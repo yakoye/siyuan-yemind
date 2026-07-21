@@ -93,6 +93,7 @@ import {
 import { NodeHoverPreview } from "../ui/nodeHoverPreview";
 import { NodeStylePanel } from "../ui/nodeStylePanel";
 import { ProjectStylePanel } from "../ui/projectStylePanel";
+import { synchronizeCanvasRichTextVisibility } from "./canvasRichTextVisibility";
 import { setSearchReplaceExpanded } from "./searchPanelState";
 import { normalizeProjectStyle, resolveProjectAppearance } from "./projectStyle";
 import { NodeQuickActionsController } from "./nodeQuickActions";
@@ -996,7 +997,11 @@ export class YeMindEditor {
 
   private bindMapEvents(): void {
     if (!this.map) return;
-    this.map.on("before_show_text_edit", () => this.canvasRightDrag?.cancel());
+    this.map.on("before_show_text_edit", () => {
+      this.canvasRightDrag?.cancel();
+      queueMicrotask(() => synchronizeCanvasRichTextVisibility(this.map as any));
+      window.requestAnimationFrame(() => synchronizeCanvasRichTextVisibility(this.map as any));
+    });
     this.map.on("data_change", (data: MindMapTree) => {
       if (this.applyingCheckpoint) return;
       this.current.data = data;

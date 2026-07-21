@@ -20,6 +20,7 @@ export class ProjectStylePanel {
     this.panel.addEventListener('change', this.onControl);
     this.panel.addEventListener('input', this.onControl);
     BLOCKED_EVENTS.forEach((type) => this.panel?.addEventListener(type, this.stop, true));
+    document.addEventListener('mousedown', this.onDocumentMouseDown, true);
     this.refresh();
   }
 
@@ -29,6 +30,7 @@ export class ProjectStylePanel {
     this.panel.removeEventListener('change', this.onControl);
     this.panel.removeEventListener('input', this.onControl);
     BLOCKED_EVENTS.forEach((type) => this.panel?.removeEventListener(type, this.stop, true));
+    document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
   }
 
   show(): void {
@@ -48,6 +50,13 @@ export class ProjectStylePanel {
 
   private readonly stop = (event: Event): void => event.stopPropagation();
 
+  private readonly onDocumentMouseDown = (event: MouseEvent): void => {
+    if (!this.panel || this.panel.hidden) return;
+    const target = event.target as Node | null;
+    if (target && this.panel.contains(target)) return;
+    this.hide();
+  };
+
   private commit(patch: Partial<ProjectStyle>): void {
     if (this.readonly()) return;
     this.style = normalizeProjectStyle({ ...this.style, ...patch });
@@ -62,6 +71,10 @@ export class ProjectStylePanel {
       button.classList.toggle('is-active', active);
       button.setAttribute('aria-pressed', String(active));
     });
+    const horizontal = this.panel.querySelector<HTMLInputElement>('[data-project-spacing="horizontal"]');
+    const vertical = this.panel.querySelector<HTMLInputElement>('[data-project-spacing="vertical"]');
+    if (horizontal) horizontal.value = String(this.style.customMarginX ?? 42);
+    if (vertical) vertical.value = String(this.style.customMarginY ?? 11);
     const rainbow = this.panel.querySelector<HTMLInputElement>('[data-project-style="rainbowLines"]');
     if (rainbow) {
       rainbow.checked = this.style.rainbowLines === true;
@@ -84,6 +97,14 @@ export class ProjectStylePanel {
       this.commit({ rainbowLines: target.checked });
     } else if (target.dataset.projectStyle === 'backgroundColor') {
       this.commit({ backgroundColor: target.value });
+    } else if (target.dataset.projectSpacing) {
+      const horizontal = this.panel?.querySelector<HTMLInputElement>('[data-project-spacing="horizontal"]');
+      const vertical = this.panel?.querySelector<HTMLInputElement>('[data-project-spacing="vertical"]');
+      this.commit({
+        density: 'custom',
+        customMarginX: Number(horizontal?.value),
+        customMarginY: Number(vertical?.value),
+      });
     }
   };
 
@@ -93,7 +114,7 @@ export class ProjectStylePanel {
     const action = target.closest<HTMLElement>('[data-project-style-action]')?.dataset.projectStyleAction;
     if (action === 'close') return this.hide();
     if (action === 'reset') {
-      this.commit({ density: 'default', rainbowLines: null, backgroundColor: null });
+      this.commit({ density: 'default', rainbowLines: null, backgroundColor: null, customMarginX: undefined, customMarginY: undefined });
       return;
     }
     const density = target.closest<HTMLElement>('[data-project-density]')?.dataset.projectDensity as ProjectStyle['density'] | undefined;

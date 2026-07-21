@@ -5,7 +5,7 @@
 - 插件目录：`siyuan-yemind-zen`
 - 插件 ID：`siyuan-yemind-zen`
 - 思源显示名：`YeMind Zen`
-- 当前版本：`0.6.4`
+- 当前版本：`0.6.5`
 
 ## 核心分层
 
@@ -20,8 +20,8 @@ SiYuan Plugin Shell
 ├─ Official drag intent adapter：仅负责画布拖动预览候选、稳定器和引导线
 ├─ Outline adapter：不移动活动行的 keyed patch、单活动 Quill、原生折叠状态、叶子语义、空节点删除和左侧空白 Pointer 拖拽意图
 ├─ Node note/comment layer：备注数据、清理、对话框和悬停预览
-├─ Global search adapter：扩展思源 input-search，定位导图与节点
-├─ Project style layer：整图密度、彩虹连线、背景与检查点持久化
+├─ Global search adapter：扩展思源 input-search，支持标签延迟挂载后的节点定位
+├─ Project style layer：整图预设/自定义间距、彩虹连线、背景与检查点持久化
 └─ UI：顶部、左侧、底部工具栏与思源原生菜单
 ```
 

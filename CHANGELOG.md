@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.5 — 2026-07-20
+
+- Reassigned density presets so the former Compact spacing is now Default, the former Default/theme spacing is Comfortable, and a new tighter Compact preset reduces both horizontal and vertical gaps.
+- Added editable horizontal and vertical custom spacing to whole-map Style, with normalization, persistence and checkpoint coverage.
+- Made the whole-map Style panel close on an outside click without closing for interactions inside the panel.
+- Queued SiYuan global-search node navigation while a map tab is still mounting, then focused the exact node once the editor becomes ready.
+- Reused the shared 52-swatch Reset/More/HEX/RGB palette for node fill, border and text colors.
+- Restored visible canvas rich-text editing by synchronizing the real node text color and safe edit background into the upstream Quill wrapper.
+- Strengthened the permanent real-SVG double-click regression: enter edit, keep text visible, select a partial range, show the toolbar and apply Bold only to that range.
+- Aligned package, manifest, runtime, diagnostic and test identity at 0.6.5.
+
 ## 0.6.4 — 2026-07-20
 
 - Added a find-first project search surface whose left disclosure button reveals or hides the replace row without rebuilding the active query input.

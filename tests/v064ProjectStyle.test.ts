@@ -30,8 +30,8 @@ describe('v0.6.4 whole-map style', () => {
       themeConfig: { second: { marginX: 100, marginY: 30 }, node: { marginX: 50, marginY: 16 }, backgroundColor: '#fff' },
       rainbow: { open: false, colorsList: ['#111'] },
     });
-    expect(result.themeConfig.second).toMatchObject({ marginX: 150, marginY: 54 });
-    expect(result.themeConfig.node).toMatchObject({ marginX: 76, marginY: 26 });
+    expect(result.themeConfig.second).toMatchObject({ marginX: 100, marginY: 30 });
+    expect(result.themeConfig.node).toMatchObject({ marginX: 50, marginY: 16 });
     expect(result.themeConfig.backgroundColor).toBe('#8fa1cf');
     expect(result.rainbow.open).toBe(true);
   });

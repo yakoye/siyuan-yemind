@@ -5,8 +5,9 @@ import { mountAfterReady, type DeferredMountState } from './deferredMount';
 import type { YeMindPluginHost } from './host';
 import { TAB_TYPE } from './constants';
 import { waitForNonZeroSize } from './visibleElement';
+import { flushPendingTabNodeFocus, requestTabNodeFocus, type TabNodeFocusState } from './tabNodeFocus';
 
-interface TabMountState extends DeferredMountState {
+interface TabMountState extends DeferredMountState, TabNodeFocusState {
   editor?: YeMindEditor;
   unregister?: () => void;
 }
@@ -48,7 +49,7 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
             activate: () => activateTab(),
             close: () => this.tab.close(),
             updateTitle: (title) => this.tab.updateTitle(title),
-            focusNode: (uid) => state.editor?.focusNode(uid),
+            focusNode: (uid) => requestTabNodeFocus(state, uid),
             isAlive: () => !state.destroyed
               && container.isConnected
               && (this.tab.headElement ? this.tab.headElement.isConnected : true),
@@ -71,7 +72,8 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
             onMissing: () => this.tab.close(),
           });
           const pendingUid = host.consumePendingNodeTarget(resolvedMapId);
-          if (pendingUid) window.requestAnimationFrame(() => state.editor?.focusNode(pendingUid));
+          if (pendingUid) requestTabNodeFocus(state, pendingUid);
+          flushPendingTabNodeFocus(state);
         },
         (error) => {
           state.unregister?.();

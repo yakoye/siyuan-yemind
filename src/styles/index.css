@@ -325,7 +325,7 @@
 .ymz-rich-color[data-rich-action="color-menu"] i{border-bottom:3px solid var(--ymz-current-color,currentColor);background:transparent}
 
 /* The upstream editor is mounted inside .ymz-editor instead of document.body. */
-.ymz-editor .smm-richtext-node-edit-wrap{z-index:55!important;color:inherit;caret-color:currentColor;-webkit-text-fill-color:currentColor}
+.ymz-editor .smm-richtext-node-edit-wrap{z-index:55!important;caret-color:currentColor;-webkit-text-fill-color:currentColor}
 .ymz-editor .smm-richtext-node-edit-wrap .ql-container,.ymz-editor .smm-richtext-node-edit-wrap .ql-editor{color:inherit!important;caret-color:currentColor!important;-webkit-text-fill-color:currentColor!important}
 .ymz-editor .smm-richtext-node-edit-wrap .ql-editor *{-webkit-text-fill-color:currentColor}
 .ymz-editor .smm-richtext-node-edit-wrap .ql-editor::selection,.ymz-editor .smm-richtext-node-edit-wrap .ql-editor *::selection{background:color-mix(in srgb,var(--b3-theme-primary) 30%,transparent);color:inherit;-webkit-text-fill-color:currentColor}
@@ -710,3 +710,7 @@
 .ymz-global-search-result{display:flex;width:100%;align-items:flex-start;gap:8px;border-radius:7px;text-align:left}.ymz-global-search-result .b3-list-item__graphic{display:grid;place-items:center;width:24px;height:24px;border-radius:6px;background:var(--ymz-accent);color:#fff;font-size:10px}.ymz-global-search-result .b3-list-item__text{display:flex;min-width:0;flex-direction:column;gap:2px}.ymz-global-search-result strong{font-weight:550}.ymz-global-search-result small{overflow:hidden;color:var(--b3-theme-on-surface-light);font-size:10px;text-overflow:ellipsis;white-space:nowrap}
 
 @media(max-width:560px){.ymz-project-style-panel{top:58px;right:8px;width:calc(100% - 16px);max-height:calc(100% - 74px)}.ymz-density-options{grid-template-columns:1fr}.ymz-background-options{grid-template-columns:repeat(4,1fr)}}
+/* v0.6.5 custom whole-map spacing */
+.ymz-custom-spacing{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.ymz-custom-spacing label{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:7px;padding:6px 8px;border:1px solid var(--ymz-border);border-radius:8px;background:var(--b3-theme-background);font-size:11px}.ymz-custom-spacing input{min-width:0;width:100%;height:28px;padding:0 6px;border:1px solid var(--ymz-border);border-radius:6px;background:var(--b3-theme-surface);color:inherit}
+/* v0.6.5 shared node-style color palette */
+.ymz-node-color-trigger{display:flex!important;align-items:center;justify-content:flex-start!important;gap:8px;width:100%;padding:0 9px!important}.ymz-node-color-trigger i{display:block;width:16px;height:16px;flex:0 0 16px;border:1px solid color-mix(in srgb,var(--b3-theme-on-surface) 24%,transparent);border-radius:4px;background:var(--ymz-current-color,transparent);box-sizing:border-box}.ymz-node-color-trigger span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:11px/1.2 var(--b3-font-family-code,monospace)}.ymz-node-color-popover{z-index:75}

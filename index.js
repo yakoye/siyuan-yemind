@@ -3195,31 +3195,49 @@ function normalizeColor(value) {
   const text2 = value.trim().toLowerCase();
   return /^#[0-9a-f]{6}$/.test(text2) ? text2 : null;
 }
+function normalizeSpacing(value, fallback, min, max) {
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(parsed)));
+}
 function normalizeProjectStyle(value) {
   const input = value && typeof value === "object" ? value : {};
-  const density = input.density === "compact" || input.density === "comfortable" ? input.density : "default";
+  const density = input.density === "compact" || input.density === "comfortable" || input.density === "custom" ? input.density : "default";
   const rainbowLines = typeof input.rainbowLines === "boolean" ? input.rainbowLines : null;
   const backgroundColor = normalizeColor(input.backgroundColor);
-  return { density, rainbowLines, backgroundColor };
+  const base = { density, rainbowLines, backgroundColor };
+  if (density === "custom") {
+    base.customMarginX = normalizeSpacing(input.customMarginX, 42, 12, 240);
+    base.customMarginY = normalizeSpacing(input.customMarginY, 11, 2, 100);
+  }
+  return base;
 }
-function densitySpacing(density) {
+function densitySpacing(density, customMarginX, customMarginY) {
   if (density === "compact") {
+    return {
+      second: { marginX: 60, marginY: 14 },
+      node: { marginX: 28, marginY: 6 }
+    };
+  }
+  if (density === "default") {
     return {
       second: { marginX: 82, marginY: 22 },
       node: { marginX: 42, marginY: 11 }
     };
   }
-  if (density === "comfortable") {
+  if (density === "custom") {
+    const marginX = normalizeSpacing(customMarginX, 42, 12, 240);
+    const marginY = normalizeSpacing(customMarginY, 11, 2, 100);
     return {
-      second: { marginX: 150, marginY: 54 },
-      node: { marginX: 76, marginY: 26 }
+      second: { marginX, marginY },
+      node: { marginX, marginY }
     };
   }
   return {};
 }
 function resolveProjectAppearance(input) {
   const style = normalizeProjectStyle(input.style);
-  const spacing2 = densitySpacing(style.density);
+  const spacing2 = densitySpacing(style.density, style.customMarginX, style.customMarginY);
   const themeConfig = {
     ...input.themeConfig,
     second: { ...input.themeConfig.second ?? {}, ...spacing2.second ?? {} },
@@ -4493,7 +4511,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.6.4";
+const PLUGIN_VERSION = "0.6.5";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -57771,7 +57789,7 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
 
         <aside class="ymz-project-style-panel" data-role="project-style-panel" aria-label="整图样式" hidden>
           <header class="ymz-project-style-panel__header"><strong>样式</strong><button type="button" data-project-style-action="close" aria-label="关闭样式">×</button></header>
-          <section><h4>密度</h4><p>应用到整张导图的所有节点。</p><div class="ymz-density-options" role="group" aria-label="节点密度"><button type="button" data-project-density="compact"><strong>紧凑</strong><small>分支更紧凑</small></button><button type="button" data-project-density="default"><strong>默认</strong><small>平衡间距</small></button><button type="button" data-project-density="comfortable"><strong>舒展</strong><small>布局更舒展</small></button></div></section>
+          <section><h4>密度</h4><p>应用到整张导图的所有节点。</p><div class="ymz-density-options" role="group" aria-label="节点密度"><button type="button" data-project-density="compact"><strong>紧凑</strong><small>最小化分支间距</small></button><button type="button" data-project-density="default"><strong>默认</strong><small>原紧凑间距</small></button><button type="button" data-project-density="comfortable"><strong>舒展</strong><small>主题原始间距</small></button></div><div class="ymz-custom-spacing" aria-label="自定义节点间距"><label><span>左右</span><input type="number" min="12" max="240" step="1" data-project-spacing="horizontal" aria-label="水平间距"></label><label><span>上下</span><input type="number" min="2" max="100" step="1" data-project-spacing="vertical" aria-label="垂直间距"></label></div></section>
           <section><label class="ymz-project-style-panel__switch"><span><strong>彩虹连线</strong><small>应用分支颜色</small></span><input type="checkbox" data-project-style="rainbowLines"></label></section>
           <section><h4>背景色</h4><p>未设置时使用主题。</p><div class="ymz-background-options"><button type="button" data-project-background="" title="主题背景">主题</button><button type="button" data-project-background="#ffffff" title="白色"></button><button type="button" data-project-background="#e2e8f0" title="岩灰"></button><button type="button" data-project-background="#ffe7ba" title="暖色"></button><button type="button" data-project-background="#c8f0dc" title="薄荷"></button><button type="button" data-project-background="#d7e8ff" title="天空"></button><button type="button" data-project-background="#f7cbd5" title="玫瑰"></button><button type="button" data-project-background="#0f172a" title="深色"></button></div><label class="ymz-project-style-panel__custom"><span>自定义</span><input type="color" data-project-style="backgroundColor" value="#f8fafc"></label></section>
           <footer><button type="button" data-project-style-action="reset">恢复主题默认</button></footer>
@@ -57779,8 +57797,8 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
 
         <aside class="ymz-node-style-panel" data-role="node-style-panel" aria-label="节点样式" hidden>
           <header class="ymz-node-style-panel__header"><strong>节点样式</strong><button type="button" data-node-style-action="close" aria-label="关闭节点样式">×</button></header>
-          <section><h4>形状</h4><label><span>形状</span><select data-node-style="shape"><option value="roundedRectangle">圆角矩形</option><option value="rectangle">矩形</option><option value="diamond">菱形</option><option value="ellipse">椭圆</option><option value="pill">胶囊</option></select></label><label><span>填充</span><input type="color" data-node-style="fillColor" value="#ffffff"><button type="button" data-node-style-clear="fillColor" title="清除填充">清除</button></label><label><span>边框</span><input type="color" data-node-style="borderColor" value="#333333"><button type="button" data-node-style-clear="borderColor" title="清除边框颜色">清除</button></label><label><span>线型</span><select data-node-style="borderDasharray"><option value="none">实线</option><option value="5,5">虚线</option><option value="2,3">点线</option></select></label><label><span>宽度</span><input type="number" data-node-style="borderWidth" min="0" max="12" step="1" value="1"></label><label><span>内容宽度</span><input type="number" data-node-style="width" min="40" max="1000" step="1"><button type="button" data-node-style-action="fit-width">适应</button></label></section>
-          <section><h4>文本</h4><label><span>字体</span><select data-node-style="fontFamily"><option value="NeverMind">NeverMind</option><option value="system-ui">系统默认</option><option value="Arial">Arial</option><option value="Noto Sans SC">Noto Sans SC</option><option value="Noto Serif CJK SC">Noto Serif CJK SC</option></select></label><label><span>字号</span><input type="number" data-node-style="fontSize" min="8" max="96" step="1"></label><label><span>字重</span><select data-node-style="fontWeight"><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semibold</option><option value="700">Bold</option></select></label><label><span>颜色</span><input type="color" data-node-style="color" value="#000000"></label><div class="ymz-node-style-panel__buttons" aria-label="文字格式"><button type="button" data-node-style-toggle="fontWeight" data-node-style-value="700"><b>B</b></button><button type="button" data-node-style-toggle="fontStyle" data-node-style-value="italic"><i>I</i></button><button type="button" data-node-style-toggle="textDecoration" data-node-style-value="line-through"><s>S</s></button><button type="button" data-node-style-toggle="textDecoration" data-node-style-value="underline"><u>U</u></button></div><div class="ymz-node-style-panel__buttons" aria-label="文字对齐"><button type="button" data-node-style-set="textAlign" data-node-style-value="left">≡</button><button type="button" data-node-style-set="textAlign" data-node-style-value="center">≣</button><button type="button" data-node-style-set="textAlign" data-node-style-value="right">≡</button></div></section>
+          <section><h4>形状</h4><label><span>形状</span><select data-node-style="shape"><option value="roundedRectangle">圆角矩形</option><option value="rectangle">矩形</option><option value="diamond">菱形</option><option value="ellipse">椭圆</option><option value="pill">胶囊</option></select></label><label><span>填充</span><button type="button" class="ymz-node-color-trigger" data-node-color-trigger="fillColor"><i data-node-color-swatch="fillColor"></i><span data-node-color-label="fillColor">默认</span></button></label><label><span>边框</span><button type="button" class="ymz-node-color-trigger" data-node-color-trigger="borderColor"><i data-node-color-swatch="borderColor"></i><span data-node-color-label="borderColor">默认</span></button></label><label><span>线型</span><select data-node-style="borderDasharray"><option value="none">实线</option><option value="5,5">虚线</option><option value="2,3">点线</option></select></label><label><span>宽度</span><input type="number" data-node-style="borderWidth" min="0" max="12" step="1" value="1"></label><label><span>内容宽度</span><input type="number" data-node-style="width" min="40" max="1000" step="1"><button type="button" data-node-style-action="fit-width">适应</button></label></section>
+          <section><h4>文本</h4><label><span>字体</span><select data-node-style="fontFamily"><option value="NeverMind">NeverMind</option><option value="system-ui">系统默认</option><option value="Arial">Arial</option><option value="Noto Sans SC">Noto Sans SC</option><option value="Noto Serif CJK SC">Noto Serif CJK SC</option></select></label><label><span>字号</span><input type="number" data-node-style="fontSize" min="8" max="96" step="1"></label><label><span>字重</span><select data-node-style="fontWeight"><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semibold</option><option value="700">Bold</option></select></label><label><span>颜色</span><button type="button" class="ymz-node-color-trigger" data-node-color-trigger="color"><i data-node-color-swatch="color"></i><span data-node-color-label="color">默认</span></button></label><div class="ymz-node-style-panel__buttons" aria-label="文字格式"><button type="button" data-node-style-toggle="fontWeight" data-node-style-value="700"><b>B</b></button><button type="button" data-node-style-toggle="fontStyle" data-node-style-value="italic"><i>I</i></button><button type="button" data-node-style-toggle="textDecoration" data-node-style-value="line-through"><s>S</s></button><button type="button" data-node-style-toggle="textDecoration" data-node-style-value="underline"><u>U</u></button></div><div class="ymz-node-style-panel__buttons" aria-label="文字对齐"><button type="button" data-node-style-set="textAlign" data-node-style-value="left">≡</button><button type="button" data-node-style-set="textAlign" data-node-style-value="center">≣</button><button type="button" data-node-style-set="textAlign" data-node-style-value="right">≡</button></div></section>
           <footer><button type="button" data-node-style-action="reset">恢复主题样式</button></footer>
         </aside>
 
@@ -58573,6 +58591,22 @@ const COLOR_SWATCHES = [
   "#383d78",
   "#5b2069"
 ];
+function colorSwatchesHtml() {
+  return COLOR_SWATCHES.map((value) => `<button type="button" class="ymz-color-popover__swatch" data-color-value="${value}" style="--ymz-swatch:${value}" title="${value}" aria-label="${value}"></button>`).join("");
+}
+function colorPaletteInnerHtml() {
+  return `<div class="ymz-color-popover__grid">${colorSwatchesHtml()}</div>
+    <div class="ymz-color-popover__footer">
+      <button type="button" data-color-action="reset">重置默认</button>
+      <button type="button" data-color-action="custom">更多颜色</button>
+    </div>
+    <div class="ymz-color-popover__current" aria-live="polite">
+      <label><span>HEX</span><input type="text" spellcheck="false" autocomplete="off" data-color-input="hex" value="" aria-label="十六进制颜色"></label>
+      <label><span>RGB</span><input type="text" spellcheck="false" autocomplete="off" data-color-input="rgb" value="" aria-label="RGB 颜色"></label>
+      <span class="ymz-sr-only" data-color-readout="hex">默认</span>
+      <span class="ymz-sr-only" data-color-readout="rgb">继承颜色</span>
+    </div>`;
+}
 function option(value, label) {
   return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -58585,11 +58619,6 @@ function fontOptions() {
   const labels = ["无衬线", "衬线", "微软雅黑", "宋体", "等宽"];
   return YEMIND_FONT_VALUES.map(
     (value, index) => option(value, labels[index] ?? value)
-  ).join("");
-}
-function swatchesHtml() {
-  return COLOR_SWATCHES.map(
-    (value) => `<button type="button" class="ymz-color-popover__swatch" data-color-value="${value}" style="--ymz-swatch:${value}" title="${value}" aria-label="${value}"></button>`
   ).join("");
 }
 class RichTextToolbar {
@@ -58643,17 +58672,7 @@ class RichTextToolbar {
     this.colorPopover = document.createElement("div");
     this.colorPopover.className = "ymz-color-popover";
     this.colorPopover.hidden = true;
-    this.colorPopover.innerHTML = `<div class="ymz-color-popover__grid">${swatchesHtml()}</div>
-      <div class="ymz-color-popover__footer">
-        <button type="button" data-color-action="reset">重置默认</button>
-        <button type="button" data-color-action="custom">更多颜色</button>
-      </div>
-      <div class="ymz-color-popover__current" aria-live="polite">
-        <label><span>HEX</span><input type="text" spellcheck="false" autocomplete="off" data-color-input="hex" value="" aria-label="十六进制颜色"></label>
-        <label><span>RGB</span><input type="text" spellcheck="false" autocomplete="off" data-color-input="rgb" value="" aria-label="RGB 颜色"></label>
-        <span class="ymz-sr-only" data-color-readout="hex">默认</span>
-        <span class="ymz-sr-only" data-color-readout="rgb">继承节点颜色</span>
-      </div>`;
+    this.colorPopover.innerHTML = colorPaletteInnerHtml();
     this.customColorInput = document.createElement("input");
     this.customColorInput.type = "color";
     this.customColorInput.className = "ymz-color-popover__native";
@@ -59374,16 +59393,48 @@ const INPUT_EVENTS = ["keydown", "keyup", "beforeinput", "input", "paste", "comp
 function toInputValue(value) {
   return value === null || value === void 0 ? "" : String(value);
 }
+function isNodeColorKey(value) {
+  return value === "fillColor" || value === "borderColor" || value === "color";
+}
 class NodeStylePanel {
   constructor(root2, commands) {
     __publicField(this, "panel");
+    __publicField(this, "colorPopover");
+    __publicField(this, "customColorInput");
     __publicField(this, "current", {});
-    __publicField(this, "stopEditorEvent", (event) => {
+    __publicField(this, "activeColorKey", "fillColor");
+    __publicField(this, "stopEditorEvent", (event) => event.stopPropagation());
+    __publicField(this, "onDocumentMouseDown", (event) => {
+      const target = event.target;
+      if (!target) return;
+      if (!this.colorPopover.hidden && !this.colorPopover.contains(target)) this.colorPopover.hidden = true;
+    });
+    __publicField(this, "onColorPopoverMouseDown", (event) => {
+      const target = event.target;
+      const isTextInput = target instanceof HTMLInputElement && target.type !== "color";
+      if (!isTextInput) event.preventDefault();
       event.stopPropagation();
+    });
+    __publicField(this, "onNativeColorInput", () => this.applyColor(this.customColorInput.value, false));
+    __publicField(this, "onColorPopoverClick", (event) => {
+      var _a;
+      const target = event.target;
+      const swatch = target.closest("[data-color-value]");
+      if (swatch) {
+        this.applyColor(swatch.dataset.colorValue || null);
+        return;
+      }
+      const action = (_a = target.closest("[data-color-action]")) == null ? void 0 : _a.dataset.colorAction;
+      if (action === "reset") this.applyColor(null);
+      if (action === "custom") {
+        const value = this.current[this.activeColorKey];
+        this.customColorInput.value = typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value) ? value : "#000000";
+        this.customColorInput.click();
+      }
     });
     __publicField(this, "onInput", (event) => {
       const control = event.target.closest("[data-node-style]");
-      if (!control || control.type !== "color" && control.type !== "number") return;
+      if (!control || control.type !== "number") return;
       this.applyControl(control);
     });
     __publicField(this, "onChange", (event) => {
@@ -59397,6 +59448,12 @@ class NodeStylePanel {
       const action = (_a = target.closest("[data-node-style-action]")) == null ? void 0 : _a.dataset.nodeStyleAction;
       if (action === "close") {
         this.hide();
+        return;
+      }
+      const colorTrigger = target.closest("[data-node-color-trigger]");
+      const colorKey = colorTrigger == null ? void 0 : colorTrigger.dataset.nodeColorTrigger;
+      if (colorTrigger && isNodeColorKey(colorKey)) {
+        this.openColorPopover(colorKey, colorTrigger);
         return;
       }
       if (this.commands.isReadonly()) return;
@@ -59434,6 +59491,17 @@ class NodeStylePanel {
     this.root = root2;
     this.commands = commands;
     this.panel = root2.querySelector('[data-role="node-style-panel"]');
+    this.colorPopover = document.createElement("div");
+    this.colorPopover.className = "ymz-color-popover ymz-node-color-popover";
+    this.colorPopover.hidden = true;
+    this.colorPopover.innerHTML = colorPaletteInnerHtml();
+    this.customColorInput = document.createElement("input");
+    this.customColorInput.type = "color";
+    this.customColorInput.className = "ymz-color-popover__native";
+    this.customColorInput.tabIndex = -1;
+    this.customColorInput.setAttribute("aria-hidden", "true");
+    this.colorPopover.appendChild(this.customColorInput);
+    root2.appendChild(this.colorPopover);
     if (!this.panel) return;
     this.panel.addEventListener("click", this.onClick);
     this.panel.addEventListener("change", this.onChange);
@@ -59443,17 +59511,31 @@ class NodeStylePanel {
       return (_a = this.panel) == null ? void 0 : _a.addEventListener(type, this.stopEditorEvent, true);
     });
     this.panel.addEventListener("pointerdown", this.stopEditorEvent, true);
+    this.colorPopover.addEventListener("click", this.onColorPopoverClick);
+    this.colorPopover.addEventListener("mousedown", this.onColorPopoverMouseDown);
+    INPUT_EVENTS.forEach((type) => this.colorPopover.addEventListener(type, this.stopEditorEvent, true));
+    this.customColorInput.addEventListener("input", this.onNativeColorInput);
+    this.bindEditableColorInput("hex");
+    this.bindEditableColorInput("rgb");
+    document.addEventListener("mousedown", this.onDocumentMouseDown, true);
   }
   destroy() {
-    if (!this.panel) return;
-    this.panel.removeEventListener("click", this.onClick);
-    this.panel.removeEventListener("change", this.onChange);
-    this.panel.removeEventListener("input", this.onInput, true);
-    INPUT_EVENTS.forEach((type) => {
-      var _a;
-      return (_a = this.panel) == null ? void 0 : _a.removeEventListener(type, this.stopEditorEvent, true);
-    });
-    this.panel.removeEventListener("pointerdown", this.stopEditorEvent, true);
+    if (this.panel) {
+      this.panel.removeEventListener("click", this.onClick);
+      this.panel.removeEventListener("change", this.onChange);
+      this.panel.removeEventListener("input", this.onInput, true);
+      INPUT_EVENTS.forEach((type) => {
+        var _a;
+        return (_a = this.panel) == null ? void 0 : _a.removeEventListener(type, this.stopEditorEvent, true);
+      });
+      this.panel.removeEventListener("pointerdown", this.stopEditorEvent, true);
+    }
+    this.colorPopover.removeEventListener("click", this.onColorPopoverClick);
+    this.colorPopover.removeEventListener("mousedown", this.onColorPopoverMouseDown);
+    INPUT_EVENTS.forEach((type) => this.colorPopover.removeEventListener(type, this.stopEditorEvent, true));
+    this.customColorInput.removeEventListener("input", this.onNativeColorInput);
+    document.removeEventListener("mousedown", this.onDocumentMouseDown, true);
+    this.colorPopover.remove();
   }
   show() {
     if (!this.panel) return;
@@ -59462,6 +59544,7 @@ class NodeStylePanel {
   }
   hide() {
     if (this.panel) this.panel.hidden = true;
+    this.colorPopover.hidden = true;
   }
   refresh() {
     if (!this.panel) return;
@@ -59469,12 +59552,7 @@ class NodeStylePanel {
     this.panel.querySelectorAll("[data-node-style]").forEach((control) => {
       const key = control.dataset.nodeStyle;
       if (!key) return;
-      const value = this.current[key];
-      if (control.type === "color") {
-        if (typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value)) control.value = value;
-        return;
-      }
-      control.value = toInputValue(value);
+      control.value = toInputValue(this.current[key]);
     });
     this.panel.querySelectorAll("[data-node-style-toggle],[data-node-style-set]").forEach((button) => {
       const key = button.dataset.nodeStyleToggle ?? button.dataset.nodeStyleSet;
@@ -59482,6 +59560,7 @@ class NodeStylePanel {
       button.classList.toggle("is-active", Boolean(key && value && this.current[key] === value));
       button.setAttribute("aria-pressed", String(Boolean(key && value && this.current[key] === value)));
     });
+    ["fillColor", "borderColor", "color"].forEach((key) => this.syncColorTrigger(key));
     this.panel.dataset.readonly = String(this.commands.isReadonly());
     this.panel.querySelectorAll("input,select,button").forEach((control) => {
       if (control.dataset.nodeStyleAction === "close") return;
@@ -59494,6 +59573,76 @@ class NodeStylePanel {
     this.commands.setActiveNodeStyle({ [key]: control.value || null });
     this.current = { ...this.current, [key]: control.value || null };
   }
+  applyColor(value, close2 = true) {
+    if (this.commands.isReadonly()) return;
+    this.commands.setActiveNodeStyle({ [this.activeColorKey]: value });
+    this.current = { ...this.current, [this.activeColorKey]: value };
+    this.syncColorTrigger(this.activeColorKey);
+    this.syncColorInputs();
+    if (close2) this.colorPopover.hidden = true;
+  }
+  syncColorTrigger(key) {
+    if (!this.panel) return;
+    const value = typeof this.current[key] === "string" ? String(this.current[key]) : "";
+    const swatch = this.panel.querySelector(`[data-node-color-swatch="${key}"]`);
+    const label = this.panel.querySelector(`[data-node-color-label="${key}"]`);
+    swatch == null ? void 0 : swatch.style.setProperty("--ymz-current-color", value || "transparent");
+    if (label) label.textContent = value || "默认";
+  }
+  syncColorInputs() {
+    const value = this.current[this.activeColorKey];
+    const presentation = presentColor(value);
+    const editable = parseEditableColor(value);
+    const hex2 = this.colorPopover.querySelector('[data-color-input="hex"]');
+    const rgb2 = this.colorPopover.querySelector('[data-color-input="rgb"]');
+    if (hex2) {
+      hex2.value = (editable == null ? void 0 : editable.hex) ?? "";
+      hex2.setAttribute("aria-invalid", "false");
+    }
+    if (rgb2) {
+      rgb2.value = (editable == null ? void 0 : editable.rgb) ?? "";
+      rgb2.setAttribute("aria-invalid", "false");
+    }
+    const hexReadout = this.colorPopover.querySelector('[data-color-readout="hex"]');
+    const rgbReadout = this.colorPopover.querySelector('[data-color-readout="rgb"]');
+    if (hexReadout) hexReadout.textContent = presentation.hex;
+    if (rgbReadout) rgbReadout.textContent = presentation.rgb;
+  }
+  openColorPopover(key, anchor) {
+    this.activeColorKey = key;
+    this.syncColorInputs();
+    this.colorPopover.hidden = false;
+    const rootRect = this.root.getBoundingClientRect();
+    const anchorRect = anchor.getBoundingClientRect();
+    const width2 = this.colorPopover.offsetWidth || 318;
+    const height2 = this.colorPopover.offsetHeight || 260;
+    const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
+    const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
+    const left = Math.max(8, Math.min(anchorRect.left - rootRect.left, rootWidth - width2 - 8));
+    const below = anchorRect.bottom - rootRect.top + 6;
+    const above = anchorRect.top - rootRect.top - height2 - 6;
+    const top = below + height2 <= rootHeight - 8 ? below : Math.max(8, above);
+    this.colorPopover.style.left = `${Math.round(left)}px`;
+    this.colorPopover.style.top = `${Math.round(top)}px`;
+  }
+  bindEditableColorInput(kind) {
+    const input = this.colorPopover.querySelector(`[data-color-input="${kind}"]`);
+    if (!input) return;
+    input.addEventListener("input", () => {
+      const parsed = parseEditableColor(input.value);
+      input.setAttribute("aria-invalid", parsed ? "false" : "true");
+      if (!parsed) return;
+      const other = this.colorPopover.querySelector(`[data-color-input="${kind === "hex" ? "rgb" : "hex"}"]`);
+      if (other) {
+        other.value = kind === "hex" ? parsed.rgb : parsed.hex;
+        other.setAttribute("aria-invalid", "false");
+      }
+      this.applyColor(parsed.hex, false);
+    });
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") this.colorPopover.hidden = true;
+    });
+  }
 }
 const BLOCKED_EVENTS = ["keydown", "keyup", "beforeinput", "input", "paste", "compositionstart", "compositionupdate", "compositionend"];
 class ProjectStylePanel {
@@ -59501,12 +59650,27 @@ class ProjectStylePanel {
     __publicField(this, "panel");
     __publicField(this, "style");
     __publicField(this, "stop", (event) => event.stopPropagation());
+    __publicField(this, "onDocumentMouseDown", (event) => {
+      if (!this.panel || this.panel.hidden) return;
+      const target = event.target;
+      if (target && this.panel.contains(target)) return;
+      this.hide();
+    });
     __publicField(this, "onControl", (event) => {
+      var _a, _b;
       const target = event.target;
       if (target.dataset.projectStyle === "rainbowLines") {
         this.commit({ rainbowLines: target.checked });
       } else if (target.dataset.projectStyle === "backgroundColor") {
         this.commit({ backgroundColor: target.value });
+      } else if (target.dataset.projectSpacing) {
+        const horizontal = (_a = this.panel) == null ? void 0 : _a.querySelector('[data-project-spacing="horizontal"]');
+        const vertical = (_b = this.panel) == null ? void 0 : _b.querySelector('[data-project-spacing="vertical"]');
+        this.commit({
+          density: "custom",
+          customMarginX: Number(horizontal == null ? void 0 : horizontal.value),
+          customMarginY: Number(vertical == null ? void 0 : vertical.value)
+        });
       }
     });
     __publicField(this, "onClick", (event) => {
@@ -59516,7 +59680,7 @@ class ProjectStylePanel {
       const action = (_a = target.closest("[data-project-style-action]")) == null ? void 0 : _a.dataset.projectStyleAction;
       if (action === "close") return this.hide();
       if (action === "reset") {
-        this.commit({ density: "default", rainbowLines: null, backgroundColor: null });
+        this.commit({ density: "default", rainbowLines: null, backgroundColor: null, customMarginX: void 0, customMarginY: void 0 });
         return;
       }
       const density = (_b = target.closest("[data-project-density]")) == null ? void 0 : _b.dataset.projectDensity;
@@ -59540,6 +59704,7 @@ class ProjectStylePanel {
       var _a;
       return (_a = this.panel) == null ? void 0 : _a.addEventListener(type, this.stop, true);
     });
+    document.addEventListener("mousedown", this.onDocumentMouseDown, true);
     this.refresh();
   }
   destroy() {
@@ -59551,6 +59716,7 @@ class ProjectStylePanel {
       var _a;
       return (_a = this.panel) == null ? void 0 : _a.removeEventListener(type, this.stop, true);
     });
+    document.removeEventListener("mousedown", this.onDocumentMouseDown, true);
   }
   show() {
     if (!this.panel) return;
@@ -59577,6 +59743,10 @@ class ProjectStylePanel {
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-pressed", String(active));
     });
+    const horizontal = this.panel.querySelector('[data-project-spacing="horizontal"]');
+    const vertical = this.panel.querySelector('[data-project-spacing="vertical"]');
+    if (horizontal) horizontal.value = String(this.style.customMarginX ?? 42);
+    if (vertical) vertical.value = String(this.style.customMarginY ?? 11);
     const rainbow = this.panel.querySelector('[data-project-style="rainbowLines"]');
     if (rainbow) {
       rainbow.checked = this.style.rainbowLines === true;
@@ -59592,6 +59762,29 @@ class ProjectStylePanel {
       control.disabled = this.readonly();
     });
   }
+}
+function cssColor(value, fallback) {
+  const text2 = typeof value === "string" ? value.trim() : "";
+  return text2 || fallback;
+}
+function synchronizeCanvasRichTextVisibility(map2) {
+  var _a, _b, _c2, _d2, _e;
+  const runtime = map2 == null ? void 0 : map2.richText;
+  const wrapper = runtime == null ? void 0 : runtime.textEditNode;
+  const node = runtime == null ? void 0 : runtime.node;
+  if (!wrapper || !node) return false;
+  const textColor = cssColor((_b = (_a = node.style) == null ? void 0 : _a.merge) == null ? void 0 : _b.call(_a, "color"), "#1f2937");
+  const safeBackground = cssColor((_e = (_d2 = (_c2 = map2 == null ? void 0 : map2.renderer) == null ? void 0 : _c2.textEdit) == null ? void 0 : _d2.getBackground) == null ? void 0 : _e.call(_d2, node), "var(--b3-theme-background, #ffffff)");
+  wrapper.style.setProperty("color", textColor, "important");
+  wrapper.style.setProperty("caret-color", textColor, "important");
+  wrapper.style.setProperty("-webkit-text-fill-color", "currentColor", "important");
+  wrapper.style.setProperty("background", safeBackground, "important");
+  wrapper.querySelectorAll(".ql-container,.ql-editor").forEach((element) => {
+    element.style.setProperty("color", "inherit", "important");
+    element.style.setProperty("caret-color", "currentColor", "important");
+    element.style.setProperty("-webkit-text-fill-color", "currentColor", "important");
+  });
+  return true;
 }
 function setSearchReplaceExpanded(panel, expanded) {
   panel.dataset.replaceExpanded = String(expanded);
@@ -60688,7 +60881,9 @@ class YeMindEditor {
     if (!this.map) return;
     this.map.on("before_show_text_edit", () => {
       var _a;
-      return (_a = this.canvasRightDrag) == null ? void 0 : _a.cancel();
+      (_a = this.canvasRightDrag) == null ? void 0 : _a.cancel();
+      queueMicrotask(() => synchronizeCanvasRichTextVisibility(this.map));
+      window.requestAnimationFrame(() => synchronizeCanvasRichTextVisibility(this.map));
     });
     this.map.on("data_change", (data2) => {
       var _a, _b;
@@ -62009,6 +62204,23 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
     if (!state.destroyed) onError == null ? void 0 : onError(error);
   }
 }
+function requestTabNodeFocus(state, uid) {
+  if (!uid) return;
+  if (state.editor) {
+    state.editor.focusNode(uid);
+    return;
+  }
+  state.pendingNodeUid = uid;
+}
+function flushPendingTabNodeFocus(state, schedule = (callback) => window.requestAnimationFrame(callback)) {
+  if (!state.editor || !state.pendingNodeUid) return;
+  const uid = state.pendingNodeUid;
+  state.pendingNodeUid = void 0;
+  schedule(() => {
+    var _a;
+    return (_a = state.editor) == null ? void 0 : _a.focusNode(uid);
+  });
+}
 function registerYeMindTab(plugin, host) {
   const states = /* @__PURE__ */ new WeakMap();
   plugin.addTab({
@@ -62046,10 +62258,7 @@ function registerYeMindTab(plugin, host) {
             activate: () => activateTab(),
             close: () => this.tab.close(),
             updateTitle: (title) => this.tab.updateTitle(title),
-            focusNode: (uid) => {
-              var _a2;
-              return (_a2 = state.editor) == null ? void 0 : _a2.focusNode(uid);
-            },
+            focusNode: (uid) => requestTabNodeFocus(state, uid),
             isAlive: () => !state.destroyed && container.isConnected && (this.tab.headElement ? this.tab.headElement.isConnected : true)
           });
           host.diagnostics.record("tab", "waiting-for-visible-container", resolvedMapId, void 0, "info", true);
@@ -62070,10 +62279,8 @@ function registerYeMindTab(plugin, host) {
             onMissing: () => this.tab.close()
           });
           const pendingUid = host.consumePendingNodeTarget(resolvedMapId);
-          if (pendingUid) window.requestAnimationFrame(() => {
-            var _a2;
-            return (_a2 = state.editor) == null ? void 0 : _a2.focusNode(pendingUid);
-          });
+          if (pendingUid) requestTabNodeFocus(state, pendingUid);
+          flushPendingTabNodeFocus(state);
         },
         (error) => {
           var _a2;

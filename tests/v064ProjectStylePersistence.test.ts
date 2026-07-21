@@ -14,7 +14,13 @@ describe('v0.6.4 whole-map style persistence', () => {
     const maps = new MapRepository(mapStorage, { id: () => 'm1', now: () => 10 });
     await maps.load();
     await maps.create('Demo');
-    const style = { density: 'compact' as const, rainbowLines: true, backgroundColor: '#8fa1cf' };
+    const style = {
+      density: 'custom' as const,
+      rainbowLines: true,
+      backgroundColor: '#8fa1cf',
+      customMarginX: 36,
+      customMarginY: 8,
+    };
     await maps.update('m1', { projectStyle: style });
     expect(maps.get('m1')?.projectStyle).toEqual(style);
 
