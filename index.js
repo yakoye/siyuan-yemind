@@ -2555,11 +2555,11 @@ async function runDiagnosticsSelfCheck(input) {
     items.push({
       id: "lifecycle-probe",
       status: passed ? "pass" : "fail",
-      summary: passed ? "临时导图、保存、检查点恢复和清理正常" : "临时导图生命周期回归失败",
+      summary: passed ? "隔离临时导图、保存、检查点恢复和清理正常" : "隔离临时导图生命周期回归失败",
       details: lifecycle
     });
   } catch (error) {
-    items.push({ id: "lifecycle-probe", status: "fail", summary: "临时导图生命周期回归抛出异常", details: { errorType: error instanceof Error ? error.name : typeof error } });
+    items.push({ id: "lifecycle-probe", status: "fail", summary: "隔离临时导图生命周期回归抛出异常", details: { errorType: error instanceof Error ? error.name : typeof error } });
   }
   const treeStats = input.maps.map((map2) => inspectTree(map2.data));
   const duplicateUids = treeStats.reduce((total, item) => total + item.duplicateUids, 0);
@@ -2602,7 +2602,7 @@ async function runDiagnosticsSelfCheck(input) {
     }
   });
   const invalidZoom = input.editors.filter((editor) => !Number.isFinite(editor.zoom) || editor.zoom <= 0).length;
-  const zeroCanvas = input.editors.filter((editor) => editor.mounted && (editor.canvasWidth <= 0 || editor.canvasHeight <= 0)).length;
+  const zeroCanvas = input.editors.filter((editor) => editor.mounted && editor.viewMode !== "outline" && (editor.canvasWidth <= 0 || editor.canvasHeight <= 0)).length;
   items.push({
     id: "open-editors",
     status: invalidZoom > 0 ? "fail" : zeroCanvas > 0 ? "warning" : "pass",
@@ -2650,6 +2650,7 @@ class DiagnosticsService {
     __publicField(this, "recorder");
     __publicField(this, "now");
     __publicField(this, "lastSelfCheck", null);
+    __publicField(this, "selfCheckPromise", null);
     this.options = options;
     this.recorder = options.recorder ?? new DiagnosticsRecorder();
     this.now = options.now ?? (() => Date.now());
@@ -2696,14 +2697,23 @@ class DiagnosticsService {
   detachGlobalListeners() {
     this.recorder.detachGlobalErrorListeners();
   }
-  async runSelfCheck() {
+  runSelfCheck() {
+    if (this.selfCheckPromise) return this.selfCheckPromise;
+    const operation = this.runSelfCheckInternal();
+    const tracked = operation.finally(() => {
+      if (this.selfCheckPromise === tracked) this.selfCheckPromise = null;
+    });
+    this.selfCheckPromise = tracked;
+    return tracked;
+  }
+  async runSelfCheckInternal() {
     const report = await runDiagnosticsSelfCheck({
       maps: this.options.maps.list(),
       checkpoints: this.options.checkpoints.listAll(),
       settings: this.options.settings.get(),
       editors: this.recorder.listEditorStates(),
       storageProbe: () => this.options.storageProbe.run(),
-      lifecycleProbe: () => this.runLifecycleProbe(),
+      lifecycleProbe: () => this.options.lifecycleProbe.run(),
       now: this.now
     });
     this.lastSelfCheck = report;
@@ -2769,38 +2779,6 @@ class DiagnosticsService {
     const filename = `yemind-diagnostics-${date.getFullYear()}${pad2(date.getMonth() + 1)}${pad2(date.getDate())}-${pad2(date.getHours())}${pad2(date.getMinutes())}${pad2(date.getSeconds())}.zip`;
     this.record("diagnostics", "archive-created", void 0, { includeNodeText, eventCount: report.events.length }, "info", true);
     return { blob, bytes, filename };
-  }
-  async runLifecycleProbe() {
-    var _a;
-    const result = { create: false, update: false, checkpoint: false, restore: false, cleanup: false };
-    const originalActive = this.options.maps.getActiveMapId();
-    let mapId = "";
-    try {
-      const map2 = await this.options.maps.create("__YeMind diagnostic temporary map__", this.options.settings.get().defaultLayout);
-      mapId = map2.id;
-      result.create = Boolean(this.options.maps.get(mapId));
-      const data2 = {
-        ...map2.data,
-        children: [{ data: { text: "diagnostic-child" }, children: [] }]
-      };
-      await this.options.maps.update(mapId, { data: data2 });
-      result.update = ((_a = this.options.maps.get(mapId)) == null ? void 0 : _a.data.children.length) === 1;
-      const checkpoint = await this.options.checkpointService.createManual(mapId, "diagnostic checkpoint");
-      result.checkpoint = Boolean(this.options.checkpoints.get(checkpoint.id));
-      await this.options.maps.update(mapId, {
-        data: { ...data2, children: [...data2.children, { data: { text: "temporary-change" }, children: [] }] }
-      });
-      const restored = await this.options.checkpointService.restore(mapId, checkpoint.id);
-      result.restore = restored.data.children.length === 1;
-    } finally {
-      if (mapId) {
-        await this.options.checkpoints.removeForMap(mapId).catch((error) => this.recordError("diagnostics", "temporary-checkpoint-cleanup-failed", error));
-        await this.options.maps.remove(mapId).catch((error) => this.recordError("diagnostics", "temporary-map-cleanup-failed", error));
-        result.cleanup = !this.options.maps.get(mapId) && this.options.checkpoints.list(mapId).length === 0;
-      }
-      await this.options.maps.setActiveMap(originalActive).catch((error) => this.recordError("diagnostics", "active-map-restore-failed", error));
-    }
-    return result;
   }
 }
 function downloadDiagnosticsArchive(blob, filename) {
@@ -3185,6 +3163,44 @@ class MapRepository {
     const snapshot = this.snapshot();
     this.listeners.forEach((listener) => listener(snapshot));
   }
+}
+async function runIsolatedLifecycleProbe(storage, layout2 = "logicalStructure") {
+  var _a;
+  const result = {
+    create: false,
+    update: false,
+    checkpoint: false,
+    restore: false,
+    cleanup: false
+  };
+  const maps = new MapRepository(storage.maps);
+  const checkpoints = new CheckpointRepository(storage.checkpoints);
+  const service = new CheckpointService(maps, checkpoints);
+  try {
+    await Promise.all([maps.load(), checkpoints.load()]);
+    const map2 = await maps.create("__YeMind isolated diagnostic map__", layout2);
+    result.create = Boolean(maps.get(map2.id));
+    const data2 = {
+      ...map2.data,
+      children: [{ data: { text: "diagnostic-child" }, children: [] }]
+    };
+    await maps.update(map2.id, { data: data2 });
+    result.update = ((_a = maps.get(map2.id)) == null ? void 0 : _a.data.children.length) === 1;
+    const checkpoint = await service.createManual(map2.id, "diagnostic checkpoint");
+    result.checkpoint = Boolean(checkpoints.get(checkpoint.id));
+    await maps.update(map2.id, {
+      data: {
+        ...data2,
+        children: [...data2.children, { data: { text: "temporary-change" }, children: [] }]
+      }
+    });
+    const restored = await service.restore(map2.id, checkpoint.id);
+    result.restore = restored.data.children.length === 1;
+  } finally {
+    await storage.cleanup();
+    result.cleanup = true;
+  }
+  return result;
 }
 function escapeHtml$a(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
@@ -3944,24 +3960,38 @@ const MAP_STORAGE_NAME = "maps.json";
 const SETTINGS_STORAGE_NAME = "settings.json";
 const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
-const PLUGIN_VERSION = "0.5.9";
+const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
+const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
+const PLUGIN_VERSION = "0.5.10";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 class YeMindDockView {
   constructor(host, element) {
     __publicField(this, "unsubscribe", null);
+    __publicField(this, "ready", false);
+    __publicField(this, "destroyed", false);
     this.host = host;
     this.element = element;
     this.element.classList.add("ymz-dock");
-    this.unsubscribe = this.host.repository.subscribe(() => this.render());
+    this.element.innerHTML = '<div class="ymz-dock__empty">正在加载导图…</div>';
+    this.unsubscribe = this.host.repository.subscribe(() => {
+      if (this.ready && !this.destroyed) this.render();
+    });
+    void this.host.whenReady().then(() => {
+      if (this.destroyed) return;
+      this.ready = true;
+      this.render();
+    });
   }
   destroy() {
     var _a;
+    this.destroyed = true;
     (_a = this.unsubscribe) == null ? void 0 : _a.call(this);
     this.element.innerHTML = "";
   }
   render() {
+    if (this.destroyed) return;
     const maps = this.host.repository.list();
     const activeId = this.host.repository.getActiveMapId();
     this.element.innerHTML = `<div class="ymz-dock__head"><span>YeMind Zen</span><button data-action="new" aria-label="新建导图" title="新建导图">＋</button><button data-action="refresh" aria-label="刷新" title="刷新">↻</button></div><div class="ymz-dock__body"></div>`;
@@ -3982,7 +4012,9 @@ class YeMindDockView {
   bindEvents() {
     var _a, _b;
     (_a = this.element.querySelector('[data-action="new"]')) == null ? void 0 : _a.addEventListener("click", () => void this.host.createMap());
-    (_b = this.element.querySelector('[data-action="refresh"]')) == null ? void 0 : _b.addEventListener("click", () => this.render());
+    (_b = this.element.querySelector('[data-action="refresh"]')) == null ? void 0 : _b.addEventListener("click", () => {
+      void this.host.whenReady().then(() => this.render());
+    });
     this.element.querySelectorAll(".ymz-dock__item").forEach((row) => {
       var _a2, _b2, _c2, _d2;
       const mapId = row.dataset.mapId;
@@ -23255,6 +23287,120 @@ class Drag extends Base2 {
   }
 }
 Drag.instanceName = "drag";
+function resolveDragGuideTarget(state) {
+  var _a;
+  if (state.overlapNode) return state.overlapNode;
+  const sibling = state.prevNode ?? state.nextNode;
+  if (sibling == null ? void 0 : sibling.parent) return sibling.parent;
+  return ((_a = state.mousedownNode) == null ? void 0 : _a.parent) ?? null;
+}
+function calculateDragGuideEndpoints(source, target) {
+  const sourceCenterX = source.x + source.width / 2;
+  const sourceCenterY = source.y + source.height / 2;
+  const targetCenterX = target.x + target.width / 2;
+  const targetCenterY = target.y + target.height / 2;
+  const deltaX = targetCenterX - sourceCenterX;
+  const deltaY = targetCenterY - sourceCenterY;
+  if (Math.abs(deltaX) >= Math.abs(deltaY)) {
+    return {
+      startX: deltaX >= 0 ? source.x + source.width : source.x,
+      startY: sourceCenterY,
+      endX: deltaX >= 0 ? target.x : target.x + target.width,
+      endY: targetCenterY
+    };
+  }
+  return {
+    startX: sourceCenterX,
+    startY: deltaY >= 0 ? source.y + source.height : source.y,
+    endX: targetCenterX,
+    endY: deltaY >= 0 ? target.y : target.y + target.height
+  };
+}
+function normalizeRect(rect) {
+  if (!rect) return null;
+  const x2 = Number(rect.x);
+  const y2 = Number(rect.y);
+  const width2 = Number(rect.width);
+  const height2 = Number(rect.height);
+  if (![x2, y2, width2, height2].every(Number.isFinite) || width2 <= 0 || height2 <= 0) return null;
+  return { x: x2, y: y2, width: width2, height: height2 };
+}
+class YeMindDrag extends Drag {
+  constructor() {
+    super(...arguments);
+    __publicField(this, "yemindTargetGuideLine", null);
+  }
+  createCloneNode() {
+    super.createCloneNode();
+    this.ensureTargetGuideLine();
+    this.updateTargetGuideLine();
+  }
+  onMove(x2, y2, event) {
+    super.onMove(x2, y2, event);
+    this.updateTargetGuideLine();
+  }
+  checkOverlapNode() {
+    super.checkOverlapNode();
+    this.styleUpstreamPlaceholderLines();
+    this.updateTargetGuideLine();
+  }
+  removeCloneNode() {
+    this.removeTargetGuideLine();
+    super.removeCloneNode();
+  }
+  beforePluginRemove() {
+    this.removeTargetGuideLine();
+    super.beforePluginRemove();
+  }
+  beforePluginDestroy() {
+    this.removeTargetGuideLine();
+    super.beforePluginDestroy();
+  }
+  ensureTargetGuideLine() {
+    if (this.yemindTargetGuideLine) return;
+    const plugin = this;
+    this.yemindTargetGuideLine = plugin.mindMap.otherDraw.path().fill({ color: "none" }).attr({ "pointer-events": "none" }).hide();
+  }
+  updateTargetGuideLine() {
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l;
+    const plugin = this;
+    if (!plugin.clone) {
+      (_b = (_a = this.yemindTargetGuideLine) == null ? void 0 : _a.hide) == null ? void 0 : _b.call(_a);
+      return;
+    }
+    const target = resolveDragGuideTarget(plugin);
+    const sourceRect = normalizeRect(((_d2 = (_c2 = plugin.clone).rbox) == null ? void 0 : _d2.call(_c2, plugin.mindMap.otherDraw)) ?? ((_f = (_e = plugin.clone).bbox) == null ? void 0 : _f.call(_e)));
+    const targetRect = normalizeRect(((_h = (_g = target == null ? void 0 : target.group) == null ? void 0 : _g.rbox) == null ? void 0 : _h.call(_g, plugin.mindMap.otherDraw)) ?? ((_j = (_i = target == null ? void 0 : target.group) == null ? void 0 : _i.bbox) == null ? void 0 : _j.call(_i)));
+    if (!sourceRect || !targetRect) {
+      (_l = (_k = this.yemindTargetGuideLine) == null ? void 0 : _k.hide) == null ? void 0 : _l.call(_k);
+      return;
+    }
+    this.ensureTargetGuideLine();
+    const points = calculateDragGuideEndpoints(sourceRect, targetRect);
+    const config2 = plugin.mindMap.opt.dragPlaceholderLineConfig ?? {};
+    const color = config2.color || "#27896b";
+    const width2 = Number(config2.width) || 2;
+    const dasharray = config2.dasharray || "7,5";
+    this.yemindTargetGuideLine.plot(`M ${points.startX} ${points.startY} L ${points.endX} ${points.endY}`).stroke({ color, width: width2, linecap: "round" }).attr({ "stroke-dasharray": dasharray, opacity: 0.95 }).show().front();
+  }
+  styleUpstreamPlaceholderLines() {
+    const plugin = this;
+    const config2 = plugin.mindMap.opt.dragPlaceholderLineConfig ?? {};
+    const dasharray = config2.dasharray || "7,5";
+    const lines = [plugin.placeHolderLine, ...plugin.placeHolderExtraLines ?? []].filter(Boolean);
+    lines.forEach((line) => {
+      var _a, _b;
+      (_a = line.attr) == null ? void 0 : _a.call(line, { "stroke-dasharray": dasharray, opacity: 0.95, "pointer-events": "none" });
+      (_b = line.front) == null ? void 0 : _b.call(line);
+    });
+  }
+  removeTargetGuideLine() {
+    var _a, _b;
+    (_b = (_a = this.yemindTargetGuideLine) == null ? void 0 : _a.remove) == null ? void 0 : _b.call(_a);
+    this.yemindTargetGuideLine = null;
+  }
+}
+YeMindDrag.instanceName = "drag";
 class Select {
   //  构造函数
   constructor({ mindMap }) {
@@ -54383,7 +54529,7 @@ class YeMindRichText extends RichText {
   }
 }
 __publicField(YeMindRichText, "instanceName", "richText");
-const plugins = [Drag, Select, MiniMap, Search, Export, YeMindRichText, Formula, AssociativeLine, OuterFrame, NodeImgAdjust];
+const plugins = [YeMindDrag, Select, MiniMap, Search, Export, YeMindRichText, Formula, AssociativeLine, OuterFrame, NodeImgAdjust];
 let registered = false;
 function configureMindMapPlugins(settings) {
   const target = YeMindRichText;
@@ -54624,6 +54770,7 @@ function createMindMap(options) {
     disabledClipboard: true,
     enableFreeDrag: false,
     autoMoveWhenMouseInEdgeOnDrag: (behavior == null ? void 0 : behavior.autoMoveWhenMouseInEdgeOnDrag) ?? false,
+    dragPlaceholderLineConfig: { color: "#27896b", width: 2, dasharray: "7,5" },
     isLimitMindMapInCanvas: (behavior == null ? void 0 : behavior.isLimitMindMapInCanvas) ?? false,
     minZoomRatio: (behavior == null ? void 0 : behavior.minZoomRatio) ?? 20,
     maxZoomRatio: (behavior == null ? void 0 : behavior.maxZoomRatio) ?? 400,
@@ -54739,8 +54886,7 @@ function sanitizeAssociativeLines(input) {
 }
 function toggleTodo(todo) {
   if (!todo) return { checked: false };
-  if (!todo.checked) return { ...todo, checked: true };
-  return null;
+  return { ...todo, checked: !todo.checked };
 }
 function getTodoMenuState(todo) {
   if (!todo) return { label: "添加待办", next: { checked: false }, warning: false };
@@ -56342,6 +56488,58 @@ function resolveLinkNavigation(value, externalMode) {
     target: href.toLowerCase().startsWith("siyuan://") ? "siyuan" : externalMode
   };
 }
+function hasNonZeroSize(element) {
+  const rect = element.getBoundingClientRect();
+  const width2 = Number(rect.width || element.clientWidth || 0);
+  const height2 = Number(rect.height || element.clientHeight || 0);
+  return Number.isFinite(width2) && Number.isFinite(height2) && width2 > 0 && height2 > 0;
+}
+function waitForNonZeroSize(element, options = {}) {
+  var _a;
+  if ((_a = options.isCancelled) == null ? void 0 : _a.call(options)) return Promise.resolve(false);
+  if (hasNonZeroSize(element)) return Promise.resolve(true);
+  const pollMs = Math.max(1, Math.floor(options.pollMs ?? 50));
+  return new Promise((resolve) => {
+    let done = false;
+    let timer = null;
+    let observer = null;
+    const finish = (value) => {
+      if (done) return;
+      done = true;
+      if (timer !== null) window.clearTimeout(timer);
+      timer = null;
+      observer == null ? void 0 : observer.disconnect();
+      observer = null;
+      resolve(value);
+    };
+    const schedule = () => {
+      if (done) return;
+      if (timer !== null) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = null;
+        check();
+      }, pollMs);
+    };
+    const check = () => {
+      var _a2;
+      if (done) return;
+      if ((_a2 = options.isCancelled) == null ? void 0 : _a2.call(options)) {
+        finish(false);
+        return;
+      }
+      if (hasNonZeroSize(element)) {
+        finish(true);
+        return;
+      }
+      schedule();
+    };
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(() => check());
+      observer.observe(element);
+    }
+    schedule();
+  });
+}
 class YeMindEditor {
   constructor(options) {
     __publicField(this, "map", null);
@@ -56374,6 +56572,7 @@ class YeMindEditor {
     __publicField(this, "viewMode", "map");
     __publicField(this, "searchText", "");
     __publicField(this, "applyingCheckpoint", false);
+    __publicField(this, "resizeFrame", null);
     __publicField(this, "onRootKeydown", (event) => {
       var _a, _b;
       if (event.key === "Escape" && ((_a = this.commands) == null ? void 0 : _a.isRelationCreating())) {
@@ -56443,9 +56642,7 @@ class YeMindEditor {
     this.mount();
   }
   resize() {
-    var _a;
-    (_a = this.map) == null ? void 0 : _a.resize();
-    this.updateDiagnosticState();
+    this.scheduleSafeResize();
   }
   destroy() {
     var _a, _b, _c2, _d2, _e;
@@ -56457,6 +56654,8 @@ class YeMindEditor {
     (_c2 = this.richTextToolbar) == null ? void 0 : _c2.destroy();
     this.richTextToolbar = null;
     (_d2 = this.rootEl) == null ? void 0 : _d2.removeEventListener("keydown", this.onRootKeydown);
+    if (this.resizeFrame !== null) window.cancelAnimationFrame(this.resizeFrame);
+    this.resizeFrame = null;
     (_e = this.map) == null ? void 0 : _e.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
@@ -56940,9 +57139,35 @@ class YeMindEditor {
     this.rootEl.querySelectorAll('[data-action^="view-"]').forEach((button) => {
       button.classList.toggle("is-active", button.dataset.action === `view-${mode}`);
     });
-    window.requestAnimationFrame(() => {
-      var _a;
-      return (_a = this.map) == null ? void 0 : _a.resize();
+    if (mode !== "outline") this.scheduleSafeResize();
+    else if (this.resizeFrame !== null) {
+      window.cancelAnimationFrame(this.resizeFrame);
+      this.resizeFrame = null;
+    }
+  }
+  scheduleSafeResize(attempt = 0) {
+    if (this.destroyed || !this.map || this.viewMode === "outline") return;
+    if (this.resizeFrame !== null) window.cancelAnimationFrame(this.resizeFrame);
+    this.resizeFrame = window.requestAnimationFrame(() => {
+      this.resizeFrame = null;
+      if (this.destroyed || !this.map || this.viewMode === "outline") return;
+      if (!hasNonZeroSize(this.canvasEl)) {
+        if (attempt < 8) this.scheduleSafeResize(attempt + 1);
+        else {
+          this.options.diagnostics.record("editor", "resize-skipped-zero-size", this.current.id, {
+            mode: this.viewMode
+          }, "warning", true);
+          this.updateDiagnosticState({ canvasWidth: 0, canvasHeight: 0 });
+        }
+        return;
+      }
+      try {
+        this.map.resize();
+        this.updateDiagnosticState();
+      } catch (error) {
+        this.options.diagnostics.recordError("editor", "resize-failed", error, this.current.id, true);
+        console.error("[YeMind Zen] safe resize failed", error);
+      }
     });
   }
   renderOutline(data2) {
@@ -57059,7 +57284,7 @@ class YeMindEditor {
     try {
       this.current = restored;
       const viewData = normalizePersistedViewData(restored.viewData);
-      this.map.resize();
+      if (this.viewMode !== "outline" && hasNonZeroSize(this.canvasEl)) this.map.resize();
       this.map.setFullData({
         root: restored.data,
         layout: restored.layout,
@@ -57071,8 +57296,11 @@ class YeMindEditor {
       if (!viewData) {
         await new Promise((resolve) => {
           window.requestAnimationFrame(() => {
-            var _a;
-            (_a = this.map) == null ? void 0 : _a.view.fit();
+            var _a, _b;
+            if (this.viewMode !== "outline" && hasNonZeroSize(this.canvasEl)) {
+              (_a = this.map) == null ? void 0 : _a.resize();
+              (_b = this.map) == null ? void 0 : _b.view.fit();
+            }
             resolve();
           });
         });
@@ -57252,7 +57480,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
     if (state.destroyed) return;
     const value = resolveValue();
     if (state.destroyed) return;
-    mount(value);
+    await mount(value);
   } catch (error) {
     if (!state.destroyed) onError == null ? void 0 : onError(error);
   }
@@ -57275,20 +57503,34 @@ function registerYeMindTab(plugin, host) {
         state,
         host.whenReady(),
         () => ({ mapId, map: host.repository.get(mapId) }),
-        ({ mapId: resolvedMapId, map: map2 }) => {
+        async ({ mapId: resolvedMapId, map: map2 }) => {
           if (!map2) {
             container.innerHTML = '<div class="ymz-missing"><b>导图不存在</b><span>它可能已被删除。</span></div>';
             return;
           }
           this.tab.updateTitle(map2.title);
+          const activateTab = (attempt = 0) => {
+            if (state.destroyed || !container.isConnected) return;
+            const head = this.tab.headElement;
+            if (head == null ? void 0 : head.isConnected) {
+              head.click();
+              return;
+            }
+            if (attempt < 20) window.requestAnimationFrame(() => activateTab(attempt + 1));
+          };
           state.unregister = host.tabRegistry.register(resolvedMapId, {
-            activate: () => {
-              var _a2;
-              return (_a2 = this.tab.headElement) == null ? void 0 : _a2.click();
-            },
+            activate: () => activateTab(),
             close: () => this.tab.close(),
-            updateTitle: (title) => this.tab.updateTitle(title)
+            updateTitle: (title) => this.tab.updateTitle(title),
+            isAlive: () => !state.destroyed && container.isConnected && (this.tab.headElement ? this.tab.headElement.isConnected : true)
           });
+          host.diagnostics.record("tab", "waiting-for-visible-container", resolvedMapId, void 0, "info", true);
+          const visible2 = await waitForNonZeroSize(container, { isCancelled: () => state.destroyed });
+          if (!visible2 || state.destroyed) {
+            host.diagnostics.record("tab", "visible-container-wait-cancelled", resolvedMapId, void 0, "warning", true);
+            return;
+          }
+          host.diagnostics.record("tab", "visible-container-ready", resolvedMapId, void 0, "info", true);
           state.editor = new YeMindEditor({
             container,
             mapId: resolvedMapId,
@@ -57336,13 +57578,13 @@ class OpenMapTabRegistry {
     };
   }
   activate(mapId) {
-    const handle = this.handles.get(mapId);
+    const handle = this.getLiveHandle(mapId);
     if (!handle) return false;
     handle.activate();
     return true;
   }
   close(mapId) {
-    const handle = this.handles.get(mapId);
+    const handle = this.getLiveHandle(mapId);
     if (!handle) return false;
     this.handles.delete(mapId);
     handle.close();
@@ -57350,7 +57592,16 @@ class OpenMapTabRegistry {
   }
   updateTitle(mapId, title) {
     var _a;
-    (_a = this.handles.get(mapId)) == null ? void 0 : _a.updateTitle(title);
+    (_a = this.getLiveHandle(mapId)) == null ? void 0 : _a.updateTitle(title);
+  }
+  getLiveHandle(mapId) {
+    const handle = this.handles.get(mapId);
+    if (!handle) return null;
+    if (handle.isAlive && !handle.isAlive()) {
+      this.handles.delete(mapId);
+      return null;
+    }
+    return handle;
   }
 }
 function parseYeMindMapUrl(value, pluginName) {
@@ -57416,7 +57667,6 @@ class YeMindZenPlugin extends siyuan.Plugin {
       pluginVersion: PLUGIN_VERSION,
       maps: this.repository,
       checkpoints: this.checkpointRepository,
-      checkpointService: this.checkpointService,
       settings: this.settingsStore,
       storageProbe: {
         run: async () => {
@@ -57441,6 +57691,9 @@ class YeMindZenPlugin extends siyuan.Plugin {
           }
           return { write, read, remove: remove2 };
         }
+      },
+      lifecycleProbe: {
+        run: () => this.runDiagnosticLifecycleProbe()
       }
     });
     this.diagnostics.start();
@@ -57539,6 +57792,38 @@ class YeMindZenPlugin extends siyuan.Plugin {
     } catch {
       siyuan.showMessage(link, 8e3);
     }
+  }
+  async runDiagnosticLifecycleProbe() {
+    var _a, _b;
+    const nonce = ((_b = (_a = globalThis.crypto) == null ? void 0 : _a.randomUUID) == null ? void 0 : _b.call(_a)) ?? `probe-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const mapStorageName = `${DIAGNOSTIC_LIFECYCLE_MAP_PREFIX}-${nonce}.json`;
+    const checkpointStorageName = `${DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX}-${nonce}.json`;
+    const removeProbeData = async () => {
+      const failures = [];
+      for (const name of [mapStorageName, checkpointStorageName]) {
+        try {
+          await this.removeData(name);
+        } catch (error) {
+          failures.push(error);
+        }
+      }
+      if (failures.length > 0) throw failures[0];
+    };
+    return runIsolatedLifecycleProbe({
+      maps: {
+        load: () => this.loadData(mapStorageName),
+        save: async (value) => {
+          await this.saveData(mapStorageName, value);
+        }
+      },
+      checkpoints: {
+        load: () => this.loadData(checkpointStorageName),
+        save: async (value) => {
+          await this.saveData(checkpointStorageName, value);
+        }
+      },
+      cleanup: removeProbeData
+    }, this.settingsStore.get().defaultLayout);
   }
   reportOperationFailure(action, error) {
     var _a;

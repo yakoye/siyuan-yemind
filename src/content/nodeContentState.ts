@@ -10,10 +10,9 @@ export interface NodeComment {
   updatedAt: number;
 }
 
-export function toggleTodo(todo: NodeTodo | null | undefined): NodeTodo | null {
+export function toggleTodo(todo: NodeTodo | null | undefined): NodeTodo {
   if (!todo) return { checked: false };
-  if (!todo.checked) return { ...todo, checked: true };
-  return null;
+  return { ...todo, checked: !todo.checked };
 }
 
 export interface TodoMenuState {

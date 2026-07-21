@@ -9,14 +9,15 @@ import {
 } from '../src/content/nodeContentState';
 
 describe('node content state', () => {
-  it('toggles todo between pending, completed and absent', () => {
+  it('toggles the checkbox between pending and completed without deleting the todo', () => {
     const pending = toggleTodo(undefined);
     expect(pending).toMatchObject({ checked: false });
 
     const completed = toggleTodo(pending);
     expect(completed).toMatchObject({ checked: true });
 
-    expect(toggleTodo(completed)).toBeNull();
+    const pendingAgain = toggleTodo(completed);
+    expect(pendingAgain).toMatchObject({ checked: false });
   });
 
 

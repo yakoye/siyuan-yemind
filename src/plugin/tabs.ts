@@ -4,6 +4,7 @@ import type { YeMindMapDocument } from '../model/types';
 import { mountAfterReady, type DeferredMountState } from './deferredMount';
 import type { YeMindPluginHost } from './host';
 import { TAB_TYPE } from './constants';
+import { waitForNonZeroSize } from './visibleElement';
 
 interface TabMountState extends DeferredMountState {
   editor?: YeMindEditor;
@@ -28,17 +29,36 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
         state,
         host.whenReady(),
         () => ({ mapId, map: host.repository.get(mapId) }),
-        ({ mapId: resolvedMapId, map }: { mapId: string; map?: YeMindMapDocument }) => {
+        async ({ mapId: resolvedMapId, map }: { mapId: string; map?: YeMindMapDocument }) => {
           if (!map) {
             container.innerHTML = '<div class="ymz-missing"><b>导图不存在</b><span>它可能已被删除。</span></div>';
             return;
           }
           this.tab.updateTitle(map.title);
+          const activateTab = (attempt = 0): void => {
+            if (state.destroyed || !container.isConnected) return;
+            const head = this.tab.headElement;
+            if (head?.isConnected) {
+              head.click();
+              return;
+            }
+            if (attempt < 20) window.requestAnimationFrame(() => activateTab(attempt + 1));
+          };
           state.unregister = host.tabRegistry.register(resolvedMapId, {
-            activate: () => this.tab.headElement?.click(),
+            activate: () => activateTab(),
             close: () => this.tab.close(),
             updateTitle: (title) => this.tab.updateTitle(title),
+            isAlive: () => !state.destroyed
+              && container.isConnected
+              && (this.tab.headElement ? this.tab.headElement.isConnected : true),
           });
+          host.diagnostics.record('tab', 'waiting-for-visible-container', resolvedMapId, undefined, 'info', true);
+          const visible = await waitForNonZeroSize(container, { isCancelled: () => state.destroyed });
+          if (!visible || state.destroyed) {
+            host.diagnostics.record('tab', 'visible-container-wait-cancelled', resolvedMapId, undefined, 'warning', true);
+            return;
+          }
+          host.diagnostics.record('tab', 'visible-container-ready', resolvedMapId, undefined, 'info', true);
           state.editor = new YeMindEditor({
             container,
             mapId: resolvedMapId,

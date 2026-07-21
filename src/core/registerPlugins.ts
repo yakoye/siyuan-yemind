@@ -1,5 +1,5 @@
 import MindMap from 'simple-mind-map';
-import Drag from 'simple-mind-map/src/plugins/Drag';
+import YeMindDrag from './YeMindDrag';
 import Select from 'simple-mind-map/src/plugins/Select';
 import MiniMap from 'simple-mind-map/src/plugins/MiniMap';
 import Search from 'simple-mind-map/src/plugins/Search';
@@ -24,7 +24,7 @@ export const MIND_MAP_PLUGIN_NAMES = [
   'NodeImgAdjust',
 ] as const;
 
-const plugins = [Drag, Select, MiniMap, Search, Export, YeMindRichText, Formula, AssociativeLine, OuterFrame, NodeImgAdjust];
+const plugins = [YeMindDrag, Select, MiniMap, Search, Export, YeMindRichText, Formula, AssociativeLine, OuterFrame, NodeImgAdjust];
 let registered = false;
 
 export function configureMindMapPlugins(settings?: YeMindSettings): void {

@@ -30,6 +30,7 @@ import { createRelationPresentation } from './relationPresentation';
 import { createOuterFramePresentation, hexToRgba } from './outerFramePresentation';
 import { createToolbarAvailability } from './toolbarAvailability';
 import { resolveLinkNavigation } from './linkNavigation';
+import { hasNonZeroSize } from '../plugin/visibleElement';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -73,6 +74,7 @@ export class YeMindEditor {
   private viewMode: ViewMode = 'map';
   private searchText = '';
   private applyingCheckpoint = false;
+  private resizeFrame: number | null = null;
 
   private readonly onRootKeydown = (event: KeyboardEvent): void => {
     if (event.key === 'Escape' && this.commands?.isRelationCreating()) {
@@ -124,8 +126,7 @@ export class YeMindEditor {
   }
 
   resize(): void {
-    this.map?.resize();
-    this.updateDiagnosticState();
+    this.scheduleSafeResize();
   }
 
   destroy(): void {
@@ -137,6 +138,8 @@ export class YeMindEditor {
     this.richTextToolbar?.destroy();
     this.richTextToolbar = null;
     this.rootEl?.removeEventListener('keydown', this.onRootKeydown);
+    if (this.resizeFrame !== null) window.cancelAnimationFrame(this.resizeFrame);
+    this.resizeFrame = null;
     this.map?.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
@@ -603,7 +606,37 @@ export class YeMindEditor {
     this.rootEl.querySelectorAll<HTMLElement>('[data-action^="view-"]').forEach((button) => {
       button.classList.toggle('is-active', button.dataset.action === `view-${mode}`);
     });
-    window.requestAnimationFrame(() => this.map?.resize());
+    if (mode !== 'outline') this.scheduleSafeResize();
+    else if (this.resizeFrame !== null) {
+      window.cancelAnimationFrame(this.resizeFrame);
+      this.resizeFrame = null;
+    }
+  }
+
+  private scheduleSafeResize(attempt = 0): void {
+    if (this.destroyed || !this.map || this.viewMode === 'outline') return;
+    if (this.resizeFrame !== null) window.cancelAnimationFrame(this.resizeFrame);
+    this.resizeFrame = window.requestAnimationFrame(() => {
+      this.resizeFrame = null;
+      if (this.destroyed || !this.map || this.viewMode === 'outline') return;
+      if (!hasNonZeroSize(this.canvasEl)) {
+        if (attempt < 8) this.scheduleSafeResize(attempt + 1);
+        else {
+          this.options.diagnostics.record('editor', 'resize-skipped-zero-size', this.current.id, {
+            mode: this.viewMode,
+          }, 'warning', true);
+          this.updateDiagnosticState({ canvasWidth: 0, canvasHeight: 0 });
+        }
+        return;
+      }
+      try {
+        this.map.resize();
+        this.updateDiagnosticState();
+      } catch (error) {
+        this.options.diagnostics.recordError('editor', 'resize-failed', error, this.current.id, true);
+        console.error('[YeMind Zen] safe resize failed', error);
+      }
+    });
   }
 
   private renderOutline(data: MindMapTree): void {
@@ -728,7 +761,7 @@ export class YeMindEditor {
     try {
       this.current = restored;
       const viewData = normalizePersistedViewData(restored.viewData);
-      this.map.resize();
+      if (this.viewMode !== 'outline' && hasNonZeroSize(this.canvasEl)) this.map.resize();
       this.map.setFullData({
         root: restored.data,
         layout: restored.layout,
@@ -740,7 +773,10 @@ export class YeMindEditor {
       if (!viewData) {
         await new Promise<void>((resolve) => {
           window.requestAnimationFrame(() => {
-            this.map?.view.fit();
+            if (this.viewMode !== 'outline' && hasNonZeroSize(this.canvasEl)) {
+              this.map?.resize();
+              this.map?.view.fit();
+            }
             resolve();
           });
         });

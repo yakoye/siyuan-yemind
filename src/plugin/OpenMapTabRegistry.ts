@@ -2,6 +2,7 @@ export interface OpenMapTabHandle {
   activate(): void;
   close(): void;
   updateTitle(title: string): void;
+  isAlive?(): boolean;
 }
 
 export class OpenMapTabRegistry {
@@ -15,14 +16,14 @@ export class OpenMapTabRegistry {
   }
 
   activate(mapId: string): boolean {
-    const handle = this.handles.get(mapId);
+    const handle = this.getLiveHandle(mapId);
     if (!handle) return false;
     handle.activate();
     return true;
   }
 
   close(mapId: string): boolean {
-    const handle = this.handles.get(mapId);
+    const handle = this.getLiveHandle(mapId);
     if (!handle) return false;
     this.handles.delete(mapId);
     handle.close();
@@ -30,6 +31,16 @@ export class OpenMapTabRegistry {
   }
 
   updateTitle(mapId: string, title: string): void {
-    this.handles.get(mapId)?.updateTitle(title);
+    this.getLiveHandle(mapId)?.updateTitle(title);
+  }
+
+  private getLiveHandle(mapId: string): OpenMapTabHandle | null {
+    const handle = this.handles.get(mapId);
+    if (!handle) return null;
+    if (handle.isAlive && !handle.isAlive()) {
+      this.handles.delete(mapId);
+      return null;
+    }
+    return handle;
   }
 }

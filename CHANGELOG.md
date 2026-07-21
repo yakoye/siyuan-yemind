@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.10 — 2026-07-17
+
+- Analyzed two diagnostics archives exported from SiYuan 3.7.2 and confirmed that all three real maps remained in persistent storage with no real `map-deleted` event.
+- Moved map/checkpoint lifecycle regression into unique isolated temporary repositories so running diagnostics no longer inserts and removes a temporary map in the real Dock.
+- Coalesced concurrent self-check requests and guaranteed temporary lifecycle storage cleanup.
+- Deferred Dock rendering until repository readiness and deferred restored-tab editor construction until its container has a non-zero size.
+- Added stale-tab handle detection and deferred activation while SiYuan is still creating a restored tab head element.
+- Prevented `mindMap.resize()` from running while the canvas is hidden in outline mode and added bounded safe-resize retries when returning to map or split view.
+- Changed todo badge clicks to toggle pending/completed only; deletion remains exclusively in the context-menu `删除待办` action.
+- Added `YeMindDrag`, a thin subclass of upstream `Drag`, to draw a dashed guide from the drag clone to the upstream-selected target parent without changing `MOVE_NODE_TO`, `INSERT_BEFORE`, or `INSERT_AFTER`.
+- Added focused regressions for repository isolation, concurrent diagnostics, zero-size visibility, restored-tab liveness, outline self-checks, todo semantics, and drag-guide target resolution.
+
 ## 0.5.9 — 2026-07-17
 
 - Added a local diagnostics recorder with a bounded in-memory ring buffer and no automatic network upload.

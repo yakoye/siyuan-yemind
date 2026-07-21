@@ -5,7 +5,7 @@
 - 插件目录：`siyuan-yemind-zen`
 - 插件 ID：`siyuan-yemind-zen`
 - 思源显示名：`YeMind Zen`
-- 当前版本：`0.5.9`
+- 当前版本：`0.5.10`
 
 ## 核心分层
 
@@ -14,7 +14,7 @@ SiYuan Plugin Shell
 ├─ Dock / Tab / Top Bar / Settings
 ├─ MapRepository：导图元数据、内容和当前项
 ├─ CheckpointRepository：独立命名快照与恢复前保护
-├─ DiagnosticsService：本地诊断、回归自检与脱敏导出
+├─ DiagnosticsService：本地诊断、隔离回归自检与脱敏导出
 ├─ YeMindEditor：编辑器生命周期和自动保存
 ├─ simple-mind-map：节点、布局、历史、拖拽、缩放
 └─ UI：顶部、左侧、底部工具栏与思源原生菜单

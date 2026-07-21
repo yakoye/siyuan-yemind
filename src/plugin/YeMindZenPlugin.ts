@@ -1,6 +1,7 @@
 import { Menu, Plugin, openTab, showMessage } from 'siyuan';
 import { CheckpointService } from '../checkpoints/CheckpointService';
 import { DiagnosticsService } from '../diagnostics/DiagnosticsService';
+import { runIsolatedLifecycleProbe } from '../diagnostics/isolatedLifecycleProbe';
 import { CheckpointRepository } from '../model/CheckpointRepository';
 import { MapRepository } from '../model/MapRepository';
 import type { CheckpointStorageDocument } from '../model/checkpointTypes';
@@ -10,7 +11,7 @@ import { openDiagnosticsDialog } from '../ui/diagnosticsDialog';
 import { registerSettings } from '../settings/settings';
 import { openYeMindSettingsDialog } from '../settings/settingsDialog';
 import { SettingsStore } from '../settings/SettingsStore';
-import { CHECKPOINT_STORAGE_NAME, DIAGNOSTIC_PROBE_STORAGE_NAME, ICON_ID, MAP_STORAGE_NAME, PLUGIN_VERSION, SETTINGS_STORAGE_NAME, TAB_TYPE } from './constants';
+import { CHECKPOINT_STORAGE_NAME, DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX, DIAGNOSTIC_LIFECYCLE_MAP_PREFIX, DIAGNOSTIC_PROBE_STORAGE_NAME, ICON_ID, MAP_STORAGE_NAME, PLUGIN_VERSION, SETTINGS_STORAGE_NAME, TAB_TYPE } from './constants';
 import { registerYeMindDock } from './dock';
 import type { YeMindPluginHost } from './host';
 import { registerYeMindTab } from './tabs';
@@ -49,7 +50,6 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
       pluginVersion: PLUGIN_VERSION,
       maps: this.repository,
       checkpoints: this.checkpointRepository,
-      checkpointService: this.checkpointService,
       settings: this.settingsStore,
       storageProbe: {
         run: async () => {
@@ -73,6 +73,9 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
           }
           return { write, read, remove };
         },
+      },
+      lifecycleProbe: {
+        run: () => this.runDiagnosticLifecycleProbe(),
       },
     });
     this.diagnostics.start();
@@ -181,6 +184,35 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
     } catch {
       showMessage(link, 8000);
     }
+  }
+
+
+  private async runDiagnosticLifecycleProbe(): Promise<{ create: boolean; update: boolean; checkpoint: boolean; restore: boolean; cleanup: boolean }> {
+    const nonce = globalThis.crypto?.randomUUID?.() ?? `probe-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const mapStorageName = `${DIAGNOSTIC_LIFECYCLE_MAP_PREFIX}-${nonce}.json`;
+    const checkpointStorageName = `${DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX}-${nonce}.json`;
+    const removeProbeData = async (): Promise<void> => {
+      const failures: unknown[] = [];
+      for (const name of [mapStorageName, checkpointStorageName]) {
+        try {
+          await this.removeData(name);
+        } catch (error) {
+          failures.push(error);
+        }
+      }
+      if (failures.length > 0) throw failures[0];
+    };
+    return runIsolatedLifecycleProbe({
+      maps: {
+        load: () => this.loadData(mapStorageName),
+        save: async (value) => { await this.saveData(mapStorageName, value); },
+      },
+      checkpoints: {
+        load: () => this.loadData(checkpointStorageName),
+        save: async (value) => { await this.saveData(checkpointStorageName, value); },
+      },
+      cleanup: removeProbeData,
+    }, this.settingsStore.get().defaultLayout);
   }
 
   private reportOperationFailure(action: string, error: unknown): void {

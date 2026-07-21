@@ -6,7 +6,7 @@ function source(path: string): string {
   return readFileSync(resolve(process.cwd(), path), 'utf8');
 }
 
-describe('v0.5.9 diagnostics integration', () => {
+describe('v0.5.10 diagnostics integration', () => {
   it('exposes diagnostics from the top menu and command palette', () => {
     const plugin = source('src/plugin/YeMindZenPlugin.ts');
     expect(plugin).toContain("label: '诊断与回归'");

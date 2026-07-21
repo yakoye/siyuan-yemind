@@ -83,11 +83,11 @@ export async function runDiagnosticsSelfCheck(input: DiagnosticsSelfCheckInput):
     items.push({
       id: 'lifecycle-probe',
       status: passed ? 'pass' : 'fail',
-      summary: passed ? '临时导图、保存、检查点恢复和清理正常' : '临时导图生命周期回归失败',
+      summary: passed ? '隔离临时导图、保存、检查点恢复和清理正常' : '隔离临时导图生命周期回归失败',
       details: lifecycle,
     });
   } catch (error) {
-    items.push({ id: 'lifecycle-probe', status: 'fail', summary: '临时导图生命周期回归抛出异常', details: { errorType: error instanceof Error ? error.name : typeof error } });
+    items.push({ id: 'lifecycle-probe', status: 'fail', summary: '隔离临时导图生命周期回归抛出异常', details: { errorType: error instanceof Error ? error.name : typeof error } });
   }
 
   const treeStats = input.maps.map((map) => inspectTree(map.data));
@@ -136,7 +136,9 @@ export async function runDiagnosticsSelfCheck(input: DiagnosticsSelfCheckInput):
   });
 
   const invalidZoom = input.editors.filter((editor) => !Number.isFinite(editor.zoom) || editor.zoom <= 0).length;
-  const zeroCanvas = input.editors.filter((editor) => editor.mounted && (editor.canvasWidth <= 0 || editor.canvasHeight <= 0)).length;
+  const zeroCanvas = input.editors.filter((editor) => editor.mounted
+    && editor.viewMode !== 'outline'
+    && (editor.canvasWidth <= 0 || editor.canvasHeight <= 0)).length;
   items.push({
     id: 'open-editors',
     status: invalidZoom > 0 ? 'fail' : zeroCanvas > 0 ? 'warning' : 'pass',

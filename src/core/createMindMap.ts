@@ -40,6 +40,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     disabledClipboard: true,
     enableFreeDrag: false,
     autoMoveWhenMouseInEdgeOnDrag: behavior?.autoMoveWhenMouseInEdgeOnDrag ?? false,
+    dragPlaceholderLineConfig: { color: '#27896b', width: 2, dasharray: '7,5' },
     isLimitMindMapInCanvas: behavior?.isLimitMindMapInCanvas ?? false,
     minZoomRatio: behavior?.minZoomRatio ?? 20,
     maxZoomRatio: behavior?.maxZoomRatio ?? 400,

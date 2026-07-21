@@ -37,3 +37,13 @@ it('removes a handle before closing so repeated close requests are idempotent', 
   expect(registry.close('map-1')).toBe(false);
   expect(close).toHaveBeenCalledOnce();
 });
+
+
+it('drops a stale tab handle so the map can be opened again', () => {
+  const registry = new OpenMapTabRegistry();
+  const activate = vi.fn();
+  registry.register('map-1', { activate, close: vi.fn(), updateTitle: vi.fn(), isAlive: () => false });
+
+  expect(registry.activate('map-1')).toBe(false);
+  expect(activate).not.toHaveBeenCalled();
+});

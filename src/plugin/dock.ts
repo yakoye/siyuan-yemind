@@ -4,18 +4,30 @@ import type { YeMindPluginHost } from './host';
 
 class YeMindDockView {
   private unsubscribe: (() => void) | null = null;
+  private ready = false;
+  private destroyed = false;
 
   constructor(private readonly host: YeMindPluginHost, private readonly element: HTMLElement) {
     this.element.classList.add('ymz-dock');
-    this.unsubscribe = this.host.repository.subscribe(() => this.render());
+    this.element.innerHTML = '<div class="ymz-dock__empty">正在加载导图…</div>';
+    this.unsubscribe = this.host.repository.subscribe(() => {
+      if (this.ready && !this.destroyed) this.render();
+    });
+    void this.host.whenReady().then(() => {
+      if (this.destroyed) return;
+      this.ready = true;
+      this.render();
+    });
   }
 
   destroy(): void {
+    this.destroyed = true;
     this.unsubscribe?.();
     this.element.innerHTML = '';
   }
 
   render(): void {
+    if (this.destroyed) return;
     const maps = this.host.repository.list();
     const activeId = this.host.repository.getActiveMapId();
     this.element.innerHTML = `<div class="ymz-dock__head"><span>YeMind Zen</span><button data-action="new" aria-label="新建导图" title="新建导图">＋</button><button data-action="refresh" aria-label="刷新" title="刷新">↻</button></div><div class="ymz-dock__body"></div>`;
@@ -36,7 +48,9 @@ class YeMindDockView {
 
   private bindEvents(): void {
     this.element.querySelector('[data-action="new"]')?.addEventListener('click', () => void this.host.createMap());
-    this.element.querySelector('[data-action="refresh"]')?.addEventListener('click', () => this.render());
+    this.element.querySelector('[data-action="refresh"]')?.addEventListener('click', () => {
+      void this.host.whenReady().then(() => this.render());
+    });
     this.element.querySelectorAll<HTMLElement>('.ymz-dock__item').forEach((row) => {
       const mapId = row.dataset.mapId!;
       row.querySelector('[data-action="open"]')?.addEventListener('click', () => void this.host.openMap(mapId));
