@@ -71,6 +71,8 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
             diagnostics: host.diagnostics,
             onMissing: () => this.tab.close(),
           });
+          host.diagnostics.record('global-search', 'map-editor-ready', resolvedMapId, { pendingTarget: true });
+          host.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'map-editor-ready' });
           const pendingUid = host.consumePendingNodeTarget(resolvedMapId);
           if (pendingUid) requestTabNodeFocus(state, pendingUid);
           flushPendingTabNodeFocus(state);

@@ -1,4 +1,5 @@
 import { canvasModeIcon } from '../editor/projectControls';
+import { RELEASE_INFO } from '../releaseInfo';
 import {
   DEFAULT_SHORTCUTS,
   type ShortcutCommand,
@@ -106,6 +107,7 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
       <button data-settings-page="drag-layout">拖拽与布局</button>
       <button data-settings-page="content">节点与内容</button>
       <button data-settings-page="shortcuts">快捷键</button>
+      <button data-settings-page="about">关于</button>
     </aside>
     <main class="ymz-settings-main">
       <section class="ymz-settings-page" data-settings-panel="general">
@@ -217,6 +219,37 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
       <section class="ymz-settings-page" data-settings-panel="shortcuts" hidden>
         <header><h2>快捷键</h2><p>可直接编辑组合键，也可以录制、禁用或恢复默认。</p></header>
         <div class="ymz-settings-shortcuts">${shortcutsHtml(settings.shortcutMap)}</div>
+      </section>
+
+      <section class="ymz-settings-page ymz-settings-about" data-settings-panel="about" hidden>
+        <header><h2>关于</h2><p>${escapeHtml(RELEASE_INFO.tagline)}</p></header>
+        <div class="ymz-about-hero">
+          <img src="/plugins/siyuan-yemind-zen/icon.png" alt="YeMind Zen">
+          <div><h3>${escapeHtml(RELEASE_INFO.productName)}</h3><p>${escapeHtml(RELEASE_INFO.releaseSummary)}</p></div>
+        </div>
+        <div class="ymz-settings-group ymz-about-version-card">
+          <h3>版本信息</h3>
+          <dl class="ymz-about-version-grid">
+            <div><dt>当前版本</dt><dd>${escapeHtml(RELEASE_INFO.version)}</dd></div>
+            <div><dt>插件声明版本</dt><dd data-about-version="manifest">正在读取…</dd></div>
+            <div><dt>运行时代码版本</dt><dd data-about-version="runtime">${escapeHtml(RELEASE_INFO.version)}</dd></div>
+            <div><dt>构建版本</dt><dd data-about-version="build">${escapeHtml(RELEASE_INFO.buildVersion)}</dd></div>
+            <div><dt>构建标识</dt><dd>${escapeHtml(RELEASE_INFO.buildId)}</dd></div>
+            <div><dt>构建时间</dt><dd>${escapeHtml(RELEASE_INFO.buildTime)}</dd></div>
+            <div><dt>思源版本</dt><dd data-about-version="siyuan">正在读取…</dd></div>
+            <div><dt>官方参考</dt><dd>${escapeHtml(RELEASE_INFO.officialReference)}</dd></div>
+          </dl>
+          <div class="ymz-about-consistency" data-about-consistency="pending">正在检查版本一致性…</div>
+        </div>
+        <div class="ymz-settings-group ymz-about-highlights">
+          <h3>本版更新</h3>
+          <ul>${RELEASE_INFO.highlights.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+        </div>
+        <div class="ymz-about-actions">
+          <button class="b3-button b3-button--outline" data-about-action="copy-version">复制版本信息</button>
+          <button class="b3-button b3-button--outline" data-about-action="open-diagnostics">诊断与回归</button>
+          <button class="b3-button b3-button--text" data-about-action="export-diagnostics">导出诊断包</button>
+        </div>
       </section>
       <footer class="ymz-settings-footer">
         <button class="b3-button b3-button--cancel" data-settings-action="reset">恢复全部默认值</button>

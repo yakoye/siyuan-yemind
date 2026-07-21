@@ -5,7 +5,7 @@
 - 插件目录：`siyuan-yemind-zen`
 - 插件 ID：`siyuan-yemind-zen`
 - 思源显示名：`YeMind Zen`
-- 当前版本：`0.6.5`
+- 当前版本：`0.7.0`
 
 ## 核心分层
 
@@ -14,14 +14,15 @@ SiYuan Plugin Shell
 ├─ Dock / Tab / Top Bar / Settings
 ├─ MapRepository：导图元数据、内容和当前项
 ├─ CheckpointRepository：独立命名快照与恢复前保护
-├─ DiagnosticsService：本地诊断、问题时刻窗口、版本自检与脱敏导出
+├─ DiagnosticsService：本地诊断、问题时刻窗口、版本一致性、搜索链路追踪与结构化脱敏导出
 ├─ YeMindEditor：编辑器生命周期、稳定大纲 patch 和自动保存
 ├─ simple-mind-map：节点、布局、历史、最终拖拽变更、缩放
 ├─ Official drag intent adapter：仅负责画布拖动预览候选、稳定器和引导线
 ├─ Outline adapter：不移动活动行的 keyed patch、单活动 Quill、原生折叠状态、叶子语义、空节点删除和左侧空白 Pointer 拖拽意图
 ├─ Node note/comment layer：备注数据、清理、对话框和悬停预览
-├─ Global search adapter：扩展思源 input-search，支持标签延迟挂载后的节点定位
+├─ Global search adapter：融合思源原生结果列表/预览区，记录查询、预览、打开与节点定位完整链路
 ├─ Project style layer：整图预设/自定义间距、彩虹连线、背景与检查点持久化
+├─ Release information：关于页、构建元数据与语义化版本发布门禁
 └─ UI：顶部、左侧、底部工具栏与思源原生菜单
 ```
 

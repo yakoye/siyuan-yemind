@@ -2,6 +2,7 @@ import type { MapCheckpoint } from '../model/checkpointTypes';
 import type { MindMapTree, YeMindMapDocument } from '../model/types';
 import type { YeMindSettings } from '../settings/SettingsStore';
 import type { DiagnosticEditorState } from './DiagnosticsRecorder';
+import type { GlobalSearchDiagnosticState } from './DiagnosticsService';
 
 export type SelfCheckStatus = 'pass' | 'warning' | 'fail';
 
@@ -24,6 +25,7 @@ export interface DiagnosticsSelfCheckInput {
   settings: YeMindSettings;
   editors: DiagnosticEditorState[];
   versions?: { manifest: string; runtime: string; build: string };
+  globalSearch?: GlobalSearchDiagnosticState;
   storageProbe(): Promise<{ write: boolean; read: boolean; remove: boolean }>;
   lifecycleProbe(): Promise<{ create: boolean; update: boolean; checkpoint: boolean; restore: boolean; cleanup: boolean }>;
   now?: () => number;
@@ -73,6 +75,28 @@ export async function runDiagnosticsSelfCheck(input: DiagnosticsSelfCheckInput):
       status: consistent ? 'pass' : 'fail',
       summary: consistent ? '清单、运行时和构建版本一致' : '清单、运行时和构建版本不一致，可能仍在运行旧缓存代码',
       details: input.versions,
+    });
+  }
+
+
+  if (input.globalSearch) {
+    const state = input.globalSearch;
+    const status: SelfCheckStatus = !state.observed
+      ? 'warning'
+      : state.yemindResultCount > 0 && (!state.listMounted || !state.previewMounted || !state.previewVisible)
+        ? 'fail'
+        : state.lastNavigationSuccess === false
+          ? 'fail'
+          : 'pass';
+    items.push({
+      id: 'global-search',
+      status,
+      summary: !state.observed
+        ? '尚未记录全局搜索会话；开始记录并复现后将检查预览与导航链路'
+        : status === 'fail'
+          ? `全局搜索链路在“${state.lastNavigationStep}”附近失败`
+          : '全局搜索结果、预览与最近一次导航状态正常',
+      details: { ...state },
     });
   }
 

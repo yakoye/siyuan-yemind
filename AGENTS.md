@@ -1,13 +1,13 @@
 # YeMind Zen Development Instructions / 开发要求
 
-本文件是 YeMind Zen 的项目级开发入口。所有后续开发以 **v0.6.9** 为当前稳定基线，并结合 `.agents/skills/superpowers-*` 中的 Superpowers skills 执行。
+本文件是 YeMind Zen 的项目级开发入口。所有后续开发以 **v0.7.0** 为当前稳定基线，并结合 `.agents/skills/superpowers-*` 中的 Superpowers skills 执行。
 
 ## 1. Baseline / 当前基线
 
 - 插件 ID：`siyuan-yemind-zen`
 - 显示名称：`YeMind Zen`
-- 当前开发基线：`v0.6.9`
-- 不得回退或破坏 v0.5.10 至 v0.6.9 已完成的稳定性修复与交互契约。
+- 当前开发基线：`v0.7.0`
+- 不得回退或破坏 v0.5.10 至 v0.7.0 已完成的稳定性修复与交互契约。
 - 真实运行环境的最终验收目标为 Windows 上的 SiYuan 3.7.2 桌面端。
 
 必须持续保护以下行为：

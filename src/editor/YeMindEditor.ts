@@ -455,12 +455,30 @@ export class YeMindEditor {
 
   focusNode(uid: string): void {
     if (!uid || !this.commands) return;
+    const renderer = (this.map?.renderer as any) ?? null;
+    const foundBeforeNavigation = Boolean(renderer?.findNodeByUid?.(uid));
+    this.options.diagnostics.record('global-search', 'target-node-found', this.current.id, { foundBeforeNavigation });
+    this.options.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'target-node-found' });
     this.commands.goToNode(uid);
+    this.options.diagnostics.record('global-search', 'target-ancestors-expanded', this.current.id, { requested: true });
     this.activateOutlineUid(uid);
+    this.options.diagnostics.record('global-search', 'target-node-selected', this.current.id, { outlineActivated: true });
+    this.options.diagnostics.record('global-search', 'target-node-centered', this.current.id, { command: 'GO_TARGET_NODE' });
+    this.options.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'target-node-centered' });
     this.cancelFocusedNodeHighlight?.();
     this.cancelFocusedNodeHighlight = scheduleFocusedNodeHighlight(
       () => (this.map?.renderer as any) ?? null,
       uid,
+      {
+        onFound: () => {
+          this.options.diagnostics.record('global-search', 'target-node-highlighted', this.current.id, { durationMs: 1500 });
+          this.options.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'target-node-highlighted', lastNavigationSuccess: true, lastFailure: undefined });
+        },
+        onMissing: () => {
+          this.options.diagnostics.record('global-search', 'target-navigation-failed', this.current.id, { reason: 'target-node-not-rendered' }, 'error');
+          this.options.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'target-navigation-failed', lastNavigationSuccess: false, lastFailure: 'target-node-not-rendered' });
+        },
+      },
     );
   }
 

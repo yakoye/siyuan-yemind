@@ -1,3 +1,14 @@
+## 0.7.0 — 2026-07-21
+
+- Added a dedicated Settings → About page with product identity, release highlights, manifest/runtime/build/SiYuan versions, build metadata and official KMind reference.
+- Added one-click version copying, Diagnostics opening and diagnostics archive export from About.
+- Established a semantic-versioning policy and a release identity gate covering package, manifest, runtime, build metadata, About, diagnostics, documentation, archive name and verification report.
+- Upgraded diagnostics archives to schema v3 with separate summary, environment, version consistency, event timeline, global-search state, active editor state, self-check results, errors, problem markers and a privacy-safe DOM structure snapshot.
+- Instrumented the complete global-search path: query changes, native/YeMind counts, list/preview mounting, selection, Enter capture, search close, tab opening, editor readiness, ancestor expansion, node selection, centering and highlight success/failure.
+- Added a guided reproduce → mark problem → export workflow and global-search self-check status in the diagnostics dialog.
+- Added permanent regressions for About, version consistency, structured archives and the global-search diagnostic event chain.
+- Aligned package, manifest, runtime, build metadata, About, diagnostics and tests at 0.7.0.
+
 # Changelog
 
 ## 0.6.9 — 2026-07-21

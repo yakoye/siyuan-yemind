@@ -14,6 +14,10 @@ export interface GlobalSearchOpenOptions {
   position?: 'right';
 }
 
+export type GlobalSearchDiagnosticLevel = 'info' | 'warning' | 'error';
+export type GlobalSearchDiagnosticCallback = (action: string, details?: Record<string, unknown>, level?: GlobalSearchDiagnosticLevel) => void;
+export type GlobalSearchStateCallback = (patch: Record<string, unknown>) => void;
+
 export interface GlobalSearchSurface {
   root: HTMLElement;
   layout: HTMLElement;
@@ -39,10 +43,36 @@ interface GlobalSearchState {
   keyDown?: (event: KeyboardEvent) => void;
   scheduled: boolean;
   mutating: boolean;
+  onDiagnostic?: GlobalSearchDiagnosticCallback;
+  onStateChange?: GlobalSearchStateCallback;
+  publishedState: Record<string, unknown>;
 }
 
 const states = new WeakMap<HTMLInputElement, GlobalSearchState>();
 const activeStates = new Set<GlobalSearchState>();
+
+
+function queryHash(value: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function diagnostic(state: GlobalSearchState, action: string, details: Record<string, unknown> = {}, level: GlobalSearchDiagnosticLevel = 'info'): void {
+  state.onDiagnostic?.(action, details, level);
+}
+
+function publishState(state: GlobalSearchState, patch: Record<string, unknown>): void {
+  state.publishedState = { ...state.publishedState, observed: true, ...patch };
+  state.onStateChange?.({ ...state.publishedState });
+}
+
+function nativeResultCount(surface: GlobalSearchSurface): number {
+  return surface.list.querySelectorAll('.b3-list-item[data-type="search-item"]:not([data-yemind-global-result])').length;
+}
 
 function escapeHtml(value: string): string {
   return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
@@ -406,7 +436,11 @@ function clearCustomSelection(state: GlobalSearchState, surface: GlobalSearchSur
 }
 
 function openMatch(state: GlobalSearchState, match: GlobalMapMatch, position?: 'right'): void {
-  closeGlobalSearchSurface(state.searchElement);
+  diagnostic(state, 'close-request', { selectedType: 'yemind', position: position ?? 'current' });
+  const closed = closeGlobalSearchSurface(state.searchElement);
+  diagnostic(state, closed ? 'search-closed' : 'search-close-fallback', { closed }, closed ? 'info' : 'warning');
+  diagnostic(state, 'open-request', { position: position ?? 'current', hasNodeTarget: Boolean(match.nodeUid) });
+  publishState(state, { lastNavigationStep: 'open-request', lastNavigationSuccess: null, selectedType: 'yemind' });
   if (position) state.onOpen(match.mapId, match.nodeUid, { position });
   else state.onOpen(match.mapId, match.nodeUid);
 }
@@ -442,6 +476,8 @@ function showPreview(state: GlobalSearchState, surface: GlobalSearchSurface, mat
   });
   surface.preview.append(preview);
   surface.preview.classList.add('ymz-global-preview-active');
+  diagnostic(state, 'preview-mounted', { visible: true, source: match.source ?? 'node' });
+  publishState(state, { previewMounted: true, previewVisible: true, selectedType: 'yemind', lastNavigationStep: 'preview-mounted' });
 }
 
 function selectMatch(state: GlobalSearchState, surface: GlobalSearchSurface, match: GlobalMapMatch, scroll = true): void {
@@ -453,6 +489,8 @@ function selectMatch(state: GlobalSearchState, surface: GlobalSearchSurface, mat
   row.classList.add('b3-list-item--focus');
   row.setAttribute('aria-selected', 'true');
   state.selectedKey = keyForMatch(match);
+  diagnostic(state, 'result-selected', { selectedType: 'yemind', source: match.source ?? 'node' });
+  publishState(state, { selectedType: 'yemind', lastNavigationStep: 'result-selected' });
   showPreview(state, surface, match);
   if (scroll && typeof row.scrollIntoView === 'function') row.scrollIntoView({ block: 'nearest' });
 }
@@ -463,6 +501,8 @@ function selectedMatch(state: GlobalSearchState): GlobalMapMatch | undefined {
 
 function activateNativeResult(state: GlobalSearchState, surface: GlobalSearchSurface, native: HTMLElement): void {
   clearCustomSelection(state, surface);
+  diagnostic(state, 'result-selected', { selectedType: 'native' });
+  publishState(state, { selectedType: 'native', previewVisible: false, lastNavigationStep: 'native-result-selected' });
   surface.list.querySelectorAll<HTMLElement>('.b3-list-item--focus').forEach((item) => item.classList.remove('b3-list-item--focus'));
   native.classList.add('b3-list-item--focus');
   native.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
@@ -552,7 +592,13 @@ function updateNativeEmptyState(surface: GlobalSearchSurface, hasYeMindResults: 
 
 function ensureMounted(state: GlobalSearchState, selectInitial = false): void {
   const surface = resolveGlobalSearchSurface(state.searchElement);
-  if (!surface) return;
+  if (!surface) {
+    diagnostic(state, 'surface-missing', { queryLength: state.query.length }, 'warning');
+    publishState(state, { listMounted: false, previewMounted: false, previewVisible: false, lastNavigationStep: 'surface-missing' });
+    return;
+  }
+  diagnostic(state, 'list-mounted', { nativeResultCount: nativeResultCount(surface), yemindResultCount: state.matches.length });
+  publishState(state, { queryLength: state.query.length, nativeResultCount: nativeResultCount(surface), yemindResultCount: state.matches.length, listMounted: true, previewMounted: Boolean(surface.preview), previewVisible: surface.preview.classList.contains('ymz-global-preview-active') });
   state.mutating = true;
   try {
     const panels = Array.from(surface.root.querySelectorAll<HTMLElement>('[data-yemind-global-results]'));
@@ -570,6 +616,7 @@ function ensureMounted(state: GlobalSearchState, selectInitial = false): void {
       updateResultCount(surface, 0);
       updateNativeEmptyState(surface, false);
       state.selectedKey = null;
+      publishState(state, { yemindResultCount: 0, previewVisible: false, selectedType: 'none', lastNavigationStep: 'empty-results' });
       state.initialized = true;
       return;
     }
@@ -646,6 +693,8 @@ function attachKeyboard(state: GlobalSearchState): void {
 
     if (event.key === 'Enter' && current) {
       stop();
+      diagnostic(state, 'enter-captured', { altKey: event.altKey, selectedType: 'yemind' });
+      publishState(state, { lastNavigationStep: 'enter-captured', selectedType: 'yemind' });
       openMatch(state, current, event.altKey ? 'right' : undefined);
       return;
     }
@@ -719,6 +768,8 @@ export function mountGlobalSearchResults(options: {
   searchElement: HTMLInputElement;
   maps: YeMindMapDocument[];
   onOpen: (mapId: string, nodeUid: string, options?: GlobalSearchOpenOptions) => void;
+  onDiagnostic?: GlobalSearchDiagnosticCallback;
+  onStateChange?: GlobalSearchStateCallback;
 }): void {
   let state = states.get(options.searchElement);
   const query = options.searchElement.value.trim();
@@ -737,14 +788,23 @@ export function mountGlobalSearchResults(options: {
       observedList: null,
       scheduled: false,
       mutating: false,
+      onDiagnostic: options.onDiagnostic,
+      onStateChange: options.onStateChange,
+      publishedState: { observed: true },
     };
     states.set(options.searchElement, state);
     activeStates.add(state);
   }
   state.maps = options.maps;
   state.onOpen = options.onOpen;
+  state.onDiagnostic = options.onDiagnostic;
+  state.onStateChange = options.onStateChange;
   state.query = query;
   state.matches = collectGlobalMapMatches(options.maps, query);
+  diagnostic(state, 'query-change', { queryLength: query.length, queryHash: queryHash(query) });
+  const currentSurface = resolveGlobalSearchSurface(options.searchElement);
+  diagnostic(state, 'result-counts', { nativeResultCount: currentSurface ? nativeResultCount(currentSurface) : 0, yemindResultCount: state.matches.length });
+  publishState(state, { queryLength: query.length, nativeResultCount: currentSurface ? nativeResultCount(currentSurface) : 0, yemindResultCount: state.matches.length, listMounted: Boolean(currentSurface?.list), previewMounted: Boolean(currentSurface?.preview), previewVisible: Boolean(currentSurface?.preview.classList.contains('ymz-global-preview-active')) });
   if (queryChanged) state.selectedKey = null;
   attachKeyboard(state);
   ensureMounted(state, queryChanged || !state.initialized);

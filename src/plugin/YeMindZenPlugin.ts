@@ -11,6 +11,7 @@ import { openDiagnosticsDialog } from '../ui/diagnosticsDialog';
 import { registerSettings } from '../settings/settings';
 import { openYeMindSettingsDialog } from '../settings/settingsDialog';
 import { SettingsStore } from '../settings/SettingsStore';
+import { RELEASE_INFO } from '../releaseInfo';
 import { CHECKPOINT_STORAGE_NAME, DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX, DIAGNOSTIC_LIFECYCLE_MAP_PREFIX, DIAGNOSTIC_PROBE_STORAGE_NAME, ICON_ID, MAP_STORAGE_NAME, PLUGIN_VERSION, SETTINGS_STORAGE_NAME, TAB_TYPE } from './constants';
 import { registerYeMindDock } from './dock';
 import type { YeMindPluginHost } from './host';
@@ -54,6 +55,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
     this.diagnostics = new DiagnosticsService({
       pluginId: this.name,
       pluginVersion: PLUGIN_VERSION,
+      buildVersion: RELEASE_INFO.buildVersion,
       maps: this.repository,
       checkpoints: this.checkpointRepository,
       settings: this.settingsStore,
@@ -94,7 +96,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
       registrations: [
         { name: 'tab', register: () => registerYeMindTab(this, this) },
         { name: 'dock', register: () => registerYeMindDock(this, this) },
-        { name: 'settings', register: () => registerSettings(this, this.settingsStore) },
+        { name: 'settings', register: () => registerSettings(this, this.settingsStore, this.diagnostics) },
         { name: 'commands', register: () => this.registerCommands() },
         { name: 'plugin-url', register: () => this.eventBus.on('open-siyuan-url-plugin', this.onOpenPluginUrl) },
         { name: 'global-search', register: () => this.eventBus.on('input-search', this.onGlobalSearchInput) },
@@ -139,7 +141,13 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
         return;
       }
       await this.repository.setActiveMap(mapId);
-      if (this.tabRegistry.activate(mapId)) return;
+      if (this.tabRegistry.activate(mapId)) {
+        this.diagnostics.record('global-search', 'map-tab-found-existing', mapId, { activated: true });
+        this.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'map-tab-found-existing' });
+        return;
+      }
+      this.diagnostics.record('global-search', 'map-tab-create-request', mapId, { position: options.position ?? 'current' });
+      this.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'map-tab-create-request' });
       await openTab({
         app: this.app,
         custom: {
@@ -152,12 +160,23 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
         position: options.position,
         keepCursor: false,
       });
-    }, (error) => this.reportOperationFailure('打开导图', error));
+      this.diagnostics.record('global-search', 'map-tab-created', mapId, { position: options.position ?? 'current' });
+      this.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'map-tab-created' });
+    }, (error) => {
+      this.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'map-tab-open-failed', lastNavigationSuccess: false, lastFailure: error instanceof Error ? error.message : String(error) });
+      this.reportOperationFailure('打开导图', error);
+    });
   }
 
   async openMapAtNode(mapId: string, nodeUid: string, options: { position?: 'right' } = {}): Promise<void> {
     if (!mapId) return;
-    if (nodeUid && this.tabRegistry.focusNode(mapId, nodeUid)) return;
+    this.diagnostics.record('global-search', 'target-navigation-request', mapId, { hasNodeTarget: Boolean(nodeUid), position: options.position ?? 'current' });
+    this.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'target-navigation-request', lastNavigationSuccess: null, lastFailure: undefined });
+    if (nodeUid && this.tabRegistry.focusNode(mapId, nodeUid)) {
+      this.diagnostics.record('global-search', 'target-navigation-existing-tab', mapId, { hasNodeTarget: true });
+      this.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'target-navigation-existing-tab' });
+      return;
+    }
     if (nodeUid) this.pendingNodeTargets.set(mapId, nodeUid);
     await this.openMap(mapId, options);
   }
@@ -233,6 +252,8 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
         searchElement,
         maps: this.repository.list(),
         onOpen: (mapId, nodeUid, openOptions) => { void this.openMapAtNode(mapId, nodeUid, openOptions); },
+        onDiagnostic: (action, details, level = 'info') => this.diagnostics.record('global-search', action, undefined, details, level),
+        onStateChange: (patch) => this.diagnostics.updateGlobalSearchState(patch),
       });
     }, 80);
   };
@@ -311,7 +332,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
       });
     }
     menu.addSeparator();
-    menu.addItem({ icon: 'iconSettings', label: '设置', click: () => openYeMindSettingsDialog(this.settingsStore) });
+    menu.addItem({ icon: 'iconSettings', label: '设置', click: () => openYeMindSettingsDialog(this.settingsStore, { diagnostics: this.diagnostics }) });
     menu.addItem({ icon: 'iconInfo', label: '诊断与回归', click: () => openDiagnosticsDialog(this.diagnostics) });
     menu.open({ x: event.clientX, y: event.clientY });
   }

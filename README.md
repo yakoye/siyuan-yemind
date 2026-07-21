@@ -4,7 +4,17 @@ YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-
 
 - Plugin folder and ID: `siyuan-yemind-zen`
 - Display name: `YeMind Zen`
-- Version: `0.6.9`
+- Version: `0.7.0`
+
+## v0.7.0: About, release identity and actionable diagnostics
+
+- Added Settings → About with product information, release highlights, manifest/runtime/build/SiYuan versions and consistency status.
+- Added copy-version, open-diagnostics and export-diagnostics actions.
+- Diagnostics archives now separate summary, environment, version consistency, event timeline, search state, editor state, regression results, errors and problem markers.
+- Global-search diagnostics trace query, result/preview mounting, selection, Enter capture, search closing, tab opening, editor readiness and final node focus/highlight.
+- Added semantic-versioning and release-identity gates; this feature-sized diagnostics/settings release is 0.7.0 rather than another patch.
+
+- Diagnostic reproduce/export workflow: `docs/DIAGNOSTICS_GUIDE.md`.
 
 ## v0.6.9: exact-match preview and search navigation stability
 

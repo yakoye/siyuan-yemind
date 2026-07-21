@@ -19,12 +19,28 @@ function renderReport(report: SelfCheckReport | null): string {
   </div>`).join('')}</div>`;
 }
 
+function renderSearchState(service: DiagnosticsService): string {
+  const state = service.getGlobalSearchState();
+  const navigation = state.lastNavigationSuccess === null ? '未完成' : state.lastNavigationSuccess ? '成功' : '失败';
+  return `<div class="ymz-diagnostics-search" data-status="${state.lastNavigationSuccess === false ? 'fail' : state.observed ? 'pass' : 'idle'}">
+    <header><b>全局搜索链路</b><span>${state.observed ? '已记录' : '尚未记录'}</span></header>
+    <dl>
+      <div><dt>思源 / YeMind 结果</dt><dd>${state.nativeResultCount} / ${state.yemindResultCount}</dd></div>
+      <div><dt>列表 / 预览</dt><dd>${state.listMounted ? '已挂载' : '未挂载'} / ${state.previewVisible ? '可见' : '不可见'}</dd></div>
+      <div><dt>最后步骤</dt><dd>${escapeHtml(state.lastNavigationStep)}</dd></div>
+      <div><dt>导航结果</dt><dd>${navigation}</dd></div>
+    </dl>
+    ${state.lastFailure ? `<p>${escapeHtml(state.lastFailure)}</p>` : ''}
+  </div>`;
+}
+
 export function openDiagnosticsDialog(service: DiagnosticsService): void {
   const dialog = new Dialog({
     title: 'YeMind Zen 诊断与回归',
     width: '760px',
     content: `<div class="b3-dialog__content ymz-diagnostics">
       <p class="ymz-diagnostics-note">全部检查在本机执行。默认诊断包不包含导图标题、节点正文、批注、链接或图片数据。</p>
+      <div class="ymz-diagnostics-workflow"><b>复现问题的推荐步骤</b><span>开始记录 → 复现问题 → 立即标记问题发生 → 导出诊断包</span></div>
       <div class="ymz-diagnostics-actions">
         <button class="b3-button b3-button--text" data-diagnostics-action="run">运行回归检查</button>
         <button class="b3-button b3-button--outline" data-diagnostics-action="record">${service.isRecording() ? '停止记录' : '开始记录'}</button>
@@ -33,6 +49,7 @@ export function openDiagnosticsDialog(service: DiagnosticsService): void {
         <button class="b3-button b3-button--outline" data-diagnostics-action="clear">清空日志</button>
       </div>
       <label class="ymz-diagnostics-sensitive"><input type="checkbox" data-role="include-node-text"> 包含导图标题与节点文字（可能包含隐私，仅排查内容问题时勾选）</label>
+      <div data-role="diagnostics-search-state">${renderSearchState(service)}</div>
       <div data-role="diagnostics-report">${renderReport(service.getLastSelfCheck())}</div>
       <div class="ymz-diagnostics-log-count" data-role="diagnostics-log-count"></div>
     </div>
@@ -40,6 +57,7 @@ export function openDiagnosticsDialog(service: DiagnosticsService): void {
   });
   let busy = false;
   const reportEl = dialog.element.querySelector<HTMLElement>('[data-role="diagnostics-report"]');
+  const searchStateEl = dialog.element.querySelector<HTMLElement>('[data-role="diagnostics-search-state"]');
   const logCountEl = dialog.element.querySelector<HTMLElement>('[data-role="diagnostics-log-count"]');
   const includeTextEl = dialog.element.querySelector<HTMLInputElement>('[data-role="include-node-text"]');
   const recordButton = dialog.element.querySelector<HTMLButtonElement>('[data-diagnostics-action="record"]');
@@ -47,6 +65,7 @@ export function openDiagnosticsDialog(service: DiagnosticsService): void {
     const session = service.buildReport().session;
     if (logCountEl) logCountEl.textContent = `运行日志：${session.eventCount} 条 · ${session.recording ? '正在记录' : '已停止'}`;
     if (recordButton) recordButton.textContent = session.recording ? '停止记录' : '开始记录';
+    if (searchStateEl) searchStateEl.innerHTML = renderSearchState(service);
   };
   refreshCount();
 

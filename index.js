@@ -2586,6 +2586,16 @@ async function runDiagnosticsSelfCheck(input) {
       details: input.versions
     });
   }
+  if (input.globalSearch) {
+    const state = input.globalSearch;
+    const status = !state.observed ? "warning" : state.yemindResultCount > 0 && (!state.listMounted || !state.previewMounted || !state.previewVisible) ? "fail" : state.lastNavigationSuccess === false ? "fail" : "pass";
+    items.push({
+      id: "global-search",
+      status,
+      summary: !state.observed ? "尚未记录全局搜索会话；开始记录并复现后将检查预览与导航链路" : status === "fail" ? `全局搜索链路在“${state.lastNavigationStep}”附近失败` : "全局搜索结果、预览与最近一次导航状态正常",
+      details: { ...state }
+    });
+  }
   try {
     const probe = await input.storageProbe();
     const passed = probe.write && probe.read && probe.remove;
@@ -2694,12 +2704,55 @@ function summarizeMaps(maps) {
 function safeNavigatorValue(key) {
   return typeof navigator === "undefined" ? "unknown" : String(navigator[key] ?? "unknown");
 }
+function buildSafeGlobalSearchDomSnapshot() {
+  var _a;
+  if (typeof document === "undefined") return '<!doctype html><meta charset="utf-8"><pre>document unavailable</pre>';
+  const input = document.querySelector("#searchInput");
+  const root2 = (input == null ? void 0 : input.closest(".b3-dialog__container, .fn__flex-column")) ?? ((_a = document.querySelector("#searchList")) == null ? void 0 : _a.parentElement) ?? null;
+  if (!root2) return '<!doctype html><meta charset="utf-8"><pre>global search surface not found</pre>';
+  const allowedData = /* @__PURE__ */ new Set(["type", "role", "yemind-global-results", "yemind-global-map", "yemind-global-node"]);
+  let count = 0;
+  const render3 = (element, depth) => {
+    if (count >= 220 || depth > 7) return "";
+    count += 1;
+    const attrs2 = [];
+    if (element.id) attrs2.push(`id=${JSON.stringify(element.id)}`);
+    if (element.classList.length) attrs2.push(`class=${JSON.stringify(Array.from(element.classList).join(" "))}`);
+    for (const attribute of Array.from(element.attributes)) {
+      if (!attribute.name.startsWith("data-")) continue;
+      const key = attribute.name.slice(5);
+      if (!allowedData.has(key)) continue;
+      const value = key.includes("map") || key.includes("node") ? "[id]" : attribute.value;
+      attrs2.push(`${attribute.name}=${JSON.stringify(value)}`);
+    }
+    const hidden = element instanceof HTMLElement && (element.hidden || getComputedStyle(element).display === "none");
+    if (hidden) attrs2.push("hidden=true");
+    const line = `${"  ".repeat(depth)}<${element.tagName.toLowerCase()}${attrs2.length ? " " + attrs2.join(" ") : ""}>`;
+    const children = Array.from(element.children).map((child) => render3(child, depth + 1)).filter(Boolean);
+    return [line, ...children].join("\n");
+  };
+  const structure = render3(root2, 0);
+  return `<!doctype html><meta charset="utf-8"><title>YeMind diagnostics DOM structure</title><pre>${structure.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</pre>`;
+}
 class DiagnosticsService {
   constructor(options) {
     __publicField(this, "recorder");
     __publicField(this, "now");
     __publicField(this, "lastSelfCheck", null);
     __publicField(this, "selfCheckPromise", null);
+    __publicField(this, "globalSearchState", {
+      observed: false,
+      queryLength: 0,
+      nativeResultCount: 0,
+      yemindResultCount: 0,
+      listMounted: false,
+      previewMounted: false,
+      previewVisible: false,
+      selectedType: "none",
+      lastNavigationStep: "not-started",
+      lastNavigationSuccess: null,
+      updatedAt: 0
+    });
     this.options = options;
     this.recorder = options.recorder ?? new DiagnosticsRecorder();
     this.now = options.now ?? (() => Date.now());
@@ -2722,6 +2775,35 @@ class DiagnosticsService {
   }
   getLastSelfCheck() {
     return this.lastSelfCheck ? JSON.parse(JSON.stringify(this.lastSelfCheck)) : null;
+  }
+  updateGlobalSearchState(patch) {
+    const normalized2 = { ...patch };
+    if (typeof normalized2.lastFailure === "string") {
+      normalized2.lastFailure = normalized2.lastFailure.replace(/(?:[A-Za-z]:\\|\/)[^\s]+/g, "[path]").slice(0, 180);
+    }
+    this.globalSearchState = { ...this.globalSearchState, ...normalized2, updatedAt: this.now() };
+  }
+  getGlobalSearchState() {
+    return { ...this.globalSearchState };
+  }
+  getEnvironmentSnapshot() {
+    var _a, _b;
+    const system = ((_b = (_a = globalThis.siyuan) == null ? void 0 : _a.config) == null ? void 0 : _b.system) ?? {};
+    return {
+      platform: system.os ?? safeNavigatorValue("platform"),
+      architecture: system.arch ?? "unknown",
+      container: system.container ?? "unknown",
+      appVersion: system.kernelVersion ?? system.appVersion ?? "unknown",
+      language: safeNavigatorValue("language"),
+      userAgent: safeNavigatorValue("userAgent"),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    };
+  }
+  async getVersionConsistency() {
+    const manifest = await this.readManifestVersion();
+    const runtime = this.options.pluginVersion;
+    const build2 = this.options.buildVersion ?? runtime;
+    return { manifest: manifest ?? "unknown", runtime, build: build2, consistent: Boolean(manifest) && manifest === runtime && runtime === build2 };
   }
   record(category, action, mapId, details, level2 = "info", force = false) {
     try {
@@ -2765,7 +2847,8 @@ class DiagnosticsService {
       checkpoints: this.options.checkpoints.listAll(),
       settings: this.options.settings.get(),
       editors: this.recorder.listEditorStates(),
-      versions: { manifest: manifestVersion ?? this.options.pluginVersion, runtime: this.options.pluginVersion, build: this.options.pluginVersion },
+      versions: { manifest: manifestVersion ?? this.options.pluginVersion, runtime: this.options.pluginVersion, build: this.options.buildVersion ?? this.options.pluginVersion },
+      globalSearch: this.globalSearchState,
       storageProbe: () => this.options.storageProbe.run(),
       lifecycleProbe: () => this.options.lifecycleProbe.run(),
       now: this.now
@@ -2792,22 +2875,12 @@ class DiagnosticsService {
     }
   }
   buildReport() {
-    var _a, _b;
-    const system = ((_b = (_a = globalThis.siyuan) == null ? void 0 : _a.config) == null ? void 0 : _b.system) ?? {};
     const checkpoints = this.options.checkpoints.listAll();
     return {
-      schemaVersion: 2,
+      schemaVersion: 3,
       generatedAt: this.now(),
       plugin: { id: this.options.pluginId, version: this.options.pluginVersion },
-      environment: {
-        platform: system.os ?? safeNavigatorValue("platform"),
-        architecture: system.arch ?? "unknown",
-        container: system.container ?? "unknown",
-        appVersion: system.kernelVersion ?? system.appVersion ?? "unknown",
-        language: safeNavigatorValue("language"),
-        userAgent: safeNavigatorValue("userAgent"),
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-      },
+      environment: this.getEnvironmentSnapshot(),
       session: this.recorder.getSessionInfo(),
       selfCheck: this.lastSelfCheck,
       editors: this.recorder.listEditorStates(),
@@ -2819,18 +2892,59 @@ class DiagnosticsService {
       })),
       events: this.recorder.listEvents(),
       problemMarkers: this.recorder.listProblemMarkers(),
-      problemWindows: this.recorder.listProblemMarkers().map((marker) => this.recorder.problemWindow(marker.id)).filter((window2) => Boolean(window2))
+      problemWindows: this.recorder.listProblemMarkers().map((marker) => this.recorder.problemWindow(marker.id)).filter((window2) => Boolean(window2)),
+      globalSearch: this.getGlobalSearchState(),
+      versionConsistency: { manifest: this.options.pluginVersion, runtime: this.options.pluginVersion, build: this.options.buildVersion ?? this.options.pluginVersion, consistent: this.options.pluginVersion === (this.options.buildVersion ?? this.options.pluginVersion) }
     };
   }
   async buildArchive(includeNodeText = false) {
+    var _a;
     if (!this.lastSelfCheck) await this.runSelfCheck();
     const report = this.buildReport();
+    const versionConsistency = await this.getVersionConsistency();
+    report.versionConsistency = versionConsistency;
     const zip = new JSZip();
+    const errors = report.events.filter((event) => event.level === "error");
+    const markers = { markers: report.problemMarkers, windows: report.problemWindows };
+    const timeline2 = report.events.map((event) => JSON.stringify(event)).join("\n");
+    const searchState = report.globalSearch;
+    const summary = [
+      "# YeMind Zen 诊断摘要",
+      "",
+      `- 生成时间：${new Date(report.generatedAt).toISOString()}`,
+      `- 插件版本：${report.plugin.version}`,
+      `- 版本一致性：${versionConsistency.consistent ? "通过" : "失败"}`,
+      `- 回归检查：${((_a = report.selfCheck) == null ? void 0 : _a.status) ?? "未运行"}`,
+      `- 事件数量：${report.events.length}`,
+      `- 错误数量：${errors.length}`,
+      `- 问题标记：${report.problemMarkers.length}`,
+      "",
+      "## 全局搜索",
+      "",
+      `- 已观察搜索会话：${searchState.observed ? "是" : "否"}`,
+      `- 思源结果：${searchState.nativeResultCount}`,
+      `- YeMind 结果：${searchState.yemindResultCount}`,
+      `- 结果列表挂载：${searchState.listMounted ? "是" : "否"}`,
+      `- 预览可见：${searchState.previewVisible ? "是" : "否"}`,
+      `- 最后导航步骤：${searchState.lastNavigationStep}`,
+      `- 最后导航结果：${searchState.lastNavigationSuccess === null ? "未知" : searchState.lastNavigationSuccess ? "成功" : "失败"}`,
+      searchState.lastFailure ? `- 最后失败：${searchState.lastFailure}` : ""
+    ].filter(Boolean).join("\n");
+    const domSnapshot = `${buildSafeGlobalSearchDomSnapshot()}
+<!-- state: list=${searchState.listMounted}; preview=${searchState.previewMounted}; visible=${searchState.previewVisible}; selected=${searchState.selectedType}; native=${searchState.nativeResultCount}; yemind=${searchState.yemindResultCount} -->`;
+    zip.file("summary.md", summary);
+    zip.file("environment.json", JSON.stringify(report.environment, null, 2));
+    zip.file("version-consistency.json", JSON.stringify(versionConsistency, null, 2));
+    zip.file("event-timeline.jsonl", timeline2);
+    zip.file("search-state.json", JSON.stringify(searchState, null, 2));
+    zip.file("active-map-state.json", JSON.stringify(report.editors, null, 2));
+    zip.file("regression-results.json", JSON.stringify(report.selfCheck, null, 2));
+    zip.file("errors.json", JSON.stringify(errors, null, 2));
+    zip.file("diagnostic-marker.json", JSON.stringify(markers, null, 2));
+    zip.file("dom-structure-snapshot.html", domSnapshot);
     zip.file("diagnostics.json", JSON.stringify(report, null, 2));
     zip.file("settings.json", JSON.stringify(this.options.settings.get(), null, 2));
-    if (includeNodeText) {
-      zip.file("maps-with-content.json", JSON.stringify(this.options.maps.list(), null, 2));
-    }
+    if (includeNodeText) zip.file("maps-with-content.json", JSON.stringify(this.options.maps.list(), null, 2));
     zip.file("README.txt", [
       "YeMind Zen diagnostics package",
       "",
@@ -3749,12 +3863,27 @@ function renderReport(report) {
     <div><b>${escapeHtml$b(item.id)}</b><p>${escapeHtml$b(item.summary)}</p></div>
   </div>`).join("")}</div>`;
 }
+function renderSearchState(service) {
+  const state = service.getGlobalSearchState();
+  const navigation = state.lastNavigationSuccess === null ? "未完成" : state.lastNavigationSuccess ? "成功" : "失败";
+  return `<div class="ymz-diagnostics-search" data-status="${state.lastNavigationSuccess === false ? "fail" : state.observed ? "pass" : "idle"}">
+    <header><b>全局搜索链路</b><span>${state.observed ? "已记录" : "尚未记录"}</span></header>
+    <dl>
+      <div><dt>思源 / YeMind 结果</dt><dd>${state.nativeResultCount} / ${state.yemindResultCount}</dd></div>
+      <div><dt>列表 / 预览</dt><dd>${state.listMounted ? "已挂载" : "未挂载"} / ${state.previewVisible ? "可见" : "不可见"}</dd></div>
+      <div><dt>最后步骤</dt><dd>${escapeHtml$b(state.lastNavigationStep)}</dd></div>
+      <div><dt>导航结果</dt><dd>${navigation}</dd></div>
+    </dl>
+    ${state.lastFailure ? `<p>${escapeHtml$b(state.lastFailure)}</p>` : ""}
+  </div>`;
+}
 function openDiagnosticsDialog(service) {
   const dialog = new siyuan.Dialog({
     title: "YeMind Zen 诊断与回归",
     width: "760px",
     content: `<div class="b3-dialog__content ymz-diagnostics">
       <p class="ymz-diagnostics-note">全部检查在本机执行。默认诊断包不包含导图标题、节点正文、批注、链接或图片数据。</p>
+      <div class="ymz-diagnostics-workflow"><b>复现问题的推荐步骤</b><span>开始记录 → 复现问题 → 立即标记问题发生 → 导出诊断包</span></div>
       <div class="ymz-diagnostics-actions">
         <button class="b3-button b3-button--text" data-diagnostics-action="run">运行回归检查</button>
         <button class="b3-button b3-button--outline" data-diagnostics-action="record">${service.isRecording() ? "停止记录" : "开始记录"}</button>
@@ -3763,6 +3892,7 @@ function openDiagnosticsDialog(service) {
         <button class="b3-button b3-button--outline" data-diagnostics-action="clear">清空日志</button>
       </div>
       <label class="ymz-diagnostics-sensitive"><input type="checkbox" data-role="include-node-text"> 包含导图标题与节点文字（可能包含隐私，仅排查内容问题时勾选）</label>
+      <div data-role="diagnostics-search-state">${renderSearchState(service)}</div>
       <div data-role="diagnostics-report">${renderReport(service.getLastSelfCheck())}</div>
       <div class="ymz-diagnostics-log-count" data-role="diagnostics-log-count"></div>
     </div>
@@ -3770,6 +3900,7 @@ function openDiagnosticsDialog(service) {
   });
   let busy = false;
   const reportEl = dialog.element.querySelector('[data-role="diagnostics-report"]');
+  const searchStateEl = dialog.element.querySelector('[data-role="diagnostics-search-state"]');
   const logCountEl = dialog.element.querySelector('[data-role="diagnostics-log-count"]');
   const includeTextEl = dialog.element.querySelector('[data-role="include-node-text"]');
   const recordButton = dialog.element.querySelector('[data-diagnostics-action="record"]');
@@ -3777,6 +3908,7 @@ function openDiagnosticsDialog(service) {
     const session = service.buildReport().session;
     if (logCountEl) logCountEl.textContent = `运行日志：${session.eventCount} 条 · ${session.recording ? "正在记录" : "已停止"}`;
     if (recordButton) recordButton.textContent = session.recording ? "停止记录" : "开始记录";
+    if (searchStateEl) searchStateEl.innerHTML = renderSearchState(service);
   };
   refreshCount();
   dialog.element.addEventListener("click", (event) => {
@@ -3826,6 +3958,42 @@ function openDiagnosticsDialog(service) {
       }
     })();
   });
+}
+const MAP_STORAGE_NAME = "maps.json";
+const SETTINGS_STORAGE_NAME = "settings.json";
+const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
+const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
+const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
+const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
+const PLUGIN_VERSION = "0.7.0";
+const TAB_TYPE = "yemind-map";
+const DOCK_TYPE = "yemind-dock";
+const ICON_ID = "iconYeMind";
+const RELEASE_INFO = {
+  version: PLUGIN_VERSION,
+  buildVersion: PLUGIN_VERSION,
+  buildTime: "2026-07-21T10:58:47+08:00",
+  buildId: "yemind-zen-v0.7.0-20260721",
+  productName: "YeMind Zen",
+  tagline: "思源笔记中的思维导图、分屏大纲与知识整理插件。",
+  officialReference: "KMind Zen 0.34.0",
+  releaseSummary: "新增关于页面、版本一致性门禁，并将诊断与回归升级为可追踪全局搜索完整链路的工具。",
+  highlights: [
+    "设置中新增“关于”，集中展示版本、构建、运行环境和本版更新。",
+    "诊断包拆分为摘要、环境、版本、事件时间线、搜索状态、错误和回归结果。",
+    "全局搜索记录查询、结果、预览、Enter、关闭窗口、打开导图和节点定位全过程。"
+  ]
+};
+function resolveVersionConsistency(manifestVersion) {
+  const manifest = "unknown";
+  const runtime = PLUGIN_VERSION;
+  const build2 = RELEASE_INFO.buildVersion;
+  return {
+    manifest,
+    runtime,
+    build: build2,
+    consistent: manifest !== "unknown" && manifest === runtime && runtime === build2
+  };
 }
 const MODIFIER_ORDER = ["Ctrl", "Cmd", "Alt", "Shift"];
 function normalizeKey(key) {
@@ -4220,6 +4388,7 @@ function createSettingsDialogTemplate(settings) {
       <button data-settings-page="drag-layout">拖拽与布局</button>
       <button data-settings-page="content">节点与内容</button>
       <button data-settings-page="shortcuts">快捷键</button>
+      <button data-settings-page="about">关于</button>
     </aside>
     <main class="ymz-settings-main">
       <section class="ymz-settings-page" data-settings-panel="general">
@@ -4332,6 +4501,37 @@ function createSettingsDialogTemplate(settings) {
         <header><h2>快捷键</h2><p>可直接编辑组合键，也可以录制、禁用或恢复默认。</p></header>
         <div class="ymz-settings-shortcuts">${shortcutsHtml(settings.shortcutMap)}</div>
       </section>
+
+      <section class="ymz-settings-page ymz-settings-about" data-settings-panel="about" hidden>
+        <header><h2>关于</h2><p>${escapeHtml$a(RELEASE_INFO.tagline)}</p></header>
+        <div class="ymz-about-hero">
+          <img src="/plugins/siyuan-yemind-zen/icon.png" alt="YeMind Zen">
+          <div><h3>${escapeHtml$a(RELEASE_INFO.productName)}</h3><p>${escapeHtml$a(RELEASE_INFO.releaseSummary)}</p></div>
+        </div>
+        <div class="ymz-settings-group ymz-about-version-card">
+          <h3>版本信息</h3>
+          <dl class="ymz-about-version-grid">
+            <div><dt>当前版本</dt><dd>${escapeHtml$a(RELEASE_INFO.version)}</dd></div>
+            <div><dt>插件声明版本</dt><dd data-about-version="manifest">正在读取…</dd></div>
+            <div><dt>运行时代码版本</dt><dd data-about-version="runtime">${escapeHtml$a(RELEASE_INFO.version)}</dd></div>
+            <div><dt>构建版本</dt><dd data-about-version="build">${escapeHtml$a(RELEASE_INFO.buildVersion)}</dd></div>
+            <div><dt>构建标识</dt><dd>${escapeHtml$a(RELEASE_INFO.buildId)}</dd></div>
+            <div><dt>构建时间</dt><dd>${escapeHtml$a(RELEASE_INFO.buildTime)}</dd></div>
+            <div><dt>思源版本</dt><dd data-about-version="siyuan">正在读取…</dd></div>
+            <div><dt>官方参考</dt><dd>${escapeHtml$a(RELEASE_INFO.officialReference)}</dd></div>
+          </dl>
+          <div class="ymz-about-consistency" data-about-consistency="pending">正在检查版本一致性…</div>
+        </div>
+        <div class="ymz-settings-group ymz-about-highlights">
+          <h3>本版更新</h3>
+          <ul>${RELEASE_INFO.highlights.map((item) => `<li>${escapeHtml$a(item)}</li>`).join("")}</ul>
+        </div>
+        <div class="ymz-about-actions">
+          <button class="b3-button b3-button--outline" data-about-action="copy-version">复制版本信息</button>
+          <button class="b3-button b3-button--outline" data-about-action="open-diagnostics">诊断与回归</button>
+          <button class="b3-button b3-button--text" data-about-action="export-diagnostics">导出诊断包</button>
+        </div>
+      </section>
       <footer class="ymz-settings-footer">
         <button class="b3-button b3-button--cancel" data-settings-action="reset">恢复全部默认值</button>
         <span class="fn__flex-1"></span>
@@ -4352,7 +4552,22 @@ function setControlValue(control, value) {
   else if (control instanceof HTMLInputElement && control.type === "radio") control.checked = control.value === String(value ?? "");
   else control.value = String(value ?? "");
 }
-function openYeMindSettingsDialog(store) {
+async function writeClipboard(text2) {
+  var _a;
+  if ((_a = navigator.clipboard) == null ? void 0 : _a.writeText) {
+    await navigator.clipboard.writeText(text2);
+    return;
+  }
+  const input = document.createElement("textarea");
+  input.value = text2;
+  input.style.position = "fixed";
+  input.style.opacity = "0";
+  document.body.append(input);
+  input.select();
+  document.execCommand("copy");
+  input.remove();
+}
+function openYeMindSettingsDialog(store, options = {}) {
   var _a, _b;
   let draft = cloneSettings(store.get());
   let recordingCleanup = null;
@@ -4368,6 +4583,25 @@ function openYeMindSettingsDialog(store) {
   const saveButton = shell.querySelector('[data-settings-action="save"]');
   let hasShortcutConflict = false;
   let saving = false;
+  const updateAbout = async () => {
+    var _a2;
+    const consistency = options.diagnostics ? await options.diagnostics.getVersionConsistency() : resolveVersionConsistency();
+    const environment = ((_a2 = options.diagnostics) == null ? void 0 : _a2.getEnvironmentSnapshot()) ?? {};
+    const setText2 = (role, value) => {
+      const target = shell.querySelector(`[data-about-version="${role}"]`);
+      if (target) target.textContent = value;
+    };
+    setText2("manifest", consistency.manifest);
+    setText2("runtime", consistency.runtime);
+    setText2("build", consistency.build);
+    setText2("siyuan", String(environment.appVersion ?? "unknown"));
+    const status = shell.querySelector("[data-about-consistency]");
+    if (status) {
+      status.dataset.aboutConsistency = consistency.consistent ? "pass" : "fail";
+      status.textContent = consistency.consistent ? "版本一致：插件声明、运行时代码与构建版本相同。" : "版本不一致：可能仍在运行旧缓存代码，请重新安装并重启思源。";
+    }
+  };
+  void updateAbout();
   const refreshConflicts = () => {
     const conflicts = findShortcutConflicts(draft.shortcutMap);
     let hasConflict = false;
@@ -4474,6 +4708,41 @@ function openYeMindSettingsDialog(store) {
       }
     });
   });
+  shell.querySelectorAll("[data-about-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const action = button.dataset.aboutAction;
+      void (async () => {
+        var _a2;
+        if (action === "copy-version") {
+          const consistency = options.diagnostics ? await options.diagnostics.getVersionConsistency() : resolveVersionConsistency();
+          const environment = ((_a2 = options.diagnostics) == null ? void 0 : _a2.getEnvironmentSnapshot()) ?? {};
+          await writeClipboard([
+            `${RELEASE_INFO.productName} ${RELEASE_INFO.version}`,
+            `插件声明版本: ${consistency.manifest}`,
+            `运行时代码版本: ${consistency.runtime}`,
+            `构建版本: ${consistency.build}`,
+            `构建标识: ${RELEASE_INFO.buildId}`,
+            `构建时间: ${RELEASE_INFO.buildTime}`,
+            `思源版本: ${String(environment.appVersion ?? "unknown")}`,
+            `官方参考: ${RELEASE_INFO.officialReference}`
+          ].join("\n"));
+          siyuan.showMessage("版本信息已复制");
+        } else if (action === "open-diagnostics") {
+          if (!options.diagnostics) return siyuan.showMessage("诊断服务尚未就绪", 3500, "error");
+          openDiagnosticsDialog(options.diagnostics);
+        } else if (action === "export-diagnostics") {
+          if (!options.diagnostics) return siyuan.showMessage("诊断服务尚未就绪", 3500, "error");
+          const archive = await options.diagnostics.buildArchive(false);
+          downloadDiagnosticsArchive(archive.blob, archive.filename);
+          siyuan.showMessage("诊断包已导出");
+        }
+      })().catch((error) => {
+        var _a2;
+        (_a2 = options.diagnostics) == null ? void 0 : _a2.recordError("settings", `about-${action}-failed`, error, void 0, true);
+        siyuan.showMessage("关于页面操作失败", 4e3, "error");
+      });
+    });
+  });
   (_a = shell.querySelector('[data-settings-action="cancel"]')) == null ? void 0 : _a.addEventListener("click", () => {
     recordingCleanup == null ? void 0 : recordingCleanup();
     dialog.destroy();
@@ -4503,27 +4772,17 @@ function openYeMindSettingsDialog(store) {
   });
   refreshConflicts();
 }
-function registerSettings(plugin, store) {
+function registerSettings(plugin, store, diagnostics) {
   const button = document.createElement("button");
   button.className = "b3-button b3-button--outline";
   button.textContent = "打开完整设置";
-  button.addEventListener("click", () => openYeMindSettingsDialog(store));
+  button.addEventListener("click", () => openYeMindSettingsDialog(store, { diagnostics }));
   plugin.setting.addItem({
     title: "YeMind Zen 设置",
     description: "常规设置、节点入口、富文本、代码块和快捷键统一在完整设置窗口中管理。",
     actionElement: button
   });
 }
-const MAP_STORAGE_NAME = "maps.json";
-const SETTINGS_STORAGE_NAME = "settings.json";
-const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
-const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
-const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
-const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.6.9";
-const TAB_TYPE = "yemind-map";
-const DOCK_TYPE = "yemind-dock";
-const ICON_ID = "iconYeMind";
 class YeMindDockView {
   constructor(host, element) {
     __publicField(this, "unsubscribe", null);
@@ -60183,7 +60442,7 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
   };
   const attempt = (remaining) => {
     frameId = scheduleFrame(() => {
-      var _a, _b, _c2;
+      var _a, _b, _c2, _d2, _e;
       frameId = null;
       if (cancelled) return;
       const node = ((_b = (_a = renderer()) == null ? void 0 : _a.findNodeByUid) == null ? void 0 : _b.call(_a, uid)) ?? null;
@@ -60191,9 +60450,13 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
         attempt(remaining - 1);
         return;
       }
-      if (!node) return;
+      if (!node) {
+        (_c2 = options.onMissing) == null ? void 0 : _c2.call(options);
+        return;
+      }
       highlighted = node;
-      (_c2 = node.highlight) == null ? void 0 : _c2.call(node);
+      (_d2 = options.onFound) == null ? void 0 : _d2.call(options);
+      (_e = node.highlight) == null ? void 0 : _e.call(node);
       timerId = scheduleTimer(() => {
         timerId = null;
         if (!cancelled) stopHighlight();
@@ -60524,17 +60787,35 @@ class YeMindEditor {
     this.mount();
   }
   focusNode(uid) {
-    var _a;
+    var _a, _b, _c2;
     if (!uid || !this.commands) return;
+    const renderer = ((_a = this.map) == null ? void 0 : _a.renderer) ?? null;
+    const foundBeforeNavigation = Boolean((_b = renderer == null ? void 0 : renderer.findNodeByUid) == null ? void 0 : _b.call(renderer, uid));
+    this.options.diagnostics.record("global-search", "target-node-found", this.current.id, { foundBeforeNavigation });
+    this.options.diagnostics.updateGlobalSearchState({ lastNavigationStep: "target-node-found" });
     this.commands.goToNode(uid);
+    this.options.diagnostics.record("global-search", "target-ancestors-expanded", this.current.id, { requested: true });
     this.activateOutlineUid(uid);
-    (_a = this.cancelFocusedNodeHighlight) == null ? void 0 : _a.call(this);
+    this.options.diagnostics.record("global-search", "target-node-selected", this.current.id, { outlineActivated: true });
+    this.options.diagnostics.record("global-search", "target-node-centered", this.current.id, { command: "GO_TARGET_NODE" });
+    this.options.diagnostics.updateGlobalSearchState({ lastNavigationStep: "target-node-centered" });
+    (_c2 = this.cancelFocusedNodeHighlight) == null ? void 0 : _c2.call(this);
     this.cancelFocusedNodeHighlight = scheduleFocusedNodeHighlight(
       () => {
         var _a2;
         return ((_a2 = this.map) == null ? void 0 : _a2.renderer) ?? null;
       },
-      uid
+      uid,
+      {
+        onFound: () => {
+          this.options.diagnostics.record("global-search", "target-node-highlighted", this.current.id, { durationMs: 1500 });
+          this.options.diagnostics.updateGlobalSearchState({ lastNavigationStep: "target-node-highlighted", lastNavigationSuccess: true, lastFailure: void 0 });
+        },
+        onMissing: () => {
+          this.options.diagnostics.record("global-search", "target-navigation-failed", this.current.id, { reason: "target-node-not-rendered" }, "error");
+          this.options.diagnostics.updateGlobalSearchState({ lastNavigationStep: "target-navigation-failed", lastNavigationSuccess: false, lastFailure: "target-node-not-rendered" });
+        }
+      }
     );
   }
   resize() {
@@ -62469,6 +62750,8 @@ function registerYeMindTab(plugin, host) {
             diagnostics: host.diagnostics,
             onMissing: () => this.tab.close()
           });
+          host.diagnostics.record("global-search", "map-editor-ready", resolvedMapId, { pendingTarget: true });
+          host.diagnostics.updateGlobalSearchState({ lastNavigationStep: "map-editor-ready" });
           const pendingUid = host.consumePendingNodeTarget(resolvedMapId);
           if (pendingUid) requestTabNodeFocus(state, pendingUid);
           flushPendingTabNodeFocus(state);
@@ -62580,6 +62863,26 @@ function initializePluginStartup(options) {
 }
 const states = /* @__PURE__ */ new WeakMap();
 const activeStates = /* @__PURE__ */ new Set();
+function queryHash(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+function diagnostic(state, action, details = {}, level2 = "info") {
+  var _a;
+  (_a = state.onDiagnostic) == null ? void 0 : _a.call(state, action, details, level2);
+}
+function publishState(state, patch) {
+  var _a;
+  state.publishedState = { ...state.publishedState, observed: true, ...patch };
+  (_a = state.onStateChange) == null ? void 0 : _a.call(state, { ...state.publishedState });
+}
+function nativeResultCount(surface) {
+  return surface.list.querySelectorAll('.b3-list-item[data-type="search-item"]:not([data-yemind-global-result])').length;
+}
 function escapeHtml(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
@@ -62901,7 +63204,11 @@ function clearCustomSelection(state, surface) {
   clearPreview(surface);
 }
 function openMatch(state, match2, position2) {
-  closeGlobalSearchSurface(state.searchElement);
+  diagnostic(state, "close-request", { selectedType: "yemind", position: position2 ?? "current" });
+  const closed = closeGlobalSearchSurface(state.searchElement);
+  diagnostic(state, closed ? "search-closed" : "search-close-fallback", { closed }, closed ? "info" : "warning");
+  diagnostic(state, "open-request", { position: position2 ?? "current", hasNodeTarget: Boolean(match2.nodeUid) });
+  publishState(state, { lastNavigationStep: "open-request", lastNavigationSuccess: null, selectedType: "yemind" });
   if (position2) state.onOpen(match2.mapId, match2.nodeUid, { position: position2 });
   else state.onOpen(match2.mapId, match2.nodeUid);
 }
@@ -62936,6 +63243,8 @@ function showPreview(state, surface, match2) {
   });
   surface.preview.append(preview);
   surface.preview.classList.add("ymz-global-preview-active");
+  diagnostic(state, "preview-mounted", { visible: true, source: match2.source ?? "node" });
+  publishState(state, { previewMounted: true, previewVisible: true, selectedType: "yemind", lastNavigationStep: "preview-mounted" });
 }
 function selectMatch(state, surface, match2, scroll = true) {
   surface.list.querySelectorAll(".b3-list-item--focus").forEach((item) => item.classList.remove("b3-list-item--focus"));
@@ -62945,6 +63254,8 @@ function selectMatch(state, surface, match2, scroll = true) {
   row.classList.add("b3-list-item--focus");
   row.setAttribute("aria-selected", "true");
   state.selectedKey = keyForMatch(match2);
+  diagnostic(state, "result-selected", { selectedType: "yemind", source: match2.source ?? "node" });
+  publishState(state, { selectedType: "yemind", lastNavigationStep: "result-selected" });
   showPreview(state, surface, match2);
   if (scroll && typeof row.scrollIntoView === "function") row.scrollIntoView({ block: "nearest" });
 }
@@ -62953,6 +63264,8 @@ function selectedMatch(state) {
 }
 function activateNativeResult(state, surface, native2) {
   clearCustomSelection(state, surface);
+  diagnostic(state, "result-selected", { selectedType: "native" });
+  publishState(state, { selectedType: "native", previewVisible: false, lastNavigationStep: "native-result-selected" });
   surface.list.querySelectorAll(".b3-list-item--focus").forEach((item) => item.classList.remove("b3-list-item--focus"));
   native2.classList.add("b3-list-item--focus");
   native2.dispatchEvent(new MouseEvent("click", { bubbles: true, button: 0 }));
@@ -63042,7 +63355,13 @@ function updateNativeEmptyState(surface, hasYeMindResults) {
 }
 function ensureMounted(state, selectInitial = false) {
   const surface = resolveGlobalSearchSurface(state.searchElement);
-  if (!surface) return;
+  if (!surface) {
+    diagnostic(state, "surface-missing", { queryLength: state.query.length }, "warning");
+    publishState(state, { listMounted: false, previewMounted: false, previewVisible: false, lastNavigationStep: "surface-missing" });
+    return;
+  }
+  diagnostic(state, "list-mounted", { nativeResultCount: nativeResultCount(surface), yemindResultCount: state.matches.length });
+  publishState(state, { queryLength: state.query.length, nativeResultCount: nativeResultCount(surface), yemindResultCount: state.matches.length, listMounted: true, previewMounted: Boolean(surface.preview), previewVisible: surface.preview.classList.contains("ymz-global-preview-active") });
   state.mutating = true;
   try {
     const panels = Array.from(surface.root.querySelectorAll("[data-yemind-global-results]"));
@@ -63061,6 +63380,7 @@ function ensureMounted(state, selectInitial = false) {
       updateResultCount(surface, 0);
       updateNativeEmptyState(surface, false);
       state.selectedKey = null;
+      publishState(state, { yemindResultCount: 0, previewVisible: false, selectedType: "none", lastNavigationStep: "empty-results" });
       state.initialized = true;
       return;
     }
@@ -63132,6 +63452,8 @@ function attachKeyboard(state) {
     };
     if (event.key === "Enter" && current) {
       stop();
+      diagnostic(state, "enter-captured", { altKey: event.altKey, selectedType: "yemind" });
+      publishState(state, { lastNavigationStep: "enter-captured", selectedType: "yemind" });
       openMatch(state, current, event.altKey ? "right" : void 0);
       return;
     }
@@ -63217,15 +63539,24 @@ function mountGlobalSearchResults(options) {
       observedRoot: null,
       observedList: null,
       scheduled: false,
-      mutating: false
+      mutating: false,
+      onDiagnostic: options.onDiagnostic,
+      onStateChange: options.onStateChange,
+      publishedState: { observed: true }
     };
     states.set(options.searchElement, state);
     activeStates.add(state);
   }
   state.maps = options.maps;
   state.onOpen = options.onOpen;
+  state.onDiagnostic = options.onDiagnostic;
+  state.onStateChange = options.onStateChange;
   state.query = query;
   state.matches = collectGlobalMapMatches(options.maps, query);
+  diagnostic(state, "query-change", { queryLength: query.length, queryHash: queryHash(query) });
+  const currentSurface = resolveGlobalSearchSurface(options.searchElement);
+  diagnostic(state, "result-counts", { nativeResultCount: currentSurface ? nativeResultCount(currentSurface) : 0, yemindResultCount: state.matches.length });
+  publishState(state, { queryLength: query.length, nativeResultCount: currentSurface ? nativeResultCount(currentSurface) : 0, yemindResultCount: state.matches.length, listMounted: Boolean(currentSurface == null ? void 0 : currentSurface.list), previewMounted: Boolean(currentSurface == null ? void 0 : currentSurface.preview), previewVisible: Boolean(currentSurface == null ? void 0 : currentSurface.preview.classList.contains("ymz-global-preview-active")) });
   if (queryChanged) state.selectedKey = null;
   attachKeyboard(state);
   ensureMounted(state, queryChanged || !state.initialized);
@@ -63260,7 +63591,9 @@ class YeMindZenPlugin extends siyuan.Plugin {
           maps: this.repository.list(),
           onOpen: (mapId, nodeUid2, openOptions) => {
             void this.openMapAtNode(mapId, nodeUid2, openOptions);
-          }
+          },
+          onDiagnostic: (action, details, level2 = "info") => this.diagnostics.record("global-search", action, void 0, details, level2),
+          onStateChange: (patch) => this.diagnostics.updateGlobalSearchState(patch)
         });
       }, 80);
     });
@@ -63296,6 +63629,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
     this.diagnostics = new DiagnosticsService({
       pluginId: this.name,
       pluginVersion: PLUGIN_VERSION,
+      buildVersion: RELEASE_INFO.buildVersion,
       maps: this.repository,
       checkpoints: this.checkpointRepository,
       settings: this.settingsStore,
@@ -63338,7 +63672,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
       registrations: [
         { name: "tab", register: () => registerYeMindTab(this, this) },
         { name: "dock", register: () => registerYeMindDock(this, this) },
-        { name: "settings", register: () => registerSettings(this, this.settingsStore) },
+        { name: "settings", register: () => registerSettings(this, this.settingsStore, this.diagnostics) },
         { name: "commands", register: () => this.registerCommands() },
         { name: "plugin-url", register: () => this.eventBus.on("open-siyuan-url-plugin", this.onOpenPluginUrl) },
         { name: "global-search", register: () => this.eventBus.on("input-search", this.onGlobalSearchInput) }
@@ -63378,7 +63712,13 @@ class YeMindZenPlugin extends siyuan.Plugin {
         return;
       }
       await this.repository.setActiveMap(mapId);
-      if (this.tabRegistry.activate(mapId)) return;
+      if (this.tabRegistry.activate(mapId)) {
+        this.diagnostics.record("global-search", "map-tab-found-existing", mapId, { activated: true });
+        this.diagnostics.updateGlobalSearchState({ lastNavigationStep: "map-tab-found-existing" });
+        return;
+      }
+      this.diagnostics.record("global-search", "map-tab-create-request", mapId, { position: options.position ?? "current" });
+      this.diagnostics.updateGlobalSearchState({ lastNavigationStep: "map-tab-create-request" });
       await siyuan.openTab({
         app: this.app,
         custom: {
@@ -63391,11 +63731,22 @@ class YeMindZenPlugin extends siyuan.Plugin {
         position: options.position,
         keepCursor: false
       });
-    }, (error) => this.reportOperationFailure("打开导图", error));
+      this.diagnostics.record("global-search", "map-tab-created", mapId, { position: options.position ?? "current" });
+      this.diagnostics.updateGlobalSearchState({ lastNavigationStep: "map-tab-created" });
+    }, (error) => {
+      this.diagnostics.updateGlobalSearchState({ lastNavigationStep: "map-tab-open-failed", lastNavigationSuccess: false, lastFailure: error instanceof Error ? error.message : String(error) });
+      this.reportOperationFailure("打开导图", error);
+    });
   }
   async openMapAtNode(mapId, nodeUid2, options = {}) {
     if (!mapId) return;
-    if (nodeUid2 && this.tabRegistry.focusNode(mapId, nodeUid2)) return;
+    this.diagnostics.record("global-search", "target-navigation-request", mapId, { hasNodeTarget: Boolean(nodeUid2), position: options.position ?? "current" });
+    this.diagnostics.updateGlobalSearchState({ lastNavigationStep: "target-navigation-request", lastNavigationSuccess: null, lastFailure: void 0 });
+    if (nodeUid2 && this.tabRegistry.focusNode(mapId, nodeUid2)) {
+      this.diagnostics.record("global-search", "target-navigation-existing-tab", mapId, { hasNodeTarget: true });
+      this.diagnostics.updateGlobalSearchState({ lastNavigationStep: "target-navigation-existing-tab" });
+      return;
+    }
     if (nodeUid2) this.pendingNodeTargets.set(mapId, nodeUid2);
     await this.openMap(mapId, options);
   }
@@ -63529,7 +63880,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
       });
     }
     menu.addSeparator();
-    menu.addItem({ icon: "iconSettings", label: "设置", click: () => openYeMindSettingsDialog(this.settingsStore) });
+    menu.addItem({ icon: "iconSettings", label: "设置", click: () => openYeMindSettingsDialog(this.settingsStore, { diagnostics: this.diagnostics }) });
     menu.addItem({ icon: "iconInfo", label: "诊断与回归", click: () => openDiagnosticsDialog(this.diagnostics) });
     menu.open({ x: event.clientX, y: event.clientY });
   }

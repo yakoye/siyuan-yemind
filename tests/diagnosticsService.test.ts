@@ -39,7 +39,8 @@ describe('DiagnosticsService', () => {
 
     const report = await service.runSelfCheck();
 
-    expect(report.status).toBe('pass');
+    expect(report.status).toBe('warning');
+    expect(report.items.find((item) => item.id === 'global-search')?.summary).toContain('尚未记录');
     expect(lifecycleProbe).toHaveBeenCalledOnce();
     expect(listener).not.toHaveBeenCalled();
     expect(maps.list().map((map) => map.id)).toEqual(beforeIds);

@@ -14,6 +14,8 @@ export interface FocusHighlightOptions {
   cancelFrame?: (id: number) => void;
   scheduleTimer?: (callback: () => void, delay: number) => number;
   cancelTimer?: (id: number) => void;
+  onFound?: () => void;
+  onMissing?: () => void;
 }
 
 /**
@@ -54,8 +56,12 @@ export function scheduleFocusedNodeHighlight(
         attempt(remaining - 1);
         return;
       }
-      if (!node) return;
+      if (!node) {
+        options.onMissing?.();
+        return;
+      }
       highlighted = node;
+      options.onFound?.();
       node.highlight?.();
       timerId = scheduleTimer(() => {
         timerId = null;
