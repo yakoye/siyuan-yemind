@@ -7,7 +7,7 @@ import {
 
 const maps = [{
   id: 'map-close', title: '搜索测试导图', createdAt: 1, updatedAt: 1,
-  layout: 'logicalStructure', theme: 'kmind-default', lineStyle: 'curve' as const,
+  layout: 'logicalStructure', theme: 'yemind-default', lineStyle: 'curve' as const,
   projectStyle: { density: 'default' as const, rainbowLines: null, backgroundColor: null },
   data: { data: { uid: 'root', text: 'Root' }, children: [
     { data: { uid: 'target', text: '43214' }, children: [] },

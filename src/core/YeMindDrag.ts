@@ -227,7 +227,7 @@ function endpointDistance(parent: DragGuideRect, ghost: DragGuideRect, orientati
 }
 
 /**
- * Keeps simple-mind-map's native drop commands, while adapting KMind Zen's
+ * Keeps the engine's native drop commands while applying YeMind's
  * rectangle/tail/lane intent sampling, per-frame coalescing and 60 ms /
  * three-frame target stabilisation to the installed renderer.
  */

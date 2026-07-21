@@ -7,7 +7,7 @@ import { buildCommentsListHtml } from '../../../src/ui/commentsPresentation';
 
 const maps = [{
   id: 'map-1', title: '未命名导图2', createdAt: 1, updatedAt: 1,
-  layout: 'logicalStructure', theme: 'kmind-default', lineStyle: 'curve' as const,
+  layout: 'logicalStructure', theme: 'yemind-default', lineStyle: 'curve' as const,
   data: { data: { uid: 'root', text: '未命名导图0' }, children: [
     { data: { uid: 'n-target', text: '目标关键词' }, children: [] },
   ] },

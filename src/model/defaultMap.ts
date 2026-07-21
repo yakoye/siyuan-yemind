@@ -24,7 +24,7 @@ export function createDefaultMap(
     createdAt: now,
     updatedAt: now,
     layout: 'logicalStructure',
-    theme: 'kmind-default',
+    theme: 'yemind-default',
     lineStyle: 'curve',
     projectStyle: { ...DEFAULT_PROJECT_STYLE },
     data: createDefaultTree(normalizedTitle),

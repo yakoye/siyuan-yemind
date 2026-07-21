@@ -12,12 +12,12 @@ function memoryStorage(initial: unknown = null) {
 }
 
 describe('map appearance persistence', () => {
-  it('creates maps with KMind Default and curved lines', async () => {
+  it('creates maps with YeMind Default and curved lines', async () => {
     const repo = new MapRepository(memoryStorage(), { id: () => 'map-1', now: () => 100 });
     await repo.load();
     const map = await repo.create('Theme map');
 
-    expect(map.theme).toBe('kmind-default');
+    expect(map.theme).toBe('yemind-default');
     expect(map.lineStyle).toBe('curve');
   });
 
@@ -39,9 +39,9 @@ describe('map appearance persistence', () => {
     await repo.load();
 
     const map = repo.get('legacy')!;
-    expect(map.theme).toBe('kmind-default');
+    expect(map.theme).toBe('yemind-default');
     expect(map.lineStyle).toBe('curve');
-    expect((storage.read() as any).maps[0]).toMatchObject({ theme: 'kmind-default', lineStyle: 'curve' });
+    expect((storage.read() as any).maps[0]).toMatchObject({ theme: 'yemind-default', lineStyle: 'curve' });
   });
 
   it('updates and restores theme and line style through checkpoints', async () => {
@@ -53,19 +53,19 @@ describe('map appearance persistence', () => {
     await checkpoints.load();
     await maps.create('Styled');
     await maps.update('map-1', {
-      theme: 'kmind-midnight-neon',
+      theme: 'scheme-code',
       lineStyle: 'direct',
     });
     const current = maps.get('map-1')!;
     const checkpoint = await checkpoints.create(current, 'Styled state');
 
-    expect(checkpoint.snapshot.theme).toBe('kmind-midnight-neon');
+    expect(checkpoint.snapshot.theme).toBe('scheme-code');
     expect(checkpoint.snapshot.lineStyle).toBe('direct');
 
-    await maps.update('map-1', { theme: 'kmind-default', lineStyle: 'curve' });
+    await maps.update('map-1', { theme: 'yemind-default', lineStyle: 'curve' });
     await maps.restoreSnapshot('map-1', checkpoint.snapshot);
     expect(maps.get('map-1')).toMatchObject({
-      theme: 'kmind-midnight-neon',
+      theme: 'scheme-code',
       lineStyle: 'direct',
     });
   });

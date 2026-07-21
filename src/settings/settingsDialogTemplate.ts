@@ -238,7 +238,7 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
             <div><dt>构建标识</dt><dd>${escapeHtml(RELEASE_INFO.buildId)}</dd></div>
             <div><dt>构建时间</dt><dd>${escapeHtml(RELEASE_INFO.buildTime)}</dd></div>
             <div><dt>思源版本</dt><dd data-about-version="siyuan">正在读取…</dd></div>
-            <div><dt>官方参考</dt><dd>${escapeHtml(RELEASE_INFO.officialReference)}</dd></div>
+            <div><dt>开发基线</dt><dd>${escapeHtml(RELEASE_INFO.hostBaseline)}</dd></div>
           </dl>
           <div class="ymz-about-consistency" data-about-consistency="pending">正在检查版本一致性…</div>
         </div>

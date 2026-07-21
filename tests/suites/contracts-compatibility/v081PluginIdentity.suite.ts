@@ -72,8 +72,8 @@ describe('YeMind plugin identity and install layout', () => {
     expect(manifest.displayName.default).toBe('YeMind');
     expect(manifest.displayName.zh_CN).toBe('YeMind');
     expect(packageJson.name).toBe('siyuan-yemind');
-    expect(manifest.version).toBe('0.8.6');
-    expect(packageJson.version).toBe('0.8.6');
+    expect(manifest.version).toBe('0.9.0');
+    expect(packageJson.version).toBe('0.9.0');
   });
 
   it('uses the renamed YeMindPlugin source entry and removes the old current source filename', () => {
@@ -112,6 +112,23 @@ describe('YeMind plugin identity and install layout', () => {
     expect(pluginSource).toContain('<circle cx="5.5" cy="5.5" r="2.5"/>');
     expect(aboutTemplate).toContain('ROOT_ICON_URL');
     expect(existsSync(resolve('src/plugin/yemindIcon.ts'))).toBe(true);
+  });
+
+  it('keeps public documentation on the YeMind identity and SiYuan 3.7.3 baseline', () => {
+    const publicDocs = [
+      'README.md', 'README_zh_CN.md', 'CHANGELOG.md', 'DEVELOPMENT_PLAN.md',
+      'FEATURE_MATRIX.md', 'MIGRATION_STATUS.md', 'AGENTS.md', 'ARCHITECTURE.md',
+      ...Array.from(new Set([
+        'docs/DIAGNOSTICS_GUIDE.md', 'docs/VERSIONING.md',
+        'docs/TEST_COVERAGE_MATRIX_v0.9.0.md', 'docs/verification-v0.9.0.md',
+        'docs/PRODUCT_BOUNDARIES_v0.9.0.md',
+      ])),
+    ].map((file) => readFileSync(resolve(file), 'utf8')).join('\n');
+    expect(publicDocs).not.toMatch(/kmind/i);
+    expect(publicDocs).not.toContain('SiYuan 3.7.2');
+    expect(publicDocs).toContain('SiYuan 3.7.3');
+    const manifest = JSON.parse(readFileSync(resolve('plugin.json'), 'utf8'));
+    expect(manifest.minAppVersion).toBe('3.7.3');
   });
 
   it('uses YeMind in current runtime UI and release information', () => {

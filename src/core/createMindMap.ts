@@ -8,6 +8,7 @@ import { buildRelationOptions } from './relationConfig';
 import { buildOuterFrameOptions } from './outerFrameConfig';
 import { resolveUpstreamShortcutAction } from '../editor/shortcutSafety';
 import { buildThemeConfig, detectAppearance, type YeMindLineStyle } from './themePresets';
+import { imageDeleteIcon } from './YeMindNodeImgAdjust';
 
 export interface CreateMindMapOptions {
   el: HTMLElement;
@@ -20,6 +21,18 @@ export interface CreateMindMapOptions {
   settings?: YeMindSettings;
   onHyperlink?: (href: string) => void;
   onDeleteShortcut?: () => void;
+  onConfirmDeleteImage?: (node: any) => Promise<boolean>;
+}
+
+
+export function createImageDeleteGuard(
+  confirmDelete?: (node: any) => Promise<boolean>,
+): (node: any) => Promise<boolean> {
+  return async (node: any): Promise<boolean> => {
+    if (!confirmDelete) return false;
+    const confirmed = await confirmDelete(node);
+    return !confirmed;
+  };
 }
 
 export function createMindMap(options: CreateMindMapOptions): MindMap {
@@ -85,6 +98,8 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     openRealtimeRenderOnNodeTextEdit: true,
     enableEditFormulaInRichTextEdit: true,
     customHyperlinkJump: (href: string) => options.onHyperlink?.(href),
+    customDeleteBtnInnerHTML: imageDeleteIcon(),
+    beforeDeleteNodeImg: createImageDeleteGuard(options.onConfirmDeleteImage),
     beforeShortcutRun: (shortcut: string, nodes: any[]) => {
       const action = resolveUpstreamShortcutAction(
         shortcut,

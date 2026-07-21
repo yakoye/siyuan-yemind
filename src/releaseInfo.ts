@@ -3,18 +3,19 @@ import { PLUGIN_VERSION, PRODUCT_NAME, PROJECT_PACKAGE_NAME } from './plugin/con
 export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: '2026-07-21T22:30:00+08:00',
-  buildId: 'yemind-v0.8.6-20260721',
+  buildTime: '2026-07-21T23:45:00+08:00',
+  buildId: 'yemind-v0.9.0-20260721',
   productName: PRODUCT_NAME,
   projectName: PROJECT_PACKAGE_NAME,
   tagline: '思源笔记中的思维导图、分屏大纲与知识整理插件。',
-  officialReference: 'KMind Zen 0.34.0',
-  releaseSummary: '重构测试体系：按 15 个功能域组织 445 项回归，合并重复入口并建立功能覆盖矩阵。',
+  hostBaseline: 'SiYuan 3.7.3',
+  releaseSummary: '新增图片安全操作与沉浸预览，扩展彩虹连线配色，并重做整图主题方案。',
   highlights: [
-    '将 159 个零散测试入口重组为 15 个功能域入口，保留独立场景模块和故障隔离能力。',
-    '删除重复的插件身份与版本断言，所有用户反馈形成的永久回归场景继续保留。',
-    '新增测试结构门禁、suite manifest 和功能覆盖矩阵，阻止孤立、漏挂载或未分类测试进入发布包。',
-    '完整执行 445 项测试、TypeScript 检查、生产构建和最终 ZIP 解压后二次验证。',
+    '节点图片增加左上角放大预览和右上角删除图标，删除前必须二次确认。',
+    '图片预览支持遮罩显示、滚轮缩放、恢复 1:1、点击空白或按 Esc 关闭。',
+    '备注和批注悬停只显示内容预览，不再叠加浏览器提示标签。',
+    '彩虹连线增加晨曦、彩虹、活力、舞动、代码、和风、岛屿、玫瑰、薄荷和绿茶十套配色。',
+    '主题面板保留三套基础主题，并加入十套带背景色、节点色和分支色的完整配色方案。',
   ],
 } as const;
 

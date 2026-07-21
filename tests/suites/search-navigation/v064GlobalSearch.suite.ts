@@ -4,7 +4,7 @@ import { collectGlobalMapMatches, renderGlobalSearchResults } from '../../../src
 describe('v0.6.4 SiYuan global search integration', () => {
   const maps = [{
     id: 'm1', title: 'PCIe 学习', createdAt: 1, updatedAt: 1,
-    layout: 'logicalStructure', theme: 'kmind-default', lineStyle: 'curve' as const,
+    layout: 'logicalStructure', theme: 'yemind-default', lineStyle: 'curve' as const,
     data: { data: { uid: 'root', text: 'PCIe Root' }, children: [
       { data: { uid: 'ats', text: '<b>ATS 地址转换服务</b>', richText: true }, children: [] },
     ] },

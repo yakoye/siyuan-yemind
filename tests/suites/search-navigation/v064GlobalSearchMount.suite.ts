@@ -3,7 +3,7 @@ import { mountGlobalSearchResults } from '../../../src/plugin/globalSearch';
 
 const maps = [{
   id: 'm1', title: 'PCIe 学习', createdAt: 1, updatedAt: 1,
-  layout: 'logicalStructure', theme: 'kmind-default', lineStyle: 'curve' as const,
+  layout: 'logicalStructure', theme: 'yemind-default', lineStyle: 'curve' as const,
   projectStyle: { density: 'default' as const, rainbowLines: null, backgroundColor: null },
   data: { data: { uid: 'root', text: 'PCIe Root' }, children: [
     { data: { uid: 'ats', text: 'ATS', yemindNote: { html: '<p>地址转换服务</p>', createdAt: 1, updatedAt: 1 }, yemindComments: [{ id: 'c1', text: '需要测试缓存失效', createdAt: 1, updatedAt: 1 }] }, children: [] },

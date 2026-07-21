@@ -56,8 +56,8 @@ function createBadge(node: any, type: 'note' | 'comments'): HTMLButtonElement {
   badge.type = 'button';
   badge.className = `ymz-node-content-badge ymz-node-content-badge--${type}${type === 'comments' ? ' ymz-node-comment-badge' : ' ymz-node-note-badge'}`;
   badge.dataset.yemindBadge = type;
-  badge.title = type === 'note' ? '备注' : '批注';
-  badge.setAttribute('aria-label', badge.title);
+  const accessibleLabel = type === 'note' ? '备注' : '批注';
+  badge.setAttribute('aria-label', accessibleLabel);
   badge.innerHTML = type === 'note' ? noteSvg() : commentSvg();
   badge.addEventListener('click', (event) => {
     event.preventDefault(); event.stopPropagation();

@@ -10,7 +10,7 @@ import {
 
 const maps = [{
   id: 'map-1', title: '未命名导图2', createdAt: 1, updatedAt: 1,
-  layout: 'logicalStructure', theme: 'kmind-default', lineStyle: 'curve' as const,
+  layout: 'logicalStructure', theme: 'yemind-default', lineStyle: 'curve' as const,
   projectStyle: { density: 'default' as const, rainbowLines: null, backgroundColor: null },
   data: { data: { uid: 'root', text: '未命名导图0' }, children: [
     { data: { uid: 'branch', text: '另一个主' }, children: [

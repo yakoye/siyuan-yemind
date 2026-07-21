@@ -1,8 +1,11 @@
+import { getColorScheme, normalizeColorSchemeId } from '../core/colorSchemes';
+
 export type ProjectDensity = 'compact' | 'default' | 'comfortable' | 'custom';
 
 export interface ProjectStyle {
   density: ProjectDensity;
   rainbowLines: boolean | null;
+  rainbowScheme: string | null;
   backgroundColor: string | null;
   customMarginX?: number;
   customMarginY?: number;
@@ -11,6 +14,7 @@ export interface ProjectStyle {
 export const DEFAULT_PROJECT_STYLE: ProjectStyle = {
   density: 'default',
   rainbowLines: null,
+  rainbowScheme: null,
   backgroundColor: null,
 };
 
@@ -34,8 +38,9 @@ export function normalizeProjectStyle(value: unknown): ProjectStyle {
     ? input.density
     : 'default';
   const rainbowLines = typeof input.rainbowLines === 'boolean' ? input.rainbowLines : null;
+  const rainbowScheme = normalizeColorSchemeId(input.rainbowScheme);
   const backgroundColor = normalizeColor(input.backgroundColor);
-  const base: ProjectStyle = { density, rainbowLines, backgroundColor };
+  const base: ProjectStyle = { density, rainbowLines, rainbowScheme, backgroundColor };
   if (density === 'custom') {
     base.customMarginX = normalizeSpacing(input.customMarginX, 42, 12, 240);
     base.customMarginY = normalizeSpacing(input.customMarginY, 11, 2, 100);
@@ -80,6 +85,7 @@ export function densitySpacing(
   return {};
 }
 
+
 export function resolveProjectAppearance(input: {
   style: ProjectStyle | Record<string, unknown> | null | undefined;
   themeConfig: Record<string, any>;
@@ -98,6 +104,7 @@ export function resolveProjectAppearance(input: {
     rainbow: {
       ...input.rainbow,
       open: style.rainbowLines ?? input.rainbow.open,
+      colorsList: getColorScheme(style.rainbowScheme)?.colors.slice() ?? input.rainbow.colorsList,
     },
   };
 }

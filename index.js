@@ -3035,6 +3035,30 @@ function downloadDiagnosticsArchive(blob, filename) {
   anchor.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 1e3);
 }
+const YEMIND_COLOR_SCHEMES = [
+  { id: "dawn", label: "晨曦", colors: ["#ff6b6b", "#ff9f68", "#a8d4bd", "#8edbd7", "#62c8e5", "#d07ae8"], background: "#ffffff", text: "#172033" },
+  { id: "rainbow", label: "彩虹", colors: ["#f04444", "#f39a43", "#e8c600", "#81c995", "#62d2c9", "#60bde7", "#5261d8", "#d075e4"], background: "#ffffff", text: "#172033" },
+  { id: "vitality", label: "活力", colors: ["#ffffff", "#f4f4f4", "#ff2d1a", "#f5c400", "#2f45dc", "#070707"], background: "#ffffff", text: "#111111" },
+  { id: "dance", label: "舞动", colors: ["#4f5ee6", "#eb4660", "#ffffff", "#fff8e7", "#bd1021", "#3a3123"], background: "#ffffff", text: "#161a2b" },
+  { id: "code", label: "代码", colors: ["#fff0b0", "#c8ffb1", "#ffffff", "#cf7df0", "#84b4f0", "#3e4349"], background: "#2c2d30", darkBackground: "#2c2d30", text: "#17191d", darkText: "#f5f7fa" },
+  { id: "harmony", label: "和风", colors: ["#ffffff", "#ffb3b3", "#ff7a36", "#84a9f6", "#544fd4", "#25217b"], background: "#ffffff", text: "#1f2548" },
+  { id: "island", label: "岛屿", colors: ["#ffe9d8", "#dec2ad", "#c59477", "#c7c5b5", "#abae98", "#737865"], background: "#ffe8d6", text: "#4b463f" },
+  { id: "rose", label: "玫瑰", colors: ["#fff0f3", "#ffd0da", "#ffa8bb", "#ff6d8c", "#d5104d", "#a90b3f"], background: "#fff0f3", text: "#8f2344" },
+  { id: "mint", label: "薄荷", colors: ["#ffffff", "#d8faf7", "#a5edf0", "#76d9de", "#23b6b2", "#007e78"], background: "#ffffff", text: "#086d6b" },
+  { id: "green-tea", label: "绿茶", colors: ["#d9d6c3", "#bfb89a", "#66a272", "#687f59", "#416449", "#203a26"], background: "#1f2b1d", darkBackground: "#1f2b1d", text: "#1d2a1d", darkText: "#f1f2df" }
+];
+const SCHEME_MAP = new Map(YEMIND_COLOR_SCHEMES.map((scheme) => [scheme.id, scheme]));
+function normalizeColorSchemeId(value) {
+  return typeof value === "string" && SCHEME_MAP.has(value) ? value : null;
+}
+function getColorScheme(value) {
+  const id = normalizeColorSchemeId(value);
+  return id ? SCHEME_MAP.get(id) ?? null : null;
+}
+function rainbowSchemeOptionsHtml(selected) {
+  const value = normalizeColorSchemeId(selected) ?? "rainbow";
+  return YEMIND_COLOR_SCHEMES.map((scheme) => `<option value="${scheme.id}"${scheme.id === value ? " selected" : ""}>${scheme.label}</option>`).join("");
+}
 const FONT_SANS = 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif';
 const FONT_MONO = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
 const RAINBOW = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
@@ -3055,8 +3079,8 @@ const defaultLight = {
 };
 const defaultDark = {
   backgroundColor: "#0b1220",
-  lineColor: "rgba(148, 163, 184, 0.62)",
-  generalizationLineColor: "rgba(148, 163, 184, 0.72)",
+  lineColor: "rgba(148,163,184,.62)",
+  generalizationLineColor: "rgba(148,163,184,.72)",
   associativeLineColor: "#f59e0b",
   root: level$1("#0b1220", "#e2e8f0", "rgba(148,163,184,.45)", 2, 10, 14, "400"),
   second: level$1("#0b1220", "#e2e8f0", "rgba(148,163,184,.45)", 2, 10, 14, "400"),
@@ -3065,28 +3089,12 @@ const defaultDark = {
   lineWidth: 2,
   lineRadius: 10
 };
-function materialVariant(accent2, rootFill, depthFill, backgroundColor, dark = false) {
-  const text2 = dark ? "#fef7ff" : "#1d1b20";
-  const nodeFill = dark ? "#211f26" : "#fffbfe";
-  return {
-    backgroundColor,
-    lineColor: accent2,
-    generalizationLineColor: accent2,
-    associativeLineColor: dark ? "#f2b8b5" : "#ba1a1a",
-    root: level$1(rootFill, dark ? "#fef7ff" : "#ffffff", "transparent", 0, 16, 24, "700"),
-    second: level$1(depthFill, text2, "transparent", 0, 16, 18, "600"),
-    node: level$1(nodeFill, text2, "transparent", 0, 14, 14, "400"),
-    rainbow: { open: false, colorsList: [accent2, "#0ea5e9", "#14b8a6", "#22c55e", "#f59e0b", "#fb7185", "#a78bfa"] },
-    lineWidth: 2,
-    lineRadius: 14
-  };
-}
 const inkLight = {
   backgroundColor: "#ffffff",
   lineColor: "#151515",
   generalizationLineColor: "#151515",
   associativeLineColor: "#737373",
-  root: { ...level$1("transparent", "#3749b5", "transparent", 0, 0, 26, "800") },
+  root: level$1("transparent", "#3749b5", "transparent", 0, 0, 26, "800"),
   second: level$1("transparent", "#111111", "transparent", 0, 0, 18, "700"),
   node: level$1("transparent", "#111111", "transparent", 0, 0, 14, "600"),
   rainbow: { open: false, colorsList: ["#151515", "#3749b5", "#525252", "#737373"] },
@@ -3107,31 +3115,7 @@ const inkDark = {
   lineWidth: 4,
   lineRadius: 0
 };
-const slateLight = {
-  backgroundColor: "#f5f7fb",
-  lineColor: "#475569",
-  generalizationLineColor: "#64748b",
-  associativeLineColor: "#2563eb",
-  root: level$1("#303745", "#f8fafc", "transparent", 0, 16, 24, "700"),
-  second: level$1("#e8ecf3", "#1e293b", "transparent", 0, 16, 18, "600"),
-  node: level$1("#ffffff", "#334155", "#d8dee9", 1, 14, 14, "400"),
-  rainbow: { open: false, colorsList: ["#303745", "#1b5fa7", "#0ea5e9", "#14b8a6", "#22c55e", "#f59e0b", "#fb7185", "#a78bfa"] },
-  lineWidth: 2,
-  lineRadius: 14
-};
-const slateDark = {
-  backgroundColor: "#0e1219",
-  lineColor: "#c5cad4",
-  generalizationLineColor: "#9aa3b2",
-  associativeLineColor: "#8bb4ff",
-  root: level$1("#303745", "#f6f7fb", "transparent", 0, 16, 24, "700"),
-  second: level$1("#242b37", "#e6e9ef", "transparent", 0, 16, 18, "600"),
-  node: level$1("#1a2435", "#dce3f3", "#303745", 1, 14, 14, "400"),
-  rainbow: { open: false, colorsList: ["#303745", "#1b5fa7", "#0ea5e9", "#14b8a6", "#22c55e", "#f59e0b", "#fb7185", "#a78bfa"] },
-  lineWidth: 2,
-  lineRadius: 14
-};
-const materialBasicLight = {
+const materialLight = {
   backgroundColor: "#fef7ff",
   lineColor: "#79747e",
   generalizationLineColor: "#cac4d0",
@@ -3144,7 +3128,7 @@ const materialBasicLight = {
   lineRadius: 16,
   lineDasharray: "6,4"
 };
-const materialBasicDark = {
+const materialDark = {
   backgroundColor: "#141218",
   lineColor: "#938f99",
   generalizationLineColor: "#49454f",
@@ -3157,86 +3141,71 @@ const materialBasicDark = {
   lineRadius: 16,
   lineDasharray: "6,4"
 };
-const candyLight = {
-  backgroundColor: "#fff1f2",
-  lineColor: "#7c3aed",
-  generalizationLineColor: "rgba(124, 58, 237, 0.55)",
-  associativeLineColor: "#0ea5e9",
-  root: level$1("#ffffff", "#111827", "#ec4899", 2.5, 999, 22, "800"),
-  second: level$1("#ffffff", "#111827", "#ec4899", 2.5, 999, 17, "650"),
-  node: level$1("#ffffff", "#111827", "#f9a8d4", 2, 999, 14, "450"),
-  rainbow: { open: false, colorsList: ["#ec4899", "#7c3aed", "#0ea5e9", "#14b8a6", "#f97316", "#eab308"] },
-  lineWidth: 2.5,
-  lineRadius: 18
-};
-const candyDark = {
-  backgroundColor: "#0b1020",
-  lineColor: "#a78bfa",
-  generalizationLineColor: "rgba(167, 139, 250, 0.55)",
-  associativeLineColor: "#38bdf8",
-  root: level$1("#0f172a", "#e5e7eb", "#fb7185", 2.5, 999, 22, "800"),
-  second: level$1("#0f172a", "#e5e7eb", "#a78bfa", 2.5, 999, 17, "650"),
-  node: level$1("#111827", "#e5e7eb", "#64748b", 2, 999, 14, "450"),
-  rainbow: { open: false, colorsList: ["#fb7185", "#a78bfa", "#38bdf8", "#2dd4bf", "#fb923c", "#facc15"] },
-  lineWidth: 2.5,
-  lineRadius: 18
-};
-const neon = {
-  backgroundColor: "#070a14",
-  lineColor: "#a855f7",
-  generalizationLineColor: "rgba(168,85,247,.72)",
-  associativeLineColor: "#f59e0b",
-  root: level$1("#0b1020", "#e2e8f0", "#22c55e", 3, 14, 24, "800"),
-  second: level$1("#0b1020", "#e2e8f0", "#a855f7", 2.5, 14, 18, "600"),
-  node: level$1("#0b1020", "#e2e8f0", "#38bdf8", 1.5, 12, 14, "400"),
-  rainbow: { open: true, colorsList: RAINBOW },
-  lineWidth: 4,
-  lineRadius: 16
-};
-const rainbowLight = {
-  backgroundColor: "#f8fafc",
-  lineColor: "#0ea5e9",
-  generalizationLineColor: "rgba(14,165,233,.55)",
-  associativeLineColor: "#fb7185",
-  root: level$1("#e53935", "#ffffff", "transparent", 0, 16, 24, "800"),
-  second: level$1("#ffffff", "#0f172a", "#0ea5e9", 2.5, 16, 18, "700"),
-  node: level$1("#ffffff", "#0f172a", "#bae6fd", 1.5, 14, 14, "400"),
-  rainbow: { open: true, colorsList: ["#fb7185", "#f97316", "#fbbf24", "#34d399", "#22d3ee", "#60a5fa", "#a78bfa", "#f472b6"] },
-  lineWidth: 3,
-  lineRadius: 16
-};
-const rainbowDark = {
-  backgroundColor: "#0b1020",
-  lineColor: "#38bdf8",
-  generalizationLineColor: "rgba(56,189,248,.62)",
-  associativeLineColor: "#fb7185",
-  root: level$1("#b91c1c", "#ffffff", "transparent", 0, 16, 24, "800"),
-  second: level$1("#0f172a", "#e2e8f0", "#38bdf8", 2.5, 16, 18, "700"),
-  node: level$1("#0f172a", "#e2e8f0", "#1e3a5f", 1.5, 14, 14, "400"),
-  rainbow: { open: true, colorsList: ["#fb7185", "#fb923c", "#facc15", "#4ade80", "#22d3ee", "#60a5fa", "#a78bfa", "#f472b6"] },
-  lineWidth: 3,
-  lineRadius: 16
-};
+function contrastText(color2) {
+  const hex2 = color2.replace("#", "");
+  const r = Number.parseInt(hex2.slice(0, 2), 16);
+  const g = Number.parseInt(hex2.slice(2, 4), 16);
+  const b = Number.parseInt(hex2.slice(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1e3 > 150 ? "#141414" : "#ffffff";
+}
+function schemeVariant(id, appearance) {
+  const scheme = getColorScheme(id);
+  const background = appearance === "dark" ? scheme.darkBackground ?? scheme.background : scheme.background;
+  const colors = [...scheme.colors];
+  const strong = colors[Math.min(colors.length - 1, 4)];
+  const medium = colors[Math.min(colors.length - 1, 2)];
+  const light = colors[Math.min(colors.length - 1, 1)];
+  const rootText = appearance === "dark" ? scheme.darkText ?? "#f5f5f5" : scheme.text ?? "#202020";
+  return {
+    backgroundColor: background,
+    lineColor: strong,
+    generalizationLineColor: medium,
+    associativeLineColor: colors[0],
+    root: level$1("transparent", rootText, "transparent", 0, 0, 25, "800"),
+    second: level$1(strong, contrastText(strong), "transparent", 0, 10, 18, "700"),
+    node: level$1(light, contrastText(light), "transparent", 0, 8, 14, "400"),
+    rainbow: { open: true, colorsList: colors },
+    lineWidth: 2.4,
+    lineRadius: 16
+  };
+}
+const BASE_PRESETS = [
+  { id: "yemind-default", label: "YeMind 默认", description: "清晰圆角与中性背景", group: "基础", light: defaultLight, dark: defaultDark },
+  { id: "ink-branch", label: "Ink Branch", description: "粗线条极简分支", group: "基础", light: inkLight, dark: inkDark },
+  { id: "material-3-basic", label: "Material 3 Basic", description: "柔和圆角 Material 风格", group: "基础", light: materialLight, dark: materialDark }
+];
 const YEMIND_THEME_PRESETS = [
-  { id: "kmind-default", label: "KMind 默认", description: "官方默认的清晰圆角风格", light: defaultLight, dark: defaultDark },
-  { id: "kmind-material-3-slate", label: "KMind Slate", description: "克制的石板灰专业风格", light: slateLight, dark: slateDark },
-  { id: "kmind-material-3", label: "Material 3 Basic", description: "官方 Material 3 基础主题", light: materialBasicLight, dark: materialBasicDark },
-  { id: "kmind-candy-pop", label: "Candy Pop", description: "糖果色胶囊节点和彩虹分支", light: candyLight, dark: candyDark },
-  { id: "kmind-material-3-rounded-orthogonal-ocean", label: "Material Ocean", description: "海洋蓝 Material 3", light: materialVariant("#00639a", "#00639a", "#d0e4ff", "#f8f9ff"), dark: materialVariant("#92ccff", "#004a75", "#12344c", "#0d141b", true) },
-  { id: "kmind-material-3-rounded-orthogonal-forest", label: "Material Forest", description: "森林绿 Material 3", light: materialVariant("#386a20", "#386a20", "#d6e8c9", "#f8fbf4"), dark: materialVariant("#9bd67d", "#205107", "#263d22", "#10170f", true) },
-  { id: "kmind-material-3-rounded-orthogonal-citrus", label: "Material Citrus", description: "柑橘色 Material 3", light: materialVariant("#8f4c00", "#8f4c00", "#ffddb5", "#fff8f1"), dark: materialVariant("#ffb86c", "#6b3b00", "#4a2a00", "#1a120b", true) },
-  { id: "kmind-material-3-rounded-orthogonal-rose", label: "Material Rose", description: "玫瑰色 Material 3", light: materialVariant("#984061", "#984061", "#ffd9e2", "#fff8f8"), dark: materialVariant("#ffb0c8", "#7b2949", "#492532", "#1a1115", true) },
-  { id: "kmind-material-3-rounded-orthogonal-violet", label: "Material Violet", description: "紫罗兰 Material 3", light: materialVariant("#6750a4", "#6750a4", "#eaddff", "#fffbfe"), dark: materialVariant("#d0bcff", "#4f378b", "#332d41", "#141218", true) },
-  { id: "kmind-material-3-rounded-orthogonal-aqua", label: "Material Aqua", description: "青绿色 Material 3", light: materialVariant("#006a60", "#006a60", "#9ef2e5", "#f4fbf9"), dark: materialVariant("#82d5c9", "#005047", "#173936", "#0d1514", true) },
-  { id: "kmind-midnight-neon", label: "Midnight Neon", description: "深色霓虹与彩虹分支", light: neon, dark: neon },
-  { id: "kmind-rainbow-breeze", label: "Rainbow Breeze", description: "轻盈彩虹分支", light: rainbowLight, dark: rainbowDark },
-  { id: "kmind-baseline-fork-ink", label: "Ink Branch", description: "粗墨枝干式极简主题", light: inkLight, dark: inkDark }
+  ...BASE_PRESETS,
+  ...YEMIND_COLOR_SCHEMES.map((scheme) => ({
+    id: `scheme-${scheme.id}`,
+    label: scheme.label,
+    description: `${scheme.label}配色方案`,
+    group: "配色方案",
+    light: schemeVariant(scheme.id, "light"),
+    dark: schemeVariant(scheme.id, "dark")
+  }))
 ];
 const THEME_IDS = new Set(YEMIND_THEME_PRESETS.map((item) => item.id));
+const LEGACY_THEME_ALIASES = {
+  default: "yemind-default",
+  "kmind-default": "yemind-default",
+  "kmind-baseline-fork-ink": "ink-branch",
+  "kmind-material-3": "material-3-basic",
+  "kmind-material-3-slate": "yemind-default",
+  "kmind-candy-pop": "scheme-rainbow",
+  "kmind-material-3-rounded-orthogonal-ocean": "scheme-mint",
+  "kmind-material-3-rounded-orthogonal-forest": "scheme-green-tea",
+  "kmind-material-3-rounded-orthogonal-citrus": "scheme-dawn",
+  "kmind-material-3-rounded-orthogonal-rose": "scheme-rose",
+  "kmind-material-3-rounded-orthogonal-violet": "scheme-dance",
+  "kmind-material-3-rounded-orthogonal-aqua": "scheme-mint",
+  "kmind-midnight-neon": "scheme-code",
+  "kmind-rainbow-breeze": "scheme-rainbow"
+};
 const LINE_STYLES = /* @__PURE__ */ new Set(["curve", "straight", "direct"]);
 function normalizeThemePresetId(value) {
-  if (value === "default" || typeof value !== "string" || !THEME_IDS.has(value)) return "kmind-default";
-  return value;
+  if (typeof value === "string" && LEGACY_THEME_ALIASES[value]) return LEGACY_THEME_ALIASES[value];
+  return typeof value === "string" && THEME_IDS.has(value) ? value : "yemind-default";
 }
 function normalizeLineStyle(value) {
   return typeof value === "string" && LINE_STYLES.has(value) ? value : "curve";
@@ -3245,36 +3214,14 @@ function detectAppearance(root2 = typeof document === "undefined" ? null : docum
   const candidates = root2 ? [root2, ...typeof document !== "undefined" && root2 === document.documentElement && document.body ? [document.body] : []] : [];
   for (const candidate of candidates) {
     const element = candidate;
-    const values = [
-      element.dataset.themeMode,
-      element.dataset.theme,
-      element.getAttribute("data-color-mode"),
-      element.getAttribute("data-theme-mode"),
-      element.className
-    ].filter(Boolean).join(" ").toLowerCase();
+    const values = [element.dataset.themeMode, element.dataset.theme, element.getAttribute("data-color-mode"), element.getAttribute("data-theme-mode"), element.className].filter(Boolean).join(" ").toLowerCase();
     if (/(^|\s|[-_])(dark|midnight)(\s|$|[-_])/.test(` ${values} `)) return "dark";
     if (/(^|\s|[-_])light(\s|$|[-_])/.test(` ${values} `)) return "light";
   }
   return typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 function cloneLevel(style, marginX, marginY) {
-  return {
-    shape: "rectangle",
-    fillColor: style.fillColor,
-    fontFamily: FONT_SANS,
-    color: style.color,
-    fontSize: style.fontSize,
-    fontWeight: style.fontWeight,
-    fontStyle: "normal",
-    borderColor: style.borderColor,
-    borderWidth: style.borderWidth,
-    borderDasharray: "none",
-    borderRadius: style.borderRadius,
-    textDecoration: "none",
-    textAlign: "left",
-    marginX,
-    marginY
-  };
+  return { shape: "rectangle", fillColor: style.fillColor, fontFamily: FONT_SANS, color: style.color, fontSize: style.fontSize, fontWeight: style.fontWeight, fontStyle: "normal", borderColor: style.borderColor, borderWidth: style.borderWidth, borderDasharray: "none", borderRadius: style.borderRadius, textDecoration: "none", textAlign: "left", marginX, marginY };
 }
 function buildThemeConfig(options) {
   const presetId = normalizeThemePresetId(options.presetId);
@@ -3283,49 +3230,15 @@ function buildThemeConfig(options) {
   const spacing2 = options.spacingConfig ?? {};
   const lineStyle = normalizeLineStyle(options.lineStyle);
   const root2 = { ...cloneLevel(variant.root, 0, 0), ...spacing2.root ?? {} };
-  if (presetId === "kmind-baseline-fork-ink") root2.fontFamily = FONT_MONO;
+  if (presetId === "ink-branch") root2.fontFamily = FONT_MONO;
   const second = { ...cloneLevel(variant.second, 100, 38), ...spacing2.second ?? {} };
   const node = { ...cloneLevel(variant.node, 54, 12), ...spacing2.node ?? {} };
-  const generalization = {
-    ...cloneLevel(variant.second, 80, 30),
-    fillColor: variant.second.fillColor,
-    ...spacing2.generalization ?? {}
-  };
-  return {
-    presetId,
-    themeConfig: {
-      paddingX: 12,
-      paddingY: 7,
-      lineWidth: variant.lineWidth ?? 2,
-      lineColor: variant.lineColor,
-      lineDasharray: variant.lineDasharray ?? "none",
-      lineStyle,
-      rootLineKeepSameInCurve: true,
-      rootLineStartPositionKeepSameInCurve: false,
-      lineRadius: variant.lineRadius ?? 10,
-      generalizationLineWidth: Math.max(1, (variant.lineWidth ?? 2) - 0.5),
-      generalizationLineColor: variant.generalizationLineColor,
-      associativeLineWidth: 2,
-      associativeLineColor: variant.associativeLineColor,
-      associativeLineActiveWidth: 6,
-      associativeLineActiveColor: variant.root.color,
-      associativeLineTextColor: variant.node.color,
-      backgroundColor: variant.backgroundColor,
-      nodeUseLineStyle: Boolean(variant.nodeUseLineStyle),
-      root: root2,
-      second,
-      node,
-      generalization
-    },
-    rainbow: {
-      open: variant.rainbow.open,
-      colorsList: [...variant.rainbow.colorsList]
-    }
-  };
+  const generalization = { ...cloneLevel(variant.second, 80, 30), fillColor: variant.second.fillColor, ...spacing2.generalization ?? {} };
+  return { presetId, themeConfig: { paddingX: 12, paddingY: 7, lineWidth: variant.lineWidth ?? 2, lineColor: variant.lineColor, lineDasharray: variant.lineDasharray ?? "none", lineStyle, rootLineKeepSameInCurve: true, rootLineStartPositionKeepSameInCurve: false, lineRadius: variant.lineRadius ?? 10, generalizationLineWidth: Math.max(1, (variant.lineWidth ?? 2) - 0.5), generalizationLineColor: variant.generalizationLineColor, associativeLineWidth: 2, associativeLineColor: variant.associativeLineColor, associativeLineActiveWidth: 6, associativeLineActiveColor: variant.root.color, associativeLineTextColor: variant.node.color, backgroundColor: variant.backgroundColor, nodeUseLineStyle: Boolean(variant.nodeUseLineStyle), root: root2, second, node, generalization }, rainbow: { open: variant.rainbow.open, colorsList: [...variant.rainbow.colorsList] } };
 }
 function themeOptionsHtml(selected) {
   const value = normalizeThemePresetId(selected);
-  return YEMIND_THEME_PRESETS.map((preset) => `<option value="${preset.id}"${preset.id === value ? " selected" : ""}>${preset.label}</option>`).join("");
+  return ["基础", "配色方案"].map((group) => `<optgroup label="${group}">${YEMIND_THEME_PRESETS.filter((preset) => preset.group === group).map((preset) => `<option value="${preset.id}"${preset.id === value ? " selected" : ""}>${preset.label}</option>`).join("")}</optgroup>`).join("");
 }
 const YEMIND_LAYOUT_PRESETS = [
   { id: "logicalStructure", label: "向右逻辑图", family: "logic" },
@@ -3363,6 +3276,7 @@ function layoutOptionsHtml(selected) {
 const DEFAULT_PROJECT_STYLE = {
   density: "default",
   rainbowLines: null,
+  rainbowScheme: null,
   backgroundColor: null
 };
 function normalizeColor(value) {
@@ -3379,8 +3293,9 @@ function normalizeProjectStyle(value) {
   const input = value && typeof value === "object" ? value : {};
   const density = input.density === "compact" || input.density === "comfortable" || input.density === "custom" ? input.density : "default";
   const rainbowLines = typeof input.rainbowLines === "boolean" ? input.rainbowLines : null;
+  const rainbowScheme = normalizeColorSchemeId(input.rainbowScheme);
   const backgroundColor = normalizeColor(input.backgroundColor);
-  const base = { density, rainbowLines, backgroundColor };
+  const base = { density, rainbowLines, rainbowScheme, backgroundColor };
   if (density === "custom") {
     base.customMarginX = normalizeSpacing(input.customMarginX, 42, 12, 240);
     base.customMarginY = normalizeSpacing(input.customMarginY, 11, 2, 100);
@@ -3417,6 +3332,7 @@ function densitySpacing(density, customMarginX, customMarginY) {
   return {};
 }
 function resolveProjectAppearance(input) {
+  var _a;
   const style = normalizeProjectStyle(input.style);
   const spacing2 = densitySpacing(style.density, style.customMarginX, style.customMarginY);
   const themeConfig = {
@@ -3429,7 +3345,8 @@ function resolveProjectAppearance(input) {
     themeConfig,
     rainbow: {
       ...input.rainbow,
-      open: style.rainbowLines ?? input.rainbow.open
+      open: style.rainbowLines ?? input.rainbow.open,
+      colorsList: ((_a = getColorScheme(style.rainbowScheme)) == null ? void 0 : _a.colors.slice()) ?? input.rainbow.colorsList
     }
   };
 }
@@ -3635,7 +3552,7 @@ function createDefaultMap(title = "未命名导图", id = ((_b) => (_b = ((_a) =
     createdAt: now,
     updatedAt: now,
     layout: "logicalStructure",
-    theme: "kmind-default",
+    theme: "yemind-default",
     lineStyle: "curve",
     projectStyle: { ...DEFAULT_PROJECT_STYLE },
     data: createDefaultTree(normalizedTitle)
@@ -4064,7 +3981,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.8.6";
+const PLUGIN_VERSION = "0.9.0";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -4072,17 +3989,18 @@ const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-21T22:30:00+08:00",
-  buildId: "yemind-v0.8.6-20260721",
+  buildTime: "2026-07-21T23:45:00+08:00",
+  buildId: "yemind-v0.9.0-20260721",
   productName: PRODUCT_NAME,
   tagline: "思源笔记中的思维导图、分屏大纲与知识整理插件。",
-  officialReference: "KMind Zen 0.34.0",
-  releaseSummary: "重构测试体系：按 15 个功能域组织 445 项回归，合并重复入口并建立功能覆盖矩阵。",
+  hostBaseline: "SiYuan 3.7.3",
+  releaseSummary: "新增图片安全操作与沉浸预览，扩展彩虹连线配色，并重做整图主题方案。",
   highlights: [
-    "将 159 个零散测试入口重组为 15 个功能域入口，保留独立场景模块和故障隔离能力。",
-    "删除重复的插件身份与版本断言，所有用户反馈形成的永久回归场景继续保留。",
-    "新增测试结构门禁、suite manifest 和功能覆盖矩阵，阻止孤立、漏挂载或未分类测试进入发布包。",
-    "完整执行 445 项测试、TypeScript 检查、生产构建和最终 ZIP 解压后二次验证。"
+    "节点图片增加左上角放大预览和右上角删除图标，删除前必须二次确认。",
+    "图片预览支持遮罩显示、滚轮缩放、恢复 1:1、点击空白或按 Esc 关闭。",
+    "备注和批注悬停只显示内容预览，不再叠加浏览器提示标签。",
+    "彩虹连线增加晨曦、彩虹、活力、舞动、代码、和风、岛屿、玫瑰、薄荷和绿茶十套配色。",
+    "主题面板保留三套基础主题，并加入十套带背景色、节点色和分支色的完整配色方案。"
   ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -4619,7 +4537,7 @@ function createSettingsDialogTemplate(settings) {
             <div><dt>构建标识</dt><dd>${escapeHtml$a(RELEASE_INFO.buildId)}</dd></div>
             <div><dt>构建时间</dt><dd>${escapeHtml$a(RELEASE_INFO.buildTime)}</dd></div>
             <div><dt>思源版本</dt><dd data-about-version="siyuan">正在读取…</dd></div>
-            <div><dt>官方参考</dt><dd>${escapeHtml$a(RELEASE_INFO.officialReference)}</dd></div>
+            <div><dt>开发基线</dt><dd>${escapeHtml$a(RELEASE_INFO.hostBaseline)}</dd></div>
           </dl>
           <div class="ymz-about-consistency" data-about-consistency="pending">正在检查版本一致性…</div>
         </div>
@@ -4825,7 +4743,7 @@ function openYeMindSettingsDialog(store, options = {}) {
             `构建标识: ${RELEASE_INFO.buildId}`,
             `构建时间: ${RELEASE_INFO.buildTime}`,
             `思源版本: ${String(environment.appVersion ?? "unknown")}`,
-            `官方参考: ${RELEASE_INFO.officialReference}`
+            `开发基线: ${RELEASE_INFO.hostBaseline}`
           ].join("\n"));
           siyuan.showMessage("版本信息已复制");
         } else if (action === "open-diagnostics") {
@@ -55023,6 +54941,55 @@ class NodeImgAdjust {
   }
 }
 NodeImgAdjust.instanceName = "nodeImgAdjust";
+function imageDeleteIcon() {
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9 7V4.8h6V7M8 10v7M12 10v7M16 10v7M6.5 7l.8 13h9.4l.8-13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+function imagePreviewIcon() {
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m14.4 14.4 4.7 4.7M10.5 7.8v5.4M7.8 10.5h5.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+}
+const BaseNodeImgAdjust = NodeImgAdjust;
+class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
+  createResizeBtnEl() {
+    var _a, _b;
+    super.createResizeBtnEl();
+    if (!this.handleEl || this.handleEl.querySelector(".ymz-node-image-preview")) return;
+    const remove2 = this.handleEl.querySelector(".node-image-remove");
+    if (remove2) {
+      remove2.setAttribute("role", "button");
+      remove2.setAttribute("aria-label", "删除节点图片");
+      remove2.setAttribute("title", "删除图片");
+      remove2.setAttribute("tabindex", "0");
+      remove2.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        remove2.click();
+      });
+    }
+    const size2 = Number((_b = (_a = this.mindMap) == null ? void 0 : _a.opt) == null ? void 0 : _b.imgResizeBtnSize) || 24;
+    const preview = document.createElement("button");
+    preview.type = "button";
+    preview.className = "ymz-node-image-preview";
+    preview.setAttribute("aria-label", "放大预览图片");
+    preview.title = "放大预览";
+    preview.innerHTML = imagePreviewIcon();
+    preview.style.cssText = `position:absolute;left:0;top:0;pointer-events:auto;width:${size2}px;height:${size2}px;display:flex;align-items:center;justify-content:center;border:0;padding:3px;background:rgba(0,0,0,.52);color:#fff;cursor:zoom-in;`;
+    preview.addEventListener("mouseenter", () => this.showHandleEl());
+    preview.addEventListener("mouseleave", () => {
+      if (!this.isMousedown) this.hideHandleEl();
+    });
+    preview.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    preview.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.mindMap.emit("yemind_node_image_preview", this.node);
+    });
+    this.handleEl.appendChild(preview);
+  }
+}
+YeMindNodeImgAdjust.instanceName = "nodeImgAdjust";
 const defaultColorsList = [
   "rgb(255, 213, 73)",
   "rgb(255, 136, 126)",
@@ -56371,7 +56338,7 @@ class YeMindRichText extends RichText {
   }
 }
 __publicField(YeMindRichText, "instanceName", "richText");
-const plugins = [YeMindDrag, Select, MiniMap, Search, Export, YeMindRichText, Formula, AssociativeLine, OuterFrame, NodeImgAdjust, RainbowLines];
+const plugins = [YeMindDrag, Select, MiniMap, Search, Export, YeMindRichText, Formula, AssociativeLine, OuterFrame, YeMindNodeImgAdjust, RainbowLines];
 let registered = false;
 function configureMindMapPlugins(settings) {
   const target = YeMindRichText;
@@ -56523,8 +56490,8 @@ function createBadge(node, type) {
   badge.type = "button";
   badge.className = `ymz-node-content-badge ymz-node-content-badge--${type}${type === "comments" ? " ymz-node-comment-badge" : " ymz-node-note-badge"}`;
   badge.dataset.yemindBadge = type;
-  badge.title = type === "note" ? "备注" : "批注";
-  badge.setAttribute("aria-label", badge.title);
+  const accessibleLabel = type === "note" ? "备注" : "批注";
+  badge.setAttribute("aria-label", accessibleLabel);
   badge.innerHTML = type === "note" ? noteSvg() : commentSvg();
   badge.addEventListener("click", (event) => {
     var _a, _b;
@@ -56664,6 +56631,13 @@ function resolveUpstreamShortcutAction(shortcut, nodes, readonly) {
   const active = Array.isArray(nodes) ? nodes : [];
   return active.some((node) => !(node == null ? void 0 : node.isRoot)) ? "safe-delete" : "block";
 }
+function createImageDeleteGuard(confirmDelete) {
+  return async (node) => {
+    if (!confirmDelete) return false;
+    const confirmed = await confirmDelete(node);
+    return !confirmed;
+  };
+}
 function createMindMap(options) {
   registerMindMapPlugins(options.settings);
   const settings = options.settings;
@@ -56726,6 +56700,8 @@ function createMindMap(options) {
       var _a;
       return (_a = options.onHyperlink) == null ? void 0 : _a.call(options, href);
     },
+    customDeleteBtnInnerHTML: imageDeleteIcon(),
+    beforeDeleteNodeImg: createImageDeleteGuard(options.onConfirmDeleteImage),
     beforeShortcutRun: (shortcut, nodes) => {
       var _a, _b;
       const action = resolveUpstreamShortcutAction(
@@ -57848,8 +57824,14 @@ function openImageDialog(commands) {
     preview.innerHTML = `<img src="${escapeAttribute(fileData)}" alt="">`;
   });
   (_a = dialog.element.querySelector('[data-action="remove-image"]')) == null ? void 0 : _a.addEventListener("click", () => {
-    commands.setImage({ url: null });
-    dialog.destroy();
+    siyuan.confirm(
+      "删除节点图片",
+      "确定删除当前节点中的图片吗？此操作可通过撤销恢复。",
+      () => {
+        commands.setImage({ url: null });
+        dialog.destroy();
+      }
+    );
   });
   bindDialogActions(dialog, () => {
     var _a2, _b;
@@ -58419,7 +58401,7 @@ function calculateEditorStats(tree) {
   walk2(tree);
   return { roots: 1, nodes, words };
 }
-function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curve") {
+function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "curve") {
   return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
       <div class="ymz-canvas-wrap">
@@ -58489,7 +58471,7 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
         <aside class="ymz-project-style-panel" data-role="project-style-panel" aria-label="整图样式" hidden>
           <header class="ymz-project-style-panel__header"><strong>样式</strong><button type="button" data-project-style-action="close" aria-label="关闭样式">×</button></header>
           <section><h4>密度</h4><div class="ymz-density-options" role="group" aria-label="节点密度"><button type="button" data-project-density="compact"><strong>紧凑</strong></button><button type="button" data-project-density="default"><strong>默认</strong></button><button type="button" data-project-density="comfortable"><strong>舒展</strong></button></div><div class="ymz-custom-spacing" aria-label="自定义节点间距"><label><span>左右</span><input type="number" min="12" max="240" step="1" data-project-spacing="horizontal" aria-label="水平间距"></label><label><span>上下</span><input type="number" min="2" max="100" step="1" data-project-spacing="vertical" aria-label="垂直间距"></label></div></section>
-          <section><label class="ymz-project-style-panel__switch"><strong>彩虹连线</strong><input type="checkbox" data-project-style="rainbowLines"></label></section>
+          <section><h4>彩虹连线</h4><label class="ymz-project-style-panel__switch"><strong>启用</strong><input type="checkbox" data-project-style="rainbowLines"></label><label class="ymz-project-style-panel__palette"><span>配色</span><select data-project-style="rainbowScheme" aria-label="彩虹连线配色">${rainbowSchemeOptionsHtml("rainbow")}</select><i data-project-rainbow-preview></i></label></section>
           <section><h4>背景色</h4><div class="ymz-background-options"><button type="button" data-project-background="" title="主题背景">主题</button><button type="button" data-project-background="#ffffff" title="白色"></button><button type="button" data-project-background="#e2e8f0" title="岩灰"></button><button type="button" data-project-background="#ffe7ba" title="暖色"></button><button type="button" data-project-background="#c8f0dc" title="薄荷"></button><button type="button" data-project-background="#d7e8ff" title="天空"></button><button type="button" data-project-background="#f7cbd5" title="玫瑰"></button><button type="button" data-project-background="#0f172a" title="深色"></button></div><label class="ymz-project-style-panel__custom"><span>自定义</span><button type="button" class="ymz-node-color-trigger ymz-project-color-trigger" data-project-color-trigger="backgroundColor"><i data-project-color-swatch="backgroundColor"></i><span data-project-color-label="backgroundColor">默认</span></button></label></section>
           <footer><button type="button" data-project-style-action="reset">恢复主题默认</button></footer>
         </aside>
@@ -60103,6 +60085,101 @@ class NodeHoverPreview {
     this.element.style.top = `${Math.round(placement.top - rootRect.top)}px`;
   }
 }
+const IMAGE_PREVIEW_MIN_SCALE = 0.2;
+const IMAGE_PREVIEW_MAX_SCALE = 6;
+function clampImagePreviewScale(value) {
+  return Math.max(IMAGE_PREVIEW_MIN_SCALE, Math.min(IMAGE_PREVIEW_MAX_SCALE, Math.round(value * 100) / 100));
+}
+function nextImagePreviewScale(current, deltaY) {
+  const factor = deltaY < 0 ? 1.12 : 1 / 1.12;
+  return clampImagePreviewScale(current * factor);
+}
+class ImageLightbox {
+  constructor(root2) {
+    __publicField(this, "overlay");
+    __publicField(this, "stage");
+    __publicField(this, "image");
+    __publicField(this, "scaleLabel");
+    __publicField(this, "scale", 1);
+    __publicField(this, "naturalWidth", 0);
+    __publicField(this, "naturalHeight", 0);
+    __publicField(this, "onLoad", () => {
+      this.naturalWidth = this.image.naturalWidth || 1;
+      this.naturalHeight = this.image.naturalHeight || 1;
+      const availableWidth = Math.max(120, this.stage.clientWidth - 48);
+      const availableHeight = Math.max(120, this.stage.clientHeight - 48);
+      this.scale = clampImagePreviewScale(Math.min(1, availableWidth / this.naturalWidth, availableHeight / this.naturalHeight));
+      this.sync();
+    });
+    __publicField(this, "onWheel", (event) => {
+      if (this.overlay.hidden) return;
+      event.preventDefault();
+      this.scale = nextImagePreviewScale(this.scale, event.deltaY);
+      this.sync();
+    });
+    __publicField(this, "onClick", (event) => {
+      const target = event.target;
+      if (target === this.overlay || target === this.stage || target.closest('[data-action="close"]')) {
+        this.hide();
+        return;
+      }
+      if (target.closest('[data-action="reset"]')) {
+        this.scale = 1;
+        this.sync();
+      }
+    });
+    __publicField(this, "onKeydown", (event) => {
+      if (!this.overlay.hidden && event.key === "Escape") {
+        event.preventDefault();
+        this.hide();
+      }
+    });
+    this.root = root2;
+    this.overlay = document.createElement("div");
+    this.overlay.className = "ymz-image-lightbox";
+    this.overlay.hidden = true;
+    this.overlay.innerHTML = `<div class="ymz-image-lightbox__toolbar"><span data-role="scale">100%</span><button type="button" data-action="reset" aria-label="恢复原始比例">1:1</button><button type="button" data-action="close" aria-label="关闭图片预览">×</button></div><div class="ymz-image-lightbox__stage"><img alt=""></div>`;
+    this.stage = this.overlay.querySelector(".ymz-image-lightbox__stage");
+    this.image = this.overlay.querySelector("img");
+    this.scaleLabel = this.overlay.querySelector('[data-role="scale"]');
+    this.overlay.addEventListener("click", this.onClick);
+    this.overlay.addEventListener("wheel", this.onWheel, { passive: false });
+    document.addEventListener("keydown", this.onKeydown, true);
+    this.image.addEventListener("load", this.onLoad);
+    root2.appendChild(this.overlay);
+  }
+  show(source, title = "") {
+    if (!source) return;
+    this.overlay.hidden = false;
+    this.image.alt = title;
+    this.image.title = title;
+    this.scale = 1;
+    this.naturalWidth = 0;
+    this.naturalHeight = 0;
+    this.image.src = source;
+    this.sync();
+  }
+  hide() {
+    this.overlay.hidden = true;
+    this.image.removeAttribute("src");
+    this.image.removeAttribute("style");
+    this.scale = 1;
+  }
+  destroy() {
+    this.overlay.removeEventListener("click", this.onClick);
+    this.overlay.removeEventListener("wheel", this.onWheel);
+    document.removeEventListener("keydown", this.onKeydown, true);
+    this.image.removeEventListener("load", this.onLoad);
+    this.overlay.remove();
+  }
+  sync() {
+    this.scaleLabel.textContent = `${Math.round(this.scale * 100)}%`;
+    if (this.naturalWidth > 0 && this.naturalHeight > 0) {
+      this.image.style.width = `${Math.round(this.naturalWidth * this.scale)}px`;
+      this.image.style.height = `${Math.round(this.naturalHeight * this.scale)}px`;
+    }
+  }
+}
 const INPUT_EVENTS = ["keydown", "keyup", "beforeinput", "input", "paste", "compositionstart", "compositionupdate", "compositionend"];
 function toInputValue(value) {
   return value === null || value === void 0 ? "" : String(value);
@@ -60404,6 +60481,8 @@ class ProjectStylePanel {
       const target = event.target;
       if (target.dataset.projectStyle === "rainbowLines") {
         this.commit({ rainbowLines: target.checked });
+      } else if (target.dataset.projectStyle === "rainbowScheme") {
+        this.commit({ rainbowScheme: target.value, rainbowLines: true });
       } else if (target.dataset.projectSpacing) {
         const horizontal = (_a = this.panel) == null ? void 0 : _a.querySelector('[data-project-spacing="horizontal"]');
         const vertical = (_b = this.panel) == null ? void 0 : _b.querySelector('[data-project-spacing="vertical"]');
@@ -60426,7 +60505,7 @@ class ProjectStylePanel {
       }
       if (action === "close") return this.hide();
       if (action === "reset") {
-        this.commit({ density: "default", rainbowLines: null, backgroundColor: null, customMarginX: void 0, customMarginY: void 0 });
+        this.commit({ density: "default", rainbowLines: null, rainbowScheme: null, backgroundColor: null, customMarginX: void 0, customMarginY: void 0 });
         return;
       }
       const density = (_b = target.closest("[data-project-density]")) == null ? void 0 : _b.dataset.projectDensity;
@@ -60508,6 +60587,7 @@ class ProjectStylePanel {
     this.refresh();
   }
   refresh() {
+    var _a;
     if (!this.panel) return;
     this.panel.querySelectorAll("[data-project-density]").forEach((button) => {
       const active = button.dataset.projectDensity === this.style.density;
@@ -60524,6 +60604,12 @@ class ProjectStylePanel {
       rainbow.checked = this.style.rainbowLines === true;
       rainbow.indeterminate = this.style.rainbowLines === null;
     }
+    const rainbowScheme = this.panel.querySelector('[data-project-style="rainbowScheme"]');
+    const selectedScheme = normalizeColorSchemeId(this.style.rainbowScheme) ?? "rainbow";
+    if (rainbowScheme) rainbowScheme.value = selectedScheme;
+    const rainbowPreview = this.panel.querySelector("[data-project-rainbow-preview]");
+    const colors = ((_a = getColorScheme(selectedScheme)) == null ? void 0 : _a.colors) ?? [];
+    if (rainbowPreview) rainbowPreview.style.background = colors.length ? `linear-gradient(90deg, ${colors.join(",")})` : "";
     this.syncBackgroundTrigger();
     this.panel.querySelectorAll("[data-project-background]").forEach((button) => {
       button.classList.toggle("is-active", (button.dataset.projectBackground || null) === this.style.backgroundColor);
@@ -61015,6 +61101,7 @@ class YeMindEditor {
     __publicField(this, "outerFrameHintEl");
     __publicField(this, "richTextToolbar", null);
     __publicField(this, "nodeHoverPreview", null);
+    __publicField(this, "imageLightbox", null);
     __publicField(this, "nodeStylePanel", null);
     __publicField(this, "projectStylePanel", null);
     __publicField(this, "nodeQuickActions", null);
@@ -61339,7 +61426,7 @@ class YeMindEditor {
     this.scheduleSafeResize();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
     this.options.diagnostics.record(
       "editor",
       "destroy-started",
@@ -61364,23 +61451,25 @@ class YeMindEditor {
     this.richTextToolbar = null;
     (_h = this.nodeHoverPreview) == null ? void 0 : _h.destroy();
     this.nodeHoverPreview = null;
-    (_i = this.nodeStylePanel) == null ? void 0 : _i.destroy();
+    (_i = this.imageLightbox) == null ? void 0 : _i.destroy();
+    this.imageLightbox = null;
+    (_j = this.nodeStylePanel) == null ? void 0 : _j.destroy();
     this.nodeStylePanel = null;
-    (_j = this.projectStylePanel) == null ? void 0 : _j.destroy();
+    (_k = this.projectStylePanel) == null ? void 0 : _k.destroy();
     this.projectStylePanel = null;
-    (_k = this.nodeQuickActions) == null ? void 0 : _k.destroy();
+    (_l = this.nodeQuickActions) == null ? void 0 : _l.destroy();
     this.nodeQuickActions = null;
-    (_l = this.canvasRightDrag) == null ? void 0 : _l.destroy();
+    (_m = this.canvasRightDrag) == null ? void 0 : _m.destroy();
     this.canvasRightDrag = null;
-    (_m = this.cancelFocusedNodeHighlight) == null ? void 0 : _m.call(this);
+    (_n = this.cancelFocusedNodeHighlight) == null ? void 0 : _n.call(this);
     this.cancelFocusedNodeHighlight = null;
-    (_n = this.rootEl) == null ? void 0 : _n.removeEventListener("keydown", this.onRootKeydown, true);
-    (_o = this.outlineEl) == null ? void 0 : _o.removeEventListener("keydown", this.onOutlineKeydownBubble);
-    (_p = this.rootEl) == null ? void 0 : _p.removeEventListener("paste", this.onImagePaste);
-    (_q = this.canvasEl) == null ? void 0 : _q.removeEventListener("dragover", this.onImageDragOver);
-    (_r = this.canvasEl) == null ? void 0 : _r.removeEventListener("drop", this.onImageDrop);
-    (_s = this.canvasEl) == null ? void 0 : _s.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
-    (_t = this.outlineEl) == null ? void 0 : _t.removeEventListener(
+    (_o = this.rootEl) == null ? void 0 : _o.removeEventListener("keydown", this.onRootKeydown, true);
+    (_p = this.outlineEl) == null ? void 0 : _p.removeEventListener("keydown", this.onOutlineKeydownBubble);
+    (_q = this.rootEl) == null ? void 0 : _q.removeEventListener("paste", this.onImagePaste);
+    (_r = this.canvasEl) == null ? void 0 : _r.removeEventListener("dragover", this.onImageDragOver);
+    (_s = this.canvasEl) == null ? void 0 : _s.removeEventListener("drop", this.onImageDrop);
+    (_t = this.canvasEl) == null ? void 0 : _t.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
+    (_u = this.outlineEl) == null ? void 0 : _u.removeEventListener(
       "pointerdown",
       this.onOutlinePointerDown
     );
@@ -61395,7 +61484,7 @@ class YeMindEditor {
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_u = this.map) == null ? void 0 : _u.destroy();
+    (_v = this.map) == null ? void 0 : _v.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record(
@@ -61507,7 +61596,8 @@ class YeMindEditor {
       onDeleteShortcut: () => {
         var _a2;
         return (_a2 = this.commands) == null ? void 0 : _a2.remove();
-      }
+      },
+      onConfirmDeleteImage: () => this.confirmDeleteNodeImage()
     });
     this.commands = createCommandAdapter(this.map);
     this.canvasRightDrag = new CanvasRightDragController({
@@ -61554,6 +61644,7 @@ class YeMindEditor {
       }
     });
     this.nodeHoverPreview = new NodeHoverPreview(this.rootEl);
+    this.imageLightbox = new ImageLightbox(this.rootEl);
     this.richTextToolbar = new RichTextToolbar(this.rootEl, this.commands, {
       onFormula: (target) => openFormulaDialog(target),
       onLink: (target) => openInlineLinkDialog(target, this.settings),
@@ -61885,6 +61976,16 @@ class YeMindEditor {
     (_b = this.nodeQuickActions) == null ? void 0 : _b.scheduleRefresh();
     this.scheduleSave();
   }
+  confirmDeleteNodeImage() {
+    return new Promise((resolve) => {
+      siyuan.confirm(
+        "删除节点图片",
+        "确定删除当前节点中的图片吗？此操作可通过撤销恢复。",
+        () => resolve(true),
+        () => resolve(false)
+      );
+    });
+  }
   bindMapEvents() {
     if (!this.map) return;
     this.map.on("before_show_text_edit", () => {
@@ -61967,6 +62068,12 @@ class YeMindEditor {
         );
       }
     );
+    this.map.on("yemind_node_image_preview", (node) => {
+      var _a, _b, _c2;
+      const source = String(((_a = node == null ? void 0 : node.getData) == null ? void 0 : _a.call(node, "image")) ?? "");
+      const title = String(((_b = node == null ? void 0 : node.getData) == null ? void 0 : _b.call(node, "imageTitle")) ?? "");
+      if (source) (_c2 = this.imageLightbox) == null ? void 0 : _c2.show(source, title);
+    });
     this.map.on("yemind_todo_toggle", (node) => {
       if (!this.commands) return;
       this.activateNode(node);

@@ -44,7 +44,8 @@
     "v065ProjectDensity.suite.ts",
     "v066DensityPanelSearchFit.suite.ts",
     "v067ProjectColorSearchComments.suite.ts",
-    "v082DockIconTheme.suite.ts"
+    "v082DockIconTheme.suite.ts",
+    "v090ColorSchemes.suite.ts"
   ],
   "commands-selection": [
     "commands.suite.ts",
@@ -70,7 +71,8 @@
     "v0517NodeNotes.suite.ts",
     "v061NodeDialogs.suite.ts",
     "v063HoverPreviewPlacement.suite.ts",
-    "v063NodeContentDialogs.suite.ts"
+    "v063NodeContentDialogs.suite.ts",
+    "v090ImageActionsPreview.suite.ts"
   ],
   "ui-shell": [
     "contextMenuAvailability.suite.ts",

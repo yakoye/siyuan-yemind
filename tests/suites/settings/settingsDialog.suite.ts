@@ -3,7 +3,7 @@ import { DEFAULT_SETTINGS, DEFAULT_SHORTCUTS } from '../../../src/settings/Setti
 import { createSettingsDialogTemplate } from '../../../src/settings/settingsDialogTemplate';
 
 describe('custom settings dialog', () => {
-  it('renders KMind-Zen-style general and shortcut pages', () => {
+  it('renders YeMind general and shortcut pages', () => {
     const html = createSettingsDialogTemplate({ ...DEFAULT_SETTINGS, shortcutMap: { ...DEFAULT_SHORTCUTS } });
 
     expect(html).toContain('data-settings-page="general"');

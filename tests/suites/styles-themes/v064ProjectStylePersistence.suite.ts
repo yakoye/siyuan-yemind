@@ -17,6 +17,7 @@ describe('v0.6.4 whole-map style persistence', () => {
     const style = {
       density: 'custom' as const,
       rainbowLines: true,
+      rainbowScheme: 'rose',
       backgroundColor: '#8fa1cf',
       customMarginX: 36,
       customMarginY: 8,
@@ -33,13 +34,13 @@ describe('v0.6.4 whole-map style persistence', () => {
 
   it('uses one panel transaction for density and background changes', () => {
     const host = document.createElement('div');
-    host.innerHTML = `<aside data-role="project-style-panel"><button data-project-style-action="close"></button><button data-project-density="compact"></button><button data-project-density="default"></button><button data-project-density="comfortable"></button><input type="checkbox" data-project-style="rainbowLines"><input type="color" data-project-style="backgroundColor" value="#f8fafc"><button data-project-background=""></button><button data-project-background="#8fa1cf"></button><button data-project-style-action="reset"></button></aside>`;
+    host.innerHTML = `<aside data-role="project-style-panel"><button data-project-style-action="close"></button><button data-project-density="compact"></button><button data-project-density="default"></button><button data-project-density="comfortable"></button><input type="checkbox" data-project-style="rainbowLines"><select data-project-style="rainbowScheme"><option value="rainbow">彩虹</option></select><i data-project-rainbow-preview></i><input type="color" data-project-style="backgroundColor" value="#f8fafc"><button data-project-background=""></button><button data-project-background="#8fa1cf"></button><button data-project-style-action="reset"></button></aside>`;
     const onChange = vi.fn();
-    const panel = new ProjectStylePanel(host, { density: 'default', rainbowLines: null, backgroundColor: null }, () => false, onChange);
+    const panel = new ProjectStylePanel(host, { density: 'default', rainbowLines: null, rainbowScheme: null, backgroundColor: null }, () => false, onChange);
     host.querySelector<HTMLButtonElement>('[data-project-density="compact"]')!.click();
-    expect(onChange).toHaveBeenLastCalledWith({ density: 'compact', rainbowLines: null, backgroundColor: null });
+    expect(onChange).toHaveBeenLastCalledWith({ density: 'compact', rainbowLines: null, rainbowScheme: null, backgroundColor: null });
     host.querySelector<HTMLButtonElement>('[data-project-background="#8fa1cf"]')!.click();
-    expect(onChange).toHaveBeenLastCalledWith({ density: 'compact', rainbowLines: null, backgroundColor: '#8fa1cf' });
+    expect(onChange).toHaveBeenLastCalledWith({ density: 'compact', rainbowLines: null, rainbowScheme: null, backgroundColor: '#8fa1cf' });
     panel.destroy();
   });
 });

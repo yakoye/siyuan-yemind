@@ -1,5 +1,5 @@
 import type MindMap from "simple-mind-map";
-import { Dialog, Menu, showMessage } from "siyuan";
+import { Dialog, Menu, confirm, showMessage } from "siyuan";
 import { createMindMap } from "../core/createMindMap";
 import {
   buildDragAndLayoutOptions,
@@ -90,6 +90,7 @@ import {
   hasImageFile,
 } from "../ui/nodeImageInput";
 import { NodeHoverPreview } from "../ui/nodeHoverPreview";
+import { ImageLightbox } from "../ui/imageLightbox";
 import { NodeStylePanel } from "../ui/nodeStylePanel";
 import { ProjectStylePanel } from "../ui/projectStylePanel";
 import { synchronizeCanvasRichTextVisibility } from "./canvasRichTextVisibility";
@@ -163,6 +164,7 @@ export class YeMindEditor {
   private outerFrameHintEl!: HTMLElement;
   private richTextToolbar: RichTextToolbar | null = null;
   private nodeHoverPreview: NodeHoverPreview | null = null;
+  private imageLightbox: ImageLightbox | null = null;
   private nodeStylePanel: NodeStylePanel | null = null;
   private projectStylePanel: ProjectStylePanel | null = null;
   private nodeQuickActions: NodeQuickActionsController | null = null;
@@ -515,6 +517,8 @@ export class YeMindEditor {
     this.richTextToolbar = null;
     this.nodeHoverPreview?.destroy();
     this.nodeHoverPreview = null;
+    this.imageLightbox?.destroy();
+    this.imageLightbox = null;
     this.nodeStylePanel?.destroy();
     this.nodeStylePanel = null;
     this.projectStylePanel?.destroy();
@@ -664,6 +668,7 @@ export class YeMindEditor {
       settings: this.settings,
       onHyperlink: (href) => this.openLink(href),
       onDeleteShortcut: () => this.commands?.remove(),
+      onConfirmDeleteImage: () => this.confirmDeleteNodeImage(),
     });
     this.commands = createCommandAdapter(this.map);
     this.canvasRightDrag = new CanvasRightDragController({
@@ -696,6 +701,7 @@ export class YeMindEditor {
       },
     });
     this.nodeHoverPreview = new NodeHoverPreview(this.rootEl);
+    this.imageLightbox = new ImageLightbox(this.rootEl);
     this.richTextToolbar = new RichTextToolbar(this.rootEl, this.commands, {
       onFormula: (target) => openFormulaDialog(target),
       onLink: (target) => openInlineLinkDialog(target, this.settings),
@@ -1046,6 +1052,17 @@ export class YeMindEditor {
     this.scheduleSave();
   }
 
+  private confirmDeleteNodeImage(): Promise<boolean> {
+    return new Promise((resolve) => {
+      confirm(
+        "删除节点图片",
+        "确定删除当前节点中的图片吗？此操作可通过撤销恢复。",
+        () => resolve(true),
+        () => resolve(false),
+      );
+    });
+  }
+
   private bindMapEvents(): void {
     if (!this.map) return;
     this.map.on("before_show_text_edit", () => {
@@ -1126,6 +1143,11 @@ export class YeMindEditor {
         );
       },
     );
+    this.map.on("yemind_node_image_preview", (node: any) => {
+      const source = String(node?.getData?.("image") ?? "");
+      const title = String(node?.getData?.("imageTitle") ?? "");
+      if (source) this.imageLightbox?.show(source, title);
+    });
     this.map.on("yemind_todo_toggle", (node: any) => {
       if (!this.commands) return;
       this.activateNode(node);

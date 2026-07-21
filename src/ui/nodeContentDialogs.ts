@@ -231,8 +231,14 @@ export function openImageDialog(commands: YeMindCommands): void {
     preview.innerHTML = `<img src="${escapeAttribute(fileData)}" alt="">`;
   });
   dialog.element.querySelector('[data-action="remove-image"]')?.addEventListener('click', () => {
-    commands.setImage({ url: null });
-    dialog.destroy();
+    confirm(
+      '删除节点图片',
+      '确定删除当前节点中的图片吗？此操作可通过撤销恢复。',
+      () => {
+        commands.setImage({ url: null });
+        dialog.destroy();
+      },
+    );
   });
   bindDialogActions(dialog, () => {
     const source = fileData || url.value.trim();

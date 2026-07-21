@@ -6,7 +6,7 @@ import { mountGlobalSearchResults } from '../../../src/plugin/globalSearch';
 
 const maps = [{
   id: 'map-1', title: 'PCIe 学习', createdAt: 1, updatedAt: 1,
-  layout: 'logicalStructure', theme: 'kmind-default', lineStyle: 'curve' as const,
+  layout: 'logicalStructure', theme: 'yemind-default', lineStyle: 'curve' as const,
   data: { data: { uid: 'root', text: 'PCIe Root' }, children: [
     { data: { uid: 'ats', text: 'ATS 地址转换' }, children: [] },
   ] },

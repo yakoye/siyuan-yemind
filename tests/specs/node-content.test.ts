@@ -13,3 +13,4 @@ import '../suites/node-content/v0517NodeNotes.suite';
 import '../suites/node-content/v061NodeDialogs.suite';
 import '../suites/node-content/v063HoverPreviewPlacement.suite';
 import '../suites/node-content/v063NodeContentDialogs.suite';
+import '../suites/node-content/v090ImageActionsPreview.suite';

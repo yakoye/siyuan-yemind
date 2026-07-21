@@ -19,7 +19,7 @@ function node(uid: string, rect: { x: number; y: number; width: number; height: 
   };
 }
 
-describe('KMind Zen official-style drag intent geometry', () => {
+describe('rectangle-based drag intent geometry', () => {
   it('enters a logical-right node through its 80px child tail before the pointer reaches the node', () => {
     const root = node('root', { x: 0, y: 80, width: 80, height: 40 });
     const target = node('target', { x: 100, y: 100, width: 80, height: 40 }, root);

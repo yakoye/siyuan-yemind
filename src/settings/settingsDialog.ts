@@ -216,7 +216,7 @@ export function openYeMindSettingsDialog(store: SettingsStore, options: Settings
             `构建标识: ${RELEASE_INFO.buildId}`,
             `构建时间: ${RELEASE_INFO.buildTime}`,
             `思源版本: ${String(environment.appVersion ?? 'unknown')}`,
-            `官方参考: ${RELEASE_INFO.officialReference}`,
+            `开发基线: ${RELEASE_INFO.hostBaseline}`,
           ].join('\n'));
           showMessage('版本信息已复制');
         } else if (action === 'open-diagnostics') {

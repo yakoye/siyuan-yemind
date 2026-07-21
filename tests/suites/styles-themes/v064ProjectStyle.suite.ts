@@ -15,11 +15,13 @@ describe('v0.6.4 whole-map style', () => {
     expect(normalizeProjectStyle({ density: 'compact', rainbowLines: true, backgroundColor: '#8fa1cf' })).toEqual({
       density: 'compact',
       rainbowLines: true,
+      rainbowScheme: null,
       backgroundColor: '#8fa1cf',
     });
     expect(normalizeProjectStyle({ density: 'bad', rainbowLines: 'x', backgroundColor: 'red' })).toEqual({
       density: 'default',
       rainbowLines: null,
+      rainbowScheme: null,
       backgroundColor: null,
     });
   });

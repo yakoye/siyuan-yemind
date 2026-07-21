@@ -2,6 +2,7 @@ import type { ProjectStyle } from '../editor/projectStyle';
 import { densitySpacing, normalizeProjectStyle } from '../editor/projectStyle';
 import { colorPaletteInnerHtml } from '../editor/colorPalette';
 import { parseEditableColor, presentColor } from '../editor/colorPresentation';
+import { getColorScheme, normalizeColorSchemeId } from '../core/colorSchemes';
 
 const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'] as const;
 
@@ -114,6 +115,12 @@ export class ProjectStylePanel {
       rainbow.checked = this.style.rainbowLines === true;
       rainbow.indeterminate = this.style.rainbowLines === null;
     }
+    const rainbowScheme = this.panel.querySelector<HTMLSelectElement>('[data-project-style="rainbowScheme"]');
+    const selectedScheme = normalizeColorSchemeId(this.style.rainbowScheme) ?? 'rainbow';
+    if (rainbowScheme) rainbowScheme.value = selectedScheme;
+    const rainbowPreview = this.panel.querySelector<HTMLElement>('[data-project-rainbow-preview]');
+    const colors = getColorScheme(selectedScheme)?.colors ?? [];
+    if (rainbowPreview) rainbowPreview.style.background = colors.length ? `linear-gradient(90deg, ${colors.join(',')})` : '';
     this.syncBackgroundTrigger();
     this.panel.querySelectorAll<HTMLButtonElement>('[data-project-background]').forEach((button) => {
       button.classList.toggle('is-active', (button.dataset.projectBackground || null) === this.style.backgroundColor);
@@ -223,6 +230,8 @@ export class ProjectStylePanel {
     const target = event.target as HTMLInputElement;
     if (target.dataset.projectStyle === 'rainbowLines') {
       this.commit({ rainbowLines: target.checked });
+    } else if (target.dataset.projectStyle === 'rainbowScheme') {
+      this.commit({ rainbowScheme: target.value, rainbowLines: true });
     } else if (target.dataset.projectSpacing) {
       const horizontal = this.panel?.querySelector<HTMLInputElement>('[data-project-spacing="horizontal"]');
       const vertical = this.panel?.querySelector<HTMLInputElement>('[data-project-spacing="vertical"]');
@@ -245,7 +254,7 @@ export class ProjectStylePanel {
     }
     if (action === 'close') return this.hide();
     if (action === 'reset') {
-      this.commit({ density: 'default', rainbowLines: null, backgroundColor: null, customMarginX: undefined, customMarginY: undefined });
+      this.commit({ density: 'default', rainbowLines: null, rainbowScheme: null, backgroundColor: null, customMarginX: undefined, customMarginY: undefined });
       return;
     }
     const density = target.closest<HTMLElement>('[data-project-density]')?.dataset.projectDensity as ProjectStyle['density'] | undefined;
