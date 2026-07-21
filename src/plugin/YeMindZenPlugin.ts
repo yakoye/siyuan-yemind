@@ -19,7 +19,7 @@ import { OpenMapTabRegistry } from './OpenMapTabRegistry';
 import { parseYeMindMapUrl } from './pluginUrl';
 import { runSafeOperation } from './operationSafety';
 import { initializePluginStartup } from './pluginStartup';
-import { mountGlobalSearchResults } from './globalSearch';
+import { destroyGlobalSearchIntegrations, mountGlobalSearchResults } from './globalSearch';
 
 export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost {
   repository!: MapRepository;
@@ -119,6 +119,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
     this.eventBus.off('open-siyuan-url-plugin', this.onOpenPluginUrl);
     this.eventBus.off('input-search', this.onGlobalSearchInput);
     if (this.globalSearchTimer !== null) window.clearTimeout(this.globalSearchTimer);
+    destroyGlobalSearchIntegrations();
     this.diagnostics?.record('plugin', 'unload', undefined, undefined, 'info', true);
     this.diagnostics?.detachGlobalListeners();
     this.diagnostics?.stop();
@@ -128,7 +129,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
     return this.ready;
   }
 
-  async openMap(mapId: string): Promise<void> {
+  async openMap(mapId: string, options: { position?: 'right' } = {}): Promise<void> {
     await runSafeOperation(async () => {
       await this.ready;
       this.diagnostics.record('operation', 'open-map-requested', mapId);
@@ -148,16 +149,17 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
           data: { mapId },
         },
         openNewTab: true,
+        position: options.position,
         keepCursor: false,
       });
     }, (error) => this.reportOperationFailure('打开导图', error));
   }
 
-  async openMapAtNode(mapId: string, nodeUid: string): Promise<void> {
+  async openMapAtNode(mapId: string, nodeUid: string, options: { position?: 'right' } = {}): Promise<void> {
     if (!mapId) return;
     if (nodeUid && this.tabRegistry.focusNode(mapId, nodeUid)) return;
     if (nodeUid) this.pendingNodeTargets.set(mapId, nodeUid);
-    await this.openMap(mapId);
+    await this.openMap(mapId, options);
   }
 
   consumePendingNodeTarget(mapId: string): string | undefined {
@@ -230,7 +232,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
       mountGlobalSearchResults({
         searchElement,
         maps: this.repository.list(),
-        onOpen: (mapId, nodeUid) => { void this.openMapAtNode(mapId, nodeUid); },
+        onOpen: (mapId, nodeUid, openOptions) => { void this.openMapAtNode(mapId, nodeUid, openOptions); },
       });
     }, 80);
   };

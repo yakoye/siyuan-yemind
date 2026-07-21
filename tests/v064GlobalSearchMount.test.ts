@@ -19,8 +19,11 @@ describe('v0.6.4 host global-search mounting', () => {
     const onOpen = vi.fn();
     mountGlobalSearchResults({ searchElement: input, maps, onOpen });
     const result = root.querySelector<HTMLButtonElement>('[data-yemind-global-node="ats"]')!;
-    expect(result.textContent).toContain('批注：需要测试缓存失效');
+    expect(result.textContent).toContain('批注');
+    expect(result.textContent).toContain('需要测试缓存失效');
     result.click();
+    expect(onOpen).not.toHaveBeenCalled();
+    result.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, button: 0 }));
     expect(onOpen).toHaveBeenCalledWith('m1', 'ats');
     root.remove();
   });

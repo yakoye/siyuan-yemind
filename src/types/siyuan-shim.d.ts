@@ -99,6 +99,7 @@ declare module 'siyuan' {
     app: any;
     custom: { id: string; icon: string; title: string; data?: any };
     openNewTab?: boolean;
+    position?: 'right' | 'bottom';
     keepCursor?: boolean;
   }): Promise<Tab>;
 

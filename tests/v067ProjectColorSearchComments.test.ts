@@ -9,7 +9,7 @@ const maps = [{
   id: 'map-1', title: '未命名导图2', createdAt: 1, updatedAt: 1,
   layout: 'logicalStructure', theme: 'kmind-default', lineStyle: 'curve' as const,
   data: { data: { uid: 'root', text: '未命名导图0' }, children: [
-    { data: { uid: 'n-43214', text: '43214' }, children: [] },
+    { data: { uid: 'n-target', text: '目标关键词' }, children: [] },
   ] },
 }];
 
@@ -51,7 +51,7 @@ describe('v0.6.7 shared project colors, native search placement and comments ali
 
   it('mounts YeMind results at the top of the native search result region and activates on pointer down', () => {
     const root = document.createElement('div');
-    root.innerHTML = `<div class="search__layout"><div class="search__header"><input value="43214"></div><div class="search__list"><div class="native-empty">搜索结果为空</div></div></div>`;
+    root.innerHTML = `<div class="search__layout"><div class="search__header"><input value="目标关键词"></div><div class="search__list"><div class="native-empty">搜索结果为空</div></div></div>`;
     document.body.appendChild(root);
     const input = root.querySelector<HTMLInputElement>('input')!;
     expect(resolveGlobalSearchMount(input)?.mountPoint).toBe(root.querySelector('.search__list'));
@@ -59,9 +59,10 @@ describe('v0.6.7 shared project colors, native search placement and comments ali
     mountGlobalSearchResults({ searchElement: input, maps, onOpen });
     const native = root.querySelector('.search__list')!;
     expect(native.firstElementChild?.hasAttribute('data-yemind-global-results')).toBe(true);
-    const result = root.querySelector<HTMLElement>('[data-yemind-global-node="n-43214"]')!;
+    const result = root.querySelector<HTMLElement>('[data-yemind-global-node="n-target"]')!;
     result.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }));
-    expect(onOpen).toHaveBeenCalledWith('map-1', 'n-43214');
+    expect(onOpen).not.toHaveBeenCalled();
+    expect(result.classList.contains('b3-list-item--focus')).toBe(true);
     root.remove();
   });
 

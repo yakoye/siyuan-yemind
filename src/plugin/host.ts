@@ -13,8 +13,8 @@ export interface YeMindPluginHost {
   settingsStore: SettingsStore;
   tabRegistry: OpenMapTabRegistry;
   whenReady(): Promise<void>;
-  openMap(mapId: string): Promise<void>;
-  openMapAtNode(mapId: string, nodeUid: string): Promise<void>;
+  openMap(mapId: string, options?: { position?: 'right' }): Promise<void>;
+  openMapAtNode(mapId: string, nodeUid: string, options?: { position?: 'right' }): Promise<void>;
   consumePendingNodeTarget(mapId: string): string | undefined;
   createMap(): Promise<void>;
   renameMap(mapId: string): Promise<void>;

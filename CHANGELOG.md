@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.8 — 2026-07-21
+
+- Replaced the detached global-search card with native list integration inside SiYuan's `#searchList` result column.
+- Rendered one result per matching map node with highlighted node content, source labels and right-aligned map/node paths.
+- Added a read-only outline context preview inside `#searchPreview` without destroying SiYuan's native Protyle preview.
+- Added single-click preview, double-click/Enter open, Alt+click/Alt+Enter right-split open, arrow navigation and PageUp/PageDown behavior.
+- Added MutationObserver recovery for host result/preview rebuilds, duplicate prevention, native empty-state suppression and complete unload cleanup.
+- Added a sanitized real-structure SiYuan global-search fixture and permanent integration regressions for placement, preview, keyboard, host rebuild and right-split propagation.
+- Aligned package, manifest, runtime, diagnostics and tests at 0.6.8.
+
 ## 0.6.7 — 2026-07-21
 
 - Reused the shared 52-color HEX/RGB palette for the whole-map custom background.

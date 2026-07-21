@@ -52,10 +52,11 @@ describe('v0.6.6 compact style panel and dependable search opening', () => {
     mountGlobalSearchResults({ searchElement: root.querySelector('input')!, maps, onOpen });
     const result = root.querySelector<HTMLElement>('[data-yemind-global-node="ats"]')!;
     result.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+    expect(onOpen).not.toHaveBeenCalled();
+    expect(result.classList.contains('b3-list-item--focus')).toBe(true);
+    result.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, button: 0 }));
     expect(onOpen).toHaveBeenCalledTimes(1);
     expect(onOpen).toHaveBeenCalledWith('map-1', 'ats');
-    result.click();
-    expect(onOpen).toHaveBeenCalledTimes(1);
     root.remove();
   });
 

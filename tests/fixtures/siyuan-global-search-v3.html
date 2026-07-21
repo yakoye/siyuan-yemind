@@ -1,0 +1,46 @@
+<div class="fn__flex-column" style="height:100%;overflow:hidden">
+  <div class="block__icons">
+    <span data-type="previous" class="block__icon" disabled>上一页</span>
+    <span data-type="next" class="block__icon" disabled>下一页</span>
+    <span id="searchResult" data-pagecount="1">1/1 <span class="ft__on-surface">2 个文档中匹配 2 个块</span></span>
+  </div>
+  <div class="b3-form__icon search__header">
+    <div class="fn__flex-1" style="position:relative">
+      <section class="ymz-global-search-results" data-yemind-global-results>
+        <header><strong>旧版错误位置</strong></header>
+      </section>
+      <span class="search__history-icon" id="searchHistoryBtn"></span>
+      <input id="searchInput" class="b3-text-field b3-text-field--text" value="目标关键词">
+    </div>
+    <div class="block__icons">
+      <span id="searchFilter" class="block__icon"></span>
+      <span id="searchReplace" class="block__icon"></span>
+      <span id="searchRefresh" class="block__icon"></span>
+    </div>
+  </div>
+  <div id="criteria" class="search__header">
+    <span class="fn__flex-1"></span>
+    <button data-type="saveCriterion">保存查询条件</button>
+    <button data-type="removeCriterion">重置查询条件</button>
+  </div>
+  <div class="search__layout">
+    <div id="searchList" class="fn__flex-1 search__list b3-list b3-list--background">
+      <div data-type="search-item" class="b3-list-item b3-list-item--focus" data-node-id="native-node-1" data-root-id="native-root-1">
+        <svg class="b3-list-item__graphic"></svg>
+        <span class="b3-list-item__text">原生结果 目标关键词</span>
+        <span class="b3-list-item__meta">Root/示例文档</span>
+      </div>
+      <div data-type="search-item" class="b3-list-item" data-node-id="native-node-2" data-root-id="native-root-2">
+        <svg class="b3-list-item__graphic"></svg>
+        <span class="b3-list-item__text">第二个原生结果</span>
+        <span class="b3-list-item__meta">Root/另一个文档</span>
+      </div>
+    </div>
+    <div class="search__drag"></div>
+    <div id="searchPreview" class="fn__flex-1 search__preview protyle" data-loading="finished">
+      <div class="protyle-breadcrumb"><span class="protyle-breadcrumb__text">Root/示例文档</span></div>
+      <div class="protyle-content"><div class="protyle-wysiwyg">原生预览内容</div></div>
+    </div>
+  </div>
+  <div class="search__tips">↑/↓/PageUp/PageDown 导航　Ctrl+N 新建　回车/双击 打开　Alt+/Alt+点击 右侧分屏打开　Esc 退出搜索</div>
+</div>

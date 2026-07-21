@@ -3356,9 +3356,9 @@ class CheckpointRepository {
     await this.ensureLoaded();
     await this.enqueueMutation((draft) => {
       const checkpoint = draft.checkpoints.find((item) => item.id === id);
-      const normalized = name.trim();
-      if (!checkpoint || !normalized || normalized === checkpoint.name) return { changed: false, value: void 0 };
-      checkpoint.name = normalized;
+      const normalized2 = name.trim();
+      if (!checkpoint || !normalized2 || normalized2 === checkpoint.name) return { changed: false, value: void 0 };
+      checkpoint.name = normalized2;
       return { changed: true, value: void 0 };
     });
   }
@@ -3561,9 +3561,9 @@ class MapRepository {
     await this.ensureLoaded();
     await this.enqueueMutation((draft) => {
       const map2 = draft.maps.find((item) => item.id === id);
-      const normalized = title.trim();
-      if (!map2 || !normalized || normalized === map2.title) return { changed: false, value: void 0 };
-      map2.title = normalized;
+      const normalized2 = title.trim();
+      if (!map2 || !normalized2 || normalized2 === map2.title) return { changed: false, value: void 0 };
+      map2.title = normalized2;
       map2.updatedAt = this.now();
       return { changed: true, value: void 0 };
     });
@@ -3884,13 +3884,13 @@ function findShortcutConflicts(shortcuts) {
     output[key] = [];
     return output;
   }, {});
-  const normalized = new Map(
+  const normalized2 = new Map(
     keys2.map((key) => [key, new Set(alternatives(shortcuts[key]))])
   );
   keys2.forEach((key, index) => {
     keys2.slice(index + 1).forEach((other) => {
-      const left = normalized.get(key);
-      const right = normalized.get(other);
+      const left = normalized2.get(key);
+      const right = normalized2.get(other);
       if (left.size === 0 || right.size === 0) return;
       if ([...left].some((shortcut) => right.has(shortcut))) {
         result[key].push(other);
@@ -4107,9 +4107,9 @@ function projectControlIcon(kind) {
   return '<svg class="ymz-project-icon ymz-icon-theme" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 4.2 10 2.8h4l1.8 1.4 3.2 1.2-1.5 4.1V21H6.5V9.5L5 5.4l3.2-1.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.2 4.2c.8 1.7 2 2.6 3.8 2.6s3-.9 3.8-2.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 }
 function lineStyleIcon(style) {
-  const normalized = style === "straight" || style === "direct" ? style : "curve";
-  const path2 = normalized === "curve" ? "M3 18C8 18 8 6 14 6h7" : normalized === "straight" ? "M3 18h8V6h10" : "M3 18 14 6h7";
-  return `<svg class="ymz-line-icon ymz-line-icon--${normalized}" viewBox="0 0 24 24" aria-hidden="true"><path d="${path2}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const normalized2 = style === "straight" || style === "direct" ? style : "curve";
+  const path2 = normalized2 === "curve" ? "M3 18C8 18 8 6 14 6h7" : normalized2 === "straight" ? "M3 18h8V6h10" : "M3 18 14 6h7";
+  return `<svg class="ymz-line-icon ymz-line-icon--${normalized2}" viewBox="0 0 24 24" aria-hidden="true"><path d="${path2}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 function summaryIcon() {
   return '<svg class="ymz-menu-icon ymz-icon-summary" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c-2 0-3 2-3 4v2c0 1.5-.7 2.5-2 3 1.3.5 2 1.5 2 3v1c0 2 1 3 3 3M17 4c2 0 3 2 3 4v2c0 1.5.7 2.5 2 3-1.3.5-2 1.5-2 3v1c0 2-1 3-3 3M8 12h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
@@ -4520,7 +4520,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.6.7";
+const PLUGIN_VERSION = "0.6.8";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -24197,10 +24197,10 @@ function calculateDragGuidePath(parent, ghost, orientation) {
   return `M ${startX} ${startY} C ${startX + 40} ${startY}, ${endX - 40} ${endY}, ${endX} ${endY}`;
 }
 function calculateOriginalParentGuideStyle(distance) {
-  const normalized = Math.max(0, Math.min(1, Number(distance) / 140));
+  const normalized2 = Math.max(0, Math.min(1, Number(distance) / 140));
   return {
-    width: 2 - 1.1 * normalized,
-    opacity: 0.3 + 0.6 * normalized
+    width: 2 - 1.1 * normalized2,
+    opacity: 0.3 + 0.6 * normalized2
   };
 }
 function normalizeRect(rect) {
@@ -45819,10 +45819,10 @@ class Selection {
     if ("isConnected" in root2 && !root2.isConnected) {
       return [null, null];
     }
-    const normalized = this.getNativeRange();
-    if (normalized == null) return [null, null];
-    const range = this.normalizedToRange(normalized);
-    return [range, normalized];
+    const normalized2 = this.getNativeRange();
+    if (normalized2 == null) return [null, null];
+    const range = this.normalizedToRange(normalized2);
+    return [range, normalized2];
   }
   hasFocus() {
     return document.activeElement === this.root || document.activeElement != null && contains(this.root, document.activeElement);
@@ -49015,9 +49015,9 @@ class Uploader extends Module {
         native2.setStart(position2.offsetNode, position2.offset);
         native2.setEnd(position2.offsetNode, position2.offset);
       }
-      const normalized = native2 && quill.selection.normalizeNative(native2);
-      if (normalized) {
-        const range = quill.selection.normalizedToRange(normalized);
+      const normalized2 = native2 && quill.selection.normalizeNative(native2);
+      if (normalized2) {
+        const range = quill.selection.normalizedToRange(normalized2);
         if ((_a = e.dataTransfer) == null ? void 0 : _a.files) {
           this.upload(range, e.dataTransfer.files);
         }
@@ -49107,8 +49107,8 @@ class Input extends Module {
     if (text2 == null) {
       return;
     }
-    const normalized = this.quill.selection.normalizeNative(staticRange);
-    const range = normalized ? this.quill.selection.normalizedToRange(normalized) : null;
+    const normalized2 = this.quill.selection.normalizeNative(staticRange);
+    const range = normalized2 ? this.quill.selection.normalizedToRange(normalized2) : null;
     if (range && this.replaceText(range, text2)) {
       event.preventDefault();
     }
@@ -55719,11 +55719,11 @@ function registerMindMapPlugins(settings) {
 }
 const BLOCKED_ELEMENTS = "script,style,iframe,object,embed,meta,link,base,form,input,button,textarea,select,option";
 function isUnsafeUrl(value, attributeName) {
-  const normalized = value.trim().replace(/[\u0000-\u001f\u007f\s]+/g, "").toLowerCase();
-  if (!normalized) return false;
-  if (normalized.startsWith("javascript:") || normalized.startsWith("vbscript:")) return true;
-  if (!normalized.startsWith("data:")) return false;
-  return attributeName === "src" ? !normalized.startsWith("data:image/") : true;
+  const normalized2 = value.trim().replace(/[\u0000-\u001f\u007f\s]+/g, "").toLowerCase();
+  if (!normalized2) return false;
+  if (normalized2.startsWith("javascript:") || normalized2.startsWith("vbscript:")) return true;
+  if (!normalized2.startsWith("data:")) return false;
+  return attributeName === "src" ? !normalized2.startsWith("data:image/") : true;
 }
 function sanitizeRichHtml(value) {
   const source = String(value ?? "");
@@ -56192,9 +56192,9 @@ function findCurrentCodeBlock(quill, range) {
   };
 }
 function replaceCodeBlock(quill, target, code, language = "plain") {
-  const normalized = code.replace(/\r\n?/g, "\n").replace(/\n+$/, "");
+  const normalized2 = code.replace(/\r\n?/g, "\n").replace(/\n+$/, "");
   if (target.length > 0) quill.deleteText(target.index, target.length, "user");
-  const inserted = `${normalized}
+  const inserted = `${normalized2}
 `;
   quill.insertText(target.index, inserted, "user");
   quill.formatLine(target.index, inserted.length, "code-block", language || "plain", "user");
@@ -56249,17 +56249,17 @@ function normalizeNodeStylePatch(input) {
     }
     if (key === "shape" && SHAPES.has(String(value))) output.shape = String(value);
     else if (key === "fillColor" || key === "borderColor" || key === "color") {
-      const normalized = color(value);
-      if (normalized !== void 0) output[key] = normalized;
+      const normalized2 = color(value);
+      if (normalized2 !== void 0) output[key] = normalized2;
     } else if (key === "borderWidth") {
-      const normalized = finite(value, 0, 12);
-      if (normalized !== void 0) output.borderWidth = normalized;
+      const normalized2 = finite(value, 0, 12);
+      if (normalized2 !== void 0) output.borderWidth = normalized2;
     } else if (key === "width") {
-      const normalized = finite(value, 40, 1e3);
-      if (normalized !== void 0) output.width = normalized;
+      const normalized2 = finite(value, 40, 1e3);
+      if (normalized2 !== void 0) output.width = normalized2;
     } else if (key === "fontSize") {
-      const normalized = finite(value, 8, 96);
-      if (normalized !== void 0) output.fontSize = normalized;
+      const normalized2 = finite(value, 8, 96);
+      if (normalized2 !== void 0) output.fontSize = normalized2;
     } else if (key === "borderDasharray" && DASH.has(String(value))) output.borderDasharray = String(value);
     else if (key === "textAlign" && TEXT_ALIGN.has(String(value))) output.textAlign = String(value);
     else if (key === "fontStyle" && FONT_STYLE.has(String(value))) output.fontStyle = String(value);
@@ -57059,14 +57059,14 @@ function openLinkDialog(commands, autoHttps = true) {
       dialog.destroy();
       return;
     }
-    const normalized = normalizeInlineLink(raw, autoHttps);
-    if (!normalized) {
+    const normalized2 = normalizeInlineLink(raw, autoHttps);
+    if (!normalized2) {
       siyuan.showMessage("链接地址无效或协议不受支持", 3500, "error");
       url.focus();
       url.select();
       return;
     }
-    commands.setLink(normalized, title.value.trim());
+    commands.setLink(normalized2, title.value.trim());
     dialog.destroy();
   });
   url.focus();
@@ -57626,13 +57626,13 @@ function openInlineLinkDialog(commands, settings) {
     dialog.destroy();
   });
   const apply2 = () => {
-    const normalized = normalizeInlineLink(input.value, settings.inlineLinkAutoHttps);
-    if (!normalized) {
+    const normalized2 = normalizeInlineLink(input.value, settings.inlineLinkAutoHttps);
+    if (!normalized2) {
       siyuan.showMessage("链接地址无效或协议不受支持", 3e3, "error");
       input.focus();
       return;
     }
-    commands.setInlineLink(normalized);
+    commands.setInlineLink(normalized2);
     dialog.destroy();
   };
   (_c2 = dialog.element.querySelector('[data-action="save"]')) == null ? void 0 : _c2.addEventListener("click", apply2);
@@ -60619,10 +60619,10 @@ class YeMindEditor {
     );
     if (lineStyleSelect) lineStyleSelect.value = this.current.lineStyle;
     let runtimeData = this.current.data;
-    const normalized = stripCustomPositions(runtimeData);
-    const sanitized = sanitizeAssociativeLines(normalized.tree);
+    const normalized2 = stripCustomPositions(runtimeData);
+    const sanitized = sanitizeAssociativeLines(normalized2.tree);
     runtimeData = sanitized.tree;
-    if (normalized.changed || sanitized.changed) {
+    if (normalized2.changed || sanitized.changed) {
       this.current.data = runtimeData;
       void this.options.repository.update(this.current.id, { data: runtimeData }).catch((error) => {
         console.error("[YeMind Zen] migrated data save failed", error);
@@ -61036,9 +61036,9 @@ class YeMindEditor {
       var _a, _b, _c2;
       if (this.applyingCheckpoint) return;
       this.updateZoom();
-      const normalized = normalizePersistedViewData(viewData);
-      if (!normalized) return;
-      this.current.viewData = normalized;
+      const normalized2 = normalizePersistedViewData(viewData);
+      if (!normalized2) return;
+      this.current.viewData = normalized2;
       this.options.diagnostics.record(
         "editor",
         "view-change",
@@ -62353,7 +62353,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
   });
 }
 function registerYeMindTab(plugin, host) {
-  const states = /* @__PURE__ */ new WeakMap();
+  const states2 = /* @__PURE__ */ new WeakMap();
   plugin.addTab({
     type: TAB_TYPE,
     init() {
@@ -62364,7 +62364,7 @@ function registerYeMindTab(plugin, host) {
       container.style.minHeight = "0";
       container.innerHTML = '<div class="ymz-loading">正在加载导图…</div>';
       const state = { destroyed: false };
-      states.set(this, state);
+      states2.set(this, state);
       const mapId = String(((_a = this.data) == null ? void 0 : _a.mapId) ?? "");
       void mountAfterReady(
         state,
@@ -62425,16 +62425,16 @@ function registerYeMindTab(plugin, host) {
     },
     resize() {
       var _a, _b;
-      (_b = (_a = states.get(this)) == null ? void 0 : _a.editor) == null ? void 0 : _b.resize();
+      (_b = (_a = states2.get(this)) == null ? void 0 : _a.editor) == null ? void 0 : _b.resize();
     },
     destroy() {
       var _a, _b;
-      const state = states.get(this);
+      const state = states2.get(this);
       if (!state) return;
       state.destroyed = true;
       (_a = state.editor) == null ? void 0 : _a.destroy();
       (_b = state.unregister) == null ? void 0 : _b.call(state);
-      states.delete(this);
+      states2.delete(this);
     }
   });
 }
@@ -62518,6 +62518,8 @@ function initializePluginStartup(options) {
   }
   return ready;
 }
+const states = /* @__PURE__ */ new WeakMap();
+const activeStates = /* @__PURE__ */ new Set();
 function escapeHtml(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
@@ -62530,6 +62532,71 @@ function plainText(value) {
     return (element.textContent ?? "").replace(/\s+/g, " ").trim();
   }
   return text2.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+function normalized(value) {
+  return value.toLocaleLowerCase();
+}
+function sourceLabel(source) {
+  switch (source) {
+    case "note":
+      return "备注";
+    case "comment":
+      return "批注";
+    case "tag":
+      return "标签";
+    case "link":
+      return "链接";
+    case "todo":
+      return "待办";
+    case "title":
+      return "导图";
+    default:
+      return "";
+  }
+}
+function sourcePriority(source) {
+  switch (source) {
+    case "node":
+      return 0;
+    case "title":
+      return 1;
+    case "note":
+      return 2;
+    case "comment":
+      return 3;
+    case "tag":
+      return 4;
+    case "todo":
+      return 5;
+    case "link":
+      return 6;
+    default:
+      return 7;
+  }
+}
+function matchPriority(match2, query) {
+  const text2 = normalized(match2.text.replace(/^(备注|批注|标签|链接|待办)：/, ""));
+  if (text2 === query) return sourcePriority(match2.source);
+  if (text2.startsWith(query)) return 20 + sourcePriority(match2.source);
+  return 40 + sourcePriority(match2.source);
+}
+function highlightText(text2, rawQuery) {
+  const query = rawQuery.trim();
+  if (!query) return escapeHtml(text2);
+  const lower = normalized(text2);
+  const needle = normalized(query);
+  let start = 0;
+  let index = lower.indexOf(needle, start);
+  if (index < 0) return escapeHtml(text2);
+  const chunks = [];
+  while (index >= 0) {
+    chunks.push(escapeHtml(text2.slice(start, index)));
+    chunks.push(`<mark>${escapeHtml(text2.slice(index, index + query.length))}</mark>`);
+    start = index + query.length;
+    index = lower.indexOf(needle, start);
+  }
+  chunks.push(escapeHtml(text2.slice(start)));
+  return chunks.join("");
 }
 function nodeFragments(node) {
   const data2 = node.data;
@@ -62552,8 +62619,13 @@ function visitTree(map2, node, query, path2, matches, limit) {
   if (matches.length >= limit) return;
   const nodeText = plainText(node.data.text);
   const nextPath = nodeText ? [...path2, nodeText] : path2;
-  const fragment = nodeFragments(node).find((item) => item.text.toLocaleLowerCase().includes(query));
-  if (fragment) {
+  const fragments = nodeFragments(node).filter((item) => normalized(item.text).includes(query));
+  if (fragments.length > 0) {
+    const fragment = [...fragments].sort((left, right) => {
+      const leftMatch = { mapId: map2.id, mapTitle: map2.title, text: left.text, source: left.source };
+      const rightMatch = { mapId: map2.id, mapTitle: map2.title, text: right.text, source: right.source };
+      return matchPriority(leftMatch, query) - matchPriority(rightMatch, query);
+    })[0];
     matches.push({
       mapId: map2.id,
       nodeUid: String(node.data.uid ?? ""),
@@ -62566,83 +62638,485 @@ function visitTree(map2, node, query, path2, matches, limit) {
   for (const child of node.children ?? []) visitTree(map2, child, query, nextPath, matches, limit);
 }
 function collectGlobalMapMatches(maps, rawQuery, limit = 30) {
-  const query = rawQuery.trim().toLocaleLowerCase();
+  const query = normalized(rawQuery.trim());
   if (!query) return [];
   const matches = [];
   for (const map2 of maps) {
-    if (map2.title.toLocaleLowerCase().includes(query)) {
+    if (normalized(map2.title).includes(query)) {
       matches.push({
         mapId: map2.id,
         nodeUid: String(map2.data.data.uid ?? ""),
         mapTitle: map2.title,
         text: map2.title,
-        path: map2.title,
+        path: plainText(map2.data.data.text) || map2.title,
         titleMatch: true,
         source: "title"
       });
     }
-    visitTree(map2, map2.data, query, [], matches, limit);
-    if (matches.length >= limit) break;
+    visitTree(map2, map2.data, query, [], matches, limit * 2);
   }
   const unique = /* @__PURE__ */ new Map();
-  matches.forEach((item) => unique.set(`${item.mapId}:${item.nodeUid}:${item.source}`, item));
-  return [...unique.values()].slice(0, limit);
+  matches.forEach((item) => {
+    const key = `${item.mapId}:${item.nodeUid}`;
+    const existing = unique.get(key);
+    if (!existing || matchPriority(item, query) < matchPriority(existing, query)) unique.set(key, item);
+  });
+  return [...unique.values()].sort((left, right) => matchPriority(left, query) - matchPriority(right, query) || right.mapTitle.localeCompare(left.mapTitle) || left.path.localeCompare(right.path)).slice(0, limit);
 }
-function renderGlobalSearchResults(matches) {
+function resultPath(match2) {
+  const path2 = match2.path && match2.path !== match2.mapTitle ? match2.path : "";
+  return path2 ? `${match2.mapTitle} / ${path2.replaceAll(" › ", " / ")}` : match2.mapTitle;
+}
+function displayMatchText(match2) {
+  return match2.text.replace(/^(备注|批注|标签|链接|待办)：/, "");
+}
+function resultSignature(matches, query) {
+  return `${query}::${matches.map((item) => `${item.mapId}:${item.nodeUid}:${item.source}:${item.text}`).join("|")}`;
+}
+function renderGlobalSearchResults(matches, query = "") {
   if (matches.length === 0) return "";
-  return `<section class="ymz-global-search-results" data-yemind-global-results><header><strong>YeMind Zen</strong><span>${matches.length} 条结果</span></header><div class="ymz-global-search-results__list">${matches.map((item) => `<button type="button" class="b3-list-item ymz-global-search-result" data-yemind-global-map="${escapeHtml(item.mapId)}" data-yemind-global-node="${escapeHtml(item.nodeUid)}"><span class="b3-list-item__graphic">Ye</span><span class="b3-list-item__text"><strong>${escapeHtml(item.text)}</strong><small>${escapeHtml(item.mapTitle)}${item.path && item.path !== item.text ? ` · ${escapeHtml(item.path)}` : ""}</small></span></button>`).join("")}</div></section>`;
+  const signature = resultSignature(matches, query);
+  const rows = matches.map((item) => {
+    const label = sourceLabel(item.source);
+    return `<div role="option" tabindex="-1" class="b3-list-item ymz-global-search-result" data-yemind-global-result data-yemind-global-map="${escapeHtml(item.mapId)}" data-yemind-global-node="${escapeHtml(item.nodeUid)}">
+      <svg class="b3-list-item__graphic ymz-global-search-result__icon" aria-hidden="true"><use xlink:href="#iconYeMind"></use></svg>
+      <span class="b3-list-item__text">${label ? `<span class="ymz-global-search-result__source">${escapeHtml(label)}</span>` : ""}<span class="ymz-global-search-result__content">${highlightText(displayMatchText(item), query)}</span></span>
+      <span class="b3-list-item__meta b3-list-item__meta--ellipsis ariaLabel" aria-label="${escapeHtml(resultPath(item))}">${escapeHtml(resultPath(item))}</span>
+    </div>`;
+  }).join("");
+  return `<section class="ymz-global-search-results" data-yemind-global-results data-yemind-global-signature="${escapeHtml(signature)}" role="group" aria-label="YeMind Zen 搜索结果">
+    <header class="ymz-global-search-results__header"><strong>YeMind Zen</strong><span>${matches.length} 条结果</span></header>
+    <div class="ymz-global-search-results__list">${rows}</div>
+  </section>`;
 }
-function resolveGlobalSearchMount(searchElement) {
-  const layout2 = searchElement.closest(".search__layout") ?? searchElement.closest(".search__panel") ?? searchElement.closest(".protyle") ?? searchElement.parentElement;
-  if (!layout2) return null;
-  const cleanupRoot = layout2.parentElement ?? layout2;
-  const candidates = [
-    ".search__list",
-    ".search__result",
-    ".search__results",
-    '[data-type="search-result"]',
-    ".search__content",
-    ".search__body"
-  ];
-  for (const selector of candidates) {
-    const candidate = layout2.querySelector(selector) ?? cleanupRoot.querySelector(selector);
-    if (candidate && !candidate.contains(searchElement)) return { cleanupRoot, mountPoint: candidate };
+function findNodePath(root2, uid, path2 = []) {
+  const next2 = [...path2, root2];
+  if (String(root2.data.uid ?? "") === uid) return next2;
+  for (const child of root2.children ?? []) {
+    const found = findNodePath(child, uid, next2);
+    if (found) return found;
   }
-  return { cleanupRoot, mountPoint: layout2 };
+  return null;
+}
+function renderPreviewRow(node, depth, targetUid, onPath, current) {
+  const uid = String(node.data.uid ?? "");
+  const text2 = plainText(node.data.text) || "未命名节点";
+  const children = node.children ?? [];
+  const marker = children.length > 0 ? onPath ? "▾" : "▸" : "●";
+  return `<div class="ymz-global-search-preview__row${current ? " is-current" : ""}${onPath ? " is-path" : ""}" data-yemind-preview-node="${escapeHtml(uid)}" style="--ymz-preview-depth:${depth}">
+    <span class="ymz-global-search-preview__marker" aria-hidden="true">${marker}</span>
+    <span class="ymz-global-search-preview__text">${escapeHtml(text2)}</span>
+    ${children.length > 0 && !onPath ? `<span class="ymz-global-search-preview__count">${children.length}</span>` : ""}
+  </div>`;
+}
+function renderGlobalSearchPreview(map2, match2, maxRows = 200) {
+  const path2 = findNodePath(map2.data, match2.nodeUid) ?? [map2.data];
+  const pathSet = new Set(path2.map((node) => String(node.data.uid ?? "")));
+  path2.at(-1) ?? map2.data;
+  const rows = [];
+  let count = 0;
+  const push = (node, depth, onPath, current = false) => {
+    if (count >= maxRows) return;
+    rows.push(renderPreviewRow(node, depth, match2.nodeUid, onPath, current));
+    count += 1;
+  };
+  const renderPathContext = (node, depth) => {
+    if (count >= maxRows) return;
+    const uid = String(node.data.uid ?? "");
+    const current = uid === match2.nodeUid;
+    push(node, depth, true, current);
+    if (current) {
+      for (const child of node.children ?? []) push(child, depth + 1, false, false);
+      return;
+    }
+    for (const child of node.children ?? []) {
+      const childUid = String(child.data.uid ?? "");
+      if (pathSet.has(childUid)) renderPathContext(child, depth + 1);
+      else push(child, depth + 1, false, false);
+      if (count >= maxRows) break;
+    }
+  };
+  renderPathContext(map2.data, 0);
+  const source = sourceLabel(match2.source);
+  const fullPath = resultPath(match2);
+  return `<section class="ymz-global-search-preview" data-yemind-global-preview data-yemind-preview-map="${escapeHtml(map2.id)}" data-yemind-preview-node-target="${escapeHtml(match2.nodeUid)}">
+    <header class="ymz-global-search-preview__header">
+      <div><strong>${escapeHtml(map2.title)}</strong><small title="${escapeHtml(fullPath)}">${escapeHtml(fullPath)}</small></div>
+      <button type="button" class="b3-button b3-button--small b3-button--outline" data-yemind-preview-open>打开导图</button>
+    </header>
+    ${source && match2.source !== "title" && match2.source !== "node" ? `<div class="ymz-global-search-preview__match"><span>${escapeHtml(source)}</span>${escapeHtml(displayMatchText(match2))}</div>` : ""}
+    <div class="ymz-global-search-preview__outline" role="tree">${rows.join("")}</div>
+    ${count >= maxRows ? `<footer>预览已限制为 ${maxRows} 个节点</footer>` : ""}
+  </section>`;
+}
+function findSearchRoot(searchElement) {
+  return searchElement.closest(".fn__flex-column") ?? searchElement.closest(".search__panel") ?? searchElement.closest(".search__layout") ?? searchElement.parentElement;
+}
+function resolveGlobalSearchSurface(searchElement) {
+  const root2 = findSearchRoot(searchElement);
+  if (!root2) return null;
+  const list = root2.querySelector("#searchList, .search__list") ?? searchElement.closest(".search__layout") ?? root2;
+  let preview = root2.querySelector("#searchPreview, .search__preview");
+  if (!preview && typeof document !== "undefined") {
+    preview = document.createElement("div");
+    preview.className = "search__preview ymz-global-search-preview-host";
+    preview.dataset.yemindFallbackPreview = "";
+    if (list.parentElement) list.parentElement.append(preview);
+    else root2.append(preview);
+  }
+  if (!preview) return null;
+  return {
+    root: root2,
+    list,
+    preview,
+    resultCount: root2.querySelector("#searchResult")
+  };
+}
+function keyForMatch(match2) {
+  return `${match2.mapId}:${match2.nodeUid}`;
+}
+function matchForRow(state, row) {
+  const mapId = row.dataset.yemindGlobalMap ?? "";
+  const nodeUid2 = row.dataset.yemindGlobalNode ?? "";
+  return state.matches.find((item) => item.mapId === mapId && item.nodeUid === nodeUid2);
+}
+function findMap(state, mapId) {
+  return state.maps.find((map2) => map2.id === mapId);
+}
+function clearPreview(surface) {
+  var _a;
+  (_a = surface.preview.querySelector("[data-yemind-global-preview]")) == null ? void 0 : _a.remove();
+  surface.preview.classList.remove("ymz-global-preview-active");
+}
+function clearCustomSelection(state, surface) {
+  surface.list.querySelectorAll("[data-yemind-global-result].b3-list-item--focus").forEach((item) => item.classList.remove("b3-list-item--focus"));
+  state.selectedKey = null;
+  clearPreview(surface);
+}
+function openMatch(state, match2, position2) {
+  if (position2) state.onOpen(match2.mapId, match2.nodeUid, { position: position2 });
+  else state.onOpen(match2.mapId, match2.nodeUid);
+}
+function showPreview(state, surface, match2) {
+  var _a;
+  const map2 = findMap(state, match2.mapId);
+  if (!map2) return;
+  const existing = surface.preview.querySelector("[data-yemind-global-preview]");
+  if ((existing == null ? void 0 : existing.dataset.yemindPreviewMap) === match2.mapId && existing.dataset.yemindPreviewNodeTarget === match2.nodeUid) {
+    surface.preview.classList.add("ymz-global-preview-active");
+    return;
+  }
+  clearPreview(surface);
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = renderGlobalSearchPreview(map2, match2);
+  const preview = wrapper.firstElementChild;
+  if (!preview) return;
+  (_a = preview.querySelector("[data-yemind-preview-open]")) == null ? void 0 : _a.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openMatch(state, match2);
+  });
+  preview.querySelectorAll("[data-yemind-preview-node]").forEach((row) => {
+    row.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const uid = row.dataset.yemindPreviewNode ?? match2.nodeUid;
+      if (uid) state.onOpen(match2.mapId, uid);
+    });
+  });
+  surface.preview.append(preview);
+  surface.preview.classList.add("ymz-global-preview-active");
+}
+function selectMatch(state, surface, match2, scroll = true) {
+  surface.list.querySelectorAll(".b3-list-item--focus").forEach((item) => item.classList.remove("b3-list-item--focus"));
+  surface.list.querySelectorAll('[data-yemind-global-result][aria-selected="true"]').forEach((item) => item.setAttribute("aria-selected", "false"));
+  const row = Array.from(surface.list.querySelectorAll("[data-yemind-global-result]")).find((item) => item.dataset.yemindGlobalMap === match2.mapId && item.dataset.yemindGlobalNode === match2.nodeUid);
+  if (!row) return;
+  row.classList.add("b3-list-item--focus");
+  row.setAttribute("aria-selected", "true");
+  state.selectedKey = keyForMatch(match2);
+  showPreview(state, surface, match2);
+  if (scroll && typeof row.scrollIntoView === "function") row.scrollIntoView({ block: "nearest" });
+}
+function selectedMatch(state) {
+  return state.selectedKey ? state.matches.find((item) => keyForMatch(item) === state.selectedKey) : void 0;
+}
+function activateNativeResult(state, surface, native2) {
+  clearCustomSelection(state, surface);
+  surface.list.querySelectorAll(".b3-list-item--focus").forEach((item) => item.classList.remove("b3-list-item--focus"));
+  native2.classList.add("b3-list-item--focus");
+  native2.dispatchEvent(new MouseEvent("click", { bubbles: true, button: 0 }));
+  if (typeof native2.scrollIntoView === "function") native2.scrollIntoView({ block: "nearest" });
+}
+function attachRowEvents(state, surface) {
+  surface.list.querySelectorAll("[data-yemind-global-result]").forEach((row) => {
+    if (row.dataset.yemindEvents === "1") return;
+    row.dataset.yemindEvents = "1";
+    const selectFromEvent = (event) => {
+      if (event instanceof MouseEvent && event.button !== 0) return void 0;
+      event.preventDefault();
+      event.stopPropagation();
+      if ("stopImmediatePropagation" in event) event.stopImmediatePropagation();
+      const match2 = matchForRow(state, row);
+      if (match2) selectMatch(state, surface, match2, false);
+      return match2;
+    };
+    row.addEventListener("pointerdown", (event) => {
+      selectFromEvent(event);
+    }, true);
+    row.addEventListener("mousedown", (event) => {
+      selectFromEvent(event);
+    }, true);
+    row.addEventListener("click", (event) => {
+      const match2 = selectFromEvent(event);
+      if (match2 && event.altKey) openMatch(state, match2, "right");
+    });
+    row.addEventListener("dblclick", (event) => {
+      const match2 = selectFromEvent(event);
+      if (match2) openMatch(state, match2);
+    });
+  });
+}
+function attachNativeSelectionRestore(state, surface) {
+  if (state.observedList === surface.list) return;
+  if (state.observedList && state.listMouseDown) state.observedList.removeEventListener("mousedown", state.listMouseDown, true);
+  if (state.observedList && state.listPointerDown) state.observedList.removeEventListener("pointerdown", state.listPointerDown, true);
+  if (state.observedList && state.listClick) state.observedList.removeEventListener("click", state.listClick, true);
+  state.observedList = surface.list;
+  const restore = (event) => {
+    var _a;
+    const item = (_a = event.target) == null ? void 0 : _a.closest(".b3-list-item");
+    if (!item || item.hasAttribute("data-yemind-global-result")) return;
+    clearCustomSelection(state, surface);
+  };
+  state.listMouseDown = (event) => restore(event);
+  state.listPointerDown = (event) => restore(event);
+  state.listClick = (event) => restore(event);
+  surface.list.addEventListener("pointerdown", state.listPointerDown, true);
+  surface.list.addEventListener("mousedown", state.listMouseDown, true);
+  surface.list.addEventListener("click", state.listClick, true);
+}
+function updateResultCount(surface, count) {
+  const host = surface.resultCount;
+  if (!host) return;
+  const existing = host.querySelector("[data-yemind-search-count]");
+  if (count <= 0) {
+    existing == null ? void 0 : existing.remove();
+    return;
+  }
+  const text2 = ` · ${count} 个导图节点`;
+  if (existing) {
+    if (existing.textContent !== text2) existing.textContent = text2;
+    return;
+  }
+  const badge = document.createElement("span");
+  badge.dataset.yemindSearchCount = "";
+  badge.className = "ymz-global-search-count";
+  badge.textContent = text2;
+  host.append(badge);
+}
+function updateNativeEmptyState(surface, hasYeMindResults) {
+  surface.list.querySelectorAll("[data-yemind-native-empty-hidden]").forEach((item) => {
+    item.classList.remove("ymz-global-search-native-empty-hidden");
+    delete item.dataset.yemindNativeEmptyHidden;
+  });
+  if (!hasYeMindResults) return;
+  Array.from(surface.list.children).forEach((child) => {
+    if (!(child instanceof HTMLElement) || child.hasAttribute("data-yemind-global-results")) return;
+    const text2 = (child.textContent ?? "").trim();
+    if (/搜索结果为空|没有搜索结果|无结果/.test(text2)) {
+      child.dataset.yemindNativeEmptyHidden = "";
+      child.classList.add("ymz-global-search-native-empty-hidden");
+    }
+  });
+}
+function ensureMounted(state, selectInitial = false) {
+  const surface = resolveGlobalSearchSurface(state.searchElement);
+  if (!surface) return;
+  state.mutating = true;
+  try {
+    const panels = Array.from(surface.root.querySelectorAll("[data-yemind-global-results]"));
+    let panel = panels.find((item) => item.parentElement === surface.list) ?? null;
+    panels.forEach((item) => {
+      if (item !== panel) item.remove();
+    });
+    const signature = resultSignature(state.matches, state.query);
+    if (panel && panel.dataset.yemindGlobalSignature !== signature) {
+      panel.remove();
+      panel = null;
+    }
+    if (!state.query || state.matches.length === 0) {
+      panel == null ? void 0 : panel.remove();
+      clearPreview(surface);
+      updateResultCount(surface, 0);
+      updateNativeEmptyState(surface, false);
+      state.selectedKey = null;
+      state.initialized = true;
+      return;
+    }
+    if (!panel) {
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = renderGlobalSearchResults(state.matches, state.query);
+      panel = wrapper.firstElementChild;
+      if (panel) surface.list.prepend(panel);
+    }
+    if (!panel) return;
+    attachRowEvents(state, surface);
+    attachNativeSelectionRestore(state, surface);
+    updateResultCount(surface, state.matches.length);
+    updateNativeEmptyState(surface, true);
+    const selected = selectedMatch(state);
+    if (selected) selectMatch(state, surface, selected, false);
+    else if (selectInitial && state.matches[0]) selectMatch(state, surface, state.matches[0], false);
+    state.initialized = true;
+  } finally {
+    state.mutating = false;
+  }
+}
+function scheduleEnsure(state) {
+  if (state.scheduled) return;
+  state.scheduled = true;
+  window.setTimeout(() => {
+    state.scheduled = false;
+    if (!state.searchElement.isConnected) {
+      destroyState(state, false);
+      return;
+    }
+    ensureMounted(state, false);
+  }, 0);
+}
+function observeSurface(state) {
+  var _a;
+  const surface = resolveGlobalSearchSurface(state.searchElement);
+  if (!surface) return;
+  if (state.observedRoot === surface.root && state.observer) return;
+  (_a = state.observer) == null ? void 0 : _a.disconnect();
+  state.observedRoot = surface.root;
+  state.observer = new MutationObserver(() => {
+    if (!state.mutating) scheduleEnsure(state);
+  });
+  state.observer.observe(surface.root, { childList: true, subtree: true });
+}
+function attachKeyboard(state) {
+  if (state.keyDown) return;
+  state.keyDown = (event) => {
+    const surface = resolveGlobalSearchSurface(state.searchElement);
+    if (!surface || state.matches.length === 0) return;
+    const current = selectedMatch(state);
+    const currentIndex = current ? state.matches.findIndex((item) => keyForMatch(item) === keyForMatch(current)) : -1;
+    const customRows = Array.from(surface.list.querySelectorAll("[data-yemind-global-result]"));
+    const nativeRows = Array.from(surface.list.querySelectorAll(".b3-list-item:not([data-yemind-global-result])"));
+    const focusedNative = nativeRows.find((item) => item.classList.contains("b3-list-item--focus"));
+    const stop = () => {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+    };
+    if (event.key === "Enter" && current) {
+      stop();
+      openMatch(state, current, event.altKey ? "right" : void 0);
+      return;
+    }
+    if (event.key === "ArrowDown") {
+      if (currentIndex >= 0) {
+        stop();
+        if (currentIndex < state.matches.length - 1) selectMatch(state, surface, state.matches[currentIndex + 1]);
+        else if (nativeRows[0]) activateNativeResult(state, surface, nativeRows[0]);
+        return;
+      }
+      if (!focusedNative && state.matches[0]) {
+        stop();
+        selectMatch(state, surface, state.matches[0]);
+      }
+      return;
+    }
+    if (event.key === "ArrowUp") {
+      if (currentIndex > 0) {
+        stop();
+        selectMatch(state, surface, state.matches[currentIndex - 1]);
+        return;
+      }
+      if (currentIndex === 0) {
+        stop();
+        return;
+      }
+      if (focusedNative && nativeRows.indexOf(focusedNative) === 0 && state.matches.at(-1)) {
+        stop();
+        selectMatch(state, surface, state.matches.at(-1));
+      }
+      return;
+    }
+    if (event.key === "PageUp" && customRows.length > 0) {
+      stop();
+      selectMatch(state, surface, state.matches[0]);
+      return;
+    }
+    if (event.key === "PageDown" && customRows.length > 0) {
+      stop();
+      selectMatch(state, surface, state.matches.at(-1));
+    }
+  };
+  state.searchElement.addEventListener("keydown", state.keyDown, true);
+}
+function destroyState(state, removeDom = true) {
+  var _a;
+  (_a = state.observer) == null ? void 0 : _a.disconnect();
+  state.observer = null;
+  if (state.keyDown) state.searchElement.removeEventListener("keydown", state.keyDown, true);
+  if (state.observedList && state.listMouseDown) state.observedList.removeEventListener("mousedown", state.listMouseDown, true);
+  if (state.observedList && state.listPointerDown) state.observedList.removeEventListener("pointerdown", state.listPointerDown, true);
+  if (state.observedList && state.listClick) state.observedList.removeEventListener("click", state.listClick, true);
+  if (removeDom) {
+    const surface = resolveGlobalSearchSurface(state.searchElement);
+    if (surface) {
+      surface.root.querySelectorAll("[data-yemind-global-results]").forEach((item) => item.remove());
+      clearPreview(surface);
+      updateResultCount(surface, 0);
+      updateNativeEmptyState(surface, false);
+    }
+  }
+  activeStates.delete(state);
+  states.delete(state.searchElement);
+}
+function destroyGlobalSearchIntegrations() {
+  Array.from(activeStates).forEach((state) => destroyState(state));
 }
 function mountGlobalSearchResults(options) {
   var _a;
-  const surface = resolveGlobalSearchMount(options.searchElement);
-  if (!surface) return;
-  (_a = surface.cleanupRoot.querySelector("[data-yemind-global-results]")) == null ? void 0 : _a.remove();
-  const matches = collectGlobalMapMatches(options.maps, options.searchElement.value);
-  if (matches.length === 0) return;
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = renderGlobalSearchResults(matches);
-  const panel = wrapper.firstElementChild;
-  if (!panel) return;
-  panel.classList.add("ymz-global-search-results--native");
-  const activated = /* @__PURE__ */ new WeakMap();
-  const activateButton = (button, event) => {
-    if (event instanceof MouseEvent && event.button !== 0) return;
-    event.preventDefault();
-    event.stopPropagation();
-    if ("stopImmediatePropagation" in event) event.stopImmediatePropagation();
-    const now = Date.now();
-    const previous = activated.get(button) ?? 0;
-    if (now - previous < 500) return;
-    activated.set(button, now);
-    options.onOpen(button.dataset.yemindGlobalMap ?? "", button.dataset.yemindGlobalNode ?? "");
-  };
-  panel.querySelectorAll("[data-yemind-global-map]").forEach((button) => {
-    button.addEventListener("pointerdown", (event) => activateButton(button, event), true);
-    button.addEventListener("mousedown", (event) => activateButton(button, event), true);
-    button.addEventListener("click", (event) => activateButton(button, event));
-    button.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") activateButton(button, event);
-    });
-  });
-  surface.mountPoint.prepend(panel);
+  let state = states.get(options.searchElement);
+  const query = options.searchElement.value.trim();
+  const queryChanged = !state || state.query !== query;
+  if (!state) {
+    state = {
+      searchElement: options.searchElement,
+      maps: options.maps,
+      onOpen: options.onOpen,
+      query,
+      matches: [],
+      selectedKey: null,
+      initialized: false,
+      observer: null,
+      observedRoot: null,
+      observedList: null,
+      scheduled: false,
+      mutating: false
+    };
+    states.set(options.searchElement, state);
+    activeStates.add(state);
+  }
+  state.maps = options.maps;
+  state.onOpen = options.onOpen;
+  state.query = query;
+  state.matches = collectGlobalMapMatches(options.maps, query);
+  if (queryChanged) state.selectedKey = null;
+  attachKeyboard(state);
+  ensureMounted(state, queryChanged || !state.initialized);
+  if (state.query && state.matches.length > 0) observeSurface(state);
+  else {
+    (_a = state.observer) == null ? void 0 : _a.disconnect();
+    state.observer = null;
+    state.observedRoot = null;
+  }
 }
 class YeMindZenPlugin extends siyuan.Plugin {
   constructor() {
@@ -62666,8 +63140,8 @@ class YeMindZenPlugin extends siyuan.Plugin {
         mountGlobalSearchResults({
           searchElement,
           maps: this.repository.list(),
-          onOpen: (mapId, nodeUid2) => {
-            void this.openMapAtNode(mapId, nodeUid2);
+          onOpen: (mapId, nodeUid2, openOptions) => {
+            void this.openMapAtNode(mapId, nodeUid2, openOptions);
           }
         });
       }, 80);
@@ -62768,6 +63242,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
     this.eventBus.off("open-siyuan-url-plugin", this.onOpenPluginUrl);
     this.eventBus.off("input-search", this.onGlobalSearchInput);
     if (this.globalSearchTimer !== null) window.clearTimeout(this.globalSearchTimer);
+    destroyGlobalSearchIntegrations();
     (_a = this.diagnostics) == null ? void 0 : _a.record("plugin", "unload", void 0, void 0, "info", true);
     (_b = this.diagnostics) == null ? void 0 : _b.detachGlobalListeners();
     (_c2 = this.diagnostics) == null ? void 0 : _c2.stop();
@@ -62775,7 +63250,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
   whenReady() {
     return this.ready;
   }
-  async openMap(mapId) {
+  async openMap(mapId, options = {}) {
     await runSafeOperation(async () => {
       await this.ready;
       this.diagnostics.record("operation", "open-map-requested", mapId);
@@ -62795,15 +63270,16 @@ class YeMindZenPlugin extends siyuan.Plugin {
           data: { mapId }
         },
         openNewTab: true,
+        position: options.position,
         keepCursor: false
       });
     }, (error) => this.reportOperationFailure("打开导图", error));
   }
-  async openMapAtNode(mapId, nodeUid2) {
+  async openMapAtNode(mapId, nodeUid2, options = {}) {
     if (!mapId) return;
     if (nodeUid2 && this.tabRegistry.focusNode(mapId, nodeUid2)) return;
     if (nodeUid2) this.pendingNodeTargets.set(mapId, nodeUid2);
-    await this.openMap(mapId);
+    await this.openMap(mapId, options);
   }
   consumePendingNodeTarget(mapId) {
     const uid = this.pendingNodeTargets.get(mapId);
