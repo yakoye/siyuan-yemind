@@ -548,14 +548,7 @@ export class YeMindEditor {
     const normalized = stripCustomPositions(runtimeData);
     const sanitized = sanitizeAssociativeLines(normalized.tree);
     runtimeData = sanitized.tree;
-    const rootExpandChanged = runtimeData.data.expand === false;
-    if (rootExpandChanged) {
-      runtimeData = {
-        ...runtimeData,
-        data: { ...runtimeData.data, expand: true },
-      };
-    }
-    if (normalized.changed || sanitized.changed || rootExpandChanged) {
+    if (normalized.changed || sanitized.changed) {
       this.current.data = runtimeData;
       void this.options.repository
         .update(this.current.id, { data: runtimeData })
@@ -591,6 +584,7 @@ export class YeMindEditor {
       root: this.rootEl,
       canvas: this.canvasEl,
       getRendererRoot: () => (this.map as any)?.renderer?.root,
+      getActiveNodes: () => this.commands?.getActiveNodes() ?? [],
       readonly: () => Boolean(this.commands?.isReadonly()),
       onAddChild: (uid) => {
         if (this.commands?.addChildByUid(uid)) this.nodeQuickActions?.scheduleRefresh();

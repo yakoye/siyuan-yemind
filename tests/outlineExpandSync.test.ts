@@ -29,4 +29,10 @@ describe('outline expand synchronization', () => {
   it('includes expand state in the structural signature', () => {
     expect(outlineStructureSignature(tree)).toContain('branch:1:1:0');
   });
+
+  it('honors a collapsed Root instead of forcing it open', () => {
+    const collapsedRoot = { ...tree, data: { ...tree.data, expand: false } };
+    expect(flattenOutline(collapsedRoot).map((row) => row.uid)).toEqual(['root']);
+    expect(outlineStructureSignature(collapsedRoot)).toBe('root:0:1:0');
+  });
 });

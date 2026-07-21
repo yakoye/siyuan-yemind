@@ -5,7 +5,7 @@
 - 插件目录：`siyuan-yemind-zen`
 - 插件 ID：`siyuan-yemind-zen`
 - 思源显示名：`YeMind Zen`
-- 当前版本：`0.5.20`
+- 当前版本：`0.5.19`
 
 ## 核心分层
 
@@ -18,9 +18,7 @@ SiYuan Plugin Shell
 ├─ YeMindEditor：编辑器生命周期、稳定大纲 patch 和自动保存
 ├─ simple-mind-map：节点、布局、历史、最终拖拽变更、缩放
 ├─ Official drag intent adapter：仅负责画布拖动预览候选、稳定器和引导线
-├─ Outline adapter：不移动活动行的 keyed patch、单活动 Quill、原生 expand 同步、空节点结构删除和整行 Pointer 拖拽意图
-├─ Node quick actions：编辑器局部新增/折叠控件，动作路由到上游命令
-├─ Node style panel：原生样式 patch、历史和主题继承
+├─ Outline adapter：不移动活动行的 keyed patch、单活动 Quill、局部折叠状态、空节点结构删除和整行 Pointer 拖拽意图
 ├─ Node note/comment layer：备注数据、清理、对话框和悬停预览
 └─ UI：顶部、左侧、底部工具栏与思源原生菜单
 ```

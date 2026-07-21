@@ -82,7 +82,7 @@ export function flattenOutline(tree: MindMapTree): OutlineRow[] {
     const children = Array.isArray(node.children) ? node.children : [];
     const hasChildren = children.length > 0;
     const uid = String(node.data.uid ?? path);
-    const expanded = depth === 0 ? true : node.data.expand !== false;
+    const expanded = node.data.expand !== false;
     rows.push({
       uid,
       ...dataText(node.data),
@@ -165,7 +165,7 @@ function rowHtml(row: OutlineRow, readonly: boolean): string {
   const branch = row.expanded ? "▾" : "▸";
   const label = row.text || "空节点";
   const encodedOriginal = encodeURIComponent(row.html);
-  const toggle = row.hasChildren && !row.isRoot
+  const toggle = row.hasChildren
     ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle aria-label="${row.expanded ? "折叠" : "展开"}">${branch}</button>`
     : '<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" aria-hidden="true"></span>';
   return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml(row.uid)}" data-outline-root="${row.isRoot}" data-outline-generalization="${Boolean(row.isGeneralization)}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" data-outline-drag-source="${readonly || row.isRoot || row.isGeneralization ? "false" : "true"}" style="--ymz-outline-depth:${row.depth}">${toggle}<div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
@@ -247,7 +247,7 @@ export function patchOutlineTree(
       const existingToggle = row.querySelector<HTMLElement>(
         "[data-outline-toggle]",
       );
-      if (data.hasChildren && !data.isRoot) {
+      if (data.hasChildren) {
         let toggle = existingToggle as HTMLButtonElement | null;
         if (!toggle) {
           const placeholder = row.querySelector<HTMLElement>(

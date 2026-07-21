@@ -10,15 +10,26 @@ export interface NodeQuickActionState {
   isRoot: boolean;
   childCount: number;
   expanded: boolean;
+  selected: boolean;
 }
 
 export function describeNodeQuickActions(state: NodeQuickActionState): NodeQuickActionDescriptor[] {
   const childCount = Math.max(0, Math.trunc(Number(state.childCount) || 0));
+  if (childCount > 0 && !state.expanded) {
+    return [{
+      action: 'expand',
+      label: `展开 ${childCount} 个子孙节点`,
+      text: String(childCount),
+    }];
+  }
+  if (!state.selected) return [];
   const actions: NodeQuickActionDescriptor[] = [];
-  if (!state.isRoot && childCount > 0) {
-    actions.push(state.expanded
-      ? { action: 'collapse', label: `折叠 ${childCount} 个子孙节点`, text: '−' }
-      : { action: 'expand', label: `展开 ${childCount} 个子孙节点`, text: String(childCount) });
+  if (childCount > 0) {
+    actions.push({
+      action: 'collapse',
+      label: `折叠 ${childCount} 个子孙节点`,
+      text: '−',
+    });
   }
   actions.push({ action: 'add-child', label: '添加子节点', text: '+' });
   return actions;
@@ -52,6 +63,7 @@ export interface NodeQuickActionsControllerOptions {
   root: HTMLElement;
   canvas: HTMLElement;
   getRendererRoot(): any;
+  getActiveNodes(): any[];
   readonly(): boolean;
   onAddChild(uid: string): void;
   onSetExpanded(uid: string, expanded: boolean): void;
@@ -93,12 +105,21 @@ export class NodeQuickActionsController {
       if (!rect.width && !rect.height) return;
       const childCount = descendantCount(node);
       const expanded = node.getData?.('expand') !== false;
+      const selected = this.options.getActiveNodes().includes(node)
+        || node.getData?.('isActive') === true;
+      const descriptors = describeNodeQuickActions({
+        isRoot: Boolean(node.isRoot),
+        childCount,
+        expanded,
+        selected,
+      });
+      if (descriptors.length === 0) return;
       const container = document.createElement('div');
       container.className = 'ymz-node-quick-actions';
       container.dataset.nodeUid = uid;
       container.style.left = `${rect.right - rootRect.left + 5}px`;
       container.style.top = `${rect.top - rootRect.top + rect.height / 2}px`;
-      describeNodeQuickActions({ isRoot: Boolean(node.isRoot), childCount, expanded }).forEach((descriptor) => {
+      descriptors.forEach((descriptor) => {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = `ymz-node-quick-action ymz-node-quick-action--${descriptor.action}`;

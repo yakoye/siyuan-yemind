@@ -1,14 +1,13 @@
 # Changelog
 
-## 0.5.20 — 2026-07-20
+## 0.5.21 — 2026-07-20
 
-- Added editor-local quick node controls: leaf nodes show add-child; expanded branches show compact collapse plus add-child; collapsed branches show their hidden descendant count plus add-child.
-- Synchronized outline/split disclosure with native map `expand` data and restored Root first-level branch folding. Root itself remains fixed and legacy false Root expansion is repaired on open.
-- Removed the top toolbar Delete entry. Replaced layout, theme and line-style text selectors with Structure, Theme and line SVG controls.
-- Added Structure, Theme and Line Style submenus to the blank-canvas context menu only.
-- Added a node-local style panel for shape, fill, border, width, font, size, weight, color, decoration and alignment, backed by native simple-mind-map style commands and history.
-- Added a dedicated summary icon and exposed native generalizations as editable outline rows while retaining upstream bracket layout and range logic.
-- Added focused regression coverage for quick controls, synchronized disclosure, Root branch behavior, project controls, node styles and summaries.
+- Fixed a three-layer Root collapse conflict: editor startup no longer rewrites `expand: false`, outline flattening no longer forces Root open, and Root rows now render the same disclosure control as other branches.
+- Made split/full-outline collapse and expansion read and write the same persisted `expand` field for Root and ordinary branches.
+- Made collapsed node count pills explicit expand controls, including Root, and added a controller regression proving count clicks route to `SET_NODE_EXPAND(..., true)`.
+- Updated quick actions so unselected expanded nodes show no controls, selected leaves show `+`, selected expanded branches show `−` and `+`, and every collapsed branch shows only the hidden-descendant count.
+- Unified `+` and `−` to the existing compact minus-button dimensions, typography, stroke weight, border and hit area.
+- Added Root persistence, repeatable Root disclosure, count-click routing, selection visibility and native Root expand-command regression coverage.
 
 ## 0.5.19 — 2026-07-18
 

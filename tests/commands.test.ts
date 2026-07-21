@@ -116,6 +116,7 @@ describe('outline command bridge', () => {
     const node = {
       isRoot: false,
       isGeneralization: false,
+      children: [{}],
       getData: vi.fn((key?: string) => key === 'uid' ? 'node-1' : {}),
     };
     const map = fakeMindMap() as any;
@@ -128,11 +129,13 @@ describe('outline command bridge', () => {
     commands.insertSiblingByUid('node-1', 'new-sibling');
     commands.insertChildByUid('node-1', 'new-child');
     commands.removeNodeByUid('node-1');
+    commands.setNodeExpandedByUid('node-1', false);
 
     expect(map.execCommand.mock.calls).toContainEqual(['SET_NODE_TEXT', node, 'Changed', false, true]);
     expect(map.execCommand.mock.calls).toContainEqual(['INSERT_NODE', false, [node], { uid: 'new-sibling', text: '', richText: false }]);
     expect(map.execCommand.mock.calls).toContainEqual(['INSERT_CHILD_NODE', false, [node], { uid: 'new-child', text: '', richText: false }]);
     expect(map.execCommand.mock.calls).toContainEqual(['REMOVE_NODE', [node]]);
+    expect(map.execCommand.mock.calls).toContainEqual(['SET_NODE_EXPAND', node, false]);
   });
 
   it('refuses outline mutations in readonly mode and refuses root deletion', () => {
@@ -216,4 +219,23 @@ describe('node style command bridge', () => {
     expect(commands.addChildByUid('node-1')).toBe(true);
     expect(map.execCommand).toHaveBeenCalledWith('INSERT_CHILD_NODE', true, [node]);
   });
+
+  it('allows Root to use the native expand command when it has children', () => {
+    const root = {
+      isRoot: true,
+      isGeneralization: false,
+      children: [{}],
+      getData: (key?: string) => key === 'uid' ? 'root' : undefined,
+    };
+    const map = fakeMindMap() as any;
+    map.opt = { readonly: false };
+    map.renderer.findNodeByUid = (uid: string) => uid === 'root' ? root : null;
+    const commands = createCommandAdapter(map as never);
+
+    expect(commands.setNodeExpandedByUid('root', false)).toBe(true);
+    expect(commands.setNodeExpandedByUid('root', true)).toBe(true);
+    expect(map.execCommand.mock.calls).toContainEqual(['SET_NODE_EXPAND', root, false]);
+    expect(map.execCommand.mock.calls).toContainEqual(['SET_NODE_EXPAND', root, true]);
+  });
+
 });

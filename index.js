@@ -4371,7 +4371,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.5.20";
+const PLUGIN_VERSION = "0.5.21";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -57674,7 +57674,7 @@ function flattenOutline(tree) {
     const children = Array.isArray(node.children) ? node.children : [];
     const hasChildren = children.length > 0;
     const uid = String(node.data.uid ?? path2);
-    const expanded = depth === 0 ? true : node.data.expand !== false;
+    const expanded = node.data.expand !== false;
     rows.push({
       uid,
       ...dataText(node.data),
@@ -57732,7 +57732,7 @@ function rowHtml(row, readonly) {
   const branch = row.expanded ? "▾" : "▸";
   const label = row.text || "空节点";
   const encodedOriginal = encodeURIComponent(row.html);
-  const toggle = row.hasChildren && !row.isRoot ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle aria-label="${row.expanded ? "折叠" : "展开"}">${branch}</button>` : '<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" aria-hidden="true"></span>';
+  const toggle = row.hasChildren ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle aria-label="${row.expanded ? "折叠" : "展开"}">${branch}</button>` : '<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" aria-hidden="true"></span>';
   return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml$1(row.uid)}" data-outline-root="${row.isRoot}" data-outline-generalization="${Boolean(row.isGeneralization)}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" data-outline-drag-source="${readonly || row.isRoot || row.isGeneralization ? "false" : "true"}" style="--ymz-outline-depth:${row.depth}">${toggle}<div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml$1(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml$1(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
 }
 function resolveOutlineToggleState(input) {
@@ -57773,7 +57773,7 @@ function patchOutlineTree(container, tree, readonly = false, activeUid = null) {
       const existingToggle = row.querySelector(
         "[data-outline-toggle]"
       );
-      if (data2.hasChildren && !data2.isRoot) {
+      if (data2.hasChildren) {
         let toggle = existingToggle;
         if (!toggle) {
           const placeholder = row.querySelector(
@@ -59177,9 +59177,21 @@ class NodeStylePanel {
 }
 function describeNodeQuickActions(state) {
   const childCount = Math.max(0, Math.trunc(Number(state.childCount) || 0));
+  if (childCount > 0 && !state.expanded) {
+    return [{
+      action: "expand",
+      label: `展开 ${childCount} 个子孙节点`,
+      text: String(childCount)
+    }];
+  }
+  if (!state.selected) return [];
   const actions = [];
-  if (!state.isRoot && childCount > 0) {
-    actions.push(state.expanded ? { action: "collapse", label: `折叠 ${childCount} 个子孙节点`, text: "−" } : { action: "expand", label: `展开 ${childCount} 个子孙节点`, text: String(childCount) });
+  if (childCount > 0) {
+    actions.push({
+      action: "collapse",
+      label: `折叠 ${childCount} 个子孙节点`,
+      text: "−"
+    });
   }
   actions.push({ action: "add-child", label: "添加子节点", text: "+" });
   return actions;
@@ -59244,7 +59256,7 @@ class NodeQuickActionsController {
     if (this.options.readonly()) return;
     const rootRect = this.options.root.getBoundingClientRect();
     visibleNodeList(this.options.getRendererRoot()).forEach((node) => {
-      var _a, _b, _c2;
+      var _a, _b, _c2, _d2;
       if ((node == null ? void 0 : node.isGeneralization) || !((_a = node == null ? void 0 : node.group) == null ? void 0 : _a.node)) return;
       const uid = String(((_b = node.getData) == null ? void 0 : _b.call(node, "uid")) ?? "");
       if (!uid) return;
@@ -59252,12 +59264,20 @@ class NodeQuickActionsController {
       if (!rect.width && !rect.height) return;
       const childCount = descendantCount(node);
       const expanded = ((_c2 = node.getData) == null ? void 0 : _c2.call(node, "expand")) !== false;
+      const selected = this.options.getActiveNodes().includes(node) || ((_d2 = node.getData) == null ? void 0 : _d2.call(node, "isActive")) === true;
+      const descriptors = describeNodeQuickActions({
+        isRoot: Boolean(node.isRoot),
+        childCount,
+        expanded,
+        selected
+      });
+      if (descriptors.length === 0) return;
       const container = document.createElement("div");
       container.className = "ymz-node-quick-actions";
       container.dataset.nodeUid = uid;
       container.style.left = `${rect.right - rootRect.left + 5}px`;
       container.style.top = `${rect.top - rootRect.top + rect.height / 2}px`;
-      describeNodeQuickActions({ isRoot: Boolean(node.isRoot), childCount, expanded }).forEach((descriptor) => {
+      descriptors.forEach((descriptor) => {
         const button = document.createElement("button");
         button.type = "button";
         button.className = `ymz-node-quick-action ymz-node-quick-action--${descriptor.action}`;
@@ -59695,14 +59715,7 @@ class YeMindEditor {
     const normalized = stripCustomPositions(runtimeData);
     const sanitized = sanitizeAssociativeLines(normalized.tree);
     runtimeData = sanitized.tree;
-    const rootExpandChanged = runtimeData.data.expand === false;
-    if (rootExpandChanged) {
-      runtimeData = {
-        ...runtimeData,
-        data: { ...runtimeData.data, expand: true }
-      };
-    }
-    if (normalized.changed || sanitized.changed || rootExpandChanged) {
+    if (normalized.changed || sanitized.changed) {
       this.current.data = runtimeData;
       void this.options.repository.update(this.current.id, { data: runtimeData }).catch((error) => {
         console.error("[YeMind Zen] migrated data save failed", error);
@@ -59738,6 +59751,10 @@ class YeMindEditor {
       getRendererRoot: () => {
         var _a2, _b;
         return (_b = (_a2 = this.map) == null ? void 0 : _a2.renderer) == null ? void 0 : _b.root;
+      },
+      getActiveNodes: () => {
+        var _a2;
+        return ((_a2 = this.commands) == null ? void 0 : _a2.getActiveNodes()) ?? [];
       },
       readonly: () => {
         var _a2;
