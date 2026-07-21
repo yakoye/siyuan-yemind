@@ -1,4 +1,5 @@
 import type { NodeComment, NodeTodo } from '../content/nodeContentState';
+import type { NodeNote } from '../content/nodeNoteState';
 
 export interface MindMapNodeData {
   text: string;
@@ -14,6 +15,7 @@ export interface MindMapNodeData {
   imageTitle?: string;
   imageSize?: { width: number; height: number; custom?: boolean };
   yemindTodo?: NodeTodo | null;
+  yemindNote?: NodeNote | null;
   yemindComments?: NodeComment[];
   [key: string]: unknown;
 }

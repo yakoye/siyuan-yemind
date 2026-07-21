@@ -23,6 +23,7 @@ export interface DiagnosticsSelfCheckInput {
   checkpoints: MapCheckpoint[];
   settings: YeMindSettings;
   editors: DiagnosticEditorState[];
+  versions?: { manifest: string; runtime: string; build: string };
   storageProbe(): Promise<{ write: boolean; read: boolean; remove: boolean }>;
   lifecycleProbe(): Promise<{ create: boolean; update: boolean; checkpoint: boolean; restore: boolean; cleanup: boolean }>;
   now?: () => number;
@@ -63,6 +64,17 @@ function inspectTree(tree: MindMapTree): { nodes: number; duplicateUids: number;
 export async function runDiagnosticsSelfCheck(input: DiagnosticsSelfCheckInput): Promise<SelfCheckReport> {
   const items: SelfCheckItem[] = [];
   const now = input.now ?? (() => Date.now());
+
+  if (input.versions) {
+    const values = Object.values(input.versions);
+    const consistent = values.every((value) => value === values[0]);
+    items.push({
+      id: 'version-consistency',
+      status: consistent ? 'pass' : 'fail',
+      summary: consistent ? '清单、运行时和构建版本一致' : '清单、运行时和构建版本不一致，可能仍在运行旧缓存代码',
+      details: input.versions,
+    });
+  }
 
   try {
     const probe = await input.storageProbe();

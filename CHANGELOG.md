@@ -1,17 +1,25 @@
 # Changelog
 
+## 0.5.17 — 2026-07-18
+
+- Studied the user-supplied KMind Zen 0.34.0 bundle and adapted its stable outline-row, explicit structure-transaction, note-image, note-resize, and root-Enter interaction mechanisms without importing the private KMind document kernel.
+- Replaced full outline rerenders with stable UID-keyed row patching; the active Quill host, selection, IME composition, and local draft survive ordinary map saves and `data_change` events.
+- Made empty text a valid rich-text commit and separated text deletion from structural node deletion; Backspace/Delete inside outline editing never removes a node.
+- Added boundary-aware row navigation, IME-safe Enter/Shift+Enter/Tab/Shift+Tab handling, and pre-armed focus restoration for synchronous structure changes.
+- Added a dedicated drag handle to every movable outline row, with before/inside/after drop zones mapped to upstream `INSERT_BEFORE`, `MOVE_NODE_TO`, and `INSERT_AFTER`.
+- Added editable HEX/RGB fields with validation, real-time bidirectional conversion, live application, Escape rollback, saved selection restoration, and keyboard/input/composition isolation from the node editor.
+- Added long-form node notes, sanitized rich HTML, pasted note images, persisted resizable note dialogs, separate note/comment badges, hover previews, and reliable custom menu SVG icons.
+- Changed the Zen capsule to `● 禅` / `● 退出禅模式`, changed UI cloze wording to `模糊/取消模糊`, and changed the formula affordance from `Fx` to `π` while preserving existing data formats.
+- Simplified TODO context-menu semantics to `添加待办/删除待办`; completion remains a checkbox-only state toggle.
+- Expanded diagnostics with problem markers, ± event windows, outline edit/IME/drag transactions, high-frequency view-event coalescing, and manifest/runtime/build version consistency checks.
+- Corrected the runtime version constant that had remained at 0.5.13 and aligned package, manifest, build, and diagnostic versions at 0.5.17.
+
 ## 0.5.16 — 2026-07-18
 
-- Studied the supplied KMind Zen canvas/node menus, zen-state presentation and image commands, then adapted their interaction semantics to the existing SiYuan Menu and `simple-mind-map` command boundaries.
-- Removed the node three-dot postfix control and its settings switch; persisted legacy values are ignored without changing the settings file format.
-- Replaced changing comment counts with one stable comment icon and count-free accessible labels.
-- Removed the EyeDropper entry from text/background palettes, retained 52 swatches, Reset Default and the native custom color picker, and added live uppercase HEX plus RGB readouts.
-- Changed split/full-outline Backspace and Delete handling to text-only semantics so an empty editor row never becomes an implicit structural deletion.
-- Added a dedicated canvas context menu for whole-map/view actions while retaining the complete node context menu with a constrained height and narrow scrollbar.
-- Reworked the zen exit control into a compact accessible capsule that expands on hover or keyboard focus and exits through the existing zen command path.
-- Added local image paste and node-targeted drag/drop input, preserving natural image dimensions and writing through upstream `SET_NODE_IMAGE`.
-- Kept proportional image resizing on the already registered upstream `NodeImgAdjust`; no second image geometry, map history or persistence implementation was introduced.
-- Added RED/GREEN regressions covering node chrome, palette presentation, outline deletion semantics, both context menus, zen presentation and image input/integration.
+- Removed the node ellipsis menu and its obsolete setting; comment badges no longer display counts.
+- Split blank-canvas and node context menus and constrained the long node menu to a thin scroll surface.
+- Added target-specific local image paste/drop and retained upstream natural-size/aspect-ratio resizing.
+- Added the compact Zen exit capsule and updated outline deletion semantics so editing text does not implicitly remove nodes.
 
 ## 0.5.15 — 2026-07-18
 

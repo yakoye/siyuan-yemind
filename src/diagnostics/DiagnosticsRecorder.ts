@@ -10,6 +10,19 @@ export interface DiagnosticEvent {
   details?: Record<string, unknown>;
 }
 
+export interface ProblemMarker {
+  id: string;
+  timestamp: number;
+  label: string;
+}
+
+export interface ProblemWindow {
+  marker: ProblemMarker;
+  beforeMs: number;
+  afterMs: number;
+  events: DiagnosticEvent[];
+}
+
 export interface DiagnosticEditorState {
   mapKey: string;
   mounted: boolean;
@@ -81,6 +94,7 @@ export class DiagnosticsRecorder {
   private readonly sessionId: string;
   private readonly events: DiagnosticEvent[] = [];
   private readonly editors = new Map<string, DiagnosticEditorState>();
+  private readonly markers: ProblemMarker[] = [];
   private sequence = 0;
   private recording = false;
   private startedAt: number | null = null;
@@ -88,7 +102,7 @@ export class DiagnosticsRecorder {
 
   constructor(options: DiagnosticsRecorderOptions = {}) {
     this.now = options.now ?? (() => Date.now());
-    this.maxEvents = Math.max(50, Math.floor(options.maxEvents ?? 500));
+    this.maxEvents = Math.max(50, Math.floor(options.maxEvents ?? 2000));
     this.sessionId = options.sessionId ?? globalThis.crypto?.randomUUID?.() ?? `session-${this.now()}`;
   }
 
@@ -107,6 +121,7 @@ export class DiagnosticsRecorder {
 
   clear(): void {
     this.events.length = 0;
+    this.markers.length = 0;
     this.sequence = 0;
     this.startedAt = this.recording ? this.now() : null;
   }
@@ -132,17 +147,57 @@ export class DiagnosticsRecorder {
     force = false,
   ): void {
     if (!force && !this.recording) return;
+    const timestamp = this.now();
+    const safeCategory = scrubString(category);
+    const safeAction = scrubString(action);
+    const mapKey = mapId ? this.mapKey(mapId) : undefined;
+    const safeDetails = details ? sanitizeValue(details) as Record<string, unknown> : undefined;
+    const previous = this.events[this.events.length - 1];
+    if (safeCategory === 'editor' && safeAction === 'view-change'
+      && previous?.category === safeCategory && previous.action === safeAction
+      && previous.mapKey === mapKey && timestamp - previous.timestamp <= 250) {
+      previous.timestamp = timestamp;
+      previous.details = { ...(safeDetails ?? {}), coalesced: Number(previous.details?.coalesced ?? 1) + 1 };
+      return;
+    }
     const event: DiagnosticEvent = {
       sequence: ++this.sequence,
-      timestamp: this.now(),
+      timestamp,
       level,
-      category: scrubString(category),
-      action: scrubString(action),
-      mapKey: mapId ? this.mapKey(mapId) : undefined,
-      details: details ? sanitizeValue(details) as Record<string, unknown> : undefined,
+      category: safeCategory,
+      action: safeAction,
+      mapKey,
+      details: safeDetails,
     };
     this.events.push(event);
     while (this.events.length > this.maxEvents) this.events.shift();
+  }
+
+
+  markProblem(label = '问题发生'): ProblemMarker {
+    const marker: ProblemMarker = {
+      id: `problem-${this.now()}-${this.markers.length + 1}`,
+      timestamp: this.now(),
+      label: scrubString(label),
+    };
+    this.markers.push(marker);
+    this.record('diagnostics', 'problem-marked', undefined, { markerId: marker.id, label: marker.label }, 'warning', true);
+    return { ...marker };
+  }
+
+  listProblemMarkers(): ProblemMarker[] {
+    return this.markers.map((marker) => ({ ...marker }));
+  }
+
+  problemWindow(markerId: string, beforeMs = 60_000, afterMs = 20_000): ProblemWindow | null {
+    const marker = this.markers.find((item) => item.id === markerId);
+    if (!marker) return null;
+    const start = marker.timestamp - Math.max(0, beforeMs);
+    const end = marker.timestamp + Math.max(0, afterMs);
+    return {
+      marker: { ...marker }, beforeMs, afterMs,
+      events: this.listEvents().filter((event) => event.timestamp >= start && event.timestamp <= end),
+    };
   }
 
   recordError(category: string, action: string, error: unknown, mapId?: string, force = true): void {

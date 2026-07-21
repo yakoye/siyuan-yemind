@@ -5,7 +5,7 @@ import {
   type RichTextBooleanFormat,
 } from './richTextActions';
 import type { RichTextFormattingTarget } from './richTextTarget';
-import { presentColor } from './colorPresentation';
+import { parseEditableColor, presentColor } from './colorPresentation';
 
 export interface RichTextSelectionRect {
   left: number;
@@ -57,6 +57,7 @@ export class RichTextToolbar {
   private interacting = false;
   private target: RichTextFormattingTarget | null = null;
   private activeColorKind: ColorKind = 'color';
+  private colorSessionOriginal: string | false = false;
   private readonly onDocumentMouseDown = (event: MouseEvent): void => {
     const node = event.target as Node;
     if (!this.element.contains(node) && !this.colorPopover.contains(node)) this.hide();
@@ -92,21 +93,23 @@ export class RichTextToolbar {
       </select>
       <span class="ymz-rich-toolbar__separator"></span>
       <button type="button" data-rich-action="link" title="行内链接">链接</button>
-      <button type="button" data-rich-action="cloze" title="挖空/取消挖空">挖空</button>
-      <button type="button" data-rich-action="formula" title="插入公式">Fx</button>
+      <button type="button" data-rich-action="cloze" title="模糊/取消模糊">模糊</button>
+      <button type="button" data-rich-action="formula" title="插入公式">π</button>
       <button type="button" data-rich-action="clear" title="清除全部格式">清除</button>`;
 
     this.colorPopover = document.createElement('div');
     this.colorPopover.className = 'ymz-color-popover';
     this.colorPopover.hidden = true;
-    this.colorPopover.innerHTML = `<div class="ymz-color-popover__current" aria-live="polite">
-        <span data-color-readout="hex">默认</span>
-        <span data-color-readout="rgb">继承节点颜色</span>
-      </div>
-      <div class="ymz-color-popover__grid">${swatchesHtml()}</div>
+    this.colorPopover.innerHTML = `<div class="ymz-color-popover__grid">${swatchesHtml()}</div>
       <div class="ymz-color-popover__footer">
         <button type="button" data-color-action="reset">重置默认</button>
         <button type="button" data-color-action="custom">更多颜色</button>
+      </div>
+      <div class="ymz-color-popover__current" aria-live="polite">
+        <label><span>HEX</span><input type="text" spellcheck="false" autocomplete="off" data-color-input="hex" value="" aria-label="十六进制颜色"></label>
+        <label><span>RGB</span><input type="text" spellcheck="false" autocomplete="off" data-color-input="rgb" value="" aria-label="RGB 颜色"></label>
+        <span class="ymz-sr-only" data-color-readout="hex">默认</span>
+        <span class="ymz-sr-only" data-color-readout="rgb">继承节点颜色</span>
       </div>`;
     this.customColorInput = document.createElement('input');
     this.customColorInput.type = 'color';
@@ -165,11 +168,17 @@ export class RichTextToolbar {
   private bind(): void {
     const markInteracting = (event: Event): void => {
       this.interacting = true;
-      event.preventDefault();
+      const target = event.target as HTMLElement | null;
+      const isTextInput = target instanceof HTMLInputElement && target.type !== 'color';
+      if (!isTextInput) event.preventDefault();
       event.stopPropagation();
     };
     this.element.addEventListener('mousedown', markInteracting);
     this.colorPopover.addEventListener('mousedown', markInteracting);
+
+    const isolateInputEvent = (event: Event): void => event.stopPropagation();
+    ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend']
+      .forEach((type) => this.colorPopover.addEventListener(type, isolateInputEvent));
 
     this.element.addEventListener('click', (event) => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-rich-action]');
@@ -228,11 +237,11 @@ export class RichTextToolbar {
     this.colorPopover.addEventListener('click', (event) => {
       const swatch = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-color-value]');
       if (swatch) {
-        this.applyColor(swatch.dataset.colorValue || false);
+        this.applyColor(swatch.dataset.colorValue || false, true);
         return;
       }
       const action = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-color-action]')?.dataset.colorAction;
-      if (action === 'reset') this.applyColor(false);
+      if (action === 'reset') this.applyColor(false, true);
       if (action === 'custom') {
         const current = this.formatInfo[this.activeColorKind];
         this.customColorInput.value = typeof current === 'string' && /^#[0-9a-f]{6}$/i.test(current) ? current : '#000000';
@@ -240,7 +249,10 @@ export class RichTextToolbar {
       }
     });
 
-    this.customColorInput.addEventListener('input', () => this.applyColor(this.customColorInput.value));
+    this.customColorInput.addEventListener('input', () => this.applyColor(this.customColorInput.value, false));
+
+    this.bindEditableColorInput('hex');
+    this.bindEditableColorInput('rgb');
     this.element.querySelector<HTMLSelectElement>('[data-rich-field="size"]')?.addEventListener('change', (event) => {
       this.callbacks.onAction?.('size');
       this.target?.formatText({ size: (event.target as HTMLSelectElement).value || false });
@@ -253,6 +265,7 @@ export class RichTextToolbar {
 
   private openColorPopover(kind: ColorKind, anchor: HTMLElement): void {
     this.activeColorKind = kind;
+    this.colorSessionOriginal = typeof this.formatInfo[kind] === 'string' ? this.formatInfo[kind] as string : false;
     this.colorPopover.dataset.kind = kind;
     this.syncColorReadout();
     this.colorPopover.hidden = false;
@@ -270,32 +283,82 @@ export class RichTextToolbar {
     this.colorPopover.style.top = `${Math.round(top)}px`;
   }
 
-  private applyColor(value: string | false): void {
-    if (!this.target) return;
-    this.callbacks.onAction?.(this.activeColorKind);
-    this.target.formatText({ [this.activeColorKind]: value });
-    this.formatInfo[this.activeColorKind] = value || undefined;
+  private bindEditableColorInput(kind: 'hex' | 'rgb'): void {
+    const input = this.colorPopover.querySelector<HTMLInputElement>(`[data-color-input="${kind}"]`);
+    if (!input) return;
+    input.addEventListener('input', () => {
+      const parsed = parseEditableColor(input.value);
+      input.setAttribute('aria-invalid', parsed ? 'false' : 'true');
+      if (!parsed) return;
+      const other = this.colorPopover.querySelector<HTMLInputElement>(`[data-color-input="${kind === 'hex' ? 'rgb' : 'hex'}"]`);
+      if (other) {
+        other.value = kind === 'hex' ? parsed.rgb : parsed.hex;
+        other.setAttribute('aria-invalid', 'false');
+      }
+      this.applyColor(parsed.hex, false, false);
+    });
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        this.cancelColorEditing();
+      }
+    });
+  }
+
+
+  private cancelColorEditing(): void {
+    if (!this.target) {
+      this.colorPopover.hidden = true;
+      return;
+    }
+    this.target.restoreSelection?.();
+    this.target.formatText({ [this.activeColorKind]: this.colorSessionOriginal });
+    this.formatInfo[this.activeColorKind] = this.colorSessionOriginal || undefined;
     this.syncState();
     this.colorPopover.hidden = true;
   }
 
+  private applyColor(value: string | false, close = true, syncInputs = true): void {
+    if (!this.target) return;
+    this.callbacks.onAction?.(this.activeColorKind);
+    this.target.restoreSelection?.();
+    this.target.formatText({ [this.activeColorKind]: value });
+    this.formatInfo[this.activeColorKind] = value || undefined;
+    this.syncState(syncInputs);
+    if (close) this.colorPopover.hidden = true;
+  }
+
   private syncColorReadout(): void {
     const presentation = presentColor(this.formatInfo[this.activeColorKind]);
-    const hex = this.colorPopover.querySelector<HTMLElement>('[data-color-readout="hex"]');
-    const rgb = this.colorPopover.querySelector<HTMLElement>('[data-color-readout="rgb"]');
-    if (hex) hex.textContent = presentation.hex;
-    if (rgb) rgb.textContent = presentation.rgb;
+    const editable = parseEditableColor(this.formatInfo[this.activeColorKind]);
+    const hex = this.colorPopover.querySelector<HTMLInputElement>('[data-color-input="hex"]');
+    const rgb = this.colorPopover.querySelector<HTMLInputElement>('[data-color-input="rgb"]');
+    if (hex) {
+      hex.value = editable?.hex ?? (presentation.hex === '默认' ? '' : presentation.hex);
+      hex.setAttribute('aria-invalid', 'false');
+    }
+    if (rgb) {
+      rgb.value = editable?.rgb ?? '';
+      rgb.setAttribute('aria-invalid', 'false');
+    }
+    const hexReadout = this.colorPopover.querySelector<HTMLElement>('[data-color-readout="hex"]');
+    const rgbReadout = this.colorPopover.querySelector<HTMLElement>('[data-color-readout="rgb"]');
+    if (hexReadout) hexReadout.textContent = presentation.hex;
+    if (rgbReadout) rgbReadout.textContent = presentation.rgb;
   }
 
 
-  private syncState(): void {
+  private syncState(syncInputs = true): void {
     ['bold', 'italic', 'underline', 'strike'].forEach((name) => {
       this.element.querySelector(`[data-rich-action="${name}"]`)?.classList.toggle('is-active', Boolean(this.formatInfo[name]));
     });
     this.element.querySelector('[data-rich-action="inline-code"]')?.classList.toggle('is-active', Boolean(this.formatInfo.code));
     this.element.querySelector('[data-rich-action="link"]')?.classList.toggle('is-active', Boolean(this.formatInfo.link));
     this.element.querySelector('[data-rich-action="code-block"]')?.classList.toggle('is-active', Boolean(this.formatInfo['code-block']));
-    this.element.querySelector('[data-rich-action="cloze"]')?.classList.toggle('is-active', isClozeFormat(this.formatInfo));
+    const cloze = this.element.querySelector<HTMLButtonElement>('[data-rich-action="cloze"]');
+    const clozeActive = isClozeFormat(this.formatInfo);
+    cloze?.classList.toggle('is-active', clozeActive);
+    if (cloze) cloze.textContent = clozeActive ? '取消模糊' : '模糊';
     const size = this.element.querySelector<HTMLSelectElement>('[data-rich-field="size"]');
     if (size) size.value = typeof this.formatInfo.size === 'string' ? this.formatInfo.size : '';
     const font = this.element.querySelector<HTMLSelectElement>('[data-rich-field="font"]');
@@ -304,7 +367,7 @@ export class RichTextToolbar {
     const background = typeof this.formatInfo.background === 'string' ? this.formatInfo.background : 'transparent';
     this.element.querySelector<HTMLElement>('[data-rich-swatch="color"]')?.style.setProperty('--ymz-current-color', color);
     this.element.querySelector<HTMLElement>('[data-rich-swatch="background"]')?.style.setProperty('--ymz-current-color', background);
-    this.syncColorReadout();
+    if (syncInputs) this.syncColorReadout();
   }
 
   private position(rect: RichTextSelectionRect): void {

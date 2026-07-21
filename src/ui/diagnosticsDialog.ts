@@ -28,6 +28,7 @@ export function openDiagnosticsDialog(service: DiagnosticsService): void {
       <div class="ymz-diagnostics-actions">
         <button class="b3-button b3-button--text" data-diagnostics-action="run">运行回归检查</button>
         <button class="b3-button b3-button--outline" data-diagnostics-action="record">${service.isRecording() ? '停止记录' : '开始记录'}</button>
+        <button class="b3-button b3-button--outline" data-diagnostics-action="mark">标记问题发生</button>
         <button class="b3-button b3-button--outline" data-diagnostics-action="export">导出诊断包</button>
         <button class="b3-button b3-button--outline" data-diagnostics-action="clear">清空日志</button>
       </div>
@@ -68,6 +69,9 @@ export function openDiagnosticsDialog(service: DiagnosticsService): void {
           showMessage(report.status === 'fail' ? '回归检查发现失败项' : '回归检查完成', 3500, report.status === 'fail' ? 'error' : 'info');
         } else if (action === 'record') {
           if (service.isRecording()) service.stop(); else service.start();
+        } else if (action === 'mark') {
+          const marker = service.markProblem('用户标记的问题时刻');
+          showMessage(`已标记问题时刻：${new Date(marker.timestamp).toLocaleTimeString()}`, 3500, 'info');
         } else if (action === 'export') {
           const archive = await service.buildArchive(Boolean(includeTextEl?.checked));
           downloadDiagnosticsArchive(archive.blob, archive.filename);

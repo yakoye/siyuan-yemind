@@ -2407,13 +2407,14 @@ class DiagnosticsRecorder {
     __publicField(this, "sessionId");
     __publicField(this, "events", []);
     __publicField(this, "editors", /* @__PURE__ */ new Map());
+    __publicField(this, "markers", []);
     __publicField(this, "sequence", 0);
     __publicField(this, "recording", false);
     __publicField(this, "startedAt", null);
     __publicField(this, "globalCleanup", null);
     var _a, _b;
     this.now = options.now ?? (() => Date.now());
-    this.maxEvents = Math.max(50, Math.floor(options.maxEvents ?? 500));
+    this.maxEvents = Math.max(50, Math.floor(options.maxEvents ?? 2e3));
     this.sessionId = options.sessionId ?? ((_b = (_a = globalThis.crypto) == null ? void 0 : _a.randomUUID) == null ? void 0 : _b.call(_a)) ?? `session-${this.now()}`;
   }
   start() {
@@ -2429,6 +2430,7 @@ class DiagnosticsRecorder {
   }
   clear() {
     this.events.length = 0;
+    this.markers.length = 0;
     this.sequence = 0;
     this.startedAt = this.recording ? this.now() : null;
   }
@@ -2442,18 +2444,55 @@ class DiagnosticsRecorder {
     return `map-${shortHash(`${this.sessionId}:${mapId}`)}`;
   }
   record(category, action, mapId, details, level2 = "info", force = false) {
+    var _a;
     if (!force && !this.recording) return;
+    const timestamp = this.now();
+    const safeCategory = scrubString(category);
+    const safeAction = scrubString(action);
+    const mapKey = mapId ? this.mapKey(mapId) : void 0;
+    const safeDetails = details ? sanitizeValue(details) : void 0;
+    const previous = this.events[this.events.length - 1];
+    if (safeCategory === "editor" && safeAction === "view-change" && (previous == null ? void 0 : previous.category) === safeCategory && previous.action === safeAction && previous.mapKey === mapKey && timestamp - previous.timestamp <= 250) {
+      previous.timestamp = timestamp;
+      previous.details = { ...safeDetails ?? {}, coalesced: Number(((_a = previous.details) == null ? void 0 : _a.coalesced) ?? 1) + 1 };
+      return;
+    }
     const event = {
       sequence: ++this.sequence,
-      timestamp: this.now(),
+      timestamp,
       level: level2,
-      category: scrubString(category),
-      action: scrubString(action),
-      mapKey: mapId ? this.mapKey(mapId) : void 0,
-      details: details ? sanitizeValue(details) : void 0
+      category: safeCategory,
+      action: safeAction,
+      mapKey,
+      details: safeDetails
     };
     this.events.push(event);
     while (this.events.length > this.maxEvents) this.events.shift();
+  }
+  markProblem(label = "问题发生") {
+    const marker = {
+      id: `problem-${this.now()}-${this.markers.length + 1}`,
+      timestamp: this.now(),
+      label: scrubString(label)
+    };
+    this.markers.push(marker);
+    this.record("diagnostics", "problem-marked", void 0, { markerId: marker.id, label: marker.label }, "warning", true);
+    return { ...marker };
+  }
+  listProblemMarkers() {
+    return this.markers.map((marker) => ({ ...marker }));
+  }
+  problemWindow(markerId, beforeMs = 6e4, afterMs = 2e4) {
+    const marker = this.markers.find((item) => item.id === markerId);
+    if (!marker) return null;
+    const start = marker.timestamp - Math.max(0, beforeMs);
+    const end = marker.timestamp + Math.max(0, afterMs);
+    return {
+      marker: { ...marker },
+      beforeMs,
+      afterMs,
+      events: this.listEvents().filter((event) => event.timestamp >= start && event.timestamp <= end)
+    };
   }
   recordError(category, action, error, mapId, force = true) {
     this.record(category, action, mapId, errorDetails(error), "error", force);
@@ -2537,6 +2576,16 @@ function inspectTree(tree) {
 async function runDiagnosticsSelfCheck(input) {
   const items = [];
   const now = input.now ?? (() => Date.now());
+  if (input.versions) {
+    const values = Object.values(input.versions);
+    const consistent = values.every((value) => value === values[0]);
+    items.push({
+      id: "version-consistency",
+      status: consistent ? "pass" : "fail",
+      summary: consistent ? "清单、运行时和构建版本一致" : "清单、运行时和构建版本不一致，可能仍在运行旧缓存代码",
+      details: input.versions
+    });
+  }
   try {
     const probe = await input.storageProbe();
     const passed = probe.write && probe.read && probe.remove;
@@ -2668,6 +2717,9 @@ class DiagnosticsService {
   isRecording() {
     return this.recorder.isRecording();
   }
+  markProblem(label = "问题发生") {
+    return this.recorder.markProblem(label);
+  }
   getLastSelfCheck() {
     return this.lastSelfCheck ? JSON.parse(JSON.stringify(this.lastSelfCheck)) : null;
   }
@@ -2707,11 +2759,13 @@ class DiagnosticsService {
     return tracked;
   }
   async runSelfCheckInternal() {
+    const manifestVersion = await this.readManifestVersion();
     const report = await runDiagnosticsSelfCheck({
       maps: this.options.maps.list(),
       checkpoints: this.options.checkpoints.listAll(),
       settings: this.options.settings.get(),
       editors: this.recorder.listEditorStates(),
+      versions: { manifest: manifestVersion ?? this.options.pluginVersion, runtime: this.options.pluginVersion, build: this.options.pluginVersion },
       storageProbe: () => this.options.storageProbe.run(),
       lifecycleProbe: () => this.options.lifecycleProbe.run(),
       now: this.now
@@ -2725,12 +2779,24 @@ class DiagnosticsService {
     }, report.status === "fail" ? "error" : report.status === "warning" ? "warning" : "info", true);
     return report;
   }
+  async readManifestVersion() {
+    if (this.options.manifestVersionProbe) return this.options.manifestVersionProbe();
+    if (typeof fetch !== "function") return null;
+    try {
+      const response = await fetch(`/plugins/${encodeURIComponent(this.options.pluginId)}/plugin.json?diagnostics=${this.now()}`, { cache: "no-store" });
+      if (!response.ok) return null;
+      const manifest = await response.json();
+      return typeof manifest.version === "string" ? manifest.version : null;
+    } catch {
+      return null;
+    }
+  }
   buildReport() {
     var _a, _b;
     const system = ((_b = (_a = globalThis.siyuan) == null ? void 0 : _a.config) == null ? void 0 : _b.system) ?? {};
     const checkpoints = this.options.checkpoints.listAll();
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       generatedAt: this.now(),
       plugin: { id: this.options.pluginId, version: this.options.pluginVersion },
       environment: {
@@ -2751,7 +2817,9 @@ class DiagnosticsService {
         createdAt: checkpoint.createdAt,
         nodeCount: checkpoint.nodeCount
       })),
-      events: this.recorder.listEvents()
+      events: this.recorder.listEvents(),
+      problemMarkers: this.recorder.listProblemMarkers(),
+      problemWindows: this.recorder.listProblemMarkers().map((marker) => this.recorder.problemWindow(marker.id)).filter((window2) => Boolean(window2))
     };
   }
   async buildArchive(includeNodeText = false) {
@@ -3533,7 +3601,7 @@ async function runIsolatedLifecycleProbe(storage, layout2 = "logicalStructure") 
   }
   return result;
 }
-function escapeHtml$a(value) {
+function escapeHtml$b(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function promptText(title, initialValue, placeholder = "") {
@@ -3542,7 +3610,7 @@ function promptText(title, initialValue, placeholder = "") {
     const dialog = new siyuan.Dialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$a(initialValue)}" placeholder="${escapeHtml$a(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
+      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$b(initialValue)}" placeholder="${escapeHtml$b(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
       destroyCallback: () => resolve(null)
     });
     const element = dialog.element;
@@ -3574,7 +3642,7 @@ function confirmAction(title, message, confirmText = "确定") {
     const dialog = new siyuan.Dialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><p>${escapeHtml$a(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$a(confirmText)}</button></div>`,
+      content: `<div class="b3-dialog__content"><p>${escapeHtml$b(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$b(confirmText)}</button></div>`,
       destroyCallback: () => resolve(false)
     });
     let completed = false;
@@ -3588,7 +3656,7 @@ function confirmAction(title, message, confirmText = "确定") {
     (_b = dialog.element.querySelector(".b3-button--text")) == null ? void 0 : _b.addEventListener("click", () => finish(true));
   });
 }
-function escapeHtml$9(value) {
+function escapeHtml$a(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function renderReport(report) {
@@ -3599,7 +3667,7 @@ function renderReport(report) {
   </div>
   <div class="ymz-diagnostics-list">${report.items.map((item) => `<div class="ymz-diagnostics-check" data-status="${item.status}">
     <span class="ymz-diagnostics-check__mark">${item.status === "pass" ? "✓" : item.status === "warning" ? "!" : "×"}</span>
-    <div><b>${escapeHtml$9(item.id)}</b><p>${escapeHtml$9(item.summary)}</p></div>
+    <div><b>${escapeHtml$a(item.id)}</b><p>${escapeHtml$a(item.summary)}</p></div>
   </div>`).join("")}</div>`;
 }
 function openDiagnosticsDialog(service) {
@@ -3611,6 +3679,7 @@ function openDiagnosticsDialog(service) {
       <div class="ymz-diagnostics-actions">
         <button class="b3-button b3-button--text" data-diagnostics-action="run">运行回归检查</button>
         <button class="b3-button b3-button--outline" data-diagnostics-action="record">${service.isRecording() ? "停止记录" : "开始记录"}</button>
+        <button class="b3-button b3-button--outline" data-diagnostics-action="mark">标记问题发生</button>
         <button class="b3-button b3-button--outline" data-diagnostics-action="export">导出诊断包</button>
         <button class="b3-button b3-button--outline" data-diagnostics-action="clear">清空日志</button>
       </div>
@@ -3653,6 +3722,9 @@ function openDiagnosticsDialog(service) {
         } else if (action === "record") {
           if (service.isRecording()) service.stop();
           else service.start();
+        } else if (action === "mark") {
+          const marker = service.markProblem("用户标记的问题时刻");
+          siyuan.showMessage(`已标记问题时刻：${new Date(marker.timestamp).toLocaleTimeString()}`, 3500, "info");
         } else if (action === "export") {
           const archive = await service.buildArchive(Boolean(includeTextEl == null ? void 0 : includeTextEl.checked));
           downloadDiagnosticsArchive(archive.blob, archive.filename);
@@ -3943,47 +4015,47 @@ const SHORTCUT_ROWS = [
   { key: "summary", label: "概要", group: "节点命令" },
   { key: "relation", label: "关联线", group: "节点命令" }
 ];
-function escapeHtml$8(value) {
+function escapeHtml$9(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function checked(value) {
   return value ? " checked" : "";
 }
 function option$1(value, label, current) {
-  return `<option value="${escapeHtml$8(value)}"${value === current ? " selected" : ""}>${escapeHtml$8(label)}</option>`;
+  return `<option value="${escapeHtml$9(value)}"${value === current ? " selected" : ""}>${escapeHtml$9(label)}</option>`;
 }
 function switchRow(title, description, key, value) {
   return `<label class="ymz-settings-row ymz-settings-row--switch">
-    <span><b>${escapeHtml$8(title)}</b><small>${escapeHtml$8(description)}</small></span>
+    <span><b>${escapeHtml$9(title)}</b><small>${escapeHtml$9(description)}</small></span>
     <input class="b3-switch" type="checkbox" data-setting="${String(key)}"${checked(value)}>
   </label>`;
 }
 function selectRow(title, description, key, options) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$8(title)}</b><small>${escapeHtml$8(description)}</small></span>
+    <span><b>${escapeHtml$9(title)}</b><small>${escapeHtml$9(description)}</small></span>
     <select class="b3-select fn__size200" data-setting="${String(key)}">${options}</select>
   </label>`;
 }
 function textRow(title, description, key, value) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$8(title)}</b><small>${escapeHtml$8(description)}</small></span>
-    <input class="b3-text-field fn__size200" type="text" data-setting="${String(key)}" value="${escapeHtml$8(value)}">
+    <span><b>${escapeHtml$9(title)}</b><small>${escapeHtml$9(description)}</small></span>
+    <input class="b3-text-field fn__size200" type="text" data-setting="${String(key)}" value="${escapeHtml$9(value)}">
   </label>`;
 }
 function numberRow(title, description, key, value, min, max, step, suffix) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$8(title)}</b><small>${escapeHtml$8(description)}</small></span>
-    <span class="ymz-settings-number"><input class="b3-text-field" type="number" data-setting="${String(key)}" value="${value}" min="${min}" max="${max}" step="${step}"><em>${escapeHtml$8(suffix)}</em></span>
+    <span><b>${escapeHtml$9(title)}</b><small>${escapeHtml$9(description)}</small></span>
+    <span class="ymz-settings-number"><input class="b3-text-field" type="number" data-setting="${String(key)}" value="${value}" min="${min}" max="${max}" step="${step}"><em>${escapeHtml$9(suffix)}</em></span>
   </label>`;
 }
 function shortcutsHtml(shortcuts) {
   let currentGroup = "";
   return SHORTCUT_ROWS.map((row) => {
-    const group = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$8(row.group)}</h3>` : "";
+    const group = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$9(row.group)}</h3>` : "";
     currentGroup = row.group;
     return `${group}<div class="ymz-shortcut-row" data-shortcut-row="${row.key}">
-      <span class="ymz-shortcut-row__label">${escapeHtml$8(row.label)}</span>
-      <input class="b3-text-field" data-shortcut="${row.key}" value="${escapeHtml$8(shortcuts[row.key])}" placeholder="未设置">
+      <span class="ymz-shortcut-row__label">${escapeHtml$9(row.label)}</span>
+      <input class="b3-text-field" data-shortcut="${row.key}" value="${escapeHtml$9(shortcuts[row.key])}" placeholder="未设置">
       <button class="b3-button b3-button--outline" data-shortcut-action="record" data-shortcut-key="${row.key}">录制</button>
       <button class="b3-button b3-button--cancel" data-shortcut-action="disable" data-shortcut-key="${row.key}">禁用</button>
       <button class="b3-button b3-button--outline" data-shortcut-action="restore" data-shortcut-key="${row.key}">恢复默认</button>
@@ -4055,7 +4127,7 @@ function createSettingsDialogTemplate(settings) {
       </section>
 
       <section class="ymz-settings-page" data-settings-panel="content" hidden>
-        <header><h2>节点与内容</h2><p>控制节点入口、富文本、代码和挖空显示。</p></header>
+        <header><h2>节点与内容</h2><p>控制节点入口、富文本、代码和模糊显示。</p></header>
         <div class="ymz-settings-group"><h3>节点入口控件</h3>
           ${switchRow("显示添加子节点按钮", "节点激活后显示快速添加入口。", "showQuickCreate", settings.showQuickCreate)}
           ${switchRow("显示待办标记", "节点文字前显示待办状态。", "showTodoBadge", settings.showTodoBadge)}
@@ -4100,12 +4172,12 @@ function createSettingsDialogTemplate(settings) {
           ${switchRow("显示代码语言", "在代码块上方显示语言标签。", "codeBlockShowLanguage", settings.codeBlockShowLanguage)}
           ${numberRow("代码字号", "代码编辑器和节点代码块字号。", "codeBlockFontSize", settings.codeBlockFontSize, 10, 24, 1, "px")}
         </div>
-        <div class="ymz-settings-group"><h3>挖空</h3>
-          ${selectRow("挖空显示方式", "完全隐藏或保留模糊轮廓。", "clozeMode", [
+        <div class="ymz-settings-group"><h3>模糊</h3>
+          ${selectRow("模糊显示方式", "完全隐藏或保留模糊轮廓。", "clozeMode", [
     option$1("hidden", "完全隐藏", settings.clozeMode),
     option$1("blur", "模糊显示", settings.clozeMode)
   ].join(""))}
-          ${switchRow("悬停显示答案", "鼠标移入挖空内容时临时显示。", "clozeRevealOnHover", settings.clozeRevealOnHover)}
+          ${switchRow("悬停显示答案", "鼠标移入模糊内容时临时显示。", "clozeRevealOnHover", settings.clozeRevealOnHover)}
         </div>
       </section>
 
@@ -4299,7 +4371,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.5.13";
+const PLUGIN_VERSION = "0.5.17";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -4340,7 +4412,7 @@ class YeMindDockView {
         const row = document.createElement("div");
         row.className = `ymz-dock__item${map2.id === activeId ? " is-active" : ""}`;
         row.dataset.mapId = map2.id;
-        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$7(map2.title)}">${escapeHtml$7(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
+        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$8(map2.title)}">${escapeHtml$8(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
         body.appendChild(row);
       });
     }
@@ -4389,7 +4461,7 @@ function registerYeMindDock(plugin, host) {
     }
   });
 }
-function escapeHtml$7(value) {
+function escapeHtml$8(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 const CONSTANTS = {
@@ -55478,10 +55550,81 @@ function registerMindMapPlugins(settings) {
   });
   registered = true;
 }
-let decorationSettings = {
-  showTodoBadge: true,
-  showCommentBadge: true
-};
+const BLOCKED_ELEMENTS = "script,style,iframe,object,embed,meta,link,base,form,input,button,textarea,select,option";
+function isUnsafeUrl(value, attributeName) {
+  const normalized = value.trim().replace(/[\u0000-\u001f\u007f\s]+/g, "").toLowerCase();
+  if (!normalized) return false;
+  if (normalized.startsWith("javascript:") || normalized.startsWith("vbscript:")) return true;
+  if (!normalized.startsWith("data:")) return false;
+  return attributeName === "src" ? !normalized.startsWith("data:image/") : true;
+}
+function sanitizeRichHtml(value) {
+  const source = String(value ?? "");
+  if (typeof document === "undefined") {
+    return source.replace(/<(script|style|iframe|object|embed|meta|link|base|form|input|button|textarea|select|option)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "").replace(/<(script|style|iframe|object|embed|meta|link|base|form|input|button|textarea|select|option)\b[^>]*\/?\s*>/gi, "").replace(/\s+on[a-z0-9_-]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "").replace(/\s+(href|src)\s*=\s*(["'])\s*(?:javascript|vbscript):[\s\S]*?\2/gi, "");
+  }
+  const template = document.createElement("template");
+  template.innerHTML = source;
+  template.content.querySelectorAll(BLOCKED_ELEMENTS).forEach((node) => node.remove());
+  template.content.querySelectorAll("*").forEach((node) => {
+    Array.from(node.attributes).forEach((attribute) => {
+      const name = attribute.name.toLowerCase();
+      if (name.startsWith("on") || name === "srcdoc") {
+        node.removeAttribute(attribute.name);
+        return;
+      }
+      if ((name === "href" || name === "src" || name === "xlink:href") && isUnsafeUrl(attribute.value, name === "xlink:href" ? "href" : name)) {
+        node.removeAttribute(attribute.name);
+        return;
+      }
+      if (name === "style" && /(url\s*\(|expression\s*\(|javascript:|vbscript:|@import)/i.test(attribute.value)) {
+        node.removeAttribute(attribute.name);
+      }
+    });
+    if (node.tagName === "A" && node.getAttribute("target") === "_blank") {
+      node.setAttribute("rel", "noopener noreferrer");
+    }
+  });
+  return template.innerHTML;
+}
+function cleanDimension(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? Math.round(number) : void 0;
+}
+function normalizeNodeNote(value, now = Date.now()) {
+  if (typeof value === "string") {
+    if (!value.trim()) return null;
+    const html22 = sanitizeRichHtml(value).trim();
+    if (!html22) return null;
+    return { html: html22, createdAt: now, updatedAt: now };
+  }
+  if (!value || typeof value !== "object") return null;
+  const source = value;
+  const html2 = sanitizeRichHtml(String(source.html ?? "")).trim();
+  if (!html2) return null;
+  const createdAt = Number(source.createdAt);
+  const updatedAt = Number(source.updatedAt);
+  return {
+    html: html2,
+    createdAt: Number.isFinite(createdAt) ? createdAt : now,
+    updatedAt: Number.isFinite(updatedAt) ? updatedAt : now,
+    ...cleanDimension(source.width) ? { width: cleanDimension(source.width) } : {},
+    ...cleanDimension(source.height) ? { height: cleanDimension(source.height) } : {}
+  };
+}
+function updateNodeNote(previous, html2, now = Date.now(), size2 = {}) {
+  const value = sanitizeRichHtml(html2).trim();
+  if (!value) return null;
+  const current = normalizeNodeNote(previous, now);
+  return {
+    html: value,
+    createdAt: (current == null ? void 0 : current.createdAt) ?? now,
+    updatedAt: now,
+    ...cleanDimension(size2.width ?? (current == null ? void 0 : current.width)) ? { width: cleanDimension(size2.width ?? (current == null ? void 0 : current.width)) } : {},
+    ...cleanDimension(size2.height ?? (current == null ? void 0 : current.height)) ? { height: cleanDimension(size2.height ?? (current == null ? void 0 : current.height)) } : {}
+  };
+}
+let decorationSettings = { showTodoBadge: true, showCommentBadge: true };
 function configureNodeDecorations(patch) {
   decorationSettings = { ...decorationSettings, ...patch };
 }
@@ -55521,31 +55664,54 @@ function createNodePrefixContent(node) {
   el.appendChild(checkbox);
   return { el, width: 20, height: 20 };
 }
-function createCommentButton(node) {
+function noteSvg() {
+  return `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M6.5 3.75h8.8l3.2 3.2v13.3H6.5a2 2 0 0 1-2-2V5.75a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7"/><path d="M15.2 3.9v3.4h3.2M8 11h7.5M8 14.5h7.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
+}
+function commentSvg() {
+  return `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M6.25 4.75h11.5A2.5 2.5 0 0 1 20.25 7.25v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.25 2.9v-2.9A2.5 2.5 0 0 1 3.75 15.25v-8a2.5 2.5 0 0 1 2.5-2.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function createBadge(node, type) {
   const badge = document.createElement("button");
   badge.type = "button";
-  badge.className = "ymz-node-comment-badge";
-  badge.title = "批注";
-  badge.setAttribute("aria-label", "批注");
-  badge.innerHTML = `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
-    <path d="M6.25 4.75h11.5A2.5 2.5 0 0 1 20.25 7.25v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.25 2.9v-2.9A2.5 2.5 0 0 1 3.75 15.25v-8a2.5 2.5 0 0 1 2.5-2.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>`;
+  badge.className = `ymz-node-content-badge ymz-node-content-badge--${type}${type === "comments" ? " ymz-node-comment-badge" : " ymz-node-note-badge"}`;
+  badge.dataset.yemindBadge = type;
+  badge.title = type === "note" ? "备注" : "批注";
+  badge.setAttribute("aria-label", badge.title);
+  badge.innerHTML = type === "note" ? noteSvg() : commentSvg();
   badge.addEventListener("click", (event) => {
     var _a, _b;
     event.preventDefault();
     event.stopPropagation();
-    (_b = (_a = node.mindMap) == null ? void 0 : _a.emit) == null ? void 0 : _b.call(_a, "yemind_badge_click", "comments", node);
+    (_b = (_a = node.mindMap) == null ? void 0 : _a.emit) == null ? void 0 : _b.call(_a, "yemind_badge_click", type, node);
+  });
+  badge.addEventListener("pointerenter", () => {
+    var _a, _b;
+    return (_b = (_a = node.mindMap) == null ? void 0 : _a.emit) == null ? void 0 : _b.call(_a, "yemind_badge_hover", type, node, badge, true);
+  });
+  badge.addEventListener("pointerleave", () => {
+    var _a, _b;
+    return (_b = (_a = node.mindMap) == null ? void 0 : _a.emit) == null ? void 0 : _b.call(_a, "yemind_badge_hover", type, node, badge, false);
   });
   return badge;
 }
 function createNodePostfixContent(node) {
-  var _a;
-  const comments = ((_a = node.getData) == null ? void 0 : _a.call(node, "yemindComments")) ?? [];
-  if (comments.length === 0 || !decorationSettings.showCommentBadge) return null;
+  var _a, _b, _c2;
+  const note2 = normalizeNodeNote(((_a = node.getData) == null ? void 0 : _a.call(node, "yemindNote")) ?? ((_b = node.getData) == null ? void 0 : _b.call(node, "note")));
+  const comments = ((_c2 = node.getData) == null ? void 0 : _c2.call(node, "yemindComments")) ?? [];
+  const hasComments = decorationSettings.showCommentBadge && comments.length > 0;
+  if (!note2 && !hasComments) return null;
   const el = document.createElement("span");
   el.className = "ymz-node-postfix";
-  el.appendChild(createCommentButton(node));
-  return { el, width: 24, height: 24 };
+  let count = 0;
+  if (note2) {
+    el.appendChild(createBadge(node, "note"));
+    count += 1;
+  }
+  if (hasComments) {
+    el.appendChild(createBadge(node, "comments"));
+    count += 1;
+  }
+  return { el, width: count * 24 + Math.max(0, count - 1) * 3, height: 24 };
 }
 const clone$1 = (value) => JSON.parse(JSON.stringify(value));
 const MAX_SAVED_TRANSLATE = 5e4;
@@ -55796,7 +55962,6 @@ function toggleTodo(todo) {
 }
 function getTodoMenuState(todo) {
   if (!todo) return { label: "添加待办", next: { checked: false }, warning: false };
-  if (!todo.checked) return { label: "待办完成", next: { ...todo, checked: true }, warning: false };
   return { label: "删除待办", next: null, warning: true };
 }
 function addComment(comments, text2, now = Date.now(), id = `comment_${now}_${Math.random().toString(36).slice(2, 8)}`) {
@@ -56171,6 +56336,14 @@ function createCommandAdapter(mindMap) {
       mindMap.execCommand("SET_NODE_DATA", node, { yemindComments: comments });
       (_a = mindMap.render) == null ? void 0 : _a.call(mindMap);
     },
+    setNote: (note2) => {
+      var _a;
+      if (!canMutate()) return;
+      const node = primaryNode();
+      if (!node) return;
+      mindMap.execCommand("SET_NODE_DATA", node, { yemindNote: note2 });
+      (_a = mindMap.render) == null ? void 0 : _a.call(mindMap);
+    },
     formatText: (config2) => {
       var _a, _b;
       if (canMutate() && hasRichTextSelection()) (_b = (_a = richText()) == null ? void 0 : _a.formatText) == null ? void 0 : _b.call(_a, config2);
@@ -56272,10 +56445,31 @@ function createCommandAdapter(mindMap) {
       if (!node || node.isGeneralization || !Array.isArray(node.children) || node.children.length === 0) return false;
       mindMap.execCommand("SET_NODE_EXPAND", node, expanded);
       return true;
+    },
+    moveNodeByUid: (uid, targetUid, position2) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      const target = findNodeByUid(targetUid);
+      if (!node || !target || node === target || node.isRoot || node.isGeneralization || target.isGeneralization) return false;
+      let ancestor = target.parent;
+      while (ancestor) {
+        if (ancestor === node) return false;
+        ancestor = ancestor.parent;
+      }
+      if (position2 === "before") {
+        if (target.isRoot) return false;
+        mindMap.execCommand("INSERT_BEFORE", [node], target);
+      } else if (position2 === "after") {
+        if (target.isRoot) return false;
+        mindMap.execCommand("INSERT_AFTER", [node], target);
+      } else {
+        mindMap.execCommand("MOVE_NODE_TO", [node], target);
+      }
+      return true;
     }
   };
 }
-function escapeHtml$6(value) {
+function escapeHtml$7(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function formatCheckpointTime(value) {
@@ -56290,9 +56484,9 @@ function renderCheckpointListHtml(checkpoints, options) {
   return checkpoints.map((checkpoint) => {
     const kind = checkpoint.kind === "recovery-protection" ? "恢复前保护" : "普通检查点";
     const restoreDisabled = options.readonly ? " disabled" : "";
-    return `<article class="ymz-checkpoint-item" data-checkpoint-id="${escapeHtml$6(checkpoint.id)}">
+    return `<article class="ymz-checkpoint-item" data-checkpoint-id="${escapeHtml$7(checkpoint.id)}">
       <div class="ymz-checkpoint-item__main">
-        <strong>${escapeHtml$6(checkpoint.name)}</strong>
+        <strong>${escapeHtml$7(checkpoint.name)}</strong>
         <span>${kind} · ${formatCheckpointTime(checkpoint.createdAt)} · ${checkpoint.nodeCount} 个节点</span>
       </div>
       <div class="ymz-checkpoint-item__actions">
@@ -56312,13 +56506,13 @@ function buildCheckpointDialogContent(checkpoints, readonly) {
     <button class="b3-button b3-button--cancel" data-checkpoint-dialog-action="close">关闭</button>
   </div>`;
 }
-function escapeHtml$5(value) {
+function escapeHtml$6(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function openCheckpointManager(options) {
   var _a;
   const dialog = new siyuan.Dialog({
-    title: `检查点 · ${escapeHtml$5(options.mapTitle)}`,
+    title: `检查点 · ${escapeHtml$6(options.mapTitle)}`,
     width: "720px",
     content: buildCheckpointDialogContent(options.repository.list(options.mapId), options.readonly)
   });
@@ -56381,6 +56575,65 @@ async function loadImageFileSelection(file, dependencies) {
     return null;
   }
 }
+function calculateDialogResize(input) {
+  const margin = Math.max(0, input.viewportMargin ?? 32);
+  const minWidth = Math.max(240, input.minWidth ?? 420);
+  const minHeight = Math.max(180, input.minHeight ?? 280);
+  const maxWidth = Math.max(minWidth, input.viewportWidth - margin);
+  const maxHeight = Math.max(minHeight, input.viewportHeight - margin);
+  return {
+    width: Math.round(Math.min(maxWidth, Math.max(minWidth, input.startWidth + input.deltaX))),
+    height: Math.round(Math.min(maxHeight, Math.max(minHeight, input.startHeight + input.deltaY)))
+  };
+}
+function bindDialogResize(handle, container) {
+  let cleanupMove = null;
+  const finish = () => {
+    cleanupMove == null ? void 0 : cleanupMove();
+    cleanupMove = null;
+    container.classList.remove("is-resizing");
+  };
+  const onPointerDown = (event) => {
+    var _a;
+    if (event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    finish();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const rect = container.getBoundingClientRect();
+    container.classList.add("is-resizing");
+    (_a = handle.setPointerCapture) == null ? void 0 : _a.call(handle, event.pointerId);
+    const onMove = (move2) => {
+      const next2 = calculateDialogResize({
+        startWidth: rect.width,
+        startHeight: rect.height,
+        deltaX: move2.clientX - startX,
+        deltaY: move2.clientY - startY,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight
+      });
+      container.style.width = `${next2.width}px`;
+      container.style.height = `${next2.height}px`;
+      container.style.maxWidth = "calc(100vw - 32px)";
+      container.style.maxHeight = "calc(100vh - 32px)";
+    };
+    const onUp = () => finish();
+    window.addEventListener("pointermove", onMove, true);
+    window.addEventListener("pointerup", onUp, { capture: true, once: true });
+    window.addEventListener("pointercancel", onUp, { capture: true, once: true });
+    cleanupMove = () => {
+      window.removeEventListener("pointermove", onMove, true);
+      window.removeEventListener("pointerup", onUp, true);
+      window.removeEventListener("pointercancel", onUp, true);
+    };
+  };
+  handle.addEventListener("pointerdown", onPointerDown);
+  return () => {
+    finish();
+    handle.removeEventListener("pointerdown", onPointerDown);
+  };
+}
 function formatCommentTimestamp(timestamp) {
   const date = new Date(timestamp);
   const pad2 = (value) => String(value).padStart(2, "0");
@@ -56390,7 +56643,7 @@ function buildCommentsListHtml(comments, editingId = null) {
   if (comments.length === 0) return '<div class="ymz-empty-hint">暂无批注</div>';
   return comments.map((comment) => {
     const editing = comment.id === editingId;
-    const body = editing ? `<textarea class="b3-text-field fn__block ymz-comment__editor" rows="3" data-field="edit-comment">${escapeHtml$4(comment.text)}</textarea>` : `<div class="ymz-comment__text">${escapeHtml$4(comment.text).replaceAll("\n", "<br>")}</div>`;
+    const body = editing ? `<textarea class="b3-text-field fn__block ymz-comment__editor" rows="3" data-field="edit-comment">${escapeHtml$5(comment.text)}</textarea>` : `<div class="ymz-comment__text">${escapeHtml$5(comment.text).replaceAll("\n", "<br>")}</div>`;
     const actions = editing ? `<button class="b3-button b3-button--outline" data-action="save-comment">保存</button>
          <button class="b3-button b3-button--cancel" data-action="cancel-edit-comment">取消</button>` : `<button class="b3-button b3-button--outline" data-action="edit-comment">编辑</button>
          <button class="b3-button b3-button--cancel" data-action="delete-comment">删除</button>`;
@@ -56410,11 +56663,11 @@ function requestClearAllComments(confirmHandler, onClear) {
     onClear
   );
 }
-function escapeHtml$4(value) {
+function escapeHtml$5(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function escapeAttribute$1(value) {
-  return escapeHtml$4(value);
+  return escapeHtml$5(value);
 }
 const SUPPORTED_PROTOCOLS = /* @__PURE__ */ new Set(["http:", "https:", "mailto:", "tel:", "siyuan:"]);
 const BARE_DOMAIN = /^(?:localhost(?::\d+)?|(?:[a-z0-9-]+\.)+[a-z]{2,})(?:[/:?#].*)?$/i;
@@ -56550,7 +56803,7 @@ function openFormulaDialog(commands) {
     }
     try {
       const katex2 = window.katex;
-      preview.innerHTML = (katex2 == null ? void 0 : katex2.renderToString) ? katex2.renderToString(value, { throwOnError: false }) : escapeHtml$3(value);
+      preview.innerHTML = (katex2 == null ? void 0 : katex2.renderToString) ? katex2.renderToString(value, { throwOnError: false }) : escapeHtml$4(value);
     } catch {
       preview.textContent = value;
     }
@@ -56631,6 +56884,57 @@ function openImageDialog(commands) {
       custom: false
     });
   });
+}
+function openNoteDialog(commands, options = {}) {
+  var _a, _b;
+  const readonly = Boolean(options.readonly);
+  const data2 = activeData(commands);
+  const current = normalizeNodeNote(data2.yemindNote ?? data2.note);
+  const width2 = Math.max(420, (current == null ? void 0 : current.width) ?? 560);
+  const height2 = Math.max(280, (current == null ? void 0 : current.height) ?? 380);
+  const dialog = new siyuan.Dialog({
+    title: readonly ? "备注（只读）" : "备注",
+    content: `<div class="b3-dialog__content ymz-node-dialog ymz-note-dialog">
+      <div class="ymz-note-editor" data-field="note" contenteditable="${readonly ? "false" : "true"}" role="textbox" aria-multiline="true" data-placeholder="输入长篇备注；可粘贴文字和图片…"></div>
+      ${readonly ? "" : '<div class="b3-label__text">备注支持多段文字和图片粘贴，窗口大小会随备注一同保存。</div>'}
+    </div>${readonly ? '<div class="b3-dialog__action"><div class="fn__space"></div><button class="b3-button b3-button--cancel" data-dialog-action="cancel">关闭</button></div>' : actionButtons()}`,
+    width: `${width2}px`,
+    height: `${height2}px`
+  });
+  const editor = dialog.element.querySelector('[data-field="note"]');
+  editor.innerHTML = (current == null ? void 0 : current.html) ?? "";
+  const container = dialog.element.querySelector(".b3-dialog__container") ?? dialog.element;
+  const resizeHandle = document.createElement("button");
+  resizeHandle.type = "button";
+  resizeHandle.className = "ymz-note-resize-handle";
+  resizeHandle.title = "拖动调整备注窗口大小";
+  resizeHandle.setAttribute("aria-label", resizeHandle.title);
+  container.appendChild(resizeHandle);
+  bindDialogResize(resizeHandle, container);
+  editor.addEventListener("paste", (event) => {
+    var _a2, _b2;
+    if (readonly) return;
+    const image = (_b2 = Array.from(((_a2 = event.clipboardData) == null ? void 0 : _a2.items) ?? []).find((item) => item.type.startsWith("image/"))) == null ? void 0 : _b2.getAsFile();
+    if (!image) return;
+    event.preventDefault();
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      const source = typeof reader.result === "string" ? reader.result : "";
+      if (!source) return;
+      document.execCommand("insertHTML", false, `<img src="${escapeAttribute(source)}" alt="">`);
+    });
+    reader.readAsDataURL(image);
+  });
+  (_a = dialog.element.querySelector('[data-dialog-action="cancel"]')) == null ? void 0 : _a.addEventListener("click", () => dialog.destroy());
+  if (!readonly) {
+    (_b = dialog.element.querySelector('[data-dialog-action="save"]')) == null ? void 0 : _b.addEventListener("click", () => {
+      var _a2;
+      const rect = ((_a2 = dialog.element.querySelector(".b3-dialog__container")) == null ? void 0 : _a2.getBoundingClientRect()) ?? dialog.element.getBoundingClientRect();
+      commands.setNote(updateNodeNote(current, editor.innerHTML, Date.now(), { width: rect.width, height: rect.height }));
+      dialog.destroy();
+    });
+    editor.focus();
+  }
 }
 function openCommentsDialog(commands, options = {}) {
   var _a;
@@ -56730,11 +57034,11 @@ function getImageSize(url) {
     image.src = url;
   });
 }
-function escapeHtml$3(value) {
+function escapeHtml$4(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function escapeAttribute(value) {
-  return escapeHtml$3(value);
+  return escapeHtml$4(value);
 }
 function createTodoMenuDescriptor(todo) {
   return getTodoMenuState(todo);
@@ -56836,8 +57140,9 @@ function openNodeContextMenu(event, commands, options = {}) {
   }) });
   menu.addSeparator();
   const todoAction = createTodoMenuDescriptor(commands.getTodo());
-  menu.addItem({ icon: "iconCheck", label: todoAction.label, warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? "todo-remove" : todoAction.next.checked ? "todo-complete" : "todo-add", () => commands.setTodo(todoAction.next)) });
-  menu.addItem({ icon: "iconMessage", label: "批注", disabled: !availability.nodeContent, click: run("comments", () => openCommentsDialog(commands)) });
+  menu.addItem({ icon: "iconCheck", label: todoAction.label, warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? "todo-remove" : "todo-add", () => commands.setTodo(todoAction.next)) });
+  menu.addItem({ icon: "iconYeMindNote", label: "备注", disabled: !availability.nodeContent, click: run("note", () => openNoteDialog(commands)) });
+  menu.addItem({ icon: "iconYeMindComment", label: "批注", disabled: !availability.nodeContent, click: run("comments", () => openCommentsDialog(commands)) });
   menu.addItem({ icon: "iconTags", label: "标签", disabled: !availability.nodeContent, click: run("tags", () => openTagsDialog(commands)) });
   menu.addItem({ icon: "iconEmoji", label: "图标", disabled: !availability.nodeContent, click: run("icons", () => openIconsDialog(commands)) });
   menu.addItem({ icon: "iconLink", label: "链接", disabled: !availability.nodeContent, click: run("node-link", () => options.onNodeLink ? options.onNodeLink() : openLinkDialog(commands)) });
@@ -56891,7 +57196,7 @@ const CODE_LANGUAGES = [
   ["markdown", "Markdown"],
   ["yaml", "YAML"]
 ];
-function escapeHtml$2(value) {
+function escapeHtml$3(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function openInlineLinkDialog(commands, settings) {
@@ -56907,7 +57212,7 @@ function openInlineLinkDialog(commands, settings) {
     width: "480px",
     content: `<div class="b3-dialog__content ymz-node-dialog">
       <label>选中文字</label>
-      <div class="ymz-selection-preview">${escapeHtml$2(selectedText || "当前链接")}</div>
+      <div class="ymz-selection-preview">${escapeHtml$3(selectedText || "当前链接")}</div>
       <label>链接地址</label>
       <input class="b3-text-field fn__block" data-field="inline-link" placeholder="https://…、example.com 或 siyuan://blocks/…">
       <div class="b3-label__text">支持网页、邮箱、电话和思源块链接。</div>
@@ -57092,7 +57397,7 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
           <button data-action="redo" title="重做">↷</button>
         </div>
 
-        <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式" aria-label="退出禅模式"><span class="ymz-zen-exit__icon" aria-hidden="true">◉</span><span class="ymz-zen-exit__label">退出禅模式</span></button>
+        <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式" aria-label="退出禅模式"><span class="ymz-zen-exit__idle"><span class="ymz-zen-exit__icon ymz-zen-exit__dot" aria-hidden="true">●</span><span>禅</span></span><span class="ymz-zen-exit__label"><span class="ymz-zen-exit__icon ymz-zen-exit__dot" aria-hidden="true">●</span><span>退出禅模式</span></span></button>
 
         <div class="ymz-relation-panel" data-role="relation-panel" hidden data-mode="idle">
           <span data-role="relation-hint"></span>
@@ -57119,7 +57424,7 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
         </div>
 
         <div class="ymz-floating ymz-statusbar">
-          <button class="ymz-status-title" data-role="title" title="${escapeHtml$1(title)}">${escapeHtml$1(title)}</button>
+          <button class="ymz-status-title" data-role="title" title="${escapeHtml$2(title)}">${escapeHtml$2(title)}</button>
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
           <span class="ymz-selection-count" data-role="selection-count" hidden></span>
           <button data-action="open-search" title="搜索">⌕</button>
@@ -57135,7 +57440,7 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
       </div>
     </div>`;
 }
-function escapeHtml$1(value) {
+function escapeHtml$2(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function plainTextFromHtml(value) {
@@ -57148,37 +57453,31 @@ function nodeText(tree) {
   if (tree.data.richText) {
     return { text: plainTextFromHtml(value), html: sanitizeOutlineHtml(value), richText: true };
   }
-  return {
-    text: value,
-    html: escapeHtml(value).replaceAll("\n", "<br>"),
-    richText: false
-  };
+  return { text: value, html: escapeHtml$1(value).replaceAll("\n", "<br>"), richText: false };
 }
 function flattenOutline(tree) {
   const rows = [];
   const visit = (node, depth, path2) => {
-    const hasChildren = node.children.length > 0;
+    const children = Array.isArray(node.children) ? node.children : [];
+    const hasChildren = children.length > 0;
     const expanded = node.data.expand !== false;
-    const content = nodeText(node);
     rows.push({
       uid: String(node.data.uid ?? path2),
-      ...content,
+      ...nodeText(node),
       depth,
       hasChildren,
       expanded,
       isRoot: depth === 0
     });
-    if (hasChildren && expanded) {
-      node.children.forEach((child, index) => visit(child, depth + 1, `${path2}.${index}`));
-    }
+    if (hasChildren && expanded) children.forEach((child, index) => visit(child, depth + 1, `${path2}.${index}`));
   };
   visit(tree, 0, "root");
   return rows;
 }
 function resolveOutlineKeyAction(context) {
   if (context.composing) return "none";
-  if (context.key === "ArrowUp") return "previous";
-  if (context.key === "ArrowDown") return "next";
+  if (context.key === "ArrowUp") return context.atStart ? "previous" : "none";
+  if (context.key === "ArrowDown") return context.atEnd ? "next" : "none";
   if (context.key === "Escape") return "cancel";
   if (context.readonly) return "none";
   const hasCommandModifier = Boolean(context.altKey || context.ctrlKey || context.metaKey);
@@ -57192,32 +57491,77 @@ function resolveOutlineKeyAction(context) {
   if (context.key === "ArrowRight" && context.atEnd && context.hasChildren && context.expanded === false) return "expand";
   return "none";
 }
-function renderOutlineHtml(tree, readonly = false) {
-  return flattenOutline(tree).map((row) => {
-    const tabindex = readonly ? "-1" : "0";
-    const branch = row.hasChildren ? row.expanded ? "▾" : "▸" : "•";
-    const label = row.text || "空节点";
-    const encodedOriginal = encodeURIComponent(row.html);
-    return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml(row.uid)}" data-outline-root="${row.isRoot}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" style="--ymz-outline-depth:${row.depth}"><button type="button" class="ymz-outline-row__branch" data-outline-toggle aria-label="${row.expanded ? "折叠" : "展开"}"${row.hasChildren ? "" : " disabled"}>${branch}</button><div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
-  }).join("");
+function rowHtml(row, readonly) {
+  const tabindex = readonly ? "-1" : "0";
+  const branch = row.hasChildren ? row.expanded ? "▾" : "▸" : "•";
+  const label = row.text || "空节点";
+  const encodedOriginal = encodeURIComponent(row.html);
+  return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml$1(row.uid)}" data-outline-root="${row.isRoot}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" style="--ymz-outline-depth:${row.depth}"><button type="button" class="ymz-outline-row__drag" data-outline-drag-handle draggable="${readonly ? "false" : "true"}" aria-label="拖动节点" title="拖动调整层级和顺序"${readonly ? " disabled" : ""}>⋮⋮</button><button type="button" class="ymz-outline-row__branch" data-outline-toggle aria-label="${row.expanded ? "折叠" : "展开"}"${row.hasChildren ? "" : " disabled"}>${branch}</button><div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml$1(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml$1(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
+}
+function patchOutlineTree(container, tree, readonly = false, activeUid = null) {
+  const rows = flattenOutline(tree);
+  const existing = /* @__PURE__ */ new Map();
+  container.querySelectorAll(":scope > [data-outline-uid]").forEach((row) => {
+    existing.set(row.dataset.outlineUid ?? "", row);
+  });
+  const fragment = document.createDocumentFragment();
+  const keep = /* @__PURE__ */ new Set();
+  rows.forEach((data2) => {
+    keep.add(data2.uid);
+    let row = existing.get(data2.uid);
+    if (!row) {
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = rowHtml(data2, readonly);
+      row = wrapper.firstElementChild;
+    } else {
+      row.setAttribute("aria-level", String(data2.depth + 1));
+      row.setAttribute("aria-expanded", data2.hasChildren ? String(data2.expanded) : "false");
+      row.dataset.outlineRoot = String(data2.isRoot);
+      row.dataset.outlineHasChildren = String(data2.hasChildren);
+      row.dataset.outlineExpanded = String(data2.expanded);
+      row.style.setProperty("--ymz-outline-depth", String(data2.depth));
+      const branch = row.querySelector("[data-outline-toggle]");
+      if (branch) {
+        branch.textContent = data2.hasChildren ? data2.expanded ? "▾" : "▸" : "•";
+        branch.disabled = !data2.hasChildren;
+        branch.setAttribute("aria-label", data2.expanded ? "折叠" : "展开");
+      }
+      const handle = row.querySelector("[data-outline-drag-handle]");
+      if (handle) {
+        handle.draggable = !readonly;
+        handle.disabled = readonly;
+      }
+      const editor = row.querySelector("[data-outline-editor]");
+      if (editor) {
+        editor.tabIndex = readonly ? -1 : 0;
+        if (readonly) editor.setAttribute("aria-readonly", "true");
+        else editor.removeAttribute("aria-readonly");
+        if (data2.uid !== activeUid) {
+          editor.innerHTML = data2.html;
+          editor.dataset.outlineOriginal = encodeURIComponent(data2.html);
+          editor.dataset.outlineRichText = String(data2.richText);
+          editor.setAttribute("aria-label", `编辑节点：${data2.text || "空节点"}`);
+        }
+      }
+    }
+    fragment.appendChild(row);
+  });
+  existing.forEach((row, uid) => {
+    if (!keep.has(uid)) row.remove();
+  });
+  container.appendChild(fragment);
 }
 function sanitizeOutlineHtml(value) {
-  const template = document.createElement("template");
-  template.innerHTML = value;
-  template.content.querySelectorAll("script,style,iframe,object,embed,meta,link").forEach((node) => node.remove());
-  template.content.querySelectorAll("*").forEach((node) => {
-    Array.from(node.attributes).forEach((attribute) => {
-      const name = attribute.name.toLowerCase();
-      const raw = attribute.value;
-      if (name.startsWith("on")) node.removeAttribute(attribute.name);
-      if ((name === "href" || name === "src") && /^\s*javascript:/i.test(raw)) node.removeAttribute(attribute.name);
-      if (name === "style" && /(url\s*\(|expression\s*\(|javascript:)/i.test(raw)) node.removeAttribute(attribute.name);
-    });
-  });
-  return template.innerHTML;
+  return sanitizeRichHtml(value);
 }
-function escapeHtml(value) {
+function escapeHtml$1(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+function resolveOutlineDropIntent(input) {
+  if (!input.sourceUid || !input.targetUid || input.sourceUid === input.targetUid || input.rect.height <= 0) return null;
+  const ratio = Math.max(0, Math.min(1, (input.clientY - input.rect.top) / input.rect.height));
+  const position2 = ratio < 0.25 ? "before" : ratio > 0.75 ? "after" : "inside";
+  return { targetUid: input.targetUid, position: position2 };
 }
 function decodeOriginal(host) {
   try {
@@ -57241,14 +57585,20 @@ class OutlineRichTextController {
     __publicField(this, "commitTimer", null);
     __publicField(this, "composing", false);
     __publicField(this, "onCompositionStart", () => {
+      var _a, _b;
       this.composing = true;
+      (_b = (_a = this.options).onDiagnostic) == null ? void 0 : _b.call(_a, "composition-start");
     });
     __publicField(this, "onCompositionEnd", () => {
+      var _a, _b;
       this.composing = false;
+      (_b = (_a = this.options).onDiagnostic) == null ? void 0 : _b.call(_a, "composition-end");
       this.scheduleCommit();
     });
     __publicField(this, "onTextChange", () => {
-      this.scheduleCommit();
+      var _a, _b;
+      (_b = (_a = this.options).onDiagnostic) == null ? void 0 : _b.call(_a, "text-change", { composing: this.composing, textLength: this.plainText().length });
+      if (!this.composing) this.scheduleCommit();
     });
     __publicField(this, "onSelectionChange", (range) => {
       this.lastRange = this.range;
@@ -57280,6 +57630,7 @@ class OutlineRichTextController {
     return this.composing;
   }
   activate(host, uid, request) {
+    var _a, _b;
     if (this.host === host && this.quill) {
       if (request) this.focus(request);
       return;
@@ -57287,6 +57638,7 @@ class OutlineRichTextController {
     this.detach(true);
     this.host = host;
     this.uid = uid;
+    (_b = (_a = this.options).onDiagnostic) == null ? void 0 : _b.call(_a, "edit-start", { uidLength: uid.length });
     this.originalHtml = decodeOriginal(host);
     host.classList.add("is-editing");
     host.innerHTML = this.originalHtml;
@@ -57348,6 +57700,7 @@ class OutlineRichTextController {
     return { text: text2, length: text2.length, start: 0, end: 0 };
   }
   flush(host = this.host) {
+    var _a, _b;
     if (!host || host !== this.host || !this.quill || !this.uid) return false;
     if (this.commitTimer !== null) {
       window.clearTimeout(this.commitTimer);
@@ -57355,9 +57708,9 @@ class OutlineRichTextController {
     }
     const html2 = normalizeHtml(this.quill.root.innerHTML);
     const text2 = this.plainText();
-    if (!text2.trim()) return false;
     if (html2 === this.originalHtml) return false;
     const changed = this.options.onCommit(this.uid, html2);
+    (_b = (_a = this.options).onDiagnostic) == null ? void 0 : _b.call(_a, "commit", { changed, textLength: text2.length, htmlLength: html2.length });
     if (changed) {
       this.originalHtml = html2;
       host.dataset.outlineOriginal = encodeURIComponent(html2);
@@ -57366,6 +57719,7 @@ class OutlineRichTextController {
     return changed;
   }
   cancel() {
+    var _a, _b;
     if (!this.host) return;
     if (this.commitTimer !== null) window.clearTimeout(this.commitTimer);
     this.commitTimer = null;
@@ -57374,11 +57728,13 @@ class OutlineRichTextController {
     const original = this.sessionStartHtml;
     const current = this.quill ? normalizeHtml(this.quill.root.innerHTML) : this.originalHtml;
     this.detach(false);
+    (_b = (_a = this.options).onDiagnostic) == null ? void 0 : _b.call(_a, "cancel", { changed: current !== original });
     if (uid && current !== original) this.options.onCommit(uid, original);
     host.innerHTML = original;
     host.dataset.outlineOriginal = encodeURIComponent(original);
   }
   detach(commit) {
+    var _a, _b;
     if (!this.host) return;
     if (commit) this.flush();
     if (this.commitTimer !== null) window.clearTimeout(this.commitTimer);
@@ -57392,6 +57748,7 @@ class OutlineRichTextController {
       this.quill.off("text-change", this.onTextChange);
     }
     host.classList.remove("is-editing");
+    (_b = (_a = this.options).onDiagnostic) == null ? void 0 : _b.call(_a, "editor-destroy", { commit });
     host.innerHTML = html2;
     this.options.onSelectionChange(false, null, null, this);
     this.quill = null;
@@ -57485,6 +57842,10 @@ class OutlineRichTextController {
     if (!this.quill) return "";
     return String(this.quill.getText(0, Math.max(0, this.quill.getLength() - 1)) ?? "").replace(/\u00a0/g, " ");
   }
+  restoreSelection() {
+    const range = this.activeRange();
+    if (range) this.restoreRange(range);
+  }
   restoreRange(range) {
     var _a;
     this.range = { index: range.index, length: range.length };
@@ -57538,23 +57899,36 @@ function rgbFromCss(value) {
   if (channels.some((channel) => channel < 0 || channel > 255)) return null;
   return channels;
 }
+function rgbFromEditable(value) {
+  const css2 = rgbFromCss(value);
+  if (css2) return css2;
+  const match2 = /^\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*$/.exec(value);
+  if (!match2) return null;
+  const channels = match2.slice(1, 4).map(Number);
+  if (channels.some((channel) => channel < 0 || channel > 255)) return null;
+  return channels;
+}
 function toHex(channels) {
   return `#${channels.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`.toUpperCase();
 }
-function presentColor(value) {
+function channelsFromHex(hex2) {
+  return [
+    Number.parseInt(hex2.slice(1, 3), 16),
+    Number.parseInt(hex2.slice(3, 5), 16),
+    Number.parseInt(hex2.slice(5, 7), 16)
+  ];
+}
+function parseEditableColor(value) {
+  if (typeof value !== "string") return null;
   const hex2 = normalizeHexColor(value);
-  let channels = null;
-  if (hex2) {
-    channels = [
-      Number.parseInt(hex2.slice(1, 3), 16),
-      Number.parseInt(hex2.slice(3, 5), 16),
-      Number.parseInt(hex2.slice(5, 7), 16)
-    ];
-  } else if (typeof value === "string") {
-    channels = rgbFromCss(value);
-  }
-  if (!channels) return { hex: "默认", rgb: "继承节点颜色" };
-  return { hex: hex2 ?? toHex(channels), rgb: `RGB(${channels.join(", ")})` };
+  const channels = hex2 ? channelsFromHex(hex2) : rgbFromEditable(value);
+  if (!channels) return null;
+  return { hex: hex2 ?? toHex(channels), rgb: channels.join(", ") };
+}
+function presentColor(value) {
+  const editable = parseEditableColor(value);
+  if (!editable) return { hex: "默认", rgb: "继承节点颜色" };
+  return { hex: editable.hex, rgb: `RGB(${editable.rgb})` };
 }
 const COLOR_SWATCHES = [
   "#5f6368",
@@ -57633,6 +58007,7 @@ class RichTextToolbar {
     __publicField(this, "interacting", false);
     __publicField(this, "target", null);
     __publicField(this, "activeColorKind", "color");
+    __publicField(this, "colorSessionOriginal", false);
     __publicField(this, "onDocumentMouseDown", (event) => {
       const node = event.target;
       if (!this.element.contains(node) && !this.colorPopover.contains(node)) this.hide();
@@ -57666,20 +58041,22 @@ class RichTextToolbar {
       </select>
       <span class="ymz-rich-toolbar__separator"></span>
       <button type="button" data-rich-action="link" title="行内链接">链接</button>
-      <button type="button" data-rich-action="cloze" title="挖空/取消挖空">挖空</button>
-      <button type="button" data-rich-action="formula" title="插入公式">Fx</button>
+      <button type="button" data-rich-action="cloze" title="模糊/取消模糊">模糊</button>
+      <button type="button" data-rich-action="formula" title="插入公式">π</button>
       <button type="button" data-rich-action="clear" title="清除全部格式">清除</button>`;
     this.colorPopover = document.createElement("div");
     this.colorPopover.className = "ymz-color-popover";
     this.colorPopover.hidden = true;
-    this.colorPopover.innerHTML = `<div class="ymz-color-popover__current" aria-live="polite">
-        <span data-color-readout="hex">默认</span>
-        <span data-color-readout="rgb">继承节点颜色</span>
-      </div>
-      <div class="ymz-color-popover__grid">${swatchesHtml()}</div>
+    this.colorPopover.innerHTML = `<div class="ymz-color-popover__grid">${swatchesHtml()}</div>
       <div class="ymz-color-popover__footer">
         <button type="button" data-color-action="reset">重置默认</button>
         <button type="button" data-color-action="custom">更多颜色</button>
+      </div>
+      <div class="ymz-color-popover__current" aria-live="polite">
+        <label><span>HEX</span><input type="text" spellcheck="false" autocomplete="off" data-color-input="hex" value="" aria-label="十六进制颜色"></label>
+        <label><span>RGB</span><input type="text" spellcheck="false" autocomplete="off" data-color-input="rgb" value="" aria-label="RGB 颜色"></label>
+        <span class="ymz-sr-only" data-color-readout="hex">默认</span>
+        <span class="ymz-sr-only" data-color-readout="rgb">继承节点颜色</span>
       </div>`;
     this.customColorInput = document.createElement("input");
     this.customColorInput.type = "color";
@@ -57726,11 +58103,15 @@ class RichTextToolbar {
     var _a, _b;
     const markInteracting = (event) => {
       this.interacting = true;
-      event.preventDefault();
+      const target = event.target;
+      const isTextInput = target instanceof HTMLInputElement && target.type !== "color";
+      if (!isTextInput) event.preventDefault();
       event.stopPropagation();
     };
     this.element.addEventListener("mousedown", markInteracting);
     this.colorPopover.addEventListener("mousedown", markInteracting);
+    const isolateInputEvent = (event) => event.stopPropagation();
+    ["keydown", "keyup", "beforeinput", "input", "paste", "compositionstart", "compositionupdate", "compositionend"].forEach((type) => this.colorPopover.addEventListener(type, isolateInputEvent));
     this.element.addEventListener("click", (event) => {
       var _a2, _b2, _c2, _d2, _e, _f, _g, _h;
       const button = event.target.closest("[data-rich-action]");
@@ -57789,18 +58170,20 @@ class RichTextToolbar {
       var _a2;
       const swatch = event.target.closest("[data-color-value]");
       if (swatch) {
-        this.applyColor(swatch.dataset.colorValue || false);
+        this.applyColor(swatch.dataset.colorValue || false, true);
         return;
       }
       const action = (_a2 = event.target.closest("[data-color-action]")) == null ? void 0 : _a2.dataset.colorAction;
-      if (action === "reset") this.applyColor(false);
+      if (action === "reset") this.applyColor(false, true);
       if (action === "custom") {
         const current = this.formatInfo[this.activeColorKind];
         this.customColorInput.value = typeof current === "string" && /^#[0-9a-f]{6}$/i.test(current) ? current : "#000000";
         this.customColorInput.click();
       }
     });
-    this.customColorInput.addEventListener("input", () => this.applyColor(this.customColorInput.value));
+    this.customColorInput.addEventListener("input", () => this.applyColor(this.customColorInput.value, false));
+    this.bindEditableColorInput("hex");
+    this.bindEditableColorInput("rgb");
     (_a = this.element.querySelector('[data-rich-field="size"]')) == null ? void 0 : _a.addEventListener("change", (event) => {
       var _a2, _b2, _c2;
       (_b2 = (_a2 = this.callbacks).onAction) == null ? void 0 : _b2.call(_a2, "size");
@@ -57814,6 +58197,7 @@ class RichTextToolbar {
   }
   openColorPopover(kind, anchor) {
     this.activeColorKind = kind;
+    this.colorSessionOriginal = typeof this.formatInfo[kind] === "string" ? this.formatInfo[kind] : false;
     this.colorPopover.dataset.kind = kind;
     this.syncColorReadout();
     this.colorPopover.hidden = false;
@@ -57830,24 +58214,69 @@ class RichTextToolbar {
     this.colorPopover.style.left = `${Math.round(left)}px`;
     this.colorPopover.style.top = `${Math.round(top)}px`;
   }
-  applyColor(value) {
+  bindEditableColorInput(kind) {
+    const input = this.colorPopover.querySelector(`[data-color-input="${kind}"]`);
+    if (!input) return;
+    input.addEventListener("input", () => {
+      const parsed = parseEditableColor(input.value);
+      input.setAttribute("aria-invalid", parsed ? "false" : "true");
+      if (!parsed) return;
+      const other = this.colorPopover.querySelector(`[data-color-input="${kind === "hex" ? "rgb" : "hex"}"]`);
+      if (other) {
+        other.value = kind === "hex" ? parsed.rgb : parsed.hex;
+        other.setAttribute("aria-invalid", "false");
+      }
+      this.applyColor(parsed.hex, false, false);
+    });
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        this.cancelColorEditing();
+      }
+    });
+  }
+  cancelColorEditing() {
     var _a, _b;
-    if (!this.target) return;
-    (_b = (_a = this.callbacks).onAction) == null ? void 0 : _b.call(_a, this.activeColorKind);
-    this.target.formatText({ [this.activeColorKind]: value });
-    this.formatInfo[this.activeColorKind] = value || void 0;
+    if (!this.target) {
+      this.colorPopover.hidden = true;
+      return;
+    }
+    (_b = (_a = this.target).restoreSelection) == null ? void 0 : _b.call(_a);
+    this.target.formatText({ [this.activeColorKind]: this.colorSessionOriginal });
+    this.formatInfo[this.activeColorKind] = this.colorSessionOriginal || void 0;
     this.syncState();
     this.colorPopover.hidden = true;
   }
+  applyColor(value, close2 = true, syncInputs = true) {
+    var _a, _b, _c2, _d2;
+    if (!this.target) return;
+    (_b = (_a = this.callbacks).onAction) == null ? void 0 : _b.call(_a, this.activeColorKind);
+    (_d2 = (_c2 = this.target).restoreSelection) == null ? void 0 : _d2.call(_c2);
+    this.target.formatText({ [this.activeColorKind]: value });
+    this.formatInfo[this.activeColorKind] = value || void 0;
+    this.syncState(syncInputs);
+    if (close2) this.colorPopover.hidden = true;
+  }
   syncColorReadout() {
     const presentation = presentColor(this.formatInfo[this.activeColorKind]);
-    const hex2 = this.colorPopover.querySelector('[data-color-readout="hex"]');
-    const rgb2 = this.colorPopover.querySelector('[data-color-readout="rgb"]');
-    if (hex2) hex2.textContent = presentation.hex;
-    if (rgb2) rgb2.textContent = presentation.rgb;
+    const editable = parseEditableColor(this.formatInfo[this.activeColorKind]);
+    const hex2 = this.colorPopover.querySelector('[data-color-input="hex"]');
+    const rgb2 = this.colorPopover.querySelector('[data-color-input="rgb"]');
+    if (hex2) {
+      hex2.value = (editable == null ? void 0 : editable.hex) ?? (presentation.hex === "默认" ? "" : presentation.hex);
+      hex2.setAttribute("aria-invalid", "false");
+    }
+    if (rgb2) {
+      rgb2.value = (editable == null ? void 0 : editable.rgb) ?? "";
+      rgb2.setAttribute("aria-invalid", "false");
+    }
+    const hexReadout = this.colorPopover.querySelector('[data-color-readout="hex"]');
+    const rgbReadout = this.colorPopover.querySelector('[data-color-readout="rgb"]');
+    if (hexReadout) hexReadout.textContent = presentation.hex;
+    if (rgbReadout) rgbReadout.textContent = presentation.rgb;
   }
-  syncState() {
-    var _a, _b, _c2, _d2, _e, _f;
+  syncState(syncInputs = true) {
+    var _a, _b, _c2, _d2, _e;
     ["bold", "italic", "underline", "strike"].forEach((name) => {
       var _a2;
       (_a2 = this.element.querySelector(`[data-rich-action="${name}"]`)) == null ? void 0 : _a2.classList.toggle("is-active", Boolean(this.formatInfo[name]));
@@ -57855,16 +58284,19 @@ class RichTextToolbar {
     (_a = this.element.querySelector('[data-rich-action="inline-code"]')) == null ? void 0 : _a.classList.toggle("is-active", Boolean(this.formatInfo.code));
     (_b = this.element.querySelector('[data-rich-action="link"]')) == null ? void 0 : _b.classList.toggle("is-active", Boolean(this.formatInfo.link));
     (_c2 = this.element.querySelector('[data-rich-action="code-block"]')) == null ? void 0 : _c2.classList.toggle("is-active", Boolean(this.formatInfo["code-block"]));
-    (_d2 = this.element.querySelector('[data-rich-action="cloze"]')) == null ? void 0 : _d2.classList.toggle("is-active", isClozeFormat(this.formatInfo));
+    const cloze = this.element.querySelector('[data-rich-action="cloze"]');
+    const clozeActive = isClozeFormat(this.formatInfo);
+    cloze == null ? void 0 : cloze.classList.toggle("is-active", clozeActive);
+    if (cloze) cloze.textContent = clozeActive ? "取消模糊" : "模糊";
     const size2 = this.element.querySelector('[data-rich-field="size"]');
     if (size2) size2.value = typeof this.formatInfo.size === "string" ? this.formatInfo.size : "";
     const font = this.element.querySelector('[data-rich-field="font"]');
     if (font) font.value = typeof this.formatInfo.font === "string" ? this.formatInfo.font : "";
     const color = typeof this.formatInfo.color === "string" && this.formatInfo.color !== "transparent" ? this.formatInfo.color : "currentColor";
     const background = typeof this.formatInfo.background === "string" ? this.formatInfo.background : "transparent";
-    (_e = this.element.querySelector('[data-rich-swatch="color"]')) == null ? void 0 : _e.style.setProperty("--ymz-current-color", color);
-    (_f = this.element.querySelector('[data-rich-swatch="background"]')) == null ? void 0 : _f.style.setProperty("--ymz-current-color", background);
-    this.syncColorReadout();
+    (_d2 = this.element.querySelector('[data-rich-swatch="color"]')) == null ? void 0 : _d2.style.setProperty("--ymz-current-color", color);
+    (_e = this.element.querySelector('[data-rich-swatch="background"]')) == null ? void 0 : _e.style.setProperty("--ymz-current-color", background);
+    if (syncInputs) this.syncColorReadout();
   }
   position(rect) {
     const rootRect = this.root.getBoundingClientRect();
@@ -58104,6 +58536,81 @@ function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
   visit(root2);
   return match2;
 }
+function escapeHtml(value) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+function buildHoverPreviewHtml(type, value) {
+  if (type === "note") {
+    const note2 = value;
+    return (note2 == null ? void 0 : note2.html) ? `<div class="ymz-node-hover-preview__note">${sanitizeRichHtml(note2.html)}</div>` : '<div class="ymz-empty-hint">暂无备注</div>';
+  }
+  const comments = Array.isArray(value) ? value : [];
+  if (!comments.length) return '<div class="ymz-empty-hint">暂无批注</div>';
+  return `<div class="ymz-node-hover-preview__comments">${comments.map((comment) => `<div class="ymz-node-hover-preview__comment">${escapeHtml(comment.text).replaceAll("\n", "<br>")}</div>`).join("")}</div>`;
+}
+class NodeHoverPreview {
+  constructor(root2) {
+    __publicField(this, "element");
+    __publicField(this, "showTimer", null);
+    __publicField(this, "hideTimer", null);
+    __publicField(this, "anchor", null);
+    this.root = root2;
+    this.element = document.createElement("div");
+    this.element.className = "ymz-node-hover-preview";
+    this.element.hidden = true;
+    this.element.addEventListener("pointerenter", () => this.cancelHide());
+    this.element.addEventListener("pointerleave", () => this.scheduleHide());
+    root2.appendChild(this.element);
+  }
+  show(type, value, anchor, delay = 220) {
+    this.cancelTimers();
+    this.anchor = anchor;
+    this.showTimer = window.setTimeout(() => {
+      this.showTimer = null;
+      this.element.dataset.type = type;
+      this.element.innerHTML = buildHoverPreviewHtml(type, value);
+      this.element.hidden = false;
+      this.position(anchor);
+    }, delay);
+  }
+  scheduleHide(delay = 160) {
+    if (this.showTimer !== null) window.clearTimeout(this.showTimer);
+    this.showTimer = null;
+    this.cancelHide();
+    this.hideTimer = window.setTimeout(() => this.hide(), delay);
+  }
+  hide() {
+    this.cancelTimers();
+    this.element.hidden = true;
+    this.element.innerHTML = "";
+    this.anchor = null;
+  }
+  destroy() {
+    this.hide();
+    this.element.remove();
+  }
+  cancelHide() {
+    if (this.hideTimer !== null) window.clearTimeout(this.hideTimer);
+    this.hideTimer = null;
+  }
+  cancelTimers() {
+    if (this.showTimer !== null) window.clearTimeout(this.showTimer);
+    this.showTimer = null;
+    this.cancelHide();
+  }
+  position(anchor) {
+    const root2 = this.root.getBoundingClientRect();
+    const rect = anchor.getBoundingClientRect();
+    const width2 = this.element.offsetWidth || 360;
+    const height2 = this.element.offsetHeight || 220;
+    const rootWidth = this.root.clientWidth || root2.width || window.innerWidth;
+    const rootHeight = this.root.clientHeight || root2.height || window.innerHeight;
+    const left = Math.max(8, Math.min(rect.right - root2.left + 8, rootWidth - width2 - 8));
+    const top = Math.max(8, Math.min(rect.top - root2.top, rootHeight - height2 - 8));
+    this.element.style.left = `${Math.round(left)}px`;
+    this.element.style.top = `${Math.round(top)}px`;
+  }
+}
 class YeMindEditor {
   constructor(options) {
     __publicField(this, "map", null);
@@ -58133,6 +58640,7 @@ class YeMindEditor {
     __publicField(this, "outerFramePanelEl");
     __publicField(this, "outerFrameHintEl");
     __publicField(this, "richTextToolbar", null);
+    __publicField(this, "nodeHoverPreview", null);
     __publicField(this, "outlineRichText", null);
     __publicField(this, "settingsInitialized", false);
     __publicField(this, "viewMode", "map");
@@ -58145,6 +58653,7 @@ class YeMindEditor {
     __publicField(this, "splitOutlineRatio", DEFAULT_SPLIT_OUTLINE_RATIO);
     __publicField(this, "outlineTextCommitUid", null);
     __publicField(this, "outlineStructureBusy", false);
+    __publicField(this, "outlineDragUid", null);
     __publicField(this, "pendingOutlineFocus", null);
     __publicField(this, "appearanceObserver", null);
     __publicField(this, "appearanceMedia", null);
@@ -58251,7 +58760,7 @@ class YeMindEditor {
     this.scheduleSafeResize();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m;
     this.options.diagnostics.record("editor", "destroy-started", this.current.id, { dirty: this.saveRevisions.isDirty() });
     (_a = this.outlineRichText) == null ? void 0 : _a.destroy();
     this.outlineRichText = null;
@@ -58265,16 +58774,18 @@ class YeMindEditor {
     this.appearanceMedia = null;
     (_g = this.richTextToolbar) == null ? void 0 : _g.destroy();
     this.richTextToolbar = null;
-    (_h = this.rootEl) == null ? void 0 : _h.removeEventListener("keydown", this.onRootKeydown);
-    (_i = this.rootEl) == null ? void 0 : _i.removeEventListener("paste", this.onImagePaste);
-    (_j = this.canvasEl) == null ? void 0 : _j.removeEventListener("dragover", this.onImageDragOver);
-    (_k = this.canvasEl) == null ? void 0 : _k.removeEventListener("drop", this.onImageDrop);
+    (_h = this.nodeHoverPreview) == null ? void 0 : _h.destroy();
+    this.nodeHoverPreview = null;
+    (_i = this.rootEl) == null ? void 0 : _i.removeEventListener("keydown", this.onRootKeydown);
+    (_j = this.rootEl) == null ? void 0 : _j.removeEventListener("paste", this.onImagePaste);
+    (_k = this.canvasEl) == null ? void 0 : _k.removeEventListener("dragover", this.onImageDragOver);
+    (_l = this.canvasEl) == null ? void 0 : _l.removeEventListener("drop", this.onImageDrop);
     if (this.resizeFrame !== null) window.cancelAnimationFrame(this.resizeFrame);
     if (this.splitResizeFrame !== null) window.cancelAnimationFrame(this.splitResizeFrame);
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_l = this.map) == null ? void 0 : _l.destroy();
+    (_m = this.map) == null ? void 0 : _m.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record("editor", "destroy-completed", this.current.id);
@@ -58331,6 +58842,7 @@ class YeMindEditor {
       onHyperlink: (href) => this.openLink(href)
     });
     this.commands = createCommandAdapter(this.map);
+    this.nodeHoverPreview = new NodeHoverPreview(this.rootEl);
     this.richTextToolbar = new RichTextToolbar(this.rootEl, this.commands, {
       onFormula: (target) => openFormulaDialog(target),
       onLink: (target) => openInlineLinkDialog(target, this.settings),
@@ -58344,6 +58856,7 @@ class YeMindEditor {
         return Boolean((_a = this.commands) == null ? void 0 : _a.isReadonly());
       },
       onCommit: (uid, html2) => this.commitOutlineRichText(uid, html2),
+      onDiagnostic: (action, details) => this.options.diagnostics.record("outline", action, this.current.id, details),
       onSelectionChange: (hasRange, rect, format, target) => {
         var _a;
         (_a = this.richTextToolbar) == null ? void 0 : _a.update(hasRange, rect, format, target);
@@ -58526,6 +59039,7 @@ class YeMindEditor {
       this.activateOutlineUid(uid);
     });
     this.outlineEl.addEventListener("keydown", (event) => this.handleOutlineKeydown(event), true);
+    this.bindOutlineDrag();
     this.bindSplitDivider();
     this.rootEl.addEventListener("change", (event) => {
       const control = event.target.closest("[data-outer-frame-setting]");
@@ -58594,7 +59108,7 @@ class YeMindEditor {
       this.current.data = data2;
       this.options.diagnostics.record("editor", "data-change", this.current.id, { nodeCount: calculateEditorStats(data2).nodes });
       this.updateStats(data2);
-      if (!this.outlineTextCommitUid) this.renderOutline(data2);
+      this.renderOutline(data2);
       this.scheduleSave();
     });
     this.map.on("view_data_change", (viewData) => {
@@ -58639,7 +59153,19 @@ class YeMindEditor {
         }
         this.commands.toggleTodo();
       }
+      if (type === "note") openNoteDialog(this.commands, { readonly: this.commands.isReadonly() });
       if (type === "comments") openCommentsDialog(this.commands, { readonly: this.commands.isReadonly() });
+    });
+    this.map.on("yemind_badge_hover", (type, node, anchor, entering) => {
+      var _a, _b, _c2;
+      if (!this.nodeHoverPreview) return;
+      if (!entering) {
+        this.nodeHoverPreview.scheduleHide();
+        return;
+      }
+      const value = type === "note" ? normalizeNodeNote(((_a = node.getData) == null ? void 0 : _a.call(node, "yemindNote")) ?? ((_b = node.getData) == null ? void 0 : _b.call(node, "note"))) : ((_c2 = node.getData) == null ? void 0 : _c2.call(node, "yemindComments")) ?? [];
+      if (!value || Array.isArray(value) && value.length === 0) return;
+      this.nodeHoverPreview.show(type, value, anchor);
     });
     this.map.on("node_active", (node, list) => {
       var _a;
@@ -58997,29 +59523,81 @@ class YeMindEditor {
       }
     });
   }
-  renderOutline(data2) {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h;
-    const activeEditor = (_a = this.outlineRichText) == null ? void 0 : _a.activeHost;
-    if (!this.pendingOutlineFocus && activeEditor) {
-      const uid = ((_b = activeEditor.closest("[data-outline-uid]")) == null ? void 0 : _b.dataset.outlineUid) ?? "";
-      const selection = (_c2 = this.outlineRichText) == null ? void 0 : _c2.getSelectionState(activeEditor);
-      if (uid && selection) {
-        this.pendingOutlineFocus = {
-          uid,
-          placement: "range",
-          start: selection.start,
-          end: selection.end
-        };
+  bindOutlineDrag() {
+    const clearDropState = () => {
+      this.outlineEl.querySelectorAll("[data-outline-uid]").forEach((row) => {
+        row.classList.remove("is-drop-before", "is-drop-inside", "is-drop-after");
+      });
+    };
+    this.outlineEl.addEventListener("dragstart", (event) => {
+      var _a, _b;
+      const handle = event.target.closest("[data-outline-drag-handle]");
+      const row = handle == null ? void 0 : handle.closest("[data-outline-uid]");
+      if (!handle || !row || !this.commands || this.commands.isReadonly()) return;
+      const uid = row.dataset.outlineUid ?? "";
+      if (!uid || row.dataset.outlineRoot === "true") {
+        event.preventDefault();
+        return;
       }
-    }
-    (_d2 = this.outlineRichText) == null ? void 0 : _d2.flush();
-    (_e = this.outlineRichText) == null ? void 0 : _e.detach(false);
-    data2 = this.current.data;
-    const activeUid = String(((_h = (_g = (_f = this.commands) == null ? void 0 : _f.getPrimaryNode()) == null ? void 0 : _g.getData) == null ? void 0 : _h.call(_g, "uid")) ?? "");
+      (_a = this.outlineRichText) == null ? void 0 : _a.flush();
+      this.outlineDragUid = uid;
+      (_b = event.dataTransfer) == null ? void 0 : _b.setData("text/x-yemind-outline-uid", uid);
+      if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+      this.options.diagnostics.record("outline", "drag-start", this.current.id, { sourceDepth: Number(row.style.getPropertyValue("--ymz-outline-depth") || 0) });
+    });
+    this.outlineEl.addEventListener("dragover", (event) => {
+      var _a;
+      const row = event.target.closest("[data-outline-uid]");
+      const sourceUid = this.outlineDragUid ?? ((_a = event.dataTransfer) == null ? void 0 : _a.getData("text/x-yemind-outline-uid")) ?? "";
+      const targetUid = (row == null ? void 0 : row.dataset.outlineUid) ?? "";
+      if (!row || !sourceUid || !targetUid) return;
+      const intent = resolveOutlineDropIntent({ sourceUid, targetUid, clientY: event.clientY, rect: row.getBoundingClientRect() });
+      clearDropState();
+      if (!intent) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+      row.classList.add(`is-drop-${intent.position}`);
+    });
+    this.outlineEl.addEventListener("drop", (event) => {
+      var _a;
+      const row = event.target.closest("[data-outline-uid]");
+      const sourceUid = this.outlineDragUid ?? ((_a = event.dataTransfer) == null ? void 0 : _a.getData("text/x-yemind-outline-uid")) ?? "";
+      const targetUid = (row == null ? void 0 : row.dataset.outlineUid) ?? "";
+      clearDropState();
+      this.outlineDragUid = null;
+      if (!row || !sourceUid || !targetUid || !this.commands) return;
+      const intent = resolveOutlineDropIntent({ sourceUid, targetUid, clientY: event.clientY, rect: row.getBoundingClientRect() });
+      if (!intent) return;
+      event.preventDefault();
+      this.pendingOutlineFocus = { uid: sourceUid, placement: "start" };
+      const moved = this.commands.moveNodeByUid(sourceUid, intent.targetUid, intent.position);
+      this.options.diagnostics.record("outline", "drag-drop", this.current.id, { position: intent.position, moved });
+      if (!moved) {
+        this.pendingOutlineFocus = null;
+        return;
+      }
+      this.commands.goToNode(sourceUid);
+    });
+    this.outlineEl.addEventListener("dragend", () => {
+      clearDropState();
+      this.outlineDragUid = null;
+    });
+  }
+  renderOutline(data2) {
+    var _a, _b, _c2, _d2, _e, _f, _g;
+    const activeEditor = ((_a = this.outlineRichText) == null ? void 0 : _a.activeHost) ?? null;
+    const activeUid = ((_b = activeEditor == null ? void 0 : activeEditor.closest("[data-outline-uid]")) == null ? void 0 : _b.dataset.outlineUid) ?? null;
     const readonly = this.rootEl.dataset.readonly === "true";
     this.outlineEl.setAttribute("aria-readonly", String(readonly));
-    this.outlineEl.innerHTML = renderOutlineHtml(data2, readonly);
-    this.activateOutlineUid(activeUid);
+    if (this.pendingOutlineFocus) {
+      (_c2 = this.outlineRichText) == null ? void 0 : _c2.flush();
+      (_d2 = this.outlineRichText) == null ? void 0 : _d2.detach(false);
+      patchOutlineTree(this.outlineEl, data2, readonly, null);
+    } else {
+      patchOutlineTree(this.outlineEl, data2, readonly, activeUid);
+    }
+    const selectedUid = String(((_g = (_f = (_e = this.commands) == null ? void 0 : _e.getPrimaryNode()) == null ? void 0 : _f.getData) == null ? void 0 : _g.call(_f, "uid")) ?? "");
+    this.activateOutlineUid(selectedUid);
     this.restorePendingOutlineFocus();
   }
   restorePendingOutlineFocus() {
@@ -59461,7 +60039,7 @@ class YeMindEditor {
       content: `<div class="b3-dialog__content ymz-help">
         <p><b>双击</b> 编辑节点</p>
         <p><b>Tab</b> 添加子节点，<b>Enter</b> 添加同级节点</p>
-        <p><b>选中文字</b> 使用格式、行内链接、挖空、公式与代码工具</p>
+        <p><b>选中文字</b> 使用格式、行内链接、模糊、公式与代码工具</p>
         <p><b>右键节点</b> 直接切换待办，打开批注、概要、外框与关联线</p>
         <p><b>平移优先</b>：平移优先：左键拖动画布，Ctrl/Cmd + 左键框选</p>
         <p><b>选择优先</b>：选择优先：左键框选，右键拖动画布</p>
@@ -59661,7 +60239,9 @@ class YeMindZenPlugin extends siyuan.Plugin {
     });
   }
   onload() {
-    this.addIcons(`<symbol id="${ICON_ID}" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="7" fill="#176b50"/><text x="16" y="21" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Ye</text></symbol>`);
+    this.addIcons(`<symbol id="${ICON_ID}" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="7" fill="#176b50"/><text x="16" y="21" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Ye</text></symbol>
+      <symbol id="iconYeMindNote" viewBox="0 0 24 24"><path d="M6.5 3.75h8.8l3.2 3.2v13.3H6.5a2 2 0 0 1-2-2V5.75a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.2 3.9v3.4h3.2M8 11h7.5M8 14.5h7.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+      <symbol id="iconYeMindComment" viewBox="0 0 24 24"><path d="M6.25 4.75h11.5A2.5 2.5 0 0 1 20.25 7.25v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.25 2.9v-2.9A2.5 2.5 0 0 1 3.75 15.25v-8a2.5 2.5 0 0 1 2.5-2.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>`);
     this.repository = new MapRepository({
       load: () => this.loadData(MAP_STORAGE_NAME),
       save: async (value) => {

@@ -24,11 +24,12 @@ import type { SettingsStore, ShortcutCommand, ViewMode, YeMindSettings } from '.
 import { openCheckpointManager } from '../ui/checkpointDialog';
 import { openCanvasContextMenu, openNodeContextMenu } from '../ui/contextMenu';
 import { promptText } from '../ui/dialogs';
-import { openCommentsDialog, openFormulaDialog, openLinkDialog } from '../ui/nodeContentDialogs';
+import { openCommentsDialog, openFormulaDialog, openLinkDialog, openNoteDialog } from '../ui/nodeContentDialogs';
 import { openCodeBlockDialog, openInlineLinkDialog } from '../ui/richTextDialogs';
 import { calculateEditorStats } from './editorStats';
 import { createEditorTemplate } from './editorTemplate';
-import { renderOutlineHtml, resolveOutlineKeyAction } from './outline';
+import { patchOutlineTree, resolveOutlineKeyAction } from './outline';
+import { resolveOutlineDropIntent, type OutlineDropPosition } from './outlineDrag';
 import { OutlineRichTextController, type OutlineFocusPlacement } from './OutlineRichTextController';
 import { DEFAULT_SPLIT_OUTLINE_RATIO, normalizeSplitOutlineRatio, ratioFromPointer } from './splitPane';
 import { RichTextToolbar } from './RichTextToolbar';
@@ -42,6 +43,8 @@ import { resolveLinkNavigation } from './linkNavigation';
 import { hasNonZeroSize } from '../plugin/visibleElement';
 import { loadImageFileSelection } from '../ui/imageFileLoading';
 import { extractImageFile, findRenderedNodeAtClientPoint, hasImageFile } from '../ui/nodeImageInput';
+import { NodeHoverPreview } from '../ui/nodeHoverPreview';
+import { normalizeNodeNote } from '../content/nodeNoteState';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -90,6 +93,7 @@ export class YeMindEditor {
   private outerFramePanelEl!: HTMLElement;
   private outerFrameHintEl!: HTMLElement;
   private richTextToolbar: RichTextToolbar | null = null;
+  private nodeHoverPreview: NodeHoverPreview | null = null;
   private outlineRichText: OutlineRichTextController | null = null;
   private settingsInitialized = false;
   private viewMode: ViewMode = 'map';
@@ -102,6 +106,7 @@ export class YeMindEditor {
   private splitOutlineRatio = DEFAULT_SPLIT_OUTLINE_RATIO;
   private outlineTextCommitUid: string | null = null;
   private outlineStructureBusy = false;
+  private outlineDragUid: string | null = null;
   private pendingOutlineFocus: PendingOutlineFocus | null = null;
   private appearanceObserver: MutationObserver | null = null;
   private appearanceMedia: MediaQueryList | null = null;
@@ -207,6 +212,8 @@ export class YeMindEditor {
     this.appearanceMedia = null;
     this.richTextToolbar?.destroy();
     this.richTextToolbar = null;
+    this.nodeHoverPreview?.destroy();
+    this.nodeHoverPreview = null;
     this.rootEl?.removeEventListener('keydown', this.onRootKeydown);
     this.rootEl?.removeEventListener('paste', this.onImagePaste);
     this.canvasEl?.removeEventListener('dragover', this.onImageDragOver);
@@ -278,6 +285,7 @@ export class YeMindEditor {
       onHyperlink: (href) => this.openLink(href),
     });
     this.commands = createCommandAdapter(this.map);
+    this.nodeHoverPreview = new NodeHoverPreview(this.rootEl);
     this.richTextToolbar = new RichTextToolbar(this.rootEl, this.commands, {
       onFormula: (target) => openFormulaDialog(target),
       onLink: (target) => openInlineLinkDialog(target, this.settings),
@@ -288,6 +296,7 @@ export class YeMindEditor {
       root: this.rootEl,
       isReadonly: () => Boolean(this.commands?.isReadonly()),
       onCommit: (uid, html) => this.commitOutlineRichText(uid, html),
+      onDiagnostic: (action, details) => this.options.diagnostics.record('outline', action, this.current.id, details),
       onSelectionChange: (hasRange, rect, format, target) => {
         this.richTextToolbar?.update(hasRange, rect, format, target);
       },
@@ -433,6 +442,7 @@ export class YeMindEditor {
     });
     // Capture structural keys before Quill's own keyboard module consumes them.
     this.outlineEl.addEventListener('keydown', (event) => this.handleOutlineKeydown(event), true);
+    this.bindOutlineDrag();
     this.bindSplitDivider();
 
     this.rootEl.addEventListener('change', (event) => {
@@ -504,7 +514,7 @@ export class YeMindEditor {
       this.current.data = data;
       this.options.diagnostics.record('editor', 'data-change', this.current.id, { nodeCount: calculateEditorStats(data).nodes });
       this.updateStats(data);
-      if (!this.outlineTextCommitUid) this.renderOutline(data);
+      this.renderOutline(data);
       this.scheduleSave();
     });
     this.map.on('view_data_change', (viewData: Record<string, unknown>) => {
@@ -541,7 +551,7 @@ export class YeMindEditor {
       }
       this.commands.toggleTodo();
     });
-    this.map.on('yemind_badge_click', (type: 'todo' | 'comments', node: any) => {
+    this.map.on('yemind_badge_click', (type: 'todo' | 'note' | 'comments', node: any) => {
       if (!this.commands) return;
       this.activateNode(node);
       if (type === 'todo') {
@@ -551,7 +561,20 @@ export class YeMindEditor {
         }
         this.commands.toggleTodo();
       }
+      if (type === 'note') openNoteDialog(this.commands, { readonly: this.commands.isReadonly() });
       if (type === 'comments') openCommentsDialog(this.commands, { readonly: this.commands.isReadonly() });
+    });
+    this.map.on('yemind_badge_hover', (type: 'note' | 'comments', node: any, anchor: HTMLElement, entering: boolean) => {
+      if (!this.nodeHoverPreview) return;
+      if (!entering) {
+        this.nodeHoverPreview.scheduleHide();
+        return;
+      }
+      const value = type === 'note'
+        ? normalizeNodeNote(node.getData?.('yemindNote') ?? node.getData?.('note'))
+        : ((node.getData?.('yemindComments') ?? []) as any[]);
+      if (!value || (Array.isArray(value) && value.length === 0)) return;
+      this.nodeHoverPreview.show(type, value as any, anchor);
     });
     this.map.on('node_active', (node: any, list: any[]) => {
       this.rootEl.dataset.hasSelection = list.length > 0 ? 'true' : 'false';
@@ -926,28 +949,83 @@ export class YeMindEditor {
     });
   }
 
-  private renderOutline(data: MindMapTree): void {
-    const activeEditor = this.outlineRichText?.activeHost;
-    if (!this.pendingOutlineFocus && activeEditor) {
-      const uid = activeEditor.closest<HTMLElement>('[data-outline-uid]')?.dataset.outlineUid ?? '';
-      const selection = this.outlineRichText?.getSelectionState(activeEditor);
-      if (uid && selection) {
-        this.pendingOutlineFocus = {
-          uid,
-          placement: 'range',
-          start: selection.start,
-          end: selection.end,
-        };
+  private bindOutlineDrag(): void {
+    const clearDropState = (): void => {
+      this.outlineEl.querySelectorAll<HTMLElement>('[data-outline-uid]').forEach((row) => {
+        row.classList.remove('is-drop-before', 'is-drop-inside', 'is-drop-after');
+      });
+    };
+    this.outlineEl.addEventListener('dragstart', (event) => {
+      const handle = (event.target as HTMLElement).closest<HTMLElement>('[data-outline-drag-handle]');
+      const row = handle?.closest<HTMLElement>('[data-outline-uid]');
+      if (!handle || !row || !this.commands || this.commands.isReadonly()) return;
+      const uid = row.dataset.outlineUid ?? '';
+      if (!uid || row.dataset.outlineRoot === 'true') {
+        event.preventDefault();
+        return;
       }
-    }
-    this.outlineRichText?.flush();
-    this.outlineRichText?.detach(false);
-    data = this.current.data;
-    const activeUid = String(this.commands?.getPrimaryNode()?.getData?.('uid') ?? '');
+      this.outlineRichText?.flush();
+      this.outlineDragUid = uid;
+      event.dataTransfer?.setData('text/x-yemind-outline-uid', uid);
+      if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+      this.options.diagnostics.record('outline', 'drag-start', this.current.id, { sourceDepth: Number(row.style.getPropertyValue('--ymz-outline-depth') || 0) });
+    });
+    this.outlineEl.addEventListener('dragover', (event) => {
+      const row = (event.target as HTMLElement).closest<HTMLElement>('[data-outline-uid]');
+      const sourceUid = this.outlineDragUid ?? event.dataTransfer?.getData('text/x-yemind-outline-uid') ?? '';
+      const targetUid = row?.dataset.outlineUid ?? '';
+      if (!row || !sourceUid || !targetUid) return;
+      const intent = resolveOutlineDropIntent({ sourceUid, targetUid, clientY: event.clientY, rect: row.getBoundingClientRect() });
+      clearDropState();
+      if (!intent) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+      row.classList.add(`is-drop-${intent.position}`);
+    });
+    this.outlineEl.addEventListener('drop', (event) => {
+      const row = (event.target as HTMLElement).closest<HTMLElement>('[data-outline-uid]');
+      const sourceUid = this.outlineDragUid ?? event.dataTransfer?.getData('text/x-yemind-outline-uid') ?? '';
+      const targetUid = row?.dataset.outlineUid ?? '';
+      clearDropState();
+      this.outlineDragUid = null;
+      if (!row || !sourceUid || !targetUid || !this.commands) return;
+      const intent = resolveOutlineDropIntent({ sourceUid, targetUid, clientY: event.clientY, rect: row.getBoundingClientRect() });
+      if (!intent) return;
+      event.preventDefault();
+      // Arm focus restoration before the structure command. simple-mind-map may emit
+      // data_change synchronously from execCommand, so setting this afterwards can
+      // leave the outline editor detached with no pending focus to restore.
+      this.pendingOutlineFocus = { uid: sourceUid, placement: 'start' };
+      const moved = this.commands.moveNodeByUid(sourceUid, intent.targetUid, intent.position as OutlineDropPosition);
+      this.options.diagnostics.record('outline', 'drag-drop', this.current.id, { position: intent.position, moved });
+      if (!moved) {
+        this.pendingOutlineFocus = null;
+        return;
+      }
+      this.commands.goToNode(sourceUid);
+    });
+    this.outlineEl.addEventListener('dragend', () => {
+      clearDropState();
+      this.outlineDragUid = null;
+    });
+  }
+
+  private renderOutline(data: MindMapTree): void {
+    const activeEditor = this.outlineRichText?.activeHost ?? null;
+    const activeUid = activeEditor?.closest<HTMLElement>('[data-outline-uid]')?.dataset.outlineUid ?? null;
     const readonly = this.rootEl.dataset.readonly === 'true';
     this.outlineEl.setAttribute('aria-readonly', String(readonly));
-    this.outlineEl.innerHTML = renderOutlineHtml(data, readonly);
-    this.activateOutlineUid(activeUid);
+
+    if (this.pendingOutlineFocus) {
+      this.outlineRichText?.flush();
+      this.outlineRichText?.detach(false);
+      patchOutlineTree(this.outlineEl, data, readonly, null);
+    } else {
+      patchOutlineTree(this.outlineEl, data, readonly, activeUid);
+    }
+
+    const selectedUid = String(this.commands?.getPrimaryNode()?.getData?.('uid') ?? '');
+    this.activateOutlineUid(selectedUid);
     this.restorePendingOutlineFocus();
   }
 
@@ -1428,7 +1506,7 @@ export class YeMindEditor {
       content: `<div class="b3-dialog__content ymz-help">
         <p><b>双击</b> 编辑节点</p>
         <p><b>Tab</b> 添加子节点，<b>Enter</b> 添加同级节点</p>
-        <p><b>选中文字</b> 使用格式、行内链接、挖空、公式与代码工具</p>
+        <p><b>选中文字</b> 使用格式、行内链接、模糊、公式与代码工具</p>
         <p><b>右键节点</b> 直接切换待办，打开批注、概要、外框与关联线</p>
         <p><b>平移优先</b>：平移优先：左键拖动画布，Ctrl/Cmd + 左键框选</p>
         <p><b>选择优先</b>：选择优先：左键框选，右键拖动画布</p>

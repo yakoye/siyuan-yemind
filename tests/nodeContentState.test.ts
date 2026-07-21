@@ -28,9 +28,9 @@ describe('node content state', () => {
       warning: false,
     });
     expect(getTodoMenuState({ checked: false })).toEqual({
-      label: '待办完成',
-      next: { checked: true },
-      warning: false,
+      label: '删除待办',
+      next: null,
+      warning: true,
     });
     expect(getTodoMenuState({ checked: true })).toEqual({
       label: '删除待办',

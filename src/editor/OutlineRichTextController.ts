@@ -23,6 +23,7 @@ export interface OutlineRichTextControllerOptions {
   root: HTMLElement;
   isReadonly: () => boolean;
   onCommit: (uid: string, html: string) => boolean;
+  onDiagnostic?: (action: string, details?: Record<string, unknown>) => void;
   onSelectionChange: (
     hasRange: boolean,
     rect: RichTextSelectionRect | null,
@@ -79,6 +80,7 @@ export class OutlineRichTextController implements RichTextFormattingTarget {
     this.detach(true);
     this.host = host;
     this.uid = uid;
+    this.options.onDiagnostic?.('edit-start', { uidLength: uid.length });
     this.originalHtml = decodeOriginal(host);
     host.classList.add('is-editing');
     host.innerHTML = this.originalHtml;
@@ -149,9 +151,9 @@ export class OutlineRichTextController implements RichTextFormattingTarget {
     }
     const html = normalizeHtml(this.quill.root.innerHTML);
     const text = this.plainText();
-    if (!text.trim()) return false;
     if (html === this.originalHtml) return false;
     const changed = this.options.onCommit(this.uid, html);
+    this.options.onDiagnostic?.('commit', { changed, textLength: text.length, htmlLength: html.length });
     if (changed) {
       this.originalHtml = html;
       host.dataset.outlineOriginal = encodeURIComponent(html);
@@ -169,6 +171,7 @@ export class OutlineRichTextController implements RichTextFormattingTarget {
     const original = this.sessionStartHtml;
     const current = this.quill ? normalizeHtml(this.quill.root.innerHTML) : this.originalHtml;
     this.detach(false);
+    this.options.onDiagnostic?.('cancel', { changed: current !== original });
     if (uid && current !== original) this.options.onCommit(uid, original);
     host.innerHTML = original;
     host.dataset.outlineOriginal = encodeURIComponent(original);
@@ -188,6 +191,7 @@ export class OutlineRichTextController implements RichTextFormattingTarget {
       this.quill.off('text-change', this.onTextChange);
     }
     host.classList.remove('is-editing');
+    this.options.onDiagnostic?.('editor-destroy', { commit });
     host.innerHTML = html;
     this.options.onSelectionChange(false, null, null, this);
     this.quill = null;
@@ -296,6 +300,11 @@ export class OutlineRichTextController implements RichTextFormattingTarget {
     return String(this.quill.getText(0, Math.max(0, this.quill.getLength() - 1)) ?? '').replace(/\u00a0/g, ' ');
   }
 
+  restoreSelection(): void {
+    const range = this.activeRange();
+    if (range) this.restoreRange(range);
+  }
+
   private restoreRange(range: any): void {
     this.range = { index: range.index, length: range.length };
     this.quill?.setSelection(range.index, range.length, Quill.sources.SILENT);
@@ -311,15 +320,18 @@ export class OutlineRichTextController implements RichTextFormattingTarget {
 
   private readonly onCompositionStart = (): void => {
     this.composing = true;
+    this.options.onDiagnostic?.('composition-start');
   };
 
   private readonly onCompositionEnd = (): void => {
     this.composing = false;
+    this.options.onDiagnostic?.('composition-end');
     this.scheduleCommit();
   };
 
   private readonly onTextChange = (): void => {
-    this.scheduleCommit();
+    this.options.onDiagnostic?.('text-change', { composing: this.composing, textLength: this.plainText().length });
+    if (!this.composing) this.scheduleCommit();
   };
 
   private readonly onSelectionChange = (range: any): void => {

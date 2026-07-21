@@ -50,6 +50,14 @@ describe('editable outline', () => {
     expect(resolveOutlineKeyAction({ ...base, key: 'Enter', readonly: true })).toBe('none');
   });
 
+  it('only moves between rows when the caret is at the matching vertical boundary', () => {
+    const base = { empty: false, isRoot: false, readonly: false, hasChildren: false, expanded: true };
+    expect(resolveOutlineKeyAction({ ...base, key: 'ArrowUp', atStart: false, atEnd: true })).toBe('none');
+    expect(resolveOutlineKeyAction({ ...base, key: 'ArrowUp', atStart: true, atEnd: false })).toBe('previous');
+    expect(resolveOutlineKeyAction({ ...base, key: 'ArrowDown', atStart: true, atEnd: false })).toBe('none');
+    expect(resolveOutlineKeyAction({ ...base, key: 'ArrowDown', atStart: false, atEnd: true })).toBe('next');
+  });
+
   it('only collapses or expands at the relevant caret boundary', () => {
     const base = { empty: false, isRoot: false, readonly: false, hasChildren: true, expanded: true };
     expect(resolveOutlineKeyAction({ ...base, key: 'ArrowLeft', atStart: false, atEnd: true })).toBe('none');

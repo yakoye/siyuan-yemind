@@ -4,15 +4,13 @@ YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-
 
 - Plugin folder and ID: `siyuan-yemind-zen`
 - Display name: `YeMind Zen`
-- Version: `0.5.16`
+- Version: `0.5.17`
 
-v0.5.16 removes the node three-dot chrome and comment counts, simplifies color palettes to swatches/reset/native custom color with live HEX/RGB values, makes outline Delete/Backspace text-only, separates canvas and node context menus, adds a compact zen-exit capsule, and supports pasting or dropping local images onto nodes while retaining upstream proportional image resizing.
+v0.5.17 rebuilds split/full-outline editing around stable UID-keyed rows and one persistent active Quill session. It adds IME-safe commits, non-destructive Backspace/Delete behavior, boundary-aware row navigation, and a dedicated drag handle on every movable outline row while keeping structural changes in upstream `simple-mind-map` commands and history. It also adds editable bidirectional HEX/RGB color inputs with event isolation, long-form notes with pasted images and resizable dialogs, hover previews for notes/comments, corrected TODO menu semantics, the `● 禅` capsule, `模糊/取消模糊`, the `π` formula affordance, problem-time diagnostic markers, and manifest/runtime/build version consistency checks.
 
-v0.5.15 isolates every YeMind editor overlay inside its own tab so SiYuan Settings and other host dialogs always remain above plugin controls. It also fixes invisible node-edit text, adds selection-aware color/background palettes with reset, custom color and eyedropper actions, preserves partial node-text selections, and gives split/full-outline editing the same rich-text toolbar through one active Quill session while retaining upstream map commands and persistence.
+v0.5.16 removed the node ellipsis button, split canvas/node context menus, removed comment counts, added target-specific node image paste/drop with upstream aspect-ratio resizing, and introduced the compact Zen exit capsule.
 
-v0.5.14 adds the first source-driven KMind Zen visual-parity layer: curved parent-child edges by default, all 13 official theme families with light/dark variants, theme-defined rainbow branches, per-map theme/edge-route persistence, and all 14 layouts supported by the installed `simple-mind-map` runtime. Existing startup, outline, checkpoint and structured-drag contracts remain unchanged.
-
-v0.5.12 added IME-safe transactional outline editing, indent/outdent, caret restoration, a persisted split divider, and the official 60 ms/3-frame drag stability contract. Existing map storage, checkpoints, diagnostics isolation, startup restoration, and upstream history remain unchanged.
+v0.5.15 isolated every YeMind editor overlay inside its own tab, fixed invisible node-edit text, preserved partial rich-text selection, and introduced one active outline Quill target.
 
 See `README_zh_CN.md`, `FEATURE_MATRIX.md`, and `DEVELOPMENT_PLAN.md` for details.
 

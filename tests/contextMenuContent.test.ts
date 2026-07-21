@@ -5,7 +5,6 @@ describe('node context menu content', () => {
   it('exposes all requested node-content actions as separate entries', () => {
     expect(NODE_CONTENT_MENU_LABELS).toEqual(expect.arrayContaining([
       '添加待办',
-      '待办完成',
       '删除待办',
       '批注',
       '标签',
@@ -17,13 +16,13 @@ describe('node context menu content', () => {
       '关联线',
       '添加外框',
     ]));
-    expect(NODE_CONTENT_MENU_LABELS).not.toContain('备注');
+    expect(NODE_CONTENT_MENU_LABELS).toContain('备注');
   });
 
   it('creates a direct todo menu descriptor without opening a dialog', () => {
     const pending = createTodoMenuDescriptor({ checked: false });
-    expect(pending.label).toBe('待办完成');
-    expect(pending.next).toEqual({ checked: true });
+    expect(pending.label).toBe('删除待办');
+    expect(pending.next).toBeNull();
 
     const completed = createTodoMenuDescriptor({ checked: true });
     expect(completed.label).toBe('删除待办');

@@ -2,8 +2,8 @@ import { getTodoMenuState, type NodeTodo, type TodoMenuState } from '../content/
 
 export const NODE_CONTENT_MENU_LABELS = [
   '添加待办',
-  '待办完成',
   '删除待办',
+  '备注',
   '批注',
   '标签',
   '图标',

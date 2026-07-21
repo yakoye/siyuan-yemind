@@ -16,14 +16,13 @@ export function toggleTodo(todo: NodeTodo | null | undefined): NodeTodo {
 }
 
 export interface TodoMenuState {
-  label: '添加待办' | '待办完成' | '删除待办';
+  label: '添加待办' | '删除待办';
   next: NodeTodo | null;
   warning: boolean;
 }
 
 export function getTodoMenuState(todo: NodeTodo | null | undefined): TodoMenuState {
   if (!todo) return { label: '添加待办', next: { checked: false }, warning: false };
-  if (!todo.checked) return { label: '待办完成', next: { ...todo, checked: true }, warning: false };
   return { label: '删除待办', next: null, warning: true };
 }
 

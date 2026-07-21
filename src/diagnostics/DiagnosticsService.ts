@@ -11,7 +11,7 @@ export interface DiagnosticStorageProbe {
 }
 
 export interface DiagnosticsReport {
-  schemaVersion: 1;
+  schemaVersion: 2;
   generatedAt: number;
   plugin: { id: string; version: string };
   environment: Record<string, unknown>;
@@ -21,6 +21,8 @@ export interface DiagnosticsReport {
   mapsSummary: unknown[];
   checkpointsSummary: unknown[];
   events: ReturnType<DiagnosticsRecorder['listEvents']>;
+  problemMarkers: ReturnType<DiagnosticsRecorder['listProblemMarkers']>;
+  problemWindows: Array<NonNullable<ReturnType<DiagnosticsRecorder['problemWindow']>>>;
 }
 
 interface DiagnosticsServiceOptions {
@@ -31,6 +33,7 @@ interface DiagnosticsServiceOptions {
   settings: SettingsStore;
   storageProbe: DiagnosticStorageProbe;
   lifecycleProbe: { run(): Promise<{ create: boolean; update: boolean; checkpoint: boolean; restore: boolean; cleanup: boolean }> };
+  manifestVersionProbe?: () => Promise<string | null>;
   recorder?: DiagnosticsRecorder;
   now?: () => number;
 }
@@ -86,6 +89,7 @@ export class DiagnosticsService {
   stop(): void { this.recorder.stop(); }
   clear(): void { this.recorder.clear(); this.lastSelfCheck = null; }
   isRecording(): boolean { return this.recorder.isRecording(); }
+  markProblem(label = '问题发生'): ReturnType<DiagnosticsRecorder['markProblem']> { return this.recorder.markProblem(label); }
   getLastSelfCheck(): SelfCheckReport | null {
     return this.lastSelfCheck ? JSON.parse(JSON.stringify(this.lastSelfCheck)) as SelfCheckReport : null;
   }
@@ -133,11 +137,13 @@ export class DiagnosticsService {
   }
 
   private async runSelfCheckInternal(): Promise<SelfCheckReport> {
+    const manifestVersion = await this.readManifestVersion();
     const report = await runDiagnosticsSelfCheck({
       maps: this.options.maps.list(),
       checkpoints: this.options.checkpoints.listAll(),
       settings: this.options.settings.get(),
       editors: this.recorder.listEditorStates(),
+      versions: { manifest: manifestVersion ?? this.options.pluginVersion, runtime: this.options.pluginVersion, build: this.options.pluginVersion },
       storageProbe: () => this.options.storageProbe.run(),
       lifecycleProbe: () => this.options.lifecycleProbe.run(),
       now: this.now,
@@ -152,11 +158,25 @@ export class DiagnosticsService {
     return report;
   }
 
+
+  private async readManifestVersion(): Promise<string | null> {
+    if (this.options.manifestVersionProbe) return this.options.manifestVersionProbe();
+    if (typeof fetch !== 'function') return null;
+    try {
+      const response = await fetch(`/plugins/${encodeURIComponent(this.options.pluginId)}/plugin.json?diagnostics=${this.now()}`, { cache: 'no-store' });
+      if (!response.ok) return null;
+      const manifest = await response.json() as { version?: unknown };
+      return typeof manifest.version === 'string' ? manifest.version : null;
+    } catch {
+      return null;
+    }
+  }
+
   buildReport(): DiagnosticsReport {
     const system = (globalThis as typeof globalThis & { siyuan?: { config?: { system?: Record<string, unknown> } } }).siyuan?.config?.system ?? {};
     const checkpoints = this.options.checkpoints.listAll();
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       generatedAt: this.now(),
       plugin: { id: this.options.pluginId, version: this.options.pluginVersion },
       environment: {
@@ -178,6 +198,8 @@ export class DiagnosticsService {
         nodeCount: checkpoint.nodeCount,
       })),
       events: this.recorder.listEvents(),
+      problemMarkers: this.recorder.listProblemMarkers(),
+      problemWindows: this.recorder.listProblemMarkers().map((marker) => this.recorder.problemWindow(marker.id)).filter((window): window is NonNullable<typeof window> => Boolean(window)),
     };
   }
 

@@ -147,7 +147,7 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
       </section>
 
       <section class="ymz-settings-page" data-settings-panel="content" hidden>
-        <header><h2>节点与内容</h2><p>控制节点入口、富文本、代码和挖空显示。</p></header>
+        <header><h2>节点与内容</h2><p>控制节点入口、富文本、代码和模糊显示。</p></header>
         <div class="ymz-settings-group"><h3>节点入口控件</h3>
           ${switchRow('显示添加子节点按钮', '节点激活后显示快速添加入口。', 'showQuickCreate', settings.showQuickCreate)}
           ${switchRow('显示待办标记', '节点文字前显示待办状态。', 'showTodoBadge', settings.showTodoBadge)}
@@ -192,12 +192,12 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
           ${switchRow('显示代码语言', '在代码块上方显示语言标签。', 'codeBlockShowLanguage', settings.codeBlockShowLanguage)}
           ${numberRow('代码字号', '代码编辑器和节点代码块字号。', 'codeBlockFontSize', settings.codeBlockFontSize, 10, 24, 1, 'px')}
         </div>
-        <div class="ymz-settings-group"><h3>挖空</h3>
-          ${selectRow('挖空显示方式', '完全隐藏或保留模糊轮廓。', 'clozeMode', [
+        <div class="ymz-settings-group"><h3>模糊</h3>
+          ${selectRow('模糊显示方式', '完全隐藏或保留模糊轮廓。', 'clozeMode', [
             option('hidden', '完全隐藏', settings.clozeMode),
             option('blur', '模糊显示', settings.clozeMode),
           ].join(''))}
-          ${switchRow('悬停显示答案', '鼠标移入挖空内容时临时显示。', 'clozeRevealOnHover', settings.clozeRevealOnHover)}
+          ${switchRow('悬停显示答案', '鼠标移入模糊内容时临时显示。', 'clozeRevealOnHover', settings.clozeRevealOnHover)}
         </div>
       </section>
 

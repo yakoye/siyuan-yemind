@@ -6,6 +6,7 @@ import type { CodeBlockSnapshot } from './codeBlock';
  * adapter prevents the outline from owning a second tree implementation.
  */
 export interface RichTextFormattingTarget {
+  restoreSelection?(): void;
   getSelectedText(): string;
   getSelectedInlineLink(): string;
   setInlineLink(link: string | null): void;

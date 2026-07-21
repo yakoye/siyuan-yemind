@@ -10,8 +10,10 @@ import {
   type NodeComment,
   type NodeTodo,
 } from '../content/nodeContentState';
+import { bindDialogResize } from './dialogResize';
 import { buildCommentsListHtml, requestClearAllComments } from './commentsPresentation';
 import { normalizeInlineLink } from '../editor/inlineLink';
+import { normalizeNodeNote, updateNodeNote } from '../content/nodeNoteState';
 
 function activeData(commands: YeMindCommands): Record<string, any> {
   return commands.getPrimaryNodeData() ?? {};
@@ -241,6 +243,57 @@ export function openImageDialog(commands: YeMindCommands): void {
       custom: false,
     });
   });
+}
+
+
+export function openNoteDialog(commands: YeMindCommands, options: { readonly?: boolean } = {}): void {
+  const readonly = Boolean(options.readonly);
+  const data = activeData(commands);
+  const current = normalizeNodeNote(data.yemindNote ?? data.note);
+  const width = Math.max(420, current?.width ?? 560);
+  const height = Math.max(280, current?.height ?? 380);
+  const dialog = new Dialog({
+    title: readonly ? '备注（只读）' : '备注',
+    content: `<div class="b3-dialog__content ymz-node-dialog ymz-note-dialog">
+      <div class="ymz-note-editor" data-field="note" contenteditable="${readonly ? 'false' : 'true'}" role="textbox" aria-multiline="true" data-placeholder="输入长篇备注；可粘贴文字和图片…"></div>
+      ${readonly ? '' : '<div class="b3-label__text">备注支持多段文字和图片粘贴，窗口大小会随备注一同保存。</div>'}
+    </div>${readonly ? '<div class="b3-dialog__action"><div class="fn__space"></div><button class="b3-button b3-button--cancel" data-dialog-action="cancel">关闭</button></div>' : actionButtons()}`,
+    width: `${width}px`,
+    height: `${height}px`,
+  });
+  const editor = dialog.element.querySelector<HTMLElement>('[data-field="note"]')!;
+  editor.innerHTML = current?.html ?? '';
+  const container = dialog.element.querySelector<HTMLElement>('.b3-dialog__container') ?? dialog.element;
+  const resizeHandle = document.createElement('button');
+  resizeHandle.type = 'button';
+  resizeHandle.className = 'ymz-note-resize-handle';
+  resizeHandle.title = '拖动调整备注窗口大小';
+  resizeHandle.setAttribute('aria-label', resizeHandle.title);
+  container.appendChild(resizeHandle);
+  bindDialogResize(resizeHandle, container);
+  editor.addEventListener('paste', (event) => {
+    if (readonly) return;
+    const image = Array.from(event.clipboardData?.items ?? []).find((item) => item.type.startsWith('image/'))?.getAsFile();
+    if (!image) return;
+    event.preventDefault();
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      const source = typeof reader.result === 'string' ? reader.result : '';
+      if (!source) return;
+      document.execCommand('insertHTML', false, `<img src="${escapeAttribute(source)}" alt="">`);
+    });
+    reader.readAsDataURL(image);
+  });
+  dialog.element.querySelector('[data-dialog-action="cancel"]')?.addEventListener('click', () => dialog.destroy());
+  if (!readonly) {
+    dialog.element.querySelector('[data-dialog-action="save"]')?.addEventListener('click', () => {
+      const rect = dialog.element.querySelector<HTMLElement>('.b3-dialog__container')?.getBoundingClientRect()
+        ?? dialog.element.getBoundingClientRect();
+      commands.setNote(updateNodeNote(current, editor.innerHTML, Date.now(), { width: rect.width, height: rect.height }));
+      dialog.destroy();
+    });
+    editor.focus();
+  }
 }
 
 export function openCommentsDialog(commands: YeMindCommands, options: { readonly?: boolean } = {}): void {

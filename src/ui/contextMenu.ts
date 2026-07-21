@@ -2,6 +2,7 @@ import { Menu, showMessage } from 'siyuan';
 import type { YeMindCommands } from '../core/commands';
 import {
   openCommentsDialog,
+  openNoteDialog,
   openFormulaDialog,
   openIconsDialog,
   openImageDialog,
@@ -85,8 +86,9 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   }) });
   menu.addSeparator();
   const todoAction = createTodoMenuDescriptor(commands.getTodo());
-  menu.addItem({ icon: 'iconCheck', label: todoAction.label, warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? 'todo-remove' : todoAction.next.checked ? 'todo-complete' : 'todo-add', () => commands.setTodo(todoAction.next)) });
-  menu.addItem({ icon: 'iconMessage', label: '批注', disabled: !availability.nodeContent, click: run('comments', () => openCommentsDialog(commands)) });
+  menu.addItem({ icon: 'iconCheck', label: todoAction.label, warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? 'todo-remove' : 'todo-add', () => commands.setTodo(todoAction.next)) });
+  menu.addItem({ icon: 'iconYeMindNote', label: '备注', disabled: !availability.nodeContent, click: run('note', () => openNoteDialog(commands)) });
+  menu.addItem({ icon: 'iconYeMindComment', label: '批注', disabled: !availability.nodeContent, click: run('comments', () => openCommentsDialog(commands)) });
   menu.addItem({ icon: 'iconTags', label: '标签', disabled: !availability.nodeContent, click: run('tags', () => openTagsDialog(commands)) });
   menu.addItem({ icon: 'iconEmoji', label: '图标', disabled: !availability.nodeContent, click: run('icons', () => openIconsDialog(commands)) });
   menu.addItem({ icon: 'iconLink', label: '链接', disabled: !availability.nodeContent, click: run('node-link', () => options.onNodeLink ? options.onNodeLink() : openLinkDialog(commands)) });

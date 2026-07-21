@@ -1,5 +1,6 @@
 import type MindMap from 'simple-mind-map';
 import { toggleTodo as nextTodo, type NodeComment, type NodeTodo } from '../content/nodeContentState';
+import type { NodeNote } from '../content/nodeNoteState';
 import { deleteCodeBlock, findCurrentCodeBlock, removeCodeBlockFormat, replaceCodeBlock, type CodeBlockSnapshot } from '../editor/codeBlock';
 import type { RichTextFormattingTarget } from '../editor/richTextTarget';
 
@@ -71,6 +72,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   getTodo(): NodeTodo | null;
   setTodo(todo: NodeTodo | null): void;
   setComments(comments: NodeComment[]): void;
+  setNote(note: NodeNote | null): void;
   formatText(config: Record<string, unknown>): void;
   clearTextFormat(): void;
   setCloze(enabled: boolean): void;
@@ -89,6 +91,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   indentNodeByUid(uid: string): boolean;
   outdentNodeByUid(uid: string): boolean;
   setNodeExpandedByUid(uid: string, expanded: boolean): boolean;
+  moveNodeByUid(uid: string, targetUid: string, position: 'before' | 'inside' | 'after'): boolean;
 }
 
 export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
@@ -304,6 +307,13 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       mindMap.execCommand('SET_NODE_DATA', node, { yemindComments: comments });
       (mindMap as any).render?.();
     },
+    setNote: (note) => {
+      if (!canMutate()) return;
+      const node = primaryNode();
+      if (!node) return;
+      mindMap.execCommand('SET_NODE_DATA', node, { yemindNote: note });
+      (mindMap as any).render?.();
+    },
     formatText: (config) => { if (canMutate() && hasRichTextSelection()) richText()?.formatText?.(config); },
     clearTextFormat: () => { if (canMutate() && hasRichTextSelection()) richText()?.removeFormat?.(); },
     setCloze: (enabled) => {
@@ -387,6 +397,27 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       const node = findNodeByUid(uid);
       if (!node || node.isGeneralization || !Array.isArray(node.children) || node.children.length === 0) return false;
       mindMap.execCommand('SET_NODE_EXPAND', node, expanded);
+      return true;
+    },
+    moveNodeByUid: (uid, targetUid, position) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      const target = findNodeByUid(targetUid);
+      if (!node || !target || node === target || node.isRoot || node.isGeneralization || target.isGeneralization) return false;
+      let ancestor = target.parent;
+      while (ancestor) {
+        if (ancestor === node) return false;
+        ancestor = ancestor.parent;
+      }
+      if (position === 'before') {
+        if (target.isRoot) return false;
+        mindMap.execCommand('INSERT_BEFORE', [node], target);
+      } else if (position === 'after') {
+        if (target.isRoot) return false;
+        mindMap.execCommand('INSERT_AFTER', [node], target);
+      } else {
+        mindMap.execCommand('MOVE_NODE_TO', [node], target);
+      }
       return true;
     },
   };

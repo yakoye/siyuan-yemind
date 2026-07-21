@@ -13,8 +13,8 @@ export const RICH_TEXT_ACTIONS: RichTextActionDefinition[] = [
   { id: 'italic', label: 'I', title: '斜体' },
   { id: 'underline', label: 'U', title: '下划线' },
   { id: 'strike', label: 'S', title: '删除线' },
-  { id: 'cloze', label: '挖空', title: '挖空/取消挖空' },
-  { id: 'formula', label: 'Fx', title: '插入公式' },
+  { id: 'cloze', label: '模糊', title: '模糊/取消模糊' },
+  { id: 'formula', label: 'π', title: '插入公式' },
   { id: 'clear', label: '×', title: '清除格式' },
 ];
 

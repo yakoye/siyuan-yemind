@@ -62,7 +62,7 @@ export function createEditorTemplate(title: string, theme: unknown = 'kmind-defa
           <button data-action="redo" title="重做">↷</button>
         </div>
 
-        <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式" aria-label="退出禅模式"><span class="ymz-zen-exit__icon" aria-hidden="true">◉</span><span class="ymz-zen-exit__label">退出禅模式</span></button>
+        <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式" aria-label="退出禅模式"><span class="ymz-zen-exit__idle"><span class="ymz-zen-exit__icon ymz-zen-exit__dot" aria-hidden="true">●</span><span>禅</span></span><span class="ymz-zen-exit__label"><span class="ymz-zen-exit__icon ymz-zen-exit__dot" aria-hidden="true">●</span><span>退出禅模式</span></span></button>
 
         <div class="ymz-relation-panel" data-role="relation-panel" hidden data-mode="idle">
           <span data-role="relation-hint"></span>
