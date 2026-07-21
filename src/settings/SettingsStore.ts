@@ -73,7 +73,7 @@ type Listener = (settings: YeMindSettings) => void;
 
 export const DEFAULT_SETTINGS: YeMindSettings = {
   defaultLayout: 'logicalStructure',
-  canvasMode: 'pan',
+  canvasMode: 'select',
   wheelMode: 'pan',
   showQuickCreate: true,
   autoFitOnOpen: true,

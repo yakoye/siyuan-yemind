@@ -10,7 +10,7 @@ describe('v0.5.17 zen exit capsule', () => {
     expect(template).toContain('ymz-zen-exit__icon');
     expect(template).toContain('ymz-zen-exit__idle');
     expect(template).toContain('ymz-zen-exit__label');
-    expect(template).toContain('>禅<');
+    expect(template).toContain('meditationIcon()');
     expect(template).toContain('>退出禅模式<');
     expect(css).toContain('.ymz-zen-exit__label{max-width:0');
     expect(css).toContain('.ymz-zen-exit:hover .ymz-zen-exit__label');

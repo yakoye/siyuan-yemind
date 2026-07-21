@@ -29,7 +29,7 @@ describe('v0.6.1 toolbar consolidation', () => {
     const bottom = surface(html, '.ymz-statusbar');
 
     expect(left.querySelector('[data-action="checkpoints"]')).not.toBeNull();
-    expect(left.textContent).toContain('历史');
+    expect(left.querySelector('[data-action="checkpoints"] svg')).not.toBeNull();
     expect(left.querySelector('[data-action="fit"]')).toBeNull();
     expect(left.querySelector('[data-action="reset"]')).toBeNull();
     expect(left.querySelector('[data-action="undo"]')).not.toBeNull();

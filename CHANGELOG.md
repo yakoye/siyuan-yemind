@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.2 — 2026-07-20
+
+- Unified YeMind active, focus, selection and canvas-node highlight states around the plugin green `#176B50`.
+- Renamed the canvas interaction modes to “选（选择优先）” and “拖（拖动优先）”, made new installs default to “选”, and aligned toolbar, settings and help wording.
+- Moved the canvas mode control to the bottom bar immediately before Readonly.
+- Reduced the left rail to History, Undo and Redo and replaced text/glyph controls with consistent SVG icons.
+- Replaced Search, Readonly, Zen and Zen Exit text glyphs with plugin-owned SVG icons.
+- Added permanent v0.6.2 visual-language and toolbar-location regressions while retaining all previous folding, editing, right-drag, rich-text, outline and node-content gates.
+- Aligned package, manifest, runtime and diagnostic version identity at 0.6.2.
+
 ## 0.6.1 — 2026-07-20
 
 - Prevented split/full-outline text selection from ever arming whole-row structure dragging while the persistent Quill host is active; `.ql-editor`, contenteditable descendants and the complete active outline editor surface own pointer selection.

@@ -29,3 +29,28 @@ export function summaryIcon(): string {
 export function nodeStyleIcon(): string {
   return '<svg class="ymz-project-icon ymz-icon-node-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="6.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="15" cy="12" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="17.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/></svg>';
 }
+
+
+export function historyIcon(): string {
+  return '<svg class="ymz-toolbar-icon ymz-icon-history" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 9.2A8 8 0 1 1 5 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4.5 4.8v4.6h4.6M12 7.5v5l3.2 1.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+
+export function undoIcon(): string {
+  return '<svg class="ymz-toolbar-icon ymz-icon-undo" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4.5 11.5 9 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11.5h8.2c4 0 6.3 2.1 6.3 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+}
+
+export function redoIcon(): string {
+  return '<svg class="ymz-toolbar-icon ymz-icon-redo" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 4.5 4.5L15 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 11.5h-8.2c-4 0-6.3 2.1-6.3 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+}
+
+export function searchIcon(): string {
+  return '<svg class="ymz-toolbar-icon ymz-icon-search" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="m14.7 14.7 4.8 4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+}
+
+export function lockIcon(): string {
+  return '<svg class="ymz-toolbar-icon ymz-icon-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="15" r="1.2" fill="currentColor"/></svg>';
+}
+
+export function meditationIcon(): string {
+  return '<svg class="ymz-toolbar-icon ymz-icon-meditation" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4.3" r="2.1" fill="none" stroke="currentColor" stroke-width="1.65"/><path d="M9.4 7.2c-1.9 1-2.8 2.7-3 5.1-.2 2.1-1.2 3.5-3.2 4.3M14.6 7.2c1.9 1 2.8 2.7 3 5.1.2 2.1 1.2 3.5 3.2 4.3M8.4 11.2 12 16l3.6-4.8M3.4 17c2.7-.3 4.9.2 6.6 1.5L12 20l2-1.5c1.7-1.3 3.9-1.8 6.6-1.5M6 20h12" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}

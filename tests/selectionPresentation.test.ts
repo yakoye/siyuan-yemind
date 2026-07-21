@@ -7,8 +7,9 @@ describe('selection presentation', () => {
       count: 0,
       isMultiple: false,
       countText: '',
-      modeLabel: '平移优先',
-      modeTitle: '平移优先：左键拖动画布；Ctrl/Cmd + 左键框选',
+      modeLabel: '拖（拖动优先）',
+      modeShortLabel: '拖',
+      modeTitle: '拖（拖动优先）：左键拖动画布，Ctrl/Cmd + 左键框选',
     });
   });
 
@@ -22,8 +23,9 @@ describe('selection presentation', () => {
       count: 3,
       isMultiple: true,
       countText: '已选 3',
-      modeLabel: '选择优先',
-      modeTitle: '选择优先：左键框选；右键拖动画布',
+      modeLabel: '选（选择优先）',
+      modeShortLabel: '选',
+      modeTitle: '选（选择优先）：左键框选，右键拖动画布',
     });
   });
 

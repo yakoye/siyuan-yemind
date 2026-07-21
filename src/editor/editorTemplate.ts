@@ -1,6 +1,6 @@
 import { normalizeLineStyle, themeOptionsHtml } from '../core/themePresets';
 import { layoutOptionsHtml } from '../core/layoutPresets';
-import { lineStyleIcon, nodeStyleIcon, projectControlIcon } from './projectControls';
+import { historyIcon, lineStyleIcon, lockIcon, meditationIcon, nodeStyleIcon, projectControlIcon, redoIcon, searchIcon, undoIcon } from './projectControls';
 export function createEditorTemplate(title: string, theme: unknown = 'kmind-default', lineStyle: unknown = 'curve'): string {
   return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
@@ -11,7 +11,7 @@ export function createEditorTemplate(title: string, theme: unknown = 'kmind-defa
           <button class="is-active" data-action="view-map">导图</button>
           <button data-action="view-split">分屏</button>
           <button data-action="view-outline">大纲</button>
-          <button data-action="open-search" title="项目内搜索">⌕</button>
+          <button class="ymz-icon-button" data-action="open-search" title="项目内搜索" aria-label="项目内搜索">${searchIcon()}</button>
           <span class="ymz-separator"></span>
           <label class="ymz-project-control" data-project-control="layout" title="结构">
             ${projectControlIcon('layout')}<span>结构</span>
@@ -59,14 +59,12 @@ export function createEditorTemplate(title: string, theme: unknown = 'kmind-defa
         </div>
 
         <div class="ymz-floating ymz-leftbar" role="toolbar" aria-label="画布工具">
-          <button data-action="checkpoints" title="检查点与历史">历史</button>
-          <button data-action="reset-layout" title="整理布局">整</button>
-          <button data-action="toggle-selection-mode" title="平移优先：左键拖动画布；Ctrl/Cmd + 左键框选" aria-pressed="false">框</button>
-          <button data-action="undo" title="撤销">↶</button>
-          <button data-action="redo" title="重做">↷</button>
+          <button class="ymz-icon-button" data-action="checkpoints" title="检查点与历史" aria-label="检查点与历史">${historyIcon()}</button>
+          <button class="ymz-icon-button" data-action="undo" title="撤销" aria-label="撤销">${undoIcon()}</button>
+          <button class="ymz-icon-button" data-action="redo" title="重做" aria-label="重做">${redoIcon()}</button>
         </div>
 
-        <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式" aria-label="退出禅模式"><span class="ymz-zen-exit__idle"><span class="ymz-zen-exit__icon ymz-zen-exit__dot" aria-hidden="true">●</span><span>禅</span></span><span class="ymz-zen-exit__label"><span class="ymz-zen-exit__icon ymz-zen-exit__dot" aria-hidden="true">●</span><span>退出禅模式</span></span></button>
+        <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式" aria-label="退出禅模式"><span class="ymz-zen-exit__idle"><span class="ymz-zen-exit__icon" aria-hidden="true">${meditationIcon()}</span></span><span class="ymz-zen-exit__label"><span class="ymz-zen-exit__icon" aria-hidden="true">${meditationIcon()}</span><span>退出禅模式</span></span></button>
 
         <aside class="ymz-node-style-panel" data-role="node-style-panel" aria-label="节点样式" hidden>
           <header class="ymz-node-style-panel__header"><strong>节点样式</strong><button type="button" data-node-style-action="close" aria-label="关闭节点样式">×</button></header>
@@ -104,8 +102,9 @@ export function createEditorTemplate(title: string, theme: unknown = 'kmind-defa
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
           <span class="ymz-selection-count" data-role="selection-count" hidden></span>
           <button data-action="fit" title="适配视图">⌖</button>
-          <button data-action="readonly" title="只读模式">锁</button>
-          <button data-action="zen" title="禅模式">禅</button>
+          <button class="ymz-canvas-mode" data-action="toggle-selection-mode" title="选（选择优先）：左键框选，右键拖动画布" aria-label="选（选择优先）：左键框选，右键拖动画布" aria-pressed="false"><span data-role="canvas-mode-label">选</span></button>
+          <button class="ymz-icon-button" data-action="readonly" title="只读模式" aria-label="只读模式">${lockIcon()}</button>
+          <button class="ymz-icon-button" data-action="zen" title="禅模式" aria-label="禅模式">${meditationIcon()}</button>
           <button data-action="zoom-out" title="缩小">−</button>
           <span class="ymz-zoom" data-role="zoom">100%</span>
           <button data-action="zoom-in" title="放大">＋</button>

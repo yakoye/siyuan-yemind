@@ -4,8 +4,10 @@ YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-
 
 - Plugin folder and ID: `siyuan-yemind-zen`
 - Display name: `YeMind Zen`
-- Version: `0.6.1`
+- Version: `0.6.2`
 
+
+v0.6.2 unifies YeMind selection, focus and editing states around the plugin green, aligns canvas modes as Select-first and Drag-first, defaults new installs to Select-first, consolidates the left rail to History/Undo/Redo, and replaces Search, History, Undo, Redo, Readonly and Zen text glyphs with plugin-owned SVG icons. The complete accumulated regression matrix remains a release gate.
 
 v0.6.1 gives the active split/full-outline Quill editor complete pointer-selection ownership, so drag-selecting text no longer starts structural row dragging. It consolidates the top/left/bottom tool surfaces, exposes icon-and-text Line Style and Node Style controls, moves Checkpoint/History to the left rail, places Note/Comment close controls inside their dialogs, and uses the plugin icon green for the brand and current-map chips. The accumulated user-reported regression matrix remains a release gate.
 

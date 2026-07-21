@@ -494,3 +494,69 @@
 .ymz-node-dialog__close:hover,.ymz-node-dialog__close:focus-visible{background:var(--b3-list-hover);color:var(--b3-theme-on-background);outline:0}
 .ymz-note-dialog-host .b3-dialog__header{display:none}
 .ymz-comments-dialog-host .b3-dialog__header{display:none}
+
+
+/* v0.6.2 unified YeMind accent and toolbar icon language */
+:root{
+  --ymz-accent:var(--ymz-green,#176b50);
+  --ymz-accent-soft:color-mix(in srgb,var(--ymz-accent) 14%,transparent);
+  --ymz-accent-soft-strong:color-mix(in srgb,var(--ymz-accent) 20%,transparent);
+  --ymz-accent-border:color-mix(in srgb,var(--ymz-accent) 72%,transparent);
+}
+.ymz-toolbar-icon,.ymz-project-icon,.ymz-line-icon{display:block;width:18px;height:18px;flex:0 0 auto}
+.ymz-icon-button{display:inline-flex!important;align-items:center;justify-content:center;padding:0!important;width:32px;min-width:32px}
+.ymz-leftbar .ymz-icon-button{width:34px;min-width:34px}
+.ymz-canvas-mode{min-width:32px!important;padding:0 8px!important;font-weight:650}
+.ymz-zen-exit__icon{display:inline-flex;align-items:center;justify-content:center;color:currentColor}
+.ymz-zen-exit__icon .ymz-icon-meditation{width:20px;height:20px}
+.ymz-statusbar .ymz-icon-meditation{width:19px;height:19px}
+
+.ymz-floating button.is-active,
+.ymz-settings-nav button.is-active,
+.ymz-rich-toolbar button.is-active,
+.ymz-node-style-panel__buttons button.is-active,
+.ymz-formula-mode label:has(input:checked){
+  border-color:var(--ymz-accent-border)!important;
+  background:var(--ymz-accent-soft)!important;
+  color:var(--ymz-accent)!important;
+}
+.ymz-outline-row.is-active{
+  background:var(--ymz-accent-soft)!important;
+  color:var(--ymz-accent)!important;
+  box-shadow:inset 3px 0 0 var(--ymz-accent);
+}
+.ymz-outline-row__editor:hover:not([readonly]),
+.ymz-outline-row__editor:hover:not([aria-readonly="true"]){border-color:color-mix(in srgb,var(--ymz-accent) 30%,transparent)!important}
+.ymz-outline-row__editor:focus,
+.ymz-outline-row__editor:focus-within{
+  border-color:var(--ymz-accent)!important;
+  box-shadow:0 0 0 2px var(--ymz-accent-soft)!important;
+}
+.ymz-editor .smm-node.active .smm-hover-node,
+.ymz-editor .smm-node-highlight .smm-hover-node{
+  stroke:var(--ymz-accent)!important;
+  fill:var(--ymz-accent-soft)!important;
+}
+.ymz-editor .smm-richtext-node-edit-wrap,
+.ymz-editor .smm-richtext-node-edit-wrap .ql-container{
+  border-color:var(--ymz-accent)!important;
+}
+.ymz-editor .smm-richtext-node-edit-wrap .ql-editor::selection,
+.ymz-editor .smm-richtext-node-edit-wrap .ql-editor *::selection,
+.ymz-outline-row__editor .ql-editor::selection,
+.ymz-outline-row__editor .ql-editor *::selection{
+  background:color-mix(in srgb,var(--ymz-accent) 28%,transparent)!important;
+}
+.ymz-leftbar [data-action="toggle-selection-mode"].is-active,
+.ymz-statusbar [data-action="toggle-selection-mode"].is-active{
+  border-color:var(--ymz-accent-border)!important;
+  background:var(--ymz-accent-soft)!important;
+  color:var(--ymz-accent)!important;
+}
+.ymz-selection-count{border-color:var(--ymz-accent-border)!important;background:var(--ymz-accent-soft)!important;color:var(--ymz-accent)!important}
+.ymz-dock__item.is-active{background:var(--ymz-accent-soft)!important}.ymz-dock__item.is-active .ymz-dock__title{color:var(--ymz-accent)!important}
+.ymz-split-divider:hover::before,.ymz-split-divider:focus-visible::before,.ymz-split-divider.is-dragging::before{background:var(--ymz-accent)!important}
+.ymz-outline-row__branch:hover:not(:disabled),.ymz-outline-row__branch:focus-visible{color:var(--ymz-accent)!important}
+.ymz-color-popover__swatch:hover,.ymz-color-popover__swatch:focus-visible{outline-color:var(--ymz-accent)!important}
+.ymz-color-popover__current label:focus-within,.ymz-note-editor:focus{border-color:var(--ymz-accent)!important;box-shadow:0 0 0 2px var(--ymz-accent-soft)!important}
+.ymz-outline-row.is-drop-before{box-shadow:inset 0 2px 0 var(--ymz-accent)!important}.ymz-outline-row.is-drop-after{box-shadow:inset 0 -2px 0 var(--ymz-accent)!important}.ymz-outline-row.is-drop-inside{background:var(--ymz-accent-soft)!important}

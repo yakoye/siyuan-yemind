@@ -1528,16 +1528,13 @@ export class YeMindEditor {
     this.rootEl
       .querySelectorAll<HTMLElement>('[data-action="toggle-selection-mode"]')
       .forEach((button) => {
-        button.classList.toggle(
-          "is-active",
-          this.settings.canvasMode === "select",
-        );
+        const isDragMode = this.settings.canvasMode === "pan";
+        button.classList.toggle("is-active", isDragMode);
         button.title = presentation.modeTitle;
         button.setAttribute("aria-label", presentation.modeTitle);
-        button.setAttribute(
-          "aria-pressed",
-          String(this.settings.canvasMode === "select"),
-        );
+        button.setAttribute("aria-pressed", String(isDragMode));
+        const label = button.querySelector<HTMLElement>('[data-role="canvas-mode-label"]');
+        if (label) label.textContent = presentation.modeShortLabel;
       });
   }
 
@@ -2398,8 +2395,8 @@ export class YeMindEditor {
         <p><b>Tab</b> 添加子节点，<b>Enter</b> 添加同级节点</p>
         <p><b>选中文字</b> 使用格式、行内链接、模糊、公式与代码工具</p>
         <p><b>右键节点</b> 直接切换待办，打开批注、概要、外框与关联线</p>
-        <p><b>平移优先</b>：平移优先：左键拖动画布，Ctrl/Cmd + 左键框选</p>
-        <p><b>选择优先</b>：选择优先：左键框选，右键拖动画布</p>
+        <p><b>选（选择优先）</b>：左键框选，右键拖动画布</p>
+        <p><b>拖（拖动优先）</b>：左键拖动画布，Ctrl/Cmd + 左键框选</p>
         <p><b>Ctrl/Cmd + 单击</b>：Ctrl/Cmd + 单击：增减节点选择</p>
         <p><b>批量移动</b>：拖动任一已选节点：批量移动最上层所选子树</p>
         <p><b>检查点</b> 创建命名快照；恢复前会自动保存当前状态为保护检查点</p>

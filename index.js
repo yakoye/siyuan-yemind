@@ -3843,7 +3843,7 @@ const DEFAULT_SHORTCUTS = {
 };
 const DEFAULT_SETTINGS = {
   defaultLayout: "logicalStructure",
-  canvasMode: "pan",
+  canvasMode: "select",
   wheelMode: "pan",
   showQuickCreate: true,
   autoFitOnOpen: true,
@@ -4093,9 +4093,9 @@ function createSettingsDialogTemplate(settings) {
           ${switchRow("默认只读模式", "禁止编辑，保留平移、缩放和展开折叠。", "defaultReadonlyMode", settings.defaultReadonlyMode)}
         </div>
         <div class="ymz-settings-group"><h3>画布操作习惯</h3>
-          ${selectRow("画布拖拽习惯", "平移优先：左键拖动画布，Ctrl/Cmd + 左键框选；选择优先：左键框选，右键拖动画布。", "canvasMode", [
-    option$1("pan", "平移优先", settings.canvasMode),
-    option$1("select", "选择优先", settings.canvasMode)
+          ${selectRow("画布操作模式", "选（选择优先）：左键框选，右键拖动画布；拖（拖动优先）：左键拖动画布，Ctrl/Cmd + 左键框选。", "canvasMode", [
+    option$1("select", "选（选择优先）", settings.canvasMode),
+    option$1("pan", "拖（拖动优先）", settings.canvasMode)
   ].join(""))}
           ${selectRow("滚轮行为", "控制滚轮平移和缩放。", "wheelMode", [
     option$1("pan", "滚轮平移，Ctrl/Cmd 缩放", settings.wheelMode),
@@ -4372,7 +4372,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.6.1";
+const PLUGIN_VERSION = "0.6.2";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -56722,6 +56722,24 @@ function summaryIcon() {
 function nodeStyleIcon() {
   return '<svg class="ymz-project-icon ymz-icon-node-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="6.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="15" cy="12" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="17.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/></svg>';
 }
+function historyIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-history" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 9.2A8 8 0 1 1 5 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4.5 4.8v4.6h4.6M12 7.5v5l3.2 1.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+function undoIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-undo" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4.5 11.5 9 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11.5h8.2c4 0 6.3 2.1 6.3 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+}
+function redoIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-redo" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 4.5 4.5L15 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 11.5h-8.2c-4 0-6.3 2.1-6.3 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+}
+function searchIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-search" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="m14.7 14.7 4.8 4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+}
+function lockIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="15" r="1.2" fill="currentColor"/></svg>';
+}
+function meditationIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-meditation" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4.3" r="2.1" fill="none" stroke="currentColor" stroke-width="1.65"/><path d="M9.4 7.2c-1.9 1-2.8 2.7-3 5.1-.2 2.1-1.2 3.5-3.2 4.3M14.6 7.2c1.9 1 2.8 2.7 3 5.1.2 2.1 1.2 3.5 3.2 4.3M8.4 11.2 12 16l3.6-4.8M3.4 17c2.7-.3 4.9.2 6.6 1.5L12 20l2-1.5c1.7-1.3 3.9-1.8 6.6-1.5M6 20h12" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
 async function loadImageFileSelection(file, dependencies) {
   try {
     const dataUrl = await dependencies.read(file);
@@ -57562,7 +57580,7 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
           <button class="is-active" data-action="view-map">导图</button>
           <button data-action="view-split">分屏</button>
           <button data-action="view-outline">大纲</button>
-          <button data-action="open-search" title="项目内搜索">⌕</button>
+          <button class="ymz-icon-button" data-action="open-search" title="项目内搜索" aria-label="项目内搜索">${searchIcon()}</button>
           <span class="ymz-separator"></span>
           <label class="ymz-project-control" data-project-control="layout" title="结构">
             ${projectControlIcon("layout")}<span>结构</span>
@@ -57610,14 +57628,12 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
         </div>
 
         <div class="ymz-floating ymz-leftbar" role="toolbar" aria-label="画布工具">
-          <button data-action="checkpoints" title="检查点与历史">历史</button>
-          <button data-action="reset-layout" title="整理布局">整</button>
-          <button data-action="toggle-selection-mode" title="平移优先：左键拖动画布；Ctrl/Cmd + 左键框选" aria-pressed="false">框</button>
-          <button data-action="undo" title="撤销">↶</button>
-          <button data-action="redo" title="重做">↷</button>
+          <button class="ymz-icon-button" data-action="checkpoints" title="检查点与历史" aria-label="检查点与历史">${historyIcon()}</button>
+          <button class="ymz-icon-button" data-action="undo" title="撤销" aria-label="撤销">${undoIcon()}</button>
+          <button class="ymz-icon-button" data-action="redo" title="重做" aria-label="重做">${redoIcon()}</button>
         </div>
 
-        <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式" aria-label="退出禅模式"><span class="ymz-zen-exit__idle"><span class="ymz-zen-exit__icon ymz-zen-exit__dot" aria-hidden="true">●</span><span>禅</span></span><span class="ymz-zen-exit__label"><span class="ymz-zen-exit__icon ymz-zen-exit__dot" aria-hidden="true">●</span><span>退出禅模式</span></span></button>
+        <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式" aria-label="退出禅模式"><span class="ymz-zen-exit__idle"><span class="ymz-zen-exit__icon" aria-hidden="true">${meditationIcon()}</span></span><span class="ymz-zen-exit__label"><span class="ymz-zen-exit__icon" aria-hidden="true">${meditationIcon()}</span><span>退出禅模式</span></span></button>
 
         <aside class="ymz-node-style-panel" data-role="node-style-panel" aria-label="节点样式" hidden>
           <header class="ymz-node-style-panel__header"><strong>节点样式</strong><button type="button" data-node-style-action="close" aria-label="关闭节点样式">×</button></header>
@@ -57655,8 +57671,9 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
           <span class="ymz-selection-count" data-role="selection-count" hidden></span>
           <button data-action="fit" title="适配视图">⌖</button>
-          <button data-action="readonly" title="只读模式">锁</button>
-          <button data-action="zen" title="禅模式">禅</button>
+          <button class="ymz-canvas-mode" data-action="toggle-selection-mode" title="选（选择优先）：左键框选，右键拖动画布" aria-label="选（选择优先）：左键框选，右键拖动画布" aria-pressed="false"><span data-role="canvas-mode-label">选</span></button>
+          <button class="ymz-icon-button" data-action="readonly" title="只读模式" aria-label="只读模式">${lockIcon()}</button>
+          <button class="ymz-icon-button" data-action="zen" title="禅模式" aria-label="禅模式">${meditationIcon()}</button>
           <button data-action="zoom-out" title="缩小">−</button>
           <span class="ymz-zoom" data-role="zoom">100%</span>
           <button data-action="zoom-in" title="放大">＋</button>
@@ -58798,8 +58815,9 @@ function createSelectionPresentation(rawCount, mode) {
     count,
     isMultiple: count > 1,
     countText: count > 1 ? `已选 ${count}` : "",
-    modeLabel: isSelectMode ? "选择优先" : "平移优先",
-    modeTitle: isSelectMode ? "选择优先：左键框选；右键拖动画布" : "平移优先：左键拖动画布；Ctrl/Cmd + 左键框选"
+    modeLabel: isSelectMode ? "选（选择优先）" : "拖（拖动优先）",
+    modeShortLabel: isSelectMode ? "选" : "拖",
+    modeTitle: isSelectMode ? "选（选择优先）：左键框选，右键拖动画布" : "拖（拖动优先）：左键拖动画布，Ctrl/Cmd + 左键框选"
   };
 }
 function promoteNodeToPrimary(renderer, node) {
@@ -60800,16 +60818,13 @@ class YeMindEditor {
     this.selectionCountEl.textContent = presentation.countText;
     this.selectionCountEl.hidden = !presentation.isMultiple;
     this.rootEl.querySelectorAll('[data-action="toggle-selection-mode"]').forEach((button) => {
-      button.classList.toggle(
-        "is-active",
-        this.settings.canvasMode === "select"
-      );
+      const isDragMode = this.settings.canvasMode === "pan";
+      button.classList.toggle("is-active", isDragMode);
       button.title = presentation.modeTitle;
       button.setAttribute("aria-label", presentation.modeTitle);
-      button.setAttribute(
-        "aria-pressed",
-        String(this.settings.canvasMode === "select")
-      );
+      button.setAttribute("aria-pressed", String(isDragMode));
+      const label = button.querySelector('[data-role="canvas-mode-label"]');
+      if (label) label.textContent = presentation.modeShortLabel;
     });
   }
   setViewMode(mode) {
@@ -61539,8 +61554,8 @@ class YeMindEditor {
         <p><b>Tab</b> 添加子节点，<b>Enter</b> 添加同级节点</p>
         <p><b>选中文字</b> 使用格式、行内链接、模糊、公式与代码工具</p>
         <p><b>右键节点</b> 直接切换待办，打开批注、概要、外框与关联线</p>
-        <p><b>平移优先</b>：平移优先：左键拖动画布，Ctrl/Cmd + 左键框选</p>
-        <p><b>选择优先</b>：选择优先：左键框选，右键拖动画布</p>
+        <p><b>选（选择优先）</b>：左键框选，右键拖动画布</p>
+        <p><b>拖（拖动优先）</b>：左键拖动画布，Ctrl/Cmd + 左键框选</p>
         <p><b>Ctrl/Cmd + 单击</b>：Ctrl/Cmd + 单击：增减节点选择</p>
         <p><b>批量移动</b>：拖动任一已选节点：批量移动最上层所选子树</p>
         <p><b>检查点</b> 创建命名快照；恢复前会自动保存当前状态为保护检查点</p>

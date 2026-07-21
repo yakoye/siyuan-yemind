@@ -112,9 +112,9 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
           ${switchRow('默认只读模式', '禁止编辑，保留平移、缩放和展开折叠。', 'defaultReadonlyMode', settings.defaultReadonlyMode)}
         </div>
         <div class="ymz-settings-group"><h3>画布操作习惯</h3>
-          ${selectRow('画布拖拽习惯', '平移优先：左键拖动画布，Ctrl/Cmd + 左键框选；选择优先：左键框选，右键拖动画布。', 'canvasMode', [
-            option('pan', '平移优先', settings.canvasMode),
-            option('select', '选择优先', settings.canvasMode),
+          ${selectRow('画布操作模式', '选（选择优先）：左键框选，右键拖动画布；拖（拖动优先）：左键拖动画布，Ctrl/Cmd + 左键框选。', 'canvasMode', [
+            option('select', '选（选择优先）', settings.canvasMode),
+            option('pan', '拖（拖动优先）', settings.canvasMode),
           ].join(''))}
           ${selectRow('滚轮行为', '控制滚轮平移和缩放。', 'wheelMode', [
             option('pan', '滚轮平移，Ctrl/Cmd 缩放', settings.wheelMode),
