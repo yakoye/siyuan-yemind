@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.18 — 2026-07-18
+
+- Reworked split/full-outline reconciliation so ordinary text commits never move or reinsert the active Quill row; consecutive Backspace/Delete edits now keep the same browser focus and selection.
+- Added a commit re-entry guard and reasoned `commitAndDetach()` boundary so synchronous `data_change` callbacks and structure moves cannot write an accidental empty label that renders as a tiny circle.
+- Replaced the six-dot HTML5 drag handle with whole-row Pointer Events: row chrome drags immediately, while editable text requires a deliberate long press plus movement so normal caret placement and selection remain available.
+- Added geometry-based horizontal depth intent in addition to before/inside/after vertical slots, allowing same-level reorder, child placement and leftward outdent through upstream `MOVE_NODE_TO`, `INSERT_BEFORE` and `INSERT_AFTER` commands.
+- Fixed repeatable collapse/expand by resolving from the latest row state, stopping click-through, using a noninteractive leaf placeholder and clearing impossible focus restoration when a collapsed subtree hides the active row.
+- Added a dedicated math-font, bold `π` formula symbol with an accessible label.
+- Replaced the solid cloze block with shared canvas/outline Gaussian and glass blur presentation; hover restores readable, selectable text while hidden mode remains fully hidden.
+- Added focused regressions for stable active-row DOM, repeated Delete commits, synchronous commit re-entry, text-vs-structure signatures, whole-row drag thresholds, horizontal hierarchy resolution, leaf placeholders and collapse round trips.
+
 ## 0.5.17 — 2026-07-18
 
 - Studied the user-supplied KMind Zen 0.34.0 bundle and adapted its stable outline-row, explicit structure-transaction, note-image, note-resize, and root-Enter interaction mechanisms without importing the private KMind document kernel.

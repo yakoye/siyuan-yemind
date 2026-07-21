@@ -16,10 +16,10 @@ describe('v0.5.10 diagnostics integration', () => {
 
   it('records editor lifecycle, drag, save and view events without node text', () => {
     const editor = source('src/editor/YeMindEditor.ts');
-    expect(editor).not.toContain("this.map.on('node_dragend'");
-    expect(editor).toContain("'data-change'");
-    expect(editor).toContain("'view-change'");
-    expect(editor).toContain("'save', 'completed'");
+    expect(editor).not.toMatch(/this\.map\.on\(["']node_dragend["']/);
+    expect(editor).toMatch(/["']data-change["']/);
+    expect(editor).toMatch(/["']view-change["']/);
+    expect(editor).toMatch(/["']save["']\s*,\s*["']completed["']/);
     expect(editor).not.toContain("diagnostics.record('editor', 'data-change', this.current.id, { text:");
   });
 });

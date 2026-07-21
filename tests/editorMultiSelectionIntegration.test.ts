@@ -12,7 +12,7 @@ describe('native multi-selection integration', () => {
     expect(templateSource).toContain('data-role="selection-count"');
     expect(editorSource).toContain('createSelectionPresentation');
     expect(editorSource).toContain('settingsStore.update({ canvasMode: nextMode })');
-    expect(editorSource).toContain("this.map.on('node_active'");
+    expect(editorSource).toMatch(/this\.map\.on\(["']node_active["']/);
   });
 
   it('keeps selection and multi-node drag owned by simple-mind-map', () => {
@@ -20,6 +20,6 @@ describe('native multi-selection integration', () => {
     expect(createSource).toContain("useLeftKeySelectionRightKeyDrag: settings?.canvasMode === 'select'");
     expect(editorSource).not.toContain('createSelectionRect');
     expect(editorSource).not.toContain('beingDragNodeList =');
-    expect(editorSource).not.toContain("this.map.on('node_dragging'");
+    expect(editorSource).not.toMatch(/this\.map\.on\(["']node_dragging["']/);
   });
 });

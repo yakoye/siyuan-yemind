@@ -13,7 +13,7 @@ describe('v0.5.16 official-style context menus', () => {
     expect(menuSource).toContain("label: '适配全部节点'");
     expect(menuSource).toContain("options.zen ? '退出禅模式' : '进入禅模式'");
     expect(menuSource).toContain("options.readonly ? '退出只读模式' : '进入只读模式'");
-    expect(editorSource).toContain("this.map.on('contextmenu'");
+    expect(editorSource).toMatch(/this\.map\.on\(["']contextmenu["']/);
   });
 
   it('marks the long node menu with a narrow scroll surface', () => {

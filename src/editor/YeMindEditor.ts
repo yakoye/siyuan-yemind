@@ -1,50 +1,96 @@
-import type MindMap from 'simple-mind-map';
-import { Dialog, Menu, showMessage } from 'siyuan';
-import { createMindMap } from '../core/createMindMap';
-import { buildDragAndLayoutOptions, normalizePersistedViewData, stripCustomPositions } from '../core/dragBehavior';
+import type MindMap from "simple-mind-map";
+import { Dialog, Menu, showMessage } from "siyuan";
+import { createMindMap } from "../core/createMindMap";
+import {
+  buildDragAndLayoutOptions,
+  normalizePersistedViewData,
+  stripCustomPositions,
+} from "../core/dragBehavior";
 import {
   buildThemeConfig,
   detectAppearance,
   normalizeLineStyle,
   normalizeThemePresetId,
   type YeMindAppearance,
-} from '../core/themePresets';
-import { buildRelationOptions } from '../core/relationConfig';
-import { buildOuterFrameOptions } from '../core/outerFrameConfig';
-import { sanitizeAssociativeLines } from '../core/relationData';
-import { createCommandAdapter, type YeMindCommands } from '../core/commands';
-import { configureNodeDecorations } from '../core/nodeDecorations';
-import { configureMindMapPlugins } from '../core/registerPlugins';
-import type { CheckpointService } from '../checkpoints/CheckpointService';
-import type { DiagnosticsService } from '../diagnostics/DiagnosticsService';
-import type { CheckpointRepository } from '../model/CheckpointRepository';
-import { MapRepository } from '../model/MapRepository';
-import type { MindMapTree, YeMindMapDocument } from '../model/types';
-import type { SettingsStore, ShortcutCommand, ViewMode, YeMindSettings } from '../settings/SettingsStore';
-import { openCheckpointManager } from '../ui/checkpointDialog';
-import { openCanvasContextMenu, openNodeContextMenu } from '../ui/contextMenu';
-import { promptText } from '../ui/dialogs';
-import { openCommentsDialog, openFormulaDialog, openLinkDialog, openNoteDialog } from '../ui/nodeContentDialogs';
-import { openCodeBlockDialog, openInlineLinkDialog } from '../ui/richTextDialogs';
-import { calculateEditorStats } from './editorStats';
-import { createEditorTemplate } from './editorTemplate';
-import { patchOutlineTree, resolveOutlineKeyAction } from './outline';
-import { resolveOutlineDropIntent, type OutlineDropPosition } from './outlineDrag';
-import { OutlineRichTextController, type OutlineFocusPlacement } from './OutlineRichTextController';
-import { DEFAULT_SPLIT_OUTLINE_RATIO, normalizeSplitOutlineRatio, ratioFromPointer } from './splitPane';
-import { RichTextToolbar } from './RichTextToolbar';
-import { isEditableTarget, matchesShortcut } from './shortcuts';
-import { createSelectionPresentation, promoteNodeToPrimary, shouldBlockRootDeleteShortcut } from './selectionPresentation';
-import { SaveRevisionTracker } from './saveRevision';
-import { createRelationPresentation } from './relationPresentation';
-import { createOuterFramePresentation, hexToRgba } from './outerFramePresentation';
-import { createToolbarAvailability } from './toolbarAvailability';
-import { resolveLinkNavigation } from './linkNavigation';
-import { hasNonZeroSize } from '../plugin/visibleElement';
-import { loadImageFileSelection } from '../ui/imageFileLoading';
-import { extractImageFile, findRenderedNodeAtClientPoint, hasImageFile } from '../ui/nodeImageInput';
-import { NodeHoverPreview } from '../ui/nodeHoverPreview';
-import { normalizeNodeNote } from '../content/nodeNoteState';
+} from "../core/themePresets";
+import { buildRelationOptions } from "../core/relationConfig";
+import { buildOuterFrameOptions } from "../core/outerFrameConfig";
+import { sanitizeAssociativeLines } from "../core/relationData";
+import { createCommandAdapter, type YeMindCommands } from "../core/commands";
+import { configureNodeDecorations } from "../core/nodeDecorations";
+import { configureMindMapPlugins } from "../core/registerPlugins";
+import type { CheckpointService } from "../checkpoints/CheckpointService";
+import type { DiagnosticsService } from "../diagnostics/DiagnosticsService";
+import type { CheckpointRepository } from "../model/CheckpointRepository";
+import { MapRepository } from "../model/MapRepository";
+import type { MindMapTree, YeMindMapDocument } from "../model/types";
+import type {
+  SettingsStore,
+  ShortcutCommand,
+  ViewMode,
+  YeMindSettings,
+} from "../settings/SettingsStore";
+import { openCheckpointManager } from "../ui/checkpointDialog";
+import { openCanvasContextMenu, openNodeContextMenu } from "../ui/contextMenu";
+import { promptText } from "../ui/dialogs";
+import {
+  openCommentsDialog,
+  openFormulaDialog,
+  openLinkDialog,
+  openNoteDialog,
+} from "../ui/nodeContentDialogs";
+import {
+  openCodeBlockDialog,
+  openInlineLinkDialog,
+} from "../ui/richTextDialogs";
+import { calculateEditorStats } from "./editorStats";
+import { createEditorTemplate } from "./editorTemplate";
+import {
+  flattenOutline,
+  outlineStructureSignature,
+  patchOutlineTree,
+  resolveOutlineKeyAction,
+  resolveOutlineToggleState,
+} from "./outline";
+import {
+  resolveOutlinePointerDropIntent,
+  shouldStartOutlinePointerDrag,
+  type OutlineDropPosition,
+  type OutlinePointerDropIntent,
+} from "./outlineDrag";
+import {
+  OutlineRichTextController,
+  type OutlineFocusPlacement,
+} from "./OutlineRichTextController";
+import {
+  DEFAULT_SPLIT_OUTLINE_RATIO,
+  normalizeSplitOutlineRatio,
+  ratioFromPointer,
+} from "./splitPane";
+import { RichTextToolbar } from "./RichTextToolbar";
+import { isEditableTarget, matchesShortcut } from "./shortcuts";
+import {
+  createSelectionPresentation,
+  promoteNodeToPrimary,
+  shouldBlockRootDeleteShortcut,
+} from "./selectionPresentation";
+import { SaveRevisionTracker } from "./saveRevision";
+import { createRelationPresentation } from "./relationPresentation";
+import {
+  createOuterFramePresentation,
+  hexToRgba,
+} from "./outerFramePresentation";
+import { createToolbarAvailability } from "./toolbarAvailability";
+import { resolveLinkNavigation } from "./linkNavigation";
+import { hasNonZeroSize } from "../plugin/visibleElement";
+import { loadImageFileSelection } from "../ui/imageFileLoading";
+import {
+  extractImageFile,
+  findRenderedNodeAtClientPoint,
+  hasImageFile,
+} from "../ui/nodeImageInput";
+import { NodeHoverPreview } from "../ui/nodeHoverPreview";
+import { normalizeNodeNote } from "../content/nodeNoteState";
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -57,12 +103,25 @@ export interface YeMindEditorOptions {
   onMissing?: () => void;
 }
 
-
 interface PendingOutlineFocus {
   uid: string;
   placement: OutlineFocusPlacement;
   start?: number;
   end?: number;
+}
+
+interface OutlinePointerDragSession {
+  pointerId: number;
+  sourceUid: string;
+  sourceRow: HTMLElement;
+  startX: number;
+  startY: number;
+  startedAt: number;
+  fromEditor: boolean;
+  interactive: boolean;
+  dragging: boolean;
+  ghost: HTMLElement | null;
+  intent: OutlinePointerDropIntent | null;
 }
 
 export class YeMindEditor {
@@ -96,8 +155,8 @@ export class YeMindEditor {
   private nodeHoverPreview: NodeHoverPreview | null = null;
   private outlineRichText: OutlineRichTextController | null = null;
   private settingsInitialized = false;
-  private viewMode: ViewMode = 'map';
-  private searchText = '';
+  private viewMode: ViewMode = "map";
+  private searchText = "";
   private applyingCheckpoint = false;
   private resizeFrame: number | null = null;
   private splitResizeFrame: number | null = null;
@@ -106,13 +165,140 @@ export class YeMindEditor {
   private splitOutlineRatio = DEFAULT_SPLIT_OUTLINE_RATIO;
   private outlineTextCommitUid: string | null = null;
   private outlineStructureBusy = false;
-  private outlineDragUid: string | null = null;
+  private outlinePointerDrag: OutlinePointerDragSession | null = null;
+  private outlineStructureKey = "";
+  private suppressOutlineClickUntil = 0;
   private pendingOutlineFocus: PendingOutlineFocus | null = null;
   private appearanceObserver: MutationObserver | null = null;
   private appearanceMedia: MediaQueryList | null = null;
   private appearanceMode: YeMindAppearance | null = null;
   private readonly onAppearanceMediaChange = (): void => {
     this.refreshAppearanceIfNeeded();
+  };
+
+  private readonly onOutlinePointerDown = (event: PointerEvent): void => {
+    if (event.button !== 0 || !this.commands || this.commands.isReadonly())
+      return;
+    const target = event.target as HTMLElement;
+    const row = target.closest<HTMLElement>("[data-outline-uid]");
+    if (!row || row.dataset.outlineDragSource !== "true") return;
+    const sourceUid = row.dataset.outlineUid ?? "";
+    if (!sourceUid || row.dataset.outlineRoot === "true") return;
+    const fromEditor = Boolean(target.closest("[data-outline-editor]"));
+    const interactive = Boolean(
+      target.closest('button,a,input,textarea,select,[role="button"]'),
+    );
+    if (interactive) return;
+    this.outlinePointerDrag = {
+      pointerId: event.pointerId,
+      sourceUid,
+      sourceRow: row,
+      startX: event.clientX,
+      startY: event.clientY,
+      startedAt: performance.now(),
+      fromEditor,
+      interactive,
+      dragging: false,
+      ghost: null,
+      intent: null,
+    };
+  };
+
+  private readonly onOutlinePointerMove = (event: PointerEvent): void => {
+    const session = this.outlinePointerDrag;
+    if (!session || session.pointerId !== event.pointerId || !this.commands)
+      return;
+    const distance = Math.hypot(
+      event.clientX - session.startX,
+      event.clientY - session.startY,
+    );
+    if (!session.dragging) {
+      const start = shouldStartOutlinePointerDrag({
+        interactive: session.interactive,
+        fromEditor: session.fromEditor,
+        elapsedMs: performance.now() - session.startedAt,
+        distancePx: distance,
+      });
+      if (!start) return;
+      event.preventDefault();
+      this.outlineRichText?.commitAndDetach("pointer-drag-start");
+      session.dragging = true;
+      session.sourceRow.classList.add("is-dragging");
+      session.ghost = this.createOutlineDragGhost(session.sourceRow);
+      this.options.diagnostics.record(
+        "outline",
+        "pointer-drag-start",
+        this.current.id,
+        {
+          sourceDepth: this.outlineDepth(session.sourceRow),
+          fromEditor: session.fromEditor,
+        },
+      );
+    }
+
+    event.preventDefault();
+    if (session.ghost) {
+      session.ghost.style.transform = `translate3d(${event.clientX + 14}px,${event.clientY + 10}px,0)`;
+    }
+    const targetRow = this.findOutlineRowAtPoint(event.clientX, event.clientY);
+    this.clearOutlineDropState();
+    session.intent = null;
+    if (!targetRow || this.isOutlineDescendantRow(session.sourceRow, targetRow))
+      return;
+    const targetUid = targetRow.dataset.outlineUid ?? "";
+    const editor = targetRow.querySelector<HTMLElement>(
+      "[data-outline-editor]",
+    );
+    if (!targetUid || !editor) return;
+    const intent = resolveOutlinePointerDropIntent({
+      sourceUid: session.sourceUid,
+      targetUid,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      rect: targetRow.getBoundingClientRect(),
+      targetTextLeft: editor.getBoundingClientRect().left,
+      targetDepth: this.outlineDepth(targetRow),
+      indentWidth: 22,
+      targetAncestors: this.collectOutlineAncestors(targetRow),
+    });
+    if (!intent) return;
+    session.intent = intent;
+    targetRow.classList.add(`is-drop-${intent.position}`);
+    targetRow.style.setProperty(
+      "--ymz-outline-drop-depth",
+      String(intent.desiredDepth),
+    );
+  };
+
+  private readonly onOutlinePointerUp = (event: PointerEvent): void => {
+    const session = this.outlinePointerDrag;
+    if (!session || session.pointerId !== event.pointerId) return;
+    const { dragging, intent, sourceUid } = session;
+    this.cleanupOutlinePointerDrag();
+    if (!dragging || !intent || !this.commands) return;
+    event.preventDefault();
+    this.suppressOutlineClickUntil = Date.now() + 300;
+    const moved = this.commands.moveNodeByUid(
+      sourceUid,
+      intent.targetUid,
+      intent.position as OutlineDropPosition,
+    );
+    this.options.diagnostics.record(
+      "outline",
+      "pointer-drag-drop",
+      this.current.id,
+      {
+        position: intent.position,
+        desiredDepth: intent.desiredDepth,
+        moved,
+      },
+    );
+    if (moved) this.commands.goToNode(sourceUid);
+  };
+
+  private readonly onOutlinePointerCancel = (event: PointerEvent): void => {
+    if (this.outlinePointerDrag?.pointerId !== event.pointerId) return;
+    this.cleanupOutlinePointerDrag();
   };
 
   private readonly onImagePaste = (event: ClipboardEvent): void => {
@@ -122,63 +308,82 @@ export class YeMindEditor {
     if (!file || !node) return;
     event.preventDefault();
     event.stopPropagation();
-    void this.applyNodeImageFile(file, node, 'paste');
+    void this.applyNodeImageFile(file, node, "paste");
   };
 
   private readonly onImageDragOver = (event: DragEvent): void => {
     if (!this.map || !this.commands || this.commands.isReadonly()) return;
     if (!hasImageFile(event.dataTransfer)) return;
-    const node = findRenderedNodeAtClientPoint(this.map, event.clientX, event.clientY);
+    const node = findRenderedNodeAtClientPoint(
+      this.map,
+      event.clientX,
+      event.clientY,
+    );
     if (!node) return;
     event.preventDefault();
-    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
   };
 
   private readonly onImageDrop = (event: DragEvent): void => {
     if (!this.map || !this.commands || this.commands.isReadonly()) return;
     const file = extractImageFile(event.dataTransfer);
-    const node = file ? findRenderedNodeAtClientPoint(this.map, event.clientX, event.clientY) : null;
+    const node = file
+      ? findRenderedNodeAtClientPoint(this.map, event.clientX, event.clientY)
+      : null;
     if (!file || !node) return;
     event.preventDefault();
     event.stopPropagation();
-    void this.applyNodeImageFile(file, node, 'drop');
+    void this.applyNodeImageFile(file, node, "drop");
   };
 
   private readonly onRootKeydown = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape' && this.commands?.isRelationCreating()) {
+    if (event.key === "Escape" && this.commands?.isRelationCreating()) {
       event.preventDefault();
       event.stopPropagation();
       this.commands.cancelRelation();
       this.updateRelationPresentation();
       return;
     }
-    if (event.key === 'Escape' && this.rootEl?.dataset.zen === 'true') {
+    if (event.key === "Escape" && this.rootEl?.dataset.zen === "true") {
       event.preventDefault();
       this.toggleZen(false);
       return;
     }
     if (!this.commands || isEditableTarget(event.target)) return;
-    if (shouldBlockRootDeleteShortcut(event.key, this.commands.getActiveNodes())) {
+    if (
+      shouldBlockRootDeleteShortcut(event.key, this.commands.getActiveNodes())
+    ) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      showMessage('根节点不能删除；请选择普通节点后再删除', 3000, 'info');
+      showMessage("根节点不能删除；请选择普通节点后再删除", 3000, "info");
       return;
     }
 
     const actions: Array<[ShortcutCommand, () => void]> = [
-      ['search', () => this.openSearchPanel()],
-      ['toggleZen', () => this.toggleZen(this.rootEl.dataset.zen !== 'true')],
-      ['toggleReadonly', () => this.setReadonly(this.rootEl.dataset.readonly !== 'true')],
-      ['undo', () => this.commands?.undo()],
-      ['redo', () => this.commands?.redo()],
-      ['fit', () => this.commands?.fit()],
-      ['reset', () => this.commands?.resetZoom()],
-      ['addParent', () => this.commands?.addParent()],
-      ['comments', () => { if (this.commands?.getPrimaryNode() && !this.commands.isReadonly()) openCommentsDialog(this.commands); }],
-      ['summary', () => this.commands?.addSummary()],
-      ['relation', () => this.beginRelation()],
+      ["search", () => this.openSearchPanel()],
+      ["toggleZen", () => this.toggleZen(this.rootEl.dataset.zen !== "true")],
+      [
+        "toggleReadonly",
+        () => this.setReadonly(this.rootEl.dataset.readonly !== "true"),
+      ],
+      ["undo", () => this.commands?.undo()],
+      ["redo", () => this.commands?.redo()],
+      ["fit", () => this.commands?.fit()],
+      ["reset", () => this.commands?.resetZoom()],
+      ["addParent", () => this.commands?.addParent()],
+      [
+        "comments",
+        () => {
+          if (this.commands?.getPrimaryNode() && !this.commands.isReadonly())
+            openCommentsDialog(this.commands);
+        },
+      ],
+      ["summary", () => this.commands?.addSummary()],
+      ["relation", () => this.beginRelation()],
     ];
-    const action = actions.find(([key]) => matchesShortcut(event, this.settings.shortcutMap[key]));
+    const action = actions.find(([key]) =>
+      matchesShortcut(event, this.settings.shortcutMap[key]),
+    );
     if (!action) return;
     event.preventDefault();
     event.stopPropagation();
@@ -190,7 +395,9 @@ export class YeMindEditor {
     if (!map) throw new Error(`Map not found: ${options.mapId}`);
     this.current = map;
     this.settings = options.settingsStore.get();
-    this.splitOutlineRatio = normalizeSplitOutlineRatio(this.settings.splitOutlineRatio);
+    this.splitOutlineRatio = normalizeSplitOutlineRatio(
+      this.settings.splitOutlineRatio,
+    );
     this.mount();
   }
 
@@ -199,7 +406,12 @@ export class YeMindEditor {
   }
 
   destroy(): void {
-    this.options.diagnostics.record('editor', 'destroy-started', this.current.id, { dirty: this.saveRevisions.isDirty() });
+    this.options.diagnostics.record(
+      "editor",
+      "destroy-started",
+      this.current.id,
+      { dirty: this.saveRevisions.isDirty() },
+    );
     this.outlineRichText?.destroy();
     this.outlineRichText = null;
     this.flushPendingSave();
@@ -208,54 +420,117 @@ export class YeMindEditor {
     this.settingsUnsubscribe?.();
     this.appearanceObserver?.disconnect();
     this.appearanceObserver = null;
-    this.appearanceMedia?.removeEventListener?.('change', this.onAppearanceMediaChange);
+    this.appearanceMedia?.removeEventListener?.(
+      "change",
+      this.onAppearanceMediaChange,
+    );
     this.appearanceMedia = null;
     this.richTextToolbar?.destroy();
     this.richTextToolbar = null;
     this.nodeHoverPreview?.destroy();
     this.nodeHoverPreview = null;
-    this.rootEl?.removeEventListener('keydown', this.onRootKeydown);
-    this.rootEl?.removeEventListener('paste', this.onImagePaste);
-    this.canvasEl?.removeEventListener('dragover', this.onImageDragOver);
-    this.canvasEl?.removeEventListener('drop', this.onImageDrop);
-    if (this.resizeFrame !== null) window.cancelAnimationFrame(this.resizeFrame);
-    if (this.splitResizeFrame !== null) window.cancelAnimationFrame(this.splitResizeFrame);
+    this.rootEl?.removeEventListener("keydown", this.onRootKeydown);
+    this.rootEl?.removeEventListener("paste", this.onImagePaste);
+    this.canvasEl?.removeEventListener("dragover", this.onImageDragOver);
+    this.canvasEl?.removeEventListener("drop", this.onImageDrop);
+    this.outlineEl?.removeEventListener(
+      "pointerdown",
+      this.onOutlinePointerDown,
+    );
+    window.removeEventListener("pointermove", this.onOutlinePointerMove);
+    window.removeEventListener("pointerup", this.onOutlinePointerUp);
+    window.removeEventListener("pointercancel", this.onOutlinePointerCancel);
+    this.cleanupOutlinePointerDrag();
+    if (this.resizeFrame !== null)
+      window.cancelAnimationFrame(this.resizeFrame);
+    if (this.splitResizeFrame !== null)
+      window.cancelAnimationFrame(this.splitResizeFrame);
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
     this.map?.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
-    this.options.diagnostics.record('editor', 'destroy-completed', this.current.id);
-    this.options.container.innerHTML = '';
+    this.options.diagnostics.record(
+      "editor",
+      "destroy-completed",
+      this.current.id,
+    );
+    this.options.container.innerHTML = "";
   }
 
   private mount(): void {
     this.current.theme = normalizeThemePresetId(this.current.theme);
     this.current.lineStyle = normalizeLineStyle(this.current.lineStyle);
-    this.options.container.innerHTML = createEditorTemplate(this.current.title, this.current.theme, this.current.lineStyle);
-    this.rootEl = this.options.container.querySelector('.ymz-editor') as HTMLElement;
-    this.canvasEl = this.options.container.querySelector('[data-role="canvas"]') as HTMLElement;
-    this.splitDividerEl = this.options.container.querySelector('[data-role="split-divider"]') as HTMLElement;
-    this.outlineEl = this.options.container.querySelector('[data-role="outline"]') as HTMLElement;
-    this.statsEl = this.options.container.querySelector('[data-role="stats"]') as HTMLElement;
-    this.zoomEl = this.options.container.querySelector('[data-role="zoom"]') as HTMLElement;
-    this.saveStateEl = this.options.container.querySelector('[data-role="save-state"]') as HTMLElement;
-    this.titleEl = this.options.container.querySelector('[data-role="title"]') as HTMLElement;
-    this.searchPanelEl = this.options.container.querySelector('[data-role="search-panel"]') as HTMLElement;
-    this.searchInputEl = this.options.container.querySelector('[data-role="search-input"]') as HTMLInputElement;
-    this.replaceInputEl = this.options.container.querySelector('[data-role="replace-input"]') as HTMLInputElement;
-    this.searchInfoEl = this.options.container.querySelector('[data-role="search-info"]') as HTMLElement;
-    this.selectionCountEl = this.options.container.querySelector('[data-role="selection-count"]') as HTMLElement;
-    this.relationPanelEl = this.options.container.querySelector('[data-role="relation-panel"]') as HTMLElement;
-    this.relationHintEl = this.options.container.querySelector('[data-role="relation-hint"]') as HTMLElement;
-    this.outerFramePanelEl = this.options.container.querySelector('[data-role="outer-frame-panel"]') as HTMLElement;
-    this.outerFrameHintEl = this.options.container.querySelector('[data-role="outer-frame-hint"]') as HTMLElement;
-    const layoutSelect = this.options.container.querySelector<HTMLSelectElement>('[data-action="layout"]');
+    this.options.container.innerHTML = createEditorTemplate(
+      this.current.title,
+      this.current.theme,
+      this.current.lineStyle,
+    );
+    this.rootEl = this.options.container.querySelector(
+      ".ymz-editor",
+    ) as HTMLElement;
+    this.canvasEl = this.options.container.querySelector(
+      '[data-role="canvas"]',
+    ) as HTMLElement;
+    this.splitDividerEl = this.options.container.querySelector(
+      '[data-role="split-divider"]',
+    ) as HTMLElement;
+    this.outlineEl = this.options.container.querySelector(
+      '[data-role="outline"]',
+    ) as HTMLElement;
+    this.statsEl = this.options.container.querySelector(
+      '[data-role="stats"]',
+    ) as HTMLElement;
+    this.zoomEl = this.options.container.querySelector(
+      '[data-role="zoom"]',
+    ) as HTMLElement;
+    this.saveStateEl = this.options.container.querySelector(
+      '[data-role="save-state"]',
+    ) as HTMLElement;
+    this.titleEl = this.options.container.querySelector(
+      '[data-role="title"]',
+    ) as HTMLElement;
+    this.searchPanelEl = this.options.container.querySelector(
+      '[data-role="search-panel"]',
+    ) as HTMLElement;
+    this.searchInputEl = this.options.container.querySelector(
+      '[data-role="search-input"]',
+    ) as HTMLInputElement;
+    this.replaceInputEl = this.options.container.querySelector(
+      '[data-role="replace-input"]',
+    ) as HTMLInputElement;
+    this.searchInfoEl = this.options.container.querySelector(
+      '[data-role="search-info"]',
+    ) as HTMLElement;
+    this.selectionCountEl = this.options.container.querySelector(
+      '[data-role="selection-count"]',
+    ) as HTMLElement;
+    this.relationPanelEl = this.options.container.querySelector(
+      '[data-role="relation-panel"]',
+    ) as HTMLElement;
+    this.relationHintEl = this.options.container.querySelector(
+      '[data-role="relation-hint"]',
+    ) as HTMLElement;
+    this.outerFramePanelEl = this.options.container.querySelector(
+      '[data-role="outer-frame-panel"]',
+    ) as HTMLElement;
+    this.outerFrameHintEl = this.options.container.querySelector(
+      '[data-role="outer-frame-hint"]',
+    ) as HTMLElement;
+    const layoutSelect =
+      this.options.container.querySelector<HTMLSelectElement>(
+        '[data-action="layout"]',
+      );
     if (layoutSelect) layoutSelect.value = this.current.layout;
-    const themeSelect = this.options.container.querySelector<HTMLSelectElement>('[data-action="theme"]');
+    const themeSelect = this.options.container.querySelector<HTMLSelectElement>(
+      '[data-action="theme"]',
+    );
     if (themeSelect) themeSelect.value = this.current.theme;
-    const lineStyleSelect = this.options.container.querySelector<HTMLSelectElement>('[data-action="line-style"]');
+    const lineStyleSelect =
+      this.options.container.querySelector<HTMLSelectElement>(
+        '[data-action="line-style"]',
+      );
     if (lineStyleSelect) lineStyleSelect.value = this.current.lineStyle;
 
     let runtimeData = this.current.data;
@@ -264,15 +539,22 @@ export class YeMindEditor {
     runtimeData = sanitized.tree;
     if (normalized.changed || sanitized.changed) {
       this.current.data = runtimeData;
-      void this.options.repository.update(this.current.id, { data: runtimeData }).catch((error) => {
-        console.error('[YeMind Zen] migrated data save failed', error);
-        showMessage('导图兼容数据保存失败，请勿立即关闭该标签', 5000, 'error');
-      });
+      void this.options.repository
+        .update(this.current.id, { data: runtimeData })
+        .catch((error) => {
+          console.error("[YeMind Zen] migrated data save failed", error);
+          showMessage(
+            "导图兼容数据保存失败，请勿立即关闭该标签",
+            5000,
+            "error",
+          );
+        });
     }
     const runtimeViewData = this.settings.restoreSavedView
       ? normalizePersistedViewData(this.current.viewData)
       : undefined;
-    if (this.current.viewData && !runtimeViewData) this.current.viewData = undefined;
+    if (this.current.viewData && !runtimeViewData)
+      this.current.viewData = undefined;
 
     this.map = createMindMap({
       el: this.canvasEl,
@@ -290,21 +572,28 @@ export class YeMindEditor {
       onFormula: (target) => openFormulaDialog(target),
       onLink: (target) => openInlineLinkDialog(target, this.settings),
       onCodeBlock: (target) => openCodeBlockDialog(target, this.settings),
-      onAction: (action) => this.options.diagnostics.record('rich-text', action, this.current.id),
+      onAction: (action) =>
+        this.options.diagnostics.record("rich-text", action, this.current.id),
     });
     this.outlineRichText = new OutlineRichTextController({
       root: this.rootEl,
       isReadonly: () => Boolean(this.commands?.isReadonly()),
       onCommit: (uid, html) => this.commitOutlineRichText(uid, html),
-      onDiagnostic: (action, details) => this.options.diagnostics.record('outline', action, this.current.id, details),
+      onDiagnostic: (action, details) =>
+        this.options.diagnostics.record(
+          "outline",
+          action,
+          this.current.id,
+          details,
+        ),
       onSelectionChange: (hasRange, rect, format, target) => {
         this.richTextToolbar?.update(hasRange, rect, format, target);
       },
     });
-    this.rootEl.addEventListener('keydown', this.onRootKeydown);
-    this.rootEl.addEventListener('paste', this.onImagePaste);
-    this.canvasEl.addEventListener('dragover', this.onImageDragOver);
-    this.canvasEl.addEventListener('drop', this.onImageDrop);
+    this.rootEl.addEventListener("keydown", this.onRootKeydown);
+    this.rootEl.addEventListener("paste", this.onImagePaste);
+    this.canvasEl.addEventListener("dragover", this.onImageDragOver);
+    this.canvasEl.addEventListener("drop", this.onImageDrop);
 
     this.bindToolbar();
     this.bindMapEvents();
@@ -321,12 +610,14 @@ export class YeMindEditor {
         this.titleEl.title = next.title;
       }
     });
-    this.settingsUnsubscribe = this.options.settingsStore.subscribe((settings) => this.applySettings(settings));
+    this.settingsUnsubscribe = this.options.settingsStore.subscribe(
+      (settings) => this.applySettings(settings),
+    );
     this.updateStats(this.current.data);
     this.renderOutline(this.current.data);
     this.updateZoom();
     const runtime = this.map as any;
-    this.options.diagnostics.record('editor', 'mounted', this.current.id, {
+    this.options.diagnostics.record("editor", "mounted", this.current.id, {
       layout: this.current.layout,
       theme: this.current.theme,
       lineStyle: this.current.lineStyle,
@@ -343,280 +634,462 @@ export class YeMindEditor {
   }
 
   private bindToolbar(): void {
-    this.rootEl.addEventListener('click', (event) => {
-      const anchor = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[href]');
+    this.rootEl.addEventListener("click", (event) => {
+      const anchor = (event.target as HTMLElement).closest<HTMLAnchorElement>(
+        "a[href]",
+      );
       if (anchor && this.rootEl.contains(anchor)) {
         event.preventDefault();
         event.stopPropagation();
-        this.openLink(anchor.href || anchor.getAttribute('href') || '');
+        this.openLink(anchor.href || anchor.getAttribute("href") || "");
         return;
       }
 
-      const outlineToggle = (event.target as HTMLElement).closest<HTMLElement>('[data-outline-toggle]');
-      const outlineRow = (event.target as HTMLElement).closest<HTMLElement>('[data-outline-uid]');
+      const outlineToggle = (event.target as HTMLElement).closest<HTMLElement>(
+        "[data-outline-toggle]",
+      );
+      const outlineRow = (event.target as HTMLElement).closest<HTMLElement>(
+        "[data-outline-uid]",
+      );
       if (outlineToggle && outlineRow && this.commands) {
-        const uid = outlineRow.dataset.outlineUid ?? '';
-        const expanded = outlineRow.dataset.outlineExpanded === 'true';
+        event.preventDefault();
+        event.stopPropagation();
+        const uid = outlineRow.dataset.outlineUid ?? "";
+        const next = resolveOutlineToggleState({
+          hasChildren: outlineRow.dataset.outlineHasChildren === "true",
+          expanded: outlineRow.dataset.outlineExpanded === "true",
+        });
+        if (!uid || next === null) return;
+        const activeHost = this.outlineRichText?.activeHost;
+        const activeUid =
+          activeHost?.closest<HTMLElement>("[data-outline-uid]")?.dataset
+            .outlineUid ?? "";
+        if (activeUid === uid && activeHost && this.outlineRichText) {
+          const selection = this.outlineRichText.getSelectionState(activeHost);
+          this.pendingOutlineFocus = {
+            uid,
+            placement: "range",
+            start: selection.start,
+            end: selection.end,
+          };
+          this.outlineRichText.commitAndDetach("toggle-collapse");
+        }
         this.commands.goToNode(uid);
         this.activateOutlineUid(uid);
-        this.pendingOutlineFocus = { uid, placement: 'start' };
-        if (!this.commands.setNodeExpandedByUid(uid, !expanded)) this.pendingOutlineFocus = null;
+        if (!this.commands.setNodeExpandedByUid(uid, next))
+          this.pendingOutlineFocus = null;
         return;
       }
       if (outlineRow && this.commands) {
-        const uid = outlineRow.dataset.outlineUid ?? '';
+        if (Date.now() < this.suppressOutlineClickUntil) return;
+        const uid = outlineRow.dataset.outlineUid ?? "";
         this.commands.goToNode(uid);
         this.activateOutlineUid(uid);
         return;
       }
 
-      const searchButton = (event.target as HTMLElement).closest<HTMLElement>('[data-search-action]');
+      const searchButton = (event.target as HTMLElement).closest<HTMLElement>(
+        "[data-search-action]",
+      );
       if (searchButton) {
-        this.handleSearchAction(searchButton.dataset.searchAction ?? '');
+        this.handleSearchAction(searchButton.dataset.searchAction ?? "");
         return;
       }
 
-      const relationButton = (event.target as HTMLElement).closest<HTMLElement>('[data-relation-action]');
+      const relationButton = (event.target as HTMLElement).closest<HTMLElement>(
+        "[data-relation-action]",
+      );
       if (relationButton && this.commands) {
         const relationAction = relationButton.dataset.relationAction;
-        if (relationAction === 'edit' && !this.commands.isReadonly()) this.commands.editActiveRelationText();
-        if (relationAction === 'delete' && !this.commands.isReadonly()) this.commands.removeActiveRelation();
-        if (relationAction === 'cancel') this.commands.cancelRelation();
+        if (relationAction === "edit" && !this.commands.isReadonly())
+          this.commands.editActiveRelationText();
+        if (relationAction === "delete" && !this.commands.isReadonly())
+          this.commands.removeActiveRelation();
+        if (relationAction === "cancel") this.commands.cancelRelation();
         this.updateRelationPresentation();
         return;
       }
 
-      const outerFrameButton = (event.target as HTMLElement).closest<HTMLElement>('[data-outer-frame-action]');
+      const outerFrameButton = (
+        event.target as HTMLElement
+      ).closest<HTMLElement>("[data-outer-frame-action]");
       if (outerFrameButton && this.commands) {
         const outerFrameAction = outerFrameButton.dataset.outerFrameAction;
-        if (outerFrameAction === 'edit' && !this.commands.isReadonly()) {
+        if (outerFrameAction === "edit" && !this.commands.isReadonly()) {
           this.commands.editActiveOuterFrameText();
           this.updateOuterFramePresentation();
         }
-        if (outerFrameAction === 'delete' && !this.commands.isReadonly()) {
+        if (outerFrameAction === "delete" && !this.commands.isReadonly()) {
           this.commands.removeActiveOuterFrame();
           this.hideOuterFramePresentation();
         }
         return;
       }
 
-      const button = (event.target as HTMLElement).closest<HTMLElement>('[data-action]');
+      const button = (event.target as HTMLElement).closest<HTMLElement>(
+        "[data-action]",
+      );
       if (!button || !this.commands || !this.map) return;
       const action = button.dataset.action;
-      if (action) this.options.diagnostics.record('toolbar', action, this.current.id);
+      if (action)
+        this.options.diagnostics.record("toolbar", action, this.current.id);
       switch (action) {
-        case 'undo': this.commands.undo(); break;
-        case 'redo': this.commands.redo(); break;
-        case 'add-child': this.commands.addChild(); break;
-        case 'add-sibling': this.commands.addSibling(); break;
-        case 'remove': this.commands.remove(); break;
-        case 'fit': this.commands.fit(); break;
-        case 'reset': this.commands.resetZoom(); break;
-        case 'reset-layout': this.commands.resetLayout(); break;
-        case 'toggle-selection-mode': void this.toggleSelectionMode(); break;
-        case 'zoom-in': this.commands.zoomIn(); break;
-        case 'zoom-out': this.commands.zoomOut(); break;
-        case 'view-map': this.setViewMode('map'); break;
-        case 'view-split': this.setViewMode('split'); break;
-        case 'view-outline': this.setViewMode('outline'); break;
-        case 'open-search': this.openSearchPanel(); break;
-        case 'checkpoints': this.openCheckpointMenu(button); break;
-        case 'readonly': this.setReadonly(this.rootEl.dataset.readonly !== 'true'); break;
-        case 'zen': this.toggleZen(true); break;
-        case 'zen-exit': this.toggleZen(false); break;
-        case 'fullscreen': void this.toggleFullscreen(); break;
-        case 'help': this.openHelp(); break;
+        case "undo":
+          this.commands.undo();
+          break;
+        case "redo":
+          this.commands.redo();
+          break;
+        case "add-child":
+          this.commands.addChild();
+          break;
+        case "add-sibling":
+          this.commands.addSibling();
+          break;
+        case "remove":
+          this.commands.remove();
+          break;
+        case "fit":
+          this.commands.fit();
+          break;
+        case "reset":
+          this.commands.resetZoom();
+          break;
+        case "reset-layout":
+          this.commands.resetLayout();
+          break;
+        case "toggle-selection-mode":
+          void this.toggleSelectionMode();
+          break;
+        case "zoom-in":
+          this.commands.zoomIn();
+          break;
+        case "zoom-out":
+          this.commands.zoomOut();
+          break;
+        case "view-map":
+          this.setViewMode("map");
+          break;
+        case "view-split":
+          this.setViewMode("split");
+          break;
+        case "view-outline":
+          this.setViewMode("outline");
+          break;
+        case "open-search":
+          this.openSearchPanel();
+          break;
+        case "checkpoints":
+          this.openCheckpointMenu(button);
+          break;
+        case "readonly":
+          this.setReadonly(this.rootEl.dataset.readonly !== "true");
+          break;
+        case "zen":
+          this.toggleZen(true);
+          break;
+        case "zen-exit":
+          this.toggleZen(false);
+          break;
+        case "fullscreen":
+          void this.toggleFullscreen();
+          break;
+        case "help":
+          this.openHelp();
+          break;
       }
     });
 
-    this.outlineEl.addEventListener('focusin', (event) => {
-      const editor = (event.target as HTMLElement).closest<HTMLElement>('[data-outline-editor]');
-      const row = editor?.closest<HTMLElement>('[data-outline-uid]');
-      const uid = row?.dataset.outlineUid ?? '';
+    this.outlineEl.addEventListener("focusin", (event) => {
+      const editor = (event.target as HTMLElement).closest<HTMLElement>(
+        "[data-outline-editor]",
+      );
+      const row = editor?.closest<HTMLElement>("[data-outline-uid]");
+      const uid = row?.dataset.outlineUid ?? "";
       if (!editor || !uid || !this.commands || !this.outlineRichText) return;
-      const request = this.pendingOutlineFocus?.uid === uid ? this.pendingOutlineFocus : undefined;
+      const request =
+        this.pendingOutlineFocus?.uid === uid
+          ? this.pendingOutlineFocus
+          : undefined;
       if (request) this.pendingOutlineFocus = null;
       this.outlineRichText.activate(editor, uid, request);
       this.commands.goToNode(uid);
       this.activateOutlineUid(uid);
     });
     // Capture structural keys before Quill's own keyboard module consumes them.
-    this.outlineEl.addEventListener('keydown', (event) => this.handleOutlineKeydown(event), true);
+    this.outlineEl.addEventListener(
+      "keydown",
+      (event) => this.handleOutlineKeydown(event),
+      true,
+    );
     this.bindOutlineDrag();
     this.bindSplitDivider();
 
-    this.rootEl.addEventListener('change', (event) => {
-      const control = (event.target as HTMLElement).closest<HTMLInputElement | HTMLSelectElement>('[data-outer-frame-setting]');
+    this.rootEl.addEventListener("change", (event) => {
+      const control = (event.target as HTMLElement).closest<
+        HTMLInputElement | HTMLSelectElement
+      >("[data-outer-frame-setting]");
       if (!control || !this.commands || this.commands.isReadonly()) return;
       const key = control.dataset.outerFrameSetting;
       if (!key) return;
       const rawValue = control.value;
-      const value = key === 'fill' ? hexToRgba(rawValue) : rawValue;
+      const value = key === "fill" ? hexToRgba(rawValue) : rawValue;
       this.commands.updateActiveOuterFrame({ [key]: value });
       this.updateOuterFramePresentation();
     });
 
-    this.searchInputEl.addEventListener('input', () => {
+    this.searchInputEl.addEventListener("input", () => {
       if (!this.searchInputEl.value.trim()) {
         this.commands?.endSearch();
-        this.searchText = '';
+        this.searchText = "";
         this.updateSearchInfo({ currentIndex: -1, total: 0 });
       } else if (this.searchInputEl.value.trim() !== this.searchText) {
-        this.searchInfoEl.textContent = '按 Enter 搜索';
+        this.searchInfoEl.textContent = "按 Enter 搜索";
       }
     });
-    this.searchInputEl.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
+    this.searchInputEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
         event.preventDefault();
-        this.performSearch(event.shiftKey ? 'previous' : 'next');
-      } else if (event.key === 'Escape') {
+        this.performSearch(event.shiftKey ? "previous" : "next");
+      } else if (event.key === "Escape") {
         event.preventDefault();
         this.closeSearchPanel();
       }
     });
-    this.replaceInputEl.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter') return;
+    this.replaceInputEl.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
       event.preventDefault();
       this.replaceCurrentSearch();
     });
 
-    this.rootEl.querySelector<HTMLSelectElement>('[data-action="layout"]')?.addEventListener('change', (event) => {
-      if (!this.map) return;
-      const layout = (event.target as HTMLSelectElement).value;
-      this.map.setLayout(layout);
-      this.current.layout = layout;
-      this.scheduleSave();
-    });
-    this.rootEl.querySelector<HTMLSelectElement>('[data-action="theme"]')?.addEventListener('change', (event) => {
-      if (!this.map) return;
-      this.current.theme = normalizeThemePresetId((event.target as HTMLSelectElement).value);
-      this.applyMapAppearance();
-      this.options.diagnostics.record('appearance', 'theme-changed', this.current.id, {
-        theme: this.current.theme,
+    this.rootEl
+      .querySelector<HTMLSelectElement>('[data-action="layout"]')
+      ?.addEventListener("change", (event) => {
+        if (!this.map) return;
+        const layout = (event.target as HTMLSelectElement).value;
+        this.map.setLayout(layout);
+        this.current.layout = layout;
+        this.scheduleSave();
       });
-      this.scheduleSave();
-    });
-    this.rootEl.querySelector<HTMLSelectElement>('[data-action="line-style"]')?.addEventListener('change', (event) => {
-      if (!this.map) return;
-      this.current.lineStyle = normalizeLineStyle((event.target as HTMLSelectElement).value);
-      this.applyMapAppearance();
-      this.options.diagnostics.record('appearance', 'line-style-changed', this.current.id, {
-        lineStyle: this.current.lineStyle,
+    this.rootEl
+      .querySelector<HTMLSelectElement>('[data-action="theme"]')
+      ?.addEventListener("change", (event) => {
+        if (!this.map) return;
+        this.current.theme = normalizeThemePresetId(
+          (event.target as HTMLSelectElement).value,
+        );
+        this.applyMapAppearance();
+        this.options.diagnostics.record(
+          "appearance",
+          "theme-changed",
+          this.current.id,
+          {
+            theme: this.current.theme,
+          },
+        );
+        this.scheduleSave();
       });
-      this.scheduleSave();
-    });
+    this.rootEl
+      .querySelector<HTMLSelectElement>('[data-action="line-style"]')
+      ?.addEventListener("change", (event) => {
+        if (!this.map) return;
+        this.current.lineStyle = normalizeLineStyle(
+          (event.target as HTMLSelectElement).value,
+        );
+        this.applyMapAppearance();
+        this.options.diagnostics.record(
+          "appearance",
+          "line-style-changed",
+          this.current.id,
+          {
+            lineStyle: this.current.lineStyle,
+          },
+        );
+        this.scheduleSave();
+      });
   }
 
   private bindMapEvents(): void {
     if (!this.map) return;
-    this.map.on('data_change', (data: MindMapTree) => {
+    this.map.on("data_change", (data: MindMapTree) => {
       if (this.applyingCheckpoint) return;
       this.current.data = data;
-      this.options.diagnostics.record('editor', 'data-change', this.current.id, { nodeCount: calculateEditorStats(data).nodes });
+      this.options.diagnostics.record(
+        "editor",
+        "data-change",
+        this.current.id,
+        { nodeCount: calculateEditorStats(data).nodes },
+      );
       this.updateStats(data);
       this.renderOutline(data);
       this.scheduleSave();
     });
-    this.map.on('view_data_change', (viewData: Record<string, unknown>) => {
+    this.map.on("view_data_change", (viewData: Record<string, unknown>) => {
       if (this.applyingCheckpoint) return;
       this.updateZoom();
       const normalized = normalizePersistedViewData(viewData);
       if (!normalized) return;
       this.current.viewData = normalized;
-      this.options.diagnostics.record('editor', 'view-change', this.current.id, { zoom: Number((this.map?.view as any)?.scale ?? 1) });
+      this.options.diagnostics.record(
+        "editor",
+        "view-change",
+        this.current.id,
+        { zoom: Number((this.map?.view as any)?.scale ?? 1) },
+      );
       this.updateDiagnosticState();
       this.scheduleSave();
     });
-    this.map.on('node_contextmenu', (event: MouseEvent, node: any) => {
+    this.map.on("node_contextmenu", (event: MouseEvent, node: any) => {
       if (!this.commands) return;
       this.activateNode(node);
       this.openContextMenu(event);
     });
-    this.map.on('contextmenu', (event: MouseEvent) => {
+    this.map.on("contextmenu", (event: MouseEvent) => {
       this.openCanvasMenu(event);
     });
-    this.map.on('rich_text_selection_change', (
-      hasRange: boolean,
-      rectInfo: Record<string, number> | null,
-      formatInfo: Record<string, unknown> | null,
-    ) => {
-      this.richTextToolbar?.update(hasRange, rectInfo as any, formatInfo, this.commands);
-    });
-    this.map.on('yemind_todo_toggle', (node: any) => {
+    this.map.on(
+      "rich_text_selection_change",
+      (
+        hasRange: boolean,
+        rectInfo: Record<string, number> | null,
+        formatInfo: Record<string, unknown> | null,
+      ) => {
+        this.richTextToolbar?.update(
+          hasRange,
+          rectInfo as any,
+          formatInfo,
+          this.commands,
+        );
+      },
+    );
+    this.map.on("yemind_todo_toggle", (node: any) => {
       if (!this.commands) return;
       this.activateNode(node);
       if (this.commands.isReadonly()) {
-        showMessage('只读模式下不能修改待办', 2500, 'info');
+        showMessage("只读模式下不能修改待办", 2500, "info");
         return;
       }
       this.commands.toggleTodo();
     });
-    this.map.on('yemind_badge_click', (type: 'todo' | 'note' | 'comments', node: any) => {
-      if (!this.commands) return;
-      this.activateNode(node);
-      if (type === 'todo') {
-        if (this.commands.isReadonly()) {
-          showMessage('只读模式下不能修改待办', 2500, 'info');
+    this.map.on(
+      "yemind_badge_click",
+      (type: "todo" | "note" | "comments", node: any) => {
+        if (!this.commands) return;
+        this.activateNode(node);
+        if (type === "todo") {
+          if (this.commands.isReadonly()) {
+            showMessage("只读模式下不能修改待办", 2500, "info");
+            return;
+          }
+          this.commands.toggleTodo();
+        }
+        if (type === "note")
+          openNoteDialog(this.commands, {
+            readonly: this.commands.isReadonly(),
+          });
+        if (type === "comments")
+          openCommentsDialog(this.commands, {
+            readonly: this.commands.isReadonly(),
+          });
+      },
+    );
+    this.map.on(
+      "yemind_badge_hover",
+      (
+        type: "note" | "comments",
+        node: any,
+        anchor: HTMLElement,
+        entering: boolean,
+      ) => {
+        if (!this.nodeHoverPreview) return;
+        if (!entering) {
+          this.nodeHoverPreview.scheduleHide();
           return;
         }
-        this.commands.toggleTodo();
-      }
-      if (type === 'note') openNoteDialog(this.commands, { readonly: this.commands.isReadonly() });
-      if (type === 'comments') openCommentsDialog(this.commands, { readonly: this.commands.isReadonly() });
-    });
-    this.map.on('yemind_badge_hover', (type: 'note' | 'comments', node: any, anchor: HTMLElement, entering: boolean) => {
-      if (!this.nodeHoverPreview) return;
-      if (!entering) {
-        this.nodeHoverPreview.scheduleHide();
-        return;
-      }
-      const value = type === 'note'
-        ? normalizeNodeNote(node.getData?.('yemindNote') ?? node.getData?.('note'))
-        : ((node.getData?.('yemindComments') ?? []) as any[]);
-      if (!value || (Array.isArray(value) && value.length === 0)) return;
-      this.nodeHoverPreview.show(type, value as any, anchor);
-    });
-    this.map.on('node_active', (node: any, list: any[]) => {
-      this.rootEl.dataset.hasSelection = list.length > 0 ? 'true' : 'false';
+        const value =
+          type === "note"
+            ? normalizeNodeNote(
+                node.getData?.("yemindNote") ?? node.getData?.("note"),
+              )
+            : ((node.getData?.("yemindComments") ?? []) as any[]);
+        if (!value || (Array.isArray(value) && value.length === 0)) return;
+        this.nodeHoverPreview.show(type, value as any, anchor);
+      },
+    );
+    this.map.on("node_active", (node: any, list: any[]) => {
+      this.rootEl.dataset.hasSelection = list.length > 0 ? "true" : "false";
       this.updateSelectionPresentation(list.length);
       this.updateDiagnosticState({ selectedNodeCount: list.length });
       this.updateToolbarAvailability();
       const active = node ?? list[0];
-      const uid = active?.getData?.('uid');
-      this.activateOutlineUid(uid ? String(uid) : '');
+      const uid = active?.getData?.("uid");
+      this.activateOutlineUid(uid ? String(uid) : "");
     });
-    this.map.on('associative_line_click', () => this.updateRelationPresentation());
-    this.map.on('associative_line_deactivate', () => this.updateRelationPresentation());
-    this.map.on('outer_frame_active', () => this.updateOuterFramePresentation());
-    this.map.on('outer_frame_deactivate', () => this.hideOuterFramePresentation());
-    this.map.on('outer_frame_delete', () => this.hideOuterFramePresentation());
-    this.map.on('node_click', () => window.setTimeout(() => this.updateRelationPresentation(), 0));
-    this.map.on('draw_click', () => window.setTimeout(() => this.updateRelationPresentation(), 0));
-    this.map.on('search_info_change', (info: { currentIndex: number; total: number }) => this.updateSearchInfo(info));
-    this.map.on('scale', () => this.updateZoom());
+    this.map.on("associative_line_click", () =>
+      this.updateRelationPresentation(),
+    );
+    this.map.on("associative_line_deactivate", () =>
+      this.updateRelationPresentation(),
+    );
+    this.map.on("outer_frame_active", () =>
+      this.updateOuterFramePresentation(),
+    );
+    this.map.on("outer_frame_deactivate", () =>
+      this.hideOuterFramePresentation(),
+    );
+    this.map.on("outer_frame_delete", () => this.hideOuterFramePresentation());
+    this.map.on("node_click", () =>
+      window.setTimeout(() => this.updateRelationPresentation(), 0),
+    );
+    this.map.on("draw_click", () =>
+      window.setTimeout(() => this.updateRelationPresentation(), 0),
+    );
+    this.map.on(
+      "search_info_change",
+      (info: { currentIndex: number; total: number }) =>
+        this.updateSearchInfo(info),
+    );
+    this.map.on("scale", () => this.updateZoom());
   }
 
   private openContextMenu(event: MouseEvent): void {
     if (!this.commands) return;
-    this.options.diagnostics.record('context-menu', 'opened', this.current.id, { selectedNodeCount: this.commands.getActiveNodes().length });
+    this.options.diagnostics.record("context-menu", "opened", this.current.id, {
+      selectedNodeCount: this.commands.getActiveNodes().length,
+    });
     openNodeContextMenu(event, this.commands, {
       onInlineLink: () => openInlineLinkDialog(this.commands!, this.settings),
       onCodeBlock: () => openCodeBlockDialog(this.commands!, this.settings),
-      onNodeLink: () => openLinkDialog(this.commands!, this.settings.inlineLinkAutoHttps),
+      onNodeLink: () =>
+        openLinkDialog(this.commands!, this.settings.inlineLinkAutoHttps),
       onRelation: () => this.beginRelation(),
-      onAction: (action) => this.options.diagnostics.record('context-menu', action, this.current.id),
+      onAction: (action) =>
+        this.options.diagnostics.record(
+          "context-menu",
+          action,
+          this.current.id,
+        ),
     });
   }
 
   private openCanvasMenu(event: MouseEvent): void {
     if (!this.commands) return;
-    this.options.diagnostics.record('context-menu', 'canvas-opened', this.current.id);
+    this.options.diagnostics.record(
+      "context-menu",
+      "canvas-opened",
+      this.current.id,
+    );
     openCanvasContextMenu(event, this.commands, {
-      zen: this.rootEl.dataset.zen === 'true',
-      readonly: this.rootEl.dataset.readonly === 'true',
+      zen: this.rootEl.dataset.zen === "true",
+      readonly: this.rootEl.dataset.readonly === "true",
       onZenChange: (enabled) => this.toggleZen(enabled),
       onReadonlyChange: (enabled) => this.setReadonly(enabled),
-      onAction: (action) => this.options.diagnostics.record('context-menu', `canvas-${action}`, this.current.id),
+      onAction: (action) =>
+        this.options.diagnostics.record(
+          "context-menu",
+          `canvas-${action}`,
+          this.current.id,
+        ),
     });
   }
 
@@ -635,14 +1108,22 @@ export class YeMindEditor {
     this.relationPanelEl.hidden = presentation.hidden;
     this.relationPanelEl.dataset.mode = presentation.mode;
     this.relationHintEl.textContent = presentation.hint;
-    this.relationPanelEl.querySelectorAll<HTMLElement>('[data-relation-action]').forEach((button) => {
-      const action = button.dataset.relationAction;
-      button.hidden = presentation.mode === 'creating' ? action !== 'cancel' : presentation.mode === 'active' ? action === 'cancel' : true;
-    });
+    this.relationPanelEl
+      .querySelectorAll<HTMLElement>("[data-relation-action]")
+      .forEach((button) => {
+        const action = button.dataset.relationAction;
+        button.hidden =
+          presentation.mode === "creating"
+            ? action !== "cancel"
+            : presentation.mode === "active"
+              ? action === "cancel"
+              : true;
+      });
   }
 
   private updateOuterFramePresentation(): void {
-    if (!this.commands || !this.outerFramePanelEl || !this.outerFrameHintEl) return;
+    if (!this.commands || !this.outerFramePanelEl || !this.outerFrameHintEl)
+      return;
     const presentation = createOuterFramePresentation({
       activeStyle: this.commands.getActiveOuterFrameStyle(),
       readonly: this.commands.isReadonly(),
@@ -656,15 +1137,21 @@ export class YeMindEditor {
       strokeDasharray: presentation.strokeDasharray,
       textAlign: presentation.textAlign,
     };
-    this.outerFramePanelEl.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-outer-frame-setting]').forEach((control) => {
-      const key = control.dataset.outerFrameSetting ?? '';
-      if (values[key]) control.value = values[key];
-      control.disabled = presentation.readonly;
-    });
-    this.outerFramePanelEl.querySelectorAll<HTMLButtonElement>('[data-outer-frame-action]').forEach((button) => {
-      button.hidden = presentation.readonly;
-      button.disabled = presentation.readonly;
-    });
+    this.outerFramePanelEl
+      .querySelectorAll<HTMLInputElement | HTMLSelectElement>(
+        "[data-outer-frame-setting]",
+      )
+      .forEach((control) => {
+        const key = control.dataset.outerFrameSetting ?? "";
+        if (values[key]) control.value = values[key];
+        control.disabled = presentation.readonly;
+      });
+    this.outerFramePanelEl
+      .querySelectorAll<HTMLButtonElement>("[data-outer-frame-action]")
+      .forEach((button) => {
+        button.hidden = presentation.readonly;
+        button.disabled = presentation.readonly;
+      });
   }
 
   private hideOuterFramePresentation(): void {
@@ -674,7 +1161,9 @@ export class YeMindEditor {
   private applySettings(settings: YeMindSettings): void {
     const firstApply = !this.settingsInitialized;
     this.settings = settings;
-    this.richTextToolbar?.setEnabled(settings.showRichTextToolbar && this.rootEl.dataset.readonly !== 'true');
+    this.richTextToolbar?.setEnabled(
+      settings.showRichTextToolbar && this.rootEl.dataset.readonly !== "true",
+    );
     configureMindMapPlugins(settings);
     configureNodeDecorations({
       showTodoBadge: settings.showTodoBadge,
@@ -684,16 +1173,22 @@ export class YeMindEditor {
     this.rootEl.dataset.codeLanguage = String(settings.codeBlockShowLanguage);
     this.rootEl.dataset.clozeMode = settings.clozeMode;
     this.rootEl.dataset.clozeHover = String(settings.clozeRevealOnHover);
-    this.rootEl.style.setProperty('--ymz-code-tab-size', String(settings.codeBlockTabSize));
-    this.rootEl.style.setProperty('--ymz-code-font-size', `${settings.codeBlockFontSize}px`);
+    this.rootEl.style.setProperty(
+      "--ymz-code-tab-size",
+      String(settings.codeBlockTabSize),
+    );
+    this.rootEl.style.setProperty(
+      "--ymz-code-font-size",
+      `${settings.codeBlockFontSize}px`,
+    );
     this.applySplitOutlineRatio(settings.splitOutlineRatio, false);
     const behavior = buildDragAndLayoutOptions(settings);
     const relationOptions = buildRelationOptions(settings);
     const outerFrameOptions = buildOuterFrameOptions(settings);
     this.map?.updateConfig({
-      useLeftKeySelectionRightKeyDrag: settings.canvasMode === 'select',
-      mousewheelAction: settings.wheelMode === 'zoom' ? 'zoom' : 'move',
-      disableMouseWheelZoom: settings.wheelMode === 'none',
+      useLeftKeySelectionRightKeyDrag: settings.canvasMode === "select",
+      mousewheelAction: settings.wheelMode === "zoom" ? "zoom" : "move",
+      disableMouseWheelZoom: settings.wheelMode === "none",
       isShowCreateChildBtnIcon: settings.showQuickCreate,
       autoMoveWhenMouseInEdgeOnDrag: behavior.autoMoveWhenMouseInEdgeOnDrag,
       isLimitMindMapInCanvas: behavior.isLimitMindMapInCanvas,
@@ -733,7 +1228,9 @@ export class YeMindEditor {
     this.appearanceMode = appearanceMode;
     this.rootEl.dataset.themePreset = appearance.presetId;
     this.rootEl.dataset.appearance = appearanceMode;
-    this.canvasEl.style.backgroundColor = String(appearance.themeConfig.backgroundColor ?? '');
+    this.canvasEl.style.backgroundColor = String(
+      appearance.themeConfig.backgroundColor ?? "",
+    );
     this.map.setThemeConfig(appearance.themeConfig, true);
     this.map.updateConfig({ rainbowLinesConfig: appearance.rainbow });
     if (render) this.map.render();
@@ -743,22 +1240,37 @@ export class YeMindEditor {
 
   private bindAppearanceObserver(): void {
     this.appearanceMode = detectAppearance();
-    if (typeof MutationObserver !== 'undefined') {
-      this.appearanceObserver = new MutationObserver(() => this.refreshAppearanceIfNeeded());
+    if (typeof MutationObserver !== "undefined") {
+      this.appearanceObserver = new MutationObserver(() =>
+        this.refreshAppearanceIfNeeded(),
+      );
       this.appearanceObserver.observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ['class', 'data-theme', 'data-theme-mode', 'data-color-mode'],
+        attributeFilter: [
+          "class",
+          "data-theme",
+          "data-theme-mode",
+          "data-color-mode",
+        ],
       });
       if (document.body) {
         this.appearanceObserver.observe(document.body, {
           attributes: true,
-          attributeFilter: ['class', 'data-theme', 'data-theme-mode', 'data-color-mode'],
+          attributeFilter: [
+            "class",
+            "data-theme",
+            "data-theme-mode",
+            "data-color-mode",
+          ],
         });
       }
     }
-    if (typeof matchMedia === 'function') {
-      this.appearanceMedia = matchMedia('(prefers-color-scheme: dark)');
-      this.appearanceMedia.addEventListener?.('change', this.onAppearanceMediaChange);
+    if (typeof matchMedia === "function") {
+      this.appearanceMedia = matchMedia("(prefers-color-scheme: dark)");
+      this.appearanceMedia.addEventListener?.(
+        "change",
+        this.onAppearanceMediaChange,
+      );
     }
     this.applyMapAppearance(false);
   }
@@ -768,7 +1280,12 @@ export class YeMindEditor {
     const next = detectAppearance();
     if (next === this.appearanceMode) return;
     this.applyMapAppearance();
-    this.options.diagnostics.record('appearance', 'host-mode-changed', this.current.id, { appearance: next });
+    this.options.diagnostics.record(
+      "appearance",
+      "host-mode-changed",
+      this.current.id,
+      { appearance: next },
+    );
   }
 
   private bindSplitDivider(): void {
@@ -776,37 +1293,39 @@ export class YeMindEditor {
       if (this.splitDragPointerId !== event.pointerId) return;
       this.flushSplitPointerUpdate();
       this.splitDragPointerId = null;
-      this.splitDividerEl.classList.remove('is-dragging');
-      try { this.splitDividerEl.releasePointerCapture(event.pointerId); } catch {}
+      this.splitDividerEl.classList.remove("is-dragging");
+      try {
+        this.splitDividerEl.releasePointerCapture(event.pointerId);
+      } catch {}
       void this.persistSplitOutlineRatio();
     };
 
-    this.splitDividerEl.addEventListener('pointerdown', (event) => {
-      if (this.viewMode !== 'split' || event.button !== 0) return;
+    this.splitDividerEl.addEventListener("pointerdown", (event) => {
+      if (this.viewMode !== "split" || event.button !== 0) return;
       event.preventDefault();
       this.splitDragPointerId = event.pointerId;
-      this.splitDividerEl.classList.add('is-dragging');
+      this.splitDividerEl.classList.add("is-dragging");
       this.splitDividerEl.setPointerCapture(event.pointerId);
       this.queueSplitPointerUpdate(event.clientX);
     });
-    this.splitDividerEl.addEventListener('pointermove', (event) => {
+    this.splitDividerEl.addEventListener("pointermove", (event) => {
       if (this.splitDragPointerId !== event.pointerId) return;
       event.preventDefault();
       this.queueSplitPointerUpdate(event.clientX);
     });
-    this.splitDividerEl.addEventListener('pointerup', endDrag);
-    this.splitDividerEl.addEventListener('pointercancel', endDrag);
-    this.splitDividerEl.addEventListener('dblclick', (event) => {
-      if (this.viewMode !== 'split') return;
+    this.splitDividerEl.addEventListener("pointerup", endDrag);
+    this.splitDividerEl.addEventListener("pointercancel", endDrag);
+    this.splitDividerEl.addEventListener("dblclick", (event) => {
+      if (this.viewMode !== "split") return;
       event.preventDefault();
       this.applySplitOutlineRatio(DEFAULT_SPLIT_OUTLINE_RATIO, true);
     });
-    this.splitDividerEl.addEventListener('keydown', (event) => {
-      if (this.viewMode !== 'split') return;
+    this.splitDividerEl.addEventListener("keydown", (event) => {
+      if (this.viewMode !== "split") return;
       let next: number | null = null;
-      if (event.key === 'ArrowLeft') next = this.splitOutlineRatio + 0.02;
-      if (event.key === 'ArrowRight') next = this.splitOutlineRatio - 0.02;
-      if (event.key === 'Home') next = DEFAULT_SPLIT_OUTLINE_RATIO;
+      if (event.key === "ArrowLeft") next = this.splitOutlineRatio + 0.02;
+      if (event.key === "ArrowRight") next = this.splitOutlineRatio - 0.02;
+      if (event.key === "Home") next = DEFAULT_SPLIT_OUTLINE_RATIO;
       if (next === null) return;
       event.preventDefault();
       event.stopPropagation();
@@ -835,28 +1354,36 @@ export class YeMindEditor {
 
   private applySplitOutlineRatio(value: unknown, persist: boolean): void {
     this.splitOutlineRatio = normalizeSplitOutlineRatio(value);
-    this.rootEl.style.setProperty('--ymz-outline-ratio', `${(this.splitOutlineRatio * 100).toFixed(2)}%`);
-    this.splitDividerEl.setAttribute('aria-valuenow', String(Math.round(this.splitOutlineRatio * 100)));
-    if (this.viewMode === 'split') this.scheduleSafeResize();
+    this.rootEl.style.setProperty(
+      "--ymz-outline-ratio",
+      `${(this.splitOutlineRatio * 100).toFixed(2)}%`,
+    );
+    this.splitDividerEl.setAttribute(
+      "aria-valuenow",
+      String(Math.round(this.splitOutlineRatio * 100)),
+    );
+    if (this.viewMode === "split") this.scheduleSafeResize();
     if (persist) void this.persistSplitOutlineRatio();
   }
 
   private async persistSplitOutlineRatio(): Promise<void> {
     try {
-      await this.options.settingsStore.update({ splitOutlineRatio: this.splitOutlineRatio });
+      await this.options.settingsStore.update({
+        splitOutlineRatio: this.splitOutlineRatio,
+      });
     } catch (error) {
-      console.error('[YeMind Zen] split ratio save failed', error);
-      showMessage('分屏比例保存失败，已保持当前显示', 4000, 'error');
+      console.error("[YeMind Zen] split ratio save failed", error);
+      showMessage("分屏比例保存失败，已保持当前显示", 4000, "error");
     }
   }
 
   private async toggleSelectionMode(): Promise<void> {
-    const nextMode = this.settings.canvasMode === 'select' ? 'pan' : 'select';
+    const nextMode = this.settings.canvasMode === "select" ? "pan" : "select";
     try {
       await this.options.settingsStore.update({ canvasMode: nextMode });
     } catch (error) {
-      console.error('[YeMind Zen] canvas mode save failed', error);
-      showMessage('画布操作模式保存失败，已保持原设置', 4000, 'error');
+      console.error("[YeMind Zen] canvas mode save failed", error);
+      showMessage("画布操作模式保存失败，已保持原设置", 4000, "error");
     }
   }
 
@@ -874,49 +1401,81 @@ export class YeMindEditor {
     const actionState: Record<string, boolean> = {
       undo: state.undo,
       redo: state.redo,
-      'add-child': state.addChild,
-      'add-sibling': state.addSibling,
+      "add-child": state.addChild,
+      "add-sibling": state.addSibling,
       remove: state.remove,
-      'reset-layout': state.resetLayout,
+      "reset-layout": state.resetLayout,
     };
-    this.rootEl.querySelectorAll<HTMLButtonElement>('button[data-action]').forEach((button) => {
-      const action = button.dataset.action ?? '';
-      if (Object.prototype.hasOwnProperty.call(actionState, action)) button.disabled = !actionState[action];
-    });
-    const layout = this.rootEl.querySelector<HTMLSelectElement>('[data-action="layout"]');
+    this.rootEl
+      .querySelectorAll<HTMLButtonElement>("button[data-action]")
+      .forEach((button) => {
+        const action = button.dataset.action ?? "";
+        if (Object.prototype.hasOwnProperty.call(actionState, action))
+          button.disabled = !actionState[action];
+      });
+    const layout = this.rootEl.querySelector<HTMLSelectElement>(
+      '[data-action="layout"]',
+    );
     if (layout) layout.disabled = !state.layout;
-    const theme = this.rootEl.querySelector<HTMLSelectElement>('[data-action="theme"]');
+    const theme = this.rootEl.querySelector<HTMLSelectElement>(
+      '[data-action="theme"]',
+    );
     if (theme) theme.disabled = this.commands.isReadonly();
-    const lineStyle = this.rootEl.querySelector<HTMLSelectElement>('[data-action="line-style"]');
+    const lineStyle = this.rootEl.querySelector<HTMLSelectElement>(
+      '[data-action="line-style"]',
+    );
     if (lineStyle) lineStyle.disabled = this.commands.isReadonly();
   }
 
   private updateSelectionPresentation(count?: number): void {
-    const activeList = Array.isArray((this.map as any)?.renderer?.activeNodeList)
+    const activeList = Array.isArray(
+      (this.map as any)?.renderer?.activeNodeList,
+    )
       ? (this.map as any).renderer.activeNodeList
       : [];
-    const presentation = createSelectionPresentation(count ?? activeList.length, this.settings.canvasMode);
+    const presentation = createSelectionPresentation(
+      count ?? activeList.length,
+      this.settings.canvasMode,
+    );
     this.rootEl.dataset.selectionMode = this.settings.canvasMode;
     this.rootEl.dataset.multiSelection = String(presentation.isMultiple);
     this.selectionCountEl.textContent = presentation.countText;
     this.selectionCountEl.hidden = !presentation.isMultiple;
-    this.rootEl.querySelectorAll<HTMLElement>('[data-action="toggle-selection-mode"]').forEach((button) => {
-      button.classList.toggle('is-active', this.settings.canvasMode === 'select');
-      button.title = presentation.modeTitle;
-      button.setAttribute('aria-label', presentation.modeTitle);
-      button.setAttribute('aria-pressed', String(this.settings.canvasMode === 'select'));
-    });
+    this.rootEl
+      .querySelectorAll<HTMLElement>('[data-action="toggle-selection-mode"]')
+      .forEach((button) => {
+        button.classList.toggle(
+          "is-active",
+          this.settings.canvasMode === "select",
+        );
+        button.title = presentation.modeTitle;
+        button.setAttribute("aria-label", presentation.modeTitle);
+        button.setAttribute(
+          "aria-pressed",
+          String(this.settings.canvasMode === "select"),
+        );
+      });
   }
 
   private setViewMode(mode: ViewMode): void {
     this.viewMode = mode;
     this.rootEl.dataset.view = mode;
-    this.options.diagnostics.record('editor', 'view-mode-changed', this.current.id, { mode });
+    this.options.diagnostics.record(
+      "editor",
+      "view-mode-changed",
+      this.current.id,
+      { mode },
+    );
     this.updateDiagnosticState({ viewMode: mode });
-    this.rootEl.querySelectorAll<HTMLElement>('[data-action^="view-"]').forEach((button) => {
-      button.classList.toggle('is-active', button.dataset.action === `view-${mode}`);
-    });
-    if (mode !== 'outline') this.scheduleSafeResize();
+    this.rootEl
+      .querySelectorAll<HTMLElement>('[data-action^="view-"]')
+      .forEach((button) => {
+        button.classList.toggle(
+          "is-active",
+          button.dataset.action === `view-${mode}`,
+        );
+      });
+    if (mode !== "outline") this.scheduleSafeResize();
     else if (this.resizeFrame !== null) {
       window.cancelAnimationFrame(this.resizeFrame);
       this.resizeFrame = null;
@@ -924,17 +1483,25 @@ export class YeMindEditor {
   }
 
   private scheduleSafeResize(attempt = 0): void {
-    if (this.destroyed || !this.map || this.viewMode === 'outline') return;
-    if (this.resizeFrame !== null) window.cancelAnimationFrame(this.resizeFrame);
+    if (this.destroyed || !this.map || this.viewMode === "outline") return;
+    if (this.resizeFrame !== null)
+      window.cancelAnimationFrame(this.resizeFrame);
     this.resizeFrame = window.requestAnimationFrame(() => {
       this.resizeFrame = null;
-      if (this.destroyed || !this.map || this.viewMode === 'outline') return;
+      if (this.destroyed || !this.map || this.viewMode === "outline") return;
       if (!hasNonZeroSize(this.canvasEl)) {
         if (attempt < 8) this.scheduleSafeResize(attempt + 1);
         else {
-          this.options.diagnostics.record('editor', 'resize-skipped-zero-size', this.current.id, {
-            mode: this.viewMode,
-          }, 'warning', true);
+          this.options.diagnostics.record(
+            "editor",
+            "resize-skipped-zero-size",
+            this.current.id,
+            {
+              mode: this.viewMode,
+            },
+            "warning",
+            true,
+          );
           this.updateDiagnosticState({ canvasWidth: 0, canvasHeight: 0 });
         }
         return;
@@ -943,88 +1510,176 @@ export class YeMindEditor {
         this.map.resize();
         this.updateDiagnosticState();
       } catch (error) {
-        this.options.diagnostics.recordError('editor', 'resize-failed', error, this.current.id, true);
-        console.error('[YeMind Zen] safe resize failed', error);
+        this.options.diagnostics.recordError(
+          "editor",
+          "resize-failed",
+          error,
+          this.current.id,
+          true,
+        );
+        console.error("[YeMind Zen] safe resize failed", error);
       }
     });
   }
 
   private bindOutlineDrag(): void {
-    const clearDropState = (): void => {
-      this.outlineEl.querySelectorAll<HTMLElement>('[data-outline-uid]').forEach((row) => {
-        row.classList.remove('is-drop-before', 'is-drop-inside', 'is-drop-after');
+    this.outlineEl.addEventListener("pointerdown", this.onOutlinePointerDown);
+    window.addEventListener("pointermove", this.onOutlinePointerMove, {
+      passive: false,
+    });
+    window.addEventListener("pointerup", this.onOutlinePointerUp, {
+      passive: false,
+    });
+    window.addEventListener("pointercancel", this.onOutlinePointerCancel);
+  }
+
+  private createOutlineDragGhost(row: HTMLElement): HTMLElement {
+    const ghost = row.cloneNode(true) as HTMLElement;
+    ghost.className = "ymz-outline-drag-ghost";
+    ghost.removeAttribute("data-outline-uid");
+    ghost
+      .querySelectorAll("[contenteditable]")
+      .forEach((item) => item.removeAttribute("contenteditable"));
+    document.body.appendChild(ghost);
+    return ghost;
+  }
+
+  private cleanupOutlinePointerDrag(): void {
+    const session = this.outlinePointerDrag;
+    session?.sourceRow.classList.remove("is-dragging");
+    session?.ghost?.remove();
+    this.outlinePointerDrag = null;
+    this.clearOutlineDropState();
+  }
+
+  private clearOutlineDropState(): void {
+    this.outlineEl
+      .querySelectorAll<HTMLElement>("[data-outline-uid]")
+      .forEach((row) => {
+        row.classList.remove(
+          "is-drop-before",
+          "is-drop-inside",
+          "is-drop-after",
+        );
+        row.style.removeProperty("--ymz-outline-drop-depth");
       });
-    };
-    this.outlineEl.addEventListener('dragstart', (event) => {
-      const handle = (event.target as HTMLElement).closest<HTMLElement>('[data-outline-drag-handle]');
-      const row = handle?.closest<HTMLElement>('[data-outline-uid]');
-      if (!handle || !row || !this.commands || this.commands.isReadonly()) return;
-      const uid = row.dataset.outlineUid ?? '';
-      if (!uid || row.dataset.outlineRoot === 'true') {
-        event.preventDefault();
-        return;
-      }
-      this.outlineRichText?.flush();
-      this.outlineDragUid = uid;
-      event.dataTransfer?.setData('text/x-yemind-outline-uid', uid);
-      if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
-      this.options.diagnostics.record('outline', 'drag-start', this.current.id, { sourceDepth: Number(row.style.getPropertyValue('--ymz-outline-depth') || 0) });
-    });
-    this.outlineEl.addEventListener('dragover', (event) => {
-      const row = (event.target as HTMLElement).closest<HTMLElement>('[data-outline-uid]');
-      const sourceUid = this.outlineDragUid ?? event.dataTransfer?.getData('text/x-yemind-outline-uid') ?? '';
-      const targetUid = row?.dataset.outlineUid ?? '';
-      if (!row || !sourceUid || !targetUid) return;
-      const intent = resolveOutlineDropIntent({ sourceUid, targetUid, clientY: event.clientY, rect: row.getBoundingClientRect() });
-      clearDropState();
-      if (!intent) return;
-      event.preventDefault();
-      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-      row.classList.add(`is-drop-${intent.position}`);
-    });
-    this.outlineEl.addEventListener('drop', (event) => {
-      const row = (event.target as HTMLElement).closest<HTMLElement>('[data-outline-uid]');
-      const sourceUid = this.outlineDragUid ?? event.dataTransfer?.getData('text/x-yemind-outline-uid') ?? '';
-      const targetUid = row?.dataset.outlineUid ?? '';
-      clearDropState();
-      this.outlineDragUid = null;
-      if (!row || !sourceUid || !targetUid || !this.commands) return;
-      const intent = resolveOutlineDropIntent({ sourceUid, targetUid, clientY: event.clientY, rect: row.getBoundingClientRect() });
-      if (!intent) return;
-      event.preventDefault();
-      // Arm focus restoration before the structure command. simple-mind-map may emit
-      // data_change synchronously from execCommand, so setting this afterwards can
-      // leave the outline editor detached with no pending focus to restore.
-      this.pendingOutlineFocus = { uid: sourceUid, placement: 'start' };
-      const moved = this.commands.moveNodeByUid(sourceUid, intent.targetUid, intent.position as OutlineDropPosition);
-      this.options.diagnostics.record('outline', 'drag-drop', this.current.id, { position: intent.position, moved });
-      if (!moved) {
-        this.pendingOutlineFocus = null;
-        return;
-      }
-      this.commands.goToNode(sourceUid);
-    });
-    this.outlineEl.addEventListener('dragend', () => {
-      clearDropState();
-      this.outlineDragUid = null;
-    });
+  }
+
+  private outlineDepth(row: HTMLElement): number {
+    const value = Number(
+      row.style.getPropertyValue("--ymz-outline-depth") ||
+        row.getAttribute("aria-level") ||
+        1,
+    );
+    return row.style.getPropertyValue("--ymz-outline-depth")
+      ? value
+      : Math.max(0, value - 1);
+  }
+
+  private collectOutlineAncestors(
+    target: HTMLElement,
+  ): Array<{ uid: string; depth: number }> {
+    const rows = Array.from(
+      this.outlineEl.querySelectorAll<HTMLElement>(
+        ":scope > [data-outline-uid]",
+      ),
+    );
+    const targetIndex = rows.indexOf(target);
+    const targetDepth = this.outlineDepth(target);
+    const byDepth = new Map<number, { uid: string; depth: number }>();
+    for (let index = targetIndex; index >= 0; index -= 1) {
+      const row = rows[index];
+      const depth = this.outlineDepth(row);
+      if (depth > targetDepth || byDepth.has(depth)) continue;
+      const uid = row.dataset.outlineUid ?? "";
+      if (uid) byDepth.set(depth, { uid, depth });
+      if (depth === 0) break;
+    }
+    return [...byDepth.values()].sort((a, b) => a.depth - b.depth);
+  }
+
+  private isOutlineDescendantRow(
+    source: HTMLElement,
+    target: HTMLElement,
+  ): boolean {
+    if (source === target) return true;
+    const sourceDepth = this.outlineDepth(source);
+    let cursor = source.nextElementSibling as HTMLElement | null;
+    while (cursor?.hasAttribute("data-outline-uid")) {
+      const depth = this.outlineDepth(cursor);
+      if (depth <= sourceDepth) break;
+      if (cursor === target) return true;
+      cursor = cursor.nextElementSibling as HTMLElement | null;
+    }
+    return false;
+  }
+
+  private findOutlineRowAtPoint(
+    clientX: number,
+    clientY: number,
+  ): HTMLElement | null {
+    const pointed = document
+      .elementFromPoint?.(clientX, clientY)
+      ?.closest<HTMLElement>("[data-outline-uid]");
+    if (pointed && this.outlineEl.contains(pointed)) return pointed;
+    return (
+      Array.from(
+        this.outlineEl.querySelectorAll<HTMLElement>(
+          ":scope > [data-outline-uid]",
+        ),
+      ).find((row) => {
+        const rect = row.getBoundingClientRect();
+        return clientY >= rect.top && clientY <= rect.bottom;
+      }) ?? null
+    );
   }
 
   private renderOutline(data: MindMapTree): void {
     const activeEditor = this.outlineRichText?.activeHost ?? null;
-    const activeUid = activeEditor?.closest<HTMLElement>('[data-outline-uid]')?.dataset.outlineUid ?? null;
-    const readonly = this.rootEl.dataset.readonly === 'true';
-    this.outlineEl.setAttribute('aria-readonly', String(readonly));
+    const activeUid =
+      activeEditor?.closest<HTMLElement>("[data-outline-uid]")?.dataset
+        .outlineUid ?? null;
+    const readonly = this.rootEl.dataset.readonly === "true";
+    const nextStructureKey = outlineStructureSignature(data);
+    const structureChanged = Boolean(
+      this.outlineStructureKey && this.outlineStructureKey !== nextStructureKey,
+    );
+    const visibleUids = structureChanged
+      ? new Set(flattenOutline(data).map((row) => row.uid))
+      : null;
+    this.outlineEl.setAttribute("aria-readonly", String(readonly));
 
-    if (this.pendingOutlineFocus) {
-      this.outlineRichText?.flush();
-      this.outlineRichText?.detach(false);
+    if (
+      this.pendingOutlineFocus ||
+      (structureChanged && activeEditor && activeUid)
+    ) {
+      if (
+        !this.pendingOutlineFocus &&
+        activeEditor &&
+        activeUid &&
+        visibleUids?.has(activeUid) &&
+        this.outlineRichText
+      ) {
+        const selection = this.outlineRichText.getSelectionState(activeEditor);
+        this.pendingOutlineFocus = {
+          uid: activeUid,
+          placement: "range",
+          start: selection.start,
+          end: selection.end,
+        };
+      }
+      this.outlineRichText?.commitAndDetach(
+        structureChanged ? "structure-change" : "pending-focus",
+      );
       patchOutlineTree(this.outlineEl, data, readonly, null);
     } else {
       patchOutlineTree(this.outlineEl, data, readonly, activeUid);
     }
+    this.outlineStructureKey = nextStructureKey;
 
-    const selectedUid = String(this.commands?.getPrimaryNode()?.getData?.('uid') ?? '');
+    const selectedUid = String(
+      this.commands?.getPrimaryNode()?.getData?.("uid") ?? "",
+    );
     this.activateOutlineUid(selectedUid);
     this.restorePendingOutlineFocus();
   }
@@ -1033,9 +1688,17 @@ export class YeMindEditor {
     const pending = this.pendingOutlineFocus;
     if (!pending) return;
     window.requestAnimationFrame(() => {
-      if (this.destroyed || !this.pendingOutlineFocus || this.pendingOutlineFocus.uid !== pending.uid) return;
+      if (
+        this.destroyed ||
+        !this.pendingOutlineFocus ||
+        this.pendingOutlineFocus.uid !== pending.uid
+      )
+        return;
       const editor = this.findOutlineInput(pending.uid);
-      if (!editor || !this.outlineRichText) return;
+      if (!editor || !this.outlineRichText) {
+        this.pendingOutlineFocus = null;
+        return;
+      }
       this.pendingOutlineFocus = null;
       this.outlineRichText.activate(editor, pending.uid, pending);
       this.activateOutlineUid(pending.uid);
@@ -1043,9 +1706,10 @@ export class YeMindEditor {
   }
 
   private findOutlineInput(uid: string): HTMLElement | null {
-    const row = Array.from(this.outlineEl.querySelectorAll<HTMLElement>('[data-outline-uid]'))
-      .find((item) => item.dataset.outlineUid === uid);
-    return row?.querySelector<HTMLElement>('[data-outline-editor]') ?? null;
+    const row = Array.from(
+      this.outlineEl.querySelectorAll<HTMLElement>("[data-outline-uid]"),
+    ).find((item) => item.dataset.outlineUid === uid);
+    return row?.querySelector<HTMLElement>("[data-outline-editor]") ?? null;
   }
 
   private commitOutlineRichText(uid: string, html: string): boolean {
@@ -1059,64 +1723,82 @@ export class YeMindEditor {
   }
 
   private handleOutlineKeydown(event: KeyboardEvent): void {
-    const editor = (event.target as HTMLElement).closest<HTMLElement>('[data-outline-editor]');
-    const row = editor?.closest<HTMLElement>('[data-outline-uid]');
-    if (!editor || !row || !this.commands || !this.outlineRichText || this.outlineStructureBusy) return;
-    const uid = row.dataset.outlineUid ?? '';
-    if (this.outlineRichText.activeHost !== editor) this.outlineRichText.activate(editor, uid);
+    const editor = (event.target as HTMLElement).closest<HTMLElement>(
+      "[data-outline-editor]",
+    );
+    const row = editor?.closest<HTMLElement>("[data-outline-uid]");
+    if (
+      !editor ||
+      !row ||
+      !this.commands ||
+      !this.outlineRichText ||
+      this.outlineStructureBusy
+    )
+      return;
+    const uid = row.dataset.outlineUid ?? "";
+    if (this.outlineRichText.activeHost !== editor)
+      this.outlineRichText.activate(editor, uid);
     const selection = this.outlineRichText.getSelectionState(editor);
-    const isRoot = row.dataset.outlineRoot === 'true';
+    const isRoot = row.dataset.outlineRoot === "true";
     const action = resolveOutlineKeyAction({
       key: event.key,
       empty: selection.text.trim().length === 0,
       isRoot,
       readonly: this.commands.isReadonly(),
-      hasChildren: row.dataset.outlineHasChildren === 'true',
-      expanded: row.dataset.outlineExpanded === 'true',
+      hasChildren: row.dataset.outlineHasChildren === "true",
+      expanded: row.dataset.outlineExpanded === "true",
       atStart: selection.start === 0 && selection.end === 0,
-      atEnd: selection.start === selection.length && selection.end === selection.length,
+      atEnd:
+        selection.start === selection.length &&
+        selection.end === selection.length,
       composing: event.isComposing || this.outlineRichText.isComposing,
       shiftKey: event.shiftKey,
       altKey: event.altKey,
       ctrlKey: event.ctrlKey,
       metaKey: event.metaKey,
     });
-    if (action === 'none' || action === 'hard-break') return;
+    if (action === "none" || action === "hard-break") return;
     event.preventDefault();
     event.stopPropagation();
 
-    if (action === 'cancel') {
+    if (action === "cancel") {
       this.outlineRichText.cancel();
       editor.blur();
       return;
     }
-    if (action === 'previous' || action === 'next') {
-      this.focusOutlineNeighbor(editor, action === 'previous' ? -1 : 1);
+    if (action === "previous" || action === "next") {
+      this.focusOutlineNeighbor(editor, action === "previous" ? -1 : 1);
       return;
     }
 
     this.outlineStructureBusy = true;
     try {
       this.outlineRichText.flush(editor);
-      if (action === 'collapse' || action === 'expand') {
-        this.pendingOutlineFocus = { uid, placement: action === 'collapse' ? 'start' : 'end' };
-        if (!this.commands.setNodeExpandedByUid(uid, action === 'expand')) this.pendingOutlineFocus = null;
+      if (action === "collapse" || action === "expand") {
+        this.pendingOutlineFocus = {
+          uid,
+          placement: action === "collapse" ? "start" : "end",
+        };
+        if (!this.commands.setNodeExpandedByUid(uid, action === "expand"))
+          this.pendingOutlineFocus = null;
         return;
       }
-      if (action === 'indent' || action === 'outdent') {
-        this.pendingOutlineFocus = { uid, placement: 'start' };
-        const changed = action === 'indent'
-          ? this.commands.indentNodeByUid(uid)
-          : this.commands.outdentNodeByUid(uid);
+      if (action === "indent" || action === "outdent") {
+        this.pendingOutlineFocus = { uid, placement: "start" };
+        const changed =
+          action === "indent"
+            ? this.commands.indentNodeByUid(uid)
+            : this.commands.outdentNodeByUid(uid);
         if (!changed) this.pendingOutlineFocus = null;
         return;
       }
 
       const newUid = createOutlineUid();
-      this.pendingOutlineFocus = { uid: newUid, placement: 'start' };
-      const inserted = action === 'insert-child'
-        ? this.commands.insertChildByUid(uid, newUid)
-        : this.commands.insertSiblingByUid(uid, newUid);
+      this.pendingOutlineFocus = { uid: newUid, placement: "start" };
+      const inserted =
+        action === "insert-child"
+          ? this.commands.insertChildByUid(uid, newUid)
+          : this.commands.insertSiblingByUid(uid, newUid);
       if (!inserted) this.pendingOutlineFocus = null;
     } finally {
       this.outlineStructureBusy = false;
@@ -1125,21 +1807,32 @@ export class YeMindEditor {
 
   private focusOutlineNeighbor(editor: HTMLElement, offset: number): void {
     if (!this.outlineRichText) return;
-    const editors = Array.from(this.outlineEl.querySelectorAll<HTMLElement>('[data-outline-editor]'));
+    const editors = Array.from(
+      this.outlineEl.querySelectorAll<HTMLElement>("[data-outline-editor]"),
+    );
     const current = editors.indexOf(editor);
     const target = editors[current + offset];
-    const uid = target?.closest<HTMLElement>('[data-outline-uid]')?.dataset.outlineUid ?? '';
+    const uid =
+      target?.closest<HTMLElement>("[data-outline-uid]")?.dataset.outlineUid ??
+      "";
     if (!target || !uid) return;
     this.outlineRichText.flush(editor);
-    this.outlineRichText.activate(target, uid, { placement: offset < 0 ? 'end' : 'start' });
+    this.outlineRichText.activate(target, uid, {
+      placement: offset < 0 ? "end" : "start",
+    });
     this.commands?.goToNode(uid);
     this.activateOutlineUid(uid);
   }
 
   private activateOutlineUid(uid: string): void {
-    this.outlineEl.querySelectorAll<HTMLElement>('[data-outline-uid]').forEach((row) => {
-      row.classList.toggle('is-active', Boolean(uid) && row.dataset.outlineUid === uid);
-    });
+    this.outlineEl
+      .querySelectorAll<HTMLElement>("[data-outline-uid]")
+      .forEach((row) => {
+        row.classList.toggle(
+          "is-active",
+          Boolean(uid) && row.dataset.outlineUid === uid,
+        );
+      });
   }
 
   private openSearchPanel(): void {
@@ -1150,18 +1843,18 @@ export class YeMindEditor {
 
   private closeSearchPanel(): void {
     this.commands?.endSearch();
-    this.searchText = '';
+    this.searchText = "";
     this.searchPanelEl.hidden = true;
     this.updateSearchInfo({ currentIndex: -1, total: 0 });
     this.canvasEl.focus();
   }
 
   private handleSearchAction(action: string): void {
-    if (action === 'next') this.performSearch('next');
-    else if (action === 'previous') this.performSearch('previous');
-    else if (action === 'replace') this.replaceCurrentSearch();
-    else if (action === 'replace-all') this.replaceAllSearch();
-    else if (action === 'close') this.closeSearchPanel();
+    if (action === "next") this.performSearch("next");
+    else if (action === "previous") this.performSearch("previous");
+    else if (action === "replace") this.replaceCurrentSearch();
+    else if (action === "replace-all") this.replaceAllSearch();
+    else if (action === "close") this.closeSearchPanel();
   }
 
   private ensureSearch(): boolean {
@@ -1174,12 +1867,12 @@ export class YeMindEditor {
     return true;
   }
 
-  private performSearch(direction: 'next' | 'previous'): void {
+  private performSearch(direction: "next" | "previous"): void {
     if (!this.commands) return;
     const previousText = this.searchText;
     if (!this.ensureSearch()) return;
     if (previousText !== this.searchText) return;
-    if (direction === 'previous') this.commands.searchPrevious();
+    if (direction === "previous") this.commands.searchPrevious();
     else this.commands.searchNext();
   }
 
@@ -1193,21 +1886,27 @@ export class YeMindEditor {
     this.commands?.replaceSearchAll(this.replaceInputEl.value);
   }
 
-  private updateSearchInfo(info: { currentIndex: number; total: number }): void {
-    const current = info.total > 0 && info.currentIndex >= 0 ? info.currentIndex + 1 : 0;
+  private updateSearchInfo(info: {
+    currentIndex: number;
+    total: number;
+  }): void {
+    const current =
+      info.total > 0 && info.currentIndex >= 0 ? info.currentIndex + 1 : 0;
     this.searchInfoEl.textContent = `${current} / ${Math.max(0, info.total)}`;
   }
 
   private openCheckpointMenu(anchor: HTMLElement): void {
-    const menu = new Menu('siyuan-yemind-zen-checkpoint-menu');
+    const menu = new Menu("siyuan-yemind-zen-checkpoint-menu");
     menu.addItem({
-      icon: 'iconAdd',
-      label: '创建检查点',
-      click: () => { void this.createCheckpoint(); },
+      icon: "iconAdd",
+      label: "创建检查点",
+      click: () => {
+        void this.createCheckpoint();
+      },
     });
     menu.addItem({
-      icon: 'iconHistory',
-      label: '管理检查点',
+      icon: "iconHistory",
+      label: "管理检查点",
       click: () => this.openCheckpointManager(),
     });
     const rect = anchor.getBoundingClientRect();
@@ -1218,15 +1917,15 @@ export class YeMindEditor {
     try {
       await this.saveNow();
       const now = new Date();
-      const pad = (value: number) => String(value).padStart(2, '0');
+      const pad = (value: number) => String(value).padStart(2, "0");
       const defaultName = `检查点 ${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-      const name = await promptText('创建检查点', defaultName, '检查点名称');
+      const name = await promptText("创建检查点", defaultName, "检查点名称");
       if (!name) return;
       await this.options.checkpointService.createManual(this.current.id, name);
-      showMessage('检查点已创建');
+      showMessage("检查点已创建");
     } catch (error) {
-      console.error('[YeMind Zen] create checkpoint failed', error);
-      showMessage('检查点创建失败，请先确认导图已成功保存', 5000, 'error');
+      console.error("[YeMind Zen] create checkpoint failed", error);
+      showMessage("检查点创建失败，请先确认导图已成功保存", 5000, "error");
     }
   }
 
@@ -1234,7 +1933,7 @@ export class YeMindEditor {
     openCheckpointManager({
       mapId: this.current.id,
       mapTitle: this.current.title,
-      readonly: this.rootEl.dataset.readonly === 'true',
+      readonly: this.rootEl.dataset.readonly === "true",
       repository: this.options.checkpointRepository,
       service: this.options.checkpointService,
       onBeforeRestore: async () => {
@@ -1256,24 +1955,31 @@ export class YeMindEditor {
       this.current.theme = normalizeThemePresetId(restored.theme);
       this.current.lineStyle = normalizeLineStyle(restored.lineStyle);
       const viewData = normalizePersistedViewData(restored.viewData);
-      if (this.viewMode !== 'outline' && hasNonZeroSize(this.canvasEl)) this.map.resize();
+      if (this.viewMode !== "outline" && hasNonZeroSize(this.canvasEl))
+        this.map.resize();
       this.map.setFullData({
         root: restored.data,
         layout: restored.layout,
-        theme: { template: 'default' },
+        theme: { template: "default" },
         view: viewData,
       });
-      const layoutSelect = this.rootEl.querySelector<HTMLSelectElement>('[data-action="layout"]');
+      const layoutSelect = this.rootEl.querySelector<HTMLSelectElement>(
+        '[data-action="layout"]',
+      );
       if (layoutSelect) layoutSelect.value = restored.layout;
-      const themeSelect = this.rootEl.querySelector<HTMLSelectElement>('[data-action="theme"]');
+      const themeSelect = this.rootEl.querySelector<HTMLSelectElement>(
+        '[data-action="theme"]',
+      );
       if (themeSelect) themeSelect.value = this.current.theme;
-      const lineStyleSelect = this.rootEl.querySelector<HTMLSelectElement>('[data-action="line-style"]');
+      const lineStyleSelect = this.rootEl.querySelector<HTMLSelectElement>(
+        '[data-action="line-style"]',
+      );
       if (lineStyleSelect) lineStyleSelect.value = this.current.lineStyle;
       this.applyMapAppearance();
       if (!viewData) {
         await new Promise<void>((resolve) => {
           window.requestAnimationFrame(() => {
-            if (this.viewMode !== 'outline' && hasNonZeroSize(this.canvasEl)) {
+            if (this.viewMode !== "outline" && hasNonZeroSize(this.canvasEl)) {
               this.map?.resize();
               this.map?.view.fit();
             }
@@ -1286,36 +1992,44 @@ export class YeMindEditor {
       this.updateZoom();
       const revision = this.saveRevisions.markChanged();
       this.saveRevisions.markSaved(revision);
-      this.saveStateEl.textContent = '已恢复';
+      this.saveStateEl.textContent = "已恢复";
     } finally {
       this.applyingCheckpoint = false;
     }
   }
 
   private openLink(href: string): void {
-    if (!href || href === 'about:blank') return;
-    const navigation = resolveLinkNavigation(href, this.settings.externalLinkMode);
+    if (!href || href === "about:blank") return;
+    const navigation = resolveLinkNavigation(
+      href,
+      this.settings.externalLinkMode,
+    );
     if (!navigation) {
-      showMessage('链接地址无效或协议不受支持', 3000, 'error');
+      showMessage("链接地址无效或协议不受支持", 3000, "error");
       return;
     }
-    if (navigation.target === 'siyuan' || navigation.target === 'current-window') {
+    if (
+      navigation.target === "siyuan" ||
+      navigation.target === "current-window"
+    ) {
       window.location.href = navigation.href;
       return;
     }
-    window.open(navigation.href, '_blank', 'noopener,noreferrer');
+    window.open(navigation.href, "_blank", "noopener,noreferrer");
   }
 
   private activateNode(node: any): void {
     if (!this.map || !node) return;
     const renderer = (this.map as any).renderer;
-    const activeList = Array.isArray(renderer?.activeNodeList) ? renderer.activeNodeList : [];
+    const activeList = Array.isArray(renderer?.activeNodeList)
+      ? renderer.activeNodeList
+      : [];
     if (activeList.includes(node)) {
       promoteNodeToPrimary(renderer, node);
       return;
     }
     renderer?.clearActiveNodeList?.();
-    if (typeof node.active === 'function') node.active();
+    if (typeof node.active === "function") node.active();
     else renderer?.addNodeToActiveList?.(node);
   }
 
@@ -1323,28 +2037,40 @@ export class YeMindEditor {
     if (!this.map || !node) return;
     const renderer = (this.map as any).renderer;
     renderer?.clearActiveNodeList?.();
-    if (typeof node.active === 'function') node.active();
+    if (typeof node.active === "function") node.active();
     else renderer?.addNodeToActiveList?.(node);
   }
 
-  private async applyNodeImageFile(file: File, node: any, source: 'paste' | 'drop'): Promise<void> {
+  private async applyNodeImageFile(
+    file: File,
+    node: any,
+    source: "paste" | "drop",
+  ): Promise<void> {
     if (!this.commands || this.commands.isReadonly()) return;
     const loaded = await loadImageFileSelection(file, {
-      read: (selected) => new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result ?? ''));
-        reader.onerror = () => reject(reader.error ?? new Error('Image file read failed'));
-        reader.readAsDataURL(selected);
-      }),
-      measure: (dataUrl) => new Promise<{ width: number; height: number }>((resolve, reject) => {
-        const image = new Image();
-        image.onload = () => resolve({ width: image.naturalWidth || 240, height: image.naturalHeight || 160 });
-        image.onerror = () => reject(new Error('Image dimensions could not be measured'));
-        image.src = dataUrl;
-      }),
+      read: (selected) =>
+        new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result ?? ""));
+          reader.onerror = () =>
+            reject(reader.error ?? new Error("Image file read failed"));
+          reader.readAsDataURL(selected);
+        }),
+      measure: (dataUrl) =>
+        new Promise<{ width: number; height: number }>((resolve, reject) => {
+          const image = new Image();
+          image.onload = () =>
+            resolve({
+              width: image.naturalWidth || 240,
+              height: image.naturalHeight || 160,
+            });
+          image.onerror = () =>
+            reject(new Error("Image dimensions could not be measured"));
+          image.src = dataUrl;
+        }),
       onError: (error) => {
-        console.error('[YeMind Zen] node image input failed', error);
-        showMessage('图片读取失败，请重试', 4000, 'error');
+        console.error("[YeMind Zen] node image input failed", error);
+        showMessage("图片读取失败，请重试", 4000, "error");
       },
     });
     if (!loaded || this.destroyed || !this.map || !this.commands) return;
@@ -1356,7 +2082,7 @@ export class YeMindEditor {
       height: loaded.size.height,
       custom: false,
     });
-    this.options.diagnostics.record('node-image', source, this.current.id, {
+    this.options.diagnostics.record("node-image", source, this.current.id, {
       name: file.name,
       width: loaded.size.width,
       height: loaded.size.height,
@@ -1366,8 +2092,8 @@ export class YeMindEditor {
   private scheduleSave(): void {
     if (this.destroyed) return;
     const revision = this.saveRevisions.markChanged();
-    this.saveStateEl.textContent = '保存中…';
-    this.updateDiagnosticState({ saveState: 'saving' });
+    this.saveStateEl.textContent = "保存中…";
+    this.updateDiagnosticState({ saveState: "saving" });
     if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.saveTimer = window.setTimeout(() => {
       this.saveTimer = null;
@@ -1377,7 +2103,7 @@ export class YeMindEditor {
 
   private flushPendingSave(): void {
     void this.saveNow().catch((error) => {
-      console.error('[YeMind Zen] close-time save failed', error);
+      console.error("[YeMind Zen] close-time save failed", error);
     });
   }
 
@@ -1390,9 +2116,13 @@ export class YeMindEditor {
 
   private async persist(revision: number, throwOnError = false): Promise<void> {
     if (!this.map || this.destroyed) return;
-    this.options.diagnostics.record('save', 'started', this.current.id, { revision });
+    this.options.diagnostics.record("save", "started", this.current.id, {
+      revision,
+    });
     try {
-      const sanitized = sanitizeAssociativeLines(this.map.getData(false) as MindMapTree);
+      const sanitized = sanitizeAssociativeLines(
+        this.map.getData(false) as MindMapTree,
+      );
       const patch = {
         data: sanitized.tree,
         layout: this.map.getLayout(),
@@ -1406,17 +2136,25 @@ export class YeMindEditor {
       this.current.lineStyle = patch.lineStyle;
       await this.options.repository.update(this.current.id, patch);
       if (!this.destroyed && this.saveRevisions.markSaved(revision)) {
-        this.saveStateEl.textContent = '已保存';
-        this.options.diagnostics.record('save', 'completed', this.current.id, { revision });
-        this.updateDiagnosticState({ saveState: 'saved' });
+        this.saveStateEl.textContent = "已保存";
+        this.options.diagnostics.record("save", "completed", this.current.id, {
+          revision,
+        });
+        this.updateDiagnosticState({ saveState: "saved" });
       }
     } catch (error) {
-      this.options.diagnostics.recordError('save', 'failed', error, this.current.id, true);
-      console.error('[YeMind Zen] save failed', error);
+      this.options.diagnostics.recordError(
+        "save",
+        "failed",
+        error,
+        this.current.id,
+        true,
+      );
+      console.error("[YeMind Zen] save failed", error);
       if (!this.destroyed && revision === this.saveRevisions.current()) {
-        this.saveStateEl.textContent = '保存失败';
-        this.updateDiagnosticState({ saveState: 'failed' });
-        showMessage('YeMind Zen 保存失败', 5000, 'error');
+        this.saveStateEl.textContent = "保存失败";
+        this.updateDiagnosticState({ saveState: "failed" });
+        showMessage("YeMind Zen 保存失败", 5000, "error");
       }
       if (throwOnError) throw error;
     }
@@ -1433,29 +2171,35 @@ export class YeMindEditor {
     this.updateDiagnosticState({ zoom: scale });
   }
 
-  private updateDiagnosticState(patch: Partial<{
-    mounted: boolean;
-    readonly: boolean;
-    viewMode: string;
-    selectedNodeCount: number;
-    nodeCount: number;
-    canvasWidth: number;
-    canvasHeight: number;
-    zoom: number;
-    saveState: string;
-  }> = {}): void {
+  private updateDiagnosticState(
+    patch: Partial<{
+      mounted: boolean;
+      readonly: boolean;
+      viewMode: string;
+      selectedNodeCount: number;
+      nodeCount: number;
+      canvasWidth: number;
+      canvasHeight: number;
+      zoom: number;
+      saveState: string;
+    }> = {},
+  ): void {
     const stats = calculateEditorStats(this.current.data);
     const rect = this.canvasEl?.getBoundingClientRect?.();
     this.options.diagnostics.setEditorState(this.current.id, {
       mounted: !this.destroyed,
-      readonly: this.rootEl?.dataset.readonly === 'true',
+      readonly: this.rootEl?.dataset.readonly === "true",
       viewMode: this.viewMode,
-      selectedNodeCount: Number(this.selectionCountEl?.textContent?.replace(/\D/g, '') || 0),
+      selectedNodeCount: Number(
+        this.selectionCountEl?.textContent?.replace(/\D/g, "") || 0,
+      ),
       nodeCount: stats.nodes,
       canvasWidth: Math.round(rect?.width ?? this.canvasEl?.clientWidth ?? 0),
-      canvasHeight: Math.round(rect?.height ?? this.canvasEl?.clientHeight ?? 0),
+      canvasHeight: Math.round(
+        rect?.height ?? this.canvasEl?.clientHeight ?? 0,
+      ),
       zoom: Number((this.map?.view as any)?.scale ?? 1),
-      saveState: this.saveStateEl?.textContent ?? 'unknown',
+      saveState: this.saveStateEl?.textContent ?? "unknown",
       ...patch,
     });
   }
@@ -1463,23 +2207,41 @@ export class YeMindEditor {
   private setReadonly(enabled: boolean): void {
     if (!this.map) return;
     this.rootEl.dataset.readonly = String(enabled);
-    this.rootEl.querySelectorAll<HTMLElement>('[data-action="readonly"]').forEach((button) => {
-      button.classList.toggle('is-active', enabled);
-      button.setAttribute('aria-pressed', String(enabled));
-    });
+    this.rootEl
+      .querySelectorAll<HTMLElement>('[data-action="readonly"]')
+      .forEach((button) => {
+        button.classList.toggle("is-active", enabled);
+        button.setAttribute("aria-pressed", String(enabled));
+      });
     this.replaceInputEl.disabled = enabled;
-    this.rootEl.querySelectorAll<HTMLButtonElement>('[data-search-action="replace"], [data-search-action="replace-all"]').forEach((button) => {
-      button.disabled = enabled;
-    });
-    this.relationPanelEl.querySelectorAll<HTMLButtonElement>('[data-relation-action="edit"], [data-relation-action="delete"]').forEach((button) => {
-      button.disabled = enabled;
-    });
-    if (enabled && this.commands?.isRelationCreating()) this.commands.cancelRelation();
-    this.richTextToolbar?.setEnabled(this.settings.showRichTextToolbar && !enabled);
+    this.rootEl
+      .querySelectorAll<HTMLButtonElement>(
+        '[data-search-action="replace"], [data-search-action="replace-all"]',
+      )
+      .forEach((button) => {
+        button.disabled = enabled;
+      });
+    this.relationPanelEl
+      .querySelectorAll<HTMLButtonElement>(
+        '[data-relation-action="edit"], [data-relation-action="delete"]',
+      )
+      .forEach((button) => {
+        button.disabled = enabled;
+      });
+    if (enabled && this.commands?.isRelationCreating())
+      this.commands.cancelRelation();
+    this.richTextToolbar?.setEnabled(
+      this.settings.showRichTextToolbar && !enabled,
+    );
     this.outlineRichText?.setReadonly(enabled);
-    this.map.setMode(enabled ? 'readonly' : 'edit');
+    this.map.setMode(enabled ? "readonly" : "edit");
     this.renderOutline(this.current.data);
-    this.options.diagnostics.record('editor', 'readonly-changed', this.current.id, { enabled });
+    this.options.diagnostics.record(
+      "editor",
+      "readonly-changed",
+      this.current.id,
+      { enabled },
+    );
     this.updateDiagnosticState({ readonly: enabled });
     this.updateToolbarAvailability();
     this.updateRelationPresentation();
@@ -1495,14 +2257,14 @@ export class YeMindEditor {
       if (document.fullscreenElement) await document.exitFullscreen();
       else await this.rootEl.requestFullscreen();
     } catch (error) {
-      console.error('[YeMind Zen] fullscreen failed', error);
-      showMessage('当前环境无法切换全屏', 3000, 'error');
+      console.error("[YeMind Zen] fullscreen failed", error);
+      showMessage("当前环境无法切换全屏", 3000, "error");
     }
   }
 
   private openHelp(): void {
     const dialog = new Dialog({
-      title: 'YeMind Zen 快速操作',
+      title: "YeMind Zen 快速操作",
       content: `<div class="b3-dialog__content ymz-help">
         <p><b>双击</b> 编辑节点</p>
         <p><b>Tab</b> 添加子节点，<b>Enter</b> 添加同级节点</p>
@@ -1515,12 +2277,15 @@ export class YeMindEditor {
         <p><b>检查点</b> 创建命名快照；恢复前会自动保存当前状态为保护检查点</p>
         <p><b>Ctrl/Cmd + F</b> 搜索节点，顶部可切换导图、分屏和大纲</p>
       </div>`,
-      width: '460px',
+      width: "460px",
     });
     void dialog;
   }
 }
 
 function createOutlineUid(): string {
-  return globalThis.crypto?.randomUUID?.() ?? `outline-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `outline-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+  );
 }

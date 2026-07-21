@@ -1,5 +1,20 @@
 # YeMind Zen 功能矩阵
 
+## v0.5.18 已完成
+
+- [x] 文字提交时不移动/重插活动大纲行，Quill 焦点和 selection 连续保持
+- [x] Backspace/Delete 只编辑正文；清空正文不触发结构删除
+- [x] 同步 `data_change` 提交防重入和带原因的单次 commit/detach
+- [x] 删除六点把手与 HTML5 draggable，整行使用 Pointer Events 拖拽
+- [x] 正文短按保持光标/选区，长按后移动才进入拖拽
+- [x] 纵向 before/inside/after 与横向同级、子级、向左降级层级解析
+- [x] 自身/后代目标拒绝，最终结构继续使用上游 MOVE/INSERT 命令
+- [x] 折叠与展开可反复往返；叶节点为不可交互占位
+- [x] 折叠隐藏活动子节点时清理无效焦点恢复
+- [x] 数学字体加粗 `π` 公式入口
+- [x] 画布与大纲共享高斯/毛玻璃模糊，悬停恢复
+- [x] package/plugin/runtime 版本统一到 0.5.18
+
 ## v0.5.17 已完成
 
 - [x] 稳定 UID 大纲行增量 patch，活动 Quill DOM、选区和 IME 不被普通数据同步替换

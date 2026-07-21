@@ -6,7 +6,7 @@ const source = readFileSync(resolve(process.cwd(), 'src/editor/YeMindEditor.ts')
 
 describe('editor safe resize', () => {
   it('does not resize the mind-map while pure outline mode hides the canvas', () => {
-    expect(source).toContain("if (mode !== 'outline') this.scheduleSafeResize();");
+    expect(source).toMatch(/if \(mode !== ["']outline["']\) this\.scheduleSafeResize\(\);/);
     expect(source).not.toContain("window.requestAnimationFrame(() => this.map?.resize())");
   });
 });
