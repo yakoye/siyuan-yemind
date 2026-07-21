@@ -100,18 +100,26 @@ export class CanvasRightDragController {
     options.map.on?.("mousedown", this.onMouseDown);
     options.map.on?.("mousemove", this.onMouseMove);
     options.map.on?.("mouseup", this.onMouseUp);
+    window.addEventListener("mouseup", this.onWindowMouseUp, true);
+    window.addEventListener("blur", this.onWindowBlur);
   }
 
   destroy(): void {
     this.options.map.off?.("mousedown", this.onMouseDown);
     this.options.map.off?.("mousemove", this.onMouseMove);
     this.options.map.off?.("mouseup", this.onMouseUp);
-    this.options.root.classList.remove("is-canvas-right-dragging");
-    this.gesture.cancel();
+    window.removeEventListener("mouseup", this.onWindowMouseUp, true);
+    window.removeEventListener("blur", this.onWindowBlur);
+    this.cancel();
   }
 
   consumeContextMenu(): boolean {
     return this.gesture.consumeContextMenu();
+  }
+
+  cancel(): void {
+    this.gesture.cancel();
+    this.options.root.classList.remove("is-canvas-right-dragging");
   }
 
   private readonly onMouseDown = (event: MouseEvent): void => {
@@ -128,8 +136,21 @@ export class CanvasRightDragController {
     }
   };
 
-  private readonly onMouseUp = (): void => {
+  private readonly finishGesture = (): void => {
     this.gesture.pointerUp();
     this.options.root.classList.remove("is-canvas-right-dragging");
+  };
+
+  private readonly onMouseUp = (): void => {
+    this.finishGesture();
+  };
+
+  private readonly onWindowMouseUp = (event: MouseEvent): void => {
+    if (event.button !== 2 && !this.gesture.isDragging) return;
+    this.finishGesture();
+  };
+
+  private readonly onWindowBlur = (): void => {
+    this.cancel();
   };
 }

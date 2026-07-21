@@ -462,10 +462,12 @@
 .ymz-node-style-panel footer { display:flex; justify-content:flex-end; }
 
 /* v0.5.22 right-button canvas panning */
-.ymz-editor.is-canvas-right-dragging,
 .ymz-editor.is-canvas-right-dragging .ymz-canvas-wrap,
 .ymz-editor.is-canvas-right-dragging .ymz-canvas-wrap svg,
 .ymz-editor.is-canvas-right-dragging .smm-mind-map-container {
   cursor: grabbing !important;
   user-select: none;
 }
+
+/* v0.5.23 canvas rich-text selection must remain selectable even after canvas gestures */
+.ymz-editor .smm-richtext-node-edit-wrap,.ymz-editor .smm-richtext-node-edit-wrap .ql-container,.ymz-editor .smm-richtext-node-edit-wrap .ql-editor{user-select:text!important;-webkit-user-select:text!important;cursor:text!important}

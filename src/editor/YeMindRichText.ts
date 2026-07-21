@@ -118,6 +118,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
   initQuillEditor(): void {
     registerYeMindFormats();
     const plugin = this;
+    this.bindCanvasInteractionIsolation();
     this.quill = new Quill(this.textEditNode, {
       modules: {
         toolbar: false,
@@ -232,6 +233,25 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.quill.root.addEventListener('paste', (event: ClipboardEvent) => {
       if (event.clipboardData?.files?.length) event.preventDefault();
     }, true);
+  }
+
+
+  private bindCanvasInteractionIsolation(): void {
+    const host = this.textEditNode as HTMLElement | null;
+    if (!host || host.dataset.yemindInteractionIsolation === 'true') return;
+    host.dataset.yemindInteractionIsolation = 'true';
+    const stopCanvasGesture = (event: Event): void => event.stopPropagation();
+    [
+      'pointerdown',
+      'pointermove',
+      'pointerup',
+      'pointercancel',
+      'mousedown',
+      'mouseup',
+      'click',
+      'dblclick',
+      'contextmenu',
+    ].forEach((type) => host.addEventListener(type, stopCanvasGesture));
   }
 
   formatPasteText(text: string): string {

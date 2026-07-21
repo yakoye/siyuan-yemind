@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.23 — 2026-07-20
+
+- Restored reliable canvas-node rich-text selection after right-button panning by ending the gesture on window-level mouseup and blur, not only on map-local mouseup.
+- Removed the editor-root-wide `user-select: none` drag rule and explicitly forced the canvas Quill edit wrapper, container and editor to remain selectable with a text cursor.
+- Cancelled any stale canvas right-drag session before an upstream text editor opens.
+- Isolated pointer, mouse, double-click and context-menu events inside the canvas rich-text editor so node dragging, box selection and canvas gestures cannot steal text selection.
+- Classified the complete `.smm-richtext-node-edit-wrap` surface as editable, keeping Delete/Backspace inside canvas Quill as well as outline Quill.
+- Added a real SVG/Quill integration regression that double-clicks a rendered node, selects only part of its label, shows the shared toolbar, clicks Bold and Underline and verifies only the selected range changes.
+- Added a permanent user-reported regression matrix covering node quick controls, Root/branch expansion from persisted children, canvas/outline editing isolation and right-drag cleanup.
+
 ## 0.5.22 — 2026-07-20
 
 - Fixed collapsed branch and Root expansion by checking persisted `nodeData.children` instead of the empty live `node.children` list before dispatching `SET_NODE_EXPAND`.

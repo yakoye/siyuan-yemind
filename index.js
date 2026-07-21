@@ -3824,7 +3824,7 @@ function findShortcutConflicts(shortcuts) {
 function isEditableTarget(target) {
   if (!(target instanceof HTMLElement)) return false;
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return true;
-  if (target.closest("[data-outline-editor]")) return true;
+  if (target.closest("[data-outline-editor], .smm-richtext-node-edit-wrap")) return true;
   if (target.isContentEditable || target.contentEditable === "true" || target.closest('[contenteditable="true"], [contenteditable=""], .ql-editor')) return true;
   return false;
 }
@@ -4372,7 +4372,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.5.22";
+const PLUGIN_VERSION = "0.5.23";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -55413,6 +55413,7 @@ class YeMindRichText extends RichText {
   initQuillEditor() {
     registerYeMindFormats();
     const plugin = this;
+    this.bindCanvasInteractionIsolation();
     this.quill = new Quill(this.textEditNode, {
       modules: {
         toolbar: false,
@@ -55524,6 +55525,23 @@ class YeMindRichText extends RichText {
       var _a, _b;
       if ((_b = (_a = event.clipboardData) == null ? void 0 : _a.files) == null ? void 0 : _b.length) event.preventDefault();
     }, true);
+  }
+  bindCanvasInteractionIsolation() {
+    const host = this.textEditNode;
+    if (!host || host.dataset.yemindInteractionIsolation === "true") return;
+    host.dataset.yemindInteractionIsolation = "true";
+    const stopCanvasGesture = (event) => event.stopPropagation();
+    [
+      "pointerdown",
+      "pointermove",
+      "pointerup",
+      "pointercancel",
+      "mousedown",
+      "mouseup",
+      "click",
+      "dblclick",
+      "contextmenu"
+    ].forEach((type) => host.addEventListener(type, stopCanvasGesture));
   }
   formatPasteText(text2) {
     var _a;
@@ -59372,26 +59390,43 @@ class CanvasRightDragController {
         (_b = (_a = this.options.map.view) == null ? void 0 : _a.translateXY) == null ? void 0 : _b.call(_a, result.dx, result.dy);
       }
     });
-    __publicField(this, "onMouseUp", () => {
+    __publicField(this, "finishGesture", () => {
       this.gesture.pointerUp();
       this.options.root.classList.remove("is-canvas-right-dragging");
+    });
+    __publicField(this, "onMouseUp", () => {
+      this.finishGesture();
+    });
+    __publicField(this, "onWindowMouseUp", (event) => {
+      if (event.button !== 2 && !this.gesture.isDragging) return;
+      this.finishGesture();
+    });
+    __publicField(this, "onWindowBlur", () => {
+      this.cancel();
     });
     var _a, _b, _c2, _d2, _e, _f;
     this.options = options;
     (_b = (_a = options.map).on) == null ? void 0 : _b.call(_a, "mousedown", this.onMouseDown);
     (_d2 = (_c2 = options.map).on) == null ? void 0 : _d2.call(_c2, "mousemove", this.onMouseMove);
     (_f = (_e = options.map).on) == null ? void 0 : _f.call(_e, "mouseup", this.onMouseUp);
+    window.addEventListener("mouseup", this.onWindowMouseUp, true);
+    window.addEventListener("blur", this.onWindowBlur);
   }
   destroy() {
     var _a, _b, _c2, _d2, _e, _f;
     (_b = (_a = this.options.map).off) == null ? void 0 : _b.call(_a, "mousedown", this.onMouseDown);
     (_d2 = (_c2 = this.options.map).off) == null ? void 0 : _d2.call(_c2, "mousemove", this.onMouseMove);
     (_f = (_e = this.options.map).off) == null ? void 0 : _f.call(_e, "mouseup", this.onMouseUp);
-    this.options.root.classList.remove("is-canvas-right-dragging");
-    this.gesture.cancel();
+    window.removeEventListener("mouseup", this.onWindowMouseUp, true);
+    window.removeEventListener("blur", this.onWindowBlur);
+    this.cancel();
   }
   consumeContextMenu() {
     return this.gesture.consumeContextMenu();
+  }
+  cancel() {
+    this.gesture.cancel();
+    this.options.root.classList.remove("is-canvas-right-dragging");
   }
 }
 class YeMindEditor {
@@ -60202,6 +60237,10 @@ class YeMindEditor {
   }
   bindMapEvents() {
     if (!this.map) return;
+    this.map.on("before_show_text_edit", () => {
+      var _a;
+      return (_a = this.canvasRightDrag) == null ? void 0 : _a.cancel();
+    });
     this.map.on("data_change", (data2) => {
       var _a, _b;
       if (this.applyingCheckpoint) return;

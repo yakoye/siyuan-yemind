@@ -952,6 +952,7 @@ export class YeMindEditor {
 
   private bindMapEvents(): void {
     if (!this.map) return;
+    this.map.on("before_show_text_edit", () => this.canvasRightDrag?.cancel());
     this.map.on("data_change", (data: MindMapTree) => {
       if (this.applyingCheckpoint) return;
       this.current.data = data;

@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.22 迁移状态
+# YeMind Zen v0.5.23 迁移状态
 
 ## 已完成
 
@@ -39,6 +39,8 @@
 - 折叠节点的展开判断现读取持久化 `nodeData.children`，Root、数字和大纲三角不会再因 live children 为空而失效。
 - 大纲 Quill 的 Backspace/Delete 已与全局节点删除快捷键双层隔离；空节点结构删除仍为独立明确事务。
 - pan/select 两种画布模式均支持右键平移，拖动使用抓手并消费松开后的菜单事件。
+- 画布右键拖动现在在 window mouseup/blur 和文本编辑开始时可靠收尾；画布 Quill 选区不会再继承残留禁选状态。
+- 真实 SVG 双击、局部选择、共享工具栏和局部格式化已纳入发布级集成回归。
 
 ## 下一阶段
 

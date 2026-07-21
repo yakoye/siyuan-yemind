@@ -1,5 +1,18 @@
 # YeMind Zen 功能矩阵
 
+## v0.5.23 已完成
+
+- [x] 真实 SVG 节点双击进入画布 Quill 编辑
+- [x] 节点文字局部拖选后显示共享富文本工具栏
+- [x] 加粗、下划线等格式只作用于当前文字选区
+- [x] 右键拖动在 window mouseup 和 blur 时可靠结束
+- [x] 进入富文本编辑前清理残留画布拖动状态
+- [x] 画布富文本包装器、Quill 容器和编辑区强制保持可选择
+- [x] 富文本内部 pointer/mouse/dblclick/contextmenu 不泄漏到画布手势
+- [x] 画布与大纲编辑宿主均阻断全局 Delete/Backspace 节点删除
+- [x] 用户反馈回归矩阵覆盖快捷按钮、Root/分支折叠展开、编辑隔离与右键平移
+- [x] package/plugin/runtime 版本统一到 0.5.23
+
 ## v0.5.22 已完成
 
 - [x] 折叠节点 live children 为空时仍从持久化子树识别为可展开分支
