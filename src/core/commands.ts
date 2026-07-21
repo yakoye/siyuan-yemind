@@ -47,7 +47,13 @@ export interface YeMindCommands {
   setImage(image: NodeImageInput): void;
   insertFormula(formula: string, mode?: 'inline' | 'block'): void;
   addSummary(): void;
-  startRelation(): void;
+  removeSummary(): void;
+  startRelation(): boolean;
+  isRelationCreating(): boolean;
+  hasActiveRelation(): boolean;
+  cancelRelation(): void;
+  editActiveRelationText(): void;
+  removeActiveRelation(): void;
   toggleTodo(): void;
   getTodo(): NodeTodo | null;
   setTodo(todo: NodeTodo | null): void;
@@ -166,7 +172,28 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       mindMap.execCommand('INSERT_FORMULA', value);
     },
     addSummary: () => mindMap.execCommand('ADD_GENERALIZATION'),
-    startRelation: () => (mindMap as any).associativeLine?.createLineFromActiveNode?.(),
+    removeSummary: () => {
+      const node = primaryNode();
+      if (!node) return;
+      mindMap.execCommand(node.isGeneralization ? 'REMOVE_NODE' : 'REMOVE_GENERALIZATION');
+    },
+    startRelation: () => {
+      const relation = (mindMap as any).associativeLine;
+      relation?.createLineFromActiveNode?.();
+      return Boolean(relation?.isCreatingLine);
+    },
+    isRelationCreating: () => Boolean((mindMap as any).associativeLine?.isCreatingLine),
+    hasActiveRelation: () => Boolean((mindMap as any).associativeLine?.activeLine),
+    cancelRelation: () => {
+      const relation = (mindMap as any).associativeLine;
+      if (relation?.isCreatingLine) relation.cancelCreateLine?.();
+    },
+    editActiveRelationText: () => {
+      const relation = (mindMap as any).associativeLine;
+      const textGroup = relation?.activeLine?.[2];
+      if (textGroup) relation.showEditTextBox?.(textGroup);
+    },
+    removeActiveRelation: () => (mindMap as any).associativeLine?.removeLine?.(),
     getTodo: () => (primaryNode()?.getData?.('yemindTodo') ?? null) as NodeTodo | null,
     toggleTodo: () => {
       const node = primaryNode();

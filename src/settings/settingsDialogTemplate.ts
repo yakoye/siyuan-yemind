@@ -50,6 +50,14 @@ function selectRow(title: string, description: string, key: keyof YeMindSettings
   </label>`;
 }
 
+
+function textRow(title: string, description: string, key: keyof YeMindSettings, value: string): string {
+  return `<label class="ymz-settings-row">
+    <span><b>${escapeHtml(title)}</b><small>${escapeHtml(description)}</small></span>
+    <input class="b3-text-field fn__size200" type="text" data-setting="${String(key)}" value="${escapeHtml(value)}">
+  </label>`;
+}
+
 function numberRow(title: string, description: string, key: keyof YeMindSettings, value: number, min: number, max: number, step: number, suffix: string): string {
   return `<label class="ymz-settings-row">
     <span><b>${escapeHtml(title)}</b><small>${escapeHtml(description)}</small></span>
@@ -144,6 +152,12 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
           ${switchRow('显示节点菜单按钮', '节点激活后显示轻量菜单入口。', 'showNodeMenuButton', settings.showNodeMenuButton)}
           ${switchRow('显示待办标记', '节点文字前显示待办状态。', 'showTodoBadge', settings.showTodoBadge)}
           ${switchRow('显示批注标记', '节点右侧显示批注图标。', 'showCommentBadge', settings.showCommentBadge)}
+        </div>
+        <div class="ymz-settings-group"><h3>概要与关联线</h3>
+          ${textRow('默认概要文字', '使用原生 ADD_GENERALIZATION 创建概要时的默认文字。', 'defaultSummaryText', settings.defaultSummaryText)}
+          ${textRow('默认关联线文字', '首次激活新关联线时显示的默认文字。', 'defaultRelationText', settings.defaultRelationText)}
+          ${switchRow('关联线始终显示在节点上层', '关闭后，未激活的关联线回到节点下方。', 'relationAlwaysAboveNode', settings.relationAlwaysAboveNode)}
+          ${switchRow('允许调整关联线端点和控制点', '选中关联线后可拖动端点和两个贝塞尔控制点。', 'relationAdjustPoints', settings.relationAdjustPoints)}
         </div>
         <div class="ymz-settings-group"><h3>富文本与代码</h3>
           ${switchRow('富文本选区工具栏', '选中文字后显示格式、链接、公式和代码工具。', 'showRichTextToolbar', settings.showRichTextToolbar)}

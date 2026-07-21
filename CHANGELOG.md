@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.5 — 2026-07-17
+
+- Completed summary handling by keeping native `ADD_GENERALIZATION` range parsing and adding precise add/remove menu states.
+- Added native removal for the selected summary node and native removal of all summaries owned by a selected normal node.
+- Added a compact associative-line state toolbar driven by upstream `associative_line_click` and `associative_line_deactivate` events.
+- Added direct native actions for editing relation text, deleting the active line, cancelling line creation, and Esc cancellation.
+- Exposed only four upstream-backed settings: default summary text, default relation text, line z-order, and endpoint/control-point adjustment.
+- Added immutable persistence cleanup for missing or duplicate relation targets while preserving aligned point, control-offset, text, and style data.
+- Treated generalization UIDs as valid relation endpoints during cleanup.
+- Added focused tests for upstream range-summary behavior, native relation methods, relation UI states, relation settings, and deletion cleanup.
+
 ## 0.5.4 — 2026-07-16
 
 - Exposed `simple-mind-map` native box selection through a persistent pan-priority / selection-priority toggle.

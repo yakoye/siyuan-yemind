@@ -2,6 +2,8 @@ import type MindMap from 'simple-mind-map';
 import { Dialog, showMessage } from 'siyuan';
 import { createMindMap } from '../core/createMindMap';
 import { buildDragAndLayoutOptions, normalizePersistedViewData, stripCustomPositions } from '../core/dragBehavior';
+import { buildRelationOptions } from '../core/relationConfig';
+import { sanitizeAssociativeLines } from '../core/relationData';
 import { createCommandAdapter, type YeMindCommands } from '../core/commands';
 import { configureNodeDecorations } from '../core/nodeDecorations';
 import { configureMindMapPlugins } from '../core/registerPlugins';
@@ -17,6 +19,7 @@ import { renderOutlineHtml } from './outline';
 import { RichTextToolbar } from './RichTextToolbar';
 import { isEditableTarget, matchesShortcut } from './shortcuts';
 import { createSelectionPresentation } from './selectionPresentation';
+import { createRelationPresentation } from './relationPresentation';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -47,6 +50,8 @@ export class YeMindEditor {
   private replaceInputEl!: HTMLInputElement;
   private searchInfoEl!: HTMLElement;
   private selectionCountEl!: HTMLElement;
+  private relationPanelEl!: HTMLElement;
+  private relationHintEl!: HTMLElement;
   private richTextToolbar: RichTextToolbar | null = null;
   private settingsInitialized = false;
   private viewMode: ViewMode = 'map';
@@ -54,6 +59,13 @@ export class YeMindEditor {
   private restoredViewOnOpen = false;
 
   private readonly onRootKeydown = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape' && this.commands?.isRelationCreating()) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.commands.cancelRelation();
+      this.updateRelationPresentation();
+      return;
+    }
     if (event.key === 'Escape' && this.rootEl?.dataset.zen === 'true') {
       event.preventDefault();
       this.toggleZen(false);
@@ -72,7 +84,7 @@ export class YeMindEditor {
       ['addParent', () => this.commands?.addParent()],
       ['comments', () => { if (this.commands?.getPrimaryNode()) openCommentsDialog(this.commands); }],
       ['summary', () => this.commands?.addSummary()],
-      ['relation', () => this.commands?.startRelation()],
+      ['relation', () => this.beginRelation()],
     ];
     const action = actions.find(([key]) => matchesShortcut(event, this.settings.shortcutMap[key]));
     if (!action) return;
@@ -120,15 +132,18 @@ export class YeMindEditor {
     this.replaceInputEl = this.options.container.querySelector('[data-role="replace-input"]') as HTMLInputElement;
     this.searchInfoEl = this.options.container.querySelector('[data-role="search-info"]') as HTMLElement;
     this.selectionCountEl = this.options.container.querySelector('[data-role="selection-count"]') as HTMLElement;
+    this.relationPanelEl = this.options.container.querySelector('[data-role="relation-panel"]') as HTMLElement;
+    this.relationHintEl = this.options.container.querySelector('[data-role="relation-hint"]') as HTMLElement;
     const layoutSelect = this.options.container.querySelector<HTMLSelectElement>('[data-action="layout"]');
     if (layoutSelect) layoutSelect.value = this.current.layout;
 
     let runtimeData = this.current.data;
     const normalized = stripCustomPositions(runtimeData);
-    runtimeData = normalized.tree;
-    if (normalized.changed) {
-      this.current.data = normalized.tree;
-      void this.options.repository.update(this.current.id, { data: normalized.tree });
+    const sanitized = sanitizeAssociativeLines(normalized.tree);
+    runtimeData = sanitized.tree;
+    if (normalized.changed || sanitized.changed) {
+      this.current.data = runtimeData;
+      void this.options.repository.update(this.current.id, { data: runtimeData });
     }
     const runtimeViewData = this.settings.restoreSavedView
       ? normalizePersistedViewData(this.current.viewData)
@@ -190,6 +205,16 @@ export class YeMindEditor {
       const searchButton = (event.target as HTMLElement).closest<HTMLElement>('[data-search-action]');
       if (searchButton) {
         this.handleSearchAction(searchButton.dataset.searchAction ?? '');
+        return;
+      }
+
+      const relationButton = (event.target as HTMLElement).closest<HTMLElement>('[data-relation-action]');
+      if (relationButton && this.commands) {
+        const relationAction = relationButton.dataset.relationAction;
+        if (relationAction === 'edit') this.commands.editActiveRelationText();
+        if (relationAction === 'delete') this.commands.removeActiveRelation();
+        if (relationAction === 'cancel') this.commands.cancelRelation();
+        this.updateRelationPresentation();
         return;
       }
 
@@ -303,6 +328,10 @@ export class YeMindEditor {
       const uid = active?.getData?.('uid');
       this.activateOutlineUid(uid ? String(uid) : '');
     });
+    this.map.on('associative_line_click', () => this.updateRelationPresentation());
+    this.map.on('associative_line_deactivate', () => this.updateRelationPresentation());
+    this.map.on('node_click', () => window.setTimeout(() => this.updateRelationPresentation(), 0));
+    this.map.on('draw_click', () => window.setTimeout(() => this.updateRelationPresentation(), 0));
     this.map.on('search_info_change', (info: { currentIndex: number; total: number }) => this.updateSearchInfo(info));
     this.map.on('scale', () => this.updateZoom());
   }
@@ -312,6 +341,28 @@ export class YeMindEditor {
     openNodeContextMenu(event, this.commands, {
       onInlineLink: () => openInlineLinkDialog(this.commands!, this.settings),
       onCodeBlock: () => openCodeBlockDialog(this.commands!, this.settings),
+      onRelation: () => this.beginRelation(),
+    });
+  }
+
+  private beginRelation(): void {
+    if (!this.commands) return;
+    this.commands.startRelation();
+    this.updateRelationPresentation();
+  }
+
+  private updateRelationPresentation(): void {
+    if (!this.commands || !this.relationPanelEl || !this.relationHintEl) return;
+    const presentation = createRelationPresentation({
+      isCreating: this.commands.isRelationCreating(),
+      isActive: this.commands.hasActiveRelation(),
+    });
+    this.relationPanelEl.hidden = presentation.hidden;
+    this.relationPanelEl.dataset.mode = presentation.mode;
+    this.relationHintEl.textContent = presentation.hint;
+    this.relationPanelEl.querySelectorAll<HTMLElement>('[data-relation-action]').forEach((button) => {
+      const action = button.dataset.relationAction;
+      button.hidden = presentation.mode === 'creating' ? action !== 'cancel' : presentation.mode === 'active' ? action === 'cancel' : true;
     });
   }
 
@@ -333,6 +384,7 @@ export class YeMindEditor {
     this.rootEl.style.setProperty('--ymz-code-tab-size', String(settings.codeBlockTabSize));
     this.rootEl.style.setProperty('--ymz-code-font-size', `${settings.codeBlockFontSize}px`);
     const behavior = buildDragAndLayoutOptions(settings);
+    const relationOptions = buildRelationOptions(settings);
     this.map?.updateConfig({
       useLeftKeySelectionRightKeyDrag: settings.canvasMode === 'select',
       mousewheelAction: settings.wheelMode === 'zoom' ? 'zoom' : 'move',
@@ -343,8 +395,11 @@ export class YeMindEditor {
       minZoomRatio: behavior.minZoomRatio,
       maxZoomRatio: behavior.maxZoomRatio,
       fitPadding: behavior.fitPadding,
+      ...relationOptions,
     });
     this.map?.setThemeConfig(behavior.themeConfig);
+    (this.map as any)?.associativeLine?.renderAllLines?.();
+    this.updateRelationPresentation();
     this.updateSelectionPresentation();
 
     if (firstApply) {
@@ -496,8 +551,10 @@ export class YeMindEditor {
   private async persist(): Promise<void> {
     if (!this.map || this.destroyed) return;
     try {
+      const sanitized = sanitizeAssociativeLines(this.map.getData(false) as MindMapTree);
+      this.current.data = sanitized.tree;
       await this.options.repository.update(this.current.id, {
-        data: this.map.getData(false) as MindMapTree,
+        data: sanitized.tree,
         layout: this.map.getLayout(),
         theme: this.map.getTheme(),
         viewData: normalizePersistedViewData(this.map.view.getTransformData()),

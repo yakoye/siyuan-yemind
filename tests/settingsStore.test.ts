@@ -53,6 +53,10 @@ describe('SettingsStore', () => {
       secondLevelMarginY: 40,
       nodeMarginX: 50,
       nodeMarginY: 16,
+      defaultSummaryText: '概要',
+      defaultRelationText: '关联',
+      relationAlwaysAboveNode: true,
+      relationAdjustPoints: true,
       shortcutMap: DEFAULT_SHORTCUTS,
     });
   });
@@ -90,6 +94,10 @@ describe('SettingsStore', () => {
       secondLevelMarginY: 48,
       nodeMarginX: 70,
       nodeMarginY: 22,
+      defaultSummaryText: '结论',
+      defaultRelationText: '依赖',
+      relationAlwaysAboveNode: false,
+      relationAdjustPoints: false,
       shortcutMap: { ...DEFAULT_SHORTCUTS, search: 'Ctrl+Shift+f', comments: '' },
     });
 
@@ -118,6 +126,10 @@ describe('SettingsStore', () => {
       secondLevelMarginY: 48,
       nodeMarginX: 70,
       nodeMarginY: 22,
+      defaultSummaryText: '结论',
+      defaultRelationText: '依赖',
+      relationAlwaysAboveNode: false,
+      relationAdjustPoints: false,
       shortcutMap: { ...DEFAULT_SHORTCUTS, search: 'Ctrl+Shift+f', comments: '' },
     });
   });

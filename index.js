@@ -25,7 +25,7 @@ function createDefaultMap(title = "未命名导图", id = ((_b) => (_b = ((_a) =
     data: createDefaultTree(normalizedTitle)
   };
 }
-const clone$1 = (value) => JSON.parse(JSON.stringify(value));
+const clone$2 = (value) => JSON.parse(JSON.stringify(value));
 function normalizeMap(value) {
   var _a;
   if (!value || typeof value !== "object") return { map: null, changed: false };
@@ -33,7 +33,7 @@ function normalizeMap(value) {
   if (!candidate.id || !((_a = candidate.data) == null ? void 0 : _a.data)) return { map: null, changed: false };
   const fallbackTime = Number(candidate.updatedAt) || Number(candidate.createdAt) || Date.now();
   const normalizedTitle = typeof candidate.title === "string" && candidate.title.trim() ? candidate.title.trim() : "未命名导图";
-  const normalizedTree = normalizeLegacyTree(clone$1(candidate.data), fallbackTime);
+  const normalizedTree = normalizeLegacyTree(clone$2(candidate.data), fallbackTime);
   const map2 = {
     id: String(candidate.id),
     title: normalizedTitle,
@@ -42,7 +42,7 @@ function normalizeMap(value) {
     layout: typeof candidate.layout === "string" ? candidate.layout : "logicalStructure",
     theme: typeof candidate.theme === "string" ? candidate.theme : "default",
     data: normalizedTree.tree,
-    viewData: candidate.viewData ? clone$1(candidate.viewData) : void 0
+    viewData: candidate.viewData ? clone$2(candidate.viewData) : void 0
   };
   const changed = normalizedTitle !== candidate.title || normalizedTree.changed;
   return { map: map2, changed };
@@ -120,11 +120,11 @@ class MapRepository {
     if (!this.loaded) await this.load();
   }
   list() {
-    return clone$1(this.state.maps);
+    return clone$2(this.state.maps);
   }
   get(id) {
     const map2 = this.state.maps.find((item) => item.id === id);
-    return map2 ? clone$1(map2) : void 0;
+    return map2 ? clone$2(map2) : void 0;
   }
   getActiveMapId() {
     return this.state.activeMapId;
@@ -140,7 +140,7 @@ class MapRepository {
     this.state.maps.push(map2);
     this.state.activeMapId = map2.id;
     await this.persist();
-    return clone$1(map2);
+    return clone$2(map2);
   }
   async rename(id, title) {
     await this.ensureLoaded();
@@ -156,10 +156,10 @@ class MapRepository {
     await this.ensureLoaded();
     const map2 = this.state.maps.find((item) => item.id === id);
     if (!map2) return;
-    if (patch.data) map2.data = clone$1(patch.data);
+    if (patch.data) map2.data = clone$2(patch.data);
     if (patch.layout) map2.layout = patch.layout;
     if (patch.theme) map2.theme = patch.theme;
-    if (patch.viewData !== void 0) map2.viewData = clone$1(patch.viewData);
+    if (patch.viewData !== void 0) map2.viewData = clone$2(patch.viewData);
     map2.updatedAt = this.now();
     await this.persist();
   }
@@ -180,7 +180,7 @@ class MapRepository {
     return () => this.listeners.delete(listener);
   }
   snapshot() {
-    return clone$1(this.state);
+    return clone$2(this.state);
   }
   async persist() {
     const snapshot = this.snapshot();
@@ -188,7 +188,7 @@ class MapRepository {
     this.emit();
   }
   enqueueSave(snapshot) {
-    const operation = this.saveQueue.then(() => this.storage.save(clone$1(snapshot)));
+    const operation = this.saveQueue.then(() => this.storage.save(clone$2(snapshot)));
     this.saveQueue = operation.catch(() => void 0);
     return operation;
   }
@@ -377,6 +377,10 @@ const DEFAULT_SETTINGS = {
   secondLevelMarginY: 40,
   nodeMarginX: 50,
   nodeMarginY: 16,
+  defaultSummaryText: "概要",
+  defaultRelationText: "关联",
+  relationAlwaysAboveNode: true,
+  relationAdjustPoints: true,
   shortcutMap: { ...DEFAULT_SHORTCUTS }
 };
 const LAYOUTS = /* @__PURE__ */ new Set(["logicalStructure", "logicalStructureLeft", "mindMap", "organizationStructure", "catalogOrganization"]);
@@ -441,6 +445,10 @@ function normalizeSettings(value) {
     secondLevelMarginY: numberInRange(value.secondLevelMarginY, DEFAULT_SETTINGS.secondLevelMarginY, 0, 200),
     nodeMarginX: numberInRange(value.nodeMarginX, DEFAULT_SETTINGS.nodeMarginX, 10, 240),
     nodeMarginY: numberInRange(value.nodeMarginY, DEFAULT_SETTINGS.nodeMarginY, 0, 160),
+    defaultSummaryText: stringOrDefault(value.defaultSummaryText, DEFAULT_SETTINGS.defaultSummaryText),
+    defaultRelationText: stringOrDefault(value.defaultRelationText, DEFAULT_SETTINGS.defaultRelationText),
+    relationAlwaysAboveNode: booleanOrDefault(value.relationAlwaysAboveNode, DEFAULT_SETTINGS.relationAlwaysAboveNode),
+    relationAdjustPoints: booleanOrDefault(value.relationAdjustPoints, DEFAULT_SETTINGS.relationAdjustPoints),
     shortcutMap: normalizeShortcutMap(value.shortcutMap)
   };
 }
@@ -505,6 +513,12 @@ function selectRow(title, description, key, options) {
   return `<label class="ymz-settings-row">
     <span><b>${escapeHtml$6(title)}</b><small>${escapeHtml$6(description)}</small></span>
     <select class="b3-select fn__size200" data-setting="${String(key)}">${options}</select>
+  </label>`;
+}
+function textRow(title, description, key, value) {
+  return `<label class="ymz-settings-row">
+    <span><b>${escapeHtml$6(title)}</b><small>${escapeHtml$6(description)}</small></span>
+    <input class="b3-text-field fn__size200" type="text" data-setting="${String(key)}" value="${escapeHtml$6(value)}">
   </label>`;
 }
 function numberRow(title, description, key, value, min, max, step, suffix) {
@@ -597,6 +611,12 @@ function createSettingsDialogTemplate(settings) {
           ${switchRow("显示节点菜单按钮", "节点激活后显示轻量菜单入口。", "showNodeMenuButton", settings.showNodeMenuButton)}
           ${switchRow("显示待办标记", "节点文字前显示待办状态。", "showTodoBadge", settings.showTodoBadge)}
           ${switchRow("显示批注标记", "节点右侧显示批注图标。", "showCommentBadge", settings.showCommentBadge)}
+        </div>
+        <div class="ymz-settings-group"><h3>概要与关联线</h3>
+          ${textRow("默认概要文字", "使用原生 ADD_GENERALIZATION 创建概要时的默认文字。", "defaultSummaryText", settings.defaultSummaryText)}
+          ${textRow("默认关联线文字", "首次激活新关联线时显示的默认文字。", "defaultRelationText", settings.defaultRelationText)}
+          ${switchRow("关联线始终显示在节点上层", "关闭后，未激活的关联线回到节点下方。", "relationAlwaysAboveNode", settings.relationAlwaysAboveNode)}
+          ${switchRow("允许调整关联线端点和控制点", "选中关联线后可拖动端点和两个贝塞尔控制点。", "relationAdjustPoints", settings.relationAdjustPoints)}
         </div>
         <div class="ymz-settings-group"><h3>富文本与代码</h3>
           ${switchRow("富文本选区工具栏", "选中文字后显示格式、链接、公式和代码工具。", "showRichTextToolbar", settings.showRichTextToolbar)}
@@ -7752,8 +7772,8 @@ const copyRenderTree = (tree, root2, removeActiveState = false) => {
   tree.data = simpleDeepClone(root2.data);
   if (removeActiveState) {
     tree.data.isActive = false;
-    const generalizationList = formatGetNodeGeneralization(tree.data);
-    generalizationList.forEach((item) => {
+    const generalizationList2 = formatGetNodeGeneralization(tree.data);
+    generalizationList2.forEach((item) => {
       item.isActive = false;
     });
   }
@@ -8308,8 +8328,8 @@ const createUidForAppointNodes = (appointNodes, createNewId = false, handle = nu
         node.data.uid = createUid();
       }
       if (handleGeneralization) {
-        const generalizationList = formatGetNodeGeneralization(node.data);
-        generalizationList.forEach((gNode) => {
+        const generalizationList2 = formatGetNodeGeneralization(node.data);
+        generalizationList2.forEach((gNode) => {
           if (createNewId || isUndef(gNode.uid)) {
             gNode.uid = createUid();
           }
@@ -12345,12 +12365,12 @@ class Base2 {
   }
   // 检查概要节点是否需要更新
   checkGetGeneralizationChange(node, isResizeSource) {
-    const generalizationList = node.getData("generalization");
-    if (generalizationList && node._generalizationList && node._generalizationList.length > 0) {
+    const generalizationList2 = node.getData("generalization");
+    if (generalizationList2 && node._generalizationList && node._generalizationList.length > 0) {
       node._generalizationList.forEach((item, index) => {
         const gNode = item.generalizationNode;
         const oldData = gNode.getData();
-        const newData = generalizationList[index];
+        const newData = generalizationList2[index];
         if (isResizeSource || newData && JSON.stringify(oldData) !== JSON.stringify(newData)) {
           if (newData) {
             gNode.nodeData.data = newData;
@@ -16484,9 +16504,9 @@ class Render {
       walk(this.renderTree, null, (node) => {
         const _hasCustomStyles = this._handleRemoveCustomStyles(node.data);
         if (_hasCustomStyles) hasCustomStyles = true;
-        const generalizationList = formatGetNodeGeneralization(node.data);
-        if (generalizationList.length > 0) {
-          generalizationList.forEach((generalizationData) => {
+        const generalizationList2 = formatGetNodeGeneralization(node.data);
+        if (generalizationList2.length > 0) {
+          generalizationList2.forEach((generalizationData) => {
             const _hasCustomStyles2 = this._handleRemoveCustomStyles(generalizationData);
             if (_hasCustomStyles2) hasCustomStyles = true;
           });
@@ -17236,8 +17256,8 @@ class Render {
         parentsList = parent ? [...cache[parent.data.uid], parent] : [];
         return "stop";
       }
-      const generalizationList = formatGetNodeGeneralization(node.data);
-      generalizationList.forEach((item) => {
+      const generalizationList2 = formatGetNodeGeneralization(node.data);
+      generalizationList2.forEach((item) => {
         if (item.uid === uid) {
           parentsList = parent ? [...cache[parent.data.uid], parent, node] : [];
           isGeneralization = true;
@@ -20560,10 +20580,10 @@ class Search {
       if (text2.includes(this.searchText)) {
         matchList2.push(node);
       }
-      const generalizationList = formatGetNodeGeneralization({
+      const generalizationList2 = formatGetNodeGeneralization({
         generalization
       });
-      generalizationList.forEach((gNode) => {
+      generalizationList2.forEach((gNode) => {
         let { richText: richText2, text: text3, uid } = gNode;
         if (isOnlySearchCurrentRenderNodes && !this.mindMap.renderer.findNodeByUid(uid)) {
           return;
@@ -50289,8 +50309,8 @@ class RichText {
           node.data.text = getTextFromHtml(node.data.text);
         }
         if (node.data) {
-          const generalizationList = formatGetNodeGeneralization(node.data);
-          generalizationList.forEach((item) => {
+          const generalizationList2 = formatGetNodeGeneralization(node.data);
+          generalizationList2.forEach((item) => {
             item.richText = false;
             item.text = getTextFromHtml(item.text);
           });
@@ -50320,8 +50340,8 @@ class RichText {
         this.handleDataToRichText(root2.data);
       }
       if (root2.data) {
-        const generalizationList = formatGetNodeGeneralization(root2.data);
-        generalizationList.forEach((item) => {
+        const generalizationList2 = formatGetNodeGeneralization(root2.data);
+        generalizationList2.forEach((item) => {
           if (!item.richText || isOldRichTextVersion) {
             this.handleDataToRichText(item);
           }
@@ -50668,7 +50688,7 @@ function createNodePostfixContent(node) {
   }
   return { el, width: width2, height: 24 };
 }
-const clone = (value) => JSON.parse(JSON.stringify(value));
+const clone$1 = (value) => JSON.parse(JSON.stringify(value));
 const MAX_SAVED_TRANSLATE = 5e4;
 function finite(value) {
   return typeof value === "number" && Number.isFinite(value);
@@ -50686,7 +50706,7 @@ function normalizePersistedViewData(value) {
   if (transform2.scaleX < 0.05 || transform2.scaleX > 10 || transform2.scaleY < 0.05 || transform2.scaleY > 10) return void 0;
   if (Math.abs(state.x) > MAX_SAVED_TRANSLATE || Math.abs(state.y) > MAX_SAVED_TRANSLATE) return void 0;
   if (Math.abs(transform2.translateX) > MAX_SAVED_TRANSLATE || Math.abs(transform2.translateY) > MAX_SAVED_TRANSLATE) return void 0;
-  return clone(candidate);
+  return clone$1(candidate);
 }
 function stripCustomPositions(tree) {
   let changed = false;
@@ -50730,10 +50750,19 @@ function buildDragAndLayoutOptions(settings) {
     }
   };
 }
+function buildRelationOptions(settings) {
+  return {
+    defaultGeneralizationText: settings.defaultSummaryText,
+    defaultAssociativeLineText: settings.defaultRelationText,
+    associativeLineIsAlwaysAboveNode: settings.relationAlwaysAboveNode,
+    enableAdjustAssociativeLinePoints: settings.relationAdjustPoints
+  };
+}
 function createMindMap(options) {
   registerMindMapPlugins(options.settings);
   const settings = options.settings;
   const behavior = settings ? buildDragAndLayoutOptions(settings) : null;
+  const relationOptions = settings ? buildRelationOptions(settings) : null;
   const viewData = (settings == null ? void 0 : settings.restoreSavedView) === false ? void 0 : normalizePersistedViewData(options.viewData);
   return new MindMap2({
     el: options.el,
@@ -50750,6 +50779,10 @@ function createMindMap(options) {
     minZoomRatio: (behavior == null ? void 0 : behavior.minZoomRatio) ?? 20,
     maxZoomRatio: (behavior == null ? void 0 : behavior.maxZoomRatio) ?? 400,
     fitPadding: (behavior == null ? void 0 : behavior.fitPadding) ?? 50,
+    defaultGeneralizationText: (relationOptions == null ? void 0 : relationOptions.defaultGeneralizationText) ?? "概要",
+    defaultAssociativeLineText: (relationOptions == null ? void 0 : relationOptions.defaultAssociativeLineText) ?? "关联",
+    associativeLineIsAlwaysAboveNode: (relationOptions == null ? void 0 : relationOptions.associativeLineIsAlwaysAboveNode) ?? true,
+    enableAdjustAssociativeLinePoints: (relationOptions == null ? void 0 : relationOptions.enableAdjustAssociativeLinePoints) ?? true,
     enableCtrlKeyNodeSelection: true,
     useLeftKeySelectionRightKeyDrag: (settings == null ? void 0 : settings.canvasMode) === "select",
     mousewheelAction: (settings == null ? void 0 : settings.wheelMode) === "zoom" ? "zoom" : "move",
@@ -50770,6 +50803,75 @@ function createMindMap(options) {
     enableEditFormulaInRichTextEdit: true,
     errorHandler: (_code, error) => console.error("[YeMind Zen]", error)
   });
+}
+const clone = (value) => JSON.parse(JSON.stringify(value));
+function generalizationList(data2) {
+  const value = data2.generalization;
+  if (Array.isArray(value)) return value.filter((item) => Boolean(item && typeof item === "object"));
+  return value && typeof value === "object" ? [value] : [];
+}
+function visitData(tree, callback) {
+  callback(tree.data);
+  generalizationList(tree.data).forEach(callback);
+  (tree.children ?? []).forEach((child) => visitData(child, callback));
+}
+function filterIndexed(values, indices) {
+  if (!Array.isArray(values)) return values;
+  return indices.map((index) => values[index] ?? null);
+}
+function filterTargetMap(value, validTargets) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  return Object.fromEntries(
+    Object.entries(value).filter(([uid]) => validTargets.has(uid))
+  );
+}
+function relationSnapshot(data2) {
+  return JSON.stringify({
+    associativeLineTargets: data2.associativeLineTargets,
+    associativeLinePoint: data2.associativeLinePoint,
+    associativeLineTargetControlOffsets: data2.associativeLineTargetControlOffsets,
+    associativeLineText: data2.associativeLineText,
+    associativeLineStyle: data2.associativeLineStyle
+  });
+}
+function sanitizeNodeData(data2, knownUids) {
+  if (!Array.isArray(data2.associativeLineTargets)) return false;
+  const before2 = relationSnapshot(data2);
+  const sourceUid = typeof data2.uid === "string" ? data2.uid : "";
+  const seen = /* @__PURE__ */ new Set();
+  const indices = [];
+  const targets = [];
+  data2.associativeLineTargets.forEach((target, index) => {
+    if (typeof target !== "string" || !knownUids.has(target) || target === sourceUid || seen.has(target)) return;
+    seen.add(target);
+    targets.push(target);
+    indices.push(index);
+  });
+  data2.associativeLineTargets = targets;
+  if (Array.isArray(data2.associativeLinePoint)) data2.associativeLinePoint = filterIndexed(data2.associativeLinePoint, indices);
+  if (Array.isArray(data2.associativeLineTargetControlOffsets)) {
+    data2.associativeLineTargetControlOffsets = filterIndexed(data2.associativeLineTargetControlOffsets, indices);
+  }
+  const validTargets = new Set(targets);
+  if (data2.associativeLineText && typeof data2.associativeLineText === "object") {
+    data2.associativeLineText = filterTargetMap(data2.associativeLineText, validTargets);
+  }
+  if (data2.associativeLineStyle && typeof data2.associativeLineStyle === "object") {
+    data2.associativeLineStyle = filterTargetMap(data2.associativeLineStyle, validTargets);
+  }
+  return before2 !== relationSnapshot(data2);
+}
+function sanitizeAssociativeLines(input) {
+  const tree = clone(input);
+  const knownUids = /* @__PURE__ */ new Set();
+  visitData(tree, (data2) => {
+    if (typeof data2.uid === "string" && data2.uid) knownUids.add(data2.uid);
+  });
+  let changed = false;
+  visitData(tree, (data2) => {
+    if (sanitizeNodeData(data2, knownUids)) changed = true;
+  });
+  return { tree, changed };
 }
 function toggleTodo(todo) {
   if (!todo) return { checked: false };
@@ -50972,9 +51074,39 @@ function createCommandAdapter(mindMap) {
       mindMap.execCommand("INSERT_FORMULA", value);
     },
     addSummary: () => mindMap.execCommand("ADD_GENERALIZATION"),
+    removeSummary: () => {
+      const node = primaryNode();
+      if (!node) return;
+      mindMap.execCommand(node.isGeneralization ? "REMOVE_NODE" : "REMOVE_GENERALIZATION");
+    },
     startRelation: () => {
+      var _a;
+      const relation = mindMap.associativeLine;
+      (_a = relation == null ? void 0 : relation.createLineFromActiveNode) == null ? void 0 : _a.call(relation);
+      return Boolean(relation == null ? void 0 : relation.isCreatingLine);
+    },
+    isRelationCreating: () => {
+      var _a;
+      return Boolean((_a = mindMap.associativeLine) == null ? void 0 : _a.isCreatingLine);
+    },
+    hasActiveRelation: () => {
+      var _a;
+      return Boolean((_a = mindMap.associativeLine) == null ? void 0 : _a.activeLine);
+    },
+    cancelRelation: () => {
+      var _a;
+      const relation = mindMap.associativeLine;
+      if (relation == null ? void 0 : relation.isCreatingLine) (_a = relation.cancelCreateLine) == null ? void 0 : _a.call(relation);
+    },
+    editActiveRelationText: () => {
       var _a, _b;
-      return (_b = (_a = mindMap.associativeLine) == null ? void 0 : _a.createLineFromActiveNode) == null ? void 0 : _b.call(_a);
+      const relation = mindMap.associativeLine;
+      const textGroup = (_a = relation == null ? void 0 : relation.activeLine) == null ? void 0 : _a[2];
+      if (textGroup) (_b = relation.showEditTextBox) == null ? void 0 : _b.call(relation, textGroup);
+    },
+    removeActiveRelation: () => {
+      var _a, _b;
+      return (_b = (_a = mindMap.associativeLine) == null ? void 0 : _a.removeLine) == null ? void 0 : _b.call(_a);
     },
     getTodo: () => {
       var _a, _b;
@@ -51346,6 +51478,21 @@ function escapeAttribute(value) {
 function createTodoMenuDescriptor(todo) {
   return getTodoMenuState(todo);
 }
+function createSummaryMenuDescriptor(nodes) {
+  var _a;
+  const primary = nodes[0];
+  if (primary == null ? void 0 : primary.isGeneralization) {
+    return { action: "remove-current", label: "删除当前概要", warning: true };
+  }
+  if (nodes.length === 1 && ((_a = primary == null ? void 0 : primary.checkHasGeneralization) == null ? void 0 : _a.call(primary))) {
+    return { action: "remove-all", label: "删除该节点全部概要", warning: true };
+  }
+  return {
+    action: "add",
+    label: nodes.length > 1 ? "为所选节点添加概要" : "添加概要",
+    warning: false
+  };
+}
 function openNodeContextMenu(event, commands, options = {}) {
   event.preventDefault();
   event.stopPropagation();
@@ -51379,8 +51526,15 @@ function openNodeContextMenu(event, commands, options = {}) {
     return (_a = options.onCodeBlock) == null ? void 0 : _a.call(options);
   } });
   menu.addSeparator();
-  menu.addItem({ icon: "iconList", label: "概要", accelerator: "Ctrl+Alt+G", click: () => commands.addSummary() });
-  menu.addItem({ icon: "iconRight", label: "关联线", accelerator: "Ctrl+Alt+L", click: () => commands.startRelation() });
+  const summaryAction = createSummaryMenuDescriptor(commands.getActiveNodes());
+  menu.addItem({
+    icon: "iconList",
+    label: summaryAction.label,
+    accelerator: summaryAction.action === "add" ? "Ctrl+Alt+G" : void 0,
+    warning: summaryAction.warning,
+    click: () => summaryAction.action === "add" ? commands.addSummary() : commands.removeSummary()
+  });
+  menu.addItem({ icon: "iconRight", label: "关联线", accelerator: "Ctrl+Alt+L", click: () => options.onRelation ? options.onRelation() : commands.startRelation() });
   menu.addSeparator();
   menu.addItem({ icon: "iconUp", label: "上移节点", click: () => commands.moveUp() });
   menu.addItem({ icon: "iconDown", label: "下移节点", click: () => commands.moveDown() });
@@ -51619,6 +51773,13 @@ function createEditorTemplate(title) {
 
         <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式">◉ <span>退出禅模式</span></button>
 
+        <div class="ymz-relation-panel" data-role="relation-panel" hidden data-mode="idle">
+          <span data-role="relation-hint"></span>
+          <button data-relation-action="edit">编辑文字</button>
+          <button class="is-danger" data-relation-action="delete">删除关联线</button>
+          <button data-relation-action="cancel">取消</button>
+        </div>
+
         <div class="ymz-floating ymz-statusbar">
           <button class="ymz-status-title" data-role="title" title="${escapeHtml$1(title)}">${escapeHtml$1(title)}</button>
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
@@ -51848,6 +52009,15 @@ function createSelectionPresentation(rawCount, mode) {
     modeTitle: isSelectMode ? "选择优先：左键框选；右键拖动画布" : "平移优先：左键拖动画布；Ctrl/Cmd + 左键框选"
   };
 }
+function createRelationPresentation(input) {
+  if (input.isCreating) {
+    return { mode: "creating", hidden: false, hint: "点击目标节点完成关联，Esc 取消" };
+  }
+  if (input.isActive) {
+    return { mode: "active", hidden: false, hint: "关联线已选中，可拖动端点和控制点" };
+  }
+  return { mode: "idle", hidden: true, hint: "" };
+}
 class YeMindEditor {
   constructor(options) {
     __publicField(this, "map", null);
@@ -51870,14 +52040,23 @@ class YeMindEditor {
     __publicField(this, "replaceInputEl");
     __publicField(this, "searchInfoEl");
     __publicField(this, "selectionCountEl");
+    __publicField(this, "relationPanelEl");
+    __publicField(this, "relationHintEl");
     __publicField(this, "richTextToolbar", null);
     __publicField(this, "settingsInitialized", false);
     __publicField(this, "viewMode", "map");
     __publicField(this, "searchText", "");
     __publicField(this, "restoredViewOnOpen", false);
     __publicField(this, "onRootKeydown", (event) => {
-      var _a;
-      if (event.key === "Escape" && ((_a = this.rootEl) == null ? void 0 : _a.dataset.zen) === "true") {
+      var _a, _b;
+      if (event.key === "Escape" && ((_a = this.commands) == null ? void 0 : _a.isRelationCreating())) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.commands.cancelRelation();
+        this.updateRelationPresentation();
+        return;
+      }
+      if (event.key === "Escape" && ((_b = this.rootEl) == null ? void 0 : _b.dataset.zen) === "true") {
         event.preventDefault();
         this.toggleZen(false);
         return;
@@ -51915,10 +52094,7 @@ class YeMindEditor {
           var _a2;
           return (_a2 = this.commands) == null ? void 0 : _a2.addSummary();
         }],
-        ["relation", () => {
-          var _a2;
-          return (_a2 = this.commands) == null ? void 0 : _a2.startRelation();
-        }]
+        ["relation", () => this.beginRelation()]
       ];
       const action = actions.find(([key]) => matchesShortcut(event, this.settings.shortcutMap[key]));
       if (!action) return;
@@ -51964,14 +52140,17 @@ class YeMindEditor {
     this.replaceInputEl = this.options.container.querySelector('[data-role="replace-input"]');
     this.searchInfoEl = this.options.container.querySelector('[data-role="search-info"]');
     this.selectionCountEl = this.options.container.querySelector('[data-role="selection-count"]');
+    this.relationPanelEl = this.options.container.querySelector('[data-role="relation-panel"]');
+    this.relationHintEl = this.options.container.querySelector('[data-role="relation-hint"]');
     const layoutSelect = this.options.container.querySelector('[data-action="layout"]');
     if (layoutSelect) layoutSelect.value = this.current.layout;
     let runtimeData = this.current.data;
     const normalized = stripCustomPositions(runtimeData);
-    runtimeData = normalized.tree;
-    if (normalized.changed) {
-      this.current.data = normalized.tree;
-      void this.options.repository.update(this.current.id, { data: normalized.tree });
+    const sanitized = sanitizeAssociativeLines(normalized.tree);
+    runtimeData = sanitized.tree;
+    if (normalized.changed || sanitized.changed) {
+      this.current.data = runtimeData;
+      void this.options.repository.update(this.current.id, { data: runtimeData });
     }
     const runtimeViewData = this.settings.restoreSavedView ? normalizePersistedViewData(this.current.viewData) : void 0;
     if (this.current.viewData && !runtimeViewData) this.current.viewData = void 0;
@@ -52028,6 +52207,15 @@ class YeMindEditor {
       const searchButton = event.target.closest("[data-search-action]");
       if (searchButton) {
         this.handleSearchAction(searchButton.dataset.searchAction ?? "");
+        return;
+      }
+      const relationButton = event.target.closest("[data-relation-action]");
+      if (relationButton && this.commands) {
+        const relationAction = relationButton.dataset.relationAction;
+        if (relationAction === "edit") this.commands.editActiveRelationText();
+        if (relationAction === "delete") this.commands.removeActiveRelation();
+        if (relationAction === "cancel") this.commands.cancelRelation();
+        this.updateRelationPresentation();
         return;
       }
       const button = event.target.closest("[data-action]");
@@ -52176,6 +52364,10 @@ class YeMindEditor {
       const uid = (_a = active == null ? void 0 : active.getData) == null ? void 0 : _a.call(active, "uid");
       this.activateOutlineUid(uid ? String(uid) : "");
     });
+    this.map.on("associative_line_click", () => this.updateRelationPresentation());
+    this.map.on("associative_line_deactivate", () => this.updateRelationPresentation());
+    this.map.on("node_click", () => window.setTimeout(() => this.updateRelationPresentation(), 0));
+    this.map.on("draw_click", () => window.setTimeout(() => this.updateRelationPresentation(), 0));
     this.map.on("search_info_change", (info) => this.updateSearchInfo(info));
     this.map.on("scale", () => this.updateZoom());
   }
@@ -52183,11 +52375,31 @@ class YeMindEditor {
     if (!this.commands) return;
     openNodeContextMenu(event, this.commands, {
       onInlineLink: () => openInlineLinkDialog(this.commands, this.settings),
-      onCodeBlock: () => openCodeBlockDialog(this.commands, this.settings)
+      onCodeBlock: () => openCodeBlockDialog(this.commands, this.settings),
+      onRelation: () => this.beginRelation()
+    });
+  }
+  beginRelation() {
+    if (!this.commands) return;
+    this.commands.startRelation();
+    this.updateRelationPresentation();
+  }
+  updateRelationPresentation() {
+    if (!this.commands || !this.relationPanelEl || !this.relationHintEl) return;
+    const presentation = createRelationPresentation({
+      isCreating: this.commands.isRelationCreating(),
+      isActive: this.commands.hasActiveRelation()
+    });
+    this.relationPanelEl.hidden = presentation.hidden;
+    this.relationPanelEl.dataset.mode = presentation.mode;
+    this.relationHintEl.textContent = presentation.hint;
+    this.relationPanelEl.querySelectorAll("[data-relation-action]").forEach((button) => {
+      const action = button.dataset.relationAction;
+      button.hidden = presentation.mode === "creating" ? action !== "cancel" : presentation.mode === "active" ? action === "cancel" : true;
     });
   }
   applySettings(settings) {
-    var _a, _b, _c2;
+    var _a, _b, _c2, _d2, _e, _f;
     const firstApply = !this.settingsInitialized;
     this.settings = settings;
     (_a = this.richTextToolbar) == null ? void 0 : _a.setEnabled(settings.showRichTextToolbar);
@@ -52205,6 +52417,7 @@ class YeMindEditor {
     this.rootEl.style.setProperty("--ymz-code-tab-size", String(settings.codeBlockTabSize));
     this.rootEl.style.setProperty("--ymz-code-font-size", `${settings.codeBlockFontSize}px`);
     const behavior = buildDragAndLayoutOptions(settings);
+    const relationOptions = buildRelationOptions(settings);
     (_b = this.map) == null ? void 0 : _b.updateConfig({
       useLeftKeySelectionRightKeyDrag: settings.canvasMode === "select",
       mousewheelAction: settings.wheelMode === "zoom" ? "zoom" : "move",
@@ -52214,9 +52427,12 @@ class YeMindEditor {
       isLimitMindMapInCanvas: behavior.isLimitMindMapInCanvas,
       minZoomRatio: behavior.minZoomRatio,
       maxZoomRatio: behavior.maxZoomRatio,
-      fitPadding: behavior.fitPadding
+      fitPadding: behavior.fitPadding,
+      ...relationOptions
     });
     (_c2 = this.map) == null ? void 0 : _c2.setThemeConfig(behavior.themeConfig);
+    (_f = (_e = (_d2 = this.map) == null ? void 0 : _d2.associativeLine) == null ? void 0 : _e.renderAllLines) == null ? void 0 : _f.call(_e);
+    this.updateRelationPresentation();
     this.updateSelectionPresentation();
     if (firstApply) {
       this.settingsInitialized = true;
@@ -52357,8 +52573,10 @@ class YeMindEditor {
   async persist() {
     if (!this.map || this.destroyed) return;
     try {
+      const sanitized = sanitizeAssociativeLines(this.map.getData(false));
+      this.current.data = sanitized.tree;
       await this.options.repository.update(this.current.id, {
-        data: this.map.getData(false),
+        data: sanitized.tree,
         layout: this.map.getLayout(),
         theme: this.map.getTheme(),
         viewData: normalizePersistedViewData(this.map.view.getTransformData())

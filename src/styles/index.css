@@ -115,3 +115,9 @@
 .ymz-selection-count[hidden]{display:none}
 
 .ymz-settings-note{margin:8px 14px 12px;padding:9px 11px;border-radius:8px;background:var(--b3-theme-surface);color:var(--b3-theme-on-surface-light);font-size:12px;line-height:1.6}
+
+
+/* v0.5.5 native associative-line state / 原生关联线状态 */
+.ymz-relation-panel{position:absolute;z-index:34;left:50%;top:66px;display:flex;align-items:center;gap:7px;max-width:calc(100% - 28px);padding:7px 9px;border:1px solid var(--ymz-border);border-radius:12px;background:var(--ymz-panel);box-shadow:var(--ymz-shadow);transform:translateX(-50%);backdrop-filter:blur(10px)}
+.ymz-relation-panel[hidden]{display:none}.ymz-relation-panel>span{color:var(--b3-theme-on-surface-light);font-size:12px}.ymz-relation-panel button{height:30px;padding:0 10px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--b3-theme-on-background);cursor:pointer}.ymz-relation-panel button:hover{border-color:var(--ymz-border);background:var(--b3-list-hover)}.ymz-relation-panel button.is-danger{color:var(--b3-theme-error)}
+.ymz-editor[data-zen="true"] .ymz-relation-panel{top:14px}.ymz-editor[data-view="outline"] .ymz-relation-panel{display:none}

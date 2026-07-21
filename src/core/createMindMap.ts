@@ -4,6 +4,7 @@ import { registerMindMapPlugins } from './registerPlugins';
 import type { YeMindSettings } from '../settings/SettingsStore';
 import { createNodePrefixContent, createNodePostfixContent, YEMIND_ICON_LIST } from './nodeDecorations';
 import { buildDragAndLayoutOptions, normalizePersistedViewData } from './dragBehavior';
+import { buildRelationOptions } from './relationConfig';
 
 export interface CreateMindMapOptions {
   el: HTMLElement;
@@ -19,6 +20,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
   registerMindMapPlugins(options.settings);
   const settings = options.settings;
   const behavior = settings ? buildDragAndLayoutOptions(settings) : null;
+  const relationOptions = settings ? buildRelationOptions(settings) : null;
   const viewData = settings?.restoreSavedView === false
     ? undefined
     : normalizePersistedViewData(options.viewData);
@@ -38,6 +40,10 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     minZoomRatio: behavior?.minZoomRatio ?? 20,
     maxZoomRatio: behavior?.maxZoomRatio ?? 400,
     fitPadding: behavior?.fitPadding ?? 50,
+    defaultGeneralizationText: relationOptions?.defaultGeneralizationText ?? '概要',
+    defaultAssociativeLineText: relationOptions?.defaultAssociativeLineText ?? '关联',
+    associativeLineIsAlwaysAboveNode: relationOptions?.associativeLineIsAlwaysAboveNode ?? true,
+    enableAdjustAssociativeLinePoints: relationOptions?.enableAdjustAssociativeLinePoints ?? true,
     enableCtrlKeyNodeSelection: true,
     useLeftKeySelectionRightKeyDrag: settings?.canvasMode === 'select',
     mousewheelAction: settings?.wheelMode === 'zoom' ? 'zoom' : 'move',

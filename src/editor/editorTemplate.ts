@@ -56,6 +56,13 @@ export function createEditorTemplate(title: string): string {
 
         <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式">◉ <span>退出禅模式</span></button>
 
+        <div class="ymz-relation-panel" data-role="relation-panel" hidden data-mode="idle">
+          <span data-role="relation-hint"></span>
+          <button data-relation-action="edit">编辑文字</button>
+          <button class="is-danger" data-relation-action="delete">删除关联线</button>
+          <button data-relation-action="cancel">取消</button>
+        </div>
+
         <div class="ymz-floating ymz-statusbar">
           <button class="ymz-status-title" data-role="title" title="${escapeHtml(title)}">${escapeHtml(title)}</button>
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>

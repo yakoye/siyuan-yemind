@@ -8,11 +8,12 @@ import {
   openLinkDialog,
   openTagsDialog,
 } from './nodeContentDialogs';
-import { createTodoMenuDescriptor } from './nodeContentMenu';
+import { createSummaryMenuDescriptor, createTodoMenuDescriptor } from './nodeContentMenu';
 
 export interface NodeContextMenuOptions {
   onInlineLink?: () => void;
   onCodeBlock?: () => void;
+  onRelation?: () => void;
 }
 
 export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands, options: NodeContextMenuOptions = {}): void {
@@ -41,8 +42,15 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   menu.addItem({ icon: 'iconLink', label: '行内链接', click: () => options.onInlineLink?.() });
   menu.addItem({ icon: 'iconCode', label: '代码块', click: () => options.onCodeBlock?.() });
   menu.addSeparator();
-  menu.addItem({ icon: 'iconList', label: '概要', accelerator: 'Ctrl+Alt+G', click: () => commands.addSummary() });
-  menu.addItem({ icon: 'iconRight', label: '关联线', accelerator: 'Ctrl+Alt+L', click: () => commands.startRelation() });
+  const summaryAction = createSummaryMenuDescriptor(commands.getActiveNodes());
+  menu.addItem({
+    icon: 'iconList',
+    label: summaryAction.label,
+    accelerator: summaryAction.action === 'add' ? 'Ctrl+Alt+G' : undefined,
+    warning: summaryAction.warning,
+    click: () => summaryAction.action === 'add' ? commands.addSummary() : commands.removeSummary(),
+  });
+  menu.addItem({ icon: 'iconRight', label: '关联线', accelerator: 'Ctrl+Alt+L', click: () => options.onRelation ? options.onRelation() : commands.startRelation() });
   menu.addSeparator();
   menu.addItem({ icon: 'iconUp', label: '上移节点', click: () => commands.moveUp() });
   menu.addItem({ icon: 'iconDown', label: '下移节点', click: () => commands.moveDown() });

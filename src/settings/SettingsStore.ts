@@ -54,6 +54,10 @@ export interface YeMindSettings {
   secondLevelMarginY: number;
   nodeMarginX: number;
   nodeMarginY: number;
+  defaultSummaryText: string;
+  defaultRelationText: string;
+  relationAlwaysAboveNode: boolean;
+  relationAdjustPoints: boolean;
   shortcutMap: ShortcutMap;
 }
 
@@ -97,6 +101,10 @@ export const DEFAULT_SETTINGS: YeMindSettings = {
   secondLevelMarginY: 40,
   nodeMarginX: 50,
   nodeMarginY: 16,
+  defaultSummaryText: '概要',
+  defaultRelationText: '关联',
+  relationAlwaysAboveNode: true,
+  relationAdjustPoints: true,
   shortcutMap: { ...DEFAULT_SHORTCUTS },
 };
 
@@ -168,6 +176,10 @@ function normalizeSettings(value: Partial<YeMindSettings>): YeMindSettings {
     secondLevelMarginY: numberInRange(value.secondLevelMarginY, DEFAULT_SETTINGS.secondLevelMarginY, 0, 200),
     nodeMarginX: numberInRange(value.nodeMarginX, DEFAULT_SETTINGS.nodeMarginX, 10, 240),
     nodeMarginY: numberInRange(value.nodeMarginY, DEFAULT_SETTINGS.nodeMarginY, 0, 160),
+    defaultSummaryText: stringOrDefault(value.defaultSummaryText, DEFAULT_SETTINGS.defaultSummaryText),
+    defaultRelationText: stringOrDefault(value.defaultRelationText, DEFAULT_SETTINGS.defaultRelationText),
+    relationAlwaysAboveNode: booleanOrDefault(value.relationAlwaysAboveNode, DEFAULT_SETTINGS.relationAlwaysAboveNode),
+    relationAdjustPoints: booleanOrDefault(value.relationAdjustPoints, DEFAULT_SETTINGS.relationAdjustPoints),
     shortcutMap: normalizeShortcutMap(value.shortcutMap),
   };
 }
