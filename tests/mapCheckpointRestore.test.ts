@@ -18,7 +18,8 @@ describe('MapRepository checkpoint restore', () => {
     const snapshot: MapCheckpointSnapshot = {
       data: { data: { text: 'Historic root' }, children: [] },
       layout: 'mindMap',
-      theme: 'dark',
+      theme: 'kmind-midnight-neon',
+      lineStyle: 'straight',
       viewData: { scaleX: 0.8, scaleY: 0.8, translateX: 12, translateY: 24 },
     };
 
@@ -30,7 +31,8 @@ describe('MapRepository checkpoint restore', () => {
     expect(restored.createdAt).toBe(100);
     expect(restored.data.data.text).toBe('Historic root');
     expect(restored.layout).toBe('mindMap');
-    expect(restored.theme).toBe('dark');
+    expect(restored.theme).toBe('kmind-midnight-neon');
+    expect(restored.lineStyle).toBe('straight');
     expect(restored.viewData).toEqual(snapshot.viewData);
   });
 
@@ -52,7 +54,8 @@ describe('MapRepository checkpoint restore', () => {
     await expect(repo.restoreSnapshot('map-1', {
       data: { data: { text: 'Historic' }, children: [] },
       layout: 'mindMap',
-      theme: 'dark',
+      theme: 'kmind-midnight-neon',
+      lineStyle: 'straight',
     })).rejects.toThrow('write failed');
 
     expect(repo.get('map-1')).toEqual(before);

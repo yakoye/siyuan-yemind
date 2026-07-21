@@ -7,12 +7,14 @@ import { buildDragAndLayoutOptions, normalizePersistedViewData } from './dragBeh
 import { buildRelationOptions } from './relationConfig';
 import { buildOuterFrameOptions } from './outerFrameConfig';
 import { shouldBlockUpstreamShortcut } from '../editor/shortcutSafety';
+import { buildThemeConfig, detectAppearance, type YeMindLineStyle } from './themePresets';
 
 export interface CreateMindMapOptions {
   el: HTMLElement;
   data: MindMapTree;
   viewData?: Record<string, unknown>;
   theme?: string;
+  lineStyle?: YeMindLineStyle;
   layout?: string;
   readonly?: boolean;
   settings?: YeMindSettings;
@@ -25,6 +27,12 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
   const behavior = settings ? buildDragAndLayoutOptions(settings) : null;
   const relationOptions = settings ? buildRelationOptions(settings) : null;
   const outerFrameOptions = settings ? buildOuterFrameOptions(settings) : null;
+  const appearance = buildThemeConfig({
+    presetId: options.theme,
+    appearance: detectAppearance(),
+    lineStyle: options.lineStyle,
+    spacingConfig: behavior?.themeConfig,
+  });
   const viewData = settings?.restoreSavedView === false
     ? undefined
     : normalizePersistedViewData(options.viewData);
@@ -33,8 +41,9 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     el: options.el,
     data: options.data,
     viewData,
-    theme: options.theme ?? 'default',
-    themeConfig: behavior?.themeConfig,
+    theme: 'default',
+    themeConfig: appearance.themeConfig,
+    rainbowLinesConfig: appearance.rainbow,
     layout: options.layout ?? 'logicalStructure',
     readonly: Boolean(options.readonly),
     disabledClipboard: true,

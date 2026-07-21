@@ -20,5 +20,7 @@ describe('editor template v0.5 controls', () => {
     expect(html).toContain('data-action="zen"');
     expect(html).toContain('data-action="fullscreen"');
     expect(html).toContain('data-action="layout"');
+    expect(html).toContain('data-action="theme"');
+    expect(html).toContain('data-action="line-style"');
   });
 });

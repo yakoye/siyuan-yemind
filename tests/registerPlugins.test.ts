@@ -11,6 +11,7 @@ describe('mind-map plugin registration', () => {
       'AssociativeLine',
       'OuterFrame',
       'NodeImgAdjust',
+      'RainbowLines',
     ]));
   });
 });

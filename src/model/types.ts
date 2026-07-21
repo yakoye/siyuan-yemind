@@ -28,6 +28,7 @@ export interface MapCheckpointSnapshot {
   data: MindMapTree;
   layout: string;
   theme: string;
+  lineStyle: 'curve' | 'straight' | 'direct';
   viewData?: Record<string, unknown>;
 }
 
@@ -38,6 +39,7 @@ export interface YeMindMapDocument {
   updatedAt: number;
   layout: string;
   theme: string;
+  lineStyle: 'curve' | 'straight' | 'direct';
   data: MindMapTree;
   viewData?: Record<string, unknown>;
 }

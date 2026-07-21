@@ -1,4 +1,6 @@
 import type { YeMindMapDocument } from './types';
+import { normalizeLineStyle, normalizeThemePresetId } from '../core/themePresets';
+import { normalizeLayoutId } from '../core/layoutPresets';
 import type {
   CheckpointKind,
   CheckpointStorage,
@@ -32,8 +34,9 @@ function normalizeCheckpoint(value: unknown): MapCheckpoint | null {
     nodeCount: Number(candidate.nodeCount) || countNodes(candidate.snapshot.data),
     snapshot: {
       data: clone(candidate.snapshot.data),
-      layout: typeof candidate.snapshot.layout === 'string' ? candidate.snapshot.layout : 'logicalStructure',
-      theme: typeof candidate.snapshot.theme === 'string' ? candidate.snapshot.theme : 'default',
+      layout: normalizeLayoutId(candidate.snapshot.layout),
+      theme: normalizeThemePresetId(candidate.snapshot.theme),
+      lineStyle: normalizeLineStyle(candidate.snapshot.lineStyle),
       viewData: candidate.snapshot.viewData ? clone(candidate.snapshot.viewData) : undefined,
     },
   };
@@ -104,6 +107,7 @@ export class CheckpointRepository {
           data: clone(map.data),
           layout: map.layout,
           theme: map.theme,
+          lineStyle: map.lineStyle,
           viewData: map.viewData ? clone(map.viewData) : undefined,
         },
       };

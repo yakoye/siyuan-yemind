@@ -2,6 +2,13 @@ import type MindMap from 'simple-mind-map';
 import { Dialog, Menu, showMessage } from 'siyuan';
 import { createMindMap } from '../core/createMindMap';
 import { buildDragAndLayoutOptions, normalizePersistedViewData, stripCustomPositions } from '../core/dragBehavior';
+import {
+  buildThemeConfig,
+  detectAppearance,
+  normalizeLineStyle,
+  normalizeThemePresetId,
+  type YeMindAppearance,
+} from '../core/themePresets';
 import { buildRelationOptions } from '../core/relationConfig';
 import { buildOuterFrameOptions } from '../core/outerFrameConfig';
 import { sanitizeAssociativeLines } from '../core/relationData';
@@ -94,6 +101,12 @@ export class YeMindEditor {
   private outlineTextCommitUid: string | null = null;
   private outlineStructureBusy = false;
   private pendingOutlineFocus: PendingOutlineFocus | null = null;
+  private appearanceObserver: MutationObserver | null = null;
+  private appearanceMedia: MediaQueryList | null = null;
+  private appearanceMode: YeMindAppearance | null = null;
+  private readonly onAppearanceMediaChange = (): void => {
+    this.refreshAppearanceIfNeeded();
+  };
 
   private readonly onRootKeydown = (event: KeyboardEvent): void => {
     if (event.key === 'Escape' && this.commands?.isRelationCreating()) {
@@ -155,6 +168,10 @@ export class YeMindEditor {
     this.destroyed = true;
     this.repositoryUnsubscribe?.();
     this.settingsUnsubscribe?.();
+    this.appearanceObserver?.disconnect();
+    this.appearanceObserver = null;
+    this.appearanceMedia?.removeEventListener?.('change', this.onAppearanceMediaChange);
+    this.appearanceMedia = null;
     this.richTextToolbar?.destroy();
     this.richTextToolbar = null;
     this.rootEl?.removeEventListener('keydown', this.onRootKeydown);
@@ -171,7 +188,9 @@ export class YeMindEditor {
   }
 
   private mount(): void {
-    this.options.container.innerHTML = createEditorTemplate(this.current.title);
+    this.current.theme = normalizeThemePresetId(this.current.theme);
+    this.current.lineStyle = normalizeLineStyle(this.current.lineStyle);
+    this.options.container.innerHTML = createEditorTemplate(this.current.title, this.current.theme, this.current.lineStyle);
     this.rootEl = this.options.container.querySelector('.ymz-editor') as HTMLElement;
     this.canvasEl = this.options.container.querySelector('[data-role="canvas"]') as HTMLElement;
     this.splitDividerEl = this.options.container.querySelector('[data-role="split-divider"]') as HTMLElement;
@@ -191,6 +210,10 @@ export class YeMindEditor {
     this.outerFrameHintEl = this.options.container.querySelector('[data-role="outer-frame-hint"]') as HTMLElement;
     const layoutSelect = this.options.container.querySelector<HTMLSelectElement>('[data-action="layout"]');
     if (layoutSelect) layoutSelect.value = this.current.layout;
+    const themeSelect = this.options.container.querySelector<HTMLSelectElement>('[data-action="theme"]');
+    if (themeSelect) themeSelect.value = this.current.theme;
+    const lineStyleSelect = this.options.container.querySelector<HTMLSelectElement>('[data-action="line-style"]');
+    if (lineStyleSelect) lineStyleSelect.value = this.current.lineStyle;
 
     let runtimeData = this.current.data;
     const normalized = stripCustomPositions(runtimeData);
@@ -213,6 +236,7 @@ export class YeMindEditor {
       data: runtimeData,
       viewData: runtimeViewData,
       theme: this.current.theme,
+      lineStyle: this.current.lineStyle,
       layout: this.current.layout,
       settings: this.settings,
       onHyperlink: (href) => this.openLink(href),
@@ -228,6 +252,7 @@ export class YeMindEditor {
 
     this.bindToolbar();
     this.bindMapEvents();
+    this.bindAppearanceObserver();
     this.repositoryUnsubscribe = this.options.repository.subscribe((state) => {
       const next = state.maps.find((item) => item.id === this.current.id);
       if (!next) {
@@ -247,6 +272,8 @@ export class YeMindEditor {
     const runtime = this.map as any;
     this.options.diagnostics.record('editor', 'mounted', this.current.id, {
       layout: this.current.layout,
+      theme: this.current.theme,
+      lineStyle: this.current.lineStyle,
       pluginStates: {
         drag: Boolean(runtime.drag),
         select: Boolean(runtime.select),
@@ -413,6 +440,24 @@ export class YeMindEditor {
       const layout = (event.target as HTMLSelectElement).value;
       this.map.setLayout(layout);
       this.current.layout = layout;
+      this.scheduleSave();
+    });
+    this.rootEl.querySelector<HTMLSelectElement>('[data-action="theme"]')?.addEventListener('change', (event) => {
+      if (!this.map) return;
+      this.current.theme = normalizeThemePresetId((event.target as HTMLSelectElement).value);
+      this.applyMapAppearance();
+      this.options.diagnostics.record('appearance', 'theme-changed', this.current.id, {
+        theme: this.current.theme,
+      });
+      this.scheduleSave();
+    });
+    this.rootEl.querySelector<HTMLSelectElement>('[data-action="line-style"]')?.addEventListener('change', (event) => {
+      if (!this.map) return;
+      this.current.lineStyle = normalizeLineStyle((event.target as HTMLSelectElement).value);
+      this.applyMapAppearance();
+      this.options.diagnostics.record('appearance', 'line-style-changed', this.current.id, {
+        lineStyle: this.current.lineStyle,
+      });
       this.scheduleSave();
     });
   }
@@ -599,7 +644,7 @@ export class YeMindEditor {
       ...relationOptions,
       ...outerFrameOptions,
     });
-    this.map?.setThemeConfig(behavior.themeConfig);
+    this.applyMapAppearance();
     (this.map as any)?.associativeLine?.renderAllLines?.();
     (this.map as any)?.outerFrame?.renderOuterFrames?.();
     this.updateRelationPresentation();
@@ -612,6 +657,59 @@ export class YeMindEditor {
       this.setReadonly(settings.defaultReadonlyMode);
       this.toggleZen(settings.defaultZenMode);
     }
+  }
+
+  private applyMapAppearance(render = true): void {
+    if (!this.map) return;
+    this.current.theme = normalizeThemePresetId(this.current.theme);
+    this.current.lineStyle = normalizeLineStyle(this.current.lineStyle);
+    const behavior = buildDragAndLayoutOptions(this.settings);
+    const appearanceMode = detectAppearance();
+    const appearance = buildThemeConfig({
+      presetId: this.current.theme,
+      appearance: appearanceMode,
+      lineStyle: this.current.lineStyle,
+      spacingConfig: behavior.themeConfig,
+    });
+    this.appearanceMode = appearanceMode;
+    this.rootEl.dataset.themePreset = appearance.presetId;
+    this.rootEl.dataset.appearance = appearanceMode;
+    this.canvasEl.style.backgroundColor = String(appearance.themeConfig.backgroundColor ?? '');
+    this.map.setThemeConfig(appearance.themeConfig, true);
+    this.map.updateConfig({ rainbowLinesConfig: appearance.rainbow });
+    if (render) this.map.render();
+    (this.map as any)?.associativeLine?.renderAllLines?.();
+    (this.map as any)?.outerFrame?.renderOuterFrames?.();
+  }
+
+  private bindAppearanceObserver(): void {
+    this.appearanceMode = detectAppearance();
+    if (typeof MutationObserver !== 'undefined') {
+      this.appearanceObserver = new MutationObserver(() => this.refreshAppearanceIfNeeded());
+      this.appearanceObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'data-theme', 'data-theme-mode', 'data-color-mode'],
+      });
+      if (document.body) {
+        this.appearanceObserver.observe(document.body, {
+          attributes: true,
+          attributeFilter: ['class', 'data-theme', 'data-theme-mode', 'data-color-mode'],
+        });
+      }
+    }
+    if (typeof matchMedia === 'function') {
+      this.appearanceMedia = matchMedia('(prefers-color-scheme: dark)');
+      this.appearanceMedia.addEventListener?.('change', this.onAppearanceMediaChange);
+    }
+    this.applyMapAppearance(false);
+  }
+
+  private refreshAppearanceIfNeeded(): void {
+    if (this.destroyed || !this.map) return;
+    const next = detectAppearance();
+    if (next === this.appearanceMode) return;
+    this.applyMapAppearance();
+    this.options.diagnostics.record('appearance', 'host-mode-changed', this.current.id, { appearance: next });
   }
 
   private bindSplitDivider(): void {
@@ -728,6 +826,10 @@ export class YeMindEditor {
     });
     const layout = this.rootEl.querySelector<HTMLSelectElement>('[data-action="layout"]');
     if (layout) layout.disabled = !state.layout;
+    const theme = this.rootEl.querySelector<HTMLSelectElement>('[data-action="theme"]');
+    if (theme) theme.disabled = this.commands.isReadonly();
+    const lineStyle = this.rootEl.querySelector<HTMLSelectElement>('[data-action="line-style"]');
+    if (lineStyle) lineStyle.disabled = this.commands.isReadonly();
   }
 
   private updateSelectionPresentation(count?: number): void {
@@ -1094,16 +1196,23 @@ export class YeMindEditor {
     this.saveTimer = null;
     try {
       this.current = restored;
+      this.current.theme = normalizeThemePresetId(restored.theme);
+      this.current.lineStyle = normalizeLineStyle(restored.lineStyle);
       const viewData = normalizePersistedViewData(restored.viewData);
       if (this.viewMode !== 'outline' && hasNonZeroSize(this.canvasEl)) this.map.resize();
       this.map.setFullData({
         root: restored.data,
         layout: restored.layout,
-        theme: { template: restored.theme },
+        theme: { template: 'default' },
         view: viewData,
       });
       const layoutSelect = this.rootEl.querySelector<HTMLSelectElement>('[data-action="layout"]');
       if (layoutSelect) layoutSelect.value = restored.layout;
+      const themeSelect = this.rootEl.querySelector<HTMLSelectElement>('[data-action="theme"]');
+      if (themeSelect) themeSelect.value = this.current.theme;
+      const lineStyleSelect = this.rootEl.querySelector<HTMLSelectElement>('[data-action="line-style"]');
+      if (lineStyleSelect) lineStyleSelect.value = this.current.lineStyle;
+      this.applyMapAppearance();
       if (!viewData) {
         await new Promise<void>((resolve) => {
           window.requestAnimationFrame(() => {
@@ -1186,10 +1295,14 @@ export class YeMindEditor {
       const patch = {
         data: sanitized.tree,
         layout: this.map.getLayout(),
-        theme: this.map.getTheme(),
+        theme: normalizeThemePresetId(this.current.theme),
+        lineStyle: normalizeLineStyle(this.current.lineStyle),
         viewData: normalizePersistedViewData(this.map.view.getTransformData()),
       };
       this.current.data = sanitized.tree;
+      this.current.layout = patch.layout;
+      this.current.theme = patch.theme;
+      this.current.lineStyle = patch.lineStyle;
       await this.options.repository.update(this.current.id, patch);
       if (!this.destroyed && this.saveRevisions.markSaved(revision)) {
         this.saveStateEl.textContent = '已保存';

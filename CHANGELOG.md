@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.14 — 2026-07-17
+
+- Studied KMind Zen 0.33.0 theme, appearance, layout and edge-route runtime instead of deriving styles from screenshots.
+- Changed new and migrated maps to the logical `kmind-default` preset with curved parent-child edges by default.
+- Added all 13 official KMind theme families available in the supplied bundle, mapped to `simple-mind-map` light/dark theme fields without importing the private KMind document kernel.
+- Added live SiYuan light/dark appearance following, per-map theme selection, per-map edge route selection, and checkpoint-safe persistence.
+- Registered the upstream `RainbowLines` plugin and enabled theme-defined rainbow branches for official presets that request them.
+- Expanded the layout selector to all 14 layouts supported by the installed `simple-mind-map` runtime, including timeline, vertical timeline and fishbone variants.
+- Kept existing user node-spacing settings authoritative when a theme is applied and preserved v0.5.10-v0.5.13 startup, outline, checkpoint and drag contracts.
+- Added a maintained official-feature parity matrix so later batches can move node styling, advanced edge routes, outline inspector, import/export and other official functions without creating duplicate kernels.
+
 ## 0.5.13 — 2026-07-17
 
 - Traced the stale solid drag connection to upstream ownership: `hideChildren()` hides outgoing child lines, while the dragged node's incoming line is stored in `parent._lines[parent.children.indexOf(node)]`.

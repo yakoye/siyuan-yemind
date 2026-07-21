@@ -2792,6 +2792,331 @@ function downloadDiagnosticsArchive(blob, filename) {
   anchor.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 1e3);
 }
+const FONT_SANS = 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif';
+const FONT_MONO = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
+const RAINBOW = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
+function level$1(fillColor, color, borderColor, borderWidth, borderRadius, fontSize, fontWeight) {
+  return { fillColor, color, borderColor, borderWidth, borderRadius, fontSize, fontWeight };
+}
+const defaultLight = {
+  backgroundColor: "#f8fafc",
+  lineColor: "#94a3b8",
+  generalizationLineColor: "#94a3b8",
+  associativeLineColor: "#f59e0b",
+  root: level$1("#ffffff", "#0f172a", "#cbd5e1", 2, 10, 14, "400"),
+  second: level$1("#ffffff", "#0f172a", "#cbd5e1", 2, 10, 14, "400"),
+  node: level$1("#ffffff", "#0f172a", "#cbd5e1", 2, 10, 14, "400"),
+  rainbow: { open: false, colorsList: RAINBOW },
+  lineWidth: 2,
+  lineRadius: 10
+};
+const defaultDark = {
+  backgroundColor: "#0b1220",
+  lineColor: "rgba(148, 163, 184, 0.62)",
+  generalizationLineColor: "rgba(148, 163, 184, 0.72)",
+  associativeLineColor: "#f59e0b",
+  root: level$1("#0b1220", "#e2e8f0", "rgba(148,163,184,.45)", 2, 10, 14, "400"),
+  second: level$1("#0b1220", "#e2e8f0", "rgba(148,163,184,.45)", 2, 10, 14, "400"),
+  node: level$1("#0b1220", "#e2e8f0", "rgba(148,163,184,.45)", 2, 10, 14, "400"),
+  rainbow: { open: false, colorsList: RAINBOW },
+  lineWidth: 2,
+  lineRadius: 10
+};
+function materialVariant(accent2, rootFill, depthFill, backgroundColor, dark = false) {
+  const text2 = dark ? "#fef7ff" : "#1d1b20";
+  const nodeFill = dark ? "#211f26" : "#fffbfe";
+  return {
+    backgroundColor,
+    lineColor: accent2,
+    generalizationLineColor: accent2,
+    associativeLineColor: dark ? "#f2b8b5" : "#ba1a1a",
+    root: level$1(rootFill, dark ? "#fef7ff" : "#ffffff", "transparent", 0, 16, 24, "700"),
+    second: level$1(depthFill, text2, "transparent", 0, 16, 18, "600"),
+    node: level$1(nodeFill, text2, "transparent", 0, 14, 14, "400"),
+    rainbow: { open: false, colorsList: [accent2, "#0ea5e9", "#14b8a6", "#22c55e", "#f59e0b", "#fb7185", "#a78bfa"] },
+    lineWidth: 2,
+    lineRadius: 14
+  };
+}
+const inkLight = {
+  backgroundColor: "#ffffff",
+  lineColor: "#151515",
+  generalizationLineColor: "#151515",
+  associativeLineColor: "#737373",
+  root: { ...level$1("transparent", "#3749b5", "transparent", 0, 0, 26, "800") },
+  second: level$1("transparent", "#111111", "transparent", 0, 0, 18, "700"),
+  node: level$1("transparent", "#111111", "transparent", 0, 0, 14, "600"),
+  rainbow: { open: false, colorsList: ["#151515", "#3749b5", "#525252", "#737373"] },
+  nodeUseLineStyle: true,
+  lineWidth: 4,
+  lineRadius: 0
+};
+const inkDark = {
+  backgroundColor: "#0a0a0a",
+  lineColor: "#f5f5f5",
+  generalizationLineColor: "#f5f5f5",
+  associativeLineColor: "#a3a3a3",
+  root: level$1("transparent", "#93a4ff", "transparent", 0, 0, 26, "800"),
+  second: level$1("transparent", "#f5f5f5", "transparent", 0, 0, 18, "700"),
+  node: level$1("transparent", "#f5f5f5", "transparent", 0, 0, 14, "600"),
+  rainbow: { open: false, colorsList: ["#f5f5f5", "#93a4ff", "#d4d4d4", "#a3a3a3"] },
+  nodeUseLineStyle: true,
+  lineWidth: 4,
+  lineRadius: 0
+};
+const slateLight = {
+  backgroundColor: "#f5f7fb",
+  lineColor: "#475569",
+  generalizationLineColor: "#64748b",
+  associativeLineColor: "#2563eb",
+  root: level$1("#303745", "#f8fafc", "transparent", 0, 16, 24, "700"),
+  second: level$1("#e8ecf3", "#1e293b", "transparent", 0, 16, 18, "600"),
+  node: level$1("#ffffff", "#334155", "#d8dee9", 1, 14, 14, "400"),
+  rainbow: { open: false, colorsList: ["#303745", "#1b5fa7", "#0ea5e9", "#14b8a6", "#22c55e", "#f59e0b", "#fb7185", "#a78bfa"] },
+  lineWidth: 2,
+  lineRadius: 14
+};
+const slateDark = {
+  backgroundColor: "#0e1219",
+  lineColor: "#c5cad4",
+  generalizationLineColor: "#9aa3b2",
+  associativeLineColor: "#8bb4ff",
+  root: level$1("#303745", "#f6f7fb", "transparent", 0, 16, 24, "700"),
+  second: level$1("#242b37", "#e6e9ef", "transparent", 0, 16, 18, "600"),
+  node: level$1("#1a2435", "#dce3f3", "#303745", 1, 14, 14, "400"),
+  rainbow: { open: false, colorsList: ["#303745", "#1b5fa7", "#0ea5e9", "#14b8a6", "#22c55e", "#f59e0b", "#fb7185", "#a78bfa"] },
+  lineWidth: 2,
+  lineRadius: 14
+};
+const materialBasicLight = {
+  backgroundColor: "#fef7ff",
+  lineColor: "#79747e",
+  generalizationLineColor: "#cac4d0",
+  associativeLineColor: "#7d5260",
+  root: level$1("#eaddff", "#21005d", "transparent", 0, 16, 16, "700"),
+  second: level$1("#e8def8", "#1d192b", "transparent", 0, 16, 15, "600"),
+  node: level$1("#f3edf7", "#1c1b1f", "transparent", 0, 16, 14, "450"),
+  rainbow: { open: false, colorsList: ["#6750a4", "#7d5260", "#00639a", "#386a20", "#984061", "#006a60"] },
+  lineWidth: 2,
+  lineRadius: 16,
+  lineDasharray: "6,4"
+};
+const materialBasicDark = {
+  backgroundColor: "#141218",
+  lineColor: "#938f99",
+  generalizationLineColor: "#49454f",
+  associativeLineColor: "#efb8c8",
+  root: level$1("#4f378b", "#fef7ff", "transparent", 0, 16, 16, "700"),
+  second: level$1("#332d41", "#e6e1e5", "transparent", 0, 16, 15, "600"),
+  node: level$1("#211f26", "#e6e1e5", "transparent", 0, 16, 14, "450"),
+  rainbow: { open: false, colorsList: ["#d0bcff", "#efb8c8", "#92ccff", "#9bd67d", "#ffb0c8", "#82d5c9"] },
+  lineWidth: 2,
+  lineRadius: 16,
+  lineDasharray: "6,4"
+};
+const candyLight = {
+  backgroundColor: "#fff1f2",
+  lineColor: "#7c3aed",
+  generalizationLineColor: "rgba(124, 58, 237, 0.55)",
+  associativeLineColor: "#0ea5e9",
+  root: level$1("#ffffff", "#111827", "#ec4899", 2.5, 999, 22, "800"),
+  second: level$1("#ffffff", "#111827", "#ec4899", 2.5, 999, 17, "650"),
+  node: level$1("#ffffff", "#111827", "#f9a8d4", 2, 999, 14, "450"),
+  rainbow: { open: false, colorsList: ["#ec4899", "#7c3aed", "#0ea5e9", "#14b8a6", "#f97316", "#eab308"] },
+  lineWidth: 2.5,
+  lineRadius: 18
+};
+const candyDark = {
+  backgroundColor: "#0b1020",
+  lineColor: "#a78bfa",
+  generalizationLineColor: "rgba(167, 139, 250, 0.55)",
+  associativeLineColor: "#38bdf8",
+  root: level$1("#0f172a", "#e5e7eb", "#fb7185", 2.5, 999, 22, "800"),
+  second: level$1("#0f172a", "#e5e7eb", "#a78bfa", 2.5, 999, 17, "650"),
+  node: level$1("#111827", "#e5e7eb", "#64748b", 2, 999, 14, "450"),
+  rainbow: { open: false, colorsList: ["#fb7185", "#a78bfa", "#38bdf8", "#2dd4bf", "#fb923c", "#facc15"] },
+  lineWidth: 2.5,
+  lineRadius: 18
+};
+const neon = {
+  backgroundColor: "#070a14",
+  lineColor: "#a855f7",
+  generalizationLineColor: "rgba(168,85,247,.72)",
+  associativeLineColor: "#f59e0b",
+  root: level$1("#0b1020", "#e2e8f0", "#22c55e", 3, 14, 24, "800"),
+  second: level$1("#0b1020", "#e2e8f0", "#a855f7", 2.5, 14, 18, "600"),
+  node: level$1("#0b1020", "#e2e8f0", "#38bdf8", 1.5, 12, 14, "400"),
+  rainbow: { open: true, colorsList: RAINBOW },
+  lineWidth: 4,
+  lineRadius: 16
+};
+const rainbowLight = {
+  backgroundColor: "#f8fafc",
+  lineColor: "#0ea5e9",
+  generalizationLineColor: "rgba(14,165,233,.55)",
+  associativeLineColor: "#fb7185",
+  root: level$1("#e53935", "#ffffff", "transparent", 0, 16, 24, "800"),
+  second: level$1("#ffffff", "#0f172a", "#0ea5e9", 2.5, 16, 18, "700"),
+  node: level$1("#ffffff", "#0f172a", "#bae6fd", 1.5, 14, 14, "400"),
+  rainbow: { open: true, colorsList: ["#fb7185", "#f97316", "#fbbf24", "#34d399", "#22d3ee", "#60a5fa", "#a78bfa", "#f472b6"] },
+  lineWidth: 3,
+  lineRadius: 16
+};
+const rainbowDark = {
+  backgroundColor: "#0b1020",
+  lineColor: "#38bdf8",
+  generalizationLineColor: "rgba(56,189,248,.62)",
+  associativeLineColor: "#fb7185",
+  root: level$1("#b91c1c", "#ffffff", "transparent", 0, 16, 24, "800"),
+  second: level$1("#0f172a", "#e2e8f0", "#38bdf8", 2.5, 16, 18, "700"),
+  node: level$1("#0f172a", "#e2e8f0", "#1e3a5f", 1.5, 14, 14, "400"),
+  rainbow: { open: true, colorsList: ["#fb7185", "#fb923c", "#facc15", "#4ade80", "#22d3ee", "#60a5fa", "#a78bfa", "#f472b6"] },
+  lineWidth: 3,
+  lineRadius: 16
+};
+const YEMIND_THEME_PRESETS = [
+  { id: "kmind-default", label: "KMind 默认", description: "官方默认的清晰圆角风格", light: defaultLight, dark: defaultDark },
+  { id: "kmind-material-3-slate", label: "KMind Slate", description: "克制的石板灰专业风格", light: slateLight, dark: slateDark },
+  { id: "kmind-material-3", label: "Material 3 Basic", description: "官方 Material 3 基础主题", light: materialBasicLight, dark: materialBasicDark },
+  { id: "kmind-candy-pop", label: "Candy Pop", description: "糖果色胶囊节点和彩虹分支", light: candyLight, dark: candyDark },
+  { id: "kmind-material-3-rounded-orthogonal-ocean", label: "Material Ocean", description: "海洋蓝 Material 3", light: materialVariant("#00639a", "#00639a", "#d0e4ff", "#f8f9ff"), dark: materialVariant("#92ccff", "#004a75", "#12344c", "#0d141b", true) },
+  { id: "kmind-material-3-rounded-orthogonal-forest", label: "Material Forest", description: "森林绿 Material 3", light: materialVariant("#386a20", "#386a20", "#d6e8c9", "#f8fbf4"), dark: materialVariant("#9bd67d", "#205107", "#263d22", "#10170f", true) },
+  { id: "kmind-material-3-rounded-orthogonal-citrus", label: "Material Citrus", description: "柑橘色 Material 3", light: materialVariant("#8f4c00", "#8f4c00", "#ffddb5", "#fff8f1"), dark: materialVariant("#ffb86c", "#6b3b00", "#4a2a00", "#1a120b", true) },
+  { id: "kmind-material-3-rounded-orthogonal-rose", label: "Material Rose", description: "玫瑰色 Material 3", light: materialVariant("#984061", "#984061", "#ffd9e2", "#fff8f8"), dark: materialVariant("#ffb0c8", "#7b2949", "#492532", "#1a1115", true) },
+  { id: "kmind-material-3-rounded-orthogonal-violet", label: "Material Violet", description: "紫罗兰 Material 3", light: materialVariant("#6750a4", "#6750a4", "#eaddff", "#fffbfe"), dark: materialVariant("#d0bcff", "#4f378b", "#332d41", "#141218", true) },
+  { id: "kmind-material-3-rounded-orthogonal-aqua", label: "Material Aqua", description: "青绿色 Material 3", light: materialVariant("#006a60", "#006a60", "#9ef2e5", "#f4fbf9"), dark: materialVariant("#82d5c9", "#005047", "#173936", "#0d1514", true) },
+  { id: "kmind-midnight-neon", label: "Midnight Neon", description: "深色霓虹与彩虹分支", light: neon, dark: neon },
+  { id: "kmind-rainbow-breeze", label: "Rainbow Breeze", description: "轻盈彩虹分支", light: rainbowLight, dark: rainbowDark },
+  { id: "kmind-baseline-fork-ink", label: "Ink Branch", description: "粗墨枝干式极简主题", light: inkLight, dark: inkDark }
+];
+const THEME_IDS = new Set(YEMIND_THEME_PRESETS.map((item) => item.id));
+const LINE_STYLES = /* @__PURE__ */ new Set(["curve", "straight", "direct"]);
+function normalizeThemePresetId(value) {
+  if (value === "default" || typeof value !== "string" || !THEME_IDS.has(value)) return "kmind-default";
+  return value;
+}
+function normalizeLineStyle(value) {
+  return typeof value === "string" && LINE_STYLES.has(value) ? value : "curve";
+}
+function detectAppearance(root2 = typeof document === "undefined" ? null : document.documentElement) {
+  const candidates = root2 ? [root2, ...typeof document !== "undefined" && root2 === document.documentElement && document.body ? [document.body] : []] : [];
+  for (const candidate of candidates) {
+    const element = candidate;
+    const values = [
+      element.dataset.themeMode,
+      element.dataset.theme,
+      element.getAttribute("data-color-mode"),
+      element.getAttribute("data-theme-mode"),
+      element.className
+    ].filter(Boolean).join(" ").toLowerCase();
+    if (/(^|\s|[-_])(dark|midnight)(\s|$|[-_])/.test(` ${values} `)) return "dark";
+    if (/(^|\s|[-_])light(\s|$|[-_])/.test(` ${values} `)) return "light";
+  }
+  return typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+function cloneLevel(style, marginX, marginY) {
+  return {
+    shape: "rectangle",
+    fillColor: style.fillColor,
+    fontFamily: FONT_SANS,
+    color: style.color,
+    fontSize: style.fontSize,
+    fontWeight: style.fontWeight,
+    fontStyle: "normal",
+    borderColor: style.borderColor,
+    borderWidth: style.borderWidth,
+    borderDasharray: "none",
+    borderRadius: style.borderRadius,
+    textDecoration: "none",
+    textAlign: "left",
+    marginX,
+    marginY
+  };
+}
+function buildThemeConfig(options) {
+  const presetId = normalizeThemePresetId(options.presetId);
+  const preset = YEMIND_THEME_PRESETS.find((item) => item.id === presetId) ?? YEMIND_THEME_PRESETS[0];
+  const variant = options.appearance === "dark" ? preset.dark : preset.light;
+  const spacing2 = options.spacingConfig ?? {};
+  const lineStyle = normalizeLineStyle(options.lineStyle);
+  const root2 = { ...cloneLevel(variant.root, 0, 0), ...spacing2.root ?? {} };
+  if (presetId === "kmind-baseline-fork-ink") root2.fontFamily = FONT_MONO;
+  const second = { ...cloneLevel(variant.second, 100, 38), ...spacing2.second ?? {} };
+  const node = { ...cloneLevel(variant.node, 54, 12), ...spacing2.node ?? {} };
+  const generalization = {
+    ...cloneLevel(variant.second, 80, 30),
+    fillColor: variant.second.fillColor,
+    ...spacing2.generalization ?? {}
+  };
+  return {
+    presetId,
+    themeConfig: {
+      paddingX: 12,
+      paddingY: 7,
+      lineWidth: variant.lineWidth ?? 2,
+      lineColor: variant.lineColor,
+      lineDasharray: variant.lineDasharray ?? "none",
+      lineStyle,
+      rootLineKeepSameInCurve: true,
+      rootLineStartPositionKeepSameInCurve: false,
+      lineRadius: variant.lineRadius ?? 10,
+      generalizationLineWidth: Math.max(1, (variant.lineWidth ?? 2) - 0.5),
+      generalizationLineColor: variant.generalizationLineColor,
+      associativeLineWidth: 2,
+      associativeLineColor: variant.associativeLineColor,
+      associativeLineActiveWidth: 6,
+      associativeLineActiveColor: variant.root.color,
+      associativeLineTextColor: variant.node.color,
+      backgroundColor: variant.backgroundColor,
+      nodeUseLineStyle: Boolean(variant.nodeUseLineStyle),
+      root: root2,
+      second,
+      node,
+      generalization
+    },
+    rainbow: {
+      open: variant.rainbow.open,
+      colorsList: [...variant.rainbow.colorsList]
+    }
+  };
+}
+function themeOptionsHtml(selected) {
+  const value = normalizeThemePresetId(selected);
+  return YEMIND_THEME_PRESETS.map((preset) => `<option value="${preset.id}"${preset.id === value ? " selected" : ""}>${preset.label}</option>`).join("");
+}
+const YEMIND_LAYOUT_PRESETS = [
+  { id: "logicalStructure", label: "向右逻辑图", family: "logic" },
+  { id: "logicalStructureLeft", label: "向左逻辑图", family: "logic" },
+  { id: "mindMap", label: "双向思维导图", family: "logic" },
+  { id: "organizationStructure", label: "向下组织结构", family: "tree" },
+  { id: "catalogOrganization", label: "目录组织图", family: "tree" },
+  { id: "timeline", label: "向右时间轴", family: "timeline" },
+  { id: "timeline2", label: "双向时间轴", family: "timeline" },
+  { id: "verticalTimeline", label: "竖向时间轴", family: "timeline" },
+  { id: "verticalTimeline2", label: "竖向时间轴·左", family: "timeline" },
+  { id: "verticalTimeline3", label: "竖向时间轴·右", family: "timeline" },
+  { id: "fishbone", label: "左鱼骨·单侧", family: "fishbone" },
+  { id: "fishbone2", label: "左鱼骨·双侧", family: "fishbone" },
+  { id: "rightFishbone", label: "右鱼骨·单侧", family: "fishbone" },
+  { id: "rightFishbone2", label: "右鱼骨·双侧", family: "fishbone" }
+];
+const LAYOUT_IDS = new Set(YEMIND_LAYOUT_PRESETS.map((item) => item.id));
+function normalizeLayoutId(value) {
+  return typeof value === "string" && LAYOUT_IDS.has(value) ? value : "logicalStructure";
+}
+function layoutOptionsHtml(selected) {
+  const value = normalizeLayoutId(selected);
+  const groups = [
+    ["logic", "逻辑与思维导图"],
+    ["tree", "树形与目录"],
+    ["timeline", "时间轴"],
+    ["fishbone", "鱼骨图"]
+  ];
+  return groups.map(([family, label]) => {
+    const options = YEMIND_LAYOUT_PRESETS.filter((item) => item.family === family).map((item) => `<option value="${item.id}"${item.id === value ? " selected" : ""}>${item.label}</option>`).join("");
+    return `<optgroup label="${label}">${options}</optgroup>`;
+  }).join("");
+}
 const clone$3 = (value) => JSON.parse(JSON.stringify(value));
 function countNodes(tree) {
   return 1 + (tree.children ?? []).reduce((total, child) => total + countNodes(child), 0);
@@ -2811,8 +3136,9 @@ function normalizeCheckpoint(value) {
     nodeCount: Number(candidate.nodeCount) || countNodes(candidate.snapshot.data),
     snapshot: {
       data: clone$3(candidate.snapshot.data),
-      layout: typeof candidate.snapshot.layout === "string" ? candidate.snapshot.layout : "logicalStructure",
-      theme: typeof candidate.snapshot.theme === "string" ? candidate.snapshot.theme : "default",
+      layout: normalizeLayoutId(candidate.snapshot.layout),
+      theme: normalizeThemePresetId(candidate.snapshot.theme),
+      lineStyle: normalizeLineStyle(candidate.snapshot.lineStyle),
       viewData: candidate.snapshot.viewData ? clone$3(candidate.snapshot.viewData) : void 0
     }
   };
@@ -2874,6 +3200,7 @@ class CheckpointRepository {
           data: clone$3(map2.data),
           layout: map2.layout,
           theme: map2.theme,
+          lineStyle: map2.lineStyle,
           viewData: map2.viewData ? clone$3(map2.viewData) : void 0
         }
       };
@@ -2955,7 +3282,8 @@ function createDefaultMap(title = "未命名导图", id = ((_b) => (_b = ((_a) =
     createdAt: now,
     updatedAt: now,
     layout: "logicalStructure",
-    theme: "default",
+    theme: "kmind-default",
+    lineStyle: "curve",
     data: createDefaultTree(normalizedTitle)
   };
 }
@@ -2973,12 +3301,13 @@ function normalizeMap(value) {
     title: normalizedTitle,
     createdAt: Number(candidate.createdAt) || Date.now(),
     updatedAt: fallbackTime,
-    layout: typeof candidate.layout === "string" ? candidate.layout : "logicalStructure",
-    theme: typeof candidate.theme === "string" ? candidate.theme : "default",
+    layout: normalizeLayoutId(candidate.layout),
+    theme: normalizeThemePresetId(candidate.theme),
+    lineStyle: normalizeLineStyle(candidate.lineStyle),
     data: normalizedTree.tree,
     viewData: candidate.viewData ? clone$2(candidate.viewData) : void 0
   };
-  const changed = normalizedTitle !== candidate.title || normalizedTree.changed;
+  const changed = normalizedTitle !== candidate.title || normalizedTree.changed || map2.layout !== candidate.layout || map2.theme !== candidate.theme || map2.lineStyle !== candidate.lineStyle;
   return { map: map2, changed };
 }
 function normalizeLegacyTree(tree, fallbackTime, path2 = "root") {
@@ -3100,8 +3429,9 @@ class MapRepository {
       const map2 = draft.maps.find((item) => item.id === id);
       if (!map2) return { changed: false, value: void 0 };
       if (patch.data) map2.data = clone$2(patch.data);
-      if (patch.layout !== void 0) map2.layout = patch.layout;
-      if (patch.theme !== void 0) map2.theme = patch.theme;
+      if (patch.layout !== void 0) map2.layout = normalizeLayoutId(patch.layout);
+      if (patch.theme !== void 0) map2.theme = normalizeThemePresetId(patch.theme);
+      if (patch.lineStyle !== void 0) map2.lineStyle = normalizeLineStyle(patch.lineStyle);
       if (patch.viewData !== void 0) map2.viewData = clone$2(patch.viewData);
       map2.updatedAt = this.now();
       return { changed: true, value: void 0 };
@@ -3113,8 +3443,9 @@ class MapRepository {
       const map2 = draft.maps.find((item) => item.id === id);
       if (!map2) return { changed: false, value: void 0 };
       map2.data = clone$2(snapshot.data);
-      map2.layout = snapshot.layout || "logicalStructure";
-      map2.theme = snapshot.theme || "default";
+      map2.layout = normalizeLayoutId(snapshot.layout);
+      map2.theme = normalizeThemePresetId(snapshot.theme);
+      map2.lineStyle = normalizeLineStyle(snapshot.lineStyle);
       map2.viewData = snapshot.viewData ? clone$2(snapshot.viewData) : void 0;
       map2.updatedAt = this.now();
       return { changed: true, value: void 0 };
@@ -54114,6 +54445,79 @@ class NodeImgAdjust {
   }
 }
 NodeImgAdjust.instanceName = "nodeImgAdjust";
+const defaultColorsList = [
+  "rgb(255, 213, 73)",
+  "rgb(255, 136, 126)",
+  "rgb(107, 225, 141)",
+  "rgb(151, 171, 255)",
+  "rgb(129, 220, 242)",
+  "rgb(255, 163, 125)",
+  "rgb(152, 132, 234)"
+];
+class RainbowLines {
+  constructor({ mindMap }) {
+    this.mindMap = mindMap;
+  }
+  // 更新彩虹线条配置
+  updateRainLinesConfig(config2 = {}) {
+    const newConfig = this.mindMap.opt.rainbowLinesConfig || {};
+    newConfig.open = !!config2.open;
+    newConfig.colorsList = Array.isArray(config2.colorsList) ? config2.colorsList : [];
+    if (this.mindMap.opt.rainbowLinesConfig.open) {
+      this.removeNodeLineColor();
+    }
+    this.mindMap.render();
+  }
+  // 删除所有节点的连线颜色
+  removeNodeLineColor() {
+    const tree = this.mindMap.renderer.renderTree;
+    if (!tree) return;
+    walk(
+      tree,
+      null,
+      (cur) => {
+        delete cur.data.lineColor;
+      },
+      null,
+      true
+    );
+    this.mindMap.command.addHistory();
+  }
+  // 获取一个节点的第二层级的祖先节点
+  getSecondLayerAncestor(node) {
+    if (node.layerIndex === 0) {
+      return null;
+    } else if (node.layerIndex === 1) {
+      return node;
+    } else {
+      let res = null;
+      let parent = node.parent;
+      while (parent) {
+        if (parent.layerIndex === 1) {
+          return parent;
+        }
+        parent = parent.parent;
+      }
+      return res;
+    }
+  }
+  // 获取颜色列表
+  getColorsList() {
+    const { rainbowLinesConfig } = this.mindMap.opt;
+    return rainbowLinesConfig && Array.isArray(rainbowLinesConfig.colorsList) && rainbowLinesConfig.colorsList.length > 0 ? rainbowLinesConfig.colorsList : [...defaultColorsList];
+  }
+  // 获取一个节点的彩虹线条颜色
+  getNodeColor(node) {
+    const { rainbowLinesConfig } = this.mindMap.opt;
+    if (!rainbowLinesConfig || !rainbowLinesConfig.open) return "";
+    const ancestor = this.getSecondLayerAncestor(node);
+    if (!ancestor) return;
+    const index = getNodeDataIndex(ancestor);
+    const colorsList = this.getColorsList();
+    return colorsList[index % colorsList.length];
+  }
+}
+RainbowLines.instanceName = "rainbowLines";
 let extended = false;
 let fontFamilyList = [
   "宋体, SimSun, Songti SC",
@@ -55059,7 +55463,7 @@ class YeMindRichText extends RichText {
   }
 }
 __publicField(YeMindRichText, "instanceName", "richText");
-const plugins = [YeMindDrag, Select, MiniMap, Search, Export, YeMindRichText, Formula, AssociativeLine, OuterFrame, NodeImgAdjust];
+const plugins = [YeMindDrag, Select, MiniMap, Search, Export, YeMindRichText, Formula, AssociativeLine, OuterFrame, NodeImgAdjust, RainbowLines];
 let registered = false;
 function configureMindMapPlugins(settings) {
   const target = YeMindRichText;
@@ -55288,13 +55692,20 @@ function createMindMap(options) {
   const behavior = settings ? buildDragAndLayoutOptions(settings) : null;
   const relationOptions = settings ? buildRelationOptions(settings) : null;
   const outerFrameOptions = settings ? buildOuterFrameOptions(settings) : null;
+  const appearance = buildThemeConfig({
+    presetId: options.theme,
+    appearance: detectAppearance(),
+    lineStyle: options.lineStyle,
+    spacingConfig: behavior == null ? void 0 : behavior.themeConfig
+  });
   const viewData = (settings == null ? void 0 : settings.restoreSavedView) === false ? void 0 : normalizePersistedViewData(options.viewData);
   return new MindMap2({
     el: options.el,
     data: options.data,
     viewData,
-    theme: options.theme ?? "default",
-    themeConfig: behavior == null ? void 0 : behavior.themeConfig,
+    theme: "default",
+    themeConfig: appearance.themeConfig,
+    rainbowLinesConfig: appearance.rainbow,
     layout: options.layout ?? "logicalStructure",
     readonly: Boolean(options.readonly),
     disabledClipboard: true,
@@ -56618,7 +57029,7 @@ function calculateEditorStats(tree) {
   walk2(tree);
   return { roots: 1, nodes, words };
 }
-function createEditorTemplate(title) {
+function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curve") {
   return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
       <div class="ymz-canvas-wrap">
@@ -56636,12 +57047,16 @@ function createEditorTemplate(title) {
           <button data-action="add-child" title="添加子节点">＋子</button>
           <button data-action="add-sibling" title="添加同级节点">＋同</button>
           <button class="is-danger" data-action="remove" title="删除节点">删除</button>
-          <select data-action="layout" aria-label="布局">
-            <option value="logicalStructure">向右逻辑图</option>
-            <option value="logicalStructureLeft">向左逻辑图</option>
-            <option value="mindMap">双向思维导图</option>
-            <option value="organizationStructure">组织结构图</option>
-            <option value="catalogOrganization">目录组织图</option>
+          <select data-action="layout" aria-label="布局" title="布局">
+            ${layoutOptionsHtml("logicalStructure")}
+          </select>
+          <select data-action="theme" aria-label="主题" title="主题">
+            ${themeOptionsHtml(theme2)}
+          </select>
+          <select data-action="line-style" aria-label="线型" title="父子节点线型">
+            <option value="curve"${normalizeLineStyle(lineStyle) === "curve" ? " selected" : ""}>弧线</option>
+            <option value="straight"${normalizeLineStyle(lineStyle) === "straight" ? " selected" : ""}>圆角折线</option>
+            <option value="direct"${normalizeLineStyle(lineStyle) === "direct" ? " selected" : ""}>直线</option>
           </select>
           <span class="ymz-save-state" data-role="save-state">已保存</span>
         </div>
@@ -57211,6 +57626,12 @@ class YeMindEditor {
     __publicField(this, "outlineTextCommitUid", null);
     __publicField(this, "outlineStructureBusy", false);
     __publicField(this, "pendingOutlineFocus", null);
+    __publicField(this, "appearanceObserver", null);
+    __publicField(this, "appearanceMedia", null);
+    __publicField(this, "appearanceMode", null);
+    __publicField(this, "onAppearanceMediaChange", () => {
+      this.refreshAppearanceIfNeeded();
+    });
     __publicField(this, "onRootKeydown", (event) => {
       var _a, _b;
       if (event.key === "Escape" && ((_a = this.commands) == null ? void 0 : _a.isRelationCreating())) {
@@ -57284,28 +57705,34 @@ class YeMindEditor {
     this.scheduleSafeResize();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h;
     this.options.diagnostics.record("editor", "destroy-started", this.current.id, { dirty: this.saveRevisions.isDirty() });
     this.flushPendingSave();
     this.destroyed = true;
     (_a = this.repositoryUnsubscribe) == null ? void 0 : _a.call(this);
     (_b = this.settingsUnsubscribe) == null ? void 0 : _b.call(this);
-    (_c2 = this.richTextToolbar) == null ? void 0 : _c2.destroy();
+    (_c2 = this.appearanceObserver) == null ? void 0 : _c2.disconnect();
+    this.appearanceObserver = null;
+    (_e = (_d2 = this.appearanceMedia) == null ? void 0 : _d2.removeEventListener) == null ? void 0 : _e.call(_d2, "change", this.onAppearanceMediaChange);
+    this.appearanceMedia = null;
+    (_f = this.richTextToolbar) == null ? void 0 : _f.destroy();
     this.richTextToolbar = null;
-    (_d2 = this.rootEl) == null ? void 0 : _d2.removeEventListener("keydown", this.onRootKeydown);
+    (_g = this.rootEl) == null ? void 0 : _g.removeEventListener("keydown", this.onRootKeydown);
     if (this.resizeFrame !== null) window.cancelAnimationFrame(this.resizeFrame);
     if (this.splitResizeFrame !== null) window.cancelAnimationFrame(this.splitResizeFrame);
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_e = this.map) == null ? void 0 : _e.destroy();
+    (_h = this.map) == null ? void 0 : _h.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record("editor", "destroy-completed", this.current.id);
     this.options.container.innerHTML = "";
   }
   mount() {
-    this.options.container.innerHTML = createEditorTemplate(this.current.title);
+    this.current.theme = normalizeThemePresetId(this.current.theme);
+    this.current.lineStyle = normalizeLineStyle(this.current.lineStyle);
+    this.options.container.innerHTML = createEditorTemplate(this.current.title, this.current.theme, this.current.lineStyle);
     this.rootEl = this.options.container.querySelector(".ymz-editor");
     this.canvasEl = this.options.container.querySelector('[data-role="canvas"]');
     this.splitDividerEl = this.options.container.querySelector('[data-role="split-divider"]');
@@ -57325,6 +57752,10 @@ class YeMindEditor {
     this.outerFrameHintEl = this.options.container.querySelector('[data-role="outer-frame-hint"]');
     const layoutSelect = this.options.container.querySelector('[data-action="layout"]');
     if (layoutSelect) layoutSelect.value = this.current.layout;
+    const themeSelect = this.options.container.querySelector('[data-action="theme"]');
+    if (themeSelect) themeSelect.value = this.current.theme;
+    const lineStyleSelect = this.options.container.querySelector('[data-action="line-style"]');
+    if (lineStyleSelect) lineStyleSelect.value = this.current.lineStyle;
     let runtimeData = this.current.data;
     const normalized = stripCustomPositions(runtimeData);
     const sanitized = sanitizeAssociativeLines(normalized.tree);
@@ -57343,6 +57774,7 @@ class YeMindEditor {
       data: runtimeData,
       viewData: runtimeViewData,
       theme: this.current.theme,
+      lineStyle: this.current.lineStyle,
       layout: this.current.layout,
       settings: this.settings,
       onHyperlink: (href) => this.openLink(href)
@@ -57357,6 +57789,7 @@ class YeMindEditor {
     this.rootEl.addEventListener("keydown", this.onRootKeydown);
     this.bindToolbar();
     this.bindMapEvents();
+    this.bindAppearanceObserver();
     this.repositoryUnsubscribe = this.options.repository.subscribe((state) => {
       var _a, _b;
       const next2 = state.maps.find((item) => item.id === this.current.id);
@@ -57377,6 +57810,8 @@ class YeMindEditor {
     const runtime = this.map;
     this.options.diagnostics.record("editor", "mounted", this.current.id, {
       layout: this.current.layout,
+      theme: this.current.theme,
+      lineStyle: this.current.lineStyle,
       pluginStates: {
         drag: Boolean(runtime.drag),
         select: Boolean(runtime.select),
@@ -57389,7 +57824,7 @@ class YeMindEditor {
     this.updateDiagnosticState({ mounted: true });
   }
   bindToolbar() {
-    var _a;
+    var _a, _b, _c2;
     this.rootEl.addEventListener("click", (event) => {
       const anchor = event.target.closest("a[href]");
       if (anchor && this.rootEl.contains(anchor)) {
@@ -57584,6 +58019,24 @@ class YeMindEditor {
       this.current.layout = layout2;
       this.scheduleSave();
     });
+    (_b = this.rootEl.querySelector('[data-action="theme"]')) == null ? void 0 : _b.addEventListener("change", (event) => {
+      if (!this.map) return;
+      this.current.theme = normalizeThemePresetId(event.target.value);
+      this.applyMapAppearance();
+      this.options.diagnostics.record("appearance", "theme-changed", this.current.id, {
+        theme: this.current.theme
+      });
+      this.scheduleSave();
+    });
+    (_c2 = this.rootEl.querySelector('[data-action="line-style"]')) == null ? void 0 : _c2.addEventListener("change", (event) => {
+      if (!this.map) return;
+      this.current.lineStyle = normalizeLineStyle(event.target.value);
+      this.applyMapAppearance();
+      this.options.diagnostics.record("appearance", "line-style-changed", this.current.id, {
+        lineStyle: this.current.lineStyle
+      });
+      this.scheduleSave();
+    });
   }
   bindMapEvents() {
     if (!this.map) return;
@@ -57726,7 +58179,7 @@ class YeMindEditor {
     if (this.outerFramePanelEl) this.outerFramePanelEl.hidden = true;
   }
   applySettings(settings) {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h;
     const firstApply = !this.settingsInitialized;
     this.settings = settings;
     (_a = this.richTextToolbar) == null ? void 0 : _a.setEnabled(settings.showRichTextToolbar && this.rootEl.dataset.readonly !== "true");
@@ -57760,9 +58213,9 @@ class YeMindEditor {
       ...relationOptions,
       ...outerFrameOptions
     });
-    (_c2 = this.map) == null ? void 0 : _c2.setThemeConfig(behavior.themeConfig);
-    (_f = (_e = (_d2 = this.map) == null ? void 0 : _d2.associativeLine) == null ? void 0 : _e.renderAllLines) == null ? void 0 : _f.call(_e);
-    (_i = (_h = (_g = this.map) == null ? void 0 : _g.outerFrame) == null ? void 0 : _h.renderOuterFrames) == null ? void 0 : _i.call(_h);
+    this.applyMapAppearance();
+    (_e = (_d2 = (_c2 = this.map) == null ? void 0 : _c2.associativeLine) == null ? void 0 : _d2.renderAllLines) == null ? void 0 : _e.call(_d2);
+    (_h = (_g = (_f = this.map) == null ? void 0 : _f.outerFrame) == null ? void 0 : _g.renderOuterFrames) == null ? void 0 : _h.call(_g);
     this.updateRelationPresentation();
     this.updateOuterFramePresentation();
     this.updateSelectionPresentation();
@@ -57772,6 +58225,58 @@ class YeMindEditor {
       this.setReadonly(settings.defaultReadonlyMode);
       this.toggleZen(settings.defaultZenMode);
     }
+  }
+  applyMapAppearance(render3 = true) {
+    var _a, _b, _c2, _d2, _e, _f;
+    if (!this.map) return;
+    this.current.theme = normalizeThemePresetId(this.current.theme);
+    this.current.lineStyle = normalizeLineStyle(this.current.lineStyle);
+    const behavior = buildDragAndLayoutOptions(this.settings);
+    const appearanceMode = detectAppearance();
+    const appearance = buildThemeConfig({
+      presetId: this.current.theme,
+      appearance: appearanceMode,
+      lineStyle: this.current.lineStyle,
+      spacingConfig: behavior.themeConfig
+    });
+    this.appearanceMode = appearanceMode;
+    this.rootEl.dataset.themePreset = appearance.presetId;
+    this.rootEl.dataset.appearance = appearanceMode;
+    this.canvasEl.style.backgroundColor = String(appearance.themeConfig.backgroundColor ?? "");
+    this.map.setThemeConfig(appearance.themeConfig, true);
+    this.map.updateConfig({ rainbowLinesConfig: appearance.rainbow });
+    if (render3) this.map.render();
+    (_c2 = (_b = (_a = this.map) == null ? void 0 : _a.associativeLine) == null ? void 0 : _b.renderAllLines) == null ? void 0 : _c2.call(_b);
+    (_f = (_e = (_d2 = this.map) == null ? void 0 : _d2.outerFrame) == null ? void 0 : _e.renderOuterFrames) == null ? void 0 : _f.call(_e);
+  }
+  bindAppearanceObserver() {
+    var _a, _b;
+    this.appearanceMode = detectAppearance();
+    if (typeof MutationObserver !== "undefined") {
+      this.appearanceObserver = new MutationObserver(() => this.refreshAppearanceIfNeeded());
+      this.appearanceObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class", "data-theme", "data-theme-mode", "data-color-mode"]
+      });
+      if (document.body) {
+        this.appearanceObserver.observe(document.body, {
+          attributes: true,
+          attributeFilter: ["class", "data-theme", "data-theme-mode", "data-color-mode"]
+        });
+      }
+    }
+    if (typeof matchMedia === "function") {
+      this.appearanceMedia = matchMedia("(prefers-color-scheme: dark)");
+      (_b = (_a = this.appearanceMedia).addEventListener) == null ? void 0 : _b.call(_a, "change", this.onAppearanceMediaChange);
+    }
+    this.applyMapAppearance(false);
+  }
+  refreshAppearanceIfNeeded() {
+    if (this.destroyed || !this.map) return;
+    const next2 = detectAppearance();
+    if (next2 === this.appearanceMode) return;
+    this.applyMapAppearance();
+    this.options.diagnostics.record("appearance", "host-mode-changed", this.current.id, { appearance: next2 });
   }
   bindSplitDivider() {
     const endDrag = (event) => {
@@ -57883,6 +58388,10 @@ class YeMindEditor {
     });
     const layout2 = this.rootEl.querySelector('[data-action="layout"]');
     if (layout2) layout2.disabled = !state.layout;
+    const theme2 = this.rootEl.querySelector('[data-action="theme"]');
+    if (theme2) theme2.disabled = this.commands.isReadonly();
+    const lineStyle = this.rootEl.querySelector('[data-action="line-style"]');
+    if (lineStyle) lineStyle.disabled = this.commands.isReadonly();
   }
   updateSelectionPresentation(count) {
     var _a, _b;
@@ -58222,16 +58731,23 @@ class YeMindEditor {
     this.saveTimer = null;
     try {
       this.current = restored;
+      this.current.theme = normalizeThemePresetId(restored.theme);
+      this.current.lineStyle = normalizeLineStyle(restored.lineStyle);
       const viewData = normalizePersistedViewData(restored.viewData);
       if (this.viewMode !== "outline" && hasNonZeroSize(this.canvasEl)) this.map.resize();
       this.map.setFullData({
         root: restored.data,
         layout: restored.layout,
-        theme: { template: restored.theme },
+        theme: { template: "default" },
         view: viewData
       });
       const layoutSelect = this.rootEl.querySelector('[data-action="layout"]');
       if (layoutSelect) layoutSelect.value = restored.layout;
+      const themeSelect = this.rootEl.querySelector('[data-action="theme"]');
+      if (themeSelect) themeSelect.value = this.current.theme;
+      const lineStyleSelect = this.rootEl.querySelector('[data-action="line-style"]');
+      if (lineStyleSelect) lineStyleSelect.value = this.current.lineStyle;
+      this.applyMapAppearance();
       if (!viewData) {
         await new Promise((resolve) => {
           window.requestAnimationFrame(() => {
@@ -58310,10 +58826,14 @@ class YeMindEditor {
       const patch = {
         data: sanitized.tree,
         layout: this.map.getLayout(),
-        theme: this.map.getTheme(),
+        theme: normalizeThemePresetId(this.current.theme),
+        lineStyle: normalizeLineStyle(this.current.lineStyle),
         viewData: normalizePersistedViewData(this.map.view.getTransformData())
       };
       this.current.data = sanitized.tree;
+      this.current.layout = patch.layout;
+      this.current.theme = patch.theme;
+      this.current.lineStyle = patch.lineStyle;
       await this.options.repository.update(this.current.id, patch);
       if (!this.destroyed && this.saveRevisions.markSaved(revision)) {
         this.saveStateEl.textContent = "已保存";

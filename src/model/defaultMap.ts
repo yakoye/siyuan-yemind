@@ -22,7 +22,8 @@ export function createDefaultMap(
     createdAt: now,
     updatedAt: now,
     layout: 'logicalStructure',
-    theme: 'default',
+    theme: 'kmind-default',
+    lineStyle: 'curve',
     data: createDefaultTree(normalizedTitle),
   };
 }

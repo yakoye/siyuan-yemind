@@ -1,4 +1,6 @@
-export function createEditorTemplate(title: string): string {
+import { normalizeLineStyle, themeOptionsHtml } from '../core/themePresets';
+import { layoutOptionsHtml } from '../core/layoutPresets';
+export function createEditorTemplate(title: string, theme: unknown = 'kmind-default', lineStyle: unknown = 'curve'): string {
   return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
       <div class="ymz-canvas-wrap">
@@ -16,12 +18,16 @@ export function createEditorTemplate(title: string): string {
           <button data-action="add-child" title="添加子节点">＋子</button>
           <button data-action="add-sibling" title="添加同级节点">＋同</button>
           <button class="is-danger" data-action="remove" title="删除节点">删除</button>
-          <select data-action="layout" aria-label="布局">
-            <option value="logicalStructure">向右逻辑图</option>
-            <option value="logicalStructureLeft">向左逻辑图</option>
-            <option value="mindMap">双向思维导图</option>
-            <option value="organizationStructure">组织结构图</option>
-            <option value="catalogOrganization">目录组织图</option>
+          <select data-action="layout" aria-label="布局" title="布局">
+            ${layoutOptionsHtml('logicalStructure')}
+          </select>
+          <select data-action="theme" aria-label="主题" title="主题">
+            ${themeOptionsHtml(theme)}
+          </select>
+          <select data-action="line-style" aria-label="线型" title="父子节点线型">
+            <option value="curve"${normalizeLineStyle(lineStyle) === 'curve' ? ' selected' : ''}>弧线</option>
+            <option value="straight"${normalizeLineStyle(lineStyle) === 'straight' ? ' selected' : ''}>圆角折线</option>
+            <option value="direct"${normalizeLineStyle(lineStyle) === 'direct' ? ' selected' : ''}>直线</option>
           </select>
           <span class="ymz-save-state" data-role="save-state">已保存</span>
         </div>
