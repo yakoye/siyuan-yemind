@@ -180,6 +180,11 @@ export class YeMindEditor {
     ) => {
       this.richTextToolbar?.update(hasRange, rectInfo as any, formatInfo);
     });
+    this.map.on('yemind_todo_toggle', (node: any) => {
+      if (!this.commands) return;
+      this.activateNode(node);
+      this.commands.toggleTodo();
+    });
     this.map.on('yemind_badge_click', (type: 'todo' | 'comments', node: any) => {
       if (!this.commands) return;
       this.activateNode(node);

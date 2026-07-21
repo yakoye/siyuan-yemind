@@ -37,7 +37,6 @@ export interface YeMindCommands {
   saveCodeBlock(code: string, language?: string): void;
   removeCodeBlockFormat(): void;
   deleteCodeBlock(): void;
-  setNote(note: string): void;
   setTags(tags: string[]): void;
   setIcons(icons: string[]): void;
   setLink(link: string, title?: string): void;
@@ -125,7 +124,6 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       const block = richText?.quill ? findCurrentCodeBlock(richText.quill, range) : null;
       if (block) deleteCodeBlock(richText.quill, block);
     },
-    setNote: (note) => forEachActive((node) => mindMap.execCommand('SET_NODE_NOTE', node, note)),
     setTags: (tags) => forEachActive((node) => mindMap.execCommand('SET_NODE_TAG', node, tags)),
     setIcons: (icons) => forEachActive((node) => mindMap.execCommand('SET_NODE_ICON', node, icons)),
     setLink: (link, title = '') => forEachActive((node) => mindMap.execCommand('SET_NODE_HYPERLINK', node, link, title)),

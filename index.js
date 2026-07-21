@@ -38,8 +38,32 @@ function normalizeMap(value) {
     updatedAt: Number(candidate.updatedAt) || Number(candidate.createdAt) || Date.now(),
     layout: typeof candidate.layout === "string" ? candidate.layout : "logicalStructure",
     theme: typeof candidate.theme === "string" ? candidate.theme : "default",
-    data: clone(candidate.data),
+    data: normalizeLegacyTree(clone(candidate.data), Number(candidate.updatedAt) || Number(candidate.createdAt) || Date.now()),
     viewData: candidate.viewData ? clone(candidate.viewData) : void 0
+  };
+}
+function normalizeLegacyTree(tree, fallbackTime, path2 = "root") {
+  const data2 = { ...tree.data };
+  const note2 = typeof data2.note === "string" ? data2.note.trim() : "";
+  if (note2) {
+    const comments = Array.isArray(data2.yemindComments) ? [...data2.yemindComments] : [];
+    if (!comments.some((comment) => {
+      var _a;
+      return ((_a = comment == null ? void 0 : comment.text) == null ? void 0 : _a.trim()) === note2;
+    })) {
+      comments.push({
+        id: `legacy_note_${String(data2.uid ?? path2)}`,
+        text: note2,
+        createdAt: fallbackTime,
+        updatedAt: fallbackTime
+      });
+    }
+    data2.yemindComments = comments;
+  }
+  delete data2.note;
+  return {
+    data: data2,
+    children: (tree.children ?? []).map((child, index) => normalizeLegacyTree(child, fallbackTime, `${path2}_${index}`))
   };
 }
 class MapRepository {
@@ -136,7 +160,7 @@ class MapRepository {
     this.listeners.forEach((listener) => listener(snapshot));
   }
 }
-function escapeHtml$4(value) {
+function escapeHtml$5(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function promptText(title, initialValue, placeholder = "") {
@@ -145,7 +169,7 @@ function promptText(title, initialValue, placeholder = "") {
     const dialog = new siyuan.Dialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$4(initialValue)}" placeholder="${escapeHtml$4(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
+      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$5(initialValue)}" placeholder="${escapeHtml$5(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
       destroyCallback: () => resolve(null)
     });
     const element = dialog.element;
@@ -177,7 +201,7 @@ function confirmAction(title, message, confirmText = "确定") {
     const dialog = new siyuan.Dialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><p>${escapeHtml$4(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$4(confirmText)}</button></div>`,
+      content: `<div class="b3-dialog__content"><p>${escapeHtml$5(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$5(confirmText)}</button></div>`,
       destroyCallback: () => resolve(false)
     });
     let completed = false;
@@ -439,7 +463,7 @@ class YeMindDockView {
         const row = document.createElement("div");
         row.className = `ymz-dock__item${map2.id === activeId ? " is-active" : ""}`;
         row.dataset.mapId = map2.id;
-        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$3(map2.title)}">${escapeHtml$3(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
+        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$4(map2.title)}">${escapeHtml$4(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
         body.appendChild(row);
       });
     }
@@ -486,7 +510,7 @@ function registerYeMindDock(plugin, host) {
     }
   });
 }
-function escapeHtml$3(value) {
+function escapeHtml$4(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 const CONSTANTS = {
@@ -10958,7 +10982,7 @@ class MindMapNode {
     const {
       isUseCustomNodeContent: isUseCustomNodeContent2,
       customCreateNodeContent,
-      createNodePrefixContent,
+      createNodePrefixContent: createNodePrefixContent2,
       createNodePostfixContent: createNodePostfixContent2,
       addCustomContentToNode
     } = this.mindMap.opt;
@@ -11013,7 +11037,7 @@ class MindMapNode {
       }
     });
     if (createTypes.prefix) {
-      this._prefixData = createNodePrefixContent ? createNodePrefixContent(this) : null;
+      this._prefixData = createNodePrefixContent2 ? createNodePrefixContent2(this) : null;
       if (this._prefixData && this._prefixData.el) {
         addXmlns(this._prefixData.el);
       }
@@ -50196,45 +50220,47 @@ const YEMIND_ICON_LIST = [{
 function svg(text2) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#176b50"/><text x="16" y="21" text-anchor="middle" font-size="17" font-family="Arial,sans-serif" font-weight="700" fill="#fff">${text2}</text></svg>`;
 }
-function createNodePostfixContent(node) {
-  var _a, _b;
+function createNodePrefixContent(node) {
+  var _a;
   const todo = (_a = node.getData) == null ? void 0 : _a.call(node, "yemindTodo");
-  const comments = ((_b = node.getData) == null ? void 0 : _b.call(node, "yemindComments")) ?? [];
-  const showTodo = Boolean(todo && decorationSettings.showTodoBadge);
-  const showComments = comments.length > 0 && decorationSettings.showCommentBadge;
-  if (!showTodo && !showComments) return null;
+  if (!todo || !decorationSettings.showTodoBadge) return null;
   const el = document.createElement("span");
-  el.className = "ymz-node-badges";
-  if (showTodo && todo) {
-    const badge = document.createElement("button");
-    badge.type = "button";
-    badge.className = `ymz-node-badge ymz-node-badge--todo${todo.checked ? " is-checked" : ""}`;
-    badge.textContent = todo.checked ? "✓" : "○";
-    const state = todo.checked ? "待办已完成" : "待办未完成";
-    badge.title = todo.text ? `${state}：${todo.text}` : state;
-    badge.addEventListener("click", (event) => {
-      var _a2, _b2;
-      event.preventDefault();
-      event.stopPropagation();
-      (_b2 = (_a2 = node.mindMap) == null ? void 0 : _a2.emit) == null ? void 0 : _b2.call(_a2, "yemind_badge_click", "todo", node);
-    });
-    el.appendChild(badge);
-  }
-  if (showComments) {
-    const badge = document.createElement("button");
-    badge.type = "button";
-    badge.className = "ymz-node-badge ymz-node-badge--comments";
-    badge.textContent = `批${comments.length}`;
-    badge.title = `${comments.length} 条批注`;
-    badge.addEventListener("click", (event) => {
-      var _a2, _b2;
-      event.preventDefault();
-      event.stopPropagation();
-      (_b2 = (_a2 = node.mindMap) == null ? void 0 : _a2.emit) == null ? void 0 : _b2.call(_a2, "yemind_badge_click", "comments", node);
-    });
-    el.appendChild(badge);
-  }
-  return { el, width: (showTodo ? 24 : 0) + (showComments ? 34 : 0), height: 20 };
+  el.className = "ymz-node-prefix";
+  const checkbox = document.createElement("button");
+  checkbox.type = "button";
+  checkbox.className = `ymz-node-todo-checkbox${todo.checked ? " is-checked" : ""}`;
+  checkbox.setAttribute("aria-label", todo.checked ? "待办已完成" : "待办未完成");
+  checkbox.title = todo.text ? `${todo.checked ? "待办已完成" : "待办未完成"}：${todo.text}` : todo.checked ? "待办已完成" : "待办未完成";
+  checkbox.textContent = todo.checked ? "✓" : "";
+  checkbox.addEventListener("click", (event) => {
+    var _a2, _b;
+    event.preventDefault();
+    event.stopPropagation();
+    (_b = (_a2 = node.mindMap) == null ? void 0 : _a2.emit) == null ? void 0 : _b.call(_a2, "yemind_todo_toggle", node);
+  });
+  el.appendChild(checkbox);
+  return { el, width: 20, height: 20 };
+}
+function createNodePostfixContent(node) {
+  var _a;
+  const comments = ((_a = node.getData) == null ? void 0 : _a.call(node, "yemindComments")) ?? [];
+  if (comments.length === 0 || !decorationSettings.showCommentBadge) return null;
+  const el = document.createElement("span");
+  el.className = "ymz-node-postfix";
+  const badge = document.createElement("button");
+  badge.type = "button";
+  badge.className = "ymz-node-comment-badge";
+  badge.title = `${comments.length} 条批注`;
+  badge.setAttribute("aria-label", `${comments.length} 条批注`);
+  badge.innerHTML = '<svg aria-hidden="true"><use xlink:href="#iconMessage"></use></svg>' + (comments.length > 1 ? `<span class="ymz-node-comment-count">${comments.length}</span>` : "");
+  badge.addEventListener("click", (event) => {
+    var _a2, _b;
+    event.preventDefault();
+    event.stopPropagation();
+    (_b = (_a2 = node.mindMap) == null ? void 0 : _a2.emit) == null ? void 0 : _b.call(_a2, "yemind_badge_click", "comments", node);
+  });
+  el.appendChild(badge);
+  return { el, width: comments.length > 1 ? 30 : 22, height: 20 };
 }
 function createMindMap(options) {
   registerMindMapPlugins(options.settings);
@@ -50261,6 +50287,7 @@ function createMindMap(options) {
     defaultInsertSecondLevelNodeText: "新节点",
     defaultInsertBelowSecondLevelNodeText: "新节点",
     iconList: YEMIND_ICON_LIST,
+    createNodePrefixContent,
     createNodePostfixContent,
     openRealtimeRenderOnNodeTextEdit: true,
     enableEditFormulaInRichTextEdit: true,
@@ -50425,7 +50452,6 @@ function createCommandAdapter(mindMap) {
       const block = (richText == null ? void 0 : richText.quill) ? findCurrentCodeBlock(richText.quill, range) : null;
       if (block) deleteCodeBlock(richText.quill, block);
     },
-    setNote: (note2) => forEachActive((node) => mindMap.execCommand("SET_NODE_NOTE", node, note2)),
     setTags: (tags) => forEachActive((node) => mindMap.execCommand("SET_NODE_TAG", node, tags)),
     setIcons: (icons) => forEachActive((node) => mindMap.execCommand("SET_NODE_ICON", node, icons)),
     setLink: (link, title = "") => forEachActive((node) => mindMap.execCommand("SET_NODE_HYPERLINK", node, link, title)),
@@ -50489,6 +50515,41 @@ function createCommandAdapter(mindMap) {
     }
   };
 }
+function formatCommentTimestamp(timestamp) {
+  const date = new Date(timestamp);
+  const pad2 = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
+}
+function buildCommentsListHtml(comments, editingId = null) {
+  if (comments.length === 0) return '<div class="ymz-empty-hint">暂无批注</div>';
+  return comments.map((comment) => {
+    const editing = comment.id === editingId;
+    const body = editing ? `<textarea class="b3-text-field fn__block ymz-comment__editor" rows="3" data-field="edit-comment">${escapeHtml$3(comment.text)}</textarea>` : `<div class="ymz-comment__text">${escapeHtml$3(comment.text).replaceAll("\n", "<br>")}</div>`;
+    const actions = editing ? `<button class="b3-button b3-button--outline" data-action="save-comment">保存</button>
+         <button class="b3-button b3-button--cancel" data-action="cancel-edit-comment">取消</button>` : `<button class="b3-button b3-button--outline" data-action="edit-comment">编辑</button>
+         <button class="b3-button b3-button--cancel" data-action="delete-comment">删除</button>`;
+    return `<article class="ymz-comment" data-comment-id="${escapeAttribute$1(comment.id)}">
+      <div class="ymz-comment__main">
+        <time class="ymz-comment__time" datetime="${new Date(comment.createdAt).toISOString()}">${formatCommentTimestamp(comment.createdAt)}</time>
+        ${body}
+      </div>
+      <div class="ymz-comment__actions">${actions}</div>
+    </article>`;
+  }).join("");
+}
+function requestClearAllComments(confirmHandler, onClear) {
+  confirmHandler(
+    "清空全部批注",
+    "确定要清空当前节点的全部批注吗？此操作无法撤销。",
+    onClear
+  );
+}
+function escapeHtml$3(value) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+function escapeAttribute$1(value) {
+  return escapeHtml$3(value);
+}
 function activeData(commands) {
   return commands.getPrimaryNodeData() ?? {};
 }
@@ -50529,18 +50590,6 @@ function openTodoDialog(commands) {
   });
   bindDialogActions(dialog, () => commands.setTodo({ checked: checked.checked, text: text2.value.trim() }));
   text2.focus();
-}
-function openNoteDialog(commands) {
-  const data2 = activeData(commands);
-  const dialog = new siyuan.Dialog({
-    title: "备注",
-    content: `<div class="b3-dialog__content ymz-node-dialog"><textarea class="b3-text-field fn__block" data-field="note" rows="8" placeholder="输入节点备注"></textarea></div>${actionButtons()}`,
-    width: "460px"
-  });
-  const input = dialog.element.querySelector('[data-field="note"]');
-  input.value = String(data2.note ?? "");
-  bindDialogActions(dialog, () => commands.setNote(input.value.trim()));
-  input.focus();
 }
 function openTagsDialog(commands) {
   const data2 = activeData(commands);
@@ -50698,30 +50747,52 @@ function openImageDialog(commands) {
 function openCommentsDialog(commands) {
   var _a;
   let comments = (activeData(commands).yemindComments ?? []).map((item) => ({ ...item }));
+  let editingId = null;
   const dialog = new siyuan.Dialog({
     title: "批注",
     content: `<div class="b3-dialog__content ymz-node-dialog ymz-comments-dialog">
       <div data-role="comments"></div>
-      <textarea class="b3-text-field fn__block" data-field="new-comment" rows="3" placeholder="新增批注"></textarea>
-      <button class="b3-button b3-button--outline" data-action="add-comment">添加批注</button>
-    </div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel" data-dialog-action="cancel">取消</button><div class="fn__space"></div><button class="b3-button b3-button--text" data-dialog-action="save">保存</button></div>`,
-    width: "540px"
+      <textarea class="b3-text-field fn__block" data-field="new-comment" rows="3" placeholder="新增批注…"></textarea>
+      <div class="ymz-comments-dialog__footer">
+        <button class="b3-button b3-button--cancel" data-action="clear-comments">清空全部</button>
+        <div class="fn__space"></div>
+        <button class="b3-button b3-button--text" data-action="add-comment">添加</button>
+      </div>
+    </div>`,
+    width: "500px"
   });
   const list = dialog.element.querySelector('[data-role="comments"]');
   const input = dialog.element.querySelector('[data-field="new-comment"]');
+  const clearButton = dialog.element.querySelector('[data-action="clear-comments"]');
+  const persist = () => commands.setComments(comments.filter((comment) => comment.text.trim()));
   const render3 = () => {
-    list.innerHTML = comments.length === 0 ? '<div class="ymz-empty-hint">暂无批注</div>' : comments.map((comment) => `<div class="ymz-comment" data-comment-id="${comment.id}">
-          <textarea class="b3-text-field fn__block" rows="2">${escapeHtml$2(comment.text)}</textarea>
-          <button class="block__icon" data-action="delete-comment" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>
-        </div>`).join("");
+    list.innerHTML = buildCommentsListHtml(comments, editingId);
+    clearButton.hidden = comments.length === 0;
     list.querySelectorAll("[data-comment-id]").forEach((row) => {
-      var _a2, _b;
+      var _a2, _b, _c2, _d2;
       const id = row.dataset.commentId;
-      (_a2 = row.querySelector("textarea")) == null ? void 0 : _a2.addEventListener("input", (event) => {
-        comments = editComment(comments, id, event.target.value);
+      (_a2 = row.querySelector('[data-action="edit-comment"]')) == null ? void 0 : _a2.addEventListener("click", () => {
+        var _a3, _b2;
+        editingId = id;
+        render3();
+        (_b2 = (_a3 = list.querySelector(`[data-comment-id="${CSS.escape(id)}"]`)) == null ? void 0 : _a3.querySelector('[data-field="edit-comment"]')) == null ? void 0 : _b2.focus();
       });
-      (_b = row.querySelector('[data-action="delete-comment"]')) == null ? void 0 : _b.addEventListener("click", () => {
+      (_b = row.querySelector('[data-action="save-comment"]')) == null ? void 0 : _b.addEventListener("click", () => {
+        var _a3;
+        const value = ((_a3 = row.querySelector('[data-field="edit-comment"]')) == null ? void 0 : _a3.value) ?? "";
+        comments = value.trim() ? editComment(comments, id, value) : removeComment(comments, id);
+        editingId = null;
+        persist();
+        render3();
+      });
+      (_c2 = row.querySelector('[data-action="cancel-edit-comment"]')) == null ? void 0 : _c2.addEventListener("click", () => {
+        editingId = null;
+        render3();
+      });
+      (_d2 = row.querySelector('[data-action="delete-comment"]')) == null ? void 0 : _d2.addEventListener("click", () => {
         comments = removeComment(comments, id);
+        editingId = null;
+        persist();
         render3();
       });
     });
@@ -50731,9 +50802,18 @@ function openCommentsDialog(commands) {
     if (!input.value.trim()) return;
     comments = addComment(comments, input.value);
     input.value = "";
+    persist();
     render3();
+    input.focus();
   });
-  bindDialogActions(dialog, () => commands.setComments(comments.filter((comment) => comment.text.trim())));
+  clearButton.addEventListener("click", () => {
+    requestClearAllComments(siyuan.confirm, () => {
+      comments = [];
+      editingId = null;
+      persist();
+      render3();
+    });
+  });
   input.focus();
 }
 function readFileAsDataUrl(file) {
@@ -50770,7 +50850,6 @@ function openNodeContextMenu(event, commands, options = {}) {
   menu.addSeparator();
   menu.addItem({ icon: "iconCheck", label: "待办", click: () => openTodoDialog(commands) });
   menu.addItem({ icon: "iconMessage", label: "批注", click: () => openCommentsDialog(commands) });
-  menu.addItem({ icon: "iconInfo", label: "备注", click: () => openNoteDialog(commands) });
   menu.addItem({ icon: "iconTags", label: "标签", click: () => openTagsDialog(commands) });
   menu.addItem({ icon: "iconEmoji", label: "图标", click: () => openIconsDialog(commands) });
   menu.addItem({ icon: "iconLink", label: "链接", click: () => openLinkDialog(commands) });
@@ -51368,6 +51447,11 @@ class YeMindEditor {
     this.map.on("rich_text_selection_change", (hasRange, rectInfo, formatInfo) => {
       var _a;
       (_a = this.richTextToolbar) == null ? void 0 : _a.update(hasRange, rectInfo, formatInfo);
+    });
+    this.map.on("yemind_todo_toggle", (node) => {
+      if (!this.commands) return;
+      this.activateNode(node);
+      this.commands.toggleTodo();
     });
     this.map.on("yemind_badge_click", (type, node) => {
       if (!this.commands) return;

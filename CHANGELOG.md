@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.1 — 2026-07-16
+
+- Rebuilt the comment dialog around explicit empty, view and edit states.
+- Added comment timestamps and bottom-right vertical edit/delete controls.
+- Added an immediately applied multi-comment workflow and confirmed “clear all” action.
+- Moved todo state to a checkbox before the node text, with a green completed state.
+- Kept comment access as a compact node-side message icon with a count for multiple comments.
+- Removed the separate note feature from the menu and command layer.
+- Migrated legacy node notes into comments without discarding existing text.
+- Added regression tests for comment presentation, clear confirmation, todo placement, settings visibility and note migration.
+
 ## 0.4.0 — 2026-07-16
 
 - Replaced the upstream RichText registration with a YeMind extension that persists links, inline code and language-aware code blocks.

@@ -1,4 +1,4 @@
-import { Dialog, showMessage } from 'siyuan';
+import { Dialog, confirm, showMessage } from 'siyuan';
 import type { YeMindCommands } from '../core/commands';
 import {
   addComment,
@@ -8,6 +8,7 @@ import {
   type NodeComment,
   type NodeTodo,
 } from '../content/nodeContentState';
+import { buildCommentsListHtml, requestClearAllComments } from './commentsPresentation';
 
 function activeData(commands: YeMindCommands): Record<string, any> {
   return commands.getPrimaryNodeData() ?? {};
@@ -51,19 +52,6 @@ export function openTodoDialog(commands: YeMindCommands): void {
   });
   bindDialogActions(dialog, () => commands.setTodo({ checked: checked.checked, text: text.value.trim() }));
   text.focus();
-}
-
-export function openNoteDialog(commands: YeMindCommands): void {
-  const data = activeData(commands);
-  const dialog = new Dialog({
-    title: '备注',
-    content: `<div class="b3-dialog__content ymz-node-dialog"><textarea class="b3-text-field fn__block" data-field="note" rows="8" placeholder="输入节点备注"></textarea></div>${actionButtons()}`,
-    width: '460px',
-  });
-  const input = dialog.element.querySelector<HTMLTextAreaElement>('[data-field="note"]')!;
-  input.value = String(data.note ?? '');
-  bindDialogActions(dialog, () => commands.setNote(input.value.trim()));
-  input.focus();
 }
 
 export function openTagsDialog(commands: YeMindCommands): void {
@@ -223,43 +211,73 @@ export function openImageDialog(commands: YeMindCommands): void {
 
 export function openCommentsDialog(commands: YeMindCommands): void {
   let comments = ((activeData(commands).yemindComments ?? []) as NodeComment[]).map((item) => ({ ...item }));
+  let editingId: string | null = null;
   const dialog = new Dialog({
     title: '批注',
     content: `<div class="b3-dialog__content ymz-node-dialog ymz-comments-dialog">
       <div data-role="comments"></div>
-      <textarea class="b3-text-field fn__block" data-field="new-comment" rows="3" placeholder="新增批注"></textarea>
-      <button class="b3-button b3-button--outline" data-action="add-comment">添加批注</button>
-    </div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel" data-dialog-action="cancel">取消</button><div class="fn__space"></div><button class="b3-button b3-button--text" data-dialog-action="save">保存</button></div>`,
-    width: '540px',
+      <textarea class="b3-text-field fn__block" data-field="new-comment" rows="3" placeholder="新增批注…"></textarea>
+      <div class="ymz-comments-dialog__footer">
+        <button class="b3-button b3-button--cancel" data-action="clear-comments">清空全部</button>
+        <div class="fn__space"></div>
+        <button class="b3-button b3-button--text" data-action="add-comment">添加</button>
+      </div>
+    </div>`,
+    width: '500px',
   });
   const list = dialog.element.querySelector<HTMLElement>('[data-role="comments"]')!;
   const input = dialog.element.querySelector<HTMLTextAreaElement>('[data-field="new-comment"]')!;
+  const clearButton = dialog.element.querySelector<HTMLButtonElement>('[data-action="clear-comments"]')!;
+
+  const persist = (): void => commands.setComments(comments.filter((comment) => comment.text.trim()));
   const render = (): void => {
-    list.innerHTML = comments.length === 0
-      ? '<div class="ymz-empty-hint">暂无批注</div>'
-      : comments.map((comment) => `<div class="ymz-comment" data-comment-id="${comment.id}">
-          <textarea class="b3-text-field fn__block" rows="2">${escapeHtml(comment.text)}</textarea>
-          <button class="block__icon" data-action="delete-comment" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>
-        </div>`).join('');
+    list.innerHTML = buildCommentsListHtml(comments, editingId);
+    clearButton.hidden = comments.length === 0;
     list.querySelectorAll<HTMLElement>('[data-comment-id]').forEach((row) => {
       const id = row.dataset.commentId!;
-      row.querySelector<HTMLTextAreaElement>('textarea')?.addEventListener('input', (event) => {
-        comments = editComment(comments, id, (event.target as HTMLTextAreaElement).value);
+      row.querySelector('[data-action="edit-comment"]')?.addEventListener('click', () => {
+        editingId = id;
+        render();
+        list.querySelector<HTMLElement>(`[data-comment-id="${CSS.escape(id)}"]`)
+          ?.querySelector<HTMLTextAreaElement>('[data-field="edit-comment"]')?.focus();
+      });
+      row.querySelector('[data-action="save-comment"]')?.addEventListener('click', () => {
+        const value = row.querySelector<HTMLTextAreaElement>('[data-field="edit-comment"]')?.value ?? '';
+        comments = value.trim() ? editComment(comments, id, value) : removeComment(comments, id);
+        editingId = null;
+        persist();
+        render();
+      });
+      row.querySelector('[data-action="cancel-edit-comment"]')?.addEventListener('click', () => {
+        editingId = null;
+        render();
       });
       row.querySelector('[data-action="delete-comment"]')?.addEventListener('click', () => {
         comments = removeComment(comments, id);
+        editingId = null;
+        persist();
         render();
       });
     });
   };
+
   render();
   dialog.element.querySelector('[data-action="add-comment"]')?.addEventListener('click', () => {
     if (!input.value.trim()) return;
     comments = addComment(comments, input.value);
     input.value = '';
+    persist();
     render();
+    input.focus();
   });
-  bindDialogActions(dialog, () => commands.setComments(comments.filter((comment) => comment.text.trim())));
+  clearButton.addEventListener('click', () => {
+    requestClearAllComments(confirm, () => {
+      comments = [];
+      editingId = null;
+      persist();
+      render();
+    });
+  });
   input.focus();
 }
 

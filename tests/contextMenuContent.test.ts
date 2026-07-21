@@ -6,7 +6,6 @@ describe('node context menu content', () => {
     expect(NODE_CONTENT_MENU_LABELS).toEqual(expect.arrayContaining([
       '待办',
       '批注',
-      '备注',
       '标签',
       '图标',
       '链接',
@@ -15,5 +14,6 @@ describe('node context menu content', () => {
       '概要',
       '关联线',
     ]));
+    expect(NODE_CONTENT_MENU_LABELS).not.toContain('备注');
   });
 });

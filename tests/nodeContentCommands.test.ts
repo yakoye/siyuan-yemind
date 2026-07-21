@@ -28,7 +28,6 @@ describe('node content commands', () => {
     const map = fakeMindMap();
     const commands = createCommandAdapter(map as never);
 
-    commands.setNote('note');
     commands.setTags(['PCIe', 'ATS']);
     commands.setIcons(['priority_1']);
     commands.setLink('https://example.com', 'Example');
@@ -38,7 +37,6 @@ describe('node content commands', () => {
     commands.startRelation();
 
     expect(map.execCommand.mock.calls).toEqual([
-      ['SET_NODE_NOTE', map.renderer.activeNodeList[0], 'note'],
       ['SET_NODE_TAG', map.renderer.activeNodeList[0], ['PCIe', 'ATS']],
       ['SET_NODE_ICON', map.renderer.activeNodeList[0], ['priority_1']],
       ['SET_NODE_HYPERLINK', map.renderer.activeNodeList[0], 'https://example.com', 'Example'],

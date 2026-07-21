@@ -35,3 +35,21 @@
 .ymz-editor[data-cloze-hover="true"] .smm-richtext-node-wrap span[style*="color: transparent"]:hover,.ymz-editor[data-cloze-hover="true"] .smm-richtext-node-wrap span[style*="color:transparent"]:hover{color:var(--b3-theme-on-background)!important;text-shadow:none}
 @media(max-width:720px){.ymz-rich-toolbar{max-width:calc(100vw - 12px)!important}.ymz-icon-grid{grid-template-columns:1fr}}
 .ymz-formula-mode{display:flex;align-items:center;gap:8px}.ymz-formula-mode label{display:flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid var(--ymz-border);border-radius:8px;cursor:pointer}.ymz-formula-mode label:has(input:checked){background:var(--b3-theme-primary-lighter);border-color:var(--b3-theme-primary);color:var(--b3-theme-primary)}
+
+.ymz-node-prefix,.ymz-node-postfix{display:inline-flex;align-items:center;justify-content:center;height:20px}
+.ymz-node-todo-checkbox{box-sizing:border-box;width:17px;height:17px;padding:0;border:1.5px solid var(--b3-border-color);border-radius:5px;background:var(--b3-theme-background);color:#fff;font-size:12px;font-weight:700;line-height:14px;cursor:pointer}
+.ymz-node-todo-checkbox:hover{border-color:var(--b3-theme-primary)}
+.ymz-node-todo-checkbox.is-checked{border-color:#3cc77b;background:#3cc77b;box-shadow:0 0 0 1px color-mix(in srgb,#3cc77b 20%,transparent)}
+.ymz-node-comment-badge{position:relative;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;border:0;border-radius:5px;background:transparent;color:var(--b3-theme-on-surface-light);cursor:pointer}
+.ymz-node-comment-badge:hover{background:var(--b3-list-hover);color:var(--b3-theme-primary)}
+.ymz-node-comment-badge svg{width:15px;height:15px}
+.ymz-node-comment-count{position:absolute;right:-4px;top:-5px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:var(--b3-theme-primary);color:var(--b3-theme-on-primary);font-size:9px;line-height:14px;text-align:center}
+.ymz-comments-dialog [data-role="comments"]{display:flex;flex-direction:column;gap:10px;max-height:300px;overflow:auto}
+.ymz-comment{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;min-height:84px;padding:10px;border:1px solid var(--ymz-border);border-radius:8px;background:var(--b3-theme-background)}
+.ymz-comment__main{display:flex;min-width:0;flex-direction:column;gap:8px}
+.ymz-comment__time{font-size:12px;color:var(--b3-theme-on-surface-light)}
+.ymz-comment__text{white-space:normal;overflow-wrap:anywhere;line-height:1.6;color:var(--b3-theme-on-background)}
+.ymz-comment__editor{min-height:68px;resize:vertical}
+.ymz-comment__actions{display:flex;align-self:end;flex-direction:column;gap:6px}
+.ymz-comment__actions .b3-button{min-width:52px;padding:4px 10px}
+.ymz-comments-dialog__footer{display:flex;align-items:center}

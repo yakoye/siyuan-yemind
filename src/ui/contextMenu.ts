@@ -6,7 +6,6 @@ import {
   openIconsDialog,
   openImageDialog,
   openLinkDialog,
-  openNoteDialog,
   openTagsDialog,
   openTodoDialog,
 } from './nodeContentDialogs';
@@ -29,7 +28,6 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   menu.addSeparator();
   menu.addItem({ icon: 'iconCheck', label: '待办', click: () => openTodoDialog(commands) });
   menu.addItem({ icon: 'iconMessage', label: '批注', click: () => openCommentsDialog(commands) });
-  menu.addItem({ icon: 'iconInfo', label: '备注', click: () => openNoteDialog(commands) });
   menu.addItem({ icon: 'iconTags', label: '标签', click: () => openTagsDialog(commands) });
   menu.addItem({ icon: 'iconEmoji', label: '图标', click: () => openIconsDialog(commands) });
   menu.addItem({ icon: 'iconLink', label: '链接', click: () => openLinkDialog(commands) });

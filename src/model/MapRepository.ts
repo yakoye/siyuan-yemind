@@ -21,8 +21,31 @@ function normalizeMap(value: unknown): YeMindMapDocument | null {
     updatedAt: Number(candidate.updatedAt) || Number(candidate.createdAt) || Date.now(),
     layout: typeof candidate.layout === 'string' ? candidate.layout : 'logicalStructure',
     theme: typeof candidate.theme === 'string' ? candidate.theme : 'default',
-    data: clone(candidate.data),
+    data: normalizeLegacyTree(clone(candidate.data), Number(candidate.updatedAt) || Number(candidate.createdAt) || Date.now()),
     viewData: candidate.viewData ? clone(candidate.viewData) : undefined,
+  };
+}
+
+
+function normalizeLegacyTree(tree: YeMindMapDocument['data'], fallbackTime: number, path = 'root'): YeMindMapDocument['data'] {
+  const data = { ...tree.data };
+  const note = typeof data.note === 'string' ? data.note.trim() : '';
+  if (note) {
+    const comments = Array.isArray(data.yemindComments) ? [...data.yemindComments] : [];
+    if (!comments.some((comment) => comment?.text?.trim() === note)) {
+      comments.push({
+        id: `legacy_note_${String(data.uid ?? path)}`,
+        text: note,
+        createdAt: fallbackTime,
+        updatedAt: fallbackTime,
+      });
+    }
+    data.yemindComments = comments;
+  }
+  delete data.note;
+  return {
+    data,
+    children: (tree.children ?? []).map((child, index) => normalizeLegacyTree(child, fallbackTime, `${path}_${index}`)),
   };
 }
 

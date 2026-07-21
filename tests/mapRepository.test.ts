@@ -57,6 +57,32 @@ describe('MapRepository', () => {
     expect(repo.getActiveMapId()).toBeNull();
   });
 
+
+  it('migrates legacy notes into comments and removes the separate note field', async () => {
+    const storage = memoryStorage({
+      version: 1,
+      activeMapId: 'legacy',
+      maps: [{
+        id: 'legacy',
+        title: 'Legacy',
+        createdAt: 1,
+        updatedAt: 1,
+        layout: 'logicalStructure',
+        theme: 'default',
+        data: {
+          data: { text: 'Root', note: '旧备注' },
+          children: [],
+        },
+      }],
+    });
+    const repo = new MapRepository(storage);
+    await repo.load();
+
+    const data = repo.get('legacy')?.data.data;
+    expect(data?.note).toBeUndefined();
+    expect(data?.yemindComments).toEqual([expect.objectContaining({ text: '旧备注' })]);
+  });
+
   it('returns snapshots that cannot mutate repository state', async () => {
     const storage = memoryStorage();
     const repo = new MapRepository(storage, { now: () => 4000, id: () => 'safe' });

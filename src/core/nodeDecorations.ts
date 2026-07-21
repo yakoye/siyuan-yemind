@@ -31,41 +31,47 @@ function svg(text: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#176b50"/><text x="16" y="21" text-anchor="middle" font-size="17" font-family="Arial,sans-serif" font-weight="700" fill="#fff">${text}</text></svg>`;
 }
 
-export function createNodePostfixContent(node: any): { el: HTMLElement; width: number; height: number } | null {
+export function createNodePrefixContent(node: any): { el: HTMLElement; width: number; height: number } | null {
   const todo = node.getData?.('yemindTodo') as NodeTodo | null | undefined;
-  const comments = (node.getData?.('yemindComments') ?? []) as NodeComment[];
-  const showTodo = Boolean(todo && decorationSettings.showTodoBadge);
-  const showComments = comments.length > 0 && decorationSettings.showCommentBadge;
-  if (!showTodo && !showComments) return null;
+  if (!todo || !decorationSettings.showTodoBadge) return null;
 
   const el = document.createElement('span');
-  el.className = 'ymz-node-badges';
-  if (showTodo && todo) {
-    const badge = document.createElement('button');
-    badge.type = 'button';
-    badge.className = `ymz-node-badge ymz-node-badge--todo${todo.checked ? ' is-checked' : ''}`;
-    badge.textContent = todo.checked ? '✓' : '○';
-    const state = todo.checked ? '待办已完成' : '待办未完成';
-    badge.title = todo.text ? `${state}：${todo.text}` : state;
-    badge.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      node.mindMap?.emit?.('yemind_badge_click', 'todo', node);
-    });
-    el.appendChild(badge);
-  }
-  if (showComments) {
-    const badge = document.createElement('button');
-    badge.type = 'button';
-    badge.className = 'ymz-node-badge ymz-node-badge--comments';
-    badge.textContent = `批${comments.length}`;
-    badge.title = `${comments.length} 条批注`;
-    badge.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      node.mindMap?.emit?.('yemind_badge_click', 'comments', node);
-    });
-    el.appendChild(badge);
-  }
-  return { el, width: (showTodo ? 24 : 0) + (showComments ? 34 : 0), height: 20 };
+  el.className = 'ymz-node-prefix';
+  const checkbox = document.createElement('button');
+  checkbox.type = 'button';
+  checkbox.className = `ymz-node-todo-checkbox${todo.checked ? ' is-checked' : ''}`;
+  checkbox.setAttribute('aria-label', todo.checked ? '待办已完成' : '待办未完成');
+  checkbox.title = todo.text
+    ? `${todo.checked ? '待办已完成' : '待办未完成'}：${todo.text}`
+    : (todo.checked ? '待办已完成' : '待办未完成');
+  checkbox.textContent = todo.checked ? '✓' : '';
+  checkbox.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    node.mindMap?.emit?.('yemind_todo_toggle', node);
+  });
+  el.appendChild(checkbox);
+  return { el, width: 20, height: 20 };
+}
+
+export function createNodePostfixContent(node: any): { el: HTMLElement; width: number; height: number } | null {
+  const comments = (node.getData?.('yemindComments') ?? []) as NodeComment[];
+  if (comments.length === 0 || !decorationSettings.showCommentBadge) return null;
+
+  const el = document.createElement('span');
+  el.className = 'ymz-node-postfix';
+  const badge = document.createElement('button');
+  badge.type = 'button';
+  badge.className = 'ymz-node-comment-badge';
+  badge.title = `${comments.length} 条批注`;
+  badge.setAttribute('aria-label', `${comments.length} 条批注`);
+  badge.innerHTML = '<svg aria-hidden="true"><use xlink:href="#iconMessage"></use></svg>'
+    + (comments.length > 1 ? `<span class="ymz-node-comment-count">${comments.length}</span>` : '');
+  badge.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    node.mindMap?.emit?.('yemind_badge_click', 'comments', node);
+  });
+  el.appendChild(badge);
+  return { el, width: comments.length > 1 ? 30 : 22, height: 20 };
 }

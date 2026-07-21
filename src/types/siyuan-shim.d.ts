@@ -99,5 +99,6 @@ declare module 'siyuan' {
     keepCursor?: boolean;
   }): Promise<Tab>;
 
+  export function confirm(title: string, text: string, callback: () => void, cancelCallback?: () => void): void;
   export function showMessage(text: string, timeout?: number, type?: 'info' | 'error', id?: string): void;
 }
