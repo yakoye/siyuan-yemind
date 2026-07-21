@@ -81,11 +81,19 @@ export async function runDiagnosticsSelfCheck(input: DiagnosticsSelfCheckInput):
 
   if (input.globalSearch) {
     const state = input.globalSearch;
+    const pendingNavigationSteps = new Set([
+      'enter-captured', 'close-request', 'search-close-fallback', 'search-close-failed',
+      'open-request', 'target-navigation-request', 'map-tab-create-request', 'map-tab-created',
+    ]);
+    const navigationStalled = state.lastNavigationSuccess === null
+      && pendingNavigationSteps.has(state.lastNavigationStep)
+      && state.updatedAt > 0
+      && now() - state.updatedAt >= 1500;
     const status: SelfCheckStatus = !state.observed
       ? 'warning'
       : state.yemindResultCount > 0 && (!state.listMounted || !state.previewMounted || !state.previewVisible)
         ? 'fail'
-        : state.lastNavigationSuccess === false
+        : state.lastNavigationSuccess === false || navigationStalled
           ? 'fail'
           : 'pass';
     items.push({
@@ -93,10 +101,12 @@ export async function runDiagnosticsSelfCheck(input: DiagnosticsSelfCheckInput):
       status,
       summary: !state.observed
         ? '尚未记录全局搜索会话；开始记录并复现后将检查预览与导航链路'
-        : status === 'fail'
-          ? `全局搜索链路在“${state.lastNavigationStep}”附近失败`
-          : '全局搜索结果、预览与最近一次导航状态正常',
-      details: { ...state },
+        : navigationStalled
+          ? `全局搜索导航在“${state.lastNavigationStep}”停滞，未进入打开导图或节点定位阶段`
+          : status === 'fail'
+            ? `全局搜索链路在“${state.lastNavigationStep}”附近失败`
+            : '全局搜索结果、预览与最近一次导航状态正常',
+      details: { ...state, navigationStalled },
     });
   }
 

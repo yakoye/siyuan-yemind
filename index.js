@@ -2588,12 +2588,23 @@ async function runDiagnosticsSelfCheck(input) {
   }
   if (input.globalSearch) {
     const state = input.globalSearch;
-    const status = !state.observed ? "warning" : state.yemindResultCount > 0 && (!state.listMounted || !state.previewMounted || !state.previewVisible) ? "fail" : state.lastNavigationSuccess === false ? "fail" : "pass";
+    const pendingNavigationSteps = /* @__PURE__ */ new Set([
+      "enter-captured",
+      "close-request",
+      "search-close-fallback",
+      "search-close-failed",
+      "open-request",
+      "target-navigation-request",
+      "map-tab-create-request",
+      "map-tab-created"
+    ]);
+    const navigationStalled = state.lastNavigationSuccess === null && pendingNavigationSteps.has(state.lastNavigationStep) && state.updatedAt > 0 && now() - state.updatedAt >= 1500;
+    const status = !state.observed ? "warning" : state.yemindResultCount > 0 && (!state.listMounted || !state.previewMounted || !state.previewVisible) ? "fail" : state.lastNavigationSuccess === false || navigationStalled ? "fail" : "pass";
     items.push({
       id: "global-search",
       status,
-      summary: !state.observed ? "尚未记录全局搜索会话；开始记录并复现后将检查预览与导航链路" : status === "fail" ? `全局搜索链路在“${state.lastNavigationStep}”附近失败` : "全局搜索结果、预览与最近一次导航状态正常",
-      details: { ...state }
+      summary: !state.observed ? "尚未记录全局搜索会话；开始记录并复现后将检查预览与导航链路" : navigationStalled ? `全局搜索导航在“${state.lastNavigationStep}”停滞，未进入打开导图或节点定位阶段` : status === "fail" ? `全局搜索链路在“${state.lastNavigationStep}”附近失败` : "全局搜索结果、预览与最近一次导航状态正常",
+      details: { ...state, navigationStalled }
     });
   }
   try {
@@ -3965,23 +3976,23 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.7.0";
+const PLUGIN_VERSION = "0.7.1";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-21T10:58:47+08:00",
-  buildId: "yemind-zen-v0.7.0-20260721",
+  buildTime: "2026-07-21T12:20:00+08:00",
+  buildId: "yemind-zen-v0.7.1-20260721",
   productName: "YeMind Zen",
   tagline: "思源笔记中的思维导图、分屏大纲与知识整理插件。",
   officialReference: "KMind Zen 0.34.0",
-  releaseSummary: "新增关于页面、版本一致性门禁，并将诊断与回归升级为可追踪全局搜索完整链路的工具。",
+  releaseSummary: "修复思源全局搜索关闭控件兼容性，使 Enter、双击和打开导图按钮能够稳定打开并定位节点。",
   highlights: [
-    "设置中新增“关于”，集中展示版本、构建、运行环境和本版更新。",
-    "诊断包拆分为摘要、环境、版本、事件时间线、搜索状态、错误和回归结果。",
-    "全局搜索记录查询、结果、预览、Enter、关闭窗口、打开导图和节点定位全过程。"
+    "兼容思源全局搜索中 SVG 和非按钮关闭控件，不再直接假定存在 click() 方法。",
+    "关闭搜索窗口失败时仍继续打开导图，避免导航链路被关闭步骤阻断。",
+    "诊断自检可识别导航停滞，不再把长时间停在关闭阶段误判为通过。"
   ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -63179,23 +63190,60 @@ function activatePreviewHost(surface) {
   surface.preview.classList.add("fn__flex-1");
   surface.layout.classList.add("ymz-global-search-layout-active");
 }
+function dispatchSyntheticClick(target) {
+  try {
+    const click = target.click;
+    if (typeof click === "function") {
+      click.call(target);
+    } else {
+      target.dispatchEvent(new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        button: 0
+      }));
+    }
+    return true;
+  } catch {
+    try {
+      target.dispatchEvent(new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        button: 0
+      }));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+function dispatchEscape(target) {
+  try {
+    return target.dispatchEvent(new KeyboardEvent("keydown", {
+      key: "Escape",
+      code: "Escape",
+      bubbles: true,
+      cancelable: true,
+      composed: true
+    }));
+  } catch {
+    return false;
+  }
+}
 function closeGlobalSearchSurface(searchElement) {
   const dialog = searchElement.closest(".b3-dialog__container, .b3-dialog");
   const close2 = dialog == null ? void 0 : dialog.querySelector(
-    '.b3-dialog__close, [data-type="close"], [aria-label="关闭"], [aria-label="Close"]'
+    'button.b3-dialog__close, .b3-dialog__close, button[data-type="close"], [role="button"][data-type="close"], [data-type="close"], [aria-label="关闭"], [aria-label="Close"]'
   );
-  if (close2) {
-    close2.click();
-    return true;
-  }
+  if (close2 && dispatchSyntheticClick(close2)) return true;
   searchElement.blur();
-  const target = dialog ?? searchElement.ownerDocument ?? searchElement;
-  target.dispatchEvent(new KeyboardEvent("keydown", {
-    key: "Escape",
-    code: "Escape",
-    bubbles: true,
-    cancelable: true
-  }));
+  const documentTarget = searchElement.ownerDocument;
+  const targets = [searchElement];
+  if (dialog) targets.push(dialog);
+  if (documentTarget) targets.push(documentTarget);
+  if (documentTarget == null ? void 0 : documentTarget.defaultView) targets.push(documentTarget.defaultView);
+  targets.forEach((target) => dispatchEscape(target));
   return false;
 }
 function clearCustomSelection(state, surface) {
@@ -63205,12 +63253,25 @@ function clearCustomSelection(state, surface) {
 }
 function openMatch(state, match2, position2) {
   diagnostic(state, "close-request", { selectedType: "yemind", position: position2 ?? "current" });
-  const closed = closeGlobalSearchSurface(state.searchElement);
+  let closed = false;
+  try {
+    closed = closeGlobalSearchSurface(state.searchElement);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    diagnostic(state, "search-close-failed", { errorType: error instanceof Error ? error.name : typeof error, errorSummary: message }, "warning");
+    publishState(state, { lastNavigationStep: "search-close-failed", lastNavigationSuccess: null, selectedType: "yemind", lastFailure: message });
+  }
   diagnostic(state, closed ? "search-closed" : "search-close-fallback", { closed }, closed ? "info" : "warning");
   diagnostic(state, "open-request", { position: position2 ?? "current", hasNodeTarget: Boolean(match2.nodeUid) });
   publishState(state, { lastNavigationStep: "open-request", lastNavigationSuccess: null, selectedType: "yemind" });
-  if (position2) state.onOpen(match2.mapId, match2.nodeUid, { position: position2 });
-  else state.onOpen(match2.mapId, match2.nodeUid);
+  try {
+    if (position2) state.onOpen(match2.mapId, match2.nodeUid, { position: position2 });
+    else state.onOpen(match2.mapId, match2.nodeUid);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    diagnostic(state, "open-request-failed", { errorType: error instanceof Error ? error.name : typeof error, errorSummary: message }, "error");
+    publishState(state, { lastNavigationStep: "open-request-failed", lastNavigationSuccess: false, selectedType: "yemind", lastFailure: message });
+  }
 }
 function showPreview(state, surface, match2) {
   var _a;

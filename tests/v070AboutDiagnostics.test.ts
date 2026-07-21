@@ -28,7 +28,7 @@ function service() {
   }) };
 }
 
-describe('v0.7.0 about and diagnostics release contract', () => {
+describe('v0.7.x about and diagnostics release contract', () => {
   it('renders an About page with version, release highlights and support actions', () => {
     const html = createSettingsDialogTemplate(DEFAULT_SETTINGS);
     expect(html).toContain('data-settings-page="about"');
@@ -40,9 +40,9 @@ describe('v0.7.0 about and diagnostics release contract', () => {
     expect(html).toContain('data-about-version="manifest"');
   });
 
-  it('uses semantic minor version 0.7.0 consistently', () => {
-    expect(RELEASE_INFO.version).toBe('0.7.0');
-    expect(resolveVersionConsistency('0.7.0')).toEqual({ manifest: '0.7.0', runtime: '0.7.0', build: '0.7.0', consistent: true });
+  it('uses semantic patch version 0.7.1 consistently', () => {
+    expect(RELEASE_INFO.version).toBe('0.7.1');
+    expect(resolveVersionConsistency('0.7.1')).toEqual({ manifest: '0.7.1', runtime: '0.7.1', build: '0.7.1', consistent: true });
   });
 
   it('keeps package, lockfile, manifest, runtime metadata and release docs on one identity', () => {
@@ -52,10 +52,10 @@ describe('v0.7.0 about and diagnostics release contract', () => {
     const readme = readFileSync(resolve(process.cwd(), 'README_zh_CN.md'), 'utf8');
     const changelog = readFileSync(resolve(process.cwd(), 'CHANGELOG.md'), 'utf8');
     for (const version of [packageJson.version, packageLock.version, packageLock.packages[''].version, manifest.version, RELEASE_INFO.version, RELEASE_INFO.buildVersion]) {
-      expect(version).toBe('0.7.0');
+      expect(version).toBe('0.7.1');
     }
-    expect(readme).toContain('当前版本：`0.7.0`');
-    expect(changelog).toContain('## 0.7.0');
+    expect(readme).toContain('当前版本：`0.7.1`');
+    expect(changelog).toContain('## 0.7.1');
   });
 
   it('exports structured diagnostics files for direct analysis', async () => {

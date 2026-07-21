@@ -1,3 +1,12 @@
+## 0.7.1 — 2026-07-21
+
+- Fixed global-search navigation failures caused by SiYuan close controls that are SVG or non-HTMLElement elements without a callable `.click()` method.
+- Added a safe close adapter that activates HTML buttons or dispatches a bubbling synthetic click for SVG controls, with Escape fallback.
+- Ensured closing the search surface can never block opening the target map; Enter, double-click and the preview “打开导图” button now share the same protected path.
+- Improved diagnostics self-checks so a navigation attempt stalled at Enter/close/open stages is reported as failed instead of a false pass.
+- Added permanent regressions reproducing the real `close2.click is not a function` diagnostic failure.
+- Aligned package, manifest, runtime, build metadata, About and release documentation at 0.7.1.
+
 ## 0.7.0 — 2026-07-21
 
 - Added a dedicated Settings → About page with product identity, release highlights, manifest/runtime/build/SiYuan versions, build metadata and official KMind reference.

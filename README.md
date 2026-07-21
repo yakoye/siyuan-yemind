@@ -4,7 +4,14 @@ YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-
 
 - Plugin folder and ID: `siyuan-yemind-zen`
 - Display name: `YeMind Zen`
-- Version: `0.7.0`
+- Version: `0.7.1`
+
+## v0.7.1: Global-search opening and diagnostics fix
+
+- Fixed `click is not a function` when SiYuan exposes the search close control as SVG or another non-button element.
+- Enter, result double-click and the preview Open Map button now share one protected navigation path.
+- Map opening continues even when closing the global-search surface requires a fallback.
+- Diagnostics now report stalled Enter/close/open navigation instead of a false pass.
 
 ## v0.7.0: About, release identity and actionable diagnostics
 

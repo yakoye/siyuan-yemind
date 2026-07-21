@@ -409,23 +409,63 @@ function activatePreviewHost(surface: GlobalSearchSurface): void {
   surface.layout.classList.add('ymz-global-search-layout-active');
 }
 
+function dispatchSyntheticClick(target: Element): boolean {
+  try {
+    const click = (target as Element & { click?: unknown }).click;
+    if (typeof click === 'function') {
+      click.call(target);
+    } else {
+      target.dispatchEvent(new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        button: 0,
+      }));
+    }
+    return true;
+  } catch {
+    try {
+      target.dispatchEvent(new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        button: 0,
+      }));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+function dispatchEscape(target: EventTarget): boolean {
+  try {
+    return target.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Escape',
+      code: 'Escape',
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    }));
+  } catch {
+    return false;
+  }
+}
+
 export function closeGlobalSearchSurface(searchElement: HTMLInputElement): boolean {
   const dialog = searchElement.closest<HTMLElement>('.b3-dialog__container, .b3-dialog');
-  const close = dialog?.querySelector<HTMLElement>(
-    '.b3-dialog__close, [data-type="close"], [aria-label="关闭"], [aria-label="Close"]',
+  const close = dialog?.querySelector<Element>(
+    'button.b3-dialog__close, .b3-dialog__close, button[data-type="close"], [role="button"][data-type="close"], [data-type="close"], [aria-label="关闭"], [aria-label="Close"]',
   );
-  if (close) {
-    close.click();
-    return true;
-  }
+  if (close && dispatchSyntheticClick(close)) return true;
+
   searchElement.blur();
-  const target: EventTarget = dialog ?? searchElement.ownerDocument ?? searchElement;
-  target.dispatchEvent(new KeyboardEvent('keydown', {
-    key: 'Escape',
-    code: 'Escape',
-    bubbles: true,
-    cancelable: true,
-  }));
+  const documentTarget = searchElement.ownerDocument;
+  const targets: EventTarget[] = [searchElement];
+  if (dialog) targets.push(dialog);
+  if (documentTarget) targets.push(documentTarget);
+  if (documentTarget?.defaultView) targets.push(documentTarget.defaultView);
+  targets.forEach((target) => dispatchEscape(target));
   return false;
 }
 
@@ -437,12 +477,25 @@ function clearCustomSelection(state: GlobalSearchState, surface: GlobalSearchSur
 
 function openMatch(state: GlobalSearchState, match: GlobalMapMatch, position?: 'right'): void {
   diagnostic(state, 'close-request', { selectedType: 'yemind', position: position ?? 'current' });
-  const closed = closeGlobalSearchSurface(state.searchElement);
+  let closed = false;
+  try {
+    closed = closeGlobalSearchSurface(state.searchElement);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    diagnostic(state, 'search-close-failed', { errorType: error instanceof Error ? error.name : typeof error, errorSummary: message }, 'warning');
+    publishState(state, { lastNavigationStep: 'search-close-failed', lastNavigationSuccess: null, selectedType: 'yemind', lastFailure: message });
+  }
   diagnostic(state, closed ? 'search-closed' : 'search-close-fallback', { closed }, closed ? 'info' : 'warning');
   diagnostic(state, 'open-request', { position: position ?? 'current', hasNodeTarget: Boolean(match.nodeUid) });
   publishState(state, { lastNavigationStep: 'open-request', lastNavigationSuccess: null, selectedType: 'yemind' });
-  if (position) state.onOpen(match.mapId, match.nodeUid, { position });
-  else state.onOpen(match.mapId, match.nodeUid);
+  try {
+    if (position) state.onOpen(match.mapId, match.nodeUid, { position });
+    else state.onOpen(match.mapId, match.nodeUid);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    diagnostic(state, 'open-request-failed', { errorType: error instanceof Error ? error.name : typeof error, errorSummary: message }, 'error');
+    publishState(state, { lastNavigationStep: 'open-request-failed', lastNavigationSuccess: false, selectedType: 'yemind', lastFailure: message });
+  }
 }
 
 function showPreview(state: GlobalSearchState, surface: GlobalSearchSurface, match: GlobalMapMatch): void {
