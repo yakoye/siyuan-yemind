@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0 — 2026-07-16
+
+- Replaced the upstream RichText registration with a YeMind extension that persists links, inline code and language-aware code blocks.
+- Added safe inline-link normalization for HTTP(S), mail, telephone and SiYuan block links.
+- Added inline-link add, edit, remove and configurable open behavior.
+- Added inline-code formatting and a complete code-block editor with language, indentation, wrapping, font size, remove-format and delete actions.
+- Added live settings for autosave, rich toolbar visibility, links, code blocks, cloze display and node badges.
+- Added configurable cloze hidden/blur rendering and hover reveal.
+- Added node-badge visibility controls and live editor configuration updates.
+- Added focused tests for link, code-block, settings, toolbar, custom RichText formats and badge settings.
+
 ## 0.3.0 — 2026-07-16
 
 - Registered the RichText, Formula, AssociativeLine and NodeImgAdjust engine plugins.

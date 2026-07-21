@@ -1,5 +1,6 @@
 import type MindMap from 'simple-mind-map';
 import { toggleTodo as nextTodo, type NodeComment, type NodeTodo } from '../content/nodeContentState';
+import { deleteCodeBlock, findCurrentCodeBlock, removeCodeBlockFormat, replaceCodeBlock, type CodeBlockSnapshot } from '../editor/codeBlock';
 
 export interface NodeImageInput {
   url: string | null;
@@ -29,6 +30,13 @@ export interface YeMindCommands {
   getPrimaryNode(): any | null;
   getPrimaryNodeData(): Record<string, any> | null;
   getSelectedText(): string;
+  getSelectedInlineLink(): string;
+  setInlineLink(link: string | null): void;
+  toggleInlineCode(): void;
+  getCodeBlock(): CodeBlockSnapshot | null;
+  saveCodeBlock(code: string, language?: string): void;
+  removeCodeBlockFormat(): void;
+  deleteCodeBlock(): void;
   setNote(note: string): void;
   setTags(tags: string[]): void;
   setIcons(icons: string[]): void;
@@ -76,6 +84,46 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       const range = richText?.range ?? richText?.lastRange;
       if (!range || !richText?.quill?.getText) return '';
       return String(richText.quill.getText(range.index, range.length) ?? '').trim();
+    },
+    getSelectedInlineLink: () => {
+      const richText = (mindMap as any).richText;
+      const range = richText?.range ?? richText?.lastRange;
+      if (!range || !richText?.quill?.getFormat) return '';
+      const link = richText.quill.getFormat(range.index, range.length)?.link;
+      return typeof link === 'string' ? link : '';
+    },
+    setInlineLink: (link) => (mindMap as any).richText?.formatText?.({ link: link || false }),
+    toggleInlineCode: () => {
+      const richText = (mindMap as any).richText;
+      const range = richText?.range ?? richText?.lastRange;
+      if (!range || !richText?.quill?.getFormat) return;
+      const current = Boolean(richText.quill.getFormat(range.index, range.length)?.code);
+      richText.formatText?.({ code: !current });
+    },
+    getCodeBlock: () => {
+      const richText = (mindMap as any).richText;
+      const range = richText?.range ?? richText?.lastRange;
+      return richText?.quill ? findCurrentCodeBlock(richText.quill, range) : null;
+    },
+    saveCodeBlock: (code, language = 'plain') => {
+      const richText = (mindMap as any).richText;
+      const quill = richText?.quill;
+      const range = richText?.range ?? richText?.lastRange;
+      if (!quill || !range) return;
+      const existing = findCurrentCodeBlock(quill, range);
+      replaceCodeBlock(quill, existing ?? range, code, language);
+    },
+    removeCodeBlockFormat: () => {
+      const richText = (mindMap as any).richText;
+      const range = richText?.range ?? richText?.lastRange;
+      const block = richText?.quill ? findCurrentCodeBlock(richText.quill, range) : null;
+      if (block) removeCodeBlockFormat(richText.quill, block);
+    },
+    deleteCodeBlock: () => {
+      const richText = (mindMap as any).richText;
+      const range = richText?.range ?? richText?.lastRange;
+      const block = richText?.quill ? findCurrentCodeBlock(richText.quill, range) : null;
+      if (block) deleteCodeBlock(richText.quill, block);
     },
     setNote: (note) => forEachActive((node) => mindMap.execCommand('SET_NODE_NOTE', node, note)),
     setTags: (tags) => forEachActive((node) => mindMap.execCommand('SET_NODE_TAG', node, tags)),

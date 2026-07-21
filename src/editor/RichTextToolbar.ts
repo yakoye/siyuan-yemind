@@ -13,14 +13,21 @@ export interface RichTextSelectionRect {
   width?: number;
 }
 
+export interface RichTextToolbarCallbacks {
+  onFormula?: () => void;
+  onLink?: () => void;
+  onCodeBlock?: () => void;
+}
+
 export class RichTextToolbar {
   private readonly element: HTMLElement;
   private formatInfo: Record<string, unknown> = {};
+  private enabled = true;
 
   constructor(
     private readonly root: HTMLElement,
     private readonly commands: YeMindCommands,
-    private readonly onFormula: () => void = () => {},
+    private readonly callbacks: RichTextToolbarCallbacks = {},
   ) {
     this.element = document.createElement('div');
     this.element.className = 'ymz-rich-toolbar';
@@ -30,6 +37,8 @@ export class RichTextToolbar {
       <button type="button" data-rich-action="italic" title="斜体"><i>I</i></button>
       <button type="button" data-rich-action="underline" title="下划线"><u>U</u></button>
       <button type="button" data-rich-action="strike" title="删除线"><s>S</s></button>
+      <button type="button" data-rich-action="inline-code" title="行内代码">&lt;/&gt;</button>
+      <button type="button" data-rich-action="code-block" title="代码块">代码块</button>
       <span class="ymz-rich-toolbar__separator"></span>
       <label class="ymz-rich-color" title="文字颜色">A<input type="color" data-rich-field="color" value="#172033"></label>
       <button type="button" data-rich-action="clear-color" title="清除文字颜色">×</button>
@@ -49,6 +58,7 @@ export class RichTextToolbar {
         <option value="andale mono">等宽</option>
       </select>
       <span class="ymz-rich-toolbar__separator"></span>
+      <button type="button" data-rich-action="link" title="行内链接">链接</button>
       <button type="button" data-rich-action="cloze" title="挖空/取消挖空">挖空</button>
       <button type="button" data-rich-action="formula" title="插入公式">Fx</button>
       <button type="button" data-rich-action="clear" title="清除格式">清除</button>`;
@@ -56,12 +66,17 @@ export class RichTextToolbar {
     this.bind();
   }
 
+  setEnabled(enabled: boolean): void {
+    this.enabled = enabled;
+    if (!enabled) this.hide();
+  }
+
   update(
     hasRange: boolean,
     rectInfo?: RichTextSelectionRect | null,
     formatInfo?: Record<string, unknown> | null,
   ): void {
-    if (!hasRange || !rectInfo) {
+    if (!this.enabled || !hasRange || !rectInfo) {
       this.hide();
       return;
     }
@@ -95,6 +110,19 @@ export class RichTextToolbar {
         return;
       }
       switch (action) {
+        case 'inline-code':
+          this.commands.toggleInlineCode();
+          this.formatInfo.code = !Boolean(this.formatInfo.code);
+          this.syncState();
+          break;
+        case 'code-block':
+          this.hide();
+          this.callbacks.onCodeBlock?.();
+          break;
+        case 'link':
+          this.hide();
+          this.callbacks.onLink?.();
+          break;
         case 'cloze': {
           const next = !isClozeFormat(this.formatInfo);
           this.commands.setCloze(next);
@@ -105,7 +133,7 @@ export class RichTextToolbar {
         }
         case 'formula':
           this.hide();
-          this.onFormula();
+          this.callbacks.onFormula?.();
           break;
         case 'clear':
           this.commands.clearTextFormat();
@@ -140,6 +168,9 @@ export class RichTextToolbar {
     ['bold', 'italic', 'underline', 'strike'].forEach((name) => {
       this.element.querySelector(`[data-rich-action="${name}"]`)?.classList.toggle('is-active', Boolean(this.formatInfo[name]));
     });
+    this.element.querySelector('[data-rich-action="inline-code"]')?.classList.toggle('is-active', Boolean(this.formatInfo.code));
+    this.element.querySelector('[data-rich-action="link"]')?.classList.toggle('is-active', Boolean(this.formatInfo.link));
+    this.element.querySelector('[data-rich-action="code-block"]')?.classList.toggle('is-active', Boolean(this.formatInfo['code-block']));
     this.element.querySelector('[data-rich-action="cloze"]')?.classList.toggle('is-active', isClozeFormat(this.formatInfo));
     const size = this.element.querySelector<HTMLSelectElement>('[data-rich-field="size"]');
     if (size) size.value = typeof this.formatInfo.size === 'string' ? this.formatInfo.size : '';
@@ -148,7 +179,7 @@ export class RichTextToolbar {
   }
 
   private position(rect: RichTextSelectionRect): void {
-    const width = Math.min(this.element.scrollWidth || 720, window.innerWidth - 16);
+    const width = Math.min(this.element.scrollWidth || 820, window.innerWidth - 16);
     const left = Math.max(8, Math.min(rect.left + ((rect.width ?? 0) / 2) - (width / 2), window.innerWidth - width - 8));
     const measuredHeight = this.element.offsetHeight || 44;
     const below = rect.bottom + 8;

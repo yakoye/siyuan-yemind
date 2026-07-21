@@ -1,17 +1,18 @@
-# YeMind Zen v0.3.0 迁移状态
+# YeMind Zen v0.4.0 迁移状态
 
 ## 已完成
 
-- 插件目录和插件 ID 保持为 `siyuan-yemind-zen`，思源显示名为 `YeMind Zen`。
+- 插件目录和插件 ID：`siyuan-yemind-zen`；思源显示名：`YeMind Zen`。
 - 运行代码全部由 TypeScript 源码和 Vite 构建生成。
-- `simple-mind-map` 继续作为实际运行内核。
-- 已接入 RichText、Formula、AssociativeLine 和 NodeImgAdjust 插件。
-- 已完成富文本选区工具栏、公式、挖空、待办、批注、备注、标签、图标、链接、图片、概要和关联线。
-- 待办和批注保存在节点数据中，并在节点旁显示可点击状态标记。
+- `simple-mind-map` 作为实际编辑内核。
+- 自定义 RichText 扩展在上游实现基础上增加 `link`、`code` 和 `code-block` 持久化格式。
+- 已完成富文本、公式、挖空、行内链接、行内代码和完整代码块编辑。
+- 已完成待办、批注、备注、标签、图标、节点链接、图片、概要和关联线。
+- 自动保存、链接、代码、挖空和节点标记设置可实时应用。
 
 ## 下一阶段
 
-- 外框和更完整的关联线编辑
 - 搜索、大纲和分屏
-- XMind、FreeMind、Markdown、OPML 和 KMindz 导入导出
-- 思源文档树、块卡、镜像块和节点子文档
+- 外框、嵌套概要和完整关联线控制点
+- XMind、FreeMind、Markdown、OPML 和 KMindz
+- 思源文档树、卡片、镜像块和节点子文档

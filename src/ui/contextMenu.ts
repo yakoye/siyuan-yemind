@@ -11,7 +11,12 @@ import {
   openTodoDialog,
 } from './nodeContentDialogs';
 
-export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands): void {
+export interface NodeContextMenuOptions {
+  onInlineLink?: () => void;
+  onCodeBlock?: () => void;
+}
+
+export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands, options: NodeContextMenuOptions = {}): void {
   event.preventDefault();
   event.stopPropagation();
 
@@ -30,6 +35,8 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands)
   menu.addItem({ icon: 'iconLink', label: '链接', click: () => openLinkDialog(commands) });
   menu.addItem({ icon: 'iconImage', label: '图片', click: () => openImageDialog(commands) });
   menu.addItem({ icon: 'iconMath', label: '公式', click: () => openFormulaDialog(commands) });
+  menu.addItem({ icon: 'iconLink', label: '行内链接', click: () => options.onInlineLink?.() });
+  menu.addItem({ icon: 'iconCode', label: '代码块', click: () => options.onCodeBlock?.() });
   menu.addSeparator();
   menu.addItem({ icon: 'iconList', label: '概要', accelerator: 'Ctrl+Alt+G', click: () => commands.addSummary() });
   menu.addItem({ icon: 'iconRight', label: '关联线', accelerator: 'Ctrl+Alt+L', click: () => commands.startRelation() });

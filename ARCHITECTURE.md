@@ -5,7 +5,7 @@
 - 插件目录：`siyuan-yemind-zen`
 - 插件 ID：`siyuan-yemind-zen`
 - 思源显示名：`YeMind Zen`
-- 当前版本：`0.3.0`
+- 当前版本：`0.4.0`
 
 ## 核心分层
 

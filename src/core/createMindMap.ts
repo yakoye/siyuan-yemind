@@ -15,7 +15,7 @@ export interface CreateMindMapOptions {
 }
 
 export function createMindMap(options: CreateMindMapOptions): MindMap {
-  registerMindMapPlugins();
+  registerMindMapPlugins(options.settings);
   const settings = options.settings;
   return new MindMap({
     el: options.el,

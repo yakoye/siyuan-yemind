@@ -34,3 +34,8 @@ declare module 'simple-mind-map/src/plugins/NodeImgAdjust' {
   const plugin: any;
   export default plugin;
 }
+declare module 'simple-mind-map/src/utils' {
+  export const checkSmmFormatData: any;
+  export const getTextFromHtml: any;
+  export const nodeRichTextToTextWithWrap: any;
+}

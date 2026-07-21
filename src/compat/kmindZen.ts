@@ -10,5 +10,5 @@ export interface ImportedMap {
 }
 
 export async function importKmindZenFile(_bytes: Uint8Array): Promise<ImportedMap> {
-  throw new Error("KMind Zen compatibility adapter is not implemented in v0.3.0");
+  throw new Error("KMind Zen compatibility adapter is not implemented in v0.4.0");
 }

@@ -1,5 +1,19 @@
 import type { NodeComment, NodeTodo } from '../content/nodeContentState';
 
+export interface NodeDecorationSettings {
+  showTodoBadge: boolean;
+  showCommentBadge: boolean;
+}
+
+let decorationSettings: NodeDecorationSettings = {
+  showTodoBadge: true,
+  showCommentBadge: true,
+};
+
+export function configureNodeDecorations(patch: Partial<NodeDecorationSettings>): void {
+  decorationSettings = { ...decorationSettings, ...patch };
+}
+
 export const YEMIND_ICON_LIST = [{
   name: 'YeMind Zen',
   type: 'yemind',
@@ -20,11 +34,13 @@ function svg(text: string): string {
 export function createNodePostfixContent(node: any): { el: HTMLElement; width: number; height: number } | null {
   const todo = node.getData?.('yemindTodo') as NodeTodo | null | undefined;
   const comments = (node.getData?.('yemindComments') ?? []) as NodeComment[];
-  if (!todo && comments.length === 0) return null;
+  const showTodo = Boolean(todo && decorationSettings.showTodoBadge);
+  const showComments = comments.length > 0 && decorationSettings.showCommentBadge;
+  if (!showTodo && !showComments) return null;
 
   const el = document.createElement('span');
   el.className = 'ymz-node-badges';
-  if (todo) {
+  if (showTodo && todo) {
     const badge = document.createElement('button');
     badge.type = 'button';
     badge.className = `ymz-node-badge ymz-node-badge--todo${todo.checked ? ' is-checked' : ''}`;
@@ -38,7 +54,7 @@ export function createNodePostfixContent(node: any): { el: HTMLElement; width: n
     });
     el.appendChild(badge);
   }
-  if (comments.length > 0) {
+  if (showComments) {
     const badge = document.createElement('button');
     badge.type = 'button';
     badge.className = 'ymz-node-badge ymz-node-badge--comments';
@@ -51,5 +67,5 @@ export function createNodePostfixContent(node: any): { el: HTMLElement; width: n
     });
     el.appendChild(badge);
   }
-  return { el, width: (todo ? 24 : 0) + (comments.length ? 34 : 0), height: 20 };
+  return { el, width: (showTodo ? 24 : 0) + (showComments ? 34 : 0), height: 20 };
 }

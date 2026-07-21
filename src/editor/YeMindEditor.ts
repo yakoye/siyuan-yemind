@@ -2,13 +2,16 @@ import type MindMap from 'simple-mind-map';
 import { Dialog, showMessage } from 'siyuan';
 import { createMindMap } from '../core/createMindMap';
 import { createCommandAdapter, type YeMindCommands } from '../core/commands';
+import { configureNodeDecorations } from '../core/nodeDecorations';
+import { configureMindMapPlugins } from '../core/registerPlugins';
 import { MapRepository } from '../model/MapRepository';
 import type { MindMapTree, YeMindMapDocument } from '../model/types';
+import type { SettingsStore, YeMindSettings } from '../settings/SettingsStore';
 import { openNodeContextMenu } from '../ui/contextMenu';
 import { openCommentsDialog, openFormulaDialog, openTodoDialog } from '../ui/nodeContentDialogs';
+import { openCodeBlockDialog, openInlineLinkDialog } from '../ui/richTextDialogs';
 import { calculateEditorStats } from './editorStats';
 import { createEditorTemplate } from './editorTemplate';
-import type { SettingsStore } from '../settings/SettingsStore';
 import { RichTextToolbar } from './RichTextToolbar';
 
 export interface YeMindEditorOptions {
@@ -23,9 +26,11 @@ export class YeMindEditor {
   private map: MindMap | null = null;
   private commands: YeMindCommands | null = null;
   private saveTimer: number | null = null;
-  private unsubscribe: (() => void) | null = null;
+  private repositoryUnsubscribe: (() => void) | null = null;
+  private settingsUnsubscribe: (() => void) | null = null;
   private destroyed = false;
   private current: YeMindMapDocument;
+  private settings: YeMindSettings;
   private rootEl!: HTMLElement;
   private canvasEl!: HTMLElement;
   private statsEl!: HTMLElement;
@@ -44,6 +49,7 @@ export class YeMindEditor {
     const map = options.repository.get(options.mapId);
     if (!map) throw new Error(`Map not found: ${options.mapId}`);
     this.current = map;
+    this.settings = options.settingsStore.get();
     this.mount();
   }
 
@@ -54,7 +60,8 @@ export class YeMindEditor {
   destroy(): void {
     this.destroyed = true;
     if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
-    this.unsubscribe?.();
+    this.repositoryUnsubscribe?.();
+    this.settingsUnsubscribe?.();
     this.richTextToolbar?.destroy();
     this.richTextToolbar = null;
     this.rootEl?.removeEventListener('keydown', this.onRootKeydown);
@@ -80,15 +87,19 @@ export class YeMindEditor {
       viewData: this.current.viewData,
       theme: this.current.theme,
       layout: this.current.layout,
-      settings: this.options.settingsStore.get(),
+      settings: this.settings,
     });
     this.commands = createCommandAdapter(this.map);
-    this.richTextToolbar = new RichTextToolbar(this.rootEl, this.commands, () => openFormulaDialog(this.commands!));
+    this.richTextToolbar = new RichTextToolbar(this.rootEl, this.commands, {
+      onFormula: () => openFormulaDialog(this.commands!),
+      onLink: () => openInlineLinkDialog(this.commands!, this.settings),
+      onCodeBlock: () => openCodeBlockDialog(this.commands!, this.settings),
+    });
     this.rootEl.addEventListener('keydown', this.onRootKeydown);
 
     this.bindToolbar();
     this.bindMapEvents();
-    this.unsubscribe = this.options.repository.subscribe((state) => {
+    this.repositoryUnsubscribe = this.options.repository.subscribe((state) => {
       const next = state.maps.find((item) => item.id === this.current.id);
       if (!next) {
         this.options.onMissing?.();
@@ -100,12 +111,18 @@ export class YeMindEditor {
         this.titleEl.title = next.title;
       }
     });
+    this.settingsUnsubscribe = this.options.settingsStore.subscribe((settings) => this.applySettings(settings));
     this.updateStats(this.current.data);
     this.updateZoom();
   }
 
   private bindToolbar(): void {
     this.rootEl.addEventListener('click', (event) => {
+      const anchor = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[href]');
+      if (anchor && this.rootEl.contains(anchor)) {
+        this.openInlineLink(event, anchor.href || anchor.getAttribute('href') || '');
+        return;
+      }
       const button = (event.target as HTMLElement).closest<HTMLElement>('[data-action]');
       if (!button || !this.commands || !this.map) return;
       const action = button.dataset.action;
@@ -151,7 +168,10 @@ export class YeMindEditor {
     this.map.on('node_contextmenu', (event: MouseEvent, node: any) => {
       if (!this.commands) return;
       this.activateNode(node);
-      openNodeContextMenu(event, this.commands);
+      openNodeContextMenu(event, this.commands, {
+        onInlineLink: () => openInlineLinkDialog(this.commands!, this.settings),
+        onCodeBlock: () => openCodeBlockDialog(this.commands!, this.settings),
+      });
     });
     this.map.on('rich_text_selection_change', (
       hasRange: boolean,
@@ -172,6 +192,40 @@ export class YeMindEditor {
     this.map.on('scale', () => this.updateZoom());
   }
 
+  private applySettings(settings: YeMindSettings): void {
+    this.settings = settings;
+    this.richTextToolbar?.setEnabled(settings.showRichTextToolbar);
+    configureMindMapPlugins(settings);
+    configureNodeDecorations({
+      showTodoBadge: settings.showTodoBadge,
+      showCommentBadge: settings.showCommentBadge,
+    });
+    this.rootEl.dataset.codeWrap = String(settings.codeBlockWrap);
+    this.rootEl.dataset.codeLanguage = String(settings.codeBlockShowLanguage);
+    this.rootEl.dataset.clozeMode = settings.clozeMode;
+    this.rootEl.dataset.clozeHover = String(settings.clozeRevealOnHover);
+    this.rootEl.style.setProperty('--ymz-code-tab-size', String(settings.codeBlockTabSize));
+    this.rootEl.style.setProperty('--ymz-code-font-size', `${settings.codeBlockFontSize}px`);
+    (this.map as any)?.updateConfig?.({
+      useLeftKeySelectionRightKeyDrag: settings.canvasMode === 'select',
+      mousewheelAction: settings.wheelMode === 'zoom' ? 'zoom' : 'move',
+      disableMouseWheelZoom: settings.wheelMode === 'none',
+      isShowCreateChildBtnIcon: settings.showQuickCreate,
+    });
+    (this.map as any)?.render?.();
+  }
+
+  private openInlineLink(event: Event, href: string): void {
+    if (!href || href === 'about:blank') return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (href.toLowerCase().startsWith('siyuan://')) {
+      window.location.href = href;
+      return;
+    }
+    if (this.settings.externalLinkMode === 'current-window') window.location.href = href;
+    else window.open(href, '_blank', 'noopener,noreferrer');
+  }
 
   private activateNode(node: any): void {
     if (!this.map || !node) return;
@@ -190,7 +244,7 @@ export class YeMindEditor {
     this.saveTimer = window.setTimeout(() => {
       this.saveTimer = null;
       void this.persist();
-    }, 350);
+    }, this.settings.autosaveDelayMs);
   }
 
   private async persist(): Promise<void> {
@@ -233,11 +287,8 @@ export class YeMindEditor {
   }
 
   private async toggleFullscreen(): Promise<void> {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-    } else {
-      await this.rootEl.requestFullscreen();
-    }
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await this.rootEl.requestFullscreen();
   }
 
   private openHelp(): void {
@@ -246,10 +297,10 @@ export class YeMindEditor {
       content: `<div class="b3-dialog__content ymz-help">
         <p><b>双击</b> 编辑节点</p>
         <p><b>Tab</b> 添加子节点，<b>Enter</b> 添加同级节点</p>
-        <p><b>拖拽节点</b> 调整层级，<b>Ctrl/Cmd + 拖拽</b> 框选</p>
-        <p><b>Backspace/Delete</b> 删除节点，<b>Ctrl/Cmd + Z</b> 撤销</p>
+        <p><b>选中文字</b> 使用格式、行内链接、挖空、公式与代码工具</p>
+        <p><b>右键节点</b> 打开节点内容、概要与关联线菜单</p>
       </div>`,
-      width: '420px',
+      width: '440px',
     });
     void dialog;
   }
