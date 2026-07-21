@@ -3,18 +3,18 @@ import { PLUGIN_VERSION, PRODUCT_NAME, PROJECT_PACKAGE_NAME } from './plugin/con
 export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: '2026-07-21T21:20:00+08:00',
-  buildId: 'yemind-v0.8.4-20260721',
+  buildTime: '2026-07-21T21:40:00+08:00',
+  buildId: 'yemind-v0.8.5-20260721',
   productName: PRODUCT_NAME,
   projectName: PROJECT_PACKAGE_NAME,
   tagline: '思源笔记中的思维导图、分屏大纲与知识整理插件。',
   officialReference: 'KMind Zen 0.34.0',
-  releaseSummary: '修复结构拖动后画布富文本编辑框归零、文字漂移与提交到失效节点的问题。',
+  releaseSummary: '修复分屏模式下画布新增节点后错误恢复旧大纲节点焦点并进入编辑的问题。',
   highlights: [
-    '富文本编辑事务按节点 UID 重新绑定当前渲染实例，不再持有拖动前的失效节点引用。',
-    '隐藏 SVG 文字返回零矩形时，使用屏幕变换矩阵或最后有效锚点恢复编辑框位置，禁止覆盖为 -6/-4。',
-    '节点拖动、同位拖动、结构重绘后双击编辑仍覆盖在节点原位，并保留新节点全选与旧节点末尾光标语义。',
-    '完成编辑时把文字提交到当前渲染节点，避免重绘后写入旧实例；新增真实 SVG/Quill 拖动后回归测试。',
+    '新增画布/大纲编辑表面所有权协调器，同一时刻只有当前交互表面拥有编辑与焦点恢复权。',
+    '画布点击、节点激活和画布富文本开始会提交并关闭旧大纲编辑器，同时取消旧焦点恢复票据。',
+    '大纲焦点只允许由大纲自身的插入、缩进、删除和折叠命令显式恢复，普通结构同步不再推断旧焦点。',
+    '异步焦点恢复使用代次校验，旧请求被画布接管或新请求替换后立即失效，并纳入永久分屏回归。',
   ],
 } as const;
 

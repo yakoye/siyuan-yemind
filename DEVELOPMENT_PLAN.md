@@ -1,3 +1,12 @@
+## v0.8.5：分屏编辑表面所有权（已完成）
+
+- [x] 使用诊断包定位 `rich-text opened → data-change → outline editor-destroy → outline edit-start` 错误链路。
+- [x] 建立画布/大纲编辑表面协调器和显式大纲焦点票据。
+- [x] 画布 pointerdown、节点激活及富文本开始时取消旧大纲恢复。
+- [x] 删除结构变化时自动推断并恢复旧大纲编辑节点的逻辑。
+- [x] 保留大纲自身结构命令后的正确焦点恢复。
+- [x] 增加协调器行为、源码集成和全部历史回归测试。
+
 ## v0.8.1：正式插件 ID 与安装目录统一（已完成）
 
 - [x] `plugin.json.name` 改为 `siyuan-yemind`。

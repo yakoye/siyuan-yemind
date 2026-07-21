@@ -6,7 +6,7 @@ YeMind 是一个基于 `simple-mind-map` 构建的思源笔记思维导图插件
 - 思源插件 ID / 安装目录：`siyuan-yemind`
 - 历史链接兼容 ID：`siyuan-yemind-zen`
 - 思源显示名：`YeMind`
-- 当前版本：`0.8.4`
+- 当前版本：`0.8.5`
 
 ## v0.8.1：正式插件 ID 与安装目录统一
 

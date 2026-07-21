@@ -4064,7 +4064,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.8.4";
+const PLUGIN_VERSION = "0.8.5";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -4072,17 +4072,17 @@ const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-21T21:20:00+08:00",
-  buildId: "yemind-v0.8.4-20260721",
+  buildTime: "2026-07-21T21:40:00+08:00",
+  buildId: "yemind-v0.8.5-20260721",
   productName: PRODUCT_NAME,
   tagline: "思源笔记中的思维导图、分屏大纲与知识整理插件。",
   officialReference: "KMind Zen 0.34.0",
-  releaseSummary: "修复结构拖动后画布富文本编辑框归零、文字漂移与提交到失效节点的问题。",
+  releaseSummary: "修复分屏模式下画布新增节点后错误恢复旧大纲节点焦点并进入编辑的问题。",
   highlights: [
-    "富文本编辑事务按节点 UID 重新绑定当前渲染实例，不再持有拖动前的失效节点引用。",
-    "隐藏 SVG 文字返回零矩形时，使用屏幕变换矩阵或最后有效锚点恢复编辑框位置，禁止覆盖为 -6/-4。",
-    "节点拖动、同位拖动、结构重绘后双击编辑仍覆盖在节点原位，并保留新节点全选与旧节点末尾光标语义。",
-    "完成编辑时把文字提交到当前渲染节点，避免重绘后写入旧实例；新增真实 SVG/Quill 拖动后回归测试。"
+    "新增画布/大纲编辑表面所有权协调器，同一时刻只有当前交互表面拥有编辑与焦点恢复权。",
+    "画布点击、节点激活和画布富文本开始会提交并关闭旧大纲编辑器，同时取消旧焦点恢复票据。",
+    "大纲焦点只允许由大纲自身的插入、缩进、删除和折叠命令显式恢复，普通结构同步不再推断旧焦点。",
+    "异步焦点恢复使用代次校验，旧请求被画布接管或新请求替换后立即失效，并纳入永久分屏回归。"
   ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -60918,6 +60918,73 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
     stopHighlight();
   };
 }
+class EditingSurfaceCoordinator {
+  constructor() {
+    __publicField(this, "currentOwner", "none");
+    __publicField(this, "generation", 0);
+    __publicField(this, "currentPending", null);
+  }
+  get owner() {
+    return this.currentOwner;
+  }
+  get pending() {
+    return this.currentPending;
+  }
+  claimOutline() {
+    const previousOwner = this.currentOwner;
+    this.currentOwner = "outline";
+    return {
+      previousOwner,
+      owner: this.currentOwner,
+      cancelledPending: false
+    };
+  }
+  claimCanvas() {
+    const previousOwner = this.currentOwner;
+    const cancelledPending = Boolean(this.currentPending);
+    this.currentOwner = "canvas";
+    this.generation += 1;
+    this.currentPending = null;
+    return { previousOwner, owner: this.currentOwner, cancelledPending };
+  }
+  release() {
+    const previousOwner = this.currentOwner;
+    const cancelledPending = Boolean(this.currentPending);
+    this.currentOwner = "none";
+    this.generation += 1;
+    this.currentPending = null;
+    return { previousOwner, owner: this.currentOwner, cancelledPending };
+  }
+  queueOutline(request) {
+    this.currentOwner = "outline";
+    const ticket = {
+      generation: ++this.generation,
+      request
+    };
+    this.currentPending = ticket;
+    return ticket;
+  }
+  clearPending() {
+    if (!this.currentPending) return false;
+    this.generation += 1;
+    this.currentPending = null;
+    return true;
+  }
+  isCurrent(ticket) {
+    return Boolean(
+      ticket && this.currentOwner === "outline" && this.currentPending === ticket && ticket.generation === this.generation
+    );
+  }
+  take(ticket) {
+    if (!this.isCurrent(ticket)) return null;
+    this.currentPending = null;
+    return ticket.request;
+  }
+  takeCurrent() {
+    const ticket = this.currentPending;
+    return ticket ? this.take(ticket) : null;
+  }
+}
 class YeMindEditor {
   constructor(options) {
     __publicField(this, "map", null);
@@ -60968,12 +61035,16 @@ class YeMindEditor {
     __publicField(this, "outlinePointerDrag", null);
     __publicField(this, "outlineStructureKey", "");
     __publicField(this, "suppressOutlineClickUntil", 0);
-    __publicField(this, "pendingOutlineFocus", null);
+    __publicField(this, "editingSurface", new EditingSurfaceCoordinator());
     __publicField(this, "appearanceObserver", null);
     __publicField(this, "appearanceMedia", null);
     __publicField(this, "appearanceMode", null);
     __publicField(this, "onAppearanceMediaChange", () => {
       this.refreshAppearanceIfNeeded();
+    });
+    __publicField(this, "onCanvasPointerDown", (event) => {
+      if (event.button !== 0) return;
+      this.claimCanvasInteraction("canvas-pointerdown");
     });
     __publicField(this, "onOutlinePointerDown", (event) => {
       var _a;
@@ -61268,7 +61339,7 @@ class YeMindEditor {
     this.scheduleSafeResize();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u;
     this.options.diagnostics.record(
       "editor",
       "destroy-started",
@@ -61308,7 +61379,8 @@ class YeMindEditor {
     (_p = this.rootEl) == null ? void 0 : _p.removeEventListener("paste", this.onImagePaste);
     (_q = this.canvasEl) == null ? void 0 : _q.removeEventListener("dragover", this.onImageDragOver);
     (_r = this.canvasEl) == null ? void 0 : _r.removeEventListener("drop", this.onImageDrop);
-    (_s = this.outlineEl) == null ? void 0 : _s.removeEventListener(
+    (_s = this.canvasEl) == null ? void 0 : _s.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
+    (_t = this.outlineEl) == null ? void 0 : _t.removeEventListener(
       "pointerdown",
       this.onOutlinePointerDown
     );
@@ -61323,7 +61395,7 @@ class YeMindEditor {
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_t = this.map) == null ? void 0 : _t.destroy();
+    (_u = this.map) == null ? void 0 : _u.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record(
@@ -61510,6 +61582,7 @@ class YeMindEditor {
     this.rootEl.addEventListener("paste", this.onImagePaste);
     this.canvasEl.addEventListener("dragover", this.onImageDragOver);
     this.canvasEl.addEventListener("drop", this.onImageDrop);
+    this.canvasEl.addEventListener("pointerdown", this.onCanvasPointerDown, true);
     this.bindToolbar();
     this.bindMapEvents();
     this.bindAppearanceObserver();
@@ -61701,15 +61774,15 @@ class YeMindEditor {
       }
     });
     this.outlineEl.addEventListener("focusin", (event) => {
-      var _a2;
       const editor = event.target.closest(
         "[data-outline-editor]"
       );
       const row = editor == null ? void 0 : editor.closest("[data-outline-uid]");
       const uid = (row == null ? void 0 : row.dataset.outlineUid) ?? "";
       if (!editor || !uid || !this.commands || !this.outlineRichText) return;
-      const request = ((_a2 = this.pendingOutlineFocus) == null ? void 0 : _a2.uid) === uid ? this.pendingOutlineFocus : void 0;
-      if (request) this.pendingOutlineFocus = null;
+      this.claimOutlineInteraction("outline-focusin");
+      const ticket = this.editingSurface.pending;
+      const request = (ticket == null ? void 0 : ticket.request.uid) === uid ? this.editingSurface.take(ticket) ?? void 0 : void 0;
       this.outlineRichText.activate(editor, uid, request);
       this.commands.goToNode(uid);
       this.activateOutlineUid(uid);
@@ -61722,6 +61795,7 @@ class YeMindEditor {
       if (!editor || !uid || !this.outlineRichText || ((_a2 = this.commands) == null ? void 0 : _a2.isReadonly())) return;
       event.preventDefault();
       event.stopPropagation();
+      this.claimOutlineInteraction("outline-double-click");
       this.outlineRichText.activate(editor, uid, {
         placement: editor.dataset.outlinePristine === "true" ? "select-all" : "end"
       });
@@ -61815,6 +61889,7 @@ class YeMindEditor {
     if (!this.map) return;
     this.map.on("before_show_text_edit", () => {
       var _a;
+      this.claimCanvasInteraction("canvas-text-edit");
       (_a = this.canvasRightDrag) == null ? void 0 : _a.cancel();
       queueMicrotask(() => synchronizeCanvasRichTextVisibility(this.map));
       window.requestAnimationFrame(() => synchronizeCanvasRichTextVisibility(this.map));
@@ -61940,16 +62015,21 @@ class YeMindEditor {
       }
     );
     this.map.on("node_active", (node, list) => {
-      var _a, _b, _c2, _d2;
+      var _a, _b, _c2, _d2, _e;
+      const activeOutlineHost = ((_a = this.outlineRichText) == null ? void 0 : _a.activeHost) ?? null;
+      const activeElement = document.activeElement;
+      if (activeOutlineHost && (!activeElement || !activeOutlineHost.contains(activeElement))) {
+        this.claimCanvasInteraction("canvas-node-active");
+      }
       this.rootEl.dataset.hasSelection = list.length > 0 ? "true" : "false";
       this.updateSelectionPresentation(list.length);
       this.updateDiagnosticState({ selectedNodeCount: list.length });
       this.updateToolbarAvailability();
-      if (list.length > 0) (_a = this.nodeStylePanel) == null ? void 0 : _a.refresh();
-      else (_b = this.nodeStylePanel) == null ? void 0 : _b.hide();
-      (_c2 = this.nodeQuickActions) == null ? void 0 : _c2.scheduleRefresh();
+      if (list.length > 0) (_b = this.nodeStylePanel) == null ? void 0 : _b.refresh();
+      else (_c2 = this.nodeStylePanel) == null ? void 0 : _c2.hide();
+      (_d2 = this.nodeQuickActions) == null ? void 0 : _d2.scheduleRefresh();
       const active = node ?? list[0];
-      const uid = (_d2 = active == null ? void 0 : active.getData) == null ? void 0 : _d2.call(active, "uid");
+      const uid = (_e = active == null ? void 0 : active.getData) == null ? void 0 : _e.call(active, "uid");
       this.activateOutlineUid(uid ? String(uid) : "");
     });
     this.map.on(
@@ -62383,6 +62463,9 @@ class YeMindEditor {
   }
   setViewMode(mode) {
     var _a;
+    if (mode === "map" && this.viewMode !== "map") {
+      this.claimCanvasInteraction("view-map");
+    }
     this.viewMode = mode;
     this.rootEl.dataset.view = mode;
     this.options.diagnostics.record(
@@ -62531,6 +62614,50 @@ class YeMindEditor {
       return clientY >= rect.top && clientY <= rect.bottom;
     }) ?? null;
   }
+  claimOutlineInteraction(reason) {
+    const transition = this.editingSurface.claimOutline();
+    if (transition.previousOwner === "outline") return;
+    this.options.diagnostics.record(
+      "editing-surface",
+      "outline-claimed",
+      this.current.id,
+      { reason, previousOwner: transition.previousOwner }
+    );
+  }
+  claimCanvasInteraction(reason) {
+    var _a, _b;
+    const hadActiveOutlineEditor = Boolean((_a = this.outlineRichText) == null ? void 0 : _a.activeHost);
+    const transition = this.editingSurface.claimCanvas();
+    if (hadActiveOutlineEditor) {
+      (_b = this.outlineRichText) == null ? void 0 : _b.commitAndDetach(`surface-change:${reason}`);
+    }
+    if (hadActiveOutlineEditor || transition.cancelledPending || transition.previousOwner !== "canvas") {
+      this.options.diagnostics.record(
+        "editing-surface",
+        "canvas-claimed",
+        this.current.id,
+        {
+          reason,
+          previousOwner: transition.previousOwner,
+          detachedOutlineEditor: hadActiveOutlineEditor,
+          cancelledPending: transition.cancelledPending
+        }
+      );
+    }
+  }
+  queueOutlineFocus(request) {
+    if (!request) {
+      this.editingSurface.clearPending();
+      return;
+    }
+    this.editingSurface.queueOutline(request);
+    this.options.diagnostics.record(
+      "editing-surface",
+      "outline-focus-queued",
+      this.current.id,
+      { placement: request.placement }
+    );
+  }
   renderOutline(data2) {
     var _a, _b, _c2, _d2, _e, _f;
     const activeEditor = ((_a = this.outlineRichText) == null ? void 0 : _a.activeHost) ?? null;
@@ -62540,34 +62667,15 @@ class YeMindEditor {
     const structureChanged = Boolean(
       this.outlineStructureKey && this.outlineStructureKey !== nextStructureKey
     );
-    const visibleUids = structureChanged ? new Set(flattenOutline(data2).map((row) => row.uid)) : null;
+    const pendingTicket = this.editingSurface.pending;
     this.outlineEl.setAttribute("aria-readonly", String(readonly));
-    if (this.pendingOutlineFocus || structureChanged && activeEditor && activeUid) {
-      if (!this.pendingOutlineFocus && activeEditor && activeUid && (visibleUids == null ? void 0 : visibleUids.has(activeUid)) && this.outlineRichText) {
-        const selection = this.outlineRichText.getSelectionState(activeEditor);
-        this.pendingOutlineFocus = {
-          uid: activeUid,
-          placement: "range",
-          start: selection.start,
-          end: selection.end
-        };
-      }
+    if (pendingTicket || structureChanged && activeEditor && activeUid) {
       (_c2 = this.outlineRichText) == null ? void 0 : _c2.commitAndDetach(
-        structureChanged ? "structure-change" : "pending-focus"
+        pendingTicket ? "explicit-outline-focus" : "external-structure-change"
       );
-      patchOutlineTree(
-        this.outlineEl,
-        data2,
-        readonly,
-        null
-      );
+      patchOutlineTree(this.outlineEl, data2, readonly, null);
     } else {
-      patchOutlineTree(
-        this.outlineEl,
-        data2,
-        readonly,
-        activeUid
-      );
+      patchOutlineTree(this.outlineEl, data2, readonly, activeUid);
     }
     this.outlineStructureKey = nextStructureKey;
     const selectedUid = String(
@@ -62577,19 +62685,26 @@ class YeMindEditor {
     this.restorePendingOutlineFocus();
   }
   restorePendingOutlineFocus() {
-    const pending = this.pendingOutlineFocus;
-    if (!pending) return;
+    const ticket = this.editingSurface.pending;
+    if (!ticket) return;
     window.requestAnimationFrame(() => {
-      if (this.destroyed || !this.pendingOutlineFocus || this.pendingOutlineFocus.uid !== pending.uid)
-        return;
+      if (this.destroyed || !this.editingSurface.isCurrent(ticket)) return;
+      const pending = ticket.request;
       const editor = this.findOutlineInput(pending.uid);
       if (!editor || !this.outlineRichText) {
-        this.pendingOutlineFocus = null;
+        this.editingSurface.clearPending();
         return;
       }
-      this.pendingOutlineFocus = null;
-      this.outlineRichText.activate(editor, pending.uid, pending);
-      this.activateOutlineUid(pending.uid);
+      const request = this.editingSurface.take(ticket);
+      if (!request) return;
+      this.outlineRichText.activate(editor, request.uid, request);
+      this.activateOutlineUid(request.uid);
+      this.options.diagnostics.record(
+        "editing-surface",
+        "outline-focus-restored",
+        this.current.id,
+        { placement: request.placement }
+      );
     });
   }
   findOutlineInput(uid) {
@@ -62615,6 +62730,7 @@ class YeMindEditor {
     if (!editor || !row || !this.commands || !this.outlineRichText || this.outlineStructureBusy)
       return;
     const uid = row.dataset.outlineUid ?? "";
+    this.claimOutlineInteraction("outline-keydown");
     if (this.outlineRichText.activeHost !== editor)
       this.outlineRichText.activate(editor, uid);
     const selection = this.outlineRichText.getSelectionState(editor);
@@ -62650,9 +62766,11 @@ class YeMindEditor {
       const focusUid = this.outlineDeleteFocusUid(row);
       this.outlineStructureBusy = true;
       try {
-        this.pendingOutlineFocus = focusUid ? { uid: focusUid, placement: "end" } : null;
+        this.queueOutlineFocus(
+          focusUid ? { uid: focusUid, placement: "end" } : null
+        );
         this.outlineRichText.discardAndDetach("delete-empty");
-        if (!this.commands.removeNodeByUid(uid)) this.pendingOutlineFocus = null;
+        if (!this.commands.removeNodeByUid(uid)) this.queueOutlineFocus(null);
       } finally {
         this.outlineStructureBusy = false;
       }
@@ -62662,23 +62780,23 @@ class YeMindEditor {
     try {
       this.outlineRichText.flush(editor);
       if (action === "collapse" || action === "expand") {
-        this.pendingOutlineFocus = {
+        this.queueOutlineFocus({
           uid,
           placement: action === "collapse" ? "start" : "end"
-        };
+        });
         this.setOutlineExpanded(uid, action === "expand");
         return;
       }
       if (action === "indent" || action === "outdent") {
-        this.pendingOutlineFocus = { uid, placement: "start" };
+        this.queueOutlineFocus({ uid, placement: "start" });
         const changed = action === "indent" ? this.commands.indentNodeByUid(uid) : this.commands.outdentNodeByUid(uid);
-        if (!changed) this.pendingOutlineFocus = null;
+        if (!changed) this.queueOutlineFocus(null);
         return;
       }
       const newUid = createOutlineUid();
-      this.pendingOutlineFocus = { uid: newUid, placement: "start" };
+      this.queueOutlineFocus({ uid: newUid, placement: "start" });
       const inserted = action === "insert-child" ? this.commands.insertChildByUid(uid, newUid) : this.commands.insertSiblingByUid(uid, newUid);
-      if (!inserted) this.pendingOutlineFocus = null;
+      if (!inserted) this.queueOutlineFocus(null);
     } finally {
       this.outlineStructureBusy = false;
     }
@@ -62709,6 +62827,7 @@ class YeMindEditor {
     const target = editors[current + offset];
     const uid = ((_a = target == null ? void 0 : target.closest("[data-outline-uid]")) == null ? void 0 : _a.dataset.outlineUid) ?? "";
     if (!target || !uid) return;
+    this.claimOutlineInteraction("outline-neighbor");
     this.outlineRichText.flush(editor);
     this.outlineRichText.activate(target, uid, {
       placement: offset < 0 ? "end" : "start"
