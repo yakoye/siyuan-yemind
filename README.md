@@ -6,7 +6,7 @@ YeMind is a local-first mind-map plugin for SiYuan, powered by `simple-mind-map`
 - Current SiYuan plugin ID / installed folder: `siyuan-yemind`
 - Historical protocol-link alias: `siyuan-yemind-zen`
 - Display name: `YeMind`
-- Version: `0.8.1`
+- Version: `0.8.2`
 
 ## v0.8.1: current plugin ID and installed folder
 

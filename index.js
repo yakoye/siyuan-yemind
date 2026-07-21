@@ -4029,7 +4029,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.8.1";
+const PLUGIN_VERSION = "0.8.2";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -4037,17 +4037,16 @@ const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-21T15:16:33+08:00",
-  buildId: "yemind-v0.8.1-20260721",
+  buildTime: "2026-07-21T18:30:00+08:00",
+  buildId: "yemind-v0.8.2-20260721",
   productName: PRODUCT_NAME,
   tagline: "思源笔记中的思维导图、分屏大纲与知识整理插件。",
   officialReference: "KMind Zen 0.34.0",
-  releaseSummary: "将思源正式插件 ID 与安装目录统一为 siyuan-yemind，并保留旧协议链接兼容。",
+  releaseSummary: "修复 Dock 激活状态下图标无法随主题反色的问题。",
   highlights: [
-    "plugin.json.name、运行时资源路径、诊断身份和发布说明统一为 siyuan-yemind。",
-    "安装目录固定为工作空间/data/plugins/siyuan-yemind，可直接解压覆盖升级。",
-    "首次启动会在新存储为空时，从 data/storage/petal/siyuan-yemind-zen 只复制旧导图、设置和检查点到新 ID 存储，旧数据不删除。",
-    "新复制的导图链接使用 siyuan-yemind；历史 siyuan-yemind-zen 链接仍可解析。"
+    "Dock、顶栏和菜单图标改为 currentColor 矢量图标，自动适配浅色、深色与激活状态。",
+    "Dock 激活后由思源主题自动切换为高对比前景色，不再保留固定绿色像素。",
+    "关于页和品牌展示继续使用 #176B50 透明 PNG，交互图标与品牌图标分工明确。"
   ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -4849,7 +4848,6 @@ function registerSettings(plugin, store, diagnostics) {
     actionElement: button
   });
 }
-const YEMIND_ICON_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAEMElEQVR42sXXWaxccxwH8M85M4pbS0UpRSJE0wqKBFERexBLimorISKxe5CSWMIDYk0tiYjlwfqAxi5EiZYHURoRTeylQmqrNarVq+6Ml+/I33Tm3lt98E9O5szvnN/2/a2nmnDRdP/naQ7zrM7VRiu/63saqMI7tD4G1FHa2gDnqn5KuxX1Ymxhf9yIMwp6tR7K2zgZd+G0fjLqHpC1cTrexmG4B0+EXo0S9jZuwFPYHQ/j3l4y6h6eb4S5uBgHYs94cmCeN0YB+7a4HMfhcEzDOdglMup+CLQxBltgYWhf4BuMLRJzuJA28rsS74b+DlZhfGHoOga0w7wKL+MZzMBj2BG/xvq1fULR8X4Im2IcXsR0vIAf8V6BdE8EWnnhTLyJ2yJoPhbhNUwtkGrmGhP+3WL80iC4NEk4FkfjzyJBe5Zh58HKGFGeIzAngncNIt3wL8DHOD6GtPtU2Ih9oIrAoQKlBbl+S1heL/j/wt7YCVMSxrqHjNZwjagqMrwVxqoonXF4KQZMxFldNT+IT/FJyvezLq8bhb6hDjrNLvj/6tENm6HPSRlNxi99kNs4KM1N8jXCW/frinWR0WNxBe7GfkVP6CTaQZgXgZPDMy6QN7BJUHgIe4SniowWDsUDuAoDHXQ6BoxJTM/DJCxOA1mLNVG6Ol5sgw+wNR7BuaGvidCBgmdtrumpoAl5f2HHwGasOxE7p94HMwMejDdjQtsdX2EZnkyND+TdR6P8wuTIdri2CN+5QfeW8HyNY/BCJwfGY0UUwZK00hMjZG3a62AQuzTGnI+zk5Rbp3Q/x+Y4IbxD8fz9yF6Nn7GVIk5P42bcl7Z5Jy5LI+qc59Oi21iOb2PoIaHNT+gmp33vW/BejcdxCQ4uuuQ/ObAipTMp2X5NlDcSgjoZPljQFkfxdfgjipcXw6YzFxq4HjdlwE2I0T+jqrKSVcNsPJ04zsOWid1w51YcmcbUGGYpqdBuFj2g7rpvdbXnOzIPbseHKbuhopQHsX3yo9cSUxfodNa8fzWiVo+Z0C4Gz1vZCRYl01d0GT0+CM3IIrJRkGsXCK+zGzaHWclgM/yeKTYRR6XG98KXXXw7phVPyf3y0DfPcGv3CnXdozO2sU9m9zd4JbAvwwWYHeWNAuJGFM5OL/g8PAsiY0mqot2ts+6xSA6kpD7FKYn1HJyKHfBc0dtLWOuU6kTMDE+FkyJrfmT/ay9sdhkzhAOy0cwM/f3M+DfC3OwaWmUOdZ69Fdhn4Qe8mv8HpCX/Ux11j8T7LnGbmv/TgkI9il1/qPBuIEkrJblZZOu3EXVK5CPcHy8WZYpdiZ9GqOtyr/w+s+DZeHxQJuFHXSWu6vo2rApBszKW5wfCaj0+zzrvHptdcHEGVtWNQNXn47RbWf0fPtNGZXBzBCiH/bAc4YxKRnOEhNrQM6KMvwFCzzp2lYZ4awAAAABJRU5ErkJggg==";
 class YeMindDockView {
   constructor(host, element) {
     __publicField(this, "unsubscribe", null);
@@ -63724,7 +63722,18 @@ class YeMindPlugin extends siyuan.Plugin {
     });
   }
   onload() {
-    this.addIcons(`<symbol id="${ICON_ID}" viewBox="0 0 32 32"><image href="${YEMIND_ICON_DATA_URL}" x="0" y="0" width="32" height="32" preserveAspectRatio="xMidYMid meet"/></symbol>
+    this.addIcons(`<symbol id="${ICON_ID}" viewBox="0 0 32 32">
+        <g fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="10" y="10" width="12" height="12" rx="3"/>
+          <circle cx="5.5" cy="5.5" r="2.5"/><path d="M7.5 7.2C9.6 8.2 10.6 9.1 11.2 10.6"/>
+          <circle cx="26.5" cy="5.5" r="2.5"/><path d="M24.5 7.2C22.4 8.2 21.4 9.1 20.8 10.6"/>
+          <circle cx="3.5" cy="16" r="2.5"/><path d="M6 16h4"/>
+          <circle cx="28.5" cy="16" r="2.5"/><path d="M22 16h4"/>
+          <circle cx="5.5" cy="26.5" r="2.5"/><path d="M7.5 24.8c2.1-1 3.1-1.9 3.7-3.4"/>
+          <circle cx="26.5" cy="26.5" r="2.5"/><path d="M24.5 24.8c-2.1-1-3.1-1.9-3.7-3.4"/>
+          <path d="M13.2 13.2 16 17l2.8-3.8M16 17v2.3"/>
+        </g>
+      </symbol>
       <symbol id="iconYeMindNote" viewBox="0 0 24 24"><path d="M6.5 3.75h8.8l3.2 3.2v13.3H6.5a2 2 0 0 1-2-2V5.75a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.2 3.9v3.4h3.2M8 11h7.5M8 14.5h7.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
       <symbol id="iconYeMindComment" viewBox="0 0 24 24"><path d="M6.25 4.75h11.5A2.5 2.5 0 0 1 20.25 7.25v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.25 2.9v-2.9A2.5 2.5 0 0 1 3.75 15.25v-8a2.5 2.5 0 0 1 2.5-2.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>`);
     this.repository = new MapRepository({

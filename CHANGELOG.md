@@ -1,3 +1,10 @@
+## 0.8.2 — 2026-07-21
+
+- Dock、顶栏和菜单中的 YeMind 图标改为使用 `currentColor` 的纯 SVG 矢量图标。
+- 修复 Dock 激活后蓝色背景上仍显示固定绿色图标、对比度不足的问题。
+- 品牌原色图标继续用于关于页和产品展示，交互图标自动适配浅色、深色及激活主题。
+- 新增 Dock 图标主题适配回归测试。
+
 ## 0.8.1 — 2026-07-21
 
 - Changed the current SiYuan manifest ID and installed folder contract to `siyuan-yemind`.

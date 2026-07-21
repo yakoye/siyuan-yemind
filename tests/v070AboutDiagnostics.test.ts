@@ -40,9 +40,9 @@ describe('v0.7.x about and diagnostics release contract', () => {
     expect(html).toContain('data-about-version="manifest"');
   });
 
-  it('uses semantic patch version 0.8.1 consistently', () => {
-    expect(RELEASE_INFO.version).toBe('0.8.1');
-    expect(resolveVersionConsistency('0.8.1')).toEqual({ manifest: '0.8.1', runtime: '0.8.1', build: '0.8.1', consistent: true });
+  it('uses semantic patch version 0.8.2 consistently', () => {
+    expect(RELEASE_INFO.version).toBe('0.8.2');
+    expect(resolveVersionConsistency('0.8.2')).toEqual({ manifest: '0.8.2', runtime: '0.8.2', build: '0.8.2', consistent: true });
   });
 
   it('keeps package, lockfile, manifest, runtime metadata and release docs on one identity', () => {
@@ -52,10 +52,10 @@ describe('v0.7.x about and diagnostics release contract', () => {
     const readme = readFileSync(resolve(process.cwd(), 'README_zh_CN.md'), 'utf8');
     const changelog = readFileSync(resolve(process.cwd(), 'CHANGELOG.md'), 'utf8');
     for (const version of [packageJson.version, packageLock.version, packageLock.packages[''].version, manifest.version, RELEASE_INFO.version, RELEASE_INFO.buildVersion]) {
-      expect(version).toBe('0.8.1');
+      expect(version).toBe('0.8.2');
     }
-    expect(readme).toContain('当前版本：`0.8.1`');
-    expect(changelog).toContain('## 0.8.1');
+    expect(readme).toContain('当前版本：`0.8.2`');
+    expect(changelog).toContain('## 0.8.2');
   });
 
   it('exports structured diagnostics files for direct analysis', async () => {

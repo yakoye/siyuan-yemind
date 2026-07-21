@@ -14,7 +14,6 @@ import { openYeMindSettingsDialog } from '../settings/settingsDialog';
 import { SettingsStore } from '../settings/SettingsStore';
 import { RELEASE_INFO } from '../releaseInfo';
 import { CHECKPOINT_STORAGE_NAME, DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX, DIAGNOSTIC_LIFECYCLE_MAP_PREFIX, DIAGNOSTIC_PROBE_STORAGE_NAME, ICON_ID, LEGACY_PLUGIN_IDS, MAP_STORAGE_NAME, PLUGIN_VERSION, SETTINGS_STORAGE_NAME, TAB_TYPE } from './constants';
-import { YEMIND_ICON_DATA_URL } from './yemindIcon';
 import { registerYeMindDock } from './dock';
 import type { YeMindPluginHost } from './host';
 import { registerYeMindTab } from './tabs';
@@ -36,7 +35,18 @@ export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
   private globalSearchTimer: number | null = null;
 
   onload(): void {
-    this.addIcons(`<symbol id="${ICON_ID}" viewBox="0 0 32 32"><image href="${YEMIND_ICON_DATA_URL}" x="0" y="0" width="32" height="32" preserveAspectRatio="xMidYMid meet"/></symbol>
+    this.addIcons(`<symbol id="${ICON_ID}" viewBox="0 0 32 32">
+        <g fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="10" y="10" width="12" height="12" rx="3"/>
+          <circle cx="5.5" cy="5.5" r="2.5"/><path d="M7.5 7.2C9.6 8.2 10.6 9.1 11.2 10.6"/>
+          <circle cx="26.5" cy="5.5" r="2.5"/><path d="M24.5 7.2C22.4 8.2 21.4 9.1 20.8 10.6"/>
+          <circle cx="3.5" cy="16" r="2.5"/><path d="M6 16h4"/>
+          <circle cx="28.5" cy="16" r="2.5"/><path d="M22 16h4"/>
+          <circle cx="5.5" cy="26.5" r="2.5"/><path d="M7.5 24.8c2.1-1 3.1-1.9 3.7-3.4"/>
+          <circle cx="26.5" cy="26.5" r="2.5"/><path d="M24.5 24.8c-2.1-1-3.1-1.9-3.7-3.4"/>
+          <path d="M13.2 13.2 16 17l2.8-3.8M16 17v2.3"/>
+        </g>
+      </symbol>
       <symbol id="iconYeMindNote" viewBox="0 0 24 24"><path d="M6.5 3.75h8.8l3.2 3.2v13.3H6.5a2 2 0 0 1-2-2V5.75a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.2 3.9v3.4h3.2M8 11h7.5M8 14.5h7.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
       <symbol id="iconYeMindComment" viewBox="0 0 24 24"><path d="M6.25 4.75h11.5A2.5 2.5 0 0 1 20.25 7.25v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.25 2.9v-2.9A2.5 2.5 0 0 1 3.75 15.25v-8a2.5 2.5 0 0 1 2.5-2.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>`);
     this.repository = new MapRepository({

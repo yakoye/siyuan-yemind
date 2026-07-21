@@ -64,7 +64,7 @@ function pixel(image: DecodedPng, x: number, y: number): [number, number, number
   return [image.pixels[index], image.pixels[index + 1], image.pixels[index + 2], image.pixels[index + 3]];
 }
 
-describe('YeMind v0.8.1 plugin identity and install layout', () => {
+describe('YeMind v0.8.2 plugin identity and install layout', () => {
   it('uses siyuan-yemind for the current manifest, package and installed directory', () => {
     const manifest = JSON.parse(readFileSync(resolve('plugin.json'), 'utf8'));
     const packageJson = JSON.parse(readFileSync(resolve('package.json'), 'utf8'));
@@ -72,8 +72,8 @@ describe('YeMind v0.8.1 plugin identity and install layout', () => {
     expect(manifest.displayName.default).toBe('YeMind');
     expect(manifest.displayName.zh_CN).toBe('YeMind');
     expect(packageJson.name).toBe('siyuan-yemind');
-    expect(manifest.version).toBe('0.8.1');
-    expect(packageJson.version).toBe('0.8.1');
+    expect(manifest.version).toBe('0.8.2');
+    expect(packageJson.version).toBe('0.8.2');
   });
 
   it('uses the renamed YeMindPlugin source entry and removes the old current source filename', () => {
@@ -107,8 +107,9 @@ describe('YeMind v0.8.1 plugin identity and install layout', () => {
   it('uses the generated logo asset for the SiYuan icon symbol and About page', () => {
     const pluginSource = readFileSync(resolve('src/plugin/YeMindPlugin.ts'), 'utf8');
     const aboutTemplate = readFileSync(resolve('src/settings/settingsDialogTemplate.ts'), 'utf8');
-    expect(pluginSource).toContain('<image href=\"${YEMIND_ICON_DATA_URL}\"');
-    expect(pluginSource).not.toContain('<rect x=\"2\" y=\"2\" width=\"28\"');
+    expect(pluginSource).toContain('stroke="currentColor"');
+    expect(pluginSource).not.toContain('<image href="${YEMIND_ICON_DATA_URL}"');
+    expect(pluginSource).toContain('<circle cx="5.5" cy="5.5" r="2.5"/>');
     expect(aboutTemplate).toContain('ROOT_ICON_URL');
     expect(existsSync(resolve('src/plugin/yemindIcon.ts'))).toBe(true);
   });
