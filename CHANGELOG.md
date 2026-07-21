@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.11 — 2026-07-17
+
+- Analyzed the `yemind-diagnostics-20260717-130840.zip` runtime archive and proved that startup recorded `plugin/onload` but never reached `bootstrap-started`; the repository stayed unloaded until map creation called `ensureLoaded()`.
+- Started the real repository/settings/checkpoint bootstrap before host-surface registration and isolated synchronous Tab, Dock, Settings, command, and plugin-URL registration failures.
+- Added per-step startup diagnostics so a future host API failure identifies the exact registration without exposing an already-resolved readiness promise.
+- Replaced the read-only outline list with shared editable split/full-outline controls.
+- Added outline keyboard behavior: Enter inserts a sibling (root inserts a child), Tab inserts a child, empty Backspace/Delete removes a non-root node, ArrowUp/ArrowDown navigate visible rows, and Escape cancels the pending text edit.
+- Delegated outline text and structure mutations to upstream `SET_NODE_TEXT`, `INSERT_NODE`, `INSERT_CHILD_NODE`, `REMOVE_NODE`, and `GO_TARGET_NODE` commands instead of modifying tree data directly.
+- Kept split outline on the right, made full outline fill the workspace, added wrapped auto-growing editors, and preserved read-only selection/navigation.
+- Added focused startup coordination, outline semantics, native command bridge, and layout regression tests.
+
 ## 0.5.10 — 2026-07-17
 
 - Analyzed two diagnostics archives exported from SiYuan 3.7.2 and confirmed that all three real maps remained in persistent storage with no real `map-deleted` event.

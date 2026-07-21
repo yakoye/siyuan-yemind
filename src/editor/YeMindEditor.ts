@@ -21,7 +21,7 @@ import { openCommentsDialog, openFormulaDialog, openLinkDialog } from '../ui/nod
 import { openCodeBlockDialog, openInlineLinkDialog } from '../ui/richTextDialogs';
 import { calculateEditorStats } from './editorStats';
 import { createEditorTemplate } from './editorTemplate';
-import { renderOutlineHtml } from './outline';
+import { renderOutlineHtml, resolveOutlineKeyAction } from './outline';
 import { RichTextToolbar } from './RichTextToolbar';
 import { isEditableTarget, matchesShortcut } from './shortcuts';
 import { createSelectionPresentation, promoteNodeToPrimary, shouldBlockRootDeleteShortcut } from './selectionPresentation';
@@ -75,6 +75,7 @@ export class YeMindEditor {
   private searchText = '';
   private applyingCheckpoint = false;
   private resizeFrame: number | null = null;
+  private pendingOutlineFocus: { uid: string; selectAll: boolean } | null = null;
 
   private readonly onRootKeydown = (event: KeyboardEvent): void => {
     if (event.key === 'Escape' && this.commands?.isRelationCreating()) {
@@ -310,6 +311,38 @@ export class YeMindEditor {
         case 'help': this.openHelp(); break;
       }
     });
+
+    this.outlineEl.addEventListener('pointerdown', (event) => {
+      const input = (event.target as HTMLElement).closest<HTMLTextAreaElement>('[data-outline-editor]');
+      const active = document.activeElement instanceof HTMLTextAreaElement
+        ? document.activeElement.closest<HTMLTextAreaElement>('[data-outline-editor]')
+        : null;
+      const uid = input?.closest<HTMLElement>('[data-outline-uid]')?.dataset.outlineUid ?? '';
+      if (input && active && input !== active && uid) this.pendingOutlineFocus = { uid, selectAll: false };
+    });
+    this.outlineEl.addEventListener('focusin', (event) => {
+      const input = (event.target as HTMLElement).closest<HTMLTextAreaElement>('[data-outline-editor]');
+      const row = input?.closest<HTMLElement>('[data-outline-uid]');
+      const uid = row?.dataset.outlineUid ?? '';
+      if (!uid || !this.commands) return;
+      if (this.pendingOutlineFocus?.uid === uid) this.pendingOutlineFocus = null;
+      this.commands.goToNode(uid);
+      this.activateOutlineUid(uid);
+    });
+    this.outlineEl.addEventListener('input', (event) => {
+      const input = (event.target as HTMLElement).closest<HTMLTextAreaElement>('[data-outline-editor]');
+      if (input) this.resizeOutlineInput(input);
+    });
+    this.outlineEl.addEventListener('keydown', (event) => this.handleOutlineKeydown(event));
+    this.outlineEl.addEventListener('blur', (event) => {
+      const input = (event.target as HTMLElement).closest<HTMLTextAreaElement>('[data-outline-editor]');
+      if (!input) return;
+      if (input.dataset.outlineCancelled === 'true') {
+        delete input.dataset.outlineCancelled;
+        return;
+      }
+      this.commitOutlineInput(input);
+    }, true);
 
     this.rootEl.addEventListener('change', (event) => {
       const control = (event.target as HTMLElement).closest<HTMLInputElement | HTMLSelectElement>('[data-outer-frame-setting]');
@@ -611,6 +644,12 @@ export class YeMindEditor {
       window.cancelAnimationFrame(this.resizeFrame);
       this.resizeFrame = null;
     }
+    if (mode !== 'map') {
+      window.requestAnimationFrame(() => {
+        if (this.destroyed || this.viewMode === 'map') return;
+        this.outlineEl.querySelectorAll<HTMLTextAreaElement>('[data-outline-editor]').forEach((input) => this.resizeOutlineInput(input));
+      });
+    }
   }
 
   private scheduleSafeResize(attempt = 0): void {
@@ -640,7 +679,113 @@ export class YeMindEditor {
   }
 
   private renderOutline(data: MindMapTree): void {
-    this.outlineEl.innerHTML = renderOutlineHtml(data);
+    const activeUid = String(this.commands?.getPrimaryNode()?.getData?.('uid') ?? '');
+    const readonly = this.rootEl.dataset.readonly === 'true';
+    this.outlineEl.setAttribute('aria-readonly', String(readonly));
+    this.outlineEl.innerHTML = renderOutlineHtml(data, readonly);
+    this.outlineEl.querySelectorAll<HTMLTextAreaElement>('[data-outline-editor]').forEach((input) => this.resizeOutlineInput(input));
+    this.activateOutlineUid(activeUid);
+    this.restorePendingOutlineFocus();
+  }
+
+  private restorePendingOutlineFocus(): void {
+    const pending = this.pendingOutlineFocus;
+    if (!pending) return;
+    window.requestAnimationFrame(() => {
+      if (this.destroyed || !this.pendingOutlineFocus || this.pendingOutlineFocus.uid !== pending.uid) return;
+      const row = Array.from(this.outlineEl.querySelectorAll<HTMLElement>('[data-outline-uid]'))
+        .find((item) => item.dataset.outlineUid === pending.uid);
+      const input = row?.querySelector<HTMLTextAreaElement>('[data-outline-editor]');
+      if (!input) return;
+      this.pendingOutlineFocus = null;
+      input.focus();
+      if (pending.selectAll) input.select();
+      this.activateOutlineUid(pending.uid);
+    });
+  }
+
+  private commitOutlineInput(input: HTMLTextAreaElement): boolean {
+    if (!this.commands || this.commands.isReadonly()) return false;
+    const row = input.closest<HTMLElement>('[data-outline-uid]');
+    const uid = row?.dataset.outlineUid ?? '';
+    const original = input.dataset.outlineOriginal ?? '';
+    const next = input.value.trim();
+    if (!uid) return false;
+    if (!next) {
+      input.value = original;
+      return false;
+    }
+    if (next === original) return false;
+    if (!this.commands.setNodeTextByUid(uid, next)) return false;
+    input.value = next;
+    input.dataset.outlineOriginal = next;
+    return true;
+  }
+
+  private handleOutlineKeydown(event: KeyboardEvent): void {
+    const input = (event.target as HTMLElement).closest<HTMLTextAreaElement>('[data-outline-editor]');
+    const row = input?.closest<HTMLElement>('[data-outline-uid]');
+    if (!input || !row || !this.commands) return;
+    const uid = row.dataset.outlineUid ?? '';
+    const isRoot = row.dataset.outlineRoot === 'true';
+    const action = resolveOutlineKeyAction({
+      key: event.key,
+      empty: input.value.trim().length === 0,
+      isRoot,
+      readonly: this.commands.isReadonly(),
+      shiftKey: event.shiftKey,
+    });
+    if (action === 'none') return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (action === 'cancel') {
+      input.value = input.dataset.outlineOriginal ?? input.value;
+      input.dataset.outlineCancelled = 'true';
+      input.blur();
+      return;
+    }
+    if (action === 'previous' || action === 'next') {
+      this.focusOutlineNeighbor(input, action === 'previous' ? -1 : 1);
+      return;
+    }
+    if (action === 'remove') {
+      const inputs = Array.from(this.outlineEl.querySelectorAll<HTMLTextAreaElement>('[data-outline-editor]'));
+      const index = inputs.indexOf(input);
+      const fallback = inputs[index - 1] ?? inputs[index + 1];
+      const fallbackUid = fallback?.closest<HTMLElement>('[data-outline-uid]')?.dataset.outlineUid;
+      if (fallbackUid) this.pendingOutlineFocus = { uid: fallbackUid, selectAll: true };
+      if (!this.commands.removeNodeByUid(uid)) this.pendingOutlineFocus = null;
+      return;
+    }
+
+    this.commitOutlineInput(input);
+    const newUid = createOutlineUid();
+    this.pendingOutlineFocus = { uid: newUid, selectAll: true };
+    const inserted = action === 'insert-child'
+      ? this.commands.insertChildByUid(uid, newUid)
+      : this.commands.insertSiblingByUid(uid, newUid);
+    if (!inserted) this.pendingOutlineFocus = null;
+  }
+
+  private resizeOutlineInput(input: HTMLTextAreaElement): void {
+    input.style.height = 'auto';
+    const height = input.scrollHeight;
+    if (height > 0) input.style.height = `${Math.max(26, height)}px`;
+  }
+
+  private focusOutlineNeighbor(input: HTMLTextAreaElement, offset: number): void {
+    const inputs = Array.from(this.outlineEl.querySelectorAll<HTMLTextAreaElement>('[data-outline-editor]'));
+    const current = inputs.indexOf(input);
+    const target = inputs[current + offset];
+    const uid = target?.closest<HTMLElement>('[data-outline-uid]')?.dataset.outlineUid ?? '';
+    if (!target || !uid) return;
+    this.pendingOutlineFocus = { uid, selectAll: true };
+    const changed = this.commitOutlineInput(input);
+    if (changed) return;
+    this.pendingOutlineFocus = null;
+    target.focus();
+    target.select();
   }
 
   private activateOutlineUid(uid: string): void {
@@ -929,6 +1074,7 @@ export class YeMindEditor {
     if (enabled && this.commands?.isRelationCreating()) this.commands.cancelRelation();
     this.richTextToolbar?.setEnabled(this.settings.showRichTextToolbar && !enabled);
     this.map.setMode(enabled ? 'readonly' : 'edit');
+    this.renderOutline(this.current.data);
     this.options.diagnostics.record('editor', 'readonly-changed', this.current.id, { enabled });
     this.updateDiagnosticState({ readonly: enabled });
     this.updateToolbarAvailability();
@@ -969,4 +1115,8 @@ export class YeMindEditor {
     });
     void dialog;
   }
+}
+
+function createOutlineUid(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `outline-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }

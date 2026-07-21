@@ -77,6 +77,10 @@ export interface YeMindCommands {
   replaceSearchAll(text: string): void;
   endSearch(): void;
   goToNode(uid: string): void;
+  setNodeTextByUid(uid: string, text: string): boolean;
+  insertSiblingByUid(uid: string, newUid: string): boolean;
+  insertChildByUid(uid: string, newUid: string): boolean;
+  removeNodeByUid(uid: string): boolean;
 }
 
 export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
@@ -98,6 +102,7 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
   const removableNodes = (): any[] => activeNodes().filter((node) => !node?.isRoot);
   const primaryIsRegular = (): boolean => Boolean(primaryNode() && !primaryNode()?.isGeneralization);
   const primaryIsMovable = (): boolean => Boolean(primaryIsRegular() && !primaryNode()?.isRoot);
+  const findNodeByUid = (uid: string): any | null => (mindMap.renderer as any)?.findNodeByUid?.(uid) ?? null;
   const outerFramePlugin = (): any => (mindMap as any).outerFrame;
   const activeOuterFrame = (): any | null => outerFramePlugin()?.getActiveOuterFrame?.() ?? outerFramePlugin()?.activeOuterFrame ?? null;
   const canAddOuterFrame = (): boolean => Boolean(outerFramePlugin()) && canMutate() && activeNodes().some((node) => !node?.isRoot && !node?.isGeneralization);
@@ -313,5 +318,33 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     replaceSearchAll: (text) => { if (canMutate()) (mindMap as any).search?.replaceAll?.(text); },
     endSearch: () => (mindMap as any).search?.endSearch?.(),
     goToNode: (uid) => mindMap.execCommand('GO_TARGET_NODE', uid),
+    setNodeTextByUid: (uid, text) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node) return false;
+      mindMap.execCommand('SET_NODE_TEXT', node, text, false, true);
+      return true;
+    },
+    insertSiblingByUid: (uid, newUid) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isRoot || node.isGeneralization) return false;
+      mindMap.execCommand('INSERT_NODE', false, [node], { uid: newUid, text: '', richText: false });
+      return true;
+    },
+    insertChildByUid: (uid, newUid) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isGeneralization) return false;
+      mindMap.execCommand('INSERT_CHILD_NODE', false, [node], { uid: newUid, text: '', richText: false });
+      return true;
+    },
+    removeNodeByUid: (uid) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isRoot) return false;
+      mindMap.execCommand('REMOVE_NODE', [node]);
+      return true;
+    },
   };
 }

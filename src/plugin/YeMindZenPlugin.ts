@@ -18,6 +18,7 @@ import { registerYeMindTab } from './tabs';
 import { OpenMapTabRegistry } from './OpenMapTabRegistry';
 import { parseYeMindMapUrl } from './pluginUrl';
 import { runSafeOperation } from './operationSafety';
+import { initializePluginStartup } from './pluginStartup';
 
 export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost {
   repository!: MapRepository;
@@ -82,12 +83,24 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
     this.diagnostics.attachGlobalListeners();
     this.diagnostics.record('plugin', 'onload', undefined, undefined, 'info', true);
 
-    registerYeMindTab(this, this);
-    registerYeMindDock(this, this);
-    registerSettings(this, this.settingsStore);
-    this.registerCommands();
-    this.eventBus.on('open-siyuan-url-plugin', this.onOpenPluginUrl);
-    this.ready = this.bootstrap();
+    initializePluginStartup({
+      startBootstrap: () => this.bootstrap(),
+      publishReady: (ready) => { this.ready = ready; },
+      registrations: [
+        { name: 'tab', register: () => registerYeMindTab(this, this) },
+        { name: 'dock', register: () => registerYeMindDock(this, this) },
+        { name: 'settings', register: () => registerSettings(this, this.settingsStore) },
+        { name: 'commands', register: () => this.registerCommands() },
+        { name: 'plugin-url', register: () => this.eventBus.on('open-siyuan-url-plugin', this.onOpenPluginUrl) },
+      ],
+      onRegistrationStart: (name) => this.diagnostics.record('plugin', 'registration-started', undefined, { name }, 'info', true),
+      onRegistrationComplete: (name) => this.diagnostics.record('plugin', 'registration-completed', undefined, { name }, 'info', true),
+      onRegistrationError: (name, error) => {
+        this.diagnostics.recordError('plugin', 'registration-failed', error, undefined, true);
+        this.diagnostics.record('plugin', 'registration-failed-step', undefined, { name }, 'error', true);
+        console.error(`[YeMind Zen] ${name} registration failed`, error);
+      },
+    });
   }
 
 

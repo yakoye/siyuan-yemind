@@ -14,10 +14,10 @@ const tree = {
 describe('outline view model', () => {
   it('flattens the tree with depth, uid and plain text', () => {
     expect(flattenOutline(tree)).toEqual([
-      { uid: 'r', text: 'Root', depth: 0, hasChildren: true },
-      { uid: 'a', text: 'Child A', depth: 1, hasChildren: false },
-      { uid: 'b', text: 'Child B', depth: 1, hasChildren: true },
-      { uid: 'g', text: 'Grandchild', depth: 2, hasChildren: false },
+      { uid: 'r', text: 'Root', depth: 0, hasChildren: true, isRoot: true },
+      { uid: 'a', text: 'Child A', depth: 1, hasChildren: false, isRoot: false },
+      { uid: 'b', text: 'Child B', depth: 1, hasChildren: true, isRoot: false },
+      { uid: 'g', text: 'Grandchild', depth: 2, hasChildren: false, isRoot: false },
     ]);
   });
 });

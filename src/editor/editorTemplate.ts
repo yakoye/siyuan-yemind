@@ -42,8 +42,8 @@ export function createEditorTemplate(title: string): string {
         </div>
 
         <div class="ymz-workspace">
-          <aside class="ymz-outline" data-role="outline" aria-label="导图大纲"></aside>
           <div class="ymz-canvas" data-role="canvas"></div>
+          <aside class="ymz-outline" data-role="outline" role="tree" aria-label="导图大纲"></aside>
         </div>
 
         <div class="ymz-floating ymz-leftbar" role="toolbar" aria-label="画布工具">

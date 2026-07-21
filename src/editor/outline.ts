@@ -5,6 +5,17 @@ export interface OutlineRow {
   text: string;
   depth: number;
   hasChildren: boolean;
+  isRoot: boolean;
+}
+
+export type OutlineKeyAction = 'none' | 'insert-sibling' | 'insert-child' | 'remove' | 'previous' | 'next' | 'cancel';
+
+export interface OutlineKeyContext {
+  key: string;
+  empty: boolean;
+  isRoot: boolean;
+  readonly: boolean;
+  shiftKey?: boolean;
 }
 
 function plainText(tree: MindMapTree): string {
@@ -23,6 +34,7 @@ export function flattenOutline(tree: MindMapTree): OutlineRow[] {
       text: plainText(node) || '未命名节点',
       depth,
       hasChildren: node.children.length > 0,
+      isRoot: depth === 0,
     });
     node.children.forEach((child, index) => visit(child, depth + 1, `${path}.${index}`));
   };
@@ -30,8 +42,22 @@ export function flattenOutline(tree: MindMapTree): OutlineRow[] {
   return rows;
 }
 
-export function renderOutlineHtml(tree: MindMapTree): string {
-  return flattenOutline(tree).map((row) => `<button class="ymz-outline-row" data-outline-uid="${escapeHtml(row.uid)}" style="--ymz-outline-depth:${row.depth}" title="${escapeHtml(row.text)}"><span class="ymz-outline-row__branch">${row.hasChildren ? '▾' : '·'}</span><span>${escapeHtml(row.text)}</span></button>`).join('');
+export function resolveOutlineKeyAction(context: OutlineKeyContext): OutlineKeyAction {
+  if (context.key === 'ArrowUp') return 'previous';
+  if (context.key === 'ArrowDown') return 'next';
+  if (context.key === 'Escape') return 'cancel';
+  if (context.readonly) return 'none';
+  if (context.key === 'Enter') return context.isRoot ? 'insert-child' : 'insert-sibling';
+  if (context.key === 'Tab') return context.shiftKey ? 'none' : 'insert-child';
+  if ((context.key === 'Backspace' || context.key === 'Delete') && context.empty && !context.isRoot) return 'remove';
+  return 'none';
+}
+
+export function renderOutlineHtml(tree: MindMapTree, readonly = false): string {
+  return flattenOutline(tree).map((row) => {
+    const readonlyAttribute = readonly ? ' readonly' : '';
+    return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" data-outline-uid="${escapeHtml(row.uid)}" data-outline-root="${row.isRoot}" style="--ymz-outline-depth:${row.depth}"><span class="ymz-outline-row__branch" aria-hidden="true">${row.hasChildren ? '▾' : '•'}</span><textarea class="ymz-outline-row__editor" data-outline-editor rows="1" data-outline-original="${escapeHtml(row.text)}" aria-label="编辑节点：${escapeHtml(row.text)}"${readonlyAttribute}>${escapeHtml(row.text)}</textarea></div>`;
+  }).join('');
 }
 
 function escapeHtml(value: string): string {

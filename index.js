@@ -3962,7 +3962,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.5.10";
+const PLUGIN_VERSION = "0.5.11";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -54997,6 +54997,10 @@ function createCommandAdapter(mindMap) {
     var _a;
     return Boolean(primaryIsRegular() && !((_a = primaryNode()) == null ? void 0 : _a.isRoot));
   };
+  const findNodeByUid = (uid) => {
+    var _a, _b;
+    return ((_b = (_a = mindMap.renderer) == null ? void 0 : _a.findNodeByUid) == null ? void 0 : _b.call(_a, uid)) ?? null;
+  };
   const outerFramePlugin = () => mindMap.outerFrame;
   const activeOuterFrame = () => {
     var _a, _b, _c2;
@@ -55296,7 +55300,35 @@ function createCommandAdapter(mindMap) {
       var _a, _b;
       return (_b = (_a = mindMap.search) == null ? void 0 : _a.endSearch) == null ? void 0 : _b.call(_a);
     },
-    goToNode: (uid) => mindMap.execCommand("GO_TARGET_NODE", uid)
+    goToNode: (uid) => mindMap.execCommand("GO_TARGET_NODE", uid),
+    setNodeTextByUid: (uid, text2) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node) return false;
+      mindMap.execCommand("SET_NODE_TEXT", node, text2, false, true);
+      return true;
+    },
+    insertSiblingByUid: (uid, newUid) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isRoot || node.isGeneralization) return false;
+      mindMap.execCommand("INSERT_NODE", false, [node], { uid: newUid, text: "", richText: false });
+      return true;
+    },
+    insertChildByUid: (uid, newUid) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isGeneralization) return false;
+      mindMap.execCommand("INSERT_CHILD_NODE", false, [node], { uid: newUid, text: "", richText: false });
+      return true;
+    },
+    removeNodeByUid: (uid) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isRoot) return false;
+      mindMap.execCommand("REMOVE_NODE", [node]);
+      return true;
+    }
   };
 }
 function escapeHtml$6(value) {
@@ -56075,8 +56107,8 @@ function createEditorTemplate(title) {
         </div>
 
         <div class="ymz-workspace">
-          <aside class="ymz-outline" data-role="outline" aria-label="导图大纲"></aside>
           <div class="ymz-canvas" data-role="canvas"></div>
+          <aside class="ymz-outline" data-role="outline" role="tree" aria-label="导图大纲"></aside>
         </div>
 
         <div class="ymz-floating ymz-leftbar" role="toolbar" aria-label="画布工具">
@@ -56148,15 +56180,29 @@ function flattenOutline(tree) {
       uid: String(node.data.uid ?? path2),
       text: plainText(node) || "未命名节点",
       depth,
-      hasChildren: node.children.length > 0
+      hasChildren: node.children.length > 0,
+      isRoot: depth === 0
     });
     node.children.forEach((child, index) => visit(child, depth + 1, `${path2}.${index}`));
   };
   visit(tree, 0, "root");
   return rows;
 }
-function renderOutlineHtml(tree) {
-  return flattenOutline(tree).map((row) => `<button class="ymz-outline-row" data-outline-uid="${escapeHtml(row.uid)}" style="--ymz-outline-depth:${row.depth}" title="${escapeHtml(row.text)}"><span class="ymz-outline-row__branch">${row.hasChildren ? "▾" : "·"}</span><span>${escapeHtml(row.text)}</span></button>`).join("");
+function resolveOutlineKeyAction(context) {
+  if (context.key === "ArrowUp") return "previous";
+  if (context.key === "ArrowDown") return "next";
+  if (context.key === "Escape") return "cancel";
+  if (context.readonly) return "none";
+  if (context.key === "Enter") return context.isRoot ? "insert-child" : "insert-sibling";
+  if (context.key === "Tab") return context.shiftKey ? "none" : "insert-child";
+  if ((context.key === "Backspace" || context.key === "Delete") && context.empty && !context.isRoot) return "remove";
+  return "none";
+}
+function renderOutlineHtml(tree, readonly = false) {
+  return flattenOutline(tree).map((row) => {
+    const readonlyAttribute = readonly ? " readonly" : "";
+    return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" data-outline-uid="${escapeHtml(row.uid)}" data-outline-root="${row.isRoot}" style="--ymz-outline-depth:${row.depth}"><span class="ymz-outline-row__branch" aria-hidden="true">${row.hasChildren ? "▾" : "•"}</span><textarea class="ymz-outline-row__editor" data-outline-editor rows="1" data-outline-original="${escapeHtml(row.text)}" aria-label="编辑节点：${escapeHtml(row.text)}"${readonlyAttribute}>${escapeHtml(row.text)}</textarea></div>`;
+  }).join("");
 }
 function escapeHtml(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
@@ -56573,6 +56619,7 @@ class YeMindEditor {
     __publicField(this, "searchText", "");
     __publicField(this, "applyingCheckpoint", false);
     __publicField(this, "resizeFrame", null);
+    __publicField(this, "pendingOutlineFocus", null);
     __publicField(this, "onRootKeydown", (event) => {
       var _a, _b;
       if (event.key === "Escape" && ((_a = this.commands) == null ? void 0 : _a.isRelationCreating())) {
@@ -56858,6 +56905,37 @@ class YeMindEditor {
           break;
       }
     });
+    this.outlineEl.addEventListener("pointerdown", (event) => {
+      var _a2;
+      const input = event.target.closest("[data-outline-editor]");
+      const active = document.activeElement instanceof HTMLTextAreaElement ? document.activeElement.closest("[data-outline-editor]") : null;
+      const uid = ((_a2 = input == null ? void 0 : input.closest("[data-outline-uid]")) == null ? void 0 : _a2.dataset.outlineUid) ?? "";
+      if (input && active && input !== active && uid) this.pendingOutlineFocus = { uid, selectAll: false };
+    });
+    this.outlineEl.addEventListener("focusin", (event) => {
+      var _a2;
+      const input = event.target.closest("[data-outline-editor]");
+      const row = input == null ? void 0 : input.closest("[data-outline-uid]");
+      const uid = (row == null ? void 0 : row.dataset.outlineUid) ?? "";
+      if (!uid || !this.commands) return;
+      if (((_a2 = this.pendingOutlineFocus) == null ? void 0 : _a2.uid) === uid) this.pendingOutlineFocus = null;
+      this.commands.goToNode(uid);
+      this.activateOutlineUid(uid);
+    });
+    this.outlineEl.addEventListener("input", (event) => {
+      const input = event.target.closest("[data-outline-editor]");
+      if (input) this.resizeOutlineInput(input);
+    });
+    this.outlineEl.addEventListener("keydown", (event) => this.handleOutlineKeydown(event));
+    this.outlineEl.addEventListener("blur", (event) => {
+      const input = event.target.closest("[data-outline-editor]");
+      if (!input) return;
+      if (input.dataset.outlineCancelled === "true") {
+        delete input.dataset.outlineCancelled;
+        return;
+      }
+      this.commitOutlineInput(input);
+    }, true);
     this.rootEl.addEventListener("change", (event) => {
       const control = event.target.closest("[data-outer-frame-setting]");
       if (!control || !this.commands || this.commands.isReadonly()) return;
@@ -57144,6 +57222,12 @@ class YeMindEditor {
       window.cancelAnimationFrame(this.resizeFrame);
       this.resizeFrame = null;
     }
+    if (mode !== "map") {
+      window.requestAnimationFrame(() => {
+        if (this.destroyed || this.viewMode === "map") return;
+        this.outlineEl.querySelectorAll("[data-outline-editor]").forEach((input) => this.resizeOutlineInput(input));
+      });
+    }
   }
   scheduleSafeResize(attempt = 0) {
     if (this.destroyed || !this.map || this.viewMode === "outline") return;
@@ -57171,7 +57255,106 @@ class YeMindEditor {
     });
   }
   renderOutline(data2) {
-    this.outlineEl.innerHTML = renderOutlineHtml(data2);
+    var _a, _b, _c2;
+    const activeUid = String(((_c2 = (_b = (_a = this.commands) == null ? void 0 : _a.getPrimaryNode()) == null ? void 0 : _b.getData) == null ? void 0 : _c2.call(_b, "uid")) ?? "");
+    const readonly = this.rootEl.dataset.readonly === "true";
+    this.outlineEl.setAttribute("aria-readonly", String(readonly));
+    this.outlineEl.innerHTML = renderOutlineHtml(data2, readonly);
+    this.outlineEl.querySelectorAll("[data-outline-editor]").forEach((input) => this.resizeOutlineInput(input));
+    this.activateOutlineUid(activeUid);
+    this.restorePendingOutlineFocus();
+  }
+  restorePendingOutlineFocus() {
+    const pending = this.pendingOutlineFocus;
+    if (!pending) return;
+    window.requestAnimationFrame(() => {
+      if (this.destroyed || !this.pendingOutlineFocus || this.pendingOutlineFocus.uid !== pending.uid) return;
+      const row = Array.from(this.outlineEl.querySelectorAll("[data-outline-uid]")).find((item) => item.dataset.outlineUid === pending.uid);
+      const input = row == null ? void 0 : row.querySelector("[data-outline-editor]");
+      if (!input) return;
+      this.pendingOutlineFocus = null;
+      input.focus();
+      if (pending.selectAll) input.select();
+      this.activateOutlineUid(pending.uid);
+    });
+  }
+  commitOutlineInput(input) {
+    if (!this.commands || this.commands.isReadonly()) return false;
+    const row = input.closest("[data-outline-uid]");
+    const uid = (row == null ? void 0 : row.dataset.outlineUid) ?? "";
+    const original = input.dataset.outlineOriginal ?? "";
+    const next2 = input.value.trim();
+    if (!uid) return false;
+    if (!next2) {
+      input.value = original;
+      return false;
+    }
+    if (next2 === original) return false;
+    if (!this.commands.setNodeTextByUid(uid, next2)) return false;
+    input.value = next2;
+    input.dataset.outlineOriginal = next2;
+    return true;
+  }
+  handleOutlineKeydown(event) {
+    var _a;
+    const input = event.target.closest("[data-outline-editor]");
+    const row = input == null ? void 0 : input.closest("[data-outline-uid]");
+    if (!input || !row || !this.commands) return;
+    const uid = row.dataset.outlineUid ?? "";
+    const isRoot = row.dataset.outlineRoot === "true";
+    const action = resolveOutlineKeyAction({
+      key: event.key,
+      empty: input.value.trim().length === 0,
+      isRoot,
+      readonly: this.commands.isReadonly(),
+      shiftKey: event.shiftKey
+    });
+    if (action === "none") return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (action === "cancel") {
+      input.value = input.dataset.outlineOriginal ?? input.value;
+      input.dataset.outlineCancelled = "true";
+      input.blur();
+      return;
+    }
+    if (action === "previous" || action === "next") {
+      this.focusOutlineNeighbor(input, action === "previous" ? -1 : 1);
+      return;
+    }
+    if (action === "remove") {
+      const inputs = Array.from(this.outlineEl.querySelectorAll("[data-outline-editor]"));
+      const index = inputs.indexOf(input);
+      const fallback = inputs[index - 1] ?? inputs[index + 1];
+      const fallbackUid = (_a = fallback == null ? void 0 : fallback.closest("[data-outline-uid]")) == null ? void 0 : _a.dataset.outlineUid;
+      if (fallbackUid) this.pendingOutlineFocus = { uid: fallbackUid, selectAll: true };
+      if (!this.commands.removeNodeByUid(uid)) this.pendingOutlineFocus = null;
+      return;
+    }
+    this.commitOutlineInput(input);
+    const newUid = createOutlineUid();
+    this.pendingOutlineFocus = { uid: newUid, selectAll: true };
+    const inserted = action === "insert-child" ? this.commands.insertChildByUid(uid, newUid) : this.commands.insertSiblingByUid(uid, newUid);
+    if (!inserted) this.pendingOutlineFocus = null;
+  }
+  resizeOutlineInput(input) {
+    input.style.height = "auto";
+    const height2 = input.scrollHeight;
+    if (height2 > 0) input.style.height = `${Math.max(26, height2)}px`;
+  }
+  focusOutlineNeighbor(input, offset) {
+    var _a;
+    const inputs = Array.from(this.outlineEl.querySelectorAll("[data-outline-editor]"));
+    const current = inputs.indexOf(input);
+    const target = inputs[current + offset];
+    const uid = ((_a = target == null ? void 0 : target.closest("[data-outline-uid]")) == null ? void 0 : _a.dataset.outlineUid) ?? "";
+    if (!target || !uid) return;
+    this.pendingOutlineFocus = { uid, selectAll: true };
+    const changed = this.commitOutlineInput(input);
+    if (changed) return;
+    this.pendingOutlineFocus = null;
+    target.focus();
+    target.select();
   }
   activateOutlineUid(uid) {
     this.outlineEl.querySelectorAll("[data-outline-uid]").forEach((row) => {
@@ -57437,6 +57620,7 @@ class YeMindEditor {
     if (enabled && ((_a = this.commands) == null ? void 0 : _a.isRelationCreating())) this.commands.cancelRelation();
     (_b = this.richTextToolbar) == null ? void 0 : _b.setEnabled(this.settings.showRichTextToolbar && !enabled);
     this.map.setMode(enabled ? "readonly" : "edit");
+    this.renderOutline(this.current.data);
     this.options.diagnostics.record("editor", "readonly-changed", this.current.id, { enabled });
     this.updateDiagnosticState({ readonly: enabled });
     this.updateToolbarAvailability();
@@ -57473,6 +57657,10 @@ class YeMindEditor {
       width: "460px"
     });
   }
+}
+function createOutlineUid() {
+  var _a, _b;
+  return ((_b = (_a = globalThis.crypto) == null ? void 0 : _a.randomUUID) == null ? void 0 : _b.call(_a)) ?? `outline-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 async function mountAfterReady(state, ready, resolveValue, mount, onError) {
   try {
@@ -57625,6 +57813,21 @@ async function runSafeOperation(operation, onError) {
     return void 0;
   }
 }
+function initializePluginStartup(options) {
+  var _a, _b, _c2;
+  const ready = options.startBootstrap();
+  (_a = options.publishReady) == null ? void 0 : _a.call(options, ready);
+  for (const step of options.registrations) {
+    try {
+      (_b = options.onRegistrationStart) == null ? void 0 : _b.call(options, step.name);
+      step.register();
+      (_c2 = options.onRegistrationComplete) == null ? void 0 : _c2.call(options, step.name);
+    } catch (error) {
+      options.onRegistrationError(step.name, error);
+    }
+  }
+  return ready;
+}
 class YeMindZenPlugin extends siyuan.Plugin {
   constructor() {
     super(...arguments);
@@ -57699,12 +57902,26 @@ class YeMindZenPlugin extends siyuan.Plugin {
     this.diagnostics.start();
     this.diagnostics.attachGlobalListeners();
     this.diagnostics.record("plugin", "onload", void 0, void 0, "info", true);
-    registerYeMindTab(this, this);
-    registerYeMindDock(this, this);
-    registerSettings(this, this.settingsStore);
-    this.registerCommands();
-    this.eventBus.on("open-siyuan-url-plugin", this.onOpenPluginUrl);
-    this.ready = this.bootstrap();
+    initializePluginStartup({
+      startBootstrap: () => this.bootstrap(),
+      publishReady: (ready) => {
+        this.ready = ready;
+      },
+      registrations: [
+        { name: "tab", register: () => registerYeMindTab(this, this) },
+        { name: "dock", register: () => registerYeMindDock(this, this) },
+        { name: "settings", register: () => registerSettings(this, this.settingsStore) },
+        { name: "commands", register: () => this.registerCommands() },
+        { name: "plugin-url", register: () => this.eventBus.on("open-siyuan-url-plugin", this.onOpenPluginUrl) }
+      ],
+      onRegistrationStart: (name) => this.diagnostics.record("plugin", "registration-started", void 0, { name }, "info", true),
+      onRegistrationComplete: (name) => this.diagnostics.record("plugin", "registration-completed", void 0, { name }, "info", true),
+      onRegistrationError: (name, error) => {
+        this.diagnostics.recordError("plugin", "registration-failed", error, void 0, true);
+        this.diagnostics.record("plugin", "registration-failed-step", void 0, { name }, "error", true);
+        console.error(`[YeMind Zen] ${name} registration failed`, error);
+      }
+    });
   }
   onLayoutReady() {
     this.registerTopBar();
