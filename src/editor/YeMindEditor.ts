@@ -9,6 +9,7 @@ import { createCommandAdapter, type YeMindCommands } from '../core/commands';
 import { configureNodeDecorations } from '../core/nodeDecorations';
 import { configureMindMapPlugins } from '../core/registerPlugins';
 import type { CheckpointService } from '../checkpoints/CheckpointService';
+import type { DiagnosticsService } from '../diagnostics/DiagnosticsService';
 import type { CheckpointRepository } from '../model/CheckpointRepository';
 import { MapRepository } from '../model/MapRepository';
 import type { MindMapTree, YeMindMapDocument } from '../model/types';
@@ -37,6 +38,7 @@ export interface YeMindEditorOptions {
   settingsStore: SettingsStore;
   checkpointRepository: CheckpointRepository;
   checkpointService: CheckpointService;
+  diagnostics: DiagnosticsService;
   onMissing?: () => void;
 }
 
@@ -123,9 +125,11 @@ export class YeMindEditor {
 
   resize(): void {
     this.map?.resize();
+    this.updateDiagnosticState();
   }
 
   destroy(): void {
+    this.options.diagnostics.record('editor', 'destroy-started', this.current.id, { dirty: this.saveRevisions.isDirty() });
     this.flushPendingSave();
     this.destroyed = true;
     this.repositoryUnsubscribe?.();
@@ -135,6 +139,8 @@ export class YeMindEditor {
     this.rootEl?.removeEventListener('keydown', this.onRootKeydown);
     this.map?.destroy();
     this.map = null;
+    this.options.diagnostics.removeEditorState(this.current.id);
+    this.options.diagnostics.record('editor', 'destroy-completed', this.current.id);
     this.options.container.innerHTML = '';
   }
 
@@ -189,6 +195,7 @@ export class YeMindEditor {
       onFormula: () => openFormulaDialog(this.commands!),
       onLink: () => openInlineLinkDialog(this.commands!, this.settings),
       onCodeBlock: () => openCodeBlockDialog(this.commands!, this.settings),
+      onAction: (action) => this.options.diagnostics.record('rich-text', action, this.current.id),
     });
     this.rootEl.addEventListener('keydown', this.onRootKeydown);
 
@@ -210,6 +217,19 @@ export class YeMindEditor {
     this.updateStats(this.current.data);
     this.renderOutline(this.current.data);
     this.updateZoom();
+    const runtime = this.map as any;
+    this.options.diagnostics.record('editor', 'mounted', this.current.id, {
+      layout: this.current.layout,
+      pluginStates: {
+        drag: Boolean(runtime.drag),
+        select: Boolean(runtime.select),
+        search: Boolean(runtime.search),
+        richText: Boolean(runtime.richText),
+        associativeLine: Boolean(runtime.associativeLine),
+        outerFrame: Boolean(runtime.outerFrame),
+      },
+    });
+    this.updateDiagnosticState({ mounted: true });
   }
 
   private bindToolbar(): void {
@@ -262,6 +282,7 @@ export class YeMindEditor {
       const button = (event.target as HTMLElement).closest<HTMLElement>('[data-action]');
       if (!button || !this.commands || !this.map) return;
       const action = button.dataset.action;
+      if (action) this.options.diagnostics.record('toolbar', action, this.current.id);
       switch (action) {
         case 'undo': this.commands.undo(); break;
         case 'redo': this.commands.redo(); break;
@@ -336,6 +357,7 @@ export class YeMindEditor {
     this.map.on('data_change', (data: MindMapTree) => {
       if (this.applyingCheckpoint) return;
       this.current.data = data;
+      this.options.diagnostics.record('editor', 'data-change', this.current.id, { nodeCount: calculateEditorStats(data).nodes });
       this.updateStats(data);
       this.renderOutline(data);
       this.scheduleSave();
@@ -346,6 +368,8 @@ export class YeMindEditor {
       const normalized = normalizePersistedViewData(viewData);
       if (!normalized) return;
       this.current.viewData = normalized;
+      this.options.diagnostics.record('editor', 'view-change', this.current.id, { zoom: Number((this.map?.view as any)?.scale ?? 1) });
+      this.updateDiagnosticState();
       this.scheduleSave();
     });
     this.map.on('node_contextmenu', (event: MouseEvent, node: any) => {
@@ -389,6 +413,7 @@ export class YeMindEditor {
     this.map.on('node_active', (node: any, list: any[]) => {
       this.rootEl.dataset.hasSelection = list.length > 0 ? 'true' : 'false';
       this.updateSelectionPresentation(list.length);
+      this.updateDiagnosticState({ selectedNodeCount: list.length });
       this.updateToolbarAvailability();
       const active = node ?? list[0];
       const uid = active?.getData?.('uid');
@@ -407,11 +432,13 @@ export class YeMindEditor {
 
   private openContextMenu(event: MouseEvent): void {
     if (!this.commands) return;
+    this.options.diagnostics.record('context-menu', 'opened', this.current.id, { selectedNodeCount: this.commands.getActiveNodes().length });
     openNodeContextMenu(event, this.commands, {
       onInlineLink: () => openInlineLinkDialog(this.commands!, this.settings),
       onCodeBlock: () => openCodeBlockDialog(this.commands!, this.settings),
       onNodeLink: () => openLinkDialog(this.commands!, this.settings.inlineLinkAutoHttps),
       onRelation: () => this.beginRelation(),
+      onAction: (action) => this.options.diagnostics.record('context-menu', action, this.current.id),
     });
   }
 
@@ -571,6 +598,8 @@ export class YeMindEditor {
   private setViewMode(mode: ViewMode): void {
     this.viewMode = mode;
     this.rootEl.dataset.view = mode;
+    this.options.diagnostics.record('editor', 'view-mode-changed', this.current.id, { mode });
+    this.updateDiagnosticState({ viewMode: mode });
     this.rootEl.querySelectorAll<HTMLElement>('[data-action^="view-"]').forEach((button) => {
       button.classList.toggle('is-active', button.dataset.action === `view-${mode}`);
     });
@@ -758,6 +787,7 @@ export class YeMindEditor {
     if (this.destroyed) return;
     const revision = this.saveRevisions.markChanged();
     this.saveStateEl.textContent = '保存中…';
+    this.updateDiagnosticState({ saveState: 'saving' });
     if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.saveTimer = window.setTimeout(() => {
       this.saveTimer = null;
@@ -780,6 +810,7 @@ export class YeMindEditor {
 
   private async persist(revision: number, throwOnError = false): Promise<void> {
     if (!this.map || this.destroyed) return;
+    this.options.diagnostics.record('save', 'started', this.current.id, { revision });
     try {
       const sanitized = sanitizeAssociativeLines(this.map.getData(false) as MindMapTree);
       const patch = {
@@ -792,11 +823,15 @@ export class YeMindEditor {
       await this.options.repository.update(this.current.id, patch);
       if (!this.destroyed && this.saveRevisions.markSaved(revision)) {
         this.saveStateEl.textContent = '已保存';
+        this.options.diagnostics.record('save', 'completed', this.current.id, { revision });
+        this.updateDiagnosticState({ saveState: 'saved' });
       }
     } catch (error) {
+      this.options.diagnostics.recordError('save', 'failed', error, this.current.id, true);
       console.error('[YeMind Zen] save failed', error);
       if (!this.destroyed && revision === this.saveRevisions.current()) {
         this.saveStateEl.textContent = '保存失败';
+        this.updateDiagnosticState({ saveState: 'failed' });
         showMessage('YeMind Zen 保存失败', 5000, 'error');
       }
       if (throwOnError) throw error;
@@ -811,6 +846,34 @@ export class YeMindEditor {
   private updateZoom(): void {
     const scale = Number((this.map?.view as any)?.scale ?? 1);
     this.zoomEl.textContent = `${Math.round(scale * 100)}%`;
+    this.updateDiagnosticState({ zoom: scale });
+  }
+
+  private updateDiagnosticState(patch: Partial<{
+    mounted: boolean;
+    readonly: boolean;
+    viewMode: string;
+    selectedNodeCount: number;
+    nodeCount: number;
+    canvasWidth: number;
+    canvasHeight: number;
+    zoom: number;
+    saveState: string;
+  }> = {}): void {
+    const stats = calculateEditorStats(this.current.data);
+    const rect = this.canvasEl?.getBoundingClientRect?.();
+    this.options.diagnostics.setEditorState(this.current.id, {
+      mounted: !this.destroyed,
+      readonly: this.rootEl?.dataset.readonly === 'true',
+      viewMode: this.viewMode,
+      selectedNodeCount: Number(this.selectionCountEl?.textContent?.replace(/\D/g, '') || 0),
+      nodeCount: stats.nodes,
+      canvasWidth: Math.round(rect?.width ?? this.canvasEl?.clientWidth ?? 0),
+      canvasHeight: Math.round(rect?.height ?? this.canvasEl?.clientHeight ?? 0),
+      zoom: Number((this.map?.view as any)?.scale ?? 1),
+      saveState: this.saveStateEl?.textContent ?? 'unknown',
+      ...patch,
+    });
   }
 
   private setReadonly(enabled: boolean): void {
@@ -830,6 +893,8 @@ export class YeMindEditor {
     if (enabled && this.commands?.isRelationCreating()) this.commands.cancelRelation();
     this.richTextToolbar?.setEnabled(this.settings.showRichTextToolbar && !enabled);
     this.map.setMode(enabled ? 'readonly' : 'edit');
+    this.options.diagnostics.record('editor', 'readonly-changed', this.current.id, { enabled });
+    this.updateDiagnosticState({ readonly: enabled });
     this.updateToolbarAvailability();
     this.updateRelationPresentation();
     this.updateOuterFramePresentation();

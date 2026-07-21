@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.9 — 2026-07-17
+
+- Added a local diagnostics recorder with a bounded in-memory ring buffer and no automatic network upload.
+- Added global `error` and `unhandledrejection` capture with sensitive-field redaction and per-session hashed map identifiers.
+- Added a regression runner covering plugin storage probes, transactional map create/update/delete, checkpoint create/restore, tree integrity, checkpoint references, settings, and active editor state.
+- Added lifecycle and interaction traces for tab mounting, editor data/view changes, autosave, toolbar actions, context-menu actions, rich-text commands, read-only changes, and view-mode changes without recording node text by default.
+- Added a diagnostics dialog with run, start/stop recording, export, clear, and explicit opt-in for full map content.
+- Added ZIP diagnostics export containing environment metadata, sanitized logs, regression results, settings, map/checkpoint summaries, and an optional clearly warned full-content attachment.
+- Added a temporary storage probe file that is removed after each self-check and kept diagnostics isolated from normal map/checkpoint data.
+- Added focused recorder, privacy, self-check, service, lifecycle, and integration regression tests without introducing another drag, selection, save, or history implementation.
+
 ## 0.5.8 — 2026-07-17
 
 - Added a dedicated transactional `checkpoints.json` repository instead of embedding history in the main map document.

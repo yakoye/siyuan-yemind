@@ -211,3 +211,78 @@
     flex-wrap: wrap;
   }
 }
+
+/* v0.5.9 diagnostics */
+.ymz-diagnostics {
+  display: grid;
+  gap: 14px;
+  max-height: min(72vh, 680px);
+  overflow: auto;
+}
+.ymz-diagnostics-note {
+  margin: 0;
+  color: var(--b3-theme-on-surface-light);
+  line-height: 1.65;
+}
+.ymz-diagnostics-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ymz-diagnostics-sensitive {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 8px;
+  background: var(--b3-theme-surface-lighter);
+  line-height: 1.5;
+}
+.ymz-diagnostics-empty {
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--b3-theme-on-surface-light);
+}
+.ymz-diagnostics-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--b3-theme-surface-lighter);
+}
+.ymz-diagnostics-summary[data-status="pass"] b,
+.ymz-diagnostics-check[data-status="pass"] .ymz-diagnostics-check__mark { color: var(--b3-theme-primary); }
+.ymz-diagnostics-summary[data-status="warning"] b,
+.ymz-diagnostics-check[data-status="warning"] .ymz-diagnostics-check__mark { color: #b7791f; }
+.ymz-diagnostics-summary[data-status="fail"] b,
+.ymz-diagnostics-check[data-status="fail"] .ymz-diagnostics-check__mark { color: var(--b3-theme-error); }
+.ymz-diagnostics-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+.ymz-diagnostics-check {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 10px 12px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 8px;
+}
+.ymz-diagnostics-check__mark {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.ymz-diagnostics-check p {
+  margin: 4px 0 0;
+  color: var(--b3-theme-on-surface-light);
+  line-height: 1.5;
+}
+.ymz-diagnostics-log-count {
+  color: var(--b3-theme-on-surface-light);
+  font-size: 12px;
+}

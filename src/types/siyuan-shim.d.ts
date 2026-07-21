@@ -68,6 +68,7 @@ declare module 'siyuan' {
     getOpenedTab(): Record<string, Custom[]>;
     loadData(storageName: string): Promise<any>;
     saveData(storageName: string, content: any): Promise<any>;
+    removeData(storageName: string): Promise<any>;
     openSetting(): void;
   }
 

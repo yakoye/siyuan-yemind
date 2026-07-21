@@ -81,6 +81,10 @@ export class CheckpointRepository {
       .sort((a, b) => b.createdAt - a.createdAt));
   }
 
+  listAll(): MapCheckpoint[] {
+    return clone(this.state.checkpoints.slice().sort((a, b) => b.createdAt - a.createdAt));
+  }
+
   get(id: string): MapCheckpoint | undefined {
     const checkpoint = this.state.checkpoints.find((item) => item.id === id);
     return checkpoint ? clone(checkpoint) : undefined;

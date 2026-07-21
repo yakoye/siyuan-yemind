@@ -1,6 +1,6 @@
 {
   "name": "siyuan-yemind-zen",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "private": true,
   "description": "A SiYuan mind-map plugin built around simple-mind-map.",
   "license": "MIT",
@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "jszip": "^3.10.1",
     "parchment": "^3.0.0",
     "quill": "^2.0.3",
     "quill-delta": "^5.1.0",

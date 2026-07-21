@@ -1,4 +1,5 @@
 import type { CheckpointService } from '../checkpoints/CheckpointService';
+import type { DiagnosticsService } from '../diagnostics/DiagnosticsService';
 import type { CheckpointRepository } from '../model/CheckpointRepository';
 import type { MapRepository } from '../model/MapRepository';
 import type { SettingsStore } from '../settings/SettingsStore';
@@ -8,6 +9,7 @@ export interface YeMindPluginHost {
   repository: MapRepository;
   checkpointRepository: CheckpointRepository;
   checkpointService: CheckpointService;
+  diagnostics: DiagnosticsService;
   settingsStore: SettingsStore;
   tabRegistry: OpenMapTabRegistry;
   whenReady(): Promise<void>;

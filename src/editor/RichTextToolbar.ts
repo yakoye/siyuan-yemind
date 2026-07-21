@@ -18,6 +18,7 @@ export interface RichTextToolbarCallbacks {
   onFormula?: () => void;
   onLink?: () => void;
   onCodeBlock?: () => void;
+  onAction?: (action: string) => void;
 }
 
 function option(value: string, label: string): string {
@@ -126,6 +127,7 @@ export class RichTextToolbar {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-rich-action]');
       if (!button) return;
       const action = button.dataset.richAction;
+      if (action) this.callbacks.onAction?.(action);
       if (['bold', 'italic', 'underline', 'strike'].includes(String(action))) {
         this.commands.formatText(nextToggleFormat(action as RichTextBooleanFormat, this.formatInfo));
         this.formatInfo[action!] = !Boolean(this.formatInfo[action!]);
@@ -174,15 +176,19 @@ export class RichTextToolbar {
       }
     });
     this.element.querySelector<HTMLInputElement>('[data-rich-field="color"]')?.addEventListener('input', (event) => {
+      this.callbacks.onAction?.('color');
       this.commands.formatText({ color: (event.target as HTMLInputElement).value });
     });
     this.element.querySelector<HTMLInputElement>('[data-rich-field="background"]')?.addEventListener('input', (event) => {
+      this.callbacks.onAction?.('background');
       this.commands.formatText({ background: (event.target as HTMLInputElement).value });
     });
     this.element.querySelector<HTMLSelectElement>('[data-rich-field="size"]')?.addEventListener('change', (event) => {
+      this.callbacks.onAction?.('size');
       this.commands.formatText({ size: (event.target as HTMLSelectElement).value || false });
     });
     this.element.querySelector<HTMLSelectElement>('[data-rich-field="font"]')?.addEventListener('change', (event) => {
+      this.callbacks.onAction?.('font');
       this.commands.formatText({ font: (event.target as HTMLSelectElement).value || false });
     });
   }

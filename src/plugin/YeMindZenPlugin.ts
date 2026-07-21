@@ -1,14 +1,16 @@
 import { Menu, Plugin, openTab, showMessage } from 'siyuan';
 import { CheckpointService } from '../checkpoints/CheckpointService';
+import { DiagnosticsService } from '../diagnostics/DiagnosticsService';
 import { CheckpointRepository } from '../model/CheckpointRepository';
 import { MapRepository } from '../model/MapRepository';
 import type { CheckpointStorageDocument } from '../model/checkpointTypes';
 import type { MapStorageDocument } from '../model/types';
 import { confirmAction, promptText } from '../ui/dialogs';
+import { openDiagnosticsDialog } from '../ui/diagnosticsDialog';
 import { registerSettings } from '../settings/settings';
 import { openYeMindSettingsDialog } from '../settings/settingsDialog';
 import { SettingsStore } from '../settings/SettingsStore';
-import { CHECKPOINT_STORAGE_NAME, ICON_ID, MAP_STORAGE_NAME, SETTINGS_STORAGE_NAME, TAB_TYPE } from './constants';
+import { CHECKPOINT_STORAGE_NAME, DIAGNOSTIC_PROBE_STORAGE_NAME, ICON_ID, MAP_STORAGE_NAME, PLUGIN_VERSION, SETTINGS_STORAGE_NAME, TAB_TYPE } from './constants';
 import { registerYeMindDock } from './dock';
 import type { YeMindPluginHost } from './host';
 import { registerYeMindTab } from './tabs';
@@ -21,6 +23,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
   settingsStore!: SettingsStore;
   checkpointRepository!: CheckpointRepository;
   checkpointService!: CheckpointService;
+  diagnostics!: DiagnosticsService;
   readonly tabRegistry = new OpenMapTabRegistry();
   private ready: Promise<void> = Promise.resolve();
 
@@ -41,6 +44,40 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
       save: async (value: CheckpointStorageDocument) => { await this.saveData(CHECKPOINT_STORAGE_NAME, value); },
     });
     this.checkpointService = new CheckpointService(this.repository, this.checkpointRepository);
+    this.diagnostics = new DiagnosticsService({
+      pluginId: this.name,
+      pluginVersion: PLUGIN_VERSION,
+      maps: this.repository,
+      checkpoints: this.checkpointRepository,
+      checkpointService: this.checkpointService,
+      settings: this.settingsStore,
+      storageProbe: {
+        run: async () => {
+          const nonce = globalThis.crypto?.randomUUID?.() ?? `probe-${Date.now()}`;
+          const value = { nonce, createdAt: Date.now() };
+          let write = false;
+          let read = false;
+          let remove = false;
+          try {
+            await this.saveData(DIAGNOSTIC_PROBE_STORAGE_NAME, value);
+            write = true;
+            const loaded = await this.loadData(DIAGNOSTIC_PROBE_STORAGE_NAME) as { nonce?: string } | null;
+            read = loaded?.nonce === nonce;
+          } finally {
+            try {
+              await this.removeData(DIAGNOSTIC_PROBE_STORAGE_NAME);
+              remove = true;
+            } catch (error) {
+              this.diagnostics?.recordError('storage', 'probe-remove-failed', error, undefined, true);
+            }
+          }
+          return { write, read, remove };
+        },
+      },
+    });
+    this.diagnostics.start();
+    this.diagnostics.attachGlobalListeners();
+    this.diagnostics.record('plugin', 'onload', undefined, undefined, 'info', true);
 
     registerYeMindTab(this, this);
     registerYeMindDock(this, this);
@@ -58,6 +95,9 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
 
   onunload(): void {
     this.eventBus.off('open-siyuan-url-plugin', this.onOpenPluginUrl);
+    this.diagnostics?.record('plugin', 'unload', undefined, undefined, 'info', true);
+    this.diagnostics?.detachGlobalListeners();
+    this.diagnostics?.stop();
   }
 
   whenReady(): Promise<void> {
@@ -67,6 +107,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
   async openMap(mapId: string): Promise<void> {
     await runSafeOperation(async () => {
       await this.ready;
+      this.diagnostics.record('operation', 'open-map-requested', mapId);
       const map = this.repository.get(mapId);
       if (!map) {
         showMessage('导图不存在或已被删除', 4000, 'error');
@@ -95,6 +136,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
       if (!title) return;
       const settings = this.settingsStore.get();
       const map = await this.repository.create(title, settings.defaultLayout);
+      this.diagnostics.record('operation', 'map-created', map.id, { layout: map.layout });
       await this.openMap(map.id);
     }, (error) => this.reportOperationFailure('新建导图', error));
   }
@@ -107,6 +149,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
       const title = await promptText('重命名导图', map.title, '导图名称');
       if (!title || title === map.title) return;
       await this.repository.rename(mapId, title);
+      this.diagnostics.record('operation', 'map-renamed', mapId);
       this.tabRegistry.updateTitle(mapId, title);
     }, (error) => this.reportOperationFailure('重命名导图', error));
   }
@@ -119,6 +162,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
       const confirmed = await confirmAction('删除导图', `确认删除“${map.title}”？删除后无法撤销。`, '删除');
       if (!confirmed) return;
       await this.repository.remove(mapId);
+      this.diagnostics.record('operation', 'map-deleted', mapId);
       try {
         await this.checkpointRepository.removeForMap(mapId);
       } catch (error) {
@@ -140,6 +184,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
   }
 
   private reportOperationFailure(action: string, error: unknown): void {
+    this.diagnostics?.recordError('operation', `${action}-failed`, error, undefined, true);
     console.error(`[YeMind Zen] ${action} failed`, error);
     showMessage(`YeMind Zen ${action}失败，请稍后重试`, 5000, 'error');
   }
@@ -150,9 +195,12 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
   };
 
   private async bootstrap(): Promise<void> {
+    this.diagnostics.record('plugin', 'bootstrap-started', undefined, undefined, 'info', true);
     try {
       await Promise.all([this.repository.load(), this.settingsStore.load(), this.checkpointRepository.load()]);
+      this.diagnostics.record('plugin', 'bootstrap-completed', undefined, { mapCount: this.repository.list().length, checkpointCount: this.checkpointRepository.listAll().length }, 'info', true);
     } catch (error) {
+      this.diagnostics.recordError('plugin', 'bootstrap-failed', error, undefined, true);
       console.error('[YeMind Zen] failed to load storage', error);
       showMessage('YeMind Zen 数据加载失败', 6000, 'error');
     }
@@ -182,6 +230,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
     }
     menu.addSeparator();
     menu.addItem({ icon: 'iconSettings', label: '设置', click: () => openYeMindSettingsDialog(this.settingsStore) });
+    menu.addItem({ icon: 'iconInfo', label: '诊断与回归', click: () => openDiagnosticsDialog(this.diagnostics) });
     menu.open({ x: event.clientX, y: event.clientY });
   }
 
@@ -191,6 +240,11 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
       langText: '新建 YeMind 导图',
       hotkey: '⌥⇧M',
       callback: () => { void this.createMap(); },
+    });
+    this.addCommand({
+      langKey: 'openYeMindDiagnostics',
+      langText: '打开 YeMind 诊断与回归',
+      callback: () => openDiagnosticsDialog(this.diagnostics),
     });
     this.addCommand({
       langKey: 'openActiveYeMindMap',
