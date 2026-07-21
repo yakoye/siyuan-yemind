@@ -47,6 +47,12 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
             onMissing: () => this.tab.close(),
           });
         },
+        (error) => {
+          state.unregister?.();
+          state.unregister = undefined;
+          console.error('[YeMind Zen] map tab mount failed', error);
+          container.innerHTML = '<div class="ymz-missing"><b>导图加载失败</b><span>请关闭标签后重新打开；若持续出现，请检查控制台日志。</span></div>';
+        },
       );
     },
     resize(this: Custom) {

@@ -1,3 +1,4 @@
+import { loadImageFileSelection } from './imageFileLoading';
 import { Dialog, confirm, showMessage } from 'siyuan';
 import type { YeMindCommands } from '../core/commands';
 import {
@@ -9,6 +10,7 @@ import {
   type NodeTodo,
 } from '../content/nodeContentState';
 import { buildCommentsListHtml, requestClearAllComments } from './commentsPresentation';
+import { normalizeInlineLink } from '../editor/inlineLink';
 
 function activeData(commands: YeMindCommands): Record<string, any> {
   return commands.getPrimaryNodeData() ?? {};
@@ -100,14 +102,14 @@ export function openIconsDialog(commands: YeMindCommands): void {
   });
 }
 
-export function openLinkDialog(commands: YeMindCommands): void {
+export function openLinkDialog(commands: YeMindCommands, autoHttps = true): void {
   const data = activeData(commands);
   const dialog = new Dialog({
     title: '链接',
     content: `<div class="b3-dialog__content ymz-node-dialog">
       <label>链接地址</label><input class="b3-text-field fn__block" data-field="url" placeholder="https://… 或 siyuan://blocks/…">
       <label>显示提示</label><input class="b3-text-field fn__block" data-field="title" placeholder="可选">
-      <div class="b3-label__text">清空链接地址后保存，即可删除链接。</div>
+      <div class="b3-label__text">支持 HTTP、HTTPS、邮件、电话和思源链接；清空后保存即可删除。</div>
     </div>${actionButtons()}`,
     width: '480px',
   });
@@ -115,7 +117,24 @@ export function openLinkDialog(commands: YeMindCommands): void {
   const title = dialog.element.querySelector<HTMLInputElement>('[data-field="title"]')!;
   url.value = String(data.hyperlink ?? '');
   title.value = String(data.hyperlinkTitle ?? '');
-  bindDialogActions(dialog, () => commands.setLink(url.value.trim(), title.value.trim()));
+  dialog.element.querySelector('[data-dialog-action="cancel"]')?.addEventListener('click', () => dialog.destroy());
+  dialog.element.querySelector('[data-dialog-action="save"]')?.addEventListener('click', () => {
+    const raw = url.value.trim();
+    if (!raw) {
+      commands.setLink('', title.value.trim());
+      dialog.destroy();
+      return;
+    }
+    const normalized = normalizeInlineLink(raw, autoHttps);
+    if (!normalized) {
+      showMessage('链接地址无效或协议不受支持', 3500, 'error');
+      url.focus();
+      url.select();
+      return;
+    }
+    commands.setLink(normalized, title.value.trim());
+    dialog.destroy();
+  });
   url.focus();
 }
 
@@ -185,8 +204,22 @@ export function openImageDialog(commands: YeMindCommands): void {
   file.addEventListener('change', async () => {
     const selected = file.files?.[0];
     if (!selected) return;
-    fileData = await readFileAsDataUrl(selected);
-    fileSize = await getImageSize(fileData);
+    const loaded = await loadImageFileSelection(selected, {
+      read: readFileAsDataUrl,
+      measure: getImageSize,
+      onError: (error) => {
+        console.error('[YeMind Zen] local image read failed', error);
+        showMessage('图片读取失败，请重新选择文件', 4000, 'error');
+      },
+    });
+    if (!loaded) {
+      file.value = '';
+      fileData = '';
+      fileSize = { width: 0, height: 0 };
+      return;
+    }
+    fileData = loaded.dataUrl;
+    fileSize = loaded.size;
     preview.innerHTML = `<img src="${escapeAttribute(fileData)}" alt="">`;
   });
   dialog.element.querySelector('[data-action="remove-image"]')?.addEventListener('click', () => {
@@ -209,11 +242,12 @@ export function openImageDialog(commands: YeMindCommands): void {
   });
 }
 
-export function openCommentsDialog(commands: YeMindCommands): void {
+export function openCommentsDialog(commands: YeMindCommands, options: { readonly?: boolean } = {}): void {
+  const readonly = Boolean(options.readonly);
   let comments = ((activeData(commands).yemindComments ?? []) as NodeComment[]).map((item) => ({ ...item }));
   let editingId: string | null = null;
   const dialog = new Dialog({
-    title: '批注',
+    title: readonly ? '批注（只读）' : '批注',
     content: `<div class="b3-dialog__content ymz-node-dialog ymz-comments-dialog">
       <div data-role="comments"></div>
       <textarea class="b3-text-field fn__block" data-field="new-comment" rows="3" placeholder="新增批注…"></textarea>
@@ -228,11 +262,18 @@ export function openCommentsDialog(commands: YeMindCommands): void {
   const list = dialog.element.querySelector<HTMLElement>('[data-role="comments"]')!;
   const input = dialog.element.querySelector<HTMLTextAreaElement>('[data-field="new-comment"]')!;
   const clearButton = dialog.element.querySelector<HTMLButtonElement>('[data-action="clear-comments"]')!;
+  const footer = dialog.element.querySelector<HTMLElement>('.ymz-comments-dialog__footer')!;
+  input.hidden = readonly;
+  footer.hidden = readonly;
 
   const persist = (): void => commands.setComments(comments.filter((comment) => comment.text.trim()));
   const render = (): void => {
     list.innerHTML = buildCommentsListHtml(comments, editingId);
-    clearButton.hidden = comments.length === 0;
+    clearButton.hidden = readonly || comments.length === 0;
+    if (readonly) {
+      list.querySelectorAll<HTMLElement>('button, textarea').forEach((control) => { control.hidden = true; });
+      return;
+    }
     list.querySelectorAll<HTMLElement>('[data-comment-id]').forEach((row) => {
       const id = row.dataset.commentId!;
       row.querySelector('[data-action="edit-comment"]')?.addEventListener('click', () => {
@@ -278,7 +319,7 @@ export function openCommentsDialog(commands: YeMindCommands): void {
       render();
     });
   });
-  input.focus();
+  if (!readonly) input.focus();
 }
 
 export function showNodeActionUnavailable(): void {

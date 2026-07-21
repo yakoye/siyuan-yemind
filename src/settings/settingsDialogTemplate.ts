@@ -12,7 +12,7 @@ export const SHORTCUT_ROWS: Array<{ key: ShortcutCommand; label: string; group: 
   { key: 'undo', label: '撤销', group: '导图命令' },
   { key: 'redo', label: '重做', group: '导图命令' },
   { key: 'fit', label: '适配视图', group: '导图命令' },
-  { key: 'reset', label: '重置缩放', group: '导图命令' },
+  { key: 'reset', label: '重置视图（100%）', group: '导图命令' },
   { key: 'addParent', label: '添加父节点', group: '节点命令' },
   { key: 'comments', label: '打开批注', group: '节点命令' },
   { key: 'summary', label: '概要', group: '节点命令' },

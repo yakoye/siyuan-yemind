@@ -7,10 +7,15 @@ export async function mountAfterReady<T>(
   ready: Promise<void>,
   resolveValue: () => T,
   mount: (value: T) => void,
+  onError?: (error: unknown) => void,
 ): Promise<void> {
-  await ready;
-  if (state.destroyed) return;
-  const value = resolveValue();
-  if (state.destroyed) return;
-  mount(value);
+  try {
+    await ready;
+    if (state.destroyed) return;
+    const value = resolveValue();
+    if (state.destroyed) return;
+    mount(value);
+  } catch (error) {
+    if (!state.destroyed) onError?.(error);
+  }
 }

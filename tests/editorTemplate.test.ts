@@ -12,5 +12,13 @@ describe('editor template v0.5 controls', () => {
     expect(html).toContain('data-search-action="replace-all"');
     expect(html).toContain('data-role="outline"');
     expect(html).toContain('data-action="reset-layout"');
+    expect(html).toContain('data-action="fit"');
+    expect(html).toContain('data-action="reset"');
+    expect(html).toContain('data-action="zoom-in"');
+    expect(html).toContain('data-action="zoom-out"');
+    expect(html).toContain('data-action="readonly"');
+    expect(html).toContain('data-action="zen"');
+    expect(html).toContain('data-action="fullscreen"');
+    expect(html).toContain('data-action="layout"');
   });
 });

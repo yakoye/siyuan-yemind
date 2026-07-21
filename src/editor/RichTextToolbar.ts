@@ -1,4 +1,5 @@
 import type { YeMindCommands } from '../core/commands';
+import { YEMIND_FONT_VALUES, YEMIND_SIZE_VALUES } from './YeMindRichText';
 import {
   isClozeFormat,
   nextToggleFormat,
@@ -19,10 +20,30 @@ export interface RichTextToolbarCallbacks {
   onCodeBlock?: () => void;
 }
 
+function option(value: string, label: string): string {
+  return `<option value="${value.replaceAll('&', '&amp;').replaceAll('\"', '&quot;')}">${label}</option>`;
+}
+
+function sizeOptions(): string {
+  return YEMIND_SIZE_VALUES.map((value) => option(value, value.replace('px', ''))).join('');
+}
+
+function fontOptions(): string {
+  const labels = ['无衬线', '衬线', '微软雅黑', '宋体', '等宽'];
+  return YEMIND_FONT_VALUES.map((value, index) => option(value, labels[index] ?? value)).join('');
+}
+
 export class RichTextToolbar {
   private readonly element: HTMLElement;
   private formatInfo: Record<string, unknown> = {};
   private enabled = true;
+  private interacting = false;
+  private readonly onDocumentMouseDown = (event: MouseEvent): void => {
+    if (!this.element.contains(event.target as Node)) this.hide();
+  };
+  private readonly onWindowMouseUp = (): void => {
+    window.setTimeout(() => { this.interacting = false; }, 0);
+  };
 
   constructor(
     private readonly root: HTMLElement,
@@ -45,17 +66,10 @@ export class RichTextToolbar {
       <label class="ymz-rich-color" title="背景颜色">Bg<input type="color" data-rich-field="background" value="#fff1a8"></label>
       <button type="button" data-rich-action="clear-background" title="清除背景颜色">×</button>
       <select data-rich-field="size" title="字号">
-        <option value="">自动</option><option value="12px">12</option><option value="14px">14</option>
-        <option value="16px">16</option><option value="18px">18</option><option value="20px">20</option>
-        <option value="24px">24</option><option value="28px">28</option><option value="32px">32</option>
+        <option value="">自动</option>${sizeOptions()}
       </select>
       <select data-rich-field="font" title="字体">
-        <option value="">继承</option>
-        <option value="sans-serif">无衬线</option>
-        <option value="serif">衬线</option>
-        <option value="微软雅黑, Microsoft YaHei">微软雅黑</option>
-        <option value="宋体, SimSun, Songti SC">宋体</option>
-        <option value="andale mono">等宽</option>
+        <option value="">继承</option>${fontOptions()}
       </select>
       <span class="ymz-rich-toolbar__separator"></span>
       <button type="button" data-rich-action="link" title="行内链接">链接</button>
@@ -63,6 +77,8 @@ export class RichTextToolbar {
       <button type="button" data-rich-action="formula" title="插入公式">Fx</button>
       <button type="button" data-rich-action="clear" title="清除格式">清除</button>`;
     document.body.appendChild(this.element);
+    document.addEventListener('mousedown', this.onDocumentMouseDown, true);
+    window.addEventListener('mouseup', this.onWindowMouseUp, true);
     this.bind();
   }
 
@@ -76,8 +92,12 @@ export class RichTextToolbar {
     rectInfo?: RichTextSelectionRect | null,
     formatInfo?: Record<string, unknown> | null,
   ): void {
-    if (!this.enabled || !hasRange || !rectInfo) {
+    if (!this.enabled) {
       this.hide();
+      return;
+    }
+    if (!hasRange || !rectInfo) {
+      if (!this.interacting) this.hide();
       return;
     }
     this.formatInfo = formatInfo ?? {};
@@ -91,11 +111,14 @@ export class RichTextToolbar {
   }
 
   destroy(): void {
+    document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
+    window.removeEventListener('mouseup', this.onWindowMouseUp, true);
     this.element.remove();
   }
 
   private bind(): void {
     this.element.addEventListener('mousedown', (event) => {
+      this.interacting = true;
       if ((event.target as HTMLElement).closest('button')) event.preventDefault();
       event.stopPropagation();
     });

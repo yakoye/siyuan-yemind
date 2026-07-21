@@ -11,6 +11,8 @@ export interface NodeImageInput {
 }
 
 export interface YeMindCommands {
+  isReadonly(): boolean;
+  hasRichTextSelection(): boolean;
   addChild(): void;
   addSibling(): void;
   addParent(): void;
@@ -70,91 +72,120 @@ export interface YeMindCommands {
   goToNode(uid: string): void;
 }
 
-
 export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
   const activeNodes = (): any[] => Array.isArray((mindMap.renderer as any)?.activeNodeList)
     ? (mindMap.renderer as any).activeNodeList
     : [];
   const primaryNode = (): any | null => activeNodes()[0] ?? null;
+  const isReadonly = (): boolean => Boolean(
+    (mindMap as any).getConfig?.('readonly') ?? (mindMap as any).opt?.readonly,
+  );
+  const canMutate = (): boolean => !isReadonly();
   const forEachActive = (callback: (node: any) => void): void => activeNodes().forEach(callback);
+  const richText = (): any => (mindMap as any).richText;
+  const richRange = (): any => {
+    const editor = richText();
+    return editor?.range ?? editor?.lastRange ?? null;
+  };
+  const hasRichTextSelection = (): boolean => Number(richRange()?.length ?? 0) > 0;
+  const removableNodes = (): any[] => activeNodes().filter((node) => !node?.isRoot);
+  const primaryIsRegular = (): boolean => Boolean(primaryNode() && !primaryNode()?.isGeneralization);
+  const primaryIsMovable = (): boolean => Boolean(primaryIsRegular() && !primaryNode()?.isRoot);
 
   return {
-    addChild: () => mindMap.execCommand('INSERT_CHILD_NODE'),
-    addSibling: () => mindMap.execCommand('INSERT_NODE'),
-    addParent: () => mindMap.execCommand('INSERT_PARENT_NODE'),
-    moveUp: () => mindMap.execCommand('UP_NODE'),
-    moveDown: () => mindMap.execCommand('DOWN_NODE'),
+    isReadonly,
+    hasRichTextSelection,
+    addChild: () => { if (canMutate() && primaryIsRegular()) mindMap.execCommand('INSERT_CHILD_NODE'); },
+    addSibling: () => { if (canMutate() && primaryIsMovable()) mindMap.execCommand('INSERT_NODE'); },
+    addParent: () => { if (canMutate() && primaryIsMovable()) mindMap.execCommand('INSERT_PARENT_NODE'); },
+    moveUp: () => { if (canMutate() && primaryIsMovable()) mindMap.execCommand('UP_NODE'); },
+    moveDown: () => { if (canMutate() && primaryIsMovable()) mindMap.execCommand('DOWN_NODE'); },
     toggleExpand: () => mindMap.renderer.toggleActiveExpand(),
-    remove: () => mindMap.execCommand('REMOVE_NODE'),
-    removeOnlyCurrent: () => mindMap.execCommand('REMOVE_CURRENT_NODE'),
-    undo: () => mindMap.execCommand('BACK'),
-    redo: () => mindMap.execCommand('FORWARD'),
+    remove: () => {
+      if (!canMutate()) return;
+      const nodes = removableNodes();
+      if (nodes.length) mindMap.execCommand('REMOVE_NODE', nodes);
+    },
+    removeOnlyCurrent: () => {
+      if (!canMutate()) return;
+      const nodes = removableNodes();
+      if (nodes.length) mindMap.execCommand('REMOVE_CURRENT_NODE', nodes);
+    },
+    undo: () => { if (canMutate()) mindMap.execCommand('BACK'); },
+    redo: () => { if (canMutate()) mindMap.execCommand('FORWARD'); },
     fit: () => (mindMap.view as any).fit(),
     resetZoom: () => mindMap.view.reset(),
-    resetLayout: () => mindMap.execCommand('RESET_LAYOUT'),
+    resetLayout: () => { if (canMutate()) mindMap.execCommand('RESET_LAYOUT'); },
     zoomIn: () => mindMap.view.enlarge(undefined, undefined, false),
     zoomOut: () => mindMap.view.narrow(undefined, undefined, false),
-    edit: () => mindMap.renderer.startTextEdit(),
+    edit: () => { if (canMutate()) mindMap.renderer.startTextEdit(); },
     copy: () => (mindMap.renderer as any).copy?.(),
-    cut: () => (mindMap.renderer as any).cut?.(),
-    paste: async () => { await (mindMap.renderer as any).paste?.(); },
+    cut: () => { if (canMutate()) (mindMap.renderer as any).cut?.(); },
+    paste: async () => { if (canMutate()) await (mindMap.renderer as any).paste?.(); },
     getActiveNodes: activeNodes,
     getPrimaryNode: primaryNode,
     getPrimaryNodeData: () => primaryNode()?.getData?.() ?? null,
     getSelectedText: () => {
-      const richText = (mindMap as any).richText;
-      const range = richText?.range ?? richText?.lastRange;
-      if (!range || !richText?.quill?.getText) return '';
-      return String(richText.quill.getText(range.index, range.length) ?? '').trim();
+      const editor = richText();
+      const range = richRange();
+      if (!range || !editor?.quill?.getText) return '';
+      return String(editor.quill.getText(range.index, range.length) ?? '').trim();
     },
     getSelectedInlineLink: () => {
-      const richText = (mindMap as any).richText;
-      const range = richText?.range ?? richText?.lastRange;
-      if (!range || !richText?.quill?.getFormat) return '';
-      const link = richText.quill.getFormat(range.index, range.length)?.link;
+      const editor = richText();
+      const range = richRange();
+      if (!range || !editor?.quill?.getFormat) return '';
+      const link = editor.quill.getFormat(range.index, range.length)?.link;
       return typeof link === 'string' ? link : '';
     },
-    setInlineLink: (link) => (mindMap as any).richText?.formatText?.({ link: link || false }),
+    setInlineLink: (link) => {
+      if (canMutate() && hasRichTextSelection()) richText()?.formatText?.({ link: link || false });
+    },
     toggleInlineCode: () => {
-      const richText = (mindMap as any).richText;
-      const range = richText?.range ?? richText?.lastRange;
-      if (!range || !richText?.quill?.getFormat) return;
-      const current = Boolean(richText.quill.getFormat(range.index, range.length)?.code);
-      richText.formatText?.({ code: !current });
+      if (!canMutate() || !hasRichTextSelection()) return;
+      const editor = richText();
+      const range = richRange();
+      if (!range || !editor?.quill?.getFormat) return;
+      const current = Boolean(editor.quill.getFormat(range.index, range.length)?.code);
+      editor.formatText?.({ code: !current });
     },
     getCodeBlock: () => {
-      const richText = (mindMap as any).richText;
-      const range = richText?.range ?? richText?.lastRange;
-      return richText?.quill ? findCurrentCodeBlock(richText.quill, range) : null;
+      const editor = richText();
+      const range = richRange();
+      return editor?.quill ? findCurrentCodeBlock(editor.quill, range) : null;
     },
     saveCodeBlock: (code, language = 'plain') => {
-      const richText = (mindMap as any).richText;
-      const quill = richText?.quill;
-      const range = richText?.range ?? richText?.lastRange;
+      if (!canMutate()) return;
+      const editor = richText();
+      const quill = editor?.quill;
+      const range = richRange();
       if (!quill || !range) return;
       const existing = findCurrentCodeBlock(quill, range);
       replaceCodeBlock(quill, existing ?? range, code, language);
     },
     removeCodeBlockFormat: () => {
-      const richText = (mindMap as any).richText;
-      const range = richText?.range ?? richText?.lastRange;
-      const block = richText?.quill ? findCurrentCodeBlock(richText.quill, range) : null;
-      if (block) removeCodeBlockFormat(richText.quill, block);
+      if (!canMutate()) return;
+      const editor = richText();
+      const range = richRange();
+      const block = editor?.quill ? findCurrentCodeBlock(editor.quill, range) : null;
+      if (block) removeCodeBlockFormat(editor.quill, block);
     },
     deleteCodeBlock: () => {
-      const richText = (mindMap as any).richText;
-      const range = richText?.range ?? richText?.lastRange;
-      const block = richText?.quill ? findCurrentCodeBlock(richText.quill, range) : null;
-      if (block) deleteCodeBlock(richText.quill, block);
+      if (!canMutate()) return;
+      const editor = richText();
+      const range = richRange();
+      const block = editor?.quill ? findCurrentCodeBlock(editor.quill, range) : null;
+      if (block) deleteCodeBlock(editor.quill, block);
     },
-    setTags: (tags) => forEachActive((node) => mindMap.execCommand('SET_NODE_TAG', node, tags)),
-    setIcons: (icons) => forEachActive((node) => mindMap.execCommand('SET_NODE_ICON', node, icons)),
-    setLink: (link, title = '') => forEachActive((node) => mindMap.execCommand('SET_NODE_HYPERLINK', node, link, title)),
-    setImage: (image) => forEachActive((node) => mindMap.execCommand('SET_NODE_IMAGE', node, image)),
+    setTags: (tags) => { if (canMutate()) forEachActive((node) => mindMap.execCommand('SET_NODE_TAG', node, tags)); },
+    setIcons: (icons) => { if (canMutate()) forEachActive((node) => mindMap.execCommand('SET_NODE_ICON', node, icons)); },
+    setLink: (link, title = '') => { if (canMutate()) forEachActive((node) => mindMap.execCommand('SET_NODE_HYPERLINK', node, link, title)); },
+    setImage: (image) => { if (canMutate()) forEachActive((node) => mindMap.execCommand('SET_NODE_IMAGE', node, image)); },
     insertFormula: (formula, mode = 'inline') => {
-      const richText = (mindMap as any).richText;
-      const quill = richText?.quill;
-      const range = richText?.range ?? richText?.lastRange;
+      if (!canMutate()) return;
+      const editor = richText();
+      const quill = editor?.quill;
+      const range = richRange();
       const value = mode === 'block' ? `\\displaystyle{${formula}}` : formula;
       if (quill && range) {
         if (range.length > 0) quill.deleteText(range.index, range.length);
@@ -171,13 +202,16 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       }
       mindMap.execCommand('INSERT_FORMULA', value);
     },
-    addSummary: () => mindMap.execCommand('ADD_GENERALIZATION'),
+    addSummary: () => { if (canMutate()) mindMap.execCommand('ADD_GENERALIZATION'); },
     removeSummary: () => {
+      if (!canMutate()) return;
       const node = primaryNode();
       if (!node) return;
-      mindMap.execCommand(node.isGeneralization ? 'REMOVE_NODE' : 'REMOVE_GENERALIZATION');
+      if (node.isGeneralization) mindMap.execCommand('REMOVE_NODE', [node]);
+      else mindMap.execCommand('REMOVE_GENERALIZATION');
     },
     startRelation: () => {
+      if (!canMutate()) return false;
       const relation = (mindMap as any).associativeLine;
       relation?.createLineFromActiveNode?.();
       return Boolean(relation?.isCreatingLine);
@@ -189,13 +223,15 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       if (relation?.isCreatingLine) relation.cancelCreateLine?.();
     },
     editActiveRelationText: () => {
+      if (!canMutate()) return;
       const relation = (mindMap as any).associativeLine;
       const textGroup = relation?.activeLine?.[2];
       if (textGroup) relation.showEditTextBox?.(textGroup);
     },
-    removeActiveRelation: () => (mindMap as any).associativeLine?.removeLine?.(),
+    removeActiveRelation: () => { if (canMutate()) (mindMap as any).associativeLine?.removeLine?.(); },
     getTodo: () => (primaryNode()?.getData?.('yemindTodo') ?? null) as NodeTodo | null,
     toggleTodo: () => {
+      if (!canMutate()) return;
       const node = primaryNode();
       if (!node) return;
       const todo = nextTodo(node.getData?.('yemindTodo'));
@@ -203,21 +239,25 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       (mindMap as any).render?.();
     },
     setTodo: (todo) => {
+      if (!canMutate()) return;
       forEachActive((node) => mindMap.execCommand('SET_NODE_DATA', node, { yemindTodo: todo }));
       (mindMap as any).render?.();
     },
     setComments: (comments) => {
+      if (!canMutate()) return;
       const node = primaryNode();
       if (!node) return;
       mindMap.execCommand('SET_NODE_DATA', node, { yemindComments: comments });
       (mindMap as any).render?.();
     },
-    formatText: (config) => (mindMap as any).richText?.formatText?.(config),
-    clearTextFormat: () => (mindMap as any).richText?.removeFormat?.(),
-    setCloze: (enabled) => (mindMap as any).richText?.formatText?.(enabled
-      ? { background: '#f5dfa0', color: 'transparent' }
-      : { background: false, color: false }),
-
+    formatText: (config) => { if (canMutate() && hasRichTextSelection()) richText()?.formatText?.(config); },
+    clearTextFormat: () => { if (canMutate() && hasRichTextSelection()) richText()?.removeFormat?.(); },
+    setCloze: (enabled) => {
+      if (!canMutate() || !hasRichTextSelection()) return;
+      richText()?.formatText?.(enabled
+        ? { background: '#f5dfa0', color: 'transparent' }
+        : { background: false, color: false });
+    },
     search: (text) => (mindMap as any).search?.search?.(text),
     searchNext: () => {
       const search = (mindMap as any).search;
@@ -231,8 +271,8 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       const current = Number(search.currentIndex ?? 0);
       search.jump((current - 1 + total) % total);
     },
-    replaceSearch: (text) => (mindMap as any).search?.replace?.(text, true),
-    replaceSearchAll: (text) => (mindMap as any).search?.replaceAll?.(text),
+    replaceSearch: (text) => { if (canMutate()) (mindMap as any).search?.replace?.(text, true); },
+    replaceSearchAll: (text) => { if (canMutate()) (mindMap as any).search?.replaceAll?.(text); },
     endSearch: () => (mindMap as any).search?.endSearch?.(),
     goToNode: (uid) => mindMap.execCommand('GO_TARGET_NODE', uid),
   };

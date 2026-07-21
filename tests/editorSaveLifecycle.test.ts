@@ -13,4 +13,12 @@ describe('editor save lifecycle', () => {
     expect(destroyBody.indexOf('this.flushPendingSave()')).toBeLessThan(destroyBody.indexOf('this.destroyed = true'));
     expect(destroyBody.indexOf('this.flushPendingSave()')).toBeLessThan(destroyBody.indexOf('this.map?.destroy()'));
   });
+
+  it('retries dirty data on close even when no autosave timer remains', () => {
+    const flushStart = source.indexOf('private flushPendingSave()');
+    const flushEnd = source.indexOf('private async persist', flushStart);
+    const flushBody = source.slice(flushStart, flushEnd);
+    expect(flushBody).toContain('this.saveRevisions.isDirty()');
+    expect(flushBody).not.toContain('this.saveTimer === null ||');
+  });
 });

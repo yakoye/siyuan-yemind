@@ -38,3 +38,26 @@ describe('restored tab startup', () => {
     expect(mount).not.toHaveBeenCalled();
   });
 });
+
+it('reports a mount failure instead of leaving an unhandled rejected promise', async () => {
+  const onError = vi.fn();
+  const state = { destroyed: false };
+
+  await mountAfterReady(
+    state,
+    Promise.resolve(),
+    () => ({ id: 'map-1' }),
+    () => { throw new Error('editor failed'); },
+    onError,
+  );
+
+  expect(onError).toHaveBeenCalledOnce();
+  expect(onError.mock.calls[0][0]).toBeInstanceOf(Error);
+});
+
+
+it('cleans a registered tab handle when editor mounting fails', () => {
+  const source = require('node:fs').readFileSync(require('node:path').resolve(process.cwd(), 'src/plugin/tabs.ts'), 'utf8');
+  expect(source).toContain('state.unregister?.();');
+  expect(source).toContain('state.unregister = undefined;');
+});

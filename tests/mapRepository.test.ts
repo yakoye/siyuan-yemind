@@ -175,3 +175,63 @@ it('serializes writes so an older save cannot overwrite a newer snapshot', async
   await Promise.all([creating, renaming]);
   expect(repo.get('queued-map')?.title).toBe('新标题');
 });
+
+describe('MapRepository transactional persistence', () => {
+  it('keeps the previous map when delete persistence fails', async () => {
+    let fail = false;
+    let value: any = null;
+    const repo = new MapRepository({
+      load: async () => value,
+      save: async (next) => {
+        if (fail) throw new Error('disk full');
+        value = structuredClone(next);
+      },
+    }, { id: () => 'stable-map', now: () => 7000 });
+    await repo.load();
+    await repo.create('稳定导图');
+    fail = true;
+
+    await expect(repo.remove('stable-map')).rejects.toThrow('disk full');
+    expect(repo.get('stable-map')?.title).toBe('稳定导图');
+    expect(repo.getActiveMapId()).toBe('stable-map');
+  });
+
+  it('keeps the previous title and data when update persistence fails', async () => {
+    let fail = false;
+    let value: any = null;
+    const repo = new MapRepository({
+      load: async () => value,
+      save: async (next) => {
+        if (fail) throw new Error('write failed');
+        value = structuredClone(next);
+      },
+    }, { id: () => 'stable-map', now: () => 7100 });
+    await repo.load();
+    await repo.create('旧标题');
+    const before = repo.get('stable-map')!;
+    fail = true;
+
+    await expect(repo.rename('stable-map', '新标题')).rejects.toThrow('write failed');
+    await expect(repo.update('stable-map', {
+      data: { data: { text: '变更' }, children: [] },
+    })).rejects.toThrow('write failed');
+
+    expect(repo.get('stable-map')).toEqual(before);
+  });
+
+  it('creates a new map with its default layout in one persisted transaction', async () => {
+    const saves: any[] = [];
+    const repo = new MapRepository({
+      load: async () => null,
+      save: async (next) => { saves.push(structuredClone(next)); },
+    }, { id: () => 'layout-map', now: () => 7200 });
+    await repo.load();
+
+    const map = await repo.create('双向图', 'mindMap');
+
+    expect(map.layout).toBe('mindMap');
+    expect(repo.get('layout-map')?.layout).toBe('mindMap');
+    expect(saves).toHaveLength(1);
+    expect(saves[0].maps[0].layout).toBe('mindMap');
+  });
+});

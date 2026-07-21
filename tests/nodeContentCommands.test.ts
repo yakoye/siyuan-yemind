@@ -18,7 +18,7 @@ function fakeMindMap() {
       activeNodeList: [active],
       toggleActiveExpand: vi.fn(),
     },
-    richText: { formatText: vi.fn() },
+    richText: { range: { index: 0, length: 1 }, formatText: vi.fn() },
     associativeLine: { createLineFromActiveNode: vi.fn() },
   };
 }

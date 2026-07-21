@@ -187,6 +187,7 @@ function normalizeSettings(value: Partial<YeMindSettings>): YeMindSettings {
 export class SettingsStore {
   private state: YeMindSettings = { ...DEFAULT_SETTINGS };
   private readonly listeners = new Set<Listener>();
+  private updateQueue: Promise<void> = Promise.resolve();
 
   constructor(private readonly storage: SettingsStorage) {}
 
@@ -202,10 +203,16 @@ export class SettingsStore {
     return { ...this.state, shortcutMap: { ...this.state.shortcutMap } };
   }
 
-  async update(patch: Partial<YeMindSettings>): Promise<void> {
-    this.state = normalizeSettings({ ...this.state, ...patch });
-    await this.storage.save(this.get());
-    this.emit();
+  update(patch: Partial<YeMindSettings>): Promise<void> {
+    const operation = this.updateQueue.then(async () => {
+      const next = normalizeSettings({ ...this.state, ...patch });
+      const snapshot = { ...next, shortcutMap: { ...next.shortcutMap } };
+      await this.storage.save(snapshot);
+      this.state = next;
+      this.emit();
+    });
+    this.updateQueue = operation.catch(() => undefined);
+    return operation;
   }
 
   subscribe(listener: Listener): () => void {

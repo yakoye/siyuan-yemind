@@ -8,6 +8,7 @@ import {
   type YeMindSettings,
 } from './SettingsStore';
 import { createSettingsDialogTemplate, SHORTCUT_ROWS } from './settingsDialogTemplate';
+import { saveSettingsDraft } from './saveSettingsDraft';
 
 function cloneSettings(settings: YeMindSettings): YeMindSettings {
   return { ...settings, shortcutMap: { ...settings.shortcutMap } };
@@ -20,17 +21,20 @@ function setControlValue(control: HTMLInputElement | HTMLSelectElement, value: u
 
 export function openYeMindSettingsDialog(store: SettingsStore): void {
   let draft = cloneSettings(store.get());
+  let recordingCleanup: (() => void) | null = null;
   const dialog = new Dialog({
     title: 'YeMind Zen 设置',
     content: createSettingsDialogTemplate(draft),
     width: '880px',
     height: '78vh',
+    destroyCallback: () => recordingCleanup?.(),
   });
 
   const shell = dialog.element.querySelector<HTMLElement>('.ymz-settings-shell');
   if (!shell) return;
   const saveButton = shell.querySelector<HTMLButtonElement>('[data-settings-action="save"]');
-  let recordingCleanup: (() => void) | null = null;
+  let hasShortcutConflict = false;
+  let saving = false;
 
   const refreshConflicts = (): void => {
     const conflicts = findShortcutConflicts(draft.shortcutMap);
@@ -44,8 +48,9 @@ export function openYeMindSettingsDialog(store: SettingsStore): void {
       if (hint) hint.textContent = targets.length > 0 ? `与“${labels.join('、')}”冲突` : '';
       if (targets.length > 0) hasConflict = true;
     });
+    hasShortcutConflict = hasConflict;
     if (saveButton) {
-      saveButton.disabled = hasConflict;
+      saveButton.disabled = saving || hasConflict;
       saveButton.title = hasConflict ? '请先解决快捷键冲突' : '';
     }
   };
@@ -155,11 +160,23 @@ export function openYeMindSettingsDialog(store: SettingsStore): void {
     refreshControls();
     showMessage('已恢复默认值，点击“保存”后生效');
   });
-  saveButton?.addEventListener('click', () => {
-    if (saveButton.disabled) return;
+  saveButton?.addEventListener('click', async () => {
+    if (saving || saveButton.disabled) return;
     recordingCleanup?.();
-    void store.update(draft);
-    dialog.destroy();
+    const originalText = saveButton.textContent ?? '保存';
+    saving = true;
+    saveButton.disabled = true;
+    saveButton.textContent = '保存中…';
+    try {
+      await saveSettingsDraft(store, cloneSettings(draft));
+      dialog.destroy();
+    } catch (error) {
+      console.error('[YeMind Zen] settings save failed', error);
+      showMessage('YeMind Zen 设置保存失败，请检查存储后重试', 5000, 'error');
+      saving = false;
+      saveButton.textContent = originalText;
+      saveButton.disabled = hasShortcutConflict;
+    }
   });
 
   refreshConflicts();

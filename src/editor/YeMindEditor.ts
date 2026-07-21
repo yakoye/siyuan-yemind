@@ -11,15 +11,18 @@ import { MapRepository } from '../model/MapRepository';
 import type { MindMapTree, YeMindMapDocument } from '../model/types';
 import type { SettingsStore, ShortcutCommand, ViewMode, YeMindSettings } from '../settings/SettingsStore';
 import { openNodeContextMenu } from '../ui/contextMenu';
-import { openCommentsDialog, openFormulaDialog } from '../ui/nodeContentDialogs';
+import { openCommentsDialog, openFormulaDialog, openLinkDialog } from '../ui/nodeContentDialogs';
 import { openCodeBlockDialog, openInlineLinkDialog } from '../ui/richTextDialogs';
 import { calculateEditorStats } from './editorStats';
 import { createEditorTemplate } from './editorTemplate';
 import { renderOutlineHtml } from './outline';
 import { RichTextToolbar } from './RichTextToolbar';
 import { isEditableTarget, matchesShortcut } from './shortcuts';
-import { createSelectionPresentation } from './selectionPresentation';
+import { createSelectionPresentation, promoteNodeToPrimary, shouldBlockRootDeleteShortcut } from './selectionPresentation';
+import { SaveRevisionTracker } from './saveRevision';
 import { createRelationPresentation } from './relationPresentation';
+import { createToolbarAvailability } from './toolbarAvailability';
+import { resolveLinkNavigation } from './linkNavigation';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -33,6 +36,7 @@ export class YeMindEditor {
   private map: MindMap | null = null;
   private commands: YeMindCommands | null = null;
   private saveTimer: number | null = null;
+  private readonly saveRevisions = new SaveRevisionTracker();
   private repositoryUnsubscribe: (() => void) | null = null;
   private settingsUnsubscribe: (() => void) | null = null;
   private destroyed = false;
@@ -56,7 +60,6 @@ export class YeMindEditor {
   private settingsInitialized = false;
   private viewMode: ViewMode = 'map';
   private searchText = '';
-  private restoredViewOnOpen = false;
 
   private readonly onRootKeydown = (event: KeyboardEvent): void => {
     if (event.key === 'Escape' && this.commands?.isRelationCreating()) {
@@ -72,6 +75,12 @@ export class YeMindEditor {
       return;
     }
     if (!this.commands || isEditableTarget(event.target)) return;
+    if (shouldBlockRootDeleteShortcut(event.key, this.commands.getActiveNodes())) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      showMessage('根节点不能删除；请选择普通节点后再删除', 3000, 'info');
+      return;
+    }
 
     const actions: Array<[ShortcutCommand, () => void]> = [
       ['search', () => this.openSearchPanel()],
@@ -82,7 +91,7 @@ export class YeMindEditor {
       ['fit', () => this.commands?.fit()],
       ['reset', () => this.commands?.resetZoom()],
       ['addParent', () => this.commands?.addParent()],
-      ['comments', () => { if (this.commands?.getPrimaryNode()) openCommentsDialog(this.commands); }],
+      ['comments', () => { if (this.commands?.getPrimaryNode() && !this.commands.isReadonly()) openCommentsDialog(this.commands); }],
       ['summary', () => this.commands?.addSummary()],
       ['relation', () => this.beginRelation()],
     ];
@@ -143,13 +152,15 @@ export class YeMindEditor {
     runtimeData = sanitized.tree;
     if (normalized.changed || sanitized.changed) {
       this.current.data = runtimeData;
-      void this.options.repository.update(this.current.id, { data: runtimeData });
+      void this.options.repository.update(this.current.id, { data: runtimeData }).catch((error) => {
+        console.error('[YeMind Zen] migrated data save failed', error);
+        showMessage('导图兼容数据保存失败，请勿立即关闭该标签', 5000, 'error');
+      });
     }
     const runtimeViewData = this.settings.restoreSavedView
       ? normalizePersistedViewData(this.current.viewData)
       : undefined;
     if (this.current.viewData && !runtimeViewData) this.current.viewData = undefined;
-    this.restoredViewOnOpen = Boolean(runtimeViewData);
 
     this.map = createMindMap({
       el: this.canvasEl,
@@ -158,6 +169,7 @@ export class YeMindEditor {
       theme: this.current.theme,
       layout: this.current.layout,
       settings: this.settings,
+      onHyperlink: (href) => this.openLink(href),
     });
     this.commands = createCommandAdapter(this.map);
     this.richTextToolbar = new RichTextToolbar(this.rootEl, this.commands, {
@@ -191,7 +203,9 @@ export class YeMindEditor {
     this.rootEl.addEventListener('click', (event) => {
       const anchor = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[href]');
       if (anchor && this.rootEl.contains(anchor)) {
-        this.openInlineLink(event, anchor.href || anchor.getAttribute('href') || '');
+        event.preventDefault();
+        event.stopPropagation();
+        this.openLink(anchor.href || anchor.getAttribute('href') || '');
         return;
       }
 
@@ -211,8 +225,8 @@ export class YeMindEditor {
       const relationButton = (event.target as HTMLElement).closest<HTMLElement>('[data-relation-action]');
       if (relationButton && this.commands) {
         const relationAction = relationButton.dataset.relationAction;
-        if (relationAction === 'edit') this.commands.editActiveRelationText();
-        if (relationAction === 'delete') this.commands.removeActiveRelation();
+        if (relationAction === 'edit' && !this.commands.isReadonly()) this.commands.editActiveRelationText();
+        if (relationAction === 'delete' && !this.commands.isReadonly()) this.commands.removeActiveRelation();
         if (relationAction === 'cancel') this.commands.cancelRelation();
         this.updateRelationPresentation();
         return;
@@ -313,17 +327,28 @@ export class YeMindEditor {
     this.map.on('yemind_todo_toggle', (node: any) => {
       if (!this.commands) return;
       this.activateNode(node);
+      if (this.commands.isReadonly()) {
+        showMessage('只读模式下不能修改待办', 2500, 'info');
+        return;
+      }
       this.commands.toggleTodo();
     });
     this.map.on('yemind_badge_click', (type: 'todo' | 'comments', node: any) => {
       if (!this.commands) return;
       this.activateNode(node);
-      if (type === 'todo') this.commands.toggleTodo();
-      if (type === 'comments') openCommentsDialog(this.commands);
+      if (type === 'todo') {
+        if (this.commands.isReadonly()) {
+          showMessage('只读模式下不能修改待办', 2500, 'info');
+          return;
+        }
+        this.commands.toggleTodo();
+      }
+      if (type === 'comments') openCommentsDialog(this.commands, { readonly: this.commands.isReadonly() });
     });
     this.map.on('node_active', (node: any, list: any[]) => {
       this.rootEl.dataset.hasSelection = list.length > 0 ? 'true' : 'false';
       this.updateSelectionPresentation(list.length);
+      this.updateToolbarAvailability();
       const active = node ?? list[0];
       const uid = active?.getData?.('uid');
       this.activateOutlineUid(uid ? String(uid) : '');
@@ -341,6 +366,7 @@ export class YeMindEditor {
     openNodeContextMenu(event, this.commands, {
       onInlineLink: () => openInlineLinkDialog(this.commands!, this.settings),
       onCodeBlock: () => openCodeBlockDialog(this.commands!, this.settings),
+      onNodeLink: () => openLinkDialog(this.commands!, this.settings.inlineLinkAutoHttps),
       onRelation: () => this.beginRelation(),
     });
   }
@@ -369,7 +395,7 @@ export class YeMindEditor {
   private applySettings(settings: YeMindSettings): void {
     const firstApply = !this.settingsInitialized;
     this.settings = settings;
-    this.richTextToolbar?.setEnabled(settings.showRichTextToolbar);
+    this.richTextToolbar?.setEnabled(settings.showRichTextToolbar && this.rootEl.dataset.readonly !== 'true');
     configureMindMapPlugins(settings);
     configureNodeDecorations({
       showTodoBadge: settings.showTodoBadge,
@@ -407,13 +433,44 @@ export class YeMindEditor {
       this.setViewMode(settings.defaultViewMode);
       this.setReadonly(settings.defaultReadonlyMode);
       this.toggleZen(settings.defaultZenMode);
-      if (settings.autoFitOnOpen && !this.restoredViewOnOpen) window.setTimeout(() => this.commands?.fit(), 0);
     }
   }
 
   private async toggleSelectionMode(): Promise<void> {
     const nextMode = this.settings.canvasMode === 'select' ? 'pan' : 'select';
-    await this.options.settingsStore.update({ canvasMode: nextMode });
+    try {
+      await this.options.settingsStore.update({ canvasMode: nextMode });
+    } catch (error) {
+      console.error('[YeMind Zen] canvas mode save failed', error);
+      showMessage('画布操作模式保存失败，已保持原设置', 4000, 'error');
+    }
+  }
+
+  private updateToolbarAvailability(): void {
+    if (!this.commands || !this.rootEl) return;
+    const nodes = this.commands.getActiveNodes();
+    const primary = nodes[0];
+    const state = createToolbarAvailability({
+      readonly: this.commands.isReadonly(),
+      selectedCount: nodes.length,
+      primaryIsRoot: Boolean(primary?.isRoot),
+      primaryIsGeneralization: Boolean(primary?.isGeneralization),
+      hasRemovableSelection: nodes.some((node) => !node?.isRoot),
+    });
+    const actionState: Record<string, boolean> = {
+      undo: state.undo,
+      redo: state.redo,
+      'add-child': state.addChild,
+      'add-sibling': state.addSibling,
+      remove: state.remove,
+      'reset-layout': state.resetLayout,
+    };
+    this.rootEl.querySelectorAll<HTMLButtonElement>('button[data-action]').forEach((button) => {
+      const action = button.dataset.action ?? '';
+      if (Object.prototype.hasOwnProperty.call(actionState, action)) button.disabled = !actionState[action];
+    });
+    const layout = this.rootEl.querySelector<HTMLSelectElement>('[data-action="layout"]');
+    if (layout) layout.disabled = !state.layout;
   }
 
   private updateSelectionPresentation(count?: number): void {
@@ -508,23 +565,28 @@ export class YeMindEditor {
     this.searchInfoEl.textContent = `${current} / ${Math.max(0, info.total)}`;
   }
 
-  private openInlineLink(event: Event, href: string): void {
+  private openLink(href: string): void {
     if (!href || href === 'about:blank') return;
-    event.preventDefault();
-    event.stopPropagation();
-    if (href.toLowerCase().startsWith('siyuan://')) {
-      window.location.href = href;
+    const navigation = resolveLinkNavigation(href, this.settings.externalLinkMode);
+    if (!navigation) {
+      showMessage('链接地址无效或协议不受支持', 3000, 'error');
       return;
     }
-    if (this.settings.externalLinkMode === 'current-window') window.location.href = href;
-    else window.open(href, '_blank', 'noopener,noreferrer');
+    if (navigation.target === 'siyuan' || navigation.target === 'current-window') {
+      window.location.href = navigation.href;
+      return;
+    }
+    window.open(navigation.href, '_blank', 'noopener,noreferrer');
   }
 
   private activateNode(node: any): void {
     if (!this.map || !node) return;
     const renderer = (this.map as any).renderer;
     const activeList = Array.isArray(renderer?.activeNodeList) ? renderer.activeNodeList : [];
-    if (activeList.includes(node)) return;
+    if (activeList.includes(node)) {
+      promoteNodeToPrimary(renderer, node);
+      return;
+    }
     renderer?.clearActiveNodeList?.();
     if (typeof node.active === 'function') node.active();
     else renderer?.addNodeToActiveList?.(node);
@@ -532,38 +594,43 @@ export class YeMindEditor {
 
   private scheduleSave(): void {
     if (this.destroyed) return;
+    const revision = this.saveRevisions.markChanged();
     this.saveStateEl.textContent = '保存中…';
     if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.saveTimer = window.setTimeout(() => {
       this.saveTimer = null;
-      void this.persist();
+      void this.persist(revision);
     }, this.settings.autosaveDelayMs);
   }
 
-
   private flushPendingSave(): void {
-    if (this.saveTimer === null || !this.map || this.destroyed) return;
-    window.clearTimeout(this.saveTimer);
+    if (!this.map || this.destroyed || !this.saveRevisions.isDirty()) return;
+    if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.saveTimer = null;
-    void this.persist();
+    void this.persist(this.saveRevisions.current());
   }
 
-  private async persist(): Promise<void> {
+  private async persist(revision: number): Promise<void> {
     if (!this.map || this.destroyed) return;
     try {
       const sanitized = sanitizeAssociativeLines(this.map.getData(false) as MindMapTree);
-      this.current.data = sanitized.tree;
-      await this.options.repository.update(this.current.id, {
+      const patch = {
         data: sanitized.tree,
         layout: this.map.getLayout(),
         theme: this.map.getTheme(),
         viewData: normalizePersistedViewData(this.map.view.getTransformData()),
-      });
-      if (!this.destroyed) this.saveStateEl.textContent = '已保存';
+      };
+      this.current.data = sanitized.tree;
+      await this.options.repository.update(this.current.id, patch);
+      if (!this.destroyed && this.saveRevisions.markSaved(revision)) {
+        this.saveStateEl.textContent = '已保存';
+      }
     } catch (error) {
       console.error('[YeMind Zen] save failed', error);
-      if (!this.destroyed) this.saveStateEl.textContent = '保存失败';
-      showMessage('YeMind Zen 保存失败', 5000, 'error');
+      if (!this.destroyed && revision === this.saveRevisions.current()) {
+        this.saveStateEl.textContent = '保存失败';
+        showMessage('YeMind Zen 保存失败', 5000, 'error');
+      }
     }
   }
 
@@ -582,8 +649,20 @@ export class YeMindEditor {
     this.rootEl.dataset.readonly = String(enabled);
     this.rootEl.querySelectorAll<HTMLElement>('[data-action="readonly"]').forEach((button) => {
       button.classList.toggle('is-active', enabled);
+      button.setAttribute('aria-pressed', String(enabled));
     });
+    this.replaceInputEl.disabled = enabled;
+    this.rootEl.querySelectorAll<HTMLButtonElement>('[data-search-action="replace"], [data-search-action="replace-all"]').forEach((button) => {
+      button.disabled = enabled;
+    });
+    this.relationPanelEl.querySelectorAll<HTMLButtonElement>('[data-relation-action="edit"], [data-relation-action="delete"]').forEach((button) => {
+      button.disabled = enabled;
+    });
+    if (enabled && this.commands?.isRelationCreating()) this.commands.cancelRelation();
+    this.richTextToolbar?.setEnabled(this.settings.showRichTextToolbar && !enabled);
     this.map.setMode(enabled ? 'readonly' : 'edit');
+    this.updateToolbarAvailability();
+    this.updateRelationPresentation();
   }
 
   private toggleZen(enabled: boolean): void {
@@ -591,8 +670,13 @@ export class YeMindEditor {
   }
 
   private async toggleFullscreen(): Promise<void> {
-    if (document.fullscreenElement) await document.exitFullscreen();
-    else await this.rootEl.requestFullscreen();
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await this.rootEl.requestFullscreen();
+    } catch (error) {
+      console.error('[YeMind Zen] fullscreen failed', error);
+      showMessage('当前环境无法切换全屏', 3000, 'error');
+    }
   }
 
   private openHelp(): void {

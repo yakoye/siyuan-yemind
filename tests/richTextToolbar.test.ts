@@ -54,3 +54,53 @@ describe('RichTextToolbar', () => {
     root.remove();
   });
 });
+
+it('keeps the toolbar open while a color or select control temporarily owns focus', () => {
+  const root = document.createElement('div');
+  document.body.appendChild(root);
+  const toolbar = new RichTextToolbar(root, commands());
+  toolbar.update(true, { left: 1, top: 1, right: 2, bottom: 2, width: 1 }, {});
+  const size = document.body.querySelector<HTMLSelectElement>('[data-rich-field="size"]')!;
+  size.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+  toolbar.update(false, null, null);
+  expect(document.body.querySelector('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(false);
+  toolbar.destroy();
+  root.remove();
+});
+
+it('routes every visible formatting control to the command adapter', () => {
+  const root = document.createElement('div');
+  document.body.appendChild(root);
+  const actions = commands();
+  const onFormula = vi.fn();
+  const toolbar = new RichTextToolbar(root, actions, { onFormula });
+  toolbar.update(true, { left: 20, top: 20, right: 80, bottom: 40, width: 60 }, {});
+
+  const color = document.body.querySelector<HTMLInputElement>('[data-rich-field="color"]')!;
+  color.value = '#123456';
+  color.dispatchEvent(new Event('input', { bubbles: true }));
+  const background = document.body.querySelector<HTMLInputElement>('[data-rich-field="background"]')!;
+  background.value = '#abcdef';
+  background.dispatchEvent(new Event('input', { bubbles: true }));
+  const size = document.body.querySelector<HTMLSelectElement>('[data-rich-field="size"]')!;
+  size.value = '18px';
+  size.dispatchEvent(new Event('change', { bubbles: true }));
+  const font = document.body.querySelector<HTMLSelectElement>('[data-rich-field="font"]')!;
+  font.value = 'serif';
+  font.dispatchEvent(new Event('change', { bubbles: true }));
+  document.body.querySelector<HTMLButtonElement>('[data-rich-action="cloze"]')!.click();
+  document.body.querySelector<HTMLButtonElement>('[data-rich-action="clear"]')!.click();
+  toolbar.update(true, { left: 20, top: 20, right: 80, bottom: 40, width: 60 }, {});
+  document.body.querySelector<HTMLButtonElement>('[data-rich-action="formula"]')!.click();
+
+  expect(actions.formatText).toHaveBeenCalledWith({ color: '#123456' });
+  expect(actions.formatText).toHaveBeenCalledWith({ background: '#abcdef' });
+  expect(actions.formatText).toHaveBeenCalledWith({ size: '18px' });
+  expect(actions.formatText).toHaveBeenCalledWith({ font: 'serif' });
+  expect(actions.setCloze).toHaveBeenCalledWith(true);
+  expect(actions.clearTextFormat).toHaveBeenCalledOnce();
+  expect(onFormula).toHaveBeenCalledOnce();
+
+  toolbar.destroy();
+  root.remove();
+});

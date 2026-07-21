@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.6 — 2026-07-17
+
+- Performed a stability-only regression pass without adding new features.
+- Added complete context-menu surface coverage and corrected availability for read-only, root, generalization, rich-text selection, and code-block states.
+- Hardened root deletion, targeted summary deletion, and right-click primary-node promotion during multi-selection.
+- Registered the complete Quill font and size attributors and preserved rich-text selections while toolbar controls are used.
+- Unified node hyperlinks and inline links under the same protocol validation and configured external-window behavior through the upstream `customHyperlinkJump` hook.
+- Made map creation, rename, update, deletion, and settings persistence transactional so failed storage writes do not mutate committed in-memory state.
+- Serialized saves and settings updates, prevented stale autosave completions from reporting newer data as saved, and retried dirty editor data when closing.
+- Deferred restored-tab mounting until storage readiness, cleaned failed registrations, and made repeated tab-close requests idempotent.
+- Added safe local-image loading with visible failure reporting instead of unhandled promise rejection.
+- Kept node/subtree dragging, selection, zoom, fit, view reset, layout, history, summaries, and associative lines on the existing `simple-mind-map` paths.
+- Expanded automated regression coverage for menus, text selection tools, toolbar controls, settings completeness, lifecycle operations, drag/view configuration, and persistence failure paths.
+
 ## 0.5.5 — 2026-07-17
 
 - Completed summary handling by keeping native `ADD_GENERALIZATION` range parsing and adding precise add/remove menu states.

@@ -85,6 +85,7 @@ class MapRepository {
     __publicField(this, "loaded", false);
     __publicField(this, "loadPromise", null);
     __publicField(this, "saveQueue", Promise.resolve());
+    __publicField(this, "mutationQueue", Promise.resolve());
     this.storage = storage;
     this.now = options.now ?? (() => Date.now());
     this.id = options.id ?? (() => {
@@ -131,48 +132,59 @@ class MapRepository {
   }
   async setActiveMap(id) {
     await this.ensureLoaded();
-    this.state.activeMapId = id && this.state.maps.some((map2) => map2.id === id) ? id : null;
-    await this.persist();
+    await this.enqueueMutation((draft) => {
+      const next2 = id && draft.maps.some((map2) => map2.id === id) ? id : null;
+      if (draft.activeMapId === next2) return { changed: false, value: void 0 };
+      draft.activeMapId = next2;
+      return { changed: true, value: void 0 };
+    });
   }
-  async create(title) {
+  async create(title, layout2 = "logicalStructure") {
     await this.ensureLoaded();
-    const map2 = createDefaultMap(title, this.id(), this.now());
-    this.state.maps.push(map2);
-    this.state.activeMapId = map2.id;
-    await this.persist();
-    return clone$2(map2);
+    return this.enqueueMutation((draft) => {
+      const map2 = createDefaultMap(title, this.id(), this.now());
+      map2.layout = layout2 || "logicalStructure";
+      draft.maps.push(map2);
+      draft.activeMapId = map2.id;
+      return { changed: true, value: clone$2(map2) };
+    });
   }
   async rename(id, title) {
     await this.ensureLoaded();
-    const map2 = this.state.maps.find((item) => item.id === id);
-    if (!map2) return;
-    const normalized = title.trim();
-    if (!normalized) return;
-    map2.title = normalized;
-    map2.updatedAt = this.now();
-    await this.persist();
+    await this.enqueueMutation((draft) => {
+      const map2 = draft.maps.find((item) => item.id === id);
+      const normalized = title.trim();
+      if (!map2 || !normalized || normalized === map2.title) return { changed: false, value: void 0 };
+      map2.title = normalized;
+      map2.updatedAt = this.now();
+      return { changed: true, value: void 0 };
+    });
   }
   async update(id, patch) {
     await this.ensureLoaded();
-    const map2 = this.state.maps.find((item) => item.id === id);
-    if (!map2) return;
-    if (patch.data) map2.data = clone$2(patch.data);
-    if (patch.layout) map2.layout = patch.layout;
-    if (patch.theme) map2.theme = patch.theme;
-    if (patch.viewData !== void 0) map2.viewData = clone$2(patch.viewData);
-    map2.updatedAt = this.now();
-    await this.persist();
+    await this.enqueueMutation((draft) => {
+      const map2 = draft.maps.find((item) => item.id === id);
+      if (!map2) return { changed: false, value: void 0 };
+      if (patch.data) map2.data = clone$2(patch.data);
+      if (patch.layout !== void 0) map2.layout = patch.layout;
+      if (patch.theme !== void 0) map2.theme = patch.theme;
+      if (patch.viewData !== void 0) map2.viewData = clone$2(patch.viewData);
+      map2.updatedAt = this.now();
+      return { changed: true, value: void 0 };
+    });
   }
   async remove(id) {
-    var _a, _b;
     await this.ensureLoaded();
-    const index = this.state.maps.findIndex((item) => item.id === id);
-    if (index < 0) return;
-    this.state.maps.splice(index, 1);
-    if (this.state.activeMapId === id) {
-      this.state.activeMapId = ((_a = this.state.maps[index]) == null ? void 0 : _a.id) ?? ((_b = this.state.maps[index - 1]) == null ? void 0 : _b.id) ?? null;
-    }
-    await this.persist();
+    await this.enqueueMutation((draft) => {
+      var _a, _b;
+      const index = draft.maps.findIndex((item) => item.id === id);
+      if (index < 0) return { changed: false, value: void 0 };
+      draft.maps.splice(index, 1);
+      if (draft.activeMapId === id) {
+        draft.activeMapId = ((_a = draft.maps[index]) == null ? void 0 : _a.id) ?? ((_b = draft.maps[index - 1]) == null ? void 0 : _b.id) ?? null;
+      }
+      return { changed: true, value: void 0 };
+    });
   }
   subscribe(listener) {
     this.listeners.add(listener);
@@ -182,10 +194,18 @@ class MapRepository {
   snapshot() {
     return clone$2(this.state);
   }
-  async persist() {
-    const snapshot = this.snapshot();
-    await this.enqueueSave(snapshot);
-    this.emit();
+  enqueueMutation(mutator) {
+    const operation = this.mutationQueue.then(async () => {
+      const draft = this.snapshot();
+      const result = mutator(draft);
+      if (!result.changed) return result.value;
+      await this.enqueueSave(draft);
+      this.state = draft;
+      this.emit();
+      return result.value;
+    });
+    this.mutationQueue = operation.then(() => void 0, () => void 0);
+    return operation;
   }
   enqueueSave(snapshot) {
     const operation = this.saveQueue.then(() => this.storage.save(clone$2(snapshot)));
@@ -456,6 +476,7 @@ class SettingsStore {
   constructor(storage) {
     __publicField(this, "state", { ...DEFAULT_SETTINGS });
     __publicField(this, "listeners", /* @__PURE__ */ new Set());
+    __publicField(this, "updateQueue", Promise.resolve());
     this.storage = storage;
   }
   async load() {
@@ -466,10 +487,16 @@ class SettingsStore {
   get() {
     return { ...this.state, shortcutMap: { ...this.state.shortcutMap } };
   }
-  async update(patch) {
-    this.state = normalizeSettings({ ...this.state, ...patch });
-    await this.storage.save(this.get());
-    this.emit();
+  update(patch) {
+    const operation = this.updateQueue.then(async () => {
+      const next2 = normalizeSettings({ ...this.state, ...patch });
+      const snapshot = { ...next2, shortcutMap: { ...next2.shortcutMap } };
+      await this.storage.save(snapshot);
+      this.state = next2;
+      this.emit();
+    });
+    this.updateQueue = operation.catch(() => void 0);
+    return operation;
   }
   subscribe(listener) {
     this.listeners.add(listener);
@@ -488,7 +515,7 @@ const SHORTCUT_ROWS = [
   { key: "undo", label: "撤销", group: "导图命令" },
   { key: "redo", label: "重做", group: "导图命令" },
   { key: "fit", label: "适配视图", group: "导图命令" },
-  { key: "reset", label: "重置缩放", group: "导图命令" },
+  { key: "reset", label: "重置视图（100%）", group: "导图命令" },
   { key: "addParent", label: "添加父节点", group: "节点命令" },
   { key: "comments", label: "打开批注", group: "节点命令" },
   { key: "summary", label: "概要", group: "节点命令" },
@@ -500,7 +527,7 @@ function escapeHtml$6(value) {
 function checked(value) {
   return value ? " checked" : "";
 }
-function option(value, label, current) {
+function option$1(value, label, current) {
   return `<option value="${escapeHtml$6(value)}"${value === current ? " selected" : ""}>${escapeHtml$6(label)}</option>`;
 }
 function switchRow(title, description, key, value) {
@@ -555,29 +582,29 @@ function createSettingsDialogTemplate(settings) {
         <header><h2>常规</h2><p>修改后点击保存，将应用到所有已打开的 YeMind Zen 标签页。</p></header>
         <div class="ymz-settings-group"><h3>默认视图模式</h3>
           ${selectRow("默认视图", "新打开导图时使用导图、大纲或分屏。", "defaultViewMode", [
-    option("map", "导图", settings.defaultViewMode),
-    option("split", "分屏", settings.defaultViewMode),
-    option("outline", "大纲", settings.defaultViewMode)
+    option$1("map", "导图", settings.defaultViewMode),
+    option$1("split", "分屏", settings.defaultViewMode),
+    option$1("outline", "大纲", settings.defaultViewMode)
   ].join(""))}
           ${selectRow("默认布局", "新建导图时使用的结构。", "defaultLayout", [
-    option("logicalStructure", "向右逻辑图", settings.defaultLayout),
-    option("logicalStructureLeft", "向左逻辑图", settings.defaultLayout),
-    option("mindMap", "双向思维导图", settings.defaultLayout),
-    option("organizationStructure", "组织结构图", settings.defaultLayout),
-    option("catalogOrganization", "目录组织图", settings.defaultLayout)
+    option$1("logicalStructure", "向右逻辑图", settings.defaultLayout),
+    option$1("logicalStructureLeft", "向左逻辑图", settings.defaultLayout),
+    option$1("mindMap", "双向思维导图", settings.defaultLayout),
+    option$1("organizationStructure", "组织结构图", settings.defaultLayout),
+    option$1("catalogOrganization", "目录组织图", settings.defaultLayout)
   ].join(""))}
           ${switchRow("默认禅模式", "隐藏上、左、下三组工具栏。", "defaultZenMode", settings.defaultZenMode)}
           ${switchRow("默认只读模式", "禁止编辑，保留平移、缩放和展开折叠。", "defaultReadonlyMode", settings.defaultReadonlyMode)}
         </div>
         <div class="ymz-settings-group"><h3>画布操作习惯</h3>
           ${selectRow("画布拖拽习惯", "平移优先：左键拖动画布，Ctrl/Cmd + 左键框选；选择优先：左键框选，右键拖动画布。", "canvasMode", [
-    option("pan", "平移优先", settings.canvasMode),
-    option("select", "选择优先", settings.canvasMode)
+    option$1("pan", "平移优先", settings.canvasMode),
+    option$1("select", "选择优先", settings.canvasMode)
   ].join(""))}
           ${selectRow("滚轮行为", "控制滚轮平移和缩放。", "wheelMode", [
-    option("pan", "滚轮平移，Ctrl/Cmd 缩放", settings.wheelMode),
-    option("zoom", "直接缩放", settings.wheelMode),
-    option("none", "关闭滚轮缩放", settings.wheelMode)
+    option$1("pan", "滚轮平移，Ctrl/Cmd 缩放", settings.wheelMode),
+    option$1("zoom", "直接缩放", settings.wheelMode),
+    option$1("none", "关闭滚轮缩放", settings.wheelMode)
   ].join(""))}
           ${switchRow("打开时适配视图", "打开导图后完整显示全部节点。", "autoFitOnOpen", settings.autoFitOnOpen)}
           ${switchRow("恢复上次视图位置", "重新打开时恢复上次缩放比例和画布位置。关闭后使用默认视图。", "restoreSavedView", settings.restoreSavedView)}
@@ -622,25 +649,25 @@ function createSettingsDialogTemplate(settings) {
           ${switchRow("富文本选区工具栏", "选中文字后显示格式、链接、公式和代码工具。", "showRichTextToolbar", settings.showRichTextToolbar)}
           ${switchRow("裸域名自动补 HTTPS", "输入 example.com 时补全为安全链接。", "inlineLinkAutoHttps", settings.inlineLinkAutoHttps)}
           ${selectRow("外部链接打开方式", "思源 siyuan:// 链接不受影响。", "externalLinkMode", [
-    option("new-window", "新窗口打开", settings.externalLinkMode),
-    option("current-window", "当前窗口打开", settings.externalLinkMode)
+    option$1("new-window", "新窗口打开", settings.externalLinkMode),
+    option$1("current-window", "当前窗口打开", settings.externalLinkMode)
   ].join(""))}
           ${selectRow("默认代码语言", "新建代码块时预选。", "defaultCodeLanguage", [
-    option("plain", "纯文本", settings.defaultCodeLanguage),
-    option("javascript", "JavaScript", settings.defaultCodeLanguage),
-    option("typescript", "TypeScript", settings.defaultCodeLanguage),
-    option("python", "Python", settings.defaultCodeLanguage),
-    option("bash", "Bash / Shell", settings.defaultCodeLanguage),
-    option("json", "JSON", settings.defaultCodeLanguage),
-    option("cpp", "C++", settings.defaultCodeLanguage),
-    option("rust", "Rust", settings.defaultCodeLanguage),
-    option("go", "Go", settings.defaultCodeLanguage),
-    option("sql", "SQL", settings.defaultCodeLanguage),
-    option("markdown", "Markdown", settings.defaultCodeLanguage)
+    option$1("plain", "纯文本", settings.defaultCodeLanguage),
+    option$1("javascript", "JavaScript", settings.defaultCodeLanguage),
+    option$1("typescript", "TypeScript", settings.defaultCodeLanguage),
+    option$1("python", "Python", settings.defaultCodeLanguage),
+    option$1("bash", "Bash / Shell", settings.defaultCodeLanguage),
+    option$1("json", "JSON", settings.defaultCodeLanguage),
+    option$1("cpp", "C++", settings.defaultCodeLanguage),
+    option$1("rust", "Rust", settings.defaultCodeLanguage),
+    option$1("go", "Go", settings.defaultCodeLanguage),
+    option$1("sql", "SQL", settings.defaultCodeLanguage),
+    option$1("markdown", "Markdown", settings.defaultCodeLanguage)
   ].join(""))}
           ${selectRow("代码 Tab 宽度", "代码编辑器与节点代码块缩进宽度。", "codeBlockTabSize", [
-    option("2", "2 个空格", String(settings.codeBlockTabSize)),
-    option("4", "4 个空格", String(settings.codeBlockTabSize))
+    option$1("2", "2 个空格", String(settings.codeBlockTabSize)),
+    option$1("4", "4 个空格", String(settings.codeBlockTabSize))
   ].join(""))}
           ${switchRow("代码块自动换行", "关闭时使用水平滚动。", "codeBlockWrap", settings.codeBlockWrap)}
           ${switchRow("显示代码语言", "在代码块上方显示语言标签。", "codeBlockShowLanguage", settings.codeBlockShowLanguage)}
@@ -648,8 +675,8 @@ function createSettingsDialogTemplate(settings) {
         </div>
         <div class="ymz-settings-group"><h3>挖空</h3>
           ${selectRow("挖空显示方式", "完全隐藏或保留模糊轮廓。", "clozeMode", [
-    option("hidden", "完全隐藏", settings.clozeMode),
-    option("blur", "模糊显示", settings.clozeMode)
+    option$1("hidden", "完全隐藏", settings.clozeMode),
+    option$1("blur", "模糊显示", settings.clozeMode)
   ].join(""))}
           ${switchRow("悬停显示答案", "鼠标移入挖空内容时临时显示。", "clozeRevealOnHover", settings.clozeRevealOnHover)}
         </div>
@@ -668,6 +695,9 @@ function createSettingsDialogTemplate(settings) {
     </main>
   </div>`;
 }
+async function saveSettingsDraft(store, draft) {
+  await store.update(draft);
+}
 function cloneSettings(settings) {
   return { ...settings, shortcutMap: { ...settings.shortcutMap } };
 }
@@ -678,16 +708,19 @@ function setControlValue(control, value) {
 function openYeMindSettingsDialog(store) {
   var _a, _b;
   let draft = cloneSettings(store.get());
+  let recordingCleanup = null;
   const dialog = new siyuan.Dialog({
     title: "YeMind Zen 设置",
     content: createSettingsDialogTemplate(draft),
     width: "880px",
-    height: "78vh"
+    height: "78vh",
+    destroyCallback: () => recordingCleanup == null ? void 0 : recordingCleanup()
   });
   const shell = dialog.element.querySelector(".ymz-settings-shell");
   if (!shell) return;
   const saveButton = shell.querySelector('[data-settings-action="save"]');
-  let recordingCleanup = null;
+  let hasShortcutConflict = false;
+  let saving = false;
   const refreshConflicts = () => {
     const conflicts = findShortcutConflicts(draft.shortcutMap);
     let hasConflict = false;
@@ -703,8 +736,9 @@ function openYeMindSettingsDialog(store) {
       if (hint) hint.textContent = targets.length > 0 ? `与“${labels.join("、")}”冲突` : "";
       if (targets.length > 0) hasConflict = true;
     });
+    hasShortcutConflict = hasConflict;
     if (saveButton) {
-      saveButton.disabled = hasConflict;
+      saveButton.disabled = saving || hasConflict;
       saveButton.title = hasConflict ? "请先解决快捷键冲突" : "";
     }
   };
@@ -801,11 +835,23 @@ function openYeMindSettingsDialog(store) {
     refreshControls();
     siyuan.showMessage("已恢复默认值，点击“保存”后生效");
   });
-  saveButton == null ? void 0 : saveButton.addEventListener("click", () => {
-    if (saveButton.disabled) return;
+  saveButton == null ? void 0 : saveButton.addEventListener("click", async () => {
+    if (saving || saveButton.disabled) return;
     recordingCleanup == null ? void 0 : recordingCleanup();
-    void store.update(draft);
-    dialog.destroy();
+    const originalText = saveButton.textContent ?? "保存";
+    saving = true;
+    saveButton.disabled = true;
+    saveButton.textContent = "保存中…";
+    try {
+      await saveSettingsDraft(store, cloneSettings(draft));
+      dialog.destroy();
+    } catch (error) {
+      console.error("[YeMind Zen] settings save failed", error);
+      siyuan.showMessage("YeMind Zen 设置保存失败，请检查存储后重试", 5e3, "error");
+      saving = false;
+      saveButton.textContent = originalText;
+      saveButton.disabled = hasShortcutConflict;
+    }
   });
   refreshConflicts();
 }
@@ -50372,6 +50418,23 @@ class RichText {
   }
 }
 RichText.instanceName = "richText";
+const YEMIND_FONT_VALUES = [
+  "sans-serif",
+  "serif",
+  "微软雅黑, Microsoft YaHei",
+  "宋体, SimSun, Songti SC",
+  "andale mono"
+];
+const YEMIND_SIZE_VALUES = [
+  "12px",
+  "14px",
+  "16px",
+  "18px",
+  "20px",
+  "24px",
+  "28px",
+  "32px"
+];
 const YEMIND_RICH_TEXT_FORMATS = [
   "bold",
   "italic",
@@ -50396,6 +50459,12 @@ function sanitizeLink(value) {
 function registerYeMindFormats() {
   if (formatsRegistered) return;
   formatsRegistered = true;
+  const FontStyle2 = Quill.import("attributors/style/font");
+  const SizeStyle2 = Quill.import("attributors/style/size");
+  FontStyle2.whitelist = [...YEMIND_FONT_VALUES];
+  SizeStyle2.whitelist = [...YEMIND_SIZE_VALUES];
+  Quill.register(FontStyle2, true);
+  Quill.register(SizeStyle2, true);
   const BaseLink = Quill.import("formats/link");
   class YeMindLink extends BaseLink {
     static create(value) {
@@ -50758,6 +50827,25 @@ function buildRelationOptions(settings) {
     enableAdjustAssociativeLinePoints: settings.relationAdjustPoints
   };
 }
+const READONLY_ALLOWED_SHORTCUTS = /* @__PURE__ */ new Set([
+  "Control+c",
+  "Control+=",
+  "Control+-",
+  "Control+i",
+  "Control+Enter",
+  "Control+a",
+  "/",
+  "Up",
+  "Down",
+  "Left",
+  "Right"
+]);
+const ROOT_DELETE_SHORTCUTS = /* @__PURE__ */ new Set(["Del", "Delete", "Backspace", "Shift+Backspace"]);
+function shouldBlockUpstreamShortcut(shortcut, nodes, readonly) {
+  if (readonly && !READONLY_ALLOWED_SHORTCUTS.has(shortcut)) return true;
+  if (ROOT_DELETE_SHORTCUTS.has(shortcut) && nodes.some((node) => Boolean(node == null ? void 0 : node.isRoot))) return true;
+  return false;
+}
 function createMindMap(options) {
   registerMindMapPlugins(options.settings);
   const settings = options.settings;
@@ -50801,6 +50889,18 @@ function createMindMap(options) {
     createNodePostfixContent,
     openRealtimeRenderOnNodeTextEdit: true,
     enableEditFormulaInRichTextEdit: true,
+    customHyperlinkJump: (href) => {
+      var _a;
+      return (_a = options.onHyperlink) == null ? void 0 : _a.call(options, href);
+    },
+    beforeShortcutRun: (shortcut, nodes) => {
+      var _a;
+      return shouldBlockUpstreamShortcut(
+        shortcut,
+        nodes,
+        ((_a = options.el.closest(".ymz-editor")) == null ? void 0 : _a.dataset.readonly) === "true"
+      );
+    },
     errorHandler: (_code, error) => console.error("[YeMind Zen]", error)
   });
 }
@@ -50961,35 +51061,88 @@ function createCommandAdapter(mindMap) {
     return Array.isArray((_a = mindMap.renderer) == null ? void 0 : _a.activeNodeList) ? mindMap.renderer.activeNodeList : [];
   };
   const primaryNode = () => activeNodes()[0] ?? null;
+  const isReadonly = () => {
+    var _a, _b;
+    return Boolean(
+      ((_a = mindMap.getConfig) == null ? void 0 : _a.call(mindMap, "readonly")) ?? ((_b = mindMap.opt) == null ? void 0 : _b.readonly)
+    );
+  };
+  const canMutate = () => !isReadonly();
   const forEachActive = (callback) => activeNodes().forEach(callback);
+  const richText = () => mindMap.richText;
+  const richRange = () => {
+    const editor = richText();
+    return (editor == null ? void 0 : editor.range) ?? (editor == null ? void 0 : editor.lastRange) ?? null;
+  };
+  const hasRichTextSelection = () => {
+    var _a;
+    return Number(((_a = richRange()) == null ? void 0 : _a.length) ?? 0) > 0;
+  };
+  const removableNodes = () => activeNodes().filter((node) => !(node == null ? void 0 : node.isRoot));
+  const primaryIsRegular = () => {
+    var _a;
+    return Boolean(primaryNode() && !((_a = primaryNode()) == null ? void 0 : _a.isGeneralization));
+  };
+  const primaryIsMovable = () => {
+    var _a;
+    return Boolean(primaryIsRegular() && !((_a = primaryNode()) == null ? void 0 : _a.isRoot));
+  };
   return {
-    addChild: () => mindMap.execCommand("INSERT_CHILD_NODE"),
-    addSibling: () => mindMap.execCommand("INSERT_NODE"),
-    addParent: () => mindMap.execCommand("INSERT_PARENT_NODE"),
-    moveUp: () => mindMap.execCommand("UP_NODE"),
-    moveDown: () => mindMap.execCommand("DOWN_NODE"),
+    isReadonly,
+    hasRichTextSelection,
+    addChild: () => {
+      if (canMutate() && primaryIsRegular()) mindMap.execCommand("INSERT_CHILD_NODE");
+    },
+    addSibling: () => {
+      if (canMutate() && primaryIsMovable()) mindMap.execCommand("INSERT_NODE");
+    },
+    addParent: () => {
+      if (canMutate() && primaryIsMovable()) mindMap.execCommand("INSERT_PARENT_NODE");
+    },
+    moveUp: () => {
+      if (canMutate() && primaryIsMovable()) mindMap.execCommand("UP_NODE");
+    },
+    moveDown: () => {
+      if (canMutate() && primaryIsMovable()) mindMap.execCommand("DOWN_NODE");
+    },
     toggleExpand: () => mindMap.renderer.toggleActiveExpand(),
-    remove: () => mindMap.execCommand("REMOVE_NODE"),
-    removeOnlyCurrent: () => mindMap.execCommand("REMOVE_CURRENT_NODE"),
-    undo: () => mindMap.execCommand("BACK"),
-    redo: () => mindMap.execCommand("FORWARD"),
+    remove: () => {
+      if (!canMutate()) return;
+      const nodes = removableNodes();
+      if (nodes.length) mindMap.execCommand("REMOVE_NODE", nodes);
+    },
+    removeOnlyCurrent: () => {
+      if (!canMutate()) return;
+      const nodes = removableNodes();
+      if (nodes.length) mindMap.execCommand("REMOVE_CURRENT_NODE", nodes);
+    },
+    undo: () => {
+      if (canMutate()) mindMap.execCommand("BACK");
+    },
+    redo: () => {
+      if (canMutate()) mindMap.execCommand("FORWARD");
+    },
     fit: () => mindMap.view.fit(),
     resetZoom: () => mindMap.view.reset(),
-    resetLayout: () => mindMap.execCommand("RESET_LAYOUT"),
+    resetLayout: () => {
+      if (canMutate()) mindMap.execCommand("RESET_LAYOUT");
+    },
     zoomIn: () => mindMap.view.enlarge(void 0, void 0, false),
     zoomOut: () => mindMap.view.narrow(void 0, void 0, false),
-    edit: () => mindMap.renderer.startTextEdit(),
+    edit: () => {
+      if (canMutate()) mindMap.renderer.startTextEdit();
+    },
     copy: () => {
       var _a, _b;
       return (_b = (_a = mindMap.renderer).copy) == null ? void 0 : _b.call(_a);
     },
     cut: () => {
       var _a, _b;
-      return (_b = (_a = mindMap.renderer).cut) == null ? void 0 : _b.call(_a);
+      if (canMutate()) (_b = (_a = mindMap.renderer).cut) == null ? void 0 : _b.call(_a);
     },
     paste: async () => {
       var _a, _b;
-      await ((_b = (_a = mindMap.renderer).paste) == null ? void 0 : _b.call(_a));
+      if (canMutate()) await ((_b = (_a = mindMap.renderer).paste) == null ? void 0 : _b.call(_a));
     },
     getActiveNodes: activeNodes,
     getPrimaryNode: primaryNode,
@@ -50999,64 +51152,77 @@ function createCommandAdapter(mindMap) {
     },
     getSelectedText: () => {
       var _a;
-      const richText = mindMap.richText;
-      const range = (richText == null ? void 0 : richText.range) ?? (richText == null ? void 0 : richText.lastRange);
-      if (!range || !((_a = richText == null ? void 0 : richText.quill) == null ? void 0 : _a.getText)) return "";
-      return String(richText.quill.getText(range.index, range.length) ?? "").trim();
+      const editor = richText();
+      const range = richRange();
+      if (!range || !((_a = editor == null ? void 0 : editor.quill) == null ? void 0 : _a.getText)) return "";
+      return String(editor.quill.getText(range.index, range.length) ?? "").trim();
     },
     getSelectedInlineLink: () => {
       var _a, _b;
-      const richText = mindMap.richText;
-      const range = (richText == null ? void 0 : richText.range) ?? (richText == null ? void 0 : richText.lastRange);
-      if (!range || !((_a = richText == null ? void 0 : richText.quill) == null ? void 0 : _a.getFormat)) return "";
-      const link = (_b = richText.quill.getFormat(range.index, range.length)) == null ? void 0 : _b.link;
+      const editor = richText();
+      const range = richRange();
+      if (!range || !((_a = editor == null ? void 0 : editor.quill) == null ? void 0 : _a.getFormat)) return "";
+      const link = (_b = editor.quill.getFormat(range.index, range.length)) == null ? void 0 : _b.link;
       return typeof link === "string" ? link : "";
     },
     setInlineLink: (link) => {
       var _a, _b;
-      return (_b = (_a = mindMap.richText) == null ? void 0 : _a.formatText) == null ? void 0 : _b.call(_a, { link: link || false });
+      if (canMutate() && hasRichTextSelection()) (_b = (_a = richText()) == null ? void 0 : _a.formatText) == null ? void 0 : _b.call(_a, { link: link || false });
     },
     toggleInlineCode: () => {
       var _a, _b, _c2;
-      const richText = mindMap.richText;
-      const range = (richText == null ? void 0 : richText.range) ?? (richText == null ? void 0 : richText.lastRange);
-      if (!range || !((_a = richText == null ? void 0 : richText.quill) == null ? void 0 : _a.getFormat)) return;
-      const current = Boolean((_b = richText.quill.getFormat(range.index, range.length)) == null ? void 0 : _b.code);
-      (_c2 = richText.formatText) == null ? void 0 : _c2.call(richText, { code: !current });
+      if (!canMutate() || !hasRichTextSelection()) return;
+      const editor = richText();
+      const range = richRange();
+      if (!range || !((_a = editor == null ? void 0 : editor.quill) == null ? void 0 : _a.getFormat)) return;
+      const current = Boolean((_b = editor.quill.getFormat(range.index, range.length)) == null ? void 0 : _b.code);
+      (_c2 = editor.formatText) == null ? void 0 : _c2.call(editor, { code: !current });
     },
     getCodeBlock: () => {
-      const richText = mindMap.richText;
-      const range = (richText == null ? void 0 : richText.range) ?? (richText == null ? void 0 : richText.lastRange);
-      return (richText == null ? void 0 : richText.quill) ? findCurrentCodeBlock(richText.quill, range) : null;
+      const editor = richText();
+      const range = richRange();
+      return (editor == null ? void 0 : editor.quill) ? findCurrentCodeBlock(editor.quill, range) : null;
     },
     saveCodeBlock: (code, language = "plain") => {
-      const richText = mindMap.richText;
-      const quill = richText == null ? void 0 : richText.quill;
-      const range = (richText == null ? void 0 : richText.range) ?? (richText == null ? void 0 : richText.lastRange);
+      if (!canMutate()) return;
+      const editor = richText();
+      const quill = editor == null ? void 0 : editor.quill;
+      const range = richRange();
       if (!quill || !range) return;
       const existing = findCurrentCodeBlock(quill, range);
       replaceCodeBlock(quill, existing ?? range, code, language);
     },
     removeCodeBlockFormat: () => {
-      const richText = mindMap.richText;
-      const range = (richText == null ? void 0 : richText.range) ?? (richText == null ? void 0 : richText.lastRange);
-      const block = (richText == null ? void 0 : richText.quill) ? findCurrentCodeBlock(richText.quill, range) : null;
-      if (block) removeCodeBlockFormat(richText.quill, block);
+      if (!canMutate()) return;
+      const editor = richText();
+      const range = richRange();
+      const block = (editor == null ? void 0 : editor.quill) ? findCurrentCodeBlock(editor.quill, range) : null;
+      if (block) removeCodeBlockFormat(editor.quill, block);
     },
     deleteCodeBlock: () => {
-      const richText = mindMap.richText;
-      const range = (richText == null ? void 0 : richText.range) ?? (richText == null ? void 0 : richText.lastRange);
-      const block = (richText == null ? void 0 : richText.quill) ? findCurrentCodeBlock(richText.quill, range) : null;
-      if (block) deleteCodeBlock(richText.quill, block);
+      if (!canMutate()) return;
+      const editor = richText();
+      const range = richRange();
+      const block = (editor == null ? void 0 : editor.quill) ? findCurrentCodeBlock(editor.quill, range) : null;
+      if (block) deleteCodeBlock(editor.quill, block);
     },
-    setTags: (tags) => forEachActive((node) => mindMap.execCommand("SET_NODE_TAG", node, tags)),
-    setIcons: (icons) => forEachActive((node) => mindMap.execCommand("SET_NODE_ICON", node, icons)),
-    setLink: (link, title = "") => forEachActive((node) => mindMap.execCommand("SET_NODE_HYPERLINK", node, link, title)),
-    setImage: (image) => forEachActive((node) => mindMap.execCommand("SET_NODE_IMAGE", node, image)),
+    setTags: (tags) => {
+      if (canMutate()) forEachActive((node) => mindMap.execCommand("SET_NODE_TAG", node, tags));
+    },
+    setIcons: (icons) => {
+      if (canMutate()) forEachActive((node) => mindMap.execCommand("SET_NODE_ICON", node, icons));
+    },
+    setLink: (link, title = "") => {
+      if (canMutate()) forEachActive((node) => mindMap.execCommand("SET_NODE_HYPERLINK", node, link, title));
+    },
+    setImage: (image) => {
+      if (canMutate()) forEachActive((node) => mindMap.execCommand("SET_NODE_IMAGE", node, image));
+    },
     insertFormula: (formula, mode = "inline") => {
-      const richText = mindMap.richText;
-      const quill = richText == null ? void 0 : richText.quill;
-      const range = (richText == null ? void 0 : richText.range) ?? (richText == null ? void 0 : richText.lastRange);
+      if (!canMutate()) return;
+      const editor = richText();
+      const quill = editor == null ? void 0 : editor.quill;
+      const range = richRange();
       const value = mode === "block" ? `\\displaystyle{${formula}}` : formula;
       if (quill && range) {
         if (range.length > 0) quill.deleteText(range.index, range.length);
@@ -51073,14 +51239,19 @@ function createCommandAdapter(mindMap) {
       }
       mindMap.execCommand("INSERT_FORMULA", value);
     },
-    addSummary: () => mindMap.execCommand("ADD_GENERALIZATION"),
+    addSummary: () => {
+      if (canMutate()) mindMap.execCommand("ADD_GENERALIZATION");
+    },
     removeSummary: () => {
+      if (!canMutate()) return;
       const node = primaryNode();
       if (!node) return;
-      mindMap.execCommand(node.isGeneralization ? "REMOVE_NODE" : "REMOVE_GENERALIZATION");
+      if (node.isGeneralization) mindMap.execCommand("REMOVE_NODE", [node]);
+      else mindMap.execCommand("REMOVE_GENERALIZATION");
     },
     startRelation: () => {
       var _a;
+      if (!canMutate()) return false;
       const relation = mindMap.associativeLine;
       (_a = relation == null ? void 0 : relation.createLineFromActiveNode) == null ? void 0 : _a.call(relation);
       return Boolean(relation == null ? void 0 : relation.isCreatingLine);
@@ -51100,13 +51271,14 @@ function createCommandAdapter(mindMap) {
     },
     editActiveRelationText: () => {
       var _a, _b;
+      if (!canMutate()) return;
       const relation = mindMap.associativeLine;
       const textGroup = (_a = relation == null ? void 0 : relation.activeLine) == null ? void 0 : _a[2];
       if (textGroup) (_b = relation.showEditTextBox) == null ? void 0 : _b.call(relation, textGroup);
     },
     removeActiveRelation: () => {
       var _a, _b;
-      return (_b = (_a = mindMap.associativeLine) == null ? void 0 : _a.removeLine) == null ? void 0 : _b.call(_a);
+      if (canMutate()) (_b = (_a = mindMap.associativeLine) == null ? void 0 : _a.removeLine) == null ? void 0 : _b.call(_a);
     },
     getTodo: () => {
       var _a, _b;
@@ -51114,6 +51286,7 @@ function createCommandAdapter(mindMap) {
     },
     toggleTodo: () => {
       var _a, _b;
+      if (!canMutate()) return;
       const node = primaryNode();
       if (!node) return;
       const todo = toggleTodo((_a = node.getData) == null ? void 0 : _a.call(node, "yemindTodo"));
@@ -51122,11 +51295,13 @@ function createCommandAdapter(mindMap) {
     },
     setTodo: (todo) => {
       var _a;
+      if (!canMutate()) return;
       forEachActive((node) => mindMap.execCommand("SET_NODE_DATA", node, { yemindTodo: todo }));
       (_a = mindMap.render) == null ? void 0 : _a.call(mindMap);
     },
     setComments: (comments) => {
       var _a;
+      if (!canMutate()) return;
       const node = primaryNode();
       if (!node) return;
       mindMap.execCommand("SET_NODE_DATA", node, { yemindComments: comments });
@@ -51134,15 +51309,16 @@ function createCommandAdapter(mindMap) {
     },
     formatText: (config2) => {
       var _a, _b;
-      return (_b = (_a = mindMap.richText) == null ? void 0 : _a.formatText) == null ? void 0 : _b.call(_a, config2);
+      if (canMutate() && hasRichTextSelection()) (_b = (_a = richText()) == null ? void 0 : _a.formatText) == null ? void 0 : _b.call(_a, config2);
     },
     clearTextFormat: () => {
       var _a, _b;
-      return (_b = (_a = mindMap.richText) == null ? void 0 : _a.removeFormat) == null ? void 0 : _b.call(_a);
+      if (canMutate() && hasRichTextSelection()) (_b = (_a = richText()) == null ? void 0 : _a.removeFormat) == null ? void 0 : _b.call(_a);
     },
     setCloze: (enabled) => {
       var _a, _b;
-      return (_b = (_a = mindMap.richText) == null ? void 0 : _a.formatText) == null ? void 0 : _b.call(_a, enabled ? { background: "#f5dfa0", color: "transparent" } : { background: false, color: false });
+      if (!canMutate() || !hasRichTextSelection()) return;
+      (_b = (_a = richText()) == null ? void 0 : _a.formatText) == null ? void 0 : _b.call(_a, enabled ? { background: "#f5dfa0", color: "transparent" } : { background: false, color: false });
     },
     search: (text2) => {
       var _a, _b;
@@ -51162,11 +51338,11 @@ function createCommandAdapter(mindMap) {
     },
     replaceSearch: (text2) => {
       var _a, _b;
-      return (_b = (_a = mindMap.search) == null ? void 0 : _a.replace) == null ? void 0 : _b.call(_a, text2, true);
+      if (canMutate()) (_b = (_a = mindMap.search) == null ? void 0 : _a.replace) == null ? void 0 : _b.call(_a, text2, true);
     },
     replaceSearchAll: (text2) => {
       var _a, _b;
-      return (_b = (_a = mindMap.search) == null ? void 0 : _a.replaceAll) == null ? void 0 : _b.call(_a, text2);
+      if (canMutate()) (_b = (_a = mindMap.search) == null ? void 0 : _a.replaceAll) == null ? void 0 : _b.call(_a, text2);
     },
     endSearch: () => {
       var _a, _b;
@@ -51174,6 +51350,16 @@ function createCommandAdapter(mindMap) {
     },
     goToNode: (uid) => mindMap.execCommand("GO_TARGET_NODE", uid)
   };
+}
+async function loadImageFileSelection(file, dependencies) {
+  try {
+    const dataUrl = await dependencies.read(file);
+    const size2 = await dependencies.measure(dataUrl);
+    return { dataUrl, size: size2 };
+  } catch (error) {
+    dependencies.onError(error);
+    return null;
+  }
 }
 function formatCommentTimestamp(timestamp) {
   const date = new Date(timestamp);
@@ -51209,6 +51395,19 @@ function escapeHtml$4(value) {
 }
 function escapeAttribute$1(value) {
   return escapeHtml$4(value);
+}
+const SUPPORTED_PROTOCOLS = /* @__PURE__ */ new Set(["http:", "https:", "mailto:", "tel:", "siyuan:"]);
+const BARE_DOMAIN = /^(?:localhost(?::\d+)?|(?:[a-z0-9-]+\.)+[a-z]{2,})(?:[/:?#].*)?$/i;
+function normalizeInlineLink(value, autoHttps = true) {
+  const input = value.trim();
+  if (!input) return null;
+  const candidate = !/^[a-z][a-z0-9+.-]*:/i.test(input) && autoHttps && BARE_DOMAIN.test(input) ? `https://${input}` : input;
+  try {
+    const url = new URL(candidate);
+    return SUPPORTED_PROTOCOLS.has(url.protocol) ? candidate : null;
+  } catch {
+    return null;
+  }
 }
 function activeData(commands) {
   return commands.getPrimaryNodeData() ?? {};
@@ -51271,14 +51470,15 @@ function openIconsDialog(commands) {
     commands.setIcons(values);
   });
 }
-function openLinkDialog(commands) {
+function openLinkDialog(commands, autoHttps = true) {
+  var _a, _b;
   const data2 = activeData(commands);
   const dialog = new siyuan.Dialog({
     title: "链接",
     content: `<div class="b3-dialog__content ymz-node-dialog">
       <label>链接地址</label><input class="b3-text-field fn__block" data-field="url" placeholder="https://… 或 siyuan://blocks/…">
       <label>显示提示</label><input class="b3-text-field fn__block" data-field="title" placeholder="可选">
-      <div class="b3-label__text">清空链接地址后保存，即可删除链接。</div>
+      <div class="b3-label__text">支持 HTTP、HTTPS、邮件、电话和思源链接；清空后保存即可删除。</div>
     </div>${actionButtons()}`,
     width: "480px"
   });
@@ -51286,7 +51486,24 @@ function openLinkDialog(commands) {
   const title = dialog.element.querySelector('[data-field="title"]');
   url.value = String(data2.hyperlink ?? "");
   title.value = String(data2.hyperlinkTitle ?? "");
-  bindDialogActions(dialog, () => commands.setLink(url.value.trim(), title.value.trim()));
+  (_a = dialog.element.querySelector('[data-dialog-action="cancel"]')) == null ? void 0 : _a.addEventListener("click", () => dialog.destroy());
+  (_b = dialog.element.querySelector('[data-dialog-action="save"]')) == null ? void 0 : _b.addEventListener("click", () => {
+    const raw = url.value.trim();
+    if (!raw) {
+      commands.setLink("", title.value.trim());
+      dialog.destroy();
+      return;
+    }
+    const normalized = normalizeInlineLink(raw, autoHttps);
+    if (!normalized) {
+      siyuan.showMessage("链接地址无效或协议不受支持", 3500, "error");
+      url.focus();
+      url.select();
+      return;
+    }
+    commands.setLink(normalized, title.value.trim());
+    dialog.destroy();
+  });
   url.focus();
 }
 function openFormulaDialog(commands) {
@@ -51357,8 +51574,22 @@ function openImageDialog(commands) {
     var _a2;
     const selected = (_a2 = file.files) == null ? void 0 : _a2[0];
     if (!selected) return;
-    fileData = await readFileAsDataUrl(selected);
-    fileSize = await getImageSize(fileData);
+    const loaded = await loadImageFileSelection(selected, {
+      read: readFileAsDataUrl,
+      measure: getImageSize,
+      onError: (error) => {
+        console.error("[YeMind Zen] local image read failed", error);
+        siyuan.showMessage("图片读取失败，请重新选择文件", 4e3, "error");
+      }
+    });
+    if (!loaded) {
+      file.value = "";
+      fileData = "";
+      fileSize = { width: 0, height: 0 };
+      return;
+    }
+    fileData = loaded.dataUrl;
+    fileSize = loaded.size;
     preview.innerHTML = `<img src="${escapeAttribute(fileData)}" alt="">`;
   });
   (_a = dialog.element.querySelector('[data-action="remove-image"]')) == null ? void 0 : _a.addEventListener("click", () => {
@@ -51381,12 +51612,13 @@ function openImageDialog(commands) {
     });
   });
 }
-function openCommentsDialog(commands) {
+function openCommentsDialog(commands, options = {}) {
   var _a;
+  const readonly = Boolean(options.readonly);
   let comments = (activeData(commands).yemindComments ?? []).map((item) => ({ ...item }));
   let editingId = null;
   const dialog = new siyuan.Dialog({
-    title: "批注",
+    title: readonly ? "批注（只读）" : "批注",
     content: `<div class="b3-dialog__content ymz-node-dialog ymz-comments-dialog">
       <div data-role="comments"></div>
       <textarea class="b3-text-field fn__block" data-field="new-comment" rows="3" placeholder="新增批注…"></textarea>
@@ -51401,10 +51633,19 @@ function openCommentsDialog(commands) {
   const list = dialog.element.querySelector('[data-role="comments"]');
   const input = dialog.element.querySelector('[data-field="new-comment"]');
   const clearButton = dialog.element.querySelector('[data-action="clear-comments"]');
+  const footer = dialog.element.querySelector(".ymz-comments-dialog__footer");
+  input.hidden = readonly;
+  footer.hidden = readonly;
   const persist = () => commands.setComments(comments.filter((comment) => comment.text.trim()));
   const render3 = () => {
     list.innerHTML = buildCommentsListHtml(comments, editingId);
-    clearButton.hidden = comments.length === 0;
+    clearButton.hidden = readonly || comments.length === 0;
+    if (readonly) {
+      list.querySelectorAll("button, textarea").forEach((control) => {
+        control.hidden = true;
+      });
+      return;
+    }
     list.querySelectorAll("[data-comment-id]").forEach((row) => {
       var _a2, _b, _c2, _d2;
       const id = row.dataset.commentId;
@@ -51451,7 +51692,7 @@ function openCommentsDialog(commands) {
       render3();
     });
   });
-  input.focus();
+  if (!readonly) input.focus();
 }
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -51493,35 +51734,70 @@ function createSummaryMenuDescriptor(nodes) {
     warning: false
   };
 }
+function createNodeMenuAvailability(input) {
+  const editable = !input.readonly;
+  const regularNode = !input.primaryIsGeneralization;
+  const nonRoot = !input.primaryIsRoot;
+  return {
+    edit: editable,
+    addChild: editable && regularNode,
+    addSibling: editable && nonRoot && regularNode,
+    addParent: editable && nonRoot && regularNode,
+    copy: true,
+    cut: editable && nonRoot,
+    paste: editable && regularNode,
+    nodeContent: editable && regularNode,
+    inlineLink: editable && input.hasRichTextSelection,
+    codeBlock: editable && (input.hasRichTextSelection || input.hasCodeBlock),
+    summary: editable,
+    relation: editable && regularNode,
+    move: editable && nonRoot && regularNode,
+    resetLayout: editable,
+    remove: editable && nonRoot,
+    removeOnlyCurrent: editable && nonRoot,
+    toggleExpand: true
+  };
+}
 function openNodeContextMenu(event, commands, options = {}) {
   event.preventDefault();
   event.stopPropagation();
+  const primary = commands.getPrimaryNode();
+  const availability = createNodeMenuAvailability({
+    readonly: commands.isReadonly(),
+    primaryIsRoot: Boolean(primary == null ? void 0 : primary.isRoot),
+    primaryIsGeneralization: Boolean(primary == null ? void 0 : primary.isGeneralization),
+    hasRichTextSelection: commands.hasRichTextSelection(),
+    hasCodeBlock: Boolean(commands.getCodeBlock())
+  });
   const menu = new siyuan.Menu("siyuan-yemind-zen-node-menu");
-  menu.addItem({ icon: "iconEdit", label: "编辑节点", accelerator: "F2", click: () => commands.edit() });
+  menu.addItem({ icon: "iconEdit", label: "编辑节点", accelerator: "F2", disabled: !availability.edit, click: () => commands.edit() });
   menu.addSeparator();
-  menu.addItem({ icon: "iconAdd", label: "添加子节点", accelerator: "Tab", click: () => commands.addChild() });
-  menu.addItem({ icon: "iconAdd", label: "添加同级节点", accelerator: "Enter", click: () => commands.addSibling() });
-  menu.addItem({ icon: "iconAdd", label: "添加父节点", accelerator: "Alt+Enter", click: () => commands.addParent() });
+  menu.addItem({ icon: "iconAdd", label: "添加子节点", accelerator: "Tab", disabled: !availability.addChild, click: () => commands.addChild() });
+  menu.addItem({ icon: "iconAdd", label: "添加同级节点", accelerator: "Enter", disabled: !availability.addSibling, click: () => commands.addSibling() });
+  menu.addItem({ icon: "iconAdd", label: "添加父节点", accelerator: "Alt+Enter", disabled: !availability.addParent, click: () => commands.addParent() });
   menu.addSeparator();
-  menu.addItem({ icon: "iconCopy", label: "复制节点子树", accelerator: "Ctrl+C", click: () => commands.copy() });
-  menu.addItem({ label: "剪切节点子树", accelerator: "Ctrl+X", click: () => commands.cut() });
-  menu.addItem({ label: "粘贴节点子树", accelerator: "Ctrl+V", click: () => {
-    void commands.paste();
+  menu.addItem({ icon: "iconCopy", label: "复制节点子树", accelerator: "Ctrl+C", disabled: false, click: () => commands.copy() });
+  menu.addItem({ label: "剪切节点子树", accelerator: "Ctrl+X", disabled: !availability.cut, click: () => commands.cut() });
+  menu.addItem({ label: "粘贴节点子树", accelerator: "Ctrl+V", disabled: !availability.paste, click: () => {
+    void commands.paste().catch((error) => {
+      console.error("[YeMind Zen] node paste failed", error);
+      siyuan.showMessage("节点粘贴失败，请重试", 4e3, "error");
+    });
   } });
   menu.addSeparator();
   const todoAction = createTodoMenuDescriptor(commands.getTodo());
-  menu.addItem({ icon: "iconCheck", label: todoAction.label, warning: todoAction.warning, click: () => commands.setTodo(todoAction.next) });
-  menu.addItem({ icon: "iconMessage", label: "批注", click: () => openCommentsDialog(commands) });
-  menu.addItem({ icon: "iconTags", label: "标签", click: () => openTagsDialog(commands) });
-  menu.addItem({ icon: "iconEmoji", label: "图标", click: () => openIconsDialog(commands) });
-  menu.addItem({ icon: "iconLink", label: "链接", click: () => openLinkDialog(commands) });
-  menu.addItem({ icon: "iconImage", label: "图片", click: () => openImageDialog(commands) });
-  menu.addItem({ icon: "iconMath", label: "公式", click: () => openFormulaDialog(commands) });
-  menu.addItem({ icon: "iconLink", label: "行内链接", click: () => {
+  menu.addItem({ icon: "iconCheck", label: todoAction.label, warning: todoAction.warning, disabled: !availability.nodeContent, click: () => commands.setTodo(todoAction.next) });
+  menu.addItem({ icon: "iconMessage", label: "批注", disabled: !availability.nodeContent, click: () => openCommentsDialog(commands) });
+  menu.addItem({ icon: "iconTags", label: "标签", disabled: !availability.nodeContent, click: () => openTagsDialog(commands) });
+  menu.addItem({ icon: "iconEmoji", label: "图标", disabled: !availability.nodeContent, click: () => openIconsDialog(commands) });
+  menu.addItem({ icon: "iconLink", label: "链接", disabled: !availability.nodeContent, click: () => options.onNodeLink ? options.onNodeLink() : openLinkDialog(commands) });
+  menu.addItem({ icon: "iconImage", label: "图片", disabled: !availability.nodeContent, click: () => openImageDialog(commands) });
+  menu.addItem({ icon: "iconMath", label: "公式", disabled: !availability.nodeContent, click: () => openFormulaDialog(commands) });
+  menu.addItem({ icon: "iconLink", label: "行内链接", disabled: !availability.inlineLink, click: () => {
     var _a;
     return (_a = options.onInlineLink) == null ? void 0 : _a.call(options);
   } });
-  menu.addItem({ icon: "iconCode", label: "代码块", click: () => {
+  menu.addItem({ icon: "iconCode", label: "代码块", disabled: !availability.codeBlock, click: () => {
     var _a;
     return (_a = options.onCodeBlock) == null ? void 0 : _a.call(options);
   } });
@@ -51532,31 +51808,19 @@ function openNodeContextMenu(event, commands, options = {}) {
     label: summaryAction.label,
     accelerator: summaryAction.action === "add" ? "Ctrl+Alt+G" : void 0,
     warning: summaryAction.warning,
+    disabled: !availability.summary,
     click: () => summaryAction.action === "add" ? commands.addSummary() : commands.removeSummary()
   });
-  menu.addItem({ icon: "iconRight", label: "关联线", accelerator: "Ctrl+Alt+L", click: () => options.onRelation ? options.onRelation() : commands.startRelation() });
+  menu.addItem({ icon: "iconRight", label: "关联线", accelerator: "Ctrl+Alt+L", disabled: !availability.relation, click: () => options.onRelation ? options.onRelation() : commands.startRelation() });
   menu.addSeparator();
-  menu.addItem({ icon: "iconUp", label: "上移节点", click: () => commands.moveUp() });
-  menu.addItem({ icon: "iconDown", label: "下移节点", click: () => commands.moveDown() });
-  menu.addItem({ icon: "iconRefresh", label: "展开/折叠", accelerator: "/", click: () => commands.toggleExpand() });
-  menu.addItem({ icon: "iconAlignCenter", label: "整理布局", click: () => commands.resetLayout() });
+  menu.addItem({ icon: "iconUp", label: "上移节点", disabled: !availability.move, click: () => commands.moveUp() });
+  menu.addItem({ icon: "iconDown", label: "下移节点", disabled: !availability.move, click: () => commands.moveDown() });
+  menu.addItem({ icon: "iconRefresh", label: "展开/折叠", accelerator: "/", disabled: false, click: () => commands.toggleExpand() });
+  menu.addItem({ icon: "iconAlignCenter", label: "整理布局", disabled: !availability.resetLayout, click: () => commands.resetLayout() });
   menu.addSeparator();
-  menu.addItem({ icon: "iconTrashcan", label: "仅删除节点，保留子节点", accelerator: "Shift+Backspace", click: () => commands.removeOnlyCurrent() });
-  menu.addItem({ icon: "iconTrashcan", label: "删除节点和子树", accelerator: "Backspace", warning: true, click: () => commands.remove() });
+  menu.addItem({ icon: "iconTrashcan", label: "仅删除节点，保留子节点", accelerator: "Shift+Backspace", disabled: !availability.removeOnlyCurrent, click: () => commands.removeOnlyCurrent() });
+  menu.addItem({ icon: "iconTrashcan", label: "删除节点和子树", accelerator: "Backspace", warning: true, disabled: !availability.remove, click: () => commands.remove() });
   menu.open({ x: event.clientX, y: event.clientY });
-}
-const SUPPORTED_PROTOCOLS = /* @__PURE__ */ new Set(["http:", "https:", "mailto:", "tel:", "siyuan:"]);
-const BARE_DOMAIN = /^(?:localhost(?::\d+)?|(?:[a-z0-9-]+\.)+[a-z]{2,})(?:[/:?#].*)?$/i;
-function normalizeInlineLink(value, autoHttps = true) {
-  const input = value.trim();
-  if (!input) return null;
-  const candidate = !/^[a-z][a-z0-9+.-]*:/i.test(input) && autoHttps && BARE_DOMAIN.test(input) ? `https://${input}` : input;
-  try {
-    const url = new URL(candidate);
-    return SUPPORTED_PROTOCOLS.has(url.protocol) ? candidate : null;
-  } catch {
-    return null;
-  }
 }
 const CODE_LANGUAGES = [
   ["plain", "纯文本"],
@@ -51764,7 +52028,7 @@ function createEditorTemplate(title) {
 
         <div class="ymz-floating ymz-leftbar" role="toolbar" aria-label="画布工具">
           <button data-action="fit" title="适配视图">⌖</button>
-          <button data-action="reset" title="重置缩放">↺</button>
+          <button data-action="reset" title="重置视图（100%）">↺</button>
           <button data-action="reset-layout" title="整理布局">整</button>
           <button data-action="toggle-selection-mode" title="平移优先：左键拖动画布；Ctrl/Cmd + 左键框选" aria-pressed="false">框</button>
           <button data-action="undo" title="撤销">↶</button>
@@ -51837,11 +52101,30 @@ function isClozeFormat(formatInfo) {
   const background = String(formatInfo.background ?? "").toLowerCase().replaceAll(" ", "");
   return color === "transparent" || color === "rgba(0,0,0,0)" || background === CLOZE_BACKGROUND;
 }
+function option(value, label) {
+  return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
+}
+function sizeOptions() {
+  return YEMIND_SIZE_VALUES.map((value) => option(value, value.replace("px", ""))).join("");
+}
+function fontOptions() {
+  const labels = ["无衬线", "衬线", "微软雅黑", "宋体", "等宽"];
+  return YEMIND_FONT_VALUES.map((value, index) => option(value, labels[index] ?? value)).join("");
+}
 class RichTextToolbar {
   constructor(root2, commands, callbacks = {}) {
     __publicField(this, "element");
     __publicField(this, "formatInfo", {});
     __publicField(this, "enabled", true);
+    __publicField(this, "interacting", false);
+    __publicField(this, "onDocumentMouseDown", (event) => {
+      if (!this.element.contains(event.target)) this.hide();
+    });
+    __publicField(this, "onWindowMouseUp", () => {
+      window.setTimeout(() => {
+        this.interacting = false;
+      }, 0);
+    });
     this.root = root2;
     this.commands = commands;
     this.callbacks = callbacks;
@@ -51861,17 +52144,10 @@ class RichTextToolbar {
       <label class="ymz-rich-color" title="背景颜色">Bg<input type="color" data-rich-field="background" value="#fff1a8"></label>
       <button type="button" data-rich-action="clear-background" title="清除背景颜色">×</button>
       <select data-rich-field="size" title="字号">
-        <option value="">自动</option><option value="12px">12</option><option value="14px">14</option>
-        <option value="16px">16</option><option value="18px">18</option><option value="20px">20</option>
-        <option value="24px">24</option><option value="28px">28</option><option value="32px">32</option>
+        <option value="">自动</option>${sizeOptions()}
       </select>
       <select data-rich-field="font" title="字体">
-        <option value="">继承</option>
-        <option value="sans-serif">无衬线</option>
-        <option value="serif">衬线</option>
-        <option value="微软雅黑, Microsoft YaHei">微软雅黑</option>
-        <option value="宋体, SimSun, Songti SC">宋体</option>
-        <option value="andale mono">等宽</option>
+        <option value="">继承</option>${fontOptions()}
       </select>
       <span class="ymz-rich-toolbar__separator"></span>
       <button type="button" data-rich-action="link" title="行内链接">链接</button>
@@ -51879,6 +52155,8 @@ class RichTextToolbar {
       <button type="button" data-rich-action="formula" title="插入公式">Fx</button>
       <button type="button" data-rich-action="clear" title="清除格式">清除</button>`;
     document.body.appendChild(this.element);
+    document.addEventListener("mousedown", this.onDocumentMouseDown, true);
+    window.addEventListener("mouseup", this.onWindowMouseUp, true);
     this.bind();
   }
   setEnabled(enabled) {
@@ -51886,8 +52164,12 @@ class RichTextToolbar {
     if (!enabled) this.hide();
   }
   update(hasRange, rectInfo, formatInfo) {
-    if (!this.enabled || !hasRange || !rectInfo) {
+    if (!this.enabled) {
       this.hide();
+      return;
+    }
+    if (!hasRange || !rectInfo) {
+      if (!this.interacting) this.hide();
       return;
     }
     this.formatInfo = formatInfo ?? {};
@@ -51899,11 +52181,14 @@ class RichTextToolbar {
     this.element.hidden = true;
   }
   destroy() {
+    document.removeEventListener("mousedown", this.onDocumentMouseDown, true);
+    window.removeEventListener("mouseup", this.onWindowMouseUp, true);
     this.element.remove();
   }
   bind() {
     var _a, _b, _c2, _d2;
     this.element.addEventListener("mousedown", (event) => {
+      this.interacting = true;
       if (event.target.closest("button")) event.preventDefault();
       event.stopPropagation();
     });
@@ -52009,6 +52294,42 @@ function createSelectionPresentation(rawCount, mode) {
     modeTitle: isSelectMode ? "选择优先：左键框选；右键拖动画布" : "平移优先：左键拖动画布；Ctrl/Cmd + 左键框选"
   };
 }
+function promoteNodeToPrimary(renderer, node) {
+  var _a;
+  const list = Array.isArray(renderer == null ? void 0 : renderer.activeNodeList) ? renderer.activeNodeList : null;
+  if (!list || !node) return false;
+  const index = list.indexOf(node);
+  if (index <= 0) return false;
+  list.splice(index, 1);
+  list.unshift(node);
+  (_a = renderer.emitNodeActiveEvent) == null ? void 0 : _a.call(renderer);
+  return true;
+}
+function shouldBlockRootDeleteShortcut(key, nodes) {
+  if (key !== "Backspace" && key !== "Delete") return false;
+  return Array.isArray(nodes) && nodes.some((node) => Boolean(node == null ? void 0 : node.isRoot));
+}
+class SaveRevisionTracker {
+  constructor() {
+    __publicField(this, "latestRevision", 0);
+    __publicField(this, "savedRevision", 0);
+  }
+  markChanged() {
+    this.latestRevision += 1;
+    return this.latestRevision;
+  }
+  current() {
+    return this.latestRevision;
+  }
+  markSaved(revision) {
+    if (revision !== this.latestRevision) return false;
+    this.savedRevision = Math.max(this.savedRevision, revision);
+    return true;
+  }
+  isDirty() {
+    return this.savedRevision < this.latestRevision;
+  }
+}
 function createRelationPresentation(input) {
   if (input.isCreating) {
     return { mode: "creating", hidden: false, hint: "点击目标节点完成关联，Esc 取消" };
@@ -52018,11 +52339,35 @@ function createRelationPresentation(input) {
   }
   return { mode: "idle", hidden: true, hint: "" };
 }
+function createToolbarAvailability(input) {
+  const editable = !input.readonly;
+  const hasSelection = input.selectedCount > 0;
+  const regularPrimary = hasSelection && !input.primaryIsGeneralization;
+  const removable = input.hasRemovableSelection ?? (hasSelection && !input.primaryIsRoot);
+  return {
+    undo: editable,
+    redo: editable,
+    addChild: editable && regularPrimary,
+    addSibling: editable && regularPrimary && !input.primaryIsRoot,
+    remove: editable && removable,
+    resetLayout: editable,
+    layout: editable
+  };
+}
+function resolveLinkNavigation(value, externalMode) {
+  const href = normalizeInlineLink(value, true);
+  if (!href) return null;
+  return {
+    href,
+    target: href.toLowerCase().startsWith("siyuan://") ? "siyuan" : externalMode
+  };
+}
 class YeMindEditor {
   constructor(options) {
     __publicField(this, "map", null);
     __publicField(this, "commands", null);
     __publicField(this, "saveTimer", null);
+    __publicField(this, "saveRevisions", new SaveRevisionTracker());
     __publicField(this, "repositoryUnsubscribe", null);
     __publicField(this, "settingsUnsubscribe", null);
     __publicField(this, "destroyed", false);
@@ -52046,7 +52391,6 @@ class YeMindEditor {
     __publicField(this, "settingsInitialized", false);
     __publicField(this, "viewMode", "map");
     __publicField(this, "searchText", "");
-    __publicField(this, "restoredViewOnOpen", false);
     __publicField(this, "onRootKeydown", (event) => {
       var _a, _b;
       if (event.key === "Escape" && ((_a = this.commands) == null ? void 0 : _a.isRelationCreating())) {
@@ -52062,6 +52406,12 @@ class YeMindEditor {
         return;
       }
       if (!this.commands || isEditableTarget(event.target)) return;
+      if (shouldBlockRootDeleteShortcut(event.key, this.commands.getActiveNodes())) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        siyuan.showMessage("根节点不能删除；请选择普通节点后再删除", 3e3, "info");
+        return;
+      }
       const actions = [
         ["search", () => this.openSearchPanel()],
         ["toggleZen", () => this.toggleZen(this.rootEl.dataset.zen !== "true")],
@@ -52088,7 +52438,7 @@ class YeMindEditor {
         }],
         ["comments", () => {
           var _a2;
-          if ((_a2 = this.commands) == null ? void 0 : _a2.getPrimaryNode()) openCommentsDialog(this.commands);
+          if (((_a2 = this.commands) == null ? void 0 : _a2.getPrimaryNode()) && !this.commands.isReadonly()) openCommentsDialog(this.commands);
         }],
         ["summary", () => {
           var _a2;
@@ -52150,18 +52500,21 @@ class YeMindEditor {
     runtimeData = sanitized.tree;
     if (normalized.changed || sanitized.changed) {
       this.current.data = runtimeData;
-      void this.options.repository.update(this.current.id, { data: runtimeData });
+      void this.options.repository.update(this.current.id, { data: runtimeData }).catch((error) => {
+        console.error("[YeMind Zen] migrated data save failed", error);
+        siyuan.showMessage("导图兼容数据保存失败，请勿立即关闭该标签", 5e3, "error");
+      });
     }
     const runtimeViewData = this.settings.restoreSavedView ? normalizePersistedViewData(this.current.viewData) : void 0;
     if (this.current.viewData && !runtimeViewData) this.current.viewData = void 0;
-    this.restoredViewOnOpen = Boolean(runtimeViewData);
     this.map = createMindMap({
       el: this.canvasEl,
       data: runtimeData,
       viewData: runtimeViewData,
       theme: this.current.theme,
       layout: this.current.layout,
-      settings: this.settings
+      settings: this.settings,
+      onHyperlink: (href) => this.openLink(href)
     });
     this.commands = createCommandAdapter(this.map);
     this.richTextToolbar = new RichTextToolbar(this.rootEl, this.commands, {
@@ -52195,7 +52548,9 @@ class YeMindEditor {
     this.rootEl.addEventListener("click", (event) => {
       const anchor = event.target.closest("a[href]");
       if (anchor && this.rootEl.contains(anchor)) {
-        this.openInlineLink(event, anchor.href || anchor.getAttribute("href") || "");
+        event.preventDefault();
+        event.stopPropagation();
+        this.openLink(anchor.href || anchor.getAttribute("href") || "");
         return;
       }
       const outlineRow = event.target.closest("[data-outline-uid]");
@@ -52212,8 +52567,8 @@ class YeMindEditor {
       const relationButton = event.target.closest("[data-relation-action]");
       if (relationButton && this.commands) {
         const relationAction = relationButton.dataset.relationAction;
-        if (relationAction === "edit") this.commands.editActiveRelationText();
-        if (relationAction === "delete") this.commands.removeActiveRelation();
+        if (relationAction === "edit" && !this.commands.isReadonly()) this.commands.editActiveRelationText();
+        if (relationAction === "delete" && !this.commands.isReadonly()) this.commands.removeActiveRelation();
         if (relationAction === "cancel") this.commands.cancelRelation();
         this.updateRelationPresentation();
         return;
@@ -52348,18 +52703,29 @@ class YeMindEditor {
     this.map.on("yemind_todo_toggle", (node) => {
       if (!this.commands) return;
       this.activateNode(node);
+      if (this.commands.isReadonly()) {
+        siyuan.showMessage("只读模式下不能修改待办", 2500, "info");
+        return;
+      }
       this.commands.toggleTodo();
     });
     this.map.on("yemind_badge_click", (type, node) => {
       if (!this.commands) return;
       this.activateNode(node);
-      if (type === "todo") this.commands.toggleTodo();
-      if (type === "comments") openCommentsDialog(this.commands);
+      if (type === "todo") {
+        if (this.commands.isReadonly()) {
+          siyuan.showMessage("只读模式下不能修改待办", 2500, "info");
+          return;
+        }
+        this.commands.toggleTodo();
+      }
+      if (type === "comments") openCommentsDialog(this.commands, { readonly: this.commands.isReadonly() });
     });
     this.map.on("node_active", (node, list) => {
       var _a;
       this.rootEl.dataset.hasSelection = list.length > 0 ? "true" : "false";
       this.updateSelectionPresentation(list.length);
+      this.updateToolbarAvailability();
       const active = node ?? list[0];
       const uid = (_a = active == null ? void 0 : active.getData) == null ? void 0 : _a.call(active, "uid");
       this.activateOutlineUid(uid ? String(uid) : "");
@@ -52376,6 +52742,7 @@ class YeMindEditor {
     openNodeContextMenu(event, this.commands, {
       onInlineLink: () => openInlineLinkDialog(this.commands, this.settings),
       onCodeBlock: () => openCodeBlockDialog(this.commands, this.settings),
+      onNodeLink: () => openLinkDialog(this.commands, this.settings.inlineLinkAutoHttps),
       onRelation: () => this.beginRelation()
     });
   }
@@ -52402,7 +52769,7 @@ class YeMindEditor {
     var _a, _b, _c2, _d2, _e, _f;
     const firstApply = !this.settingsInitialized;
     this.settings = settings;
-    (_a = this.richTextToolbar) == null ? void 0 : _a.setEnabled(settings.showRichTextToolbar);
+    (_a = this.richTextToolbar) == null ? void 0 : _a.setEnabled(settings.showRichTextToolbar && this.rootEl.dataset.readonly !== "true");
     configureMindMapPlugins(settings);
     configureNodeDecorations({
       showTodoBadge: settings.showTodoBadge,
@@ -52439,15 +52806,42 @@ class YeMindEditor {
       this.setViewMode(settings.defaultViewMode);
       this.setReadonly(settings.defaultReadonlyMode);
       this.toggleZen(settings.defaultZenMode);
-      if (settings.autoFitOnOpen && !this.restoredViewOnOpen) window.setTimeout(() => {
-        var _a2;
-        return (_a2 = this.commands) == null ? void 0 : _a2.fit();
-      }, 0);
     }
   }
   async toggleSelectionMode() {
     const nextMode = this.settings.canvasMode === "select" ? "pan" : "select";
-    await this.options.settingsStore.update({ canvasMode: nextMode });
+    try {
+      await this.options.settingsStore.update({ canvasMode: nextMode });
+    } catch (error) {
+      console.error("[YeMind Zen] canvas mode save failed", error);
+      siyuan.showMessage("画布操作模式保存失败，已保持原设置", 4e3, "error");
+    }
+  }
+  updateToolbarAvailability() {
+    if (!this.commands || !this.rootEl) return;
+    const nodes = this.commands.getActiveNodes();
+    const primary = nodes[0];
+    const state = createToolbarAvailability({
+      readonly: this.commands.isReadonly(),
+      selectedCount: nodes.length,
+      primaryIsRoot: Boolean(primary == null ? void 0 : primary.isRoot),
+      primaryIsGeneralization: Boolean(primary == null ? void 0 : primary.isGeneralization),
+      hasRemovableSelection: nodes.some((node) => !(node == null ? void 0 : node.isRoot))
+    });
+    const actionState = {
+      undo: state.undo,
+      redo: state.redo,
+      "add-child": state.addChild,
+      "add-sibling": state.addSibling,
+      remove: state.remove,
+      "reset-layout": state.resetLayout
+    };
+    this.rootEl.querySelectorAll("button[data-action]").forEach((button) => {
+      const action = button.dataset.action ?? "";
+      if (Object.prototype.hasOwnProperty.call(actionState, action)) button.disabled = !actionState[action];
+    });
+    const layout2 = this.rootEl.querySelector('[data-action="layout"]');
+    if (layout2) layout2.disabled = !state.layout;
   }
   updateSelectionPresentation(count) {
     var _a, _b;
@@ -52534,58 +52928,69 @@ class YeMindEditor {
     const current = info.total > 0 && info.currentIndex >= 0 ? info.currentIndex + 1 : 0;
     this.searchInfoEl.textContent = `${current} / ${Math.max(0, info.total)}`;
   }
-  openInlineLink(event, href) {
+  openLink(href) {
     if (!href || href === "about:blank") return;
-    event.preventDefault();
-    event.stopPropagation();
-    if (href.toLowerCase().startsWith("siyuan://")) {
-      window.location.href = href;
+    const navigation = resolveLinkNavigation(href, this.settings.externalLinkMode);
+    if (!navigation) {
+      siyuan.showMessage("链接地址无效或协议不受支持", 3e3, "error");
       return;
     }
-    if (this.settings.externalLinkMode === "current-window") window.location.href = href;
-    else window.open(href, "_blank", "noopener,noreferrer");
+    if (navigation.target === "siyuan" || navigation.target === "current-window") {
+      window.location.href = navigation.href;
+      return;
+    }
+    window.open(navigation.href, "_blank", "noopener,noreferrer");
   }
   activateNode(node) {
     var _a, _b;
     if (!this.map || !node) return;
     const renderer = this.map.renderer;
     const activeList = Array.isArray(renderer == null ? void 0 : renderer.activeNodeList) ? renderer.activeNodeList : [];
-    if (activeList.includes(node)) return;
+    if (activeList.includes(node)) {
+      promoteNodeToPrimary(renderer, node);
+      return;
+    }
     (_a = renderer == null ? void 0 : renderer.clearActiveNodeList) == null ? void 0 : _a.call(renderer);
     if (typeof node.active === "function") node.active();
     else (_b = renderer == null ? void 0 : renderer.addNodeToActiveList) == null ? void 0 : _b.call(renderer, node);
   }
   scheduleSave() {
     if (this.destroyed) return;
+    const revision = this.saveRevisions.markChanged();
     this.saveStateEl.textContent = "保存中…";
     if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.saveTimer = window.setTimeout(() => {
       this.saveTimer = null;
-      void this.persist();
+      void this.persist(revision);
     }, this.settings.autosaveDelayMs);
   }
   flushPendingSave() {
-    if (this.saveTimer === null || !this.map || this.destroyed) return;
-    window.clearTimeout(this.saveTimer);
+    if (!this.map || this.destroyed || !this.saveRevisions.isDirty()) return;
+    if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.saveTimer = null;
-    void this.persist();
+    void this.persist(this.saveRevisions.current());
   }
-  async persist() {
+  async persist(revision) {
     if (!this.map || this.destroyed) return;
     try {
       const sanitized = sanitizeAssociativeLines(this.map.getData(false));
-      this.current.data = sanitized.tree;
-      await this.options.repository.update(this.current.id, {
+      const patch = {
         data: sanitized.tree,
         layout: this.map.getLayout(),
         theme: this.map.getTheme(),
         viewData: normalizePersistedViewData(this.map.view.getTransformData())
-      });
-      if (!this.destroyed) this.saveStateEl.textContent = "已保存";
+      };
+      this.current.data = sanitized.tree;
+      await this.options.repository.update(this.current.id, patch);
+      if (!this.destroyed && this.saveRevisions.markSaved(revision)) {
+        this.saveStateEl.textContent = "已保存";
+      }
     } catch (error) {
       console.error("[YeMind Zen] save failed", error);
-      if (!this.destroyed) this.saveStateEl.textContent = "保存失败";
-      siyuan.showMessage("YeMind Zen 保存失败", 5e3, "error");
+      if (!this.destroyed && revision === this.saveRevisions.current()) {
+        this.saveStateEl.textContent = "保存失败";
+        siyuan.showMessage("YeMind Zen 保存失败", 5e3, "error");
+      }
     }
   }
   updateStats(data2) {
@@ -52598,19 +53003,37 @@ class YeMindEditor {
     this.zoomEl.textContent = `${Math.round(scale * 100)}%`;
   }
   setReadonly(enabled) {
+    var _a, _b;
     if (!this.map) return;
     this.rootEl.dataset.readonly = String(enabled);
     this.rootEl.querySelectorAll('[data-action="readonly"]').forEach((button) => {
       button.classList.toggle("is-active", enabled);
+      button.setAttribute("aria-pressed", String(enabled));
     });
+    this.replaceInputEl.disabled = enabled;
+    this.rootEl.querySelectorAll('[data-search-action="replace"], [data-search-action="replace-all"]').forEach((button) => {
+      button.disabled = enabled;
+    });
+    this.relationPanelEl.querySelectorAll('[data-relation-action="edit"], [data-relation-action="delete"]').forEach((button) => {
+      button.disabled = enabled;
+    });
+    if (enabled && ((_a = this.commands) == null ? void 0 : _a.isRelationCreating())) this.commands.cancelRelation();
+    (_b = this.richTextToolbar) == null ? void 0 : _b.setEnabled(this.settings.showRichTextToolbar && !enabled);
     this.map.setMode(enabled ? "readonly" : "edit");
+    this.updateToolbarAvailability();
+    this.updateRelationPresentation();
   }
   toggleZen(enabled) {
     this.rootEl.dataset.zen = String(enabled);
   }
   async toggleFullscreen() {
-    if (document.fullscreenElement) await document.exitFullscreen();
-    else await this.rootEl.requestFullscreen();
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await this.rootEl.requestFullscreen();
+    } catch (error) {
+      console.error("[YeMind Zen] fullscreen failed", error);
+      siyuan.showMessage("当前环境无法切换全屏", 3e3, "error");
+    }
   }
   openHelp() {
     new siyuan.Dialog({
@@ -52630,12 +53053,16 @@ class YeMindEditor {
     });
   }
 }
-async function mountAfterReady(state, ready, resolveValue, mount) {
-  await ready;
-  if (state.destroyed) return;
-  const value = resolveValue();
-  if (state.destroyed) return;
-  mount(value);
+async function mountAfterReady(state, ready, resolveValue, mount, onError) {
+  try {
+    await ready;
+    if (state.destroyed) return;
+    const value = resolveValue();
+    if (state.destroyed) return;
+    mount(value);
+  } catch (error) {
+    if (!state.destroyed) onError == null ? void 0 : onError(error);
+  }
 }
 function registerYeMindTab(plugin, host) {
   const states = /* @__PURE__ */ new WeakMap();
@@ -52676,6 +53103,13 @@ function registerYeMindTab(plugin, host) {
             settingsStore: host.settingsStore,
             onMissing: () => this.tab.close()
           });
+        },
+        (error) => {
+          var _a2;
+          (_a2 = state.unregister) == null ? void 0 : _a2.call(state);
+          state.unregister = void 0;
+          console.error("[YeMind Zen] map tab mount failed", error);
+          container.innerHTML = '<div class="ymz-missing"><b>导图加载失败</b><span>请关闭标签后重新打开；若持续出现，请检查控制台日志。</span></div>';
         }
       );
     },
@@ -52713,6 +53147,7 @@ class OpenMapTabRegistry {
   close(mapId) {
     const handle = this.handles.get(mapId);
     if (!handle) return false;
+    this.handles.delete(mapId);
     handle.close();
     return true;
   }
@@ -52732,6 +53167,14 @@ function parseYeMindMapUrl(value, pluginName) {
     return mapId || null;
   } catch {
     return null;
+  }
+}
+async function runSafeOperation(operation, onError) {
+  try {
+    return await operation();
+  } catch (error) {
+    onError(error);
+    return void 0;
   }
 }
 class YeMindZenPlugin extends siyuan.Plugin {
@@ -52778,52 +53221,59 @@ class YeMindZenPlugin extends siyuan.Plugin {
     return this.ready;
   }
   async openMap(mapId) {
-    await this.ready;
-    const map2 = this.repository.get(mapId);
-    if (!map2) {
-      siyuan.showMessage("导图不存在或已被删除", 4e3, "error");
-      return;
-    }
-    await this.repository.setActiveMap(mapId);
-    if (this.tabRegistry.activate(mapId)) return;
-    await siyuan.openTab({
-      app: this.app,
-      custom: {
-        id: `${this.name}${TAB_TYPE}`,
-        icon: ICON_ID,
-        title: map2.title,
-        data: { mapId }
-      },
-      openNewTab: true,
-      keepCursor: false
-    });
+    await runSafeOperation(async () => {
+      await this.ready;
+      const map2 = this.repository.get(mapId);
+      if (!map2) {
+        siyuan.showMessage("导图不存在或已被删除", 4e3, "error");
+        return;
+      }
+      await this.repository.setActiveMap(mapId);
+      if (this.tabRegistry.activate(mapId)) return;
+      await siyuan.openTab({
+        app: this.app,
+        custom: {
+          id: `${this.name}${TAB_TYPE}`,
+          icon: ICON_ID,
+          title: map2.title,
+          data: { mapId }
+        },
+        openNewTab: true,
+        keepCursor: false
+      });
+    }, (error) => this.reportOperationFailure("打开导图", error));
   }
   async createMap() {
-    await this.ready;
-    const title = await promptText("新建导图", "未命名导图", "导图名称");
-    if (!title) return;
-    const map2 = await this.repository.create(title);
-    const settings = this.settingsStore.get();
-    await this.repository.update(map2.id, { layout: settings.defaultLayout });
-    await this.openMap(map2.id);
+    await runSafeOperation(async () => {
+      await this.ready;
+      const title = await promptText("新建导图", "未命名导图", "导图名称");
+      if (!title) return;
+      const settings = this.settingsStore.get();
+      const map2 = await this.repository.create(title, settings.defaultLayout);
+      await this.openMap(map2.id);
+    }, (error) => this.reportOperationFailure("新建导图", error));
   }
   async renameMap(mapId) {
-    await this.ready;
-    const map2 = this.repository.get(mapId);
-    if (!map2) return;
-    const title = await promptText("重命名导图", map2.title, "导图名称");
-    if (!title || title === map2.title) return;
-    await this.repository.rename(mapId, title);
-    this.tabRegistry.updateTitle(mapId, title);
+    await runSafeOperation(async () => {
+      await this.ready;
+      const map2 = this.repository.get(mapId);
+      if (!map2) return;
+      const title = await promptText("重命名导图", map2.title, "导图名称");
+      if (!title || title === map2.title) return;
+      await this.repository.rename(mapId, title);
+      this.tabRegistry.updateTitle(mapId, title);
+    }, (error) => this.reportOperationFailure("重命名导图", error));
   }
   async deleteMap(mapId) {
-    await this.ready;
-    const map2 = this.repository.get(mapId);
-    if (!map2) return;
-    const confirmed = await confirmAction("删除导图", `确认删除“${map2.title}”？删除后无法撤销。`, "删除");
-    if (!confirmed) return;
-    this.tabRegistry.close(mapId);
-    await this.repository.remove(mapId);
+    await runSafeOperation(async () => {
+      await this.ready;
+      const map2 = this.repository.get(mapId);
+      if (!map2) return;
+      const confirmed = await confirmAction("删除导图", `确认删除“${map2.title}”？删除后无法撤销。`, "删除");
+      if (!confirmed) return;
+      await this.repository.remove(mapId);
+      this.tabRegistry.close(mapId);
+    }, (error) => this.reportOperationFailure("删除导图", error));
   }
   async copyMapLink(mapId) {
     await this.ready;
@@ -52834,6 +53284,10 @@ class YeMindZenPlugin extends siyuan.Plugin {
     } catch {
       siyuan.showMessage(link, 8e3);
     }
+  }
+  reportOperationFailure(action, error) {
+    console.error(`[YeMind Zen] ${action} failed`, error);
+    siyuan.showMessage(`YeMind Zen ${action}失败，请稍后重试`, 5e3, "error");
   }
   async bootstrap() {
     try {

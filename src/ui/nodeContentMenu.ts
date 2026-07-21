@@ -43,3 +43,56 @@ export function createSummaryMenuDescriptor(nodes: any[]): SummaryMenuDescriptor
     warning: false,
   };
 }
+
+export interface NodeMenuAvailabilityInput {
+  readonly: boolean;
+  primaryIsRoot: boolean;
+  primaryIsGeneralization: boolean;
+  hasRichTextSelection: boolean;
+  hasCodeBlock: boolean;
+}
+
+export interface NodeMenuAvailability {
+  edit: boolean;
+  addChild: boolean;
+  addSibling: boolean;
+  addParent: boolean;
+  copy: boolean;
+  cut: boolean;
+  paste: boolean;
+  nodeContent: boolean;
+  inlineLink: boolean;
+  codeBlock: boolean;
+  summary: boolean;
+  relation: boolean;
+  move: boolean;
+  resetLayout: boolean;
+  remove: boolean;
+  removeOnlyCurrent: boolean;
+  toggleExpand: boolean;
+}
+
+export function createNodeMenuAvailability(input: NodeMenuAvailabilityInput): NodeMenuAvailability {
+  const editable = !input.readonly;
+  const regularNode = !input.primaryIsGeneralization;
+  const nonRoot = !input.primaryIsRoot;
+  return {
+    edit: editable,
+    addChild: editable && regularNode,
+    addSibling: editable && nonRoot && regularNode,
+    addParent: editable && nonRoot && regularNode,
+    copy: true,
+    cut: editable && nonRoot,
+    paste: editable && regularNode,
+    nodeContent: editable && regularNode,
+    inlineLink: editable && input.hasRichTextSelection,
+    codeBlock: editable && (input.hasRichTextSelection || input.hasCodeBlock),
+    summary: editable,
+    relation: editable && regularNode,
+    move: editable && nonRoot && regularNode,
+    resetLayout: editable,
+    remove: editable && nonRoot,
+    removeOnlyCurrent: editable && nonRoot,
+    toggleExpand: true,
+  };
+}

@@ -38,7 +38,7 @@ describe('upstream generalization behavior', () => {
     expect(execCommand.mock.calls).toEqual([
       ['ADD_GENERALIZATION'],
       ['REMOVE_GENERALIZATION'],
-      ['REMOVE_NODE'],
+      ['REMOVE_NODE', [renderer.activeNodeList[0]]],
     ]);
   });
 

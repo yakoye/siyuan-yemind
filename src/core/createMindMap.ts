@@ -5,6 +5,7 @@ import type { YeMindSettings } from '../settings/SettingsStore';
 import { createNodePrefixContent, createNodePostfixContent, YEMIND_ICON_LIST } from './nodeDecorations';
 import { buildDragAndLayoutOptions, normalizePersistedViewData } from './dragBehavior';
 import { buildRelationOptions } from './relationConfig';
+import { shouldBlockUpstreamShortcut } from '../editor/shortcutSafety';
 
 export interface CreateMindMapOptions {
   el: HTMLElement;
@@ -14,6 +15,7 @@ export interface CreateMindMapOptions {
   layout?: string;
   readonly?: boolean;
   settings?: YeMindSettings;
+  onHyperlink?: (href: string) => void;
 }
 
 export function createMindMap(options: CreateMindMapOptions): MindMap {
@@ -62,6 +64,12 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     createNodePostfixContent,
     openRealtimeRenderOnNodeTextEdit: true,
     enableEditFormulaInRichTextEdit: true,
+    customHyperlinkJump: (href: string) => options.onHyperlink?.(href),
+    beforeShortcutRun: (shortcut: string, nodes: any[]) => shouldBlockUpstreamShortcut(
+      shortcut,
+      nodes,
+      options.el.closest<HTMLElement>('.ymz-editor')?.dataset.readonly === 'true',
+    ),
     errorHandler: (_code: unknown, error: unknown) => console.error('[YeMind Zen]', error),
   } as any);
 }

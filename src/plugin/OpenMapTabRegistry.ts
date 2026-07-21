@@ -24,6 +24,7 @@ export class OpenMapTabRegistry {
   close(mapId: string): boolean {
     const handle = this.handles.get(mapId);
     if (!handle) return false;
+    this.handles.delete(mapId);
     handle.close();
     return true;
   }

@@ -134,3 +134,34 @@ describe('SettingsStore', () => {
     });
   });
 });
+
+  it('keeps the previous in-memory settings when persistence fails', async () => {
+    const store = new SettingsStore({
+      load: async () => ({ autosaveDelayMs: 350 }),
+      save: async () => { throw new Error('disk full'); },
+    });
+    await store.load();
+
+    await expect(store.update({ autosaveDelayMs: 900 })).rejects.toThrow('disk full');
+    expect(store.get().autosaveDelayMs).toBe(350);
+  });
+
+it('serializes concurrent setting updates without losing an earlier patch', async () => {
+  const pending: Array<{ value: any; resolve: () => void }> = [];
+  const store = new SettingsStore({
+    load: async () => ({}),
+    save: (value) => new Promise<void>((resolve) => pending.push({ value: structuredClone(value), resolve })),
+  });
+  await store.load();
+
+  const first = store.update({ autosaveDelayMs: 900 });
+  const second = store.update({ showRichTextToolbar: false });
+  await Promise.resolve();
+  expect(pending).toHaveLength(1);
+  pending[0].resolve();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(pending).toHaveLength(2);
+  expect(pending[1].value).toMatchObject({ autosaveDelayMs: 900, showRichTextToolbar: false });
+  pending[1].resolve();
+  await Promise.all([first, second]);
+});

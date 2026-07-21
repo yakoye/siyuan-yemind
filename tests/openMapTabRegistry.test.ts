@@ -25,3 +25,15 @@ describe('OpenMapTabRegistry', () => {
     expect(activateNew).toHaveBeenCalledOnce();
   });
 });
+
+it('removes a handle before closing so repeated close requests are idempotent', () => {
+  const registry = new OpenMapTabRegistry();
+  const close = vi.fn(() => {
+    expect(registry.close('map-1')).toBe(false);
+  });
+  registry.register('map-1', { activate: vi.fn(), close, updateTitle: vi.fn() });
+
+  expect(registry.close('map-1')).toBe(true);
+  expect(registry.close('map-1')).toBe(false);
+  expect(close).toHaveBeenCalledOnce();
+});

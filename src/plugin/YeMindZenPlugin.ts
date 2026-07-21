@@ -11,6 +11,7 @@ import type { YeMindPluginHost } from './host';
 import { registerYeMindTab } from './tabs';
 import { OpenMapTabRegistry } from './OpenMapTabRegistry';
 import { parseYeMindMapUrl } from './pluginUrl';
+import { runSafeOperation } from './operationSafety';
 
 export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost {
   repository!: MapRepository;
@@ -53,55 +54,62 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
   }
 
   async openMap(mapId: string): Promise<void> {
-    await this.ready;
-    const map = this.repository.get(mapId);
-    if (!map) {
-      showMessage('导图不存在或已被删除', 4000, 'error');
-      return;
-    }
-    await this.repository.setActiveMap(mapId);
-    if (this.tabRegistry.activate(mapId)) return;
-    await openTab({
-      app: this.app,
-      custom: {
-        id: `${this.name}${TAB_TYPE}`,
-        icon: ICON_ID,
-        title: map.title,
-        data: { mapId },
-      },
-      openNewTab: true,
-      keepCursor: false,
-    });
+    await runSafeOperation(async () => {
+      await this.ready;
+      const map = this.repository.get(mapId);
+      if (!map) {
+        showMessage('导图不存在或已被删除', 4000, 'error');
+        return;
+      }
+      await this.repository.setActiveMap(mapId);
+      if (this.tabRegistry.activate(mapId)) return;
+      await openTab({
+        app: this.app,
+        custom: {
+          id: `${this.name}${TAB_TYPE}`,
+          icon: ICON_ID,
+          title: map.title,
+          data: { mapId },
+        },
+        openNewTab: true,
+        keepCursor: false,
+      });
+    }, (error) => this.reportOperationFailure('打开导图', error));
   }
 
   async createMap(): Promise<void> {
-    await this.ready;
-    const title = await promptText('新建导图', '未命名导图', '导图名称');
-    if (!title) return;
-    const map = await this.repository.create(title);
-    const settings = this.settingsStore.get();
-    await this.repository.update(map.id, { layout: settings.defaultLayout });
-    await this.openMap(map.id);
+    await runSafeOperation(async () => {
+      await this.ready;
+      const title = await promptText('新建导图', '未命名导图', '导图名称');
+      if (!title) return;
+      const settings = this.settingsStore.get();
+      const map = await this.repository.create(title, settings.defaultLayout);
+      await this.openMap(map.id);
+    }, (error) => this.reportOperationFailure('新建导图', error));
   }
 
   async renameMap(mapId: string): Promise<void> {
-    await this.ready;
-    const map = this.repository.get(mapId);
-    if (!map) return;
-    const title = await promptText('重命名导图', map.title, '导图名称');
-    if (!title || title === map.title) return;
-    await this.repository.rename(mapId, title);
-    this.tabRegistry.updateTitle(mapId, title);
+    await runSafeOperation(async () => {
+      await this.ready;
+      const map = this.repository.get(mapId);
+      if (!map) return;
+      const title = await promptText('重命名导图', map.title, '导图名称');
+      if (!title || title === map.title) return;
+      await this.repository.rename(mapId, title);
+      this.tabRegistry.updateTitle(mapId, title);
+    }, (error) => this.reportOperationFailure('重命名导图', error));
   }
 
   async deleteMap(mapId: string): Promise<void> {
-    await this.ready;
-    const map = this.repository.get(mapId);
-    if (!map) return;
-    const confirmed = await confirmAction('删除导图', `确认删除“${map.title}”？删除后无法撤销。`, '删除');
-    if (!confirmed) return;
-    this.tabRegistry.close(mapId);
-    await this.repository.remove(mapId);
+    await runSafeOperation(async () => {
+      await this.ready;
+      const map = this.repository.get(mapId);
+      if (!map) return;
+      const confirmed = await confirmAction('删除导图', `确认删除“${map.title}”？删除后无法撤销。`, '删除');
+      if (!confirmed) return;
+      await this.repository.remove(mapId);
+      this.tabRegistry.close(mapId);
+    }, (error) => this.reportOperationFailure('删除导图', error));
   }
 
   async copyMapLink(mapId: string): Promise<void> {
@@ -113,6 +121,11 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
     } catch {
       showMessage(link, 8000);
     }
+  }
+
+  private reportOperationFailure(action: string, error: unknown): void {
+    console.error(`[YeMind Zen] ${action} failed`, error);
+    showMessage(`YeMind Zen ${action}失败，请稍后重试`, 5000, 'error');
   }
 
   private readonly onOpenPluginUrl = (event: CustomEvent<{ url: string }>): void => {

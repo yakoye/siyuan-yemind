@@ -4,6 +4,18 @@ import Quill from 'quill';
 import Delta from 'quill-delta';
 import { Scope } from 'parchment';
 
+export const YEMIND_FONT_VALUES = [
+  'sans-serif',
+  'serif',
+  '微软雅黑, Microsoft YaHei',
+  '宋体, SimSun, Songti SC',
+  'andale mono',
+] as const;
+
+export const YEMIND_SIZE_VALUES = [
+  '12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px',
+] as const;
+
 export const YEMIND_RICH_TEXT_FORMATS = [
   'bold',
   'italic',
@@ -28,9 +40,16 @@ function sanitizeLink(value: string): string {
   return 'about:blank';
 }
 
-function registerYeMindFormats(): void {
+export function registerYeMindFormats(): void {
   if (formatsRegistered) return;
   formatsRegistered = true;
+
+  const FontStyle = Quill.import('attributors/style/font') as any;
+  const SizeStyle = Quill.import('attributors/style/size') as any;
+  FontStyle.whitelist = [...YEMIND_FONT_VALUES];
+  SizeStyle.whitelist = [...YEMIND_SIZE_VALUES];
+  Quill.register(FontStyle, true);
+  Quill.register(SizeStyle, true);
 
   const BaseLink = Quill.import('formats/link') as any;
   class YeMindLink extends BaseLink {

@@ -73,6 +73,7 @@ export class MapRepository {
   private loaded = false;
   private loadPromise: Promise<void> | null = null;
   private saveQueue: Promise<void> = Promise.resolve();
+  private mutationQueue: Promise<void> = Promise.resolve();
 
   constructor(private readonly storage: RepositoryStorage, options: RepositoryOptions = {}) {
     this.now = options.now ?? (() => Date.now());
@@ -125,51 +126,62 @@ export class MapRepository {
 
   async setActiveMap(id: string | null): Promise<void> {
     await this.ensureLoaded();
-    this.state.activeMapId = id && this.state.maps.some((map) => map.id === id) ? id : null;
-    await this.persist();
+    await this.enqueueMutation((draft) => {
+      const next = id && draft.maps.some((map) => map.id === id) ? id : null;
+      if (draft.activeMapId === next) return { changed: false, value: undefined };
+      draft.activeMapId = next;
+      return { changed: true, value: undefined };
+    });
   }
 
-  async create(title: string): Promise<YeMindMapDocument> {
+  async create(title: string, layout = 'logicalStructure'): Promise<YeMindMapDocument> {
     await this.ensureLoaded();
-    const map = createDefaultMap(title, this.id(), this.now());
-    this.state.maps.push(map);
-    this.state.activeMapId = map.id;
-    await this.persist();
-    return clone(map);
+    return this.enqueueMutation((draft) => {
+      const map = createDefaultMap(title, this.id(), this.now());
+      map.layout = layout || 'logicalStructure';
+      draft.maps.push(map);
+      draft.activeMapId = map.id;
+      return { changed: true, value: clone(map) };
+    });
   }
 
   async rename(id: string, title: string): Promise<void> {
     await this.ensureLoaded();
-    const map = this.state.maps.find((item) => item.id === id);
-    if (!map) return;
-    const normalized = title.trim();
-    if (!normalized) return;
-    map.title = normalized;
-    map.updatedAt = this.now();
-    await this.persist();
+    await this.enqueueMutation((draft) => {
+      const map = draft.maps.find((item) => item.id === id);
+      const normalized = title.trim();
+      if (!map || !normalized || normalized === map.title) return { changed: false, value: undefined };
+      map.title = normalized;
+      map.updatedAt = this.now();
+      return { changed: true, value: undefined };
+    });
   }
 
   async update(id: string, patch: Partial<Pick<YeMindMapDocument, 'data' | 'layout' | 'theme' | 'viewData'>>): Promise<void> {
     await this.ensureLoaded();
-    const map = this.state.maps.find((item) => item.id === id);
-    if (!map) return;
-    if (patch.data) map.data = clone(patch.data);
-    if (patch.layout) map.layout = patch.layout;
-    if (patch.theme) map.theme = patch.theme;
-    if (patch.viewData !== undefined) map.viewData = clone(patch.viewData);
-    map.updatedAt = this.now();
-    await this.persist();
+    await this.enqueueMutation((draft) => {
+      const map = draft.maps.find((item) => item.id === id);
+      if (!map) return { changed: false, value: undefined };
+      if (patch.data) map.data = clone(patch.data);
+      if (patch.layout !== undefined) map.layout = patch.layout;
+      if (patch.theme !== undefined) map.theme = patch.theme;
+      if (patch.viewData !== undefined) map.viewData = clone(patch.viewData);
+      map.updatedAt = this.now();
+      return { changed: true, value: undefined };
+    });
   }
 
   async remove(id: string): Promise<void> {
     await this.ensureLoaded();
-    const index = this.state.maps.findIndex((item) => item.id === id);
-    if (index < 0) return;
-    this.state.maps.splice(index, 1);
-    if (this.state.activeMapId === id) {
-      this.state.activeMapId = this.state.maps[index]?.id ?? this.state.maps[index - 1]?.id ?? null;
-    }
-    await this.persist();
+    await this.enqueueMutation((draft) => {
+      const index = draft.maps.findIndex((item) => item.id === id);
+      if (index < 0) return { changed: false, value: undefined };
+      draft.maps.splice(index, 1);
+      if (draft.activeMapId === id) {
+        draft.activeMapId = draft.maps[index]?.id ?? draft.maps[index - 1]?.id ?? null;
+      }
+      return { changed: true, value: undefined };
+    });
   }
 
   subscribe(listener: Listener): () => void {
@@ -182,10 +194,18 @@ export class MapRepository {
     return clone(this.state);
   }
 
-  private async persist(): Promise<void> {
-    const snapshot = this.snapshot();
-    await this.enqueueSave(snapshot);
-    this.emit();
+  private enqueueMutation<T>(mutator: (draft: MapStorageDocument) => { changed: boolean; value: T }): Promise<T> {
+    const operation = this.mutationQueue.then(async () => {
+      const draft = this.snapshot();
+      const result = mutator(draft);
+      if (!result.changed) return result.value;
+      await this.enqueueSave(draft);
+      this.state = draft;
+      this.emit();
+      return result.value;
+    });
+    this.mutationQueue = operation.then(() => undefined, () => undefined);
+    return operation;
   }
 
   private enqueueSave(snapshot: MapStorageDocument): Promise<void> {

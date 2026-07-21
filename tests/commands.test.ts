@@ -42,8 +42,8 @@ describe('createCommandAdapter', () => {
       ['INSERT_PARENT_NODE'],
       ['UP_NODE'],
       ['DOWN_NODE'],
-      ['REMOVE_NODE'],
-      ['REMOVE_CURRENT_NODE'],
+      ['REMOVE_NODE', [map.renderer.activeNodeList[0]]],
+      ['REMOVE_CURRENT_NODE', [map.renderer.activeNodeList[0]]],
       ['BACK'],
       ['FORWARD'],
       ['RESET_LAYOUT'],
@@ -66,4 +66,28 @@ describe('createCommandAdapter', () => {
     expect(map.view.narrow).toHaveBeenCalledOnce();
     expect(map.renderer.startTextEdit).toHaveBeenCalledOnce();
   });
+});
+
+it('guards structural commands for root and generalization nodes', () => {
+  const calls: any[] = [];
+  const root = { isRoot: true, isGeneralization: false };
+  const map = {
+    opt: { readonly: false },
+    renderer: { activeNodeList: [root], toggleActiveExpand: () => undefined },
+    execCommand: (...args: any[]) => calls.push(args),
+    view: { fit: () => undefined, reset: () => undefined, enlarge: () => undefined, narrow: () => undefined },
+  } as any;
+  const commands = createCommandAdapter(map);
+
+  commands.addSibling();
+  commands.addParent();
+  commands.moveUp();
+  commands.moveDown();
+  expect(calls).toEqual([]);
+
+  map.renderer.activeNodeList = [{ isRoot: false, isGeneralization: true }];
+  commands.addChild();
+  commands.addSibling();
+  commands.addParent();
+  expect(calls).toEqual([]);
 });
