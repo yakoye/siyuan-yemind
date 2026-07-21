@@ -1,15 +1,25 @@
 # Changelog
 
+## 0.5.13 — 2026-07-17
+
+- Traced the stale solid drag connection to upstream ownership: `hideChildren()` hides outgoing child lines, while the dragged node's incoming line is stored in `parent._lines[parent.children.indexOf(node)]`.
+- Snapshotted and hid every dragged top-level node's incoming line for the whole drag session, then restored each line's original visibility after native drop/cancel cleanup.
+- Replaced the remaining upstream pointer/quadrant preview detector with a pure rectangle-based intent adapter modeled from KMind Zen 0.33.0's production bundle.
+- Added official child-tail and sibling-lane geometry: 80 px tails, 8/22 px child enter/leave padding, and 44/72 px sibling lane/end padding.
+- Preserved official intent precedence: child tail, sibling lane when the clone center is outside the target body, child body, then sibling fallback.
+- Continued animation frames while an intent is pending so a stationary pointer can still satisfy the 60 ms/3-frame stabilizer instead of waiting for another mousemove.
+- Selected horizontal or vertical Bézier guide geometry from each actual target/original parent in mixed layouts instead of applying one orientation to the entire map.
+- Kept final structural mutation entirely upstream-owned through `MOVE_NODE_TO`, `INSERT_BEFORE`, and `INSERT_AFTER`; no second history, layout, or persistence implementation was added.
+- Added focused regressions for old incoming-line visibility, screenshot-equivalent upper-target switching, logical-left/mind-map/organization geometry, active leave padding, mixed-layout guide orientation, and fishbone fallback.
+
 ## 0.5.12 — 2026-07-17
 
-- Studied the user-provided KMind Zen 0.33.0 public production bundle at the actual outline key-handler, drag-frame, target-stabilizer, and cubic-guide paths instead of inferring behavior from screenshots.
-- Ported commit-before-structure outline transactions and UID/range-based focus restoration without importing KMind Zen's private document model, persistence, history, or layout engine.
-- Added IME-safe outline keyboard semantics: Enter sibling/root child, Shift+Enter hard break, Tab indent, Shift+Tab outdent, empty Backspace/Delete removal, and caret-boundary ArrowLeft/ArrowRight collapse/expand.
-- Continued to delegate outline mutations to upstream `SET_NODE_TEXT`, `INSERT_NODE`, `INSERT_CHILD_NODE`, `MOVE_NODE_TO`, `MOVE_UP_ONE_LEVEL`, `REMOVE_NODE`, and `SET_NODE_EXPAND`.
-- Added a persisted 25%–70% split-outline ratio with pointer dragging, keyboard adjustment, double-click/Home reset, animation-frame updates, and safe canvas resizing.
-- Replaced upstream Drag's fixed 300 ms overlap throttle with animation-frame candidate sampling while retaining its native target calculation and final `MOVE_NODE_TO`, `INSERT_BEFORE`, and `INSERT_AFTER` commands.
-- Added the official 60 ms/3-frame candidate stabilizer, green `6 6` cubic target-parent guide, and red `3 6` original-parent fallback guide with distance-dependent opacity and width.
-- Added focused regressions for IME and keyboard actions, outline structure command bridges, collapsed descendants, split ratio/template/settings, target stability, cubic geometry, and guide styling.
+- Studied the user-provided KMind Zen 0.33.0 production bundle and adopted Scheme C: transplant verified interaction mechanisms while keeping YeMind Zen's current data model and `simple-mind-map` structural ownership.
+- Reworked outline editing into commit-before-structure transactions with UID-based caret restoration and structure-operation serialization.
+- Added IME-safe Enter/Shift+Enter, Tab/Shift+Tab, empty deletion, visible-row navigation, and caret-boundary collapse/expand behavior.
+- Added an adjustable right-side split divider with animation-frame updates, keyboard adjustment, reset, bounds, and persisted ratio.
+- Replaced upstream's fixed 300 ms drag-check throttle with animation-frame scheduling, a 60 ms/3-frame candidate stabilizer, and cubic target/original-parent guides.
+- Retained upstream `SET_NODE_TEXT`, node-structure commands, final drag commands, history, layout, persistence, and recovery behavior.
 
 ## 0.5.11 — 2026-07-17
 

@@ -3971,7 +3971,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.5.12";
+const PLUGIN_VERSION = "0.5.13";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -23296,6 +23296,316 @@ class Drag extends Base2 {
   }
 }
 Drag.instanceName = "drag";
+const CHILD_TAIL_SIZE = 80;
+const CHILD_ENTER_PADDING = 8;
+const CHILD_LEAVE_PADDING = 22;
+const SIBLING_LANE_PADDING = 44;
+const SIBLING_LANE_PADDING_ACTIVE = 72;
+const SIBLING_END_PADDING = 44;
+const SIBLING_END_PADDING_ACTIVE = 72;
+const OFFICIAL_GEOMETRY_LAYOUTS = /* @__PURE__ */ new Set([
+  "logicalStructure",
+  "logicalStructureLeft",
+  "mindMap",
+  "organizationStructure",
+  "catalogOrganization",
+  "timeline",
+  "timeline2",
+  "verticalTimeline",
+  "verticalTimeline2",
+  "verticalTimeline3"
+]);
+function supportsOfficialDragGeometry(layout2) {
+  return OFFICIAL_GEOMETRY_LAYOUTS.has(String(layout2));
+}
+function finiteRect(rect) {
+  return Boolean(
+    rect && [rect.x, rect.y, rect.width, rect.height].every(Number.isFinite) && rect.width > 0 && rect.height > 0
+  );
+}
+function nodeUid$1(node) {
+  if (!node) return "";
+  const value = typeof node.getData === "function" ? node.getData("uid") : node.uid;
+  return String(value ?? "");
+}
+function expandRect(rect, xPadding, yPadding = xPadding) {
+  return {
+    x: rect.x - xPadding,
+    y: rect.y - yPadding,
+    width: rect.width + xPadding * 2,
+    height: rect.height + yPadding * 2
+  };
+}
+function intersectionArea(a, b) {
+  const left = Math.max(a.x, b.x);
+  const top = Math.max(a.y, b.y);
+  const right = Math.min(a.x + a.width, b.x + b.width);
+  const bottom = Math.min(a.y + a.height, b.y + b.height);
+  const width2 = right - left;
+  const height2 = bottom - top;
+  return width2 <= 0 || height2 <= 0 ? 0 : width2 * height2;
+}
+function rectCenter(rect) {
+  return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+}
+function containsPoint(rect, point2) {
+  return point2.x >= rect.x && point2.x <= rect.x + rect.width && point2.y >= rect.y && point2.y <= rect.y + rect.height;
+}
+function unionRects(rects) {
+  if (rects.length === 0) return null;
+  let minX = Number.POSITIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
+  rects.forEach((rect) => {
+    minX = Math.min(minX, rect.x);
+    minY = Math.min(minY, rect.y);
+    maxX = Math.max(maxX, rect.x + rect.width);
+    maxY = Math.max(maxY, rect.y + rect.height);
+  });
+  if (![minX, minY, maxX, maxY].every(Number.isFinite)) return null;
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+function tailRect(rect, direction) {
+  switch (direction) {
+    case "left":
+      return { x: rect.x - CHILD_TAIL_SIZE, y: rect.y, width: CHILD_TAIL_SIZE, height: rect.height };
+    case "top":
+      return { x: rect.x, y: rect.y - CHILD_TAIL_SIZE, width: rect.width, height: CHILD_TAIL_SIZE };
+    case "bottom":
+      return { x: rect.x, y: rect.y + rect.height, width: rect.width, height: CHILD_TAIL_SIZE };
+    case "right":
+    default:
+      return { x: rect.x + rect.width, y: rect.y, width: CHILD_TAIL_SIZE, height: rect.height };
+  }
+}
+function normalizedDirection(value) {
+  const direction = String(value ?? "").toLowerCase();
+  if (direction === "left" || direction === "right" || direction === "top" || direction === "bottom") {
+    return direction;
+  }
+  return null;
+}
+function resolveOfficialDragGrowthDirection(layout2, node) {
+  switch (layout2) {
+    case "logicalStructureLeft":
+      return "left";
+    case "mindMap":
+      return normalizedDirection(node == null ? void 0 : node.dir) === "left" ? "left" : "right";
+    case "organizationStructure":
+      return "bottom";
+    case "catalogOrganization":
+      return "bottom";
+    case "timeline":
+      return Number((node == null ? void 0 : node.layerIndex) ?? 0) === 0 ? "right" : "bottom";
+    case "timeline2": {
+      const layer = Number((node == null ? void 0 : node.layerIndex) ?? 0);
+      if (layer === 0) return "right";
+      const direction = normalizedDirection(node == null ? void 0 : node.dir);
+      return direction === "top" ? "top" : "bottom";
+    }
+    case "verticalTimeline":
+    case "verticalTimeline2":
+    case "verticalTimeline3":
+      return Number((node == null ? void 0 : node.layerIndex) ?? 0) === 0 ? "bottom" : normalizedDirection(node == null ? void 0 : node.dir) ?? "right";
+    case "logicalStructure":
+    default:
+      return "right";
+  }
+}
+function resolveOfficialDragGuideOrientation(layout2, node) {
+  const direction = resolveOfficialDragGrowthDirection(layout2, node);
+  return direction === "top" || direction === "bottom" ? "vertical" : "horizontal";
+}
+function siblingAxis(layout2, parent) {
+  switch (layout2) {
+    case "organizationStructure":
+      return "x";
+    case "catalogOrganization":
+    case "timeline":
+    case "timeline2":
+      return Number((parent == null ? void 0 : parent.layerIndex) ?? 0) === 0 ? "x" : "y";
+    default:
+      return "y";
+  }
+}
+function reversesVisualSiblingOrder(layout2, parent) {
+  return layout2 === "timeline2" && Number((parent == null ? void 0 : parent.layerIndex) ?? 0) === 1 && normalizedDirection(parent == null ? void 0 : parent.dir) === "top";
+}
+function sameNode(a, b) {
+  if (a === b) return true;
+  const aUid = nodeUid$1(a);
+  return Boolean(aUid && aUid === nodeUid$1(b));
+}
+function currentSiblingParent(current) {
+  var _a, _b;
+  return ((_a = current.prevNode) == null ? void 0 : _a.parent) ?? ((_b = current.nextNode) == null ? void 0 : _b.parent) ?? null;
+}
+function resolveChildIntent(options) {
+  const center2 = rectCenter(options.ghost);
+  let best = null;
+  options.nodes.forEach((node) => {
+    const uid = nodeUid$1(node);
+    const rect = options.getRect(node);
+    if (!uid || !finiteRect(rect) || (node == null ? void 0 : node.isGeneralization)) return;
+    const active = sameNode(options.current.overlapNode, node);
+    const padding = active ? CHILD_LEAVE_PADDING : CHILD_ENTER_PADDING;
+    const bodyScore = intersectionArea(options.ghost, expandRect(rect, padding));
+    const tailScore = intersectionArea(
+      options.ghost,
+      expandRect(tailRect(rect, resolveOfficialDragGrowthDirection(options.layout, node)), padding)
+    );
+    const score = Math.max(bodyScore, tailScore);
+    if (score <= 0) return;
+    const intent = {
+      node,
+      score,
+      fromTail: tailScore > 0 && bodyScore <= 0,
+      centerInsideTarget: containsPoint(rect, center2)
+    };
+    if (!best || intent.score > best.score) {
+      best = intent;
+    }
+  });
+  return best;
+}
+function branchFilteredSiblings(layout2, parent, siblings2, ghost, getRect) {
+  if (layout2 !== "mindMap") return siblings2;
+  const parentRect = getRect(parent);
+  if (!finiteRect(parentRect)) return siblings2;
+  const branch = rectCenter(ghost).x < rectCenter(parentRect).x ? "left" : "right";
+  const filtered = siblings2.filter((node) => {
+    const direction = normalizedDirection(node == null ? void 0 : node.dir);
+    if (direction === "left" || direction === "right") return direction === branch;
+    const rect = getRect(node);
+    return finiteRect(rect) ? (rectCenter(rect).x < rectCenter(parentRect).x ? "left" : "right") === branch : false;
+  });
+  return filtered.length > 0 ? filtered : siblings2;
+}
+function resolveSiblingIntent(options) {
+  const available = new Set(options.nodes);
+  const seenParents = /* @__PURE__ */ new Set();
+  const activeParent = currentSiblingParent(options.current);
+  let best = null;
+  options.nodes.forEach((node) => {
+    const parent = node == null ? void 0 : node.parent;
+    if (!parent || seenParents.has(parent)) return;
+    seenParents.add(parent);
+    let siblings2 = Array.isArray(parent.children) ? parent.children.filter((child) => available.has(child) && finiteRect(options.getRect(child))) : [];
+    siblings2 = branchFilteredSiblings(options.layout, parent, siblings2, options.ghost, options.getRect);
+    if (siblings2.length === 0) return;
+    const rects = siblings2.map(options.getRect).filter(finiteRect);
+    const bounds = unionRects(rects);
+    if (!bounds) return;
+    const active = sameNode(activeParent, parent);
+    const lane = active ? SIBLING_LANE_PADDING_ACTIVE : SIBLING_LANE_PADDING;
+    const end = active ? SIBLING_END_PADDING_ACTIVE : SIBLING_END_PADDING;
+    const axis = siblingAxis(options.layout, parent);
+    const laneBounds = axis === "y" ? expandRect(bounds, lane, end) : expandRect(bounds, end, lane);
+    const overlap = intersectionArea(options.ghost, laneBounds);
+    if (overlap <= 0) return;
+    const score = overlap / Math.max(1, laneBounds.width * laneBounds.height);
+    const center2 = rectCenter(options.ghost);
+    const ordered = [...siblings2].sort((a, b) => {
+      const aRect = options.getRect(a);
+      const bRect = options.getRect(b);
+      const delta = axis === "x" ? rectCenter(aRect).x - rectCenter(bRect).x : rectCenter(aRect).y - rectCenter(bRect).y;
+      return Math.abs(delta) > 0.5 ? delta : nodeUid$1(a).localeCompare(nodeUid$1(b));
+    });
+    let index = 0;
+    for (const sibling of ordered) {
+      const rect = options.getRect(sibling);
+      if (!finiteRect(rect)) continue;
+      const siblingCenter = rectCenter(rect);
+      const before2 = axis === "x" ? center2.x < siblingCenter.x : center2.y < siblingCenter.y;
+      if (before2) break;
+      index += 1;
+    }
+    const reverse = reversesVisualSiblingOrder(options.layout, parent);
+    const nativeIndex = reverse ? ordered.length - index : index;
+    const intent = {
+      parent,
+      siblings: ordered,
+      index,
+      nativeIndex,
+      reverse,
+      score
+    };
+    if (!best || intent.score > best.score) {
+      best = intent;
+    }
+  });
+  return best;
+}
+function childCandidate(intent) {
+  return {
+    key: `child:${nodeUid$1(intent.node)}`,
+    overlapNode: intent.node,
+    prevNode: null,
+    nextNode: null
+  };
+}
+function siblingCandidate(intent) {
+  const prevNode = intent.reverse ? intent.index < intent.siblings.length ? intent.siblings[intent.index] ?? null : null : intent.index > 0 ? intent.siblings[intent.index - 1] ?? null : null;
+  const nextNode = intent.reverse ? intent.index > 0 ? intent.siblings[intent.index - 1] ?? null : null : intent.index < intent.siblings.length ? intent.siblings[intent.index] ?? null : null;
+  if (!prevNode && !nextNode) {
+    return { key: "none", overlapNode: null, prevNode: null, nextNode: null };
+  }
+  return {
+    key: `sibling:${nodeUid$1(intent.parent)}:${intent.nativeIndex}`,
+    overlapNode: null,
+    prevNode,
+    nextNode
+  };
+}
+function resolveOfficialDragCandidate(options) {
+  if (!finiteRect(options.ghost)) {
+    return { key: "none", overlapNode: null, prevNode: null, nextNode: null };
+  }
+  const child = resolveChildIntent(options);
+  const sibling = resolveSiblingIntent(options);
+  if (child == null ? void 0 : child.fromTail) return childCandidate(child);
+  if (sibling && (!child || !child.centerInsideTarget)) return siblingCandidate(sibling);
+  if (child) return childCandidate(child);
+  if (sibling) return siblingCandidate(sibling);
+  return { key: "none", overlapNode: null, prevNode: null, nextNode: null };
+}
+function lineIsVisible(line) {
+  var _a, _b, _c2;
+  if (!line) return false;
+  if (typeof line.visible === "function") {
+    try {
+      return Boolean(line.visible());
+    } catch {
+      return true;
+    }
+  }
+  const display = ((_b = (_a = line.node) == null ? void 0 : _a.style) == null ? void 0 : _b.display) ?? ((_c2 = line.attr) == null ? void 0 : _c2.call(line, "display"));
+  return display !== "none";
+}
+function captureIncomingDragLines(nodes) {
+  const snapshots = [];
+  const seen = /* @__PURE__ */ new Set();
+  (nodes ?? []).forEach((node) => {
+    var _a, _b;
+    const parent = node == null ? void 0 : node.parent;
+    const index = Array.isArray(parent == null ? void 0 : parent.children) ? parent.children.indexOf(node) : -1;
+    const line = index >= 0 ? (_a = parent == null ? void 0 : parent._lines) == null ? void 0 : _a[index] : null;
+    if (!line || seen.has(line)) return;
+    seen.add(line);
+    snapshots.push({ line, wasVisible: lineIsVisible(line) });
+    (_b = line.hide) == null ? void 0 : _b.call(line);
+  });
+  return snapshots;
+}
+function restoreIncomingDragLines(snapshots) {
+  (snapshots ?? []).forEach(({ line, wasVisible }) => {
+    var _a, _b;
+    if (!line) return;
+    if (wasVisible) (_a = line.show) == null ? void 0 : _a.call(line);
+    else (_b = line.hide) == null ? void 0 : _b.call(line);
+  });
+}
 const OFFICIAL_TARGET_STABLE_MS = 60;
 const OFFICIAL_TARGET_STABLE_FRAMES = 3;
 function resolveDragGuideTarget(state) {
@@ -23406,9 +23716,6 @@ function cancelFrame(id) {
   }
   clearTimeout(id);
 }
-function isVerticalLayout(layout2) {
-  return layout2 === "organizationStructure" || layout2 === "catalogOrganization";
-}
 function nodeRect(plugin, node) {
   var _a, _b, _c2, _d2;
   return normalizeRect(((_b = (_a = node == null ? void 0 : node.group) == null ? void 0 : _a.rbox) == null ? void 0 : _b.call(_a, plugin.mindMap.otherDraw)) ?? ((_d2 = (_c2 = node == null ? void 0 : node.group) == null ? void 0 : _c2.bbox) == null ? void 0 : _d2.call(_c2)));
@@ -23438,6 +23745,7 @@ class YeMindDrag extends Drag {
     plugin.__ymzRawCheckOverlap = Drag.prototype.checkOverlapNode.bind(this);
     plugin.__ymzCandidateState = createDragCandidateState(candidateFromPlugin(plugin));
     plugin.__ymzOverlapFrame = null;
+    plugin.__ymzIncomingLines = [];
     plugin.checkOverlapNode = () => this.scheduleOfficialCandidateCheck();
     plugin.mindMap.on("node_mousedown", plugin.onNodeMousedown);
     plugin.mindMap.on("mousemove", plugin.onMousemove);
@@ -23445,15 +23753,19 @@ class YeMindDrag extends Drag {
     plugin.mindMap.on("mouseup", plugin.onMouseup);
   }
   createCloneNode() {
-    super.createCloneNode();
     const plugin = this;
+    const hadClone = Boolean(plugin.clone);
+    super.createCloneNode();
+    if (hadClone || !plugin.clone) return;
     plugin.__ymzCandidateState = createDragCandidateState({
       key: "none",
       overlapNode: null,
       prevNode: null,
       nextNode: null
     });
+    plugin.__ymzIncomingLines = captureIncomingDragLines(plugin.beingDragNodeList ?? []);
     this.ensureGuideLines();
+    this.clearUpstreamPlaceholder();
     this.updateOfficialGuideLines();
   }
   onMove(x2, y2, event) {
@@ -23463,9 +23775,13 @@ class YeMindDrag extends Drag {
   async onMouseup(event) {
     var _a;
     const plugin = this;
-    this.flushOfficialCandidateCheck();
-    if ((_a = plugin.__ymzCandidateState) == null ? void 0 : _a.stable) applyCandidate(plugin, plugin.__ymzCandidateState.stable);
-    await super.onMouseup(event);
+    try {
+      this.flushOfficialCandidateCheck();
+      if ((_a = plugin.__ymzCandidateState) == null ? void 0 : _a.stable) applyCandidate(plugin, plugin.__ymzCandidateState.stable);
+      await super.onMouseup(event);
+    } finally {
+      this.restoreIncomingLines();
+    }
   }
   removeCloneNode() {
     this.cancelCandidateFrame();
@@ -23475,11 +23791,13 @@ class YeMindDrag extends Drag {
   beforePluginRemove() {
     this.cancelCandidateFrame();
     this.removeGuideLines();
+    this.restoreIncomingLines();
     super.beforePluginRemove();
   }
   beforePluginDestroy() {
     this.cancelCandidateFrame();
     this.removeGuideLines();
+    this.restoreIncomingLines();
     super.beforePluginDestroy();
   }
   scheduleOfficialCandidateCheck() {
@@ -23498,12 +23816,26 @@ class YeMindDrag extends Drag {
     this.runOfficialCandidateCheck(animationNow());
   }
   runOfficialCandidateCheck(now) {
-    var _a;
+    var _a, _b;
     const plugin = this;
     if (!plugin.clone || !plugin.placeholder || !plugin.drawTransform) return;
-    (_a = plugin.__ymzRawCheckOverlap) == null ? void 0 : _a.call(plugin);
-    this.styleUpstreamPlaceholderLines();
-    const candidate = candidateFromPlugin(plugin);
+    const layout2 = String(plugin.mindMap.opt.layout ?? "logicalStructure");
+    let candidate;
+    if (supportsOfficialDragGeometry(layout2)) {
+      const ghost = ghostRect(plugin);
+      candidate = ghost ? resolveOfficialDragCandidate({
+        layout: layout2,
+        ghost,
+        nodes: plugin.nodeList ?? [],
+        current: ((_a = plugin.__ymzCandidateState) == null ? void 0 : _a.stable) ?? { key: "none", overlapNode: null, prevNode: null, nextNode: null },
+        getRect: (node) => nodeRect(plugin, node)
+      }) : { key: "none", overlapNode: null, prevNode: null, nextNode: null };
+      this.clearUpstreamPlaceholder();
+    } else {
+      (_b = plugin.__ymzRawCheckOverlap) == null ? void 0 : _b.call(plugin);
+      this.styleUpstreamPlaceholderLines();
+      candidate = candidateFromPlugin(plugin);
+    }
     plugin.__ymzCandidateState = updateStableDragCandidate(
       plugin.__ymzCandidateState ?? createDragCandidateState(candidate),
       candidate,
@@ -23511,6 +23843,9 @@ class YeMindDrag extends Drag {
     );
     applyCandidate(plugin, plugin.__ymzCandidateState.stable);
     this.updateOfficialGuideLines();
+    if (plugin.clone && plugin.__ymzCandidateState.pending) {
+      this.scheduleOfficialCandidateCheck();
+    }
   }
   ensureGuideLines() {
     const plugin = this;
@@ -23538,23 +23873,37 @@ class YeMindDrag extends Drag {
       (_h = (_g = plugin.__ymzOriginGuideLine) == null ? void 0 : _g.hide) == null ? void 0 : _h.call(_g);
       return;
     }
-    const orientation = isVerticalLayout(String(plugin.mindMap.opt.layout)) ? "vertical" : "horizontal";
+    const layout2 = String(plugin.mindMap.opt.layout ?? "logicalStructure");
     const stableTarget = stable.key === "none" ? null : resolveDragGuideTarget(stable);
     const target = nodeRect(plugin, stableTarget);
     if (target) {
-      plugin.__ymzTargetGuideLine.plot(calculateDragGuidePath(target, ghost, orientation)).stroke({ color: "rgba(34, 197, 94, 0.9)", width: 2.5, linecap: "round" }).attr({ "stroke-dasharray": "6 6", opacity: 1, "pointer-events": "none" }).show().front();
+      const targetOrientation = resolveOfficialDragGuideOrientation(layout2, stableTarget);
+      plugin.__ymzTargetGuideLine.plot(calculateDragGuidePath(target, ghost, targetOrientation)).stroke({ color: "rgba(34, 197, 94, 0.9)", width: 2.5, linecap: "round" }).attr({ "stroke-dasharray": "6 6", opacity: 1, "pointer-events": "none" }).show().front();
     } else {
       (_j = (_i = plugin.__ymzTargetGuideLine) == null ? void 0 : _i.hide) == null ? void 0 : _j.call(_i);
     }
     const originParent = ((_k = plugin.mousedownNode) == null ? void 0 : _k.parent) ?? null;
     const origin = nodeRect(plugin, originParent);
     if (origin && !stableTarget) {
-      const distance = endpointDistance(origin, ghost, orientation);
+      const originOrientation = resolveOfficialDragGuideOrientation(layout2, originParent);
+      const distance = endpointDistance(origin, ghost, originOrientation);
       const style = calculateOriginalParentGuideStyle(distance);
-      plugin.__ymzOriginGuideLine.plot(calculateDragGuidePath(origin, ghost, orientation)).stroke({ color: `rgba(239, 68, 68, ${style.opacity.toFixed(3)})`, width: style.width, linecap: "round" }).attr({ "stroke-dasharray": "3 6", opacity: 1, "pointer-events": "none" }).show().front();
+      plugin.__ymzOriginGuideLine.plot(calculateDragGuidePath(origin, ghost, originOrientation)).stroke({ color: `rgba(239, 68, 68, ${style.opacity.toFixed(3)})`, width: style.width, linecap: "round" }).attr({ "stroke-dasharray": "3 6", opacity: 1, "pointer-events": "none" }).show().front();
     } else {
       (_m = (_l = plugin.__ymzOriginGuideLine) == null ? void 0 : _l.hide) == null ? void 0 : _m.call(_l);
     }
+  }
+  clearUpstreamPlaceholder() {
+    var _a, _b, _c2, _d2, _e;
+    const plugin = this;
+    (_b = (_a = plugin.placeholder) == null ? void 0 : _a.size) == null ? void 0 : _b.call(_a, 0, 0);
+    (_d2 = (_c2 = plugin.placeHolderLine) == null ? void 0 : _c2.hide) == null ? void 0 : _d2.call(_c2);
+    (_e = plugin.removeExtraLines) == null ? void 0 : _e.call(plugin);
+  }
+  restoreIncomingLines() {
+    const plugin = this;
+    restoreIncomingDragLines(plugin.__ymzIncomingLines ?? []);
+    plugin.__ymzIncomingLines = [];
   }
   styleUpstreamPlaceholderLines() {
     const plugin = this;

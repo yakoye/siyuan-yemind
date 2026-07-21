@@ -5,6 +5,8 @@ import {
   createDragCandidateState,
   resolveDragGuideTarget,
   updateStableDragCandidate,
+  captureIncomingDragLines,
+  restoreIncomingDragLines,
 } from '../src/core/YeMindDrag';
 
 describe('YeMindDrag official-style target guide', () => {
@@ -44,6 +46,34 @@ describe('YeMindDrag official-style target guide', () => {
     expect(state.stable.key).toBe('none');
     expect(state.pending?.candidate.key).toBe('child:b');
     expect(state.pending?.frames).toBe(1);
+  });
+
+
+  it('hides incoming parent lines during drag and restores their original visibility', () => {
+    const visibleLine = {
+      shown: true,
+      visible() { return this.shown; },
+      hide() { this.shown = false; },
+      show() { this.shown = true; },
+    };
+    const hiddenLine = {
+      shown: false,
+      visible() { return this.shown; },
+      hide() { this.shown = false; },
+      show() { this.shown = true; },
+    };
+    const parent = { children: [] as any[], _lines: [visibleLine, hiddenLine] };
+    const first = { uid: 'first', parent };
+    const second = { uid: 'second', parent };
+    parent.children = [first, second];
+
+    const snapshots = captureIncomingDragLines([first, second]);
+    expect(visibleLine.shown).toBe(false);
+    expect(hiddenLine.shown).toBe(false);
+
+    restoreIncomingDragLines(snapshots);
+    expect(visibleLine.shown).toBe(true);
+    expect(hiddenLine.shown).toBe(false);
   });
 
   it('draws cubic guides for horizontal and vertical layouts', () => {

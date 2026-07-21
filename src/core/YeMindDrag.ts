@@ -1,4 +1,10 @@
 import Drag from 'simple-mind-map/src/plugins/Drag';
+import {
+  resolveOfficialDragCandidate,
+  resolveOfficialDragGuideOrientation,
+  supportsOfficialDragGeometry,
+  type OfficialDragCandidate,
+} from './officialDragIntent';
 
 export interface DragGuideRect {
   x: number;
@@ -9,12 +15,7 @@ export interface DragGuideRect {
 
 export type DragGuideOrientation = 'horizontal' | 'vertical';
 
-export interface DragCandidate {
-  key: string;
-  overlapNode: any | null;
-  prevNode: any | null;
-  nextNode: any | null;
-}
+export type DragCandidate = OfficialDragCandidate;
 
 export interface DragCandidateState {
   stable: DragCandidate;
@@ -23,6 +24,47 @@ export interface DragCandidateState {
     since: number;
     frames: number;
   } | null;
+}
+
+export interface IncomingDragLineSnapshot {
+  line: any;
+  wasVisible: boolean;
+}
+
+function lineIsVisible(line: any): boolean {
+  if (!line) return false;
+  if (typeof line.visible === 'function') {
+    try {
+      return Boolean(line.visible());
+    } catch {
+      return true;
+    }
+  }
+  const display = line.node?.style?.display ?? line.attr?.('display');
+  return display !== 'none';
+}
+
+export function captureIncomingDragLines(nodes: any[]): IncomingDragLineSnapshot[] {
+  const snapshots: IncomingDragLineSnapshot[] = [];
+  const seen = new Set<any>();
+  (nodes ?? []).forEach((node) => {
+    const parent = node?.parent;
+    const index = Array.isArray(parent?.children) ? parent.children.indexOf(node) : -1;
+    const line = index >= 0 ? parent?._lines?.[index] : null;
+    if (!line || seen.has(line)) return;
+    seen.add(line);
+    snapshots.push({ line, wasVisible: lineIsVisible(line) });
+    line.hide?.();
+  });
+  return snapshots;
+}
+
+export function restoreIncomingDragLines(snapshots: IncomingDragLineSnapshot[]): void {
+  (snapshots ?? []).forEach(({ line, wasVisible }) => {
+    if (!line) return;
+    if (wasVisible) line.show?.();
+    else line.hide?.();
+  });
 }
 
 const OFFICIAL_TARGET_STABLE_MS = 60;
@@ -163,10 +205,6 @@ function cancelFrame(id: number): void {
   clearTimeout(id);
 }
 
-function isVerticalLayout(layout: string): boolean {
-  return layout === 'organizationStructure' || layout === 'catalogOrganization';
-}
-
 function nodeRect(plugin: any, node: any): DragGuideRect | null {
   return normalizeRect(node?.group?.rbox?.(plugin.mindMap.otherDraw) ?? node?.group?.bbox?.());
 }
@@ -189,9 +227,9 @@ function endpointDistance(parent: DragGuideRect, ghost: DragGuideRect, orientati
 }
 
 /**
- * Keeps simple-mind-map's native target calculation and drop commands, while
- * replacing the upstream 300 ms overlap throttle with KMind Zen's per-frame
- * candidate sampling and 60 ms / 3-frame target stabilisation.
+ * Keeps simple-mind-map's native drop commands, while adapting KMind Zen's
+ * rectangle/tail/lane intent sampling, per-frame coalescing and 60 ms /
+ * three-frame target stabilisation to the installed renderer.
  */
 export default class YeMindDrag extends Drag {
   bindEvent(): void {
@@ -202,6 +240,7 @@ export default class YeMindDrag extends Drag {
     plugin.__ymzRawCheckOverlap = Drag.prototype.checkOverlapNode.bind(this);
     plugin.__ymzCandidateState = createDragCandidateState(candidateFromPlugin(plugin));
     plugin.__ymzOverlapFrame = null;
+    plugin.__ymzIncomingLines = [];
     plugin.checkOverlapNode = () => this.scheduleOfficialCandidateCheck();
 
     plugin.mindMap.on('node_mousedown', plugin.onNodeMousedown);
@@ -211,15 +250,19 @@ export default class YeMindDrag extends Drag {
   }
 
   createCloneNode(): void {
-    super.createCloneNode();
     const plugin = this as any;
+    const hadClone = Boolean(plugin.clone);
+    super.createCloneNode();
+    if (hadClone || !plugin.clone) return;
     plugin.__ymzCandidateState = createDragCandidateState({
       key: 'none',
       overlapNode: null,
       prevNode: null,
       nextNode: null,
     });
+    plugin.__ymzIncomingLines = captureIncomingDragLines(plugin.beingDragNodeList ?? []);
     this.ensureGuideLines();
+    this.clearUpstreamPlaceholder();
     this.updateOfficialGuideLines();
   }
 
@@ -230,9 +273,13 @@ export default class YeMindDrag extends Drag {
 
   async onMouseup(event: MouseEvent): Promise<void> {
     const plugin = this as any;
-    this.flushOfficialCandidateCheck();
-    if (plugin.__ymzCandidateState?.stable) applyCandidate(plugin, plugin.__ymzCandidateState.stable);
-    await super.onMouseup(event);
+    try {
+      this.flushOfficialCandidateCheck();
+      if (plugin.__ymzCandidateState?.stable) applyCandidate(plugin, plugin.__ymzCandidateState.stable);
+      await super.onMouseup(event);
+    } finally {
+      this.restoreIncomingLines();
+    }
   }
 
   removeCloneNode(): void {
@@ -244,12 +291,14 @@ export default class YeMindDrag extends Drag {
   beforePluginRemove(): void {
     this.cancelCandidateFrame();
     this.removeGuideLines();
+    this.restoreIncomingLines();
     super.beforePluginRemove();
   }
 
   beforePluginDestroy(): void {
     this.cancelCandidateFrame();
     this.removeGuideLines();
+    this.restoreIncomingLines();
     super.beforePluginDestroy();
   }
 
@@ -273,9 +322,28 @@ export default class YeMindDrag extends Drag {
   private runOfficialCandidateCheck(now: number): void {
     const plugin = this as any;
     if (!plugin.clone || !plugin.placeholder || !plugin.drawTransform) return;
-    plugin.__ymzRawCheckOverlap?.();
-    this.styleUpstreamPlaceholderLines();
-    const candidate = candidateFromPlugin(plugin);
+
+    const layout = String(plugin.mindMap.opt.layout ?? 'logicalStructure');
+    let candidate: DragCandidate;
+    if (supportsOfficialDragGeometry(layout)) {
+      const ghost = ghostRect(plugin);
+      candidate = ghost
+        ? resolveOfficialDragCandidate({
+            layout,
+            ghost,
+            nodes: plugin.nodeList ?? [],
+            current: plugin.__ymzCandidateState?.stable
+              ?? { key: 'none', overlapNode: null, prevNode: null, nextNode: null },
+            getRect: (node) => nodeRect(plugin, node),
+          })
+        : { key: 'none', overlapNode: null, prevNode: null, nextNode: null };
+      this.clearUpstreamPlaceholder();
+    } else {
+      plugin.__ymzRawCheckOverlap?.();
+      this.styleUpstreamPlaceholderLines();
+      candidate = candidateFromPlugin(plugin);
+    }
+
     plugin.__ymzCandidateState = updateStableDragCandidate(
       plugin.__ymzCandidateState ?? createDragCandidateState(candidate),
       candidate,
@@ -283,6 +351,10 @@ export default class YeMindDrag extends Drag {
     );
     applyCandidate(plugin, plugin.__ymzCandidateState.stable);
     this.updateOfficialGuideLines();
+
+    if (plugin.clone && plugin.__ymzCandidateState.pending) {
+      this.scheduleOfficialCandidateCheck();
+    }
   }
 
   private ensureGuideLines(): void {
@@ -321,14 +393,13 @@ export default class YeMindDrag extends Drag {
       return;
     }
 
-    const orientation: DragGuideOrientation = isVerticalLayout(String(plugin.mindMap.opt.layout))
-      ? 'vertical'
-      : 'horizontal';
+    const layout = String(plugin.mindMap.opt.layout ?? 'logicalStructure');
     const stableTarget = stable.key === 'none' ? null : resolveDragGuideTarget(stable);
     const target = nodeRect(plugin, stableTarget);
     if (target) {
+      const targetOrientation: DragGuideOrientation = resolveOfficialDragGuideOrientation(layout, stableTarget);
       plugin.__ymzTargetGuideLine
-        .plot(calculateDragGuidePath(target, ghost, orientation))
+        .plot(calculateDragGuidePath(target, ghost, targetOrientation))
         .stroke({ color: 'rgba(34, 197, 94, 0.9)', width: 2.5, linecap: 'round' })
         .attr({ 'stroke-dasharray': '6 6', opacity: 1, 'pointer-events': 'none' })
         .show()
@@ -340,10 +411,11 @@ export default class YeMindDrag extends Drag {
     const originParent = plugin.mousedownNode?.parent ?? null;
     const origin = nodeRect(plugin, originParent);
     if (origin && !stableTarget) {
-      const distance = endpointDistance(origin, ghost, orientation);
+      const originOrientation: DragGuideOrientation = resolveOfficialDragGuideOrientation(layout, originParent);
+      const distance = endpointDistance(origin, ghost, originOrientation);
       const style = calculateOriginalParentGuideStyle(distance);
       plugin.__ymzOriginGuideLine
-        .plot(calculateDragGuidePath(origin, ghost, orientation))
+        .plot(calculateDragGuidePath(origin, ghost, originOrientation))
         .stroke({ color: `rgba(239, 68, 68, ${style.opacity.toFixed(3)})`, width: style.width, linecap: 'round' })
         .attr({ 'stroke-dasharray': '3 6', opacity: 1, 'pointer-events': 'none' })
         .show()
@@ -351,6 +423,19 @@ export default class YeMindDrag extends Drag {
     } else {
       plugin.__ymzOriginGuideLine?.hide?.();
     }
+  }
+
+  private clearUpstreamPlaceholder(): void {
+    const plugin = this as any;
+    plugin.placeholder?.size?.(0, 0);
+    plugin.placeHolderLine?.hide?.();
+    plugin.removeExtraLines?.();
+  }
+
+  private restoreIncomingLines(): void {
+    const plugin = this as any;
+    restoreIncomingDragLines(plugin.__ymzIncomingLines ?? []);
+    plugin.__ymzIncomingLines = [];
   }
 
   private styleUpstreamPlaceholderLines(): void {
