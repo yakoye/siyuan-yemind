@@ -25,6 +25,9 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   undo(): void;
   redo(): void;
   fit(): void;
+  centerRoot(): void;
+  expandAll(): void;
+  collapseAll(): void;
   resetZoom(): void;
   resetLayout(): void;
   zoomIn(): void;
@@ -134,6 +137,9 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     undo: () => { if (canMutate()) mindMap.execCommand('BACK'); },
     redo: () => { if (canMutate()) mindMap.execCommand('FORWARD'); },
     fit: () => (mindMap.view as any).fit(),
+    centerRoot: () => (mindMap.renderer as any).setRootNodeCenter?.(),
+    expandAll: () => mindMap.execCommand('EXPAND_ALL'),
+    collapseAll: () => mindMap.execCommand('UNEXPAND_ALL'),
     resetZoom: () => mindMap.view.reset(),
     resetLayout: () => { if (canMutate()) mindMap.execCommand('RESET_LAYOUT'); },
     zoomIn: () => mindMap.view.enlarge(undefined, undefined, false),

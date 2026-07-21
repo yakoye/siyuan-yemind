@@ -4,7 +4,9 @@ YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-
 
 - Plugin folder and ID: `siyuan-yemind-zen`
 - Display name: `YeMind Zen`
-- Version: `0.5.15`
+- Version: `0.5.16`
+
+v0.5.16 removes the node three-dot chrome and comment counts, simplifies color palettes to swatches/reset/native custom color with live HEX/RGB values, makes outline Delete/Backspace text-only, separates canvas and node context menus, adds a compact zen-exit capsule, and supports pasting or dropping local images onto nodes while retaining upstream proportional image resizing.
 
 v0.5.15 isolates every YeMind editor overlay inside its own tab so SiYuan Settings and other host dialogs always remain above plugin controls. It also fixes invisible node-edit text, adds selection-aware color/background palettes with reset, custom color and eyedropper actions, preserves partial node-text selections, and gives split/full-outline editing the same rich-text toolbar through one active Quill session while retaining upstream map commands and persistence.
 

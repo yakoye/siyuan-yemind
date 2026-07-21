@@ -18,7 +18,6 @@ export type OutlineKeyAction =
   | 'insert-child'
   | 'indent'
   | 'outdent'
-  | 'remove'
   | 'previous'
   | 'next'
   | 'collapse'
@@ -95,7 +94,6 @@ export function resolveOutlineKeyAction(context: OutlineKeyContext): OutlineKeyA
     return context.isRoot ? 'insert-child' : 'insert-sibling';
   }
   if (context.key === 'Tab' && !hasCommandModifier) return context.shiftKey ? 'outdent' : 'indent';
-  if ((context.key === 'Backspace' || context.key === 'Delete') && context.empty && !context.isRoot) return 'remove';
   if (context.key === 'ArrowLeft' && context.atStart && context.hasChildren && context.expanded) return 'collapse';
   if (context.key === 'ArrowRight' && context.atEnd && context.hasChildren && context.expanded === false) return 'expand';
   return 'none';

@@ -5,6 +5,7 @@ import {
   type RichTextBooleanFormat,
 } from './richTextActions';
 import type { RichTextFormattingTarget } from './richTextTarget';
+import { presentColor } from './colorPresentation';
 
 export interface RichTextSelectionRect {
   left: number;
@@ -98,11 +99,14 @@ export class RichTextToolbar {
     this.colorPopover = document.createElement('div');
     this.colorPopover.className = 'ymz-color-popover';
     this.colorPopover.hidden = true;
-    this.colorPopover.innerHTML = `<div class="ymz-color-popover__grid">${swatchesHtml()}</div>
+    this.colorPopover.innerHTML = `<div class="ymz-color-popover__current" aria-live="polite">
+        <span data-color-readout="hex">默认</span>
+        <span data-color-readout="rgb">继承节点颜色</span>
+      </div>
+      <div class="ymz-color-popover__grid">${swatchesHtml()}</div>
       <div class="ymz-color-popover__footer">
         <button type="button" data-color-action="reset">重置默认</button>
         <button type="button" data-color-action="custom">更多颜色</button>
-        <button type="button" data-color-action="eyedropper">吸管</button>
       </div>`;
     this.customColorInput = document.createElement('input');
     this.customColorInput.type = 'color';
@@ -234,7 +238,6 @@ export class RichTextToolbar {
         this.customColorInput.value = typeof current === 'string' && /^#[0-9a-f]{6}$/i.test(current) ? current : '#000000';
         this.customColorInput.click();
       }
-      if (action === 'eyedropper') void this.pickColorFromScreen();
     });
 
     this.customColorInput.addEventListener('input', () => this.applyColor(this.customColorInput.value));
@@ -251,6 +254,7 @@ export class RichTextToolbar {
   private openColorPopover(kind: ColorKind, anchor: HTMLElement): void {
     this.activeColorKind = kind;
     this.colorPopover.dataset.kind = kind;
+    this.syncColorReadout();
     this.colorPopover.hidden = false;
     const rootRect = this.root.getBoundingClientRect();
     const anchorRect = anchor.getBoundingClientRect();
@@ -275,19 +279,14 @@ export class RichTextToolbar {
     this.colorPopover.hidden = true;
   }
 
-  private async pickColorFromScreen(): Promise<void> {
-    const EyeDropperConstructor = (window as any).EyeDropper;
-    if (typeof EyeDropperConstructor !== 'function') {
-      this.customColorInput.click();
-      return;
-    }
-    try {
-      const result = await new EyeDropperConstructor().open();
-      if (result?.sRGBHex) this.applyColor(String(result.sRGBHex));
-    } catch {
-      // Cancelling the host eyedropper is not an error.
-    }
+  private syncColorReadout(): void {
+    const presentation = presentColor(this.formatInfo[this.activeColorKind]);
+    const hex = this.colorPopover.querySelector<HTMLElement>('[data-color-readout="hex"]');
+    const rgb = this.colorPopover.querySelector<HTMLElement>('[data-color-readout="rgb"]');
+    if (hex) hex.textContent = presentation.hex;
+    if (rgb) rgb.textContent = presentation.rgb;
   }
+
 
   private syncState(): void {
     ['bold', 'italic', 'underline', 'strike'].forEach((name) => {
@@ -305,6 +304,7 @@ export class RichTextToolbar {
     const background = typeof this.formatInfo.background === 'string' ? this.formatInfo.background : 'transparent';
     this.element.querySelector<HTMLElement>('[data-rich-swatch="color"]')?.style.setProperty('--ymz-current-color', color);
     this.element.querySelector<HTMLElement>('[data-rich-swatch="background"]')?.style.setProperty('--ymz-current-color', background);
+    this.syncColorReadout();
   }
 
   private position(rect: RichTextSelectionRect): void {

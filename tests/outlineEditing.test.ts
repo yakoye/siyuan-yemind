@@ -43,8 +43,8 @@ describe('editable outline', () => {
     expect(resolveOutlineKeyAction({ ...base, key: 'ArrowLeft' })).toBe('collapse');
     expect(resolveOutlineKeyAction({ ...base, key: 'ArrowRight', expanded: false })).toBe('expand');
     expect(resolveOutlineKeyAction({ ...base, key: 'ArrowRight', expanded: true })).toBe('none');
-    expect(resolveOutlineKeyAction({ ...base, key: 'Backspace', empty: true })).toBe('remove');
-    expect(resolveOutlineKeyAction({ ...base, key: 'Delete', empty: true })).toBe('remove');
+    expect(resolveOutlineKeyAction({ ...base, key: 'Backspace', empty: true })).toBe('none');
+    expect(resolveOutlineKeyAction({ ...base, key: 'Delete', empty: true })).toBe('none');
     expect(resolveOutlineKeyAction({ ...base, key: 'Escape' })).toBe('cancel');
     expect(resolveOutlineKeyAction({ ...base, key: 'Enter', composing: true })).toBe('none');
     expect(resolveOutlineKeyAction({ ...base, key: 'Enter', readonly: true })).toBe('none');

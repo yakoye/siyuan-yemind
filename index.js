@@ -3789,7 +3789,6 @@ const DEFAULT_SETTINGS = {
   showCommentBadge: true,
   defaultZenMode: false,
   defaultReadonlyMode: false,
-  showNodeMenuButton: true,
   defaultViewMode: "map",
   splitOutlineRatio: 0.42,
   dragEdgeAutoPan: false,
@@ -3873,7 +3872,6 @@ function normalizeSettings(value) {
     showCommentBadge: booleanOrDefault(value.showCommentBadge, DEFAULT_SETTINGS.showCommentBadge),
     defaultZenMode: booleanOrDefault(value.defaultZenMode, DEFAULT_SETTINGS.defaultZenMode),
     defaultReadonlyMode: booleanOrDefault(value.defaultReadonlyMode, DEFAULT_SETTINGS.defaultReadonlyMode),
-    showNodeMenuButton: booleanOrDefault(value.showNodeMenuButton, DEFAULT_SETTINGS.showNodeMenuButton),
     defaultViewMode: VIEW_MODES.has(value.defaultViewMode) ? value.defaultViewMode : DEFAULT_SETTINGS.defaultViewMode,
     splitOutlineRatio: numberClamped(value.splitOutlineRatio, DEFAULT_SETTINGS.splitOutlineRatio, 0.25, 0.7),
     dragEdgeAutoPan: booleanOrDefault(value.dragEdgeAutoPan, DEFAULT_SETTINGS.dragEdgeAutoPan),
@@ -4060,7 +4058,6 @@ function createSettingsDialogTemplate(settings) {
         <header><h2>节点与内容</h2><p>控制节点入口、富文本、代码和挖空显示。</p></header>
         <div class="ymz-settings-group"><h3>节点入口控件</h3>
           ${switchRow("显示添加子节点按钮", "节点激活后显示快速添加入口。", "showQuickCreate", settings.showQuickCreate)}
-          ${switchRow("显示节点菜单按钮", "节点激活后显示轻量菜单入口。", "showNodeMenuButton", settings.showNodeMenuButton)}
           ${switchRow("显示待办标记", "节点文字前显示待办状态。", "showTodoBadge", settings.showTodoBadge)}
           ${switchRow("显示批注标记", "节点右侧显示批注图标。", "showCommentBadge", settings.showCommentBadge)}
         </div>
@@ -55483,8 +55480,7 @@ function registerMindMapPlugins(settings) {
 }
 let decorationSettings = {
   showTodoBadge: true,
-  showCommentBadge: true,
-  showNodeMenuButton: true
+  showCommentBadge: true
 };
 function configureNodeDecorations(patch) {
   decorationSettings = { ...decorationSettings, ...patch };
@@ -55525,15 +55521,15 @@ function createNodePrefixContent(node) {
   el.appendChild(checkbox);
   return { el, width: 20, height: 20 };
 }
-function createCommentButton(node, comments) {
+function createCommentButton(node) {
   const badge = document.createElement("button");
   badge.type = "button";
   badge.className = "ymz-node-comment-badge";
-  badge.title = `${comments.length} 条批注`;
-  badge.setAttribute("aria-label", `${comments.length} 条批注`);
+  badge.title = "批注";
+  badge.setAttribute("aria-label", "批注");
   badge.innerHTML = `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
     <path d="M6.25 4.75h11.5A2.5 2.5 0 0 1 20.25 7.25v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.25 2.9v-2.9A2.5 2.5 0 0 1 3.75 15.25v-8a2.5 2.5 0 0 1 2.5-2.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>` + (comments.length > 1 ? `<span class="ymz-node-comment-count">${comments.length}</span>` : "");
+  </svg>`;
   badge.addEventListener("click", (event) => {
     var _a, _b;
     event.preventDefault();
@@ -55542,47 +55538,14 @@ function createCommentButton(node, comments) {
   });
   return badge;
 }
-function createNodeMenuButton(node) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "ymz-node-menu-button";
-  button.title = "节点菜单";
-  button.setAttribute("aria-label", "节点菜单");
-  button.innerHTML = '<span aria-hidden="true">•••</span>';
-  button.addEventListener("click", (event) => {
-    var _a, _b;
-    event.preventDefault();
-    event.stopPropagation();
-    const rect = button.getBoundingClientRect();
-    const menuEvent = new MouseEvent("contextmenu", {
-      bubbles: true,
-      cancelable: true,
-      clientX: rect.left,
-      clientY: rect.bottom + 2
-    });
-    (_b = (_a = node.mindMap) == null ? void 0 : _a.emit) == null ? void 0 : _b.call(_a, "yemind_node_menu", menuEvent, node);
-  });
-  return button;
-}
 function createNodePostfixContent(node) {
-  var _a, _b;
+  var _a;
   const comments = ((_a = node.getData) == null ? void 0 : _a.call(node, "yemindComments")) ?? [];
-  const showComments = comments.length > 0 && decorationSettings.showCommentBadge;
-  const showMenu = Boolean((_b = node.getData) == null ? void 0 : _b.call(node, "isActive")) && decorationSettings.showNodeMenuButton;
-  if (!showComments && !showMenu) return null;
+  if (comments.length === 0 || !decorationSettings.showCommentBadge) return null;
   const el = document.createElement("span");
   el.className = "ymz-node-postfix";
-  let width2 = 0;
-  if (showComments) {
-    el.appendChild(createCommentButton(node, comments));
-    width2 += comments.length > 1 ? 30 : 24;
-  }
-  if (showMenu) {
-    if (width2 > 0) width2 += 3;
-    el.appendChild(createNodeMenuButton(node));
-    width2 += 24;
-  }
-  return { el, width: width2, height: 24 };
+  el.appendChild(createCommentButton(node));
+  return { el, width: 24, height: 24 };
 }
 const clone$1 = (value) => JSON.parse(JSON.stringify(value));
 const MAX_SAVED_TRANSLATE = 5e4;
@@ -55986,6 +55949,12 @@ function createCommandAdapter(mindMap) {
       if (canMutate()) mindMap.execCommand("FORWARD");
     },
     fit: () => mindMap.view.fit(),
+    centerRoot: () => {
+      var _a, _b;
+      return (_b = (_a = mindMap.renderer).setRootNodeCenter) == null ? void 0 : _b.call(_a);
+    },
+    expandAll: () => mindMap.execCommand("EXPAND_ALL"),
+    collapseAll: () => mindMap.execCommand("UNEXPAND_ALL"),
     resetZoom: () => mindMap.view.reset(),
     resetLayout: () => {
       if (canMutate()) mindMap.execCommand("RESET_LAYOUT");
@@ -56810,6 +56779,28 @@ function createNodeMenuAvailability(input) {
     toggleExpand: true
   };
 }
+function openCanvasContextMenu(event, commands, options) {
+  event.preventDefault();
+  event.stopPropagation();
+  const menu = new siyuan.Menu("siyuan-yemind-zen-canvas-menu");
+  menu.element.classList.add("ymz-context-menu", "ymz-context-menu--canvas");
+  const run = (action, callback) => () => {
+    var _a;
+    (_a = options.onAction) == null ? void 0 : _a.call(options, action);
+    callback();
+  };
+  menu.addItem({ icon: "iconFocus", label: "定位到中心主题", click: run("center-root", () => commands.centerRoot()) });
+  menu.addItem({ icon: "iconFullscreen", label: "适配全部节点", click: run("fit", () => commands.fit()) });
+  menu.addItem({ icon: "iconRefresh", label: "重置缩放与位置", click: run("reset-view", () => commands.resetZoom()) });
+  menu.addItem({ icon: "iconAlignCenter", label: "整理布局", disabled: commands.isReadonly(), click: run("reset-layout", () => commands.resetLayout()) });
+  menu.addSeparator();
+  menu.addItem({ icon: "iconDown", label: "展开全部节点", click: run("expand-all", () => commands.expandAll()) });
+  menu.addItem({ icon: "iconUp", label: "折叠全部节点", click: run("collapse-all", () => commands.collapseAll()) });
+  menu.addSeparator();
+  menu.addItem({ icon: "iconEye", label: options.zen ? "退出禅模式" : "进入禅模式", click: run("toggle-zen", () => options.onZenChange(!options.zen)) });
+  menu.addItem({ icon: "iconLock", label: options.readonly ? "退出只读模式" : "进入只读模式", click: run("toggle-readonly", () => options.onReadonlyChange(!options.readonly)) });
+  menu.open({ x: event.clientX, y: event.clientY });
+}
 function openNodeContextMenu(event, commands, options = {}) {
   event.preventDefault();
   event.stopPropagation();
@@ -56823,6 +56814,7 @@ function openNodeContextMenu(event, commands, options = {}) {
     canAddOuterFrame: commands.canAddOuterFrame()
   });
   const menu = new siyuan.Menu("siyuan-yemind-zen-node-menu");
+  menu.element.classList.add("ymz-context-menu", "ymz-context-menu--node");
   const run = (action, callback) => () => {
     var _a;
     (_a = options.onAction) == null ? void 0 : _a.call(options, action);
@@ -57100,7 +57092,7 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
           <button data-action="redo" title="重做">↷</button>
         </div>
 
-        <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式">◉ <span>退出禅模式</span></button>
+        <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式" aria-label="退出禅模式"><span class="ymz-zen-exit__icon" aria-hidden="true">◉</span><span class="ymz-zen-exit__label">退出禅模式</span></button>
 
         <div class="ymz-relation-panel" data-role="relation-panel" hidden data-mode="idle">
           <span data-role="relation-hint"></span>
@@ -57196,7 +57188,6 @@ function resolveOutlineKeyAction(context) {
     return context.isRoot ? "insert-child" : "insert-sibling";
   }
   if (context.key === "Tab" && !hasCommandModifier) return context.shiftKey ? "outdent" : "indent";
-  if ((context.key === "Backspace" || context.key === "Delete") && context.empty && !context.isRoot) return "remove";
   if (context.key === "ArrowLeft" && context.atStart && context.hasChildren && context.expanded) return "collapse";
   if (context.key === "ArrowRight" && context.atEnd && context.hasChildren && context.expanded === false) return "expand";
   return "none";
@@ -57529,6 +57520,42 @@ function isClozeFormat(formatInfo) {
   const background = String(formatInfo.background ?? "").toLowerCase().replaceAll(" ", "");
   return color === "transparent" || color === "rgba(0,0,0,0)" || background === CLOZE_BACKGROUND;
 }
+function normalizeHexColor(value) {
+  if (typeof value !== "string") return null;
+  const input = value.trim();
+  const short = /^#([0-9a-f]{3})$/i.exec(input);
+  if (short) {
+    const [r, g, b] = short[1].split("");
+    return `#${r}${r}${g}${g}${b}${b}`.toUpperCase();
+  }
+  const long = /^#([0-9a-f]{6})$/i.exec(input);
+  return long ? `#${long[1].toUpperCase()}` : null;
+}
+function rgbFromCss(value) {
+  const match2 = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,[^)]*)?\s*\)$/i.exec(value.trim());
+  if (!match2) return null;
+  const channels = match2.slice(1, 4).map(Number);
+  if (channels.some((channel) => channel < 0 || channel > 255)) return null;
+  return channels;
+}
+function toHex(channels) {
+  return `#${channels.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+}
+function presentColor(value) {
+  const hex2 = normalizeHexColor(value);
+  let channels = null;
+  if (hex2) {
+    channels = [
+      Number.parseInt(hex2.slice(1, 3), 16),
+      Number.parseInt(hex2.slice(3, 5), 16),
+      Number.parseInt(hex2.slice(5, 7), 16)
+    ];
+  } else if (typeof value === "string") {
+    channels = rgbFromCss(value);
+  }
+  if (!channels) return { hex: "默认", rgb: "继承节点颜色" };
+  return { hex: hex2 ?? toHex(channels), rgb: `RGB(${channels.join(", ")})` };
+}
 const COLOR_SWATCHES = [
   "#5f6368",
   "#9aa0a6",
@@ -57645,11 +57672,14 @@ class RichTextToolbar {
     this.colorPopover = document.createElement("div");
     this.colorPopover.className = "ymz-color-popover";
     this.colorPopover.hidden = true;
-    this.colorPopover.innerHTML = `<div class="ymz-color-popover__grid">${swatchesHtml()}</div>
+    this.colorPopover.innerHTML = `<div class="ymz-color-popover__current" aria-live="polite">
+        <span data-color-readout="hex">默认</span>
+        <span data-color-readout="rgb">继承节点颜色</span>
+      </div>
+      <div class="ymz-color-popover__grid">${swatchesHtml()}</div>
       <div class="ymz-color-popover__footer">
         <button type="button" data-color-action="reset">重置默认</button>
         <button type="button" data-color-action="custom">更多颜色</button>
-        <button type="button" data-color-action="eyedropper">吸管</button>
       </div>`;
     this.customColorInput = document.createElement("input");
     this.customColorInput.type = "color";
@@ -57769,7 +57799,6 @@ class RichTextToolbar {
         this.customColorInput.value = typeof current === "string" && /^#[0-9a-f]{6}$/i.test(current) ? current : "#000000";
         this.customColorInput.click();
       }
-      if (action === "eyedropper") void this.pickColorFromScreen();
     });
     this.customColorInput.addEventListener("input", () => this.applyColor(this.customColorInput.value));
     (_a = this.element.querySelector('[data-rich-field="size"]')) == null ? void 0 : _a.addEventListener("change", (event) => {
@@ -57786,6 +57815,7 @@ class RichTextToolbar {
   openColorPopover(kind, anchor) {
     this.activeColorKind = kind;
     this.colorPopover.dataset.kind = kind;
+    this.syncColorReadout();
     this.colorPopover.hidden = false;
     const rootRect = this.root.getBoundingClientRect();
     const anchorRect = anchor.getBoundingClientRect();
@@ -57809,17 +57839,12 @@ class RichTextToolbar {
     this.syncState();
     this.colorPopover.hidden = true;
   }
-  async pickColorFromScreen() {
-    const EyeDropperConstructor = window.EyeDropper;
-    if (typeof EyeDropperConstructor !== "function") {
-      this.customColorInput.click();
-      return;
-    }
-    try {
-      const result = await new EyeDropperConstructor().open();
-      if (result == null ? void 0 : result.sRGBHex) this.applyColor(String(result.sRGBHex));
-    } catch {
-    }
+  syncColorReadout() {
+    const presentation = presentColor(this.formatInfo[this.activeColorKind]);
+    const hex2 = this.colorPopover.querySelector('[data-color-readout="hex"]');
+    const rgb2 = this.colorPopover.querySelector('[data-color-readout="rgb"]');
+    if (hex2) hex2.textContent = presentation.hex;
+    if (rgb2) rgb2.textContent = presentation.rgb;
   }
   syncState() {
     var _a, _b, _c2, _d2, _e, _f;
@@ -57839,6 +57864,7 @@ class RichTextToolbar {
     const background = typeof this.formatInfo.background === "string" ? this.formatInfo.background : "transparent";
     (_e = this.element.querySelector('[data-rich-swatch="color"]')) == null ? void 0 : _e.style.setProperty("--ymz-current-color", color);
     (_f = this.element.querySelector('[data-rich-swatch="background"]')) == null ? void 0 : _f.style.setProperty("--ymz-current-color", background);
+    this.syncColorReadout();
   }
   position(rect) {
     const rootRect = this.root.getBoundingClientRect();
@@ -58035,6 +58061,49 @@ function waitForNonZeroSize(element, options = {}) {
     schedule();
   });
 }
+function hasImageFile(dataTransfer) {
+  if (!dataTransfer) return false;
+  if (Array.from(dataTransfer.items ?? []).some((item) => item.kind === "file" && item.type.toLowerCase().startsWith("image/"))) {
+    return true;
+  }
+  return Array.from(dataTransfer.files ?? []).some((file) => file.type.toLowerCase().startsWith("image/"));
+}
+function extractImageFile(dataTransfer) {
+  if (!dataTransfer) return null;
+  for (const item of Array.from(dataTransfer.items ?? [])) {
+    if (item.kind !== "file") continue;
+    const file = item.getAsFile();
+    if (file == null ? void 0 : file.type.toLowerCase().startsWith("image/")) return file;
+  }
+  return Array.from(dataTransfer.files ?? []).find((file) => file.type.toLowerCase().startsWith("image/")) ?? null;
+}
+function renderedChildren(node) {
+  const children = Array.isArray(node == null ? void 0 : node.children) ? node.children : [];
+  const generalizations = Array.isArray(node == null ? void 0 : node._generalizationList) ? node._generalizationList.map((item) => item == null ? void 0 : item.generalizationNode).filter(Boolean) : [];
+  return [...children, ...generalizations];
+}
+function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
+  var _a, _b, _c2;
+  const root2 = (_a = mindMap == null ? void 0 : mindMap.renderer) == null ? void 0 : _a.root;
+  if (!root2 || typeof (mindMap == null ? void 0 : mindMap.toPos) !== "function") return null;
+  const local = mindMap.toPos(clientX, clientY);
+  const transform2 = ((_c2 = (_b = mindMap == null ? void 0 : mindMap.draw) == null ? void 0 : _b.transform) == null ? void 0 : _c2.call(_b)) ?? {};
+  const scaleX = Number(transform2.scaleX) || 1;
+  const scaleY = Number(transform2.scaleY) || 1;
+  const mapX = (Number(local.x) - (Number(transform2.translateX) || 0)) / scaleX;
+  const mapY = (Number(local.y) - (Number(transform2.translateY) || 0)) / scaleY;
+  let match2 = null;
+  const visit = (node) => {
+    const left = Number(node == null ? void 0 : node.left);
+    const top = Number(node == null ? void 0 : node.top);
+    const width2 = Number(node == null ? void 0 : node.width);
+    const height2 = Number(node == null ? void 0 : node.height);
+    if ([left, top, width2, height2].every(Number.isFinite) && mapX >= left && mapX <= left + width2 && mapY >= top && mapY <= top + height2) match2 = node;
+    renderedChildren(node).forEach(visit);
+  };
+  visit(root2);
+  return match2;
+}
 class YeMindEditor {
   constructor(options) {
     __publicField(this, "map", null);
@@ -58082,6 +58151,32 @@ class YeMindEditor {
     __publicField(this, "appearanceMode", null);
     __publicField(this, "onAppearanceMediaChange", () => {
       this.refreshAppearanceIfNeeded();
+    });
+    __publicField(this, "onImagePaste", (event) => {
+      if (!this.map || !this.commands || this.commands.isReadonly()) return;
+      const file = extractImageFile(event.clipboardData);
+      const node = this.commands.getPrimaryNode();
+      if (!file || !node) return;
+      event.preventDefault();
+      event.stopPropagation();
+      void this.applyNodeImageFile(file, node, "paste");
+    });
+    __publicField(this, "onImageDragOver", (event) => {
+      if (!this.map || !this.commands || this.commands.isReadonly()) return;
+      if (!hasImageFile(event.dataTransfer)) return;
+      const node = findRenderedNodeAtClientPoint(this.map, event.clientX, event.clientY);
+      if (!node) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    });
+    __publicField(this, "onImageDrop", (event) => {
+      if (!this.map || !this.commands || this.commands.isReadonly()) return;
+      const file = extractImageFile(event.dataTransfer);
+      const node = file ? findRenderedNodeAtClientPoint(this.map, event.clientX, event.clientY) : null;
+      if (!file || !node) return;
+      event.preventDefault();
+      event.stopPropagation();
+      void this.applyNodeImageFile(file, node, "drop");
     });
     __publicField(this, "onRootKeydown", (event) => {
       var _a, _b;
@@ -58156,7 +58251,7 @@ class YeMindEditor {
     this.scheduleSafeResize();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l;
     this.options.diagnostics.record("editor", "destroy-started", this.current.id, { dirty: this.saveRevisions.isDirty() });
     (_a = this.outlineRichText) == null ? void 0 : _a.destroy();
     this.outlineRichText = null;
@@ -58171,12 +58266,15 @@ class YeMindEditor {
     (_g = this.richTextToolbar) == null ? void 0 : _g.destroy();
     this.richTextToolbar = null;
     (_h = this.rootEl) == null ? void 0 : _h.removeEventListener("keydown", this.onRootKeydown);
+    (_i = this.rootEl) == null ? void 0 : _i.removeEventListener("paste", this.onImagePaste);
+    (_j = this.canvasEl) == null ? void 0 : _j.removeEventListener("dragover", this.onImageDragOver);
+    (_k = this.canvasEl) == null ? void 0 : _k.removeEventListener("drop", this.onImageDrop);
     if (this.resizeFrame !== null) window.cancelAnimationFrame(this.resizeFrame);
     if (this.splitResizeFrame !== null) window.cancelAnimationFrame(this.splitResizeFrame);
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_i = this.map) == null ? void 0 : _i.destroy();
+    (_l = this.map) == null ? void 0 : _l.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record("editor", "destroy-completed", this.current.id);
@@ -58252,6 +58350,9 @@ class YeMindEditor {
       }
     });
     this.rootEl.addEventListener("keydown", this.onRootKeydown);
+    this.rootEl.addEventListener("paste", this.onImagePaste);
+    this.canvasEl.addEventListener("dragover", this.onImageDragOver);
+    this.canvasEl.addEventListener("drop", this.onImageDrop);
     this.bindToolbar();
     this.bindMapEvents();
     this.bindAppearanceObserver();
@@ -58512,10 +58613,8 @@ class YeMindEditor {
       this.activateNode(node);
       this.openContextMenu(event);
     });
-    this.map.on("yemind_node_menu", (event, node) => {
-      if (!this.commands) return;
-      this.activateNode(node);
-      this.openContextMenu(event);
+    this.map.on("contextmenu", (event) => {
+      this.openCanvasMenu(event);
     });
     this.map.on("rich_text_selection_change", (hasRange, rectInfo, formatInfo) => {
       var _a;
@@ -58573,6 +58672,17 @@ class YeMindEditor {
       onAction: (action) => this.options.diagnostics.record("context-menu", action, this.current.id)
     });
   }
+  openCanvasMenu(event) {
+    if (!this.commands) return;
+    this.options.diagnostics.record("context-menu", "canvas-opened", this.current.id);
+    openCanvasContextMenu(event, this.commands, {
+      zen: this.rootEl.dataset.zen === "true",
+      readonly: this.rootEl.dataset.readonly === "true",
+      onZenChange: (enabled) => this.toggleZen(enabled),
+      onReadonlyChange: (enabled) => this.setReadonly(enabled),
+      onAction: (action) => this.options.diagnostics.record("context-menu", `canvas-${action}`, this.current.id)
+    });
+  }
   beginRelation() {
     if (!this.commands) return;
     this.commands.startRelation();
@@ -58628,14 +58738,12 @@ class YeMindEditor {
     configureMindMapPlugins(settings);
     configureNodeDecorations({
       showTodoBadge: settings.showTodoBadge,
-      showCommentBadge: settings.showCommentBadge,
-      showNodeMenuButton: settings.showNodeMenuButton
+      showCommentBadge: settings.showCommentBadge
     });
     this.rootEl.dataset.codeWrap = String(settings.codeBlockWrap);
     this.rootEl.dataset.codeLanguage = String(settings.codeBlockShowLanguage);
     this.rootEl.dataset.clozeMode = settings.clozeMode;
     this.rootEl.dataset.clozeHover = String(settings.clozeRevealOnHover);
-    this.rootEl.dataset.nodeMenuButton = String(settings.showNodeMenuButton);
     this.rootEl.style.setProperty("--ymz-code-tab-size", String(settings.codeBlockTabSize));
     this.rootEl.style.setProperty("--ymz-code-font-size", `${settings.codeBlockFontSize}px`);
     this.applySplitOutlineRatio(settings.splitOutlineRatio, false);
@@ -58940,7 +59048,6 @@ class YeMindEditor {
     }
   }
   handleOutlineKeydown(event) {
-    var _a;
     const editor = event.target.closest("[data-outline-editor]");
     const row = editor == null ? void 0 : editor.closest("[data-outline-uid]");
     if (!editor || !row || !this.commands || !this.outlineRichText || this.outlineStructureBusy) return;
@@ -58977,23 +59084,6 @@ class YeMindEditor {
     }
     this.outlineStructureBusy = true;
     try {
-      if (action === "remove") {
-        const editors = Array.from(this.outlineEl.querySelectorAll("[data-outline-editor]"));
-        const index = editors.indexOf(editor);
-        const previous = editors[index - 1];
-        const next2 = editors[index + 1];
-        const fallback = previous ?? next2;
-        const fallbackUid = ((_a = fallback == null ? void 0 : fallback.closest("[data-outline-uid]")) == null ? void 0 : _a.dataset.outlineUid) ?? "";
-        if (fallbackUid) {
-          this.pendingOutlineFocus = {
-            uid: fallbackUid,
-            placement: previous ? "end" : "start"
-          };
-        }
-        this.outlineRichText.detach(false);
-        if (!this.commands.removeNodeByUid(uid)) this.pendingOutlineFocus = null;
-        return;
-      }
       this.outlineRichText.flush(editor);
       if (action === "collapse" || action === "expand") {
         this.pendingOutlineFocus = { uid, placement: action === "collapse" ? "start" : "end" };
@@ -59201,6 +59291,49 @@ class YeMindEditor {
     (_a = renderer == null ? void 0 : renderer.clearActiveNodeList) == null ? void 0 : _a.call(renderer);
     if (typeof node.active === "function") node.active();
     else (_b = renderer == null ? void 0 : renderer.addNodeToActiveList) == null ? void 0 : _b.call(renderer, node);
+  }
+  activateOnlyNode(node) {
+    var _a, _b;
+    if (!this.map || !node) return;
+    const renderer = this.map.renderer;
+    (_a = renderer == null ? void 0 : renderer.clearActiveNodeList) == null ? void 0 : _a.call(renderer);
+    if (typeof node.active === "function") node.active();
+    else (_b = renderer == null ? void 0 : renderer.addNodeToActiveList) == null ? void 0 : _b.call(renderer, node);
+  }
+  async applyNodeImageFile(file, node, source) {
+    if (!this.commands || this.commands.isReadonly()) return;
+    const loaded = await loadImageFileSelection(file, {
+      read: (selected) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ""));
+        reader.onerror = () => reject(reader.error ?? new Error("Image file read failed"));
+        reader.readAsDataURL(selected);
+      }),
+      measure: (dataUrl) => new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve({ width: image.naturalWidth || 240, height: image.naturalHeight || 160 });
+        image.onerror = () => reject(new Error("Image dimensions could not be measured"));
+        image.src = dataUrl;
+      }),
+      onError: (error) => {
+        console.error("[YeMind Zen] node image input failed", error);
+        siyuan.showMessage("图片读取失败，请重试", 4e3, "error");
+      }
+    });
+    if (!loaded || this.destroyed || !this.map || !this.commands) return;
+    this.activateOnlyNode(node);
+    this.commands.setImage({
+      url: loaded.dataUrl,
+      title: file.name,
+      width: loaded.size.width,
+      height: loaded.size.height,
+      custom: false
+    });
+    this.options.diagnostics.record("node-image", source, this.current.id, {
+      name: file.name,
+      width: loaded.size.width,
+      height: loaded.size.height
+    });
   }
   scheduleSave() {
     if (this.destroyed) return;

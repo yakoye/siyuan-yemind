@@ -82,7 +82,7 @@ describe('RichTextToolbar', () => {
     root.remove();
   });
 
-  it('uses a palette with reset/custom/eyedropper and removes separate clear X buttons', () => {
+  it('uses a palette with HEX/RGB readouts, reset and native custom color', () => {
     const root = setup();
     const actions = commands();
     const toolbar = new RichTextToolbar(root, actions);
@@ -99,7 +99,14 @@ describe('RichTextToolbar', () => {
     root.querySelector<HTMLButtonElement>('[data-color-action="reset"]')!.click();
     expect(actions.formatText).toHaveBeenCalledWith({ background: false });
     expect(root.querySelector('[data-color-action="custom"]')).not.toBeNull();
-    expect(root.querySelector('[data-color-action="eyedropper"]')).not.toBeNull();
+    expect(root.querySelector('[data-color-action="eyedropper"]')).toBeNull();
+    expect(root.querySelector('[data-color-readout="hex"]')?.textContent).toBe('默认');
+    expect(root.querySelector('[data-color-readout="rgb"]')?.textContent).toBe('继承节点颜色');
+
+    toolbar.update(true, { left: 20, top: 20, right: 80, bottom: 40, width: 60 }, { color: '#ff4d3d' });
+    root.querySelector<HTMLButtonElement>('[data-rich-action="color-menu"]')!.click();
+    expect(root.querySelector('[data-color-readout="hex"]')?.textContent).toBe('#FF4D3D');
+    expect(root.querySelector('[data-color-readout="rgb"]')?.textContent).toBe('RGB(255, 77, 61)');
 
     toolbar.destroy();
     root.remove();

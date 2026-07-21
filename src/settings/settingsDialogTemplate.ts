@@ -150,7 +150,6 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
         <header><h2>节点与内容</h2><p>控制节点入口、富文本、代码和挖空显示。</p></header>
         <div class="ymz-settings-group"><h3>节点入口控件</h3>
           ${switchRow('显示添加子节点按钮', '节点激活后显示快速添加入口。', 'showQuickCreate', settings.showQuickCreate)}
-          ${switchRow('显示节点菜单按钮', '节点激活后显示轻量菜单入口。', 'showNodeMenuButton', settings.showNodeMenuButton)}
           ${switchRow('显示待办标记', '节点文字前显示待办状态。', 'showTodoBadge', settings.showTodoBadge)}
           ${switchRow('显示批注标记', '节点右侧显示批注图标。', 'showCommentBadge', settings.showCommentBadge)}
         </div>

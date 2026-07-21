@@ -73,6 +73,7 @@ declare module 'siyuan' {
   }
 
   export class Menu {
+    element: HTMLElement;
     constructor(id?: string, closeCB?: () => void);
     addItem(option: any): HTMLElement;
     addSeparator(options?: any): HTMLElement;

@@ -22,7 +22,7 @@ import { MapRepository } from '../model/MapRepository';
 import type { MindMapTree, YeMindMapDocument } from '../model/types';
 import type { SettingsStore, ShortcutCommand, ViewMode, YeMindSettings } from '../settings/SettingsStore';
 import { openCheckpointManager } from '../ui/checkpointDialog';
-import { openNodeContextMenu } from '../ui/contextMenu';
+import { openCanvasContextMenu, openNodeContextMenu } from '../ui/contextMenu';
 import { promptText } from '../ui/dialogs';
 import { openCommentsDialog, openFormulaDialog, openLinkDialog } from '../ui/nodeContentDialogs';
 import { openCodeBlockDialog, openInlineLinkDialog } from '../ui/richTextDialogs';
@@ -40,6 +40,8 @@ import { createOuterFramePresentation, hexToRgba } from './outerFramePresentatio
 import { createToolbarAvailability } from './toolbarAvailability';
 import { resolveLinkNavigation } from './linkNavigation';
 import { hasNonZeroSize } from '../plugin/visibleElement';
+import { loadImageFileSelection } from '../ui/imageFileLoading';
+import { extractImageFile, findRenderedNodeAtClientPoint, hasImageFile } from '../ui/nodeImageInput';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -106,6 +108,35 @@ export class YeMindEditor {
   private appearanceMode: YeMindAppearance | null = null;
   private readonly onAppearanceMediaChange = (): void => {
     this.refreshAppearanceIfNeeded();
+  };
+
+  private readonly onImagePaste = (event: ClipboardEvent): void => {
+    if (!this.map || !this.commands || this.commands.isReadonly()) return;
+    const file = extractImageFile(event.clipboardData);
+    const node = this.commands.getPrimaryNode();
+    if (!file || !node) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void this.applyNodeImageFile(file, node, 'paste');
+  };
+
+  private readonly onImageDragOver = (event: DragEvent): void => {
+    if (!this.map || !this.commands || this.commands.isReadonly()) return;
+    if (!hasImageFile(event.dataTransfer)) return;
+    const node = findRenderedNodeAtClientPoint(this.map, event.clientX, event.clientY);
+    if (!node) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+  };
+
+  private readonly onImageDrop = (event: DragEvent): void => {
+    if (!this.map || !this.commands || this.commands.isReadonly()) return;
+    const file = extractImageFile(event.dataTransfer);
+    const node = file ? findRenderedNodeAtClientPoint(this.map, event.clientX, event.clientY) : null;
+    if (!file || !node) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void this.applyNodeImageFile(file, node, 'drop');
   };
 
   private readonly onRootKeydown = (event: KeyboardEvent): void => {
@@ -177,6 +208,9 @@ export class YeMindEditor {
     this.richTextToolbar?.destroy();
     this.richTextToolbar = null;
     this.rootEl?.removeEventListener('keydown', this.onRootKeydown);
+    this.rootEl?.removeEventListener('paste', this.onImagePaste);
+    this.canvasEl?.removeEventListener('dragover', this.onImageDragOver);
+    this.canvasEl?.removeEventListener('drop', this.onImageDrop);
     if (this.resizeFrame !== null) window.cancelAnimationFrame(this.resizeFrame);
     if (this.splitResizeFrame !== null) window.cancelAnimationFrame(this.splitResizeFrame);
     this.resizeFrame = null;
@@ -259,6 +293,9 @@ export class YeMindEditor {
       },
     });
     this.rootEl.addEventListener('keydown', this.onRootKeydown);
+    this.rootEl.addEventListener('paste', this.onImagePaste);
+    this.canvasEl.addEventListener('dragover', this.onImageDragOver);
+    this.canvasEl.addEventListener('drop', this.onImageDrop);
 
     this.bindToolbar();
     this.bindMapEvents();
@@ -485,10 +522,8 @@ export class YeMindEditor {
       this.activateNode(node);
       this.openContextMenu(event);
     });
-    this.map.on('yemind_node_menu', (event: MouseEvent, node: any) => {
-      if (!this.commands) return;
-      this.activateNode(node);
-      this.openContextMenu(event);
+    this.map.on('contextmenu', (event: MouseEvent) => {
+      this.openCanvasMenu(event);
     });
     this.map.on('rich_text_selection_change', (
       hasRange: boolean,
@@ -547,6 +582,18 @@ export class YeMindEditor {
       onNodeLink: () => openLinkDialog(this.commands!, this.settings.inlineLinkAutoHttps),
       onRelation: () => this.beginRelation(),
       onAction: (action) => this.options.diagnostics.record('context-menu', action, this.current.id),
+    });
+  }
+
+  private openCanvasMenu(event: MouseEvent): void {
+    if (!this.commands) return;
+    this.options.diagnostics.record('context-menu', 'canvas-opened', this.current.id);
+    openCanvasContextMenu(event, this.commands, {
+      zen: this.rootEl.dataset.zen === 'true',
+      readonly: this.rootEl.dataset.readonly === 'true',
+      onZenChange: (enabled) => this.toggleZen(enabled),
+      onReadonlyChange: (enabled) => this.setReadonly(enabled),
+      onAction: (action) => this.options.diagnostics.record('context-menu', `canvas-${action}`, this.current.id),
     });
   }
 
@@ -609,13 +656,11 @@ export class YeMindEditor {
     configureNodeDecorations({
       showTodoBadge: settings.showTodoBadge,
       showCommentBadge: settings.showCommentBadge,
-      showNodeMenuButton: settings.showNodeMenuButton,
     });
     this.rootEl.dataset.codeWrap = String(settings.codeBlockWrap);
     this.rootEl.dataset.codeLanguage = String(settings.codeBlockShowLanguage);
     this.rootEl.dataset.clozeMode = settings.clozeMode;
     this.rootEl.dataset.clozeHover = String(settings.clozeRevealOnHover);
-    this.rootEl.dataset.nodeMenuButton = String(settings.showNodeMenuButton);
     this.rootEl.style.setProperty('--ymz-code-tab-size', String(settings.codeBlockTabSize));
     this.rootEl.style.setProperty('--ymz-code-font-size', `${settings.codeBlockFontSize}px`);
     this.applySplitOutlineRatio(settings.splitOutlineRatio, false);
@@ -974,24 +1019,6 @@ export class YeMindEditor {
 
     this.outlineStructureBusy = true;
     try {
-      if (action === 'remove') {
-        const editors = Array.from(this.outlineEl.querySelectorAll<HTMLElement>('[data-outline-editor]'));
-        const index = editors.indexOf(editor);
-        const previous = editors[index - 1];
-        const next = editors[index + 1];
-        const fallback = previous ?? next;
-        const fallbackUid = fallback?.closest<HTMLElement>('[data-outline-uid]')?.dataset.outlineUid ?? '';
-        if (fallbackUid) {
-          this.pendingOutlineFocus = {
-            uid: fallbackUid,
-            placement: previous ? 'end' : 'start',
-          };
-        }
-        this.outlineRichText.detach(false);
-        if (!this.commands.removeNodeByUid(uid)) this.pendingOutlineFocus = null;
-        return;
-      }
-
       this.outlineRichText.flush(editor);
       if (action === 'collapse' || action === 'expand') {
         this.pendingOutlineFocus = { uid, placement: action === 'collapse' ? 'start' : 'end' };
@@ -1212,6 +1239,50 @@ export class YeMindEditor {
     renderer?.clearActiveNodeList?.();
     if (typeof node.active === 'function') node.active();
     else renderer?.addNodeToActiveList?.(node);
+  }
+
+  private activateOnlyNode(node: any): void {
+    if (!this.map || !node) return;
+    const renderer = (this.map as any).renderer;
+    renderer?.clearActiveNodeList?.();
+    if (typeof node.active === 'function') node.active();
+    else renderer?.addNodeToActiveList?.(node);
+  }
+
+  private async applyNodeImageFile(file: File, node: any, source: 'paste' | 'drop'): Promise<void> {
+    if (!this.commands || this.commands.isReadonly()) return;
+    const loaded = await loadImageFileSelection(file, {
+      read: (selected) => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ''));
+        reader.onerror = () => reject(reader.error ?? new Error('Image file read failed'));
+        reader.readAsDataURL(selected);
+      }),
+      measure: (dataUrl) => new Promise<{ width: number; height: number }>((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve({ width: image.naturalWidth || 240, height: image.naturalHeight || 160 });
+        image.onerror = () => reject(new Error('Image dimensions could not be measured'));
+        image.src = dataUrl;
+      }),
+      onError: (error) => {
+        console.error('[YeMind Zen] node image input failed', error);
+        showMessage('图片读取失败，请重试', 4000, 'error');
+      },
+    });
+    if (!loaded || this.destroyed || !this.map || !this.commands) return;
+    this.activateOnlyNode(node);
+    this.commands.setImage({
+      url: loaded.dataUrl,
+      title: file.name,
+      width: loaded.size.width,
+      height: loaded.size.height,
+      custom: false,
+    });
+    this.options.diagnostics.record('node-image', source, this.current.id, {
+      name: file.name,
+      width: loaded.size.width,
+      height: loaded.size.height,
+    });
   }
 
   private scheduleSave(): void {

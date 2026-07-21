@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.16 — 2026-07-18
+
+- Studied the supplied KMind Zen canvas/node menus, zen-state presentation and image commands, then adapted their interaction semantics to the existing SiYuan Menu and `simple-mind-map` command boundaries.
+- Removed the node three-dot postfix control and its settings switch; persisted legacy values are ignored without changing the settings file format.
+- Replaced changing comment counts with one stable comment icon and count-free accessible labels.
+- Removed the EyeDropper entry from text/background palettes, retained 52 swatches, Reset Default and the native custom color picker, and added live uppercase HEX plus RGB readouts.
+- Changed split/full-outline Backspace and Delete handling to text-only semantics so an empty editor row never becomes an implicit structural deletion.
+- Added a dedicated canvas context menu for whole-map/view actions while retaining the complete node context menu with a constrained height and narrow scrollbar.
+- Reworked the zen exit control into a compact accessible capsule that expands on hover or keyboard focus and exits through the existing zen command path.
+- Added local image paste and node-targeted drag/drop input, preserving natural image dimensions and writing through upstream `SET_NODE_IMAGE`.
+- Kept proportional image resizing on the already registered upstream `NodeImgAdjust`; no second image geometry, map history or persistence implementation was introduced.
+- Added RED/GREEN regressions covering node chrome, palette presentation, outline deletion semantics, both context menus, zen presentation and image input/integration.
+
 ## 0.5.15 — 2026-07-18
 
 - Studied KMind Zen 0.33.0 selection-toolbar, persistent rich editor and overlay-mounting behavior, then adapted the verified mechanisms without importing its private document kernel.

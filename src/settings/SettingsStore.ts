@@ -42,7 +42,6 @@ export interface YeMindSettings {
   showCommentBadge: boolean;
   defaultZenMode: boolean;
   defaultReadonlyMode: boolean;
-  showNodeMenuButton: boolean;
   defaultViewMode: ViewMode;
   splitOutlineRatio: number;
   dragEdgeAutoPan: boolean;
@@ -93,7 +92,6 @@ export const DEFAULT_SETTINGS: YeMindSettings = {
   showCommentBadge: true,
   defaultZenMode: false,
   defaultReadonlyMode: false,
-  showNodeMenuButton: true,
   defaultViewMode: 'map',
   splitOutlineRatio: 0.42,
   dragEdgeAutoPan: false,
@@ -186,7 +184,6 @@ function normalizeSettings(value: Partial<YeMindSettings>): YeMindSettings {
     showCommentBadge: booleanOrDefault(value.showCommentBadge, DEFAULT_SETTINGS.showCommentBadge),
     defaultZenMode: booleanOrDefault(value.defaultZenMode, DEFAULT_SETTINGS.defaultZenMode),
     defaultReadonlyMode: booleanOrDefault(value.defaultReadonlyMode, DEFAULT_SETTINGS.defaultReadonlyMode),
-    showNodeMenuButton: booleanOrDefault(value.showNodeMenuButton, DEFAULT_SETTINGS.showNodeMenuButton),
     defaultViewMode: VIEW_MODES.has(value.defaultViewMode as ViewMode) ? value.defaultViewMode as ViewMode : DEFAULT_SETTINGS.defaultViewMode,
     splitOutlineRatio: numberClamped(value.splitOutlineRatio, DEFAULT_SETTINGS.splitOutlineRatio, 0.25, 0.7),
     dragEdgeAutoPan: booleanOrDefault(value.dragEdgeAutoPan, DEFAULT_SETTINGS.dragEdgeAutoPan),

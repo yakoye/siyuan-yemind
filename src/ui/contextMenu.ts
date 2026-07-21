@@ -10,6 +10,36 @@ import {
 } from './nodeContentDialogs';
 import { createNodeMenuAvailability, createSummaryMenuDescriptor, createTodoMenuDescriptor } from './nodeContentMenu';
 
+export interface CanvasContextMenuOptions {
+  zen: boolean;
+  readonly: boolean;
+  onZenChange(enabled: boolean): void;
+  onReadonlyChange(enabled: boolean): void;
+  onAction?: (action: string) => void;
+}
+
+export function openCanvasContextMenu(event: MouseEvent, commands: YeMindCommands, options: CanvasContextMenuOptions): void {
+  event.preventDefault();
+  event.stopPropagation();
+  const menu = new Menu('siyuan-yemind-zen-canvas-menu');
+  menu.element.classList.add('ymz-context-menu', 'ymz-context-menu--canvas');
+  const run = (action: string, callback: () => void): (() => void) => () => {
+    options.onAction?.(action);
+    callback();
+  };
+  menu.addItem({ icon: 'iconFocus', label: '定位到中心主题', click: run('center-root', () => commands.centerRoot()) });
+  menu.addItem({ icon: 'iconFullscreen', label: '适配全部节点', click: run('fit', () => commands.fit()) });
+  menu.addItem({ icon: 'iconRefresh', label: '重置缩放与位置', click: run('reset-view', () => commands.resetZoom()) });
+  menu.addItem({ icon: 'iconAlignCenter', label: '整理布局', disabled: commands.isReadonly(), click: run('reset-layout', () => commands.resetLayout()) });
+  menu.addSeparator();
+  menu.addItem({ icon: 'iconDown', label: '展开全部节点', click: run('expand-all', () => commands.expandAll()) });
+  menu.addItem({ icon: 'iconUp', label: '折叠全部节点', click: run('collapse-all', () => commands.collapseAll()) });
+  menu.addSeparator();
+  menu.addItem({ icon: 'iconEye', label: options.zen ? '退出禅模式' : '进入禅模式', click: run('toggle-zen', () => options.onZenChange(!options.zen)) });
+  menu.addItem({ icon: 'iconLock', label: options.readonly ? '退出只读模式' : '进入只读模式', click: run('toggle-readonly', () => options.onReadonlyChange(!options.readonly)) });
+  menu.open({ x: event.clientX, y: event.clientY });
+}
+
 export interface NodeContextMenuOptions {
   onInlineLink?: () => void;
   onCodeBlock?: () => void;
@@ -33,6 +63,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   });
 
   const menu = new Menu('siyuan-yemind-zen-node-menu');
+  menu.element.classList.add('ymz-context-menu', 'ymz-context-menu--node');
   const run = (action: string, callback: () => void): (() => void) => () => {
     options.onAction?.(action);
     callback();
