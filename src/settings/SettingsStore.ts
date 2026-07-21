@@ -4,7 +4,6 @@ export type WheelMode = 'zoom' | 'pan' | 'none';
 export type ExternalLinkMode = 'new-window' | 'current-window';
 export type ClozeMode = 'hidden' | 'blur';
 export type ViewMode = 'map' | 'split' | 'outline';
-export type DragMode = 'structure' | 'free';
 export type ShortcutCommand = 'search' | 'toggleZen' | 'toggleReadonly' | 'undo' | 'redo' | 'fit' | 'reset' | 'addParent' | 'comments' | 'summary' | 'relation';
 export type ShortcutMap = Record<ShortcutCommand, string>;
 
@@ -45,9 +44,7 @@ export interface YeMindSettings {
   defaultReadonlyMode: boolean;
   showNodeMenuButton: boolean;
   defaultViewMode: ViewMode;
-  dragMode: DragMode;
   dragEdgeAutoPan: boolean;
-  preserveViewportAfterDrag: boolean;
   restoreSavedView: boolean;
   limitMindMapInCanvas: boolean;
   minZoomRatio: number;
@@ -90,9 +87,7 @@ export const DEFAULT_SETTINGS: YeMindSettings = {
   defaultReadonlyMode: false,
   showNodeMenuButton: true,
   defaultViewMode: 'map',
-  dragMode: 'structure',
   dragEdgeAutoPan: false,
-  preserveViewportAfterDrag: true,
   restoreSavedView: true,
   limitMindMapInCanvas: false,
   minZoomRatio: 20,
@@ -111,7 +106,6 @@ const WHEEL_MODES = new Set<WheelMode>(['zoom', 'pan', 'none']);
 const LINK_MODES = new Set<ExternalLinkMode>(['new-window', 'current-window']);
 const CLOZE_MODES = new Set<ClozeMode>(['hidden', 'blur']);
 const VIEW_MODES = new Set<ViewMode>(['map', 'split', 'outline']);
-const DRAG_MODES = new Set<DragMode>(['structure', 'free']);
 const SHORTCUT_COMMANDS = Object.keys(DEFAULT_SHORTCUTS) as ShortcutCommand[];
 
 function numberInRange(value: unknown, fallback: number, min: number, max: number): number {
@@ -164,9 +158,7 @@ function normalizeSettings(value: Partial<YeMindSettings>): YeMindSettings {
     defaultReadonlyMode: booleanOrDefault(value.defaultReadonlyMode, DEFAULT_SETTINGS.defaultReadonlyMode),
     showNodeMenuButton: booleanOrDefault(value.showNodeMenuButton, DEFAULT_SETTINGS.showNodeMenuButton),
     defaultViewMode: VIEW_MODES.has(value.defaultViewMode as ViewMode) ? value.defaultViewMode as ViewMode : DEFAULT_SETTINGS.defaultViewMode,
-    dragMode: DRAG_MODES.has(value.dragMode as DragMode) ? value.dragMode as DragMode : DEFAULT_SETTINGS.dragMode,
     dragEdgeAutoPan: booleanOrDefault(value.dragEdgeAutoPan, DEFAULT_SETTINGS.dragEdgeAutoPan),
-    preserveViewportAfterDrag: booleanOrDefault(value.preserveViewportAfterDrag, DEFAULT_SETTINGS.preserveViewportAfterDrag),
     restoreSavedView: booleanOrDefault(value.restoreSavedView, DEFAULT_SETTINGS.restoreSavedView),
     limitMindMapInCanvas: booleanOrDefault(value.limitMindMapInCanvas, DEFAULT_SETTINGS.limitMindMapInCanvas),
     minZoomRatio,

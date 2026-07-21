@@ -21,7 +21,6 @@ export interface PersistedViewData {
 }
 
 export interface DragAndLayoutOptions {
-  enableFreeDrag: boolean;
   autoMoveWhenMouseInEdgeOnDrag: boolean;
   isLimitMindMapInCanvas: boolean;
   minZoomRatio: number;
@@ -80,7 +79,6 @@ export function stripCustomPositions(tree: MindMapTree): { tree: MindMapTree; ch
 
 export function buildDragAndLayoutOptions(settings: YeMindSettings): DragAndLayoutOptions {
   return {
-    enableFreeDrag: settings.dragMode === 'free',
     autoMoveWhenMouseInEdgeOnDrag: settings.dragEdgeAutoPan,
     isLimitMindMapInCanvas: settings.limitMindMapInCanvas,
     minZoomRatio: settings.minZoomRatio,

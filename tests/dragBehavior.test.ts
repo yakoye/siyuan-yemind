@@ -9,7 +9,7 @@ import { DEFAULT_SETTINGS } from '../src/settings/SettingsStore';
 describe('drag behavior', () => {
   it('uses structured drag and disables edge auto-pan by default', () => {
     const options = buildDragAndLayoutOptions(DEFAULT_SETTINGS);
-    expect(options.enableFreeDrag).toBe(false);
+    expect(options).not.toHaveProperty('enableFreeDrag');
     expect(options.autoMoveWhenMouseInEdgeOnDrag).toBe(false);
     expect(options.isLimitMindMapInCanvas).toBe(false);
   });

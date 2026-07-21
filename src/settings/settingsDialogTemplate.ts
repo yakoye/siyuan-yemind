@@ -119,14 +119,9 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
       </section>
 
       <section class="ymz-settings-page" data-settings-panel="drag-layout" hidden>
-        <header><h2>拖拽与布局</h2><p>结构化拖拽会移动完整子树并重新排版，是思维导图的推荐模式。</p></header>
+        <header><h2>拖拽与布局</h2><p>节点移动、子树跟随、同级插入和重新排版全部使用 simple-mind-map 原生拖拽。</p></header>
         <div class="ymz-settings-group"><h3>节点拖拽</h3>
-          ${selectRow('拖拽模式', '结构化拖拽会将节点及其全部子节点一起移动，并自动调整同级间距。', 'dragMode', [
-            option('structure', '结构化拖拽（推荐）', settings.dragMode),
-            option('free', '自由拖拽', settings.dragMode),
-          ].join(''))}
           ${switchRow('边缘自动平移', '拖拽到画布边缘时自动移动画布。关闭可避免画布意外飞走。', 'dragEdgeAutoPan', settings.dragEdgeAutoPan)}
-          ${switchRow('拖拽后保持视图位置', '节点拖拽结束后恢复拖拽前的缩放和画布位置。', 'preserveViewportAfterDrag', settings.preserveViewportAfterDrag)}
           ${switchRow('限制导图在画布内', '限制画布拖动范围，避免导图完全移出可视区域。', 'limitMindMapInCanvas', settings.limitMindMapInCanvas)}
         </div>
         <div class="ymz-settings-group"><h3>节点间距</h3>

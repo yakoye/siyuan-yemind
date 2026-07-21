@@ -48,6 +48,10 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
     this.eventBus.off('open-siyuan-url-plugin', this.onOpenPluginUrl);
   }
 
+  whenReady(): Promise<void> {
+    return this.ready;
+  }
+
   async openMap(mapId: string): Promise<void> {
     await this.ready;
     const map = this.repository.get(mapId);

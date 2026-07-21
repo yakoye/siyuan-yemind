@@ -147,3 +147,31 @@ describe('MapRepository', () => {
     expect(repo.get('safe')?.title).toBe('安全');
   });
 });
+
+it('serializes writes so an older save cannot overwrite a newer snapshot', async () => {
+  const pending: Array<{ value: any; resolve: () => void }> = [];
+  const repo = new MapRepository({
+    load: async () => null,
+    save: (value) => new Promise<void>((resolve) => {
+      pending.push({ value: structuredClone(value), resolve });
+    }),
+  }, { now: () => 6000, id: () => 'queued-map' });
+  await repo.load();
+
+  const creating = repo.create('旧标题');
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(pending).toHaveLength(1);
+
+  const renaming = repo.rename('queued-map', '新标题');
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(pending).toHaveLength(1);
+
+  pending[0].resolve();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(pending).toHaveLength(2);
+  expect(pending[1].value.maps[0].title).toBe('新标题');
+
+  pending[1].resolve();
+  await Promise.all([creating, renaming]);
+  expect(repo.get('queued-map')?.title).toBe('新标题');
+});

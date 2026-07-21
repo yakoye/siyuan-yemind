@@ -6,6 +6,7 @@ export interface YeMindPluginHost {
   repository: MapRepository;
   settingsStore: SettingsStore;
   tabRegistry: OpenMapTabRegistry;
+  whenReady(): Promise<void>;
   openMap(mapId: string): Promise<void>;
   createMap(): Promise<void>;
   renameMap(mapId: string): Promise<void>;

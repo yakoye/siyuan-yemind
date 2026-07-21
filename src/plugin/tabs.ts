@@ -1,11 +1,17 @@
 import type { Custom, Plugin } from 'siyuan';
 import { YeMindEditor } from '../editor/YeMindEditor';
+import type { YeMindMapDocument } from '../model/types';
+import { mountAfterReady, type DeferredMountState } from './deferredMount';
 import type { YeMindPluginHost } from './host';
 import { TAB_TYPE } from './constants';
 
+interface TabMountState extends DeferredMountState {
+  editor?: YeMindEditor;
+  unregister?: () => void;
+}
+
 export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void {
-  const editors = new WeakMap<object, YeMindEditor>();
-  const unregisterTabs = new WeakMap<object, () => void>();
+  const states = new WeakMap<object, TabMountState>();
   plugin.addTab({
     type: TAB_TYPE,
     init(this: Custom) {
@@ -13,36 +19,46 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
       container.style.width = '100%';
       container.style.height = '100%';
       container.style.minHeight = '0';
+      container.innerHTML = '<div class="ymz-loading">正在加载导图…</div>';
+      const state: TabMountState = { destroyed: false };
+      states.set(this, state);
       const mapId = String(this.data?.mapId ?? '');
-      const map = host.repository.get(mapId);
-      if (!map) {
-        container.innerHTML = '<div class="ymz-missing"><b>导图不存在</b><span>它可能已被删除。</span></div>';
-        return;
-      }
-      this.tab.updateTitle(map.title);
-      const unregister = host.tabRegistry.register(mapId, {
-        activate: () => this.tab.headElement?.click(),
-        close: () => this.tab.close(),
-        updateTitle: (title) => this.tab.updateTitle(title),
-      });
-      unregisterTabs.set(this, unregister);
-      const editor = new YeMindEditor({
-        container,
-        mapId,
-        repository: host.repository,
-        settingsStore: host.settingsStore,
-        onMissing: () => this.tab.close(),
-      });
-      editors.set(this, editor);
+
+      void mountAfterReady(
+        state,
+        host.whenReady(),
+        () => ({ mapId, map: host.repository.get(mapId) }),
+        ({ mapId: resolvedMapId, map }: { mapId: string; map?: YeMindMapDocument }) => {
+          if (!map) {
+            container.innerHTML = '<div class="ymz-missing"><b>导图不存在</b><span>它可能已被删除。</span></div>';
+            return;
+          }
+          this.tab.updateTitle(map.title);
+          state.unregister = host.tabRegistry.register(resolvedMapId, {
+            activate: () => this.tab.headElement?.click(),
+            close: () => this.tab.close(),
+            updateTitle: (title) => this.tab.updateTitle(title),
+          });
+          state.editor = new YeMindEditor({
+            container,
+            mapId: resolvedMapId,
+            repository: host.repository,
+            settingsStore: host.settingsStore,
+            onMissing: () => this.tab.close(),
+          });
+        },
+      );
     },
     resize(this: Custom) {
-      editors.get(this)?.resize();
+      states.get(this)?.editor?.resize();
     },
     destroy(this: Custom) {
-      editors.get(this)?.destroy();
-      editors.delete(this);
-      unregisterTabs.get(this)?.();
-      unregisterTabs.delete(this);
+      const state = states.get(this);
+      if (!state) return;
+      state.destroyed = true;
+      state.editor?.destroy();
+      state.unregister?.();
+      states.delete(this);
     },
   });
 }

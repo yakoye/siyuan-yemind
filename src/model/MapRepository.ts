@@ -72,6 +72,7 @@ export class MapRepository {
   private readonly id: () => string;
   private loaded = false;
   private loadPromise: Promise<void> | null = null;
+  private saveQueue: Promise<void> = Promise.resolve();
 
   constructor(private readonly storage: RepositoryStorage, options: RepositoryOptions = {}) {
     this.now = options.now ?? (() => Date.now());
@@ -101,7 +102,7 @@ export class MapRepository {
       migrated ||= candidate.version !== 1 || candidate.activeMapId !== activeMapId;
     }
     this.loaded = true;
-    if (migrated) await this.storage.save(this.snapshot());
+    if (migrated) await this.enqueueSave(this.snapshot());
     this.emit();
   }
 
@@ -182,8 +183,15 @@ export class MapRepository {
   }
 
   private async persist(): Promise<void> {
-    await this.storage.save(this.snapshot());
+    const snapshot = this.snapshot();
+    await this.enqueueSave(snapshot);
     this.emit();
+  }
+
+  private enqueueSave(snapshot: MapStorageDocument): Promise<void> {
+    const operation = this.saveQueue.then(() => this.storage.save(clone(snapshot)));
+    this.saveQueue = operation.catch(() => undefined);
+    return operation;
   }
 
   private emit(): void {

@@ -31,7 +31,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     themeConfig: behavior?.themeConfig,
     layout: options.layout ?? 'logicalStructure',
     readonly: Boolean(options.readonly),
-    enableFreeDrag: behavior?.enableFreeDrag ?? false,
+    enableFreeDrag: false,
     autoMoveWhenMouseInEdgeOnDrag: behavior?.autoMoveWhenMouseInEdgeOnDrag ?? false,
     isLimitMindMapInCanvas: behavior?.isLimitMindMapInCanvas ?? false,
     minZoomRatio: behavior?.minZoomRatio ?? 20,

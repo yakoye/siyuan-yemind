@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.2 — 2026-07-16
+
+- Removed YeMind Zen's custom node-drag viewport capture/restore layer and delegated drag movement, subtree movement, sibling insertion and layout recalculation entirely to `simple-mind-map`.
+- Locked the stable editor path to native structured drag; removed the experimental free-drag and post-drag viewport restoration controls from settings.
+- Kept edge auto-pan as the only optional native drag behavior and left it disabled by default.
+- Fixed restored SiYuan tabs opening before map storage was loaded by deferring editor mounting until plugin readiness.
+- Prevented tabs closed during startup from mounting an editor after asynchronous loading finishes.
+- Serialized repository writes so an older asynchronous save cannot overwrite a newer map snapshot.
+- Flushed a pending autosave before destroying a tab editor, reducing edit loss when a tab is closed quickly.
+- Added focused regression tests for native drag lifecycle, restored-tab startup, serialized saves and editor close-time flushing.
+
 ## 0.5.1 — 2026-07-16
 
 - Restored structured node dragging as the default so a moved node keeps its complete child subtree and the layout engine recalculates sibling spacing.

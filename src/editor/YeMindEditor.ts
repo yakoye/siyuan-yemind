@@ -12,7 +12,6 @@ import { openNodeContextMenu } from '../ui/contextMenu';
 import { openCommentsDialog, openFormulaDialog } from '../ui/nodeContentDialogs';
 import { openCodeBlockDialog, openInlineLinkDialog } from '../ui/richTextDialogs';
 import { calculateEditorStats } from './editorStats';
-import { DragViewportController } from './DragViewportController';
 import { createEditorTemplate } from './editorTemplate';
 import { renderOutlineHtml } from './outline';
 import { RichTextToolbar } from './RichTextToolbar';
@@ -50,7 +49,6 @@ export class YeMindEditor {
   private settingsInitialized = false;
   private viewMode: ViewMode = 'map';
   private searchText = '';
-  private readonly dragViewport = new DragViewportController();
   private restoredViewOnOpen = false;
 
   private readonly onRootKeydown = (event: KeyboardEvent): void => {
@@ -94,13 +92,12 @@ export class YeMindEditor {
   }
 
   destroy(): void {
+    this.flushPendingSave();
     this.destroyed = true;
-    if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.repositoryUnsubscribe?.();
     this.settingsUnsubscribe?.();
     this.richTextToolbar?.destroy();
     this.richTextToolbar = null;
-    this.dragViewport.reset();
     this.rootEl?.removeEventListener('keydown', this.onRootKeydown);
     this.map?.destroy();
     this.map = null;
@@ -124,13 +121,11 @@ export class YeMindEditor {
     if (layoutSelect) layoutSelect.value = this.current.layout;
 
     let runtimeData = this.current.data;
-    if (this.settings.dragMode === 'structure') {
-      const normalized = stripCustomPositions(runtimeData);
-      runtimeData = normalized.tree;
-      if (normalized.changed) {
-        this.current.data = normalized.tree;
-        void this.options.repository.update(this.current.id, { data: normalized.tree });
-      }
+    const normalized = stripCustomPositions(runtimeData);
+    runtimeData = normalized.tree;
+    if (normalized.changed) {
+      this.current.data = normalized.tree;
+      void this.options.repository.update(this.current.id, { data: normalized.tree });
     }
     const runtimeViewData = this.settings.restoreSavedView
       ? normalizePersistedViewData(this.current.viewData)
@@ -264,34 +259,10 @@ export class YeMindEditor {
     });
     this.map.on('view_data_change', (viewData: Record<string, unknown>) => {
       this.updateZoom();
-      if (!this.dragViewport.shouldPersistView()) return;
       const normalized = normalizePersistedViewData(viewData);
       if (!normalized) return;
       this.current.viewData = normalized;
       this.scheduleSave();
-    });
-    this.map.on('node_dragging', () => {
-      if (!this.map) return;
-      this.dragViewport.begin(this.map.view.getTransformData());
-    });
-    this.map.on('node_dragend', () => {
-      if (!this.map) return;
-      const target = this.dragViewport.finish(
-        this.map.view.getTransformData(),
-        this.settings.preserveViewportAfterDrag,
-      );
-      if (!target) return;
-      if (this.settings.preserveViewportAfterDrag) {
-        window.requestAnimationFrame(() => {
-          if (!this.map || this.destroyed) return;
-          this.map.view.setTransformData(target);
-          this.current.viewData = target;
-          this.scheduleSave();
-        });
-      } else {
-        this.current.viewData = target;
-        this.scheduleSave();
-      }
     });
     this.map.on('node_contextmenu', (event: MouseEvent, node: any) => {
       if (!this.commands) return;
@@ -341,7 +312,6 @@ export class YeMindEditor {
 
   private applySettings(settings: YeMindSettings): void {
     const firstApply = !this.settingsInitialized;
-    const previousSettings = this.settings;
     this.settings = settings;
     this.richTextToolbar?.setEnabled(settings.showRichTextToolbar);
     configureMindMapPlugins(settings);
@@ -363,7 +333,6 @@ export class YeMindEditor {
       mousewheelAction: settings.wheelMode === 'zoom' ? 'zoom' : 'move',
       disableMouseWheelZoom: settings.wheelMode === 'none',
       isShowCreateChildBtnIcon: settings.showQuickCreate,
-      enableFreeDrag: behavior.enableFreeDrag,
       autoMoveWhenMouseInEdgeOnDrag: behavior.autoMoveWhenMouseInEdgeOnDrag,
       isLimitMindMapInCanvas: behavior.isLimitMindMapInCanvas,
       minZoomRatio: behavior.minZoomRatio,
@@ -372,14 +341,6 @@ export class YeMindEditor {
     });
     this.map?.setThemeConfig(behavior.themeConfig);
 
-    if (!firstApply && previousSettings.dragMode !== 'structure' && settings.dragMode === 'structure' && this.map) {
-      const normalized = stripCustomPositions(this.map.getData(false) as MindMapTree);
-      if (normalized.changed) {
-        this.current.data = normalized.tree;
-        this.map.updateData(normalized.tree);
-        this.scheduleSave();
-      }
-    }
 
     if (firstApply) {
       this.settingsInitialized = true;
@@ -497,6 +458,14 @@ export class YeMindEditor {
     }, this.settings.autosaveDelayMs);
   }
 
+
+  private flushPendingSave(): void {
+    if (this.saveTimer === null || !this.map || this.destroyed) return;
+    window.clearTimeout(this.saveTimer);
+    this.saveTimer = null;
+    void this.persist();
+  }
+
   private async persist(): Promise<void> {
     if (!this.map || this.destroyed) return;
     try {
@@ -506,10 +475,10 @@ export class YeMindEditor {
         theme: this.map.getTheme(),
         viewData: normalizePersistedViewData(this.map.view.getTransformData()),
       });
-      this.saveStateEl.textContent = '已保存';
+      if (!this.destroyed) this.saveStateEl.textContent = '已保存';
     } catch (error) {
       console.error('[YeMind Zen] save failed', error);
-      this.saveStateEl.textContent = '保存失败';
+      if (!this.destroyed) this.saveStateEl.textContent = '保存失败';
       showMessage('YeMind Zen 保存失败', 5000, 'error');
     }
   }

@@ -13,9 +13,9 @@ describe('custom settings dialog', () => {
     expect(html).toContain('默认视图模式');
     expect(html).toContain('画布操作习惯');
     expect(html).toContain('节点入口控件');
-    expect(html).toContain('结构化拖拽');
+    expect(html).toContain('simple-mind-map 原生拖拽');
     expect(html).toContain('边缘自动平移');
-    expect(html).toContain('拖拽后保持视图位置');
+    expect(html).not.toContain('拖拽后保持视图位置');
     expect(html).toContain('二级节点纵向间距');
     expect(html).toContain('下级节点纵向间距');
     expect(html).toContain('恢复上次视图位置');
