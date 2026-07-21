@@ -100,6 +100,7 @@ import { NodeQuickActionsController } from "./nodeQuickActions";
 import { canvasModeIcon, lineStyleIcon } from "./projectControls";
 import { normalizeNodeNote } from "../content/nodeNoteState";
 import { CanvasRightDragController } from "./canvasRightDrag";
+import { scheduleFocusedNodeHighlight } from "./focusHighlight";
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -166,6 +167,7 @@ export class YeMindEditor {
   private projectStylePanel: ProjectStylePanel | null = null;
   private nodeQuickActions: NodeQuickActionsController | null = null;
   private canvasRightDrag: CanvasRightDragController | null = null;
+  private cancelFocusedNodeHighlight: (() => void) | null = null;
   private outlineRichText: OutlineRichTextController | null = null;
   private settingsInitialized = false;
   private viewMode: ViewMode = "map";
@@ -455,6 +457,11 @@ export class YeMindEditor {
     if (!uid || !this.commands) return;
     this.commands.goToNode(uid);
     this.activateOutlineUid(uid);
+    this.cancelFocusedNodeHighlight?.();
+    this.cancelFocusedNodeHighlight = scheduleFocusedNodeHighlight(
+      () => (this.map?.renderer as any) ?? null,
+      uid,
+    );
   }
 
   resize(): void {
@@ -493,6 +500,8 @@ export class YeMindEditor {
     this.nodeQuickActions = null;
     this.canvasRightDrag?.destroy();
     this.canvasRightDrag = null;
+    this.cancelFocusedNodeHighlight?.();
+    this.cancelFocusedNodeHighlight = null;
     this.rootEl?.removeEventListener("keydown", this.onRootKeydown, true);
     this.outlineEl?.removeEventListener("keydown", this.onOutlineKeydownBubble);
     this.rootEl?.removeEventListener("paste", this.onImagePaste);

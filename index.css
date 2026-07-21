@@ -834,6 +834,10 @@
 .ymz-comments-dialog .ymz-comment__meta{justify-content:flex-end}.ymz-comments-dialog .ymz-comment__time{flex:0 1 auto;margin-left:auto;text-align:right}.ymz-comments-dialog .ymz-comment__actions{margin-left:0;justify-content:flex-end}.ymz-comments-dialog__footer{justify-content:flex-end}
 /* v0.6.8 native global-search integration */
 .ymz-global-search-native-empty-hidden{display:none!important}
+/* v0.6.9 exact-match preview resilience */
+.search__layout.ymz-global-search-layout-active{min-height:0}
+.ymz-global-search-preview-host{min-width:0;min-height:120px;flex:1 1 50%}
+.search__preview.ymz-global-preview-active.fn__flex-1{min-width:0;min-height:120px}
 /*!
  * Quill Editor v2.0.3
  * https://quilljs.com

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.9 — 2026-07-21
+
+- Restored YeMind outline previews when SiYuan has no native search result.
+- Kept exact numeric and Chinese leaf matches selected after host DOM rebuilds.
+- Closed global search before Enter/double-click navigation and preserved right-split intent.
+- Added delayed target-node highlighting after ancestors expand and the editor renders.
+- Added permanent regressions for hidden preview hosts, exact leaf matches and search-dialog navigation.
+- Aligned package, manifest, runtime, diagnostics and tests at 0.6.9.
+
+
 ## 0.6.8 — 2026-07-21
 
 - Replaced the detached global-search card with native list integration inside SiYuan's `#searchList` result column.

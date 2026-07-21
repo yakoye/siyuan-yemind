@@ -16,6 +16,7 @@ export interface GlobalSearchOpenOptions {
 
 export interface GlobalSearchSurface {
   root: HTMLElement;
+  layout: HTMLElement;
   list: HTMLElement;
   preview: HTMLElement;
   resultCount: HTMLElement | null;
@@ -304,17 +305,27 @@ export function resolveGlobalSearchSurface(searchElement: HTMLInputElement): Glo
   const list = root.querySelector<HTMLElement>('#searchList, .search__list')
     ?? searchElement.closest<HTMLElement>('.search__layout')
     ?? root;
+  const layout = list.closest<HTMLElement>('.search__layout')
+    ?? root.querySelector<HTMLElement>('.search__layout')
+    ?? list.parentElement
+    ?? root;
   let preview = root.querySelector<HTMLElement>('#searchPreview, .search__preview');
   if (!preview && typeof document !== 'undefined') {
+    if (!layout.querySelector('.search__drag')) {
+      const drag = document.createElement('div');
+      drag.className = 'search__drag';
+      drag.dataset.yemindFallbackDrag = '';
+      layout.append(drag);
+    }
     preview = document.createElement('div');
-    preview.className = 'search__preview ymz-global-search-preview-host';
+    preview.className = 'fn__flex-1 search__preview ymz-global-search-preview-host';
     preview.dataset.yemindFallbackPreview = '';
-    if (list.parentElement) list.parentElement.append(preview);
-    else root.append(preview);
+    layout.append(preview);
   }
   if (!preview) return null;
   return {
     root,
+    layout,
     list,
     preview,
     resultCount: root.querySelector<HTMLElement>('#searchResult'),
@@ -344,6 +355,48 @@ function findMap(state: GlobalSearchState, mapId: string): YeMindMapDocument | u
 function clearPreview(surface: GlobalSearchSurface): void {
   surface.preview.querySelector<HTMLElement>('[data-yemind-global-preview]')?.remove();
   surface.preview.classList.remove('ymz-global-preview-active');
+  surface.layout.classList.remove('ymz-global-search-layout-active');
+  if (surface.preview.dataset.yemindOriginalHidden === '1') {
+    surface.preview.classList.add('fn__none');
+    delete surface.preview.dataset.yemindOriginalHidden;
+  }
+  if (surface.preview.dataset.yemindOriginalDisplay !== undefined) {
+    surface.preview.style.display = surface.preview.dataset.yemindOriginalDisplay;
+    delete surface.preview.dataset.yemindOriginalDisplay;
+  }
+}
+
+function activatePreviewHost(surface: GlobalSearchSurface): void {
+  if (surface.preview.classList.contains('fn__none')) {
+    surface.preview.dataset.yemindOriginalHidden = '1';
+    surface.preview.classList.remove('fn__none');
+  }
+  if (surface.preview.style.display === 'none') {
+    surface.preview.dataset.yemindOriginalDisplay = 'none';
+    surface.preview.style.display = '';
+  }
+  surface.preview.classList.add('fn__flex-1');
+  surface.layout.classList.add('ymz-global-search-layout-active');
+}
+
+export function closeGlobalSearchSurface(searchElement: HTMLInputElement): boolean {
+  const dialog = searchElement.closest<HTMLElement>('.b3-dialog__container, .b3-dialog');
+  const close = dialog?.querySelector<HTMLElement>(
+    '.b3-dialog__close, [data-type="close"], [aria-label="关闭"], [aria-label="Close"]',
+  );
+  if (close) {
+    close.click();
+    return true;
+  }
+  searchElement.blur();
+  const target: EventTarget = dialog ?? searchElement.ownerDocument ?? searchElement;
+  target.dispatchEvent(new KeyboardEvent('keydown', {
+    key: 'Escape',
+    code: 'Escape',
+    bubbles: true,
+    cancelable: true,
+  }));
+  return false;
 }
 
 function clearCustomSelection(state: GlobalSearchState, surface: GlobalSearchSurface): void {
@@ -353,6 +406,7 @@ function clearCustomSelection(state: GlobalSearchState, surface: GlobalSearchSur
 }
 
 function openMatch(state: GlobalSearchState, match: GlobalMapMatch, position?: 'right'): void {
+  closeGlobalSearchSurface(state.searchElement);
   if (position) state.onOpen(match.mapId, match.nodeUid, { position });
   else state.onOpen(match.mapId, match.nodeUid);
 }
@@ -363,10 +417,12 @@ function showPreview(state: GlobalSearchState, surface: GlobalSearchSurface, mat
   const existing = surface.preview.querySelector<HTMLElement>('[data-yemind-global-preview]');
   if (existing?.dataset.yemindPreviewMap === match.mapId
     && existing.dataset.yemindPreviewNodeTarget === match.nodeUid) {
+    activatePreviewHost(surface);
     surface.preview.classList.add('ymz-global-preview-active');
     return;
   }
   clearPreview(surface);
+  activatePreviewHost(surface);
   const wrapper = document.createElement('div');
   wrapper.innerHTML = renderGlobalSearchPreview(map, match);
   const preview = wrapper.firstElementChild as HTMLElement | null;
@@ -531,8 +587,16 @@ function ensureMounted(state: GlobalSearchState, selectInitial = false): void {
     updateNativeEmptyState(surface, true);
 
     const selected = selectedMatch(state);
+    const nativeResultExists = Boolean(surface.list.querySelector(
+      '.b3-list-item[data-type="search-item"][data-node-id]:not([data-yemind-global-result])',
+    ));
+    const focusedNative = Boolean(surface.list.querySelector(
+      '.b3-list-item.b3-list-item--focus[data-type="search-item"][data-node-id]:not([data-yemind-global-result])',
+    ));
     if (selected) selectMatch(state, surface, selected, false);
-    else if (selectInitial && state.matches[0]) selectMatch(state, surface, state.matches[0], false);
+    else if ((selectInitial || (!nativeResultExists && !focusedNative)) && state.matches[0]) {
+      selectMatch(state, surface, state.matches[0], false);
+    }
     state.initialized = true;
   } finally {
     state.mutating = false;

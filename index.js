@@ -4520,7 +4520,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.6.8";
+const PLUGIN_VERSION = "0.6.9";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -60161,6 +60161,54 @@ class CanvasRightDragController {
     this.options.root.classList.remove("is-canvas-right-dragging");
   }
 }
+function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
+  const maxAttempts = Math.max(1, options.attempts ?? 20);
+  const duration = Math.max(0, options.duration ?? 1500);
+  const scheduleFrame = options.scheduleFrame ?? ((callback) => window.requestAnimationFrame(callback));
+  const cancelFrame2 = options.cancelFrame ?? ((id) => window.cancelAnimationFrame(id));
+  const scheduleTimer = options.scheduleTimer ?? ((callback, delay) => window.setTimeout(callback, delay));
+  const cancelTimer = options.cancelTimer ?? ((id) => window.clearTimeout(id));
+  let cancelled = false;
+  let frameId = null;
+  let timerId = null;
+  let highlighted = null;
+  const stopHighlight = () => {
+    var _a;
+    (_a = highlighted == null ? void 0 : highlighted.closeHighlight) == null ? void 0 : _a.call(highlighted);
+    highlighted = null;
+    if (timerId !== null) {
+      cancelTimer(timerId);
+      timerId = null;
+    }
+  };
+  const attempt = (remaining) => {
+    frameId = scheduleFrame(() => {
+      var _a, _b, _c2;
+      frameId = null;
+      if (cancelled) return;
+      const node = ((_b = (_a = renderer()) == null ? void 0 : _a.findNodeByUid) == null ? void 0 : _b.call(_a, uid)) ?? null;
+      if (!node && remaining > 1) {
+        attempt(remaining - 1);
+        return;
+      }
+      if (!node) return;
+      highlighted = node;
+      (_c2 = node.highlight) == null ? void 0 : _c2.call(node);
+      timerId = scheduleTimer(() => {
+        timerId = null;
+        if (!cancelled) stopHighlight();
+      }, duration);
+    });
+  };
+  attempt(maxAttempts);
+  return () => {
+    if (cancelled) return;
+    cancelled = true;
+    if (frameId !== null) cancelFrame2(frameId);
+    frameId = null;
+    stopHighlight();
+  };
+}
 class YeMindEditor {
   constructor(options) {
     __publicField(this, "map", null);
@@ -60195,6 +60243,7 @@ class YeMindEditor {
     __publicField(this, "projectStylePanel", null);
     __publicField(this, "nodeQuickActions", null);
     __publicField(this, "canvasRightDrag", null);
+    __publicField(this, "cancelFocusedNodeHighlight", null);
     __publicField(this, "outlineRichText", null);
     __publicField(this, "settingsInitialized", false);
     __publicField(this, "viewMode", "map");
@@ -60475,15 +60524,24 @@ class YeMindEditor {
     this.mount();
   }
   focusNode(uid) {
+    var _a;
     if (!uid || !this.commands) return;
     this.commands.goToNode(uid);
     this.activateOutlineUid(uid);
+    (_a = this.cancelFocusedNodeHighlight) == null ? void 0 : _a.call(this);
+    this.cancelFocusedNodeHighlight = scheduleFocusedNodeHighlight(
+      () => {
+        var _a2;
+        return ((_a2 = this.map) == null ? void 0 : _a2.renderer) ?? null;
+      },
+      uid
+    );
   }
   resize() {
     this.scheduleSafeResize();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t;
     this.options.diagnostics.record(
       "editor",
       "destroy-started",
@@ -60516,12 +60574,14 @@ class YeMindEditor {
     this.nodeQuickActions = null;
     (_l = this.canvasRightDrag) == null ? void 0 : _l.destroy();
     this.canvasRightDrag = null;
-    (_m = this.rootEl) == null ? void 0 : _m.removeEventListener("keydown", this.onRootKeydown, true);
-    (_n = this.outlineEl) == null ? void 0 : _n.removeEventListener("keydown", this.onOutlineKeydownBubble);
-    (_o = this.rootEl) == null ? void 0 : _o.removeEventListener("paste", this.onImagePaste);
-    (_p = this.canvasEl) == null ? void 0 : _p.removeEventListener("dragover", this.onImageDragOver);
-    (_q = this.canvasEl) == null ? void 0 : _q.removeEventListener("drop", this.onImageDrop);
-    (_r = this.outlineEl) == null ? void 0 : _r.removeEventListener(
+    (_m = this.cancelFocusedNodeHighlight) == null ? void 0 : _m.call(this);
+    this.cancelFocusedNodeHighlight = null;
+    (_n = this.rootEl) == null ? void 0 : _n.removeEventListener("keydown", this.onRootKeydown, true);
+    (_o = this.outlineEl) == null ? void 0 : _o.removeEventListener("keydown", this.onOutlineKeydownBubble);
+    (_p = this.rootEl) == null ? void 0 : _p.removeEventListener("paste", this.onImagePaste);
+    (_q = this.canvasEl) == null ? void 0 : _q.removeEventListener("dragover", this.onImageDragOver);
+    (_r = this.canvasEl) == null ? void 0 : _r.removeEventListener("drop", this.onImageDrop);
+    (_s = this.outlineEl) == null ? void 0 : _s.removeEventListener(
       "pointerdown",
       this.onOutlinePointerDown
     );
@@ -60536,7 +60596,7 @@ class YeMindEditor {
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_s = this.map) == null ? void 0 : _s.destroy();
+    (_t = this.map) == null ? void 0 : _t.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record(
@@ -62756,17 +62816,24 @@ function resolveGlobalSearchSurface(searchElement) {
   const root2 = findSearchRoot(searchElement);
   if (!root2) return null;
   const list = root2.querySelector("#searchList, .search__list") ?? searchElement.closest(".search__layout") ?? root2;
+  const layout2 = list.closest(".search__layout") ?? root2.querySelector(".search__layout") ?? list.parentElement ?? root2;
   let preview = root2.querySelector("#searchPreview, .search__preview");
   if (!preview && typeof document !== "undefined") {
+    if (!layout2.querySelector(".search__drag")) {
+      const drag = document.createElement("div");
+      drag.className = "search__drag";
+      drag.dataset.yemindFallbackDrag = "";
+      layout2.append(drag);
+    }
     preview = document.createElement("div");
-    preview.className = "search__preview ymz-global-search-preview-host";
+    preview.className = "fn__flex-1 search__preview ymz-global-search-preview-host";
     preview.dataset.yemindFallbackPreview = "";
-    if (list.parentElement) list.parentElement.append(preview);
-    else root2.append(preview);
+    layout2.append(preview);
   }
   if (!preview) return null;
   return {
     root: root2,
+    layout: layout2,
     list,
     preview,
     resultCount: root2.querySelector("#searchResult")
@@ -62787,6 +62854,46 @@ function clearPreview(surface) {
   var _a;
   (_a = surface.preview.querySelector("[data-yemind-global-preview]")) == null ? void 0 : _a.remove();
   surface.preview.classList.remove("ymz-global-preview-active");
+  surface.layout.classList.remove("ymz-global-search-layout-active");
+  if (surface.preview.dataset.yemindOriginalHidden === "1") {
+    surface.preview.classList.add("fn__none");
+    delete surface.preview.dataset.yemindOriginalHidden;
+  }
+  if (surface.preview.dataset.yemindOriginalDisplay !== void 0) {
+    surface.preview.style.display = surface.preview.dataset.yemindOriginalDisplay;
+    delete surface.preview.dataset.yemindOriginalDisplay;
+  }
+}
+function activatePreviewHost(surface) {
+  if (surface.preview.classList.contains("fn__none")) {
+    surface.preview.dataset.yemindOriginalHidden = "1";
+    surface.preview.classList.remove("fn__none");
+  }
+  if (surface.preview.style.display === "none") {
+    surface.preview.dataset.yemindOriginalDisplay = "none";
+    surface.preview.style.display = "";
+  }
+  surface.preview.classList.add("fn__flex-1");
+  surface.layout.classList.add("ymz-global-search-layout-active");
+}
+function closeGlobalSearchSurface(searchElement) {
+  const dialog = searchElement.closest(".b3-dialog__container, .b3-dialog");
+  const close2 = dialog == null ? void 0 : dialog.querySelector(
+    '.b3-dialog__close, [data-type="close"], [aria-label="关闭"], [aria-label="Close"]'
+  );
+  if (close2) {
+    close2.click();
+    return true;
+  }
+  searchElement.blur();
+  const target = dialog ?? searchElement.ownerDocument ?? searchElement;
+  target.dispatchEvent(new KeyboardEvent("keydown", {
+    key: "Escape",
+    code: "Escape",
+    bubbles: true,
+    cancelable: true
+  }));
+  return false;
 }
 function clearCustomSelection(state, surface) {
   surface.list.querySelectorAll("[data-yemind-global-result].b3-list-item--focus").forEach((item) => item.classList.remove("b3-list-item--focus"));
@@ -62794,6 +62901,7 @@ function clearCustomSelection(state, surface) {
   clearPreview(surface);
 }
 function openMatch(state, match2, position2) {
+  closeGlobalSearchSurface(state.searchElement);
   if (position2) state.onOpen(match2.mapId, match2.nodeUid, { position: position2 });
   else state.onOpen(match2.mapId, match2.nodeUid);
 }
@@ -62803,10 +62911,12 @@ function showPreview(state, surface, match2) {
   if (!map2) return;
   const existing = surface.preview.querySelector("[data-yemind-global-preview]");
   if ((existing == null ? void 0 : existing.dataset.yemindPreviewMap) === match2.mapId && existing.dataset.yemindPreviewNodeTarget === match2.nodeUid) {
+    activatePreviewHost(surface);
     surface.preview.classList.add("ymz-global-preview-active");
     return;
   }
   clearPreview(surface);
+  activatePreviewHost(surface);
   const wrapper = document.createElement("div");
   wrapper.innerHTML = renderGlobalSearchPreview(map2, match2);
   const preview = wrapper.firstElementChild;
@@ -62966,8 +63076,16 @@ function ensureMounted(state, selectInitial = false) {
     updateResultCount(surface, state.matches.length);
     updateNativeEmptyState(surface, true);
     const selected = selectedMatch(state);
+    const nativeResultExists = Boolean(surface.list.querySelector(
+      '.b3-list-item[data-type="search-item"][data-node-id]:not([data-yemind-global-result])'
+    ));
+    const focusedNative = Boolean(surface.list.querySelector(
+      '.b3-list-item.b3-list-item--focus[data-type="search-item"][data-node-id]:not([data-yemind-global-result])'
+    ));
     if (selected) selectMatch(state, surface, selected, false);
-    else if (selectInitial && state.matches[0]) selectMatch(state, surface, state.matches[0], false);
+    else if ((selectInitial || !nativeResultExists && !focusedNative) && state.matches[0]) {
+      selectMatch(state, surface, state.matches[0], false);
+    }
     state.initialized = true;
   } finally {
     state.mutating = false;

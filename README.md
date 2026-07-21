@@ -4,7 +4,14 @@ YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-
 
 - Plugin folder and ID: `siyuan-yemind-zen`
 - Display name: `YeMind Zen`
-- Version: `0.6.8`
+- Version: `0.6.9`
+
+## v0.6.9: exact-match preview and search navigation stability
+
+- Keeps the outline preview visible when SiYuan has zero native matches.
+- Exact numeric and Chinese leaf matches retain ancestor context.
+- Enter/double-click closes global search, opens the map, focuses and briefly highlights the target node.
+- Alt+Enter and Alt+click preserve right-side opening.
 
 ## v0.6.8: native SiYuan global-search integration
 
