@@ -34,6 +34,56 @@ class CheckpointService {
     return `恢复前保护 ${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
   }
 }
+function buildPluginStoragePath(pluginId, storageName) {
+  const safePluginId = pluginId.replaceAll("/", "");
+  const safeStorageName = storageName.replace(/^\/+|\/+$/g, "").replaceAll("..", "");
+  return `/data/storage/petal/${safePluginId}/${safeStorageName}`;
+}
+async function loadPluginStorageData(fetcher, pluginId, storageName) {
+  try {
+    const response = await fetcher("/api/file/getFile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: buildPluginStoragePath(pluginId, storageName) })
+    });
+    if (!response.ok) return null;
+    const text2 = await response.text();
+    if (!text2) return null;
+    try {
+      return JSON.parse(text2);
+    } catch {
+      return text2;
+    }
+  } catch {
+    return null;
+  }
+}
+function hasStoredData(value) {
+  if (value === null || typeof value === "undefined" || value === "") return false;
+  if (typeof value === "object" && !Array.isArray(value)) {
+    const record = value;
+    if (typeof record.code === "number" && record.code !== 0 && "msg" in record) return false;
+  }
+  return true;
+}
+async function migrateLegacyPluginData(storage, storageNames) {
+  const report = { migrated: [], preserved: [], missing: [] };
+  for (const name of storageNames) {
+    const current = await storage.loadCurrent(name);
+    if (hasStoredData(current)) {
+      report.preserved.push(name);
+      continue;
+    }
+    const legacy = await storage.loadLegacy(name);
+    if (!hasStoredData(legacy)) {
+      report.missing.push(name);
+      continue;
+    }
+    await storage.saveCurrent(name, legacy);
+    report.migrated.push(name);
+  }
+  return report;
+}
 var commonjsGlobal = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : {};
 function getDefaultExportFromCjs(x2) {
   return x2 && x2.__esModule && Object.prototype.hasOwnProperty.call(x2, "default") ? x2["default"] : x2;
@@ -3971,31 +4021,33 @@ function openDiagnosticsDialog(service) {
   });
 }
 const PRODUCT_NAME = "YeMind";
-const LEGACY_PLUGIN_ID = "siyuan-yemind-zen";
+const PLUGIN_ID = "siyuan-yemind";
+const LEGACY_PLUGIN_IDS = ["siyuan-yemind-zen"];
 const MAP_STORAGE_NAME = "maps.json";
 const SETTINGS_STORAGE_NAME = "settings.json";
 const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.8.0";
+const PLUGIN_VERSION = "0.8.1";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
-const ROOT_ICON_URL = `/plugins/${LEGACY_PLUGIN_ID}/icon.png`;
+const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-21T14:07:00+08:00",
-  buildId: "yemind-v0.8.0-20260721",
+  buildTime: "2026-07-21T15:16:33+08:00",
+  buildId: "yemind-v0.8.1-20260721",
   productName: PRODUCT_NAME,
   tagline: "思源笔记中的思维导图、分屏大纲与知识整理插件。",
   officialReference: "KMind Zen 0.34.0",
-  releaseSummary: "启用全新的 YeMind 品牌图标，并将公开产品名、工程名、源码入口和发布产物统一重命名为 YeMind。",
+  releaseSummary: "将思源正式插件 ID 与安装目录统一为 siyuan-yemind，并保留旧协议链接兼容。",
   highlights: [
-    "使用用户提供的新导图图标，生成 32、64、128 和 512 像素透明资源，主色精确统一为 #176B50。",
-    "公开名称、设置、搜索、诊断、Dock、标签页和当前文档统一使用 YeMind 品牌。",
-    "npm 工程、源码插件类和发布压缩包统一改为 siyuan-yemind / YeMindPlugin；技术插件 ID 保留以兼容旧数据。"
+    "plugin.json.name、运行时资源路径、诊断身份和发布说明统一为 siyuan-yemind。",
+    "安装目录固定为工作空间/data/plugins/siyuan-yemind，可直接解压覆盖升级。",
+    "首次启动会在新存储为空时，从 data/storage/petal/siyuan-yemind-zen 只复制旧导图、设置和检查点到新 ID 存储，旧数据不删除。",
+    "新复制的导图链接使用 siyuan-yemind；历史 siyuan-yemind-zen 链接仍可解析。"
   ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -62840,18 +62892,21 @@ class OpenMapTabRegistry {
     return handle;
   }
 }
-function parseYeMindMapUrl(value, pluginName) {
+function parseYeMindMapUrl(value, pluginName, compatiblePluginNames = []) {
   var _a;
   try {
     const url = new URL(value);
     if (url.protocol !== "siyuan:" || url.hostname !== "plugins") return null;
     const targetPlugin = url.pathname.replace(/^\/+|\/+$/g, "");
-    if (targetPlugin !== pluginName) return null;
+    if (![pluginName, ...compatiblePluginNames].includes(targetPlugin)) return null;
     const mapId = (_a = url.searchParams.get("map")) == null ? void 0 : _a.trim();
     return mapId || null;
   } catch {
     return null;
   }
+}
+function createYeMindMapUrl(mapId, pluginName) {
+  return `siyuan://plugins/${pluginName}?map=${encodeURIComponent(mapId)}`;
 }
 async function runSafeOperation(operation, onError) {
   try {
@@ -63664,7 +63719,7 @@ class YeMindPlugin extends siyuan.Plugin {
     });
     __publicField(this, "onOpenPluginUrl", (event) => {
       var _a;
-      const mapId = parseYeMindMapUrl(((_a = event.detail) == null ? void 0 : _a.url) ?? "", this.name);
+      const mapId = parseYeMindMapUrl(((_a = event.detail) == null ? void 0 : _a.url) ?? "", this.name, LEGACY_PLUGIN_IDS);
       if (mapId) void this.openMap(mapId);
     });
   }
@@ -63862,7 +63917,7 @@ class YeMindPlugin extends siyuan.Plugin {
   }
   async copyMapLink(mapId) {
     await this.ready;
-    const link = `siyuan://plugins/${this.name}?map=${encodeURIComponent(mapId)}`;
+    const link = createYeMindMapUrl(mapId, this.name);
     try {
       await navigator.clipboard.writeText(link);
       siyuan.showMessage("导图链接已复制");
@@ -63911,8 +63966,20 @@ class YeMindPlugin extends siyuan.Plugin {
   async bootstrap() {
     this.diagnostics.record("plugin", "bootstrap-started", void 0, void 0, "info", true);
     try {
+      let migration = { migrated: [], preserved: [], missing: [] };
+      try {
+        const legacyPluginId = LEGACY_PLUGIN_IDS[0];
+        migration = await migrateLegacyPluginData({
+          loadCurrent: (name) => this.loadData(name),
+          saveCurrent: (name, value) => this.saveData(name, value),
+          loadLegacy: (name) => loadPluginStorageData(globalThis.fetch.bind(globalThis), legacyPluginId, name)
+        }, [MAP_STORAGE_NAME, SETTINGS_STORAGE_NAME, CHECKPOINT_STORAGE_NAME]);
+        this.diagnostics.record("plugin", "identity-storage-migration", void 0, { ...migration }, migration.migrated.length > 0 ? "warning" : "info", true);
+      } catch (migrationError) {
+        this.diagnostics.recordError("plugin", "identity-storage-migration-failed", migrationError, void 0, true);
+      }
       await Promise.all([this.repository.load(), this.settingsStore.load(), this.checkpointRepository.load()]);
-      this.diagnostics.record("plugin", "bootstrap-completed", void 0, { mapCount: this.repository.list().length, checkpointCount: this.checkpointRepository.listAll().length }, "info", true);
+      this.diagnostics.record("plugin", "bootstrap-completed", void 0, { mapCount: this.repository.list().length, checkpointCount: this.checkpointRepository.listAll().length, migration }, "info", true);
     } catch (error) {
       this.diagnostics.recordError("plugin", "bootstrap-failed", error, void 0, true);
       console.error("[YeMind] failed to load storage", error);

@@ -1,3 +1,13 @@
+## v0.8.1 已完成
+
+- [x] 当前思源插件 ID：`siyuan-yemind`
+- [x] 当前安装目录：`data/plugins/siyuan-yemind/`
+- [x] 当前图标资源 URL 使用新 ID
+- [x] 新导图协议链接使用新 ID
+- [x] 历史 `siyuan-yemind-zen` 协议链接兼容
+- [x] 旧 petal 存储的 maps/settings/checkpoints 非破坏性迁移
+- [x] 直接覆盖安装包与身份门禁
+
 ## v0.8.0 已完成
 
 - [x] YeMind 公开品牌统一

@@ -1,5 +1,6 @@
 import { Menu, Plugin, openTab, showMessage } from 'siyuan';
 import { CheckpointService } from '../checkpoints/CheckpointService';
+import { loadPluginStorageData, migrateLegacyPluginData } from '../compat/pluginIdentityMigration';
 import { DiagnosticsService } from '../diagnostics/DiagnosticsService';
 import { runIsolatedLifecycleProbe } from '../diagnostics/isolatedLifecycleProbe';
 import { CheckpointRepository } from '../model/CheckpointRepository';
@@ -12,13 +13,13 @@ import { registerSettings } from '../settings/settings';
 import { openYeMindSettingsDialog } from '../settings/settingsDialog';
 import { SettingsStore } from '../settings/SettingsStore';
 import { RELEASE_INFO } from '../releaseInfo';
-import { CHECKPOINT_STORAGE_NAME, DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX, DIAGNOSTIC_LIFECYCLE_MAP_PREFIX, DIAGNOSTIC_PROBE_STORAGE_NAME, ICON_ID, MAP_STORAGE_NAME, PLUGIN_VERSION, SETTINGS_STORAGE_NAME, TAB_TYPE } from './constants';
+import { CHECKPOINT_STORAGE_NAME, DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX, DIAGNOSTIC_LIFECYCLE_MAP_PREFIX, DIAGNOSTIC_PROBE_STORAGE_NAME, ICON_ID, LEGACY_PLUGIN_IDS, MAP_STORAGE_NAME, PLUGIN_VERSION, SETTINGS_STORAGE_NAME, TAB_TYPE } from './constants';
 import { YEMIND_ICON_DATA_URL } from './yemindIcon';
 import { registerYeMindDock } from './dock';
 import type { YeMindPluginHost } from './host';
 import { registerYeMindTab } from './tabs';
 import { OpenMapTabRegistry } from './OpenMapTabRegistry';
-import { parseYeMindMapUrl } from './pluginUrl';
+import { createYeMindMapUrl, parseYeMindMapUrl } from './pluginUrl';
 import { runSafeOperation } from './operationSafety';
 import { initializePluginStartup } from './pluginStartup';
 import { destroyGlobalSearchIntegrations, mountGlobalSearchResults } from './globalSearch';
@@ -233,7 +234,7 @@ export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
 
   async copyMapLink(mapId: string): Promise<void> {
     await this.ready;
-    const link = `siyuan://plugins/${this.name}?map=${encodeURIComponent(mapId)}`;
+    const link = createYeMindMapUrl(mapId, this.name);
     try {
       await navigator.clipboard.writeText(link);
       showMessage('导图链接已复制');
@@ -294,15 +295,27 @@ export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
   }
 
   private readonly onOpenPluginUrl = (event: CustomEvent<{ url: string }>): void => {
-    const mapId = parseYeMindMapUrl(event.detail?.url ?? '', this.name);
+    const mapId = parseYeMindMapUrl(event.detail?.url ?? '', this.name, LEGACY_PLUGIN_IDS);
     if (mapId) void this.openMap(mapId);
   };
 
   private async bootstrap(): Promise<void> {
     this.diagnostics.record('plugin', 'bootstrap-started', undefined, undefined, 'info', true);
     try {
+      let migration = { migrated: [] as string[], preserved: [] as string[], missing: [] as string[] };
+      try {
+        const legacyPluginId = LEGACY_PLUGIN_IDS[0];
+        migration = await migrateLegacyPluginData({
+          loadCurrent: (name) => this.loadData(name),
+          saveCurrent: (name, value) => this.saveData(name, value),
+          loadLegacy: (name) => loadPluginStorageData(globalThis.fetch.bind(globalThis), legacyPluginId, name),
+        }, [MAP_STORAGE_NAME, SETTINGS_STORAGE_NAME, CHECKPOINT_STORAGE_NAME]);
+        this.diagnostics.record('plugin', 'identity-storage-migration', undefined, { ...migration }, migration.migrated.length > 0 ? 'warning' : 'info', true);
+      } catch (migrationError) {
+        this.diagnostics.recordError('plugin', 'identity-storage-migration-failed', migrationError, undefined, true);
+      }
       await Promise.all([this.repository.load(), this.settingsStore.load(), this.checkpointRepository.load()]);
-      this.diagnostics.record('plugin', 'bootstrap-completed', undefined, { mapCount: this.repository.list().length, checkpointCount: this.checkpointRepository.listAll().length }, 'info', true);
+      this.diagnostics.record('plugin', 'bootstrap-completed', undefined, { mapCount: this.repository.list().length, checkpointCount: this.checkpointRepository.listAll().length, migration }, 'info', true);
     } catch (error) {
       this.diagnostics.recordError('plugin', 'bootstrap-failed', error, undefined, true);
       console.error('[YeMind] failed to load storage', error);

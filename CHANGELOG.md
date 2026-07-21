@@ -1,3 +1,12 @@
+## 0.8.1 — 2026-07-21
+
+- Changed the current SiYuan manifest ID and installed folder contract to `siyuan-yemind`.
+- Switched runtime icon/resource URLs and diagnostics identity to the current ID.
+- New plugin links use `siyuan-yemind`; historical `siyuan-yemind-zen` links remain readable.
+- Added direct-overwrite installation guidance for `data/plugins/siyuan-yemind/`.
+- Added non-destructive first-start migration from `data/storage/petal/siyuan-yemind-zen/` when the new identity has no corresponding maps, settings or checkpoints.
+- Added release gates that prevent the old ID from returning as the active manifest or resource path.
+
 ## 0.8.0 — 2026-07-21
 
 - Rebranded the public product from YeMind to YeMind across the plugin manifest, settings, search, diagnostics, Dock, tabs and current documentation.

@@ -1,3 +1,14 @@
+## v0.8.1：正式插件 ID 与安装目录统一（已完成）
+
+- [x] `plugin.json.name` 改为 `siyuan-yemind`。
+- [x] 当前资源路径、关于页和诊断身份使用新 ID。
+- [x] 新协议链接使用新 ID，旧协议链接保持兼容。
+- [x] 安装文档统一为 `data/plugins/siyuan-yemind/`。
+- [x] 新 ID 存储为空时，从旧 `data/storage/petal/siyuan-yemind-zen/` 只复制三类正式数据。
+- [x] 新存储已有数据时绝不覆盖，旧存储不删除。
+- [x] 平铺 ZIP 支持关闭思源后直接解压覆盖。
+- [x] 增加当前 ID、旧链接兼容和发布包结构测试。
+
 ## v0.8.0：YeMind 品牌与工程重命名（已完成）
 
 - 产品显示名、当前界面、诊断和文档统一为 YeMind。

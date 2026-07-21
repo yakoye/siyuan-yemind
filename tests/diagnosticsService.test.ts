@@ -20,7 +20,7 @@ function createService(lifecycleProbe = vi.fn(async () => ({ create: true, updat
   const checkpoints = new CheckpointRepository(storage(), { id: () => `cp-${++checkpointIndex}` });
   const settings = new SettingsStore(storage());
   const service = new DiagnosticsService({
-    pluginId: 'siyuan-yemind-zen', pluginVersion: '0.5.10', maps, checkpoints, settings,
+    pluginId: 'siyuan-yemind', pluginVersion: '0.5.10', maps, checkpoints, settings,
     storageProbe: { run: async () => ({ write: true, read: true, remove: true }) },
     lifecycleProbe: { run: lifecycleProbe },
   });

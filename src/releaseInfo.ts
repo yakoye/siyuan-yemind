@@ -3,17 +3,18 @@ import { PLUGIN_VERSION, PRODUCT_NAME, PROJECT_PACKAGE_NAME } from './plugin/con
 export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: '2026-07-21T14:07:00+08:00',
-  buildId: 'yemind-v0.8.0-20260721',
+  buildTime: '2026-07-21T15:16:33+08:00',
+  buildId: 'yemind-v0.8.1-20260721',
   productName: PRODUCT_NAME,
   projectName: PROJECT_PACKAGE_NAME,
   tagline: '思源笔记中的思维导图、分屏大纲与知识整理插件。',
   officialReference: 'KMind Zen 0.34.0',
-  releaseSummary: '启用全新的 YeMind 品牌图标，并将公开产品名、工程名、源码入口和发布产物统一重命名为 YeMind。',
+  releaseSummary: '将思源正式插件 ID 与安装目录统一为 siyuan-yemind，并保留旧协议链接兼容。',
   highlights: [
-    '使用用户提供的新导图图标，生成 32、64、128 和 512 像素透明资源，主色精确统一为 #176B50。',
-    '公开名称、设置、搜索、诊断、Dock、标签页和当前文档统一使用 YeMind 品牌。',
-    'npm 工程、源码插件类和发布压缩包统一改为 siyuan-yemind / YeMindPlugin；技术插件 ID 保留以兼容旧数据。',
+    'plugin.json.name、运行时资源路径、诊断身份和发布说明统一为 siyuan-yemind。',
+    '安装目录固定为工作空间/data/plugins/siyuan-yemind，可直接解压覆盖升级。',
+    '首次启动会在新存储为空时，从 data/storage/petal/siyuan-yemind-zen 只复制旧导图、设置和检查点到新 ID 存储，旧数据不删除。',
+    '新复制的导图链接使用 siyuan-yemind；历史 siyuan-yemind-zen 链接仍可解析。',
   ],
 } as const;
 

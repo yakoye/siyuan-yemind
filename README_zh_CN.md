@@ -3,9 +3,19 @@
 YeMind 是一个基于 `simple-mind-map` 构建的思源笔记思维导图插件。
 
 - 工程包名：`siyuan-yemind`
-- 思源永久插件 ID / 安装目录：`siyuan-yemind-zen`（为兼容旧数据而保留）
+- 思源插件 ID / 安装目录：`siyuan-yemind`
+- 历史链接兼容 ID：`siyuan-yemind-zen`
 - 思源显示名：`YeMind`
-- 当前版本：`0.8.0`
+- 当前版本：`0.8.1`
+
+## v0.8.1：正式插件 ID 与安装目录统一
+
+- `plugin.json.name`、当前运行资源路径和诊断身份统一为 `siyuan-yemind`。
+- 安装目录固定为 `工作空间/data/plugins/siyuan-yemind/`。
+- 新复制的导图链接使用 `siyuan://plugins/siyuan-yemind?...`。
+- 历史 `siyuan-yemind-zen` 协议链接继续可打开，旧 ID 不再作为当前运行目录。
+- 发布 ZIP 内部为插件文件根目录，可关闭思源后直接解压覆盖现有 `siyuan-yemind` 文件夹。
+- 插件数据由思源保存在 `data/storage/petal/<插件ID>/`。首次启动时，若新 ID 下没有对应数据，会从 `siyuan-yemind-zen` 只复制 `maps.json`、`settings.json` 和 `checkpoints.json` 到 `siyuan-yemind`；旧数据不会删除，新数据不会被覆盖。
 
 ## v0.8.0：YeMind 品牌与工程重命名
 
@@ -252,10 +262,10 @@ YeMind 是一个基于 `simple-mind-map` 构建的思源笔记思维导图插件
 
 ## 安装
 
-把整个 `siyuan-yemind-zen` 文件夹放入：
+把插件文件放入或解压覆盖：
 
 ```text
-工作空间/data/plugins/siyuan-yemind-zen/
+工作空间/data/plugins/siyuan-yemind/
 ```
 
 重启思源后启用 **YeMind**。

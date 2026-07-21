@@ -5,9 +5,9 @@ import { describe, expect, it } from 'vitest';
 const plugin = JSON.parse(readFileSync(resolve(process.cwd(), 'plugin.json'), 'utf8'));
 
 describe('plugin identity', () => {
-  it('uses the permanent SiYuan package id and YeMind display name', () => {
-    expect(plugin.name).toBe('siyuan-yemind-zen');
+  it('uses siyuan-yemind as the current SiYuan id and YeMind as the display name', () => {
+    expect(plugin.name).toBe('siyuan-yemind');
     expect(plugin.displayName.zh_CN).toBe('YeMind');
-    expect(plugin.version).toBe('0.8.0');
+    expect(plugin.version).toBe('0.8.1');
   });
 });

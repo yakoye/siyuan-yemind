@@ -3,9 +3,10 @@
 ## 项目标识
 
 - 工程包名：`siyuan-yemind`
-- 思源安装目录与永久插件 ID：`siyuan-yemind-zen`（升级兼容边界）
+- 当前思源插件 ID 与安装目录：`siyuan-yemind`
+- 历史兼容 ID：`siyuan-yemind-zen`（仅解析旧协议链接）
 - 思源显示名：`YeMind`
-- 当前版本：`0.8.0`
+- 当前版本：`0.8.1`
 
 ## 核心分层
 

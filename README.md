@@ -3,9 +3,19 @@
 YeMind is a local-first mind-map plugin for SiYuan, powered by `simple-mind-map`.
 
 - Engineering package: `siyuan-yemind`
-- Permanent SiYuan plugin ID / installed folder: `siyuan-yemind-zen` (retained for data-compatible upgrades)
+- Current SiYuan plugin ID / installed folder: `siyuan-yemind`
+- Historical protocol-link alias: `siyuan-yemind-zen`
 - Display name: `YeMind`
-- Version: `0.8.0`
+- Version: `0.8.1`
+
+## v0.8.1: current plugin ID and installed folder
+
+- `plugin.json.name`, runtime resource URLs and diagnostics identity now use `siyuan-yemind`.
+- Install into `workspace/data/plugins/siyuan-yemind/`.
+- Newly copied links use `siyuan://plugins/siyuan-yemind?...`.
+- Historical `siyuan-yemind-zen` protocol links remain readable as a compatibility alias.
+- The archive is flat and can be extracted directly over the existing `siyuan-yemind` folder while SiYuan is closed.
+- SiYuan stores plugin data under `data/storage/petal/<plugin-id>/`. On first start, missing current data is copied from the historical `siyuan-yemind-zen` storage into `siyuan-yemind`; legacy data is retained and existing current data is never overwritten.
 
 ## v0.8.0: YeMind brand and project identity
 
