@@ -23,6 +23,7 @@ export interface YeMindCommands {
   redo(): void;
   fit(): void;
   resetZoom(): void;
+  resetLayout(): void;
   zoomIn(): void;
   zoomOut(): void;
   edit(): void;
@@ -80,6 +81,7 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     redo: () => mindMap.execCommand('FORWARD'),
     fit: () => (mindMap.view as any).fit(),
     resetZoom: () => mindMap.view.reset(),
+    resetLayout: () => mindMap.execCommand('RESET_LAYOUT'),
     zoomIn: () => mindMap.view.enlarge(undefined, undefined, false),
     zoomOut: () => mindMap.view.narrow(undefined, undefined, false),
     edit: () => mindMap.renderer.startTextEdit(),

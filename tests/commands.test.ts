@@ -33,6 +33,7 @@ describe('createCommandAdapter', () => {
     commands.removeOnlyCurrent();
     commands.undo();
     commands.redo();
+    commands.resetLayout();
 
     expect(map.renderer.toggleActiveExpand).toHaveBeenCalledOnce();
     expect(map.execCommand.mock.calls).toEqual([
@@ -45,6 +46,7 @@ describe('createCommandAdapter', () => {
       ['REMOVE_CURRENT_NODE'],
       ['BACK'],
       ['FORWARD'],
+      ['RESET_LAYOUT'],
     ]);
   });
 

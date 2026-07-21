@@ -3,6 +3,7 @@ import type { MindMapTree } from '../model/types';
 import { registerMindMapPlugins } from './registerPlugins';
 import type { YeMindSettings } from '../settings/SettingsStore';
 import { createNodePrefixContent, createNodePostfixContent, YEMIND_ICON_LIST } from './nodeDecorations';
+import { buildDragAndLayoutOptions, normalizePersistedViewData } from './dragBehavior';
 
 export interface CreateMindMapOptions {
   el: HTMLElement;
@@ -17,14 +18,25 @@ export interface CreateMindMapOptions {
 export function createMindMap(options: CreateMindMapOptions): MindMap {
   registerMindMapPlugins(options.settings);
   const settings = options.settings;
+  const behavior = settings ? buildDragAndLayoutOptions(settings) : null;
+  const viewData = settings?.restoreSavedView === false
+    ? undefined
+    : normalizePersistedViewData(options.viewData);
+
   return new MindMap({
     el: options.el,
     data: options.data,
-    viewData: options.viewData,
+    viewData,
     theme: options.theme ?? 'default',
+    themeConfig: behavior?.themeConfig,
     layout: options.layout ?? 'logicalStructure',
     readonly: Boolean(options.readonly),
-    enableFreeDrag: true,
+    enableFreeDrag: behavior?.enableFreeDrag ?? false,
+    autoMoveWhenMouseInEdgeOnDrag: behavior?.autoMoveWhenMouseInEdgeOnDrag ?? false,
+    isLimitMindMapInCanvas: behavior?.isLimitMindMapInCanvas ?? false,
+    minZoomRatio: behavior?.minZoomRatio ?? 20,
+    maxZoomRatio: behavior?.maxZoomRatio ?? 400,
+    fitPadding: behavior?.fitPadding ?? 50,
     enableCtrlKeyNodeSelection: true,
     useLeftKeySelectionRightKeyDrag: settings?.canvasMode === 'select',
     mousewheelAction: settings?.wheelMode === 'zoom' ? 'zoom' : 'move',
@@ -34,7 +46,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     isEndNodeTextEditOnClickOuter: true,
     enableDragModifyNodeWidth: true,
     isShowCreateChildBtnIcon: settings?.showQuickCreate ?? true,
-    fit: settings?.autoFitOnOpen ?? true,
+    fit: Boolean(settings?.autoFitOnOpen ?? true) && !viewData,
     addHistoryOnInit: true,
     defaultInsertSecondLevelNodeText: '新节点',
     defaultInsertBelowSecondLevelNodeText: '新节点',

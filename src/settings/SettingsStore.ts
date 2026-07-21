@@ -4,6 +4,7 @@ export type WheelMode = 'zoom' | 'pan' | 'none';
 export type ExternalLinkMode = 'new-window' | 'current-window';
 export type ClozeMode = 'hidden' | 'blur';
 export type ViewMode = 'map' | 'split' | 'outline';
+export type DragMode = 'structure' | 'free';
 export type ShortcutCommand = 'search' | 'toggleZen' | 'toggleReadonly' | 'undo' | 'redo' | 'fit' | 'reset' | 'addParent' | 'comments' | 'summary' | 'relation';
 export type ShortcutMap = Record<ShortcutCommand, string>;
 
@@ -44,6 +45,18 @@ export interface YeMindSettings {
   defaultReadonlyMode: boolean;
   showNodeMenuButton: boolean;
   defaultViewMode: ViewMode;
+  dragMode: DragMode;
+  dragEdgeAutoPan: boolean;
+  preserveViewportAfterDrag: boolean;
+  restoreSavedView: boolean;
+  limitMindMapInCanvas: boolean;
+  minZoomRatio: number;
+  maxZoomRatio: number;
+  fitPadding: number;
+  secondLevelMarginX: number;
+  secondLevelMarginY: number;
+  nodeMarginX: number;
+  nodeMarginY: number;
   shortcutMap: ShortcutMap;
 }
 
@@ -77,6 +90,18 @@ export const DEFAULT_SETTINGS: YeMindSettings = {
   defaultReadonlyMode: false,
   showNodeMenuButton: true,
   defaultViewMode: 'map',
+  dragMode: 'structure',
+  dragEdgeAutoPan: false,
+  preserveViewportAfterDrag: true,
+  restoreSavedView: true,
+  limitMindMapInCanvas: false,
+  minZoomRatio: 20,
+  maxZoomRatio: 400,
+  fitPadding: 50,
+  secondLevelMarginX: 100,
+  secondLevelMarginY: 40,
+  nodeMarginX: 50,
+  nodeMarginY: 16,
   shortcutMap: { ...DEFAULT_SHORTCUTS },
 };
 
@@ -86,6 +111,7 @@ const WHEEL_MODES = new Set<WheelMode>(['zoom', 'pan', 'none']);
 const LINK_MODES = new Set<ExternalLinkMode>(['new-window', 'current-window']);
 const CLOZE_MODES = new Set<ClozeMode>(['hidden', 'blur']);
 const VIEW_MODES = new Set<ViewMode>(['map', 'split', 'outline']);
+const DRAG_MODES = new Set<DragMode>(['structure', 'free']);
 const SHORTCUT_COMMANDS = Object.keys(DEFAULT_SHORTCUTS) as ShortcutCommand[];
 
 function numberInRange(value: unknown, fallback: number, min: number, max: number): number {
@@ -113,6 +139,8 @@ function normalizeShortcutMap(value: unknown): ShortcutMap {
 
 function normalizeSettings(value: Partial<YeMindSettings>): YeMindSettings {
   const tabSize = Number(value.codeBlockTabSize);
+  const minZoomRatio = numberInRange(value.minZoomRatio, DEFAULT_SETTINGS.minZoomRatio, 5, 100);
+  const maxZoomRatio = Math.max(minZoomRatio, numberInRange(value.maxZoomRatio, DEFAULT_SETTINGS.maxZoomRatio, 100, 1000));
   return {
     defaultLayout: LAYOUTS.has(value.defaultLayout as YeMindLayout) ? value.defaultLayout as YeMindLayout : DEFAULT_SETTINGS.defaultLayout,
     canvasMode: CANVAS_MODES.has(value.canvasMode as CanvasMode) ? value.canvasMode as CanvasMode : DEFAULT_SETTINGS.canvasMode,
@@ -136,6 +164,18 @@ function normalizeSettings(value: Partial<YeMindSettings>): YeMindSettings {
     defaultReadonlyMode: booleanOrDefault(value.defaultReadonlyMode, DEFAULT_SETTINGS.defaultReadonlyMode),
     showNodeMenuButton: booleanOrDefault(value.showNodeMenuButton, DEFAULT_SETTINGS.showNodeMenuButton),
     defaultViewMode: VIEW_MODES.has(value.defaultViewMode as ViewMode) ? value.defaultViewMode as ViewMode : DEFAULT_SETTINGS.defaultViewMode,
+    dragMode: DRAG_MODES.has(value.dragMode as DragMode) ? value.dragMode as DragMode : DEFAULT_SETTINGS.dragMode,
+    dragEdgeAutoPan: booleanOrDefault(value.dragEdgeAutoPan, DEFAULT_SETTINGS.dragEdgeAutoPan),
+    preserveViewportAfterDrag: booleanOrDefault(value.preserveViewportAfterDrag, DEFAULT_SETTINGS.preserveViewportAfterDrag),
+    restoreSavedView: booleanOrDefault(value.restoreSavedView, DEFAULT_SETTINGS.restoreSavedView),
+    limitMindMapInCanvas: booleanOrDefault(value.limitMindMapInCanvas, DEFAULT_SETTINGS.limitMindMapInCanvas),
+    minZoomRatio,
+    maxZoomRatio,
+    fitPadding: numberInRange(value.fitPadding, DEFAULT_SETTINGS.fitPadding, 0, 300),
+    secondLevelMarginX: numberInRange(value.secondLevelMarginX, DEFAULT_SETTINGS.secondLevelMarginX, 20, 300),
+    secondLevelMarginY: numberInRange(value.secondLevelMarginY, DEFAULT_SETTINGS.secondLevelMarginY, 0, 200),
+    nodeMarginX: numberInRange(value.nodeMarginX, DEFAULT_SETTINGS.nodeMarginX, 10, 240),
+    nodeMarginY: numberInRange(value.nodeMarginY, DEFAULT_SETTINGS.nodeMarginY, 0, 160),
     shortcutMap: normalizeShortcutMap(value.shortcutMap),
   };
 }
@@ -155,7 +195,7 @@ export class SettingsStore {
   }
 
   get(): YeMindSettings {
-    return { ...this.state };
+    return { ...this.state, shortcutMap: { ...this.state.shortcutMap } };
   }
 
   async update(patch: Partial<YeMindSettings>): Promise<void> {

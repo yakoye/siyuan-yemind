@@ -16,6 +16,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
   repository!: MapRepository;
   settingsStore!: SettingsStore;
   readonly tabRegistry = new OpenMapTabRegistry();
+  private ready: Promise<void> = Promise.resolve();
 
   onload(): void {
     this.addIcons(`<symbol id="${ICON_ID}" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="7" fill="#176b50"/><text x="16" y="21" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Ye</text></symbol>`);
@@ -34,7 +35,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
     registerSettings(this, this.settingsStore);
     this.registerCommands();
     this.eventBus.on('open-siyuan-url-plugin', this.onOpenPluginUrl);
-    void this.bootstrap();
+    this.ready = this.bootstrap();
   }
 
 
@@ -48,6 +49,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
   }
 
   async openMap(mapId: string): Promise<void> {
+    await this.ready;
     const map = this.repository.get(mapId);
     if (!map) {
       showMessage('导图不存在或已被删除', 4000, 'error');
@@ -69,6 +71,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
   }
 
   async createMap(): Promise<void> {
+    await this.ready;
     const title = await promptText('新建导图', '未命名导图', '导图名称');
     if (!title) return;
     const map = await this.repository.create(title);
@@ -78,6 +81,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
   }
 
   async renameMap(mapId: string): Promise<void> {
+    await this.ready;
     const map = this.repository.get(mapId);
     if (!map) return;
     const title = await promptText('重命名导图', map.title, '导图名称');
@@ -87,6 +91,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
   }
 
   async deleteMap(mapId: string): Promise<void> {
+    await this.ready;
     const map = this.repository.get(mapId);
     if (!map) return;
     const confirmed = await confirmAction('删除导图', `确认删除“${map.title}”？删除后无法撤销。`, '删除');
@@ -96,6 +101,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
   }
 
   async copyMapLink(mapId: string): Promise<void> {
+    await this.ready;
     const link = `siyuan://plugins/${this.name}?map=${encodeURIComponent(mapId)}`;
     try {
       await navigator.clipboard.writeText(link);
@@ -125,20 +131,25 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
       title: 'YeMind Zen',
       position: 'right',
       callback: (event) => {
-        const menu = new Menu('siyuan-yemind-zen-top-menu');
-        menu.addItem({ icon: 'iconAdd', label: '新建导图', click: () => this.createMap() });
-        const maps = this.repository.list();
-        if (maps.length > 0) {
-          menu.addSeparator();
-          maps.slice(0, 12).forEach((map) => {
-            menu.addItem({ icon: ICON_ID, label: map.title, click: () => this.openMap(map.id) });
-          });
-        }
-        menu.addSeparator();
-        menu.addItem({ icon: 'iconSettings', label: '设置', click: () => openYeMindSettingsDialog(this.settingsStore) });
-        menu.open({ x: event.clientX, y: event.clientY });
+        void this.openTopBarMenu(event);
       },
     });
+  }
+
+  private async openTopBarMenu(event: MouseEvent): Promise<void> {
+    await this.ready;
+    const menu = new Menu('siyuan-yemind-zen-top-menu');
+    menu.addItem({ icon: 'iconAdd', label: '新建导图', click: () => { void this.createMap(); } });
+    const maps = this.repository.list();
+    if (maps.length > 0) {
+      menu.addSeparator();
+      maps.slice(0, 12).forEach((map) => {
+        menu.addItem({ icon: ICON_ID, label: map.title, click: () => { void this.openMap(map.id); } });
+      });
+    }
+    menu.addSeparator();
+    menu.addItem({ icon: 'iconSettings', label: '设置', click: () => openYeMindSettingsDialog(this.settingsStore) });
+    menu.open({ x: event.clientX, y: event.clientY });
   }
 
   private registerCommands(): void {

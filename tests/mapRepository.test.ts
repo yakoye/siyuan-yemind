@@ -83,6 +83,59 @@ describe('MapRepository', () => {
     expect(data?.yemindComments).toEqual([expect.objectContaining({ text: '旧备注' })]);
   });
 
+
+
+  it('keeps maps with an empty title and names them 未命名导图', async () => {
+    const storage = memoryStorage({
+      version: 1,
+      activeMapId: 'untitled',
+      maps: [{
+        id: 'untitled',
+        title: '',
+        createdAt: 1,
+        updatedAt: 1,
+        layout: 'logicalStructure',
+        theme: 'default',
+        data: { data: { text: '' }, children: [] },
+      }],
+    });
+    const repo = new MapRepository(storage);
+    await repo.load();
+
+    expect(repo.list()).toHaveLength(1);
+    expect(repo.get('untitled')?.title).toBe('未命名导图');
+    expect((storage.read() as any).maps[0].title).toBe('未命名导图');
+  });
+
+  it('waits for startup loading before creating a map', async () => {
+    let resolveLoad!: (value: unknown) => void;
+    const loadPromise = new Promise<unknown>((resolve) => { resolveLoad = resolve; });
+    let stored: unknown = null;
+    const repo = new MapRepository({
+      load: () => loadPromise,
+      save: async (value) => { stored = structuredClone(value); },
+    }, { now: () => 5000, id: () => 'new-map' });
+
+    const loading = repo.load();
+    const creating = repo.create('未命名导图');
+    resolveLoad({
+      version: 1,
+      activeMapId: 'old-map',
+      maps: [{
+        id: 'old-map',
+        title: '旧导图',
+        createdAt: 1,
+        updatedAt: 1,
+        layout: 'logicalStructure',
+        theme: 'default',
+        data: { data: { text: '旧导图' }, children: [] },
+      }],
+    });
+    await Promise.all([loading, creating]);
+
+    expect(repo.list().map((map) => map.id)).toEqual(['old-map', 'new-map']);
+    expect((stored as any).maps.map((map: any) => map.id)).toEqual(['old-map', 'new-map']);
+  });
   it('returns snapshots that cannot mutate repository state', async () => {
     const storage = memoryStorage();
     const repo = new MapRepository(storage, { now: () => 4000, id: () => 'safe' });

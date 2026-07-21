@@ -43,6 +43,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   menu.addItem({ icon: 'iconUp', label: '上移节点', click: () => commands.moveUp() });
   menu.addItem({ icon: 'iconDown', label: '下移节点', click: () => commands.moveDown() });
   menu.addItem({ icon: 'iconRefresh', label: '展开/折叠', accelerator: '/', click: () => commands.toggleExpand() });
+  menu.addItem({ icon: 'iconAlignCenter', label: '整理布局', click: () => commands.resetLayout() });
   menu.addSeparator();
   menu.addItem({ icon: 'iconTrashcan', label: '仅删除节点，保留子节点', accelerator: 'Shift+Backspace', click: () => commands.removeOnlyCurrent() });
   menu.addItem({ icon: 'iconTrashcan', label: '删除节点和子树', accelerator: 'Backspace', warning: true, click: () => commands.remove() });

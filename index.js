@@ -25,24 +25,30 @@ function createDefaultMap(title = "未命名导图", id = ((_b) => (_b = ((_a) =
     data: createDefaultTree(normalizedTitle)
   };
 }
-const clone = (value) => JSON.parse(JSON.stringify(value));
+const clone$1 = (value) => JSON.parse(JSON.stringify(value));
 function normalizeMap(value) {
   var _a;
-  if (!value || typeof value !== "object") return null;
+  if (!value || typeof value !== "object") return { map: null, changed: false };
   const candidate = value;
-  if (!candidate.id || !candidate.title || !((_a = candidate.data) == null ? void 0 : _a.data)) return null;
-  return {
+  if (!candidate.id || !((_a = candidate.data) == null ? void 0 : _a.data)) return { map: null, changed: false };
+  const fallbackTime = Number(candidate.updatedAt) || Number(candidate.createdAt) || Date.now();
+  const normalizedTitle = typeof candidate.title === "string" && candidate.title.trim() ? candidate.title.trim() : "未命名导图";
+  const normalizedTree = normalizeLegacyTree(clone$1(candidate.data), fallbackTime);
+  const map2 = {
     id: String(candidate.id),
-    title: String(candidate.title),
+    title: normalizedTitle,
     createdAt: Number(candidate.createdAt) || Date.now(),
-    updatedAt: Number(candidate.updatedAt) || Number(candidate.createdAt) || Date.now(),
+    updatedAt: fallbackTime,
     layout: typeof candidate.layout === "string" ? candidate.layout : "logicalStructure",
     theme: typeof candidate.theme === "string" ? candidate.theme : "default",
-    data: normalizeLegacyTree(clone(candidate.data), Number(candidate.updatedAt) || Number(candidate.createdAt) || Date.now()),
-    viewData: candidate.viewData ? clone(candidate.viewData) : void 0
+    data: normalizedTree.tree,
+    viewData: candidate.viewData ? clone$1(candidate.viewData) : void 0
   };
+  const changed = normalizedTitle !== candidate.title || normalizedTree.changed;
+  return { map: map2, changed };
 }
 function normalizeLegacyTree(tree, fallbackTime, path2 = "root") {
+  let changed = false;
   const data2 = { ...tree.data };
   const note2 = typeof data2.note === "string" ? data2.note.trim() : "";
   if (note2) {
@@ -60,10 +66,14 @@ function normalizeLegacyTree(tree, fallbackTime, path2 = "root") {
     }
     data2.yemindComments = comments;
   }
-  delete data2.note;
+  if (Object.prototype.hasOwnProperty.call(data2, "note")) {
+    delete data2.note;
+    changed = true;
+  }
+  const children = (tree.children ?? []).map((child, index) => normalizeLegacyTree(child, fallbackTime, `${path2}_${index}`));
   return {
-    data: data2,
-    children: (tree.children ?? []).map((child, index) => normalizeLegacyTree(child, fallbackTime, `${path2}_${index}`))
+    tree: { data: data2, children: children.map((item) => item.tree) },
+    changed: changed || children.some((item) => item.changed)
   };
 }
 class MapRepository {
@@ -72,6 +82,8 @@ class MapRepository {
     __publicField(this, "listeners", /* @__PURE__ */ new Set());
     __publicField(this, "now");
     __publicField(this, "id");
+    __publicField(this, "loaded", false);
+    __publicField(this, "loadPromise", null);
     this.storage = storage;
     this.now = options.now ?? (() => Date.now());
     this.id = options.id ?? (() => {
@@ -80,41 +92,57 @@ class MapRepository {
     });
   }
   async load() {
-    var _a;
+    if (this.loaded) return;
+    if (!this.loadPromise) this.loadPromise = this.loadInternal();
+    await this.loadPromise;
+  }
+  async loadInternal() {
+    var _a, _b;
     const raw = await this.storage.load();
+    let migrated = false;
     if (!raw || typeof raw !== "object") {
       this.state = { version: 1, activeMapId: null, maps: [] };
-      this.emit();
-      return;
+    } else {
+      const candidate = raw;
+      const results = Array.isArray(candidate.maps) ? candidate.maps.map(normalizeMap) : [];
+      const maps = results.map((item) => item.map).filter((item) => Boolean(item));
+      migrated = results.some((item) => item.changed) || maps.length !== (((_a = candidate.maps) == null ? void 0 : _a.length) ?? 0);
+      const activeMapId = maps.some((map2) => map2.id === candidate.activeMapId) ? String(candidate.activeMapId) : ((_b = maps[0]) == null ? void 0 : _b.id) ?? null;
+      this.state = { version: 1, activeMapId, maps };
+      migrated || (migrated = candidate.version !== 1 || candidate.activeMapId !== activeMapId);
     }
-    const candidate = raw;
-    const maps = Array.isArray(candidate.maps) ? candidate.maps.map(normalizeMap).filter((item) => Boolean(item)) : [];
-    const activeMapId = maps.some((map2) => map2.id === candidate.activeMapId) ? String(candidate.activeMapId) : ((_a = maps[0]) == null ? void 0 : _a.id) ?? null;
-    this.state = { version: 1, activeMapId, maps };
+    this.loaded = true;
+    if (migrated) await this.storage.save(this.snapshot());
     this.emit();
   }
+  async ensureLoaded() {
+    if (!this.loaded) await this.load();
+  }
   list() {
-    return clone(this.state.maps);
+    return clone$1(this.state.maps);
   }
   get(id) {
     const map2 = this.state.maps.find((item) => item.id === id);
-    return map2 ? clone(map2) : void 0;
+    return map2 ? clone$1(map2) : void 0;
   }
   getActiveMapId() {
     return this.state.activeMapId;
   }
   async setActiveMap(id) {
+    await this.ensureLoaded();
     this.state.activeMapId = id && this.state.maps.some((map2) => map2.id === id) ? id : null;
     await this.persist();
   }
   async create(title) {
+    await this.ensureLoaded();
     const map2 = createDefaultMap(title, this.id(), this.now());
     this.state.maps.push(map2);
     this.state.activeMapId = map2.id;
     await this.persist();
-    return clone(map2);
+    return clone$1(map2);
   }
   async rename(id, title) {
+    await this.ensureLoaded();
     const map2 = this.state.maps.find((item) => item.id === id);
     if (!map2) return;
     const normalized = title.trim();
@@ -124,17 +152,19 @@ class MapRepository {
     await this.persist();
   }
   async update(id, patch) {
+    await this.ensureLoaded();
     const map2 = this.state.maps.find((item) => item.id === id);
     if (!map2) return;
-    if (patch.data) map2.data = clone(patch.data);
+    if (patch.data) map2.data = clone$1(patch.data);
     if (patch.layout) map2.layout = patch.layout;
     if (patch.theme) map2.theme = patch.theme;
-    if (patch.viewData !== void 0) map2.viewData = clone(patch.viewData);
+    if (patch.viewData !== void 0) map2.viewData = clone$1(patch.viewData);
     map2.updatedAt = this.now();
     await this.persist();
   }
   async remove(id) {
     var _a, _b;
+    await this.ensureLoaded();
     const index = this.state.maps.findIndex((item) => item.id === id);
     if (index < 0) return;
     this.state.maps.splice(index, 1);
@@ -149,7 +179,7 @@ class MapRepository {
     return () => this.listeners.delete(listener);
   }
   snapshot() {
-    return clone(this.state);
+    return clone$1(this.state);
   }
   async persist() {
     await this.storage.save(this.snapshot());
@@ -330,6 +360,18 @@ const DEFAULT_SETTINGS = {
   defaultReadonlyMode: false,
   showNodeMenuButton: true,
   defaultViewMode: "map",
+  dragMode: "structure",
+  dragEdgeAutoPan: false,
+  preserveViewportAfterDrag: true,
+  restoreSavedView: true,
+  limitMindMapInCanvas: false,
+  minZoomRatio: 20,
+  maxZoomRatio: 400,
+  fitPadding: 50,
+  secondLevelMarginX: 100,
+  secondLevelMarginY: 40,
+  nodeMarginX: 50,
+  nodeMarginY: 16,
   shortcutMap: { ...DEFAULT_SHORTCUTS }
 };
 const LAYOUTS = /* @__PURE__ */ new Set(["logicalStructure", "logicalStructureLeft", "mindMap", "organizationStructure", "catalogOrganization"]);
@@ -338,6 +380,7 @@ const WHEEL_MODES = /* @__PURE__ */ new Set(["zoom", "pan", "none"]);
 const LINK_MODES = /* @__PURE__ */ new Set(["new-window", "current-window"]);
 const CLOZE_MODES = /* @__PURE__ */ new Set(["hidden", "blur"]);
 const VIEW_MODES = /* @__PURE__ */ new Set(["map", "split", "outline"]);
+const DRAG_MODES = /* @__PURE__ */ new Set(["structure", "free"]);
 const SHORTCUT_COMMANDS = Object.keys(DEFAULT_SHORTCUTS);
 function numberInRange(value, fallback, min, max) {
   const number = Number(value);
@@ -359,6 +402,8 @@ function normalizeShortcutMap(value) {
 }
 function normalizeSettings(value) {
   const tabSize = Number(value.codeBlockTabSize);
+  const minZoomRatio = numberInRange(value.minZoomRatio, DEFAULT_SETTINGS.minZoomRatio, 5, 100);
+  const maxZoomRatio = Math.max(minZoomRatio, numberInRange(value.maxZoomRatio, DEFAULT_SETTINGS.maxZoomRatio, 100, 1e3));
   return {
     defaultLayout: LAYOUTS.has(value.defaultLayout) ? value.defaultLayout : DEFAULT_SETTINGS.defaultLayout,
     canvasMode: CANVAS_MODES.has(value.canvasMode) ? value.canvasMode : DEFAULT_SETTINGS.canvasMode,
@@ -382,6 +427,18 @@ function normalizeSettings(value) {
     defaultReadonlyMode: booleanOrDefault(value.defaultReadonlyMode, DEFAULT_SETTINGS.defaultReadonlyMode),
     showNodeMenuButton: booleanOrDefault(value.showNodeMenuButton, DEFAULT_SETTINGS.showNodeMenuButton),
     defaultViewMode: VIEW_MODES.has(value.defaultViewMode) ? value.defaultViewMode : DEFAULT_SETTINGS.defaultViewMode,
+    dragMode: DRAG_MODES.has(value.dragMode) ? value.dragMode : DEFAULT_SETTINGS.dragMode,
+    dragEdgeAutoPan: booleanOrDefault(value.dragEdgeAutoPan, DEFAULT_SETTINGS.dragEdgeAutoPan),
+    preserveViewportAfterDrag: booleanOrDefault(value.preserveViewportAfterDrag, DEFAULT_SETTINGS.preserveViewportAfterDrag),
+    restoreSavedView: booleanOrDefault(value.restoreSavedView, DEFAULT_SETTINGS.restoreSavedView),
+    limitMindMapInCanvas: booleanOrDefault(value.limitMindMapInCanvas, DEFAULT_SETTINGS.limitMindMapInCanvas),
+    minZoomRatio,
+    maxZoomRatio,
+    fitPadding: numberInRange(value.fitPadding, DEFAULT_SETTINGS.fitPadding, 0, 300),
+    secondLevelMarginX: numberInRange(value.secondLevelMarginX, DEFAULT_SETTINGS.secondLevelMarginX, 20, 300),
+    secondLevelMarginY: numberInRange(value.secondLevelMarginY, DEFAULT_SETTINGS.secondLevelMarginY, 0, 200),
+    nodeMarginX: numberInRange(value.nodeMarginX, DEFAULT_SETTINGS.nodeMarginX, 10, 240),
+    nodeMarginY: numberInRange(value.nodeMarginY, DEFAULT_SETTINGS.nodeMarginY, 0, 160),
     shortcutMap: normalizeShortcutMap(value.shortcutMap)
   };
 }
@@ -397,7 +454,7 @@ class SettingsStore {
     this.emit();
   }
   get() {
-    return { ...this.state };
+    return { ...this.state, shortcutMap: { ...this.state.shortcutMap } };
   }
   async update(patch) {
     this.state = normalizeSettings({ ...this.state, ...patch });
@@ -473,6 +530,8 @@ function createSettingsDialogTemplate(settings) {
   return `<div class="ymz-settings-shell">
     <aside class="ymz-settings-nav" aria-label="设置分类">
       <button class="is-active" data-settings-page="general">常规</button>
+      <button data-settings-page="drag-layout">拖拽与布局</button>
+      <button data-settings-page="content">节点与内容</button>
       <button data-settings-page="shortcuts">快捷键</button>
     </aside>
     <main class="ymz-settings-main">
@@ -505,8 +564,37 @@ function createSettingsDialogTemplate(settings) {
     option("none", "关闭滚轮缩放", settings.wheelMode)
   ].join(""))}
           ${switchRow("打开时适配视图", "打开导图后完整显示全部节点。", "autoFitOnOpen", settings.autoFitOnOpen)}
+          ${switchRow("恢复上次视图位置", "重新打开时恢复上次缩放比例和画布位置。关闭后使用默认视图。", "restoreSavedView", settings.restoreSavedView)}
           ${numberRow("自动保存延迟", "停止编辑后多久写入数据。", "autosaveDelayMs", settings.autosaveDelayMs, 100, 5e3, 50, "毫秒")}
         </div>
+      </section>
+
+      <section class="ymz-settings-page" data-settings-panel="drag-layout" hidden>
+        <header><h2>拖拽与布局</h2><p>结构化拖拽会移动完整子树并重新排版，是思维导图的推荐模式。</p></header>
+        <div class="ymz-settings-group"><h3>节点拖拽</h3>
+          ${selectRow("拖拽模式", "结构化拖拽会将节点及其全部子节点一起移动，并自动调整同级间距。", "dragMode", [
+    option("structure", "结构化拖拽（推荐）", settings.dragMode),
+    option("free", "自由拖拽", settings.dragMode)
+  ].join(""))}
+          ${switchRow("边缘自动平移", "拖拽到画布边缘时自动移动画布。关闭可避免画布意外飞走。", "dragEdgeAutoPan", settings.dragEdgeAutoPan)}
+          ${switchRow("拖拽后保持视图位置", "节点拖拽结束后恢复拖拽前的缩放和画布位置。", "preserveViewportAfterDrag", settings.preserveViewportAfterDrag)}
+          ${switchRow("限制导图在画布内", "限制画布拖动范围，避免导图完全移出可视区域。", "limitMindMapInCanvas", settings.limitMindMapInCanvas)}
+        </div>
+        <div class="ymz-settings-group"><h3>节点间距</h3>
+          ${numberRow("二级节点横向间距", "根节点与二级节点之间的距离。", "secondLevelMarginX", settings.secondLevelMarginX, 20, 300, 2, "px")}
+          ${numberRow("二级节点纵向间距", "同一根节点下二级节点之间的距离。", "secondLevelMarginY", settings.secondLevelMarginY, 0, 200, 2, "px")}
+          ${numberRow("下级节点横向间距", "三级及以下父子节点之间的距离。", "nodeMarginX", settings.nodeMarginX, 10, 240, 2, "px")}
+          ${numberRow("下级节点纵向间距", "三级及以下同级节点之间的距离。", "nodeMarginY", settings.nodeMarginY, 0, 160, 2, "px")}
+        </div>
+        <div class="ymz-settings-group"><h3>视图范围</h3>
+          ${numberRow("最小缩放", "快捷键和滚轮允许缩小到的最小比例。", "minZoomRatio", settings.minZoomRatio, 5, 100, 5, "%")}
+          ${numberRow("最大缩放", "快捷键和滚轮允许放大的最大比例。", "maxZoomRatio", settings.maxZoomRatio, 100, 1e3, 10, "%")}
+          ${numberRow("适配视图留白", "执行适配视图时，导图四周保留的空白。", "fitPadding", settings.fitPadding, 0, 300, 5, "px")}
+        </div>
+      </section>
+
+      <section class="ymz-settings-page" data-settings-panel="content" hidden>
+        <header><h2>节点与内容</h2><p>控制节点入口、富文本、代码和挖空显示。</p></header>
         <div class="ymz-settings-group"><h3>节点入口控件</h3>
           ${switchRow("显示添加子节点按钮", "节点激活后显示快速添加入口。", "showQuickCreate", settings.showQuickCreate)}
           ${switchRow("显示节点菜单按钮", "节点激活后显示轻量菜单入口。", "showNodeMenuButton", settings.showNodeMenuButton)}
@@ -549,6 +637,7 @@ function createSettingsDialogTemplate(settings) {
           ${switchRow("悬停显示答案", "鼠标移入挖空内容时临时显示。", "clozeRevealOnHover", settings.clozeRevealOnHover)}
         </div>
       </section>
+
       <section class="ymz-settings-page" data-settings-panel="shortcuts" hidden>
         <header><h2>快捷键</h2><p>可直接编辑组合键，也可以录制、禁用或恢复默认。</p></header>
         <div class="ymz-settings-shortcuts">${shortcutsHtml(settings.shortcutMap)}</div>
@@ -50582,17 +50671,88 @@ function createNodePostfixContent(node) {
   }
   return { el, width: width2, height: 24 };
 }
+const clone = (value) => JSON.parse(JSON.stringify(value));
+const MAX_SAVED_TRANSLATE = 5e4;
+function finite(value) {
+  return typeof value === "number" && Number.isFinite(value);
+}
+function normalizePersistedViewData(value) {
+  if (!value || typeof value !== "object") return void 0;
+  const candidate = value;
+  const state = candidate.state;
+  const transform2 = candidate.transform;
+  if (!state || !transform2) return void 0;
+  const stateValues = [state.scale, state.x, state.y, state.sx, state.sy];
+  const transformValues = [transform2.scaleX, transform2.scaleY, transform2.translateX, transform2.translateY];
+  if (![...stateValues, ...transformValues].every(finite)) return void 0;
+  if (state.scale < 0.05 || state.scale > 10) return void 0;
+  if (transform2.scaleX < 0.05 || transform2.scaleX > 10 || transform2.scaleY < 0.05 || transform2.scaleY > 10) return void 0;
+  if (Math.abs(state.x) > MAX_SAVED_TRANSLATE || Math.abs(state.y) > MAX_SAVED_TRANSLATE) return void 0;
+  if (Math.abs(transform2.translateX) > MAX_SAVED_TRANSLATE || Math.abs(transform2.translateY) > MAX_SAVED_TRANSLATE) return void 0;
+  return clone(candidate);
+}
+function stripCustomPositions(tree) {
+  let changed = false;
+  const walk2 = (node) => {
+    const data2 = { ...node.data };
+    if (Object.prototype.hasOwnProperty.call(data2, "customLeft")) {
+      delete data2.customLeft;
+      changed = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(data2, "customTop")) {
+      delete data2.customTop;
+      changed = true;
+    }
+    return {
+      data: data2,
+      children: (node.children ?? []).map(walk2)
+    };
+  };
+  return { tree: walk2(tree), changed };
+}
+function buildDragAndLayoutOptions(settings) {
+  return {
+    enableFreeDrag: settings.dragMode === "free",
+    autoMoveWhenMouseInEdgeOnDrag: settings.dragEdgeAutoPan,
+    isLimitMindMapInCanvas: settings.limitMindMapInCanvas,
+    minZoomRatio: settings.minZoomRatio,
+    maxZoomRatio: settings.maxZoomRatio,
+    fitPadding: settings.fitPadding,
+    themeConfig: {
+      second: {
+        marginX: settings.secondLevelMarginX,
+        marginY: settings.secondLevelMarginY
+      },
+      node: {
+        marginX: settings.nodeMarginX,
+        marginY: settings.nodeMarginY
+      },
+      generalization: {
+        marginX: settings.secondLevelMarginX,
+        marginY: settings.secondLevelMarginY
+      }
+    }
+  };
+}
 function createMindMap(options) {
   registerMindMapPlugins(options.settings);
   const settings = options.settings;
+  const behavior = settings ? buildDragAndLayoutOptions(settings) : null;
+  const viewData = (settings == null ? void 0 : settings.restoreSavedView) === false ? void 0 : normalizePersistedViewData(options.viewData);
   return new MindMap2({
     el: options.el,
     data: options.data,
-    viewData: options.viewData,
+    viewData,
     theme: options.theme ?? "default",
+    themeConfig: behavior == null ? void 0 : behavior.themeConfig,
     layout: options.layout ?? "logicalStructure",
     readonly: Boolean(options.readonly),
-    enableFreeDrag: true,
+    enableFreeDrag: (behavior == null ? void 0 : behavior.enableFreeDrag) ?? false,
+    autoMoveWhenMouseInEdgeOnDrag: (behavior == null ? void 0 : behavior.autoMoveWhenMouseInEdgeOnDrag) ?? false,
+    isLimitMindMapInCanvas: (behavior == null ? void 0 : behavior.isLimitMindMapInCanvas) ?? false,
+    minZoomRatio: (behavior == null ? void 0 : behavior.minZoomRatio) ?? 20,
+    maxZoomRatio: (behavior == null ? void 0 : behavior.maxZoomRatio) ?? 400,
+    fitPadding: (behavior == null ? void 0 : behavior.fitPadding) ?? 50,
     enableCtrlKeyNodeSelection: true,
     useLeftKeySelectionRightKeyDrag: (settings == null ? void 0 : settings.canvasMode) === "select",
     mousewheelAction: (settings == null ? void 0 : settings.wheelMode) === "zoom" ? "zoom" : "move",
@@ -50602,7 +50762,7 @@ function createMindMap(options) {
     isEndNodeTextEditOnClickOuter: true,
     enableDragModifyNodeWidth: true,
     isShowCreateChildBtnIcon: (settings == null ? void 0 : settings.showQuickCreate) ?? true,
-    fit: (settings == null ? void 0 : settings.autoFitOnOpen) ?? true,
+    fit: Boolean((settings == null ? void 0 : settings.autoFitOnOpen) ?? true) && !viewData,
     addHistoryOnInit: true,
     defaultInsertSecondLevelNodeText: "新节点",
     defaultInsertBelowSecondLevelNodeText: "新节点",
@@ -50716,6 +50876,7 @@ function createCommandAdapter(mindMap) {
     redo: () => mindMap.execCommand("FORWARD"),
     fit: () => mindMap.view.fit(),
     resetZoom: () => mindMap.view.reset(),
+    resetLayout: () => mindMap.execCommand("RESET_LAYOUT"),
     zoomIn: () => mindMap.view.enlarge(void 0, void 0, false),
     zoomOut: () => mindMap.view.narrow(void 0, void 0, false),
     edit: () => mindMap.renderer.startTextEdit(),
@@ -51209,6 +51370,7 @@ function openNodeContextMenu(event, commands, options = {}) {
   menu.addItem({ icon: "iconUp", label: "上移节点", click: () => commands.moveUp() });
   menu.addItem({ icon: "iconDown", label: "下移节点", click: () => commands.moveDown() });
   menu.addItem({ icon: "iconRefresh", label: "展开/折叠", accelerator: "/", click: () => commands.toggleExpand() });
+  menu.addItem({ icon: "iconAlignCenter", label: "整理布局", click: () => commands.resetLayout() });
   menu.addSeparator();
   menu.addItem({ icon: "iconTrashcan", label: "仅删除节点，保留子节点", accelerator: "Shift+Backspace", click: () => commands.removeOnlyCurrent() });
   menu.addItem({ icon: "iconTrashcan", label: "删除节点和子树", accelerator: "Backspace", warning: true, click: () => commands.remove() });
@@ -51384,6 +51546,31 @@ function calculateEditorStats(tree) {
   walk2(tree);
   return { roots: 1, nodes, words };
 }
+class DragViewportController {
+  constructor() {
+    __publicField(this, "active", false);
+    __publicField(this, "startView");
+  }
+  begin(viewData) {
+    if (this.active) return;
+    this.active = true;
+    this.startView = normalizePersistedViewData(viewData);
+  }
+  shouldPersistView() {
+    return !this.active;
+  }
+  finish(currentViewData, preserveViewport) {
+    const current = normalizePersistedViewData(currentViewData);
+    const result = preserveViewport ? this.startView : current;
+    this.active = false;
+    this.startView = void 0;
+    return result;
+  }
+  reset() {
+    this.active = false;
+    this.startView = void 0;
+  }
+}
 function createEditorTemplate(title) {
   return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
@@ -51434,6 +51621,7 @@ function createEditorTemplate(title) {
         <div class="ymz-floating ymz-leftbar" role="toolbar" aria-label="画布工具">
           <button data-action="fit" title="适配视图">⌖</button>
           <button data-action="reset" title="重置缩放">↺</button>
+          <button data-action="reset-layout" title="整理布局">整</button>
           <button data-action="undo" title="撤销">↶</button>
           <button data-action="redo" title="重做">↷</button>
         </div>
@@ -51682,6 +51870,8 @@ class YeMindEditor {
     __publicField(this, "settingsInitialized", false);
     __publicField(this, "viewMode", "map");
     __publicField(this, "searchText", "");
+    __publicField(this, "dragViewport", new DragViewportController());
+    __publicField(this, "restoredViewOnOpen", false);
     __publicField(this, "onRootKeydown", (event) => {
       var _a;
       if (event.key === "Escape" && ((_a = this.rootEl) == null ? void 0 : _a.dataset.zen) === "true") {
@@ -51752,6 +51942,7 @@ class YeMindEditor {
     (_b = this.settingsUnsubscribe) == null ? void 0 : _b.call(this);
     (_c2 = this.richTextToolbar) == null ? void 0 : _c2.destroy();
     this.richTextToolbar = null;
+    this.dragViewport.reset();
     (_d2 = this.rootEl) == null ? void 0 : _d2.removeEventListener("keydown", this.onRootKeydown);
     (_e = this.map) == null ? void 0 : _e.destroy();
     this.map = null;
@@ -51772,10 +51963,22 @@ class YeMindEditor {
     this.searchInfoEl = this.options.container.querySelector('[data-role="search-info"]');
     const layoutSelect = this.options.container.querySelector('[data-action="layout"]');
     if (layoutSelect) layoutSelect.value = this.current.layout;
+    let runtimeData = this.current.data;
+    if (this.settings.dragMode === "structure") {
+      const normalized = stripCustomPositions(runtimeData);
+      runtimeData = normalized.tree;
+      if (normalized.changed) {
+        this.current.data = normalized.tree;
+        void this.options.repository.update(this.current.id, { data: normalized.tree });
+      }
+    }
+    const runtimeViewData = this.settings.restoreSavedView ? normalizePersistedViewData(this.current.viewData) : void 0;
+    if (this.current.viewData && !runtimeViewData) this.current.viewData = void 0;
+    this.restoredViewOnOpen = Boolean(runtimeViewData);
     this.map = createMindMap({
       el: this.canvasEl,
-      data: this.current.data,
-      viewData: this.current.viewData,
+      data: runtimeData,
+      viewData: runtimeViewData,
       theme: this.current.theme,
       layout: this.current.layout,
       settings: this.settings
@@ -51850,6 +52053,9 @@ class YeMindEditor {
           break;
         case "reset":
           this.commands.resetZoom();
+          break;
+        case "reset-layout":
+          this.commands.resetLayout();
           break;
         case "zoom-in":
           this.commands.zoomIn();
@@ -51927,9 +52133,35 @@ class YeMindEditor {
       this.scheduleSave();
     });
     this.map.on("view_data_change", (viewData) => {
-      this.current.viewData = viewData;
       this.updateZoom();
+      if (!this.dragViewport.shouldPersistView()) return;
+      const normalized = normalizePersistedViewData(viewData);
+      if (!normalized) return;
+      this.current.viewData = normalized;
       this.scheduleSave();
+    });
+    this.map.on("node_dragging", () => {
+      if (!this.map) return;
+      this.dragViewport.begin(this.map.view.getTransformData());
+    });
+    this.map.on("node_dragend", () => {
+      if (!this.map) return;
+      const target = this.dragViewport.finish(
+        this.map.view.getTransformData(),
+        this.settings.preserveViewportAfterDrag
+      );
+      if (!target) return;
+      if (this.settings.preserveViewportAfterDrag) {
+        window.requestAnimationFrame(() => {
+          if (!this.map || this.destroyed) return;
+          this.map.view.setTransformData(target);
+          this.current.viewData = target;
+          this.scheduleSave();
+        });
+      } else {
+        this.current.viewData = target;
+        this.scheduleSave();
+      }
     });
     this.map.on("node_contextmenu", (event, node) => {
       if (!this.commands) return;
@@ -51974,8 +52206,9 @@ class YeMindEditor {
     });
   }
   applySettings(settings) {
-    var _a, _b, _c2, _d2, _e;
+    var _a, _b, _c2;
     const firstApply = !this.settingsInitialized;
+    const previousSettings = this.settings;
     this.settings = settings;
     (_a = this.richTextToolbar) == null ? void 0 : _a.setEnabled(settings.showRichTextToolbar);
     configureMindMapPlugins(settings);
@@ -51991,19 +52224,34 @@ class YeMindEditor {
     this.rootEl.dataset.nodeMenuButton = String(settings.showNodeMenuButton);
     this.rootEl.style.setProperty("--ymz-code-tab-size", String(settings.codeBlockTabSize));
     this.rootEl.style.setProperty("--ymz-code-font-size", `${settings.codeBlockFontSize}px`);
-    (_c2 = (_b = this.map) == null ? void 0 : _b.updateConfig) == null ? void 0 : _c2.call(_b, {
+    const behavior = buildDragAndLayoutOptions(settings);
+    (_b = this.map) == null ? void 0 : _b.updateConfig({
       useLeftKeySelectionRightKeyDrag: settings.canvasMode === "select",
       mousewheelAction: settings.wheelMode === "zoom" ? "zoom" : "move",
       disableMouseWheelZoom: settings.wheelMode === "none",
-      isShowCreateChildBtnIcon: settings.showQuickCreate
+      isShowCreateChildBtnIcon: settings.showQuickCreate,
+      enableFreeDrag: behavior.enableFreeDrag,
+      autoMoveWhenMouseInEdgeOnDrag: behavior.autoMoveWhenMouseInEdgeOnDrag,
+      isLimitMindMapInCanvas: behavior.isLimitMindMapInCanvas,
+      minZoomRatio: behavior.minZoomRatio,
+      maxZoomRatio: behavior.maxZoomRatio,
+      fitPadding: behavior.fitPadding
     });
-    (_e = (_d2 = this.map) == null ? void 0 : _d2.render) == null ? void 0 : _e.call(_d2);
+    (_c2 = this.map) == null ? void 0 : _c2.setThemeConfig(behavior.themeConfig);
+    if (!firstApply && previousSettings.dragMode !== "structure" && settings.dragMode === "structure" && this.map) {
+      const normalized = stripCustomPositions(this.map.getData(false));
+      if (normalized.changed) {
+        this.current.data = normalized.tree;
+        this.map.updateData(normalized.tree);
+        this.scheduleSave();
+      }
+    }
     if (firstApply) {
       this.settingsInitialized = true;
       this.setViewMode(settings.defaultViewMode);
       this.setReadonly(settings.defaultReadonlyMode);
       this.toggleZen(settings.defaultZenMode);
-      if (settings.autoFitOnOpen) window.setTimeout(() => {
+      if (settings.autoFitOnOpen && !this.restoredViewOnOpen) window.setTimeout(() => {
         var _a2;
         return (_a2 = this.commands) == null ? void 0 : _a2.fit();
       }, 0);
@@ -52116,7 +52364,7 @@ class YeMindEditor {
         data: this.map.getData(false),
         layout: this.map.getLayout(),
         theme: this.map.getTheme(),
-        viewData: this.map.view.getTransformData()
+        viewData: normalizePersistedViewData(this.map.view.getTransformData())
       });
       this.saveStateEl.textContent = "已保存";
     } catch (error) {
@@ -52258,6 +52506,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
     __publicField(this, "repository");
     __publicField(this, "settingsStore");
     __publicField(this, "tabRegistry", new OpenMapTabRegistry());
+    __publicField(this, "ready", Promise.resolve());
     __publicField(this, "onOpenPluginUrl", (event) => {
       var _a;
       const mapId = parseYeMindMapUrl(((_a = event.detail) == null ? void 0 : _a.url) ?? "", this.name);
@@ -52283,7 +52532,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
     registerSettings(this, this.settingsStore);
     this.registerCommands();
     this.eventBus.on("open-siyuan-url-plugin", this.onOpenPluginUrl);
-    void this.bootstrap();
+    this.ready = this.bootstrap();
   }
   onLayoutReady() {
     this.registerTopBar();
@@ -52292,6 +52541,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
     this.eventBus.off("open-siyuan-url-plugin", this.onOpenPluginUrl);
   }
   async openMap(mapId) {
+    await this.ready;
     const map2 = this.repository.get(mapId);
     if (!map2) {
       siyuan.showMessage("导图不存在或已被删除", 4e3, "error");
@@ -52312,6 +52562,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
     });
   }
   async createMap() {
+    await this.ready;
     const title = await promptText("新建导图", "未命名导图", "导图名称");
     if (!title) return;
     const map2 = await this.repository.create(title);
@@ -52320,6 +52571,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
     await this.openMap(map2.id);
   }
   async renameMap(mapId) {
+    await this.ready;
     const map2 = this.repository.get(mapId);
     if (!map2) return;
     const title = await promptText("重命名导图", map2.title, "导图名称");
@@ -52328,6 +52580,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
     this.tabRegistry.updateTitle(mapId, title);
   }
   async deleteMap(mapId) {
+    await this.ready;
     const map2 = this.repository.get(mapId);
     if (!map2) return;
     const confirmed = await confirmAction("删除导图", `确认删除“${map2.title}”？删除后无法撤销。`, "删除");
@@ -52336,6 +52589,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
     await this.repository.remove(mapId);
   }
   async copyMapLink(mapId) {
+    await this.ready;
     const link = `siyuan://plugins/${this.name}?map=${encodeURIComponent(mapId)}`;
     try {
       await navigator.clipboard.writeText(link);
@@ -52358,20 +52612,28 @@ class YeMindZenPlugin extends siyuan.Plugin {
       title: "YeMind Zen",
       position: "right",
       callback: (event) => {
-        const menu = new siyuan.Menu("siyuan-yemind-zen-top-menu");
-        menu.addItem({ icon: "iconAdd", label: "新建导图", click: () => this.createMap() });
-        const maps = this.repository.list();
-        if (maps.length > 0) {
-          menu.addSeparator();
-          maps.slice(0, 12).forEach((map2) => {
-            menu.addItem({ icon: ICON_ID, label: map2.title, click: () => this.openMap(map2.id) });
-          });
-        }
-        menu.addSeparator();
-        menu.addItem({ icon: "iconSettings", label: "设置", click: () => openYeMindSettingsDialog(this.settingsStore) });
-        menu.open({ x: event.clientX, y: event.clientY });
+        void this.openTopBarMenu(event);
       }
     });
+  }
+  async openTopBarMenu(event) {
+    await this.ready;
+    const menu = new siyuan.Menu("siyuan-yemind-zen-top-menu");
+    menu.addItem({ icon: "iconAdd", label: "新建导图", click: () => {
+      void this.createMap();
+    } });
+    const maps = this.repository.list();
+    if (maps.length > 0) {
+      menu.addSeparator();
+      maps.slice(0, 12).forEach((map2) => {
+        menu.addItem({ icon: ICON_ID, label: map2.title, click: () => {
+          void this.openMap(map2.id);
+        } });
+      });
+    }
+    menu.addSeparator();
+    menu.addItem({ icon: "iconSettings", label: "设置", click: () => openYeMindSettingsDialog(this.settingsStore) });
+    menu.open({ x: event.clientX, y: event.clientY });
   }
   registerCommands() {
     this.addCommand({

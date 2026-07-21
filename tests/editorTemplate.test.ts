@@ -11,5 +11,6 @@ describe('editor template v0.5 controls', () => {
     expect(html).toContain('data-role="search-panel"');
     expect(html).toContain('data-search-action="replace-all"');
     expect(html).toContain('data-role="outline"');
+    expect(html).toContain('data-action="reset-layout"');
   });
 });

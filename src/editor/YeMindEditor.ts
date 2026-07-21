@@ -1,6 +1,7 @@
 import type MindMap from 'simple-mind-map';
 import { Dialog, showMessage } from 'siyuan';
 import { createMindMap } from '../core/createMindMap';
+import { buildDragAndLayoutOptions, normalizePersistedViewData, stripCustomPositions } from '../core/dragBehavior';
 import { createCommandAdapter, type YeMindCommands } from '../core/commands';
 import { configureNodeDecorations } from '../core/nodeDecorations';
 import { configureMindMapPlugins } from '../core/registerPlugins';
@@ -11,6 +12,7 @@ import { openNodeContextMenu } from '../ui/contextMenu';
 import { openCommentsDialog, openFormulaDialog } from '../ui/nodeContentDialogs';
 import { openCodeBlockDialog, openInlineLinkDialog } from '../ui/richTextDialogs';
 import { calculateEditorStats } from './editorStats';
+import { DragViewportController } from './DragViewportController';
 import { createEditorTemplate } from './editorTemplate';
 import { renderOutlineHtml } from './outline';
 import { RichTextToolbar } from './RichTextToolbar';
@@ -48,6 +50,8 @@ export class YeMindEditor {
   private settingsInitialized = false;
   private viewMode: ViewMode = 'map';
   private searchText = '';
+  private readonly dragViewport = new DragViewportController();
+  private restoredViewOnOpen = false;
 
   private readonly onRootKeydown = (event: KeyboardEvent): void => {
     if (event.key === 'Escape' && this.rootEl?.dataset.zen === 'true') {
@@ -96,6 +100,7 @@ export class YeMindEditor {
     this.settingsUnsubscribe?.();
     this.richTextToolbar?.destroy();
     this.richTextToolbar = null;
+    this.dragViewport.reset();
     this.rootEl?.removeEventListener('keydown', this.onRootKeydown);
     this.map?.destroy();
     this.map = null;
@@ -118,10 +123,25 @@ export class YeMindEditor {
     const layoutSelect = this.options.container.querySelector<HTMLSelectElement>('[data-action="layout"]');
     if (layoutSelect) layoutSelect.value = this.current.layout;
 
+    let runtimeData = this.current.data;
+    if (this.settings.dragMode === 'structure') {
+      const normalized = stripCustomPositions(runtimeData);
+      runtimeData = normalized.tree;
+      if (normalized.changed) {
+        this.current.data = normalized.tree;
+        void this.options.repository.update(this.current.id, { data: normalized.tree });
+      }
+    }
+    const runtimeViewData = this.settings.restoreSavedView
+      ? normalizePersistedViewData(this.current.viewData)
+      : undefined;
+    if (this.current.viewData && !runtimeViewData) this.current.viewData = undefined;
+    this.restoredViewOnOpen = Boolean(runtimeViewData);
+
     this.map = createMindMap({
       el: this.canvasEl,
-      data: this.current.data,
-      viewData: this.current.viewData,
+      data: runtimeData,
+      viewData: runtimeViewData,
       theme: this.current.theme,
       layout: this.current.layout,
       settings: this.settings,
@@ -186,6 +206,7 @@ export class YeMindEditor {
         case 'remove': this.commands.remove(); break;
         case 'fit': this.commands.fit(); break;
         case 'reset': this.commands.resetZoom(); break;
+        case 'reset-layout': this.commands.resetLayout(); break;
         case 'zoom-in': this.commands.zoomIn(); break;
         case 'zoom-out': this.commands.zoomOut(); break;
         case 'view-map': this.setViewMode('map'); break;
@@ -242,9 +263,35 @@ export class YeMindEditor {
       this.scheduleSave();
     });
     this.map.on('view_data_change', (viewData: Record<string, unknown>) => {
-      this.current.viewData = viewData;
       this.updateZoom();
+      if (!this.dragViewport.shouldPersistView()) return;
+      const normalized = normalizePersistedViewData(viewData);
+      if (!normalized) return;
+      this.current.viewData = normalized;
       this.scheduleSave();
+    });
+    this.map.on('node_dragging', () => {
+      if (!this.map) return;
+      this.dragViewport.begin(this.map.view.getTransformData());
+    });
+    this.map.on('node_dragend', () => {
+      if (!this.map) return;
+      const target = this.dragViewport.finish(
+        this.map.view.getTransformData(),
+        this.settings.preserveViewportAfterDrag,
+      );
+      if (!target) return;
+      if (this.settings.preserveViewportAfterDrag) {
+        window.requestAnimationFrame(() => {
+          if (!this.map || this.destroyed) return;
+          this.map.view.setTransformData(target);
+          this.current.viewData = target;
+          this.scheduleSave();
+        });
+      } else {
+        this.current.viewData = target;
+        this.scheduleSave();
+      }
     });
     this.map.on('node_contextmenu', (event: MouseEvent, node: any) => {
       if (!this.commands) return;
@@ -294,6 +341,7 @@ export class YeMindEditor {
 
   private applySettings(settings: YeMindSettings): void {
     const firstApply = !this.settingsInitialized;
+    const previousSettings = this.settings;
     this.settings = settings;
     this.richTextToolbar?.setEnabled(settings.showRichTextToolbar);
     configureMindMapPlugins(settings);
@@ -309,20 +357,36 @@ export class YeMindEditor {
     this.rootEl.dataset.nodeMenuButton = String(settings.showNodeMenuButton);
     this.rootEl.style.setProperty('--ymz-code-tab-size', String(settings.codeBlockTabSize));
     this.rootEl.style.setProperty('--ymz-code-font-size', `${settings.codeBlockFontSize}px`);
-    (this.map as any)?.updateConfig?.({
+    const behavior = buildDragAndLayoutOptions(settings);
+    this.map?.updateConfig({
       useLeftKeySelectionRightKeyDrag: settings.canvasMode === 'select',
       mousewheelAction: settings.wheelMode === 'zoom' ? 'zoom' : 'move',
       disableMouseWheelZoom: settings.wheelMode === 'none',
       isShowCreateChildBtnIcon: settings.showQuickCreate,
+      enableFreeDrag: behavior.enableFreeDrag,
+      autoMoveWhenMouseInEdgeOnDrag: behavior.autoMoveWhenMouseInEdgeOnDrag,
+      isLimitMindMapInCanvas: behavior.isLimitMindMapInCanvas,
+      minZoomRatio: behavior.minZoomRatio,
+      maxZoomRatio: behavior.maxZoomRatio,
+      fitPadding: behavior.fitPadding,
     });
-    (this.map as any)?.render?.();
+    this.map?.setThemeConfig(behavior.themeConfig);
+
+    if (!firstApply && previousSettings.dragMode !== 'structure' && settings.dragMode === 'structure' && this.map) {
+      const normalized = stripCustomPositions(this.map.getData(false) as MindMapTree);
+      if (normalized.changed) {
+        this.current.data = normalized.tree;
+        this.map.updateData(normalized.tree);
+        this.scheduleSave();
+      }
+    }
 
     if (firstApply) {
       this.settingsInitialized = true;
       this.setViewMode(settings.defaultViewMode);
       this.setReadonly(settings.defaultReadonlyMode);
       this.toggleZen(settings.defaultZenMode);
-      if (settings.autoFitOnOpen) window.setTimeout(() => this.commands?.fit(), 0);
+      if (settings.autoFitOnOpen && !this.restoredViewOnOpen) window.setTimeout(() => this.commands?.fit(), 0);
     }
   }
 
@@ -440,7 +504,7 @@ export class YeMindEditor {
         data: this.map.getData(false) as MindMapTree,
         layout: this.map.getLayout(),
         theme: this.map.getTheme(),
-        viewData: this.map.view.getTransformData(),
+        viewData: normalizePersistedViewData(this.map.view.getTransformData()),
       });
       this.saveStateEl.textContent = '已保存';
     } catch (error) {

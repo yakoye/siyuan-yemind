@@ -7,10 +7,18 @@ describe('custom settings dialog', () => {
     const html = createSettingsDialogTemplate({ ...DEFAULT_SETTINGS, shortcutMap: { ...DEFAULT_SHORTCUTS } });
 
     expect(html).toContain('data-settings-page="general"');
+    expect(html).toContain('data-settings-page="drag-layout"');
+    expect(html).toContain('data-settings-page="content"');
     expect(html).toContain('data-settings-page="shortcuts"');
     expect(html).toContain('默认视图模式');
     expect(html).toContain('画布操作习惯');
     expect(html).toContain('节点入口控件');
+    expect(html).toContain('结构化拖拽');
+    expect(html).toContain('边缘自动平移');
+    expect(html).toContain('拖拽后保持视图位置');
+    expect(html).toContain('二级节点纵向间距');
+    expect(html).toContain('下级节点纵向间距');
+    expect(html).toContain('恢复上次视图位置');
     expect(html).toContain('富文本与代码');
     expect(html).toContain('快捷键');
     expect(html).toContain('录制');

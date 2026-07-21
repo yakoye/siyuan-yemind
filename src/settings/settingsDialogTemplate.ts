@@ -79,6 +79,8 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
   return `<div class="ymz-settings-shell">
     <aside class="ymz-settings-nav" aria-label="设置分类">
       <button class="is-active" data-settings-page="general">常规</button>
+      <button data-settings-page="drag-layout">拖拽与布局</button>
+      <button data-settings-page="content">节点与内容</button>
       <button data-settings-page="shortcuts">快捷键</button>
     </aside>
     <main class="ymz-settings-main">
@@ -111,8 +113,37 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
             option('none', '关闭滚轮缩放', settings.wheelMode),
           ].join(''))}
           ${switchRow('打开时适配视图', '打开导图后完整显示全部节点。', 'autoFitOnOpen', settings.autoFitOnOpen)}
+          ${switchRow('恢复上次视图位置', '重新打开时恢复上次缩放比例和画布位置。关闭后使用默认视图。', 'restoreSavedView', settings.restoreSavedView)}
           ${numberRow('自动保存延迟', '停止编辑后多久写入数据。', 'autosaveDelayMs', settings.autosaveDelayMs, 100, 5000, 50, '毫秒')}
         </div>
+      </section>
+
+      <section class="ymz-settings-page" data-settings-panel="drag-layout" hidden>
+        <header><h2>拖拽与布局</h2><p>结构化拖拽会移动完整子树并重新排版，是思维导图的推荐模式。</p></header>
+        <div class="ymz-settings-group"><h3>节点拖拽</h3>
+          ${selectRow('拖拽模式', '结构化拖拽会将节点及其全部子节点一起移动，并自动调整同级间距。', 'dragMode', [
+            option('structure', '结构化拖拽（推荐）', settings.dragMode),
+            option('free', '自由拖拽', settings.dragMode),
+          ].join(''))}
+          ${switchRow('边缘自动平移', '拖拽到画布边缘时自动移动画布。关闭可避免画布意外飞走。', 'dragEdgeAutoPan', settings.dragEdgeAutoPan)}
+          ${switchRow('拖拽后保持视图位置', '节点拖拽结束后恢复拖拽前的缩放和画布位置。', 'preserveViewportAfterDrag', settings.preserveViewportAfterDrag)}
+          ${switchRow('限制导图在画布内', '限制画布拖动范围，避免导图完全移出可视区域。', 'limitMindMapInCanvas', settings.limitMindMapInCanvas)}
+        </div>
+        <div class="ymz-settings-group"><h3>节点间距</h3>
+          ${numberRow('二级节点横向间距', '根节点与二级节点之间的距离。', 'secondLevelMarginX', settings.secondLevelMarginX, 20, 300, 2, 'px')}
+          ${numberRow('二级节点纵向间距', '同一根节点下二级节点之间的距离。', 'secondLevelMarginY', settings.secondLevelMarginY, 0, 200, 2, 'px')}
+          ${numberRow('下级节点横向间距', '三级及以下父子节点之间的距离。', 'nodeMarginX', settings.nodeMarginX, 10, 240, 2, 'px')}
+          ${numberRow('下级节点纵向间距', '三级及以下同级节点之间的距离。', 'nodeMarginY', settings.nodeMarginY, 0, 160, 2, 'px')}
+        </div>
+        <div class="ymz-settings-group"><h3>视图范围</h3>
+          ${numberRow('最小缩放', '快捷键和滚轮允许缩小到的最小比例。', 'minZoomRatio', settings.minZoomRatio, 5, 100, 5, '%')}
+          ${numberRow('最大缩放', '快捷键和滚轮允许放大的最大比例。', 'maxZoomRatio', settings.maxZoomRatio, 100, 1000, 10, '%')}
+          ${numberRow('适配视图留白', '执行适配视图时，导图四周保留的空白。', 'fitPadding', settings.fitPadding, 0, 300, 5, 'px')}
+        </div>
+      </section>
+
+      <section class="ymz-settings-page" data-settings-panel="content" hidden>
+        <header><h2>节点与内容</h2><p>控制节点入口、富文本、代码和挖空显示。</p></header>
         <div class="ymz-settings-group"><h3>节点入口控件</h3>
           ${switchRow('显示添加子节点按钮', '节点激活后显示快速添加入口。', 'showQuickCreate', settings.showQuickCreate)}
           ${switchRow('显示节点菜单按钮', '节点激活后显示轻量菜单入口。', 'showNodeMenuButton', settings.showNodeMenuButton)}
@@ -155,6 +186,7 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
           ${switchRow('悬停显示答案', '鼠标移入挖空内容时临时显示。', 'clozeRevealOnHover', settings.clozeRevealOnHover)}
         </div>
       </section>
+
       <section class="ymz-settings-page" data-settings-panel="shortcuts" hidden>
         <header><h2>快捷键</h2><p>可直接编辑组合键，也可以录制、禁用或恢复默认。</p></header>
         <div class="ymz-settings-shortcuts">${shortcutsHtml(settings.shortcutMap)}</div>
@@ -168,4 +200,3 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
     </main>
   </div>`;
 }
-

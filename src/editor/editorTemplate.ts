@@ -48,6 +48,7 @@ export function createEditorTemplate(title: string): string {
         <div class="ymz-floating ymz-leftbar" role="toolbar" aria-label="画布工具">
           <button data-action="fit" title="适配视图">⌖</button>
           <button data-action="reset" title="重置缩放">↺</button>
+          <button data-action="reset-layout" title="整理布局">整</button>
           <button data-action="undo" title="撤销">↶</button>
           <button data-action="redo" title="重做">↷</button>
         </div>

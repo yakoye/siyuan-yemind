@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.1 — 2026-07-16
+
+- Restored structured node dragging as the default so a moved node keeps its complete child subtree and the layout engine recalculates sibling spacing.
+- Disabled drag-edge canvas auto-pan by default and added viewport capture/restore to prevent the whole map from flying away during node dragging.
+- Added bounded validation for persisted zoom and canvas transforms; malformed or extreme saved positions are ignored.
+- Added automatic cleanup of legacy free-drag `customLeft`/`customTop` coordinates when opening a map in structured mode.
+- Preserved unnamed maps as `未命名导图` instead of dropping them during repository normalization.
+- Serialized repository startup loading and mutations so a newly created map cannot be overwritten by a late storage load.
+- Added `整理布局` to the left toolbar and node context menu using the native layout reset command.
+- Expanded settings into General, Drag & Layout, Node & Content, and Shortcuts pages.
+- Added drag mode, edge auto-pan, viewport preservation, saved-view restoration, canvas limits, zoom range, fit padding, and second/lower-level node spacing settings.
+- Added plugin startup readiness gating so Dock, URL and top-bar actions wait for stored maps and settings before reading them.
+
+
 ## 0.5.0 — 2026-07-16
 
 - Changed the node todo context menu into a direct three-state workflow: add, complete and remove, with no dialog.
