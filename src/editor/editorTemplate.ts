@@ -63,6 +63,23 @@ export function createEditorTemplate(title: string): string {
           <button data-relation-action="cancel">取消</button>
         </div>
 
+        <div class="ymz-outer-frame-panel" data-role="outer-frame-panel" hidden data-readonly="false">
+          <span data-role="outer-frame-hint"></span>
+          <button data-outer-frame-action="edit">编辑文字</button>
+          <label title="边框颜色"><span>边框</span><input type="color" data-outer-frame-setting="strokeColor" value="#0984e3"></label>
+          <label title="填充颜色"><span>填充</span><input type="color" data-outer-frame-setting="fill" value="#0984e3"></label>
+          <select data-outer-frame-setting="strokeDasharray" aria-label="外框线型">
+            <option value="5,5">虚线</option>
+            <option value="none">实线</option>
+          </select>
+          <select data-outer-frame-setting="textAlign" aria-label="外框文字对齐">
+            <option value="left">左对齐</option>
+            <option value="center">居中</option>
+            <option value="right">右对齐</option>
+          </select>
+          <button class="is-danger" data-outer-frame-action="delete">删除外框</button>
+        </div>
+
         <div class="ymz-floating ymz-statusbar">
           <button class="ymz-status-title" data-role="title" title="${escapeHtml(title)}">${escapeHtml(title)}</button>
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>

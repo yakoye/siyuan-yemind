@@ -13,6 +13,7 @@ export const NODE_CONTENT_MENU_LABELS = [
   '行内链接',
   '代码块',
   '概要',
+  '添加外框',
   '关联线',
 ] as const;
 
@@ -50,6 +51,7 @@ export interface NodeMenuAvailabilityInput {
   primaryIsGeneralization: boolean;
   hasRichTextSelection: boolean;
   hasCodeBlock: boolean;
+  canAddOuterFrame: boolean;
 }
 
 export interface NodeMenuAvailability {
@@ -65,6 +67,7 @@ export interface NodeMenuAvailability {
   codeBlock: boolean;
   summary: boolean;
   relation: boolean;
+  outerFrame: boolean;
   move: boolean;
   resetLayout: boolean;
   remove: boolean;
@@ -89,6 +92,7 @@ export function createNodeMenuAvailability(input: NodeMenuAvailabilityInput): No
     codeBlock: editable && (input.hasRichTextSelection || input.hasCodeBlock),
     summary: editable,
     relation: editable && regularNode,
+    outerFrame: editable && input.canAddOuterFrame,
     move: editable && nonRoot && regularNode,
     resetLayout: editable,
     remove: editable && nonRoot,

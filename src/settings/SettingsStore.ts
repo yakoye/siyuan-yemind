@@ -58,6 +58,9 @@ export interface YeMindSettings {
   defaultRelationText: string;
   relationAlwaysAboveNode: boolean;
   relationAdjustPoints: boolean;
+  defaultOuterFrameText: string;
+  outerFramePaddingX: number;
+  outerFramePaddingY: number;
   shortcutMap: ShortcutMap;
 }
 
@@ -105,6 +108,9 @@ export const DEFAULT_SETTINGS: YeMindSettings = {
   defaultRelationText: '关联',
   relationAlwaysAboveNode: true,
   relationAdjustPoints: true,
+  defaultOuterFrameText: '外框',
+  outerFramePaddingX: 10,
+  outerFramePaddingY: 10,
   shortcutMap: { ...DEFAULT_SHORTCUTS },
 };
 
@@ -119,6 +125,13 @@ const SHORTCUT_COMMANDS = Object.keys(DEFAULT_SHORTCUTS) as ShortcutCommand[];
 function numberInRange(value: unknown, fallback: number, min: number, max: number): number {
   const number = Number(value);
   return Number.isFinite(number) && number >= min && number <= max ? number : fallback;
+}
+
+function integerClamped(value: unknown, fallback: number, min: number, max: number): number {
+  if (value === null || value === undefined || value === '') return fallback;
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(number)));
 }
 
 function booleanOrDefault(value: unknown, fallback: boolean): boolean {
@@ -180,6 +193,9 @@ function normalizeSettings(value: Partial<YeMindSettings>): YeMindSettings {
     defaultRelationText: stringOrDefault(value.defaultRelationText, DEFAULT_SETTINGS.defaultRelationText),
     relationAlwaysAboveNode: booleanOrDefault(value.relationAlwaysAboveNode, DEFAULT_SETTINGS.relationAlwaysAboveNode),
     relationAdjustPoints: booleanOrDefault(value.relationAdjustPoints, DEFAULT_SETTINGS.relationAdjustPoints),
+    defaultOuterFrameText: stringOrDefault(value.defaultOuterFrameText, DEFAULT_SETTINGS.defaultOuterFrameText),
+    outerFramePaddingX: integerClamped(value.outerFramePaddingX, DEFAULT_SETTINGS.outerFramePaddingX, 0, 80),
+    outerFramePaddingY: integerClamped(value.outerFramePaddingY, DEFAULT_SETTINGS.outerFramePaddingY, 0, 80),
     shortcutMap: normalizeShortcutMap(value.shortcutMap),
   };
 }

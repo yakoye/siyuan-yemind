@@ -9,6 +9,7 @@ describe('node context menu availability', () => {
       primaryIsGeneralization: false,
       hasRichTextSelection: true,
       hasCodeBlock: true,
+      canAddOuterFrame: true,
     });
 
     expect(state.edit).toBe(false);
@@ -16,6 +17,7 @@ describe('node context menu availability', () => {
     expect(state.cut).toBe(false);
     expect(state.paste).toBe(false);
     expect(state.nodeContent).toBe(false);
+    expect(state.outerFrame).toBe(false);
     expect(state.copy).toBe(true);
     expect(state.toggleExpand).toBe(true);
   });
@@ -27,6 +29,7 @@ describe('node context menu availability', () => {
       primaryIsGeneralization: false,
       hasRichTextSelection: false,
       hasCodeBlock: false,
+      canAddOuterFrame: false,
     });
 
     expect(state.remove).toBe(false);
@@ -35,5 +38,6 @@ describe('node context menu availability', () => {
     expect(state.addParent).toBe(false);
     expect(state.inlineLink).toBe(false);
     expect(state.codeBlock).toBe(false);
+    expect(state.outerFrame).toBe(false);
   });
 });

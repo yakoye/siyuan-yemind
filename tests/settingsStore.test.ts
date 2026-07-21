@@ -57,6 +57,9 @@ describe('SettingsStore', () => {
       defaultRelationText: '关联',
       relationAlwaysAboveNode: true,
       relationAdjustPoints: true,
+      defaultOuterFrameText: '外框',
+      outerFramePaddingX: 10,
+      outerFramePaddingY: 10,
       shortcutMap: DEFAULT_SHORTCUTS,
     });
   });
@@ -98,6 +101,9 @@ describe('SettingsStore', () => {
       defaultRelationText: '依赖',
       relationAlwaysAboveNode: false,
       relationAdjustPoints: false,
+      defaultOuterFrameText: '重点',
+      outerFramePaddingX: 24,
+      outerFramePaddingY: 18,
       shortcutMap: { ...DEFAULT_SHORTCUTS, search: 'Ctrl+Shift+f', comments: '' },
     });
 
@@ -130,6 +136,9 @@ describe('SettingsStore', () => {
       defaultRelationText: '依赖',
       relationAlwaysAboveNode: false,
       relationAdjustPoints: false,
+      defaultOuterFrameText: '重点',
+      outerFramePaddingX: 24,
+      outerFramePaddingY: 18,
       shortcutMap: { ...DEFAULT_SHORTCUTS, search: 'Ctrl+Shift+f', comments: '' },
     });
   });
@@ -164,4 +173,25 @@ it('serializes concurrent setting updates without losing an earlier patch', asyn
   expect(pending[1].value).toMatchObject({ autosaveDelayMs: 900, showRichTextToolbar: false });
   pending[1].resolve();
   await Promise.all([first, second]);
+});
+
+it('clamps outer-frame padding while preserving defaults for malformed legacy values', async () => {
+  const store = new SettingsStore({
+    load: async () => ({ outerFramePaddingX: -4.8, outerFramePaddingY: 120 }),
+    save: async () => {},
+  });
+  await store.load();
+  expect(store.get().outerFramePaddingX).toBe(0);
+  expect(store.get().outerFramePaddingY).toBe(80);
+
+  const malformed = new SettingsStore({
+    load: async () => ({ defaultOuterFrameText: '', outerFramePaddingX: 'bad', outerFramePaddingY: null }),
+    save: async () => {},
+  });
+  await malformed.load();
+  expect(malformed.get()).toMatchObject({
+    defaultOuterFrameText: '外框',
+    outerFramePaddingX: 10,
+    outerFramePaddingY: 10,
+  });
 });

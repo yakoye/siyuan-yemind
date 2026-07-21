@@ -28,6 +28,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
     primaryIsGeneralization: Boolean(primary?.isGeneralization),
     hasRichTextSelection: commands.hasRichTextSelection(),
     hasCodeBlock: Boolean(commands.getCodeBlock()),
+    canAddOuterFrame: commands.canAddOuterFrame(),
   });
 
   const menu = new Menu('siyuan-yemind-zen-node-menu');
@@ -66,6 +67,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
     disabled: !availability.summary,
     click: () => summaryAction.action === 'add' ? commands.addSummary() : commands.removeSummary(),
   });
+  menu.addItem({ icon: 'iconSelect', label: '添加外框', disabled: !availability.outerFrame, click: () => commands.addOuterFrame() });
   menu.addItem({ icon: 'iconRight', label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: () => options.onRelation ? options.onRelation() : commands.startRelation() });
   menu.addSeparator();
   menu.addItem({ icon: 'iconUp', label: '上移节点', disabled: !availability.move, click: () => commands.moveUp() });

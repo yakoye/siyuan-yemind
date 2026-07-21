@@ -159,6 +159,11 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
           ${switchRow('关联线始终显示在节点上层', '关闭后，未激活的关联线回到节点下方。', 'relationAlwaysAboveNode', settings.relationAlwaysAboveNode)}
           ${switchRow('允许调整关联线端点和控制点', '选中关联线后可拖动端点和两个贝塞尔控制点。', 'relationAdjustPoints', settings.relationAdjustPoints)}
         </div>
+        <div class="ymz-settings-group"><h3>外框</h3>
+          ${textRow('默认外框文字', '新建外框首次激活时显示的默认文字。', 'defaultOuterFrameText', settings.defaultOuterFrameText)}
+          ${numberRow('外框横向留白', '外框左右两侧相对节点范围保留的距离。', 'outerFramePaddingX', settings.outerFramePaddingX, 0, 80, 1, 'px')}
+          ${numberRow('外框纵向留白', '外框上下两侧相对节点范围保留的距离。', 'outerFramePaddingY', settings.outerFramePaddingY, 0, 80, 1, 'px')}
+        </div>
         <div class="ymz-settings-group"><h3>富文本与代码</h3>
           ${switchRow('富文本选区工具栏', '选中文字后显示格式、链接、公式和代码工具。', 'showRichTextToolbar', settings.showRichTextToolbar)}
           ${switchRow('裸域名自动补 HTTPS', '输入 example.com 时补全为安全链接。', 'inlineLinkAutoHttps', settings.inlineLinkAutoHttps)}

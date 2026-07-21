@@ -15,6 +15,7 @@ describe('node context menu content', () => {
       '公式',
       '概要',
       '关联线',
+      '添加外框',
     ]));
     expect(NODE_CONTENT_MENU_LABELS).not.toContain('备注');
   });

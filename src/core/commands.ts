@@ -56,6 +56,13 @@ export interface YeMindCommands {
   cancelRelation(): void;
   editActiveRelationText(): void;
   removeActiveRelation(): void;
+  canAddOuterFrame(): boolean;
+  addOuterFrame(): void;
+  hasActiveOuterFrame(): boolean;
+  editActiveOuterFrameText(): void;
+  updateActiveOuterFrame(config: Record<string, unknown>): void;
+  removeActiveOuterFrame(): void;
+  getActiveOuterFrameStyle(): Record<string, unknown> | null;
   toggleTodo(): void;
   getTodo(): NodeTodo | null;
   setTodo(todo: NodeTodo | null): void;
@@ -91,6 +98,9 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
   const removableNodes = (): any[] => activeNodes().filter((node) => !node?.isRoot);
   const primaryIsRegular = (): boolean => Boolean(primaryNode() && !primaryNode()?.isGeneralization);
   const primaryIsMovable = (): boolean => Boolean(primaryIsRegular() && !primaryNode()?.isRoot);
+  const outerFramePlugin = (): any => (mindMap as any).outerFrame;
+  const activeOuterFrame = (): any | null => outerFramePlugin()?.getActiveOuterFrame?.() ?? outerFramePlugin()?.activeOuterFrame ?? null;
+  const canAddOuterFrame = (): boolean => Boolean(outerFramePlugin()) && canMutate() && activeNodes().some((node) => !node?.isRoot && !node?.isGeneralization);
 
   return {
     isReadonly,
@@ -229,6 +239,34 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       if (textGroup) relation.showEditTextBox?.(textGroup);
     },
     removeActiveRelation: () => { if (canMutate()) (mindMap as any).associativeLine?.removeLine?.(); },
+    canAddOuterFrame,
+    addOuterFrame: () => {
+      if (!canAddOuterFrame()) return;
+      mindMap.execCommand('ADD_OUTER_FRAME');
+    },
+    hasActiveOuterFrame: () => Boolean(activeOuterFrame()),
+    editActiveOuterFrameText: () => {
+      if (!canMutate()) return;
+      const plugin = outerFramePlugin();
+      const active = activeOuterFrame();
+      if (active?.textNode) plugin?.showEditTextBox?.(active.textNode);
+    },
+    updateActiveOuterFrame: (config) => {
+      if (!canMutate() || !activeOuterFrame()) return;
+      outerFramePlugin()?.updateActiveOuterFrame?.(config);
+    },
+    removeActiveOuterFrame: () => {
+      if (!canMutate() || !activeOuterFrame()) return;
+      outerFramePlugin()?.removeActiveOuterFrame?.();
+    },
+    getActiveOuterFrameStyle: () => {
+      const plugin = outerFramePlugin();
+      const active = activeOuterFrame();
+      if (!plugin || !active) return null;
+      const firstNode = plugin.getNodeRangeFirstNode?.(active.node, active.range);
+      const style = firstNode ? plugin.getStyle?.(firstNode) : null;
+      return style && typeof style === 'object' ? { ...style } : null;
+    },
     getTodo: () => (primaryNode()?.getData?.('yemindTodo') ?? null) as NodeTodo | null,
     toggleTodo: () => {
       if (!canMutate()) return;

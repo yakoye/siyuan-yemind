@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.7 — 2026-07-17
+
+- Registered the installed `simple-mind-map` native `OuterFrame` plugin without adding a separate boundary model.
+- Added single-node outer frames and continuous-sibling multi-node outer frames through the native `ADD_OUTER_FRAME` command.
+- Kept top-ancestor filtering, non-continuous range splitting, different-parent grouping, `groupId`, rendering, history, and relayout behavior in the upstream plugin.
+- Added a compact active-frame toolbar that delegates text editing, stroke/fill color, solid/dashed border, text alignment, and deletion to native plugin methods.
+- Added read-only guards at both menu/toolbar and command-adapter boundaries while preserving frame viewing.
+- Added only three upstream-backed settings: default outer-frame text and horizontal/vertical padding.
+- Added focused tests against the installed upstream range parser plus registration, command, presentation, settings, and editor-lifecycle regression tests.
+- Added no custom frame coordinates, range calculation, migration layer, persistence sanitizer, or second history stack.
+
 ## 0.5.6 — 2026-07-17
 
 - Performed a stability-only regression pass without adding new features.

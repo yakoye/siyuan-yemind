@@ -5,6 +5,7 @@ import type { YeMindSettings } from '../settings/SettingsStore';
 import { createNodePrefixContent, createNodePostfixContent, YEMIND_ICON_LIST } from './nodeDecorations';
 import { buildDragAndLayoutOptions, normalizePersistedViewData } from './dragBehavior';
 import { buildRelationOptions } from './relationConfig';
+import { buildOuterFrameOptions } from './outerFrameConfig';
 import { shouldBlockUpstreamShortcut } from '../editor/shortcutSafety';
 
 export interface CreateMindMapOptions {
@@ -23,6 +24,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
   const settings = options.settings;
   const behavior = settings ? buildDragAndLayoutOptions(settings) : null;
   const relationOptions = settings ? buildRelationOptions(settings) : null;
+  const outerFrameOptions = settings ? buildOuterFrameOptions(settings) : null;
   const viewData = settings?.restoreSavedView === false
     ? undefined
     : normalizePersistedViewData(options.viewData);
@@ -46,6 +48,9 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     defaultAssociativeLineText: relationOptions?.defaultAssociativeLineText ?? '关联',
     associativeLineIsAlwaysAboveNode: relationOptions?.associativeLineIsAlwaysAboveNode ?? true,
     enableAdjustAssociativeLinePoints: relationOptions?.enableAdjustAssociativeLinePoints ?? true,
+    defaultOuterFrameText: outerFrameOptions?.defaultOuterFrameText ?? '外框',
+    outerFramePaddingX: outerFrameOptions?.outerFramePaddingX ?? 10,
+    outerFramePaddingY: outerFrameOptions?.outerFramePaddingY ?? 10,
     enableCtrlKeyNodeSelection: true,
     useLeftKeySelectionRightKeyDrag: settings?.canvasMode === 'select',
     mousewheelAction: settings?.wheelMode === 'zoom' ? 'zoom' : 'move',

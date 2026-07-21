@@ -9,6 +9,7 @@ describe('mind-map plugin registration', () => {
       'RichText',
       'Formula',
       'AssociativeLine',
+      'OuterFrame',
       'NodeImgAdjust',
     ]));
   });

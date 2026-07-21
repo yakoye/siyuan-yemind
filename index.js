@@ -401,6 +401,9 @@ const DEFAULT_SETTINGS = {
   defaultRelationText: "关联",
   relationAlwaysAboveNode: true,
   relationAdjustPoints: true,
+  defaultOuterFrameText: "外框",
+  outerFramePaddingX: 10,
+  outerFramePaddingY: 10,
   shortcutMap: { ...DEFAULT_SHORTCUTS }
 };
 const LAYOUTS = /* @__PURE__ */ new Set(["logicalStructure", "logicalStructureLeft", "mindMap", "organizationStructure", "catalogOrganization"]);
@@ -413,6 +416,12 @@ const SHORTCUT_COMMANDS = Object.keys(DEFAULT_SHORTCUTS);
 function numberInRange(value, fallback, min, max) {
   const number = Number(value);
   return Number.isFinite(number) && number >= min && number <= max ? number : fallback;
+}
+function integerClamped(value, fallback, min, max) {
+  if (value === null || value === void 0 || value === "") return fallback;
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(number)));
 }
 function booleanOrDefault(value, fallback) {
   return typeof value === "boolean" ? value : fallback;
@@ -469,6 +478,9 @@ function normalizeSettings(value) {
     defaultRelationText: stringOrDefault(value.defaultRelationText, DEFAULT_SETTINGS.defaultRelationText),
     relationAlwaysAboveNode: booleanOrDefault(value.relationAlwaysAboveNode, DEFAULT_SETTINGS.relationAlwaysAboveNode),
     relationAdjustPoints: booleanOrDefault(value.relationAdjustPoints, DEFAULT_SETTINGS.relationAdjustPoints),
+    defaultOuterFrameText: stringOrDefault(value.defaultOuterFrameText, DEFAULT_SETTINGS.defaultOuterFrameText),
+    outerFramePaddingX: integerClamped(value.outerFramePaddingX, DEFAULT_SETTINGS.outerFramePaddingX, 0, 80),
+    outerFramePaddingY: integerClamped(value.outerFramePaddingY, DEFAULT_SETTINGS.outerFramePaddingY, 0, 80),
     shortcutMap: normalizeShortcutMap(value.shortcutMap)
   };
 }
@@ -644,6 +656,11 @@ function createSettingsDialogTemplate(settings) {
           ${textRow("默认关联线文字", "首次激活新关联线时显示的默认文字。", "defaultRelationText", settings.defaultRelationText)}
           ${switchRow("关联线始终显示在节点上层", "关闭后，未激活的关联线回到节点下方。", "relationAlwaysAboveNode", settings.relationAlwaysAboveNode)}
           ${switchRow("允许调整关联线端点和控制点", "选中关联线后可拖动端点和两个贝塞尔控制点。", "relationAdjustPoints", settings.relationAdjustPoints)}
+        </div>
+        <div class="ymz-settings-group"><h3>外框</h3>
+          ${textRow("默认外框文字", "新建外框首次激活时显示的默认文字。", "defaultOuterFrameText", settings.defaultOuterFrameText)}
+          ${numberRow("外框横向留白", "外框左右两侧相对节点范围保留的距离。", "outerFramePaddingX", settings.outerFramePaddingX, 0, 80, 1, "px")}
+          ${numberRow("外框纵向留白", "外框上下两侧相对节点范围保留的距离。", "outerFramePaddingY", settings.outerFramePaddingY, 0, 80, 1, "px")}
         </div>
         <div class="ymz-settings-group"><h3>富文本与代码</h3>
           ${switchRow("富文本选区工具栏", "选中文字后显示格式、链接、公式和代码工具。", "showRichTextToolbar", settings.showRichTextToolbar)}
@@ -8695,6 +8712,41 @@ const getNodeTreeBoundingRect = (node, x2 = 0, y2 = 0, paddingX = 0, paddingY = 
   minY = minY - y2 + paddingY;
   maxX = maxX - x2 + paddingX;
   maxY = maxY - y2 + paddingY;
+  return {
+    left: minX,
+    top: minY,
+    width: maxX - minX,
+    height: maxY - minY
+  };
+};
+const getNodeListBoundingRect = (nodeList, x2 = 0, y2 = 0, paddingX = 0, paddingY = 0) => {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  nodeList.forEach((node) => {
+    const { left, top, width: width2, height: height2 } = getNodeTreeBoundingRect(
+      node,
+      x2,
+      y2,
+      paddingX,
+      paddingY,
+      false,
+      true
+    );
+    if (left < minX) {
+      minX = left;
+    }
+    if (left + width2 > maxX) {
+      maxX = left + width2;
+    }
+    if (top < minY) {
+      minY = top;
+    }
+    if (top + height2 > maxY) {
+      maxY = top + height2;
+    }
+  });
   return {
     left: minX,
     top: minY,
@@ -48582,7 +48634,7 @@ const associativeLineControlsMethods = {
   updataAassociativeLine
 };
 const ASSOCIATIVE_LINE_TEXT_EDIT_WRAP$1 = "associative-line-text-edit-warp";
-function createText(data2) {
+function createText$1(data2) {
   let g = this.associativeLineDraw.group();
   const setActive = () => {
     if (!this.activeLine || this.activeLine[3] !== data2.node || this.activeLine[4] !== data2.toNode) {
@@ -48604,7 +48656,7 @@ function createText(data2) {
   });
   return g;
 }
-function showEditTextBox(g) {
+function showEditTextBox$1(g) {
   this.mindMap.emit("before_show_text_edit");
   this.mindMap.keyCommand.addShortcut("Enter", () => {
     this.hideEditTextBox();
@@ -48647,7 +48699,7 @@ function showEditTextBox(g) {
     focusInput(this.textEditNode);
   }
 }
-function setIsShowTextEdit(val) {
+function setIsShowTextEdit$1(val) {
   this.showTextEdit = val;
   if (val) {
     this.mindMap.keyCommand.stopCheckInSvg();
@@ -48655,15 +48707,15 @@ function setIsShowTextEdit(val) {
     this.mindMap.keyCommand.recoveryCheckInSvg();
   }
 }
-function removeTextEditEl() {
+function removeTextEditEl$1() {
   if (!this.textEditNode) return;
   const targetNode = this.mindMap.opt.customInnerElsAppendTo || document.body;
   targetNode.removeChild(this.textEditNode);
 }
-function onScale() {
+function onScale$1() {
   this.hideEditTextBox();
 }
-function updateTextEditBoxPos(g) {
+function updateTextEditBoxPos$1(g) {
   let rect = g.node.getBoundingClientRect();
   if (this.textEditNode) {
     this.textEditNode.style.minWidth = `${rect.width + 10}px`;
@@ -48672,7 +48724,7 @@ function updateTextEditBoxPos(g) {
     this.textEditNode.style.top = `${rect.top}px`;
   }
 }
-function hideEditTextBox() {
+function hideEditTextBox$1() {
   if (!this.showTextEdit) {
     return;
   }
@@ -48692,14 +48744,14 @@ function hideEditTextBox() {
   this.renderText(str, path2, text2, node, toNode3);
   this.mindMap.emit("hide_text_edit");
 }
-function getText(node, toNode3) {
+function getText$1(node, toNode3) {
   let obj = node.getData("associativeLineText");
   if (!obj) {
     return "";
   }
   return obj[toNode3.getData("uid")] || "";
 }
-function renderText(str, path2, text2, node, toNode3) {
+function renderText$1(str, path2, text2, node, toNode3) {
   if (!str) return;
   let { associativeLineTextFontSize, associativeLineTextLineHeight } = this.getStyleConfig(node, toNode3);
   text2.clear();
@@ -48717,7 +48769,7 @@ function renderText(str, path2, text2, node, toNode3) {
   });
   updateTextPos(path2, text2);
 }
-function styleText(textNode, node, toNode3) {
+function styleText$1(textNode, node, toNode3) {
   let {
     associativeLineTextColor,
     associativeLineTextFontSize,
@@ -48738,16 +48790,16 @@ function updateTextPos(path2, text2) {
   text2.y(centerPoint.y - textHeight / 2);
 }
 const associativeLineTextMethods = {
-  getText,
-  createText,
-  styleText,
-  onScale,
-  showEditTextBox,
-  setIsShowTextEdit,
-  removeTextEditEl,
-  hideEditTextBox,
-  updateTextEditBoxPos,
-  renderText,
+  getText: getText$1,
+  createText: createText$1,
+  styleText: styleText$1,
+  onScale: onScale$1,
+  showEditTextBox: showEditTextBox$1,
+  setIsShowTextEdit: setIsShowTextEdit$1,
+  removeTextEditEl: removeTextEditEl$1,
+  hideEditTextBox: hideEditTextBox$1,
+  updateTextEditBoxPos: updateTextEditBoxPos$1,
+  renderText: renderText$1,
   updateTextPos
 };
 const styleProps = [
@@ -49390,6 +49442,645 @@ class AssociativeLine {
   }
 }
 AssociativeLine.instanceName = "associativeLine";
+const parseAddNodeList = (list) => {
+  list = getTopAncestorsFomNodeList(list);
+  const cache = {};
+  const uidToParent = {};
+  list.forEach((node) => {
+    const parent = node.parent;
+    if (parent) {
+      const pUid = parent.uid;
+      uidToParent[pUid] = parent;
+      const index = node.getIndexInBrothers();
+      const data2 = {
+        node,
+        index
+      };
+      if (cache[pUid]) {
+        if (!cache[pUid].find((item) => {
+          return item.index === data2.index;
+        })) {
+          cache[pUid].push(data2);
+        }
+      } else {
+        cache[pUid] = [data2];
+      }
+    }
+  });
+  const res = [];
+  Object.keys(cache).forEach((uid) => {
+    const indexList = cache[uid];
+    const parentNode = uidToParent[uid];
+    if (indexList.length > 1) {
+      const rangeList = indexList.map((item) => {
+        return item.index;
+      }).sort((a, b) => {
+        return a - b;
+      });
+      const minIndex = rangeList[0];
+      const maxIndex = rangeList[rangeList.length - 1];
+      let curStart = -1;
+      let curEnd = -1;
+      for (let i = minIndex; i <= maxIndex; i++) {
+        if (rangeList.includes(i)) {
+          if (curStart === -1) {
+            curStart = i;
+          }
+          curEnd = i;
+        } else {
+          if (curStart !== -1 && curEnd !== -1) {
+            res.push({
+              node: parentNode,
+              range: [curStart, curEnd]
+            });
+          }
+          curStart = -1;
+          curEnd = -1;
+        }
+      }
+      if (curStart !== -1 && curEnd !== -1) {
+        res.push({
+          node: parentNode,
+          range: [curStart, curEnd]
+        });
+      }
+    } else {
+      res.push({
+        node: parentNode,
+        range: [indexList[0].index, indexList[0].index]
+      });
+    }
+  });
+  return res;
+};
+const getNodeOuterFrameList = (node) => {
+  const children = node.children;
+  if (!children || children.length <= 0) return;
+  const res = [];
+  const map2 = {};
+  children.forEach((item, index) => {
+    const outerFrameData = item.getData("outerFrame");
+    if (!outerFrameData) return;
+    const groupId = outerFrameData.groupId;
+    if (groupId) {
+      if (!map2[groupId]) {
+        map2[groupId] = [];
+      }
+      map2[groupId].push({
+        node: item,
+        index
+      });
+    } else {
+      res.push({
+        nodeList: [item],
+        range: [index, index]
+      });
+    }
+  });
+  Object.keys(map2).forEach((id) => {
+    const list = map2[id];
+    res.push({
+      nodeList: list.map((item) => {
+        return item.node;
+      }),
+      range: [list[0].index, list[list.length - 1].index]
+    });
+  });
+  return res;
+};
+const OUTER_FRAME_TEXT_EDIT_WRAP$1 = "outer-frame-text-edit-warp";
+function createText(el, cur, range) {
+  const g = this.draw.group();
+  const setActive = () => {
+    if (!this.activeOuterFrame || this.activeOuterFrame.el !== el) {
+      this.setActiveOuterFrame(el, cur, range, g);
+    }
+  };
+  g.click((e) => {
+    e.stopPropagation();
+    setActive();
+  });
+  g.on("dblclick", (e) => {
+    e.stopPropagation();
+    setActive();
+    this.showEditTextBox(g);
+  });
+  return g;
+}
+function showEditTextBox(g) {
+  this.mindMap.emit("before_show_text_edit");
+  this.mindMap.keyCommand.addShortcut("Enter", () => {
+    this.hideEditTextBox();
+  });
+  if (!this.textEditNode) {
+    this.textEditNode = document.createElement("div");
+    this.textEditNode.className = OUTER_FRAME_TEXT_EDIT_WRAP$1;
+    this.textEditNode.style.cssText = `
+      position: fixed;
+      box-sizing: border-box;
+      background-color: #fff;
+      box-shadow: 0 0 20px rgba(0,0,0,.5);
+      outline: none; 
+      word-break: break-all;
+    `;
+    this.textEditNode.setAttribute("contenteditable", true);
+    this.textEditNode.addEventListener("keyup", (e) => {
+      e.stopPropagation();
+    });
+    this.textEditNode.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+    const targetNode = this.mindMap.opt.customInnerElsAppendTo || document.body;
+    targetNode.appendChild(this.textEditNode);
+  }
+  const { node, range } = this.activeOuterFrame;
+  const style = this.getStyle(this.getNodeRangeFirstNode(node, range));
+  const [pl, pt, pr, pb] = style.textFillPadding;
+  let { defaultOuterFrameText, nodeTextEditZIndex } = this.mindMap.opt;
+  let scale = this.mindMap.view.scale;
+  let text2 = this.getText(this.getNodeRangeFirstNode(node, range));
+  let textLines = (text2 || defaultOuterFrameText).split(/\n/gim);
+  this.textEditNode.style.padding = `${pl}px ${pt}px ${pr}px ${pb}px`;
+  this.textEditNode.style.fontFamily = style.fontFamily;
+  this.textEditNode.style.fontSize = style.fontSize * scale + "px";
+  this.textEditNode.style.fontWeight = style.fontWeight;
+  this.textEditNode.style.fontStyle = style.fontStyle;
+  this.textEditNode.style.lineHeight = textLines.length > 1 ? style.lineHeight : "normal";
+  this.textEditNode.style.zIndex = nodeTextEditZIndex;
+  this.textEditNode.innerHTML = textLines.join("<br>");
+  this.textEditNode.style.display = "block";
+  this.updateTextEditBoxPos(g);
+  this.setIsShowTextEdit(true);
+  if (text2 === "" || text2 === defaultOuterFrameText) {
+    selectAllInput(this.textEditNode);
+  } else {
+    focusInput(this.textEditNode);
+  }
+}
+function setIsShowTextEdit(val) {
+  this.showTextEdit = val;
+  if (val) {
+    this.mindMap.keyCommand.stopCheckInSvg();
+  } else {
+    this.mindMap.keyCommand.recoveryCheckInSvg();
+  }
+}
+function removeTextEditEl() {
+  if (!this.textEditNode) return;
+  const targetNode = this.mindMap.opt.customInnerElsAppendTo || document.body;
+  targetNode.removeChild(this.textEditNode);
+}
+function onScale() {
+  this.hideEditTextBox();
+}
+function updateTextEditBoxPos(g) {
+  let rect = g.node.getBoundingClientRect();
+  if (this.textEditNode) {
+    this.textEditNode.style.minWidth = `${rect.width}px`;
+    this.textEditNode.style.minHeight = `${rect.height}px`;
+    this.textEditNode.style.left = `${rect.left}px`;
+    this.textEditNode.style.top = `${rect.top}px`;
+  }
+}
+function hideEditTextBox() {
+  if (!this.showTextEdit) {
+    return;
+  }
+  let { el, textNode, node, range } = this.activeOuterFrame;
+  let str = getStrWithBrFromHtml(this.textEditNode.innerHTML);
+  let isDefaultText = str === this.mindMap.opt.defaultOuterFrameText;
+  str = isDefaultText ? "" : str;
+  this.updateActiveOuterFrame({
+    text: str
+  });
+  this.textEditNode.style.display = "none";
+  this.textEditNode.innerHTML = "";
+  this.setIsShowTextEdit(false);
+  this.renderText(str, el, textNode, node, range);
+  this.mindMap.emit("hide_text_edit");
+}
+function renderText(str, rect, textNode, node, range) {
+  if (!str) return;
+  textNode.clear();
+  const shape = new Rect();
+  textNode.add(shape);
+  const style = this.getStyle(this.getNodeRangeFirstNode(node, range));
+  const [pl, pt, pr, pb] = style.textFillPadding;
+  let textArr = str.replace(/\n$/g, "").split(/\n/gim);
+  const g = new G();
+  textArr.forEach((item, index) => {
+    if (item === "") {
+      item = "\uFEFF";
+    }
+    let text2 = new Text$2().text(item);
+    text2.y(style.fontSize * style.lineHeight * index);
+    this.styleText(text2, style);
+    g.add(text2);
+  });
+  textNode.add(g);
+  const { width: textWidth, height: textHeight } = textNode.bbox();
+  const totalWidth = textWidth + pl + pr;
+  const totalHeight = textHeight + pt + pb;
+  shape.size(totalWidth, totalHeight).x(0).dy(0);
+  this.styleTextShape(shape, style);
+  let tx = 0;
+  switch (style.textAlign) {
+    case "left":
+      tx = rect.x();
+      break;
+    case "center":
+      tx = rect.x() + rect.width() / 2 - totalWidth / 2;
+      break;
+    case "right":
+      tx = rect.x() + rect.width() - totalWidth;
+      break;
+  }
+  const ty = rect.y() - totalHeight;
+  shape.x(tx);
+  shape.y(ty);
+  g.x(tx + pl);
+  g.y(ty + pt);
+}
+function styleTextShape(shape, style) {
+  shape.fill({
+    color: style.textFill
+  }).radius(style.textFillRadius);
+}
+function styleText(textNode, style) {
+  textNode.fill({
+    color: style.color
+  }).css({
+    "font-family": style.fontFamily,
+    "font-size": style.fontSize + "px",
+    "font-weight": style.fontWeight,
+    "font-style": style.fontStyle
+  });
+}
+function getText(node) {
+  const data2 = node.getData("outerFrame");
+  return data2 && data2.text ? data2.text : "";
+}
+const outerFrameTextMethods = {
+  getText,
+  createText,
+  styleTextShape,
+  styleText,
+  onScale,
+  showEditTextBox,
+  setIsShowTextEdit,
+  removeTextEditEl,
+  hideEditTextBox,
+  updateTextEditBoxPos,
+  renderText
+};
+const defaultStyle = {
+  // 外框圆角大小
+  radius: 5,
+  // 外框边框宽度
+  strokeWidth: 2,
+  // 外框边框颜色
+  strokeColor: "#0984e3",
+  // 外框边框虚线样式
+  strokeDasharray: "5,5",
+  // 外框填充颜色
+  fill: "rgba(9,132,227,0.05)",
+  // 外框文字字号
+  fontSize: 14,
+  // 外框文字字体
+  fontFamily: "微软雅黑, Microsoft YaHei",
+  // 加粗
+  fontWeight: "normal",
+  // bold
+  // 斜体
+  fontStyle: "normal",
+  // italic
+  // 外框文字颜色
+  color: "#fff",
+  // 外框文字行高
+  lineHeight: 1.2,
+  // 外框文字背景
+  textFill: "#0984e3",
+  // 外框文字圆角
+  textFillRadius: 5,
+  // 外框文字矩内边距，左上右下
+  textFillPadding: [5, 5, 5, 5],
+  // 外框文字水平显示位置，相对于外框
+  textAlign: "left"
+  // left、center、right
+};
+const OUTER_FRAME_TEXT_EDIT_WRAP = "outer-frame-text-edit-warp";
+class OuterFrame {
+  constructor(opt = {}) {
+    this.mindMap = opt.mindMap;
+    this.draw = null;
+    this.createDrawContainer();
+    this.isNotRenderOuterFrames = false;
+    this.textNodeList = [];
+    this.outerFrameElList = [];
+    this.activeOuterFrame = null;
+    this.textEditNode = null;
+    this.showTextEdit = false;
+    Object.keys(outerFrameTextMethods).forEach((item) => {
+      this[item] = outerFrameTextMethods[item].bind(this);
+    });
+    this.mindMap.addEditNodeClass(OUTER_FRAME_TEXT_EDIT_WRAP);
+    this.bindEvent();
+  }
+  // 创建容器
+  createDrawContainer() {
+    this.draw = this.mindMap.draw.group();
+    this.draw.addClass("smm-outer-frame-container");
+    this.draw.back();
+    this.draw.forward();
+  }
+  // 绑定事件
+  bindEvent() {
+    this.renderOuterFrames = this.renderOuterFrames.bind(this);
+    this.mindMap.on("node_tree_render_end", this.renderOuterFrames);
+    this.mindMap.on("data_change", this.renderOuterFrames);
+    this.clearActiveOuterFrame = this.clearActiveOuterFrame.bind(this);
+    this.mindMap.on("draw_click", this.clearActiveOuterFrame);
+    this.mindMap.on("node_click", this.clearActiveOuterFrame);
+    this.mindMap.on("scale", this.onScale);
+    this.onBeforeDestroy = this.onBeforeDestroy.bind(this);
+    this.mindMap.on("beforeDestroy", this.onBeforeDestroy);
+    this.addOuterFrame = this.addOuterFrame.bind(this);
+    this.mindMap.command.add("ADD_OUTER_FRAME", this.addOuterFrame);
+    this.removeActiveOuterFrame = this.removeActiveOuterFrame.bind(this);
+    this.mindMap.keyCommand.addShortcut(
+      "Del|Backspace",
+      this.removeActiveOuterFrame
+    );
+  }
+  // 解绑事件
+  unBindEvent() {
+    this.mindMap.off("node_tree_render_end", this.renderOuterFrames);
+    this.mindMap.off("data_change", this.renderOuterFrames);
+    this.mindMap.off("draw_click", this.clearActiveOuterFrame);
+    this.mindMap.off("node_click", this.clearActiveOuterFrame);
+    this.mindMap.off("scale", this.onScale);
+    this.mindMap.off("beforeDestroy", this.onBeforeDestroy);
+    this.mindMap.command.remove("ADD_OUTER_FRAME", this.addOuterFrame);
+    this.mindMap.keyCommand.removeShortcut(
+      "Del|Backspace",
+      this.removeActiveOuterFrame
+    );
+  }
+  // 实例销毁时清除关联线文字编辑框
+  onBeforeDestroy() {
+    this.hideEditTextBox();
+    this.removeTextEditEl();
+  }
+  // 给节点添加外框数据
+  /*
+  config: {
+    text: '',
+    radius: 5,
+    strokeWidth: 2,
+    strokeColor: '#0984e3',
+    strokeDasharray: '5,5',
+    fill: 'rgba(9,132,227,0.05)'
+  }
+  */
+  addOuterFrame(appointNodes, config2 = {}) {
+    appointNodes = formatDataToArray(appointNodes);
+    const activeNodeList = this.mindMap.renderer.activeNodeList;
+    if (activeNodeList.length <= 0 && appointNodes.length <= 0) {
+      return;
+    }
+    let nodeList = appointNodes.length > 0 ? appointNodes : activeNodeList;
+    nodeList = nodeList.filter((node) => {
+      return !node.isRoot && !node.isGeneralization;
+    });
+    const list = parseAddNodeList(nodeList);
+    list.forEach(({ node, range }) => {
+      const childNodeList = node.children.slice(range[0], range[1] + 1);
+      const groupId = createUid();
+      childNodeList.forEach((child) => {
+        let outerFrame = child.getData("outerFrame");
+        if (outerFrame) {
+          outerFrame = {
+            ...outerFrame,
+            ...config2,
+            groupId
+          };
+        } else {
+          outerFrame = {
+            ...config2,
+            groupId
+          };
+        }
+        this.mindMap.execCommand("SET_NODE_DATA", child, {
+          outerFrame
+        });
+      });
+    });
+  }
+  // 获取当前激活的外框
+  getActiveOuterFrame() {
+    return this.activeOuterFrame ? {
+      ...this.activeOuterFrame
+    } : null;
+  }
+  // 删除当前激活的外框
+  removeActiveOuterFrame() {
+    if (!this.activeOuterFrame) return;
+    const { node, range } = this.activeOuterFrame;
+    this.getRangeNodeList(node, range).forEach((child) => {
+      this.mindMap.execCommand("SET_NODE_DATA", child, {
+        outerFrame: null
+      });
+    });
+    this.mindMap.emit("outer_frame_delete");
+  }
+  // 删除当前激活外框的文字
+  removeActiveOuterFrameText() {
+    this.updateActiveOuterFrame({
+      text: ""
+    });
+  }
+  // 更新当前激活的外框
+  updateActiveOuterFrame(config2 = {}) {
+    if (!this.activeOuterFrame) return;
+    this.isNotRenderOuterFrames = true;
+    const { el, node, range } = this.activeOuterFrame;
+    let newStrokeDasharray = "";
+    this.getRangeNodeList(node, range).forEach((node2) => {
+      const outerFrame = node2.getData("outerFrame");
+      const newData = {
+        ...outerFrame,
+        ...config2
+      };
+      newStrokeDasharray = newData.strokeDasharray;
+      this.mindMap.execCommand("SET_NODE_DATA", node2, {
+        outerFrame: newData
+      });
+    });
+    el.cacheStyle = {
+      dasharray: newStrokeDasharray
+    };
+    this.updateOuterFrameStyle();
+  }
+  // 更新当前激活外框的样式
+  updateOuterFrameStyle() {
+    const { el, node, range, textNode } = this.activeOuterFrame;
+    const firstNode = this.getNodeRangeFirstNode(node, range);
+    const styleConfig = this.getStyle(firstNode);
+    this.styleOuterFrame(el, {
+      ...styleConfig,
+      strokeDasharray: "none"
+    });
+    const text2 = this.getText(firstNode);
+    this.renderText(text2, el, textNode, node, range);
+  }
+  // 获取某个节点指定范围的带外框的子节点列表
+  getRangeNodeList(node, range) {
+    return node.children.slice(range[0], range[1] + 1).filter((child) => {
+      return child.getData("outerFrame");
+    });
+  }
+  // 获取某个节点指定范围的带外框的第一个子节点
+  getNodeRangeFirstNode(node, range) {
+    return node.children[range[0]];
+  }
+  // 渲染外框
+  renderOuterFrames() {
+    if (this.isNotRenderOuterFrames) {
+      this.isNotRenderOuterFrames = false;
+      return;
+    }
+    this.clearActiveOuterFrame();
+    this.clearTextNodes();
+    this.clearOuterFrameElList();
+    let tree = this.mindMap.renderer.root;
+    if (!tree) return;
+    const t = this.mindMap.draw.transform();
+    const { outerFramePaddingX, outerFramePaddingY } = this.mindMap.opt;
+    walk(
+      tree,
+      null,
+      (cur) => {
+        if (!cur) return;
+        const outerFrameList = getNodeOuterFrameList(cur);
+        if (outerFrameList && outerFrameList.length > 0) {
+          outerFrameList.forEach(({ nodeList, range }) => {
+            if (range[0] === -1 || range[1] === -1) return;
+            const { left, top, width: width2, height: height2 } = getNodeListBoundingRect(nodeList);
+            if (!Number.isFinite(left) || !Number.isFinite(top) || !Number.isFinite(width2) || !Number.isFinite(height2))
+              return;
+            const el = this.createOuterFrameEl(
+              (left - outerFramePaddingX - this.mindMap.elRect.left - t.translateX) / t.scaleX,
+              (top - outerFramePaddingY - this.mindMap.elRect.top - t.translateY) / t.scaleY,
+              (width2 + outerFramePaddingX * 2) / t.scaleX,
+              (height2 + outerFramePaddingY * 2) / t.scaleY,
+              this.getStyle(nodeList[0])
+              // 使用第一个节点的外框样式
+            );
+            const textNode = this.createText(el, cur, range);
+            this.textNodeList.push(textNode);
+            this.renderText(this.getText(nodeList[0]), el, textNode, cur, range);
+            el.on("click", (e) => {
+              e.stopPropagation();
+              this.setActiveOuterFrame(el, cur, range, textNode);
+            });
+          });
+        }
+      },
+      () => {
+      },
+      true,
+      0
+    );
+  }
+  // 激活外框
+  setActiveOuterFrame(el, node, range, textNode) {
+    this.mindMap.execCommand("CLEAR_ACTIVE_NODE");
+    this.clearActiveOuterFrame();
+    this.activeOuterFrame = {
+      el,
+      node,
+      range,
+      textNode
+    };
+    el.stroke({
+      dasharray: "none"
+    });
+    if (!this.getText(this.getNodeRangeFirstNode(node, range))) {
+      this.renderText(
+        this.mindMap.opt.defaultOuterFrameText,
+        el,
+        textNode,
+        node,
+        range
+      );
+    }
+    this.mindMap.emit("outer_frame_active", el, node, range);
+  }
+  // 清除当前激活的外框
+  clearActiveOuterFrame() {
+    if (!this.activeOuterFrame) return;
+    const { el, textNode, node, range } = this.activeOuterFrame;
+    el.stroke({
+      dasharray: el.cacheStyle.dasharray || defaultStyle.strokeDasharray
+    });
+    this.hideEditTextBox();
+    if (!this.getText(this.getNodeRangeFirstNode(node, range))) {
+      textNode.clear();
+    }
+    this.activeOuterFrame = null;
+    this.mindMap.emit("outer_frame_deactivate");
+  }
+  // 获取指定外框的样式
+  getStyle(node) {
+    return { ...defaultStyle, ...node.getData("outerFrame") || {} };
+  }
+  // 创建外框元素
+  createOuterFrameEl(x2, y2, width2, height2, styleConfig = {}) {
+    const el = this.draw.rect().size(width2, height2).x(x2).y(y2);
+    this.styleOuterFrame(el, styleConfig);
+    el.cacheStyle = {
+      dasharray: styleConfig.strokeDasharray
+    };
+    this.outerFrameElList.push(el);
+    return el;
+  }
+  // 设置外框样式
+  styleOuterFrame(el, styleConfig) {
+    el.radius(styleConfig.radius).stroke({
+      width: styleConfig.strokeWidth,
+      color: styleConfig.strokeColor,
+      dasharray: styleConfig.strokeDasharray
+    }).fill({
+      color: styleConfig.fill
+    });
+  }
+  // 清除文本元素
+  clearTextNodes() {
+    this.textNodeList.forEach((item) => {
+      item.remove();
+    });
+  }
+  // 清除外框元素
+  clearOuterFrameElList() {
+    this.outerFrameElList.forEach((item) => {
+      item.remove();
+    });
+    this.outerFrameElList = [];
+    this.activeOuterFrame = null;
+  }
+  // 插件被移除前做的事情
+  beforePluginRemove() {
+    this.mindMap.deleteEditNodeClass(OUTER_FRAME_TEXT_EDIT_WRAP);
+    this.unBindEvent();
+  }
+  // 插件被卸载前做的事情
+  beforePluginDestroy() {
+    this.mindMap.deleteEditNodeClass(OUTER_FRAME_TEXT_EDIT_WRAP);
+    this.unBindEvent();
+  }
+}
+OuterFrame.instanceName = "outerFrame";
+OuterFrame.defaultStyle = defaultStyle;
 class NodeImgAdjust {
   //  构造函数
   constructor({ mindMap }) {
@@ -50636,7 +51327,7 @@ class YeMindRichText extends RichText {
   }
 }
 __publicField(YeMindRichText, "instanceName", "richText");
-const plugins = [Drag, Select, MiniMap, Search, Export, YeMindRichText, Formula, AssociativeLine, NodeImgAdjust];
+const plugins = [Drag, Select, MiniMap, Search, Export, YeMindRichText, Formula, AssociativeLine, OuterFrame, NodeImgAdjust];
 let registered = false;
 function configureMindMapPlugins(settings) {
   const target = YeMindRichText;
@@ -50827,6 +51518,19 @@ function buildRelationOptions(settings) {
     enableAdjustAssociativeLinePoints: settings.relationAdjustPoints
   };
 }
+function normalizeOuterFramePadding(value, fallback) {
+  if (value === null || value === void 0 || value === "") return fallback;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(80, Math.max(0, Math.round(parsed)));
+}
+function buildOuterFrameOptions(settings) {
+  return {
+    defaultOuterFrameText: settings.defaultOuterFrameText,
+    outerFramePaddingX: normalizeOuterFramePadding(settings.outerFramePaddingX, 10),
+    outerFramePaddingY: normalizeOuterFramePadding(settings.outerFramePaddingY, 10)
+  };
+}
 const READONLY_ALLOWED_SHORTCUTS = /* @__PURE__ */ new Set([
   "Control+c",
   "Control+=",
@@ -50851,6 +51555,7 @@ function createMindMap(options) {
   const settings = options.settings;
   const behavior = settings ? buildDragAndLayoutOptions(settings) : null;
   const relationOptions = settings ? buildRelationOptions(settings) : null;
+  const outerFrameOptions = settings ? buildOuterFrameOptions(settings) : null;
   const viewData = (settings == null ? void 0 : settings.restoreSavedView) === false ? void 0 : normalizePersistedViewData(options.viewData);
   return new MindMap2({
     el: options.el,
@@ -50871,6 +51576,9 @@ function createMindMap(options) {
     defaultAssociativeLineText: (relationOptions == null ? void 0 : relationOptions.defaultAssociativeLineText) ?? "关联",
     associativeLineIsAlwaysAboveNode: (relationOptions == null ? void 0 : relationOptions.associativeLineIsAlwaysAboveNode) ?? true,
     enableAdjustAssociativeLinePoints: (relationOptions == null ? void 0 : relationOptions.enableAdjustAssociativeLinePoints) ?? true,
+    defaultOuterFrameText: (outerFrameOptions == null ? void 0 : outerFrameOptions.defaultOuterFrameText) ?? "外框",
+    outerFramePaddingX: (outerFrameOptions == null ? void 0 : outerFrameOptions.outerFramePaddingX) ?? 10,
+    outerFramePaddingY: (outerFrameOptions == null ? void 0 : outerFrameOptions.outerFramePaddingY) ?? 10,
     enableCtrlKeyNodeSelection: true,
     useLeftKeySelectionRightKeyDrag: (settings == null ? void 0 : settings.canvasMode) === "select",
     mousewheelAction: (settings == null ? void 0 : settings.wheelMode) === "zoom" ? "zoom" : "move",
@@ -51087,6 +51795,12 @@ function createCommandAdapter(mindMap) {
     var _a;
     return Boolean(primaryIsRegular() && !((_a = primaryNode()) == null ? void 0 : _a.isRoot));
   };
+  const outerFramePlugin = () => mindMap.outerFrame;
+  const activeOuterFrame = () => {
+    var _a, _b, _c2;
+    return ((_b = (_a = outerFramePlugin()) == null ? void 0 : _a.getActiveOuterFrame) == null ? void 0 : _b.call(_a)) ?? ((_c2 = outerFramePlugin()) == null ? void 0 : _c2.activeOuterFrame) ?? null;
+  };
+  const canAddOuterFrame = () => Boolean(outerFramePlugin()) && canMutate() && activeNodes().some((node) => !(node == null ? void 0 : node.isRoot) && !(node == null ? void 0 : node.isGeneralization));
   return {
     isReadonly,
     hasRichTextSelection,
@@ -51279,6 +51993,38 @@ function createCommandAdapter(mindMap) {
     removeActiveRelation: () => {
       var _a, _b;
       if (canMutate()) (_b = (_a = mindMap.associativeLine) == null ? void 0 : _a.removeLine) == null ? void 0 : _b.call(_a);
+    },
+    canAddOuterFrame,
+    addOuterFrame: () => {
+      if (!canAddOuterFrame()) return;
+      mindMap.execCommand("ADD_OUTER_FRAME");
+    },
+    hasActiveOuterFrame: () => Boolean(activeOuterFrame()),
+    editActiveOuterFrameText: () => {
+      var _a;
+      if (!canMutate()) return;
+      const plugin = outerFramePlugin();
+      const active = activeOuterFrame();
+      if (active == null ? void 0 : active.textNode) (_a = plugin == null ? void 0 : plugin.showEditTextBox) == null ? void 0 : _a.call(plugin, active.textNode);
+    },
+    updateActiveOuterFrame: (config2) => {
+      var _a, _b;
+      if (!canMutate() || !activeOuterFrame()) return;
+      (_b = (_a = outerFramePlugin()) == null ? void 0 : _a.updateActiveOuterFrame) == null ? void 0 : _b.call(_a, config2);
+    },
+    removeActiveOuterFrame: () => {
+      var _a, _b;
+      if (!canMutate() || !activeOuterFrame()) return;
+      (_b = (_a = outerFramePlugin()) == null ? void 0 : _a.removeActiveOuterFrame) == null ? void 0 : _b.call(_a);
+    },
+    getActiveOuterFrameStyle: () => {
+      var _a, _b;
+      const plugin = outerFramePlugin();
+      const active = activeOuterFrame();
+      if (!plugin || !active) return null;
+      const firstNode = (_a = plugin.getNodeRangeFirstNode) == null ? void 0 : _a.call(plugin, active.node, active.range);
+      const style = firstNode ? (_b = plugin.getStyle) == null ? void 0 : _b.call(plugin, firstNode) : null;
+      return style && typeof style === "object" ? { ...style } : null;
     },
     getTodo: () => {
       var _a, _b;
@@ -51751,6 +52497,7 @@ function createNodeMenuAvailability(input) {
     codeBlock: editable && (input.hasRichTextSelection || input.hasCodeBlock),
     summary: editable,
     relation: editable && regularNode,
+    outerFrame: editable && input.canAddOuterFrame,
     move: editable && nonRoot && regularNode,
     resetLayout: editable,
     remove: editable && nonRoot,
@@ -51767,7 +52514,8 @@ function openNodeContextMenu(event, commands, options = {}) {
     primaryIsRoot: Boolean(primary == null ? void 0 : primary.isRoot),
     primaryIsGeneralization: Boolean(primary == null ? void 0 : primary.isGeneralization),
     hasRichTextSelection: commands.hasRichTextSelection(),
-    hasCodeBlock: Boolean(commands.getCodeBlock())
+    hasCodeBlock: Boolean(commands.getCodeBlock()),
+    canAddOuterFrame: commands.canAddOuterFrame()
   });
   const menu = new siyuan.Menu("siyuan-yemind-zen-node-menu");
   menu.addItem({ icon: "iconEdit", label: "编辑节点", accelerator: "F2", disabled: !availability.edit, click: () => commands.edit() });
@@ -51811,6 +52559,7 @@ function openNodeContextMenu(event, commands, options = {}) {
     disabled: !availability.summary,
     click: () => summaryAction.action === "add" ? commands.addSummary() : commands.removeSummary()
   });
+  menu.addItem({ icon: "iconSelect", label: "添加外框", disabled: !availability.outerFrame, click: () => commands.addOuterFrame() });
   menu.addItem({ icon: "iconRight", label: "关联线", accelerator: "Ctrl+Alt+L", disabled: !availability.relation, click: () => options.onRelation ? options.onRelation() : commands.startRelation() });
   menu.addSeparator();
   menu.addItem({ icon: "iconUp", label: "上移节点", disabled: !availability.move, click: () => commands.moveUp() });
@@ -52042,6 +52791,23 @@ function createEditorTemplate(title) {
           <button data-relation-action="edit">编辑文字</button>
           <button class="is-danger" data-relation-action="delete">删除关联线</button>
           <button data-relation-action="cancel">取消</button>
+        </div>
+
+        <div class="ymz-outer-frame-panel" data-role="outer-frame-panel" hidden data-readonly="false">
+          <span data-role="outer-frame-hint"></span>
+          <button data-outer-frame-action="edit">编辑文字</button>
+          <label title="边框颜色"><span>边框</span><input type="color" data-outer-frame-setting="strokeColor" value="#0984e3"></label>
+          <label title="填充颜色"><span>填充</span><input type="color" data-outer-frame-setting="fill" value="#0984e3"></label>
+          <select data-outer-frame-setting="strokeDasharray" aria-label="外框线型">
+            <option value="5,5">虚线</option>
+            <option value="none">实线</option>
+          </select>
+          <select data-outer-frame-setting="textAlign" aria-label="外框文字对齐">
+            <option value="left">左对齐</option>
+            <option value="center">居中</option>
+            <option value="right">右对齐</option>
+          </select>
+          <button class="is-danger" data-outer-frame-action="delete">删除外框</button>
         </div>
 
         <div class="ymz-floating ymz-statusbar">
@@ -52339,6 +53105,53 @@ function createRelationPresentation(input) {
   }
   return { mode: "idle", hidden: true, hint: "" };
 }
+const DEFAULT_STROKE = "#0984e3";
+const DEFAULT_FILL = "#0984e3";
+function colorToHex(value, fallback) {
+  if (typeof value !== "string") return fallback;
+  const color = value.trim();
+  const short = /^#([0-9a-f]{3})$/i.exec(color);
+  if (short) return `#${short[1].split("").map((item) => item + item).join("").toLowerCase()}`;
+  const full = /^#([0-9a-f]{6})(?:[0-9a-f]{2})?$/i.exec(color);
+  if (full) return `#${full[1].toLowerCase()}`;
+  const rgb2 = /^rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)/i.exec(color);
+  if (!rgb2) return fallback;
+  const parts = rgb2.slice(1, 4).map((part) => Math.min(255, Math.max(0, Math.round(Number(part)))));
+  return `#${parts.map((part) => part.toString(16).padStart(2, "0")).join("")}`;
+}
+function hexToRgba(value, alpha = 0.08) {
+  const hex2 = colorToHex(value, DEFAULT_FILL).slice(1);
+  const red = Number.parseInt(hex2.slice(0, 2), 16);
+  const green = Number.parseInt(hex2.slice(2, 4), 16);
+  const blue = Number.parseInt(hex2.slice(4, 6), 16);
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+function createOuterFramePresentation(input) {
+  const style = input.activeStyle;
+  if (!style) {
+    return {
+      hidden: true,
+      readonly: input.readonly,
+      hint: "",
+      strokeColor: DEFAULT_STROKE,
+      fill: DEFAULT_FILL,
+      strokeDasharray: "5,5",
+      textAlign: "left"
+    };
+  }
+  const text2 = typeof style.text === "string" ? style.text.trim() : "";
+  const dasharray = style.strokeDasharray === "none" ? "none" : "5,5";
+  const align = style.textAlign === "center" || style.textAlign === "right" ? style.textAlign : "left";
+  return {
+    hidden: false,
+    readonly: input.readonly,
+    hint: text2 ? `外框已选中 · ${text2}` : "外框已选中",
+    strokeColor: colorToHex(style.strokeColor, DEFAULT_STROKE),
+    fill: colorToHex(style.fill, DEFAULT_FILL),
+    strokeDasharray: dasharray,
+    textAlign: align
+  };
+}
 function createToolbarAvailability(input) {
   const editable = !input.readonly;
   const hasSelection = input.selectedCount > 0;
@@ -52387,6 +53200,8 @@ class YeMindEditor {
     __publicField(this, "selectionCountEl");
     __publicField(this, "relationPanelEl");
     __publicField(this, "relationHintEl");
+    __publicField(this, "outerFramePanelEl");
+    __publicField(this, "outerFrameHintEl");
     __publicField(this, "richTextToolbar", null);
     __publicField(this, "settingsInitialized", false);
     __publicField(this, "viewMode", "map");
@@ -52492,6 +53307,8 @@ class YeMindEditor {
     this.selectionCountEl = this.options.container.querySelector('[data-role="selection-count"]');
     this.relationPanelEl = this.options.container.querySelector('[data-role="relation-panel"]');
     this.relationHintEl = this.options.container.querySelector('[data-role="relation-hint"]');
+    this.outerFramePanelEl = this.options.container.querySelector('[data-role="outer-frame-panel"]');
+    this.outerFrameHintEl = this.options.container.querySelector('[data-role="outer-frame-hint"]');
     const layoutSelect = this.options.container.querySelector('[data-action="layout"]');
     if (layoutSelect) layoutSelect.value = this.current.layout;
     let runtimeData = this.current.data;
@@ -52573,6 +53390,19 @@ class YeMindEditor {
         this.updateRelationPresentation();
         return;
       }
+      const outerFrameButton = event.target.closest("[data-outer-frame-action]");
+      if (outerFrameButton && this.commands) {
+        const outerFrameAction = outerFrameButton.dataset.outerFrameAction;
+        if (outerFrameAction === "edit" && !this.commands.isReadonly()) {
+          this.commands.editActiveOuterFrameText();
+          this.updateOuterFramePresentation();
+        }
+        if (outerFrameAction === "delete" && !this.commands.isReadonly()) {
+          this.commands.removeActiveOuterFrame();
+          this.hideOuterFramePresentation();
+        }
+        return;
+      }
       const button = event.target.closest("[data-action]");
       if (!button || !this.commands || !this.map) return;
       const action = button.dataset.action;
@@ -52638,6 +53468,16 @@ class YeMindEditor {
           this.openHelp();
           break;
       }
+    });
+    this.rootEl.addEventListener("change", (event) => {
+      const control = event.target.closest("[data-outer-frame-setting]");
+      if (!control || !this.commands || this.commands.isReadonly()) return;
+      const key = control.dataset.outerFrameSetting;
+      if (!key) return;
+      const rawValue = control.value;
+      const value = key === "fill" ? hexToRgba(rawValue) : rawValue;
+      this.commands.updateActiveOuterFrame({ [key]: value });
+      this.updateOuterFramePresentation();
     });
     this.searchInputEl.addEventListener("input", () => {
       var _a2;
@@ -52732,6 +53572,9 @@ class YeMindEditor {
     });
     this.map.on("associative_line_click", () => this.updateRelationPresentation());
     this.map.on("associative_line_deactivate", () => this.updateRelationPresentation());
+    this.map.on("outer_frame_active", () => this.updateOuterFramePresentation());
+    this.map.on("outer_frame_deactivate", () => this.hideOuterFramePresentation());
+    this.map.on("outer_frame_delete", () => this.hideOuterFramePresentation());
     this.map.on("node_click", () => window.setTimeout(() => this.updateRelationPresentation(), 0));
     this.map.on("draw_click", () => window.setTimeout(() => this.updateRelationPresentation(), 0));
     this.map.on("search_info_change", (info) => this.updateSearchInfo(info));
@@ -52765,8 +53608,36 @@ class YeMindEditor {
       button.hidden = presentation.mode === "creating" ? action !== "cancel" : presentation.mode === "active" ? action === "cancel" : true;
     });
   }
+  updateOuterFramePresentation() {
+    if (!this.commands || !this.outerFramePanelEl || !this.outerFrameHintEl) return;
+    const presentation = createOuterFramePresentation({
+      activeStyle: this.commands.getActiveOuterFrameStyle(),
+      readonly: this.commands.isReadonly()
+    });
+    this.outerFramePanelEl.hidden = presentation.hidden;
+    this.outerFramePanelEl.dataset.readonly = String(presentation.readonly);
+    this.outerFrameHintEl.textContent = presentation.hint;
+    const values = {
+      strokeColor: presentation.strokeColor,
+      fill: presentation.fill,
+      strokeDasharray: presentation.strokeDasharray,
+      textAlign: presentation.textAlign
+    };
+    this.outerFramePanelEl.querySelectorAll("[data-outer-frame-setting]").forEach((control) => {
+      const key = control.dataset.outerFrameSetting ?? "";
+      if (values[key]) control.value = values[key];
+      control.disabled = presentation.readonly;
+    });
+    this.outerFramePanelEl.querySelectorAll("[data-outer-frame-action]").forEach((button) => {
+      button.hidden = presentation.readonly;
+      button.disabled = presentation.readonly;
+    });
+  }
+  hideOuterFramePresentation() {
+    if (this.outerFramePanelEl) this.outerFramePanelEl.hidden = true;
+  }
   applySettings(settings) {
-    var _a, _b, _c2, _d2, _e, _f;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i;
     const firstApply = !this.settingsInitialized;
     this.settings = settings;
     (_a = this.richTextToolbar) == null ? void 0 : _a.setEnabled(settings.showRichTextToolbar && this.rootEl.dataset.readonly !== "true");
@@ -52785,6 +53656,7 @@ class YeMindEditor {
     this.rootEl.style.setProperty("--ymz-code-font-size", `${settings.codeBlockFontSize}px`);
     const behavior = buildDragAndLayoutOptions(settings);
     const relationOptions = buildRelationOptions(settings);
+    const outerFrameOptions = buildOuterFrameOptions(settings);
     (_b = this.map) == null ? void 0 : _b.updateConfig({
       useLeftKeySelectionRightKeyDrag: settings.canvasMode === "select",
       mousewheelAction: settings.wheelMode === "zoom" ? "zoom" : "move",
@@ -52795,11 +53667,14 @@ class YeMindEditor {
       minZoomRatio: behavior.minZoomRatio,
       maxZoomRatio: behavior.maxZoomRatio,
       fitPadding: behavior.fitPadding,
-      ...relationOptions
+      ...relationOptions,
+      ...outerFrameOptions
     });
     (_c2 = this.map) == null ? void 0 : _c2.setThemeConfig(behavior.themeConfig);
     (_f = (_e = (_d2 = this.map) == null ? void 0 : _d2.associativeLine) == null ? void 0 : _e.renderAllLines) == null ? void 0 : _f.call(_e);
+    (_i = (_h = (_g = this.map) == null ? void 0 : _g.outerFrame) == null ? void 0 : _h.renderOuterFrames) == null ? void 0 : _i.call(_h);
     this.updateRelationPresentation();
+    this.updateOuterFramePresentation();
     this.updateSelectionPresentation();
     if (firstApply) {
       this.settingsInitialized = true;
@@ -53022,6 +53897,7 @@ class YeMindEditor {
     this.map.setMode(enabled ? "readonly" : "edit");
     this.updateToolbarAvailability();
     this.updateRelationPresentation();
+    this.updateOuterFramePresentation();
   }
   toggleZen(enabled) {
     this.rootEl.dataset.zen = String(enabled);
@@ -53042,7 +53918,7 @@ class YeMindEditor {
         <p><b>双击</b> 编辑节点</p>
         <p><b>Tab</b> 添加子节点，<b>Enter</b> 添加同级节点</p>
         <p><b>选中文字</b> 使用格式、行内链接、挖空、公式与代码工具</p>
-        <p><b>右键节点</b> 直接切换待办，打开批注、概要与关联线</p>
+        <p><b>右键节点</b> 直接切换待办，打开批注、概要、外框与关联线</p>
         <p><b>平移优先</b>：平移优先：左键拖动画布，Ctrl/Cmd + 左键框选</p>
         <p><b>选择优先</b>：选择优先：左键框选，右键拖动画布</p>
         <p><b>Ctrl/Cmd + 单击</b>：Ctrl/Cmd + 单击：增减节点选择</p>

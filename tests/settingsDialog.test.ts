@@ -19,6 +19,10 @@ describe('custom settings dialog', () => {
     expect(html).toContain('二级节点纵向间距');
     expect(html).toContain('下级节点纵向间距');
     expect(html).toContain('恢复上次视图位置');
+    expect(html).toContain('外框');
+    expect(html).toContain('默认外框文字');
+    expect(html).toContain('外框横向留白');
+    expect(html).toContain('外框纵向留白');
     expect(html).toContain('富文本与代码');
     expect(html).toContain('快捷键');
     expect(html).toContain('录制');

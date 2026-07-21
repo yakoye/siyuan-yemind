@@ -3,6 +3,7 @@ import { Dialog, showMessage } from 'siyuan';
 import { createMindMap } from '../core/createMindMap';
 import { buildDragAndLayoutOptions, normalizePersistedViewData, stripCustomPositions } from '../core/dragBehavior';
 import { buildRelationOptions } from '../core/relationConfig';
+import { buildOuterFrameOptions } from '../core/outerFrameConfig';
 import { sanitizeAssociativeLines } from '../core/relationData';
 import { createCommandAdapter, type YeMindCommands } from '../core/commands';
 import { configureNodeDecorations } from '../core/nodeDecorations';
@@ -21,6 +22,7 @@ import { isEditableTarget, matchesShortcut } from './shortcuts';
 import { createSelectionPresentation, promoteNodeToPrimary, shouldBlockRootDeleteShortcut } from './selectionPresentation';
 import { SaveRevisionTracker } from './saveRevision';
 import { createRelationPresentation } from './relationPresentation';
+import { createOuterFramePresentation, hexToRgba } from './outerFramePresentation';
 import { createToolbarAvailability } from './toolbarAvailability';
 import { resolveLinkNavigation } from './linkNavigation';
 
@@ -56,6 +58,8 @@ export class YeMindEditor {
   private selectionCountEl!: HTMLElement;
   private relationPanelEl!: HTMLElement;
   private relationHintEl!: HTMLElement;
+  private outerFramePanelEl!: HTMLElement;
+  private outerFrameHintEl!: HTMLElement;
   private richTextToolbar: RichTextToolbar | null = null;
   private settingsInitialized = false;
   private viewMode: ViewMode = 'map';
@@ -143,6 +147,8 @@ export class YeMindEditor {
     this.selectionCountEl = this.options.container.querySelector('[data-role="selection-count"]') as HTMLElement;
     this.relationPanelEl = this.options.container.querySelector('[data-role="relation-panel"]') as HTMLElement;
     this.relationHintEl = this.options.container.querySelector('[data-role="relation-hint"]') as HTMLElement;
+    this.outerFramePanelEl = this.options.container.querySelector('[data-role="outer-frame-panel"]') as HTMLElement;
+    this.outerFrameHintEl = this.options.container.querySelector('[data-role="outer-frame-hint"]') as HTMLElement;
     const layoutSelect = this.options.container.querySelector<HTMLSelectElement>('[data-action="layout"]');
     if (layoutSelect) layoutSelect.value = this.current.layout;
 
@@ -232,6 +238,20 @@ export class YeMindEditor {
         return;
       }
 
+      const outerFrameButton = (event.target as HTMLElement).closest<HTMLElement>('[data-outer-frame-action]');
+      if (outerFrameButton && this.commands) {
+        const outerFrameAction = outerFrameButton.dataset.outerFrameAction;
+        if (outerFrameAction === 'edit' && !this.commands.isReadonly()) {
+          this.commands.editActiveOuterFrameText();
+          this.updateOuterFramePresentation();
+        }
+        if (outerFrameAction === 'delete' && !this.commands.isReadonly()) {
+          this.commands.removeActiveOuterFrame();
+          this.hideOuterFramePresentation();
+        }
+        return;
+      }
+
       const button = (event.target as HTMLElement).closest<HTMLElement>('[data-action]');
       if (!button || !this.commands || !this.map) return;
       const action = button.dataset.action;
@@ -257,6 +277,17 @@ export class YeMindEditor {
         case 'fullscreen': void this.toggleFullscreen(); break;
         case 'help': this.openHelp(); break;
       }
+    });
+
+    this.rootEl.addEventListener('change', (event) => {
+      const control = (event.target as HTMLElement).closest<HTMLInputElement | HTMLSelectElement>('[data-outer-frame-setting]');
+      if (!control || !this.commands || this.commands.isReadonly()) return;
+      const key = control.dataset.outerFrameSetting;
+      if (!key) return;
+      const rawValue = control.value;
+      const value = key === 'fill' ? hexToRgba(rawValue) : rawValue;
+      this.commands.updateActiveOuterFrame({ [key]: value });
+      this.updateOuterFramePresentation();
     });
 
     this.searchInputEl.addEventListener('input', () => {
@@ -355,6 +386,9 @@ export class YeMindEditor {
     });
     this.map.on('associative_line_click', () => this.updateRelationPresentation());
     this.map.on('associative_line_deactivate', () => this.updateRelationPresentation());
+    this.map.on('outer_frame_active', () => this.updateOuterFramePresentation());
+    this.map.on('outer_frame_deactivate', () => this.hideOuterFramePresentation());
+    this.map.on('outer_frame_delete', () => this.hideOuterFramePresentation());
     this.map.on('node_click', () => window.setTimeout(() => this.updateRelationPresentation(), 0));
     this.map.on('draw_click', () => window.setTimeout(() => this.updateRelationPresentation(), 0));
     this.map.on('search_info_change', (info: { currentIndex: number; total: number }) => this.updateSearchInfo(info));
@@ -392,6 +426,36 @@ export class YeMindEditor {
     });
   }
 
+  private updateOuterFramePresentation(): void {
+    if (!this.commands || !this.outerFramePanelEl || !this.outerFrameHintEl) return;
+    const presentation = createOuterFramePresentation({
+      activeStyle: this.commands.getActiveOuterFrameStyle(),
+      readonly: this.commands.isReadonly(),
+    });
+    this.outerFramePanelEl.hidden = presentation.hidden;
+    this.outerFramePanelEl.dataset.readonly = String(presentation.readonly);
+    this.outerFrameHintEl.textContent = presentation.hint;
+    const values: Record<string, string> = {
+      strokeColor: presentation.strokeColor,
+      fill: presentation.fill,
+      strokeDasharray: presentation.strokeDasharray,
+      textAlign: presentation.textAlign,
+    };
+    this.outerFramePanelEl.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-outer-frame-setting]').forEach((control) => {
+      const key = control.dataset.outerFrameSetting ?? '';
+      if (values[key]) control.value = values[key];
+      control.disabled = presentation.readonly;
+    });
+    this.outerFramePanelEl.querySelectorAll<HTMLButtonElement>('[data-outer-frame-action]').forEach((button) => {
+      button.hidden = presentation.readonly;
+      button.disabled = presentation.readonly;
+    });
+  }
+
+  private hideOuterFramePresentation(): void {
+    if (this.outerFramePanelEl) this.outerFramePanelEl.hidden = true;
+  }
+
   private applySettings(settings: YeMindSettings): void {
     const firstApply = !this.settingsInitialized;
     this.settings = settings;
@@ -411,6 +475,7 @@ export class YeMindEditor {
     this.rootEl.style.setProperty('--ymz-code-font-size', `${settings.codeBlockFontSize}px`);
     const behavior = buildDragAndLayoutOptions(settings);
     const relationOptions = buildRelationOptions(settings);
+    const outerFrameOptions = buildOuterFrameOptions(settings);
     this.map?.updateConfig({
       useLeftKeySelectionRightKeyDrag: settings.canvasMode === 'select',
       mousewheelAction: settings.wheelMode === 'zoom' ? 'zoom' : 'move',
@@ -422,10 +487,13 @@ export class YeMindEditor {
       maxZoomRatio: behavior.maxZoomRatio,
       fitPadding: behavior.fitPadding,
       ...relationOptions,
+      ...outerFrameOptions,
     });
     this.map?.setThemeConfig(behavior.themeConfig);
     (this.map as any)?.associativeLine?.renderAllLines?.();
+    (this.map as any)?.outerFrame?.renderOuterFrames?.();
     this.updateRelationPresentation();
+    this.updateOuterFramePresentation();
     this.updateSelectionPresentation();
 
     if (firstApply) {
@@ -663,6 +731,7 @@ export class YeMindEditor {
     this.map.setMode(enabled ? 'readonly' : 'edit');
     this.updateToolbarAvailability();
     this.updateRelationPresentation();
+    this.updateOuterFramePresentation();
   }
 
   private toggleZen(enabled: boolean): void {
@@ -686,7 +755,7 @@ export class YeMindEditor {
         <p><b>双击</b> 编辑节点</p>
         <p><b>Tab</b> 添加子节点，<b>Enter</b> 添加同级节点</p>
         <p><b>选中文字</b> 使用格式、行内链接、挖空、公式与代码工具</p>
-        <p><b>右键节点</b> 直接切换待办，打开批注、概要与关联线</p>
+        <p><b>右键节点</b> 直接切换待办，打开批注、概要、外框与关联线</p>
         <p><b>平移优先</b>：平移优先：左键拖动画布，Ctrl/Cmd + 左键框选</p>
         <p><b>选择优先</b>：选择优先：左键框选，右键拖动画布</p>
         <p><b>Ctrl/Cmd + 单击</b>：Ctrl/Cmd + 单击：增减节点选择</p>
