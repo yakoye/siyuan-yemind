@@ -48,6 +48,7 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
             activate: () => activateTab(),
             close: () => this.tab.close(),
             updateTitle: (title) => this.tab.updateTitle(title),
+            focusNode: (uid) => state.editor?.focusNode(uid),
             isAlive: () => !state.destroyed
               && container.isConnected
               && (this.tab.headElement ? this.tab.headElement.isConnected : true),
@@ -69,6 +70,8 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
             diagnostics: host.diagnostics,
             onMissing: () => this.tab.close(),
           });
+          const pendingUid = host.consumePendingNodeTarget(resolvedMapId);
+          if (pendingUid) window.requestAnimationFrame(() => state.editor?.focusNode(pendingUid));
         },
         (error) => {
           state.unregister?.();

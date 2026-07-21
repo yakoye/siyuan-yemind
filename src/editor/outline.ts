@@ -165,10 +165,11 @@ function rowHtml(row: OutlineRow, readonly: boolean): string {
   const branch = row.expanded ? "▾" : "▸";
   const label = row.text || "空节点";
   const encodedOriginal = encodeURIComponent(row.html);
+  const leaf = !row.hasChildren && !row.isRoot && !row.isGeneralization;
   const toggle = row.hasChildren
     ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle aria-label="${row.expanded ? "折叠" : "展开"}">${branch}</button>`
-    : '<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" aria-hidden="true"></span>';
-  return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml(row.uid)}" data-outline-root="${row.isRoot}" data-outline-generalization="${Boolean(row.isGeneralization)}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" data-outline-drag-source="${readonly || row.isRoot || row.isGeneralization ? "false" : "true"}" style="--ymz-outline-depth:${row.depth}">${toggle}<div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
+    : `<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" aria-hidden="true">${leaf ? '<span class="ymz-outline-row__leaf-dot"></span>' : ''}</span>`;
+  return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml(row.uid)}" data-outline-root="${row.isRoot}" data-outline-generalization="${Boolean(row.isGeneralization)}" data-outline-leaf="${leaf}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" data-outline-drag-source="${readonly || row.isRoot || row.isGeneralization ? "false" : "true"}" style="--ymz-outline-depth:${row.depth}">${toggle}<div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
 }
 
 export function renderOutlineHtml(
@@ -239,6 +240,8 @@ export function patchOutlineTree(
       );
       row.dataset.outlineRoot = String(data.isRoot);
       row.dataset.outlineGeneralization = String(Boolean(data.isGeneralization));
+      const leaf = !data.hasChildren && !data.isRoot && !data.isGeneralization;
+      row.dataset.outlineLeaf = String(leaf);
       row.dataset.outlineHasChildren = String(data.hasChildren);
       row.dataset.outlineExpanded = String(data.expanded);
       row.dataset.outlineDragSource = String(!readonly && !data.isRoot && !data.isGeneralization);
@@ -266,7 +269,22 @@ export function patchOutlineTree(
         placeholder.className =
           "ymz-outline-row__branch ymz-outline-row__branch--placeholder";
         placeholder.setAttribute("aria-hidden", "true");
+        if (leaf) {
+          const dot = document.createElement("span");
+          dot.className = "ymz-outline-row__leaf-dot";
+          placeholder.appendChild(dot);
+        }
         existingToggle.replaceWith(placeholder);
+      }
+
+      const placeholder = row.querySelector<HTMLElement>(".ymz-outline-row__branch--placeholder");
+      if (placeholder) {
+        const dot = placeholder.querySelector<HTMLElement>(".ymz-outline-row__leaf-dot");
+        if (leaf && !dot) {
+          const nextDot = document.createElement("span");
+          nextDot.className = "ymz-outline-row__leaf-dot";
+          placeholder.appendChild(nextDot);
+        } else if (!leaf && dot) dot.remove();
       }
 
       const editor = row.querySelector<HTMLElement>("[data-outline-editor]");

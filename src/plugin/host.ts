@@ -14,6 +14,8 @@ export interface YeMindPluginHost {
   tabRegistry: OpenMapTabRegistry;
   whenReady(): Promise<void>;
   openMap(mapId: string): Promise<void>;
+  openMapAtNode(mapId: string, nodeUid: string): Promise<void>;
+  consumePendingNodeTarget(mapId: string): string | undefined;
   createMap(): Promise<void>;
   renameMap(mapId: string): Promise<void>;
   deleteMap(mapId: string): Promise<void>;

@@ -6,8 +6,8 @@ import {
 } from '../src/editor/projectControls';
 
 describe('project controls', () => {
-  it('exposes structure, theme and line style only as canvas-level project actions', () => {
-    expect(CANVAS_PROJECT_MENU_LABELS).toEqual(['结构', '主题', '线型']);
+  it('exposes structure, theme, line style and style as canvas-level project actions', () => {
+    expect(CANVAS_PROJECT_MENU_LABELS).toEqual(['结构', '主题', '线型', '样式']);
   });
 
   it('provides dedicated toolbar icons', () => {

@@ -1,5 +1,6 @@
 import type { NodeComment, NodeTodo } from '../content/nodeContentState';
 import type { NodeNote } from '../content/nodeNoteState';
+import type { ProjectStyle } from '../editor/projectStyle';
 
 export interface MindMapNodeData {
   text: string;
@@ -31,6 +32,7 @@ export interface MapCheckpointSnapshot {
   layout: string;
   theme: string;
   lineStyle: 'curve' | 'straight' | 'direct';
+  projectStyle?: ProjectStyle;
   viewData?: Record<string, unknown>;
 }
 
@@ -42,6 +44,7 @@ export interface YeMindMapDocument {
   layout: string;
   theme: string;
   lineStyle: 'curve' | 'straight' | 'direct';
+  projectStyle: ProjectStyle;
   data: MindMapTree;
   viewData?: Record<string, unknown>;
 }

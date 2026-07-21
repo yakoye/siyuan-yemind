@@ -20,7 +20,7 @@ export function clipboardIcon(kind: 'copy' | 'cut' | 'paste'): string {
   return '<svg class="ymz-menu-icon ymz-icon-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="7" width="11" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 }
 
-export const CANVAS_PROJECT_MENU_LABELS = ['结构', '主题', '线型'] as const;
+export const CANVAS_PROJECT_MENU_LABELS = ['结构', '主题', '线型', '样式'] as const;
 
 export type ProjectControlKind = 'layout' | 'theme';
 
@@ -44,6 +44,11 @@ export function lineStyleIcon(style: unknown): string {
 
 export function summaryIcon(): string {
   return '<svg class="ymz-menu-icon ymz-icon-summary" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c-2 0-3 2-3 4v2c0 1.5-.7 2.5-2 3 1.3.5 2 1.5 2 3v1c0 2 1 3 3 3M17 4c2 0 3 2 3 4v2c0 1.5.7 2.5 2 3-1.3.5-2 1.5-2 3v1c0 2-1 3-3 3M8 12h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+}
+
+
+export function projectStyleIcon(): string {
+  return '<svg class="ymz-project-icon ymz-icon-project-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v13H4z" fill="none" stroke="currentColor" stroke-width="1.6" rx="2"/><path d="M7 9h10M7 12h7M7 15h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="18" cy="16.5" r="2.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><path d="M18 14.9v3.2M16.4 16.5h3.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
 }
 
 export function nodeStyleIcon(): string {

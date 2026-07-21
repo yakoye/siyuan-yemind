@@ -1,4 +1,5 @@
 import type { MindMapTree, YeMindMapDocument } from './types';
+import { DEFAULT_PROJECT_STYLE } from '../editor/projectStyle';
 
 export function createDefaultTree(title: string): MindMapTree {
   return {
@@ -24,6 +25,7 @@ export function createDefaultMap(
     layout: 'logicalStructure',
     theme: 'kmind-default',
     lineStyle: 'curve',
+    projectStyle: { ...DEFAULT_PROJECT_STYLE },
     data: createDefaultTree(normalizedTitle),
   };
 }

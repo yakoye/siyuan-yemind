@@ -2,6 +2,7 @@ import { createDefaultMap } from './defaultMap';
 import type { MapCheckpointSnapshot, MapStorageDocument, RepositoryStorage, YeMindMapDocument } from './types';
 import { normalizeLineStyle, normalizeThemePresetId } from '../core/themePresets';
 import { normalizeLayoutId } from '../core/layoutPresets';
+import { normalizeProjectStyle } from '../editor/projectStyle';
 
 interface RepositoryOptions {
   now?: () => number;
@@ -34,6 +35,7 @@ function normalizeMap(value: unknown): NormalizedMapResult {
     layout: normalizeLayoutId(candidate.layout),
     theme: normalizeThemePresetId(candidate.theme),
     lineStyle: normalizeLineStyle(candidate.lineStyle),
+    projectStyle: normalizeProjectStyle(candidate.projectStyle),
     data: normalizedTree.tree,
     viewData: candidate.viewData ? clone(candidate.viewData) : undefined,
   };
@@ -41,7 +43,8 @@ function normalizeMap(value: unknown): NormalizedMapResult {
     || normalizedTree.changed
     || map.layout !== candidate.layout
     || map.theme !== candidate.theme
-    || map.lineStyle !== candidate.lineStyle;
+    || map.lineStyle !== candidate.lineStyle
+    || JSON.stringify(map.projectStyle) !== JSON.stringify(candidate.projectStyle ?? {});
   return { map, changed };
 }
 
@@ -164,7 +167,7 @@ export class MapRepository {
     });
   }
 
-  async update(id: string, patch: Partial<Pick<YeMindMapDocument, 'data' | 'layout' | 'theme' | 'lineStyle' | 'viewData'>>): Promise<void> {
+  async update(id: string, patch: Partial<Pick<YeMindMapDocument, 'data' | 'layout' | 'theme' | 'lineStyle' | 'projectStyle' | 'viewData'>>): Promise<void> {
     await this.ensureLoaded();
     await this.enqueueMutation((draft) => {
       const map = draft.maps.find((item) => item.id === id);
@@ -173,6 +176,7 @@ export class MapRepository {
       if (patch.layout !== undefined) map.layout = normalizeLayoutId(patch.layout);
       if (patch.theme !== undefined) map.theme = normalizeThemePresetId(patch.theme);
       if (patch.lineStyle !== undefined) map.lineStyle = normalizeLineStyle(patch.lineStyle);
+      if (patch.projectStyle !== undefined) map.projectStyle = normalizeProjectStyle(patch.projectStyle);
       if (patch.viewData !== undefined) map.viewData = clone(patch.viewData);
       map.updatedAt = this.now();
       return { changed: true, value: undefined };
@@ -188,6 +192,7 @@ export class MapRepository {
       map.layout = normalizeLayoutId(snapshot.layout);
       map.theme = normalizeThemePresetId(snapshot.theme);
       map.lineStyle = normalizeLineStyle(snapshot.lineStyle);
+      map.projectStyle = normalizeProjectStyle(snapshot.projectStyle);
       map.viewData = snapshot.viewData ? clone(snapshot.viewData) : undefined;
       map.updatedAt = this.now();
       return { changed: true, value: undefined };

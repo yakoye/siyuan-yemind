@@ -37,6 +37,11 @@ export interface OutlinePointerDropIntent extends OutlineDropIntent {
   desiredDepth: number;
 }
 
+export function isOutlinePointerInDragZone(input: { clientX: number; textLeft: number; tolerance?: number }): boolean {
+  const tolerance = Math.max(0, input.tolerance ?? 0);
+  return input.clientX < input.textLeft - tolerance;
+}
+
 export function resolveOutlineDropIntent(
   input: OutlineDropIntentInput,
 ): OutlineDropIntent | null {

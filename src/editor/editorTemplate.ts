@@ -1,6 +1,6 @@
 import { normalizeLineStyle, themeOptionsHtml } from '../core/themePresets';
 import { layoutOptionsHtml } from '../core/layoutPresets';
-import { canvasModeIcon, historyIcon, lineStyleIcon, lockIcon, meditationIcon, nodeStyleIcon, projectControlIcon, redoIcon, searchIcon, undoIcon } from './projectControls';
+import { canvasModeIcon, historyIcon, lineStyleIcon, lockIcon, meditationIcon, nodeStyleIcon, projectControlIcon, projectStyleIcon, redoIcon, searchIcon, undoIcon } from './projectControls';
 export function createEditorTemplate(title: string, theme: unknown = 'kmind-default', lineStyle: unknown = 'curve'): string {
   return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
@@ -33,22 +33,24 @@ export function createEditorTemplate(title: string, theme: unknown = 'kmind-defa
               <option value="direct"${normalizeLineStyle(lineStyle) === 'direct' ? ' selected' : ''}>直线</option>
             </select>
           </label>
-          <button class="ymz-project-control ymz-project-button" data-action="node-style" title="节点样式">${nodeStyleIcon()}<span>节点样式</span></button>
+          <button class="ymz-project-control ymz-project-button" data-action="project-style" title="整图样式">${projectStyleIcon()}<span>样式</span></button>
           <span class="ymz-save-state" data-role="save-state">已保存</span>
         </div>
 
-        <div class="ymz-search-panel" data-role="search-panel" hidden>
-          <div class="ymz-search-panel__row">
-            <input class="b3-text-field" data-role="search-input" placeholder="搜索节点内容">
-            <button data-search-action="previous" title="上一个">↑</button>
-            <button data-search-action="next" title="下一个">↓</button>
-            <span data-role="search-info">0 / 0</span>
-            <button data-search-action="close" title="关闭">×</button>
+        <div class="ymz-search-panel" data-role="search-panel" data-replace-expanded="false" hidden>
+          <div class="ymz-search-panel__row ymz-search-panel__row--find">
+            <button class="ymz-search-panel__disclosure" data-search-action="toggle-replace" title="展开替换" aria-label="展开替换" aria-expanded="false">›</button>
+            <input class="b3-text-field" data-role="search-input" placeholder="查找">
+            <span data-role="search-info">无结果</span>
+            <button data-search-action="previous" title="上一个" aria-label="上一个">↑</button>
+            <button data-search-action="next" title="下一个" aria-label="下一个">↓</button>
+            <button data-search-action="close" title="关闭" aria-label="关闭">×</button>
           </div>
-          <div class="ymz-search-panel__row">
-            <input class="b3-text-field" data-role="replace-input" placeholder="替换为">
-            <button data-search-action="replace">替换</button>
-            <button data-search-action="replace-all">全部替换</button>
+          <div class="ymz-search-panel__row ymz-search-panel__row--replace" data-role="replace-row" hidden>
+            <span class="ymz-search-panel__replace-indent" aria-hidden="true"></span>
+            <input class="b3-text-field" data-role="replace-input" placeholder="替换">
+            <button data-search-action="replace" title="替换当前">替换</button>
+            <button data-search-action="replace-all" title="全部替换">全部</button>
           </div>
         </div>
 
@@ -65,6 +67,14 @@ export function createEditorTemplate(title: string, theme: unknown = 'kmind-defa
         </div>
 
         <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式" aria-label="退出禅模式"><span class="ymz-zen-exit__idle"><span class="ymz-zen-exit__icon" aria-hidden="true">${meditationIcon()}</span></span><span class="ymz-zen-exit__label"><span class="ymz-zen-exit__icon" aria-hidden="true">${meditationIcon()}</span><span>退出禅模式</span></span></button>
+
+        <aside class="ymz-project-style-panel" data-role="project-style-panel" aria-label="整图样式" hidden>
+          <header class="ymz-project-style-panel__header"><strong>样式</strong><button type="button" data-project-style-action="close" aria-label="关闭样式">×</button></header>
+          <section><h4>密度</h4><p>应用到整张导图的所有节点。</p><div class="ymz-density-options" role="group" aria-label="节点密度"><button type="button" data-project-density="compact"><strong>紧凑</strong><small>分支更紧凑</small></button><button type="button" data-project-density="default"><strong>默认</strong><small>平衡间距</small></button><button type="button" data-project-density="comfortable"><strong>舒展</strong><small>布局更舒展</small></button></div></section>
+          <section><label class="ymz-project-style-panel__switch"><span><strong>彩虹连线</strong><small>应用分支颜色</small></span><input type="checkbox" data-project-style="rainbowLines"></label></section>
+          <section><h4>背景色</h4><p>未设置时使用主题。</p><div class="ymz-background-options"><button type="button" data-project-background="" title="主题背景">主题</button><button type="button" data-project-background="#ffffff" title="白色"></button><button type="button" data-project-background="#e2e8f0" title="岩灰"></button><button type="button" data-project-background="#ffe7ba" title="暖色"></button><button type="button" data-project-background="#c8f0dc" title="薄荷"></button><button type="button" data-project-background="#d7e8ff" title="天空"></button><button type="button" data-project-background="#f7cbd5" title="玫瑰"></button><button type="button" data-project-background="#0f172a" title="深色"></button></div><label class="ymz-project-style-panel__custom"><span>自定义</span><input type="color" data-project-style="backgroundColor" value="#f8fafc"></label></section>
+          <footer><button type="button" data-project-style-action="reset">恢复主题默认</button></footer>
+        </aside>
 
         <aside class="ymz-node-style-panel" data-role="node-style-panel" aria-label="节点样式" hidden>
           <header class="ymz-node-style-panel__header"><strong>节点样式</strong><button type="button" data-node-style-action="close" aria-label="关闭节点样式">×</button></header>

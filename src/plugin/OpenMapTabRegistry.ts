@@ -2,6 +2,7 @@ export interface OpenMapTabHandle {
   activate(): void;
   close(): void;
   updateTitle(title: string): void;
+  focusNode?(uid: string): void;
   isAlive?(): boolean;
 }
 
@@ -22,6 +23,14 @@ export class OpenMapTabRegistry {
     return true;
   }
 
+
+  focusNode(mapId: string, uid: string): boolean {
+    const handle = this.getLiveHandle(mapId);
+    if (!handle || !handle.focusNode) return false;
+    handle.activate();
+    handle.focusNode(uid);
+    return true;
+  }
   close(mapId: string): boolean {
     const handle = this.getLiveHandle(mapId);
     if (!handle) return false;

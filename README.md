@@ -4,8 +4,10 @@ YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-
 
 - Plugin folder and ID: `siyuan-yemind-zen`
 - Display name: `YeMind Zen`
-- Version: `0.6.3`
+- Version: `0.6.4`
 
+
+v0.6.4 adds a find-first expandable replace surface, subtle outline leaf markers, a text-safe left-gutter structure drag boundary, SiYuan global-search results for map and node content, and a whole-map Style surface for density, rainbow lines and background. Whole-map style persists through map storage and checkpoints while node-context Node Style remains local to selected nodes.
 
 v0.6.3 replaces the bottom Select/Drag text with shared pointer and hand icons, adds badge-safe adaptive note/comment previews with comment timestamps, keeps top and bottom tools usable in narrow tabs, compacts the Note/Comment dialogs, unifies both Node Style entries, and reorganizes the node context menu into one-scroll grouped sections. The complete accumulated regression matrix remains a release gate.
 

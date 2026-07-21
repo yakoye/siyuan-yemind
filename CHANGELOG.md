@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.4 — 2026-07-20
+
+- Added a find-first project search surface whose left disclosure button reveals or hides the replace row without rebuilding the active query input.
+- Added subtle leaf-node dots to split/full outline while excluding Root, branches and generalizations.
+- Restricted outline hierarchy dragging to the blank gutter left of node text; pointer gestures starting on text remain editing and selection gestures.
+- Integrated YeMind map title, node text, notes, comments, tags, links and TODO text into the SiYuan global-search surface, with click-through node navigation.
+- Renamed the top project control to `样式`, kept node-context `节点样式` distinct, and added whole-map density, rainbow-line and background controls to the top and blank-canvas menu.
+- Persisted whole-map style through maps, checkpoints and restore while retaining theme inheritance for legacy maps.
+- Added permanent v0.6.4 find/replace, drag-boundary, global-search, project-style transaction and persistence tests, plus the complete historical regression matrix.
+- Aligned package, manifest, runtime and diagnostic version identity at 0.6.4.
+
 ## 0.6.3 — 2026-07-20
 
 - Replaced the bottom `选/拖` text with shared pointer and hand SVG icons; settings now uses the same icon choices and keeps the complete Select-first/Drag-first guidance.

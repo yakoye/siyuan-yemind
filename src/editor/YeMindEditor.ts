@@ -54,6 +54,7 @@ import {
 } from "./outline";
 import {
   resolveOutlinePointerDropIntent,
+  isOutlinePointerInDragZone,
   isOutlineTextSelectionTarget,
   shouldStartOutlinePointerDrag,
   type OutlineDropPosition,
@@ -91,6 +92,9 @@ import {
 } from "../ui/nodeImageInput";
 import { NodeHoverPreview } from "../ui/nodeHoverPreview";
 import { NodeStylePanel } from "../ui/nodeStylePanel";
+import { ProjectStylePanel } from "../ui/projectStylePanel";
+import { setSearchReplaceExpanded } from "./searchPanelState";
+import { normalizeProjectStyle, resolveProjectAppearance } from "./projectStyle";
 import { NodeQuickActionsController } from "./nodeQuickActions";
 import { canvasModeIcon, lineStyleIcon } from "./projectControls";
 import { normalizeNodeNote } from "../content/nodeNoteState";
@@ -158,6 +162,7 @@ export class YeMindEditor {
   private richTextToolbar: RichTextToolbar | null = null;
   private nodeHoverPreview: NodeHoverPreview | null = null;
   private nodeStylePanel: NodeStylePanel | null = null;
+  private projectStylePanel: ProjectStylePanel | null = null;
   private nodeQuickActions: NodeQuickActionsController | null = null;
   private canvasRightDrag: CanvasRightDragController | null = null;
   private outlineRichText: OutlineRichTextController | null = null;
@@ -191,6 +196,11 @@ export class YeMindEditor {
     if (!row || row.dataset.outlineDragSource !== "true") return;
     const sourceUid = row.dataset.outlineUid ?? "";
     if (!sourceUid || row.dataset.outlineRoot === "true") return;
+    const editor = row.querySelector<HTMLElement>("[data-outline-editor]");
+    if (!editor || !isOutlinePointerInDragZone({
+      clientX: event.clientX,
+      textLeft: editor.getBoundingClientRect().left,
+    })) return;
     const fromEditor = Boolean(target.closest("[data-outline-editor]"));
     const editing = isOutlineTextSelectionTarget(
       target,
@@ -440,6 +450,12 @@ export class YeMindEditor {
     this.mount();
   }
 
+  focusNode(uid: string): void {
+    if (!uid || !this.commands) return;
+    this.commands.goToNode(uid);
+    this.activateOutlineUid(uid);
+  }
+
   resize(): void {
     this.scheduleSafeResize();
   }
@@ -470,6 +486,8 @@ export class YeMindEditor {
     this.nodeHoverPreview = null;
     this.nodeStylePanel?.destroy();
     this.nodeStylePanel = null;
+    this.projectStylePanel?.destroy();
+    this.projectStylePanel = null;
     this.nodeQuickActions?.destroy();
     this.nodeQuickActions = null;
     this.canvasRightDrag?.destroy();
@@ -620,6 +638,16 @@ export class YeMindEditor {
       mode: () => this.settings.canvasMode,
     });
     this.nodeStylePanel = new NodeStylePanel(this.rootEl, this.commands);
+    this.projectStylePanel = new ProjectStylePanel(
+      this.rootEl,
+      this.current.projectStyle,
+      () => Boolean(this.commands?.isReadonly()),
+      (style) => {
+        this.current.projectStyle = normalizeProjectStyle(style);
+        this.applyMapAppearance();
+        this.scheduleSave();
+      },
+    );
     this.nodeQuickActions = new NodeQuickActionsController({
       root: this.rootEl,
       canvas: this.canvasEl,
@@ -835,6 +863,9 @@ export class YeMindEditor {
           break;
         case "node-style":
           this.nodeStylePanel?.show();
+          break;
+        case "project-style":
+          this.projectStylePanel?.show();
           break;
         case "readonly":
           this.setReadonly(this.rootEl.dataset.readonly !== "true");
@@ -1166,6 +1197,7 @@ export class YeMindEditor {
       onLayoutChange: (layout) => this.setLayout(layout),
       onThemeChange: (theme) => this.setTheme(theme),
       onLineStyleChange: (lineStyle) => this.setLineStyle(lineStyle),
+      onProjectStyle: () => this.projectStylePanel?.show(),
       onAction: (action) =>
         this.options.diagnostics.record(
           "context-menu",
@@ -1311,11 +1343,16 @@ export class YeMindEditor {
     this.appearanceMode = appearanceMode;
     this.rootEl.dataset.themePreset = appearance.presetId;
     this.rootEl.dataset.appearance = appearanceMode;
+    const projectAppearance = resolveProjectAppearance({
+      style: this.current.projectStyle,
+      themeConfig: appearance.themeConfig,
+      rainbow: appearance.rainbow,
+    });
     this.canvasEl.style.backgroundColor = String(
-      appearance.themeConfig.backgroundColor ?? "",
+      projectAppearance.themeConfig.backgroundColor ?? "",
     );
-    this.map.setThemeConfig(appearance.themeConfig, true);
-    this.map.updateConfig({ rainbowLinesConfig: appearance.rainbow });
+    this.map.setThemeConfig(projectAppearance.themeConfig, true);
+    this.map.updateConfig({ rainbowLinesConfig: projectAppearance.rainbow });
     if (render) this.map.render();
     (this.map as any)?.associativeLine?.renderAllLines?.();
     (this.map as any)?.outerFrame?.renderOuterFrames?.();
@@ -1489,6 +1526,7 @@ export class YeMindEditor {
       remove: state.remove,
       "reset-layout": state.resetLayout,
       "node-style": !this.commands.isReadonly() && nodes.length > 0,
+      "project-style": !this.commands.isReadonly(),
     };
     this.rootEl
       .querySelectorAll<HTMLButtonElement>("button[data-action]")
@@ -1960,6 +1998,7 @@ export class YeMindEditor {
 
   private openSearchPanel(): void {
     this.searchPanelEl.hidden = false;
+    setSearchReplaceExpanded(this.searchPanelEl, false);
     this.searchInputEl.focus();
     this.searchInputEl.select();
   }
@@ -1973,6 +2012,12 @@ export class YeMindEditor {
   }
 
   private handleSearchAction(action: string): void {
+    if (action === "toggle-replace") {
+      const expanded = this.searchPanelEl.dataset.replaceExpanded !== "true";
+      setSearchReplaceExpanded(this.searchPanelEl, expanded);
+      if (expanded) this.replaceInputEl.focus();
+      return;
+    }
     if (action === "next") this.performSearch("next");
     else if (action === "previous") this.performSearch("previous");
     else if (action === "replace") this.replaceCurrentSearch();
@@ -2015,7 +2060,9 @@ export class YeMindEditor {
   }): void {
     const current =
       info.total > 0 && info.currentIndex >= 0 ? info.currentIndex + 1 : 0;
-    this.searchInfoEl.textContent = `${current} / ${Math.max(0, info.total)}`;
+    this.searchInfoEl.textContent = info.total > 0
+      ? `${current} / ${Math.max(0, info.total)}`
+      : "无结果";
   }
 
   private openCheckpointMenu(anchor: HTMLElement): void {
@@ -2077,6 +2124,7 @@ export class YeMindEditor {
       this.current = restored;
       this.current.theme = normalizeThemePresetId(restored.theme);
       this.current.lineStyle = normalizeLineStyle(restored.lineStyle);
+      this.current.projectStyle = normalizeProjectStyle(restored.projectStyle);
       const viewData = normalizePersistedViewData(restored.viewData);
       if (this.viewMode !== "outline" && hasNonZeroSize(this.canvasEl))
         this.map.resize();
@@ -2098,6 +2146,7 @@ export class YeMindEditor {
         '[data-action="line-style"]',
       );
       if (lineStyleSelect) lineStyleSelect.value = this.current.lineStyle;
+      this.projectStylePanel?.setStyle(this.current.projectStyle);
       this.applyMapAppearance();
       if (!viewData) {
         await new Promise<void>((resolve) => {
@@ -2251,12 +2300,14 @@ export class YeMindEditor {
         layout: this.map.getLayout(),
         theme: normalizeThemePresetId(this.current.theme),
         lineStyle: normalizeLineStyle(this.current.lineStyle),
+        projectStyle: normalizeProjectStyle(this.current.projectStyle),
         viewData: normalizePersistedViewData(this.map.view.getTransformData()),
       };
       this.current.data = sanitized.tree;
       this.current.layout = patch.layout;
       this.current.theme = patch.theme;
       this.current.lineStyle = patch.lineStyle;
+      this.current.projectStyle = patch.projectStyle;
       await this.options.repository.update(this.current.id, patch);
       if (!this.destroyed && this.saveRevisions.markSaved(revision)) {
         this.saveStateEl.textContent = "已保存";

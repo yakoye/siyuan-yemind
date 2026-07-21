@@ -626,6 +626,90 @@
   .ymz-settings-mode-choices{grid-template-columns:1fr;min-width:0;width:100%}
   .ymz-node-dialog{padding:10px!important}
 }
+
+/* v0.6.4 find/replace, outline semantics, global search and whole-map style */
+.ymz-search-panel__disclosure{
+  width:26px!important;
+  min-width:26px!important;
+  padding:0!important;
+  border-color:var(--ymz-accent-border)!important;
+  font-size:20px;
+  line-height:1;
+}
+.ymz-search-panel[data-replace-expanded="true"] .ymz-search-panel__disclosure{color:var(--ymz-accent);background:var(--ymz-accent-soft)}
+.ymz-search-panel__row[hidden]{display:none!important}
+.ymz-search-panel__replace-indent{width:26px;flex:0 0 26px}
+
+.ymz-outline-row__leaf-dot{
+  display:block;
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:currentColor;
+  opacity:.9;
+}
+.ymz-outline-row[data-outline-leaf="true"] .ymz-outline-row__branch--placeholder{
+  color:var(--b3-theme-on-background);
+}
+.ymz-outline-row.is-active[data-outline-leaf="true"] .ymz-outline-row__branch--placeholder{color:var(--ymz-accent)}
+.ymz-outline-row[data-outline-drag-source="true"]{cursor:grab}
+.ymz-outline-row[data-outline-drag-source="true"]::after{
+  content:"";
+  position:absolute;
+  z-index:0;
+  inset:0 auto 0 0;
+  width:calc(8px + var(--ymz-outline-depth,0)*22px + 18px);
+  cursor:grab;
+  pointer-events:none;
+}
+.ymz-outline-row.is-dragging{cursor:grabbing}
+.ymz-outline-row__editor,.ymz-outline-row__editor *{cursor:text}
+
+.ymz-project-style-panel{
+  position:absolute;
+  z-index:48;
+  top:64px;
+  right:14px;
+  width:min(390px,calc(100% - 28px));
+  max-height:calc(100% - 86px);
+  padding:12px;
+  overflow:auto;
+  border:1px solid var(--ymz-border);
+  border-radius:13px;
+  background:var(--ymz-panel);
+  color:var(--b3-theme-on-background);
+  box-shadow:var(--ymz-shadow);
+  backdrop-filter:blur(14px);
+  box-sizing:border-box;
+}
+.ymz-project-style-panel[hidden]{display:none}
+.ymz-project-style-panel__header{display:flex;align-items:center;justify-content:space-between;padding-bottom:9px}
+.ymz-project-style-panel__header strong{font-size:15px}
+.ymz-project-style-panel__header button{display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:7px;background:transparent;color:inherit;font-size:20px;cursor:pointer}
+.ymz-project-style-panel__header button:hover{background:var(--b3-list-hover)}
+.ymz-project-style-panel section{padding:12px 0;border-top:1px solid var(--ymz-border)}
+.ymz-project-style-panel h4{margin:0 0 3px;font-size:13px}.ymz-project-style-panel p{margin:0 0 10px;color:var(--b3-theme-on-surface-light);font-size:11px}
+.ymz-density-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ymz-density-options button{display:flex;min-height:76px;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:8px;border:1px solid var(--ymz-border);border-radius:10px;background:var(--b3-theme-background);color:inherit;cursor:pointer}
+.ymz-density-options button small{color:var(--b3-theme-on-surface-light);font-size:10px;text-align:center}.ymz-density-options button.is-active{border-color:var(--ymz-accent);background:var(--ymz-accent-soft);box-shadow:0 0 0 1px var(--ymz-accent-soft-strong)}
+.ymz-project-style-panel__switch{display:flex;align-items:center;justify-content:space-between;gap:12px}.ymz-project-style-panel__switch span{display:flex;flex-direction:column;gap:2px}.ymz-project-style-panel__switch small{color:var(--b3-theme-on-surface-light)}
+.ymz-background-options{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.ymz-background-options button{height:36px;border:1px solid var(--ymz-border);border-radius:9px;background:var(--project-bg,var(--b3-theme-background));color:inherit;cursor:pointer}.ymz-background-options button[data-project-background="#ffffff"]{background:#fff}.ymz-background-options button[data-project-background="#e2e8f0"]{background:#e2e8f0}.ymz-background-options button[data-project-background="#ffe7ba"]{background:#ffe7ba}.ymz-background-options button[data-project-background="#c8f0dc"]{background:#c8f0dc}.ymz-background-options button[data-project-background="#d7e8ff"]{background:#d7e8ff}.ymz-background-options button[data-project-background="#f7cbd5"]{background:#f7cbd5}.ymz-background-options button[data-project-background="#0f172a"]{background:#0f172a}.ymz-background-options button.is-active{outline:2px solid var(--ymz-accent);outline-offset:2px}
+.ymz-project-style-panel__custom{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:10px;margin-top:10px;font-size:12px}.ymz-project-style-panel__custom input{width:100%;height:32px;border:1px solid var(--ymz-border);border-radius:7px;background:transparent}
+.ymz-project-style-panel footer{display:flex;justify-content:flex-end;padding-top:10px;border-top:1px solid var(--ymz-border)}.ymz-project-style-panel footer button{min-height:30px;padding:0 11px;border:1px solid var(--ymz-border);border-radius:7px;background:var(--b3-theme-background);color:inherit;cursor:pointer}
+
+.ymz-global-search-results{
+  margin:8px 8px 12px;
+  border:1px solid color-mix(in srgb,var(--ymz-accent) 35%,var(--b3-border-color));
+  border-radius:10px;
+  background:var(--b3-theme-background);
+  overflow:hidden;
+}
+.ymz-global-search-results>header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--b3-border-color);color:var(--ymz-accent);font-size:12px}
+.ymz-global-search-results>header span{color:var(--b3-theme-on-surface-light);font-size:11px}
+.ymz-global-search-results__list{max-height:280px;overflow:auto;padding:4px}
+.ymz-global-search-result{display:flex;width:100%;align-items:flex-start;gap:8px;border-radius:7px;text-align:left}.ymz-global-search-result .b3-list-item__graphic{display:grid;place-items:center;width:24px;height:24px;border-radius:6px;background:var(--ymz-accent);color:#fff;font-size:10px}.ymz-global-search-result .b3-list-item__text{display:flex;min-width:0;flex-direction:column;gap:2px}.ymz-global-search-result strong{font-weight:550}.ymz-global-search-result small{overflow:hidden;color:var(--b3-theme-on-surface-light);font-size:10px;text-overflow:ellipsis;white-space:nowrap}
+
+@media(max-width:560px){.ymz-project-style-panel{top:58px;right:8px;width:calc(100% - 16px);max-height:calc(100% - 74px)}.ymz-density-options{grid-template-columns:1fr}.ymz-background-options{grid-template-columns:repeat(4,1fr)}}
 /*!
  * Quill Editor v2.0.3
  * https://quilljs.com

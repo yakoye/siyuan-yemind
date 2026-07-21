@@ -19,6 +19,7 @@ import { OpenMapTabRegistry } from './OpenMapTabRegistry';
 import { parseYeMindMapUrl } from './pluginUrl';
 import { runSafeOperation } from './operationSafety';
 import { initializePluginStartup } from './pluginStartup';
+import { mountGlobalSearchResults } from './globalSearch';
 
 export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost {
   repository!: MapRepository;
@@ -28,6 +29,8 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
   diagnostics!: DiagnosticsService;
   readonly tabRegistry = new OpenMapTabRegistry();
   private ready: Promise<void> = Promise.resolve();
+  private readonly pendingNodeTargets = new Map<string, string>();
+  private globalSearchTimer: number | null = null;
 
   onload(): void {
     this.addIcons(`<symbol id="${ICON_ID}" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="7" fill="#176b50"/><text x="16" y="21" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Ye</text></symbol>
@@ -94,6 +97,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
         { name: 'settings', register: () => registerSettings(this, this.settingsStore) },
         { name: 'commands', register: () => this.registerCommands() },
         { name: 'plugin-url', register: () => this.eventBus.on('open-siyuan-url-plugin', this.onOpenPluginUrl) },
+        { name: 'global-search', register: () => this.eventBus.on('input-search', this.onGlobalSearchInput) },
       ],
       onRegistrationStart: (name) => this.diagnostics.record('plugin', 'registration-started', undefined, { name }, 'info', true),
       onRegistrationComplete: (name) => this.diagnostics.record('plugin', 'registration-completed', undefined, { name }, 'info', true),
@@ -113,6 +117,8 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
 
   onunload(): void {
     this.eventBus.off('open-siyuan-url-plugin', this.onOpenPluginUrl);
+    this.eventBus.off('input-search', this.onGlobalSearchInput);
+    if (this.globalSearchTimer !== null) window.clearTimeout(this.globalSearchTimer);
     this.diagnostics?.record('plugin', 'unload', undefined, undefined, 'info', true);
     this.diagnostics?.detachGlobalListeners();
     this.diagnostics?.stop();
@@ -145,6 +151,19 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
         keepCursor: false,
       });
     }, (error) => this.reportOperationFailure('打开导图', error));
+  }
+
+  async openMapAtNode(mapId: string, nodeUid: string): Promise<void> {
+    if (!mapId) return;
+    if (nodeUid && this.tabRegistry.focusNode(mapId, nodeUid)) return;
+    if (nodeUid) this.pendingNodeTargets.set(mapId, nodeUid);
+    await this.openMap(mapId);
+  }
+
+  consumePendingNodeTarget(mapId: string): string | undefined {
+    const uid = this.pendingNodeTargets.get(mapId);
+    this.pendingNodeTargets.delete(mapId);
+    return uid;
   }
 
   async createMap(): Promise<void> {
@@ -201,6 +220,20 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
     }
   }
 
+
+  private readonly onGlobalSearchInput = (event: CustomEvent<{ searchElement?: HTMLInputElement; config?: { query?: string } }>): void => {
+    const searchElement = event.detail?.searchElement;
+    if (!searchElement) return;
+    if (this.globalSearchTimer !== null) window.clearTimeout(this.globalSearchTimer);
+    this.globalSearchTimer = window.setTimeout(() => {
+      this.globalSearchTimer = null;
+      mountGlobalSearchResults({
+        searchElement,
+        maps: this.repository.list(),
+        onOpen: (mapId, nodeUid) => { void this.openMapAtNode(mapId, nodeUid); },
+      });
+    }, 80);
+  };
 
   private async runDiagnosticLifecycleProbe(): Promise<{ create: boolean; update: boolean; checkpoint: boolean; restore: boolean; cleanup: boolean }> {
     const nonce = globalThis.crypto?.randomUUID?.() ?? `probe-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

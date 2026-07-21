@@ -1,7 +1,7 @@
 import { Menu, showMessage } from 'siyuan';
 import { YEMIND_LAYOUT_PRESETS } from '../core/layoutPresets';
 import { YEMIND_THEME_PRESETS, type YeMindLineStyle } from '../core/themePresets';
-import { clipboardIcon, lineStyleIcon, nodeStyleIcon, projectControlIcon, summaryIcon } from '../editor/projectControls';
+import { clipboardIcon, lineStyleIcon, nodeStyleIcon, projectControlIcon, projectStyleIcon, summaryIcon } from '../editor/projectControls';
 import type { YeMindCommands } from '../core/commands';
 import {
   openCommentsDialog,
@@ -25,6 +25,7 @@ export interface CanvasContextMenuOptions {
   onLayoutChange?(layout: string): void;
   onThemeChange?(theme: string): void;
   onLineStyleChange?(lineStyle: YeMindLineStyle): void;
+  onProjectStyle?(): void;
   onAction?: (action: string) => void;
 }
 
@@ -79,6 +80,12 @@ export function openCanvasContextMenu(event: MouseEvent, commands: YeMindCommand
       disabled: commands.isReadonly(),
       click: run(`line-style-${id}`, () => options.onLineStyleChange?.(id)),
     })),
+  });
+  menu.addItem({
+    iconHTML: projectStyleIcon(),
+    label: '样式',
+    disabled: commands.isReadonly(),
+    click: run('project-style', () => options.onProjectStyle?.()),
   });
   menu.addSeparator();
   menu.addItem({ icon: 'iconDown', label: '展开全部节点', click: run('expand-all', () => commands.expandAll()) });
