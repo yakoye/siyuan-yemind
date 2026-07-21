@@ -1,0 +1,21 @@
+// Domain entry: ui-shell. Individual scenario modules remain isolated and are imported here.
+import '../suites/ui-shell/contextMenuAvailability.suite';
+import '../suites/ui-shell/contextMenuClipboard.suite';
+import '../suites/ui-shell/contextMenuContent.suite';
+import '../suites/ui-shell/contextMenuRegression.suite';
+import '../suites/ui-shell/editorTemplate.suite';
+import '../suites/ui-shell/layoutPresets.suite';
+import '../suites/ui-shell/projectControls.suite';
+import '../suites/ui-shell/selectionHelpText.suite';
+import '../suites/ui-shell/selectionPresentation.suite';
+import '../suites/ui-shell/splitPane.suite';
+import '../suites/ui-shell/toolbarAvailability.suite';
+import '../suites/ui-shell/v0516ContextMenus.suite';
+import '../suites/ui-shell/v0516NodeChrome.suite';
+import '../suites/ui-shell/v0516ZenCapsule.suite';
+import '../suites/ui-shell/v061ToolbarLayout.suite';
+import '../suites/ui-shell/v062ToolbarVisualLanguage.suite';
+import '../suites/ui-shell/v063CanvasModeIcons.suite';
+import '../suites/ui-shell/v063ContextMenuOrganization.suite';
+import '../suites/ui-shell/v063ResponsiveToolbars.suite';
+import '../suites/ui-shell/visibleElement.suite';

@@ -1,6 +1,6 @@
 # YeMind Development Instructions / 开发要求
 
-本文件是 YeMind 的项目级开发入口。所有后续开发以 **v0.8.5** 为当前稳定基线，并结合 `.agents/skills/superpowers-*` 中的 Superpowers skills 执行。
+本文件是 YeMind 的项目级开发入口。所有后续开发以 **v0.8.6** 为当前稳定基线，并结合 `.agents/skills/superpowers-*` 中的 Superpowers skills 执行。
 
 ## 1. Baseline / 当前基线
 
@@ -8,7 +8,7 @@
 - 当前思源插件 ID / 安装目录：`siyuan-yemind`
 - 历史兼容插件 ID：`siyuan-yemind-zen`（只用于旧协议链接）
 - 显示名称：`YeMind`
-- 当前开发基线：`v0.8.5`
+- 当前开发基线：`v0.8.6`
 - 不得回退或破坏 v0.5.10 至 v0.8.1 已完成的稳定性修复与交互契约。
 - 真实运行环境的最终验收目标为 Windows 上的 SiYuan 3.7.2 桌面端。
 
@@ -97,6 +97,14 @@
 - 审查意见需要技术验证；不盲从，也不以措辞代替修复。
 - 只修改与当前目标相关的代码；发现相邻问题时记录，不擅自扩大范围。
 - 文件保持单一职责；只有当前改动直接受益时才做针对性拆分，不进行无关大重构。
+
+## 3.6 测试组织
+
+- Vitest 只允许从 `tests/specs/*.test.ts` 功能域入口收集测试。
+- 独立行为与历史故障场景放入 `tests/suites/<domain>/*.suite.ts`。
+- 新场景必须登记到 `tests/suite-manifest.json` 并由对应入口导入。
+- 不得为了减少文件数把所有测试合成超大文件；域入口负责归类，场景模块负责隔离。
+- 删除测试前必须证明其功能已下线或被更强测试完全覆盖；用户反馈回归不得因版本旧而删除。
 
 ## 4. Completion gate / 完成门禁
 

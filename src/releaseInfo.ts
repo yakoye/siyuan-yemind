@@ -3,18 +3,18 @@ import { PLUGIN_VERSION, PRODUCT_NAME, PROJECT_PACKAGE_NAME } from './plugin/con
 export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: '2026-07-21T21:40:00+08:00',
-  buildId: 'yemind-v0.8.5-20260721',
+  buildTime: '2026-07-21T22:30:00+08:00',
+  buildId: 'yemind-v0.8.6-20260721',
   productName: PRODUCT_NAME,
   projectName: PROJECT_PACKAGE_NAME,
   tagline: '思源笔记中的思维导图、分屏大纲与知识整理插件。',
   officialReference: 'KMind Zen 0.34.0',
-  releaseSummary: '修复分屏模式下画布新增节点后错误恢复旧大纲节点焦点并进入编辑的问题。',
+  releaseSummary: '重构测试体系：按 15 个功能域组织 445 项回归，合并重复入口并建立功能覆盖矩阵。',
   highlights: [
-    '新增画布/大纲编辑表面所有权协调器，同一时刻只有当前交互表面拥有编辑与焦点恢复权。',
-    '画布点击、节点激活和画布富文本开始会提交并关闭旧大纲编辑器，同时取消旧焦点恢复票据。',
-    '大纲焦点只允许由大纲自身的插入、缩进、删除和折叠命令显式恢复，普通结构同步不再推断旧焦点。',
-    '异步焦点恢复使用代次校验，旧请求被画布接管或新请求替换后立即失效，并纳入永久分屏回归。',
+    '将 159 个零散测试入口重组为 15 个功能域入口，保留独立场景模块和故障隔离能力。',
+    '删除重复的插件身份与版本断言，所有用户反馈形成的永久回归场景继续保留。',
+    '新增测试结构门禁、suite manifest 和功能覆盖矩阵，阻止孤立、漏挂载或未分类测试进入发布包。',
+    '完整执行 445 项测试、TypeScript 检查、生产构建和最终 ZIP 解压后二次验证。',
   ],
 } as const;
 

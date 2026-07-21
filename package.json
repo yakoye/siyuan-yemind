@@ -1,6 +1,6 @@
 {
   "name": "siyuan-yemind",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "private": true,
   "description": "A SiYuan mind-map plugin built around simple-mind-map.",
   "license": "MIT",
@@ -8,8 +8,9 @@
     "dev": "vite build --watch --mode development",
     "build": "vite build && node scripts/copy-build.mjs",
     "check": "tsc --noEmit",
-    "test": "vitest run --pool=forks --poolOptions.forks.singleFork=true",
-    "test:watch": "vitest"
+    "test": "node scripts/check-test-structure.mjs && vitest run --pool=forks --poolOptions.forks.singleFork=true",
+    "test:watch": "vitest",
+    "test:structure": "node scripts/check-test-structure.mjs"
   },
   "dependencies": {
     "jszip": "^3.10.1",

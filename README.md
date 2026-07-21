@@ -6,7 +6,14 @@ YeMind is a local-first mind-map plugin for SiYuan, powered by `simple-mind-map`
 - Current SiYuan plugin ID / installed folder: `siyuan-yemind`
 - Historical protocol-link alias: `siyuan-yemind-zen`
 - Display name: `YeMind`
-- Version: `0.8.5`
+- Version: `0.8.6`
+
+## v0.8.6: Test architecture consolidation
+
+- Consolidated 159 scattered Vitest entries into 15 feature-domain entry points.
+- Retained 445 effective tests and every user-reported permanent regression.
+- Removed only exact duplicate identity/version assertions.
+- Added a suite manifest, orphan-test gate and a current feature coverage matrix.
 
 ## v0.8.1: current plugin ID and installed folder
 

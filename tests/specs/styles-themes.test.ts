@@ -1,0 +1,16 @@
+// Domain entry: styles-themes. Individual scenario modules remain isolated and are imported here.
+import '../suites/styles-themes/colorPresentation.suite';
+import '../suites/styles-themes/mapAppearancePersistence.suite';
+import '../suites/styles-themes/nodeStyle.suite';
+import '../suites/styles-themes/nodeStylePanel.suite';
+import '../suites/styles-themes/themePresets.suite';
+import '../suites/styles-themes/v0517ColorInputs.suite';
+import '../suites/styles-themes/v0518FormulaBlurPresentation.suite';
+import '../suites/styles-themes/v061Branding.suite';
+import '../suites/styles-themes/v064ProjectStyle.suite';
+import '../suites/styles-themes/v064ProjectStylePersistence.suite';
+import '../suites/styles-themes/v065NodeStyleColors.suite';
+import '../suites/styles-themes/v065ProjectDensity.suite';
+import '../suites/styles-themes/v066DensityPanelSearchFit.suite';
+import '../suites/styles-themes/v067ProjectColorSearchComments.suite';
+import '../suites/styles-themes/v082DockIconTheme.suite';

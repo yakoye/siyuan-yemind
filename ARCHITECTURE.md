@@ -6,7 +6,7 @@
 - 当前思源插件 ID 与安装目录：`siyuan-yemind`
 - 历史兼容 ID：`siyuan-yemind-zen`（仅解析旧协议链接）
 - 思源显示名：`YeMind`
-- 当前版本：`0.8.5`
+- 当前版本：`0.8.6`
 
 ## 核心分层
 
@@ -51,3 +51,16 @@ src/
 4. 不设置 Pro、付费、试用、激活、会员或能力开关。
 5. 文件兼容进入 `src/compat/`，不污染编辑内核。
 6. 新功能先写测试，再实现并通过类型检查和生产构建。
+
+## 测试架构
+
+```text
+tests/
+├─ specs/       15 个 Vitest 功能域入口
+├─ suites/      158 个独立行为与历史故障场景模块
+├─ fixtures/    脱敏宿主结构和测试数据
+├─ setup.ts     jsdom 与宿主 API 基础环境
+└─ suite-manifest.json 入口—场景完整性清单
+```
+
+`npm test` 先运行测试结构门禁，再执行全部功能回归。详见 `tests/README.md` 与 `docs/TEST_COVERAGE_MATRIX_v0.8.6.md`。

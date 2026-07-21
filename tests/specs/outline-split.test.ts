@@ -1,0 +1,21 @@
+// Domain entry: outline-split. Individual scenario modules remain isolated and are imported here.
+import '../suites/outline-split/outline.suite';
+import '../suites/outline-split/outlineEditing.suite';
+import '../suites/outline-split/outlineExpandSync.suite';
+import '../suites/outline-split/outlineLayout.suite';
+import '../suites/outline-split/outlineRichTextController.suite';
+import '../suites/outline-split/outlineSummary.suite';
+import '../suites/outline-split/rootBranchCollapse.suite';
+import '../suites/outline-split/v0517OutlineDrag.suite';
+import '../suites/outline-split/v0517OutlinePatch.suite';
+import '../suites/outline-split/v0518OutlineCollapse.suite';
+import '../suites/outline-split/v0518OutlineEditingStability.suite';
+import '../suites/outline-split/v0518OutlinePointerDrag.suite';
+import '../suites/outline-split/v0518OutlineRegressionMatrix.suite';
+import '../suites/outline-split/v0519OutlineDeleteCollapse.suite';
+import '../suites/outline-split/v0519OutlineIndentGuides.suite';
+import '../suites/outline-split/v0521RootExpandPersistence.suite';
+import '../suites/outline-split/v061OutlineSelection.suite';
+import '../suites/outline-split/v064OutlineLeafDrag.suite';
+import '../suites/outline-split/v085SplitFocusIntegration.suite';
+import '../suites/outline-split/v085SplitFocusOwnership.suite';

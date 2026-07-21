@@ -1,3 +1,12 @@
+## 0.8.6 — 2026-07-21
+
+- 将 159 个零散 Vitest 入口重组为 15 个功能域入口，测试输出更容易定位且保持场景模块独立。
+- 按 contracts、storage、checkpoints、commands、outline、rich-text、drag、node-content、styles、UI、search、diagnostics、settings、advanced structures 和 user regressions 分类。
+- 删除 1 个完全重复的插件身份测试文件和 2 条重复版本断言；所有真实用户反馈回归与现行功能契约均保留。
+- 新增 `tests/suite-manifest.json` 与 `scripts/check-test-structure.mjs`，阻止未分类、未导入、重复或孤立测试进入发布流程。
+- 新增测试架构说明与功能覆盖矩阵，明确 445 项测试对当前产品功能的覆盖关系。
+- 测试入口由 159 个降至 15 个，完整测试耗时由基线约 9.29 秒降至约 7 秒，功能代码未改变。
+
 ## 0.8.5 — 2026-07-21
 
 - 修复分屏模式中曾编辑过右侧大纲节点后，回到左侧画布新增节点会自动跳回旧大纲节点并再次进入编辑的问题。
