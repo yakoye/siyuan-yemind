@@ -1,6 +1,7 @@
 import { loadImageFileSelection } from './imageFileLoading';
 import { Dialog, confirm, showMessage } from 'siyuan';
 import type { YeMindCommands } from '../core/commands';
+import type { RichTextFormattingTarget } from '../editor/richTextTarget';
 import {
   addComment,
   editComment,
@@ -138,7 +139,7 @@ export function openLinkDialog(commands: YeMindCommands, autoHttps = true): void
   url.focus();
 }
 
-export function openFormulaDialog(commands: YeMindCommands): void {
+export function openFormulaDialog(commands: RichTextFormattingTarget): void {
   const dialog = new Dialog({
     title: '公式',
     content: `<div class="b3-dialog__content ymz-node-dialog">

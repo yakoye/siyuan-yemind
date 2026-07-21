@@ -1,5 +1,5 @@
 import { Dialog, showMessage } from 'siyuan';
-import type { YeMindCommands } from '../core/commands';
+import type { RichTextFormattingTarget } from '../editor/richTextTarget';
 import type { YeMindSettings } from '../settings/SettingsStore';
 import { normalizeInlineLink } from '../editor/inlineLink';
 
@@ -26,7 +26,7 @@ function escapeHtml(value: string): string {
   return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
 
-export function openInlineLinkDialog(commands: YeMindCommands, settings: YeMindSettings): void {
+export function openInlineLinkDialog(commands: RichTextFormattingTarget, settings: YeMindSettings): void {
   const selectedText = commands.getSelectedText();
   const existing = commands.getSelectedInlineLink();
   if (!selectedText && !existing) {
@@ -75,7 +75,7 @@ export function openInlineLinkDialog(commands: YeMindCommands, settings: YeMindS
   requestAnimationFrame(() => { input.focus(); input.select(); });
 }
 
-export function openCodeBlockDialog(commands: YeMindCommands, settings: YeMindSettings): void {
+export function openCodeBlockDialog(commands: RichTextFormattingTarget, settings: YeMindSettings): void {
   const existing = commands.getCodeBlock();
   const selected = existing?.code ?? commands.getSelectedText();
   if (!existing && !selected) {

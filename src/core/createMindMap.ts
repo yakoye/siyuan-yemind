@@ -37,8 +37,11 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     ? undefined
     : normalizePersistedViewData(options.viewData);
 
+  const editorRoot = options.el.closest<HTMLElement>('.ymz-editor') ?? options.el;
+
   return new MindMap({
     el: options.el,
+    customInnerElsAppendTo: editorRoot,
     data: options.data,
     viewData,
     theme: 'default',
@@ -66,7 +69,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     mousewheelAction: settings?.wheelMode === 'zoom' ? 'zoom' : 'move',
     disableMouseWheelZoom: settings?.wheelMode === 'none',
     mousewheelMoveStep: 60,
-    selectTextOnEnterEditText: true,
+    selectTextOnEnterEditText: false,
     isEndNodeTextEditOnClickOuter: true,
     enableDragModifyNodeWidth: true,
     isShowCreateChildBtnIcon: settings?.showQuickCreate ?? true,

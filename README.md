@@ -4,7 +4,9 @@ YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-
 
 - Plugin folder and ID: `siyuan-yemind-zen`
 - Display name: `YeMind Zen`
-- Version: `0.5.14`
+- Version: `0.5.15`
+
+v0.5.15 isolates every YeMind editor overlay inside its own tab so SiYuan Settings and other host dialogs always remain above plugin controls. It also fixes invisible node-edit text, adds selection-aware color/background palettes with reset, custom color and eyedropper actions, preserves partial node-text selections, and gives split/full-outline editing the same rich-text toolbar through one active Quill session while retaining upstream map commands and persistence.
 
 v0.5.14 adds the first source-driven KMind Zen visual-parity layer: curved parent-child edges by default, all 13 official theme families with light/dark variants, theme-defined rainbow branches, per-map theme/edge-route persistence, and all 14 layouts supported by the installed `simple-mind-map` runtime. Existing startup, outline, checkpoint and structured-drag contracts remain unchanged.
 

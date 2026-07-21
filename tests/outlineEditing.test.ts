@@ -18,8 +18,9 @@ describe('editable outline', () => {
     expect(html).toContain('data-outline-root="true"');
     expect(html).toContain('data-outline-expanded="true"');
     expect(html).toContain('data-outline-editor');
-    expect(html).toContain('>Root</textarea>');
-    expect(html).not.toContain('readonly');
+    expect(html).toContain('<b>Root</b></div>');
+    expect(html).toContain('data-outline-rich-text="true"');
+    expect(html).not.toContain('aria-readonly="true"');
   });
 
   it('hides descendants of collapsed nodes from the continuous outline', () => {
@@ -29,7 +30,7 @@ describe('editable outline', () => {
   });
 
   it('renders readonly outline controls in readonly mode', () => {
-    expect(renderOutlineHtml(tree, true)).toContain('readonly');
+    expect(renderOutlineHtml(tree, true)).toContain('aria-readonly="true"');
   });
 
   it('matches official keyboard semantics and ignores IME composition', () => {

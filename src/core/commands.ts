@@ -1,6 +1,7 @@
 import type MindMap from 'simple-mind-map';
 import { toggleTodo as nextTodo, type NodeComment, type NodeTodo } from '../content/nodeContentState';
 import { deleteCodeBlock, findCurrentCodeBlock, removeCodeBlockFormat, replaceCodeBlock, type CodeBlockSnapshot } from '../editor/codeBlock';
+import type { RichTextFormattingTarget } from '../editor/richTextTarget';
 
 export interface NodeImageInput {
   url: string | null;
@@ -10,7 +11,7 @@ export interface NodeImageInput {
   custom?: boolean;
 }
 
-export interface YeMindCommands {
+export interface YeMindCommands extends RichTextFormattingTarget {
   isReadonly(): boolean;
   hasRichTextSelection(): boolean;
   addChild(): void;
@@ -78,6 +79,7 @@ export interface YeMindCommands {
   endSearch(): void;
   goToNode(uid: string): void;
   setNodeTextByUid(uid: string, text: string): boolean;
+  setNodeRichTextByUid(uid: string, html: string): boolean;
   insertSiblingByUid(uid: string, newUid: string): boolean;
   insertChildByUid(uid: string, newUid: string): boolean;
   removeNodeByUid(uid: string): boolean;
@@ -326,6 +328,13 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       const node = findNodeByUid(uid);
       if (!node) return false;
       mindMap.execCommand('SET_NODE_TEXT', node, text, false, true);
+      return true;
+    },
+    setNodeRichTextByUid: (uid, html) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node) return false;
+      mindMap.execCommand('SET_NODE_TEXT', node, html, true, false);
       return true;
     },
     insertSiblingByUid: (uid, newUid) => {

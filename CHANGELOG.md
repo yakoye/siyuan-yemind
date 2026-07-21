@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.15 — 2026-07-18
+
+- Studied KMind Zen 0.33.0 selection-toolbar, persistent rich editor and overlay-mounting behavior, then adapted the verified mechanisms without importing its private document kernel.
+- Root-scoped all editor overlays and established an isolated local stacking context so YeMind toolbars, search surfaces and rich editors no longer render above SiYuan Settings or unrelated host dialogs.
+- Fixed invisible/white node-edit text by explicitly inheriting node color and text fill for the upstream rich-text editor, caret and selection.
+- Disabled automatic whole-node selection on edit entry so users can select and format only part of a node label.
+- Replaced separate text/background reset “X” controls with palette popovers containing swatches, one Reset Default action, native custom color selection and EyeDropper support with a safe fallback.
+- Introduced a shared `RichTextFormattingTarget` contract so canvas node editing and outline editing use the same toolbar actions and dialogs.
+- Replaced plain-text outline rows with preserved rich HTML and one active Quill session, enabling partial-selection bold, italic, underline, strike, inline code, code block, color, background, font, size, link, cloze, formula and clear-format actions in split and full-outline views.
+- Kept all rich HTML persistence on upstream `SET_NODE_TEXT` rich-text mode; map structure, history, checkpoints and repositories remain unchanged.
+- Added focused regressions for local overlay ownership, edit-text visibility, palette/reset/eyedropper behavior and partial outline selection formatting.
 ## 0.5.14 — 2026-07-17
 
 - Studied KMind Zen 0.33.0 theme, appearance, layout and edge-route runtime instead of deriving styles from screenshots.

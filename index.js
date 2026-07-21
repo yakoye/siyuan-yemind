@@ -49528,11 +49528,11 @@ class Syntax extends Module {
       }
       return delta;
     }], [(node, delta) => {
-      return node.data.split("\n").reduce((memo, nodeText, i) => {
+      return node.data.split("\n").reduce((memo, nodeText2, i) => {
         if (i !== 0) memo.insert("\n", {
           [CodeBlock.blotName]: language
         });
-        return memo.insert(nodeText);
+        return memo.insert(nodeText2);
       }, delta);
     }], /* @__PURE__ */ new WeakMap());
   }
@@ -52109,13 +52109,13 @@ class Formula {
     richTextPlugin.hideEditText([node]);
   }
   // 将公式富文本转换为公式源码
-  latexRichToText(nodeText) {
-    if (nodeText.indexOf('class="ql-formula"') !== -1) {
+  latexRichToText(nodeText2) {
+    if (nodeText2.indexOf('class="ql-formula"') !== -1) {
       const parser2 = new DOMParser();
-      const doc = parser2.parseFromString(nodeText, "text/html");
+      const doc = parser2.parseFromString(nodeText2, "text/html");
       const els = doc.getElementsByClassName("ql-formula");
       for (const el of els)
-        nodeText = nodeText.replace(
+        nodeText2 = nodeText2.replace(
           el.outerHTML,
           `$${el.getAttribute("data-value")}$`
         );
@@ -52129,7 +52129,7 @@ class Formula {
         }, 0);
       }
     }
-    return nodeText;
+    return nodeText2;
   }
   // 使用格式化的 latex 字符串内容更新 quill 内容：输入 $*****$
   formatLatex(richText) {
@@ -54740,20 +54740,20 @@ class RichText {
     this.textEditNode.style.maxWidth = textAutoWrapWidth + paddingX * 2 + "px";
     this.textEditNode.style.transform = `scale(${scaleX}, ${scaleY})`;
     this.textEditNode.style.transformOrigin = "left top";
-    let nodeText = node.getData("text");
+    let nodeText2 = node.getData("text");
     if (typeof transformRichTextOnEnterEdit === "function") {
-      nodeText = transformRichTextOnEnterEdit(nodeText);
+      nodeText2 = transformRichTextOnEnterEdit(nodeText2);
     }
-    const isEmptyText = isUndef(nodeText);
+    const isEmptyText = isUndef(nodeText2);
     const noneEmptyNoneRichText = !node.getData("richText") && !isEmptyText;
     if (isFromKeyDown && autoEmptyTextWhenKeydownEnterEdit) {
       this.textEditNode.innerHTML = "";
     } else if (noneEmptyNoneRichText) {
-      let text2 = String(nodeText).split(/\n/gim).join("<br>");
+      let text2 = String(nodeText2).split(/\n/gim).join("<br>");
       let html2 = `<p>${text2}</p>`;
       this.textEditNode.innerHTML = this.cacheEditingText || html2;
     } else {
-      this.textEditNode.innerHTML = this.cacheEditingText || nodeText;
+      this.textEditNode.innerHTML = this.cacheEditingText || nodeText2;
     }
     this.initQuillEditor();
     this.setQuillContainerMinHeight(originHeight);
@@ -55699,8 +55699,10 @@ function createMindMap(options) {
     spacingConfig: behavior == null ? void 0 : behavior.themeConfig
   });
   const viewData = (settings == null ? void 0 : settings.restoreSavedView) === false ? void 0 : normalizePersistedViewData(options.viewData);
+  const editorRoot = options.el.closest(".ymz-editor") ?? options.el;
   return new MindMap2({
     el: options.el,
+    customInnerElsAppendTo: editorRoot,
     data: options.data,
     viewData,
     theme: "default",
@@ -55728,7 +55730,7 @@ function createMindMap(options) {
     mousewheelAction: (settings == null ? void 0 : settings.wheelMode) === "zoom" ? "zoom" : "move",
     disableMouseWheelZoom: (settings == null ? void 0 : settings.wheelMode) === "none",
     mousewheelMoveStep: 60,
-    selectTextOnEnterEditText: true,
+    selectTextOnEnterEditText: false,
     isEndNodeTextEditOnClickOuter: true,
     enableDragModifyNodeWidth: true,
     isShowCreateChildBtnIcon: (settings == null ? void 0 : settings.showQuickCreate) ?? true,
@@ -56247,6 +56249,13 @@ function createCommandAdapter(mindMap) {
       const node = findNodeByUid(uid);
       if (!node) return false;
       mindMap.execCommand("SET_NODE_TEXT", node, text2, false, true);
+      return true;
+    },
+    setNodeRichTextByUid: (uid, html2) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node) return false;
+      mindMap.execCommand("SET_NODE_TEXT", node, html2, true, false);
       return true;
     },
     insertSiblingByUid: (uid, newUid) => {
@@ -57012,7 +57021,7 @@ function openCodeBlockDialog(commands, settings) {
     if (!existing) editor.select();
   });
 }
-function plainText$1(value) {
+function plainText(value) {
   return String(value ?? "").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
 }
 function countWords(value) {
@@ -57023,7 +57032,7 @@ function calculateEditorStats(tree) {
   let words = 0;
   const walk2 = (node) => {
     nodes += 1;
-    words += countWords(plainText$1(node.data.text));
+    words += countWords(plainText(node.data.text));
     node.children.forEach(walk2);
   };
   walk2(tree);
@@ -57137,21 +57146,31 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
 function escapeHtml$1(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
-function plainText(tree) {
-  const value = String(tree.data.text ?? "");
-  if (!tree.data.richText) return value;
+function plainTextFromHtml(value) {
   const element = document.createElement("div");
   element.innerHTML = value;
-  return (element.textContent ?? "").trim();
+  return (element.textContent ?? "").replace(/\u00a0/g, " ").trim();
+}
+function nodeText(tree) {
+  const value = String(tree.data.text ?? "");
+  if (tree.data.richText) {
+    return { text: plainTextFromHtml(value), html: sanitizeOutlineHtml(value), richText: true };
+  }
+  return {
+    text: value,
+    html: escapeHtml(value).replaceAll("\n", "<br>"),
+    richText: false
+  };
 }
 function flattenOutline(tree) {
   const rows = [];
   const visit = (node, depth, path2) => {
     const hasChildren = node.children.length > 0;
     const expanded = node.data.expand !== false;
+    const content = nodeText(node);
     rows.push({
       uid: String(node.data.uid ?? path2),
-      text: plainText(node),
+      ...content,
       depth,
       hasChildren,
       expanded,
@@ -57184,14 +57203,309 @@ function resolveOutlineKeyAction(context) {
 }
 function renderOutlineHtml(tree, readonly = false) {
   return flattenOutline(tree).map((row) => {
-    const readonlyAttribute = readonly ? " readonly" : "";
+    const tabindex = readonly ? "-1" : "0";
     const branch = row.hasChildren ? row.expanded ? "▾" : "▸" : "•";
     const label = row.text || "空节点";
-    return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml(row.uid)}" data-outline-root="${row.isRoot}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" style="--ymz-outline-depth:${row.depth}"><button type="button" class="ymz-outline-row__branch" data-outline-toggle aria-label="${row.expanded ? "折叠" : "展开"}"${row.hasChildren ? "" : " disabled"}>${branch}</button><textarea class="ymz-outline-row__editor" data-outline-editor rows="1" data-outline-original="${escapeHtml(row.text)}" placeholder="空节点" aria-label="编辑节点：${escapeHtml(label)}"${readonlyAttribute}>${escapeHtml(row.text)}</textarea></div>`;
+    const encodedOriginal = encodeURIComponent(row.html);
+    return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml(row.uid)}" data-outline-root="${row.isRoot}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" style="--ymz-outline-depth:${row.depth}"><button type="button" class="ymz-outline-row__branch" data-outline-toggle aria-label="${row.expanded ? "折叠" : "展开"}"${row.hasChildren ? "" : " disabled"}>${branch}</button><div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
   }).join("");
+}
+function sanitizeOutlineHtml(value) {
+  const template = document.createElement("template");
+  template.innerHTML = value;
+  template.content.querySelectorAll("script,style,iframe,object,embed,meta,link").forEach((node) => node.remove());
+  template.content.querySelectorAll("*").forEach((node) => {
+    Array.from(node.attributes).forEach((attribute) => {
+      const name = attribute.name.toLowerCase();
+      const raw = attribute.value;
+      if (name.startsWith("on")) node.removeAttribute(attribute.name);
+      if ((name === "href" || name === "src") && /^\s*javascript:/i.test(raw)) node.removeAttribute(attribute.name);
+      if (name === "style" && /(url\s*\(|expression\s*\(|javascript:)/i.test(raw)) node.removeAttribute(attribute.name);
+    });
+  });
+  return template.innerHTML;
 }
 function escapeHtml(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+function decodeOriginal(host) {
+  try {
+    return decodeURIComponent(host.dataset.outlineOriginal ?? "");
+  } catch {
+    return host.innerHTML;
+  }
+}
+function normalizeHtml(html2) {
+  return html2 === "<p><br></p>" ? "" : html2;
+}
+class OutlineRichTextController {
+  constructor(options) {
+    __publicField(this, "quill", null);
+    __publicField(this, "host", null);
+    __publicField(this, "uid", "");
+    __publicField(this, "originalHtml", "");
+    __publicField(this, "sessionStartHtml", "");
+    __publicField(this, "range", null);
+    __publicField(this, "lastRange", null);
+    __publicField(this, "commitTimer", null);
+    __publicField(this, "composing", false);
+    __publicField(this, "onCompositionStart", () => {
+      this.composing = true;
+    });
+    __publicField(this, "onCompositionEnd", () => {
+      this.composing = false;
+      this.scheduleCommit();
+    });
+    __publicField(this, "onTextChange", () => {
+      this.scheduleCommit();
+    });
+    __publicField(this, "onSelectionChange", (range) => {
+      this.lastRange = this.range;
+      this.range = range;
+      if (!range || !this.quill || !this.host) {
+        this.options.onSelectionChange(false, null, null, this);
+        return;
+      }
+      const bounds = this.quill.getBounds(range.index, range.length) ?? { left: 0, top: 0, right: 0, bottom: 0, width: 0 };
+      const rect = this.quill.root.getBoundingClientRect();
+      const rectInfo = {
+        left: bounds.left + rect.left,
+        top: bounds.top + rect.top,
+        right: bounds.right + rect.left,
+        bottom: bounds.bottom + rect.top,
+        width: bounds.width
+      };
+      const hasRange = range.length > 0;
+      const format = this.quill.getFormat(range.index, range.length);
+      this.options.onSelectionChange(hasRange, rectInfo, format, this);
+    });
+    this.options = options;
+    registerYeMindFormats();
+  }
+  get activeHost() {
+    return this.host;
+  }
+  get isComposing() {
+    return this.composing;
+  }
+  activate(host, uid, request) {
+    if (this.host === host && this.quill) {
+      if (request) this.focus(request);
+      return;
+    }
+    this.detach(true);
+    this.host = host;
+    this.uid = uid;
+    this.originalHtml = decodeOriginal(host);
+    host.classList.add("is-editing");
+    host.innerHTML = this.originalHtml;
+    this.quill = new Quill(host, {
+      modules: { toolbar: false },
+      formats: [...YEMIND_RICH_TEXT_FORMATS],
+      readOnly: this.options.isReadonly()
+    });
+    this.quill.root.setAttribute("spellcheck", "false");
+    this.originalHtml = normalizeHtml(this.quill.root.innerHTML);
+    this.sessionStartHtml = this.originalHtml;
+    host.dataset.outlineOriginal = encodeURIComponent(this.originalHtml);
+    this.quill.root.addEventListener("compositionstart", this.onCompositionStart);
+    this.quill.root.addEventListener("compositionend", this.onCompositionEnd);
+    this.quill.on("selection-change", this.onSelectionChange);
+    this.quill.on("text-change", this.onTextChange);
+    this.focus(request);
+  }
+  setReadonly(readonly) {
+    var _a;
+    (_a = this.quill) == null ? void 0 : _a.enable(!readonly);
+  }
+  focus(request = { placement: "end" }) {
+    if (!this.quill) return;
+    window.requestAnimationFrame(() => {
+      var _a;
+      if (!this.quill) return;
+      this.quill.root.focus({ preventScroll: true });
+      const length2 = Math.max(0, this.quill.getLength() - 1);
+      let start = length2;
+      let end = length2;
+      if (request.placement === "start") start = end = 0;
+      else if (request.placement === "select-all") {
+        start = 0;
+        end = length2;
+      } else if (request.placement === "range") {
+        start = Math.min(length2, Math.max(0, request.start ?? 0));
+        end = Math.min(length2, Math.max(start, request.end ?? start));
+      }
+      this.quill.setSelection(start, end - start, Quill.sources.SILENT);
+      this.range = { index: start, length: end - start };
+      (_a = this.host) == null ? void 0 : _a.scrollIntoView({ block: "nearest" });
+    });
+  }
+  getSelectionState(host = this.host) {
+    var _a;
+    if (!host) return { text: "", length: 0, start: 0, end: 0 };
+    if (host === this.host && this.quill) {
+      const text22 = this.plainText();
+      const current = this.quill.getSelection() ?? this.range ?? this.lastRange ?? { index: 0, length: 0 };
+      return {
+        text: text22,
+        length: text22.length,
+        start: Math.min(text22.length, Math.max(0, Number(current.index ?? 0))),
+        end: Math.min(text22.length, Math.max(0, Number(current.index ?? 0) + Number(current.length ?? 0)))
+      };
+    }
+    const text2 = ((_a = host.textContent) == null ? void 0 : _a.replace(/\u00a0/g, " ").trim()) ?? "";
+    return { text: text2, length: text2.length, start: 0, end: 0 };
+  }
+  flush(host = this.host) {
+    if (!host || host !== this.host || !this.quill || !this.uid) return false;
+    if (this.commitTimer !== null) {
+      window.clearTimeout(this.commitTimer);
+      this.commitTimer = null;
+    }
+    const html2 = normalizeHtml(this.quill.root.innerHTML);
+    const text2 = this.plainText();
+    if (!text2.trim()) return false;
+    if (html2 === this.originalHtml) return false;
+    const changed = this.options.onCommit(this.uid, html2);
+    if (changed) {
+      this.originalHtml = html2;
+      host.dataset.outlineOriginal = encodeURIComponent(html2);
+      host.dataset.outlineRichText = "true";
+    }
+    return changed;
+  }
+  cancel() {
+    if (!this.host) return;
+    if (this.commitTimer !== null) window.clearTimeout(this.commitTimer);
+    this.commitTimer = null;
+    const host = this.host;
+    const uid = this.uid;
+    const original = this.sessionStartHtml;
+    const current = this.quill ? normalizeHtml(this.quill.root.innerHTML) : this.originalHtml;
+    this.detach(false);
+    if (uid && current !== original) this.options.onCommit(uid, original);
+    host.innerHTML = original;
+    host.dataset.outlineOriginal = encodeURIComponent(original);
+  }
+  detach(commit) {
+    if (!this.host) return;
+    if (commit) this.flush();
+    if (this.commitTimer !== null) window.clearTimeout(this.commitTimer);
+    this.commitTimer = null;
+    const host = this.host;
+    const html2 = this.quill ? normalizeHtml(this.quill.root.innerHTML) : this.originalHtml;
+    if (this.quill) {
+      this.quill.root.removeEventListener("compositionstart", this.onCompositionStart);
+      this.quill.root.removeEventListener("compositionend", this.onCompositionEnd);
+      this.quill.off("selection-change", this.onSelectionChange);
+      this.quill.off("text-change", this.onTextChange);
+    }
+    host.classList.remove("is-editing");
+    host.innerHTML = html2;
+    this.options.onSelectionChange(false, null, null, this);
+    this.quill = null;
+    this.host = null;
+    this.uid = "";
+    this.sessionStartHtml = "";
+    this.range = null;
+    this.lastRange = null;
+  }
+  destroy() {
+    this.detach(true);
+  }
+  getSelectedText() {
+    const range = this.activeRange();
+    if (!this.quill || !range) return "";
+    return String(this.quill.getText(range.index, range.length) ?? "").trim();
+  }
+  getSelectedInlineLink() {
+    var _a;
+    const range = this.activeRange();
+    if (!this.quill || !range) return "";
+    const value = (_a = this.quill.getFormat(range.index, range.length)) == null ? void 0 : _a.link;
+    return typeof value === "string" ? value : "";
+  }
+  setInlineLink(link) {
+    this.formatText({ link: link || false });
+  }
+  toggleInlineCode() {
+    var _a;
+    const range = this.activeRange();
+    if (!this.quill || !range || !range.length) return;
+    const current = Boolean((_a = this.quill.getFormat(range.index, range.length)) == null ? void 0 : _a.code);
+    this.formatText({ code: !current });
+  }
+  getCodeBlock() {
+    const range = this.activeRange();
+    return this.quill ? findCurrentCodeBlock(this.quill, range) : null;
+  }
+  saveCodeBlock(code, language = "plain") {
+    const range = this.activeRange();
+    if (!this.quill || !range) return;
+    const existing = findCurrentCodeBlock(this.quill, range);
+    replaceCodeBlock(this.quill, existing ?? range, code, language);
+    this.restoreRange(range);
+  }
+  removeCodeBlockFormat() {
+    const range = this.activeRange();
+    const block = this.quill ? findCurrentCodeBlock(this.quill, range) : null;
+    if (this.quill && block) removeCodeBlockFormat(this.quill, block);
+  }
+  deleteCodeBlock() {
+    const range = this.activeRange();
+    const block = this.quill ? findCurrentCodeBlock(this.quill, range) : null;
+    if (this.quill && block) deleteCodeBlock(this.quill, block);
+  }
+  insertFormula(formula, mode = "inline") {
+    const range = this.activeRange();
+    if (!this.quill || !range) return;
+    const value = mode === "block" ? `\\displaystyle{${formula}}` : formula;
+    if (range.length > 0) this.quill.deleteText(range.index, range.length, Quill.sources.USER);
+    if (mode === "block") {
+      this.quill.insertText(range.index, "\n", Quill.sources.USER);
+      this.quill.insertEmbed(range.index + 1, "formula", value, Quill.sources.USER);
+      this.quill.insertText(range.index + 2, "\n", Quill.sources.USER);
+      this.restoreRange({ index: range.index + 3, length: 0 });
+    } else {
+      this.quill.insertEmbed(range.index, "formula", value, Quill.sources.USER);
+      this.restoreRange({ index: range.index + 1, length: 0 });
+    }
+  }
+  formatText(config2) {
+    const range = this.activeRange();
+    if (!this.quill || !range || !range.length || this.options.isReadonly()) return;
+    this.quill.formatText(range.index, range.length, config2, Quill.sources.USER);
+    this.restoreRange(range);
+  }
+  clearTextFormat() {
+    const range = this.activeRange();
+    if (!this.quill || !range || !range.length || this.options.isReadonly()) return;
+    this.quill.removeFormat(range.index, range.length, Quill.sources.USER);
+    this.restoreRange(range);
+  }
+  setCloze(enabled) {
+    this.formatText(enabled ? { background: "#f5dfa0", color: "transparent" } : { background: false, color: false });
+  }
+  activeRange() {
+    var _a;
+    return ((_a = this.quill) == null ? void 0 : _a.getSelection()) ?? this.range ?? this.lastRange ?? null;
+  }
+  plainText() {
+    if (!this.quill) return "";
+    return String(this.quill.getText(0, Math.max(0, this.quill.getLength() - 1)) ?? "").replace(/\u00a0/g, " ");
+  }
+  restoreRange(range) {
+    var _a;
+    this.range = { index: range.index, length: range.length };
+    (_a = this.quill) == null ? void 0 : _a.setSelection(range.index, range.length, Quill.sources.SILENT);
+  }
+  scheduleCommit() {
+    if (this.commitTimer !== null) window.clearTimeout(this.commitTimer);
+    this.commitTimer = window.setTimeout(() => {
+      this.commitTimer = null;
+      this.flush();
+    }, 160);
+  }
 }
 const DEFAULT_SPLIT_OUTLINE_RATIO = 0.42;
 const MIN_SPLIT_OUTLINE_RATIO = 0.25;
@@ -57215,6 +57529,60 @@ function isClozeFormat(formatInfo) {
   const background = String(formatInfo.background ?? "").toLowerCase().replaceAll(" ", "");
   return color === "transparent" || color === "rgba(0,0,0,0)" || background === CLOZE_BACKGROUND;
 }
+const COLOR_SWATCHES = [
+  "#5f6368",
+  "#9aa0a6",
+  "#f4f4f4",
+  "#ff4d3d",
+  "#ff7a18",
+  "#ffc400",
+  "#d7e600",
+  "#8ed600",
+  "#43c59e",
+  "#66cbd1",
+  "#58b9e8",
+  "#9aa8ff",
+  "#ce78e8",
+  "#3c4043",
+  "#777b80",
+  "#d9d9d9",
+  "#d92d20",
+  "#e04b12",
+  "#f59f00",
+  "#b5c900",
+  "#52b415",
+  "#268c55",
+  "#0c8d96",
+  "#147cae",
+  "#6975db",
+  "#a144bd",
+  "#202124",
+  "#4f5358",
+  "#b7b7b7",
+  "#a61b0d",
+  "#bd3408",
+  "#d67a00",
+  "#859900",
+  "#2d7c10",
+  "#1b633d",
+  "#08707c",
+  "#0b5d86",
+  "#4d54a8",
+  "#7d2d91",
+  "#000000",
+  "#303134",
+  "#8d8d8d",
+  "#7a1308",
+  "#8e2505",
+  "#a85700",
+  "#586b00",
+  "#245d12",
+  "#174d32",
+  "#07535c",
+  "#074663",
+  "#383d78",
+  "#5b2069"
+];
 function option(value, label) {
   return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -57225,14 +57593,22 @@ function fontOptions() {
   const labels = ["无衬线", "衬线", "微软雅黑", "宋体", "等宽"];
   return YEMIND_FONT_VALUES.map((value, index) => option(value, labels[index] ?? value)).join("");
 }
+function swatchesHtml() {
+  return COLOR_SWATCHES.map((value) => `<button type="button" class="ymz-color-popover__swatch" data-color-value="${value}" style="--ymz-swatch:${value}" title="${value}" aria-label="${value}"></button>`).join("");
+}
 class RichTextToolbar {
-  constructor(root2, commands, callbacks = {}) {
+  constructor(root2, initialTarget, callbacks = {}) {
     __publicField(this, "element");
+    __publicField(this, "colorPopover");
+    __publicField(this, "customColorInput");
     __publicField(this, "formatInfo", {});
     __publicField(this, "enabled", true);
     __publicField(this, "interacting", false);
+    __publicField(this, "target", null);
+    __publicField(this, "activeColorKind", "color");
     __publicField(this, "onDocumentMouseDown", (event) => {
-      if (!this.element.contains(event.target)) this.hide();
+      const node = event.target;
+      if (!this.element.contains(node) && !this.colorPopover.contains(node)) this.hide();
     });
     __publicField(this, "onWindowMouseUp", () => {
       window.setTimeout(() => {
@@ -57240,8 +57616,8 @@ class RichTextToolbar {
       }, 0);
     });
     this.root = root2;
-    this.commands = commands;
     this.callbacks = callbacks;
+    this.target = initialTarget;
     this.element = document.createElement("div");
     this.element.className = "ymz-rich-toolbar";
     this.element.hidden = true;
@@ -57253,10 +57629,8 @@ class RichTextToolbar {
       <button type="button" data-rich-action="inline-code" title="行内代码">&lt;/&gt;</button>
       <button type="button" data-rich-action="code-block" title="代码块">代码块</button>
       <span class="ymz-rich-toolbar__separator"></span>
-      <label class="ymz-rich-color" title="文字颜色">A<input type="color" data-rich-field="color" value="#172033"></label>
-      <button type="button" data-rich-action="clear-color" title="清除文字颜色">×</button>
-      <label class="ymz-rich-color" title="背景颜色">Bg<input type="color" data-rich-field="background" value="#fff1a8"></label>
-      <button type="button" data-rich-action="clear-background" title="清除背景颜色">×</button>
+      <button type="button" class="ymz-rich-color" data-rich-action="color-menu" title="文字颜色"><span>A</span><i data-rich-swatch="color"></i></button>
+      <button type="button" class="ymz-rich-color" data-rich-action="background-menu" title="背景颜色"><span>Bg</span><i data-rich-swatch="background"></i></button>
       <select data-rich-field="size" title="字号">
         <option value="">自动</option>${sizeOptions()}
       </select>
@@ -57267,8 +57641,23 @@ class RichTextToolbar {
       <button type="button" data-rich-action="link" title="行内链接">链接</button>
       <button type="button" data-rich-action="cloze" title="挖空/取消挖空">挖空</button>
       <button type="button" data-rich-action="formula" title="插入公式">Fx</button>
-      <button type="button" data-rich-action="clear" title="清除格式">清除</button>`;
-    document.body.appendChild(this.element);
+      <button type="button" data-rich-action="clear" title="清除全部格式">清除</button>`;
+    this.colorPopover = document.createElement("div");
+    this.colorPopover.className = "ymz-color-popover";
+    this.colorPopover.hidden = true;
+    this.colorPopover.innerHTML = `<div class="ymz-color-popover__grid">${swatchesHtml()}</div>
+      <div class="ymz-color-popover__footer">
+        <button type="button" data-color-action="reset">重置默认</button>
+        <button type="button" data-color-action="custom">更多颜色</button>
+        <button type="button" data-color-action="eyedropper">吸管</button>
+      </div>`;
+    this.customColorInput = document.createElement("input");
+    this.customColorInput.type = "color";
+    this.customColorInput.className = "ymz-color-popover__native";
+    this.customColorInput.tabIndex = -1;
+    this.customColorInput.setAttribute("aria-hidden", "true");
+    this.colorPopover.appendChild(this.customColorInput);
+    this.root.append(this.element, this.colorPopover);
     document.addEventListener("mousedown", this.onDocumentMouseDown, true);
     window.addEventListener("mouseup", this.onWindowMouseUp, true);
     this.bind();
@@ -57277,7 +57666,8 @@ class RichTextToolbar {
     this.enabled = enabled;
     if (!enabled) this.hide();
   }
-  update(hasRange, rectInfo, formatInfo) {
+  update(hasRange, rectInfo, formatInfo, target) {
+    if (target) this.target = target;
     if (!this.enabled) {
       this.hide();
       return;
@@ -57293,95 +57683,146 @@ class RichTextToolbar {
   }
   hide() {
     this.element.hidden = true;
+    this.colorPopover.hidden = true;
   }
   destroy() {
     document.removeEventListener("mousedown", this.onDocumentMouseDown, true);
     window.removeEventListener("mouseup", this.onWindowMouseUp, true);
     this.element.remove();
+    this.colorPopover.remove();
+    this.target = null;
   }
   bind() {
-    var _a, _b, _c2, _d2;
-    this.element.addEventListener("mousedown", (event) => {
+    var _a, _b;
+    const markInteracting = (event) => {
       this.interacting = true;
-      if (event.target.closest("button")) event.preventDefault();
+      event.preventDefault();
       event.stopPropagation();
-    });
+    };
+    this.element.addEventListener("mousedown", markInteracting);
+    this.colorPopover.addEventListener("mousedown", markInteracting);
     this.element.addEventListener("click", (event) => {
-      var _a2, _b2, _c3, _d3, _e, _f, _g, _h;
+      var _a2, _b2, _c2, _d2, _e, _f, _g, _h;
       const button = event.target.closest("[data-rich-action]");
-      if (!button) return;
-      const action = button.dataset.richAction;
-      if (action) (_b2 = (_a2 = this.callbacks).onAction) == null ? void 0 : _b2.call(_a2, action);
-      if (["bold", "italic", "underline", "strike"].includes(String(action))) {
-        this.commands.formatText(nextToggleFormat(action, this.formatInfo));
+      if (!button || !this.target) return;
+      const action = button.dataset.richAction ?? "";
+      (_b2 = (_a2 = this.callbacks).onAction) == null ? void 0 : _b2.call(_a2, action);
+      if (["bold", "italic", "underline", "strike"].includes(action)) {
+        this.target.formatText(nextToggleFormat(action, this.formatInfo));
         this.formatInfo[action] = !Boolean(this.formatInfo[action]);
         this.syncState();
         return;
       }
       switch (action) {
         case "inline-code":
-          this.commands.toggleInlineCode();
+          this.target.toggleInlineCode();
           this.formatInfo.code = !Boolean(this.formatInfo.code);
           this.syncState();
           break;
         case "code-block":
-          this.hide();
-          (_d3 = (_c3 = this.callbacks).onCodeBlock) == null ? void 0 : _d3.call(_c3);
+          this.colorPopover.hidden = true;
+          this.element.hidden = true;
+          (_d2 = (_c2 = this.callbacks).onCodeBlock) == null ? void 0 : _d2.call(_c2, this.target);
           break;
         case "link":
-          this.hide();
-          (_f = (_e = this.callbacks).onLink) == null ? void 0 : _f.call(_e);
+          this.colorPopover.hidden = true;
+          this.element.hidden = true;
+          (_f = (_e = this.callbacks).onLink) == null ? void 0 : _f.call(_e, this.target);
           break;
         case "cloze": {
           const next2 = !isClozeFormat(this.formatInfo);
-          this.commands.setCloze(next2);
+          this.target.setCloze(next2);
           this.formatInfo.color = next2 ? "transparent" : void 0;
           this.formatInfo.background = next2 ? "#f5dfa0" : void 0;
           this.syncState();
           break;
         }
         case "formula":
-          this.hide();
-          (_h = (_g = this.callbacks).onFormula) == null ? void 0 : _h.call(_g);
+          this.colorPopover.hidden = true;
+          this.element.hidden = true;
+          (_h = (_g = this.callbacks).onFormula) == null ? void 0 : _h.call(_g, this.target);
           break;
         case "clear":
-          this.commands.clearTextFormat();
+          this.target.clearTextFormat();
           this.formatInfo = {};
           this.syncState();
           break;
-        case "clear-color":
-          this.commands.formatText({ color: false });
-          this.formatInfo.color = void 0;
+        case "color-menu":
+          this.openColorPopover("color", button);
           break;
-        case "clear-background":
-          this.commands.formatText({ background: false });
-          this.formatInfo.background = void 0;
+        case "background-menu":
+          this.openColorPopover("background", button);
           break;
       }
     });
-    (_a = this.element.querySelector('[data-rich-field="color"]')) == null ? void 0 : _a.addEventListener("input", (event) => {
-      var _a2, _b2;
-      (_b2 = (_a2 = this.callbacks).onAction) == null ? void 0 : _b2.call(_a2, "color");
-      this.commands.formatText({ color: event.target.value });
+    this.colorPopover.addEventListener("click", (event) => {
+      var _a2;
+      const swatch = event.target.closest("[data-color-value]");
+      if (swatch) {
+        this.applyColor(swatch.dataset.colorValue || false);
+        return;
+      }
+      const action = (_a2 = event.target.closest("[data-color-action]")) == null ? void 0 : _a2.dataset.colorAction;
+      if (action === "reset") this.applyColor(false);
+      if (action === "custom") {
+        const current = this.formatInfo[this.activeColorKind];
+        this.customColorInput.value = typeof current === "string" && /^#[0-9a-f]{6}$/i.test(current) ? current : "#000000";
+        this.customColorInput.click();
+      }
+      if (action === "eyedropper") void this.pickColorFromScreen();
     });
-    (_b = this.element.querySelector('[data-rich-field="background"]')) == null ? void 0 : _b.addEventListener("input", (event) => {
-      var _a2, _b2;
-      (_b2 = (_a2 = this.callbacks).onAction) == null ? void 0 : _b2.call(_a2, "background");
-      this.commands.formatText({ background: event.target.value });
-    });
-    (_c2 = this.element.querySelector('[data-rich-field="size"]')) == null ? void 0 : _c2.addEventListener("change", (event) => {
-      var _a2, _b2;
+    this.customColorInput.addEventListener("input", () => this.applyColor(this.customColorInput.value));
+    (_a = this.element.querySelector('[data-rich-field="size"]')) == null ? void 0 : _a.addEventListener("change", (event) => {
+      var _a2, _b2, _c2;
       (_b2 = (_a2 = this.callbacks).onAction) == null ? void 0 : _b2.call(_a2, "size");
-      this.commands.formatText({ size: event.target.value || false });
+      (_c2 = this.target) == null ? void 0 : _c2.formatText({ size: event.target.value || false });
     });
-    (_d2 = this.element.querySelector('[data-rich-field="font"]')) == null ? void 0 : _d2.addEventListener("change", (event) => {
-      var _a2, _b2;
+    (_b = this.element.querySelector('[data-rich-field="font"]')) == null ? void 0 : _b.addEventListener("change", (event) => {
+      var _a2, _b2, _c2;
       (_b2 = (_a2 = this.callbacks).onAction) == null ? void 0 : _b2.call(_a2, "font");
-      this.commands.formatText({ font: event.target.value || false });
+      (_c2 = this.target) == null ? void 0 : _c2.formatText({ font: event.target.value || false });
     });
   }
+  openColorPopover(kind, anchor) {
+    this.activeColorKind = kind;
+    this.colorPopover.dataset.kind = kind;
+    this.colorPopover.hidden = false;
+    const rootRect = this.root.getBoundingClientRect();
+    const anchorRect = anchor.getBoundingClientRect();
+    const width2 = this.colorPopover.offsetWidth || 320;
+    const height2 = this.colorPopover.offsetHeight || 145;
+    const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
+    const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
+    const left = Math.max(8, Math.min(anchorRect.left - rootRect.left, rootWidth - width2 - 8));
+    const below = anchorRect.bottom - rootRect.top + 6;
+    const above = anchorRect.top - rootRect.top - height2 - 6;
+    const top = below + height2 <= rootHeight - 8 ? below : Math.max(8, above);
+    this.colorPopover.style.left = `${Math.round(left)}px`;
+    this.colorPopover.style.top = `${Math.round(top)}px`;
+  }
+  applyColor(value) {
+    var _a, _b;
+    if (!this.target) return;
+    (_b = (_a = this.callbacks).onAction) == null ? void 0 : _b.call(_a, this.activeColorKind);
+    this.target.formatText({ [this.activeColorKind]: value });
+    this.formatInfo[this.activeColorKind] = value || void 0;
+    this.syncState();
+    this.colorPopover.hidden = true;
+  }
+  async pickColorFromScreen() {
+    const EyeDropperConstructor = window.EyeDropper;
+    if (typeof EyeDropperConstructor !== "function") {
+      this.customColorInput.click();
+      return;
+    }
+    try {
+      const result = await new EyeDropperConstructor().open();
+      if (result == null ? void 0 : result.sRGBHex) this.applyColor(String(result.sRGBHex));
+    } catch {
+    }
+  }
   syncState() {
-    var _a, _b, _c2, _d2;
+    var _a, _b, _c2, _d2, _e, _f;
     ["bold", "italic", "underline", "strike"].forEach((name) => {
       var _a2;
       (_a2 = this.element.querySelector(`[data-rich-action="${name}"]`)) == null ? void 0 : _a2.classList.toggle("is-active", Boolean(this.formatInfo[name]));
@@ -57394,16 +57835,26 @@ class RichTextToolbar {
     if (size2) size2.value = typeof this.formatInfo.size === "string" ? this.formatInfo.size : "";
     const font = this.element.querySelector('[data-rich-field="font"]');
     if (font) font.value = typeof this.formatInfo.font === "string" ? this.formatInfo.font : "";
+    const color = typeof this.formatInfo.color === "string" && this.formatInfo.color !== "transparent" ? this.formatInfo.color : "currentColor";
+    const background = typeof this.formatInfo.background === "string" ? this.formatInfo.background : "transparent";
+    (_e = this.element.querySelector('[data-rich-swatch="color"]')) == null ? void 0 : _e.style.setProperty("--ymz-current-color", color);
+    (_f = this.element.querySelector('[data-rich-swatch="background"]')) == null ? void 0 : _f.style.setProperty("--ymz-current-color", background);
   }
   position(rect) {
-    const width2 = Math.min(this.element.scrollWidth || 820, window.innerWidth - 16);
-    const left = Math.max(8, Math.min(rect.left + (rect.width ?? 0) / 2 - width2 / 2, window.innerWidth - width2 - 8));
+    const rootRect = this.root.getBoundingClientRect();
+    const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
+    const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
+    const width2 = Math.min(this.element.scrollWidth || 820, Math.max(240, rootWidth - 16));
+    const localLeft = rect.left - rootRect.left;
+    const localTop = rect.top - rootRect.top;
+    const localBottom = rect.bottom - rootRect.top;
+    const left = Math.max(8, Math.min(localLeft + (rect.width ?? 0) / 2 - width2 / 2, rootWidth - width2 - 8));
     const measuredHeight = this.element.offsetHeight || 44;
-    const below = rect.bottom + 8;
-    const top = below + measuredHeight < window.innerHeight ? below : Math.max(8, rect.top - measuredHeight - 8);
+    const below = localBottom + 8;
+    const top = below + measuredHeight < rootHeight ? below : Math.max(8, localTop - measuredHeight - 8);
     this.element.style.left = `${Math.round(left)}px`;
     this.element.style.top = `${Math.round(top)}px`;
-    this.element.style.maxWidth = `${window.innerWidth - 16}px`;
+    this.element.style.maxWidth = `${Math.max(240, rootWidth - 16)}px`;
   }
 }
 function createSelectionPresentation(rawCount, mode) {
@@ -57613,6 +58064,7 @@ class YeMindEditor {
     __publicField(this, "outerFramePanelEl");
     __publicField(this, "outerFrameHintEl");
     __publicField(this, "richTextToolbar", null);
+    __publicField(this, "outlineRichText", null);
     __publicField(this, "settingsInitialized", false);
     __publicField(this, "viewMode", "map");
     __publicField(this, "searchText", "");
@@ -57622,7 +58074,6 @@ class YeMindEditor {
     __publicField(this, "splitDragPointerId", null);
     __publicField(this, "pendingSplitClientX", null);
     __publicField(this, "splitOutlineRatio", DEFAULT_SPLIT_OUTLINE_RATIO);
-    __publicField(this, "outlineComposing", false);
     __publicField(this, "outlineTextCommitUid", null);
     __publicField(this, "outlineStructureBusy", false);
     __publicField(this, "pendingOutlineFocus", null);
@@ -57705,25 +58156,27 @@ class YeMindEditor {
     this.scheduleSafeResize();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i;
     this.options.diagnostics.record("editor", "destroy-started", this.current.id, { dirty: this.saveRevisions.isDirty() });
+    (_a = this.outlineRichText) == null ? void 0 : _a.destroy();
+    this.outlineRichText = null;
     this.flushPendingSave();
     this.destroyed = true;
-    (_a = this.repositoryUnsubscribe) == null ? void 0 : _a.call(this);
-    (_b = this.settingsUnsubscribe) == null ? void 0 : _b.call(this);
-    (_c2 = this.appearanceObserver) == null ? void 0 : _c2.disconnect();
+    (_b = this.repositoryUnsubscribe) == null ? void 0 : _b.call(this);
+    (_c2 = this.settingsUnsubscribe) == null ? void 0 : _c2.call(this);
+    (_d2 = this.appearanceObserver) == null ? void 0 : _d2.disconnect();
     this.appearanceObserver = null;
-    (_e = (_d2 = this.appearanceMedia) == null ? void 0 : _d2.removeEventListener) == null ? void 0 : _e.call(_d2, "change", this.onAppearanceMediaChange);
+    (_f = (_e = this.appearanceMedia) == null ? void 0 : _e.removeEventListener) == null ? void 0 : _f.call(_e, "change", this.onAppearanceMediaChange);
     this.appearanceMedia = null;
-    (_f = this.richTextToolbar) == null ? void 0 : _f.destroy();
+    (_g = this.richTextToolbar) == null ? void 0 : _g.destroy();
     this.richTextToolbar = null;
-    (_g = this.rootEl) == null ? void 0 : _g.removeEventListener("keydown", this.onRootKeydown);
+    (_h = this.rootEl) == null ? void 0 : _h.removeEventListener("keydown", this.onRootKeydown);
     if (this.resizeFrame !== null) window.cancelAnimationFrame(this.resizeFrame);
     if (this.splitResizeFrame !== null) window.cancelAnimationFrame(this.splitResizeFrame);
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_h = this.map) == null ? void 0 : _h.destroy();
+    (_i = this.map) == null ? void 0 : _i.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record("editor", "destroy-completed", this.current.id);
@@ -57781,10 +58234,22 @@ class YeMindEditor {
     });
     this.commands = createCommandAdapter(this.map);
     this.richTextToolbar = new RichTextToolbar(this.rootEl, this.commands, {
-      onFormula: () => openFormulaDialog(this.commands),
-      onLink: () => openInlineLinkDialog(this.commands, this.settings),
-      onCodeBlock: () => openCodeBlockDialog(this.commands, this.settings),
+      onFormula: (target) => openFormulaDialog(target),
+      onLink: (target) => openInlineLinkDialog(target, this.settings),
+      onCodeBlock: (target) => openCodeBlockDialog(target, this.settings),
       onAction: (action) => this.options.diagnostics.record("rich-text", action, this.current.id)
+    });
+    this.outlineRichText = new OutlineRichTextController({
+      root: this.rootEl,
+      isReadonly: () => {
+        var _a;
+        return Boolean((_a = this.commands) == null ? void 0 : _a.isReadonly());
+      },
+      onCommit: (uid, html2) => this.commitOutlineRichText(uid, html2),
+      onSelectionChange: (hasRange, rect, format, target) => {
+        var _a;
+        (_a = this.richTextToolbar) == null ? void 0 : _a.update(hasRange, rect, format, target);
+      }
     });
     this.rootEl.addEventListener("keydown", this.onRootKeydown);
     this.bindToolbar();
@@ -57949,34 +58414,17 @@ class YeMindEditor {
     });
     this.outlineEl.addEventListener("focusin", (event) => {
       var _a2;
-      const input = event.target.closest("[data-outline-editor]");
-      const row = input == null ? void 0 : input.closest("[data-outline-uid]");
+      const editor = event.target.closest("[data-outline-editor]");
+      const row = editor == null ? void 0 : editor.closest("[data-outline-uid]");
       const uid = (row == null ? void 0 : row.dataset.outlineUid) ?? "";
-      if (!uid || !this.commands) return;
-      if (((_a2 = this.pendingOutlineFocus) == null ? void 0 : _a2.uid) === uid) this.pendingOutlineFocus = null;
+      if (!editor || !uid || !this.commands || !this.outlineRichText) return;
+      const request = ((_a2 = this.pendingOutlineFocus) == null ? void 0 : _a2.uid) === uid ? this.pendingOutlineFocus : void 0;
+      if (request) this.pendingOutlineFocus = null;
+      this.outlineRichText.activate(editor, uid, request);
       this.commands.goToNode(uid);
       this.activateOutlineUid(uid);
     });
-    this.outlineEl.addEventListener("compositionstart", () => {
-      this.outlineComposing = true;
-    });
-    this.outlineEl.addEventListener("compositionend", () => {
-      this.outlineComposing = false;
-    });
-    this.outlineEl.addEventListener("input", (event) => {
-      const input = event.target.closest("[data-outline-editor]");
-      if (input) this.resizeOutlineInput(input);
-    });
-    this.outlineEl.addEventListener("keydown", (event) => this.handleOutlineKeydown(event));
-    this.outlineEl.addEventListener("blur", (event) => {
-      const input = event.target.closest("[data-outline-editor]");
-      if (!input) return;
-      if (input.dataset.outlineCancelled === "true") {
-        delete input.dataset.outlineCancelled;
-        return;
-      }
-      this.commitOutlineInput(input);
-    }, true);
+    this.outlineEl.addEventListener("keydown", (event) => this.handleOutlineKeydown(event), true);
     this.bindSplitDivider();
     this.rootEl.addEventListener("change", (event) => {
       const control = event.target.closest("[data-outer-frame-setting]");
@@ -58045,13 +58493,7 @@ class YeMindEditor {
       this.current.data = data2;
       this.options.diagnostics.record("editor", "data-change", this.current.id, { nodeCount: calculateEditorStats(data2).nodes });
       this.updateStats(data2);
-      if (this.outlineTextCommitUid) {
-        const row = Array.from(this.outlineEl.querySelectorAll("[data-outline-uid]")).find((item) => item.dataset.outlineUid === this.outlineTextCommitUid);
-        const input = row == null ? void 0 : row.querySelector("[data-outline-editor]");
-        if (input) this.resizeOutlineInput(input);
-      } else {
-        this.renderOutline(data2);
-      }
+      if (!this.outlineTextCommitUid) this.renderOutline(data2);
       this.scheduleSave();
     });
     this.map.on("view_data_change", (viewData) => {
@@ -58077,7 +58519,7 @@ class YeMindEditor {
     });
     this.map.on("rich_text_selection_change", (hasRange, rectInfo, formatInfo) => {
       var _a;
-      (_a = this.richTextToolbar) == null ? void 0 : _a.update(hasRange, rectInfo, formatInfo);
+      (_a = this.richTextToolbar) == null ? void 0 : _a.update(hasRange, rectInfo, formatInfo, this.commands);
     });
     this.map.on("yemind_todo_toggle", (node) => {
       if (!this.commands) return;
@@ -58421,12 +58863,6 @@ class YeMindEditor {
       window.cancelAnimationFrame(this.resizeFrame);
       this.resizeFrame = null;
     }
-    if (mode !== "map") {
-      window.requestAnimationFrame(() => {
-        if (this.destroyed || this.viewMode === "map") return;
-        this.outlineEl.querySelectorAll("[data-outline-editor]").forEach((input) => this.resizeOutlineInput(input));
-      });
-    }
   }
   scheduleSafeResize(attempt = 0) {
     if (this.destroyed || !this.map || this.viewMode === "outline") return;
@@ -58454,24 +58890,27 @@ class YeMindEditor {
     });
   }
   renderOutline(data2) {
-    var _a, _b, _c2, _d2;
-    if (!this.pendingOutlineFocus) {
-      const active = document.activeElement instanceof HTMLTextAreaElement ? document.activeElement.closest("[data-outline-editor]") : null;
-      const uid = ((_a = active == null ? void 0 : active.closest("[data-outline-uid]")) == null ? void 0 : _a.dataset.outlineUid) ?? "";
-      if (active && uid && this.outlineEl.contains(active)) {
+    var _a, _b, _c2, _d2, _e, _f, _g, _h;
+    const activeEditor = (_a = this.outlineRichText) == null ? void 0 : _a.activeHost;
+    if (!this.pendingOutlineFocus && activeEditor) {
+      const uid = ((_b = activeEditor.closest("[data-outline-uid]")) == null ? void 0 : _b.dataset.outlineUid) ?? "";
+      const selection = (_c2 = this.outlineRichText) == null ? void 0 : _c2.getSelectionState(activeEditor);
+      if (uid && selection) {
         this.pendingOutlineFocus = {
           uid,
           placement: "range",
-          start: active.selectionStart ?? 0,
-          end: active.selectionEnd ?? active.selectionStart ?? 0
+          start: selection.start,
+          end: selection.end
         };
       }
     }
-    const activeUid = String(((_d2 = (_c2 = (_b = this.commands) == null ? void 0 : _b.getPrimaryNode()) == null ? void 0 : _c2.getData) == null ? void 0 : _d2.call(_c2, "uid")) ?? "");
+    (_d2 = this.outlineRichText) == null ? void 0 : _d2.flush();
+    (_e = this.outlineRichText) == null ? void 0 : _e.detach(false);
+    data2 = this.current.data;
+    const activeUid = String(((_h = (_g = (_f = this.commands) == null ? void 0 : _f.getPrimaryNode()) == null ? void 0 : _g.getData) == null ? void 0 : _h.call(_g, "uid")) ?? "");
     const readonly = this.rootEl.dataset.readonly === "true";
     this.outlineEl.setAttribute("aria-readonly", String(readonly));
     this.outlineEl.innerHTML = renderOutlineHtml(data2, readonly);
-    this.outlineEl.querySelectorAll("[data-outline-editor]").forEach((input) => this.resizeOutlineInput(input));
     this.activateOutlineUid(activeUid);
     this.restorePendingOutlineFocus();
   }
@@ -58480,70 +58919,45 @@ class YeMindEditor {
     if (!pending) return;
     window.requestAnimationFrame(() => {
       if (this.destroyed || !this.pendingOutlineFocus || this.pendingOutlineFocus.uid !== pending.uid) return;
-      const input = this.findOutlineInput(pending.uid);
-      if (!input) return;
+      const editor = this.findOutlineInput(pending.uid);
+      if (!editor || !this.outlineRichText) return;
       this.pendingOutlineFocus = null;
-      input.focus();
-      const length2 = input.value.length;
-      if (pending.placement === "select-all") input.select();
-      else if (pending.placement === "start") input.setSelectionRange(0, 0);
-      else if (pending.placement === "end") input.setSelectionRange(length2, length2);
-      else {
-        const start = Math.min(length2, Math.max(0, pending.start ?? 0));
-        const end = Math.min(length2, Math.max(start, pending.end ?? start));
-        input.setSelectionRange(start, end);
-      }
+      this.outlineRichText.activate(editor, pending.uid, pending);
       this.activateOutlineUid(pending.uid);
-      input.scrollIntoView({ block: "nearest" });
     });
   }
   findOutlineInput(uid) {
     const row = Array.from(this.outlineEl.querySelectorAll("[data-outline-uid]")).find((item) => item.dataset.outlineUid === uid);
     return (row == null ? void 0 : row.querySelector("[data-outline-editor]")) ?? null;
   }
-  commitOutlineInput(input) {
-    if (!this.commands || this.commands.isReadonly()) return false;
-    const row = input.closest("[data-outline-uid]");
-    const uid = (row == null ? void 0 : row.dataset.outlineUid) ?? "";
-    const original = input.dataset.outlineOriginal ?? "";
-    const next2 = input.value.replace(/\r\n/g, "\n");
-    if (!uid) return false;
-    if (!next2.trim()) {
-      input.value = original;
-      this.resizeOutlineInput(input);
-      return false;
-    }
-    if (next2 === original) return false;
+  commitOutlineRichText(uid, html2) {
+    if (!this.commands || this.commands.isReadonly() || !uid) return false;
     this.outlineTextCommitUid = uid;
     try {
-      if (!this.commands.setNodeTextByUid(uid, next2)) return false;
+      return this.commands.setNodeRichTextByUid(uid, html2);
     } finally {
       this.outlineTextCommitUid = null;
     }
-    input.value = next2;
-    input.dataset.outlineOriginal = next2;
-    this.resizeOutlineInput(input);
-    return true;
   }
   handleOutlineKeydown(event) {
     var _a;
-    const input = event.target.closest("[data-outline-editor]");
-    const row = input == null ? void 0 : input.closest("[data-outline-uid]");
-    if (!input || !row || !this.commands || this.outlineStructureBusy) return;
+    const editor = event.target.closest("[data-outline-editor]");
+    const row = editor == null ? void 0 : editor.closest("[data-outline-uid]");
+    if (!editor || !row || !this.commands || !this.outlineRichText || this.outlineStructureBusy) return;
     const uid = row.dataset.outlineUid ?? "";
+    if (this.outlineRichText.activeHost !== editor) this.outlineRichText.activate(editor, uid);
+    const selection = this.outlineRichText.getSelectionState(editor);
     const isRoot = row.dataset.outlineRoot === "true";
-    const selectionStart = input.selectionStart ?? 0;
-    const selectionEnd = input.selectionEnd ?? selectionStart;
     const action = resolveOutlineKeyAction({
       key: event.key,
-      empty: input.value.trim().length === 0,
+      empty: selection.text.trim().length === 0,
       isRoot,
       readonly: this.commands.isReadonly(),
       hasChildren: row.dataset.outlineHasChildren === "true",
       expanded: row.dataset.outlineExpanded === "true",
-      atStart: selectionStart === 0 && selectionEnd === 0,
-      atEnd: selectionStart === input.value.length && selectionEnd === input.value.length,
-      composing: event.isComposing || this.outlineComposing,
+      atStart: selection.start === 0 && selection.end === 0,
+      atEnd: selection.start === selection.length && selection.end === selection.length,
+      composing: event.isComposing || this.outlineRichText.isComposing,
       shiftKey: event.shiftKey,
       altKey: event.altKey,
       ctrlKey: event.ctrlKey,
@@ -58553,23 +58967,21 @@ class YeMindEditor {
     event.preventDefault();
     event.stopPropagation();
     if (action === "cancel") {
-      input.value = input.dataset.outlineOriginal ?? input.value;
-      input.dataset.outlineCancelled = "true";
-      this.resizeOutlineInput(input);
-      input.blur();
+      this.outlineRichText.cancel();
+      editor.blur();
       return;
     }
     if (action === "previous" || action === "next") {
-      this.focusOutlineNeighbor(input, action === "previous" ? -1 : 1);
+      this.focusOutlineNeighbor(editor, action === "previous" ? -1 : 1);
       return;
     }
     this.outlineStructureBusy = true;
     try {
       if (action === "remove") {
-        const inputs = Array.from(this.outlineEl.querySelectorAll("[data-outline-editor]"));
-        const index = inputs.indexOf(input);
-        const previous = inputs[index - 1];
-        const next2 = inputs[index + 1];
+        const editors = Array.from(this.outlineEl.querySelectorAll("[data-outline-editor]"));
+        const index = editors.indexOf(editor);
+        const previous = editors[index - 1];
+        const next2 = editors[index + 1];
         const fallback = previous ?? next2;
         const fallbackUid = ((_a = fallback == null ? void 0 : fallback.closest("[data-outline-uid]")) == null ? void 0 : _a.dataset.outlineUid) ?? "";
         if (fallbackUid) {
@@ -58578,10 +58990,11 @@ class YeMindEditor {
             placement: previous ? "end" : "start"
           };
         }
+        this.outlineRichText.detach(false);
         if (!this.commands.removeNodeByUid(uid)) this.pendingOutlineFocus = null;
         return;
       }
-      this.commitOutlineInput(input);
+      this.outlineRichText.flush(editor);
       if (action === "collapse" || action === "expand") {
         this.pendingOutlineFocus = { uid, placement: action === "collapse" ? "start" : "end" };
         if (!this.commands.setNodeExpandedByUid(uid, action === "expand")) this.pendingOutlineFocus = null;
@@ -58601,23 +59014,16 @@ class YeMindEditor {
       this.outlineStructureBusy = false;
     }
   }
-  resizeOutlineInput(input) {
-    input.style.height = "auto";
-    const height2 = input.scrollHeight;
-    if (height2 > 0) input.style.height = `${Math.max(26, height2)}px`;
-  }
-  focusOutlineNeighbor(input, offset) {
+  focusOutlineNeighbor(editor, offset) {
     var _a, _b;
-    const inputs = Array.from(this.outlineEl.querySelectorAll("[data-outline-editor]"));
-    const current = inputs.indexOf(input);
-    const target = inputs[current + offset];
+    if (!this.outlineRichText) return;
+    const editors = Array.from(this.outlineEl.querySelectorAll("[data-outline-editor]"));
+    const current = editors.indexOf(editor);
+    const target = editors[current + offset];
     const uid = ((_a = target == null ? void 0 : target.closest("[data-outline-uid]")) == null ? void 0 : _a.dataset.outlineUid) ?? "";
     if (!target || !uid) return;
-    this.commitOutlineInput(input);
-    target.focus();
-    const position2 = offset < 0 ? target.value.length : 0;
-    target.setSelectionRange(position2, position2);
-    target.scrollIntoView({ block: "nearest" });
+    this.outlineRichText.flush(editor);
+    this.outlineRichText.activate(target, uid, { placement: offset < 0 ? "end" : "start" });
     (_b = this.commands) == null ? void 0 : _b.goToNode(uid);
     this.activateOutlineUid(uid);
   }
@@ -58879,7 +59285,7 @@ class YeMindEditor {
     });
   }
   setReadonly(enabled) {
-    var _a, _b;
+    var _a, _b, _c2;
     if (!this.map) return;
     this.rootEl.dataset.readonly = String(enabled);
     this.rootEl.querySelectorAll('[data-action="readonly"]').forEach((button) => {
@@ -58895,6 +59301,7 @@ class YeMindEditor {
     });
     if (enabled && ((_a = this.commands) == null ? void 0 : _a.isRelationCreating())) this.commands.cancelRelation();
     (_b = this.richTextToolbar) == null ? void 0 : _b.setEnabled(this.settings.showRichTextToolbar && !enabled);
+    (_c2 = this.outlineRichText) == null ? void 0 : _c2.setReadonly(enabled);
     this.map.setMode(enabled ? "readonly" : "edit");
     this.renderOutline(this.current.data);
     this.options.diagnostics.record("editor", "readonly-changed", this.current.id, { enabled });

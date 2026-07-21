@@ -308,3 +308,39 @@
 .ymz-outline-row__editor{white-space:pre-wrap;overflow-wrap:anywhere}
 .ymz-outline-row__editor::placeholder{color:var(--b3-theme-on-surface-light);opacity:.6}
 @media(max-width:720px){.ymz-editor[data-view="split"] .ymz-outline{flex-basis:var(--ymz-outline-ratio)}}
+
+/* v0.5.15 scoped editor overlays and shared rich-text editing / 编辑器局部浮层与共享富文本 */
+.ymz-editor{isolation:isolate;z-index:0}
+.ymz-canvas-wrap{isolation:isolate}
+.ymz-rich-toolbar{position:absolute;z-index:60}
+.ymz-color-popover{position:absolute;z-index:61;width:318px;padding:10px;border:1px solid var(--ymz-border);border-radius:10px;background:var(--b3-theme-background);box-shadow:0 12px 34px rgba(30,45,70,.24);box-sizing:border-box}
+.ymz-color-popover[hidden]{display:none}
+.ymz-color-popover__grid{display:grid;grid-template-columns:repeat(13,18px);gap:5px;align-items:center}
+.ymz-color-popover__swatch{width:18px;height:18px;margin:0;padding:0;border:1px solid color-mix(in srgb,var(--b3-theme-on-surface) 18%,transparent);border-radius:2px;background:var(--ymz-swatch);cursor:pointer;box-sizing:border-box}
+.ymz-color-popover__swatch:hover,.ymz-color-popover__swatch:focus-visible{outline:2px solid var(--b3-theme-primary);outline-offset:1px}
+.ymz-color-popover__footer{display:flex;align-items:center;gap:4px;margin-top:9px;padding-top:8px;border-top:1px solid var(--ymz-border)}
+.ymz-color-popover__footer button{height:28px;padding:0 8px;border:0;border-radius:6px;background:transparent;color:var(--b3-theme-on-background);font:inherit;cursor:pointer}
+.ymz-color-popover__footer button:hover{background:var(--b3-list-hover)}
+.ymz-color-popover__native{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.ymz-rich-color{gap:5px;padding-inline:8px!important}
+.ymz-rich-color i{display:inline-block;width:12px;height:12px;border:1px solid color-mix(in srgb,var(--b3-theme-on-surface) 28%,transparent);border-radius:2px;background:var(--ymz-current-color,transparent);box-sizing:border-box}
+.ymz-rich-color[data-rich-action="color-menu"] i{border-bottom:3px solid var(--ymz-current-color,currentColor);background:transparent}
+
+/* The upstream editor is mounted inside .ymz-editor instead of document.body. */
+.ymz-editor .smm-richtext-node-edit-wrap{z-index:55!important;color:inherit;caret-color:currentColor;-webkit-text-fill-color:currentColor}
+.ymz-editor .smm-richtext-node-edit-wrap .ql-container,.ymz-editor .smm-richtext-node-edit-wrap .ql-editor{color:inherit!important;caret-color:currentColor!important;-webkit-text-fill-color:currentColor!important}
+.ymz-editor .smm-richtext-node-edit-wrap .ql-editor *{-webkit-text-fill-color:currentColor}
+.ymz-editor .smm-richtext-node-edit-wrap .ql-editor::selection,.ymz-editor .smm-richtext-node-edit-wrap .ql-editor *::selection{background:color-mix(in srgb,var(--b3-theme-primary) 30%,transparent);color:inherit;-webkit-text-fill-color:currentColor}
+
+/* One active Quill editor; inactive outline rows stay lightweight HTML. */
+.ymz-outline-row__editor{position:relative;display:block;flex:1;min-width:0;min-height:26px;margin:0;padding:2px 4px;border:1px solid transparent;border-radius:5px;outline:0;background:transparent;color:inherit;font:inherit;font-weight:inherit;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;cursor:text;box-sizing:border-box}
+.ymz-outline-row__editor:hover:not([aria-readonly="true"]){border-color:color-mix(in srgb,var(--b3-theme-primary) 22%,transparent)}
+.ymz-outline-row__editor:focus,.ymz-outline-row__editor:focus-within{border-color:var(--b3-theme-primary);background:var(--b3-theme-background);box-shadow:0 0 0 2px color-mix(in srgb,var(--b3-theme-primary) 15%,transparent)}
+.ymz-outline-row__editor[aria-readonly="true"]{cursor:pointer}
+.ymz-outline-row__editor[data-placeholder]:empty::before,.ymz-outline-row__editor .ql-editor.ql-blank::before{content:attr(data-placeholder);color:var(--b3-theme-on-surface-light);font-style:normal;opacity:.6;pointer-events:none}
+.ymz-outline-row__editor .ql-container{height:auto;border:0!important;background:transparent;color:inherit;font:inherit}
+.ymz-outline-row__editor .ql-editor{min-height:24px;padding:0!important;overflow:visible;color:inherit;font:inherit;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;caret-color:currentColor;-webkit-text-fill-color:currentColor}
+.ymz-outline-row__editor .ql-editor *{-webkit-text-fill-color:currentColor}
+.ymz-outline-row[data-outline-root="true"] .ymz-outline-row__editor{font-size:1.18em;font-weight:700}
+.ymz-outline-row__editor p{margin:0}
+.ymz-outline-row__editor .ql-code-block-container{margin-block:4px}

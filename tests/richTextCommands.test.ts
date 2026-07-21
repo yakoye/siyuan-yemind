@@ -49,3 +49,19 @@ describe('rich text command adapter', () => {
     expect(map.richText.formatText).toHaveBeenCalledWith({ code: false });
   });
 });
+
+it('persists outline HTML as rich text through the upstream SET_NODE_TEXT command', () => {
+  const node = { getData: vi.fn() };
+  const map = fakeMindMap() as any;
+  map.renderer.findNodeByUid = vi.fn(() => node);
+  const commands = createCommandAdapter(map as never);
+
+  expect(commands.setNodeRichTextByUid('node-1', '<p><strong>part</strong> rest</p>')).toBe(true);
+  expect(map.execCommand).toHaveBeenCalledWith(
+    'SET_NODE_TEXT',
+    node,
+    '<p><strong>part</strong> rest</p>',
+    true,
+    false,
+  );
+});
