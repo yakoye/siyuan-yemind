@@ -3215,11 +3215,17 @@ function normalizeProjectStyle(value) {
 function densitySpacing(density, customMarginX, customMarginY) {
   if (density === "compact") {
     return {
+      second: { marginX: 30, marginY: 2 },
+      node: { marginX: 30, marginY: 2 }
+    };
+  }
+  if (density === "default") {
+    return {
       second: { marginX: 60, marginY: 14 },
       node: { marginX: 28, marginY: 6 }
     };
   }
-  if (density === "default") {
+  if (density === "comfortable") {
     return {
       second: { marginX: 82, marginY: 22 },
       node: { marginX: 42, marginY: 11 }
@@ -4076,6 +4082,9 @@ class SettingsStore {
     this.listeners.forEach((listener) => listener(value));
   }
 }
+function fitViewIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-fit-view" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M4 16v4h4M20 16v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+}
 function canvasModeIcon(mode) {
   if (mode === "pan") {
     return '<svg class="ymz-toolbar-icon ymz-icon-canvas-pan" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.4 11.2V7.8a1.5 1.5 0 0 1 3 0v2.6-4.1a1.5 1.5 0 0 1 3 0v4.1-3.1a1.5 1.5 0 0 1 3 0v4.1-1.9a1.5 1.5 0 0 1 3 0v5.1c0 4.1-2.8 6.4-6.6 6.4h-1.1c-2.5 0-4.1-1.1-5.4-3l-2.2-3.2a1.6 1.6 0 0 1 .4-2.2 1.7 1.7 0 0 1 2.2.3l.7.9v-2.6Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -4511,7 +4520,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.6.5";
+const PLUGIN_VERSION = "0.6.6";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -57789,9 +57798,9 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
 
         <aside class="ymz-project-style-panel" data-role="project-style-panel" aria-label="整图样式" hidden>
           <header class="ymz-project-style-panel__header"><strong>样式</strong><button type="button" data-project-style-action="close" aria-label="关闭样式">×</button></header>
-          <section><h4>密度</h4><p>应用到整张导图的所有节点。</p><div class="ymz-density-options" role="group" aria-label="节点密度"><button type="button" data-project-density="compact"><strong>紧凑</strong><small>最小化分支间距</small></button><button type="button" data-project-density="default"><strong>默认</strong><small>原紧凑间距</small></button><button type="button" data-project-density="comfortable"><strong>舒展</strong><small>主题原始间距</small></button></div><div class="ymz-custom-spacing" aria-label="自定义节点间距"><label><span>左右</span><input type="number" min="12" max="240" step="1" data-project-spacing="horizontal" aria-label="水平间距"></label><label><span>上下</span><input type="number" min="2" max="100" step="1" data-project-spacing="vertical" aria-label="垂直间距"></label></div></section>
-          <section><label class="ymz-project-style-panel__switch"><span><strong>彩虹连线</strong><small>应用分支颜色</small></span><input type="checkbox" data-project-style="rainbowLines"></label></section>
-          <section><h4>背景色</h4><p>未设置时使用主题。</p><div class="ymz-background-options"><button type="button" data-project-background="" title="主题背景">主题</button><button type="button" data-project-background="#ffffff" title="白色"></button><button type="button" data-project-background="#e2e8f0" title="岩灰"></button><button type="button" data-project-background="#ffe7ba" title="暖色"></button><button type="button" data-project-background="#c8f0dc" title="薄荷"></button><button type="button" data-project-background="#d7e8ff" title="天空"></button><button type="button" data-project-background="#f7cbd5" title="玫瑰"></button><button type="button" data-project-background="#0f172a" title="深色"></button></div><label class="ymz-project-style-panel__custom"><span>自定义</span><input type="color" data-project-style="backgroundColor" value="#f8fafc"></label></section>
+          <section><h4>密度</h4><div class="ymz-density-options" role="group" aria-label="节点密度"><button type="button" data-project-density="compact"><strong>紧凑</strong></button><button type="button" data-project-density="default"><strong>默认</strong></button><button type="button" data-project-density="comfortable"><strong>舒展</strong></button></div><div class="ymz-custom-spacing" aria-label="自定义节点间距"><label><span>左右</span><input type="number" min="12" max="240" step="1" data-project-spacing="horizontal" aria-label="水平间距"></label><label><span>上下</span><input type="number" min="2" max="100" step="1" data-project-spacing="vertical" aria-label="垂直间距"></label></div></section>
+          <section><label class="ymz-project-style-panel__switch"><strong>彩虹连线</strong><input type="checkbox" data-project-style="rainbowLines"></label></section>
+          <section><h4>背景色</h4><div class="ymz-background-options"><button type="button" data-project-background="" title="主题背景">主题</button><button type="button" data-project-background="#ffffff" title="白色"></button><button type="button" data-project-background="#e2e8f0" title="岩灰"></button><button type="button" data-project-background="#ffe7ba" title="暖色"></button><button type="button" data-project-background="#c8f0dc" title="薄荷"></button><button type="button" data-project-background="#d7e8ff" title="天空"></button><button type="button" data-project-background="#f7cbd5" title="玫瑰"></button><button type="button" data-project-background="#0f172a" title="深色"></button></div><label class="ymz-project-style-panel__custom"><span>自定义</span><input type="color" data-project-style="backgroundColor" value="#f8fafc"></label></section>
           <footer><button type="button" data-project-style-action="reset">恢复主题默认</button></footer>
         </aside>
 
@@ -57830,7 +57839,7 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
           <button class="ymz-status-title" data-role="title" title="${escapeHtml$3(title)}">${escapeHtml$3(title)}</button>
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
           <span class="ymz-selection-count" data-role="selection-count" hidden></span>
-          <button data-action="fit" title="适配视图">⌖</button>
+          <button class="ymz-icon-button" data-action="fit" title="适配视图" aria-label="适配视图">${fitViewIcon()}</button>
           <button class="ymz-canvas-mode ymz-icon-button" data-action="toggle-selection-mode" title="选（选择优先）：左键框选，右键拖动画布" aria-label="选（选择优先）：左键框选，右键拖动画布" aria-pressed="false"><span data-role="canvas-mode-icon">${canvasModeIcon("select")}</span></button>
           <button class="ymz-icon-button" data-action="readonly" title="只读模式" aria-label="只读模式">${lockIcon()}</button>
           <button class="ymz-icon-button" data-action="zen" title="禅模式" aria-label="禅模式">${meditationIcon()}</button>
@@ -59745,8 +59754,9 @@ class ProjectStylePanel {
     });
     const horizontal = this.panel.querySelector('[data-project-spacing="horizontal"]');
     const vertical = this.panel.querySelector('[data-project-spacing="vertical"]');
-    if (horizontal) horizontal.value = String(this.style.customMarginX ?? 42);
-    if (vertical) vertical.value = String(this.style.customMarginY ?? 11);
+    const presetSpacing = densitySpacing(this.style.density, this.style.customMarginX, this.style.customMarginY).node;
+    if (horizontal) horizontal.value = String(this.style.customMarginX ?? (presetSpacing == null ? void 0 : presetSpacing.marginX) ?? 42);
+    if (vertical) vertical.value = String(this.style.customMarginY ?? (presetSpacing == null ? void 0 : presetSpacing.marginY) ?? 11);
     const rainbow = this.panel.querySelector('[data-project-style="rainbowLines"]');
     if (rainbow) {
       rainbow.checked = this.style.rainbowLines === true;
@@ -62473,12 +62483,24 @@ function mountGlobalSearchResults(options) {
   wrapper.innerHTML = renderGlobalSearchResults(matches);
   const panel = wrapper.firstElementChild;
   if (!panel) return;
-  panel.addEventListener("click", (event) => {
+  let lastButton = null;
+  let lastActivatedAt = 0;
+  const activate = (event) => {
     const button = event.target.closest("[data-yemind-global-map]");
     if (!button) return;
+    if (event instanceof MouseEvent && event.button !== 0) return;
     event.preventDefault();
     event.stopPropagation();
+    const now = Date.now();
+    if (button === lastButton && now - lastActivatedAt < 500) return;
+    lastButton = button;
+    lastActivatedAt = now;
     options.onOpen(button.dataset.yemindGlobalMap ?? "", button.dataset.yemindGlobalNode ?? "");
+  };
+  panel.addEventListener("mousedown", activate, true);
+  panel.addEventListener("click", activate);
+  panel.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") activate(event);
   });
   root2.appendChild(panel);
 }

@@ -1,5 +1,5 @@
 import type { ProjectStyle } from '../editor/projectStyle';
-import { normalizeProjectStyle } from '../editor/projectStyle';
+import { densitySpacing, normalizeProjectStyle } from '../editor/projectStyle';
 
 const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'] as const;
 
@@ -73,8 +73,9 @@ export class ProjectStylePanel {
     });
     const horizontal = this.panel.querySelector<HTMLInputElement>('[data-project-spacing="horizontal"]');
     const vertical = this.panel.querySelector<HTMLInputElement>('[data-project-spacing="vertical"]');
-    if (horizontal) horizontal.value = String(this.style.customMarginX ?? 42);
-    if (vertical) vertical.value = String(this.style.customMarginY ?? 11);
+    const presetSpacing = densitySpacing(this.style.density, this.style.customMarginX, this.style.customMarginY).node;
+    if (horizontal) horizontal.value = String(this.style.customMarginX ?? presetSpacing?.marginX ?? 42);
+    if (vertical) vertical.value = String(this.style.customMarginY ?? presetSpacing?.marginY ?? 11);
     const rainbow = this.panel.querySelector<HTMLInputElement>('[data-project-style="rainbowLines"]');
     if (rainbow) {
       rainbow.checked = this.style.rainbowLines === true;

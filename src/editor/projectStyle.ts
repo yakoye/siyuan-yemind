@@ -53,11 +53,17 @@ export function densitySpacing(
 } {
   if (density === 'compact') {
     return {
+      second: { marginX: 30, marginY: 2 },
+      node: { marginX: 30, marginY: 2 },
+    };
+  }
+  if (density === 'default') {
+    return {
       second: { marginX: 60, marginY: 14 },
       node: { marginX: 28, marginY: 6 },
     };
   }
-  if (density === 'default') {
+  if (density === 'comfortable') {
     return {
       second: { marginX: 82, marginY: 22 },
       node: { marginX: 42, marginY: 11 },

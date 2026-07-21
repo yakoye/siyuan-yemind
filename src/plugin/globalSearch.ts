@@ -116,12 +116,26 @@ export function mountGlobalSearchResults(options: {
   wrapper.innerHTML = renderGlobalSearchResults(matches);
   const panel = wrapper.firstElementChild as HTMLElement | null;
   if (!panel) return;
-  panel.addEventListener('click', (event) => {
+  let lastButton: HTMLElement | null = null;
+  let lastActivatedAt = 0;
+  const activate = (event: Event): void => {
     const button = (event.target as HTMLElement).closest<HTMLElement>('[data-yemind-global-map]');
     if (!button) return;
+    if (event instanceof MouseEvent && event.button !== 0) return;
     event.preventDefault();
     event.stopPropagation();
+    const now = Date.now();
+    if (button === lastButton && now - lastActivatedAt < 500) return;
+    lastButton = button;
+    lastActivatedAt = now;
     options.onOpen(button.dataset.yemindGlobalMap ?? '', button.dataset.yemindGlobalNode ?? '');
+  };
+  // SiYuan may rebuild the search surface as soon as the input loses focus.
+  // Open on mousedown so the result cannot disappear before the later click.
+  panel.addEventListener('mousedown', activate, true);
+  panel.addEventListener('click', activate);
+  panel.addEventListener('keydown', (event) => {
+    if ((event as KeyboardEvent).key === 'Enter') activate(event);
   });
   root.appendChild(panel);
 }

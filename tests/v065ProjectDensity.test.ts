@@ -4,16 +4,19 @@ import { densitySpacing, normalizeProjectStyle, resolveProjectAppearance } from 
 import { ProjectStylePanel } from '../src/ui/projectStylePanel';
 
 describe('v0.6.5 whole-map density semantics', () => {
-  it('makes the new compact tighter, old compact the default, and theme spacing comfortable', () => {
+  it('keeps explicit preset spacing stable as later releases remap labels', () => {
     expect(densitySpacing('compact')).toEqual({
+      second: { marginX: 30, marginY: 2 },
+      node: { marginX: 30, marginY: 2 },
+    });
+    expect(densitySpacing('default')).toEqual({
       second: { marginX: 60, marginY: 14 },
       node: { marginX: 28, marginY: 6 },
     });
-    expect(densitySpacing('default')).toEqual({
+    expect(densitySpacing('comfortable')).toEqual({
       second: { marginX: 82, marginY: 22 },
       node: { marginX: 42, marginY: 11 },
     });
-    expect(densitySpacing('comfortable')).toEqual({});
   });
 
   it('normalizes and applies explicit horizontal and vertical spacing', () => {

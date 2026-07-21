@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.6 — 2026-07-20
+
+- Remapped density presets: compact is 30/2, default inherits the former compact values, and comfortable inherits the former default values.
+- Reduced the whole-map Style panel to a narrow minimal layout and removed density subtitles.
+- Made SiYuan global-search results activate on primary mousedown before the host can remove the blurred result surface; click and Enter remain as fallbacks.
+- Replaced the fit-view text glyph with a four-corner focus SVG.
+- Added permanent regression coverage for density mappings, compact panel layout, early search activation and the fit icon.
+- Aligned package, manifest, runtime, diagnostics and tests at 0.6.6.
+
 ## 0.6.5 — 2026-07-20
 
 - Reassigned density presets so the former Compact spacing is now Default, the former Default/theme spacing is Comfortable, and a new tighter Compact preset reduces both horizontal and vertical gaps.
