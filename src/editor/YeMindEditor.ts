@@ -54,6 +54,7 @@ import {
 } from "./outline";
 import {
   resolveOutlinePointerDropIntent,
+  isOutlineTextSelectionTarget,
   shouldStartOutlinePointerDrag,
   type OutlineDropPosition,
   type OutlinePointerDropIntent,
@@ -191,9 +192,17 @@ export class YeMindEditor {
     const sourceUid = row.dataset.outlineUid ?? "";
     if (!sourceUid || row.dataset.outlineRoot === "true") return;
     const fromEditor = Boolean(target.closest("[data-outline-editor]"));
-    const interactive = Boolean(
-      target.closest('button,a,input,textarea,select,[role="button"]'),
+    const editing = isOutlineTextSelectionTarget(
+      target,
+      this.outlineRichText?.activeHost ?? null,
     );
+    const interactive =
+      editing ||
+      Boolean(
+        target.closest(
+          'button,a,input,textarea,select,[role="button"],[contenteditable="true"],.ql-editor',
+        ),
+      );
     if (interactive) return;
     this.outlinePointerDrag = {
       pointerId: event.pointerId,
@@ -222,6 +231,7 @@ export class YeMindEditor {
       const start = shouldStartOutlinePointerDrag({
         interactive: session.interactive,
         fromEditor: session.fromEditor,
+        editing: false,
         elapsedMs: performance.now() - session.startedAt,
         distancePx: distance,
       });
@@ -822,6 +832,9 @@ export class YeMindEditor {
           break;
         case "checkpoints":
           this.openCheckpointMenu(button);
+          break;
+        case "node-style":
+          this.nodeStylePanel?.show();
           break;
         case "readonly":
           this.setReadonly(this.rootEl.dataset.readonly !== "true");
@@ -1475,6 +1488,7 @@ export class YeMindEditor {
       "add-sibling": state.addSibling,
       remove: state.remove,
       "reset-layout": state.resetLayout,
+      "node-style": !this.commands.isReadonly() && nodes.length > 0,
     };
     this.rootEl
       .querySelectorAll<HTMLButtonElement>("button[data-action]")

@@ -25,3 +25,7 @@ export function lineStyleIcon(style: unknown): string {
 export function summaryIcon(): string {
   return '<svg class="ymz-menu-icon ymz-icon-summary" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c-2 0-3 2-3 4v2c0 1.5-.7 2.5-2 3 1.3.5 2 1.5 2 3v1c0 2 1 3 3 3M17 4c2 0 3 2 3 4v2c0 1.5.7 2.5 2 3-1.3.5-2 1.5-2 3v1c0 2-1 3-3 3M8 12h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
 }
+
+export function nodeStyleIcon(): string {
+  return '<svg class="ymz-project-icon ymz-icon-node-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="6.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="15" cy="12" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="17.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/></svg>';
+}

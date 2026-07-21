@@ -15,6 +15,7 @@ export interface OutlineDropIntent {
 export interface OutlineDragStartInput {
   interactive: boolean;
   fromEditor: boolean;
+  editing?: boolean;
   elapsedMs: number;
   distancePx: number;
 }
@@ -55,6 +56,25 @@ export function resolveOutlineDropIntent(
   return { targetUid: input.targetUid, position };
 }
 
+
+/**
+ * Active Quill/contenteditable surfaces own pointer selection completely.
+ * Non-editing outline labels may still become row drags after the deliberate
+ * long-press threshold.
+ */
+export function isOutlineTextSelectionTarget(
+  target: Element | null,
+  activeEditor: HTMLElement | null,
+): boolean {
+  if (!target) return false;
+  if (target.closest('.ql-editor,[contenteditable="true"]')) return true;
+  return Boolean(
+    activeEditor &&
+      activeEditor.classList.contains('is-editing') &&
+      activeEditor.contains(target),
+  );
+}
+
 /**
  * Row chrome behaves like a conventional draggable row. The text editor keeps
  * normal text selection until a deliberate long press plus movement occurs.
@@ -62,7 +82,7 @@ export function resolveOutlineDropIntent(
 export function shouldStartOutlinePointerDrag(
   input: OutlineDragStartInput,
 ): boolean {
-  if (input.interactive) return false;
+  if (input.interactive || input.editing) return false;
   if (input.distancePx < 6) return false;
   if (!input.fromEditor) return true;
   return input.elapsedMs >= 240;

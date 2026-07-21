@@ -90,6 +90,7 @@ declare module 'siyuan' {
       height?: string;
       destroyCallback?: () => void;
       disableClose?: boolean;
+      hideCloseIcon?: boolean;
     });
     destroy(options?: any): void;
   }

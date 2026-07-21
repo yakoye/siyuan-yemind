@@ -1,6 +1,6 @@
 import { normalizeLineStyle, themeOptionsHtml } from '../core/themePresets';
 import { layoutOptionsHtml } from '../core/layoutPresets';
-import { lineStyleIcon, projectControlIcon } from './projectControls';
+import { lineStyleIcon, nodeStyleIcon, projectControlIcon } from './projectControls';
 export function createEditorTemplate(title: string, theme: unknown = 'kmind-default', lineStyle: unknown = 'curve'): string {
   return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
@@ -12,12 +12,7 @@ export function createEditorTemplate(title: string, theme: unknown = 'kmind-defa
           <button data-action="view-split">分屏</button>
           <button data-action="view-outline">大纲</button>
           <button data-action="open-search" title="项目内搜索">⌕</button>
-          <button data-action="checkpoints" title="检查点与安全恢复">检查点</button>
           <span class="ymz-separator"></span>
-          <button data-action="undo" title="撤销">↶</button>
-          <button data-action="redo" title="重做">↷</button>
-          <button data-action="add-child" title="添加子节点">＋子</button>
-          <button data-action="add-sibling" title="添加同级节点">＋同</button>
           <label class="ymz-project-control" data-project-control="layout" title="结构">
             ${projectControlIcon('layout')}<span>结构</span>
             <select data-action="layout" aria-label="结构">
@@ -31,13 +26,14 @@ export function createEditorTemplate(title: string, theme: unknown = 'kmind-defa
             </select>
           </label>
           <label class="ymz-project-control ymz-project-control--line" data-project-control="line-style" title="线型">
-            <span data-role="line-style-icon">${lineStyleIcon(lineStyle)}</span>
+            <span data-role="line-style-icon">${lineStyleIcon(lineStyle)}</span><span>线型</span>
             <select data-action="line-style" aria-label="线型">
               <option value="curve"${normalizeLineStyle(lineStyle) === 'curve' ? ' selected' : ''}>弧线</option>
               <option value="straight"${normalizeLineStyle(lineStyle) === 'straight' ? ' selected' : ''}>圆角折线</option>
               <option value="direct"${normalizeLineStyle(lineStyle) === 'direct' ? ' selected' : ''}>直线</option>
             </select>
           </label>
+          <button class="ymz-project-control ymz-project-button" data-action="node-style" title="节点样式">${nodeStyleIcon()}<span>节点样式</span></button>
           <span class="ymz-save-state" data-role="save-state">已保存</span>
         </div>
 
@@ -63,8 +59,7 @@ export function createEditorTemplate(title: string, theme: unknown = 'kmind-defa
         </div>
 
         <div class="ymz-floating ymz-leftbar" role="toolbar" aria-label="画布工具">
-          <button data-action="fit" title="适配视图">⌖</button>
-          <button data-action="reset" title="重置视图（100%）">↺</button>
+          <button data-action="checkpoints" title="检查点与历史">历史</button>
           <button data-action="reset-layout" title="整理布局">整</button>
           <button data-action="toggle-selection-mode" title="平移优先：左键拖动画布；Ctrl/Cmd + 左键框选" aria-pressed="false">框</button>
           <button data-action="undo" title="撤销">↶</button>
@@ -108,7 +103,6 @@ export function createEditorTemplate(title: string, theme: unknown = 'kmind-defa
           <button class="ymz-status-title" data-role="title" title="${escapeHtml(title)}">${escapeHtml(title)}</button>
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
           <span class="ymz-selection-count" data-role="selection-count" hidden></span>
-          <button data-action="open-search" title="搜索">⌕</button>
           <button data-action="fit" title="适配视图">⌖</button>
           <button data-action="readonly" title="只读模式">锁</button>
           <button data-action="zen" title="禅模式">禅</button>

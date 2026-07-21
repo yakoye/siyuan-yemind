@@ -4372,7 +4372,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.5.23";
+const PLUGIN_VERSION = "0.6.1";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -56719,6 +56719,9 @@ function lineStyleIcon(style) {
 function summaryIcon() {
   return '<svg class="ymz-menu-icon ymz-icon-summary" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c-2 0-3 2-3 4v2c0 1.5-.7 2.5-2 3 1.3.5 2 1.5 2 3v1c0 2 1 3 3 3M17 4c2 0 3 2 3 4v2c0 1.5.7 2.5 2 3-1.3.5-2 1.5-2 3v1c0 2-1 3-3 3M8 12h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
 }
+function nodeStyleIcon() {
+  return '<svg class="ymz-project-icon ymz-icon-node-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="6.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="15" cy="12" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="17.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/></svg>';
+}
 async function loadImageFileSelection(file, dependencies) {
   try {
     const dataUrl = await dependencies.read(file);
@@ -57040,7 +57043,7 @@ function openImageDialog(commands) {
   });
 }
 function openNoteDialog(commands, options = {}) {
-  var _a, _b;
+  var _a, _b, _c2;
   const readonly = Boolean(options.readonly);
   const data2 = activeData(commands);
   const current = normalizeNodeNote(data2.yemindNote ?? data2.note);
@@ -57048,13 +57051,17 @@ function openNoteDialog(commands, options = {}) {
   const height2 = Math.max(280, (current == null ? void 0 : current.height) ?? 380);
   const dialog = new siyuan.Dialog({
     title: readonly ? "备注（只读）" : "备注",
+    hideCloseIcon: true,
     content: `<div class="b3-dialog__content ymz-node-dialog ymz-note-dialog">
+      <header class="ymz-node-dialog__header"><strong>${readonly ? "备注（只读）" : "备注"}</strong><button type="button" class="ymz-node-dialog__close" data-node-dialog-action="close-note" aria-label="关闭备注">×</button></header>
       <div class="ymz-note-editor" data-field="note" contenteditable="${readonly ? "false" : "true"}" role="textbox" aria-multiline="true" data-placeholder="输入长篇备注；可粘贴文字和图片…"></div>
       ${readonly ? "" : '<div class="b3-label__text">备注支持多段文字和图片粘贴，窗口大小会随备注一同保存。</div>'}
     </div>${readonly ? '<div class="b3-dialog__action"><div class="fn__space"></div><button class="b3-button b3-button--cancel" data-dialog-action="cancel">关闭</button></div>' : actionButtons()}`,
     width: `${width2}px`,
     height: `${height2}px`
   });
+  dialog.element.classList.add("ymz-note-dialog-host");
+  (_a = dialog.element.querySelector('[data-node-dialog-action="close-note"]')) == null ? void 0 : _a.addEventListener("click", () => dialog.destroy());
   const editor = dialog.element.querySelector('[data-field="note"]');
   editor.innerHTML = (current == null ? void 0 : current.html) ?? "";
   const container = dialog.element.querySelector(".b3-dialog__container") ?? dialog.element;
@@ -57079,9 +57086,9 @@ function openNoteDialog(commands, options = {}) {
     });
     reader.readAsDataURL(image);
   });
-  (_a = dialog.element.querySelector('[data-dialog-action="cancel"]')) == null ? void 0 : _a.addEventListener("click", () => dialog.destroy());
+  (_b = dialog.element.querySelector('[data-dialog-action="cancel"]')) == null ? void 0 : _b.addEventListener("click", () => dialog.destroy());
   if (!readonly) {
-    (_b = dialog.element.querySelector('[data-dialog-action="save"]')) == null ? void 0 : _b.addEventListener("click", () => {
+    (_c2 = dialog.element.querySelector('[data-dialog-action="save"]')) == null ? void 0 : _c2.addEventListener("click", () => {
       var _a2;
       const rect = ((_a2 = dialog.element.querySelector(".b3-dialog__container")) == null ? void 0 : _a2.getBoundingClientRect()) ?? dialog.element.getBoundingClientRect();
       commands.setNote(updateNodeNote(current, editor.innerHTML, Date.now(), { width: rect.width, height: rect.height }));
@@ -57091,13 +57098,15 @@ function openNoteDialog(commands, options = {}) {
   }
 }
 function openCommentsDialog(commands, options = {}) {
-  var _a;
+  var _a, _b;
   const readonly = Boolean(options.readonly);
   let comments = (activeData(commands).yemindComments ?? []).map((item) => ({ ...item }));
   let editingId = null;
   const dialog = new siyuan.Dialog({
     title: readonly ? "批注（只读）" : "批注",
+    hideCloseIcon: true,
     content: `<div class="b3-dialog__content ymz-node-dialog ymz-comments-dialog">
+      <header class="ymz-node-dialog__header"><strong>${readonly ? "批注（只读）" : "批注"}</strong><button type="button" class="ymz-node-dialog__close" data-node-dialog-action="close-comments" aria-label="关闭批注">×</button></header>
       <div data-role="comments"></div>
       <textarea class="b3-text-field fn__block" data-field="new-comment" rows="3" placeholder="新增批注…"></textarea>
       <div class="ymz-comments-dialog__footer">
@@ -57108,6 +57117,8 @@ function openCommentsDialog(commands, options = {}) {
     </div>`,
     width: "500px"
   });
+  dialog.element.classList.add("ymz-comments-dialog-host");
+  (_a = dialog.element.querySelector('[data-node-dialog-action="close-comments"]')) == null ? void 0 : _a.addEventListener("click", () => dialog.destroy());
   const list = dialog.element.querySelector('[data-role="comments"]');
   const input = dialog.element.querySelector('[data-field="new-comment"]');
   const clearButton = dialog.element.querySelector('[data-action="clear-comments"]');
@@ -57125,15 +57136,15 @@ function openCommentsDialog(commands, options = {}) {
       return;
     }
     list.querySelectorAll("[data-comment-id]").forEach((row) => {
-      var _a2, _b, _c2, _d2;
+      var _a2, _b2, _c2, _d2;
       const id = row.dataset.commentId;
       (_a2 = row.querySelector('[data-action="edit-comment"]')) == null ? void 0 : _a2.addEventListener("click", () => {
-        var _a3, _b2;
+        var _a3, _b3;
         editingId = id;
         render3();
-        (_b2 = (_a3 = list.querySelector(`[data-comment-id="${CSS.escape(id)}"]`)) == null ? void 0 : _a3.querySelector('[data-field="edit-comment"]')) == null ? void 0 : _b2.focus();
+        (_b3 = (_a3 = list.querySelector(`[data-comment-id="${CSS.escape(id)}"]`)) == null ? void 0 : _a3.querySelector('[data-field="edit-comment"]')) == null ? void 0 : _b3.focus();
       });
-      (_b = row.querySelector('[data-action="save-comment"]')) == null ? void 0 : _b.addEventListener("click", () => {
+      (_b2 = row.querySelector('[data-action="save-comment"]')) == null ? void 0 : _b2.addEventListener("click", () => {
         var _a3;
         const value = ((_a3 = row.querySelector('[data-field="edit-comment"]')) == null ? void 0 : _a3.value) ?? "";
         comments = value.trim() ? editComment(comments, id, value) : removeComment(comments, id);
@@ -57154,7 +57165,7 @@ function openCommentsDialog(commands, options = {}) {
     });
   };
   render3();
-  (_a = dialog.element.querySelector('[data-action="add-comment"]')) == null ? void 0 : _a.addEventListener("click", () => {
+  (_b = dialog.element.querySelector('[data-action="add-comment"]')) == null ? void 0 : _b.addEventListener("click", () => {
     if (!input.value.trim()) return;
     comments = addComment(comments, input.value);
     input.value = "";
@@ -57552,12 +57563,7 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
           <button data-action="view-split">分屏</button>
           <button data-action="view-outline">大纲</button>
           <button data-action="open-search" title="项目内搜索">⌕</button>
-          <button data-action="checkpoints" title="检查点与安全恢复">检查点</button>
           <span class="ymz-separator"></span>
-          <button data-action="undo" title="撤销">↶</button>
-          <button data-action="redo" title="重做">↷</button>
-          <button data-action="add-child" title="添加子节点">＋子</button>
-          <button data-action="add-sibling" title="添加同级节点">＋同</button>
           <label class="ymz-project-control" data-project-control="layout" title="结构">
             ${projectControlIcon("layout")}<span>结构</span>
             <select data-action="layout" aria-label="结构">
@@ -57571,13 +57577,14 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
             </select>
           </label>
           <label class="ymz-project-control ymz-project-control--line" data-project-control="line-style" title="线型">
-            <span data-role="line-style-icon">${lineStyleIcon(lineStyle)}</span>
+            <span data-role="line-style-icon">${lineStyleIcon(lineStyle)}</span><span>线型</span>
             <select data-action="line-style" aria-label="线型">
               <option value="curve"${normalizeLineStyle(lineStyle) === "curve" ? " selected" : ""}>弧线</option>
               <option value="straight"${normalizeLineStyle(lineStyle) === "straight" ? " selected" : ""}>圆角折线</option>
               <option value="direct"${normalizeLineStyle(lineStyle) === "direct" ? " selected" : ""}>直线</option>
             </select>
           </label>
+          <button class="ymz-project-control ymz-project-button" data-action="node-style" title="节点样式">${nodeStyleIcon()}<span>节点样式</span></button>
           <span class="ymz-save-state" data-role="save-state">已保存</span>
         </div>
 
@@ -57603,8 +57610,7 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
         </div>
 
         <div class="ymz-floating ymz-leftbar" role="toolbar" aria-label="画布工具">
-          <button data-action="fit" title="适配视图">⌖</button>
-          <button data-action="reset" title="重置视图（100%）">↺</button>
+          <button data-action="checkpoints" title="检查点与历史">历史</button>
           <button data-action="reset-layout" title="整理布局">整</button>
           <button data-action="toggle-selection-mode" title="平移优先：左键拖动画布；Ctrl/Cmd + 左键框选" aria-pressed="false">框</button>
           <button data-action="undo" title="撤销">↶</button>
@@ -57648,7 +57654,6 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
           <button class="ymz-status-title" data-role="title" title="${escapeHtml$2(title)}">${escapeHtml$2(title)}</button>
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
           <span class="ymz-selection-count" data-role="selection-count" hidden></span>
-          <button data-action="open-search" title="搜索">⌕</button>
           <button data-action="fit" title="适配视图">⌖</button>
           <button data-action="readonly" title="只读模式">锁</button>
           <button data-action="zen" title="禅模式">禅</button>
@@ -57860,8 +57865,15 @@ function resolveOutlineDropIntent(input) {
   const position2 = ratio < 0.25 ? "before" : ratio > 0.75 ? "after" : "inside";
   return { targetUid: input.targetUid, position: position2 };
 }
+function isOutlineTextSelectionTarget(target, activeEditor) {
+  if (!target) return false;
+  if (target.closest('.ql-editor,[contenteditable="true"]')) return true;
+  return Boolean(
+    activeEditor && activeEditor.classList.contains("is-editing") && activeEditor.contains(target)
+  );
+}
 function shouldStartOutlinePointerDrag(input) {
-  if (input.interactive) return false;
+  if (input.interactive || input.editing) return false;
   if (input.distancePx < 6) return false;
   if (!input.fromEditor) return true;
   return input.elapsedMs >= 240;
@@ -59485,6 +59497,7 @@ class YeMindEditor {
       this.refreshAppearanceIfNeeded();
     });
     __publicField(this, "onOutlinePointerDown", (event) => {
+      var _a;
       if (event.button !== 0 || !this.commands || this.commands.isReadonly())
         return;
       const target = event.target;
@@ -59493,8 +59506,14 @@ class YeMindEditor {
       const sourceUid = row.dataset.outlineUid ?? "";
       if (!sourceUid || row.dataset.outlineRoot === "true") return;
       const fromEditor = Boolean(target.closest("[data-outline-editor]"));
-      const interactive = Boolean(
-        target.closest('button,a,input,textarea,select,[role="button"]')
+      const editing = isOutlineTextSelectionTarget(
+        target,
+        ((_a = this.outlineRichText) == null ? void 0 : _a.activeHost) ?? null
+      );
+      const interactive = editing || Boolean(
+        target.closest(
+          'button,a,input,textarea,select,[role="button"],[contenteditable="true"],.ql-editor'
+        )
       );
       if (interactive) return;
       this.outlinePointerDrag = {
@@ -59524,6 +59543,7 @@ class YeMindEditor {
         const start = shouldStartOutlinePointerDrag({
           interactive: session.interactive,
           fromEditor: session.fromEditor,
+          editing: false,
           elapsedMs: performance.now() - session.startedAt,
           distancePx: distance
         });
@@ -59999,6 +60019,7 @@ class YeMindEditor {
   bindToolbar() {
     var _a, _b, _c2;
     this.rootEl.addEventListener("click", (event) => {
+      var _a2;
       const anchor = event.target.closest(
         "a[href]"
       );
@@ -60122,6 +60143,9 @@ class YeMindEditor {
           break;
         case "checkpoints":
           this.openCheckpointMenu(button);
+          break;
+        case "node-style":
+          (_a2 = this.nodeStylePanel) == null ? void 0 : _a2.show();
           break;
         case "readonly":
           this.setReadonly(this.rootEl.dataset.readonly !== "true");
@@ -60741,7 +60765,8 @@ class YeMindEditor {
       "add-child": state.addChild,
       "add-sibling": state.addSibling,
       remove: state.remove,
-      "reset-layout": state.resetLayout
+      "reset-layout": state.resetLayout,
+      "node-style": !this.commands.isReadonly() && nodes.length > 0
     };
     this.rootEl.querySelectorAll("button[data-action]").forEach((button) => {
       const action = button.dataset.action ?? "";

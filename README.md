@@ -4,7 +4,10 @@ YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-
 
 - Plugin folder and ID: `siyuan-yemind-zen`
 - Display name: `YeMind Zen`
-- Version: `0.5.19`
+- Version: `0.6.1`
+
+
+v0.6.1 gives the active split/full-outline Quill editor complete pointer-selection ownership, so drag-selecting text no longer starts structural row dragging. It consolidates the top/left/bottom tool surfaces, exposes icon-and-text Line Style and Node Style controls, moves Checkpoint/History to the left rail, places Note/Comment close controls inside their dialogs, and uses the plugin icon green for the brand and current-map chips. The accumulated user-reported regression matrix remains a release gate.
 
 v0.5.19 makes empty non-root outline rows structurally deletable, separates outline disclosure from canvas `expand` data, restores repeatable Root and branch collapse/expand, and prunes stale disclosure state. Canvas Delete/Backspace now passes through a capture-phase and `beforeShortcutRun` safety boundary that filters Root nodes before any upstream delete command can show the multi-Root error dialog. The outline also gains subtle repeating VS Code-style indent guides.
 

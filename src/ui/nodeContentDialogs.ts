@@ -254,13 +254,17 @@ export function openNoteDialog(commands: YeMindCommands, options: { readonly?: b
   const height = Math.max(280, current?.height ?? 380);
   const dialog = new Dialog({
     title: readonly ? '备注（只读）' : '备注',
+    hideCloseIcon: true,
     content: `<div class="b3-dialog__content ymz-node-dialog ymz-note-dialog">
+      <header class="ymz-node-dialog__header"><strong>${readonly ? '备注（只读）' : '备注'}</strong><button type="button" class="ymz-node-dialog__close" data-node-dialog-action="close-note" aria-label="关闭备注">×</button></header>
       <div class="ymz-note-editor" data-field="note" contenteditable="${readonly ? 'false' : 'true'}" role="textbox" aria-multiline="true" data-placeholder="输入长篇备注；可粘贴文字和图片…"></div>
       ${readonly ? '' : '<div class="b3-label__text">备注支持多段文字和图片粘贴，窗口大小会随备注一同保存。</div>'}
     </div>${readonly ? '<div class="b3-dialog__action"><div class="fn__space"></div><button class="b3-button b3-button--cancel" data-dialog-action="cancel">关闭</button></div>' : actionButtons()}`,
     width: `${width}px`,
     height: `${height}px`,
   });
+  dialog.element.classList.add('ymz-note-dialog-host');
+  dialog.element.querySelector('[data-node-dialog-action="close-note"]')?.addEventListener('click', () => dialog.destroy());
   const editor = dialog.element.querySelector<HTMLElement>('[data-field="note"]')!;
   editor.innerHTML = current?.html ?? '';
   const container = dialog.element.querySelector<HTMLElement>('.b3-dialog__container') ?? dialog.element;
@@ -302,7 +306,9 @@ export function openCommentsDialog(commands: YeMindCommands, options: { readonly
   let editingId: string | null = null;
   const dialog = new Dialog({
     title: readonly ? '批注（只读）' : '批注',
+    hideCloseIcon: true,
     content: `<div class="b3-dialog__content ymz-node-dialog ymz-comments-dialog">
+      <header class="ymz-node-dialog__header"><strong>${readonly ? '批注（只读）' : '批注'}</strong><button type="button" class="ymz-node-dialog__close" data-node-dialog-action="close-comments" aria-label="关闭批注">×</button></header>
       <div data-role="comments"></div>
       <textarea class="b3-text-field fn__block" data-field="new-comment" rows="3" placeholder="新增批注…"></textarea>
       <div class="ymz-comments-dialog__footer">
@@ -313,6 +319,8 @@ export function openCommentsDialog(commands: YeMindCommands, options: { readonly
     </div>`,
     width: '500px',
   });
+  dialog.element.classList.add('ymz-comments-dialog-host');
+  dialog.element.querySelector('[data-node-dialog-action="close-comments"]')?.addEventListener('click', () => dialog.destroy());
   const list = dialog.element.querySelector<HTMLElement>('[data-role="comments"]')!;
   const input = dialog.element.querySelector<HTMLTextAreaElement>('[data-field="new-comment"]')!;
   const clearButton = dialog.element.querySelector<HTMLButtonElement>('[data-action="clear-comments"]')!;

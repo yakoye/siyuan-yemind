@@ -16,13 +16,14 @@ describe('v0.5.18 whole-row pointer drag', () => {
     expect(html).toContain('data-outline-drag-source="true"');
   });
 
-  it('starts immediately from row chrome but requires a long press in editable text', () => {
+  it('starts immediately from row chrome, uses long press for inactive labels, and never drags active text editing', () => {
     const resolve = (outlineDrag as any).shouldStartOutlinePointerDrag;
     expect(typeof resolve).toBe('function');
-    expect(resolve({ interactive: true, fromEditor: false, elapsedMs: 500, distancePx: 20 })).toBe(false);
-    expect(resolve({ interactive: false, fromEditor: false, elapsedMs: 20, distancePx: 7 })).toBe(true);
-    expect(resolve({ interactive: false, fromEditor: true, elapsedMs: 120, distancePx: 10 })).toBe(false);
-    expect(resolve({ interactive: false, fromEditor: true, elapsedMs: 280, distancePx: 7 })).toBe(true);
+    expect(resolve({ interactive: true, fromEditor: false, editing: false, elapsedMs: 500, distancePx: 20 })).toBe(false);
+    expect(resolve({ interactive: false, fromEditor: false, editing: false, elapsedMs: 20, distancePx: 7 })).toBe(true);
+    expect(resolve({ interactive: false, fromEditor: true, editing: false, elapsedMs: 120, distancePx: 10 })).toBe(false);
+    expect(resolve({ interactive: false, fromEditor: true, editing: false, elapsedMs: 280, distancePx: 7 })).toBe(true);
+    expect(resolve({ interactive: false, fromEditor: true, editing: true, elapsedMs: 500, distancePx: 20 })).toBe(false);
   });
 
   it('uses horizontal movement to choose child or lower-level placement', () => {

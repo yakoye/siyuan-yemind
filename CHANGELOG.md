@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.1 — 2026-07-20
+
+- Prevented split/full-outline text selection from ever arming whole-row structure dragging while the persistent Quill host is active; `.ql-editor`, contenteditable descendants and the complete active outline editor surface own pointer selection.
+- Kept deliberate whole-row hierarchy dragging available only outside text-editing mode, retaining the existing movement and long-press thresholds for non-editing labels.
+- Consolidated the top toolbar by removing Add Child, Add Sibling, Checkpoints, Undo and Redo while retaining the requested single search entry.
+- Added visible icon-and-text `线型` and `节点样式` project controls to the top toolbar.
+- Replaced the left Reset View entry with `历史`, backed by the existing checkpoint/history dialog; left Fit was removed, while Undo/Redo remain.
+- Removed bottom Search and kept bottom Fit as the only fit-view entry outside the clickable brand.
+- Moved Note and Comment close controls into the top-right corner of their own dialog content and hid the detached SiYuan host header close surface.
+- Changed the YeMind brand and current-map title chips from black to the plugin icon green.
+- Added permanent v0.6.1 regressions for outline text-selection ownership, toolbar surface uniqueness, dialog-local close controls and icon-green branding, while retaining the accumulated folding, deletion, right-drag, canvas rich-text and quick-action matrices.
+- Aligned package, manifest, runtime and diagnostic version identity at 0.6.1.
+
 ## 0.5.23 — 2026-07-20
 
 - Restored reliable canvas-node rich-text selection after right-button panning by ending the gesture on window-level mouseup and blur, not only on map-local mouseup.
