@@ -27,6 +27,9 @@ export interface YeMindCommands {
   zoomIn(): void;
   zoomOut(): void;
   edit(): void;
+  copy(): void;
+  cut(): void;
+  paste(): Promise<void>;
   getActiveNodes(): any[];
   getPrimaryNode(): any | null;
   getPrimaryNodeData(): Record<string, any> | null;
@@ -61,6 +64,7 @@ export interface YeMindCommands {
   goToNode(uid: string): void;
 }
 
+
 export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
   const activeNodes = (): any[] => Array.isArray((mindMap.renderer as any)?.activeNodeList)
     ? (mindMap.renderer as any).activeNodeList
@@ -85,6 +89,9 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     zoomIn: () => mindMap.view.enlarge(undefined, undefined, false),
     zoomOut: () => mindMap.view.narrow(undefined, undefined, false),
     edit: () => mindMap.renderer.startTextEdit(),
+    copy: () => (mindMap.renderer as any).copy?.(),
+    cut: () => (mindMap.renderer as any).cut?.(),
+    paste: async () => { await (mindMap.renderer as any).paste?.(); },
     getActiveNodes: activeNodes,
     getPrimaryNode: primaryNode,
     getPrimaryNodeData: () => primaryNode()?.getData?.() ?? null,

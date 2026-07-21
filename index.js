@@ -50743,6 +50743,7 @@ function createMindMap(options) {
     themeConfig: behavior == null ? void 0 : behavior.themeConfig,
     layout: options.layout ?? "logicalStructure",
     readonly: Boolean(options.readonly),
+    disabledClipboard: true,
     enableFreeDrag: false,
     autoMoveWhenMouseInEdgeOnDrag: (behavior == null ? void 0 : behavior.autoMoveWhenMouseInEdgeOnDrag) ?? false,
     isLimitMindMapInCanvas: (behavior == null ? void 0 : behavior.isLimitMindMapInCanvas) ?? false,
@@ -50876,6 +50877,18 @@ function createCommandAdapter(mindMap) {
     zoomIn: () => mindMap.view.enlarge(void 0, void 0, false),
     zoomOut: () => mindMap.view.narrow(void 0, void 0, false),
     edit: () => mindMap.renderer.startTextEdit(),
+    copy: () => {
+      var _a, _b;
+      return (_b = (_a = mindMap.renderer).copy) == null ? void 0 : _b.call(_a);
+    },
+    cut: () => {
+      var _a, _b;
+      return (_b = (_a = mindMap.renderer).cut) == null ? void 0 : _b.call(_a);
+    },
+    paste: async () => {
+      var _a, _b;
+      await ((_b = (_a = mindMap.renderer).paste) == null ? void 0 : _b.call(_a));
+    },
     getActiveNodes: activeNodes,
     getPrimaryNode: primaryNode,
     getPrimaryNodeData: () => {
@@ -51342,6 +51355,12 @@ function openNodeContextMenu(event, commands, options = {}) {
   menu.addItem({ icon: "iconAdd", label: "添加子节点", accelerator: "Tab", click: () => commands.addChild() });
   menu.addItem({ icon: "iconAdd", label: "添加同级节点", accelerator: "Enter", click: () => commands.addSibling() });
   menu.addItem({ icon: "iconAdd", label: "添加父节点", accelerator: "Alt+Enter", click: () => commands.addParent() });
+  menu.addSeparator();
+  menu.addItem({ icon: "iconCopy", label: "复制节点子树", accelerator: "Ctrl+C", click: () => commands.copy() });
+  menu.addItem({ label: "剪切节点子树", accelerator: "Ctrl+X", click: () => commands.cut() });
+  menu.addItem({ label: "粘贴节点子树", accelerator: "Ctrl+V", click: () => {
+    void commands.paste();
+  } });
   menu.addSeparator();
   const todoAction = createTodoMenuDescriptor(commands.getTodo());
   menu.addItem({ icon: "iconCheck", label: todoAction.label, warning: todoAction.warning, click: () => commands.setTodo(todoAction.next) });

@@ -26,6 +26,10 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   menu.addItem({ icon: 'iconAdd', label: '添加同级节点', accelerator: 'Enter', click: () => commands.addSibling() });
   menu.addItem({ icon: 'iconAdd', label: '添加父节点', accelerator: 'Alt+Enter', click: () => commands.addParent() });
   menu.addSeparator();
+  menu.addItem({ icon: 'iconCopy', label: '复制节点子树', accelerator: 'Ctrl+C', click: () => commands.copy() });
+  menu.addItem({ label: '剪切节点子树', accelerator: 'Ctrl+X', click: () => commands.cut() });
+  menu.addItem({ label: '粘贴节点子树', accelerator: 'Ctrl+V', click: () => { void commands.paste(); } });
+  menu.addSeparator();
   const todoAction = createTodoMenuDescriptor(commands.getTodo());
   menu.addItem({ icon: 'iconCheck', label: todoAction.label, warning: todoAction.warning, click: () => commands.setTodo(todoAction.next) });
   menu.addItem({ icon: 'iconMessage', label: '批注', click: () => openCommentsDialog(commands) });

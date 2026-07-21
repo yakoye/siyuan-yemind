@@ -4,8 +4,8 @@ YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-
 
 - Plugin folder and ID: `siyuan-yemind-zen`
 - Display name: `YeMind Zen`
-- Version: `0.5.1`
+- Version: `0.5.3`
 
-v0.5.1 is a drag, persistence, and layout-stability release. It restores structured subtree dragging, protects the viewport during drag, preserves unnamed maps, validates saved transforms, adds layout reset, and exposes the missing drag, spacing, zoom, and saved-view settings.
+v0.5.3 adds same-map subtree copy, cut and paste through the native `simple-mind-map` renderer and command pipeline. It deliberately keeps clipboard shortcuts under the upstream `KeyCommand` implementation and uses its permission-free in-memory fallback instead of introducing another clipboard state layer.
 
 See `README_zh_CN.md`, `FEATURE_MATRIX.md`, and `DEVELOPMENT_PLAN.md` for details.

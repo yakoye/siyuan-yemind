@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.3 — 2026-07-16
+
+- Added same-map node subtree copy, cut and paste by delegating directly to `simple-mind-map` native `Render.copy`, `Render.cut` and `Render.paste` methods.
+- Kept Ctrl/Cmd+C, Ctrl/Cmd+X and Ctrl/Cmd+V under the upstream `KeyCommand` implementation instead of adding a second keyboard listener.
+- Enabled the upstream in-memory clipboard path with `disabledClipboard: true`, avoiding browser clipboard permission failures for same-map operations.
+- Preserved complete subtrees and relied on upstream top-ancestor filtering so selecting a parent and descendant does not duplicate the descendant subtree.
+- Relied on native `CUT_NODE`, `PASTE_NODE` and `INSERT_MULTI_CHILD_NODE` commands for fresh node IDs, activation, history, rendering and autosave events.
+- Added copy, cut and paste entries to the native SiYuan node context menu without introducing a second clipboard data format.
+- Added focused regression tests for renderer delegation, native shortcut ownership, top-ancestor filtering and complete subtree cloning.
+
 ## 0.5.2 — 2026-07-16
 
 - Removed YeMind Zen's custom node-drag viewport capture/restore layer and delegated drag movement, subtree movement, sibling insertion and layout recalculation entirely to `simple-mind-map`.
