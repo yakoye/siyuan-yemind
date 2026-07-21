@@ -3583,12 +3583,47 @@ class CheckpointRepository {
     return operation;
   }
 }
+const LEGACY_DEFAULT_NODE_TEXTS = /* @__PURE__ */ new Set([
+  "新节点",
+  "主要主题",
+  "另一个主题",
+  "未命名导图"
+]);
+function plainText$2(value) {
+  const text2 = String(value ?? "");
+  if (!/[<&]/.test(text2)) return text2.replace(/\u00a0/g, " ").trim();
+  const host = document.createElement("div");
+  host.innerHTML = text2;
+  return (host.textContent ?? "").replace(/\u00a0/g, " ").trim();
+}
+function isPristineNodeTextData(data2) {
+  if (!data2) return false;
+  if (data2.yemindTextEdited === true) return false;
+  if (data2.yemindTextPristine === true) return true;
+  return LEGACY_DEFAULT_NODE_TEXTS.has(plainText$2(data2.text));
+}
+function markNodeTextEditedData(data2) {
+  if (!data2) return;
+  data2.yemindTextPristine = false;
+  data2.yemindTextEdited = true;
+}
+function pristineNodeData(data2) {
+  return {
+    ...data2,
+    yemindTextPristine: true,
+    yemindTextEdited: false
+  };
+}
+function editableTextLength(quill) {
+  var _a;
+  return Math.max(0, Number(((_a = quill.getLength) == null ? void 0 : _a.call(quill)) ?? 0) - 1);
+}
 function createDefaultTree(title) {
   return {
-    data: { text: title, expand: true },
+    data: pristineNodeData({ text: title, expand: true }),
     children: [
-      { data: { text: "主要主题", expand: true }, children: [] },
-      { data: { text: "另一个主题", expand: true }, children: [] }
+      { data: pristineNodeData({ text: "主要主题", expand: true }), children: [] },
+      { data: pristineNodeData({ text: "另一个主题", expand: true }), children: [] }
     ]
   };
 }
@@ -4029,7 +4064,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.8.2";
+const PLUGIN_VERSION = "0.8.3";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -4037,16 +4072,17 @@ const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-21T18:30:00+08:00",
-  buildId: "yemind-v0.8.2-20260721",
+  buildTime: "2026-07-21T20:30:00+08:00",
+  buildId: "yemind-v0.8.3-20260721",
   productName: PRODUCT_NAME,
   tagline: "思源笔记中的思维导图、分屏大纲与知识整理插件。",
   officialReference: "KMind Zen 0.34.0",
-  releaseSummary: "修复 Dock 激活状态下图标无法随主题反色的问题。",
+  releaseSummary: "修复画布、分屏和大纲的节点文本编辑事务与编辑器定位。",
   highlights: [
-    "Dock、顶栏和菜单图标改为 currentColor 矢量图标，自动适配浅色、深色与激活状态。",
-    "Dock 激活后由思源主题自动切换为高对比前景色，不再保留固定绿色像素。",
-    "关于页和品牌展示继续使用 #176B50 透明 PNG，交互图标与品牌图标分工明确。"
+    "新建或默认节点双击后自动全选文字，可直接粘贴、剪切或替换。",
+    "已有节点双击后光标落在末尾，Ctrl+A、复制、剪切、粘贴、Backspace 和 Delete 按文本编辑语义工作。",
+    "画布富文本编辑层改用编辑器局部坐标，修复节点原位空白、文字漂到页面左上角的问题。",
+    "分屏和大纲统一 Ctrl+A 与选区处理，并确保 YeMind 富文本覆盖真正替换上游同名插件。"
   ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -55882,6 +55918,85 @@ function registerYeMindFormats() {
   Quill.register(YeMindCodeBlock, true);
 }
 class YeMindRichText extends RichText {
+  showEditText(params) {
+    super.showEditText(params);
+    this.normalizeEditorPlacement(params == null ? void 0 : params.rect);
+    this.bindTextEditingKeyboard();
+    this.emitEditingDiagnostic("opened");
+  }
+  updateTextEditNode() {
+    super.updateTextEditNode();
+    this.normalizeEditorPlacement();
+    this.emitEditingDiagnostic("repositioned");
+  }
+  setQuillContainerMinHeight(minHeight) {
+    var _a;
+    const editor = (_a = this.textEditNode) == null ? void 0 : _a.querySelector(".ql-editor");
+    if (editor) editor.style.minHeight = `${Math.max(0, Number(minHeight) || 0)}px`;
+  }
+  focus(start) {
+    var _a, _b, _c2, _d2;
+    if (!this.quill) return;
+    const length2 = editableTextLength(this.quill);
+    const data2 = ((_b = (_a = this.node) == null ? void 0 : _a.nodeData) == null ? void 0 : _b.data) ?? ((_d2 = (_c2 = this.node) == null ? void 0 : _c2.getData) == null ? void 0 : _d2.call(_c2)) ?? null;
+    const selectAll = start === 0 || isPristineNodeTextData(data2);
+    this.quill.root.focus({ preventScroll: true });
+    this.quill.setSelection(selectAll ? 0 : length2, selectAll ? length2 : 0, Quill.sources.SILENT);
+    this.range = selectAll ? { index: 0, length: length2 } : { index: length2, length: 0 };
+    this.pasteUseRange = this.range;
+    this.emitEditingDiagnostic(selectAll ? "initial-select-all" : "initial-caret-end", { length: length2 });
+  }
+  normalizeEditorPlacement(rect) {
+    var _a, _b, _c2, _d2, _e, _f, _g;
+    const host = this.textEditNode;
+    if (!host) return;
+    const target = (_b = (_a = this.mindMap) == null ? void 0 : _a.opt) == null ? void 0 : _b.customInnerElsAppendTo;
+    const nodeRect2 = rect ?? ((_g = (_f = (_e = (_d2 = (_c2 = this.node) == null ? void 0 : _c2._textData) == null ? void 0 : _d2.node) == null ? void 0 : _e.node) == null ? void 0 : _f.getBoundingClientRect) == null ? void 0 : _g.call(_f));
+    if (!nodeRect2) return;
+    if (!target || target === document.body || host.parentElement === document.body) {
+      host.style.position = "fixed";
+      host.style.left = `${nodeRect2.left}px`;
+      host.style.top = `${nodeRect2.top}px`;
+      return;
+    }
+    const targetRect = target.getBoundingClientRect();
+    host.style.position = "absolute";
+    host.style.left = `${nodeRect2.left - targetRect.left + target.scrollLeft - target.clientLeft}px`;
+    host.style.top = `${nodeRect2.top - targetRect.top + target.scrollTop - target.clientTop}px`;
+  }
+  bindTextEditingKeyboard() {
+    var _a;
+    const root2 = (_a = this.quill) == null ? void 0 : _a.root;
+    if (!root2 || root2.dataset.yemindTextKeyboard === "true") return;
+    root2.dataset.yemindTextKeyboard = "true";
+    root2.addEventListener("keydown", (event) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== "a") return;
+      event.preventDefault();
+      event.stopPropagation();
+      const length2 = editableTextLength(this.quill);
+      this.quill.setSelection(0, length2, Quill.sources.USER);
+      this.range = { index: 0, length: length2 };
+      this.pasteUseRange = this.range;
+      this.emitEditingDiagnostic("select-all-shortcut", { length: length2 });
+    }, true);
+  }
+  emitEditingDiagnostic(action, details = {}) {
+    var _a, _b, _c2, _d2, _e, _f, _g, _h;
+    const host = this.textEditNode;
+    const nodeRect2 = (_e = (_d2 = (_c2 = (_b = (_a = this.node) == null ? void 0 : _a._textData) == null ? void 0 : _b.node) == null ? void 0 : _c2.node) == null ? void 0 : _d2.getBoundingClientRect) == null ? void 0 : _e.call(_d2);
+    const hostRect = (_f = host == null ? void 0 : host.getBoundingClientRect) == null ? void 0 : _f.call(host);
+    (_h = (_g = this.mindMap) == null ? void 0 : _g.emit) == null ? void 0 : _h.call(_g, "yemind_text_edit_diagnostic", {
+      action,
+      details: {
+        ...details,
+        position: (host == null ? void 0 : host.style.position) ?? "",
+        hostLeft: hostRect ? Math.round(hostRect.left) : null,
+        hostTop: hostRect ? Math.round(hostRect.top) : null,
+        nodeLeft: nodeRect2 ? Math.round(nodeRect2.left) : null,
+        nodeTop: nodeRect2 ? Math.round(nodeRect2.top) : null
+      }
+    });
+  }
   initQuillEditor() {
     registerYeMindFormats();
     const plugin = this;
@@ -55975,7 +56090,11 @@ class YeMindRichText extends RichText {
         this.mindMap.emit("rich_text_selection_change", false, null, null);
       }
     });
-    this.quill.on("text-change", () => {
+    this.quill.on("text-change", (_delta, _oldDelta, source) => {
+      var _a, _b, _c2, _d2;
+      if (source === Quill.sources.USER) {
+        markNodeTextEditedData(((_b = (_a = this.node) == null ? void 0 : _a.nodeData) == null ? void 0 : _b.data) ?? ((_d2 = (_c2 = this.node) == null ? void 0 : _c2.getData) == null ? void 0 : _d2.call(_c2)));
+      }
       this.mindMap.emit("node_text_edit_change", {
         node: this.node,
         text: this.getEditText(),
@@ -56036,8 +56155,17 @@ function registerMindMapPlugins(settings) {
   configureMindMapPlugins(settings);
   if (registered) return;
   plugins.forEach((plugin) => {
-    if (plugin === YeMindRichText) MindMap2.usePlugin(plugin, YeMindRichText.pluginOpt);
-    else MindMap2.usePlugin(plugin);
+    const runtime = MindMap2;
+    const list = Array.isArray(runtime.pluginList) ? runtime.pluginList : [];
+    const sameInstanceIndex = list.findIndex((item) => (item == null ? void 0 : item.instanceName) === plugin.instanceName);
+    if (sameInstanceIndex >= 0) {
+      plugin.pluginOpt = plugin === YeMindRichText ? YeMindRichText.pluginOpt : {};
+      list.splice(sameInstanceIndex, 1, plugin);
+    } else if (plugin === YeMindRichText) {
+      runtime.usePlugin(plugin, YeMindRichText.pluginOpt);
+    } else {
+      runtime.usePlugin(plugin);
+    }
   });
   registered = true;
 }
@@ -56646,17 +56774,24 @@ function createCommandAdapter(mindMap) {
     return ((_b = (_a = outerFramePlugin()) == null ? void 0 : _a.getActiveOuterFrame) == null ? void 0 : _b.call(_a)) ?? ((_c2 = outerFramePlugin()) == null ? void 0 : _c2.activeOuterFrame) ?? null;
   };
   const canAddOuterFrame = () => Boolean(outerFramePlugin()) && canMutate() && activeNodes().some((node) => !(node == null ? void 0 : node.isRoot) && !(node == null ? void 0 : node.isGeneralization));
+  const markNodeTextEdited = (node) => {
+    var _a, _b;
+    const data2 = ((_a = node == null ? void 0 : node.nodeData) == null ? void 0 : _a.data) ?? ((_b = node == null ? void 0 : node.getData) == null ? void 0 : _b.call(node));
+    if (!data2 || typeof data2 !== "object") return;
+    data2.yemindTextPristine = false;
+    data2.yemindTextEdited = true;
+  };
   return {
     isReadonly,
     hasRichTextSelection,
     addChild: () => {
-      if (canMutate() && primaryIsRegular()) mindMap.execCommand("INSERT_CHILD_NODE");
+      if (canMutate() && primaryIsRegular()) mindMap.execCommand("INSERT_CHILD_NODE", true, [], { yemindTextPristine: true, yemindTextEdited: false });
     },
     addSibling: () => {
-      if (canMutate() && primaryIsMovable()) mindMap.execCommand("INSERT_NODE");
+      if (canMutate() && primaryIsMovable()) mindMap.execCommand("INSERT_NODE", true, [], { yemindTextPristine: true, yemindTextEdited: false });
     },
     addParent: () => {
-      if (canMutate() && primaryIsMovable()) mindMap.execCommand("INSERT_PARENT_NODE");
+      if (canMutate() && primaryIsMovable()) mindMap.execCommand("INSERT_PARENT_NODE", true, [], { yemindTextPristine: true, yemindTextEdited: false });
     },
     moveUp: () => {
       if (canMutate() && primaryIsMovable()) mindMap.execCommand("UP_NODE");
@@ -56993,6 +57128,7 @@ function createCommandAdapter(mindMap) {
       if (!canMutate()) return false;
       const node = findNodeByUid(uid);
       if (!node) return false;
+      markNodeTextEdited(node);
       mindMap.execCommand("SET_NODE_TEXT", node, text2, false, true);
       return true;
     },
@@ -57000,6 +57136,7 @@ function createCommandAdapter(mindMap) {
       if (!canMutate()) return false;
       const node = findNodeByUid(uid);
       if (!node) return false;
+      markNodeTextEdited(node);
       mindMap.execCommand("SET_NODE_TEXT", node, html2, true, false);
       return true;
     },
@@ -57007,21 +57144,21 @@ function createCommandAdapter(mindMap) {
       if (!canMutate()) return false;
       const node = findNodeByUid(uid);
       if (!node || node.isRoot || node.isGeneralization) return false;
-      mindMap.execCommand("INSERT_NODE", false, [node], { uid: newUid, text: "", richText: false });
+      mindMap.execCommand("INSERT_NODE", false, [node], { uid: newUid, text: "", richText: false, yemindTextPristine: true, yemindTextEdited: false });
       return true;
     },
     insertChildByUid: (uid, newUid) => {
       if (!canMutate()) return false;
       const node = findNodeByUid(uid);
       if (!node || node.isGeneralization) return false;
-      mindMap.execCommand("INSERT_CHILD_NODE", false, [node], { uid: newUid, text: "", richText: false });
+      mindMap.execCommand("INSERT_CHILD_NODE", false, [node], { uid: newUid, text: "", richText: false, yemindTextPristine: true, yemindTextEdited: false });
       return true;
     },
     addChildByUid: (uid) => {
       if (!canMutate()) return false;
       const node = findNodeByUid(uid);
       if (!node || node.isGeneralization) return false;
-      mindMap.execCommand("INSERT_CHILD_NODE", true, [node]);
+      mindMap.execCommand("INSERT_CHILD_NODE", true, [node], { yemindTextPristine: true, yemindTextEdited: false });
       return true;
     },
     removeNodeByUid: (uid) => {
@@ -58217,7 +58354,8 @@ function flattenOutline(tree) {
       depth,
       hasChildren,
       expanded,
-      isRoot: depth === 0
+      isRoot: depth === 0,
+      pristine: isPristineNodeTextData(node.data)
     });
     if (expanded) {
       if (hasChildren) children.forEach((child, index) => visit(child, depth + 1, `${path2}.${index}`));
@@ -58230,7 +58368,8 @@ function flattenOutline(tree) {
           hasChildren: false,
           expanded: true,
           isRoot: false,
-          isGeneralization: true
+          isGeneralization: true,
+          pristine: isPristineNodeTextData(summary)
         });
       });
     }
@@ -58270,7 +58409,7 @@ function rowHtml(row, readonly) {
   const encodedOriginal = encodeURIComponent(row.html);
   const leaf = !row.hasChildren && !row.isRoot && !row.isGeneralization;
   const toggle = row.hasChildren ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle aria-label="${row.expanded ? "折叠" : "展开"}">${branch}</button>` : `<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" aria-hidden="true">${leaf ? '<span class="ymz-outline-row__leaf-dot"></span>' : ""}</span>`;
-  return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml$2(row.uid)}" data-outline-root="${row.isRoot}" data-outline-generalization="${Boolean(row.isGeneralization)}" data-outline-leaf="${leaf}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" data-outline-drag-source="${readonly || row.isRoot || row.isGeneralization ? "false" : "true"}" style="--ymz-outline-depth:${row.depth}">${toggle}<div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml$2(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml$2(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
+  return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml$2(row.uid)}" data-outline-root="${row.isRoot}" data-outline-generalization="${Boolean(row.isGeneralization)}" data-outline-leaf="${leaf}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" data-outline-drag-source="${readonly || row.isRoot || row.isGeneralization ? "false" : "true"}" style="--ymz-outline-depth:${row.depth}">${toggle}<div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml$2(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-outline-pristine="${row.pristine}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml$2(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
 }
 function resolveOutlineToggleState(input) {
   return input.hasChildren ? !input.expanded : null;
@@ -58307,6 +58446,7 @@ function patchOutlineTree(container, tree, readonly = false, activeUid = null) {
       row.dataset.outlineLeaf = String(leaf);
       row.dataset.outlineHasChildren = String(data2.hasChildren);
       row.dataset.outlineExpanded = String(data2.expanded);
+      row.dataset.outlinePristine = String(data2.pristine);
       row.dataset.outlineDragSource = String(!readonly && !data2.isRoot && !data2.isGeneralization);
       row.style.setProperty("--ymz-outline-depth", String(data2.depth));
       const existingToggle = row.querySelector(
@@ -58463,6 +58603,16 @@ class OutlineRichTextController {
     __publicField(this, "commitTimer", null);
     __publicField(this, "composing", false);
     __publicField(this, "committing", false);
+    __publicField(this, "onEditorKeyDown", (event) => {
+      var _a, _b;
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== "a" || !this.quill) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const length2 = editableTextLength(this.quill);
+      this.quill.setSelection(0, length2, Quill.sources.USER);
+      this.range = { index: 0, length: length2 };
+      (_b = (_a = this.options).onDiagnostic) == null ? void 0 : _b.call(_a, "select-all-shortcut", { length: length2 });
+    });
     __publicField(this, "onCompositionStart", () => {
       var _a, _b;
       this.composing = true;
@@ -58539,6 +58689,7 @@ class OutlineRichTextController {
     this.originalHtml = normalizeHtml(this.quill.root.innerHTML);
     this.sessionStartHtml = this.originalHtml;
     host.dataset.outlineOriginal = encodeURIComponent(this.originalHtml);
+    this.quill.root.addEventListener("keydown", this.onEditorKeyDown, true);
     this.quill.root.addEventListener(
       "compositionstart",
       this.onCompositionStart
@@ -58657,6 +58808,7 @@ class OutlineRichTextController {
     const host = this.host;
     const html2 = this.quill ? normalizeHtml(this.quill.root.innerHTML) : this.originalHtml;
     if (this.quill) {
+      this.quill.root.removeEventListener("keydown", this.onEditorKeyDown, true);
       this.quill.root.removeEventListener(
         "compositionstart",
         this.onCompositionStart
@@ -61333,6 +61485,22 @@ class YeMindEditor {
       this.commands.goToNode(uid);
       this.activateOutlineUid(uid);
     });
+    this.outlineEl.addEventListener("dblclick", (event) => {
+      var _a2;
+      const editor = event.target.closest("[data-outline-editor]");
+      const row = editor == null ? void 0 : editor.closest("[data-outline-uid]");
+      const uid = (row == null ? void 0 : row.dataset.outlineUid) ?? "";
+      if (!editor || !uid || !this.outlineRichText || ((_a2 = this.commands) == null ? void 0 : _a2.isReadonly())) return;
+      event.preventDefault();
+      event.stopPropagation();
+      this.outlineRichText.activate(editor, uid, {
+        placement: editor.dataset.outlinePristine === "true" ? "select-all" : "end"
+      });
+      this.activateOutlineUid(uid);
+      this.options.diagnostics.record("outline", "double-click-edit", this.current.id, {
+        pristine: editor.dataset.outlinePristine === "true"
+      });
+    });
     this.outlineEl.addEventListener(
       "keydown",
       (event) => this.handleOutlineKeydown(event),
@@ -61421,6 +61589,14 @@ class YeMindEditor {
       (_a = this.canvasRightDrag) == null ? void 0 : _a.cancel();
       queueMicrotask(() => synchronizeCanvasRichTextVisibility(this.map));
       window.requestAnimationFrame(() => synchronizeCanvasRichTextVisibility(this.map));
+    });
+    this.map.on("yemind_text_edit_diagnostic", (payload) => {
+      this.options.diagnostics.record(
+        "rich-text",
+        (payload == null ? void 0 : payload.action) ?? "unknown",
+        this.current.id,
+        (payload == null ? void 0 : payload.details) ?? {}
+      );
     });
     this.map.on("data_change", (data2) => {
       var _a, _b;

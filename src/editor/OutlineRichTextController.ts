@@ -12,6 +12,7 @@ import {
 } from "./YeMindRichText";
 import type { RichTextFormattingTarget } from "./richTextTarget";
 import type { RichTextSelectionRect } from "./RichTextToolbar";
+import { editableTextLength } from "./textEditingPolicy";
 
 export type OutlineFocusPlacement = "start" | "end" | "select-all" | "range";
 
@@ -70,6 +71,16 @@ export class OutlineRichTextController implements RichTextFormattingTarget {
   private composing = false;
   private committing = false;
 
+  private readonly onEditorKeyDown = (event: KeyboardEvent): void => {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== "a" || !this.quill) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const length = editableTextLength(this.quill);
+    this.quill.setSelection(0, length, Quill.sources.USER);
+    this.range = { index: 0, length };
+    this.options.onDiagnostic?.("select-all-shortcut", { length });
+  };
+
   constructor(private readonly options: OutlineRichTextControllerOptions) {
     registerYeMindFormats();
   }
@@ -110,6 +121,7 @@ export class OutlineRichTextController implements RichTextFormattingTarget {
     this.originalHtml = normalizeHtml(this.quill.root.innerHTML);
     this.sessionStartHtml = this.originalHtml;
     host.dataset.outlineOriginal = encodeURIComponent(this.originalHtml);
+    this.quill.root.addEventListener("keydown", this.onEditorKeyDown, true);
     this.quill.root.addEventListener(
       "compositionstart",
       this.onCompositionStart,
@@ -242,6 +254,7 @@ export class OutlineRichTextController implements RichTextFormattingTarget {
       ? normalizeHtml(this.quill.root.innerHTML)
       : this.originalHtml;
     if (this.quill) {
+      this.quill.root.removeEventListener("keydown", this.onEditorKeyDown, true);
       this.quill.root.removeEventListener(
         "compositionstart",
         this.onCompositionStart,

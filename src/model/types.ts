@@ -18,6 +18,8 @@ export interface MindMapNodeData {
   yemindTodo?: NodeTodo | null;
   yemindNote?: NodeNote | null;
   yemindComments?: NodeComment[];
+  yemindTextPristine?: boolean;
+  yemindTextEdited?: boolean;
   [key: string]: unknown;
 }
 

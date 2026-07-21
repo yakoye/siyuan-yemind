@@ -4,7 +4,7 @@ import { LEGACY_PLUGIN_IDS, PLUGIN_ID, ROOT_ICON_URL } from '../src/plugin/const
 
 const manifest = JSON.parse(readFileSync('plugin.json', 'utf8')) as { name: string; version: string };
 
-describe('v0.8.2 current plugin id contract', () => {
+describe('v0.8.3 current plugin id contract', () => {
   it('uses siyuan-yemind everywhere current runtime resources are resolved', () => {
     expect(manifest.name).toBe(PLUGIN_ID);
     expect(PLUGIN_ID).toBe('siyuan-yemind');
@@ -22,7 +22,7 @@ describe('v0.8.2 current plugin id contract', () => {
     expect(source.indexOf('await migrateLegacyPluginData')).toBeLessThan(source.indexOf('await Promise.all([this.repository.load()'));
   });
 
-  it('publishes version 0.8.2', () => {
-    expect(manifest.version).toBe('0.8.2');
+  it('publishes version 0.8.3', () => {
+    expect(manifest.version).toBe('0.8.3');
   });
 });

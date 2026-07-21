@@ -41,8 +41,19 @@ export function registerMindMapPlugins(settings?: YeMindSettings): void {
   configureMindMapPlugins(settings);
   if (registered) return;
   plugins.forEach((plugin) => {
-    if (plugin === YeMindRichText) (MindMap as any).usePlugin(plugin, (YeMindRichText as any).pluginOpt);
-    else MindMap.usePlugin(plugin);
+    const runtime = MindMap as any;
+    const list = Array.isArray(runtime.pluginList) ? runtime.pluginList : [];
+    const sameInstanceIndex = list.findIndex((item: any) => item?.instanceName === (plugin as any).instanceName);
+    if (sameInstanceIndex >= 0) {
+      // The package UMD build pre-registers upstream plugins. Replace plugins
+      // by instanceName so tests and production both use YeMind's overrides.
+      (plugin as any).pluginOpt = plugin === YeMindRichText ? (YeMindRichText as any).pluginOpt : {};
+      list.splice(sameInstanceIndex, 1, plugin);
+    } else if (plugin === YeMindRichText) {
+      runtime.usePlugin(plugin, (YeMindRichText as any).pluginOpt);
+    } else {
+      runtime.usePlugin(plugin);
+    }
   });
   registered = true;
 }

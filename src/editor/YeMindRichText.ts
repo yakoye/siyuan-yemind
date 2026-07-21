@@ -3,6 +3,7 @@ import { checkSmmFormatData, getTextFromHtml, nodeRichTextToTextWithWrap } from 
 import Quill from 'quill';
 import Delta from 'quill-delta';
 import { Scope } from 'parchment';
+import { editableTextLength, isPristineNodeTextData, markNodeTextEditedData } from './textEditingPolicy';
 
 export const YEMIND_FONT_VALUES = [
   'sans-serif',
@@ -115,6 +116,87 @@ export function registerYeMindFormats(): void {
 export default class YeMindRichText extends (BaseRichText as any) {
   static instanceName = 'richText';
 
+  showEditText(params: any): void {
+    super.showEditText(params);
+    this.normalizeEditorPlacement(params?.rect);
+    this.bindTextEditingKeyboard();
+    this.emitEditingDiagnostic('opened');
+  }
+
+  updateTextEditNode(): void {
+    super.updateTextEditNode();
+    this.normalizeEditorPlacement();
+    this.emitEditingDiagnostic('repositioned');
+  }
+
+  setQuillContainerMinHeight(minHeight: number): void {
+    const editor = (this.textEditNode as HTMLElement | null)?.querySelector<HTMLElement>('.ql-editor');
+    if (editor) editor.style.minHeight = `${Math.max(0, Number(minHeight) || 0)}px`;
+  }
+
+  focus(start?: number): void {
+    if (!this.quill) return;
+    const length = editableTextLength(this.quill);
+    const data = this.node?.nodeData?.data ?? this.node?.getData?.() ?? null;
+    const selectAll = start === 0 || isPristineNodeTextData(data);
+    this.quill.root.focus({ preventScroll: true });
+    this.quill.setSelection(selectAll ? 0 : length, selectAll ? length : 0, Quill.sources.SILENT);
+    this.range = selectAll ? { index: 0, length } : { index: length, length: 0 };
+    this.pasteUseRange = this.range;
+    this.emitEditingDiagnostic(selectAll ? 'initial-select-all' : 'initial-caret-end', { length });
+  }
+
+  private normalizeEditorPlacement(rect?: DOMRect | null): void {
+    const host = this.textEditNode as HTMLElement | null;
+    if (!host) return;
+    const target = this.mindMap?.opt?.customInnerElsAppendTo as HTMLElement | null | undefined;
+    const nodeRect = rect ?? this.node?._textData?.node?.node?.getBoundingClientRect?.();
+    if (!nodeRect) return;
+    if (!target || target === document.body || host.parentElement === document.body) {
+      host.style.position = 'fixed';
+      host.style.left = `${nodeRect.left}px`;
+      host.style.top = `${nodeRect.top}px`;
+      return;
+    }
+    const targetRect = target.getBoundingClientRect();
+    host.style.position = 'absolute';
+    host.style.left = `${nodeRect.left - targetRect.left + target.scrollLeft - target.clientLeft}px`;
+    host.style.top = `${nodeRect.top - targetRect.top + target.scrollTop - target.clientTop}px`;
+  }
+
+  private bindTextEditingKeyboard(): void {
+    const root = this.quill?.root as HTMLElement | null;
+    if (!root || root.dataset.yemindTextKeyboard === 'true') return;
+    root.dataset.yemindTextKeyboard = 'true';
+    root.addEventListener('keydown', (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== 'a') return;
+      event.preventDefault();
+      event.stopPropagation();
+      const length = editableTextLength(this.quill);
+      this.quill.setSelection(0, length, Quill.sources.USER);
+      this.range = { index: 0, length };
+      this.pasteUseRange = this.range;
+      this.emitEditingDiagnostic('select-all-shortcut', { length });
+    }, true);
+  }
+
+  private emitEditingDiagnostic(action: string, details: Record<string, unknown> = {}): void {
+    const host = this.textEditNode as HTMLElement | null;
+    const nodeRect = this.node?._textData?.node?.node?.getBoundingClientRect?.();
+    const hostRect = host?.getBoundingClientRect?.();
+    this.mindMap?.emit?.('yemind_text_edit_diagnostic', {
+      action,
+      details: {
+        ...details,
+        position: host?.style.position ?? '',
+        hostLeft: hostRect ? Math.round(hostRect.left) : null,
+        hostTop: hostRect ? Math.round(hostRect.top) : null,
+        nodeLeft: nodeRect ? Math.round(nodeRect.left) : null,
+        nodeTop: nodeRect ? Math.round(nodeRect.top) : null,
+      },
+    });
+  }
+
   initQuillEditor(): void {
     registerYeMindFormats();
     const plugin = this;
@@ -210,7 +292,10 @@ export default class YeMindRichText extends (BaseRichText as any) {
       }
     });
 
-    this.quill.on('text-change', () => {
+    this.quill.on('text-change', (_delta: unknown, _oldDelta: unknown, source: string) => {
+      if (source === Quill.sources.USER) {
+        markNodeTextEditedData(this.node?.nodeData?.data ?? this.node?.getData?.());
+      }
       this.mindMap.emit('node_text_edit_change', {
         node: this.node,
         text: this.getEditText(),

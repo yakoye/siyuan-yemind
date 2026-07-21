@@ -929,6 +929,21 @@ export class YeMindEditor {
       this.commands.goToNode(uid);
       this.activateOutlineUid(uid);
     });
+    this.outlineEl.addEventListener("dblclick", (event) => {
+      const editor = (event.target as HTMLElement).closest<HTMLElement>("[data-outline-editor]");
+      const row = editor?.closest<HTMLElement>("[data-outline-uid]");
+      const uid = row?.dataset.outlineUid ?? "";
+      if (!editor || !uid || !this.outlineRichText || this.commands?.isReadonly()) return;
+      event.preventDefault();
+      event.stopPropagation();
+      this.outlineRichText.activate(editor, uid, {
+        placement: editor.dataset.outlinePristine === "true" ? "select-all" : "end",
+      });
+      this.activateOutlineUid(uid);
+      this.options.diagnostics.record("outline", "double-click-edit", this.current.id, {
+        pristine: editor.dataset.outlinePristine === "true",
+      });
+    });
     // Capture structural keys before Quill's own keyboard module consumes them.
     this.outlineEl.addEventListener(
       "keydown",
@@ -1028,6 +1043,14 @@ export class YeMindEditor {
       this.canvasRightDrag?.cancel();
       queueMicrotask(() => synchronizeCanvasRichTextVisibility(this.map as any));
       window.requestAnimationFrame(() => synchronizeCanvasRichTextVisibility(this.map as any));
+    });
+    this.map.on("yemind_text_edit_diagnostic", (payload: { action?: string; details?: Record<string, unknown> }) => {
+      this.options.diagnostics.record(
+        "rich-text",
+        payload?.action ?? "unknown",
+        this.current.id,
+        payload?.details ?? {},
+      );
     });
     this.map.on("data_change", (data: MindMapTree) => {
       if (this.applyingCheckpoint) return;

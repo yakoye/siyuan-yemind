@@ -1,12 +1,13 @@
 import type { MindMapTree, YeMindMapDocument } from './types';
 import { DEFAULT_PROJECT_STYLE } from '../editor/projectStyle';
+import { pristineNodeData } from '../editor/textEditingPolicy';
 
 export function createDefaultTree(title: string): MindMapTree {
   return {
-    data: { text: title, expand: true },
+    data: pristineNodeData({ text: title, expand: true }),
     children: [
-      { data: { text: '主要主题', expand: true }, children: [] },
-      { data: { text: '另一个主题', expand: true }, children: [] },
+      { data: pristineNodeData({ text: '主要主题', expand: true }), children: [] },
+      { data: pristineNodeData({ text: '另一个主题', expand: true }), children: [] },
     ],
   };
 }

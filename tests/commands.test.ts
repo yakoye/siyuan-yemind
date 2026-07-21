@@ -37,9 +37,9 @@ describe('createCommandAdapter', () => {
 
     expect(map.renderer.toggleActiveExpand).toHaveBeenCalledOnce();
     expect(map.execCommand.mock.calls).toEqual([
-      ['INSERT_CHILD_NODE'],
-      ['INSERT_NODE'],
-      ['INSERT_PARENT_NODE'],
+      ['INSERT_CHILD_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }],
+      ['INSERT_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }],
+      ['INSERT_PARENT_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }],
       ['UP_NODE'],
       ['DOWN_NODE'],
       ['REMOVE_NODE', [map.renderer.activeNodeList[0]]],
@@ -132,8 +132,8 @@ describe('outline command bridge', () => {
     commands.setNodeExpandedByUid('node-1', false);
 
     expect(map.execCommand.mock.calls).toContainEqual(['SET_NODE_TEXT', node, 'Changed', false, true]);
-    expect(map.execCommand.mock.calls).toContainEqual(['INSERT_NODE', false, [node], { uid: 'new-sibling', text: '', richText: false }]);
-    expect(map.execCommand.mock.calls).toContainEqual(['INSERT_CHILD_NODE', false, [node], { uid: 'new-child', text: '', richText: false }]);
+    expect(map.execCommand.mock.calls).toContainEqual(['INSERT_NODE', false, [node], { uid: 'new-sibling', text: '', richText: false, yemindTextPristine: true, yemindTextEdited: false }]);
+    expect(map.execCommand.mock.calls).toContainEqual(['INSERT_CHILD_NODE', false, [node], { uid: 'new-child', text: '', richText: false, yemindTextPristine: true, yemindTextEdited: false }]);
     expect(map.execCommand.mock.calls).toContainEqual(['REMOVE_NODE', [node]]);
     expect(map.execCommand.mock.calls).toContainEqual(['SET_NODE_EXPAND', node, false]);
   });
@@ -217,7 +217,7 @@ describe('node style command bridge', () => {
     const commands = createCommandAdapter(map as never);
 
     expect(commands.addChildByUid('node-1')).toBe(true);
-    expect(map.execCommand).toHaveBeenCalledWith('INSERT_CHILD_NODE', true, [node]);
+    expect(map.execCommand).toHaveBeenCalledWith('INSERT_CHILD_NODE', true, [node], { yemindTextPristine: true, yemindTextEdited: false });
   });
 
   it('allows Root to use the native expand command when it has children', () => {
