@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.8 — 2026-07-17
+
+- Added a dedicated transactional `checkpoints.json` repository instead of embedding history in the main map document.
+- Added named manual checkpoints containing immutable data, layout, theme, view and node-count snapshots.
+- Added per-map retention of 20 checkpoints while preserving all recovery-protection snapshots from automatic deletion.
+- Added safe restore that first flushes pending autosave data, creates a protected pre-restore checkpoint, then transactionally replaces the current map snapshot.
+- Restored the active editor through the upstream `setFullData` API so data, layout, theme, view and native history are reinitialized together.
+- Added a compact checkpoint menu and management dialog with time, node count, restore, rename and delete actions.
+- Disabled restore in read-only mode while keeping checkpoint creation and history viewing available.
+- Removed checkpoints after a map is successfully deleted without risking the primary map deletion transaction.
+- Added focused persistence, retention, restore, presentation, plugin-lifecycle and editor-integration tests.
+
 ## 0.5.7 — 2026-07-17
 
 - Registered the installed `simple-mind-map` native `OuterFrame` plugin without adding a separate boundary model.

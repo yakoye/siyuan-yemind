@@ -123,3 +123,91 @@
 .ymz-editor[data-zen="true"] .ymz-relation-panel{top:14px}.ymz-editor[data-view="outline"] .ymz-relation-panel{display:none}
 .ymz-outer-frame-panel{position:absolute;z-index:33;left:50%;top:112px;display:flex;align-items:center;gap:7px;max-width:calc(100% - 28px);padding:7px 9px;border:1px solid var(--ymz-border);border-radius:12px;background:var(--ymz-panel);box-shadow:var(--ymz-shadow);transform:translateX(-50%);backdrop-filter:blur(10px)}
 .ymz-outer-frame-panel[hidden]{display:none}.ymz-outer-frame-panel>span{max-width:190px;overflow:hidden;color:var(--b3-theme-on-surface-light);font-size:12px;text-overflow:ellipsis;white-space:nowrap}.ymz-outer-frame-panel button,.ymz-outer-frame-panel select{height:30px;padding:0 9px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--b3-theme-on-background);cursor:pointer}.ymz-outer-frame-panel button:hover,.ymz-outer-frame-panel select:hover{border-color:var(--ymz-border);background:var(--b3-list-hover)}.ymz-outer-frame-panel button.is-danger{color:var(--b3-theme-error)}.ymz-outer-frame-panel label{display:flex;align-items:center;gap:4px;color:var(--b3-theme-on-surface-light);font-size:12px}.ymz-outer-frame-panel input[type="color"]{width:28px;height:28px;padding:2px;border:1px solid var(--ymz-border);border-radius:7px;background:transparent;cursor:pointer}.ymz-outer-frame-panel :disabled{cursor:not-allowed;opacity:.55}.ymz-editor[data-zen="true"] .ymz-outer-frame-panel{top:58px}.ymz-editor[data-view="outline"] .ymz-outer-frame-panel{display:none}@media(max-width:720px){.ymz-outer-frame-panel{top:106px;max-width:calc(100% - 16px);overflow-x:auto}.ymz-outer-frame-panel>span{display:none}}
+
+.ymz-checkpoint-dialog__intro {
+  margin-bottom: 12px;
+  color: var(--b3-theme-on-surface-light, #6b7280);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ymz-checkpoint-list {
+  display: grid;
+  gap: 8px;
+  max-height: min(56vh, 520px);
+  overflow: auto;
+}
+
+.ymz-checkpoint-empty {
+  padding: 32px 12px;
+  text-align: center;
+  color: var(--b3-theme-on-surface-light, #777);
+  border: 1px dashed var(--b3-border-color, #d5d7da);
+  border-radius: 8px;
+}
+
+.ymz-checkpoint-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--b3-border-color, #d5d7da);
+  border-radius: 8px;
+  background: var(--b3-theme-surface, #fff);
+}
+
+.ymz-checkpoint-item__main {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.ymz-checkpoint-item__main strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.ymz-checkpoint-item__main span {
+  color: var(--b3-theme-on-surface-light, #6b7280);
+  font-size: 12px;
+}
+
+.ymz-checkpoint-item__actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+}
+
+.ymz-checkpoint-item__actions button {
+  min-height: 28px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--b3-list-hover, rgba(0, 0, 0, .06));
+  color: inherit;
+  cursor: pointer;
+}
+
+.ymz-checkpoint-item__actions button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.ymz-checkpoint-item__actions button.is-danger {
+  color: var(--b3-card-error-color, #b42318);
+}
+
+@media (max-width: 640px) {
+  .ymz-checkpoint-item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ymz-checkpoint-item__actions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+}

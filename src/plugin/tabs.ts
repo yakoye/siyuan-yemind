@@ -44,6 +44,8 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
             mapId: resolvedMapId,
             repository: host.repository,
             settingsStore: host.settingsStore,
+            checkpointRepository: host.checkpointRepository,
+            checkpointService: host.checkpointService,
             onMissing: () => this.tab.close(),
           });
         },

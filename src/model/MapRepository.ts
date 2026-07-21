@@ -1,5 +1,5 @@
 import { createDefaultMap } from './defaultMap';
-import type { MapStorageDocument, RepositoryStorage, YeMindMapDocument } from './types';
+import type { MapCheckpointSnapshot, MapStorageDocument, RepositoryStorage, YeMindMapDocument } from './types';
 
 interface RepositoryOptions {
   now?: () => number;
@@ -166,6 +166,20 @@ export class MapRepository {
       if (patch.layout !== undefined) map.layout = patch.layout;
       if (patch.theme !== undefined) map.theme = patch.theme;
       if (patch.viewData !== undefined) map.viewData = clone(patch.viewData);
+      map.updatedAt = this.now();
+      return { changed: true, value: undefined };
+    });
+  }
+
+  async restoreSnapshot(id: string, snapshot: MapCheckpointSnapshot): Promise<void> {
+    await this.ensureLoaded();
+    await this.enqueueMutation((draft) => {
+      const map = draft.maps.find((item) => item.id === id);
+      if (!map) return { changed: false, value: undefined };
+      map.data = clone(snapshot.data);
+      map.layout = snapshot.layout || 'logicalStructure';
+      map.theme = snapshot.theme || 'default';
+      map.viewData = snapshot.viewData ? clone(snapshot.viewData) : undefined;
       map.updatedAt = this.now();
       return { changed: true, value: undefined };
     });

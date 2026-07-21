@@ -9,6 +9,7 @@ export function createEditorTemplate(title: string): string {
           <button data-action="view-split">分屏</button>
           <button data-action="view-outline">大纲</button>
           <button data-action="open-search" title="项目内搜索">⌕</button>
+          <button data-action="checkpoints" title="检查点与安全恢复">检查点</button>
           <span class="ymz-separator"></span>
           <button data-action="undo" title="撤销">↶</button>
           <button data-action="redo" title="重做">↷</button>

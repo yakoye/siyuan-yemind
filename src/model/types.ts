@@ -23,6 +23,14 @@ export interface MindMapTree {
   children: MindMapTree[];
 }
 
+
+export interface MapCheckpointSnapshot {
+  data: MindMapTree;
+  layout: string;
+  theme: string;
+  viewData?: Record<string, unknown>;
+}
+
 export interface YeMindMapDocument {
   id: string;
   title: string;

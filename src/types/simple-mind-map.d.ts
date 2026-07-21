@@ -16,6 +16,7 @@ declare module 'simple-mind-map' {
     setThemeConfig(config: Record<string, unknown>, notRender?: boolean): void;
     updateConfig(options: Record<string, unknown>): void;
     updateData(data: unknown): void;
+    setFullData(data: Record<string, unknown>): void;
     setMode(mode: string): void;
     resize(): void;
     destroy(): void;

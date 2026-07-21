@@ -1,5 +1,5 @@
 import type MindMap from 'simple-mind-map';
-import { Dialog, showMessage } from 'siyuan';
+import { Dialog, Menu, showMessage } from 'siyuan';
 import { createMindMap } from '../core/createMindMap';
 import { buildDragAndLayoutOptions, normalizePersistedViewData, stripCustomPositions } from '../core/dragBehavior';
 import { buildRelationOptions } from '../core/relationConfig';
@@ -8,10 +8,14 @@ import { sanitizeAssociativeLines } from '../core/relationData';
 import { createCommandAdapter, type YeMindCommands } from '../core/commands';
 import { configureNodeDecorations } from '../core/nodeDecorations';
 import { configureMindMapPlugins } from '../core/registerPlugins';
+import type { CheckpointService } from '../checkpoints/CheckpointService';
+import type { CheckpointRepository } from '../model/CheckpointRepository';
 import { MapRepository } from '../model/MapRepository';
 import type { MindMapTree, YeMindMapDocument } from '../model/types';
 import type { SettingsStore, ShortcutCommand, ViewMode, YeMindSettings } from '../settings/SettingsStore';
+import { openCheckpointManager } from '../ui/checkpointDialog';
 import { openNodeContextMenu } from '../ui/contextMenu';
+import { promptText } from '../ui/dialogs';
 import { openCommentsDialog, openFormulaDialog, openLinkDialog } from '../ui/nodeContentDialogs';
 import { openCodeBlockDialog, openInlineLinkDialog } from '../ui/richTextDialogs';
 import { calculateEditorStats } from './editorStats';
@@ -31,6 +35,8 @@ export interface YeMindEditorOptions {
   mapId: string;
   repository: MapRepository;
   settingsStore: SettingsStore;
+  checkpointRepository: CheckpointRepository;
+  checkpointService: CheckpointService;
   onMissing?: () => void;
 }
 
@@ -64,6 +70,7 @@ export class YeMindEditor {
   private settingsInitialized = false;
   private viewMode: ViewMode = 'map';
   private searchText = '';
+  private applyingCheckpoint = false;
 
   private readonly onRootKeydown = (event: KeyboardEvent): void => {
     if (event.key === 'Escape' && this.commands?.isRelationCreating()) {
@@ -271,6 +278,7 @@ export class YeMindEditor {
         case 'view-split': this.setViewMode('split'); break;
         case 'view-outline': this.setViewMode('outline'); break;
         case 'open-search': this.openSearchPanel(); break;
+        case 'checkpoints': this.openCheckpointMenu(button); break;
         case 'readonly': this.setReadonly(this.rootEl.dataset.readonly !== 'true'); break;
         case 'zen': this.toggleZen(true); break;
         case 'zen-exit': this.toggleZen(false); break;
@@ -326,12 +334,14 @@ export class YeMindEditor {
   private bindMapEvents(): void {
     if (!this.map) return;
     this.map.on('data_change', (data: MindMapTree) => {
+      if (this.applyingCheckpoint) return;
       this.current.data = data;
       this.updateStats(data);
       this.renderOutline(data);
       this.scheduleSave();
     });
     this.map.on('view_data_change', (viewData: Record<string, unknown>) => {
+      if (this.applyingCheckpoint) return;
       this.updateZoom();
       const normalized = normalizePersistedViewData(viewData);
       if (!normalized) return;
@@ -633,6 +643,90 @@ export class YeMindEditor {
     this.searchInfoEl.textContent = `${current} / ${Math.max(0, info.total)}`;
   }
 
+  private openCheckpointMenu(anchor: HTMLElement): void {
+    const menu = new Menu('siyuan-yemind-zen-checkpoint-menu');
+    menu.addItem({
+      icon: 'iconAdd',
+      label: '创建检查点',
+      click: () => { void this.createCheckpoint(); },
+    });
+    menu.addItem({
+      icon: 'iconHistory',
+      label: '管理检查点',
+      click: () => this.openCheckpointManager(),
+    });
+    const rect = anchor.getBoundingClientRect();
+    menu.open({ x: rect.left, y: rect.bottom + 4 });
+  }
+
+  private async createCheckpoint(): Promise<void> {
+    try {
+      await this.saveNow();
+      const now = new Date();
+      const pad = (value: number) => String(value).padStart(2, '0');
+      const defaultName = `检查点 ${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      const name = await promptText('创建检查点', defaultName, '检查点名称');
+      if (!name) return;
+      await this.options.checkpointService.createManual(this.current.id, name);
+      showMessage('检查点已创建');
+    } catch (error) {
+      console.error('[YeMind Zen] create checkpoint failed', error);
+      showMessage('检查点创建失败，请先确认导图已成功保存', 5000, 'error');
+    }
+  }
+
+  private openCheckpointManager(): void {
+    openCheckpointManager({
+      mapId: this.current.id,
+      mapTitle: this.current.title,
+      readonly: this.rootEl.dataset.readonly === 'true',
+      repository: this.options.checkpointRepository,
+      service: this.options.checkpointService,
+      onBeforeRestore: async () => {
+        await this.saveNow();
+      },
+      onRestored: async (restored) => {
+        await this.applyRestoredMap(restored);
+      },
+    });
+  }
+
+  private async applyRestoredMap(restored: YeMindMapDocument): Promise<void> {
+    if (!this.map || this.destroyed) return;
+    this.applyingCheckpoint = true;
+    if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
+    this.saveTimer = null;
+    try {
+      this.current = restored;
+      const viewData = normalizePersistedViewData(restored.viewData);
+      this.map.resize();
+      this.map.setFullData({
+        root: restored.data,
+        layout: restored.layout,
+        theme: { template: restored.theme },
+        view: viewData,
+      });
+      const layoutSelect = this.rootEl.querySelector<HTMLSelectElement>('[data-action="layout"]');
+      if (layoutSelect) layoutSelect.value = restored.layout;
+      if (!viewData) {
+        await new Promise<void>((resolve) => {
+          window.requestAnimationFrame(() => {
+            this.map?.view.fit();
+            resolve();
+          });
+        });
+      }
+      this.updateStats(restored.data);
+      this.renderOutline(restored.data);
+      this.updateZoom();
+      const revision = this.saveRevisions.markChanged();
+      this.saveRevisions.markSaved(revision);
+      this.saveStateEl.textContent = '已恢复';
+    } finally {
+      this.applyingCheckpoint = false;
+    }
+  }
+
   private openLink(href: string): void {
     if (!href || href === 'about:blank') return;
     const navigation = resolveLinkNavigation(href, this.settings.externalLinkMode);
@@ -672,13 +766,19 @@ export class YeMindEditor {
   }
 
   private flushPendingSave(): void {
+    void this.saveNow().catch((error) => {
+      console.error('[YeMind Zen] close-time save failed', error);
+    });
+  }
+
+  private async saveNow(): Promise<void> {
     if (!this.map || this.destroyed || !this.saveRevisions.isDirty()) return;
     if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.saveTimer = null;
-    void this.persist(this.saveRevisions.current());
+    await this.persist(this.saveRevisions.current(), true);
   }
 
-  private async persist(revision: number): Promise<void> {
+  private async persist(revision: number, throwOnError = false): Promise<void> {
     if (!this.map || this.destroyed) return;
     try {
       const sanitized = sanitizeAssociativeLines(this.map.getData(false) as MindMapTree);
@@ -699,6 +799,7 @@ export class YeMindEditor {
         this.saveStateEl.textContent = '保存失败';
         showMessage('YeMind Zen 保存失败', 5000, 'error');
       }
+      if (throwOnError) throw error;
     }
   }
 
@@ -760,6 +861,7 @@ export class YeMindEditor {
         <p><b>选择优先</b>：选择优先：左键框选，右键拖动画布</p>
         <p><b>Ctrl/Cmd + 单击</b>：Ctrl/Cmd + 单击：增减节点选择</p>
         <p><b>批量移动</b>：拖动任一已选节点：批量移动最上层所选子树</p>
+        <p><b>检查点</b> 创建命名快照；恢复前会自动保存当前状态为保护检查点</p>
         <p><b>Ctrl/Cmd + F</b> 搜索节点，顶部可切换导图、分屏和大纲</p>
       </div>`,
       width: '460px',

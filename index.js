@@ -4,6 +4,179 @@ var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { en
 var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 var _c, _d;
 const siyuan = require("siyuan");
+class CheckpointService {
+  constructor(maps, checkpoints, options = {}) {
+    __publicField(this, "now");
+    this.maps = maps;
+    this.checkpoints = checkpoints;
+    this.now = options.now ?? (() => Date.now());
+  }
+  async createManual(mapId, name) {
+    const map2 = this.maps.get(mapId);
+    if (!map2) throw new Error("Map not found");
+    return this.checkpoints.create(map2, name, "manual");
+  }
+  async restore(mapId, checkpointId) {
+    const checkpoint = this.checkpoints.get(checkpointId);
+    if (!checkpoint) throw new Error("Checkpoint not found");
+    if (checkpoint.mapId !== mapId) throw new Error("Checkpoint does not belong to map");
+    const current = this.maps.get(mapId);
+    if (!current) throw new Error("Map not found");
+    await this.checkpoints.create(current, this.createProtectionName(), "recovery-protection");
+    await this.maps.restoreSnapshot(mapId, checkpoint.snapshot);
+    const restored = this.maps.get(mapId);
+    if (!restored) throw new Error("Map missing after restore");
+    return restored;
+  }
+  createProtectionName() {
+    const date = new Date(this.now());
+    const pad2 = (value) => String(value).padStart(2, "0");
+    return `恢复前保护 ${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
+  }
+}
+const clone$3 = (value) => JSON.parse(JSON.stringify(value));
+function countNodes(tree) {
+  return 1 + (tree.children ?? []).reduce((total, child) => total + countNodes(child), 0);
+}
+function normalizeCheckpoint(value) {
+  var _a;
+  if (!value || typeof value !== "object") return null;
+  const candidate = value;
+  if (!candidate.id || !candidate.mapId || !((_a = candidate.snapshot) == null ? void 0 : _a.data)) return null;
+  const kind = candidate.kind === "recovery-protection" ? "recovery-protection" : "manual";
+  return {
+    id: String(candidate.id),
+    mapId: String(candidate.mapId),
+    name: typeof candidate.name === "string" && candidate.name.trim() ? candidate.name.trim() : "未命名检查点",
+    kind,
+    createdAt: Number(candidate.createdAt) || Date.now(),
+    nodeCount: Number(candidate.nodeCount) || countNodes(candidate.snapshot.data),
+    snapshot: {
+      data: clone$3(candidate.snapshot.data),
+      layout: typeof candidate.snapshot.layout === "string" ? candidate.snapshot.layout : "logicalStructure",
+      theme: typeof candidate.snapshot.theme === "string" ? candidate.snapshot.theme : "default",
+      viewData: candidate.snapshot.viewData ? clone$3(candidate.snapshot.viewData) : void 0
+    }
+  };
+}
+class CheckpointRepository {
+  constructor(storage, options = {}) {
+    __publicField(this, "state", { version: 1, checkpoints: [] });
+    __publicField(this, "loaded", false);
+    __publicField(this, "loadPromise", null);
+    __publicField(this, "saveQueue", Promise.resolve());
+    __publicField(this, "mutationQueue", Promise.resolve());
+    __publicField(this, "now");
+    __publicField(this, "id");
+    __publicField(this, "maxPerMap");
+    this.storage = storage;
+    this.now = options.now ?? (() => Date.now());
+    this.id = options.id ?? (() => {
+      var _a, _b;
+      return ((_b = (_a = globalThis.crypto) == null ? void 0 : _a.randomUUID) == null ? void 0 : _b.call(_a)) ?? `checkpoint-${Date.now()}`;
+    });
+    this.maxPerMap = Math.max(1, Math.floor(options.maxPerMap ?? 20));
+  }
+  async load() {
+    if (this.loaded) return;
+    if (!this.loadPromise) this.loadPromise = this.loadInternal();
+    await this.loadPromise;
+  }
+  async loadInternal() {
+    const raw = await this.storage.load();
+    const candidate = raw && typeof raw === "object" ? raw : null;
+    const checkpoints = Array.isArray(candidate == null ? void 0 : candidate.checkpoints) ? candidate.checkpoints.map(normalizeCheckpoint).filter((item) => Boolean(item)) : [];
+    this.state = { version: 1, checkpoints };
+    this.loaded = true;
+  }
+  async ensureLoaded() {
+    if (!this.loaded) await this.load();
+  }
+  list(mapId) {
+    return clone$3(this.state.checkpoints.filter((item) => item.mapId === mapId).sort((a, b) => b.createdAt - a.createdAt));
+  }
+  get(id) {
+    const checkpoint = this.state.checkpoints.find((item) => item.id === id);
+    return checkpoint ? clone$3(checkpoint) : void 0;
+  }
+  async create(map2, name, kind = "manual") {
+    await this.ensureLoaded();
+    return this.enqueueMutation((draft) => {
+      const checkpoint = {
+        id: this.id(),
+        mapId: map2.id,
+        name: name.trim() || "未命名检查点",
+        kind,
+        createdAt: this.now(),
+        nodeCount: countNodes(map2.data),
+        snapshot: {
+          data: clone$3(map2.data),
+          layout: map2.layout,
+          theme: map2.theme,
+          viewData: map2.viewData ? clone$3(map2.viewData) : void 0
+        }
+      };
+      draft.checkpoints.push(checkpoint);
+      this.applyRetention(draft, map2.id, checkpoint.id);
+      return { changed: true, value: clone$3(checkpoint) };
+    });
+  }
+  async rename(id, name) {
+    await this.ensureLoaded();
+    await this.enqueueMutation((draft) => {
+      const checkpoint = draft.checkpoints.find((item) => item.id === id);
+      const normalized = name.trim();
+      if (!checkpoint || !normalized || normalized === checkpoint.name) return { changed: false, value: void 0 };
+      checkpoint.name = normalized;
+      return { changed: true, value: void 0 };
+    });
+  }
+  async remove(id) {
+    await this.ensureLoaded();
+    await this.enqueueMutation((draft) => {
+      const index = draft.checkpoints.findIndex((item) => item.id === id);
+      if (index < 0) return { changed: false, value: void 0 };
+      draft.checkpoints.splice(index, 1);
+      return { changed: true, value: void 0 };
+    });
+  }
+  async removeForMap(mapId) {
+    await this.ensureLoaded();
+    await this.enqueueMutation((draft) => {
+      const next2 = draft.checkpoints.filter((item) => item.mapId !== mapId);
+      if (next2.length === draft.checkpoints.length) return { changed: false, value: void 0 };
+      draft.checkpoints = next2;
+      return { changed: true, value: void 0 };
+    });
+  }
+  applyRetention(draft, mapId, preserveId) {
+    while (draft.checkpoints.filter((item) => item.mapId === mapId).length > this.maxPerMap) {
+      const oldestManual = draft.checkpoints.filter((item) => item.mapId === mapId && item.kind === "manual" && item.id !== preserveId).sort((a, b) => a.createdAt - b.createdAt)[0];
+      if (!oldestManual) break;
+      draft.checkpoints = draft.checkpoints.filter((item) => item.id !== oldestManual.id);
+    }
+  }
+  snapshot() {
+    return clone$3(this.state);
+  }
+  enqueueMutation(mutator) {
+    const operation = this.mutationQueue.then(async () => {
+      const draft = this.snapshot();
+      const result = mutator(draft);
+      if (!result.changed) return result.value;
+      await this.enqueueSave(draft);
+      this.state = draft;
+      return result.value;
+    });
+    this.mutationQueue = operation.then(() => void 0, () => void 0);
+    return operation;
+  }
+  enqueueSave(snapshot) {
+    const operation = this.saveQueue.then(() => this.storage.save(clone$3(snapshot)));
+    this.saveQueue = operation.catch(() => void 0);
+    return operation;
+  }
+}
 function createDefaultTree(title) {
   return {
     data: { text: title, expand: true },
@@ -173,6 +346,19 @@ class MapRepository {
       return { changed: true, value: void 0 };
     });
   }
+  async restoreSnapshot(id, snapshot) {
+    await this.ensureLoaded();
+    await this.enqueueMutation((draft) => {
+      const map2 = draft.maps.find((item) => item.id === id);
+      if (!map2) return { changed: false, value: void 0 };
+      map2.data = clone$2(snapshot.data);
+      map2.layout = snapshot.layout || "logicalStructure";
+      map2.theme = snapshot.theme || "default";
+      map2.viewData = snapshot.viewData ? clone$2(snapshot.viewData) : void 0;
+      map2.updatedAt = this.now();
+      return { changed: true, value: void 0 };
+    });
+  }
   async remove(id) {
     await this.ensureLoaded();
     await this.enqueueMutation((draft) => {
@@ -217,7 +403,7 @@ class MapRepository {
     this.listeners.forEach((listener) => listener(snapshot));
   }
 }
-function escapeHtml$7(value) {
+function escapeHtml$9(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function promptText(title, initialValue, placeholder = "") {
@@ -226,7 +412,7 @@ function promptText(title, initialValue, placeholder = "") {
     const dialog = new siyuan.Dialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$7(initialValue)}" placeholder="${escapeHtml$7(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
+      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$9(initialValue)}" placeholder="${escapeHtml$9(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
       destroyCallback: () => resolve(null)
     });
     const element = dialog.element;
@@ -258,7 +444,7 @@ function confirmAction(title, message, confirmText = "确定") {
     const dialog = new siyuan.Dialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><p>${escapeHtml$7(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$7(confirmText)}</button></div>`,
+      content: `<div class="b3-dialog__content"><p>${escapeHtml$9(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$9(confirmText)}</button></div>`,
       destroyCallback: () => resolve(false)
     });
     let completed = false;
@@ -533,47 +719,47 @@ const SHORTCUT_ROWS = [
   { key: "summary", label: "概要", group: "节点命令" },
   { key: "relation", label: "关联线", group: "节点命令" }
 ];
-function escapeHtml$6(value) {
+function escapeHtml$8(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function checked(value) {
   return value ? " checked" : "";
 }
 function option$1(value, label, current) {
-  return `<option value="${escapeHtml$6(value)}"${value === current ? " selected" : ""}>${escapeHtml$6(label)}</option>`;
+  return `<option value="${escapeHtml$8(value)}"${value === current ? " selected" : ""}>${escapeHtml$8(label)}</option>`;
 }
 function switchRow(title, description, key, value) {
   return `<label class="ymz-settings-row ymz-settings-row--switch">
-    <span><b>${escapeHtml$6(title)}</b><small>${escapeHtml$6(description)}</small></span>
+    <span><b>${escapeHtml$8(title)}</b><small>${escapeHtml$8(description)}</small></span>
     <input class="b3-switch" type="checkbox" data-setting="${String(key)}"${checked(value)}>
   </label>`;
 }
 function selectRow(title, description, key, options) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$6(title)}</b><small>${escapeHtml$6(description)}</small></span>
+    <span><b>${escapeHtml$8(title)}</b><small>${escapeHtml$8(description)}</small></span>
     <select class="b3-select fn__size200" data-setting="${String(key)}">${options}</select>
   </label>`;
 }
 function textRow(title, description, key, value) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$6(title)}</b><small>${escapeHtml$6(description)}</small></span>
-    <input class="b3-text-field fn__size200" type="text" data-setting="${String(key)}" value="${escapeHtml$6(value)}">
+    <span><b>${escapeHtml$8(title)}</b><small>${escapeHtml$8(description)}</small></span>
+    <input class="b3-text-field fn__size200" type="text" data-setting="${String(key)}" value="${escapeHtml$8(value)}">
   </label>`;
 }
 function numberRow(title, description, key, value, min, max, step, suffix) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$6(title)}</b><small>${escapeHtml$6(description)}</small></span>
-    <span class="ymz-settings-number"><input class="b3-text-field" type="number" data-setting="${String(key)}" value="${value}" min="${min}" max="${max}" step="${step}"><em>${escapeHtml$6(suffix)}</em></span>
+    <span><b>${escapeHtml$8(title)}</b><small>${escapeHtml$8(description)}</small></span>
+    <span class="ymz-settings-number"><input class="b3-text-field" type="number" data-setting="${String(key)}" value="${value}" min="${min}" max="${max}" step="${step}"><em>${escapeHtml$8(suffix)}</em></span>
   </label>`;
 }
 function shortcutsHtml(shortcuts) {
   let currentGroup = "";
   return SHORTCUT_ROWS.map((row) => {
-    const group = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$6(row.group)}</h3>` : "";
+    const group = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$8(row.group)}</h3>` : "";
     currentGroup = row.group;
     return `${group}<div class="ymz-shortcut-row" data-shortcut-row="${row.key}">
-      <span class="ymz-shortcut-row__label">${escapeHtml$6(row.label)}</span>
-      <input class="b3-text-field" data-shortcut="${row.key}" value="${escapeHtml$6(shortcuts[row.key])}" placeholder="未设置">
+      <span class="ymz-shortcut-row__label">${escapeHtml$8(row.label)}</span>
+      <input class="b3-text-field" data-shortcut="${row.key}" value="${escapeHtml$8(shortcuts[row.key])}" placeholder="未设置">
       <button class="b3-button b3-button--outline" data-shortcut-action="record" data-shortcut-key="${row.key}">录制</button>
       <button class="b3-button b3-button--cancel" data-shortcut-action="disable" data-shortcut-key="${row.key}">禁用</button>
       <button class="b3-button b3-button--outline" data-shortcut-action="restore" data-shortcut-key="${row.key}">恢复默认</button>
@@ -885,6 +1071,7 @@ function registerSettings(plugin, store) {
 }
 const MAP_STORAGE_NAME = "maps.json";
 const SETTINGS_STORAGE_NAME = "settings.json";
+const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -913,7 +1100,7 @@ class YeMindDockView {
         const row = document.createElement("div");
         row.className = `ymz-dock__item${map2.id === activeId ? " is-active" : ""}`;
         row.dataset.mapId = map2.id;
-        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$5(map2.title)}">${escapeHtml$5(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
+        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$7(map2.title)}">${escapeHtml$7(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
         body.appendChild(row);
       });
     }
@@ -960,7 +1147,7 @@ function registerYeMindDock(plugin, host) {
     }
   });
 }
-function escapeHtml$5(value) {
+function escapeHtml$7(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 const CONSTANTS = {
@@ -52097,6 +52284,102 @@ function createCommandAdapter(mindMap) {
     goToNode: (uid) => mindMap.execCommand("GO_TARGET_NODE", uid)
   };
 }
+function escapeHtml$6(value) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+function formatCheckpointTime(value) {
+  const date = new Date(value);
+  const pad2 = (part) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
+}
+function renderCheckpointListHtml(checkpoints, options) {
+  if (checkpoints.length === 0) {
+    return '<div class="ymz-checkpoint-empty">暂无检查点</div>';
+  }
+  return checkpoints.map((checkpoint) => {
+    const kind = checkpoint.kind === "recovery-protection" ? "恢复前保护" : "普通检查点";
+    const restoreDisabled = options.readonly ? " disabled" : "";
+    return `<article class="ymz-checkpoint-item" data-checkpoint-id="${escapeHtml$6(checkpoint.id)}">
+      <div class="ymz-checkpoint-item__main">
+        <strong>${escapeHtml$6(checkpoint.name)}</strong>
+        <span>${kind} · ${formatCheckpointTime(checkpoint.createdAt)} · ${checkpoint.nodeCount} 个节点</span>
+      </div>
+      <div class="ymz-checkpoint-item__actions">
+        <button data-checkpoint-action="restore"${restoreDisabled}>恢复</button>
+        <button data-checkpoint-action="rename">重命名</button>
+        <button class="is-danger" data-checkpoint-action="delete">删除</button>
+      </div>
+    </article>`;
+  }).join("");
+}
+function buildCheckpointDialogContent(checkpoints, readonly) {
+  return `<div class="b3-dialog__content ymz-checkpoint-dialog">
+    <div class="ymz-checkpoint-dialog__intro">检查点保存在独立历史文件中。恢复前会自动保存当前状态为保护检查点。</div>
+    <div class="ymz-checkpoint-list" data-role="checkpoint-list">${renderCheckpointListHtml(checkpoints, { readonly })}</div>
+  </div>
+  <div class="b3-dialog__action">
+    <button class="b3-button b3-button--cancel" data-checkpoint-dialog-action="close">关闭</button>
+  </div>`;
+}
+function escapeHtml$5(value) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+function openCheckpointManager(options) {
+  var _a;
+  const dialog = new siyuan.Dialog({
+    title: `检查点 · ${escapeHtml$5(options.mapTitle)}`,
+    width: "720px",
+    content: buildCheckpointDialogContent(options.repository.list(options.mapId), options.readonly)
+  });
+  let busy = false;
+  const render3 = () => {
+    const list = dialog.element.querySelector('[data-role="checkpoint-list"]');
+    if (list) list.innerHTML = renderCheckpointListHtml(options.repository.list(options.mapId), { readonly: options.readonly });
+  };
+  (_a = dialog.element.querySelector('[data-checkpoint-dialog-action="close"]')) == null ? void 0 : _a.addEventListener("click", () => dialog.destroy());
+  dialog.element.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-checkpoint-action]");
+    if (!button || busy || button.disabled) return;
+    const row = button.closest("[data-checkpoint-id]");
+    const checkpointId = row == null ? void 0 : row.dataset.checkpointId;
+    if (!checkpointId) return;
+    const checkpoint = options.repository.get(checkpointId);
+    if (!checkpoint) {
+      render3();
+      return;
+    }
+    const action = button.dataset.checkpointAction;
+    void (async () => {
+      busy = true;
+      try {
+        if (action === "rename") {
+          const name = await promptText("重命名检查点", checkpoint.name, "检查点名称");
+          if (name && name !== checkpoint.name) await options.repository.rename(checkpoint.id, name);
+        } else if (action === "delete") {
+          const confirmed = await confirmAction("删除检查点", `确认删除“${checkpoint.name}”？`, "删除");
+          if (confirmed) await options.repository.remove(checkpoint.id);
+        } else if (action === "restore" && !options.readonly) {
+          const confirmed = await confirmAction(
+            "恢复检查点",
+            `确认恢复“${checkpoint.name}”？当前状态会先自动保存为恢复前保护检查点。`,
+            "恢复"
+          );
+          if (!confirmed) return;
+          await options.onBeforeRestore();
+          const restored = await options.service.restore(options.mapId, checkpoint.id);
+          await options.onRestored(restored);
+          siyuan.showMessage("检查点恢复完成");
+        }
+        render3();
+      } catch (error) {
+        console.error("[YeMind Zen] checkpoint operation failed", error);
+        siyuan.showMessage("检查点操作失败，请稍后重试", 5e3, "error");
+      } finally {
+        busy = false;
+      }
+    })();
+  });
+}
 async function loadImageFileSelection(file, dependencies) {
   try {
     const dataUrl = await dependencies.read(file);
@@ -52739,6 +53022,7 @@ function createEditorTemplate(title) {
           <button data-action="view-split">分屏</button>
           <button data-action="view-outline">大纲</button>
           <button data-action="open-search" title="项目内搜索">⌕</button>
+          <button data-action="checkpoints" title="检查点与安全恢复">检查点</button>
           <span class="ymz-separator"></span>
           <button data-action="undo" title="撤销">↶</button>
           <button data-action="redo" title="重做">↷</button>
@@ -53206,6 +53490,7 @@ class YeMindEditor {
     __publicField(this, "settingsInitialized", false);
     __publicField(this, "viewMode", "map");
     __publicField(this, "searchText", "");
+    __publicField(this, "applyingCheckpoint", false);
     __publicField(this, "onRootKeydown", (event) => {
       var _a, _b;
       if (event.key === "Escape" && ((_a = this.commands) == null ? void 0 : _a.isRelationCreating())) {
@@ -53452,6 +53737,9 @@ class YeMindEditor {
         case "open-search":
           this.openSearchPanel();
           break;
+        case "checkpoints":
+          this.openCheckpointMenu(button);
+          break;
         case "readonly":
           this.setReadonly(this.rootEl.dataset.readonly !== "true");
           break;
@@ -53514,12 +53802,14 @@ class YeMindEditor {
   bindMapEvents() {
     if (!this.map) return;
     this.map.on("data_change", (data2) => {
+      if (this.applyingCheckpoint) return;
       this.current.data = data2;
       this.updateStats(data2);
       this.renderOutline(data2);
       this.scheduleSave();
     });
     this.map.on("view_data_change", (viewData) => {
+      if (this.applyingCheckpoint) return;
       this.updateZoom();
       const normalized = normalizePersistedViewData(viewData);
       if (!normalized) return;
@@ -53803,6 +54093,89 @@ class YeMindEditor {
     const current = info.total > 0 && info.currentIndex >= 0 ? info.currentIndex + 1 : 0;
     this.searchInfoEl.textContent = `${current} / ${Math.max(0, info.total)}`;
   }
+  openCheckpointMenu(anchor) {
+    const menu = new siyuan.Menu("siyuan-yemind-zen-checkpoint-menu");
+    menu.addItem({
+      icon: "iconAdd",
+      label: "创建检查点",
+      click: () => {
+        void this.createCheckpoint();
+      }
+    });
+    menu.addItem({
+      icon: "iconHistory",
+      label: "管理检查点",
+      click: () => this.openCheckpointManager()
+    });
+    const rect = anchor.getBoundingClientRect();
+    menu.open({ x: rect.left, y: rect.bottom + 4 });
+  }
+  async createCheckpoint() {
+    try {
+      await this.saveNow();
+      const now = /* @__PURE__ */ new Date();
+      const pad2 = (value) => String(value).padStart(2, "0");
+      const defaultName = `检查点 ${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+      const name = await promptText("创建检查点", defaultName, "检查点名称");
+      if (!name) return;
+      await this.options.checkpointService.createManual(this.current.id, name);
+      siyuan.showMessage("检查点已创建");
+    } catch (error) {
+      console.error("[YeMind Zen] create checkpoint failed", error);
+      siyuan.showMessage("检查点创建失败，请先确认导图已成功保存", 5e3, "error");
+    }
+  }
+  openCheckpointManager() {
+    openCheckpointManager({
+      mapId: this.current.id,
+      mapTitle: this.current.title,
+      readonly: this.rootEl.dataset.readonly === "true",
+      repository: this.options.checkpointRepository,
+      service: this.options.checkpointService,
+      onBeforeRestore: async () => {
+        await this.saveNow();
+      },
+      onRestored: async (restored) => {
+        await this.applyRestoredMap(restored);
+      }
+    });
+  }
+  async applyRestoredMap(restored) {
+    if (!this.map || this.destroyed) return;
+    this.applyingCheckpoint = true;
+    if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
+    this.saveTimer = null;
+    try {
+      this.current = restored;
+      const viewData = normalizePersistedViewData(restored.viewData);
+      this.map.resize();
+      this.map.setFullData({
+        root: restored.data,
+        layout: restored.layout,
+        theme: { template: restored.theme },
+        view: viewData
+      });
+      const layoutSelect = this.rootEl.querySelector('[data-action="layout"]');
+      if (layoutSelect) layoutSelect.value = restored.layout;
+      if (!viewData) {
+        await new Promise((resolve) => {
+          window.requestAnimationFrame(() => {
+            var _a;
+            (_a = this.map) == null ? void 0 : _a.view.fit();
+            resolve();
+          });
+        });
+      }
+      this.updateStats(restored.data);
+      this.renderOutline(restored.data);
+      this.updateZoom();
+      const revision = this.saveRevisions.markChanged();
+      this.saveRevisions.markSaved(revision);
+      this.saveStateEl.textContent = "已恢复";
+    } finally {
+      this.applyingCheckpoint = false;
+    }
+  }
   openLink(href) {
     if (!href || href === "about:blank") return;
     const navigation = resolveLinkNavigation(href, this.settings.externalLinkMode);
@@ -53840,12 +54213,17 @@ class YeMindEditor {
     }, this.settings.autosaveDelayMs);
   }
   flushPendingSave() {
+    void this.saveNow().catch((error) => {
+      console.error("[YeMind Zen] close-time save failed", error);
+    });
+  }
+  async saveNow() {
     if (!this.map || this.destroyed || !this.saveRevisions.isDirty()) return;
     if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.saveTimer = null;
-    void this.persist(this.saveRevisions.current());
+    await this.persist(this.saveRevisions.current(), true);
   }
-  async persist(revision) {
+  async persist(revision, throwOnError = false) {
     if (!this.map || this.destroyed) return;
     try {
       const sanitized = sanitizeAssociativeLines(this.map.getData(false));
@@ -53866,6 +54244,7 @@ class YeMindEditor {
         this.saveStateEl.textContent = "保存失败";
         siyuan.showMessage("YeMind Zen 保存失败", 5e3, "error");
       }
+      if (throwOnError) throw error;
     }
   }
   updateStats(data2) {
@@ -53923,6 +54302,7 @@ class YeMindEditor {
         <p><b>选择优先</b>：选择优先：左键框选，右键拖动画布</p>
         <p><b>Ctrl/Cmd + 单击</b>：Ctrl/Cmd + 单击：增减节点选择</p>
         <p><b>批量移动</b>：拖动任一已选节点：批量移动最上层所选子树</p>
+        <p><b>检查点</b> 创建命名快照；恢复前会自动保存当前状态为保护检查点</p>
         <p><b>Ctrl/Cmd + F</b> 搜索节点，顶部可切换导图、分屏和大纲</p>
       </div>`,
       width: "460px"
@@ -53977,6 +54357,8 @@ function registerYeMindTab(plugin, host) {
             mapId: resolvedMapId,
             repository: host.repository,
             settingsStore: host.settingsStore,
+            checkpointRepository: host.checkpointRepository,
+            checkpointService: host.checkpointService,
             onMissing: () => this.tab.close()
           });
         },
@@ -54058,6 +54440,8 @@ class YeMindZenPlugin extends siyuan.Plugin {
     super(...arguments);
     __publicField(this, "repository");
     __publicField(this, "settingsStore");
+    __publicField(this, "checkpointRepository");
+    __publicField(this, "checkpointService");
     __publicField(this, "tabRegistry", new OpenMapTabRegistry());
     __publicField(this, "ready", Promise.resolve());
     __publicField(this, "onOpenPluginUrl", (event) => {
@@ -54080,6 +54464,13 @@ class YeMindZenPlugin extends siyuan.Plugin {
         await this.saveData(SETTINGS_STORAGE_NAME, value);
       }
     });
+    this.checkpointRepository = new CheckpointRepository({
+      load: () => this.loadData(CHECKPOINT_STORAGE_NAME),
+      save: async (value) => {
+        await this.saveData(CHECKPOINT_STORAGE_NAME, value);
+      }
+    });
+    this.checkpointService = new CheckpointService(this.repository, this.checkpointRepository);
     registerYeMindTab(this, this);
     registerYeMindDock(this, this);
     registerSettings(this, this.settingsStore);
@@ -54148,6 +54539,11 @@ class YeMindZenPlugin extends siyuan.Plugin {
       const confirmed = await confirmAction("删除导图", `确认删除“${map2.title}”？删除后无法撤销。`, "删除");
       if (!confirmed) return;
       await this.repository.remove(mapId);
+      try {
+        await this.checkpointRepository.removeForMap(mapId);
+      } catch (error) {
+        console.error("[YeMind Zen] checkpoint cleanup after map deletion failed", error);
+      }
       this.tabRegistry.close(mapId);
     }, (error) => this.reportOperationFailure("删除导图", error));
   }
@@ -54167,7 +54563,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
   }
   async bootstrap() {
     try {
-      await Promise.all([this.repository.load(), this.settingsStore.load()]);
+      await Promise.all([this.repository.load(), this.settingsStore.load(), this.checkpointRepository.load()]);
     } catch (error) {
       console.error("[YeMind Zen] failed to load storage", error);
       siyuan.showMessage("YeMind Zen 数据加载失败", 6e3, "error");
