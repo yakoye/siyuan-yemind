@@ -1,0 +1,160 @@
+import type { YeMindCommands } from '../core/commands';
+import {
+  isClozeFormat,
+  nextToggleFormat,
+  type RichTextBooleanFormat,
+} from './richTextActions';
+
+export interface RichTextSelectionRect {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+  width?: number;
+}
+
+export class RichTextToolbar {
+  private readonly element: HTMLElement;
+  private formatInfo: Record<string, unknown> = {};
+
+  constructor(
+    private readonly root: HTMLElement,
+    private readonly commands: YeMindCommands,
+    private readonly onFormula: () => void = () => {},
+  ) {
+    this.element = document.createElement('div');
+    this.element.className = 'ymz-rich-toolbar';
+    this.element.hidden = true;
+    this.element.innerHTML = `
+      <button type="button" data-rich-action="bold" title="加粗"><b>B</b></button>
+      <button type="button" data-rich-action="italic" title="斜体"><i>I</i></button>
+      <button type="button" data-rich-action="underline" title="下划线"><u>U</u></button>
+      <button type="button" data-rich-action="strike" title="删除线"><s>S</s></button>
+      <span class="ymz-rich-toolbar__separator"></span>
+      <label class="ymz-rich-color" title="文字颜色">A<input type="color" data-rich-field="color" value="#172033"></label>
+      <button type="button" data-rich-action="clear-color" title="清除文字颜色">×</button>
+      <label class="ymz-rich-color" title="背景颜色">Bg<input type="color" data-rich-field="background" value="#fff1a8"></label>
+      <button type="button" data-rich-action="clear-background" title="清除背景颜色">×</button>
+      <select data-rich-field="size" title="字号">
+        <option value="">自动</option><option value="12px">12</option><option value="14px">14</option>
+        <option value="16px">16</option><option value="18px">18</option><option value="20px">20</option>
+        <option value="24px">24</option><option value="28px">28</option><option value="32px">32</option>
+      </select>
+      <select data-rich-field="font" title="字体">
+        <option value="">继承</option>
+        <option value="sans-serif">无衬线</option>
+        <option value="serif">衬线</option>
+        <option value="微软雅黑, Microsoft YaHei">微软雅黑</option>
+        <option value="宋体, SimSun, Songti SC">宋体</option>
+        <option value="andale mono">等宽</option>
+      </select>
+      <span class="ymz-rich-toolbar__separator"></span>
+      <button type="button" data-rich-action="cloze" title="挖空/取消挖空">挖空</button>
+      <button type="button" data-rich-action="formula" title="插入公式">Fx</button>
+      <button type="button" data-rich-action="clear" title="清除格式">清除</button>`;
+    document.body.appendChild(this.element);
+    this.bind();
+  }
+
+  update(
+    hasRange: boolean,
+    rectInfo?: RichTextSelectionRect | null,
+    formatInfo?: Record<string, unknown> | null,
+  ): void {
+    if (!hasRange || !rectInfo) {
+      this.hide();
+      return;
+    }
+    this.formatInfo = formatInfo ?? {};
+    this.syncState();
+    this.element.hidden = false;
+    this.position(rectInfo);
+  }
+
+  hide(): void {
+    this.element.hidden = true;
+  }
+
+  destroy(): void {
+    this.element.remove();
+  }
+
+  private bind(): void {
+    this.element.addEventListener('mousedown', (event) => {
+      if ((event.target as HTMLElement).closest('button')) event.preventDefault();
+      event.stopPropagation();
+    });
+    this.element.addEventListener('click', (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-rich-action]');
+      if (!button) return;
+      const action = button.dataset.richAction;
+      if (['bold', 'italic', 'underline', 'strike'].includes(String(action))) {
+        this.commands.formatText(nextToggleFormat(action as RichTextBooleanFormat, this.formatInfo));
+        this.formatInfo[action!] = !Boolean(this.formatInfo[action!]);
+        this.syncState();
+        return;
+      }
+      switch (action) {
+        case 'cloze': {
+          const next = !isClozeFormat(this.formatInfo);
+          this.commands.setCloze(next);
+          this.formatInfo.color = next ? 'transparent' : undefined;
+          this.formatInfo.background = next ? '#f5dfa0' : undefined;
+          this.syncState();
+          break;
+        }
+        case 'formula':
+          this.hide();
+          this.onFormula();
+          break;
+        case 'clear':
+          this.commands.clearTextFormat();
+          this.formatInfo = {};
+          this.syncState();
+          break;
+        case 'clear-color':
+          this.commands.formatText({ color: false });
+          this.formatInfo.color = undefined;
+          break;
+        case 'clear-background':
+          this.commands.formatText({ background: false });
+          this.formatInfo.background = undefined;
+          break;
+      }
+    });
+    this.element.querySelector<HTMLInputElement>('[data-rich-field="color"]')?.addEventListener('input', (event) => {
+      this.commands.formatText({ color: (event.target as HTMLInputElement).value });
+    });
+    this.element.querySelector<HTMLInputElement>('[data-rich-field="background"]')?.addEventListener('input', (event) => {
+      this.commands.formatText({ background: (event.target as HTMLInputElement).value });
+    });
+    this.element.querySelector<HTMLSelectElement>('[data-rich-field="size"]')?.addEventListener('change', (event) => {
+      this.commands.formatText({ size: (event.target as HTMLSelectElement).value || false });
+    });
+    this.element.querySelector<HTMLSelectElement>('[data-rich-field="font"]')?.addEventListener('change', (event) => {
+      this.commands.formatText({ font: (event.target as HTMLSelectElement).value || false });
+    });
+  }
+
+  private syncState(): void {
+    ['bold', 'italic', 'underline', 'strike'].forEach((name) => {
+      this.element.querySelector(`[data-rich-action="${name}"]`)?.classList.toggle('is-active', Boolean(this.formatInfo[name]));
+    });
+    this.element.querySelector('[data-rich-action="cloze"]')?.classList.toggle('is-active', isClozeFormat(this.formatInfo));
+    const size = this.element.querySelector<HTMLSelectElement>('[data-rich-field="size"]');
+    if (size) size.value = typeof this.formatInfo.size === 'string' ? this.formatInfo.size : '';
+    const font = this.element.querySelector<HTMLSelectElement>('[data-rich-field="font"]');
+    if (font) font.value = typeof this.formatInfo.font === 'string' ? this.formatInfo.font : '';
+  }
+
+  private position(rect: RichTextSelectionRect): void {
+    const width = Math.min(this.element.scrollWidth || 720, window.innerWidth - 16);
+    const left = Math.max(8, Math.min(rect.left + ((rect.width ?? 0) / 2) - (width / 2), window.innerWidth - width - 8));
+    const measuredHeight = this.element.offsetHeight || 44;
+    const below = rect.bottom + 8;
+    const top = below + measuredHeight < window.innerHeight ? below : Math.max(8, rect.top - measuredHeight - 8);
+    this.element.style.left = `${Math.round(left)}px`;
+    this.element.style.top = `${Math.round(top)}px`;
+    this.element.style.maxWidth = `${window.innerWidth - 16}px`;
+  }
+}

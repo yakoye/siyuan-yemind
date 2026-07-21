@@ -2,6 +2,7 @@ import MindMap from 'simple-mind-map';
 import type { MindMapTree } from '../model/types';
 import { registerMindMapPlugins } from './registerPlugins';
 import type { YeMindSettings } from '../settings/SettingsStore';
+import { createNodePostfixContent, YEMIND_ICON_LIST } from './nodeDecorations';
 
 export interface CreateMindMapOptions {
   el: HTMLElement;
@@ -37,6 +38,10 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     addHistoryOnInit: true,
     defaultInsertSecondLevelNodeText: '新节点',
     defaultInsertBelowSecondLevelNodeText: '新节点',
+    iconList: YEMIND_ICON_LIST,
+    createNodePostfixContent,
+    openRealtimeRenderOnNodeTextEdit: true,
+    enableEditFormulaInRichTextEdit: true,
     errorHandler: (_code: unknown, error: unknown) => console.error('[YeMind Zen]', error),
   } as any);
 }

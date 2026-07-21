@@ -1,8 +1,20 @@
+import type { NodeComment, NodeTodo } from '../content/nodeContentState';
+
 export interface MindMapNodeData {
   text: string;
   uid?: string;
   expand?: boolean;
   richText?: boolean;
+  note?: string;
+  tag?: string[];
+  icon?: string[];
+  hyperlink?: string;
+  hyperlinkTitle?: string;
+  image?: string;
+  imageTitle?: string;
+  imageSize?: { width: number; height: number; custom?: boolean };
+  yemindTodo?: NodeTodo | null;
+  yemindComments?: NodeComment[];
   [key: string]: unknown;
 }
 

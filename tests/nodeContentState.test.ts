@@ -1,0 +1,36 @@
+import { describe, expect, it } from 'vitest';
+import {
+  addComment,
+  editComment,
+  removeComment,
+  toggleTodo,
+  normalizeStringList,
+} from '../src/content/nodeContentState';
+
+describe('node content state', () => {
+  it('toggles todo between pending, completed and absent', () => {
+    const pending = toggleTodo(undefined);
+    expect(pending).toMatchObject({ checked: false });
+
+    const completed = toggleTodo(pending);
+    expect(completed).toMatchObject({ checked: true });
+
+    expect(toggleTodo(completed)).toBeNull();
+  });
+
+  it('adds, edits and removes comments without mutating the input', () => {
+    const source = [{ id: 'c1', text: 'first', createdAt: 1, updatedAt: 1 }];
+    const added = addComment(source, 'second', 2, 'c2');
+    expect(source).toHaveLength(1);
+    expect(added.map((item) => item.text)).toEqual(['first', 'second']);
+
+    const edited = editComment(added, 'c2', 'changed', 3);
+    expect(edited[1]).toMatchObject({ text: 'changed', updatedAt: 3 });
+
+    expect(removeComment(edited, 'c1').map((item) => item.id)).toEqual(['c2']);
+  });
+
+  it('normalizes tags and icons by trimming, removing blanks and deduplicating', () => {
+    expect(normalizeStringList([' PCIe ', '', 'ATS', 'PCIe', '  '])).toEqual(['PCIe', 'ATS']);
+  });
+});

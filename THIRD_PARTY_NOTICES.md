@@ -16,6 +16,6 @@
 
 - Project: `suka233/siyuan-kmind-plugin`
 - Role: Public reference for established SiYuan mind-map workflows and feature planning.
-- YeMind Zen v0.2.0 does not copy or load its bundled runtime.
+- YeMind Zen v0.3.0 does not copy or load its bundled runtime.
 
 Third-party copyright and license terms remain with their respective owners.

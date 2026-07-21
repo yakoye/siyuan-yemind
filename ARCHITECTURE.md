@@ -5,7 +5,7 @@
 - 插件目录：`siyuan-yemind-zen`
 - 插件 ID：`siyuan-yemind-zen`
 - 思源显示名：`YeMind Zen`
-- 当前版本：`0.2.0`
+- 当前版本：`0.3.0`
 
 ## 核心分层
 
@@ -23,12 +23,13 @@ SiYuan Plugin Shell
 ```text
 src/
 ├─ core/       simple-mind-map 创建、插件注册和命令适配
-├─ editor/     编辑器生命周期、模板、状态统计
+├─ content/    待办、批注等节点扩展数据
+├─ editor/     编辑器生命周期、富文本工具栏、模板、状态统计
 ├─ model/      导图数据模型、默认导图、持久化仓库
 ├─ plugin/     思源插件、Dock、Tab、协议与常量
 ├─ settings/   全局设置及存储
 ├─ styles/     运行样式
-├─ ui/         菜单和对话框
+├─ ui/         节点内容菜单和对话框
 └─ compat/     后续文件兼容适配器
 ```
 

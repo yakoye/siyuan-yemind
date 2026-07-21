@@ -5,9 +5,11 @@ import { createCommandAdapter, type YeMindCommands } from '../core/commands';
 import { MapRepository } from '../model/MapRepository';
 import type { MindMapTree, YeMindMapDocument } from '../model/types';
 import { openNodeContextMenu } from '../ui/contextMenu';
+import { openCommentsDialog, openFormulaDialog, openTodoDialog } from '../ui/nodeContentDialogs';
 import { calculateEditorStats } from './editorStats';
 import { createEditorTemplate } from './editorTemplate';
 import type { SettingsStore } from '../settings/SettingsStore';
+import { RichTextToolbar } from './RichTextToolbar';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -30,6 +32,13 @@ export class YeMindEditor {
   private zoomEl!: HTMLElement;
   private saveStateEl!: HTMLElement;
   private titleEl!: HTMLElement;
+  private richTextToolbar: RichTextToolbar | null = null;
+  private readonly onRootKeydown = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape' && this.rootEl?.dataset.zen === 'true') {
+      event.preventDefault();
+      this.toggleZen(false);
+    }
+  };
 
   constructor(private readonly options: YeMindEditorOptions) {
     const map = options.repository.get(options.mapId);
@@ -46,6 +55,9 @@ export class YeMindEditor {
     this.destroyed = true;
     if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.unsubscribe?.();
+    this.richTextToolbar?.destroy();
+    this.richTextToolbar = null;
+    this.rootEl?.removeEventListener('keydown', this.onRootKeydown);
     this.map?.destroy();
     this.map = null;
     this.options.container.innerHTML = '';
@@ -71,6 +83,8 @@ export class YeMindEditor {
       settings: this.options.settingsStore.get(),
     });
     this.commands = createCommandAdapter(this.map);
+    this.richTextToolbar = new RichTextToolbar(this.rootEl, this.commands, () => openFormulaDialog(this.commands!));
+    this.rootEl.addEventListener('keydown', this.onRootKeydown);
 
     this.bindToolbar();
     this.bindMapEvents();
@@ -134,13 +148,39 @@ export class YeMindEditor {
       this.updateZoom();
       this.scheduleSave();
     });
-    this.map.on('node_contextmenu', (event: MouseEvent) => {
-      if (this.commands) openNodeContextMenu(event, this.commands);
+    this.map.on('node_contextmenu', (event: MouseEvent, node: any) => {
+      if (!this.commands) return;
+      this.activateNode(node);
+      openNodeContextMenu(event, this.commands);
+    });
+    this.map.on('rich_text_selection_change', (
+      hasRange: boolean,
+      rectInfo: Record<string, number> | null,
+      formatInfo: Record<string, unknown> | null,
+    ) => {
+      this.richTextToolbar?.update(hasRange, rectInfo as any, formatInfo);
+    });
+    this.map.on('yemind_badge_click', (type: 'todo' | 'comments', node: any) => {
+      if (!this.commands) return;
+      this.activateNode(node);
+      if (type === 'todo') openTodoDialog(this.commands);
+      if (type === 'comments') openCommentsDialog(this.commands);
     });
     this.map.on('node_active', (_node: unknown, list: unknown[]) => {
       this.rootEl.dataset.hasSelection = list.length > 0 ? 'true' : 'false';
     });
     this.map.on('scale', () => this.updateZoom());
+  }
+
+
+  private activateNode(node: any): void {
+    if (!this.map || !node) return;
+    const renderer = (this.map as any).renderer;
+    const activeList = Array.isArray(renderer?.activeNodeList) ? renderer.activeNodeList : [];
+    if (activeList.includes(node)) return;
+    renderer?.clearActiveNodeList?.();
+    if (typeof node.active === 'function') node.active();
+    else renderer?.addNodeToActiveList?.(node);
   }
 
   private scheduleSave(): void {
