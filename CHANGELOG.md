@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.0 — 2026-07-16
+
+- Changed the node todo context menu into a direct three-state workflow: add, complete and remove, with no dialog.
+- Replaced the faint comment indicator with a larger outlined note/comment icon and kept the multi-comment count badge.
+- Added an optional compact active-node menu button beside node content.
+- Added project search, previous/next navigation, current replacement and replace-all through the native Search plugin.
+- Added map, split and outline views with click-to-locate outline rows.
+- Added default map/split/outline, zen and read-only startup modes.
+- Added a complete two-page settings dialog for canvas, node controls, links, code, cloze and shortcuts.
+- Added shortcut recording, disabling, restoring defaults and conflict detection.
+- Routed SiYuan's built-in plugin settings entry to the same complete settings window to avoid duplicate settings UIs.
+- Added regression tests for todo transitions, node decorations, outline rendering, search commands, settings schema and shortcuts.
+
 ## 0.4.1 — 2026-07-16
 
 - Rebuilt the comment dialog around explicit empty, view and edit states.

@@ -160,7 +160,7 @@ class MapRepository {
     this.listeners.forEach((listener) => listener(snapshot));
   }
 }
-function escapeHtml$5(value) {
+function escapeHtml$7(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function promptText(title, initialValue, placeholder = "") {
@@ -169,7 +169,7 @@ function promptText(title, initialValue, placeholder = "") {
     const dialog = new siyuan.Dialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$5(initialValue)}" placeholder="${escapeHtml$5(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
+      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$7(initialValue)}" placeholder="${escapeHtml$7(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
       destroyCallback: () => resolve(null)
     });
     const element = dialog.element;
@@ -201,7 +201,7 @@ function confirmAction(title, message, confirmText = "确定") {
     const dialog = new siyuan.Dialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><p>${escapeHtml$5(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$5(confirmText)}</button></div>`,
+      content: `<div class="b3-dialog__content"><p>${escapeHtml$7(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$7(confirmText)}</button></div>`,
       destroyCallback: () => resolve(false)
     });
     let completed = false;
@@ -215,137 +215,98 @@ function confirmAction(title, message, confirmText = "确定") {
     (_b = dialog.element.querySelector(".b3-button--text")) == null ? void 0 : _b.addEventListener("click", () => finish(true));
   });
 }
-function selectElement(options, onChange) {
-  const select = document.createElement("select");
-  select.className = "b3-select fn__size200";
-  options.forEach(({ value, label }) => {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = label;
-    select.appendChild(option);
+const MODIFIER_ORDER = ["Ctrl", "Cmd", "Alt", "Shift"];
+function normalizeKey(key) {
+  const aliases = {
+    " ": "Space",
+    Spacebar: "Space",
+    Esc: "Escape",
+    Del: "Delete",
+    Up: "ArrowUp",
+    Down: "ArrowDown",
+    Left: "ArrowLeft",
+    Right: "ArrowRight"
+  };
+  const value = aliases[key] ?? key;
+  if (value.length === 1 && /[A-Z]/.test(value)) return value.toLowerCase();
+  return value;
+}
+function keyboardEventToShortcut(event) {
+  const key = normalizeKey(event.key);
+  if (["Control", "Meta", "Alt", "Shift"].includes(key)) return "";
+  const parts = [];
+  if (event.ctrlKey) parts.push("Ctrl");
+  if (event.metaKey) parts.push("Cmd");
+  if (event.altKey) parts.push("Alt");
+  if (event.shiftKey) parts.push("Shift");
+  parts.push(key);
+  return parts.join("+");
+}
+function normalizeAlternative(value) {
+  const raw = value.trim();
+  if (!raw) return "";
+  const tokens = raw.split("+").map((item) => item.trim()).filter(Boolean);
+  const modifiers = /* @__PURE__ */ new Set();
+  let key = "";
+  tokens.forEach((token) => {
+    const lower = token.toLowerCase();
+    if (lower === "ctrl" || lower === "control" || lower === "⌃") modifiers.add("Ctrl");
+    else if (lower === "cmd" || lower === "command" || lower === "meta" || lower === "⌘") modifiers.add("Cmd");
+    else if (lower === "alt" || lower === "option" || lower === "⌥") modifiers.add("Alt");
+    else if (lower === "shift" || lower === "⇧") modifiers.add("Shift");
+    else key = normalizeKey(token);
   });
-  select.addEventListener("change", () => onChange(select.value));
-  return select;
+  if (!key) return "";
+  return [...MODIFIER_ORDER.filter((modifier) => modifiers.has(modifier)), key].join("+").toLowerCase();
 }
-function checkboxElement(onChange) {
-  const input = document.createElement("input");
-  input.type = "checkbox";
-  input.className = "b3-switch";
-  input.addEventListener("change", () => onChange(input.checked));
-  return input;
+function alternatives(binding) {
+  return binding.split("/").map(normalizeAlternative).filter(Boolean);
 }
-function numberElement(min, max, step, suffix, onChange) {
-  const wrap = document.createElement("div");
-  wrap.className = "fn__flex";
-  const input = document.createElement("input");
-  input.type = "number";
-  input.className = "b3-text-field fn__size100";
-  input.min = String(min);
-  input.max = String(max);
-  input.step = String(step);
-  const label = document.createElement("span");
-  label.className = "fn__space";
-  label.textContent = suffix;
-  input.addEventListener("change", () => onChange(Number(input.value)));
-  wrap.append(input, label);
-  Object.defineProperty(wrap, "settingInput", { value: input });
-  return wrap;
+function matchesShortcut(event, binding) {
+  const current = normalizeAlternative(keyboardEventToShortcut(event));
+  return Boolean(current) && alternatives(binding).includes(current);
 }
-function inputOf(element) {
-  return element.settingInput;
-}
-function registerSettings(plugin, store) {
-  const layout2 = selectElement([
-    { value: "logicalStructure", label: "向右逻辑图" },
-    { value: "logicalStructureLeft", label: "向左逻辑图" },
-    { value: "mindMap", label: "双向思维导图" },
-    { value: "organizationStructure", label: "组织结构图" },
-    { value: "catalogOrganization", label: "目录组织图" }
-  ], (value) => void store.update({ defaultLayout: value }));
-  const canvas = selectElement([
-    { value: "pan", label: "平移优先" },
-    { value: "select", label: "选择优先" }
-  ], (value) => void store.update({ canvasMode: value }));
-  const wheel = selectElement([
-    { value: "pan", label: "滚轮平移，Ctrl/Cmd 缩放" },
-    { value: "zoom", label: "直接缩放" },
-    { value: "none", label: "关闭滚轮缩放" }
-  ], (value) => void store.update({ wheelMode: value }));
-  const quickCreate = checkboxElement((checked) => void store.update({ showQuickCreate: checked }));
-  const autoFit = checkboxElement((checked) => void store.update({ autoFitOnOpen: checked }));
-  const autosave = numberElement(100, 5e3, 50, "毫秒", (value) => void store.update({ autosaveDelayMs: value }));
-  const richToolbar = checkboxElement((checked) => void store.update({ showRichTextToolbar: checked }));
-  const autoHttps = checkboxElement((checked) => void store.update({ inlineLinkAutoHttps: checked }));
-  const externalLink = selectElement([
-    { value: "new-window", label: "新窗口打开" },
-    { value: "current-window", label: "当前窗口打开" }
-  ], (value) => void store.update({ externalLinkMode: value }));
-  const defaultCodeLanguage = selectElement([
-    { value: "plain", label: "纯文本" },
-    { value: "javascript", label: "JavaScript" },
-    { value: "typescript", label: "TypeScript" },
-    { value: "python", label: "Python" },
-    { value: "bash", label: "Bash / Shell" },
-    { value: "json", label: "JSON" },
-    { value: "cpp", label: "C++" },
-    { value: "rust", label: "Rust" },
-    { value: "go", label: "Go" },
-    { value: "sql", label: "SQL" },
-    { value: "markdown", label: "Markdown" }
-  ], (value) => void store.update({ defaultCodeLanguage: value }));
-  const codeWrap = checkboxElement((checked) => void store.update({ codeBlockWrap: checked }));
-  const codeLanguage2 = checkboxElement((checked) => void store.update({ codeBlockShowLanguage: checked }));
-  const tabSize = selectElement([
-    { value: "2", label: "2 个空格" },
-    { value: "4", label: "4 个空格" }
-  ], (value) => void store.update({ codeBlockTabSize: value === "4" ? 4 : 2 }));
-  const codeFontSize = numberElement(10, 24, 1, "px", (value) => void store.update({ codeBlockFontSize: value }));
-  const clozeMode = selectElement([
-    { value: "hidden", label: "完全隐藏" },
-    { value: "blur", label: "模糊显示" }
-  ], (value) => void store.update({ clozeMode: value }));
-  const clozeHover = checkboxElement((checked) => void store.update({ clozeRevealOnHover: checked }));
-  const todoBadge = checkboxElement((checked) => void store.update({ showTodoBadge: checked }));
-  const commentBadge = checkboxElement((checked) => void store.update({ showCommentBadge: checked }));
-  plugin.setting.addItem({ title: "默认布局", description: "新建导图默认使用的结构。", actionElement: layout2 });
-  plugin.setting.addItem({ title: "画布拖拽习惯", description: "平移优先或框选优先。", actionElement: canvas });
-  plugin.setting.addItem({ title: "滚轮行为", description: "控制画布滚轮与缩放方式。", actionElement: wheel });
-  plugin.setting.addItem({ title: "显示添加子节点按钮", description: "节点选中后显示快速添加入口。", actionElement: quickCreate });
-  plugin.setting.addItem({ title: "打开时适配视图", description: "打开导图后自动完整显示全部节点。", actionElement: autoFit });
-  plugin.setting.addItem({ title: "自动保存延迟", description: "停止编辑后多久写入插件数据。", actionElement: autosave });
-  plugin.setting.addItem({ title: "富文本选区工具栏", description: "选中文字后显示格式、链接、挖空、公式与代码工具。", actionElement: richToolbar });
-  plugin.setting.addItem({ title: "裸域名自动补 HTTPS", description: "输入 example.com 时自动转换为 https://example.com。", actionElement: autoHttps });
-  plugin.setting.addItem({ title: "外部链接打开方式", description: "不影响 siyuan:// 思源内部链接。", actionElement: externalLink });
-  plugin.setting.addItem({ title: "默认代码语言", description: "新建代码块时预选的语言。", actionElement: defaultCodeLanguage });
-  plugin.setting.addItem({ title: "代码块自动换行", description: "关闭时保留水平滚动，适合较长代码。", actionElement: codeWrap });
-  plugin.setting.addItem({ title: "显示代码语言", description: "在代码块左上角显示语言标签。", actionElement: codeLanguage2 });
-  plugin.setting.addItem({ title: "代码 Tab 宽度", description: "代码编辑器和节点代码块使用的缩进宽度。", actionElement: tabSize });
-  plugin.setting.addItem({ title: "代码字号", description: "代码编辑器和节点代码块字号。", actionElement: codeFontSize });
-  plugin.setting.addItem({ title: "挖空显示方式", description: "完全隐藏或保留模糊轮廓。", actionElement: clozeMode });
-  plugin.setting.addItem({ title: "悬停显示挖空答案", description: "鼠标移到挖空内容上时临时显示答案。", actionElement: clozeHover });
-  plugin.setting.addItem({ title: "显示待办标记", description: "在节点旁显示待办状态入口。", actionElement: todoBadge });
-  plugin.setting.addItem({ title: "显示批注标记", description: "在节点旁显示批注数量入口。", actionElement: commentBadge });
-  store.subscribe((settings) => {
-    layout2.value = settings.defaultLayout;
-    canvas.value = settings.canvasMode;
-    wheel.value = settings.wheelMode;
-    quickCreate.checked = settings.showQuickCreate;
-    autoFit.checked = settings.autoFitOnOpen;
-    inputOf(autosave).value = String(settings.autosaveDelayMs);
-    richToolbar.checked = settings.showRichTextToolbar;
-    autoHttps.checked = settings.inlineLinkAutoHttps;
-    externalLink.value = settings.externalLinkMode;
-    defaultCodeLanguage.value = settings.defaultCodeLanguage;
-    codeWrap.checked = settings.codeBlockWrap;
-    codeLanguage2.checked = settings.codeBlockShowLanguage;
-    tabSize.value = String(settings.codeBlockTabSize);
-    inputOf(codeFontSize).value = String(settings.codeBlockFontSize);
-    clozeMode.value = settings.clozeMode;
-    clozeHover.checked = settings.clozeRevealOnHover;
-    todoBadge.checked = settings.showTodoBadge;
-    commentBadge.checked = settings.showCommentBadge;
+function findShortcutConflicts(shortcuts) {
+  const keys2 = Object.keys(shortcuts);
+  const result = keys2.reduce((output, key) => {
+    output[key] = [];
+    return output;
+  }, {});
+  const normalized = new Map(
+    keys2.map((key) => [key, new Set(alternatives(shortcuts[key]))])
+  );
+  keys2.forEach((key, index) => {
+    keys2.slice(index + 1).forEach((other) => {
+      const left = normalized.get(key);
+      const right = normalized.get(other);
+      if (left.size === 0 || right.size === 0) return;
+      if ([...left].some((shortcut) => right.has(shortcut))) {
+        result[key].push(other);
+        result[other].push(key);
+      }
+    });
   });
+  return result;
 }
+function isEditableTarget(target) {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return true;
+  if (target.isContentEditable || target.contentEditable === "true" || target.closest('[contenteditable="true"], [contenteditable=""], .ql-editor')) return true;
+  return false;
+}
+const DEFAULT_SHORTCUTS = {
+  search: "Ctrl+f / Cmd+f",
+  toggleZen: "Ctrl+Alt+z / Cmd+Alt+z",
+  toggleReadonly: "Ctrl+Alt+r / Cmd+Alt+r",
+  undo: "Ctrl+z / Cmd+z",
+  redo: "Ctrl+Shift+z / Cmd+Shift+z / Ctrl+y / Cmd+y",
+  fit: "Ctrl+0 / Cmd+0",
+  reset: "Ctrl+Alt+0 / Cmd+Alt+0",
+  addParent: "Alt+Enter",
+  comments: "Ctrl+Alt+m / Cmd+Alt+m",
+  summary: "Ctrl+Alt+g / Cmd+Alt+g",
+  relation: "Ctrl+Alt+l / Cmd+Alt+l"
+};
 const DEFAULT_SETTINGS = {
   defaultLayout: "logicalStructure",
   canvasMode: "pan",
@@ -364,13 +325,20 @@ const DEFAULT_SETTINGS = {
   clozeMode: "hidden",
   clozeRevealOnHover: true,
   showTodoBadge: true,
-  showCommentBadge: true
+  showCommentBadge: true,
+  defaultZenMode: false,
+  defaultReadonlyMode: false,
+  showNodeMenuButton: true,
+  defaultViewMode: "map",
+  shortcutMap: { ...DEFAULT_SHORTCUTS }
 };
 const LAYOUTS = /* @__PURE__ */ new Set(["logicalStructure", "logicalStructureLeft", "mindMap", "organizationStructure", "catalogOrganization"]);
 const CANVAS_MODES = /* @__PURE__ */ new Set(["pan", "select"]);
 const WHEEL_MODES = /* @__PURE__ */ new Set(["zoom", "pan", "none"]);
 const LINK_MODES = /* @__PURE__ */ new Set(["new-window", "current-window"]);
 const CLOZE_MODES = /* @__PURE__ */ new Set(["hidden", "blur"]);
+const VIEW_MODES = /* @__PURE__ */ new Set(["map", "split", "outline"]);
+const SHORTCUT_COMMANDS = Object.keys(DEFAULT_SHORTCUTS);
 function numberInRange(value, fallback, min, max) {
   const number = Number(value);
   return Number.isFinite(number) && number >= min && number <= max ? number : fallback;
@@ -380,6 +348,14 @@ function booleanOrDefault(value, fallback) {
 }
 function stringOrDefault(value, fallback) {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+function normalizeShortcutMap(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return SHORTCUT_COMMANDS.reduce((result, key) => {
+    const current = source[key];
+    result[key] = typeof current === "string" ? current.trim() : DEFAULT_SHORTCUTS[key];
+    return result;
+  }, {});
 }
 function normalizeSettings(value) {
   const tabSize = Number(value.codeBlockTabSize);
@@ -401,7 +377,12 @@ function normalizeSettings(value) {
     clozeMode: CLOZE_MODES.has(value.clozeMode) ? value.clozeMode : DEFAULT_SETTINGS.clozeMode,
     clozeRevealOnHover: booleanOrDefault(value.clozeRevealOnHover, DEFAULT_SETTINGS.clozeRevealOnHover),
     showTodoBadge: booleanOrDefault(value.showTodoBadge, DEFAULT_SETTINGS.showTodoBadge),
-    showCommentBadge: booleanOrDefault(value.showCommentBadge, DEFAULT_SETTINGS.showCommentBadge)
+    showCommentBadge: booleanOrDefault(value.showCommentBadge, DEFAULT_SETTINGS.showCommentBadge),
+    defaultZenMode: booleanOrDefault(value.defaultZenMode, DEFAULT_SETTINGS.defaultZenMode),
+    defaultReadonlyMode: booleanOrDefault(value.defaultReadonlyMode, DEFAULT_SETTINGS.defaultReadonlyMode),
+    showNodeMenuButton: booleanOrDefault(value.showNodeMenuButton, DEFAULT_SETTINGS.showNodeMenuButton),
+    defaultViewMode: VIEW_MODES.has(value.defaultViewMode) ? value.defaultViewMode : DEFAULT_SETTINGS.defaultViewMode,
+    shortcutMap: normalizeShortcutMap(value.shortcutMap)
   };
 }
 class SettingsStore {
@@ -433,6 +414,306 @@ class SettingsStore {
     this.listeners.forEach((listener) => listener(value));
   }
 }
+const SHORTCUT_ROWS = [
+  { key: "search", label: "项目内搜索", group: "导图命令" },
+  { key: "toggleZen", label: "切换禅模式", group: "导图命令" },
+  { key: "toggleReadonly", label: "切换只读模式", group: "导图命令" },
+  { key: "undo", label: "撤销", group: "导图命令" },
+  { key: "redo", label: "重做", group: "导图命令" },
+  { key: "fit", label: "适配视图", group: "导图命令" },
+  { key: "reset", label: "重置缩放", group: "导图命令" },
+  { key: "addParent", label: "添加父节点", group: "节点命令" },
+  { key: "comments", label: "打开批注", group: "节点命令" },
+  { key: "summary", label: "概要", group: "节点命令" },
+  { key: "relation", label: "关联线", group: "节点命令" }
+];
+function escapeHtml$6(value) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+function checked(value) {
+  return value ? " checked" : "";
+}
+function option(value, label, current) {
+  return `<option value="${escapeHtml$6(value)}"${value === current ? " selected" : ""}>${escapeHtml$6(label)}</option>`;
+}
+function switchRow(title, description, key, value) {
+  return `<label class="ymz-settings-row ymz-settings-row--switch">
+    <span><b>${escapeHtml$6(title)}</b><small>${escapeHtml$6(description)}</small></span>
+    <input class="b3-switch" type="checkbox" data-setting="${String(key)}"${checked(value)}>
+  </label>`;
+}
+function selectRow(title, description, key, options) {
+  return `<label class="ymz-settings-row">
+    <span><b>${escapeHtml$6(title)}</b><small>${escapeHtml$6(description)}</small></span>
+    <select class="b3-select fn__size200" data-setting="${String(key)}">${options}</select>
+  </label>`;
+}
+function numberRow(title, description, key, value, min, max, step, suffix) {
+  return `<label class="ymz-settings-row">
+    <span><b>${escapeHtml$6(title)}</b><small>${escapeHtml$6(description)}</small></span>
+    <span class="ymz-settings-number"><input class="b3-text-field" type="number" data-setting="${String(key)}" value="${value}" min="${min}" max="${max}" step="${step}"><em>${escapeHtml$6(suffix)}</em></span>
+  </label>`;
+}
+function shortcutsHtml(shortcuts) {
+  let currentGroup = "";
+  return SHORTCUT_ROWS.map((row) => {
+    const group = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$6(row.group)}</h3>` : "";
+    currentGroup = row.group;
+    return `${group}<div class="ymz-shortcut-row" data-shortcut-row="${row.key}">
+      <span class="ymz-shortcut-row__label">${escapeHtml$6(row.label)}</span>
+      <input class="b3-text-field" data-shortcut="${row.key}" value="${escapeHtml$6(shortcuts[row.key])}" placeholder="未设置">
+      <button class="b3-button b3-button--outline" data-shortcut-action="record" data-shortcut-key="${row.key}">录制</button>
+      <button class="b3-button b3-button--cancel" data-shortcut-action="disable" data-shortcut-key="${row.key}">禁用</button>
+      <button class="b3-button b3-button--outline" data-shortcut-action="restore" data-shortcut-key="${row.key}">恢复默认</button>
+      <small class="ymz-shortcut-row__conflict" data-shortcut-conflict="${row.key}"></small>
+    </div>`;
+  }).join("");
+}
+function createSettingsDialogTemplate(settings) {
+  return `<div class="ymz-settings-shell">
+    <aside class="ymz-settings-nav" aria-label="设置分类">
+      <button class="is-active" data-settings-page="general">常规</button>
+      <button data-settings-page="shortcuts">快捷键</button>
+    </aside>
+    <main class="ymz-settings-main">
+      <section class="ymz-settings-page" data-settings-panel="general">
+        <header><h2>常规</h2><p>修改后点击保存，将应用到所有已打开的 YeMind Zen 标签页。</p></header>
+        <div class="ymz-settings-group"><h3>默认视图模式</h3>
+          ${selectRow("默认视图", "新打开导图时使用导图、大纲或分屏。", "defaultViewMode", [
+    option("map", "导图", settings.defaultViewMode),
+    option("split", "分屏", settings.defaultViewMode),
+    option("outline", "大纲", settings.defaultViewMode)
+  ].join(""))}
+          ${selectRow("默认布局", "新建导图时使用的结构。", "defaultLayout", [
+    option("logicalStructure", "向右逻辑图", settings.defaultLayout),
+    option("logicalStructureLeft", "向左逻辑图", settings.defaultLayout),
+    option("mindMap", "双向思维导图", settings.defaultLayout),
+    option("organizationStructure", "组织结构图", settings.defaultLayout),
+    option("catalogOrganization", "目录组织图", settings.defaultLayout)
+  ].join(""))}
+          ${switchRow("默认禅模式", "隐藏上、左、下三组工具栏。", "defaultZenMode", settings.defaultZenMode)}
+          ${switchRow("默认只读模式", "禁止编辑，保留平移、缩放和展开折叠。", "defaultReadonlyMode", settings.defaultReadonlyMode)}
+        </div>
+        <div class="ymz-settings-group"><h3>画布操作习惯</h3>
+          ${selectRow("画布拖拽习惯", "在平移优先和选择优先之间切换。", "canvasMode", [
+    option("pan", "平移优先", settings.canvasMode),
+    option("select", "选择优先", settings.canvasMode)
+  ].join(""))}
+          ${selectRow("滚轮行为", "控制滚轮平移和缩放。", "wheelMode", [
+    option("pan", "滚轮平移，Ctrl/Cmd 缩放", settings.wheelMode),
+    option("zoom", "直接缩放", settings.wheelMode),
+    option("none", "关闭滚轮缩放", settings.wheelMode)
+  ].join(""))}
+          ${switchRow("打开时适配视图", "打开导图后完整显示全部节点。", "autoFitOnOpen", settings.autoFitOnOpen)}
+          ${numberRow("自动保存延迟", "停止编辑后多久写入数据。", "autosaveDelayMs", settings.autosaveDelayMs, 100, 5e3, 50, "毫秒")}
+        </div>
+        <div class="ymz-settings-group"><h3>节点入口控件</h3>
+          ${switchRow("显示添加子节点按钮", "节点激活后显示快速添加入口。", "showQuickCreate", settings.showQuickCreate)}
+          ${switchRow("显示节点菜单按钮", "节点激活后显示轻量菜单入口。", "showNodeMenuButton", settings.showNodeMenuButton)}
+          ${switchRow("显示待办标记", "节点文字前显示待办状态。", "showTodoBadge", settings.showTodoBadge)}
+          ${switchRow("显示批注标记", "节点右侧显示批注图标。", "showCommentBadge", settings.showCommentBadge)}
+        </div>
+        <div class="ymz-settings-group"><h3>富文本与代码</h3>
+          ${switchRow("富文本选区工具栏", "选中文字后显示格式、链接、公式和代码工具。", "showRichTextToolbar", settings.showRichTextToolbar)}
+          ${switchRow("裸域名自动补 HTTPS", "输入 example.com 时补全为安全链接。", "inlineLinkAutoHttps", settings.inlineLinkAutoHttps)}
+          ${selectRow("外部链接打开方式", "思源 siyuan:// 链接不受影响。", "externalLinkMode", [
+    option("new-window", "新窗口打开", settings.externalLinkMode),
+    option("current-window", "当前窗口打开", settings.externalLinkMode)
+  ].join(""))}
+          ${selectRow("默认代码语言", "新建代码块时预选。", "defaultCodeLanguage", [
+    option("plain", "纯文本", settings.defaultCodeLanguage),
+    option("javascript", "JavaScript", settings.defaultCodeLanguage),
+    option("typescript", "TypeScript", settings.defaultCodeLanguage),
+    option("python", "Python", settings.defaultCodeLanguage),
+    option("bash", "Bash / Shell", settings.defaultCodeLanguage),
+    option("json", "JSON", settings.defaultCodeLanguage),
+    option("cpp", "C++", settings.defaultCodeLanguage),
+    option("rust", "Rust", settings.defaultCodeLanguage),
+    option("go", "Go", settings.defaultCodeLanguage),
+    option("sql", "SQL", settings.defaultCodeLanguage),
+    option("markdown", "Markdown", settings.defaultCodeLanguage)
+  ].join(""))}
+          ${selectRow("代码 Tab 宽度", "代码编辑器与节点代码块缩进宽度。", "codeBlockTabSize", [
+    option("2", "2 个空格", String(settings.codeBlockTabSize)),
+    option("4", "4 个空格", String(settings.codeBlockTabSize))
+  ].join(""))}
+          ${switchRow("代码块自动换行", "关闭时使用水平滚动。", "codeBlockWrap", settings.codeBlockWrap)}
+          ${switchRow("显示代码语言", "在代码块上方显示语言标签。", "codeBlockShowLanguage", settings.codeBlockShowLanguage)}
+          ${numberRow("代码字号", "代码编辑器和节点代码块字号。", "codeBlockFontSize", settings.codeBlockFontSize, 10, 24, 1, "px")}
+        </div>
+        <div class="ymz-settings-group"><h3>挖空</h3>
+          ${selectRow("挖空显示方式", "完全隐藏或保留模糊轮廓。", "clozeMode", [
+    option("hidden", "完全隐藏", settings.clozeMode),
+    option("blur", "模糊显示", settings.clozeMode)
+  ].join(""))}
+          ${switchRow("悬停显示答案", "鼠标移入挖空内容时临时显示。", "clozeRevealOnHover", settings.clozeRevealOnHover)}
+        </div>
+      </section>
+      <section class="ymz-settings-page" data-settings-panel="shortcuts" hidden>
+        <header><h2>快捷键</h2><p>可直接编辑组合键，也可以录制、禁用或恢复默认。</p></header>
+        <div class="ymz-settings-shortcuts">${shortcutsHtml(settings.shortcutMap)}</div>
+      </section>
+      <footer class="ymz-settings-footer">
+        <button class="b3-button b3-button--cancel" data-settings-action="reset">恢复全部默认值</button>
+        <span class="fn__flex-1"></span>
+        <button class="b3-button b3-button--cancel" data-settings-action="cancel">取消</button>
+        <button class="b3-button b3-button--text" data-settings-action="save">保存</button>
+      </footer>
+    </main>
+  </div>`;
+}
+function cloneSettings(settings) {
+  return { ...settings, shortcutMap: { ...settings.shortcutMap } };
+}
+function setControlValue(control, value) {
+  if (control instanceof HTMLInputElement && control.type === "checkbox") control.checked = Boolean(value);
+  else control.value = String(value ?? "");
+}
+function openYeMindSettingsDialog(store) {
+  var _a, _b;
+  let draft = cloneSettings(store.get());
+  const dialog = new siyuan.Dialog({
+    title: "YeMind Zen 设置",
+    content: createSettingsDialogTemplate(draft),
+    width: "880px",
+    height: "78vh"
+  });
+  const shell = dialog.element.querySelector(".ymz-settings-shell");
+  if (!shell) return;
+  const saveButton = shell.querySelector('[data-settings-action="save"]');
+  let recordingCleanup = null;
+  const refreshConflicts = () => {
+    const conflicts = findShortcutConflicts(draft.shortcutMap);
+    let hasConflict = false;
+    SHORTCUT_ROWS.forEach((row) => {
+      const targets = conflicts[row.key];
+      const container = shell.querySelector(`[data-shortcut-row="${row.key}"]`);
+      const hint = shell.querySelector(`[data-shortcut-conflict="${row.key}"]`);
+      const labels = targets.map((target) => {
+        var _a2;
+        return ((_a2 = SHORTCUT_ROWS.find((item) => item.key === target)) == null ? void 0 : _a2.label) ?? target;
+      });
+      container == null ? void 0 : container.classList.toggle("has-conflict", targets.length > 0);
+      if (hint) hint.textContent = targets.length > 0 ? `与“${labels.join("、")}”冲突` : "";
+      if (targets.length > 0) hasConflict = true;
+    });
+    if (saveButton) {
+      saveButton.disabled = hasConflict;
+      saveButton.title = hasConflict ? "请先解决快捷键冲突" : "";
+    }
+  };
+  const refreshControls = () => {
+    shell.querySelectorAll("[data-setting]").forEach((control) => {
+      const key = control.dataset.setting;
+      setControlValue(control, draft[key]);
+    });
+    shell.querySelectorAll("[data-shortcut]").forEach((input) => {
+      const key = input.dataset.shortcut;
+      input.value = draft.shortcutMap[key];
+      input.placeholder = "未设置";
+      delete input.dataset.recording;
+    });
+    refreshConflicts();
+  };
+  shell.querySelectorAll("[data-settings-page]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const page = button.dataset.settingsPage;
+      shell.querySelectorAll("[data-settings-page]").forEach((item) => item.classList.toggle("is-active", item === button));
+      shell.querySelectorAll("[data-settings-panel]").forEach((panel) => {
+        panel.hidden = panel.dataset.settingsPanel !== page;
+      });
+    });
+  });
+  shell.querySelectorAll("[data-setting]").forEach((control) => {
+    control.addEventListener("change", () => {
+      const key = control.dataset.setting;
+      const value = control instanceof HTMLInputElement && control.type === "checkbox" ? control.checked : control instanceof HTMLInputElement && control.type === "number" ? Number(control.value) : key === "codeBlockTabSize" ? Number(control.value) : control.value;
+      draft[key] = value;
+    });
+  });
+  shell.querySelectorAll("[data-shortcut]").forEach((input) => {
+    input.addEventListener("input", () => {
+      const key = input.dataset.shortcut;
+      draft.shortcutMap[key] = input.value.trim();
+      refreshConflicts();
+    });
+  });
+  const beginRecording = (key, input) => {
+    recordingCleanup == null ? void 0 : recordingCleanup();
+    input.focus();
+    input.select();
+    input.placeholder = "请按快捷键，Esc 取消";
+    input.dataset.recording = "true";
+    const previous = input.value;
+    const listener = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.key === "Escape") {
+        input.value = previous;
+      } else {
+        const shortcut = keyboardEventToShortcut(event);
+        if (!shortcut) return;
+        input.value = shortcut;
+        draft.shortcutMap[key] = shortcut;
+      }
+      recordingCleanup == null ? void 0 : recordingCleanup();
+      refreshConflicts();
+    };
+    window.addEventListener("keydown", listener, true);
+    recordingCleanup = () => {
+      window.removeEventListener("keydown", listener, true);
+      input.placeholder = "未设置";
+      delete input.dataset.recording;
+      recordingCleanup = null;
+    };
+  };
+  shell.querySelectorAll("[data-shortcut-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const key = button.dataset.shortcutKey;
+      const input = shell.querySelector(`[data-shortcut="${key}"]`);
+      if (!input) return;
+      const action = button.dataset.shortcutAction;
+      if (action === "disable") {
+        input.value = "";
+        draft.shortcutMap[key] = "";
+        refreshConflicts();
+      } else if (action === "restore") {
+        input.value = DEFAULT_SHORTCUTS[key];
+        draft.shortcutMap[key] = DEFAULT_SHORTCUTS[key];
+        refreshConflicts();
+      } else {
+        beginRecording(key, input);
+      }
+    });
+  });
+  (_a = shell.querySelector('[data-settings-action="cancel"]')) == null ? void 0 : _a.addEventListener("click", () => {
+    recordingCleanup == null ? void 0 : recordingCleanup();
+    dialog.destroy();
+  });
+  (_b = shell.querySelector('[data-settings-action="reset"]')) == null ? void 0 : _b.addEventListener("click", () => {
+    draft = cloneSettings(DEFAULT_SETTINGS);
+    refreshControls();
+    siyuan.showMessage("已恢复默认值，点击“保存”后生效");
+  });
+  saveButton == null ? void 0 : saveButton.addEventListener("click", () => {
+    if (saveButton.disabled) return;
+    recordingCleanup == null ? void 0 : recordingCleanup();
+    void store.update(draft);
+    dialog.destroy();
+  });
+  refreshConflicts();
+}
+function registerSettings(plugin, store) {
+  const button = document.createElement("button");
+  button.className = "b3-button b3-button--outline";
+  button.textContent = "打开完整设置";
+  button.addEventListener("click", () => openYeMindSettingsDialog(store));
+  plugin.setting.addItem({
+    title: "YeMind Zen 设置",
+    description: "常规设置、节点入口、富文本、代码块和快捷键统一在完整设置窗口中管理。",
+    actionElement: button
+  });
+}
 const MAP_STORAGE_NAME = "maps.json";
 const SETTINGS_STORAGE_NAME = "settings.json";
 const TAB_TYPE = "yemind-map";
@@ -463,7 +744,7 @@ class YeMindDockView {
         const row = document.createElement("div");
         row.className = `ymz-dock__item${map2.id === activeId ? " is-active" : ""}`;
         row.dataset.mapId = map2.id;
-        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$4(map2.title)}">${escapeHtml$4(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
+        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$5(map2.title)}">${escapeHtml$5(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
         body.appendChild(row);
       });
     }
@@ -510,7 +791,7 @@ function registerYeMindDock(plugin, host) {
     }
   });
 }
-function escapeHtml$4(value) {
+function escapeHtml$5(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 const CONSTANTS = {
@@ -44910,10 +45191,10 @@ class Syntax extends Module {
           key,
           label
         } = _ref3;
-        const option = select.ownerDocument.createElement("option");
-        option.textContent = label;
-        option.setAttribute("value", key);
-        select.appendChild(option);
+        const option2 = select.ownerDocument.createElement("option");
+        option2.textContent = label;
+        option2.setAttribute("value", key);
+        select.appendChild(option2);
       });
       select.addEventListener("change", () => {
         blot.format(SyntaxCodeBlock.blotName, select.value);
@@ -45413,23 +45694,23 @@ class Toolbar extends Module {
     this.controls.forEach((pair) => {
       const [format, input] = pair;
       if (input.tagName === "SELECT") {
-        let option = null;
+        let option2 = null;
         if (range == null) {
-          option = null;
+          option2 = null;
         } else if (formats[format] == null) {
-          option = input.querySelector("option[selected]");
+          option2 = input.querySelector("option[selected]");
         } else if (!Array.isArray(formats[format])) {
           let value = formats[format];
           if (typeof value === "string") {
             value = value.replace(/"/g, '\\"');
           }
-          option = input.querySelector(`option[value="${value}"]`);
+          option2 = input.querySelector(`option[value="${value}"]`);
         }
-        if (option == null) {
+        if (option2 == null) {
           input.value = "";
           input.selectedIndex = -1;
         } else {
-          option.selected = true;
+          option2.selected = true;
         }
       } else if (range == null) {
         input.classList.remove("ql-active");
@@ -45488,13 +45769,13 @@ function addSelect(container, format, values) {
   const input = document.createElement("select");
   input.classList.add(`ql-${format}`);
   values.forEach((value) => {
-    const option = document.createElement("option");
+    const option2 = document.createElement("option");
     if (value !== false) {
-      option.setAttribute("value", String(value));
+      option2.setAttribute("value", String(value));
     } else {
-      option.setAttribute("selected", "selected");
+      option2.setAttribute("selected", "selected");
     }
-    input.appendChild(option);
+    input.appendChild(option2);
   });
   container.appendChild(input);
 }
@@ -45671,17 +45952,17 @@ class Picker {
     toggleAriaAttribute(this.label, "aria-expanded");
     toggleAriaAttribute(this.options, "aria-hidden");
   }
-  buildItem(option) {
+  buildItem(option2) {
     const item = document.createElement("span");
     item.tabIndex = "0";
     item.setAttribute("role", "button");
     item.classList.add("ql-picker-item");
-    const value = option.getAttribute("value");
+    const value = option2.getAttribute("value");
     if (value) {
       item.setAttribute("data-value", value);
     }
-    if (option.textContent) {
-      item.setAttribute("data-label", option.textContent);
+    if (option2.textContent) {
+      item.setAttribute("data-label", option2.textContent);
     }
     item.addEventListener("click", () => {
       this.selectItem(item, true);
@@ -45719,10 +46000,10 @@ class Picker {
     optionsCounter += 1;
     this.label.setAttribute("aria-controls", options.id);
     this.options = options;
-    Array.from(this.select.options).forEach((option) => {
-      const item = this.buildItem(option);
+    Array.from(this.select.options).forEach((option2) => {
+      const item = this.buildItem(option2);
       options.appendChild(item);
-      if (option.selected === true) {
+      if (option2.selected === true) {
         this.selectItem(item);
       }
     });
@@ -45771,18 +46052,18 @@ class Picker {
     }
   }
   update() {
-    let option;
+    let option2;
     if (this.select.selectedIndex > -1) {
       const item = (
         // @ts-expect-error Fix me later
         this.container.querySelector(".ql-picker-options").children[this.select.selectedIndex]
       );
-      option = this.select.options[this.select.selectedIndex];
+      option2 = this.select.options[this.select.selectedIndex];
       this.selectItem(item);
     } else {
       this.selectItem(null);
     }
-    const isActive = option != null && option !== this.select.querySelector("option[selected]");
+    const isActive = option2 != null && option2 !== this.select.querySelector("option[selected]");
     this.label.classList.toggle("ql-active", isActive);
   }
 }
@@ -45795,9 +46076,9 @@ class ColorPicker extends Picker {
       item.classList.add("ql-primary");
     });
   }
-  buildItem(option) {
-    const item = super.buildItem(option);
-    item.style.backgroundColor = option.getAttribute("value") || "";
+  buildItem(option2) {
+    const item = super.buildItem(option2);
+    item.style.backgroundColor = option2.getAttribute("value") || "";
     return item;
   }
   selectItem(item, trigger) {
@@ -46110,13 +46391,13 @@ function extractVideoUrl(url) {
 function fillSelect(select, values) {
   let defaultValue = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : false;
   values.forEach((value) => {
-    const option = document.createElement("option");
+    const option2 = document.createElement("option");
     if (value === defaultValue) {
-      option.setAttribute("selected", "selected");
+      option2.setAttribute("selected", "selected");
     } else {
-      option.setAttribute("value", String(value));
+      option2.setAttribute("value", String(value));
     }
-    select.appendChild(option);
+    select.appendChild(option2);
   });
 }
 const TOOLBAR_CONFIG$1 = [["bold", "italic", "link"], [{
@@ -50200,7 +50481,8 @@ function registerMindMapPlugins(settings) {
 }
 let decorationSettings = {
   showTodoBadge: true,
-  showCommentBadge: true
+  showCommentBadge: true,
+  showNodeMenuButton: true
 };
 function configureNodeDecorations(patch) {
   decorationSettings = { ...decorationSettings, ...patch };
@@ -50241,26 +50523,64 @@ function createNodePrefixContent(node) {
   el.appendChild(checkbox);
   return { el, width: 20, height: 20 };
 }
-function createNodePostfixContent(node) {
-  var _a;
-  const comments = ((_a = node.getData) == null ? void 0 : _a.call(node, "yemindComments")) ?? [];
-  if (comments.length === 0 || !decorationSettings.showCommentBadge) return null;
-  const el = document.createElement("span");
-  el.className = "ymz-node-postfix";
+function createCommentButton(node, comments) {
   const badge = document.createElement("button");
   badge.type = "button";
   badge.className = "ymz-node-comment-badge";
   badge.title = `${comments.length} 条批注`;
   badge.setAttribute("aria-label", `${comments.length} 条批注`);
-  badge.innerHTML = '<svg aria-hidden="true"><use xlink:href="#iconMessage"></use></svg>' + (comments.length > 1 ? `<span class="ymz-node-comment-count">${comments.length}</span>` : "");
+  badge.innerHTML = `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+    <path d="M6.25 4.75h11.5A2.5 2.5 0 0 1 20.25 7.25v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.25 2.9v-2.9A2.5 2.5 0 0 1 3.75 15.25v-8a2.5 2.5 0 0 1 2.5-2.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>` + (comments.length > 1 ? `<span class="ymz-node-comment-count">${comments.length}</span>` : "");
   badge.addEventListener("click", (event) => {
-    var _a2, _b;
+    var _a, _b;
     event.preventDefault();
     event.stopPropagation();
-    (_b = (_a2 = node.mindMap) == null ? void 0 : _a2.emit) == null ? void 0 : _b.call(_a2, "yemind_badge_click", "comments", node);
+    (_b = (_a = node.mindMap) == null ? void 0 : _a.emit) == null ? void 0 : _b.call(_a, "yemind_badge_click", "comments", node);
   });
-  el.appendChild(badge);
-  return { el, width: comments.length > 1 ? 30 : 22, height: 20 };
+  return badge;
+}
+function createNodeMenuButton(node) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "ymz-node-menu-button";
+  button.title = "节点菜单";
+  button.setAttribute("aria-label", "节点菜单");
+  button.innerHTML = '<span aria-hidden="true">•••</span>';
+  button.addEventListener("click", (event) => {
+    var _a, _b;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = button.getBoundingClientRect();
+    const menuEvent = new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+      clientX: rect.left,
+      clientY: rect.bottom + 2
+    });
+    (_b = (_a = node.mindMap) == null ? void 0 : _a.emit) == null ? void 0 : _b.call(_a, "yemind_node_menu", menuEvent, node);
+  });
+  return button;
+}
+function createNodePostfixContent(node) {
+  var _a, _b;
+  const comments = ((_a = node.getData) == null ? void 0 : _a.call(node, "yemindComments")) ?? [];
+  const showComments = comments.length > 0 && decorationSettings.showCommentBadge;
+  const showMenu = Boolean((_b = node.getData) == null ? void 0 : _b.call(node, "isActive")) && decorationSettings.showNodeMenuButton;
+  if (!showComments && !showMenu) return null;
+  const el = document.createElement("span");
+  el.className = "ymz-node-postfix";
+  let width2 = 0;
+  if (showComments) {
+    el.appendChild(createCommentButton(node, comments));
+    width2 += comments.length > 1 ? 30 : 24;
+  }
+  if (showMenu) {
+    if (width2 > 0) width2 += 3;
+    el.appendChild(createNodeMenuButton(node));
+    width2 += 24;
+  }
+  return { el, width: width2, height: 24 };
 }
 function createMindMap(options) {
   registerMindMapPlugins(options.settings);
@@ -50298,6 +50618,11 @@ function toggleTodo(todo) {
   if (!todo) return { checked: false };
   if (!todo.checked) return { ...todo, checked: true };
   return null;
+}
+function getTodoMenuState(todo) {
+  if (!todo) return { label: "添加待办", next: { checked: false }, warning: false };
+  if (!todo.checked) return { label: "待办完成", next: { ...todo, checked: true }, warning: false };
+  return { label: "删除待办", next: null, warning: true };
 }
 function addComment(comments, text2, now = Date.now(), id = `comment_${now}_${Math.random().toString(36).slice(2, 8)}`) {
   const value = text2.trim();
@@ -50481,6 +50806,10 @@ function createCommandAdapter(mindMap) {
       var _a, _b;
       return (_b = (_a = mindMap.associativeLine) == null ? void 0 : _a.createLineFromActiveNode) == null ? void 0 : _b.call(_a);
     },
+    getTodo: () => {
+      var _a, _b;
+      return ((_b = (_a = primaryNode()) == null ? void 0 : _a.getData) == null ? void 0 : _b.call(_a, "yemindTodo")) ?? null;
+    },
     toggleTodo: () => {
       var _a, _b;
       const node = primaryNode();
@@ -50512,7 +50841,36 @@ function createCommandAdapter(mindMap) {
     setCloze: (enabled) => {
       var _a, _b;
       return (_b = (_a = mindMap.richText) == null ? void 0 : _a.formatText) == null ? void 0 : _b.call(_a, enabled ? { background: "#f5dfa0", color: "transparent" } : { background: false, color: false });
-    }
+    },
+    search: (text2) => {
+      var _a, _b;
+      return (_b = (_a = mindMap.search) == null ? void 0 : _a.search) == null ? void 0 : _b.call(_a, text2);
+    },
+    searchNext: () => {
+      const search = mindMap.search;
+      if (!(search == null ? void 0 : search.searchText)) return;
+      search.search(search.searchText);
+    },
+    searchPrevious: () => {
+      const search = mindMap.search;
+      const total = Array.isArray(search == null ? void 0 : search.matchNodeList) ? search.matchNodeList.length : 0;
+      if (!total) return;
+      const current = Number(search.currentIndex ?? 0);
+      search.jump((current - 1 + total) % total);
+    },
+    replaceSearch: (text2) => {
+      var _a, _b;
+      return (_b = (_a = mindMap.search) == null ? void 0 : _a.replace) == null ? void 0 : _b.call(_a, text2, true);
+    },
+    replaceSearchAll: (text2) => {
+      var _a, _b;
+      return (_b = (_a = mindMap.search) == null ? void 0 : _a.replaceAll) == null ? void 0 : _b.call(_a, text2);
+    },
+    endSearch: () => {
+      var _a, _b;
+      return (_b = (_a = mindMap.search) == null ? void 0 : _a.endSearch) == null ? void 0 : _b.call(_a);
+    },
+    goToNode: (uid) => mindMap.execCommand("GO_TARGET_NODE", uid)
   };
 }
 function formatCommentTimestamp(timestamp) {
@@ -50524,7 +50882,7 @@ function buildCommentsListHtml(comments, editingId = null) {
   if (comments.length === 0) return '<div class="ymz-empty-hint">暂无批注</div>';
   return comments.map((comment) => {
     const editing = comment.id === editingId;
-    const body = editing ? `<textarea class="b3-text-field fn__block ymz-comment__editor" rows="3" data-field="edit-comment">${escapeHtml$3(comment.text)}</textarea>` : `<div class="ymz-comment__text">${escapeHtml$3(comment.text).replaceAll("\n", "<br>")}</div>`;
+    const body = editing ? `<textarea class="b3-text-field fn__block ymz-comment__editor" rows="3" data-field="edit-comment">${escapeHtml$4(comment.text)}</textarea>` : `<div class="ymz-comment__text">${escapeHtml$4(comment.text).replaceAll("\n", "<br>")}</div>`;
     const actions = editing ? `<button class="b3-button b3-button--outline" data-action="save-comment">保存</button>
          <button class="b3-button b3-button--cancel" data-action="cancel-edit-comment">取消</button>` : `<button class="b3-button b3-button--outline" data-action="edit-comment">编辑</button>
          <button class="b3-button b3-button--cancel" data-action="delete-comment">删除</button>`;
@@ -50544,11 +50902,11 @@ function requestClearAllComments(confirmHandler, onClear) {
     onClear
   );
 }
-function escapeHtml$3(value) {
+function escapeHtml$4(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function escapeAttribute$1(value) {
-  return escapeHtml$3(value);
+  return escapeHtml$4(value);
 }
 function activeData(commands) {
   return commands.getPrimaryNodeData() ?? {};
@@ -50567,29 +50925,6 @@ function bindDialogActions(dialog, onSave) {
     onSave();
     dialog.destroy();
   });
-}
-function openTodoDialog(commands) {
-  var _a;
-  const existing = activeData(commands).yemindTodo ?? null;
-  const dialog = new siyuan.Dialog({
-    title: "待办",
-    content: `<div class="b3-dialog__content ymz-node-dialog">
-      <label>待办内容</label><input class="b3-text-field fn__block" data-field="todo-text" placeholder="输入待办内容">
-      <label class="ymz-checkbox-row"><input type="checkbox" data-field="todo-checked"> 已完成</label>
-      <button class="b3-button b3-button--outline" data-action="remove-todo">移除待办</button>
-    </div>${actionButtons()}`,
-    width: "440px"
-  });
-  const text2 = dialog.element.querySelector('[data-field="todo-text"]');
-  const checked = dialog.element.querySelector('[data-field="todo-checked"]');
-  text2.value = (existing == null ? void 0 : existing.text) ?? "";
-  checked.checked = Boolean(existing == null ? void 0 : existing.checked);
-  (_a = dialog.element.querySelector('[data-action="remove-todo"]')) == null ? void 0 : _a.addEventListener("click", () => {
-    commands.setTodo(null);
-    dialog.destroy();
-  });
-  bindDialogActions(dialog, () => commands.setTodo({ checked: checked.checked, text: text2.value.trim() }));
-  text2.focus();
 }
 function openTagsDialog(commands) {
   const data2 = activeData(commands);
@@ -50676,7 +51011,7 @@ function openFormulaDialog(commands) {
     }
     try {
       const katex2 = window.katex;
-      preview.innerHTML = (katex2 == null ? void 0 : katex2.renderToString) ? katex2.renderToString(value, { throwOnError: false }) : escapeHtml$2(value);
+      preview.innerHTML = (katex2 == null ? void 0 : katex2.renderToString) ? katex2.renderToString(value, { throwOnError: false }) : escapeHtml$3(value);
     } catch {
       preview.textContent = value;
     }
@@ -50832,11 +51167,14 @@ function getImageSize(url) {
     image.src = url;
   });
 }
-function escapeHtml$2(value) {
+function escapeHtml$3(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function escapeAttribute(value) {
-  return escapeHtml$2(value);
+  return escapeHtml$3(value);
+}
+function createTodoMenuDescriptor(todo) {
+  return getTodoMenuState(todo);
 }
 function openNodeContextMenu(event, commands, options = {}) {
   event.preventDefault();
@@ -50848,7 +51186,8 @@ function openNodeContextMenu(event, commands, options = {}) {
   menu.addItem({ icon: "iconAdd", label: "添加同级节点", accelerator: "Enter", click: () => commands.addSibling() });
   menu.addItem({ icon: "iconAdd", label: "添加父节点", accelerator: "Alt+Enter", click: () => commands.addParent() });
   menu.addSeparator();
-  menu.addItem({ icon: "iconCheck", label: "待办", click: () => openTodoDialog(commands) });
+  const todoAction = createTodoMenuDescriptor(commands.getTodo());
+  menu.addItem({ icon: "iconCheck", label: todoAction.label, warning: todoAction.warning, click: () => commands.setTodo(todoAction.next) });
   menu.addItem({ icon: "iconMessage", label: "批注", click: () => openCommentsDialog(commands) });
   menu.addItem({ icon: "iconTags", label: "标签", click: () => openTagsDialog(commands) });
   menu.addItem({ icon: "iconEmoji", label: "图标", click: () => openIconsDialog(commands) });
@@ -50906,7 +51245,7 @@ const CODE_LANGUAGES = [
   ["markdown", "Markdown"],
   ["yaml", "YAML"]
 ];
-function escapeHtml$1(value) {
+function escapeHtml$2(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function openInlineLinkDialog(commands, settings) {
@@ -50922,7 +51261,7 @@ function openInlineLinkDialog(commands, settings) {
     width: "480px",
     content: `<div class="b3-dialog__content ymz-node-dialog">
       <label>选中文字</label>
-      <div class="ymz-selection-preview">${escapeHtml$1(selectedText || "当前链接")}</div>
+      <div class="ymz-selection-preview">${escapeHtml$2(selectedText || "当前链接")}</div>
       <label>链接地址</label>
       <input class="b3-text-field fn__block" data-field="inline-link" placeholder="https://…、example.com 或 siyuan://blocks/…">
       <div class="b3-label__text">支持网页、邮箱、电话和思源块链接。</div>
@@ -50997,7 +51336,7 @@ function openCodeBlockDialog(commands, settings) {
   const language = dialog.element.querySelector('[data-field="code-language"]');
   const editor = dialog.element.querySelector('[data-field="code"]');
   language.value = (existing == null ? void 0 : existing.language) || settings.defaultCodeLanguage;
-  if (!Array.from(language.options).some((option) => option.value === language.value)) language.value = "plain";
+  if (!Array.from(language.options).some((option2) => option2.value === language.value)) language.value = "plain";
   editor.value = selected;
   editor.style.fontSize = `${settings.codeBlockFontSize}px`;
   editor.style.tabSize = String(settings.codeBlockTabSize);
@@ -51028,7 +51367,7 @@ function openCodeBlockDialog(commands, settings) {
     if (!existing) editor.select();
   });
 }
-function plainText(value) {
+function plainText$1(value) {
   return String(value ?? "").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
 }
 function countWords(value) {
@@ -51039,7 +51378,7 @@ function calculateEditorStats(tree) {
   let words = 0;
   const walk2 = (node) => {
     nodes += 1;
-    words += countWords(plainText(node.data.text));
+    words += countWords(plainText$1(node.data.text));
     node.children.forEach(walk2);
   };
   walk2(tree);
@@ -51047,12 +51386,16 @@ function calculateEditorStats(tree) {
 }
 function createEditorTemplate(title) {
   return `
-    <div class="ymz-editor" data-zen="false" data-readonly="false">
+    <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
       <div class="ymz-canvas-wrap">
         <div class="ymz-floating ymz-topbar" role="toolbar" aria-label="YeMind Zen 工具栏">
           <button class="ymz-brand" data-action="fit" title="适配视图">YeMind</button>
           <span class="ymz-separator"></span>
-          <button class="is-active" data-action="map">导图</button>
+          <button class="is-active" data-action="view-map">导图</button>
+          <button data-action="view-split">分屏</button>
+          <button data-action="view-outline">大纲</button>
+          <button data-action="open-search" title="项目内搜索">⌕</button>
+          <span class="ymz-separator"></span>
           <button data-action="undo" title="撤销">↶</button>
           <button data-action="redo" title="重做">↷</button>
           <button data-action="add-child" title="添加子节点">＋子</button>
@@ -51068,7 +51411,25 @@ function createEditorTemplate(title) {
           <span class="ymz-save-state" data-role="save-state">已保存</span>
         </div>
 
-        <div class="ymz-canvas" data-role="canvas"></div>
+        <div class="ymz-search-panel" data-role="search-panel" hidden>
+          <div class="ymz-search-panel__row">
+            <input class="b3-text-field" data-role="search-input" placeholder="搜索节点内容">
+            <button data-search-action="previous" title="上一个">↑</button>
+            <button data-search-action="next" title="下一个">↓</button>
+            <span data-role="search-info">0 / 0</span>
+            <button data-search-action="close" title="关闭">×</button>
+          </div>
+          <div class="ymz-search-panel__row">
+            <input class="b3-text-field" data-role="replace-input" placeholder="替换为">
+            <button data-search-action="replace">替换</button>
+            <button data-search-action="replace-all">全部替换</button>
+          </div>
+        </div>
+
+        <div class="ymz-workspace">
+          <aside class="ymz-outline" data-role="outline" aria-label="导图大纲"></aside>
+          <div class="ymz-canvas" data-role="canvas"></div>
+        </div>
 
         <div class="ymz-floating ymz-leftbar" role="toolbar" aria-label="画布工具">
           <button data-action="fit" title="适配视图">⌖</button>
@@ -51080,8 +51441,9 @@ function createEditorTemplate(title) {
         <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式">◉ <span>退出禅模式</span></button>
 
         <div class="ymz-floating ymz-statusbar">
-          <button class="ymz-status-title" data-role="title" title="${escapeHtml(title)}">${escapeHtml(title)}</button>
+          <button class="ymz-status-title" data-role="title" title="${escapeHtml$1(title)}">${escapeHtml$1(title)}</button>
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
+          <button data-action="open-search" title="搜索">⌕</button>
           <button data-action="fit" title="适配视图">⌖</button>
           <button data-action="readonly" title="只读模式">锁</button>
           <button data-action="zen" title="禅模式">禅</button>
@@ -51093,6 +51455,33 @@ function createEditorTemplate(title) {
         </div>
       </div>
     </div>`;
+}
+function escapeHtml$1(value) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+function plainText(tree) {
+  const value = String(tree.data.text ?? "");
+  if (!tree.data.richText) return value;
+  const element = document.createElement("div");
+  element.innerHTML = value;
+  return (element.textContent ?? "").trim();
+}
+function flattenOutline(tree) {
+  const rows = [];
+  const visit = (node, depth, path2) => {
+    rows.push({
+      uid: String(node.data.uid ?? path2),
+      text: plainText(node) || "未命名节点",
+      depth,
+      hasChildren: node.children.length > 0
+    });
+    node.children.forEach((child, index) => visit(child, depth + 1, `${path2}.${index}`));
+  };
+  visit(tree, 0, "root");
+  return rows;
+}
+function renderOutlineHtml(tree) {
+  return flattenOutline(tree).map((row) => `<button class="ymz-outline-row" data-outline-uid="${escapeHtml(row.uid)}" style="--ymz-outline-depth:${row.depth}" title="${escapeHtml(row.text)}"><span class="ymz-outline-row__branch">${row.hasChildren ? "▾" : "·"}</span><span>${escapeHtml(row.text)}</span></button>`).join("");
 }
 function escapeHtml(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
@@ -51280,17 +51669,69 @@ class YeMindEditor {
     __publicField(this, "settings");
     __publicField(this, "rootEl");
     __publicField(this, "canvasEl");
+    __publicField(this, "outlineEl");
     __publicField(this, "statsEl");
     __publicField(this, "zoomEl");
     __publicField(this, "saveStateEl");
     __publicField(this, "titleEl");
+    __publicField(this, "searchPanelEl");
+    __publicField(this, "searchInputEl");
+    __publicField(this, "replaceInputEl");
+    __publicField(this, "searchInfoEl");
     __publicField(this, "richTextToolbar", null);
+    __publicField(this, "settingsInitialized", false);
+    __publicField(this, "viewMode", "map");
+    __publicField(this, "searchText", "");
     __publicField(this, "onRootKeydown", (event) => {
       var _a;
       if (event.key === "Escape" && ((_a = this.rootEl) == null ? void 0 : _a.dataset.zen) === "true") {
         event.preventDefault();
         this.toggleZen(false);
+        return;
       }
+      if (!this.commands || isEditableTarget(event.target)) return;
+      const actions = [
+        ["search", () => this.openSearchPanel()],
+        ["toggleZen", () => this.toggleZen(this.rootEl.dataset.zen !== "true")],
+        ["toggleReadonly", () => this.setReadonly(this.rootEl.dataset.readonly !== "true")],
+        ["undo", () => {
+          var _a2;
+          return (_a2 = this.commands) == null ? void 0 : _a2.undo();
+        }],
+        ["redo", () => {
+          var _a2;
+          return (_a2 = this.commands) == null ? void 0 : _a2.redo();
+        }],
+        ["fit", () => {
+          var _a2;
+          return (_a2 = this.commands) == null ? void 0 : _a2.fit();
+        }],
+        ["reset", () => {
+          var _a2;
+          return (_a2 = this.commands) == null ? void 0 : _a2.resetZoom();
+        }],
+        ["addParent", () => {
+          var _a2;
+          return (_a2 = this.commands) == null ? void 0 : _a2.addParent();
+        }],
+        ["comments", () => {
+          var _a2;
+          if ((_a2 = this.commands) == null ? void 0 : _a2.getPrimaryNode()) openCommentsDialog(this.commands);
+        }],
+        ["summary", () => {
+          var _a2;
+          return (_a2 = this.commands) == null ? void 0 : _a2.addSummary();
+        }],
+        ["relation", () => {
+          var _a2;
+          return (_a2 = this.commands) == null ? void 0 : _a2.startRelation();
+        }]
+      ];
+      const action = actions.find(([key]) => matchesShortcut(event, this.settings.shortcutMap[key]));
+      if (!action) return;
+      event.preventDefault();
+      event.stopPropagation();
+      action[1]();
     });
     this.options = options;
     const map2 = options.repository.get(options.mapId);
@@ -51320,10 +51761,15 @@ class YeMindEditor {
     this.options.container.innerHTML = createEditorTemplate(this.current.title);
     this.rootEl = this.options.container.querySelector(".ymz-editor");
     this.canvasEl = this.options.container.querySelector('[data-role="canvas"]');
+    this.outlineEl = this.options.container.querySelector('[data-role="outline"]');
     this.statsEl = this.options.container.querySelector('[data-role="stats"]');
     this.zoomEl = this.options.container.querySelector('[data-role="zoom"]');
     this.saveStateEl = this.options.container.querySelector('[data-role="save-state"]');
     this.titleEl = this.options.container.querySelector('[data-role="title"]');
+    this.searchPanelEl = this.options.container.querySelector('[data-role="search-panel"]');
+    this.searchInputEl = this.options.container.querySelector('[data-role="search-input"]');
+    this.replaceInputEl = this.options.container.querySelector('[data-role="replace-input"]');
+    this.searchInfoEl = this.options.container.querySelector('[data-role="search-info"]');
     const layoutSelect = this.options.container.querySelector('[data-action="layout"]');
     if (layoutSelect) layoutSelect.value = this.current.layout;
     this.map = createMindMap({
@@ -51358,6 +51804,7 @@ class YeMindEditor {
     });
     this.settingsUnsubscribe = this.options.settingsStore.subscribe((settings) => this.applySettings(settings));
     this.updateStats(this.current.data);
+    this.renderOutline(this.current.data);
     this.updateZoom();
   }
   bindToolbar() {
@@ -51366,6 +51813,17 @@ class YeMindEditor {
       const anchor = event.target.closest("a[href]");
       if (anchor && this.rootEl.contains(anchor)) {
         this.openInlineLink(event, anchor.href || anchor.getAttribute("href") || "");
+        return;
+      }
+      const outlineRow = event.target.closest("[data-outline-uid]");
+      if (outlineRow && this.commands) {
+        this.commands.goToNode(outlineRow.dataset.outlineUid ?? "");
+        this.activateOutlineUid(outlineRow.dataset.outlineUid ?? "");
+        return;
+      }
+      const searchButton = event.target.closest("[data-search-action]");
+      if (searchButton) {
+        this.handleSearchAction(searchButton.dataset.searchAction ?? "");
         return;
       }
       const button = event.target.closest("[data-action]");
@@ -51399,8 +51857,20 @@ class YeMindEditor {
         case "zoom-out":
           this.commands.zoomOut();
           break;
+        case "view-map":
+          this.setViewMode("map");
+          break;
+        case "view-split":
+          this.setViewMode("split");
+          break;
+        case "view-outline":
+          this.setViewMode("outline");
+          break;
+        case "open-search":
+          this.openSearchPanel();
+          break;
         case "readonly":
-          this.toggleReadonly(button);
+          this.setReadonly(this.rootEl.dataset.readonly !== "true");
           break;
         case "zen":
           this.toggleZen(true);
@@ -51416,6 +51886,30 @@ class YeMindEditor {
           break;
       }
     });
+    this.searchInputEl.addEventListener("input", () => {
+      var _a2;
+      if (!this.searchInputEl.value.trim()) {
+        (_a2 = this.commands) == null ? void 0 : _a2.endSearch();
+        this.searchText = "";
+        this.updateSearchInfo({ currentIndex: -1, total: 0 });
+      } else if (this.searchInputEl.value.trim() !== this.searchText) {
+        this.searchInfoEl.textContent = "按 Enter 搜索";
+      }
+    });
+    this.searchInputEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        this.performSearch(event.shiftKey ? "previous" : "next");
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        this.closeSearchPanel();
+      }
+    });
+    this.replaceInputEl.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      this.replaceCurrentSearch();
+    });
     (_a = this.rootEl.querySelector('[data-action="layout"]')) == null ? void 0 : _a.addEventListener("change", (event) => {
       if (!this.map) return;
       const layout2 = event.target.value;
@@ -51429,6 +51923,7 @@ class YeMindEditor {
     this.map.on("data_change", (data2) => {
       this.current.data = data2;
       this.updateStats(data2);
+      this.renderOutline(data2);
       this.scheduleSave();
     });
     this.map.on("view_data_change", (viewData) => {
@@ -51439,10 +51934,12 @@ class YeMindEditor {
     this.map.on("node_contextmenu", (event, node) => {
       if (!this.commands) return;
       this.activateNode(node);
-      openNodeContextMenu(event, this.commands, {
-        onInlineLink: () => openInlineLinkDialog(this.commands, this.settings),
-        onCodeBlock: () => openCodeBlockDialog(this.commands, this.settings)
-      });
+      this.openContextMenu(event);
+    });
+    this.map.on("yemind_node_menu", (event, node) => {
+      if (!this.commands) return;
+      this.activateNode(node);
+      this.openContextMenu(event);
     });
     this.map.on("rich_text_selection_change", (hasRange, rectInfo, formatInfo) => {
       var _a;
@@ -51456,27 +51953,42 @@ class YeMindEditor {
     this.map.on("yemind_badge_click", (type, node) => {
       if (!this.commands) return;
       this.activateNode(node);
-      if (type === "todo") openTodoDialog(this.commands);
+      if (type === "todo") this.commands.toggleTodo();
       if (type === "comments") openCommentsDialog(this.commands);
     });
-    this.map.on("node_active", (_node, list) => {
+    this.map.on("node_active", (node, list) => {
+      var _a;
       this.rootEl.dataset.hasSelection = list.length > 0 ? "true" : "false";
+      const active = node ?? list[0];
+      const uid = (_a = active == null ? void 0 : active.getData) == null ? void 0 : _a.call(active, "uid");
+      this.activateOutlineUid(uid ? String(uid) : "");
     });
+    this.map.on("search_info_change", (info) => this.updateSearchInfo(info));
     this.map.on("scale", () => this.updateZoom());
+  }
+  openContextMenu(event) {
+    if (!this.commands) return;
+    openNodeContextMenu(event, this.commands, {
+      onInlineLink: () => openInlineLinkDialog(this.commands, this.settings),
+      onCodeBlock: () => openCodeBlockDialog(this.commands, this.settings)
+    });
   }
   applySettings(settings) {
     var _a, _b, _c2, _d2, _e;
+    const firstApply = !this.settingsInitialized;
     this.settings = settings;
     (_a = this.richTextToolbar) == null ? void 0 : _a.setEnabled(settings.showRichTextToolbar);
     configureMindMapPlugins(settings);
     configureNodeDecorations({
       showTodoBadge: settings.showTodoBadge,
-      showCommentBadge: settings.showCommentBadge
+      showCommentBadge: settings.showCommentBadge,
+      showNodeMenuButton: settings.showNodeMenuButton
     });
     this.rootEl.dataset.codeWrap = String(settings.codeBlockWrap);
     this.rootEl.dataset.codeLanguage = String(settings.codeBlockShowLanguage);
     this.rootEl.dataset.clozeMode = settings.clozeMode;
     this.rootEl.dataset.clozeHover = String(settings.clozeRevealOnHover);
+    this.rootEl.dataset.nodeMenuButton = String(settings.showNodeMenuButton);
     this.rootEl.style.setProperty("--ymz-code-tab-size", String(settings.codeBlockTabSize));
     this.rootEl.style.setProperty("--ymz-code-font-size", `${settings.codeBlockFontSize}px`);
     (_c2 = (_b = this.map) == null ? void 0 : _b.updateConfig) == null ? void 0 : _c2.call(_b, {
@@ -51486,6 +51998,86 @@ class YeMindEditor {
       isShowCreateChildBtnIcon: settings.showQuickCreate
     });
     (_e = (_d2 = this.map) == null ? void 0 : _d2.render) == null ? void 0 : _e.call(_d2);
+    if (firstApply) {
+      this.settingsInitialized = true;
+      this.setViewMode(settings.defaultViewMode);
+      this.setReadonly(settings.defaultReadonlyMode);
+      this.toggleZen(settings.defaultZenMode);
+      if (settings.autoFitOnOpen) window.setTimeout(() => {
+        var _a2;
+        return (_a2 = this.commands) == null ? void 0 : _a2.fit();
+      }, 0);
+    }
+  }
+  setViewMode(mode) {
+    this.viewMode = mode;
+    this.rootEl.dataset.view = mode;
+    this.rootEl.querySelectorAll('[data-action^="view-"]').forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.action === `view-${mode}`);
+    });
+    window.requestAnimationFrame(() => {
+      var _a;
+      return (_a = this.map) == null ? void 0 : _a.resize();
+    });
+  }
+  renderOutline(data2) {
+    this.outlineEl.innerHTML = renderOutlineHtml(data2);
+  }
+  activateOutlineUid(uid) {
+    this.outlineEl.querySelectorAll("[data-outline-uid]").forEach((row) => {
+      row.classList.toggle("is-active", Boolean(uid) && row.dataset.outlineUid === uid);
+    });
+  }
+  openSearchPanel() {
+    this.searchPanelEl.hidden = false;
+    this.searchInputEl.focus();
+    this.searchInputEl.select();
+  }
+  closeSearchPanel() {
+    var _a;
+    (_a = this.commands) == null ? void 0 : _a.endSearch();
+    this.searchText = "";
+    this.searchPanelEl.hidden = true;
+    this.updateSearchInfo({ currentIndex: -1, total: 0 });
+    this.canvasEl.focus();
+  }
+  handleSearchAction(action) {
+    if (action === "next") this.performSearch("next");
+    else if (action === "previous") this.performSearch("previous");
+    else if (action === "replace") this.replaceCurrentSearch();
+    else if (action === "replace-all") this.replaceAllSearch();
+    else if (action === "close") this.closeSearchPanel();
+  }
+  ensureSearch() {
+    const text2 = this.searchInputEl.value.trim();
+    if (!text2 || !this.commands) return false;
+    if (this.searchText !== text2) {
+      this.searchText = text2;
+      this.commands.search(text2);
+    }
+    return true;
+  }
+  performSearch(direction) {
+    if (!this.commands) return;
+    const previousText = this.searchText;
+    if (!this.ensureSearch()) return;
+    if (previousText !== this.searchText) return;
+    if (direction === "previous") this.commands.searchPrevious();
+    else this.commands.searchNext();
+  }
+  replaceCurrentSearch() {
+    var _a;
+    if (!this.ensureSearch()) return;
+    (_a = this.commands) == null ? void 0 : _a.replaceSearch(this.replaceInputEl.value);
+  }
+  replaceAllSearch() {
+    var _a;
+    if (!this.ensureSearch()) return;
+    (_a = this.commands) == null ? void 0 : _a.replaceSearchAll(this.replaceInputEl.value);
+  }
+  updateSearchInfo(info) {
+    const current = info.total > 0 && info.currentIndex >= 0 ? info.currentIndex + 1 : 0;
+    this.searchInfoEl.textContent = `${current} / ${Math.max(0, info.total)}`;
   }
   openInlineLink(event, href) {
     if (!href || href === "about:blank") return;
@@ -51542,12 +52134,13 @@ class YeMindEditor {
     const scale = Number(((_b = (_a = this.map) == null ? void 0 : _a.view) == null ? void 0 : _b.scale) ?? 1);
     this.zoomEl.textContent = `${Math.round(scale * 100)}%`;
   }
-  toggleReadonly(button) {
+  setReadonly(enabled) {
     if (!this.map) return;
-    const next2 = this.rootEl.dataset.readonly !== "true";
-    this.rootEl.dataset.readonly = String(next2);
-    button.classList.toggle("is-active", next2);
-    this.map.setMode(next2 ? "readonly" : "edit");
+    this.rootEl.dataset.readonly = String(enabled);
+    this.rootEl.querySelectorAll('[data-action="readonly"]').forEach((button) => {
+      button.classList.toggle("is-active", enabled);
+    });
+    this.map.setMode(enabled ? "readonly" : "edit");
   }
   toggleZen(enabled) {
     this.rootEl.dataset.zen = String(enabled);
@@ -51563,9 +52156,10 @@ class YeMindEditor {
         <p><b>双击</b> 编辑节点</p>
         <p><b>Tab</b> 添加子节点，<b>Enter</b> 添加同级节点</p>
         <p><b>选中文字</b> 使用格式、行内链接、挖空、公式与代码工具</p>
-        <p><b>右键节点</b> 打开节点内容、概要与关联线菜单</p>
+        <p><b>右键节点</b> 直接切换待办，打开批注、概要与关联线</p>
+        <p><b>Ctrl/Cmd + F</b> 搜索节点，顶部可切换导图、分屏和大纲</p>
       </div>`,
-      width: "440px"
+      width: "460px"
     });
   }
 }
@@ -51774,7 +52368,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
           });
         }
         menu.addSeparator();
-        menu.addItem({ icon: "iconSettings", label: "设置", click: () => this.openSetting() });
+        menu.addItem({ icon: "iconSettings", label: "设置", click: () => openYeMindSettingsDialog(this.settingsStore) });
         menu.open({ x: event.clientX, y: event.clientY });
       }
     });

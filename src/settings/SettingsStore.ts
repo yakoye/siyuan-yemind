@@ -3,6 +3,23 @@ export type CanvasMode = 'pan' | 'select';
 export type WheelMode = 'zoom' | 'pan' | 'none';
 export type ExternalLinkMode = 'new-window' | 'current-window';
 export type ClozeMode = 'hidden' | 'blur';
+export type ViewMode = 'map' | 'split' | 'outline';
+export type ShortcutCommand = 'search' | 'toggleZen' | 'toggleReadonly' | 'undo' | 'redo' | 'fit' | 'reset' | 'addParent' | 'comments' | 'summary' | 'relation';
+export type ShortcutMap = Record<ShortcutCommand, string>;
+
+export const DEFAULT_SHORTCUTS: ShortcutMap = {
+  search: 'Ctrl+f / Cmd+f',
+  toggleZen: 'Ctrl+Alt+z / Cmd+Alt+z',
+  toggleReadonly: 'Ctrl+Alt+r / Cmd+Alt+r',
+  undo: 'Ctrl+z / Cmd+z',
+  redo: 'Ctrl+Shift+z / Cmd+Shift+z / Ctrl+y / Cmd+y',
+  fit: 'Ctrl+0 / Cmd+0',
+  reset: 'Ctrl+Alt+0 / Cmd+Alt+0',
+  addParent: 'Alt+Enter',
+  comments: 'Ctrl+Alt+m / Cmd+Alt+m',
+  summary: 'Ctrl+Alt+g / Cmd+Alt+g',
+  relation: 'Ctrl+Alt+l / Cmd+Alt+l',
+};
 
 export interface YeMindSettings {
   defaultLayout: YeMindLayout;
@@ -23,6 +40,11 @@ export interface YeMindSettings {
   clozeRevealOnHover: boolean;
   showTodoBadge: boolean;
   showCommentBadge: boolean;
+  defaultZenMode: boolean;
+  defaultReadonlyMode: boolean;
+  showNodeMenuButton: boolean;
+  defaultViewMode: ViewMode;
+  shortcutMap: ShortcutMap;
 }
 
 interface SettingsStorage {
@@ -51,6 +73,11 @@ export const DEFAULT_SETTINGS: YeMindSettings = {
   clozeRevealOnHover: true,
   showTodoBadge: true,
   showCommentBadge: true,
+  defaultZenMode: false,
+  defaultReadonlyMode: false,
+  showNodeMenuButton: true,
+  defaultViewMode: 'map',
+  shortcutMap: { ...DEFAULT_SHORTCUTS },
 };
 
 const LAYOUTS = new Set<YeMindLayout>(['logicalStructure', 'logicalStructureLeft', 'mindMap', 'organizationStructure', 'catalogOrganization']);
@@ -58,6 +85,8 @@ const CANVAS_MODES = new Set<CanvasMode>(['pan', 'select']);
 const WHEEL_MODES = new Set<WheelMode>(['zoom', 'pan', 'none']);
 const LINK_MODES = new Set<ExternalLinkMode>(['new-window', 'current-window']);
 const CLOZE_MODES = new Set<ClozeMode>(['hidden', 'blur']);
+const VIEW_MODES = new Set<ViewMode>(['map', 'split', 'outline']);
+const SHORTCUT_COMMANDS = Object.keys(DEFAULT_SHORTCUTS) as ShortcutCommand[];
 
 function numberInRange(value: unknown, fallback: number, min: number, max: number): number {
   const number = Number(value);
@@ -70,6 +99,16 @@ function booleanOrDefault(value: unknown, fallback: boolean): boolean {
 
 function stringOrDefault(value: unknown, fallback: string): string {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+}
+
+
+function normalizeShortcutMap(value: unknown): ShortcutMap {
+  const source = value && typeof value === 'object' ? value as Partial<Record<ShortcutCommand, unknown>> : {};
+  return SHORTCUT_COMMANDS.reduce((result, key) => {
+    const current = source[key];
+    result[key] = typeof current === 'string' ? current.trim() : DEFAULT_SHORTCUTS[key];
+    return result;
+  }, {} as ShortcutMap);
 }
 
 function normalizeSettings(value: Partial<YeMindSettings>): YeMindSettings {
@@ -93,6 +132,11 @@ function normalizeSettings(value: Partial<YeMindSettings>): YeMindSettings {
     clozeRevealOnHover: booleanOrDefault(value.clozeRevealOnHover, DEFAULT_SETTINGS.clozeRevealOnHover),
     showTodoBadge: booleanOrDefault(value.showTodoBadge, DEFAULT_SETTINGS.showTodoBadge),
     showCommentBadge: booleanOrDefault(value.showCommentBadge, DEFAULT_SETTINGS.showCommentBadge),
+    defaultZenMode: booleanOrDefault(value.defaultZenMode, DEFAULT_SETTINGS.defaultZenMode),
+    defaultReadonlyMode: booleanOrDefault(value.defaultReadonlyMode, DEFAULT_SETTINGS.defaultReadonlyMode),
+    showNodeMenuButton: booleanOrDefault(value.showNodeMenuButton, DEFAULT_SETTINGS.showNodeMenuButton),
+    defaultViewMode: VIEW_MODES.has(value.defaultViewMode as ViewMode) ? value.defaultViewMode as ViewMode : DEFAULT_SETTINGS.defaultViewMode,
+    shortcutMap: normalizeShortcutMap(value.shortcutMap),
   };
 }
 

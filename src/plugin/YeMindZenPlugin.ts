@@ -3,6 +3,7 @@ import { MapRepository } from '../model/MapRepository';
 import type { MapStorageDocument } from '../model/types';
 import { confirmAction, promptText } from '../ui/dialogs';
 import { registerSettings } from '../settings/settings';
+import { openYeMindSettingsDialog } from '../settings/settingsDialog';
 import { SettingsStore } from '../settings/SettingsStore';
 import { ICON_ID, MAP_STORAGE_NAME, SETTINGS_STORAGE_NAME, TAB_TYPE } from './constants';
 import { registerYeMindDock } from './dock';
@@ -134,7 +135,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
           });
         }
         menu.addSeparator();
-        menu.addItem({ icon: 'iconSettings', label: '设置', click: () => this.openSetting() });
+        menu.addItem({ icon: 'iconSettings', label: '设置', click: () => openYeMindSettingsDialog(this.settingsStore) });
         menu.open({ x: event.clientX, y: event.clientY });
       },
     });

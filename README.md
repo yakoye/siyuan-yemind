@@ -1,18 +1,11 @@
 # YeMind Zen
 
-YeMind Zen is a local-first mind-map plugin for SiYuan, powered by the MIT-licensed `simple-mind-map` engine.
+YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-map`.
 
-Version 0.4.0 adds persisted inline links, inline code, language-aware code blocks, a complete code-block lifecycle editor, and live settings for autosave, links, code, cloze behavior, and node badges.
+- Plugin folder and ID: `siyuan-yemind-zen`
+- Display name: `YeMind Zen`
+- Version: `0.5.0`
 
-Install the `siyuan-yemind-zen` directory under your SiYuan workspace's `data/plugins/` directory.
+v0.5.0 adds direct todo state actions, a clearer comment entry, map/outline/split views, native search and replacement, a complete settings dialog, shortcut recording and conflict detection.
 
-Development:
-
-```bash
-npm install
-npm test
-npm run check
-npm run build
-```
-
-See `DEVELOPMENT_PLAN.md` for the roadmap.
+See `README_zh_CN.md`, `FEATURE_MATRIX.md`, and `DEVELOPMENT_PLAN.md` for details.

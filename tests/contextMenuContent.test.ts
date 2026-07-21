@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { NODE_CONTENT_MENU_LABELS } from '../src/ui/nodeContentMenu';
+import { NODE_CONTENT_MENU_LABELS, createTodoMenuDescriptor } from '../src/ui/nodeContentMenu';
 
 describe('node context menu content', () => {
   it('exposes all requested node-content actions as separate entries', () => {
     expect(NODE_CONTENT_MENU_LABELS).toEqual(expect.arrayContaining([
-      '待办',
+      '添加待办',
+      '待办完成',
+      '删除待办',
       '批注',
       '标签',
       '图标',
@@ -15,5 +17,15 @@ describe('node context menu content', () => {
       '关联线',
     ]));
     expect(NODE_CONTENT_MENU_LABELS).not.toContain('备注');
+  });
+
+  it('creates a direct todo menu descriptor without opening a dialog', () => {
+    const pending = createTodoMenuDescriptor({ checked: false });
+    expect(pending.label).toBe('待办完成');
+    expect(pending.next).toEqual({ checked: true });
+
+    const completed = createTodoMenuDescriptor({ checked: true });
+    expect(completed.label).toBe('删除待办');
+    expect(completed.warning).toBe(true);
   });
 });

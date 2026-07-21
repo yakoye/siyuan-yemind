@@ -1,5 +1,9 @@
+import { getTodoMenuState, type NodeTodo, type TodoMenuState } from '../content/nodeContentState';
+
 export const NODE_CONTENT_MENU_LABELS = [
-  '待办',
+  '添加待办',
+  '待办完成',
+  '删除待办',
   '批注',
   '标签',
   '图标',
@@ -11,3 +15,7 @@ export const NODE_CONTENT_MENU_LABELS = [
   '概要',
   '关联线',
 ] as const;
+
+export function createTodoMenuDescriptor(todo: NodeTodo | null | undefined): TodoMenuState {
+  return getTodoMenuState(todo);
+}

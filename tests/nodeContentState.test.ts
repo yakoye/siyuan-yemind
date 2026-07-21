@@ -4,6 +4,7 @@ import {
   editComment,
   removeComment,
   toggleTodo,
+  getTodoMenuState,
   normalizeStringList,
 } from '../src/content/nodeContentState';
 
@@ -16,6 +17,25 @@ describe('node content state', () => {
     expect(completed).toMatchObject({ checked: true });
 
     expect(toggleTodo(completed)).toBeNull();
+  });
+
+
+  it('resolves the direct todo context-menu action for every state', () => {
+    expect(getTodoMenuState(undefined)).toEqual({
+      label: '添加待办',
+      next: { checked: false },
+      warning: false,
+    });
+    expect(getTodoMenuState({ checked: false })).toEqual({
+      label: '待办完成',
+      next: { checked: true },
+      warning: false,
+    });
+    expect(getTodoMenuState({ checked: true })).toEqual({
+      label: '删除待办',
+      next: null,
+      warning: true,
+    });
   });
 
   it('adds, edits and removes comments without mutating the input', () => {

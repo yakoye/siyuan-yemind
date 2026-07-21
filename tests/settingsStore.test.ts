@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SettingsStore } from '../src/settings/SettingsStore';
+import { DEFAULT_SHORTCUTS, SettingsStore } from '../src/settings/SettingsStore';
 
 describe('SettingsStore', () => {
   it('normalizes invalid values and fills every v0.4 setting default', async () => {
@@ -39,6 +39,11 @@ describe('SettingsStore', () => {
       clozeRevealOnHover: true,
       showTodoBadge: true,
       showCommentBadge: true,
+      defaultZenMode: false,
+      defaultReadonlyMode: false,
+      showNodeMenuButton: true,
+      defaultViewMode: 'map',
+      shortcutMap: DEFAULT_SHORTCUTS,
     });
   });
 
@@ -61,6 +66,11 @@ describe('SettingsStore', () => {
       codeBlockFontSize: 15,
       clozeMode: 'blur',
       showCommentBadge: false,
+      defaultZenMode: true,
+      defaultReadonlyMode: true,
+      showNodeMenuButton: false,
+      defaultViewMode: 'split',
+      shortcutMap: { ...DEFAULT_SHORTCUTS, search: 'Ctrl+Shift+f', comments: '' },
     });
 
     expect(saved).toMatchObject({
@@ -74,6 +84,11 @@ describe('SettingsStore', () => {
       codeBlockFontSize: 15,
       clozeMode: 'blur',
       showCommentBadge: false,
+      defaultZenMode: true,
+      defaultReadonlyMode: true,
+      showNodeMenuButton: false,
+      defaultViewMode: 'split',
+      shortcutMap: { ...DEFAULT_SHORTCUTS, search: 'Ctrl+Shift+f', comments: '' },
     });
   });
 });

@@ -1,11 +1,15 @@
 export function createEditorTemplate(title: string): string {
   return `
-    <div class="ymz-editor" data-zen="false" data-readonly="false">
+    <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
       <div class="ymz-canvas-wrap">
         <div class="ymz-floating ymz-topbar" role="toolbar" aria-label="YeMind Zen 工具栏">
           <button class="ymz-brand" data-action="fit" title="适配视图">YeMind</button>
           <span class="ymz-separator"></span>
-          <button class="is-active" data-action="map">导图</button>
+          <button class="is-active" data-action="view-map">导图</button>
+          <button data-action="view-split">分屏</button>
+          <button data-action="view-outline">大纲</button>
+          <button data-action="open-search" title="项目内搜索">⌕</button>
+          <span class="ymz-separator"></span>
           <button data-action="undo" title="撤销">↶</button>
           <button data-action="redo" title="重做">↷</button>
           <button data-action="add-child" title="添加子节点">＋子</button>
@@ -21,7 +25,25 @@ export function createEditorTemplate(title: string): string {
           <span class="ymz-save-state" data-role="save-state">已保存</span>
         </div>
 
-        <div class="ymz-canvas" data-role="canvas"></div>
+        <div class="ymz-search-panel" data-role="search-panel" hidden>
+          <div class="ymz-search-panel__row">
+            <input class="b3-text-field" data-role="search-input" placeholder="搜索节点内容">
+            <button data-search-action="previous" title="上一个">↑</button>
+            <button data-search-action="next" title="下一个">↓</button>
+            <span data-role="search-info">0 / 0</span>
+            <button data-search-action="close" title="关闭">×</button>
+          </div>
+          <div class="ymz-search-panel__row">
+            <input class="b3-text-field" data-role="replace-input" placeholder="替换为">
+            <button data-search-action="replace">替换</button>
+            <button data-search-action="replace-all">全部替换</button>
+          </div>
+        </div>
+
+        <div class="ymz-workspace">
+          <aside class="ymz-outline" data-role="outline" aria-label="导图大纲"></aside>
+          <div class="ymz-canvas" data-role="canvas"></div>
+        </div>
 
         <div class="ymz-floating ymz-leftbar" role="toolbar" aria-label="画布工具">
           <button data-action="fit" title="适配视图">⌖</button>
@@ -35,6 +57,7 @@ export function createEditorTemplate(title: string): string {
         <div class="ymz-floating ymz-statusbar">
           <button class="ymz-status-title" data-role="title" title="${escapeHtml(title)}">${escapeHtml(title)}</button>
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
+          <button data-action="open-search" title="搜索">⌕</button>
           <button data-action="fit" title="适配视图">⌖</button>
           <button data-action="readonly" title="只读模式">锁</button>
           <button data-action="zen" title="禅模式">禅</button>

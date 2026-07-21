@@ -7,8 +7,8 @@ import {
   openImageDialog,
   openLinkDialog,
   openTagsDialog,
-  openTodoDialog,
 } from './nodeContentDialogs';
+import { createTodoMenuDescriptor } from './nodeContentMenu';
 
 export interface NodeContextMenuOptions {
   onInlineLink?: () => void;
@@ -26,7 +26,8 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   menu.addItem({ icon: 'iconAdd', label: '添加同级节点', accelerator: 'Enter', click: () => commands.addSibling() });
   menu.addItem({ icon: 'iconAdd', label: '添加父节点', accelerator: 'Alt+Enter', click: () => commands.addParent() });
   menu.addSeparator();
-  menu.addItem({ icon: 'iconCheck', label: '待办', click: () => openTodoDialog(commands) });
+  const todoAction = createTodoMenuDescriptor(commands.getTodo());
+  menu.addItem({ icon: 'iconCheck', label: todoAction.label, warning: todoAction.warning, click: () => commands.setTodo(todoAction.next) });
   menu.addItem({ icon: 'iconMessage', label: '批注', click: () => openCommentsDialog(commands) });
   menu.addItem({ icon: 'iconTags', label: '标签', click: () => openTagsDialog(commands) });
   menu.addItem({ icon: 'iconEmoji', label: '图标', click: () => openIconsDialog(commands) });

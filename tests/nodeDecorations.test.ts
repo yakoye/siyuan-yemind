@@ -26,6 +26,10 @@ describe('node content decorations', () => {
     expect(prefix?.el.querySelector('.ymz-node-todo-checkbox')).not.toBeNull();
     expect(prefix?.el.querySelector('.ymz-node-todo-checkbox')?.classList.contains('is-checked')).toBe(false);
     expect(postfix?.el.querySelector('.ymz-node-comment-badge')).not.toBeNull();
+    const commentIcon = postfix?.el.querySelector('.ymz-node-comment-badge svg');
+    expect(commentIcon?.querySelector('path')).not.toBeNull();
+    expect(commentIcon?.querySelector('use')).toBeNull();
+    expect(commentIcon?.getAttribute('viewBox')).toBe('0 0 24 24');
 
     prefix?.el.querySelector<HTMLButtonElement>('.ymz-node-todo-checkbox')?.click();
     expect(emit).toHaveBeenCalledWith('yemind_todo_toggle', node);

@@ -10,7 +10,7 @@ function node(data: Record<string, unknown>) {
 }
 
 describe('node decorations settings', () => {
-  beforeEach(() => configureNodeDecorations({ showTodoBadge: true, showCommentBadge: true }));
+  beforeEach(() => configureNodeDecorations({ showTodoBadge: true, showCommentBadge: true, showNodeMenuButton: true }));
 
   it('can hide todo and comment decorations independently', () => {
     const source = node({

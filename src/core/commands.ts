@@ -45,11 +45,19 @@ export interface YeMindCommands {
   addSummary(): void;
   startRelation(): void;
   toggleTodo(): void;
+  getTodo(): NodeTodo | null;
   setTodo(todo: NodeTodo | null): void;
   setComments(comments: NodeComment[]): void;
   formatText(config: Record<string, unknown>): void;
   clearTextFormat(): void;
   setCloze(enabled: boolean): void;
+  search(text: string): void;
+  searchNext(): void;
+  searchPrevious(): void;
+  replaceSearch(text: string): void;
+  replaceSearchAll(text: string): void;
+  endSearch(): void;
+  goToNode(uid: string): void;
 }
 
 export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
@@ -150,6 +158,7 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     },
     addSummary: () => mindMap.execCommand('ADD_GENERALIZATION'),
     startRelation: () => (mindMap as any).associativeLine?.createLineFromActiveNode?.(),
+    getTodo: () => (primaryNode()?.getData?.('yemindTodo') ?? null) as NodeTodo | null,
     toggleTodo: () => {
       const node = primaryNode();
       if (!node) return;
@@ -172,5 +181,23 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     setCloze: (enabled) => (mindMap as any).richText?.formatText?.(enabled
       ? { background: '#f5dfa0', color: 'transparent' }
       : { background: false, color: false }),
+
+    search: (text) => (mindMap as any).search?.search?.(text),
+    searchNext: () => {
+      const search = (mindMap as any).search;
+      if (!search?.searchText) return;
+      search.search(search.searchText);
+    },
+    searchPrevious: () => {
+      const search = (mindMap as any).search;
+      const total = Array.isArray(search?.matchNodeList) ? search.matchNodeList.length : 0;
+      if (!total) return;
+      const current = Number(search.currentIndex ?? 0);
+      search.jump((current - 1 + total) % total);
+    },
+    replaceSearch: (text) => (mindMap as any).search?.replace?.(text, true),
+    replaceSearchAll: (text) => (mindMap as any).search?.replaceAll?.(text),
+    endSearch: () => (mindMap as any).search?.endSearch?.(),
+    goToNode: (uid) => mindMap.execCommand('GO_TARGET_NODE', uid),
   };
 }
