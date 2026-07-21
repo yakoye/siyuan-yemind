@@ -1,3 +1,13 @@
+## v0.6.7 已完成
+
+- [x] 整图背景共享 52 色面板
+- [x] HEX/RGB 双向实时转换
+- [x] 颜色输入事件隔离
+- [x] 全局搜索结果置于原生结果区顶部
+- [x] pointerdown/mousedown/click/Enter 搜索激活
+- [x] 批注时间和操作右对齐
+- [x] 145 个测试文件 / 385 项测试发布门禁
+
 # YeMind Zen Feature Matrix
 
 ## v0.6.6 已完成

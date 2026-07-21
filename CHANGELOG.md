@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.7 — 2026-07-21
+
+- Reused the shared 52-color HEX/RGB palette for the whole-map custom background.
+- Mounted YeMind global-search results at the top of SiYuan's native result region and activated results on pointer-down.
+- Right-aligned comment timestamps, per-comment actions and dialog footer actions.
+- Kept all prior canvas rich-text, outline editing, folding, drag, search and style regressions in the release gate.
+- Aligned package, manifest, runtime, diagnostics and tests at 0.6.7.
+
 ## 0.6.6 — 2026-07-20
 
 - Remapped density presets: compact is 30/2, default inherits the former compact values, and comfortable inherits the former default values.

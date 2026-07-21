@@ -715,6 +715,12 @@
 @media(max-width:260px){.ymz-project-style-panel{top:54px;right:6px;width:calc(100% - 12px);max-height:calc(100% - 64px)}}
 /* v0.6.5 shared node-style color palette */
 .ymz-node-color-trigger{display:flex!important;align-items:center;justify-content:flex-start!important;gap:8px;width:100%;padding:0 9px!important}.ymz-node-color-trigger i{display:block;width:16px;height:16px;flex:0 0 16px;border:1px solid color-mix(in srgb,var(--b3-theme-on-surface) 24%,transparent);border-radius:4px;background:var(--ymz-current-color,transparent);box-sizing:border-box}.ymz-node-color-trigger span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:11px/1.2 var(--b3-font-family-code,monospace)}.ymz-node-color-popover{z-index:75}
+
+/* v0.6.7 shared project color palette, native search placement and comment alignment */
+.ymz-project-color-trigger{height:28px!important;min-width:0}.ymz-project-color-popover{z-index:78}
+.ymz-comments-dialog .ymz-comment__meta{justify-content:flex-end}.ymz-comments-dialog .ymz-comment__time{flex:0 1 auto;margin-left:auto;text-align:right}.ymz-comments-dialog .ymz-comment__actions{margin-left:0;justify-content:flex-end}.ymz-comments-dialog__footer{justify-content:flex-end}.ymz-global-search-results{position:relative;z-index:8;pointer-events:auto}.ymz-global-search-result{pointer-events:auto;cursor:pointer}
+
+.ymz-global-search-results--native{margin:0 0 8px;max-width:100%;box-sizing:border-box}
 /*!
  * Quill Editor v2.0.3
  * https://quilljs.com

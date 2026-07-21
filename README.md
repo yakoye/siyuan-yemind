@@ -4,9 +4,15 @@ YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-
 
 - Plugin folder and ID: `siyuan-yemind-zen`
 - Display name: `YeMind Zen`
-- Version: `0.6.6`
+- Version: `0.6.7`
 
-## v0.6.6: compact style panel and reliable search opening
+## v0.6.7: shared project colors and native search placement
+
+- Whole-map background uses the shared 52-color editable HEX/RGB palette.
+- Global search results render at the top of the native result region and open on pointer-down.
+- Comment timestamps and actions are right-aligned.
+
+## v0.6.7: compact style panel and reliable search opening
 
 - Compact is fixed at horizontal 30 / vertical 2. Default and Comfortable inherit the previous Compact and Default presets.
 - The whole-map Style panel is narrowed to 220 px, removes density subtitles and uses compact spacing controls.

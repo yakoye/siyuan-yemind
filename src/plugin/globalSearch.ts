@@ -101,41 +101,63 @@ export function renderGlobalSearchResults(matches: GlobalMapMatch[]): string {
   return `<section class="ymz-global-search-results" data-yemind-global-results><header><strong>YeMind Zen</strong><span>${matches.length} 条结果</span></header><div class="ymz-global-search-results__list">${matches.map((item) => `<button type="button" class="b3-list-item ymz-global-search-result" data-yemind-global-map="${escapeHtml(item.mapId)}" data-yemind-global-node="${escapeHtml(item.nodeUid)}"><span class="b3-list-item__graphic">Ye</span><span class="b3-list-item__text"><strong>${escapeHtml(item.text)}</strong><small>${escapeHtml(item.mapTitle)}${item.path && item.path !== item.text ? ` · ${escapeHtml(item.path)}` : ''}</small></span></button>`).join('')}</div></section>`;
 }
 
+export function resolveGlobalSearchMount(searchElement: HTMLInputElement): { cleanupRoot: HTMLElement; mountPoint: HTMLElement } | null {
+  const layout = searchElement.closest<HTMLElement>('.search__layout')
+    ?? searchElement.closest<HTMLElement>('.search__panel')
+    ?? searchElement.closest<HTMLElement>('.protyle')
+    ?? searchElement.parentElement;
+  if (!layout) return null;
+  const cleanupRoot = layout.parentElement ?? layout;
+  const candidates = [
+    '.search__list',
+    '.search__result',
+    '.search__results',
+    '[data-type="search-result"]',
+    '.search__content',
+    '.search__body',
+  ];
+  for (const selector of candidates) {
+    const candidate = layout.querySelector<HTMLElement>(selector) ?? cleanupRoot.querySelector<HTMLElement>(selector);
+    if (candidate && !candidate.contains(searchElement)) return { cleanupRoot, mountPoint: candidate };
+  }
+  return { cleanupRoot, mountPoint: layout };
+}
+
 export function mountGlobalSearchResults(options: {
   searchElement: HTMLInputElement;
   maps: YeMindMapDocument[];
   onOpen: (mapId: string, nodeUid: string) => void;
 }): void {
-  const parent = options.searchElement.closest<HTMLElement>('.search__header, .search__layout, .protyle') ?? options.searchElement.parentElement;
-  if (!parent) return;
-  const root = parent.parentElement ?? parent;
-  root.querySelector<HTMLElement>('[data-yemind-global-results]')?.remove();
+  const surface = resolveGlobalSearchMount(options.searchElement);
+  if (!surface) return;
+  surface.cleanupRoot.querySelector<HTMLElement>('[data-yemind-global-results]')?.remove();
   const matches = collectGlobalMapMatches(options.maps, options.searchElement.value);
   if (matches.length === 0) return;
   const wrapper = document.createElement('div');
   wrapper.innerHTML = renderGlobalSearchResults(matches);
   const panel = wrapper.firstElementChild as HTMLElement | null;
   if (!panel) return;
-  let lastButton: HTMLElement | null = null;
-  let lastActivatedAt = 0;
-  const activate = (event: Event): void => {
-    const button = (event.target as HTMLElement).closest<HTMLElement>('[data-yemind-global-map]');
-    if (!button) return;
+  panel.classList.add('ymz-global-search-results--native');
+  const activated = new WeakMap<HTMLElement, number>();
+  const activateButton = (button: HTMLElement, event: Event): void => {
     if (event instanceof MouseEvent && event.button !== 0) return;
     event.preventDefault();
     event.stopPropagation();
+    if ('stopImmediatePropagation' in event) event.stopImmediatePropagation();
     const now = Date.now();
-    if (button === lastButton && now - lastActivatedAt < 500) return;
-    lastButton = button;
-    lastActivatedAt = now;
+    const previous = activated.get(button) ?? 0;
+    if (now - previous < 500) return;
+    activated.set(button, now);
     options.onOpen(button.dataset.yemindGlobalMap ?? '', button.dataset.yemindGlobalNode ?? '');
   };
-  // SiYuan may rebuild the search surface as soon as the input loses focus.
-  // Open on mousedown so the result cannot disappear before the later click.
-  panel.addEventListener('mousedown', activate, true);
-  panel.addEventListener('click', activate);
-  panel.addEventListener('keydown', (event) => {
-    if ((event as KeyboardEvent).key === 'Enter') activate(event);
+  panel.querySelectorAll<HTMLElement>('[data-yemind-global-map]').forEach((button) => {
+    button.addEventListener('pointerdown', (event) => activateButton(button, event), true);
+    button.addEventListener('mousedown', (event) => activateButton(button, event), true);
+    button.addEventListener('click', (event) => activateButton(button, event));
+    button.addEventListener('keydown', (event) => {
+      if ((event as KeyboardEvent).key === 'Enter' || (event as KeyboardEvent).key === ' ') activateButton(button, event);
+    });
   });
-  root.appendChild(panel);
+  surface.mountPoint.prepend(panel);
 }
+

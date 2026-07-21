@@ -38,11 +38,11 @@ export class NodeStylePanel {
     this.panel.addEventListener('click', this.onClick);
     this.panel.addEventListener('change', this.onChange);
     this.panel.addEventListener('input', this.onInput, true);
-    INPUT_EVENTS.forEach((type) => this.panel?.addEventListener(type, this.stopEditorEvent, true));
-    this.panel.addEventListener('pointerdown', this.stopEditorEvent, true);
+    INPUT_EVENTS.forEach((type) => this.panel?.addEventListener(type, this.stopEditorEvent));
+    this.panel.addEventListener('pointerdown', this.stopEditorEvent);
     this.colorPopover.addEventListener('click', this.onColorPopoverClick);
     this.colorPopover.addEventListener('mousedown', this.onColorPopoverMouseDown);
-    INPUT_EVENTS.forEach((type) => this.colorPopover.addEventListener(type, this.stopEditorEvent, true));
+    INPUT_EVENTS.forEach((type) => this.colorPopover.addEventListener(type, this.stopEditorEvent));
     this.customColorInput.addEventListener('input', this.onNativeColorInput);
     this.bindEditableColorInput('hex');
     this.bindEditableColorInput('rgb');
@@ -54,12 +54,12 @@ export class NodeStylePanel {
       this.panel.removeEventListener('click', this.onClick);
       this.panel.removeEventListener('change', this.onChange);
       this.panel.removeEventListener('input', this.onInput, true);
-      INPUT_EVENTS.forEach((type) => this.panel?.removeEventListener(type, this.stopEditorEvent, true));
-      this.panel.removeEventListener('pointerdown', this.stopEditorEvent, true);
+      INPUT_EVENTS.forEach((type) => this.panel?.removeEventListener(type, this.stopEditorEvent));
+      this.panel.removeEventListener('pointerdown', this.stopEditorEvent);
     }
     this.colorPopover.removeEventListener('click', this.onColorPopoverClick);
     this.colorPopover.removeEventListener('mousedown', this.onColorPopoverMouseDown);
-    INPUT_EVENTS.forEach((type) => this.colorPopover.removeEventListener(type, this.stopEditorEvent, true));
+    INPUT_EVENTS.forEach((type) => this.colorPopover.removeEventListener(type, this.stopEditorEvent));
     this.customColorInput.removeEventListener('input', this.onNativeColorInput);
     document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
     this.colorPopover.remove();

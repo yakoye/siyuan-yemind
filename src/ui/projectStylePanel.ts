@@ -1,10 +1,14 @@
 import type { ProjectStyle } from '../editor/projectStyle';
 import { densitySpacing, normalizeProjectStyle } from '../editor/projectStyle';
+import { colorPaletteInnerHtml } from '../editor/colorPalette';
+import { parseEditableColor, presentColor } from '../editor/colorPresentation';
 
 const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'] as const;
 
 export class ProjectStylePanel {
   private readonly panel: HTMLElement | null;
+  private readonly colorPopover: HTMLElement;
+  private readonly customColorInput: HTMLInputElement;
   private style: ProjectStyle;
 
   constructor(
@@ -15,11 +19,29 @@ export class ProjectStylePanel {
   ) {
     this.style = normalizeProjectStyle(initial);
     this.panel = root.querySelector<HTMLElement>('[data-role="project-style-panel"]');
+    this.colorPopover = document.createElement('div');
+    this.colorPopover.className = 'ymz-color-popover ymz-project-color-popover';
+    this.colorPopover.hidden = true;
+    this.colorPopover.innerHTML = colorPaletteInnerHtml();
+    this.customColorInput = document.createElement('input');
+    this.customColorInput.type = 'color';
+    this.customColorInput.className = 'ymz-color-popover__native';
+    this.customColorInput.tabIndex = -1;
+    this.customColorInput.setAttribute('aria-hidden', 'true');
+    this.colorPopover.appendChild(this.customColorInput);
+    root.appendChild(this.colorPopover);
     if (!this.panel) return;
     this.panel.addEventListener('click', this.onClick);
     this.panel.addEventListener('change', this.onControl);
     this.panel.addEventListener('input', this.onControl);
-    BLOCKED_EVENTS.forEach((type) => this.panel?.addEventListener(type, this.stop, true));
+    BLOCKED_EVENTS.forEach((type) => this.panel?.addEventListener(type, this.stop));
+    this.panel.addEventListener('pointerdown', this.stop);
+    this.colorPopover.addEventListener('click', this.onColorPopoverClick);
+    this.colorPopover.addEventListener('mousedown', this.onColorPopoverMouseDown);
+    BLOCKED_EVENTS.forEach((type) => this.colorPopover.addEventListener(type, this.stop));
+    this.customColorInput.addEventListener('input', this.onNativeColorInput);
+    this.bindEditableColorInput('hex');
+    this.bindEditableColorInput('rgb');
     document.addEventListener('mousedown', this.onDocumentMouseDown, true);
     this.refresh();
   }
@@ -29,8 +51,14 @@ export class ProjectStylePanel {
     this.panel.removeEventListener('click', this.onClick);
     this.panel.removeEventListener('change', this.onControl);
     this.panel.removeEventListener('input', this.onControl);
-    BLOCKED_EVENTS.forEach((type) => this.panel?.removeEventListener(type, this.stop, true));
+    BLOCKED_EVENTS.forEach((type) => this.panel?.removeEventListener(type, this.stop));
+    this.panel.removeEventListener('pointerdown', this.stop);
+    this.colorPopover.removeEventListener('click', this.onColorPopoverClick);
+    this.colorPopover.removeEventListener('mousedown', this.onColorPopoverMouseDown);
+    BLOCKED_EVENTS.forEach((type) => this.colorPopover.removeEventListener(type, this.stop));
+    this.customColorInput.removeEventListener('input', this.onNativeColorInput);
     document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
+    this.colorPopover.remove();
   }
 
   show(): void {
@@ -41,6 +69,7 @@ export class ProjectStylePanel {
 
   hide(): void {
     if (this.panel) this.panel.hidden = true;
+    this.colorPopover.hidden = true;
   }
 
   setStyle(style: ProjectStyle): void {
@@ -53,7 +82,11 @@ export class ProjectStylePanel {
   private readonly onDocumentMouseDown = (event: MouseEvent): void => {
     if (!this.panel || this.panel.hidden) return;
     const target = event.target as Node | null;
-    if (target && this.panel.contains(target)) return;
+    if (target && this.colorPopover.contains(target)) return;
+    if (target && this.panel.contains(target)) {
+      this.colorPopover.hidden = true;
+      return;
+    }
     this.hide();
   };
 
@@ -81,8 +114,7 @@ export class ProjectStylePanel {
       rainbow.checked = this.style.rainbowLines === true;
       rainbow.indeterminate = this.style.rainbowLines === null;
     }
-    const background = this.panel.querySelector<HTMLInputElement>('[data-project-style="backgroundColor"]');
-    if (background) background.value = this.style.backgroundColor ?? '#f8fafc';
+    this.syncBackgroundTrigger();
     this.panel.querySelectorAll<HTMLButtonElement>('[data-project-background]').forEach((button) => {
       button.classList.toggle('is-active', (button.dataset.projectBackground || null) === this.style.backgroundColor);
     });
@@ -92,12 +124,105 @@ export class ProjectStylePanel {
     });
   }
 
+  private syncBackgroundTrigger(): void {
+    if (!this.panel) return;
+    const value = this.style.backgroundColor ?? '';
+    const swatch = this.panel.querySelector<HTMLElement>('[data-project-color-swatch="backgroundColor"]');
+    const label = this.panel.querySelector<HTMLElement>('[data-project-color-label="backgroundColor"]');
+    swatch?.style.setProperty('--ymz-current-color', value || 'transparent');
+    if (label) label.textContent = value || '默认';
+  }
+
+  private syncColorInputs(): void {
+    const presentation = presentColor(this.style.backgroundColor);
+    const editable = parseEditableColor(this.style.backgroundColor);
+    const hex = this.colorPopover.querySelector<HTMLInputElement>('[data-color-input="hex"]');
+    const rgb = this.colorPopover.querySelector<HTMLInputElement>('[data-color-input="rgb"]');
+    if (hex) {
+      hex.value = editable?.hex ?? '';
+      hex.setAttribute('aria-invalid', 'false');
+    }
+    if (rgb) {
+      rgb.value = editable?.rgb ?? '';
+      rgb.setAttribute('aria-invalid', 'false');
+    }
+    const hexReadout = this.colorPopover.querySelector<HTMLElement>('[data-color-readout="hex"]');
+    const rgbReadout = this.colorPopover.querySelector<HTMLElement>('[data-color-readout="rgb"]');
+    if (hexReadout) hexReadout.textContent = presentation.hex;
+    if (rgbReadout) rgbReadout.textContent = presentation.rgb;
+  }
+
+  private applyBackgroundColor(value: string | null, close = true): void {
+    this.commit({ backgroundColor: value });
+    this.syncColorInputs();
+    if (close) this.colorPopover.hidden = true;
+  }
+
+  private openColorPopover(anchor: HTMLElement): void {
+    this.syncColorInputs();
+    this.colorPopover.hidden = false;
+    const rootRect = this.root.getBoundingClientRect();
+    const anchorRect = anchor.getBoundingClientRect();
+    const width = this.colorPopover.offsetWidth || 318;
+    const height = this.colorPopover.offsetHeight || 260;
+    const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
+    const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
+    const left = Math.max(8, Math.min(anchorRect.left - rootRect.left, rootWidth - width - 8));
+    const below = anchorRect.bottom - rootRect.top + 6;
+    const above = anchorRect.top - rootRect.top - height - 6;
+    const top = below + height <= rootHeight - 8 ? below : Math.max(8, above);
+    this.colorPopover.style.left = `${Math.round(left)}px`;
+    this.colorPopover.style.top = `${Math.round(top)}px`;
+  }
+
+  private bindEditableColorInput(kind: 'hex' | 'rgb'): void {
+    const input = this.colorPopover.querySelector<HTMLInputElement>(`[data-color-input="${kind}"]`);
+    if (!input) return;
+    input.addEventListener('input', () => {
+      const parsed = parseEditableColor(input.value);
+      input.setAttribute('aria-invalid', parsed ? 'false' : 'true');
+      if (!parsed) return;
+      const other = this.colorPopover.querySelector<HTMLInputElement>(`[data-color-input="${kind === 'hex' ? 'rgb' : 'hex'}"]`);
+      if (other) {
+        other.value = kind === 'hex' ? parsed.rgb : parsed.hex;
+        other.setAttribute('aria-invalid', 'false');
+      }
+      this.applyBackgroundColor(parsed.hex, false);
+    });
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') this.colorPopover.hidden = true;
+    });
+  }
+
+  private readonly onColorPopoverMouseDown = (event: MouseEvent): void => {
+    const target = event.target as HTMLElement | null;
+    const isTextInput = target instanceof HTMLInputElement && target.type !== 'color';
+    if (!isTextInput) event.preventDefault();
+    event.stopPropagation();
+  };
+
+  private readonly onNativeColorInput = (): void => this.applyBackgroundColor(this.customColorInput.value, false);
+
+  private readonly onColorPopoverClick = (event: MouseEvent): void => {
+    const target = event.target as HTMLElement;
+    const swatch = target.closest<HTMLButtonElement>('[data-color-value]');
+    if (swatch) {
+      this.applyBackgroundColor(swatch.dataset.colorValue || null);
+      return;
+    }
+    const action = target.closest<HTMLButtonElement>('[data-color-action]')?.dataset.colorAction;
+    if (action === 'reset') this.applyBackgroundColor(null);
+    if (action === 'custom') {
+      const value = this.style.backgroundColor;
+      this.customColorInput.value = typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : '#000000';
+      this.customColorInput.click();
+    }
+  };
+
   private readonly onControl = (event: Event): void => {
     const target = event.target as HTMLInputElement;
     if (target.dataset.projectStyle === 'rainbowLines') {
       this.commit({ rainbowLines: target.checked });
-    } else if (target.dataset.projectStyle === 'backgroundColor') {
-      this.commit({ backgroundColor: target.value });
     } else if (target.dataset.projectSpacing) {
       const horizontal = this.panel?.querySelector<HTMLInputElement>('[data-project-spacing="horizontal"]');
       const vertical = this.panel?.querySelector<HTMLInputElement>('[data-project-spacing="vertical"]');
@@ -113,6 +238,11 @@ export class ProjectStylePanel {
     event.stopPropagation();
     const target = event.target as HTMLElement;
     const action = target.closest<HTMLElement>('[data-project-style-action]')?.dataset.projectStyleAction;
+    const colorTrigger = target.closest<HTMLElement>('[data-project-color-trigger]');
+    if (colorTrigger) {
+      this.openColorPopover(colorTrigger);
+      return;
+    }
     if (action === 'close') return this.hide();
     if (action === 'reset') {
       this.commit({ density: 'default', rainbowLines: null, backgroundColor: null, customMarginX: undefined, customMarginY: undefined });

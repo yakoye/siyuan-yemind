@@ -4520,7 +4520,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.6.6";
+const PLUGIN_VERSION = "0.6.7";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -57800,7 +57800,7 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
           <header class="ymz-project-style-panel__header"><strong>样式</strong><button type="button" data-project-style-action="close" aria-label="关闭样式">×</button></header>
           <section><h4>密度</h4><div class="ymz-density-options" role="group" aria-label="节点密度"><button type="button" data-project-density="compact"><strong>紧凑</strong></button><button type="button" data-project-density="default"><strong>默认</strong></button><button type="button" data-project-density="comfortable"><strong>舒展</strong></button></div><div class="ymz-custom-spacing" aria-label="自定义节点间距"><label><span>左右</span><input type="number" min="12" max="240" step="1" data-project-spacing="horizontal" aria-label="水平间距"></label><label><span>上下</span><input type="number" min="2" max="100" step="1" data-project-spacing="vertical" aria-label="垂直间距"></label></div></section>
           <section><label class="ymz-project-style-panel__switch"><strong>彩虹连线</strong><input type="checkbox" data-project-style="rainbowLines"></label></section>
-          <section><h4>背景色</h4><div class="ymz-background-options"><button type="button" data-project-background="" title="主题背景">主题</button><button type="button" data-project-background="#ffffff" title="白色"></button><button type="button" data-project-background="#e2e8f0" title="岩灰"></button><button type="button" data-project-background="#ffe7ba" title="暖色"></button><button type="button" data-project-background="#c8f0dc" title="薄荷"></button><button type="button" data-project-background="#d7e8ff" title="天空"></button><button type="button" data-project-background="#f7cbd5" title="玫瑰"></button><button type="button" data-project-background="#0f172a" title="深色"></button></div><label class="ymz-project-style-panel__custom"><span>自定义</span><input type="color" data-project-style="backgroundColor" value="#f8fafc"></label></section>
+          <section><h4>背景色</h4><div class="ymz-background-options"><button type="button" data-project-background="" title="主题背景">主题</button><button type="button" data-project-background="#ffffff" title="白色"></button><button type="button" data-project-background="#e2e8f0" title="岩灰"></button><button type="button" data-project-background="#ffe7ba" title="暖色"></button><button type="button" data-project-background="#c8f0dc" title="薄荷"></button><button type="button" data-project-background="#d7e8ff" title="天空"></button><button type="button" data-project-background="#f7cbd5" title="玫瑰"></button><button type="button" data-project-background="#0f172a" title="深色"></button></div><label class="ymz-project-style-panel__custom"><span>自定义</span><button type="button" class="ymz-node-color-trigger ymz-project-color-trigger" data-project-color-trigger="backgroundColor"><i data-project-color-swatch="backgroundColor"></i><span data-project-color-label="backgroundColor">默认</span></button></label></section>
           <footer><button type="button" data-project-style-action="reset">恢复主题默认</button></footer>
         </aside>
 
@@ -59517,12 +59517,12 @@ class NodeStylePanel {
     this.panel.addEventListener("input", this.onInput, true);
     INPUT_EVENTS.forEach((type) => {
       var _a;
-      return (_a = this.panel) == null ? void 0 : _a.addEventListener(type, this.stopEditorEvent, true);
+      return (_a = this.panel) == null ? void 0 : _a.addEventListener(type, this.stopEditorEvent);
     });
-    this.panel.addEventListener("pointerdown", this.stopEditorEvent, true);
+    this.panel.addEventListener("pointerdown", this.stopEditorEvent);
     this.colorPopover.addEventListener("click", this.onColorPopoverClick);
     this.colorPopover.addEventListener("mousedown", this.onColorPopoverMouseDown);
-    INPUT_EVENTS.forEach((type) => this.colorPopover.addEventListener(type, this.stopEditorEvent, true));
+    INPUT_EVENTS.forEach((type) => this.colorPopover.addEventListener(type, this.stopEditorEvent));
     this.customColorInput.addEventListener("input", this.onNativeColorInput);
     this.bindEditableColorInput("hex");
     this.bindEditableColorInput("rgb");
@@ -59535,13 +59535,13 @@ class NodeStylePanel {
       this.panel.removeEventListener("input", this.onInput, true);
       INPUT_EVENTS.forEach((type) => {
         var _a;
-        return (_a = this.panel) == null ? void 0 : _a.removeEventListener(type, this.stopEditorEvent, true);
+        return (_a = this.panel) == null ? void 0 : _a.removeEventListener(type, this.stopEditorEvent);
       });
-      this.panel.removeEventListener("pointerdown", this.stopEditorEvent, true);
+      this.panel.removeEventListener("pointerdown", this.stopEditorEvent);
     }
     this.colorPopover.removeEventListener("click", this.onColorPopoverClick);
     this.colorPopover.removeEventListener("mousedown", this.onColorPopoverMouseDown);
-    INPUT_EVENTS.forEach((type) => this.colorPopover.removeEventListener(type, this.stopEditorEvent, true));
+    INPUT_EVENTS.forEach((type) => this.colorPopover.removeEventListener(type, this.stopEditorEvent));
     this.customColorInput.removeEventListener("input", this.onNativeColorInput);
     document.removeEventListener("mousedown", this.onDocumentMouseDown, true);
     this.colorPopover.remove();
@@ -59657,21 +59657,48 @@ const BLOCKED_EVENTS = ["keydown", "keyup", "beforeinput", "input", "paste", "co
 class ProjectStylePanel {
   constructor(root2, initial, readonly, onChange) {
     __publicField(this, "panel");
+    __publicField(this, "colorPopover");
+    __publicField(this, "customColorInput");
     __publicField(this, "style");
     __publicField(this, "stop", (event) => event.stopPropagation());
     __publicField(this, "onDocumentMouseDown", (event) => {
       if (!this.panel || this.panel.hidden) return;
       const target = event.target;
-      if (target && this.panel.contains(target)) return;
+      if (target && this.colorPopover.contains(target)) return;
+      if (target && this.panel.contains(target)) {
+        this.colorPopover.hidden = true;
+        return;
+      }
       this.hide();
+    });
+    __publicField(this, "onColorPopoverMouseDown", (event) => {
+      const target = event.target;
+      const isTextInput = target instanceof HTMLInputElement && target.type !== "color";
+      if (!isTextInput) event.preventDefault();
+      event.stopPropagation();
+    });
+    __publicField(this, "onNativeColorInput", () => this.applyBackgroundColor(this.customColorInput.value, false));
+    __publicField(this, "onColorPopoverClick", (event) => {
+      var _a;
+      const target = event.target;
+      const swatch = target.closest("[data-color-value]");
+      if (swatch) {
+        this.applyBackgroundColor(swatch.dataset.colorValue || null);
+        return;
+      }
+      const action = (_a = target.closest("[data-color-action]")) == null ? void 0 : _a.dataset.colorAction;
+      if (action === "reset") this.applyBackgroundColor(null);
+      if (action === "custom") {
+        const value = this.style.backgroundColor;
+        this.customColorInput.value = typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value) ? value : "#000000";
+        this.customColorInput.click();
+      }
     });
     __publicField(this, "onControl", (event) => {
       var _a, _b;
       const target = event.target;
       if (target.dataset.projectStyle === "rainbowLines") {
         this.commit({ rainbowLines: target.checked });
-      } else if (target.dataset.projectStyle === "backgroundColor") {
-        this.commit({ backgroundColor: target.value });
       } else if (target.dataset.projectSpacing) {
         const horizontal = (_a = this.panel) == null ? void 0 : _a.querySelector('[data-project-spacing="horizontal"]');
         const vertical = (_b = this.panel) == null ? void 0 : _b.querySelector('[data-project-spacing="vertical"]');
@@ -59687,6 +59714,11 @@ class ProjectStylePanel {
       event.stopPropagation();
       const target = event.target;
       const action = (_a = target.closest("[data-project-style-action]")) == null ? void 0 : _a.dataset.projectStyleAction;
+      const colorTrigger = target.closest("[data-project-color-trigger]");
+      if (colorTrigger) {
+        this.openColorPopover(colorTrigger);
+        return;
+      }
       if (action === "close") return this.hide();
       if (action === "reset") {
         this.commit({ density: "default", rainbowLines: null, backgroundColor: null, customMarginX: void 0, customMarginY: void 0 });
@@ -59705,14 +59737,32 @@ class ProjectStylePanel {
     this.onChange = onChange;
     this.style = normalizeProjectStyle(initial);
     this.panel = root2.querySelector('[data-role="project-style-panel"]');
+    this.colorPopover = document.createElement("div");
+    this.colorPopover.className = "ymz-color-popover ymz-project-color-popover";
+    this.colorPopover.hidden = true;
+    this.colorPopover.innerHTML = colorPaletteInnerHtml();
+    this.customColorInput = document.createElement("input");
+    this.customColorInput.type = "color";
+    this.customColorInput.className = "ymz-color-popover__native";
+    this.customColorInput.tabIndex = -1;
+    this.customColorInput.setAttribute("aria-hidden", "true");
+    this.colorPopover.appendChild(this.customColorInput);
+    root2.appendChild(this.colorPopover);
     if (!this.panel) return;
     this.panel.addEventListener("click", this.onClick);
     this.panel.addEventListener("change", this.onControl);
     this.panel.addEventListener("input", this.onControl);
     BLOCKED_EVENTS.forEach((type) => {
       var _a;
-      return (_a = this.panel) == null ? void 0 : _a.addEventListener(type, this.stop, true);
+      return (_a = this.panel) == null ? void 0 : _a.addEventListener(type, this.stop);
     });
+    this.panel.addEventListener("pointerdown", this.stop);
+    this.colorPopover.addEventListener("click", this.onColorPopoverClick);
+    this.colorPopover.addEventListener("mousedown", this.onColorPopoverMouseDown);
+    BLOCKED_EVENTS.forEach((type) => this.colorPopover.addEventListener(type, this.stop));
+    this.customColorInput.addEventListener("input", this.onNativeColorInput);
+    this.bindEditableColorInput("hex");
+    this.bindEditableColorInput("rgb");
     document.addEventListener("mousedown", this.onDocumentMouseDown, true);
     this.refresh();
   }
@@ -59723,9 +59773,15 @@ class ProjectStylePanel {
     this.panel.removeEventListener("input", this.onControl);
     BLOCKED_EVENTS.forEach((type) => {
       var _a;
-      return (_a = this.panel) == null ? void 0 : _a.removeEventListener(type, this.stop, true);
+      return (_a = this.panel) == null ? void 0 : _a.removeEventListener(type, this.stop);
     });
+    this.panel.removeEventListener("pointerdown", this.stop);
+    this.colorPopover.removeEventListener("click", this.onColorPopoverClick);
+    this.colorPopover.removeEventListener("mousedown", this.onColorPopoverMouseDown);
+    BLOCKED_EVENTS.forEach((type) => this.colorPopover.removeEventListener(type, this.stop));
+    this.customColorInput.removeEventListener("input", this.onNativeColorInput);
     document.removeEventListener("mousedown", this.onDocumentMouseDown, true);
+    this.colorPopover.remove();
   }
   show() {
     if (!this.panel) return;
@@ -59734,6 +59790,7 @@ class ProjectStylePanel {
   }
   hide() {
     if (this.panel) this.panel.hidden = true;
+    this.colorPopover.hidden = true;
   }
   setStyle(style) {
     this.style = normalizeProjectStyle(style);
@@ -59762,14 +59819,78 @@ class ProjectStylePanel {
       rainbow.checked = this.style.rainbowLines === true;
       rainbow.indeterminate = this.style.rainbowLines === null;
     }
-    const background = this.panel.querySelector('[data-project-style="backgroundColor"]');
-    if (background) background.value = this.style.backgroundColor ?? "#f8fafc";
+    this.syncBackgroundTrigger();
     this.panel.querySelectorAll("[data-project-background]").forEach((button) => {
       button.classList.toggle("is-active", (button.dataset.projectBackground || null) === this.style.backgroundColor);
     });
     this.panel.querySelectorAll("input,button").forEach((control) => {
       if (control.dataset.projectStyleAction === "close") return;
       control.disabled = this.readonly();
+    });
+  }
+  syncBackgroundTrigger() {
+    if (!this.panel) return;
+    const value = this.style.backgroundColor ?? "";
+    const swatch = this.panel.querySelector('[data-project-color-swatch="backgroundColor"]');
+    const label = this.panel.querySelector('[data-project-color-label="backgroundColor"]');
+    swatch == null ? void 0 : swatch.style.setProperty("--ymz-current-color", value || "transparent");
+    if (label) label.textContent = value || "默认";
+  }
+  syncColorInputs() {
+    const presentation = presentColor(this.style.backgroundColor);
+    const editable = parseEditableColor(this.style.backgroundColor);
+    const hex2 = this.colorPopover.querySelector('[data-color-input="hex"]');
+    const rgb2 = this.colorPopover.querySelector('[data-color-input="rgb"]');
+    if (hex2) {
+      hex2.value = (editable == null ? void 0 : editable.hex) ?? "";
+      hex2.setAttribute("aria-invalid", "false");
+    }
+    if (rgb2) {
+      rgb2.value = (editable == null ? void 0 : editable.rgb) ?? "";
+      rgb2.setAttribute("aria-invalid", "false");
+    }
+    const hexReadout = this.colorPopover.querySelector('[data-color-readout="hex"]');
+    const rgbReadout = this.colorPopover.querySelector('[data-color-readout="rgb"]');
+    if (hexReadout) hexReadout.textContent = presentation.hex;
+    if (rgbReadout) rgbReadout.textContent = presentation.rgb;
+  }
+  applyBackgroundColor(value, close2 = true) {
+    this.commit({ backgroundColor: value });
+    this.syncColorInputs();
+    if (close2) this.colorPopover.hidden = true;
+  }
+  openColorPopover(anchor) {
+    this.syncColorInputs();
+    this.colorPopover.hidden = false;
+    const rootRect = this.root.getBoundingClientRect();
+    const anchorRect = anchor.getBoundingClientRect();
+    const width2 = this.colorPopover.offsetWidth || 318;
+    const height2 = this.colorPopover.offsetHeight || 260;
+    const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
+    const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
+    const left = Math.max(8, Math.min(anchorRect.left - rootRect.left, rootWidth - width2 - 8));
+    const below = anchorRect.bottom - rootRect.top + 6;
+    const above = anchorRect.top - rootRect.top - height2 - 6;
+    const top = below + height2 <= rootHeight - 8 ? below : Math.max(8, above);
+    this.colorPopover.style.left = `${Math.round(left)}px`;
+    this.colorPopover.style.top = `${Math.round(top)}px`;
+  }
+  bindEditableColorInput(kind) {
+    const input = this.colorPopover.querySelector(`[data-color-input="${kind}"]`);
+    if (!input) return;
+    input.addEventListener("input", () => {
+      const parsed = parseEditableColor(input.value);
+      input.setAttribute("aria-invalid", parsed ? "false" : "true");
+      if (!parsed) return;
+      const other = this.colorPopover.querySelector(`[data-color-input="${kind === "hex" ? "rgb" : "hex"}"]`);
+      if (other) {
+        other.value = kind === "hex" ? parsed.rgb : parsed.hex;
+        other.setAttribute("aria-invalid", "false");
+      }
+      this.applyBackgroundColor(parsed.hex, false);
+    });
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") this.colorPopover.hidden = true;
     });
   }
 }
@@ -62471,38 +62592,57 @@ function renderGlobalSearchResults(matches) {
   if (matches.length === 0) return "";
   return `<section class="ymz-global-search-results" data-yemind-global-results><header><strong>YeMind Zen</strong><span>${matches.length} 条结果</span></header><div class="ymz-global-search-results__list">${matches.map((item) => `<button type="button" class="b3-list-item ymz-global-search-result" data-yemind-global-map="${escapeHtml(item.mapId)}" data-yemind-global-node="${escapeHtml(item.nodeUid)}"><span class="b3-list-item__graphic">Ye</span><span class="b3-list-item__text"><strong>${escapeHtml(item.text)}</strong><small>${escapeHtml(item.mapTitle)}${item.path && item.path !== item.text ? ` · ${escapeHtml(item.path)}` : ""}</small></span></button>`).join("")}</div></section>`;
 }
+function resolveGlobalSearchMount(searchElement) {
+  const layout2 = searchElement.closest(".search__layout") ?? searchElement.closest(".search__panel") ?? searchElement.closest(".protyle") ?? searchElement.parentElement;
+  if (!layout2) return null;
+  const cleanupRoot = layout2.parentElement ?? layout2;
+  const candidates = [
+    ".search__list",
+    ".search__result",
+    ".search__results",
+    '[data-type="search-result"]',
+    ".search__content",
+    ".search__body"
+  ];
+  for (const selector of candidates) {
+    const candidate = layout2.querySelector(selector) ?? cleanupRoot.querySelector(selector);
+    if (candidate && !candidate.contains(searchElement)) return { cleanupRoot, mountPoint: candidate };
+  }
+  return { cleanupRoot, mountPoint: layout2 };
+}
 function mountGlobalSearchResults(options) {
   var _a;
-  const parent = options.searchElement.closest(".search__header, .search__layout, .protyle") ?? options.searchElement.parentElement;
-  if (!parent) return;
-  const root2 = parent.parentElement ?? parent;
-  (_a = root2.querySelector("[data-yemind-global-results]")) == null ? void 0 : _a.remove();
+  const surface = resolveGlobalSearchMount(options.searchElement);
+  if (!surface) return;
+  (_a = surface.cleanupRoot.querySelector("[data-yemind-global-results]")) == null ? void 0 : _a.remove();
   const matches = collectGlobalMapMatches(options.maps, options.searchElement.value);
   if (matches.length === 0) return;
   const wrapper = document.createElement("div");
   wrapper.innerHTML = renderGlobalSearchResults(matches);
   const panel = wrapper.firstElementChild;
   if (!panel) return;
-  let lastButton = null;
-  let lastActivatedAt = 0;
-  const activate = (event) => {
-    const button = event.target.closest("[data-yemind-global-map]");
-    if (!button) return;
+  panel.classList.add("ymz-global-search-results--native");
+  const activated = /* @__PURE__ */ new WeakMap();
+  const activateButton = (button, event) => {
     if (event instanceof MouseEvent && event.button !== 0) return;
     event.preventDefault();
     event.stopPropagation();
+    if ("stopImmediatePropagation" in event) event.stopImmediatePropagation();
     const now = Date.now();
-    if (button === lastButton && now - lastActivatedAt < 500) return;
-    lastButton = button;
-    lastActivatedAt = now;
+    const previous = activated.get(button) ?? 0;
+    if (now - previous < 500) return;
+    activated.set(button, now);
     options.onOpen(button.dataset.yemindGlobalMap ?? "", button.dataset.yemindGlobalNode ?? "");
   };
-  panel.addEventListener("mousedown", activate, true);
-  panel.addEventListener("click", activate);
-  panel.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") activate(event);
+  panel.querySelectorAll("[data-yemind-global-map]").forEach((button) => {
+    button.addEventListener("pointerdown", (event) => activateButton(button, event), true);
+    button.addEventListener("mousedown", (event) => activateButton(button, event), true);
+    button.addEventListener("click", (event) => activateButton(button, event));
+    button.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") activateButton(button, event);
+    });
   });
-  root2.appendChild(panel);
+  surface.mountPoint.prepend(panel);
 }
 class YeMindZenPlugin extends siyuan.Plugin {
   constructor() {
