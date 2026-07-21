@@ -1,19 +1,22 @@
-import { defineConfig } from "vite";
-import { resolve } from "node:path";
+import { defineConfig } from 'vite';
+import { resolve } from 'node:path';
 
 export default defineConfig({
   build: {
     lib: {
-      entry: resolve(__dirname, "src/index.ts"),
-      formats: ["cjs"],
-      fileName: () => "index.js",
+      entry: resolve(__dirname, 'src/index.ts'),
+      formats: ['cjs'],
+      fileName: () => 'index.js',
     },
     rollupOptions: {
-      external: ["siyuan"],
-      output: { exports: "default" },
+      external: ['siyuan'],
+      output: {
+        exports: 'default',
+        assetFileNames: (assetInfo) => assetInfo.name?.endsWith('.css') ? 'index.css' : 'assets/[name]-[hash][extname]',
+      },
     },
-    outDir: ".",
-    emptyOutDir: false,
+    outDir: 'dist',
+    emptyOutDir: true,
     sourcemap: true,
     minify: false,
   },

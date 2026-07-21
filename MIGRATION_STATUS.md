@@ -1,17 +1,22 @@
-# YeMind Zen v0.1.0 migration status
+# YeMind Zen v0.2.0 迁移状态
 
-## Completed
+## 已完成
 
-- Project, plugin ID, storage keys, tab type, Dock type, protocol links, display name and icon renamed to `yemind-zen` / `YeMind Zen`.
-- Added a TypeScript + Vite source project under `src/`.
-- Added the `simple-mind-map` dependency and the editor-core creation entry.
-- Preserved the last installable runtime as a temporary fallback, so this package can still be loaded while the core migration proceeds.
-- Removed Study naming and did not add account, payment, Pro, trial or activation concepts.
+- 插件目录、插件 ID、存储键、标签页类型、Dock 类型和协议链接统一为 `siyuan-yemind-zen`。
+- 思源显示名统一为 `YeMind Zen`。
+- 根目录运行包由 TypeScript 源码和 Vite 构建生成。
+- v0.1.0 过渡运行时已完全移除。
+- `simple-mind-map` 已成为实际运行的导图内核。
+- 节点渲染、选择、编辑、拖拽、布局、历史记录、缩放和平移已迁移。
+- Dock、标签页、设置、右键菜单和本地持久化已重新实现。
+- 已建立 Vitest 测试和 TypeScript 检查流程。
 
-## Transitional limitation
+## 下一阶段
 
-The installable root `index.js` is the renamed transitional runtime. The new `simple-mind-map` source entry is present in `src/`, but the complete editor-core migration is not yet finished in v0.1.0. Building `src/` after installing dependencies will replace the transitional runtime progressively in later versions.
+v0.3.0 将围绕成熟内核继续实现：
 
-## Next version
-
-v0.2.0 will move node rendering, selection, editing, drag/drop, history and context-menu commands to `simple-mind-map` first. Rich text, formulas and cloze follow after the base editor is stable.
+- 富文本选区和格式工具栏
+- 公式和挖空
+- 批注、备注、待办、标签、图标和链接
+- 概要、关联线、外框和图片
+- 搜索、大纲和分屏的完整交互

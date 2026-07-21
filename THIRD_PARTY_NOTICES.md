@@ -2,13 +2,20 @@
 
 ## simple-mind-map
 
-- Project: wanglin2/mind-map
-- Package: simple-mind-map
+- Project: `wanglin2/mind-map`
+- Package: `simple-mind-map`
 - License: MIT
-- Used as the YeMind Zen editor core.
+- Role: YeMind Zen mind-map rendering, layout, node editing, history, dragging, selection and export foundation.
+
+## SiYuan
+
+- Package: `siyuan`
+- Role: Plugin lifecycle, Dock, tabs, settings, dialogs, menus and host integration.
 
 ## siyuan-kmind-plugin
 
-- Project: suka233/siyuan-kmind-plugin
-- Used as a reference for SiYuan lifecycle, tabs, Dock, drag/drop and document integration.
-- Preserve upstream copyright and license notices when source code is incorporated.
+- Project: `suka233/siyuan-kmind-plugin`
+- Role: Public reference for established SiYuan mind-map workflows and feature planning.
+- YeMind Zen v0.2.0 does not copy or load its bundled runtime.
+
+Third-party copyright and license terms remain with their respective owners.

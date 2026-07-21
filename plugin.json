@@ -1,8 +1,8 @@
 {
-  "name": "yemind-zen",
+  "name": "siyuan-yemind-zen",
   "author": "gocoffee-local",
   "url": "",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "minAppVersion": "3.0.0",
   "backends": [
     "all"
@@ -16,12 +16,12 @@
   ],
   "disabledInPublish": true,
   "displayName": {
-    "default": "YeMind Zen Mind Map",
-    "zh_CN": "YeMind Zen 思维导图"
+    "default": "YeMind Zen",
+    "zh_CN": "YeMind Zen"
   },
   "description": {
-    "default": "Independent local-first mind-map plugin with reliable Dock actions and a simplified editable canvas.",
-    "zh_CN": "独立、本地优先的思维导图插件，提供可靠的 Dock 操作和简洁可编辑画布。"
+    "default": "A local-first mind map plugin for SiYuan powered by simple-mind-map.",
+    "zh_CN": "基于 simple-mind-map 的思源笔记本地优先思维导图插件。"
   },
   "readme": {
     "default": "README.md",

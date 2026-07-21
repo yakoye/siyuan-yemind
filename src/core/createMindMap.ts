@@ -1,20 +1,42 @@
-import MindMap from "simple-mind-map";
+import MindMap from 'simple-mind-map';
+import type { MindMapTree } from '../model/types';
+import { registerMindMapPlugins } from './registerPlugins';
+import type { YeMindSettings } from '../settings/SettingsStore';
 
 export interface CreateMindMapOptions {
   el: HTMLElement;
-  data: Record<string, unknown>;
+  data: MindMapTree;
+  viewData?: Record<string, unknown>;
   theme?: string;
   layout?: string;
+  readonly?: boolean;
+  settings?: YeMindSettings;
 }
 
 export function createMindMap(options: CreateMindMapOptions): MindMap {
+  registerMindMapPlugins();
+  const settings = options.settings;
   return new MindMap({
     el: options.el,
     data: options.data,
-    theme: options.theme ?? "default",
-    layout: options.layout ?? "logicalStructure",
+    viewData: options.viewData,
+    theme: options.theme ?? 'default',
+    layout: options.layout ?? 'logicalStructure',
+    readonly: Boolean(options.readonly),
     enableFreeDrag: true,
-    enableNodeRichText: true,
-    mousewheelAction: "move",
-  });
+    enableCtrlKeyNodeSelection: true,
+    useLeftKeySelectionRightKeyDrag: settings?.canvasMode === 'select',
+    mousewheelAction: settings?.wheelMode === 'zoom' ? 'zoom' : 'move',
+    disableMouseWheelZoom: settings?.wheelMode === 'none',
+    mousewheelMoveStep: 60,
+    selectTextOnEnterEditText: true,
+    isEndNodeTextEditOnClickOuter: true,
+    enableDragModifyNodeWidth: true,
+    isShowCreateChildBtnIcon: settings?.showQuickCreate ?? true,
+    fit: settings?.autoFitOnOpen ?? true,
+    addHistoryOnInit: true,
+    defaultInsertSecondLevelNodeText: '新节点',
+    defaultInsertBelowSecondLevelNodeText: '新节点',
+    errorHandler: (_code: unknown, error: unknown) => console.error('[YeMind Zen]', error),
+  } as any);
 }

@@ -1,21 +1,25 @@
 {
-  "name": "yemind-zen",
-  "version": "0.1.0",
+  "name": "siyuan-yemind-zen",
+  "version": "0.2.0",
   "private": true,
   "description": "A SiYuan mind-map plugin built around simple-mind-map.",
   "license": "MIT",
   "scripts": {
     "dev": "vite build --watch --mode development",
-    "build": "vite build",
-    "check": "tsc --noEmit"
+    "build": "vite build && node scripts/copy-build.mjs",
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
-    "simple-mind-map": "^0.14.0",
+    "simple-mind-map": "0.14.0-fix.3",
     "siyuan": "^1.1.4"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "jsdom": "^26.1.0",
     "typescript": "^5.7.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "vitest": "^3.2.7"
   }
 }
