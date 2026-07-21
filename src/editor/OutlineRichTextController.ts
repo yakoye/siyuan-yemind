@@ -210,6 +210,11 @@ export class OutlineRichTextController implements RichTextFormattingTarget {
     this.detach(false, reason);
   }
 
+  /** Detach an editor whose backing node is about to be removed. */
+  discardAndDetach(reason: string): void {
+    this.detach(false, reason);
+  }
+
   cancel(): void {
     if (!this.host) return;
     if (this.commitTimer !== null) window.clearTimeout(this.commitTimer);

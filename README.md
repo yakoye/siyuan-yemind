@@ -4,7 +4,9 @@ YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-
 
 - Plugin folder and ID: `siyuan-yemind-zen`
 - Display name: `YeMind Zen`
-- Version: `0.5.18`
+- Version: `0.5.19`
+
+v0.5.19 makes empty non-root outline rows structurally deletable, separates outline disclosure from canvas `expand` data, restores repeatable Root and branch collapse/expand, and prunes stale disclosure state. Canvas Delete/Backspace now passes through a capture-phase and `beforeShortcutRun` safety boundary that filters Root nodes before any upstream delete command can show the multi-Root error dialog. The outline also gains subtle repeating VS Code-style indent guides.
 
 v0.5.18 fixes the remaining outline focus-loss root cause by keeping the active keyed row in place during text-only model updates and preventing synchronous commit re-entry. It removes the six-dot handle in favor of whole-row pointer dragging with long-press protection inside editable text, adds horizontal hierarchy intent, restores repeatable collapse/expand, uses a math-font `π`, and replaces solid cloze blocks with shared Gaussian/glass blur for canvas and outline. Structural changes remain upstream-owned by `simple-mind-map` commands and history.
 

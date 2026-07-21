@@ -49,6 +49,7 @@ import {
   flattenOutline,
   outlineStructureSignature,
   patchOutlineTree,
+  pruneOutlineCollapsedUids,
   resolveOutlineKeyAction,
   resolveOutlineToggleState,
 } from "./outline";
@@ -72,7 +73,6 @@ import { isEditableTarget, matchesShortcut } from "./shortcuts";
 import {
   createSelectionPresentation,
   promoteNodeToPrimary,
-  shouldBlockRootDeleteShortcut,
 } from "./selectionPresentation";
 import { SaveRevisionTracker } from "./saveRevision";
 import { createRelationPresentation } from "./relationPresentation";
@@ -167,6 +167,7 @@ export class YeMindEditor {
   private outlineStructureBusy = false;
   private outlinePointerDrag: OutlinePointerDragSession | null = null;
   private outlineStructureKey = "";
+  private readonly outlineCollapsedUids = new Set<string>();
   private suppressOutlineClickUntil = 0;
   private pendingOutlineFocus: PendingOutlineFocus | null = null;
   private appearanceObserver: MutationObserver | null = null;
@@ -351,11 +352,14 @@ export class YeMindEditor {
     }
     if (!this.commands || isEditableTarget(event.target)) return;
     if (
-      shouldBlockRootDeleteShortcut(event.key, this.commands.getActiveNodes())
+      (event.key === "Backspace" || event.key === "Delete") &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey
     ) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      showMessage("根节点不能删除；请选择普通节点后再删除", 3000, "info");
+      this.commands.remove();
       return;
     }
 
@@ -429,7 +433,7 @@ export class YeMindEditor {
     this.richTextToolbar = null;
     this.nodeHoverPreview?.destroy();
     this.nodeHoverPreview = null;
-    this.rootEl?.removeEventListener("keydown", this.onRootKeydown);
+    this.rootEl?.removeEventListener("keydown", this.onRootKeydown, true);
     this.rootEl?.removeEventListener("paste", this.onImagePaste);
     this.canvasEl?.removeEventListener("dragover", this.onImageDragOver);
     this.canvasEl?.removeEventListener("drop", this.onImageDrop);
@@ -565,6 +569,7 @@ export class YeMindEditor {
       layout: this.current.layout,
       settings: this.settings,
       onHyperlink: (href) => this.openLink(href),
+      onDeleteShortcut: () => this.commands?.remove(),
     });
     this.commands = createCommandAdapter(this.map);
     this.nodeHoverPreview = new NodeHoverPreview(this.rootEl);
@@ -590,7 +595,7 @@ export class YeMindEditor {
         this.richTextToolbar?.update(hasRange, rect, format, target);
       },
     });
-    this.rootEl.addEventListener("keydown", this.onRootKeydown);
+    this.rootEl.addEventListener("keydown", this.onRootKeydown, true);
     this.rootEl.addEventListener("paste", this.onImagePaste);
     this.canvasEl.addEventListener("dragover", this.onImageDragOver);
     this.canvasEl.addEventListener("drop", this.onImageDrop);
@@ -660,24 +665,9 @@ export class YeMindEditor {
           expanded: outlineRow.dataset.outlineExpanded === "true",
         });
         if (!uid || next === null) return;
-        const activeHost = this.outlineRichText?.activeHost;
-        const activeUid =
-          activeHost?.closest<HTMLElement>("[data-outline-uid]")?.dataset
-            .outlineUid ?? "";
-        if (activeUid === uid && activeHost && this.outlineRichText) {
-          const selection = this.outlineRichText.getSelectionState(activeHost);
-          this.pendingOutlineFocus = {
-            uid,
-            placement: "range",
-            start: selection.start,
-            end: selection.end,
-          };
-          this.outlineRichText.commitAndDetach("toggle-collapse");
-        }
         this.commands.goToNode(uid);
         this.activateOutlineUid(uid);
-        if (!this.commands.setNodeExpandedByUid(uid, next))
-          this.pendingOutlineFocus = null;
+        this.setOutlineExpanded(uid, next);
         return;
       }
       if (outlineRow && this.commands) {
@@ -1635,17 +1625,18 @@ export class YeMindEditor {
   }
 
   private renderOutline(data: MindMapTree): void {
+    pruneOutlineCollapsedUids(data, this.outlineCollapsedUids);
     const activeEditor = this.outlineRichText?.activeHost ?? null;
     const activeUid =
       activeEditor?.closest<HTMLElement>("[data-outline-uid]")?.dataset
         .outlineUid ?? null;
     const readonly = this.rootEl.dataset.readonly === "true";
-    const nextStructureKey = outlineStructureSignature(data);
+    const nextStructureKey = outlineStructureSignature(data, this.outlineCollapsedUids);
     const structureChanged = Boolean(
       this.outlineStructureKey && this.outlineStructureKey !== nextStructureKey,
     );
     const visibleUids = structureChanged
-      ? new Set(flattenOutline(data).map((row) => row.uid))
+      ? new Set(flattenOutline(data, this.outlineCollapsedUids).map((row) => row.uid))
       : null;
     this.outlineEl.setAttribute("aria-readonly", String(readonly));
 
@@ -1671,9 +1662,21 @@ export class YeMindEditor {
       this.outlineRichText?.commitAndDetach(
         structureChanged ? "structure-change" : "pending-focus",
       );
-      patchOutlineTree(this.outlineEl, data, readonly, null);
+      patchOutlineTree(
+        this.outlineEl,
+        data,
+        readonly,
+        null,
+        this.outlineCollapsedUids,
+      );
     } else {
-      patchOutlineTree(this.outlineEl, data, readonly, activeUid);
+      patchOutlineTree(
+        this.outlineEl,
+        data,
+        readonly,
+        activeUid,
+        this.outlineCollapsedUids,
+      );
     }
     this.outlineStructureKey = nextStructureKey;
 
@@ -1770,6 +1773,20 @@ export class YeMindEditor {
       this.focusOutlineNeighbor(editor, action === "previous" ? -1 : 1);
       return;
     }
+    if (action === "delete-empty") {
+      const focusUid = this.outlineDeleteFocusUid(row);
+      this.outlineStructureBusy = true;
+      try {
+        this.pendingOutlineFocus = focusUid
+          ? { uid: focusUid, placement: "end" }
+          : null;
+        this.outlineRichText.discardAndDetach("delete-empty");
+        if (!this.commands.removeNodeByUid(uid)) this.pendingOutlineFocus = null;
+      } finally {
+        this.outlineStructureBusy = false;
+      }
+      return;
+    }
 
     this.outlineStructureBusy = true;
     try {
@@ -1779,8 +1796,7 @@ export class YeMindEditor {
           uid,
           placement: action === "collapse" ? "start" : "end",
         };
-        if (!this.commands.setNodeExpandedByUid(uid, action === "expand"))
-          this.pendingOutlineFocus = null;
+        this.setOutlineExpanded(uid, action === "expand");
         return;
       }
       if (action === "indent" || action === "outdent") {
@@ -1803,6 +1819,23 @@ export class YeMindEditor {
     } finally {
       this.outlineStructureBusy = false;
     }
+  }
+
+  private setOutlineExpanded(uid: string, expanded: boolean): void {
+    if (!uid) return;
+    if (expanded) this.outlineCollapsedUids.delete(uid);
+    else this.outlineCollapsedUids.add(uid);
+    this.renderOutline(this.current.data);
+  }
+
+  private outlineDeleteFocusUid(row: HTMLElement): string | null {
+    const rows = Array.from(
+      this.outlineEl.querySelectorAll<HTMLElement>(":scope > [data-outline-uid]"),
+    );
+    const index = rows.indexOf(row);
+    if (index < 0) return null;
+    const candidate = rows[index - 1] ?? rows[index + 1] ?? null;
+    return candidate?.dataset.outlineUid || null;
   }
 
   private focusOutlineNeighbor(editor: HTMLElement, offset: number): void {

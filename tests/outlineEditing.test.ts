@@ -24,7 +24,7 @@ describe('editable outline', () => {
   });
 
   it('hides descendants of collapsed nodes from the continuous outline', () => {
-    const html = renderOutlineHtml(tree, false);
+    const html = renderOutlineHtml(tree, false, new Set(['a']));
     expect(html).toContain('data-outline-uid="a"');
     expect(html).not.toContain('data-outline-uid="hidden"');
   });
@@ -43,8 +43,8 @@ describe('editable outline', () => {
     expect(resolveOutlineKeyAction({ ...base, key: 'ArrowLeft' })).toBe('collapse');
     expect(resolveOutlineKeyAction({ ...base, key: 'ArrowRight', expanded: false })).toBe('expand');
     expect(resolveOutlineKeyAction({ ...base, key: 'ArrowRight', expanded: true })).toBe('none');
-    expect(resolveOutlineKeyAction({ ...base, key: 'Backspace', empty: true })).toBe('none');
-    expect(resolveOutlineKeyAction({ ...base, key: 'Delete', empty: true })).toBe('none');
+    expect(resolveOutlineKeyAction({ ...base, key: 'Backspace', empty: true })).toBe('delete-empty');
+    expect(resolveOutlineKeyAction({ ...base, key: 'Delete', empty: true })).toBe('delete-empty');
     expect(resolveOutlineKeyAction({ ...base, key: 'Escape' })).toBe('cancel');
     expect(resolveOutlineKeyAction({ ...base, key: 'Enter', composing: true })).toBe('none');
     expect(resolveOutlineKeyAction({ ...base, key: 'Enter', readonly: true })).toBe('none');

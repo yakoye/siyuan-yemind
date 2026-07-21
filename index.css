@@ -363,6 +363,12 @@
 .ymz-note-dialog{min-height:220px}.ymz-note-editor{min-height:210px;max-height:56vh;overflow:auto;padding:12px;border:1px solid var(--ymz-border);border-radius:8px;background:var(--b3-theme-background);color:var(--b3-theme-on-background);outline:0;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}.ymz-note-editor:focus{border-color:var(--b3-theme-primary);box-shadow:0 0 0 2px color-mix(in srgb,var(--b3-theme-primary) 14%,transparent)}.ymz-note-editor:empty::before{content:attr(data-placeholder);color:var(--b3-theme-on-surface-light);pointer-events:none}.ymz-note-editor img{max-width:100%;height:auto}
 .ymz-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .ymz-note-resize-handle{position:absolute;right:3px;bottom:3px;width:20px;height:20px;padding:0;border:0;background:linear-gradient(135deg,transparent 0 45%,color-mix(in srgb,var(--b3-theme-on-surface) 35%,transparent) 46% 52%,transparent 53% 62%,color-mix(in srgb,var(--b3-theme-on-surface) 35%,transparent) 63% 69%,transparent 70%);cursor:nwse-resize;opacity:.7}.ymz-note-resize-handle:hover,.ymz-note-resize-handle:focus-visible{opacity:1;outline:0}.b3-dialog__container:has(.ymz-note-resize-handle){position:relative;min-width:420px;min-height:280px}.b3-dialog__container.is-resizing{user-select:none}
+
+/* v0.5.19 outline-local disclosure and VS Code-style indent guides */
+.ymz-outline{--ymz-outline-guide-1:color-mix(in srgb,#5b8def 42%,transparent);--ymz-outline-guide-2:color-mix(in srgb,#d99a2b 40%,transparent);--ymz-outline-guide-3:color-mix(in srgb,#38a169 38%,transparent);--ymz-outline-guide-4:color-mix(in srgb,#9b6bd3 38%,transparent)}
+.ymz-outline-row{position:relative}
+.ymz-outline-row::before{content:"";position:absolute;z-index:0;top:0;bottom:0;left:8px;width:calc(var(--ymz-outline-depth,0)*22px);background-image:linear-gradient(to right,transparent 0 10px,var(--ymz-outline-guide-1) 10px 11px,transparent 11px 32px,var(--ymz-outline-guide-2) 32px 33px,transparent 33px 54px,var(--ymz-outline-guide-3) 54px 55px,transparent 55px 76px,var(--ymz-outline-guide-4) 76px 77px,transparent 77px 88px);background-size:88px 100%;background-repeat:repeat-x;pointer-events:none}
+.ymz-outline-row__branch,.ymz-outline-row__editor{position:relative;z-index:1}
 /*!
  * Quill Editor v2.0.3
  * https://quilljs.com

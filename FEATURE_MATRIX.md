@@ -1,5 +1,16 @@
 # YeMind Zen 功能矩阵
 
+## v0.5.19 已完成
+
+- [x] 空白非根大纲行 Backspace/Delete 删除对应节点并恢复相邻可见行焦点
+- [x] 大纲折叠状态与画布 `data.expand` 完全解耦
+- [x] Root 和普通分支折叠/展开可反复往返，叶节点保持不可交互占位
+- [x] 删除节点或失去子节点后自动清理陈旧折叠 UID
+- [x] 画布 Delete/Backspace 捕获阶段拦截与上游 safe-delete 双层保护
+- [x] 混合选择删除时过滤所有 Root，只把普通节点交给 `REMOVE_NODE`
+- [x] 四级循环、非交互的 VS Code 风格大纲层级引导线
+- [x] package/plugin/runtime 版本统一到 0.5.19
+
 ## v0.5.18 已完成
 
 - [x] 文字提交时不移动/重插活动大纲行，Quill 焦点和 selection 连续保持

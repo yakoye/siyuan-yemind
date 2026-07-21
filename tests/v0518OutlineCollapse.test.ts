@@ -19,13 +19,13 @@ describe('v0.5.18 repeatable outline collapse', () => {
     const row = container.querySelector<HTMLElement>('[data-outline-uid="parent"]')!;
     const toggle = row.querySelector<HTMLButtonElement>('[data-outline-toggle]')!;
 
-    patchOutlineTree(container, tree(false), false, null);
+    patchOutlineTree(container, tree(true), false, null, new Set(['parent']));
     expect(container.querySelector('[data-outline-uid="parent"]')).toBe(row);
     expect(toggle.textContent).toBe('▸');
     expect(toggle.disabled).toBe(false);
     expect(container.querySelector('[data-outline-uid="child"]')).toBeNull();
 
-    patchOutlineTree(container, tree(true), false, null);
+    patchOutlineTree(container, tree(true), false, null, new Set());
     expect(container.querySelector('[data-outline-uid="parent"]')).toBe(row);
     expect(toggle.textContent).toBe('▾');
     expect(toggle.disabled).toBe(false);

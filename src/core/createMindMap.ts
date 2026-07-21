@@ -6,7 +6,7 @@ import { createNodePrefixContent, createNodePostfixContent, YEMIND_ICON_LIST } f
 import { buildDragAndLayoutOptions, normalizePersistedViewData } from './dragBehavior';
 import { buildRelationOptions } from './relationConfig';
 import { buildOuterFrameOptions } from './outerFrameConfig';
-import { shouldBlockUpstreamShortcut } from '../editor/shortcutSafety';
+import { resolveUpstreamShortcutAction } from '../editor/shortcutSafety';
 import { buildThemeConfig, detectAppearance, type YeMindLineStyle } from './themePresets';
 
 export interface CreateMindMapOptions {
@@ -19,6 +19,7 @@ export interface CreateMindMapOptions {
   readonly?: boolean;
   settings?: YeMindSettings;
   onHyperlink?: (href: string) => void;
+  onDeleteShortcut?: () => void;
 }
 
 export function createMindMap(options: CreateMindMapOptions): MindMap {
@@ -83,11 +84,15 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     openRealtimeRenderOnNodeTextEdit: true,
     enableEditFormulaInRichTextEdit: true,
     customHyperlinkJump: (href: string) => options.onHyperlink?.(href),
-    beforeShortcutRun: (shortcut: string, nodes: any[]) => shouldBlockUpstreamShortcut(
-      shortcut,
-      nodes,
-      options.el.closest<HTMLElement>('.ymz-editor')?.dataset.readonly === 'true',
-    ),
+    beforeShortcutRun: (shortcut: string, nodes: any[]) => {
+      const action = resolveUpstreamShortcutAction(
+        shortcut,
+        nodes,
+        options.el.closest<HTMLElement>('.ymz-editor')?.dataset.readonly === 'true',
+      );
+      if (action === 'safe-delete') options.onDeleteShortcut?.();
+      return action !== 'allow';
+    },
     errorHandler: (_code: unknown, error: unknown) => console.error('[YeMind Zen]', error),
   } as any);
 }

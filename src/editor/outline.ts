@@ -19,6 +19,7 @@ export type OutlineKeyAction =
   | "insert-child"
   | "indent"
   | "outdent"
+  | "delete-empty"
   | "previous"
   | "next"
   | "collapse"
@@ -40,6 +41,8 @@ export interface OutlineKeyContext {
   ctrlKey?: boolean;
   metaKey?: boolean;
 }
+
+const NO_COLLAPSED_OUTLINE_UIDS: ReadonlySet<string> = new Set<string>();
 
 function plainTextFromHtml(value: string): string {
   const element = document.createElement("div");
@@ -67,27 +70,55 @@ function nodeText(tree: MindMapTree): {
   };
 }
 
-export function flattenOutline(tree: MindMapTree): OutlineRow[] {
+/**
+ * Build the outline from the complete map tree. Outline disclosure is editor UI
+ * state and deliberately does not inherit `node.data.expand`, which belongs to
+ * the canvas renderer.
+ */
+export function flattenOutline(
+  tree: MindMapTree,
+  collapsedUids: ReadonlySet<string> = NO_COLLAPSED_OUTLINE_UIDS,
+): OutlineRow[] {
   const rows: OutlineRow[] = [];
   const visit = (node: MindMapTree, depth: number, path: string): void => {
     const children = Array.isArray(node.children) ? node.children : [];
     const hasChildren = children.length > 0;
-    const expanded = node.data.expand !== false;
+    const uid = String(node.data.uid ?? path);
+    const expanded = !collapsedUids.has(uid);
     rows.push({
-      uid: String(node.data.uid ?? path),
+      uid,
       ...nodeText(node),
       depth,
       hasChildren,
       expanded,
       isRoot: depth === 0,
     });
-    if (hasChildren && expanded)
+    if (hasChildren && expanded) {
       children.forEach((child, index) =>
         visit(child, depth + 1, `${path}.${index}`),
       );
+    }
   };
   visit(tree, 0, "root");
   return rows;
+}
+
+/** Remove disclosure entries whose node disappeared or no longer has children. */
+export function pruneOutlineCollapsedUids(
+  tree: MindMapTree,
+  collapsedUids: Set<string>,
+): void {
+  const collapsible = new Set<string>();
+  const visit = (node: MindMapTree, path: string): void => {
+    const children = Array.isArray(node.children) ? node.children : [];
+    const uid = String(node.data.uid ?? path);
+    if (children.length > 0) collapsible.add(uid);
+    children.forEach((child, index) => visit(child, `${path}.${index}`));
+  };
+  visit(tree, "root");
+  collapsedUids.forEach((uid) => {
+    if (!collapsible.has(uid)) collapsedUids.delete(uid);
+  });
 }
 
 export function resolveOutlineKeyAction(
@@ -101,6 +132,15 @@ export function resolveOutlineKeyAction(
   const hasCommandModifier = Boolean(
     context.altKey || context.ctrlKey || context.metaKey,
   );
+  if (
+    (context.key === "Backspace" || context.key === "Delete") &&
+    context.empty &&
+    !context.isRoot &&
+    !context.shiftKey &&
+    !hasCommandModifier
+  ) {
+    return "delete-empty";
+  }
   if (context.key === "Enter") {
     if (context.shiftKey && !hasCommandModifier) return "hard-break";
     if (context.shiftKey || hasCommandModifier) return "none";
@@ -136,16 +176,16 @@ function rowHtml(row: OutlineRow, readonly: boolean): string {
   return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml(row.uid)}" data-outline-root="${row.isRoot}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" data-outline-drag-source="${readonly || row.isRoot ? "false" : "true"}" style="--ymz-outline-depth:${row.depth}">${toggle}<div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
 }
 
-export function renderOutlineHtml(tree: MindMapTree, readonly = false): string {
-  return flattenOutline(tree)
+export function renderOutlineHtml(
+  tree: MindMapTree,
+  readonly = false,
+  collapsedUids: ReadonlySet<string> = NO_COLLAPSED_OUTLINE_UIDS,
+): string {
+  return flattenOutline(tree, collapsedUids)
     .map((row) => rowHtml(row, readonly))
     .join("");
 }
 
-/**
- * Patch outline rows by stable UID. The active row/editor is never replaced or
- * rewritten, so a Quill session and its IME/selection state survive map saves.
- */
 export function resolveOutlineToggleState(input: {
   hasChildren: boolean;
   expanded: boolean;
@@ -154,11 +194,15 @@ export function resolveOutlineToggleState(input: {
 }
 
 /**
- * A signature of structural state only. Text and rich formatting are deliberately
- * excluded so ordinary typing never tears down the active editor session.
+ * A signature of structural and outline-disclosure state only. Text and rich
+ * formatting are deliberately excluded so ordinary typing never tears down the
+ * active editor session.
  */
-export function outlineStructureSignature(tree: MindMapTree): string {
-  return flattenOutline(tree)
+export function outlineStructureSignature(
+  tree: MindMapTree,
+  collapsedUids: ReadonlySet<string> = NO_COLLAPSED_OUTLINE_UIDS,
+): string {
+  return flattenOutline(tree, collapsedUids)
     .map(
       (row) =>
         `${row.uid}:${row.depth}:${row.hasChildren ? 1 : 0}:${row.expanded ? 1 : 0}`,
@@ -176,8 +220,9 @@ export function patchOutlineTree(
   tree: MindMapTree,
   readonly = false,
   activeUid: string | null = null,
+  collapsedUids: ReadonlySet<string> = NO_COLLAPSED_OUTLINE_UIDS,
 ): void {
-  const rows = flattenOutline(tree);
+  const rows = flattenOutline(tree, collapsedUids);
   const existing = new Map<string, HTMLElement>();
   container
     .querySelectorAll<HTMLElement>(":scope > [data-outline-uid]")

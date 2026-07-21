@@ -23,17 +23,18 @@ describe('v0.5.18 outline regression matrix', () => {
       b,
     ], 'Renamed');
     const reordered = branch([b, a]);
-    const collapsed = branch([a, b], 'Parent', false);
-
     expect(outlineStructureSignature(textOnly)).toBe(outlineStructureSignature(initial));
     expect(outlineStructureSignature(reordered)).not.toBe(outlineStructureSignature(initial));
-    expect(outlineStructureSignature(collapsed)).not.toBe(outlineStructureSignature(initial));
+    expect(outlineStructureSignature(initial, new Set(['parent']))).not.toBe(
+      outlineStructureSignature(initial),
+    );
   });
 
-  it('does not route Backspace or Delete into structural node deletion, even when empty', () => {
+  it('routes only an empty non-root row into structural deletion', () => {
     for (const key of ['Backspace', 'Delete']) {
       expect(resolveOutlineKeyAction({ key, empty: false, isRoot: false, readonly: false })).toBe('none');
-      expect(resolveOutlineKeyAction({ key, empty: true, isRoot: false, readonly: false })).toBe('none');
+      expect(resolveOutlineKeyAction({ key, empty: true, isRoot: false, readonly: false })).toBe('delete-empty');
+      expect(resolveOutlineKeyAction({ key, empty: true, isRoot: true, readonly: false })).toBe('none');
     }
   });
 

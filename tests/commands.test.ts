@@ -50,6 +50,25 @@ describe('createCommandAdapter', () => {
     ]);
   });
 
+
+
+  it('filters Root nodes from mixed destructive selections and never calls upstream with Root', () => {
+    const root = { isRoot: true, isGeneralization: false };
+    const child = { isRoot: false, isGeneralization: false };
+    const map = fakeMindMap() as any;
+    map.opt = { readonly: false };
+    map.renderer.activeNodeList = [root, child];
+    const commands = createCommandAdapter(map as never);
+
+    commands.remove();
+    commands.removeOnlyCurrent();
+
+    expect(map.execCommand.mock.calls).toEqual([
+      ['REMOVE_NODE', [child]],
+      ['REMOVE_CURRENT_NODE', [child]],
+    ]);
+  });
+
   it('uses native view and edit methods', () => {
     const map = fakeMindMap();
     const commands = createCommandAdapter(map as never);

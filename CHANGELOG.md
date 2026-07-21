@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.19 — 2026-07-18
+
+- Added explicit structural deletion for empty non-root outline rows: Backspace/Delete discards the empty editor host, removes the matching node through the command adapter, and restores focus to a neighboring visible row.
+- Separated outline disclosure from canvas node `expand` data by introducing editor-local collapsed UID state consumed by flattening, signatures, rendering, and keyed patching.
+- Restored repeatable Root and branch collapse/expand and pruned disclosure entries when nodes disappear or lose their children.
+- Routed canvas Backspace/Delete through capture-phase interception and the upstream `beforeShortcutRun` safety resolver, filtering Root nodes before `REMOVE_NODE` and preventing the KMind multi-Root error dialog.
+- Added mixed-selection deletion regression coverage to guarantee upstream delete commands never receive Root nodes.
+- Added subtle four-level repeating VS Code-style indent guides without new row DOM or pointer interception.
+- Added focused regression tests for empty deletion, Root disclosure round trips, map/outline expansion independence, stale-state pruning, shortcut safety, mixed Root deletion, and indent guides.
+
 ## 0.5.18 — 2026-07-18
 
 - Reworked split/full-outline reconciliation so ordinary text commits never move or reinsert the active Quill row; consecutive Backspace/Delete edits now keep the same browser focus and selection.

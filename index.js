@@ -4371,7 +4371,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.5.18";
+const PLUGIN_VERSION = "0.5.19";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -55809,11 +55809,12 @@ const READONLY_ALLOWED_SHORTCUTS = /* @__PURE__ */ new Set([
   "Left",
   "Right"
 ]);
-const ROOT_DELETE_SHORTCUTS = /* @__PURE__ */ new Set(["Del", "Delete", "Backspace", "Shift+Backspace"]);
-function shouldBlockUpstreamShortcut(shortcut, nodes, readonly) {
-  if (readonly && !READONLY_ALLOWED_SHORTCUTS.has(shortcut)) return true;
-  if (ROOT_DELETE_SHORTCUTS.has(shortcut) && nodes.some((node) => Boolean(node == null ? void 0 : node.isRoot))) return true;
-  return false;
+const DELETE_SHORTCUTS = /* @__PURE__ */ new Set(["Del", "Delete", "Backspace", "Shift+Backspace"]);
+function resolveUpstreamShortcutAction(shortcut, nodes, readonly) {
+  if (readonly && !READONLY_ALLOWED_SHORTCUTS.has(shortcut)) return "block";
+  if (!DELETE_SHORTCUTS.has(shortcut)) return "allow";
+  const active = Array.isArray(nodes) ? nodes : [];
+  return active.some((node) => !(node == null ? void 0 : node.isRoot)) ? "safe-delete" : "block";
 }
 function createMindMap(options) {
   registerMindMapPlugins(options.settings);
@@ -55877,12 +55878,14 @@ function createMindMap(options) {
       return (_a = options.onHyperlink) == null ? void 0 : _a.call(options, href);
     },
     beforeShortcutRun: (shortcut, nodes) => {
-      var _a;
-      return shouldBlockUpstreamShortcut(
+      var _a, _b;
+      const action = resolveUpstreamShortcutAction(
         shortcut,
         nodes,
         ((_a = options.el.closest(".ymz-editor")) == null ? void 0 : _a.dataset.readonly) === "true"
       );
+      if (action === "safe-delete") (_b = options.onDeleteShortcut) == null ? void 0 : _b.call(options);
+      return action !== "allow";
     },
     errorHandler: (_code, error) => console.error("[YeMind Zen]", error)
   });
@@ -57443,6 +57446,7 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
 function escapeHtml$2(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
+const NO_COLLAPSED_OUTLINE_UIDS = /* @__PURE__ */ new Set();
 function plainTextFromHtml(value) {
   const element = document.createElement("div");
   element.innerHTML = value;
@@ -57463,27 +57467,42 @@ function nodeText(tree) {
     richText: false
   };
 }
-function flattenOutline(tree) {
+function flattenOutline(tree, collapsedUids = NO_COLLAPSED_OUTLINE_UIDS) {
   const rows = [];
   const visit = (node, depth, path2) => {
     const children = Array.isArray(node.children) ? node.children : [];
     const hasChildren = children.length > 0;
-    const expanded = node.data.expand !== false;
+    const uid = String(node.data.uid ?? path2);
+    const expanded = !collapsedUids.has(uid);
     rows.push({
-      uid: String(node.data.uid ?? path2),
+      uid,
       ...nodeText(node),
       depth,
       hasChildren,
       expanded,
       isRoot: depth === 0
     });
-    if (hasChildren && expanded)
+    if (hasChildren && expanded) {
       children.forEach(
         (child, index) => visit(child, depth + 1, `${path2}.${index}`)
       );
+    }
   };
   visit(tree, 0, "root");
   return rows;
+}
+function pruneOutlineCollapsedUids(tree, collapsedUids) {
+  const collapsible = /* @__PURE__ */ new Set();
+  const visit = (node, path2) => {
+    const children = Array.isArray(node.children) ? node.children : [];
+    const uid = String(node.data.uid ?? path2);
+    if (children.length > 0) collapsible.add(uid);
+    children.forEach((child, index) => visit(child, `${path2}.${index}`));
+  };
+  visit(tree, "root");
+  collapsedUids.forEach((uid) => {
+    if (!collapsible.has(uid)) collapsedUids.delete(uid);
+  });
 }
 function resolveOutlineKeyAction(context) {
   if (context.composing) return "none";
@@ -57494,6 +57513,9 @@ function resolveOutlineKeyAction(context) {
   const hasCommandModifier = Boolean(
     context.altKey || context.ctrlKey || context.metaKey
   );
+  if ((context.key === "Backspace" || context.key === "Delete") && context.empty && !context.isRoot && !context.shiftKey && !hasCommandModifier) {
+    return "delete-empty";
+  }
   if (context.key === "Enter") {
     if (context.shiftKey && !hasCommandModifier) return "hard-break";
     if (context.shiftKey || hasCommandModifier) return "none";
@@ -57518,13 +57540,13 @@ function rowHtml(row, readonly) {
 function resolveOutlineToggleState(input) {
   return input.hasChildren ? !input.expanded : null;
 }
-function outlineStructureSignature(tree) {
-  return flattenOutline(tree).map(
+function outlineStructureSignature(tree, collapsedUids = NO_COLLAPSED_OUTLINE_UIDS) {
+  return flattenOutline(tree, collapsedUids).map(
     (row) => `${row.uid}:${row.depth}:${row.hasChildren ? 1 : 0}:${row.expanded ? 1 : 0}`
   ).join("|");
 }
-function patchOutlineTree(container, tree, readonly = false, activeUid = null) {
-  const rows = flattenOutline(tree);
+function patchOutlineTree(container, tree, readonly = false, activeUid = null, collapsedUids = NO_COLLAPSED_OUTLINE_UIDS) {
+  const rows = flattenOutline(tree, collapsedUids);
   const existing = /* @__PURE__ */ new Map();
   container.querySelectorAll(":scope > [data-outline-uid]").forEach((row) => {
     existing.set(row.dataset.outlineUid ?? "", row);
@@ -57842,6 +57864,10 @@ class OutlineRichTextController {
   commitAndDetach(reason) {
     if (!this.host) return;
     this.flush();
+    this.detach(false, reason);
+  }
+  /** Detach an editor whose backing node is about to be removed. */
+  discardAndDetach(reason) {
     this.detach(false, reason);
   }
   cancel() {
@@ -58555,10 +58581,6 @@ function promoteNodeToPrimary(renderer, node) {
   (_a = renderer.emitNodeActiveEvent) == null ? void 0 : _a.call(renderer);
   return true;
 }
-function shouldBlockRootDeleteShortcut(key, nodes) {
-  if (key !== "Backspace" && key !== "Delete") return false;
-  return Array.isArray(nodes) && nodes.some((node) => Boolean(node == null ? void 0 : node.isRoot));
-}
 class SaveRevisionTracker {
   constructor() {
     __publicField(this, "latestRevision", 0);
@@ -58873,6 +58895,7 @@ class YeMindEditor {
     __publicField(this, "outlineStructureBusy", false);
     __publicField(this, "outlinePointerDrag", null);
     __publicField(this, "outlineStructureKey", "");
+    __publicField(this, "outlineCollapsedUids", /* @__PURE__ */ new Set());
     __publicField(this, "suppressOutlineClickUntil", 0);
     __publicField(this, "pendingOutlineFocus", null);
     __publicField(this, "appearanceObserver", null);
@@ -59048,10 +59071,10 @@ class YeMindEditor {
         return;
       }
       if (!this.commands || isEditableTarget(event.target)) return;
-      if (shouldBlockRootDeleteShortcut(event.key, this.commands.getActiveNodes())) {
+      if ((event.key === "Backspace" || event.key === "Delete") && !event.ctrlKey && !event.metaKey && !event.altKey) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        siyuan.showMessage("根节点不能删除；请选择普通节点后再删除", 3e3, "info");
+        this.commands.remove();
         return;
       }
       const actions = [
@@ -59142,7 +59165,7 @@ class YeMindEditor {
     this.richTextToolbar = null;
     (_h = this.nodeHoverPreview) == null ? void 0 : _h.destroy();
     this.nodeHoverPreview = null;
-    (_i = this.rootEl) == null ? void 0 : _i.removeEventListener("keydown", this.onRootKeydown);
+    (_i = this.rootEl) == null ? void 0 : _i.removeEventListener("keydown", this.onRootKeydown, true);
     (_j = this.rootEl) == null ? void 0 : _j.removeEventListener("paste", this.onImagePaste);
     (_k = this.canvasEl) == null ? void 0 : _k.removeEventListener("dragover", this.onImageDragOver);
     (_l = this.canvasEl) == null ? void 0 : _l.removeEventListener("drop", this.onImageDrop);
@@ -59268,7 +59291,11 @@ class YeMindEditor {
       lineStyle: this.current.lineStyle,
       layout: this.current.layout,
       settings: this.settings,
-      onHyperlink: (href) => this.openLink(href)
+      onHyperlink: (href) => this.openLink(href),
+      onDeleteShortcut: () => {
+        var _a;
+        return (_a = this.commands) == null ? void 0 : _a.remove();
+      }
     });
     this.commands = createCommandAdapter(this.map);
     this.nodeHoverPreview = new NodeHoverPreview(this.rootEl);
@@ -59296,7 +59323,7 @@ class YeMindEditor {
         (_a = this.richTextToolbar) == null ? void 0 : _a.update(hasRange, rect, format, target);
       }
     });
-    this.rootEl.addEventListener("keydown", this.onRootKeydown);
+    this.rootEl.addEventListener("keydown", this.onRootKeydown, true);
     this.rootEl.addEventListener("paste", this.onImagePaste);
     this.canvasEl.addEventListener("dragover", this.onImageDragOver);
     this.canvasEl.addEventListener("drop", this.onImageDrop);
@@ -59341,7 +59368,6 @@ class YeMindEditor {
   bindToolbar() {
     var _a, _b, _c2;
     this.rootEl.addEventListener("click", (event) => {
-      var _a2, _b2;
       const anchor = event.target.closest(
         "a[href]"
       );
@@ -59366,22 +59392,9 @@ class YeMindEditor {
           expanded: outlineRow.dataset.outlineExpanded === "true"
         });
         if (!uid || next2 === null) return;
-        const activeHost = (_a2 = this.outlineRichText) == null ? void 0 : _a2.activeHost;
-        const activeUid = ((_b2 = activeHost == null ? void 0 : activeHost.closest("[data-outline-uid]")) == null ? void 0 : _b2.dataset.outlineUid) ?? "";
-        if (activeUid === uid && activeHost && this.outlineRichText) {
-          const selection = this.outlineRichText.getSelectionState(activeHost);
-          this.pendingOutlineFocus = {
-            uid,
-            placement: "range",
-            start: selection.start,
-            end: selection.end
-          };
-          this.outlineRichText.commitAndDetach("toggle-collapse");
-        }
         this.commands.goToNode(uid);
         this.activateOutlineUid(uid);
-        if (!this.commands.setNodeExpandedByUid(uid, next2))
-          this.pendingOutlineFocus = null;
+        this.setOutlineExpanded(uid, next2);
         return;
       }
       if (outlineRow && this.commands) {
@@ -60251,14 +60264,15 @@ class YeMindEditor {
   }
   renderOutline(data2) {
     var _a, _b, _c2, _d2, _e, _f;
+    pruneOutlineCollapsedUids(data2, this.outlineCollapsedUids);
     const activeEditor = ((_a = this.outlineRichText) == null ? void 0 : _a.activeHost) ?? null;
     const activeUid = ((_b = activeEditor == null ? void 0 : activeEditor.closest("[data-outline-uid]")) == null ? void 0 : _b.dataset.outlineUid) ?? null;
     const readonly = this.rootEl.dataset.readonly === "true";
-    const nextStructureKey = outlineStructureSignature(data2);
+    const nextStructureKey = outlineStructureSignature(data2, this.outlineCollapsedUids);
     const structureChanged = Boolean(
       this.outlineStructureKey && this.outlineStructureKey !== nextStructureKey
     );
-    const visibleUids = structureChanged ? new Set(flattenOutline(data2).map((row) => row.uid)) : null;
+    const visibleUids = structureChanged ? new Set(flattenOutline(data2, this.outlineCollapsedUids).map((row) => row.uid)) : null;
     this.outlineEl.setAttribute("aria-readonly", String(readonly));
     if (this.pendingOutlineFocus || structureChanged && activeEditor && activeUid) {
       if (!this.pendingOutlineFocus && activeEditor && activeUid && (visibleUids == null ? void 0 : visibleUids.has(activeUid)) && this.outlineRichText) {
@@ -60273,9 +60287,21 @@ class YeMindEditor {
       (_c2 = this.outlineRichText) == null ? void 0 : _c2.commitAndDetach(
         structureChanged ? "structure-change" : "pending-focus"
       );
-      patchOutlineTree(this.outlineEl, data2, readonly, null);
+      patchOutlineTree(
+        this.outlineEl,
+        data2,
+        readonly,
+        null,
+        this.outlineCollapsedUids
+      );
     } else {
-      patchOutlineTree(this.outlineEl, data2, readonly, activeUid);
+      patchOutlineTree(
+        this.outlineEl,
+        data2,
+        readonly,
+        activeUid,
+        this.outlineCollapsedUids
+      );
     }
     this.outlineStructureKey = nextStructureKey;
     const selectedUid = String(
@@ -60354,6 +60380,18 @@ class YeMindEditor {
       this.focusOutlineNeighbor(editor, action === "previous" ? -1 : 1);
       return;
     }
+    if (action === "delete-empty") {
+      const focusUid = this.outlineDeleteFocusUid(row);
+      this.outlineStructureBusy = true;
+      try {
+        this.pendingOutlineFocus = focusUid ? { uid: focusUid, placement: "end" } : null;
+        this.outlineRichText.discardAndDetach("delete-empty");
+        if (!this.commands.removeNodeByUid(uid)) this.pendingOutlineFocus = null;
+      } finally {
+        this.outlineStructureBusy = false;
+      }
+      return;
+    }
     this.outlineStructureBusy = true;
     try {
       this.outlineRichText.flush(editor);
@@ -60362,8 +60400,7 @@ class YeMindEditor {
           uid,
           placement: action === "collapse" ? "start" : "end"
         };
-        if (!this.commands.setNodeExpandedByUid(uid, action === "expand"))
-          this.pendingOutlineFocus = null;
+        this.setOutlineExpanded(uid, action === "expand");
         return;
       }
       if (action === "indent" || action === "outdent") {
@@ -60379,6 +60416,21 @@ class YeMindEditor {
     } finally {
       this.outlineStructureBusy = false;
     }
+  }
+  setOutlineExpanded(uid, expanded) {
+    if (!uid) return;
+    if (expanded) this.outlineCollapsedUids.delete(uid);
+    else this.outlineCollapsedUids.add(uid);
+    this.renderOutline(this.current.data);
+  }
+  outlineDeleteFocusUid(row) {
+    const rows = Array.from(
+      this.outlineEl.querySelectorAll(":scope > [data-outline-uid]")
+    );
+    const index = rows.indexOf(row);
+    if (index < 0) return null;
+    const candidate = rows[index - 1] ?? rows[index + 1] ?? null;
+    return (candidate == null ? void 0 : candidate.dataset.outlineUid) || null;
   }
   focusOutlineNeighbor(editor, offset) {
     var _a, _b;
