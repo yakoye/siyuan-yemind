@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   flattenOutline,
   patchOutlineTree,
-  pruneOutlineCollapsedUids,
   renderOutlineHtml,
   resolveOutlineKeyAction,
 } from '../src/editor/outline';
@@ -51,44 +50,26 @@ describe('v0.5.19 empty outline deletion', () => {
   });
 });
 
-describe('v0.5.19 outline-local collapse', () => {
-  it('does not inherit the map node expand flag', () => {
-    const rows = flattenOutline(tree({ rootExpand: false, parentExpand: false }), new Set());
-    expect(rows.map((row) => row.uid)).toEqual(['root', 'parent', 'child', 'sibling']);
-    expect(rows.find((row) => row.uid === 'root')?.expanded).toBe(true);
-    expect(rows.find((row) => row.uid === 'parent')?.expanded).toBe(true);
+describe('v0.5.20 synchronized outline collapse', () => {
+  it('inherits persisted map expansion state', () => {
+    const rows = flattenOutline(tree({ rootExpand: true, parentExpand: false }));
+    expect(rows.map((row) => row.uid)).toEqual(['root', 'parent', 'sibling']);
+    expect(rows.find((row) => row.uid === 'parent')?.expanded).toBe(false);
   });
 
-  it('hides descendants only through the outline-local collapsed set', () => {
-    expect(flattenOutline(tree(), new Set(['parent'])).map((row) => row.uid)).toEqual([
-      'root',
-      'parent',
-      'sibling',
-    ]);
-    expect(flattenOutline(tree(), new Set(['root'])).map((row) => row.uid)).toEqual([
-      'root',
-    ]);
-  });
-
-  it('keeps the root disclosure button reusable after collapse and expansion', () => {
+  it('updates the same disclosure button from persisted data', () => {
     const container = document.createElement('div');
-    container.innerHTML = renderOutlineHtml(tree(), false, new Set(['root']));
-    const rootRow = container.querySelector<HTMLElement>('[data-outline-uid="root"]')!;
-    const toggle = rootRow.querySelector<HTMLButtonElement>('[data-outline-toggle]')!;
+    container.innerHTML = renderOutlineHtml(tree({ parentExpand: false }), false);
+    const parentRow = container.querySelector<HTMLElement>('[data-outline-uid="parent"]')!;
+    const toggle = parentRow.querySelector<HTMLButtonElement>('[data-outline-toggle]')!;
     expect(toggle.textContent).toBe('▸');
-    expect(container.querySelector('[data-outline-uid="parent"]')).toBeNull();
+    expect(container.querySelector('[data-outline-uid="child"]')).toBeNull();
 
-    patchOutlineTree(container, tree(), false, null, new Set());
+    patchOutlineTree(container, tree({ parentExpand: true }), false, null);
 
-    expect(container.querySelector('[data-outline-uid="root"]')).toBe(rootRow);
+    expect(container.querySelector('[data-outline-uid="parent"]')).toBe(parentRow);
     expect(toggle.textContent).toBe('▾');
-    expect(container.querySelector('[data-outline-uid="parent"]')).not.toBeNull();
-  });
-
-  it('prunes collapsed UIDs that no longer exist', () => {
-    const collapsed = new Set(['parent', 'missing']);
-    pruneOutlineCollapsedUids(tree(), collapsed);
-    expect([...collapsed]).toEqual(['parent']);
+    expect(container.querySelector('[data-outline-uid="child"]')).not.toBeNull();
   });
 });
 

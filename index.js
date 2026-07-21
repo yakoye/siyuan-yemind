@@ -2863,8 +2863,8 @@ function downloadDiagnosticsArchive(blob, filename) {
 const FONT_SANS = 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif';
 const FONT_MONO = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
 const RAINBOW = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
-function level$1(fillColor, color, borderColor, borderWidth, borderRadius, fontSize, fontWeight) {
-  return { fillColor, color, borderColor, borderWidth, borderRadius, fontSize, fontWeight };
+function level$1(fillColor, color2, borderColor, borderWidth, borderRadius, fontSize, fontWeight) {
+  return { fillColor, color: color2, borderColor, borderWidth, borderRadius, fontSize, fontWeight };
 }
 const defaultLight = {
   backgroundColor: "#f8fafc",
@@ -4371,7 +4371,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.5.19";
+const PLUGIN_VERSION = "0.5.20";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -6009,12 +6009,12 @@ class Color {
     this.init(...inputs);
   }
   // Test if given value is a color
-  static isColor(color) {
-    return color && (color instanceof Color || this.isRgb(color) || this.test(color));
+  static isColor(color2) {
+    return color2 && (color2 instanceof Color || this.isRgb(color2) || this.test(color2));
   }
   // Test if given value is an rgb object
-  static isRgb(color) {
-    return color && typeof color.r === "number" && typeof color.g === "number" && typeof color.b === "number";
+  static isRgb(color2) {
+    return color2 && typeof color2.r === "number" && typeof color2.g === "number" && typeof color2.b === "number";
   }
   /*
   Generating random colors
@@ -6030,50 +6030,50 @@ class Color {
       const l = (81 - 57) * random() + 57;
       const c = (83 - 45) * random() + 45;
       const h = 360 * random();
-      const color = new Color(l, c, h, "lch");
-      return color;
+      const color2 = new Color(l, c, h, "lch");
+      return color2;
     } else if (mode === "sine") {
       t = t == null ? random() : t;
       const r = round(80 * sin(2 * pi * t / 0.5 + 0.01) + 150);
       const g = round(50 * sin(2 * pi * t / 0.5 + 4.6) + 200);
       const b = round(100 * sin(2 * pi * t / 0.5 + 2.3) + 150);
-      const color = new Color(r, g, b);
-      return color;
+      const color2 = new Color(r, g, b);
+      return color2;
     } else if (mode === "pastel") {
       const l = (94 - 86) * random() + 86;
       const c = (26 - 9) * random() + 9;
       const h = 360 * random();
-      const color = new Color(l, c, h, "lch");
-      return color;
+      const color2 = new Color(l, c, h, "lch");
+      return color2;
     } else if (mode === "dark") {
       const l = 10 + 10 * random();
       const c = (125 - 75) * random() + 86;
       const h = 360 * random();
-      const color = new Color(l, c, h, "lch");
-      return color;
+      const color2 = new Color(l, c, h, "lch");
+      return color2;
     } else if (mode === "rgb") {
       const r = 255 * random();
       const g = 255 * random();
       const b = 255 * random();
-      const color = new Color(r, g, b);
-      return color;
+      const color2 = new Color(r, g, b);
+      return color2;
     } else if (mode === "lab") {
       const l = 100 * random();
       const a = 256 * random() - 128;
       const b = 256 * random() - 128;
-      const color = new Color(l, a, b, "lab");
-      return color;
+      const color2 = new Color(l, a, b, "lab");
+      return color2;
     } else if (mode === "grey") {
       const grey = 255 * random();
-      const color = new Color(grey, grey, grey);
-      return color;
+      const color2 = new Color(grey, grey, grey);
+      return color2;
     } else {
       throw new Error("Unsupported random color mode");
     }
   }
   // Test if given value is a color string
-  static test(color) {
-    return typeof color === "string" && (isHex.test(color) || isRgb.test(color));
+  static test(color2) {
+    return typeof color2 === "string" && (isHex.test(color2) || isRgb.test(color2));
   }
   cmyk() {
     const {
@@ -6089,8 +6089,8 @@ class Color {
     const c = (1 - r - k) / (1 - k);
     const m = (1 - g - k) / (1 - k);
     const y2 = (1 - b - k) / (1 - k);
-    const color = new Color(c, m, y2, k, "cmyk");
-    return color;
+    const color2 = new Color(c, m, y2, k, "cmyk");
+    return color2;
   }
   hsl() {
     const {
@@ -6106,8 +6106,8 @@ class Color {
     const delta = max - min;
     const s = isGrey ? 0 : l > 0.5 ? delta / (2 - max - min) : delta / (max + min);
     const h = isGrey ? 0 : max === r ? ((g - b) / delta + (g < b ? 6 : 0)) / 6 : max === g ? ((b - r) / delta + 2) / 6 : max === b ? ((r - g) / delta + 4) / 6 : 0;
-    const color = new Color(360 * h, 100 * s, 100 * l, "hsl");
-    return color;
+    const color2 = new Color(360 * h, 100 * s, 100 * l, "hsl");
+    return color2;
   }
   init(a = 0, b = 0, c = 0, d = 0, space = "rgb") {
     a = !a ? 0 : a;
@@ -6203,8 +6203,8 @@ class Color {
     const l = 116 * y2 - 16;
     const a = 500 * (x2 - y2);
     const b = 200 * (y2 - z);
-    const color = new Color(l, a, b, "lab");
-    return color;
+    const color2 = new Color(l, a, b, "lab");
+    return color2;
   }
   lch() {
     const {
@@ -6218,8 +6218,8 @@ class Color {
       h *= -1;
       h = 360 - h;
     }
-    const color = new Color(l, c, h, "lch");
-    return color;
+    const color2 = new Color(l, c, h, "lch");
+    return color2;
   }
   /*
   Conversion Methods
@@ -6266,8 +6266,8 @@ class Color {
       const r = rU > bd ? 1.055 * pow(rU, 1 / 2.4) - 0.055 : 12.92 * rU;
       const g = gU > bd ? 1.055 * pow(gU, 1 / 2.4) - 0.055 : 12.92 * gU;
       const b = bU > bd ? 1.055 * pow(bU, 1 / 2.4) - 0.055 : 12.92 * bU;
-      const color = new Color(255 * r, 255 * g, 255 * b);
-      return color;
+      const color2 = new Color(255 * r, 255 * g, 255 * b);
+      return color2;
     } else if (this.space === "hsl") {
       let {
         h,
@@ -6279,16 +6279,16 @@ class Color {
       l /= 100;
       if (s === 0) {
         l *= 255;
-        const color2 = new Color(l, l, l);
-        return color2;
+        const color3 = new Color(l, l, l);
+        return color3;
       }
       const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
       const p = 2 * l - q;
       const r = 255 * hueToRgb(p, q, h + 1 / 3);
       const g = 255 * hueToRgb(p, q, h);
       const b = 255 * hueToRgb(p, q, h - 1 / 3);
-      const color = new Color(r, g, b);
-      return color;
+      const color2 = new Color(r, g, b);
+      return color2;
     } else if (this.space === "cmyk") {
       const {
         c,
@@ -6299,8 +6299,8 @@ class Color {
       const r = 255 * (1 - Math.min(1, c * (1 - k) + k));
       const g = 255 * (1 - Math.min(1, m * (1 - k) + k));
       const b = 255 * (1 - Math.min(1, y2 * (1 - k) + k));
-      const color = new Color(r, g, b);
-      return color;
+      const color2 = new Color(r, g, b);
+      return color2;
     } else {
       return this;
     }
@@ -6343,8 +6343,8 @@ class Color {
     const x2 = xU > 8856e-6 ? Math.pow(xU, 1 / 3) : 7.787 * xU + 16 / 116;
     const y2 = yU > 8856e-6 ? Math.pow(yU, 1 / 3) : 7.787 * yU + 16 / 116;
     const z = zU > 8856e-6 ? Math.pow(zU, 1 / 3) : 7.787 * zU + 16 / 116;
-    const color = new Color(x2, y2, z, "xyz");
-    return color;
+    const color2 = new Color(x2, y2, z, "xyz");
+    return color2;
   }
   /*
   Input and Output methods
@@ -8996,8 +8996,8 @@ class ObjectBag {
       if (values[i + 1] === other[i + 1]) {
         if (values[i + 1] === Color && other[i + 7] !== values[i + 7]) {
           const space = other[i + 7];
-          const color = new Color(this.values.splice(i + 3, 5))[space]().toArray();
-          this.values.splice(i + 3, 0, ...color);
+          const color2 = new Color(this.values.splice(i + 3, 5))[space]().toArray();
+          this.values.splice(i + 3, 0, ...color2);
         }
         i += values[i + 2] + 2;
         continue;
@@ -10828,8 +10828,8 @@ class Stop extends Element$1 {
 registerMethods({
   Gradient: {
     // Add a color stop
-    stop: function(offset, color, opacity) {
-      return this.put(new Stop()).update(offset, color, opacity);
+    stop: function(offset, color2, opacity) {
+      return this.put(new Stop()).update(offset, color2, opacity);
     }
   }
 });
@@ -11623,15 +11623,15 @@ const replaceHtmlText = (html2, searchText, replaceText) => {
   walk2(replaceHtmlTextEl);
   return replaceHtmlTextEl.innerHTML;
 };
-const isWhite = (color) => {
-  color = String(color).replace(/\s+/g, "");
+const isWhite = (color2) => {
+  color2 = String(color2).replace(/\s+/g, "");
   return ["#fff", "#ffffff", "#FFF", "#FFFFFF", "rgb(255,255,255)"].includes(
-    color
-  ) || /rgba\(255,255,255,[^)]+\)/.test(color);
+    color2
+  ) || /rgba\(255,255,255,[^)]+\)/.test(color2);
 };
-const isTransparent = (color) => {
-  color = String(color).replace(/\s+/g, "");
-  return ["", "transparent"].includes(color) || /rgba\(\d+,\d+,\d+,0\)/.test(color);
+const isTransparent = (color2) => {
+  color2 = String(color2).replace(/\s+/g, "");
+  return ["", "transparent"].includes(color2) || /rgba\(\d+,\d+,\d+,0\)/.test(color2);
 };
 const getVisibleColorFromTheme = (themeConfig) => {
   let { lineColor, root: root2, second, node } = themeConfig;
@@ -11648,9 +11648,9 @@ const getVisibleColorFromTheme = (themeConfig) => {
     node.borderColor
   ];
   for (let i = 0; i < list.length; i++) {
-    let color = list[i];
-    if (!isTransparent(color) && !isWhite(color)) {
-      return color;
+    let color2 = list[i];
+    if (!isTransparent(color2) && !isWhite(color2)) {
+      return color2;
     }
   }
 };
@@ -12523,24 +12523,24 @@ let Style$2 = class Style2 {
     }
   }
   //  内置图标
-  iconNode(node, color) {
+  iconNode(node, color2) {
     node.attr({
-      fill: color || this.merge("color")
+      fill: color2 || this.merge("color")
     });
   }
   //  连线
-  line(line, { width: width2, color, dasharray } = {}, enableMarker, childNode) {
+  line(line, { width: width2, color: color2, dasharray } = {}, enableMarker, childNode) {
     const { customHandleLine } = this.ctx.mindMap.opt;
     if (typeof customHandleLine === "function") {
-      customHandleLine(this.ctx, line, { width: width2, color, dasharray });
+      customHandleLine(this.ctx, line, { width: width2, color: color2, dasharray });
     }
-    line.stroke({ color, dasharray, width: width2 }).fill({ color: "none" });
+    line.stroke({ color: color2, dasharray, width: width2 }).fill({ color: "none" });
     if (enableMarker) {
       const showMarker = this.merge("showLineMarker", true);
       const childNodeStyle = childNode.style;
       if (showMarker) {
         childNodeStyle._marker = childNodeStyle._marker || childNodeStyle.createMarker();
-        childNodeStyle._markerPath.stroke({ color }).fill({ color });
+        childNodeStyle._markerPath.stroke({ color: color2 }).fill({ color: color2 });
         line.attr("marker-start", "");
         line.attr("marker-end", "");
         const dir = childNodeStyle.merge("lineMarkerDir");
@@ -12572,14 +12572,14 @@ let Style$2 = class Style2 {
   }
   //  展开收起按钮
   iconBtn(node, node2, fillNode) {
-    let { color, fill, fontSize, fontColor } = this.ctx.mindMap.opt.expandBtnStyle || {
+    let { color: color2, fill, fontSize, fontColor } = this.ctx.mindMap.opt.expandBtnStyle || {
       color: "#808080",
       fill: "#fff",
       fontSize: 12,
       fontColor: "#333333"
     };
-    node.fill({ color });
-    node2.fill({ color });
+    node.fill({ color: color2 });
+    node2.fill({ color: color2 });
     fillNode.fill({ color: fill });
     if (this.ctx.mindMap.opt.isShowExpandNum) {
       node.attr({ "font-size": fontSize + "px", "font-color": fontColor });
@@ -13060,9 +13060,9 @@ function handleGeneralizationMouseenter() {
   const index = belongNode.getGeneralizationNodeIndex(this);
   const generalizationData = list[index];
   const hoverRectColor = this.getStyle("hoverRectColor");
-  const color = hoverRectColor || this.mindMap.opt.hoverRectColor;
-  const style = color ? {
-    stroke: color
+  const color2 = hoverRectColor || this.mindMap.opt.hoverRectColor;
+  const style = color2 ? {
+    stroke: color2
   } : null;
   if (Array.isArray(generalizationData.range) && generalizationData.range.length > 0) {
     this.mindMap.renderer.highlightNode(
@@ -14367,11 +14367,11 @@ function showQuickCreateChildBtn() {
   } else {
     const { quickCreateChildBtnIcon, expandBtnStyle, expandBtnSize } = this.mindMap.opt;
     const { icon, style } = quickCreateChildBtnIcon;
-    let { color, fill } = expandBtnStyle || {
+    let { color: color2, fill } = expandBtnStyle || {
       color: "#808080",
       fill: "#fff"
     };
-    color = style.color || color;
+    color2 = style.color || color2;
     const iconNode = SVG(icon || btnsSvg.quickCreateChild).size(
       expandBtnSize,
       expandBtnSize
@@ -14380,7 +14380,7 @@ function showQuickCreateChildBtn() {
       cursor: "pointer"
     });
     iconNode.x(0).y(-expandBtnSize / 2);
-    this.style.iconNode(iconNode, color);
+    this.style.iconNode(iconNode, color2);
     const fillNode = new Circle().size(expandBtnSize);
     fillNode.x(0).y(-expandBtnSize / 2);
     fillNode.fill({ color: fill }).css({
@@ -15528,13 +15528,13 @@ class MindMapNode {
     const { enableInheritAncestorLineStyle } = this.mindMap.opt;
     const getName = enableInheritAncestorLineStyle ? "getSelfInhertStyle" : "getSelfStyle";
     const width2 = childNode[getName]("lineWidth") || childNode.getStyle("lineWidth", true);
-    const color = childNode[getName]("lineColor") || this.getRainbowLineColor(childNode) || childNode.getStyle("lineColor", true);
+    const color2 = childNode[getName]("lineColor") || this.getRainbowLineColor(childNode) || childNode.getStyle("lineColor", true);
     const dasharray = childNode[getName]("lineDasharray") || childNode.getStyle("lineDasharray", true);
     this.style.line(
       line,
       {
         width: width2,
-        color,
+        color: color2,
         dasharray
       },
       enableMarker,
@@ -19126,8 +19126,8 @@ class TextEdit {
       return `linear-gradient(to right, ${startColor}, ${endColor})`;
     } else {
       const bgColor = node.style.merge("fillColor");
-      const color = node.style.merge("color");
-      return bgColor === "transparent" ? isWhite(color) ? getVisibleColorFromTheme(this.mindMap.themeConfig) : "#fff" : bgColor;
+      const color2 = node.style.merge("color");
+      return bgColor === "transparent" ? isWhite(color2) ? getVisibleColorFromTheme(this.mindMap.themeConfig) : "#fff" : bgColor;
     }
   }
   // 删除文本编辑元素
@@ -25805,7 +25805,7 @@ var SETTINGS_SCHEMA = {
     default: "#cc0000",
     cli: "-c, --error-color <color>",
     cliDescription: "A color string given in the format 'rgb' or 'rrggbb' (no #). This option determines the color of errors rendered by the -t option.",
-    cliProcessor: (color) => "#" + color
+    cliProcessor: (color2) => "#" + color2
   },
   macros: {
     type: "object",
@@ -26468,9 +26468,9 @@ var initNode = function initNode2(classes2, options, style) {
     if (options.style.isTight()) {
       this.classes.push("mtight");
     }
-    var color = options.getColor();
-    if (color) {
-      this.style.color = color;
+    var color2 = options.getColor();
+    if (color2) {
+      this.style.color = color2;
     }
   }
 };
@@ -29966,9 +29966,9 @@ var makeSymbol = function makeSymbol2(value, fontName, mode, options, classes2) 
     if (options.style.isTight()) {
       symbolNode.classes.push("mtight");
     }
-    var color = options.getColor();
-    if (color) {
-      symbolNode.style.color = color;
+    var color2 = options.getColor();
+    if (color2) {
+      symbolNode.style.color = color2;
     }
   }
   return symbolNode;
@@ -31259,9 +31259,9 @@ class Options {
   /**
    * Create a new options object with the given color.
    */
-  withColor(color) {
+  withColor(color2) {
     return this.extend({
-      color
+      color: color2
     });
   }
   /**
@@ -31614,9 +31614,9 @@ var stretchyEnclose = function stretchyEnclose2(inner2, label, topPad, bottomPad
   if (/fbox|color|angl/.test(label)) {
     img = makeSpan(["stretchy", label], [], options);
     if (label === "fbox") {
-      var color = options.color && options.getColor();
-      if (color) {
-        img.style.borderColor = color;
+      var color2 = options.color && options.getColor();
+      if (color2) {
+        img.style.borderColor = color2;
       }
     }
   } else {
@@ -32497,12 +32497,12 @@ defineFunction({
     var {
       parser: parser2
     } = _ref;
-    var color = assertNodeType(args[0], "color-token").color;
+    var color2 = assertNodeType(args[0], "color-token").color;
     var body = args[1];
     return {
       type: "color",
       mode: parser2.mode,
-      color,
+      color: color2,
       body: ordargument(body)
     };
   },
@@ -32522,13 +32522,13 @@ defineFunction({
       parser: parser2,
       breakOnTokenText
     } = _ref2;
-    var color = assertNodeType(args[0], "color-token").color;
-    parser2.gullet.macros.set("\\current@color", color);
+    var color2 = assertNodeType(args[0], "color-token").color;
+    parser2.gullet.macros.set("\\current@color", color2);
     var body = parser2.parseExpression(true, breakOnTokenText);
     return {
       type: "color",
       mode: parser2.mode,
-      color,
+      color: color2,
       body
     };
   },
@@ -33386,15 +33386,15 @@ defineFunction({
     primitive: true
   },
   handler: (context, args) => {
-    var color = context.parser.gullet.macros.get("\\current@color");
-    if (color && typeof color !== "string") {
+    var color2 = context.parser.gullet.macros.get("\\current@color");
+    if (color2 && typeof color2 !== "string") {
       throw new ParseError("\\current@color set to non-string in \\right");
     }
     return {
       type: "leftright-right",
       mode: context.parser.mode,
       delim: checkDelimiter(args[0], context).text,
-      color
+      color: color2
       // undefined if not set via \color
     };
   }
@@ -33713,13 +33713,13 @@ defineFunction({
       parser: parser2,
       funcName
     } = _ref;
-    var color = assertNodeType(args[0], "color-token").color;
+    var color2 = assertNodeType(args[0], "color-token").color;
     var body = args[1];
     return {
       type: "enclose",
       mode: parser2.mode,
       label: funcName,
-      backgroundColor: color,
+      backgroundColor: color2,
       body
     };
   },
@@ -36672,9 +36672,9 @@ defineFunction({
     var width2 = calculateSize(group.width, options);
     var height2 = calculateSize(group.height, options);
     var shift = group.shift ? calculateSize(group.shift, options) : 0;
-    var color = options.color && options.getColor() || "black";
+    var color2 = options.color && options.getColor() || "black";
     var rule = new MathNode("mspace");
-    rule.setAttribute("mathbackground", color);
+    rule.setAttribute("mathbackground", color2);
     rule.setAttribute("width", makeEm(width2));
     rule.setAttribute("height", makeEm(height2));
     var wrapper = new MathNode("mpadded", [rule]);
@@ -39715,14 +39715,14 @@ class Parser {
     if (!match2) {
       throw new ParseError("Invalid color: '" + res.text + "'", res);
     }
-    var color = match2[0];
-    if (/^[0-9a-f]{6}$/i.test(color)) {
-      color = "#" + color;
+    var color2 = match2[0];
+    if (/^[0-9a-f]{6}$/i.test(color2)) {
+      color2 = "#" + color2;
     }
     return {
       type: "color-token",
       mode: this.mode,
-      color
+      color: color2
     };
   }
   /**
@@ -49597,11 +49597,11 @@ class Syntax extends Module {
       }
       return delta;
     }], [(node, delta) => {
-      return node.data.split("\n").reduce((memo, nodeText2, i) => {
+      return node.data.split("\n").reduce((memo, nodeText, i) => {
         if (i !== 0) memo.insert("\n", {
           [CodeBlock.blotName]: language
         });
-        return memo.insert(nodeText2);
+        return memo.insert(nodeText);
       }, delta);
     }], /* @__PURE__ */ new WeakMap());
   }
@@ -52178,13 +52178,13 @@ class Formula {
     richTextPlugin.hideEditText([node]);
   }
   // 将公式富文本转换为公式源码
-  latexRichToText(nodeText2) {
-    if (nodeText2.indexOf('class="ql-formula"') !== -1) {
+  latexRichToText(nodeText) {
+    if (nodeText.indexOf('class="ql-formula"') !== -1) {
       const parser2 = new DOMParser();
-      const doc = parser2.parseFromString(nodeText2, "text/html");
+      const doc = parser2.parseFromString(nodeText, "text/html");
       const els = doc.getElementsByClassName("ql-formula");
       for (const el of els)
-        nodeText2 = nodeText2.replace(
+        nodeText = nodeText.replace(
           el.outerHTML,
           `$${el.getAttribute("data-value")}$`
         );
@@ -52198,7 +52198,7 @@ class Formula {
         }, 0);
       }
     }
-    return nodeText2;
+    return nodeText;
   }
   // 使用格式化的 latex 字符串内容更新 quill 内容：输入 $*****$
   formatLatex(richText) {
@@ -54809,20 +54809,20 @@ class RichText {
     this.textEditNode.style.maxWidth = textAutoWrapWidth + paddingX * 2 + "px";
     this.textEditNode.style.transform = `scale(${scaleX}, ${scaleY})`;
     this.textEditNode.style.transformOrigin = "left top";
-    let nodeText2 = node.getData("text");
+    let nodeText = node.getData("text");
     if (typeof transformRichTextOnEnterEdit === "function") {
-      nodeText2 = transformRichTextOnEnterEdit(nodeText2);
+      nodeText = transformRichTextOnEnterEdit(nodeText);
     }
-    const isEmptyText = isUndef(nodeText2);
+    const isEmptyText = isUndef(nodeText);
     const noneEmptyNoneRichText = !node.getData("richText") && !isEmptyText;
     if (isFromKeyDown && autoEmptyTextWhenKeydownEnterEdit) {
       this.textEditNode.innerHTML = "";
     } else if (noneEmptyNoneRichText) {
-      let text2 = String(nodeText2).split(/\n/gim).join("<br>");
+      let text2 = String(nodeText).split(/\n/gim).join("<br>");
       let html2 = `<p>${text2}</p>`;
       this.textEditNode.innerHTML = this.cacheEditingText || html2;
     } else {
-      this.textEditNode.innerHTML = this.cacheEditingText || nodeText2;
+      this.textEditNode.innerHTML = this.cacheEditingText || nodeText;
     }
     this.initQuillEditor();
     this.setQuillContainerMinHeight(originHeight);
@@ -55715,7 +55715,7 @@ function createNodePostfixContent(node) {
 }
 const clone$1 = (value) => JSON.parse(JSON.stringify(value));
 const MAX_SAVED_TRANSLATE = 5e4;
-function finite(value) {
+function finite$1(value) {
   return typeof value === "number" && Number.isFinite(value);
 }
 function normalizePersistedViewData(value) {
@@ -55726,7 +55726,7 @@ function normalizePersistedViewData(value) {
   if (!state || !transform2) return void 0;
   const stateValues = [state.scale, state.x, state.y, state.sx, state.sy];
   const transformValues = [transform2.scaleX, transform2.scaleY, transform2.translateX, transform2.translateY];
-  if (![...stateValues, ...transformValues].every(finite)) return void 0;
+  if (![...stateValues, ...transformValues].every(finite$1)) return void 0;
   if (state.scale < 0.05 || state.scale > 10) return void 0;
   if (transform2.scaleX < 0.05 || transform2.scaleX > 10 || transform2.scaleY < 0.05 || transform2.scaleY > 10) return void 0;
   if (Math.abs(state.x) > MAX_SAVED_TRANSLATE || Math.abs(state.y) > MAX_SAVED_TRANSLATE) return void 0;
@@ -55863,7 +55863,8 @@ function createMindMap(options) {
     selectTextOnEnterEditText: false,
     isEndNodeTextEditOnClickOuter: true,
     enableDragModifyNodeWidth: true,
-    isShowCreateChildBtnIcon: (settings == null ? void 0 : settings.showQuickCreate) ?? true,
+    isShowCreateChildBtnIcon: false,
+    notShowExpandBtn: true,
     fit: Boolean((settings == null ? void 0 : settings.autoFitOnOpen) ?? true) && !viewData,
     addHistoryOnInit: true,
     defaultInsertSecondLevelNodeText: "新节点",
@@ -55891,14 +55892,14 @@ function createMindMap(options) {
   });
 }
 const clone = (value) => JSON.parse(JSON.stringify(value));
-function generalizationList(data2) {
+function generalizationList$1(data2) {
   const value = data2.generalization;
   if (Array.isArray(value)) return value.filter((item) => Boolean(item && typeof item === "object"));
   return value && typeof value === "object" ? [value] : [];
 }
 function visitData(tree, callback) {
   callback(tree.data);
-  generalizationList(tree.data).forEach(callback);
+  generalizationList$1(tree.data).forEach(callback);
   (tree.children ?? []).forEach((child) => visitData(child, callback));
 }
 function filterIndexed(values, indices) {
@@ -56039,6 +56040,79 @@ function deleteCodeBlock(quill, block) {
   quill.deleteText(block.index, block.length, "user");
   quill.setSelection(block.index, 0, "silent");
 }
+const NODE_STYLE_KEYS = [
+  "shape",
+  "fillColor",
+  "borderColor",
+  "borderWidth",
+  "borderDasharray",
+  "width",
+  "fontFamily",
+  "fontSize",
+  "fontWeight",
+  "fontStyle",
+  "textDecoration",
+  "textAlign",
+  "color"
+];
+const SHAPES = /* @__PURE__ */ new Set(["rectangle", "rect", "rounded", "roundedRectangle", "diamond", "ellipse", "circle", "pill"]);
+const TEXT_ALIGN = /* @__PURE__ */ new Set(["left", "center", "right"]);
+const FONT_STYLE = /* @__PURE__ */ new Set(["normal", "italic"]);
+const TEXT_DECORATION = /* @__PURE__ */ new Set(["none", "underline", "line-through"]);
+const DASH = /* @__PURE__ */ new Set(["none", "5,5", "2,3"]);
+function color(value) {
+  if (value === null) return null;
+  const text2 = String(value ?? "").trim();
+  if (/^#[0-9a-f]{3}$/i.test(text2)) return text2.toLowerCase();
+  return /^#[0-9a-f]{6}$/i.test(text2) ? text2.toLowerCase() : void 0;
+}
+function finite(value, min, max) {
+  if (value === null) return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.min(max, Math.max(min, number)) : void 0;
+}
+function normalizeNodeStylePatch(input) {
+  const output = {};
+  for (const key of NODE_STYLE_KEYS) {
+    if (!(key in input)) continue;
+    const value = input[key];
+    if (value === null) {
+      output[key] = null;
+      continue;
+    }
+    if (key === "shape" && SHAPES.has(String(value))) output.shape = String(value);
+    else if (key === "fillColor" || key === "borderColor" || key === "color") {
+      const normalized = color(value);
+      if (normalized !== void 0) output[key] = normalized;
+    } else if (key === "borderWidth") {
+      const normalized = finite(value, 0, 12);
+      if (normalized !== void 0) output.borderWidth = normalized;
+    } else if (key === "width") {
+      const normalized = finite(value, 40, 1e3);
+      if (normalized !== void 0) output.width = normalized;
+    } else if (key === "fontSize") {
+      const normalized = finite(value, 8, 96);
+      if (normalized !== void 0) output.fontSize = normalized;
+    } else if (key === "borderDasharray" && DASH.has(String(value))) output.borderDasharray = String(value);
+    else if (key === "textAlign" && TEXT_ALIGN.has(String(value))) output.textAlign = String(value);
+    else if (key === "fontStyle" && FONT_STYLE.has(String(value))) output.fontStyle = String(value);
+    else if (key === "textDecoration" && TEXT_DECORATION.has(String(value))) output.textDecoration = String(value);
+    else if (key === "fontWeight") output.fontWeight = String(value);
+    else if (key === "fontFamily") {
+      const text2 = String(value).trim();
+      if (text2) output.fontFamily = text2;
+    }
+  }
+  return output;
+}
+function nodeStyleSnapshot(data2) {
+  if (!data2) return {};
+  const raw = {};
+  NODE_STYLE_KEYS.forEach((key) => {
+    if (key in data2) raw[key] = data2[key];
+  });
+  return normalizeNodeStylePatch(raw);
+}
 function createCommandAdapter(mindMap) {
   const activeNodes = () => {
     var _a;
@@ -56149,6 +56223,41 @@ function createCommandAdapter(mindMap) {
     getPrimaryNodeData: () => {
       var _a, _b;
       return ((_b = (_a = primaryNode()) == null ? void 0 : _a.getData) == null ? void 0 : _b.call(_a)) ?? null;
+    },
+    getActiveNodeStyle: () => {
+      var _a;
+      const node = primaryNode();
+      if (!node) return null;
+      const data2 = { ...((_a = node.getData) == null ? void 0 : _a.call(node)) ?? {} };
+      const effectiveKeys = ["shape", "fillColor", "borderColor", "borderWidth", "borderDasharray", "fontFamily", "fontSize", "fontWeight", "fontStyle", "textDecoration", "textAlign", "color"];
+      effectiveKeys.forEach((key) => {
+        var _a2;
+        if (!(key in data2) && ((_a2 = node.style) == null ? void 0 : _a2.merge)) data2[key] = node.style.merge(key);
+      });
+      if ("customTextWidth" in data2 && !("width" in data2)) data2.width = data2.customTextWidth;
+      return nodeStyleSnapshot(data2);
+    },
+    setActiveNodeStyle: (input) => {
+      if (!canMutate()) return;
+      const patch = normalizeNodeStylePatch(input);
+      if (!Object.keys(patch).length) return;
+      const nativePatch = {};
+      Object.entries(patch).forEach(([key, value]) => {
+        const nativeValue = value === null ? void 0 : value;
+        if (key === "width") nativePatch.customTextWidth = nativeValue;
+        else if (key === "shape" && value === "pill") {
+          nativePatch.shape = "roundedRectangle";
+          nativePatch.borderRadius = 999;
+        } else if (key === "shape") {
+          nativePatch.shape = value === "rounded" ? "roundedRectangle" : value === "rect" ? "rectangle" : nativeValue;
+          nativePatch.borderRadius = void 0;
+        } else nativePatch[key] = nativeValue;
+      });
+      forEachActive((node) => mindMap.execCommand("SET_NODE_STYLES", node, nativePatch));
+    },
+    resetActiveNodeStyle: () => {
+      if (!canMutate()) return;
+      forEachActive((node) => mindMap.execCommand("REMOVE_CUSTOM_STYLES", node));
     },
     getSelectedText: () => {
       var _a;
@@ -56417,6 +56526,13 @@ function createCommandAdapter(mindMap) {
       mindMap.execCommand("INSERT_CHILD_NODE", false, [node], { uid: newUid, text: "", richText: false });
       return true;
     },
+    addChildByUid: (uid) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isGeneralization) return false;
+      mindMap.execCommand("INSERT_CHILD_NODE", true, [node]);
+      return true;
+    },
     removeNodeByUid: (uid) => {
       if (!canMutate()) return false;
       const node = findNodeByUid(uid);
@@ -56567,6 +56683,20 @@ function openCheckpointManager(options) {
       }
     })();
   });
+}
+function projectControlIcon(kind) {
+  if (kind === "layout") {
+    return '<svg class="ymz-project-icon ymz-icon-structure" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M5 10h14M5 10v4M12 10v4M19 10v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="2.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="9.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="16.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="9.5" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+  }
+  return '<svg class="ymz-project-icon ymz-icon-theme" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 4.2 10 2.8h4l1.8 1.4 3.2 1.2-1.5 4.1V21H6.5V9.5L5 5.4l3.2-1.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.2 4.2c.8 1.7 2 2.6 3.8 2.6s3-.9 3.8-2.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+}
+function lineStyleIcon(style) {
+  const normalized = style === "straight" || style === "direct" ? style : "curve";
+  const path2 = normalized === "curve" ? "M3 18C8 18 8 6 14 6h7" : normalized === "straight" ? "M3 18h8V6h10" : "M3 18 14 6h7";
+  return `<svg class="ymz-line-icon ymz-line-icon--${normalized}" viewBox="0 0 24 24" aria-hidden="true"><path d="${path2}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function summaryIcon() {
+  return '<svg class="ymz-menu-icon ymz-icon-summary" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c-2 0-3 2-3 4v2c0 1.5-.7 2.5-2 3 1.3.5 2 1.5 2 3v1c0 2 1 3 3 3M17 4c2 0 3 2 3 4v2c0 1.5.7 2.5 2 3-1.3.5-2 1.5-2 3v1c0 2-1 3-3 3M8 12h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
 }
 async function loadImageFileSelection(file, dependencies) {
   try {
@@ -57101,6 +57231,54 @@ function openCanvasContextMenu(event, commands, options) {
   menu.addItem({ icon: "iconRefresh", label: "重置缩放与位置", click: run("reset-view", () => commands.resetZoom()) });
   menu.addItem({ icon: "iconAlignCenter", label: "整理布局", disabled: commands.isReadonly(), click: run("reset-layout", () => commands.resetLayout()) });
   menu.addSeparator();
+  menu.addItem({
+    type: "submenu",
+    iconHTML: projectControlIcon("layout"),
+    label: "结构",
+    submenu: YEMIND_LAYOUT_PRESETS.map((item) => ({
+      label: item.label,
+      current: item.id === options.currentLayout,
+      disabled: commands.isReadonly(),
+      click: run(`layout-${item.id}`, () => {
+        var _a;
+        return (_a = options.onLayoutChange) == null ? void 0 : _a.call(options, item.id);
+      })
+    }))
+  });
+  menu.addItem({
+    type: "submenu",
+    iconHTML: projectControlIcon("theme"),
+    label: "主题",
+    submenu: YEMIND_THEME_PRESETS.map((item) => ({
+      label: item.label,
+      current: item.id === options.currentTheme,
+      disabled: commands.isReadonly(),
+      click: run(`theme-${item.id}`, () => {
+        var _a;
+        return (_a = options.onThemeChange) == null ? void 0 : _a.call(options, item.id);
+      })
+    }))
+  });
+  menu.addItem({
+    type: "submenu",
+    iconHTML: lineStyleIcon(options.currentLineStyle ?? "curve"),
+    label: "线型",
+    submenu: [
+      ["curve", "弧线"],
+      ["straight", "圆角折线"],
+      ["direct", "直线"]
+    ].map(([id, label]) => ({
+      iconHTML: lineStyleIcon(id),
+      label,
+      current: id === options.currentLineStyle,
+      disabled: commands.isReadonly(),
+      click: run(`line-style-${id}`, () => {
+        var _a;
+        return (_a = options.onLineStyleChange) == null ? void 0 : _a.call(options, id);
+      })
+    }))
+  });
+  menu.addSeparator();
   menu.addItem({ icon: "iconDown", label: "展开全部节点", click: run("expand-all", () => commands.expandAll()) });
   menu.addItem({ icon: "iconUp", label: "折叠全部节点", click: run("collapse-all", () => commands.collapseAll()) });
   menu.addSeparator();
@@ -57159,10 +57337,14 @@ function openNodeContextMenu(event, commands, options = {}) {
     var _a;
     return (_a = options.onCodeBlock) == null ? void 0 : _a.call(options);
   }) });
+  menu.addItem({ icon: "iconTheme", label: "节点样式", disabled: !availability.nodeContent, click: run("node-style", () => {
+    var _a;
+    return (_a = options.onNodeStyle) == null ? void 0 : _a.call(options);
+  }) });
   menu.addSeparator();
   const summaryAction = createSummaryMenuDescriptor(commands.getActiveNodes());
   menu.addItem({
-    icon: "iconList",
+    iconHTML: summaryIcon(),
     label: summaryAction.label,
     accelerator: summaryAction.action === "add" ? "Ctrl+Alt+G" : void 0,
     warning: summaryAction.warning,
@@ -57355,18 +57537,26 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
           <button data-action="redo" title="重做">↷</button>
           <button data-action="add-child" title="添加子节点">＋子</button>
           <button data-action="add-sibling" title="添加同级节点">＋同</button>
-          <button class="is-danger" data-action="remove" title="删除节点">删除</button>
-          <select data-action="layout" aria-label="布局" title="布局">
-            ${layoutOptionsHtml("logicalStructure")}
-          </select>
-          <select data-action="theme" aria-label="主题" title="主题">
-            ${themeOptionsHtml(theme2)}
-          </select>
-          <select data-action="line-style" aria-label="线型" title="父子节点线型">
-            <option value="curve"${normalizeLineStyle(lineStyle) === "curve" ? " selected" : ""}>弧线</option>
-            <option value="straight"${normalizeLineStyle(lineStyle) === "straight" ? " selected" : ""}>圆角折线</option>
-            <option value="direct"${normalizeLineStyle(lineStyle) === "direct" ? " selected" : ""}>直线</option>
-          </select>
+          <label class="ymz-project-control" data-project-control="layout" title="结构">
+            ${projectControlIcon("layout")}<span>结构</span>
+            <select data-action="layout" aria-label="结构">
+              ${layoutOptionsHtml("logicalStructure")}
+            </select>
+          </label>
+          <label class="ymz-project-control" data-project-control="theme" title="主题">
+            ${projectControlIcon("theme")}<span>主题</span>
+            <select data-action="theme" aria-label="主题">
+              ${themeOptionsHtml(theme2)}
+            </select>
+          </label>
+          <label class="ymz-project-control ymz-project-control--line" data-project-control="line-style" title="线型">
+            <span data-role="line-style-icon">${lineStyleIcon(lineStyle)}</span>
+            <select data-action="line-style" aria-label="线型">
+              <option value="curve"${normalizeLineStyle(lineStyle) === "curve" ? " selected" : ""}>弧线</option>
+              <option value="straight"${normalizeLineStyle(lineStyle) === "straight" ? " selected" : ""}>圆角折线</option>
+              <option value="direct"${normalizeLineStyle(lineStyle) === "direct" ? " selected" : ""}>直线</option>
+            </select>
+          </label>
           <span class="ymz-save-state" data-role="save-state">已保存</span>
         </div>
 
@@ -57401,6 +57591,13 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
         </div>
 
         <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式" aria-label="退出禅模式"><span class="ymz-zen-exit__idle"><span class="ymz-zen-exit__icon ymz-zen-exit__dot" aria-hidden="true">●</span><span>禅</span></span><span class="ymz-zen-exit__label"><span class="ymz-zen-exit__icon ymz-zen-exit__dot" aria-hidden="true">●</span><span>退出禅模式</span></span></button>
+
+        <aside class="ymz-node-style-panel" data-role="node-style-panel" aria-label="节点样式" hidden>
+          <header class="ymz-node-style-panel__header"><strong>节点样式</strong><button type="button" data-node-style-action="close" aria-label="关闭节点样式">×</button></header>
+          <section><h4>形状</h4><label><span>形状</span><select data-node-style="shape"><option value="roundedRectangle">圆角矩形</option><option value="rectangle">矩形</option><option value="diamond">菱形</option><option value="ellipse">椭圆</option><option value="pill">胶囊</option></select></label><label><span>填充</span><input type="color" data-node-style="fillColor" value="#ffffff"><button type="button" data-node-style-clear="fillColor" title="清除填充">清除</button></label><label><span>边框</span><input type="color" data-node-style="borderColor" value="#333333"><button type="button" data-node-style-clear="borderColor" title="清除边框颜色">清除</button></label><label><span>线型</span><select data-node-style="borderDasharray"><option value="none">实线</option><option value="5,5">虚线</option><option value="2,3">点线</option></select></label><label><span>宽度</span><input type="number" data-node-style="borderWidth" min="0" max="12" step="1" value="1"></label><label><span>内容宽度</span><input type="number" data-node-style="width" min="40" max="1000" step="1"><button type="button" data-node-style-action="fit-width">适应</button></label></section>
+          <section><h4>文本</h4><label><span>字体</span><select data-node-style="fontFamily"><option value="NeverMind">NeverMind</option><option value="system-ui">系统默认</option><option value="Arial">Arial</option><option value="Noto Sans SC">Noto Sans SC</option><option value="Noto Serif CJK SC">Noto Serif CJK SC</option></select></label><label><span>字号</span><input type="number" data-node-style="fontSize" min="8" max="96" step="1"></label><label><span>字重</span><select data-node-style="fontWeight"><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semibold</option><option value="700">Bold</option></select></label><label><span>颜色</span><input type="color" data-node-style="color" value="#000000"></label><div class="ymz-node-style-panel__buttons" aria-label="文字格式"><button type="button" data-node-style-toggle="fontWeight" data-node-style-value="700"><b>B</b></button><button type="button" data-node-style-toggle="fontStyle" data-node-style-value="italic"><i>I</i></button><button type="button" data-node-style-toggle="textDecoration" data-node-style-value="line-through"><s>S</s></button><button type="button" data-node-style-toggle="textDecoration" data-node-style-value="underline"><u>U</u></button></div><div class="ymz-node-style-panel__buttons" aria-label="文字对齐"><button type="button" data-node-style-set="textAlign" data-node-style-value="left">≡</button><button type="button" data-node-style-set="textAlign" data-node-style-value="center">≣</button><button type="button" data-node-style-set="textAlign" data-node-style-value="right">≡</button></div></section>
+          <footer><button type="button" data-node-style-action="reset">恢复主题样式</button></footer>
+        </aside>
 
         <div class="ymz-relation-panel" data-role="relation-panel" hidden data-mode="idle">
           <span data-role="relation-hint"></span>
@@ -57446,15 +57643,14 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
 function escapeHtml$2(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
-const NO_COLLAPSED_OUTLINE_UIDS = /* @__PURE__ */ new Set();
 function plainTextFromHtml(value) {
   const element = document.createElement("div");
   element.innerHTML = value;
   return (element.textContent ?? "").replace(/\u00a0/g, " ").trim();
 }
-function nodeText(tree) {
-  const value = String(tree.data.text ?? "");
-  if (tree.data.richText) {
+function dataText(data2) {
+  const value = String(data2.text ?? "");
+  if (data2.richText) {
     return {
       text: plainTextFromHtml(value),
       html: sanitizeOutlineHtml(value),
@@ -57467,42 +57663,44 @@ function nodeText(tree) {
     richText: false
   };
 }
-function flattenOutline(tree, collapsedUids = NO_COLLAPSED_OUTLINE_UIDS) {
+function generalizationList(data2) {
+  const value = data2.generalization;
+  if (Array.isArray(value)) return value.filter((item) => Boolean(item && typeof item === "object"));
+  return value && typeof value === "object" ? [value] : [];
+}
+function flattenOutline(tree) {
   const rows = [];
   const visit = (node, depth, path2) => {
     const children = Array.isArray(node.children) ? node.children : [];
     const hasChildren = children.length > 0;
     const uid = String(node.data.uid ?? path2);
-    const expanded = !collapsedUids.has(uid);
+    const expanded = depth === 0 ? true : node.data.expand !== false;
     rows.push({
       uid,
-      ...nodeText(node),
+      ...dataText(node.data),
       depth,
       hasChildren,
       expanded,
       isRoot: depth === 0
     });
-    if (hasChildren && expanded) {
-      children.forEach(
-        (child, index) => visit(child, depth + 1, `${path2}.${index}`)
-      );
+    if (expanded) {
+      if (hasChildren) children.forEach((child, index) => visit(child, depth + 1, `${path2}.${index}`));
+      generalizationList(node.data).forEach((summary, index) => {
+        const summaryUid = String(summary.uid ?? `${uid}.summary.${index}`);
+        rows.push({
+          uid: summaryUid,
+          ...dataText(summary),
+          depth: depth + 1,
+          hasChildren: false,
+          expanded: true,
+          isRoot: false,
+          isGeneralization: true
+        });
+      });
     }
   };
   visit(tree, 0, "root");
   return rows;
-}
-function pruneOutlineCollapsedUids(tree, collapsedUids) {
-  const collapsible = /* @__PURE__ */ new Set();
-  const visit = (node, path2) => {
-    const children = Array.isArray(node.children) ? node.children : [];
-    const uid = String(node.data.uid ?? path2);
-    if (children.length > 0) collapsible.add(uid);
-    children.forEach((child, index) => visit(child, `${path2}.${index}`));
-  };
-  visit(tree, "root");
-  collapsedUids.forEach((uid) => {
-    if (!collapsible.has(uid)) collapsedUids.delete(uid);
-  });
 }
 function resolveOutlineKeyAction(context) {
   if (context.composing) return "none";
@@ -57534,19 +57732,19 @@ function rowHtml(row, readonly) {
   const branch = row.expanded ? "▾" : "▸";
   const label = row.text || "空节点";
   const encodedOriginal = encodeURIComponent(row.html);
-  const toggle = row.hasChildren ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle aria-label="${row.expanded ? "折叠" : "展开"}">${branch}</button>` : '<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" aria-hidden="true"></span>';
-  return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml$1(row.uid)}" data-outline-root="${row.isRoot}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" data-outline-drag-source="${readonly || row.isRoot ? "false" : "true"}" style="--ymz-outline-depth:${row.depth}">${toggle}<div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml$1(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml$1(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
+  const toggle = row.hasChildren && !row.isRoot ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle aria-label="${row.expanded ? "折叠" : "展开"}">${branch}</button>` : '<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" aria-hidden="true"></span>';
+  return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml$1(row.uid)}" data-outline-root="${row.isRoot}" data-outline-generalization="${Boolean(row.isGeneralization)}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" data-outline-drag-source="${readonly || row.isRoot || row.isGeneralization ? "false" : "true"}" style="--ymz-outline-depth:${row.depth}">${toggle}<div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml$1(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml$1(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
 }
 function resolveOutlineToggleState(input) {
   return input.hasChildren ? !input.expanded : null;
 }
-function outlineStructureSignature(tree, collapsedUids = NO_COLLAPSED_OUTLINE_UIDS) {
-  return flattenOutline(tree, collapsedUids).map(
+function outlineStructureSignature(tree) {
+  return flattenOutline(tree).map(
     (row) => `${row.uid}:${row.depth}:${row.hasChildren ? 1 : 0}:${row.expanded ? 1 : 0}`
   ).join("|");
 }
-function patchOutlineTree(container, tree, readonly = false, activeUid = null, collapsedUids = NO_COLLAPSED_OUTLINE_UIDS) {
-  const rows = flattenOutline(tree, collapsedUids);
+function patchOutlineTree(container, tree, readonly = false, activeUid = null) {
+  const rows = flattenOutline(tree);
   const existing = /* @__PURE__ */ new Map();
   container.querySelectorAll(":scope > [data-outline-uid]").forEach((row) => {
     existing.set(row.dataset.outlineUid ?? "", row);
@@ -57567,14 +57765,15 @@ function patchOutlineTree(container, tree, readonly = false, activeUid = null, c
         data2.hasChildren ? String(data2.expanded) : "false"
       );
       row.dataset.outlineRoot = String(data2.isRoot);
+      row.dataset.outlineGeneralization = String(Boolean(data2.isGeneralization));
       row.dataset.outlineHasChildren = String(data2.hasChildren);
       row.dataset.outlineExpanded = String(data2.expanded);
-      row.dataset.outlineDragSource = String(!readonly && !data2.isRoot);
+      row.dataset.outlineDragSource = String(!readonly && !data2.isRoot && !data2.isGeneralization);
       row.style.setProperty("--ymz-outline-depth", String(data2.depth));
       const existingToggle = row.querySelector(
         "[data-outline-toggle]"
       );
-      if (data2.hasChildren) {
+      if (data2.hasChildren && !data2.isRoot) {
         let toggle = existingToggle;
         if (!toggle) {
           const placeholder = row.querySelector(
@@ -58054,9 +58253,9 @@ function nextToggleFormat(name, formatInfo) {
 }
 function isClozeFormat(formatInfo) {
   if (!formatInfo) return false;
-  const color = String(formatInfo.color ?? "").toLowerCase().replaceAll(" ", "");
+  const color2 = String(formatInfo.color ?? "").toLowerCase().replaceAll(" ", "");
   const background = String(formatInfo.background ?? "").toLowerCase().replaceAll(" ", "");
-  return color === "transparent" || color === "rgba(0,0,0,0)" || background === CLOZE_BACKGROUND;
+  return color2 === "transparent" || color2 === "rgba(0,0,0,0)" || background === CLOZE_BACKGROUND;
 }
 function normalizeHexColor(value) {
   if (typeof value !== "string") return null;
@@ -58527,9 +58726,9 @@ class RichTextToolbar {
     );
     if (font)
       font.value = typeof this.formatInfo.font === "string" ? this.formatInfo.font : "";
-    const color = typeof this.formatInfo.color === "string" && this.formatInfo.color !== "transparent" ? this.formatInfo.color : "currentColor";
+    const color2 = typeof this.formatInfo.color === "string" && this.formatInfo.color !== "transparent" ? this.formatInfo.color : "currentColor";
     const background = typeof this.formatInfo.background === "string" ? this.formatInfo.background : "transparent";
-    (_d2 = this.element.querySelector('[data-rich-swatch="color"]')) == null ? void 0 : _d2.style.setProperty("--ymz-current-color", color);
+    (_d2 = this.element.querySelector('[data-rich-swatch="color"]')) == null ? void 0 : _d2.style.setProperty("--ymz-current-color", color2);
     (_e = this.element.querySelector('[data-rich-swatch="background"]')) == null ? void 0 : _e.style.setProperty("--ymz-current-color", background);
     if (syncInputs) this.syncColorReadout();
   }
@@ -58615,12 +58814,12 @@ const DEFAULT_STROKE = "#0984e3";
 const DEFAULT_FILL = "#0984e3";
 function colorToHex(value, fallback) {
   if (typeof value !== "string") return fallback;
-  const color = value.trim();
-  const short = /^#([0-9a-f]{3})$/i.exec(color);
+  const color2 = value.trim();
+  const short = /^#([0-9a-f]{3})$/i.exec(color2);
   if (short) return `#${short[1].split("").map((item) => item + item).join("").toLowerCase()}`;
-  const full = /^#([0-9a-f]{6})(?:[0-9a-f]{2})?$/i.exec(color);
+  const full = /^#([0-9a-f]{6})(?:[0-9a-f]{2})?$/i.exec(color2);
   if (full) return `#${full[1].toLowerCase()}`;
-  const rgb2 = /^rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)/i.exec(color);
+  const rgb2 = /^rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)/i.exec(color2);
   if (!rgb2) return fallback;
   const parts = rgb2.slice(1, 4).map((part) => Math.min(255, Math.max(0, Math.round(Number(part)))));
   return `#${parts.map((part) => part.toString(16).padStart(2, "0")).join("")}`;
@@ -58851,6 +59050,227 @@ class NodeHoverPreview {
     this.element.style.top = `${Math.round(top)}px`;
   }
 }
+const INPUT_EVENTS = ["keydown", "keyup", "beforeinput", "input", "paste", "compositionstart", "compositionupdate", "compositionend"];
+function toInputValue(value) {
+  return value === null || value === void 0 ? "" : String(value);
+}
+class NodeStylePanel {
+  constructor(root2, commands) {
+    __publicField(this, "panel");
+    __publicField(this, "current", {});
+    __publicField(this, "stopEditorEvent", (event) => {
+      event.stopPropagation();
+    });
+    __publicField(this, "onInput", (event) => {
+      const control = event.target.closest("[data-node-style]");
+      if (!control || control.type !== "color" && control.type !== "number") return;
+      this.applyControl(control);
+    });
+    __publicField(this, "onChange", (event) => {
+      const control = event.target.closest("[data-node-style]");
+      if (control) this.applyControl(control);
+    });
+    __publicField(this, "onClick", (event) => {
+      var _a, _b;
+      event.stopPropagation();
+      const target = event.target;
+      const action = (_a = target.closest("[data-node-style-action]")) == null ? void 0 : _a.dataset.nodeStyleAction;
+      if (action === "close") {
+        this.hide();
+        return;
+      }
+      if (this.commands.isReadonly()) return;
+      if (action === "fit-width") {
+        this.commands.setActiveNodeStyle({ width: null });
+        this.refresh();
+        return;
+      }
+      if (action === "reset") {
+        this.commands.resetActiveNodeStyle();
+        this.refresh();
+        return;
+      }
+      const clear2 = (_b = target.closest("[data-node-style-clear]")) == null ? void 0 : _b.dataset.nodeStyleClear;
+      if (clear2) {
+        this.commands.setActiveNodeStyle({ [clear2]: null });
+        this.refresh();
+        return;
+      }
+      const toggle = target.closest("[data-node-style-toggle]");
+      if (toggle) {
+        const key = toggle.dataset.nodeStyleToggle;
+        const expected = toggle.dataset.nodeStyleValue ?? "";
+        this.commands.setActiveNodeStyle({ [key]: this.current[key] === expected ? null : expected });
+        this.refresh();
+        return;
+      }
+      const set = target.closest("[data-node-style-set]");
+      if (set) {
+        const key = set.dataset.nodeStyleSet;
+        this.commands.setActiveNodeStyle({ [key]: set.dataset.nodeStyleValue ?? null });
+        this.refresh();
+      }
+    });
+    this.root = root2;
+    this.commands = commands;
+    this.panel = root2.querySelector('[data-role="node-style-panel"]');
+    if (!this.panel) return;
+    this.panel.addEventListener("click", this.onClick);
+    this.panel.addEventListener("change", this.onChange);
+    this.panel.addEventListener("input", this.onInput, true);
+    INPUT_EVENTS.forEach((type) => {
+      var _a;
+      return (_a = this.panel) == null ? void 0 : _a.addEventListener(type, this.stopEditorEvent, true);
+    });
+    this.panel.addEventListener("pointerdown", this.stopEditorEvent, true);
+  }
+  destroy() {
+    if (!this.panel) return;
+    this.panel.removeEventListener("click", this.onClick);
+    this.panel.removeEventListener("change", this.onChange);
+    this.panel.removeEventListener("input", this.onInput, true);
+    INPUT_EVENTS.forEach((type) => {
+      var _a;
+      return (_a = this.panel) == null ? void 0 : _a.removeEventListener(type, this.stopEditorEvent, true);
+    });
+    this.panel.removeEventListener("pointerdown", this.stopEditorEvent, true);
+  }
+  show() {
+    if (!this.panel) return;
+    this.refresh();
+    this.panel.hidden = false;
+  }
+  hide() {
+    if (this.panel) this.panel.hidden = true;
+  }
+  refresh() {
+    if (!this.panel) return;
+    this.current = this.commands.getActiveNodeStyle() ?? {};
+    this.panel.querySelectorAll("[data-node-style]").forEach((control) => {
+      const key = control.dataset.nodeStyle;
+      if (!key) return;
+      const value = this.current[key];
+      if (control.type === "color") {
+        if (typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value)) control.value = value;
+        return;
+      }
+      control.value = toInputValue(value);
+    });
+    this.panel.querySelectorAll("[data-node-style-toggle],[data-node-style-set]").forEach((button) => {
+      const key = button.dataset.nodeStyleToggle ?? button.dataset.nodeStyleSet;
+      const value = button.dataset.nodeStyleValue;
+      button.classList.toggle("is-active", Boolean(key && value && this.current[key] === value));
+      button.setAttribute("aria-pressed", String(Boolean(key && value && this.current[key] === value)));
+    });
+    this.panel.dataset.readonly = String(this.commands.isReadonly());
+    this.panel.querySelectorAll("input,select,button").forEach((control) => {
+      if (control.dataset.nodeStyleAction === "close") return;
+      control.disabled = this.commands.isReadonly();
+    });
+  }
+  applyControl(control) {
+    const key = control.dataset.nodeStyle;
+    if (!key || this.commands.isReadonly()) return;
+    this.commands.setActiveNodeStyle({ [key]: control.value || null });
+    this.current = { ...this.current, [key]: control.value || null };
+  }
+}
+function describeNodeQuickActions(state) {
+  const childCount = Math.max(0, Math.trunc(Number(state.childCount) || 0));
+  const actions = [];
+  if (!state.isRoot && childCount > 0) {
+    actions.push(state.expanded ? { action: "collapse", label: `折叠 ${childCount} 个子孙节点`, text: "−" } : { action: "expand", label: `展开 ${childCount} 个子孙节点`, text: String(childCount) });
+  }
+  actions.push({ action: "add-child", label: "添加子节点", text: "+" });
+  return actions;
+}
+function descendantCount(node) {
+  var _a;
+  const children = Array.isArray((_a = node == null ? void 0 : node.nodeData) == null ? void 0 : _a.children) ? node.nodeData.children : Array.isArray(node == null ? void 0 : node.children) ? node.children : [];
+  return children.reduce((total, child) => total + 1 + descendantCount(child), 0);
+}
+function visibleNodeList(root2) {
+  if (!root2) return [];
+  const list = [];
+  const visit = (node) => {
+    var _a;
+    if (!node) return;
+    list.push(node);
+    const expanded = ((_a = node.getData) == null ? void 0 : _a.call(node, "expand")) !== false;
+    if (!expanded) return;
+    const children = Array.isArray(node.children) ? node.children : [];
+    children.forEach(visit);
+  };
+  visit(root2);
+  return list;
+}
+class NodeQuickActionsController {
+  constructor(options) {
+    __publicField(this, "layer");
+    __publicField(this, "frame", 0);
+    __publicField(this, "onClick", (event) => {
+      const button = event.target.closest("[data-node-quick-action]");
+      const host = button == null ? void 0 : button.closest("[data-node-uid]");
+      if (!button || !host) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const uid = host.dataset.nodeUid ?? "";
+      if (!uid) return;
+      const action = button.dataset.nodeQuickAction;
+      if (action === "add-child") this.options.onAddChild(uid);
+      if (action === "collapse") this.options.onSetExpanded(uid, false);
+      if (action === "expand") this.options.onSetExpanded(uid, true);
+    });
+    var _a;
+    this.options = options;
+    this.layer = document.createElement("div");
+    this.layer.className = "ymz-node-quick-actions-layer";
+    this.layer.setAttribute("aria-hidden", "false");
+    (_a = this.options.root.querySelector(".ymz-canvas-wrap")) == null ? void 0 : _a.appendChild(this.layer);
+    this.layer.addEventListener("click", this.onClick);
+  }
+  destroy() {
+    cancelAnimationFrame(this.frame);
+    this.layer.removeEventListener("click", this.onClick);
+    this.layer.remove();
+  }
+  scheduleRefresh() {
+    cancelAnimationFrame(this.frame);
+    this.frame = requestAnimationFrame(() => this.refresh());
+  }
+  refresh() {
+    this.frame = 0;
+    this.layer.replaceChildren();
+    if (this.options.readonly()) return;
+    const rootRect = this.options.root.getBoundingClientRect();
+    visibleNodeList(this.options.getRendererRoot()).forEach((node) => {
+      var _a, _b, _c2;
+      if ((node == null ? void 0 : node.isGeneralization) || !((_a = node == null ? void 0 : node.group) == null ? void 0 : _a.node)) return;
+      const uid = String(((_b = node.getData) == null ? void 0 : _b.call(node, "uid")) ?? "");
+      if (!uid) return;
+      const rect = node.group.node.getBoundingClientRect();
+      if (!rect.width && !rect.height) return;
+      const childCount = descendantCount(node);
+      const expanded = ((_c2 = node.getData) == null ? void 0 : _c2.call(node, "expand")) !== false;
+      const container = document.createElement("div");
+      container.className = "ymz-node-quick-actions";
+      container.dataset.nodeUid = uid;
+      container.style.left = `${rect.right - rootRect.left + 5}px`;
+      container.style.top = `${rect.top - rootRect.top + rect.height / 2}px`;
+      describeNodeQuickActions({ isRoot: Boolean(node.isRoot), childCount, expanded }).forEach((descriptor) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `ymz-node-quick-action ymz-node-quick-action--${descriptor.action}`;
+        button.dataset.nodeQuickAction = descriptor.action;
+        button.title = descriptor.label;
+        button.setAttribute("aria-label", descriptor.label);
+        button.textContent = descriptor.text;
+        container.appendChild(button);
+      });
+      this.layer.appendChild(container);
+    });
+  }
+}
 class YeMindEditor {
   constructor(options) {
     __publicField(this, "map", null);
@@ -58881,6 +59301,8 @@ class YeMindEditor {
     __publicField(this, "outerFrameHintEl");
     __publicField(this, "richTextToolbar", null);
     __publicField(this, "nodeHoverPreview", null);
+    __publicField(this, "nodeStylePanel", null);
+    __publicField(this, "nodeQuickActions", null);
     __publicField(this, "outlineRichText", null);
     __publicField(this, "settingsInitialized", false);
     __publicField(this, "viewMode", "map");
@@ -58895,7 +59317,6 @@ class YeMindEditor {
     __publicField(this, "outlineStructureBusy", false);
     __publicField(this, "outlinePointerDrag", null);
     __publicField(this, "outlineStructureKey", "");
-    __publicField(this, "outlineCollapsedUids", /* @__PURE__ */ new Set());
     __publicField(this, "suppressOutlineClickUntil", 0);
     __publicField(this, "pendingOutlineFocus", null);
     __publicField(this, "appearanceObserver", null);
@@ -59140,7 +59561,7 @@ class YeMindEditor {
     this.scheduleSafeResize();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p;
     this.options.diagnostics.record(
       "editor",
       "destroy-started",
@@ -59165,11 +59586,15 @@ class YeMindEditor {
     this.richTextToolbar = null;
     (_h = this.nodeHoverPreview) == null ? void 0 : _h.destroy();
     this.nodeHoverPreview = null;
-    (_i = this.rootEl) == null ? void 0 : _i.removeEventListener("keydown", this.onRootKeydown, true);
-    (_j = this.rootEl) == null ? void 0 : _j.removeEventListener("paste", this.onImagePaste);
-    (_k = this.canvasEl) == null ? void 0 : _k.removeEventListener("dragover", this.onImageDragOver);
-    (_l = this.canvasEl) == null ? void 0 : _l.removeEventListener("drop", this.onImageDrop);
-    (_m = this.outlineEl) == null ? void 0 : _m.removeEventListener(
+    (_i = this.nodeStylePanel) == null ? void 0 : _i.destroy();
+    this.nodeStylePanel = null;
+    (_j = this.nodeQuickActions) == null ? void 0 : _j.destroy();
+    this.nodeQuickActions = null;
+    (_k = this.rootEl) == null ? void 0 : _k.removeEventListener("keydown", this.onRootKeydown, true);
+    (_l = this.rootEl) == null ? void 0 : _l.removeEventListener("paste", this.onImagePaste);
+    (_m = this.canvasEl) == null ? void 0 : _m.removeEventListener("dragover", this.onImageDragOver);
+    (_n = this.canvasEl) == null ? void 0 : _n.removeEventListener("drop", this.onImageDrop);
+    (_o = this.outlineEl) == null ? void 0 : _o.removeEventListener(
       "pointerdown",
       this.onOutlinePointerDown
     );
@@ -59184,7 +59609,7 @@ class YeMindEditor {
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_n = this.map) == null ? void 0 : _n.destroy();
+    (_p = this.map) == null ? void 0 : _p.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record(
@@ -59195,6 +59620,7 @@ class YeMindEditor {
     this.options.container.innerHTML = "";
   }
   mount() {
+    var _a;
     this.current.theme = normalizeThemePresetId(this.current.theme);
     this.current.lineStyle = normalizeLineStyle(this.current.lineStyle);
     this.options.container.innerHTML = createEditorTemplate(
@@ -59269,7 +59695,14 @@ class YeMindEditor {
     const normalized = stripCustomPositions(runtimeData);
     const sanitized = sanitizeAssociativeLines(normalized.tree);
     runtimeData = sanitized.tree;
-    if (normalized.changed || sanitized.changed) {
+    const rootExpandChanged = runtimeData.data.expand === false;
+    if (rootExpandChanged) {
+      runtimeData = {
+        ...runtimeData,
+        data: { ...runtimeData.data, expand: true }
+      };
+    }
+    if (normalized.changed || sanitized.changed || rootExpandChanged) {
       this.current.data = runtimeData;
       void this.options.repository.update(this.current.id, { data: runtimeData }).catch((error) => {
         console.error("[YeMind Zen] migrated data save failed", error);
@@ -59293,11 +59726,32 @@ class YeMindEditor {
       settings: this.settings,
       onHyperlink: (href) => this.openLink(href),
       onDeleteShortcut: () => {
-        var _a;
-        return (_a = this.commands) == null ? void 0 : _a.remove();
+        var _a2;
+        return (_a2 = this.commands) == null ? void 0 : _a2.remove();
       }
     });
     this.commands = createCommandAdapter(this.map);
+    this.nodeStylePanel = new NodeStylePanel(this.rootEl, this.commands);
+    this.nodeQuickActions = new NodeQuickActionsController({
+      root: this.rootEl,
+      canvas: this.canvasEl,
+      getRendererRoot: () => {
+        var _a2, _b;
+        return (_b = (_a2 = this.map) == null ? void 0 : _a2.renderer) == null ? void 0 : _b.root;
+      },
+      readonly: () => {
+        var _a2;
+        return Boolean((_a2 = this.commands) == null ? void 0 : _a2.isReadonly());
+      },
+      onAddChild: (uid) => {
+        var _a2, _b;
+        if ((_a2 = this.commands) == null ? void 0 : _a2.addChildByUid(uid)) (_b = this.nodeQuickActions) == null ? void 0 : _b.scheduleRefresh();
+      },
+      onSetExpanded: (uid, expanded) => {
+        var _a2, _b;
+        if ((_a2 = this.commands) == null ? void 0 : _a2.setNodeExpandedByUid(uid, expanded)) (_b = this.nodeQuickActions) == null ? void 0 : _b.scheduleRefresh();
+      }
+    });
     this.nodeHoverPreview = new NodeHoverPreview(this.rootEl);
     this.richTextToolbar = new RichTextToolbar(this.rootEl, this.commands, {
       onFormula: (target) => openFormulaDialog(target),
@@ -59308,8 +59762,8 @@ class YeMindEditor {
     this.outlineRichText = new OutlineRichTextController({
       root: this.rootEl,
       isReadonly: () => {
-        var _a;
-        return Boolean((_a = this.commands) == null ? void 0 : _a.isReadonly());
+        var _a2;
+        return Boolean((_a2 = this.commands) == null ? void 0 : _a2.isReadonly());
       },
       onCommit: (uid, html2) => this.commitOutlineRichText(uid, html2),
       onDiagnostic: (action, details) => this.options.diagnostics.record(
@@ -59319,8 +59773,8 @@ class YeMindEditor {
         details
       ),
       onSelectionChange: (hasRange, rect, format, target) => {
-        var _a;
-        (_a = this.richTextToolbar) == null ? void 0 : _a.update(hasRange, rect, format, target);
+        var _a2;
+        (_a2 = this.richTextToolbar) == null ? void 0 : _a2.update(hasRange, rect, format, target);
       }
     });
     this.rootEl.addEventListener("keydown", this.onRootKeydown, true);
@@ -59331,10 +59785,10 @@ class YeMindEditor {
     this.bindMapEvents();
     this.bindAppearanceObserver();
     this.repositoryUnsubscribe = this.options.repository.subscribe((state) => {
-      var _a, _b;
+      var _a2, _b;
       const next2 = state.maps.find((item) => item.id === this.current.id);
       if (!next2) {
-        (_b = (_a = this.options).onMissing) == null ? void 0 : _b.call(_a);
+        (_b = (_a2 = this.options).onMissing) == null ? void 0 : _b.call(_a2);
         return;
       }
       if (next2.title !== this.current.title) {
@@ -59348,6 +59802,7 @@ class YeMindEditor {
     );
     this.updateStats(this.current.data);
     this.renderOutline(this.current.data);
+    (_a = this.nodeQuickActions) == null ? void 0 : _a.scheduleRefresh();
     this.updateZoom();
     const runtime = this.map;
     this.options.diagnostics.record("editor", "mounted", this.current.id, {
@@ -59565,49 +60020,49 @@ class YeMindEditor {
       event.preventDefault();
       this.replaceCurrentSearch();
     });
-    (_a = this.rootEl.querySelector('[data-action="layout"]')) == null ? void 0 : _a.addEventListener("change", (event) => {
-      if (!this.map) return;
-      const layout2 = event.target.value;
-      this.map.setLayout(layout2);
-      this.current.layout = layout2;
-      this.scheduleSave();
-    });
-    (_b = this.rootEl.querySelector('[data-action="theme"]')) == null ? void 0 : _b.addEventListener("change", (event) => {
-      if (!this.map) return;
-      this.current.theme = normalizeThemePresetId(
-        event.target.value
-      );
-      this.applyMapAppearance();
-      this.options.diagnostics.record(
-        "appearance",
-        "theme-changed",
-        this.current.id,
-        {
-          theme: this.current.theme
-        }
-      );
-      this.scheduleSave();
-    });
-    (_c2 = this.rootEl.querySelector('[data-action="line-style"]')) == null ? void 0 : _c2.addEventListener("change", (event) => {
-      if (!this.map) return;
-      this.current.lineStyle = normalizeLineStyle(
-        event.target.value
-      );
-      this.applyMapAppearance();
-      this.options.diagnostics.record(
-        "appearance",
-        "line-style-changed",
-        this.current.id,
-        {
-          lineStyle: this.current.lineStyle
-        }
-      );
-      this.scheduleSave();
-    });
+    (_a = this.rootEl.querySelector('[data-action="layout"]')) == null ? void 0 : _a.addEventListener("change", (event) => this.setLayout(event.target.value));
+    (_b = this.rootEl.querySelector('[data-action="theme"]')) == null ? void 0 : _b.addEventListener("change", (event) => this.setTheme(event.target.value));
+    (_c2 = this.rootEl.querySelector('[data-action="line-style"]')) == null ? void 0 : _c2.addEventListener("change", (event) => this.setLineStyle(event.target.value));
+  }
+  setLayout(value) {
+    var _a, _b;
+    if (!this.map || ((_a = this.commands) == null ? void 0 : _a.isReadonly())) return;
+    this.current.layout = value;
+    this.map.setLayout(value);
+    const select = this.rootEl.querySelector('[data-action="layout"]');
+    if (select) select.value = value;
+    this.options.diagnostics.record("appearance", "layout-changed", this.current.id, { layout: value });
+    (_b = this.nodeQuickActions) == null ? void 0 : _b.scheduleRefresh();
+    this.scheduleSave();
+  }
+  setTheme(value) {
+    var _a, _b;
+    if (!this.map || ((_a = this.commands) == null ? void 0 : _a.isReadonly())) return;
+    this.current.theme = normalizeThemePresetId(value);
+    const select = this.rootEl.querySelector('[data-action="theme"]');
+    if (select) select.value = this.current.theme;
+    this.applyMapAppearance();
+    this.options.diagnostics.record("appearance", "theme-changed", this.current.id, { theme: this.current.theme });
+    (_b = this.nodeQuickActions) == null ? void 0 : _b.scheduleRefresh();
+    this.scheduleSave();
+  }
+  setLineStyle(value) {
+    var _a, _b;
+    if (!this.map || ((_a = this.commands) == null ? void 0 : _a.isReadonly())) return;
+    this.current.lineStyle = normalizeLineStyle(value);
+    const select = this.rootEl.querySelector('[data-action="line-style"]');
+    if (select) select.value = this.current.lineStyle;
+    const icon = this.rootEl.querySelector('[data-role="line-style-icon"]');
+    if (icon) icon.innerHTML = lineStyleIcon(this.current.lineStyle);
+    this.applyMapAppearance();
+    this.options.diagnostics.record("appearance", "line-style-changed", this.current.id, { lineStyle: this.current.lineStyle });
+    (_b = this.nodeQuickActions) == null ? void 0 : _b.scheduleRefresh();
+    this.scheduleSave();
   }
   bindMapEvents() {
     if (!this.map) return;
     this.map.on("data_change", (data2) => {
+      var _a, _b;
       if (this.applyingCheckpoint) return;
       this.current.data = data2;
       this.options.diagnostics.record(
@@ -59618,10 +60073,12 @@ class YeMindEditor {
       );
       this.updateStats(data2);
       this.renderOutline(data2);
+      (_a = this.nodeStylePanel) == null ? void 0 : _a.refresh();
+      (_b = this.nodeQuickActions) == null ? void 0 : _b.scheduleRefresh();
       this.scheduleSave();
     });
     this.map.on("view_data_change", (viewData) => {
-      var _a, _b;
+      var _a, _b, _c2;
       if (this.applyingCheckpoint) return;
       this.updateZoom();
       const normalized = normalizePersistedViewData(viewData);
@@ -59634,6 +60091,7 @@ class YeMindEditor {
         { zoom: Number(((_b = (_a = this.map) == null ? void 0 : _a.view) == null ? void 0 : _b.scale) ?? 1) }
       );
       this.updateDiagnosticState();
+      (_c2 = this.nodeQuickActions) == null ? void 0 : _c2.scheduleRefresh();
       this.scheduleSave();
     });
     this.map.on("node_contextmenu", (event, node) => {
@@ -59704,13 +60162,16 @@ class YeMindEditor {
       }
     );
     this.map.on("node_active", (node, list) => {
-      var _a;
+      var _a, _b, _c2, _d2;
       this.rootEl.dataset.hasSelection = list.length > 0 ? "true" : "false";
       this.updateSelectionPresentation(list.length);
       this.updateDiagnosticState({ selectedNodeCount: list.length });
       this.updateToolbarAvailability();
+      if (list.length > 0) (_a = this.nodeStylePanel) == null ? void 0 : _a.refresh();
+      else (_b = this.nodeStylePanel) == null ? void 0 : _b.hide();
+      (_c2 = this.nodeQuickActions) == null ? void 0 : _c2.scheduleRefresh();
       const active = node ?? list[0];
-      const uid = (_a = active == null ? void 0 : active.getData) == null ? void 0 : _a.call(active, "uid");
+      const uid = (_d2 = active == null ? void 0 : active.getData) == null ? void 0 : _d2.call(active, "uid");
       this.activateOutlineUid(uid ? String(uid) : "");
     });
     this.map.on(
@@ -59742,7 +60203,15 @@ class YeMindEditor {
       "search_info_change",
       (info) => this.updateSearchInfo(info)
     );
-    this.map.on("scale", () => this.updateZoom());
+    this.map.on("scale", () => {
+      var _a;
+      this.updateZoom();
+      (_a = this.nodeQuickActions) == null ? void 0 : _a.scheduleRefresh();
+    });
+    this.map.on("node_tree_render_end", () => {
+      var _a;
+      return (_a = this.nodeQuickActions) == null ? void 0 : _a.scheduleRefresh();
+    });
   }
   openContextMenu(event) {
     if (!this.commands) return;
@@ -59754,6 +60223,10 @@ class YeMindEditor {
       onCodeBlock: () => openCodeBlockDialog(this.commands, this.settings),
       onNodeLink: () => openLinkDialog(this.commands, this.settings.inlineLinkAutoHttps),
       onRelation: () => this.beginRelation(),
+      onNodeStyle: () => {
+        var _a;
+        return (_a = this.nodeStylePanel) == null ? void 0 : _a.show();
+      },
       onAction: (action) => this.options.diagnostics.record(
         "context-menu",
         action,
@@ -59773,6 +60246,12 @@ class YeMindEditor {
       readonly: this.rootEl.dataset.readonly === "true",
       onZenChange: (enabled) => this.toggleZen(enabled),
       onReadonlyChange: (enabled) => this.setReadonly(enabled),
+      currentLayout: this.current.layout,
+      currentTheme: this.current.theme,
+      currentLineStyle: this.current.lineStyle,
+      onLayoutChange: (layout2) => this.setLayout(layout2),
+      onThemeChange: (theme2) => this.setTheme(theme2),
+      onLineStyleChange: (lineStyle) => this.setLineStyle(lineStyle),
       onAction: (action) => this.options.diagnostics.record(
         "context-menu",
         `canvas-${action}`,
@@ -59862,7 +60341,8 @@ class YeMindEditor {
       useLeftKeySelectionRightKeyDrag: settings.canvasMode === "select",
       mousewheelAction: settings.wheelMode === "zoom" ? "zoom" : "move",
       disableMouseWheelZoom: settings.wheelMode === "none",
-      isShowCreateChildBtnIcon: settings.showQuickCreate,
+      isShowCreateChildBtnIcon: false,
+      notShowExpandBtn: true,
       autoMoveWhenMouseInEdgeOnDrag: behavior.autoMoveWhenMouseInEdgeOnDrag,
       isLimitMindMapInCanvas: behavior.isLimitMindMapInCanvas,
       minZoomRatio: behavior.minZoomRatio,
@@ -60116,6 +60596,7 @@ class YeMindEditor {
     });
   }
   setViewMode(mode) {
+    var _a;
     this.viewMode = mode;
     this.rootEl.dataset.view = mode;
     this.options.diagnostics.record(
@@ -60131,11 +60612,13 @@ class YeMindEditor {
         button.dataset.action === `view-${mode}`
       );
     });
-    if (mode !== "outline") this.scheduleSafeResize();
-    else if (this.resizeFrame !== null) {
+    if (mode !== "outline") {
+      this.scheduleSafeResize();
+    } else if (this.resizeFrame !== null) {
       window.cancelAnimationFrame(this.resizeFrame);
       this.resizeFrame = null;
     }
+    (_a = this.nodeQuickActions) == null ? void 0 : _a.scheduleRefresh();
   }
   scheduleSafeResize(attempt = 0) {
     if (this.destroyed || !this.map || this.viewMode === "outline") return;
@@ -60264,15 +60747,14 @@ class YeMindEditor {
   }
   renderOutline(data2) {
     var _a, _b, _c2, _d2, _e, _f;
-    pruneOutlineCollapsedUids(data2, this.outlineCollapsedUids);
     const activeEditor = ((_a = this.outlineRichText) == null ? void 0 : _a.activeHost) ?? null;
     const activeUid = ((_b = activeEditor == null ? void 0 : activeEditor.closest("[data-outline-uid]")) == null ? void 0 : _b.dataset.outlineUid) ?? null;
     const readonly = this.rootEl.dataset.readonly === "true";
-    const nextStructureKey = outlineStructureSignature(data2, this.outlineCollapsedUids);
+    const nextStructureKey = outlineStructureSignature(data2);
     const structureChanged = Boolean(
       this.outlineStructureKey && this.outlineStructureKey !== nextStructureKey
     );
-    const visibleUids = structureChanged ? new Set(flattenOutline(data2, this.outlineCollapsedUids).map((row) => row.uid)) : null;
+    const visibleUids = structureChanged ? new Set(flattenOutline(data2).map((row) => row.uid)) : null;
     this.outlineEl.setAttribute("aria-readonly", String(readonly));
     if (this.pendingOutlineFocus || structureChanged && activeEditor && activeUid) {
       if (!this.pendingOutlineFocus && activeEditor && activeUid && (visibleUids == null ? void 0 : visibleUids.has(activeUid)) && this.outlineRichText) {
@@ -60291,16 +60773,14 @@ class YeMindEditor {
         this.outlineEl,
         data2,
         readonly,
-        null,
-        this.outlineCollapsedUids
+        null
       );
     } else {
       patchOutlineTree(
         this.outlineEl,
         data2,
         readonly,
-        activeUid,
-        this.outlineCollapsedUids
+        activeUid
       );
     }
     this.outlineStructureKey = nextStructureKey;
@@ -60418,10 +60898,11 @@ class YeMindEditor {
     }
   }
   setOutlineExpanded(uid, expanded) {
-    if (!uid) return;
-    if (expanded) this.outlineCollapsedUids.delete(uid);
-    else this.outlineCollapsedUids.add(uid);
-    this.renderOutline(this.current.data);
+    var _a;
+    if (!uid || !this.commands) return;
+    if (this.commands.setNodeExpandedByUid(uid, expanded)) {
+      (_a = this.nodeQuickActions) == null ? void 0 : _a.scheduleRefresh();
+    }
   }
   outlineDeleteFocusUid(row) {
     const rows = Array.from(
@@ -60782,7 +61263,7 @@ class YeMindEditor {
     });
   }
   setReadonly(enabled) {
-    var _a, _b, _c2;
+    var _a, _b, _c2, _d2, _e;
     if (!this.map) return;
     this.rootEl.dataset.readonly = String(enabled);
     this.rootEl.querySelectorAll('[data-action="readonly"]').forEach((button) => {
@@ -60818,6 +61299,8 @@ class YeMindEditor {
     this.updateToolbarAvailability();
     this.updateRelationPresentation();
     this.updateOuterFramePresentation();
+    (_d2 = this.nodeStylePanel) == null ? void 0 : _d2.refresh();
+    (_e = this.nodeQuickActions) == null ? void 0 : _e.scheduleRefresh();
   }
   toggleZen(enabled) {
     this.rootEl.dataset.zen = String(enabled);

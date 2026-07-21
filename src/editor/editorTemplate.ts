@@ -1,5 +1,6 @@
 import { normalizeLineStyle, themeOptionsHtml } from '../core/themePresets';
 import { layoutOptionsHtml } from '../core/layoutPresets';
+import { lineStyleIcon, projectControlIcon } from './projectControls';
 export function createEditorTemplate(title: string, theme: unknown = 'kmind-default', lineStyle: unknown = 'curve'): string {
   return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
@@ -17,18 +18,26 @@ export function createEditorTemplate(title: string, theme: unknown = 'kmind-defa
           <button data-action="redo" title="重做">↷</button>
           <button data-action="add-child" title="添加子节点">＋子</button>
           <button data-action="add-sibling" title="添加同级节点">＋同</button>
-          <button class="is-danger" data-action="remove" title="删除节点">删除</button>
-          <select data-action="layout" aria-label="布局" title="布局">
-            ${layoutOptionsHtml('logicalStructure')}
-          </select>
-          <select data-action="theme" aria-label="主题" title="主题">
-            ${themeOptionsHtml(theme)}
-          </select>
-          <select data-action="line-style" aria-label="线型" title="父子节点线型">
-            <option value="curve"${normalizeLineStyle(lineStyle) === 'curve' ? ' selected' : ''}>弧线</option>
-            <option value="straight"${normalizeLineStyle(lineStyle) === 'straight' ? ' selected' : ''}>圆角折线</option>
-            <option value="direct"${normalizeLineStyle(lineStyle) === 'direct' ? ' selected' : ''}>直线</option>
-          </select>
+          <label class="ymz-project-control" data-project-control="layout" title="结构">
+            ${projectControlIcon('layout')}<span>结构</span>
+            <select data-action="layout" aria-label="结构">
+              ${layoutOptionsHtml('logicalStructure')}
+            </select>
+          </label>
+          <label class="ymz-project-control" data-project-control="theme" title="主题">
+            ${projectControlIcon('theme')}<span>主题</span>
+            <select data-action="theme" aria-label="主题">
+              ${themeOptionsHtml(theme)}
+            </select>
+          </label>
+          <label class="ymz-project-control ymz-project-control--line" data-project-control="line-style" title="线型">
+            <span data-role="line-style-icon">${lineStyleIcon(lineStyle)}</span>
+            <select data-action="line-style" aria-label="线型">
+              <option value="curve"${normalizeLineStyle(lineStyle) === 'curve' ? ' selected' : ''}>弧线</option>
+              <option value="straight"${normalizeLineStyle(lineStyle) === 'straight' ? ' selected' : ''}>圆角折线</option>
+              <option value="direct"${normalizeLineStyle(lineStyle) === 'direct' ? ' selected' : ''}>直线</option>
+            </select>
+          </label>
           <span class="ymz-save-state" data-role="save-state">已保存</span>
         </div>
 
@@ -63,6 +72,13 @@ export function createEditorTemplate(title: string, theme: unknown = 'kmind-defa
         </div>
 
         <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式" aria-label="退出禅模式"><span class="ymz-zen-exit__idle"><span class="ymz-zen-exit__icon ymz-zen-exit__dot" aria-hidden="true">●</span><span>禅</span></span><span class="ymz-zen-exit__label"><span class="ymz-zen-exit__icon ymz-zen-exit__dot" aria-hidden="true">●</span><span>退出禅模式</span></span></button>
+
+        <aside class="ymz-node-style-panel" data-role="node-style-panel" aria-label="节点样式" hidden>
+          <header class="ymz-node-style-panel__header"><strong>节点样式</strong><button type="button" data-node-style-action="close" aria-label="关闭节点样式">×</button></header>
+          <section><h4>形状</h4><label><span>形状</span><select data-node-style="shape"><option value="roundedRectangle">圆角矩形</option><option value="rectangle">矩形</option><option value="diamond">菱形</option><option value="ellipse">椭圆</option><option value="pill">胶囊</option></select></label><label><span>填充</span><input type="color" data-node-style="fillColor" value="#ffffff"><button type="button" data-node-style-clear="fillColor" title="清除填充">清除</button></label><label><span>边框</span><input type="color" data-node-style="borderColor" value="#333333"><button type="button" data-node-style-clear="borderColor" title="清除边框颜色">清除</button></label><label><span>线型</span><select data-node-style="borderDasharray"><option value="none">实线</option><option value="5,5">虚线</option><option value="2,3">点线</option></select></label><label><span>宽度</span><input type="number" data-node-style="borderWidth" min="0" max="12" step="1" value="1"></label><label><span>内容宽度</span><input type="number" data-node-style="width" min="40" max="1000" step="1"><button type="button" data-node-style-action="fit-width">适应</button></label></section>
+          <section><h4>文本</h4><label><span>字体</span><select data-node-style="fontFamily"><option value="NeverMind">NeverMind</option><option value="system-ui">系统默认</option><option value="Arial">Arial</option><option value="Noto Sans SC">Noto Sans SC</option><option value="Noto Serif CJK SC">Noto Serif CJK SC</option></select></label><label><span>字号</span><input type="number" data-node-style="fontSize" min="8" max="96" step="1"></label><label><span>字重</span><select data-node-style="fontWeight"><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semibold</option><option value="700">Bold</option></select></label><label><span>颜色</span><input type="color" data-node-style="color" value="#000000"></label><div class="ymz-node-style-panel__buttons" aria-label="文字格式"><button type="button" data-node-style-toggle="fontWeight" data-node-style-value="700"><b>B</b></button><button type="button" data-node-style-toggle="fontStyle" data-node-style-value="italic"><i>I</i></button><button type="button" data-node-style-toggle="textDecoration" data-node-style-value="line-through"><s>S</s></button><button type="button" data-node-style-toggle="textDecoration" data-node-style-value="underline"><u>U</u></button></div><div class="ymz-node-style-panel__buttons" aria-label="文字对齐"><button type="button" data-node-style-set="textAlign" data-node-style-value="left">≡</button><button type="button" data-node-style-set="textAlign" data-node-style-value="center">≣</button><button type="button" data-node-style-set="textAlign" data-node-style-value="right">≡</button></div></section>
+          <footer><button type="button" data-node-style-action="reset">恢复主题样式</button></footer>
+        </aside>
 
         <div class="ymz-relation-panel" data-role="relation-panel" hidden data-mode="idle">
           <span data-role="relation-hint"></span>

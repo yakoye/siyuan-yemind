@@ -369,6 +369,92 @@
 .ymz-outline-row{position:relative}
 .ymz-outline-row::before{content:"";position:absolute;z-index:0;top:0;bottom:0;left:8px;width:calc(var(--ymz-outline-depth,0)*22px);background-image:linear-gradient(to right,transparent 0 10px,var(--ymz-outline-guide-1) 10px 11px,transparent 11px 32px,var(--ymz-outline-guide-2) 32px 33px,transparent 33px 54px,var(--ymz-outline-guide-3) 54px 55px,transparent 55px 76px,var(--ymz-outline-guide-4) 76px 77px,transparent 77px 88px);background-size:88px 100%;background-repeat:repeat-x;pointer-events:none}
 .ymz-outline-row__branch,.ymz-outline-row__editor{position:relative;z-index:1}
+
+/* v0.5.20 project controls */
+.ymz-project-control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  color: var(--b3-theme-on-surface, #374151);
+  cursor: pointer;
+}
+.ymz-project-control:hover { background: var(--b3-list-hover, rgba(148,163,184,.14)); }
+.ymz-project-control select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.ymz-project-icon,.ymz-line-icon,.ymz-menu-icon { width: 21px; height: 21px; display: block; }
+.ymz-project-control--line { width: 38px; justify-content: center; }
+
+/* v0.5.20 quick node actions */
+.ymz-node-quick-actions-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ymz-node-quick-actions {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+.ymz-node-quick-action {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--b3-theme-background, #fff) 92%, transparent);
+  color: var(--b3-theme-on-background, #475569);
+  font: 600 12px/1 system-ui, sans-serif;
+  box-shadow: 0 1px 2px rgba(15,23,42,.08);
+  cursor: pointer;
+}
+.ymz-node-quick-action--collapse { min-width: 15px; width: 15px; height: 15px; padding: 0; font-size: 10px; }
+.ymz-node-quick-action:hover { border-color: var(--b3-theme-primary, #3b82f6); color: var(--b3-theme-primary, #2563eb); }
+.ymz-editor[data-view="outline"] .ymz-node-quick-actions-layer { display: none; }
+
+/* v0.5.20 node style panel */
+.ymz-node-style-panel {
+  position: absolute;
+  top: 72px;
+  right: 16px;
+  z-index: 35;
+  width: min(300px, calc(100% - 32px));
+  max-height: calc(100% - 150px);
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--b3-border-color, #d7dde5);
+  border-radius: 12px;
+  background: var(--b3-theme-background, #fff);
+  color: var(--b3-theme-on-background, #1f2937);
+  box-shadow: 0 18px 50px rgba(15,23,42,.18);
+}
+.ymz-node-style-panel[hidden] { display: none; }
+.ymz-node-style-panel__header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.ymz-node-style-panel__header button { font-size:18px; }
+.ymz-node-style-panel section { padding: 8px 0 12px; border-top: 1px solid var(--b3-border-color, #e5e7eb); }
+.ymz-node-style-panel h4 { margin: 0 0 8px; font-size: 13px; }
+.ymz-node-style-panel label { display:grid; grid-template-columns: 68px minmax(0,1fr) auto; align-items:center; gap:7px; margin:7px 0; font-size:12px; }
+.ymz-node-style-panel input,.ymz-node-style-panel select,.ymz-node-style-panel button { min-height: 28px; border:1px solid var(--b3-border-color,#d1d5db); border-radius:6px; background:var(--b3-theme-background,#fff); color:inherit; }
+.ymz-node-style-panel input[type="color"] { width:100%; padding:2px; }
+.ymz-node-style-panel__buttons { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin-top:7px; }
+.ymz-node-style-panel__buttons button.is-active { background:var(--b3-theme-primary-lightest,#dbeafe); border-color:var(--b3-theme-primary,#3b82f6); }
+.ymz-node-style-panel footer { display:flex; justify-content:flex-end; }
 /*!
  * Quill Editor v2.0.3
  * https://quilljs.com

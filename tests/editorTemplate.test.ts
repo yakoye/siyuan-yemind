@@ -22,5 +22,10 @@ describe('editor template v0.5 controls', () => {
     expect(html).toContain('data-action="layout"');
     expect(html).toContain('data-action="theme"');
     expect(html).toContain('data-action="line-style"');
+    expect(html).not.toContain('data-action="remove"');
+    expect(html).toContain('data-project-control="layout"');
+    expect(html).toContain('data-project-control="theme"');
+    expect(html).toContain('data-project-control="line-style"');
+    expect(html).toContain('data-role="node-style-panel"');
   });
 });

@@ -3,6 +3,7 @@ import { toggleTodo as nextTodo, type NodeComment, type NodeTodo } from '../cont
 import type { NodeNote } from '../content/nodeNoteState';
 import { deleteCodeBlock, findCurrentCodeBlock, removeCodeBlockFormat, replaceCodeBlock, type CodeBlockSnapshot } from '../editor/codeBlock';
 import type { RichTextFormattingTarget } from '../editor/richTextTarget';
+import { normalizeNodeStylePatch, nodeStyleSnapshot, type NodeStylePatch } from '../editor/nodeStyle';
 
 export interface NodeImageInput {
   url: string | null;
@@ -40,6 +41,9 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   getActiveNodes(): any[];
   getPrimaryNode(): any | null;
   getPrimaryNodeData(): Record<string, any> | null;
+  getActiveNodeStyle(): NodeStylePatch | null;
+  setActiveNodeStyle(patch: Record<string, unknown>): void;
+  resetActiveNodeStyle(): void;
   getSelectedText(): string;
   getSelectedInlineLink(): string;
   setInlineLink(link: string | null): void;
@@ -87,6 +91,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   setNodeRichTextByUid(uid: string, html: string): boolean;
   insertSiblingByUid(uid: string, newUid: string): boolean;
   insertChildByUid(uid: string, newUid: string): boolean;
+  addChildByUid(uid: string): boolean;
   removeNodeByUid(uid: string): boolean;
   indentNodeByUid(uid: string): boolean;
   outdentNodeByUid(uid: string): boolean;
@@ -154,6 +159,39 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     getActiveNodes: activeNodes,
     getPrimaryNode: primaryNode,
     getPrimaryNodeData: () => primaryNode()?.getData?.() ?? null,
+    getActiveNodeStyle: () => {
+      const node = primaryNode();
+      if (!node) return null;
+      const data = { ...(node.getData?.() ?? {}) } as Record<string, unknown>;
+      const effectiveKeys = ['shape', 'fillColor', 'borderColor', 'borderWidth', 'borderDasharray', 'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'textDecoration', 'textAlign', 'color'];
+      effectiveKeys.forEach((key) => {
+        if (!(key in data) && node.style?.merge) data[key] = node.style.merge(key);
+      });
+      if ('customTextWidth' in data && !('width' in data)) data.width = data.customTextWidth;
+      return nodeStyleSnapshot(data);
+    },
+    setActiveNodeStyle: (input) => {
+      if (!canMutate()) return;
+      const patch = normalizeNodeStylePatch(input);
+      if (!Object.keys(patch).length) return;
+      const nativePatch: Record<string, unknown> = {};
+      Object.entries(patch).forEach(([key, value]) => {
+        const nativeValue = value === null ? undefined : value;
+        if (key === 'width') nativePatch.customTextWidth = nativeValue;
+        else if (key === 'shape' && value === 'pill') {
+          nativePatch.shape = 'roundedRectangle';
+          nativePatch.borderRadius = 999;
+        } else if (key === 'shape') {
+          nativePatch.shape = value === 'rounded' ? 'roundedRectangle' : value === 'rect' ? 'rectangle' : nativeValue;
+          nativePatch.borderRadius = undefined;
+        } else nativePatch[key] = nativeValue;
+      });
+      forEachActive((node) => mindMap.execCommand('SET_NODE_STYLES', node, nativePatch));
+    },
+    resetActiveNodeStyle: () => {
+      if (!canMutate()) return;
+      forEachActive((node) => mindMap.execCommand('REMOVE_CUSTOM_STYLES', node));
+    },
     getSelectedText: () => {
       const editor = richText();
       const range = richRange();
@@ -365,6 +403,13 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       const node = findNodeByUid(uid);
       if (!node || node.isGeneralization) return false;
       mindMap.execCommand('INSERT_CHILD_NODE', false, [node], { uid: newUid, text: '', richText: false });
+      return true;
+    },
+    addChildByUid: (uid) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isGeneralization) return false;
+      mindMap.execCommand('INSERT_CHILD_NODE', true, [node]);
       return true;
     },
     removeNodeByUid: (uid) => {

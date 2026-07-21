@@ -25,7 +25,7 @@ describe('v0.5.18 outline regression matrix', () => {
     const reordered = branch([b, a]);
     expect(outlineStructureSignature(textOnly)).toBe(outlineStructureSignature(initial));
     expect(outlineStructureSignature(reordered)).not.toBe(outlineStructureSignature(initial));
-    expect(outlineStructureSignature(initial, new Set(['parent']))).not.toBe(
+    expect(outlineStructureSignature(branch([a, b], 'Parent', false))).not.toBe(
       outlineStructureSignature(initial),
     );
   });

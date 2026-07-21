@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.20 — 2026-07-20
+
+- Added editor-local quick node controls: leaf nodes show add-child; expanded branches show compact collapse plus add-child; collapsed branches show their hidden descendant count plus add-child.
+- Synchronized outline/split disclosure with native map `expand` data and restored Root first-level branch folding. Root itself remains fixed and legacy false Root expansion is repaired on open.
+- Removed the top toolbar Delete entry. Replaced layout, theme and line-style text selectors with Structure, Theme and line SVG controls.
+- Added Structure, Theme and Line Style submenus to the blank-canvas context menu only.
+- Added a node-local style panel for shape, fill, border, width, font, size, weight, color, decoration and alignment, backed by native simple-mind-map style commands and history.
+- Added a dedicated summary icon and exposed native generalizations as editable outline rows while retaining upstream bracket layout and range logic.
+- Added focused regression coverage for quick controls, synchronized disclosure, Root branch behavior, project controls, node styles and summaries.
+
 ## 0.5.19 — 2026-07-18
 
 - Added explicit structural deletion for empty non-root outline rows: Backspace/Delete discards the empty editor host, removes the matching node through the command adapter, and restores focus to a neighboring visible row.

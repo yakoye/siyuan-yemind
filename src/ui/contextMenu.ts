@@ -1,4 +1,7 @@
 import { Menu, showMessage } from 'siyuan';
+import { YEMIND_LAYOUT_PRESETS } from '../core/layoutPresets';
+import { YEMIND_THEME_PRESETS, type YeMindLineStyle } from '../core/themePresets';
+import { lineStyleIcon, projectControlIcon, summaryIcon } from '../editor/projectControls';
 import type { YeMindCommands } from '../core/commands';
 import {
   openCommentsDialog,
@@ -16,6 +19,12 @@ export interface CanvasContextMenuOptions {
   readonly: boolean;
   onZenChange(enabled: boolean): void;
   onReadonlyChange(enabled: boolean): void;
+  currentLayout?: string;
+  currentTheme?: string;
+  currentLineStyle?: YeMindLineStyle;
+  onLayoutChange?(layout: string): void;
+  onThemeChange?(theme: string): void;
+  onLineStyleChange?(lineStyle: YeMindLineStyle): void;
   onAction?: (action: string) => void;
 }
 
@@ -33,6 +42,45 @@ export function openCanvasContextMenu(event: MouseEvent, commands: YeMindCommand
   menu.addItem({ icon: 'iconRefresh', label: '重置缩放与位置', click: run('reset-view', () => commands.resetZoom()) });
   menu.addItem({ icon: 'iconAlignCenter', label: '整理布局', disabled: commands.isReadonly(), click: run('reset-layout', () => commands.resetLayout()) });
   menu.addSeparator();
+  menu.addItem({
+    type: 'submenu',
+    iconHTML: projectControlIcon('layout'),
+    label: '结构',
+    submenu: YEMIND_LAYOUT_PRESETS.map((item) => ({
+      label: item.label,
+      current: item.id === options.currentLayout,
+      disabled: commands.isReadonly(),
+      click: run(`layout-${item.id}`, () => options.onLayoutChange?.(item.id)),
+    })),
+  });
+  menu.addItem({
+    type: 'submenu',
+    iconHTML: projectControlIcon('theme'),
+    label: '主题',
+    submenu: YEMIND_THEME_PRESETS.map((item) => ({
+      label: item.label,
+      current: item.id === options.currentTheme,
+      disabled: commands.isReadonly(),
+      click: run(`theme-${item.id}`, () => options.onThemeChange?.(item.id)),
+    })),
+  });
+  menu.addItem({
+    type: 'submenu',
+    iconHTML: lineStyleIcon(options.currentLineStyle ?? 'curve'),
+    label: '线型',
+    submenu: ([
+      ['curve', '弧线'],
+      ['straight', '圆角折线'],
+      ['direct', '直线'],
+    ] as const).map(([id, label]) => ({
+      iconHTML: lineStyleIcon(id),
+      label,
+      current: id === options.currentLineStyle,
+      disabled: commands.isReadonly(),
+      click: run(`line-style-${id}`, () => options.onLineStyleChange?.(id)),
+    })),
+  });
+  menu.addSeparator();
   menu.addItem({ icon: 'iconDown', label: '展开全部节点', click: run('expand-all', () => commands.expandAll()) });
   menu.addItem({ icon: 'iconUp', label: '折叠全部节点', click: run('collapse-all', () => commands.collapseAll()) });
   menu.addSeparator();
@@ -46,6 +94,7 @@ export interface NodeContextMenuOptions {
   onCodeBlock?: () => void;
   onNodeLink?: () => void;
   onRelation?: () => void;
+  onNodeStyle?: () => void;
   onAction?: (action: string) => void;
 }
 
@@ -96,10 +145,11 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   menu.addItem({ icon: 'iconMath', label: '公式', disabled: !availability.nodeContent, click: run('formula', () => openFormulaDialog(commands)) });
   menu.addItem({ icon: 'iconLink', label: '行内链接', disabled: !availability.inlineLink, click: run('inline-link', () => options.onInlineLink?.()) });
   menu.addItem({ icon: 'iconCode', label: '代码块', disabled: !availability.codeBlock, click: run('code-block', () => options.onCodeBlock?.()) });
+  menu.addItem({ icon: 'iconTheme', label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
   menu.addSeparator();
   const summaryAction = createSummaryMenuDescriptor(commands.getActiveNodes());
   menu.addItem({
-    icon: 'iconList',
+    iconHTML: summaryIcon(),
     label: summaryAction.label,
     accelerator: summaryAction.action === 'add' ? 'Ctrl+Alt+G' : undefined,
     warning: summaryAction.warning,

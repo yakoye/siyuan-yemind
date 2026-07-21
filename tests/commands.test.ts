@@ -183,3 +183,37 @@ describe('official-style outline structure commands', () => {
     expect(map.execCommand).not.toHaveBeenCalled();
   });
 });
+
+describe('node style command bridge', () => {
+  it('maps the style panel patch to native node style fields and resets via upstream command', () => {
+    const data = { fillColor: '#ffffff', customTextWidth: 121, fontSize: 18 };
+    const node = { isRoot: false, isGeneralization: false, getData: vi.fn((key?: string) => key ? (data as any)[key] : data) };
+    const map = fakeMindMap() as any;
+    map.opt = { readonly: false };
+    map.renderer.activeNodeList = [node];
+    const commands = createCommandAdapter(map as never);
+
+    expect(commands.getActiveNodeStyle()).toMatchObject({ fillColor: '#ffffff', width: 121, fontSize: 18 });
+    commands.setActiveNodeStyle({ shape: 'pill', width: 200, borderWidth: 2 });
+    commands.resetActiveNodeStyle();
+
+    expect(map.execCommand.mock.calls).toContainEqual(['SET_NODE_STYLES', node, {
+      shape: 'roundedRectangle',
+      borderRadius: 999,
+      customTextWidth: 200,
+      borderWidth: 2,
+    }]);
+    expect(map.execCommand.mock.calls).toContainEqual(['REMOVE_CUSTOM_STYLES', node]);
+  });
+
+  it('adds a child to the explicit quick-action target', () => {
+    const node = { isRoot: false, isGeneralization: false };
+    const map = fakeMindMap() as any;
+    map.opt = { readonly: false };
+    map.renderer.findNodeByUid = vi.fn(() => node);
+    const commands = createCommandAdapter(map as never);
+
+    expect(commands.addChildByUid('node-1')).toBe(true);
+    expect(map.execCommand).toHaveBeenCalledWith('INSERT_CHILD_NODE', true, [node]);
+  });
+});

@@ -10,6 +10,7 @@ export interface OutlineRow {
   hasChildren: boolean;
   expanded: boolean;
   isRoot: boolean;
+  isGeneralization?: boolean;
 }
 
 export type OutlineKeyAction =
@@ -42,21 +43,19 @@ export interface OutlineKeyContext {
   metaKey?: boolean;
 }
 
-const NO_COLLAPSED_OUTLINE_UIDS: ReadonlySet<string> = new Set<string>();
-
 function plainTextFromHtml(value: string): string {
   const element = document.createElement("div");
   element.innerHTML = value;
   return (element.textContent ?? "").replace(/\u00a0/g, " ").trim();
 }
 
-function nodeText(tree: MindMapTree): {
+function dataText(data: Record<string, unknown>): {
   text: string;
   html: string;
   richText: boolean;
 } {
-  const value = String(tree.data.text ?? "");
-  if (tree.data.richText) {
+  const value = String(data.text ?? "");
+  if (data.richText) {
     return {
       text: plainTextFromHtml(value),
       html: sanitizeOutlineHtml(value),
@@ -70,55 +69,51 @@ function nodeText(tree: MindMapTree): {
   };
 }
 
-/**
- * Build the outline from the complete map tree. Outline disclosure is editor UI
- * state and deliberately does not inherit `node.data.expand`, which belongs to
- * the canvas renderer.
- */
-export function flattenOutline(
-  tree: MindMapTree,
-  collapsedUids: ReadonlySet<string> = NO_COLLAPSED_OUTLINE_UIDS,
-): OutlineRow[] {
+/** Build the outline from the persisted node expand state. */
+export function generalizationList(data: Record<string, unknown>): Record<string, unknown>[] {
+  const value = data.generalization;
+  if (Array.isArray(value)) return value.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"));
+  return value && typeof value === "object" ? [value as Record<string, unknown>] : [];
+}
+
+export function flattenOutline(tree: MindMapTree): OutlineRow[] {
   const rows: OutlineRow[] = [];
   const visit = (node: MindMapTree, depth: number, path: string): void => {
     const children = Array.isArray(node.children) ? node.children : [];
     const hasChildren = children.length > 0;
     const uid = String(node.data.uid ?? path);
-    const expanded = !collapsedUids.has(uid);
+    const expanded = depth === 0 ? true : node.data.expand !== false;
     rows.push({
       uid,
-      ...nodeText(node),
+      ...dataText(node.data),
       depth,
       hasChildren,
       expanded,
       isRoot: depth === 0,
     });
-    if (hasChildren && expanded) {
-      children.forEach((child, index) =>
-        visit(child, depth + 1, `${path}.${index}`),
-      );
+    if (expanded) {
+      if (hasChildren) children.forEach((child, index) => visit(child, depth + 1, `${path}.${index}`));
+      generalizationList(node.data).forEach((summary, index) => {
+        const summaryUid = String(summary.uid ?? `${uid}.summary.${index}`);
+        rows.push({
+          uid: summaryUid,
+          ...dataText(summary),
+          depth: depth + 1,
+          hasChildren: false,
+          expanded: true,
+          isRoot: false,
+          isGeneralization: true,
+        });
+      });
     }
   };
   visit(tree, 0, "root");
   return rows;
 }
 
-/** Remove disclosure entries whose node disappeared or no longer has children. */
-export function pruneOutlineCollapsedUids(
-  tree: MindMapTree,
-  collapsedUids: Set<string>,
-): void {
-  const collapsible = new Set<string>();
-  const visit = (node: MindMapTree, path: string): void => {
-    const children = Array.isArray(node.children) ? node.children : [];
-    const uid = String(node.data.uid ?? path);
-    if (children.length > 0) collapsible.add(uid);
-    children.forEach((child, index) => visit(child, `${path}.${index}`));
-  };
-  visit(tree, "root");
-  collapsedUids.forEach((uid) => {
-    if (!collapsible.has(uid)) collapsedUids.delete(uid);
-  });
+/** @deprecated Outline expansion is persisted in node data. */
+export function pruneOutlineCollapsedUids(_tree: MindMapTree, collapsedUids: Set<string>): void {
+  collapsedUids.clear();
 }
 
 export function resolveOutlineKeyAction(
@@ -170,18 +165,17 @@ function rowHtml(row: OutlineRow, readonly: boolean): string {
   const branch = row.expanded ? "▾" : "▸";
   const label = row.text || "空节点";
   const encodedOriginal = encodeURIComponent(row.html);
-  const toggle = row.hasChildren
+  const toggle = row.hasChildren && !row.isRoot
     ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle aria-label="${row.expanded ? "折叠" : "展开"}">${branch}</button>`
     : '<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" aria-hidden="true"></span>';
-  return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml(row.uid)}" data-outline-root="${row.isRoot}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" data-outline-drag-source="${readonly || row.isRoot ? "false" : "true"}" style="--ymz-outline-depth:${row.depth}">${toggle}<div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
+  return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml(row.uid)}" data-outline-root="${row.isRoot}" data-outline-generalization="${Boolean(row.isGeneralization)}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" data-outline-drag-source="${readonly || row.isRoot || row.isGeneralization ? "false" : "true"}" style="--ymz-outline-depth:${row.depth}">${toggle}<div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
 }
 
 export function renderOutlineHtml(
   tree: MindMapTree,
   readonly = false,
-  collapsedUids: ReadonlySet<string> = NO_COLLAPSED_OUTLINE_UIDS,
 ): string {
-  return flattenOutline(tree, collapsedUids)
+  return flattenOutline(tree)
     .map((row) => rowHtml(row, readonly))
     .join("");
 }
@@ -200,9 +194,8 @@ export function resolveOutlineToggleState(input: {
  */
 export function outlineStructureSignature(
   tree: MindMapTree,
-  collapsedUids: ReadonlySet<string> = NO_COLLAPSED_OUTLINE_UIDS,
 ): string {
-  return flattenOutline(tree, collapsedUids)
+  return flattenOutline(tree)
     .map(
       (row) =>
         `${row.uid}:${row.depth}:${row.hasChildren ? 1 : 0}:${row.expanded ? 1 : 0}`,
@@ -220,9 +213,8 @@ export function patchOutlineTree(
   tree: MindMapTree,
   readonly = false,
   activeUid: string | null = null,
-  collapsedUids: ReadonlySet<string> = NO_COLLAPSED_OUTLINE_UIDS,
 ): void {
-  const rows = flattenOutline(tree, collapsedUids);
+  const rows = flattenOutline(tree);
   const existing = new Map<string, HTMLElement>();
   container
     .querySelectorAll<HTMLElement>(":scope > [data-outline-uid]")
@@ -246,15 +238,16 @@ export function patchOutlineTree(
         data.hasChildren ? String(data.expanded) : "false",
       );
       row.dataset.outlineRoot = String(data.isRoot);
+      row.dataset.outlineGeneralization = String(Boolean(data.isGeneralization));
       row.dataset.outlineHasChildren = String(data.hasChildren);
       row.dataset.outlineExpanded = String(data.expanded);
-      row.dataset.outlineDragSource = String(!readonly && !data.isRoot);
+      row.dataset.outlineDragSource = String(!readonly && !data.isRoot && !data.isGeneralization);
       row.style.setProperty("--ymz-outline-depth", String(data.depth));
 
       const existingToggle = row.querySelector<HTMLElement>(
         "[data-outline-toggle]",
       );
-      if (data.hasChildren) {
+      if (data.hasChildren && !data.isRoot) {
         let toggle = existingToggle as HTMLButtonElement | null;
         if (!toggle) {
           const placeholder = row.querySelector<HTMLElement>(

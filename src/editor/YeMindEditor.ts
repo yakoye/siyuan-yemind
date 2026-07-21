@@ -49,7 +49,6 @@ import {
   flattenOutline,
   outlineStructureSignature,
   patchOutlineTree,
-  pruneOutlineCollapsedUids,
   resolveOutlineKeyAction,
   resolveOutlineToggleState,
 } from "./outline";
@@ -90,6 +89,9 @@ import {
   hasImageFile,
 } from "../ui/nodeImageInput";
 import { NodeHoverPreview } from "../ui/nodeHoverPreview";
+import { NodeStylePanel } from "../ui/nodeStylePanel";
+import { NodeQuickActionsController } from "./nodeQuickActions";
+import { lineStyleIcon } from "./projectControls";
 import { normalizeNodeNote } from "../content/nodeNoteState";
 
 export interface YeMindEditorOptions {
@@ -153,6 +155,8 @@ export class YeMindEditor {
   private outerFrameHintEl!: HTMLElement;
   private richTextToolbar: RichTextToolbar | null = null;
   private nodeHoverPreview: NodeHoverPreview | null = null;
+  private nodeStylePanel: NodeStylePanel | null = null;
+  private nodeQuickActions: NodeQuickActionsController | null = null;
   private outlineRichText: OutlineRichTextController | null = null;
   private settingsInitialized = false;
   private viewMode: ViewMode = "map";
@@ -167,7 +171,6 @@ export class YeMindEditor {
   private outlineStructureBusy = false;
   private outlinePointerDrag: OutlinePointerDragSession | null = null;
   private outlineStructureKey = "";
-  private readonly outlineCollapsedUids = new Set<string>();
   private suppressOutlineClickUntil = 0;
   private pendingOutlineFocus: PendingOutlineFocus | null = null;
   private appearanceObserver: MutationObserver | null = null;
@@ -433,6 +436,10 @@ export class YeMindEditor {
     this.richTextToolbar = null;
     this.nodeHoverPreview?.destroy();
     this.nodeHoverPreview = null;
+    this.nodeStylePanel?.destroy();
+    this.nodeStylePanel = null;
+    this.nodeQuickActions?.destroy();
+    this.nodeQuickActions = null;
     this.rootEl?.removeEventListener("keydown", this.onRootKeydown, true);
     this.rootEl?.removeEventListener("paste", this.onImagePaste);
     this.canvasEl?.removeEventListener("dragover", this.onImageDragOver);
@@ -541,7 +548,14 @@ export class YeMindEditor {
     const normalized = stripCustomPositions(runtimeData);
     const sanitized = sanitizeAssociativeLines(normalized.tree);
     runtimeData = sanitized.tree;
-    if (normalized.changed || sanitized.changed) {
+    const rootExpandChanged = runtimeData.data.expand === false;
+    if (rootExpandChanged) {
+      runtimeData = {
+        ...runtimeData,
+        data: { ...runtimeData.data, expand: true },
+      };
+    }
+    if (normalized.changed || sanitized.changed || rootExpandChanged) {
       this.current.data = runtimeData;
       void this.options.repository
         .update(this.current.id, { data: runtimeData })
@@ -572,6 +586,19 @@ export class YeMindEditor {
       onDeleteShortcut: () => this.commands?.remove(),
     });
     this.commands = createCommandAdapter(this.map);
+    this.nodeStylePanel = new NodeStylePanel(this.rootEl, this.commands);
+    this.nodeQuickActions = new NodeQuickActionsController({
+      root: this.rootEl,
+      canvas: this.canvasEl,
+      getRendererRoot: () => (this.map as any)?.renderer?.root,
+      readonly: () => Boolean(this.commands?.isReadonly()),
+      onAddChild: (uid) => {
+        if (this.commands?.addChildByUid(uid)) this.nodeQuickActions?.scheduleRefresh();
+      },
+      onSetExpanded: (uid, expanded) => {
+        if (this.commands?.setNodeExpandedByUid(uid, expanded)) this.nodeQuickActions?.scheduleRefresh();
+      },
+    });
     this.nodeHoverPreview = new NodeHoverPreview(this.rootEl);
     this.richTextToolbar = new RichTextToolbar(this.rootEl, this.commands, {
       onFormula: (target) => openFormulaDialog(target),
@@ -620,6 +647,7 @@ export class YeMindEditor {
     );
     this.updateStats(this.current.data);
     this.renderOutline(this.current.data);
+    this.nodeQuickActions?.scheduleRefresh();
     this.updateZoom();
     const runtime = this.map as any;
     this.options.diagnostics.record("editor", "mounted", this.current.id, {
@@ -854,49 +882,48 @@ export class YeMindEditor {
 
     this.rootEl
       .querySelector<HTMLSelectElement>('[data-action="layout"]')
-      ?.addEventListener("change", (event) => {
-        if (!this.map) return;
-        const layout = (event.target as HTMLSelectElement).value;
-        this.map.setLayout(layout);
-        this.current.layout = layout;
-        this.scheduleSave();
-      });
+      ?.addEventListener("change", (event) => this.setLayout((event.target as HTMLSelectElement).value));
     this.rootEl
       .querySelector<HTMLSelectElement>('[data-action="theme"]')
-      ?.addEventListener("change", (event) => {
-        if (!this.map) return;
-        this.current.theme = normalizeThemePresetId(
-          (event.target as HTMLSelectElement).value,
-        );
-        this.applyMapAppearance();
-        this.options.diagnostics.record(
-          "appearance",
-          "theme-changed",
-          this.current.id,
-          {
-            theme: this.current.theme,
-          },
-        );
-        this.scheduleSave();
-      });
+      ?.addEventListener("change", (event) => this.setTheme((event.target as HTMLSelectElement).value));
     this.rootEl
       .querySelector<HTMLSelectElement>('[data-action="line-style"]')
-      ?.addEventListener("change", (event) => {
-        if (!this.map) return;
-        this.current.lineStyle = normalizeLineStyle(
-          (event.target as HTMLSelectElement).value,
-        );
-        this.applyMapAppearance();
-        this.options.diagnostics.record(
-          "appearance",
-          "line-style-changed",
-          this.current.id,
-          {
-            lineStyle: this.current.lineStyle,
-          },
-        );
-        this.scheduleSave();
-      });
+      ?.addEventListener("change", (event) => this.setLineStyle((event.target as HTMLSelectElement).value));
+  }
+
+  private setLayout(value: string): void {
+    if (!this.map || this.commands?.isReadonly()) return;
+    this.current.layout = value;
+    this.map.setLayout(value);
+    const select = this.rootEl.querySelector<HTMLSelectElement>('[data-action="layout"]');
+    if (select) select.value = value;
+    this.options.diagnostics.record("appearance", "layout-changed", this.current.id, { layout: value });
+    this.nodeQuickActions?.scheduleRefresh();
+    this.scheduleSave();
+  }
+
+  private setTheme(value: string): void {
+    if (!this.map || this.commands?.isReadonly()) return;
+    this.current.theme = normalizeThemePresetId(value);
+    const select = this.rootEl.querySelector<HTMLSelectElement>('[data-action="theme"]');
+    if (select) select.value = this.current.theme;
+    this.applyMapAppearance();
+    this.options.diagnostics.record("appearance", "theme-changed", this.current.id, { theme: this.current.theme });
+    this.nodeQuickActions?.scheduleRefresh();
+    this.scheduleSave();
+  }
+
+  private setLineStyle(value: unknown): void {
+    if (!this.map || this.commands?.isReadonly()) return;
+    this.current.lineStyle = normalizeLineStyle(value);
+    const select = this.rootEl.querySelector<HTMLSelectElement>('[data-action="line-style"]');
+    if (select) select.value = this.current.lineStyle;
+    const icon = this.rootEl.querySelector<HTMLElement>('[data-role="line-style-icon"]');
+    if (icon) icon.innerHTML = lineStyleIcon(this.current.lineStyle);
+    this.applyMapAppearance();
+    this.options.diagnostics.record("appearance", "line-style-changed", this.current.id, { lineStyle: this.current.lineStyle });
+    this.nodeQuickActions?.scheduleRefresh();
+    this.scheduleSave();
   }
 
   private bindMapEvents(): void {
@@ -912,6 +939,8 @@ export class YeMindEditor {
       );
       this.updateStats(data);
       this.renderOutline(data);
+      this.nodeStylePanel?.refresh();
+      this.nodeQuickActions?.scheduleRefresh();
       this.scheduleSave();
     });
     this.map.on("view_data_change", (viewData: Record<string, unknown>) => {
@@ -927,6 +956,7 @@ export class YeMindEditor {
         { zoom: Number((this.map?.view as any)?.scale ?? 1) },
       );
       this.updateDiagnosticState();
+      this.nodeQuickActions?.scheduleRefresh();
       this.scheduleSave();
     });
     this.map.on("node_contextmenu", (event: MouseEvent, node: any) => {
@@ -1011,6 +1041,9 @@ export class YeMindEditor {
       this.updateSelectionPresentation(list.length);
       this.updateDiagnosticState({ selectedNodeCount: list.length });
       this.updateToolbarAvailability();
+      if (list.length > 0) this.nodeStylePanel?.refresh();
+      else this.nodeStylePanel?.hide();
+      this.nodeQuickActions?.scheduleRefresh();
       const active = node ?? list[0];
       const uid = active?.getData?.("uid");
       this.activateOutlineUid(uid ? String(uid) : "");
@@ -1039,7 +1072,11 @@ export class YeMindEditor {
       (info: { currentIndex: number; total: number }) =>
         this.updateSearchInfo(info),
     );
-    this.map.on("scale", () => this.updateZoom());
+    this.map.on("scale", () => {
+      this.updateZoom();
+      this.nodeQuickActions?.scheduleRefresh();
+    });
+    this.map.on("node_tree_render_end", () => this.nodeQuickActions?.scheduleRefresh());
   }
 
   private openContextMenu(event: MouseEvent): void {
@@ -1053,6 +1090,7 @@ export class YeMindEditor {
       onNodeLink: () =>
         openLinkDialog(this.commands!, this.settings.inlineLinkAutoHttps),
       onRelation: () => this.beginRelation(),
+      onNodeStyle: () => this.nodeStylePanel?.show(),
       onAction: (action) =>
         this.options.diagnostics.record(
           "context-menu",
@@ -1074,6 +1112,12 @@ export class YeMindEditor {
       readonly: this.rootEl.dataset.readonly === "true",
       onZenChange: (enabled) => this.toggleZen(enabled),
       onReadonlyChange: (enabled) => this.setReadonly(enabled),
+      currentLayout: this.current.layout,
+      currentTheme: this.current.theme,
+      currentLineStyle: this.current.lineStyle,
+      onLayoutChange: (layout) => this.setLayout(layout),
+      onThemeChange: (theme) => this.setTheme(theme),
+      onLineStyleChange: (lineStyle) => this.setLineStyle(lineStyle),
       onAction: (action) =>
         this.options.diagnostics.record(
           "context-menu",
@@ -1179,7 +1223,8 @@ export class YeMindEditor {
       useLeftKeySelectionRightKeyDrag: settings.canvasMode === "select",
       mousewheelAction: settings.wheelMode === "zoom" ? "zoom" : "move",
       disableMouseWheelZoom: settings.wheelMode === "none",
-      isShowCreateChildBtnIcon: settings.showQuickCreate,
+      isShowCreateChildBtnIcon: false,
+      notShowExpandBtn: true,
       autoMoveWhenMouseInEdgeOnDrag: behavior.autoMoveWhenMouseInEdgeOnDrag,
       isLimitMindMapInCanvas: behavior.isLimitMindMapInCanvas,
       minZoomRatio: behavior.minZoomRatio,
@@ -1465,11 +1510,13 @@ export class YeMindEditor {
           button.dataset.action === `view-${mode}`,
         );
       });
-    if (mode !== "outline") this.scheduleSafeResize();
-    else if (this.resizeFrame !== null) {
+    if (mode !== "outline") {
+      this.scheduleSafeResize();
+    } else if (this.resizeFrame !== null) {
       window.cancelAnimationFrame(this.resizeFrame);
       this.resizeFrame = null;
     }
+    this.nodeQuickActions?.scheduleRefresh();
   }
 
   private scheduleSafeResize(attempt = 0): void {
@@ -1625,18 +1672,17 @@ export class YeMindEditor {
   }
 
   private renderOutline(data: MindMapTree): void {
-    pruneOutlineCollapsedUids(data, this.outlineCollapsedUids);
     const activeEditor = this.outlineRichText?.activeHost ?? null;
     const activeUid =
       activeEditor?.closest<HTMLElement>("[data-outline-uid]")?.dataset
         .outlineUid ?? null;
     const readonly = this.rootEl.dataset.readonly === "true";
-    const nextStructureKey = outlineStructureSignature(data, this.outlineCollapsedUids);
+    const nextStructureKey = outlineStructureSignature(data);
     const structureChanged = Boolean(
       this.outlineStructureKey && this.outlineStructureKey !== nextStructureKey,
     );
     const visibleUids = structureChanged
-      ? new Set(flattenOutline(data, this.outlineCollapsedUids).map((row) => row.uid))
+      ? new Set(flattenOutline(data).map((row) => row.uid))
       : null;
     this.outlineEl.setAttribute("aria-readonly", String(readonly));
 
@@ -1667,7 +1713,6 @@ export class YeMindEditor {
         data,
         readonly,
         null,
-        this.outlineCollapsedUids,
       );
     } else {
       patchOutlineTree(
@@ -1675,7 +1720,6 @@ export class YeMindEditor {
         data,
         readonly,
         activeUid,
-        this.outlineCollapsedUids,
       );
     }
     this.outlineStructureKey = nextStructureKey;
@@ -1822,10 +1866,10 @@ export class YeMindEditor {
   }
 
   private setOutlineExpanded(uid: string, expanded: boolean): void {
-    if (!uid) return;
-    if (expanded) this.outlineCollapsedUids.delete(uid);
-    else this.outlineCollapsedUids.add(uid);
-    this.renderOutline(this.current.data);
+    if (!uid || !this.commands) return;
+    if (this.commands.setNodeExpandedByUid(uid, expanded)) {
+      this.nodeQuickActions?.scheduleRefresh();
+    }
   }
 
   private outlineDeleteFocusUid(row: HTMLElement): string | null {
@@ -2279,6 +2323,8 @@ export class YeMindEditor {
     this.updateToolbarAvailability();
     this.updateRelationPresentation();
     this.updateOuterFramePresentation();
+    this.nodeStylePanel?.refresh();
+    this.nodeQuickActions?.scheduleRefresh();
   }
 
   private toggleZen(enabled: boolean): void {
