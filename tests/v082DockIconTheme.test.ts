@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-describe('YeMind v0.8.3 Dock icon theme adaptation', () => {
+describe('YeMind v0.8.4 Dock icon theme adaptation', () => {
   const source = readFileSync(resolve('src/plugin/YeMindPlugin.ts'), 'utf8');
 
   it('registers the interactive YeMind icon as vector currentColor artwork', () => {
@@ -20,10 +20,10 @@ describe('YeMind v0.8.3 Dock icon theme adaptation', () => {
     expect(source).not.toContain("from './yemindIcon'");
   });
 
-  it('publishes v0.8.3 consistently', () => {
+  it('publishes v0.8.4 consistently', () => {
     const manifest = JSON.parse(readFileSync(resolve('plugin.json'), 'utf8'));
     const packageJson = JSON.parse(readFileSync(resolve('package.json'), 'utf8'));
-    expect(manifest.version).toBe('0.8.3');
-    expect(packageJson.version).toBe('0.8.3');
+    expect(manifest.version).toBe('0.8.4');
+    expect(packageJson.version).toBe('0.8.4');
   });
 });

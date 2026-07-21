@@ -8,6 +8,6 @@ describe('plugin identity', () => {
   it('uses siyuan-yemind as the current SiYuan id and YeMind as the display name', () => {
     expect(plugin.name).toBe('siyuan-yemind');
     expect(plugin.displayName.zh_CN).toBe('YeMind');
-    expect(plugin.version).toBe('0.8.3');
+    expect(plugin.version).toBe('0.8.4');
   });
 });

@@ -1,6 +1,6 @@
 # YeMind Development Instructions / 开发要求
 
-本文件是 YeMind 的项目级开发入口。所有后续开发以 **v0.8.3** 为当前稳定基线，并结合 `.agents/skills/superpowers-*` 中的 Superpowers skills 执行。
+本文件是 YeMind 的项目级开发入口。所有后续开发以 **v0.8.4** 为当前稳定基线，并结合 `.agents/skills/superpowers-*` 中的 Superpowers skills 执行。
 
 ## 1. Baseline / 当前基线
 
@@ -8,7 +8,7 @@
 - 当前思源插件 ID / 安装目录：`siyuan-yemind`
 - 历史兼容插件 ID：`siyuan-yemind-zen`（只用于旧协议链接）
 - 显示名称：`YeMind`
-- 当前开发基线：`v0.8.3`
+- 当前开发基线：`v0.8.4`
 - 不得回退或破坏 v0.5.10 至 v0.8.1 已完成的稳定性修复与交互契约。
 - 真实运行环境的最终验收目标为 Windows 上的 SiYuan 3.7.2 桌面端。
 

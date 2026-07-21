@@ -64,7 +64,7 @@ function pixel(image: DecodedPng, x: number, y: number): [number, number, number
   return [image.pixels[index], image.pixels[index + 1], image.pixels[index + 2], image.pixels[index + 3]];
 }
 
-describe('YeMind v0.8.3 plugin identity and install layout', () => {
+describe('YeMind v0.8.4 plugin identity and install layout', () => {
   it('uses siyuan-yemind for the current manifest, package and installed directory', () => {
     const manifest = JSON.parse(readFileSync(resolve('plugin.json'), 'utf8'));
     const packageJson = JSON.parse(readFileSync(resolve('package.json'), 'utf8'));
@@ -72,8 +72,8 @@ describe('YeMind v0.8.3 plugin identity and install layout', () => {
     expect(manifest.displayName.default).toBe('YeMind');
     expect(manifest.displayName.zh_CN).toBe('YeMind');
     expect(packageJson.name).toBe('siyuan-yemind');
-    expect(manifest.version).toBe('0.8.3');
-    expect(packageJson.version).toBe('0.8.3');
+    expect(manifest.version).toBe('0.8.4');
+    expect(packageJson.version).toBe('0.8.4');
   });
 
   it('uses the renamed YeMindPlugin source entry and removes the old current source filename', () => {

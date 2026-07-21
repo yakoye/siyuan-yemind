@@ -4,6 +4,14 @@ import Quill from 'quill';
 import Delta from 'quill-delta';
 import { Scope } from 'parchment';
 import { editableTextLength, isPristineNodeTextData, markNodeTextEditedData } from './textEditingPolicy';
+import {
+  isUsableTextRect,
+  renderedNodeUid,
+  resolveLiveRenderedNode,
+  resolveRenderedTextRect,
+  snapshotRect,
+  type ResolvedTextRect,
+} from './richTextGeometry';
 
 export const YEMIND_FONT_VALUES = [
   'sans-serif',
@@ -116,17 +124,94 @@ export function registerYeMindFormats(): void {
 export default class YeMindRichText extends (BaseRichText as any) {
   static instanceName = 'richText';
 
+  private editingUid = '';
+  private lastValidNodeRect: DOMRect | null = null;
+  private lastRectSource: ResolvedTextRect['source'] | 'show-parameter' | 'last-valid' | 'none' = 'none';
+
   showEditText(params: any): void {
-    super.showEditText(params);
-    this.normalizeEditorPlacement(params?.rect);
+    if (this.showTextEdit) return;
+    const sourceNode = params?.node ?? null;
+    const uid = renderedNodeUid(sourceNode);
+    const liveNode = resolveLiveRenderedNode(this.mindMap, sourceNode, uid);
+    const liveGeometry = resolveRenderedTextRect(liveNode);
+    const parameterRect = isUsableTextRect(params?.rect) ? snapshotRect(params.rect) : null;
+    const rect = liveGeometry?.rect ?? parameterRect ?? this.lastValidNodeRect;
+
+    this.editingUid = uid || renderedNodeUid(liveNode);
+    if (rect) {
+      this.lastValidNodeRect = snapshotRect(rect);
+      this.lastRectSource = liveGeometry?.source ?? (parameterRect ? 'show-parameter' : 'last-valid');
+    }
+
+    super.showEditText({
+      ...params,
+      node: liveNode ?? sourceNode,
+      rect: rect ?? params?.rect,
+    });
+
+    // The upstream renderer can keep the pre-drag node instance in the event
+    // payload. Keep the editor transaction bound to the current renderer node.
+    this.node = resolveLiveRenderedNode(this.mindMap, this.node ?? liveNode ?? sourceNode, this.editingUid);
+    this.normalizeEditorPlacement(rect);
     this.bindTextEditingKeyboard();
-    this.emitEditingDiagnostic('opened');
+    this.emitEditingDiagnostic('opened', {
+      liveNodeResolved: Boolean(liveNode && liveNode !== sourceNode),
+      rectSource: this.lastRectSource,
+    });
   }
 
   updateTextEditNode(): void {
-    super.updateTextEditNode();
-    this.normalizeEditorPlacement();
-    this.emitEditingDiagnostic('repositioned');
+    if (!this.showTextEdit || !this.textEditNode) return;
+    const previousNode = this.node;
+    const liveNode = resolveLiveRenderedNode(this.mindMap, previousNode, this.editingUid);
+    if (liveNode) this.node = liveNode;
+
+    const geometry = resolveRenderedTextRect(liveNode);
+    const rect = geometry?.rect ?? this.lastValidNodeRect;
+    if (!rect) {
+      this.emitEditingDiagnostic('reposition-skipped-invalid-target', {
+        liveNodeResolved: Boolean(liveNode && liveNode !== previousNode),
+        rectSource: 'none',
+      });
+      return;
+    }
+
+    if (geometry) {
+      this.lastValidNodeRect = snapshotRect(geometry.rect);
+      this.lastRectSource = geometry.source;
+    } else {
+      this.lastRectSource = 'last-valid';
+    }
+    this.applyEditorGeometry(liveNode, rect);
+    this.emitEditingDiagnostic(geometry ? 'repositioned' : 'repositioned-from-anchor', {
+      liveNodeResolved: Boolean(liveNode && liveNode !== previousNode),
+      rectSource: this.lastRectSource,
+    });
+  }
+
+  hideEditText(nodes?: any[]): void {
+    const liveNode = resolveLiveRenderedNode(this.mindMap, this.node, this.editingUid);
+    if (liveNode) this.node = liveNode;
+    const liveNodes = Array.isArray(nodes)
+      ? nodes.map((node) => resolveLiveRenderedNode(this.mindMap, node)).filter(Boolean)
+      : nodes;
+    try {
+      super.hideEditText(liveNodes);
+    } finally {
+      this.editingUid = '';
+      this.lastValidNodeRect = null;
+      this.lastRectSource = 'none';
+    }
+  }
+
+  removeTextEditEl(): void {
+    try {
+      super.removeTextEditEl();
+    } finally {
+      this.editingUid = '';
+      this.lastValidNodeRect = null;
+      this.lastRectSource = 'none';
+    }
   }
 
   setQuillContainerMinHeight(minHeight: number): void {
@@ -136,6 +221,8 @@ export default class YeMindRichText extends (BaseRichText as any) {
 
   focus(start?: number): void {
     if (!this.quill) return;
+    const liveNode = resolveLiveRenderedNode(this.mindMap, this.node, this.editingUid);
+    if (liveNode) this.node = liveNode;
     const length = editableTextLength(this.quill);
     const data = this.node?.nodeData?.data ?? this.node?.getData?.() ?? null;
     const selectAll = start === 0 || isPristineNodeTextData(data);
@@ -146,12 +233,29 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.emitEditingDiagnostic(selectAll ? 'initial-select-all' : 'initial-caret-end', { length });
   }
 
+  private applyEditorGeometry(node: any, rect: DOMRect): void {
+    const host = this.textEditNode as HTMLElement | null;
+    if (!host || !isUsableTextRect(rect)) return;
+    const group = node?._textData?.node;
+    const width = Number(group?.attr?.('data-width'));
+    const height = Number(group?.attr?.('data-height'));
+    const originWidth = Number.isFinite(width) && width > 0 ? width : rect.width;
+    const originHeight = Number.isFinite(height) && height > 0 ? height : rect.height;
+    host.style.minWidth = `${originWidth + this.textNodePaddingX * 2}px`;
+    host.style.minHeight = `${originHeight}px`;
+    this.setQuillContainerMinHeight(originHeight);
+    this.normalizeEditorPlacement(rect);
+  }
+
   private normalizeEditorPlacement(rect?: DOMRect | null): void {
     const host = this.textEditNode as HTMLElement | null;
     if (!host) return;
     const target = this.mindMap?.opt?.customInnerElsAppendTo as HTMLElement | null | undefined;
-    const nodeRect = rect ?? this.node?._textData?.node?.node?.getBoundingClientRect?.();
-    if (!nodeRect) return;
+    const geometry = rect ? null : resolveRenderedTextRect(resolveLiveRenderedNode(this.mindMap, this.node, this.editingUid));
+    const nodeRect = rect ?? geometry?.rect ?? this.lastValidNodeRect;
+    if (!nodeRect || !isUsableTextRect(nodeRect)) return;
+    this.lastValidNodeRect = snapshotRect(nodeRect);
+    if (geometry) this.lastRectSource = geometry.source;
     if (!target || target === document.body || host.parentElement === document.body) {
       host.style.position = 'fixed';
       host.style.left = `${nodeRect.left}px`;
@@ -182,8 +286,15 @@ export default class YeMindRichText extends (BaseRichText as any) {
 
   private emitEditingDiagnostic(action: string, details: Record<string, unknown> = {}): void {
     const host = this.textEditNode as HTMLElement | null;
-    const nodeRect = this.node?._textData?.node?.node?.getBoundingClientRect?.();
+    const rawNodeElement = this.node?._textData?.node?.node as SVGGraphicsElement | null | undefined;
+    let rawNodeRect: DOMRect | null = null;
+    try {
+      rawNodeRect = rawNodeElement?.getBoundingClientRect?.() ?? null;
+    } catch {
+      rawNodeRect = null;
+    }
     const hostRect = host?.getBoundingClientRect?.();
+    const anchor = this.lastValidNodeRect;
     this.mindMap?.emit?.('yemind_text_edit_diagnostic', {
       action,
       details: {
@@ -191,8 +302,17 @@ export default class YeMindRichText extends (BaseRichText as any) {
         position: host?.style.position ?? '',
         hostLeft: hostRect ? Math.round(hostRect.left) : null,
         hostTop: hostRect ? Math.round(hostRect.top) : null,
-        nodeLeft: nodeRect ? Math.round(nodeRect.left) : null,
-        nodeTop: nodeRect ? Math.round(nodeRect.top) : null,
+        rawNodeLeft: rawNodeRect ? Math.round(rawNodeRect.left) : null,
+        rawNodeTop: rawNodeRect ? Math.round(rawNodeRect.top) : null,
+        rawNodeWidth: rawNodeRect ? Math.round(rawNodeRect.width) : null,
+        rawNodeHeight: rawNodeRect ? Math.round(rawNodeRect.height) : null,
+        anchorLeft: anchor ? Math.round(anchor.left) : null,
+        anchorTop: anchor ? Math.round(anchor.top) : null,
+        anchorWidth: anchor ? Math.round(anchor.width) : null,
+        anchorHeight: anchor ? Math.round(anchor.height) : null,
+        textElementConnected: typeof rawNodeElement?.isConnected === 'boolean' ? rawNodeElement.isConnected : null,
+        editingUidLength: this.editingUid.length,
+        rectSource: this.lastRectSource,
       },
     });
   }
