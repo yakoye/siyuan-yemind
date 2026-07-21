@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.3 — 2026-07-20
+
+- Replaced the bottom `选/拖` text with shared pointer and hand SVG icons; settings now uses the same icon choices and keeps the complete Select-first/Drag-first guidance.
+- Added geometry-based note/comment hover placement that tries right, left, top and bottom positions, adapts to narrow canvases and never intentionally covers the source badge.
+- Added compact right-aligned date/time metadata to comment hover previews.
+- Made the top and bottom toolbars single-line, nonshrinking, horizontally scrollable surfaces so narrow editor tabs no longer wrap or clip controls.
+- Reworked Note and Comment dialogs into compact internal-header layouts with local close controls, tighter cards, aligned metadata/actions and viewport-safe sizing.
+- Unified the top-toolbar and node-context-menu `节点样式` entry on the same SVG and callback-backed style panel.
+- Reorganized the node menu into Clipboard, Node Content, Style & Relations and Arrange & Collapse groups; only the inner items surface owns scrolling, eliminating the double scrollbar.
+- Added plugin-owned clipboard SVGs instead of relying on uncertain host Cut/Paste icon names.
+- Added permanent v0.6.3 regressions for canvas-mode icons, hover placement, comment timestamps, compact dialogs, responsive toolbars, menu grouping and single-scroll ownership while retaining all previous user-reported release gates.
+- Aligned package, manifest, runtime and diagnostic version identity at 0.6.3.
+
 ## 0.6.2 — 2026-07-20
 
 - Unified YeMind active, focus, selection and canvas-node highlight states around the plugin green `#176B50`.

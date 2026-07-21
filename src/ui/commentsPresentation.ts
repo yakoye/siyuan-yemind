@@ -21,11 +21,11 @@ export function buildCommentsListHtml(comments: NodeComment[], editingId: string
       : `<button class="b3-button b3-button--outline" data-action="edit-comment">编辑</button>
          <button class="b3-button b3-button--cancel" data-action="delete-comment">删除</button>`;
     return `<article class="ymz-comment" data-comment-id="${escapeAttribute(comment.id)}">
-      <div class="ymz-comment__main">
+      <div class="ymz-comment__body">${body}</div>
+      <div class="ymz-comment__meta">
         <time class="ymz-comment__time" datetime="${new Date(comment.createdAt).toISOString()}">${formatCommentTimestamp(comment.createdAt)}</time>
-        ${body}
+        <div class="ymz-comment__actions">${actions}</div>
       </div>
-      <div class="ymz-comment__actions">${actions}</div>
     </article>`;
   }).join('');
 }

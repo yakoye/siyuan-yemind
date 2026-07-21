@@ -16,6 +16,7 @@ function cloneSettings(settings: YeMindSettings): YeMindSettings {
 
 function setControlValue(control: HTMLInputElement | HTMLSelectElement, value: unknown): void {
   if (control instanceof HTMLInputElement && control.type === 'checkbox') control.checked = Boolean(value);
+  else if (control instanceof HTMLInputElement && control.type === 'radio') control.checked = control.value === String(value ?? '');
   else control.value = String(value ?? '');
 }
 
@@ -82,6 +83,7 @@ export function openYeMindSettingsDialog(store: SettingsStore): void {
   shell.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-setting]').forEach((control) => {
     control.addEventListener('change', () => {
       const key = control.dataset.setting as keyof YeMindSettings;
+      if (control instanceof HTMLInputElement && control.type === 'radio' && !control.checked) return;
       const value: unknown = control instanceof HTMLInputElement && control.type === 'checkbox'
         ? control.checked
         : control instanceof HTMLInputElement && control.type === 'number'

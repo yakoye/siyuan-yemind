@@ -1,6 +1,6 @@
 import { normalizeLineStyle, themeOptionsHtml } from '../core/themePresets';
 import { layoutOptionsHtml } from '../core/layoutPresets';
-import { historyIcon, lineStyleIcon, lockIcon, meditationIcon, nodeStyleIcon, projectControlIcon, redoIcon, searchIcon, undoIcon } from './projectControls';
+import { canvasModeIcon, historyIcon, lineStyleIcon, lockIcon, meditationIcon, nodeStyleIcon, projectControlIcon, redoIcon, searchIcon, undoIcon } from './projectControls';
 export function createEditorTemplate(title: string, theme: unknown = 'kmind-default', lineStyle: unknown = 'curve'): string {
   return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
@@ -102,7 +102,7 @@ export function createEditorTemplate(title: string, theme: unknown = 'kmind-defa
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
           <span class="ymz-selection-count" data-role="selection-count" hidden></span>
           <button data-action="fit" title="适配视图">⌖</button>
-          <button class="ymz-canvas-mode" data-action="toggle-selection-mode" title="选（选择优先）：左键框选，右键拖动画布" aria-label="选（选择优先）：左键框选，右键拖动画布" aria-pressed="false"><span data-role="canvas-mode-label">选</span></button>
+          <button class="ymz-canvas-mode ymz-icon-button" data-action="toggle-selection-mode" title="选（选择优先）：左键框选，右键拖动画布" aria-label="选（选择优先）：左键框选，右键拖动画布" aria-pressed="false"><span data-role="canvas-mode-icon">${canvasModeIcon('select')}</span></button>
           <button class="ymz-icon-button" data-action="readonly" title="只读模式" aria-label="只读模式">${lockIcon()}</button>
           <button class="ymz-icon-button" data-action="zen" title="禅模式" aria-label="禅模式">${meditationIcon()}</button>
           <button data-action="zoom-out" title="缩小">−</button>

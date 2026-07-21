@@ -4003,6 +4003,56 @@ class SettingsStore {
     this.listeners.forEach((listener) => listener(value));
   }
 }
+function canvasModeIcon(mode) {
+  if (mode === "pan") {
+    return '<svg class="ymz-toolbar-icon ymz-icon-canvas-pan" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.4 11.2V7.8a1.5 1.5 0 0 1 3 0v2.6-4.1a1.5 1.5 0 0 1 3 0v4.1-3.1a1.5 1.5 0 0 1 3 0v4.1-1.9a1.5 1.5 0 0 1 3 0v5.1c0 4.1-2.8 6.4-6.6 6.4h-1.1c-2.5 0-4.1-1.1-5.4-3l-2.2-3.2a1.6 1.6 0 0 1 .4-2.2 1.7 1.7 0 0 1 2.2.3l.7.9v-2.6Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+  return '<svg class="ymz-toolbar-icon ymz-icon-canvas-select" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 12.7 9.1-5.6 1.1 3.2 5.4-2.6 1.5-3.1-5.3L6 19.1 5 3Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+function clipboardIcon(kind) {
+  if (kind === "cut") {
+    return '<svg class="ymz-menu-icon ymz-icon-cut" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6.5" cy="17.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="17.5" cy="17.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8.4 15.8 7.9-10.3M15.6 15.8 7.7 5.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  }
+  if (kind === "paste") {
+    return '<svg class="ymz-menu-icon ymz-icon-paste" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5.5" width="12" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 5.5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1.5M9 10h6M9 14h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  }
+  return '<svg class="ymz-menu-icon ymz-icon-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="7" width="11" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+}
+function projectControlIcon(kind) {
+  if (kind === "layout") {
+    return '<svg class="ymz-project-icon ymz-icon-structure" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M5 10h14M5 10v4M12 10v4M19 10v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="2.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="9.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="16.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="9.5" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+  }
+  return '<svg class="ymz-project-icon ymz-icon-theme" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 4.2 10 2.8h4l1.8 1.4 3.2 1.2-1.5 4.1V21H6.5V9.5L5 5.4l3.2-1.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.2 4.2c.8 1.7 2 2.6 3.8 2.6s3-.9 3.8-2.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+}
+function lineStyleIcon(style) {
+  const normalized = style === "straight" || style === "direct" ? style : "curve";
+  const path2 = normalized === "curve" ? "M3 18C8 18 8 6 14 6h7" : normalized === "straight" ? "M3 18h8V6h10" : "M3 18 14 6h7";
+  return `<svg class="ymz-line-icon ymz-line-icon--${normalized}" viewBox="0 0 24 24" aria-hidden="true"><path d="${path2}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function summaryIcon() {
+  return '<svg class="ymz-menu-icon ymz-icon-summary" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c-2 0-3 2-3 4v2c0 1.5-.7 2.5-2 3 1.3.5 2 1.5 2 3v1c0 2 1 3 3 3M17 4c2 0 3 2 3 4v2c0 1.5.7 2.5 2 3-1.3.5-2 1.5-2 3v1c0 2-1 3-3 3M8 12h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+}
+function nodeStyleIcon() {
+  return '<svg class="ymz-project-icon ymz-icon-node-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="6.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="15" cy="12" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="17.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/></svg>';
+}
+function historyIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-history" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 9.2A8 8 0 1 1 5 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4.5 4.8v4.6h4.6M12 7.5v5l3.2 1.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+function undoIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-undo" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4.5 11.5 9 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11.5h8.2c4 0 6.3 2.1 6.3 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+}
+function redoIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-redo" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 4.5 4.5L15 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 11.5h-8.2c-4 0-6.3 2.1-6.3 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+}
+function searchIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-search" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="m14.7 14.7 4.8 4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+}
+function lockIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="15" r="1.2" fill="currentColor"/></svg>';
+}
+function meditationIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-meditation" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4.3" r="2.1" fill="none" stroke="currentColor" stroke-width="1.65"/><path d="M9.4 7.2c-1.9 1-2.8 2.7-3 5.1-.2 2.1-1.2 3.5-3.2 4.3M14.6 7.2c1.9 1 2.8 2.7 3 5.1.2 2.1 1.2 3.5 3.2 4.3M8.4 11.2 12 16l3.6-4.8M3.4 17c2.7-.3 4.9.2 6.6 1.5L12 20l2-1.5c1.7-1.3 3.9-1.8 6.6-1.5M6 20h12" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
 const SHORTCUT_ROWS = [
   { key: "search", label: "项目内搜索", group: "导图命令" },
   { key: "toggleZen", label: "切换禅模式", group: "导图命令" },
@@ -4036,6 +4086,20 @@ function selectRow(title, description, key, options) {
     <span><b>${escapeHtml$9(title)}</b><small>${escapeHtml$9(description)}</small></span>
     <select class="b3-select fn__size200" data-setting="${String(key)}">${options}</select>
   </label>`;
+}
+function canvasModeRow(settings) {
+  const choice = (value, label, description) => `<label class="ymz-settings-mode-choice" data-canvas-mode-choice="${value}">
+    <input type="radio" name="ymz-canvas-mode" data-setting="canvasMode" value="${value}"${settings.canvasMode === value ? " checked" : ""}>
+    <span class="ymz-settings-mode-choice__icon">${canvasModeIcon(value)}</span>
+    <span><b>${label}</b><small>${description}</small></span>
+  </label>`;
+  return `<div class="ymz-settings-row ymz-settings-row--canvas-mode">
+    <span><b>画布操作模式</b><small>箭头为选择优先；手型为拖动优先。底部工具栏与这里使用同一图标。</small></span>
+    <div class="ymz-settings-mode-choices" role="radiogroup" aria-label="画布操作模式">
+      ${choice("select", "选择优先", "选（选择优先）：左键框选，右键拖动画布")}
+      ${choice("pan", "拖动优先", "拖（拖动优先）：左键拖动画布，Ctrl/Cmd + 左键框选")}
+    </div>
+  </div>`;
 }
 function textRow(title, description, key, value) {
   return `<label class="ymz-settings-row">
@@ -4093,10 +4157,7 @@ function createSettingsDialogTemplate(settings) {
           ${switchRow("默认只读模式", "禁止编辑，保留平移、缩放和展开折叠。", "defaultReadonlyMode", settings.defaultReadonlyMode)}
         </div>
         <div class="ymz-settings-group"><h3>画布操作习惯</h3>
-          ${selectRow("画布操作模式", "选（选择优先）：左键框选，右键拖动画布；拖（拖动优先）：左键拖动画布，Ctrl/Cmd + 左键框选。", "canvasMode", [
-    option$1("select", "选（选择优先）", settings.canvasMode),
-    option$1("pan", "拖（拖动优先）", settings.canvasMode)
-  ].join(""))}
+          ${canvasModeRow(settings)}
           ${selectRow("滚轮行为", "控制滚轮平移和缩放。", "wheelMode", [
     option$1("pan", "滚轮平移，Ctrl/Cmd 缩放", settings.wheelMode),
     option$1("zoom", "直接缩放", settings.wheelMode),
@@ -4203,6 +4264,7 @@ function cloneSettings(settings) {
 }
 function setControlValue(control, value) {
   if (control instanceof HTMLInputElement && control.type === "checkbox") control.checked = Boolean(value);
+  else if (control instanceof HTMLInputElement && control.type === "radio") control.checked = control.value === String(value ?? "");
   else control.value = String(value ?? "");
 }
 function openYeMindSettingsDialog(store) {
@@ -4267,6 +4329,7 @@ function openYeMindSettingsDialog(store) {
   shell.querySelectorAll("[data-setting]").forEach((control) => {
     control.addEventListener("change", () => {
       const key = control.dataset.setting;
+      if (control instanceof HTMLInputElement && control.type === "radio" && !control.checked) return;
       const value = control instanceof HTMLInputElement && control.type === "checkbox" ? control.checked : control instanceof HTMLInputElement && control.type === "number" ? Number(control.value) : key === "codeBlockTabSize" ? Number(control.value) : control.value;
       draft[key] = value;
     });
@@ -4372,7 +4435,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.6.2";
+const PLUGIN_VERSION = "0.6.3";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -6909,7 +6972,7 @@ function rbox(el) {
   }
   return rbox2.addOffset();
 }
-function inside(x2, y2) {
+function inside$1(x2, y2) {
   const box = this.bbox();
   return x2 > box.x && y2 > box.y && x2 < box.x + box.width && y2 < box.y + box.height;
 }
@@ -7669,7 +7732,7 @@ let Element$1 = class Element2 extends Dom {
 extend(Element$1, {
   bbox,
   rbox,
-  inside,
+  inside: inside$1,
   point,
   ctm,
   screenCTM
@@ -56705,41 +56768,6 @@ function openCheckpointManager(options) {
     })();
   });
 }
-function projectControlIcon(kind) {
-  if (kind === "layout") {
-    return '<svg class="ymz-project-icon ymz-icon-structure" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M5 10h14M5 10v4M12 10v4M19 10v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="2.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="9.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="16.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="9.5" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
-  }
-  return '<svg class="ymz-project-icon ymz-icon-theme" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 4.2 10 2.8h4l1.8 1.4 3.2 1.2-1.5 4.1V21H6.5V9.5L5 5.4l3.2-1.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.2 4.2c.8 1.7 2 2.6 3.8 2.6s3-.9 3.8-2.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
-}
-function lineStyleIcon(style) {
-  const normalized = style === "straight" || style === "direct" ? style : "curve";
-  const path2 = normalized === "curve" ? "M3 18C8 18 8 6 14 6h7" : normalized === "straight" ? "M3 18h8V6h10" : "M3 18 14 6h7";
-  return `<svg class="ymz-line-icon ymz-line-icon--${normalized}" viewBox="0 0 24 24" aria-hidden="true"><path d="${path2}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-}
-function summaryIcon() {
-  return '<svg class="ymz-menu-icon ymz-icon-summary" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c-2 0-3 2-3 4v2c0 1.5-.7 2.5-2 3 1.3.5 2 1.5 2 3v1c0 2 1 3 3 3M17 4c2 0 3 2 3 4v2c0 1.5.7 2.5 2 3-1.3.5-2 1.5-2 3v1c0 2-1 3-3 3M8 12h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
-}
-function nodeStyleIcon() {
-  return '<svg class="ymz-project-icon ymz-icon-node-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="6.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="15" cy="12" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="17.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/></svg>';
-}
-function historyIcon() {
-  return '<svg class="ymz-toolbar-icon ymz-icon-history" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 9.2A8 8 0 1 1 5 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4.5 4.8v4.6h4.6M12 7.5v5l3.2 1.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-}
-function undoIcon() {
-  return '<svg class="ymz-toolbar-icon ymz-icon-undo" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4.5 11.5 9 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11.5h8.2c4 0 6.3 2.1 6.3 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-}
-function redoIcon() {
-  return '<svg class="ymz-toolbar-icon ymz-icon-redo" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 4.5 4.5L15 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 11.5h-8.2c-4 0-6.3 2.1-6.3 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-}
-function searchIcon() {
-  return '<svg class="ymz-toolbar-icon ymz-icon-search" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="m14.7 14.7 4.8 4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
-}
-function lockIcon() {
-  return '<svg class="ymz-toolbar-icon ymz-icon-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="15" r="1.2" fill="currentColor"/></svg>';
-}
-function meditationIcon() {
-  return '<svg class="ymz-toolbar-icon ymz-icon-meditation" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4.3" r="2.1" fill="none" stroke="currentColor" stroke-width="1.65"/><path d="M9.4 7.2c-1.9 1-2.8 2.7-3 5.1-.2 2.1-1.2 3.5-3.2 4.3M14.6 7.2c1.9 1 2.8 2.7 3 5.1.2 2.1 1.2 3.5 3.2 4.3M8.4 11.2 12 16l3.6-4.8M3.4 17c2.7-.3 4.9.2 6.6 1.5L12 20l2-1.5c1.7-1.3 3.9-1.8 6.6-1.5M6 20h12" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-}
 async function loadImageFileSelection(file, dependencies) {
   try {
     const dataUrl = await dependencies.read(file);
@@ -56823,11 +56851,11 @@ function buildCommentsListHtml(comments, editingId = null) {
          <button class="b3-button b3-button--cancel" data-action="cancel-edit-comment">取消</button>` : `<button class="b3-button b3-button--outline" data-action="edit-comment">编辑</button>
          <button class="b3-button b3-button--cancel" data-action="delete-comment">删除</button>`;
     return `<article class="ymz-comment" data-comment-id="${escapeAttribute$1(comment.id)}">
-      <div class="ymz-comment__main">
+      <div class="ymz-comment__body">${body}</div>
+      <div class="ymz-comment__meta">
         <time class="ymz-comment__time" datetime="${new Date(comment.createdAt).toISOString()}">${formatCommentTimestamp(comment.createdAt)}</time>
-        ${body}
+        <div class="ymz-comment__actions">${actions}</div>
       </div>
-      <div class="ymz-comment__actions">${actions}</div>
     </article>`;
   }).join("");
 }
@@ -56874,6 +56902,10 @@ function bindDialogActions(dialog, onSave) {
     onSave();
     dialog.destroy();
   });
+}
+function compactDialogWidth(preferred) {
+  const viewport = typeof window === "undefined" ? preferred : Math.max(320, window.innerWidth - 24);
+  return `${Math.min(preferred, viewport)}px`;
 }
 function openTagsDialog(commands) {
   const data2 = activeData(commands);
@@ -56965,7 +56997,7 @@ function openFormulaDialog(commands) {
       <label>LaTeX</label><textarea class="b3-text-field fn__block" data-field="formula" rows="4" placeholder="e=mc^2"></textarea>
       <div class="ymz-formula-preview" data-role="preview">输入公式后预览</div>
     </div>${actionButtons()}`,
-    width: "500px"
+    width: compactDialogWidth(500)
   });
   const input = dialog.element.querySelector('[data-field="formula"]');
   const preview = dialog.element.querySelector('[data-role="preview"]');
@@ -57072,17 +57104,26 @@ function openNoteDialog(commands, options = {}) {
     hideCloseIcon: true,
     content: `<div class="b3-dialog__content ymz-node-dialog ymz-note-dialog">
       <header class="ymz-node-dialog__header"><strong>${readonly ? "备注（只读）" : "备注"}</strong><button type="button" class="ymz-node-dialog__close" data-node-dialog-action="close-note" aria-label="关闭备注">×</button></header>
-      <div class="ymz-note-editor" data-field="note" contenteditable="${readonly ? "false" : "true"}" role="textbox" aria-multiline="true" data-placeholder="输入长篇备注；可粘贴文字和图片…"></div>
-      ${readonly ? "" : '<div class="b3-label__text">备注支持多段文字和图片粘贴，窗口大小会随备注一同保存。</div>'}
-    </div>${readonly ? '<div class="b3-dialog__action"><div class="fn__space"></div><button class="b3-button b3-button--cancel" data-dialog-action="cancel">关闭</button></div>' : actionButtons()}`,
-    width: `${width2}px`,
+      <div class="ymz-note-dialog__body">
+        <div class="ymz-note-editor" data-field="note" contenteditable="${readonly ? "false" : "true"}" role="textbox" aria-multiline="true" data-placeholder="输入长篇备注；可粘贴文字和图片…"></div>
+      </div>
+      <footer class="ymz-note-dialog__footer">
+        ${readonly ? "" : "<span>支持多段文字和图片粘贴</span>"}
+        <div class="fn__space"></div>
+        <button class="b3-button b3-button--cancel" data-dialog-action="cancel-note">${readonly ? "关闭" : "取消"}</button>
+        ${readonly ? "" : '<button class="b3-button b3-button--text" data-dialog-action="save-note">保存</button>'}
+      </footer>
+    </div>`,
+    width: compactDialogWidth(560),
     height: `${height2}px`
   });
   dialog.element.classList.add("ymz-note-dialog-host");
   (_a = dialog.element.querySelector('[data-node-dialog-action="close-note"]')) == null ? void 0 : _a.addEventListener("click", () => dialog.destroy());
+  (_b = dialog.element.querySelector('[data-dialog-action="cancel-note"]')) == null ? void 0 : _b.addEventListener("click", () => dialog.destroy());
   const editor = dialog.element.querySelector('[data-field="note"]');
   editor.innerHTML = (current == null ? void 0 : current.html) ?? "";
   const container = dialog.element.querySelector(".b3-dialog__container") ?? dialog.element;
+  if (width2 < 560) container.style.width = `${width2}px`;
   const resizeHandle = document.createElement("button");
   resizeHandle.type = "button";
   resizeHandle.className = "ymz-note-resize-handle";
@@ -57104,9 +57145,8 @@ function openNoteDialog(commands, options = {}) {
     });
     reader.readAsDataURL(image);
   });
-  (_b = dialog.element.querySelector('[data-dialog-action="cancel"]')) == null ? void 0 : _b.addEventListener("click", () => dialog.destroy());
   if (!readonly) {
-    (_c2 = dialog.element.querySelector('[data-dialog-action="save"]')) == null ? void 0 : _c2.addEventListener("click", () => {
+    (_c2 = dialog.element.querySelector('[data-dialog-action="save-note"]')) == null ? void 0 : _c2.addEventListener("click", () => {
       var _a2;
       const rect = ((_a2 = dialog.element.querySelector(".b3-dialog__container")) == null ? void 0 : _a2.getBoundingClientRect()) ?? dialog.element.getBoundingClientRect();
       commands.setNote(updateNodeNote(current, editor.innerHTML, Date.now(), { width: rect.width, height: rect.height }));
@@ -57133,7 +57173,7 @@ function openCommentsDialog(commands, options = {}) {
         <button class="b3-button b3-button--text" data-action="add-comment">添加</button>
       </div>
     </div>`,
-    width: "500px"
+    width: compactDialogWidth(500)
   });
   dialog.element.classList.add("ymz-comments-dialog-host");
   (_a = dialog.element.querySelector('[data-node-dialog-action="close-comments"]')) == null ? void 0 : _a.addEventListener("click", () => dialog.destroy());
@@ -57361,53 +57401,78 @@ function openNodeContextMenu(event, commands, options = {}) {
   menu.addItem({ icon: "iconAdd", label: "添加同级节点", accelerator: "Enter", disabled: !availability.addSibling, click: run("add-sibling", () => commands.addSibling()) });
   menu.addItem({ icon: "iconAdd", label: "添加父节点", accelerator: "Alt+Enter", disabled: !availability.addParent, click: run("add-parent", () => commands.addParent()) });
   menu.addSeparator();
-  menu.addItem({ icon: "iconCopy", label: "复制节点子树", accelerator: "Ctrl+C", disabled: false, click: run("copy", () => commands.copy()) });
-  menu.addItem({ label: "剪切节点子树", accelerator: "Ctrl+X", disabled: !availability.cut, click: run("cut", () => commands.cut()) });
-  menu.addItem({ label: "粘贴节点子树", accelerator: "Ctrl+V", disabled: !availability.paste, click: run("paste", () => {
-    void commands.paste().catch((error) => {
-      console.error("[YeMind Zen] node paste failed", error);
-      siyuan.showMessage("节点粘贴失败，请重试", 4e3, "error");
-    });
-  }) });
-  menu.addSeparator();
+  menu.addItem({
+    type: "submenu",
+    iconHTML: clipboardIcon("copy"),
+    label: "剪贴板",
+    submenu: [
+      { iconHTML: clipboardIcon("copy"), label: "复制节点子树", accelerator: "Ctrl+C", disabled: false, click: run("copy", () => commands.copy()) },
+      { iconHTML: clipboardIcon("cut"), label: "剪切节点子树", accelerator: "Ctrl+X", disabled: !availability.cut, click: run("cut", () => commands.cut()) },
+      { iconHTML: clipboardIcon("paste"), label: "粘贴节点子树", accelerator: "Ctrl+V", disabled: !availability.paste, click: run("paste", () => {
+        void commands.paste().catch((error) => {
+          console.error("[YeMind Zen] node paste failed", error);
+          siyuan.showMessage("节点粘贴失败，请重试", 4e3, "error");
+        });
+      }) }
+    ]
+  });
   const todoAction = createTodoMenuDescriptor(commands.getTodo());
-  menu.addItem({ icon: "iconCheck", label: todoAction.label, warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? "todo-remove" : "todo-add", () => commands.setTodo(todoAction.next)) });
-  menu.addItem({ icon: "iconYeMindNote", label: "备注", disabled: !availability.nodeContent, click: run("note", () => openNoteDialog(commands)) });
-  menu.addItem({ icon: "iconYeMindComment", label: "批注", disabled: !availability.nodeContent, click: run("comments", () => openCommentsDialog(commands)) });
-  menu.addItem({ icon: "iconTags", label: "标签", disabled: !availability.nodeContent, click: run("tags", () => openTagsDialog(commands)) });
-  menu.addItem({ icon: "iconEmoji", label: "图标", disabled: !availability.nodeContent, click: run("icons", () => openIconsDialog(commands)) });
-  menu.addItem({ icon: "iconLink", label: "链接", disabled: !availability.nodeContent, click: run("node-link", () => options.onNodeLink ? options.onNodeLink() : openLinkDialog(commands)) });
-  menu.addItem({ icon: "iconImage", label: "图片", disabled: !availability.nodeContent, click: run("image", () => openImageDialog(commands)) });
-  menu.addItem({ icon: "iconMath", label: "公式", disabled: !availability.nodeContent, click: run("formula", () => openFormulaDialog(commands)) });
-  menu.addItem({ icon: "iconLink", label: "行内链接", disabled: !availability.inlineLink, click: run("inline-link", () => {
-    var _a;
-    return (_a = options.onInlineLink) == null ? void 0 : _a.call(options);
-  }) });
-  menu.addItem({ icon: "iconCode", label: "代码块", disabled: !availability.codeBlock, click: run("code-block", () => {
-    var _a;
-    return (_a = options.onCodeBlock) == null ? void 0 : _a.call(options);
-  }) });
-  menu.addItem({ icon: "iconTheme", label: "节点样式", disabled: !availability.nodeContent, click: run("node-style", () => {
-    var _a;
-    return (_a = options.onNodeStyle) == null ? void 0 : _a.call(options);
-  }) });
-  menu.addSeparator();
+  menu.addItem({
+    type: "submenu",
+    icon: "iconMenu",
+    label: "节点内容",
+    submenu: [
+      { icon: "iconCheck", label: todoAction.label, warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? "todo-remove" : "todo-add", () => commands.setTodo(todoAction.next)) },
+      { icon: "iconYeMindNote", label: "备注", disabled: !availability.nodeContent, click: run("note", () => openNoteDialog(commands)) },
+      { icon: "iconYeMindComment", label: "批注", disabled: !availability.nodeContent, click: run("comments", () => openCommentsDialog(commands)) },
+      { icon: "iconTags", label: "标签", disabled: !availability.nodeContent, click: run("tags", () => openTagsDialog(commands)) },
+      { icon: "iconEmoji", label: "图标", disabled: !availability.nodeContent, click: run("icons", () => openIconsDialog(commands)) },
+      { icon: "iconLink", label: "链接", disabled: !availability.nodeContent, click: run("node-link", () => options.onNodeLink ? options.onNodeLink() : openLinkDialog(commands)) },
+      { icon: "iconImage", label: "图片", disabled: !availability.nodeContent, click: run("image", () => openImageDialog(commands)) },
+      { icon: "iconMath", label: "公式", disabled: !availability.nodeContent, click: run("formula", () => openFormulaDialog(commands)) },
+      { icon: "iconLink", label: "行内链接", disabled: !availability.inlineLink, click: run("inline-link", () => {
+        var _a;
+        return (_a = options.onInlineLink) == null ? void 0 : _a.call(options);
+      }) },
+      { icon: "iconCode", label: "代码块", disabled: !availability.codeBlock, click: run("code-block", () => {
+        var _a;
+        return (_a = options.onCodeBlock) == null ? void 0 : _a.call(options);
+      }) }
+    ]
+  });
   const summaryAction = createSummaryMenuDescriptor(commands.getActiveNodes());
   menu.addItem({
-    iconHTML: summaryIcon(),
-    label: summaryAction.label,
-    accelerator: summaryAction.action === "add" ? "Ctrl+Alt+G" : void 0,
-    warning: summaryAction.warning,
-    disabled: !availability.summary,
-    click: run(`summary-${summaryAction.action}`, () => summaryAction.action === "add" ? commands.addSummary() : commands.removeSummary())
+    type: "submenu",
+    iconHTML: nodeStyleIcon(),
+    label: "样式与关系",
+    submenu: [
+      { iconHTML: nodeStyleIcon(), label: "节点样式", disabled: !availability.nodeContent, click: run("node-style", () => {
+        var _a;
+        return (_a = options.onNodeStyle) == null ? void 0 : _a.call(options);
+      }) },
+      {
+        iconHTML: summaryIcon(),
+        label: summaryAction.label,
+        accelerator: summaryAction.action === "add" ? "Ctrl+Alt+G" : void 0,
+        warning: summaryAction.warning,
+        disabled: !availability.summary,
+        click: run(`summary-${summaryAction.action}`, () => summaryAction.action === "add" ? commands.addSummary() : commands.removeSummary())
+      },
+      { icon: "iconSelect", label: "添加外框", disabled: !availability.outerFrame, click: run("outer-frame", () => commands.addOuterFrame()) },
+      { icon: "iconRight", label: "关联线", accelerator: "Ctrl+Alt+L", disabled: !availability.relation, click: run("relation", () => options.onRelation ? options.onRelation() : commands.startRelation()) }
+    ]
   });
-  menu.addItem({ icon: "iconSelect", label: "添加外框", disabled: !availability.outerFrame, click: run("outer-frame", () => commands.addOuterFrame()) });
-  menu.addItem({ icon: "iconRight", label: "关联线", accelerator: "Ctrl+Alt+L", disabled: !availability.relation, click: run("relation", () => options.onRelation ? options.onRelation() : commands.startRelation()) });
-  menu.addSeparator();
-  menu.addItem({ icon: "iconUp", label: "上移节点", disabled: !availability.move, click: run("move-up", () => commands.moveUp()) });
-  menu.addItem({ icon: "iconDown", label: "下移节点", disabled: !availability.move, click: run("move-down", () => commands.moveDown()) });
-  menu.addItem({ icon: "iconRefresh", label: "展开/折叠", accelerator: "/", disabled: false, click: run("toggle-expand", () => commands.toggleExpand()) });
-  menu.addItem({ icon: "iconAlignCenter", label: "整理布局", disabled: !availability.resetLayout, click: run("reset-layout", () => commands.resetLayout()) });
+  menu.addItem({
+    type: "submenu",
+    icon: "iconAlignCenter",
+    label: "排列与折叠",
+    submenu: [
+      { icon: "iconUp", label: "上移节点", disabled: !availability.move, click: run("move-up", () => commands.moveUp()) },
+      { icon: "iconDown", label: "下移节点", disabled: !availability.move, click: run("move-down", () => commands.moveDown()) },
+      { icon: "iconRefresh", label: "展开/折叠", accelerator: "/", disabled: false, click: run("toggle-expand", () => commands.toggleExpand()) },
+      { icon: "iconAlignCenter", label: "整理布局", disabled: !availability.resetLayout, click: run("reset-layout", () => commands.resetLayout()) }
+    ]
+  });
   menu.addSeparator();
   menu.addItem({ icon: "iconTrashcan", label: "仅删除节点，保留子节点", accelerator: "Shift+Backspace", disabled: !availability.removeOnlyCurrent, click: run("remove-only-current", () => commands.removeOnlyCurrent()) });
   menu.addItem({ icon: "iconTrashcan", label: "删除节点和子树", accelerator: "Backspace", warning: true, disabled: !availability.remove, click: run("remove-subtree", () => commands.remove()) });
@@ -57671,7 +57736,7 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
           <span class="ymz-selection-count" data-role="selection-count" hidden></span>
           <button data-action="fit" title="适配视图">⌖</button>
-          <button class="ymz-canvas-mode" data-action="toggle-selection-mode" title="选（选择优先）：左键框选，右键拖动画布" aria-label="选（选择优先）：左键框选，右键拖动画布" aria-pressed="false"><span data-role="canvas-mode-label">选</span></button>
+          <button class="ymz-canvas-mode ymz-icon-button" data-action="toggle-selection-mode" title="选（选择优先）：左键框选，右键拖动画布" aria-label="选（选择优先）：左键框选，右键拖动画布" aria-pressed="false"><span data-role="canvas-mode-icon">${canvasModeIcon("select")}</span></button>
           <button class="ymz-icon-button" data-action="readonly" title="只读模式" aria-label="只读模式">${lockIcon()}</button>
           <button class="ymz-icon-button" data-action="zen" title="禅模式" aria-label="禅模式">${meditationIcon()}</button>
           <button data-action="zoom-out" title="缩小">−</button>
@@ -59029,6 +59094,95 @@ function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
 function escapeHtml(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
+function intersects(a, b) {
+  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
+function candidateRect(left, top, width2, height2) {
+  return { left, top, width: width2, height: height2, right: left + width2, bottom: top + height2 };
+}
+function inside(rect, root2, margin) {
+  return rect.left >= root2.left + margin && rect.top >= root2.top + margin && rect.right <= root2.right - margin && rect.bottom <= root2.bottom - margin;
+}
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(value, max));
+}
+function computeHoverPreviewPlacement(input) {
+  const gap = Math.max(0, input.gap ?? 8);
+  const margin = Math.max(0, input.margin ?? 8);
+  const root2 = input.root;
+  const anchor = input.anchor;
+  const desiredWidth = Math.max(80, input.preview.width);
+  const desiredHeight = Math.max(48, input.preview.height);
+  const maxWidth = Math.max(40, root2.width - margin * 2);
+  const maxHeight = Math.max(40, root2.height - margin * 2);
+  const width2 = Math.min(desiredWidth, maxWidth);
+  const height2 = Math.min(desiredHeight, maxHeight);
+  const centeredTop = anchor.top + (anchor.height - height2) / 2;
+  const centeredLeft = anchor.left + (anchor.width - width2) / 2;
+  const candidates = [
+    { placement: "right-bottom", left: anchor.right + gap, top: anchor.top },
+    { placement: "right-top", left: anchor.right + gap, top: anchor.bottom - height2 },
+    { placement: "left-bottom", left: anchor.left - gap - width2, top: anchor.top },
+    { placement: "left-top", left: anchor.left - gap - width2, top: anchor.bottom - height2 },
+    { placement: "right", left: anchor.right + gap, top: centeredTop },
+    { placement: "left", left: anchor.left - gap - width2, top: centeredTop },
+    { placement: "bottom-right", left: anchor.left, top: anchor.bottom + gap },
+    { placement: "bottom-left", left: anchor.right - width2, top: anchor.bottom + gap },
+    { placement: "top-right", left: anchor.left, top: anchor.top - gap - height2 },
+    { placement: "top-left", left: anchor.right - width2, top: anchor.top - gap - height2 }
+  ];
+  for (const candidate of candidates) {
+    const rect = candidateRect(candidate.left, candidate.top, width2, height2);
+    if (inside(rect, root2, margin) && !intersects(rect, anchor)) {
+      return { ...candidate, width: width2, height: height2 };
+    }
+  }
+  const sideCandidates = [
+    {
+      placement: "left-adaptive",
+      width: Math.max(40, Math.min(width2, anchor.left - gap - (root2.left + margin))),
+      height: height2,
+      left: root2.left + margin,
+      top: centeredTop
+    },
+    {
+      placement: "right-adaptive",
+      width: Math.max(40, Math.min(width2, root2.right - margin - (anchor.right + gap))),
+      height: height2,
+      left: anchor.right + gap,
+      top: centeredTop
+    },
+    {
+      placement: "top-adaptive",
+      width: width2,
+      height: Math.max(40, Math.min(height2, anchor.top - gap - (root2.top + margin))),
+      left: centeredLeft,
+      top: root2.top + margin
+    },
+    {
+      placement: "bottom-adaptive",
+      width: width2,
+      height: Math.max(40, Math.min(height2, root2.bottom - margin - (anchor.bottom + gap))),
+      left: centeredLeft,
+      top: anchor.bottom + gap
+    }
+  ].map((candidate) => ({
+    ...candidate,
+    left: clamp(candidate.left, root2.left + margin, root2.right - margin - candidate.width),
+    top: clamp(candidate.top, root2.top + margin, root2.bottom - margin - candidate.height)
+  })).filter((candidate) => candidate.width >= 40 && candidate.height >= 40).sort((a, b) => b.width * b.height - a.width * a.height);
+  const adaptive = sideCandidates.find((candidate) => !intersects(candidateRect(candidate.left, candidate.top, candidate.width, candidate.height), anchor));
+  if (adaptive) return adaptive;
+  const fallbackWidth = Math.min(width2, maxWidth);
+  const fallbackHeight = Math.min(height2, Math.max(40, anchor.top - root2.top - gap - margin));
+  return {
+    placement: "top-fallback",
+    width: fallbackWidth,
+    height: fallbackHeight,
+    left: clamp(centeredLeft, root2.left + margin, root2.right - margin - fallbackWidth),
+    top: Math.max(root2.top + margin, anchor.top - gap - fallbackHeight)
+  };
+}
 function buildHoverPreviewHtml(type, value) {
   if (type === "note") {
     const note2 = value;
@@ -59036,7 +59190,7 @@ function buildHoverPreviewHtml(type, value) {
   }
   const comments = Array.isArray(value) ? value : [];
   if (!comments.length) return '<div class="ymz-empty-hint">暂无批注</div>';
-  return `<div class="ymz-node-hover-preview__comments">${comments.map((comment) => `<div class="ymz-node-hover-preview__comment">${escapeHtml(comment.text).replaceAll("\n", "<br>")}</div>`).join("")}</div>`;
+  return `<div class="ymz-node-hover-preview__comments">${comments.map((comment) => `<div class="ymz-node-hover-preview__comment"><div class="ymz-node-hover-preview__comment-text">${escapeHtml(comment.text).replaceAll("\n", "<br>")}</div><time class="ymz-node-hover-preview__comment-time" datetime="${new Date(comment.createdAt).toISOString()}">${formatCommentTimestamp(comment.createdAt)}</time></div>`).join("")}</div>`;
 }
 class NodeHoverPreview {
   constructor(root2) {
@@ -59073,6 +59227,9 @@ class NodeHoverPreview {
     this.cancelTimers();
     this.element.hidden = true;
     this.element.innerHTML = "";
+    this.element.style.removeProperty("width");
+    this.element.style.removeProperty("max-height");
+    delete this.element.dataset.placement;
     this.anchor = null;
   }
   destroy() {
@@ -59089,16 +59246,30 @@ class NodeHoverPreview {
     this.cancelHide();
   }
   position(anchor) {
-    const root2 = this.root.getBoundingClientRect();
-    const rect = anchor.getBoundingClientRect();
-    const width2 = this.element.offsetWidth || 360;
-    const height2 = this.element.offsetHeight || 220;
-    const rootWidth = this.root.clientWidth || root2.width || window.innerWidth;
-    const rootHeight = this.root.clientHeight || root2.height || window.innerHeight;
-    const left = Math.max(8, Math.min(rect.right - root2.left + 8, rootWidth - width2 - 8));
-    const top = Math.max(8, Math.min(rect.top - root2.top, rootHeight - height2 - 8));
-    this.element.style.left = `${Math.round(left)}px`;
-    this.element.style.top = `${Math.round(top)}px`;
+    const rootRect = this.root.getBoundingClientRect();
+    const anchorRect = anchor.getBoundingClientRect();
+    const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
+    const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
+    const normalizedRoot = {
+      left: rootRect.left,
+      top: rootRect.top,
+      right: rootRect.left + rootWidth,
+      bottom: rootRect.top + rootHeight,
+      width: rootWidth,
+      height: rootHeight
+    };
+    const desiredWidth = Math.min(360, Math.max(180, this.element.offsetWidth || 360));
+    const desiredHeight = Math.min(320, Math.max(80, this.element.offsetHeight || 220));
+    const placement = computeHoverPreviewPlacement({
+      root: normalizedRoot,
+      anchor: anchorRect,
+      preview: { width: desiredWidth, height: desiredHeight }
+    });
+    this.element.dataset.placement = placement.placement;
+    this.element.style.width = `${Math.round(placement.width)}px`;
+    this.element.style.maxHeight = `${Math.round(placement.height)}px`;
+    this.element.style.left = `${Math.round(placement.left - rootRect.left)}px`;
+    this.element.style.top = `${Math.round(placement.top - rootRect.top)}px`;
   }
 }
 const INPUT_EVENTS = ["keydown", "keyup", "beforeinput", "input", "paste", "compositionstart", "compositionupdate", "compositionend"];
@@ -60823,8 +60994,8 @@ class YeMindEditor {
       button.title = presentation.modeTitle;
       button.setAttribute("aria-label", presentation.modeTitle);
       button.setAttribute("aria-pressed", String(isDragMode));
-      const label = button.querySelector('[data-role="canvas-mode-label"]');
-      if (label) label.textContent = presentation.modeShortLabel;
+      const icon = button.querySelector('[data-role="canvas-mode-icon"]');
+      if (icon) icon.innerHTML = canvasModeIcon(this.settings.canvasMode);
     });
   }
   setViewMode(mode) {

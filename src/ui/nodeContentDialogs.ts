@@ -35,6 +35,11 @@ function bindDialogActions(dialog: Dialog, onSave: () => void): void {
   });
 }
 
+function compactDialogWidth(preferred: number): string {
+  const viewport = typeof window === 'undefined' ? preferred : Math.max(320, window.innerWidth - 24);
+  return `${Math.min(preferred, viewport)}px`;
+}
+
 
 export function openTodoDialog(commands: YeMindCommands): void {
   const existing = (activeData(commands).yemindTodo ?? null) as NodeTodo | null;
@@ -152,7 +157,7 @@ export function openFormulaDialog(commands: RichTextFormattingTarget): void {
       <label>LaTeX</label><textarea class="b3-text-field fn__block" data-field="formula" rows="4" placeholder="e=mc^2"></textarea>
       <div class="ymz-formula-preview" data-role="preview">输入公式后预览</div>
     </div>${actionButtons()}`,
-    width: '500px',
+    width: compactDialogWidth(500),
   });
   const input = dialog.element.querySelector<HTMLTextAreaElement>('[data-field="formula"]')!;
   const preview = dialog.element.querySelector<HTMLElement>('[data-role="preview"]')!;
@@ -257,17 +262,26 @@ export function openNoteDialog(commands: YeMindCommands, options: { readonly?: b
     hideCloseIcon: true,
     content: `<div class="b3-dialog__content ymz-node-dialog ymz-note-dialog">
       <header class="ymz-node-dialog__header"><strong>${readonly ? '备注（只读）' : '备注'}</strong><button type="button" class="ymz-node-dialog__close" data-node-dialog-action="close-note" aria-label="关闭备注">×</button></header>
-      <div class="ymz-note-editor" data-field="note" contenteditable="${readonly ? 'false' : 'true'}" role="textbox" aria-multiline="true" data-placeholder="输入长篇备注；可粘贴文字和图片…"></div>
-      ${readonly ? '' : '<div class="b3-label__text">备注支持多段文字和图片粘贴，窗口大小会随备注一同保存。</div>'}
-    </div>${readonly ? '<div class="b3-dialog__action"><div class="fn__space"></div><button class="b3-button b3-button--cancel" data-dialog-action="cancel">关闭</button></div>' : actionButtons()}`,
-    width: `${width}px`,
+      <div class="ymz-note-dialog__body">
+        <div class="ymz-note-editor" data-field="note" contenteditable="${readonly ? 'false' : 'true'}" role="textbox" aria-multiline="true" data-placeholder="输入长篇备注；可粘贴文字和图片…"></div>
+      </div>
+      <footer class="ymz-note-dialog__footer">
+        ${readonly ? '' : '<span>支持多段文字和图片粘贴</span>'}
+        <div class="fn__space"></div>
+        <button class="b3-button b3-button--cancel" data-dialog-action="cancel-note">${readonly ? '关闭' : '取消'}</button>
+        ${readonly ? '' : '<button class="b3-button b3-button--text" data-dialog-action="save-note">保存</button>'}
+      </footer>
+    </div>`,
+    width: compactDialogWidth(560),
     height: `${height}px`,
   });
   dialog.element.classList.add('ymz-note-dialog-host');
   dialog.element.querySelector('[data-node-dialog-action="close-note"]')?.addEventListener('click', () => dialog.destroy());
+  dialog.element.querySelector('[data-dialog-action="cancel-note"]')?.addEventListener('click', () => dialog.destroy());
   const editor = dialog.element.querySelector<HTMLElement>('[data-field="note"]')!;
   editor.innerHTML = current?.html ?? '';
   const container = dialog.element.querySelector<HTMLElement>('.b3-dialog__container') ?? dialog.element;
+  if (width < 560) container.style.width = `${width}px`;
   const resizeHandle = document.createElement('button');
   resizeHandle.type = 'button';
   resizeHandle.className = 'ymz-note-resize-handle';
@@ -288,9 +302,8 @@ export function openNoteDialog(commands: YeMindCommands, options: { readonly?: b
     });
     reader.readAsDataURL(image);
   });
-  dialog.element.querySelector('[data-dialog-action="cancel"]')?.addEventListener('click', () => dialog.destroy());
   if (!readonly) {
-    dialog.element.querySelector('[data-dialog-action="save"]')?.addEventListener('click', () => {
+    dialog.element.querySelector('[data-dialog-action="save-note"]')?.addEventListener('click', () => {
       const rect = dialog.element.querySelector<HTMLElement>('.b3-dialog__container')?.getBoundingClientRect()
         ?? dialog.element.getBoundingClientRect();
       commands.setNote(updateNodeNote(current, editor.innerHTML, Date.now(), { width: rect.width, height: rect.height }));
@@ -317,7 +330,7 @@ export function openCommentsDialog(commands: YeMindCommands, options: { readonly
         <button class="b3-button b3-button--text" data-action="add-comment">添加</button>
       </div>
     </div>`,
-    width: '500px',
+    width: compactDialogWidth(500),
   });
   dialog.element.classList.add('ymz-comments-dialog-host');
   dialog.element.querySelector('[data-node-dialog-action="close-comments"]')?.addEventListener('click', () => dialog.destroy());

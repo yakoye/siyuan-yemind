@@ -346,10 +346,7 @@
 /* v0.5.16 official-style local context menus */
 .ymz-context-menu{z-index:36}
 .ymz-context-menu--canvas{min-width:190px}
-.ymz-context-menu--node{max-height:min(72vh,620px);min-width:224px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--b3-theme-on-surface) 28%,transparent) transparent}
-.ymz-context-menu--node::-webkit-scrollbar{width:5px}
-.ymz-context-menu--node::-webkit-scrollbar-thumb{border-radius:5px;background:color-mix(in srgb,var(--b3-theme-on-surface) 28%,transparent)}
-.ymz-context-menu--node::-webkit-scrollbar-track{background:transparent}
+.ymz-context-menu--node{min-width:224px;overflow:hidden}
 
 /* v0.5.16 color value readout */
 .ymz-color-popover__current{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;padding:7px 9px;border:1px solid var(--ymz-border);border-radius:8px;background:var(--b3-theme-surface);font-family:var(--b3-font-family);font-size:12px}
@@ -560,6 +557,75 @@
 .ymz-color-popover__swatch:hover,.ymz-color-popover__swatch:focus-visible{outline-color:var(--ymz-accent)!important}
 .ymz-color-popover__current label:focus-within,.ymz-note-editor:focus{border-color:var(--ymz-accent)!important;box-shadow:0 0 0 2px var(--ymz-accent-soft)!important}
 .ymz-outline-row.is-drop-before{box-shadow:inset 0 2px 0 var(--ymz-accent)!important}.ymz-outline-row.is-drop-after{box-shadow:inset 0 -2px 0 var(--ymz-accent)!important}.ymz-outline-row.is-drop-inside{background:var(--ymz-accent-soft)!important}
+
+/* v0.6.3 responsive overlays, icon modes and compact content surfaces */
+.ymz-topbar,.ymz-statusbar{
+  width:max-content;
+  max-width:calc(100% - 28px);
+  box-sizing:border-box;
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-width:none;
+  overscroll-behavior-inline:contain;
+}
+.ymz-topbar::-webkit-scrollbar,.ymz-statusbar::-webkit-scrollbar{display:none}
+.ymz-topbar>*,.ymz-statusbar>*{flex:0 0 auto}
+.ymz-topbar button,.ymz-topbar label,.ymz-topbar span,.ymz-statusbar button,.ymz-statusbar span{white-space:nowrap}
+.ymz-project-control{white-space:nowrap}
+.ymz-canvas-mode{width:32px!important;min-width:32px!important;padding:0!important}
+.ymz-canvas-mode [data-role="canvas-mode-icon"]{display:inline-flex;align-items:center;justify-content:center}
+.ymz-canvas-mode .ymz-toolbar-icon{width:18px;height:18px}
+
+.ymz-settings-row--canvas-mode{align-items:flex-start}
+.ymz-settings-mode-choices{display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:8px;min-width:min(390px,100%)}
+.ymz-settings-mode-choice{position:relative;display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--ymz-border);border-radius:9px;background:var(--b3-theme-background);cursor:pointer}
+.ymz-settings-mode-choice:hover{background:var(--b3-list-hover)}
+.ymz-settings-mode-choice:has(input:checked){border-color:var(--ymz-accent-border);background:var(--ymz-accent-soft);color:var(--ymz-accent)}
+.ymz-settings-mode-choice input{position:absolute;opacity:0;pointer-events:none}
+.ymz-settings-mode-choice__icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:7px;background:color-mix(in srgb,var(--b3-theme-surface) 88%,transparent)}
+.ymz-settings-mode-choice__icon svg{width:20px;height:20px}
+.ymz-settings-mode-choice>span:last-child{display:flex;min-width:0;flex-direction:column;gap:2px}
+.ymz-settings-mode-choice b{font-size:13px}.ymz-settings-mode-choice small{font-size:11px;color:var(--b3-theme-on-surface-light)}
+
+.ymz-node-hover-preview{box-sizing:border-box;overscroll-behavior:contain}
+.ymz-node-hover-preview__comment{display:flex;min-width:0;flex-direction:column;gap:5px}
+.ymz-node-hover-preview__comment-text{min-width:0;white-space:normal;overflow-wrap:anywhere}
+.ymz-node-hover-preview__comment-time{align-self:flex-end;color:var(--b3-theme-on-surface-light);font-size:10px;line-height:1.2;white-space:nowrap;text-align:right}
+
+.ymz-node-dialog{gap:8px;padding:12px!important}
+.ymz-node-dialog__header{position:relative;min-height:30px;margin:0;padding:0 0 8px}
+.ymz-node-dialog__close{position:relative;flex:0 0 auto;width:28px;height:28px;font-size:20px}
+.ymz-note-dialog{height:100%;min-height:0}
+.ymz-note-dialog__body{display:flex;flex:1;min-height:0}
+.ymz-note-dialog__body .ymz-note-editor{flex:1;min-height:150px;max-height:none}
+.ymz-note-dialog__footer{display:flex;align-items:center;gap:8px;padding-top:2px;color:var(--b3-theme-on-surface-light);font-size:11px}
+.ymz-note-dialog__footer .b3-button{min-width:58px}
+.ymz-comments-dialog [data-role="comments"]{gap:8px;max-height:min(52vh,360px);padding-right:2px}
+.ymz-comment{display:flex;min-height:0;flex-direction:column;gap:8px;padding:10px 12px}
+.ymz-comment__body{min-width:0}
+.ymz-comment__meta{display:flex;align-items:flex-end;gap:10px}
+.ymz-comment__time{flex:1;min-width:0;font-size:11px}
+.ymz-comment__actions{display:flex;align-self:auto;flex-direction:row;gap:6px}
+.ymz-comment__actions .b3-button{min-width:48px;padding:3px 9px}
+.ymz-comments-dialog>textarea{min-height:72px;resize:vertical}
+.ymz-comments-dialog__footer{gap:8px}
+.b3-dialog__container:has(.ymz-note-resize-handle){min-width:min(420px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100vh - 24px)}
+
+.ymz-context-menu--node{max-height:none;overflow:hidden}
+.ymz-context-menu--node .b3-menu__items{max-height:min(72vh,620px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--b3-theme-on-surface) 28%,transparent) transparent}
+.ymz-context-menu--node .b3-menu__items::-webkit-scrollbar{width:5px}
+.ymz-context-menu--node .b3-menu__items::-webkit-scrollbar-thumb{border-radius:5px;background:color-mix(in srgb,var(--b3-theme-on-surface) 28%,transparent)}
+.ymz-context-menu--node .b3-menu__items::-webkit-scrollbar-track{background:transparent}
+
+@media(max-width:560px){
+  .ymz-topbar{left:8px;right:8px;width:auto;max-width:none}
+  .ymz-statusbar{left:8px;right:8px;bottom:8px;width:auto;max-width:none;transform:none}
+  .ymz-save-state{display:none}
+  .ymz-stats{display:none}
+  .ymz-settings-mode-choices{grid-template-columns:1fr;min-width:0;width:100%}
+  .ymz-node-dialog{padding:10px!important}
+}
 /*!
  * Quill Editor v2.0.3
  * https://quilljs.com

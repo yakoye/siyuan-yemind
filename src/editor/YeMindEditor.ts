@@ -92,7 +92,7 @@ import {
 import { NodeHoverPreview } from "../ui/nodeHoverPreview";
 import { NodeStylePanel } from "../ui/nodeStylePanel";
 import { NodeQuickActionsController } from "./nodeQuickActions";
-import { lineStyleIcon } from "./projectControls";
+import { canvasModeIcon, lineStyleIcon } from "./projectControls";
 import { normalizeNodeNote } from "../content/nodeNoteState";
 import { CanvasRightDragController } from "./canvasRightDrag";
 
@@ -1533,8 +1533,8 @@ export class YeMindEditor {
         button.title = presentation.modeTitle;
         button.setAttribute("aria-label", presentation.modeTitle);
         button.setAttribute("aria-pressed", String(isDragMode));
-        const label = button.querySelector<HTMLElement>('[data-role="canvas-mode-label"]');
-        if (label) label.textContent = presentation.modeShortLabel;
+        const icon = button.querySelector<HTMLElement>('[data-role="canvas-mode-icon"]');
+        if (icon) icon.innerHTML = canvasModeIcon(this.settings.canvasMode);
       });
   }
 

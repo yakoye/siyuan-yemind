@@ -1,3 +1,4 @@
+import { canvasModeIcon } from '../editor/projectControls';
 import {
   DEFAULT_SHORTCUTS,
   type ShortcutCommand,
@@ -48,6 +49,21 @@ function selectRow(title: string, description: string, key: keyof YeMindSettings
     <span><b>${escapeHtml(title)}</b><small>${escapeHtml(description)}</small></span>
     <select class="b3-select fn__size200" data-setting="${String(key)}">${options}</select>
   </label>`;
+}
+
+function canvasModeRow(settings: YeMindSettings): string {
+  const choice = (value: 'select' | 'pan', label: string, description: string): string => `<label class="ymz-settings-mode-choice" data-canvas-mode-choice="${value}">
+    <input type="radio" name="ymz-canvas-mode" data-setting="canvasMode" value="${value}"${settings.canvasMode === value ? ' checked' : ''}>
+    <span class="ymz-settings-mode-choice__icon">${canvasModeIcon(value)}</span>
+    <span><b>${label}</b><small>${description}</small></span>
+  </label>`;
+  return `<div class="ymz-settings-row ymz-settings-row--canvas-mode">
+    <span><b>画布操作模式</b><small>箭头为选择优先；手型为拖动优先。底部工具栏与这里使用同一图标。</small></span>
+    <div class="ymz-settings-mode-choices" role="radiogroup" aria-label="画布操作模式">
+      ${choice('select', '选择优先', '选（选择优先）：左键框选，右键拖动画布')}
+      ${choice('pan', '拖动优先', '拖（拖动优先）：左键拖动画布，Ctrl/Cmd + 左键框选')}
+    </div>
+  </div>`;
 }
 
 
@@ -112,10 +128,7 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
           ${switchRow('默认只读模式', '禁止编辑，保留平移、缩放和展开折叠。', 'defaultReadonlyMode', settings.defaultReadonlyMode)}
         </div>
         <div class="ymz-settings-group"><h3>画布操作习惯</h3>
-          ${selectRow('画布操作模式', '选（选择优先）：左键框选，右键拖动画布；拖（拖动优先）：左键拖动画布，Ctrl/Cmd + 左键框选。', 'canvasMode', [
-            option('select', '选（选择优先）', settings.canvasMode),
-            option('pan', '拖（拖动优先）', settings.canvasMode),
-          ].join(''))}
+          ${canvasModeRow(settings)}
           ${selectRow('滚轮行为', '控制滚轮平移和缩放。', 'wheelMode', [
             option('pan', '滚轮平移，Ctrl/Cmd 缩放', settings.wheelMode),
             option('zoom', '直接缩放', settings.wheelMode),

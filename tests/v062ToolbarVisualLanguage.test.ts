@@ -28,7 +28,8 @@ describe('v0.6.2 toolbar visual language', () => {
     const lock = bottom.querySelector<HTMLElement>('[data-action="readonly"]')!;
     const zen = bottom.querySelector<HTMLElement>('[data-action="zen"]')!;
     expect(mode.nextElementSibling).toBe(lock);
-    expect(mode.textContent?.trim()).toBe('选');
+    expect(mode.textContent?.trim()).toBe('');
+    expect(mode.querySelector('svg.ymz-icon-canvas-select')).not.toBeNull();
     expect(lock.querySelector('svg.ymz-icon-lock')).not.toBeNull();
     expect(zen.querySelector('svg.ymz-icon-meditation')).not.toBeNull();
   });
@@ -57,8 +58,12 @@ describe('v0.6.2 toolbar visual language', () => {
     });
     const settings = createSettingsDialogTemplate(DEFAULT_SETTINGS);
     expect(settings).toContain('画布操作模式');
-    expect(settings).toContain('选（选择优先）');
-    expect(settings).toContain('拖（拖动优先）');
+    expect(settings).toContain('data-canvas-mode-choice="select"');
+    expect(settings).toContain('data-canvas-mode-choice="pan"');
+    expect(settings).toContain('选择优先');
+    expect(settings).toContain('拖动优先');
+    expect(settings).toContain('ymz-icon-canvas-select');
+    expect(settings).toContain('ymz-icon-canvas-pan');
   });
 
   it('defines green active, focus and canvas node selection states', () => {
