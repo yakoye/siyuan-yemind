@@ -2,7 +2,7 @@
   "name": "siyuan-yemind-zen",
   "author": "gocoffee-local",
   "url": "",
-  "version": "0.5.21",
+  "version": "0.5.22",
   "minAppVersion": "3.0.0",
   "backends": [
     "all"

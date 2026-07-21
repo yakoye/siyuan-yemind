@@ -440,7 +440,14 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     setNodeExpandedByUid: (uid, expanded) => {
       if (!canMutate()) return false;
       const node = findNodeByUid(uid);
-      if (!node || node.isGeneralization || !Array.isArray(node.children) || node.children.length === 0) return false;
+      const persistedChildren = Array.isArray(node?.nodeData?.children)
+        ? node.nodeData.children
+        : Array.isArray(node?.getData?.('children'))
+          ? node.getData('children')
+          : Array.isArray(node?.children)
+            ? node.children
+            : [];
+      if (!node || node.isGeneralization || persistedChildren.length === 0) return false;
       mindMap.execCommand('SET_NODE_EXPAND', node, expanded);
       return true;
     },

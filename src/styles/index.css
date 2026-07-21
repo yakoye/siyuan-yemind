@@ -460,3 +460,12 @@
 .ymz-node-style-panel__buttons { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin-top:7px; }
 .ymz-node-style-panel__buttons button.is-active { background:var(--b3-theme-primary-lightest,#dbeafe); border-color:var(--b3-theme-primary,#3b82f6); }
 .ymz-node-style-panel footer { display:flex; justify-content:flex-end; }
+
+/* v0.5.22 right-button canvas panning */
+.ymz-editor.is-canvas-right-dragging,
+.ymz-editor.is-canvas-right-dragging .ymz-canvas-wrap,
+.ymz-editor.is-canvas-right-dragging .ymz-canvas-wrap svg,
+.ymz-editor.is-canvas-right-dragging .smm-mind-map-container {
+  cursor: grabbing !important;
+  user-select: none;
+}

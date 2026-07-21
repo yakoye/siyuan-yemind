@@ -3824,6 +3824,7 @@ function findShortcutConflicts(shortcuts) {
 function isEditableTarget(target) {
   if (!(target instanceof HTMLElement)) return false;
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return true;
+  if (target.closest("[data-outline-editor]")) return true;
   if (target.isContentEditable || target.contentEditable === "true" || target.closest('[contenteditable="true"], [contenteditable=""], .ql-editor')) return true;
   return false;
 }
@@ -4371,7 +4372,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.5.21";
+const PLUGIN_VERSION = "0.5.22";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -56559,9 +56560,11 @@ function createCommandAdapter(mindMap) {
       return true;
     },
     setNodeExpandedByUid: (uid, expanded) => {
+      var _a, _b;
       if (!canMutate()) return false;
       const node = findNodeByUid(uid);
-      if (!node || node.isGeneralization || !Array.isArray(node.children) || node.children.length === 0) return false;
+      const persistedChildren = Array.isArray((_a = node == null ? void 0 : node.nodeData) == null ? void 0 : _a.children) ? node.nodeData.children : Array.isArray((_b = node == null ? void 0 : node.getData) == null ? void 0 : _b.call(node, "children")) ? node.getData("children") : Array.isArray(node == null ? void 0 : node.children) ? node.children : [];
+      if (!node || node.isGeneralization || persistedChildren.length === 0) return false;
       mindMap.execCommand("SET_NODE_EXPAND", node, expanded);
       return true;
     },
@@ -59291,6 +59294,106 @@ class NodeQuickActionsController {
     });
   }
 }
+class CanvasRightDragGesture {
+  constructor(threshold = 5) {
+    __publicField(this, "active", false);
+    __publicField(this, "dragging", false);
+    __publicField(this, "startX", 0);
+    __publicField(this, "startY", 0);
+    __publicField(this, "lastX", 0);
+    __publicField(this, "lastY", 0);
+    __publicField(this, "suppressMenu", false);
+    __publicField(this, "contextSuppressedDuringDrag", false);
+    this.threshold = threshold;
+  }
+  pointerDown(event) {
+    if (event.button !== 2) return false;
+    this.active = true;
+    this.dragging = false;
+    this.suppressMenu = false;
+    this.contextSuppressedDuringDrag = false;
+    this.startX = this.lastX = event.clientX;
+    this.startY = this.lastY = event.clientY;
+    return true;
+  }
+  pointerMove(event) {
+    if (!this.active) return { dragging: false, dx: 0, dy: 0 };
+    const total = Math.hypot(event.clientX - this.startX, event.clientY - this.startY);
+    if (!this.dragging && total <= this.threshold) {
+      this.lastX = event.clientX;
+      this.lastY = event.clientY;
+      return { dragging: false, dx: 0, dy: 0 };
+    }
+    const dx2 = event.clientX - this.lastX;
+    const dy2 = event.clientY - this.lastY;
+    this.dragging = true;
+    this.lastX = event.clientX;
+    this.lastY = event.clientY;
+    return { dragging: true, dx: dx2, dy: dy2 };
+  }
+  pointerUp() {
+    if (!this.active) return false;
+    const dragged = this.dragging;
+    this.active = false;
+    this.dragging = false;
+    this.suppressMenu = dragged && !this.contextSuppressedDuringDrag;
+    return dragged;
+  }
+  cancel() {
+    this.active = false;
+    this.dragging = false;
+  }
+  consumeContextMenu() {
+    if (this.active && this.dragging) {
+      this.contextSuppressedDuringDrag = true;
+      return true;
+    }
+    if (!this.suppressMenu) return false;
+    this.suppressMenu = false;
+    return true;
+  }
+  get isDragging() {
+    return this.dragging;
+  }
+}
+class CanvasRightDragController {
+  constructor(options) {
+    __publicField(this, "gesture", new CanvasRightDragGesture(5));
+    __publicField(this, "onMouseDown", (event) => {
+      this.gesture.pointerDown(event);
+    });
+    __publicField(this, "onMouseMove", (event) => {
+      var _a, _b;
+      const result = this.gesture.pointerMove(event);
+      if (!result.dragging) return;
+      event.preventDefault();
+      this.options.root.classList.add("is-canvas-right-dragging");
+      if (this.options.mode() === "pan" && (result.dx || result.dy)) {
+        (_b = (_a = this.options.map.view) == null ? void 0 : _a.translateXY) == null ? void 0 : _b.call(_a, result.dx, result.dy);
+      }
+    });
+    __publicField(this, "onMouseUp", () => {
+      this.gesture.pointerUp();
+      this.options.root.classList.remove("is-canvas-right-dragging");
+    });
+    var _a, _b, _c2, _d2, _e, _f;
+    this.options = options;
+    (_b = (_a = options.map).on) == null ? void 0 : _b.call(_a, "mousedown", this.onMouseDown);
+    (_d2 = (_c2 = options.map).on) == null ? void 0 : _d2.call(_c2, "mousemove", this.onMouseMove);
+    (_f = (_e = options.map).on) == null ? void 0 : _f.call(_e, "mouseup", this.onMouseUp);
+  }
+  destroy() {
+    var _a, _b, _c2, _d2, _e, _f;
+    (_b = (_a = this.options.map).off) == null ? void 0 : _b.call(_a, "mousedown", this.onMouseDown);
+    (_d2 = (_c2 = this.options.map).off) == null ? void 0 : _d2.call(_c2, "mousemove", this.onMouseMove);
+    (_f = (_e = this.options.map).off) == null ? void 0 : _f.call(_e, "mouseup", this.onMouseUp);
+    this.options.root.classList.remove("is-canvas-right-dragging");
+    this.gesture.cancel();
+  }
+  consumeContextMenu() {
+    return this.gesture.consumeContextMenu();
+  }
+}
 class YeMindEditor {
   constructor(options) {
     __publicField(this, "map", null);
@@ -59323,6 +59426,7 @@ class YeMindEditor {
     __publicField(this, "nodeHoverPreview", null);
     __publicField(this, "nodeStylePanel", null);
     __publicField(this, "nodeQuickActions", null);
+    __publicField(this, "canvasRightDrag", null);
     __publicField(this, "outlineRichText", null);
     __publicField(this, "settingsInitialized", false);
     __publicField(this, "viewMode", "map");
@@ -59497,8 +59601,14 @@ class YeMindEditor {
       event.stopPropagation();
       void this.applyNodeImageFile(file, node, "drop");
     });
-    __publicField(this, "onRootKeydown", (event) => {
+    __publicField(this, "onOutlineKeydownBubble", (event) => {
       var _a, _b;
+      if ((event.key === "Backspace" || event.key === "Delete") && ((_b = (_a = event.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, "[data-outline-editor]"))) {
+        event.stopPropagation();
+      }
+    });
+    __publicField(this, "onRootKeydown", (event) => {
+      var _a, _b, _c2;
       if (event.key === "Escape" && ((_a = this.commands) == null ? void 0 : _a.isRelationCreating())) {
         event.preventDefault();
         event.stopPropagation();
@@ -59511,7 +59621,13 @@ class YeMindEditor {
         this.toggleZen(false);
         return;
       }
-      if (!this.commands || isEditableTarget(event.target)) return;
+      const activeOutlineEditor = (_c2 = this.outlineRichText) == null ? void 0 : _c2.activeHost;
+      const eventTarget = event.target instanceof Node ? event.target : null;
+      const activeElement = document.activeElement;
+      const outlineEditing = Boolean(
+        activeOutlineEditor && (eventTarget && activeOutlineEditor.contains(eventTarget) || activeElement && activeOutlineEditor.contains(activeElement))
+      );
+      if (!this.commands || outlineEditing || isEditableTarget(event.target)) return;
       if ((event.key === "Backspace" || event.key === "Delete") && !event.ctrlKey && !event.metaKey && !event.altKey) {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -59581,7 +59697,7 @@ class YeMindEditor {
     this.scheduleSafeResize();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r;
     this.options.diagnostics.record(
       "editor",
       "destroy-started",
@@ -59610,11 +59726,14 @@ class YeMindEditor {
     this.nodeStylePanel = null;
     (_j = this.nodeQuickActions) == null ? void 0 : _j.destroy();
     this.nodeQuickActions = null;
-    (_k = this.rootEl) == null ? void 0 : _k.removeEventListener("keydown", this.onRootKeydown, true);
-    (_l = this.rootEl) == null ? void 0 : _l.removeEventListener("paste", this.onImagePaste);
-    (_m = this.canvasEl) == null ? void 0 : _m.removeEventListener("dragover", this.onImageDragOver);
-    (_n = this.canvasEl) == null ? void 0 : _n.removeEventListener("drop", this.onImageDrop);
-    (_o = this.outlineEl) == null ? void 0 : _o.removeEventListener(
+    (_k = this.canvasRightDrag) == null ? void 0 : _k.destroy();
+    this.canvasRightDrag = null;
+    (_l = this.rootEl) == null ? void 0 : _l.removeEventListener("keydown", this.onRootKeydown, true);
+    (_m = this.outlineEl) == null ? void 0 : _m.removeEventListener("keydown", this.onOutlineKeydownBubble);
+    (_n = this.rootEl) == null ? void 0 : _n.removeEventListener("paste", this.onImagePaste);
+    (_o = this.canvasEl) == null ? void 0 : _o.removeEventListener("dragover", this.onImageDragOver);
+    (_p = this.canvasEl) == null ? void 0 : _p.removeEventListener("drop", this.onImageDrop);
+    (_q = this.outlineEl) == null ? void 0 : _q.removeEventListener(
       "pointerdown",
       this.onOutlinePointerDown
     );
@@ -59629,7 +59748,7 @@ class YeMindEditor {
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_p = this.map) == null ? void 0 : _p.destroy();
+    (_r = this.map) == null ? void 0 : _r.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record(
@@ -59744,6 +59863,11 @@ class YeMindEditor {
       }
     });
     this.commands = createCommandAdapter(this.map);
+    this.canvasRightDrag = new CanvasRightDragController({
+      root: this.rootEl,
+      map: this.map,
+      mode: () => this.settings.canvasMode
+    });
     this.nodeStylePanel = new NodeStylePanel(this.rootEl, this.commands);
     this.nodeQuickActions = new NodeQuickActionsController({
       root: this.rootEl,
@@ -59864,7 +59988,6 @@ class YeMindEditor {
           expanded: outlineRow.dataset.outlineExpanded === "true"
         });
         if (!uid || next2 === null) return;
-        this.commands.goToNode(uid);
         this.activateOutlineUid(uid);
         this.setOutlineExpanded(uid, next2);
         return;
@@ -60001,6 +60124,7 @@ class YeMindEditor {
       (event) => this.handleOutlineKeydown(event),
       true
     );
+    this.outlineEl.addEventListener("keydown", this.onOutlineKeydownBubble);
     this.bindOutlineDrag();
     this.bindSplitDivider();
     this.rootEl.addEventListener("change", (event) => {
@@ -60112,11 +60236,23 @@ class YeMindEditor {
       this.scheduleSave();
     });
     this.map.on("node_contextmenu", (event, node) => {
+      var _a;
+      if ((_a = this.canvasRightDrag) == null ? void 0 : _a.consumeContextMenu()) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       if (!this.commands) return;
       this.activateNode(node);
       this.openContextMenu(event);
     });
     this.map.on("contextmenu", (event) => {
+      var _a;
+      if ((_a = this.canvasRightDrag) == null ? void 0 : _a.consumeContextMenu()) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       this.openCanvasMenu(event);
     });
     this.map.on(

@@ -93,6 +93,7 @@ import { NodeStylePanel } from "../ui/nodeStylePanel";
 import { NodeQuickActionsController } from "./nodeQuickActions";
 import { lineStyleIcon } from "./projectControls";
 import { normalizeNodeNote } from "../content/nodeNoteState";
+import { CanvasRightDragController } from "./canvasRightDrag";
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -157,6 +158,7 @@ export class YeMindEditor {
   private nodeHoverPreview: NodeHoverPreview | null = null;
   private nodeStylePanel: NodeStylePanel | null = null;
   private nodeQuickActions: NodeQuickActionsController | null = null;
+  private canvasRightDrag: CanvasRightDragController | null = null;
   private outlineRichText: OutlineRichTextController | null = null;
   private settingsInitialized = false;
   private viewMode: ViewMode = "map";
@@ -340,6 +342,18 @@ export class YeMindEditor {
     void this.applyNodeImageFile(file, node, "drop");
   };
 
+  private readonly onOutlineKeydownBubble = (event: KeyboardEvent): void => {
+    if (
+      (event.key === "Backspace" || event.key === "Delete") &&
+      (event.target as HTMLElement | null)?.closest?.("[data-outline-editor]")
+    ) {
+      // Quill/default text editing already ran at the target. Stop the event
+      // here so simple-mind-map's window shortcut cannot reinterpret it as
+      // structural node deletion.
+      event.stopPropagation();
+    }
+  };
+
   private readonly onRootKeydown = (event: KeyboardEvent): void => {
     if (event.key === "Escape" && this.commands?.isRelationCreating()) {
       event.preventDefault();
@@ -353,7 +367,15 @@ export class YeMindEditor {
       this.toggleZen(false);
       return;
     }
-    if (!this.commands || isEditableTarget(event.target)) return;
+    const activeOutlineEditor = this.outlineRichText?.activeHost;
+    const eventTarget = event.target instanceof Node ? event.target : null;
+    const activeElement = document.activeElement;
+    const outlineEditing = Boolean(
+      activeOutlineEditor &&
+        ((eventTarget && activeOutlineEditor.contains(eventTarget)) ||
+          (activeElement && activeOutlineEditor.contains(activeElement))),
+    );
+    if (!this.commands || outlineEditing || isEditableTarget(event.target)) return;
     if (
       (event.key === "Backspace" || event.key === "Delete") &&
       !event.ctrlKey &&
@@ -440,7 +462,10 @@ export class YeMindEditor {
     this.nodeStylePanel = null;
     this.nodeQuickActions?.destroy();
     this.nodeQuickActions = null;
+    this.canvasRightDrag?.destroy();
+    this.canvasRightDrag = null;
     this.rootEl?.removeEventListener("keydown", this.onRootKeydown, true);
+    this.outlineEl?.removeEventListener("keydown", this.onOutlineKeydownBubble);
     this.rootEl?.removeEventListener("paste", this.onImagePaste);
     this.canvasEl?.removeEventListener("dragover", this.onImageDragOver);
     this.canvasEl?.removeEventListener("drop", this.onImageDrop);
@@ -579,6 +604,11 @@ export class YeMindEditor {
       onDeleteShortcut: () => this.commands?.remove(),
     });
     this.commands = createCommandAdapter(this.map);
+    this.canvasRightDrag = new CanvasRightDragController({
+      root: this.rootEl,
+      map: this.map,
+      mode: () => this.settings.canvasMode,
+    });
     this.nodeStylePanel = new NodeStylePanel(this.rootEl, this.commands);
     this.nodeQuickActions = new NodeQuickActionsController({
       root: this.rootEl,
@@ -687,7 +717,6 @@ export class YeMindEditor {
           expanded: outlineRow.dataset.outlineExpanded === "true",
         });
         if (!uid || next === null) return;
-        this.commands.goToNode(uid);
         this.activateOutlineUid(uid);
         this.setOutlineExpanded(uid, next);
         return;
@@ -834,6 +863,7 @@ export class YeMindEditor {
       (event) => this.handleOutlineKeydown(event),
       true,
     );
+    this.outlineEl.addEventListener("keydown", this.onOutlineKeydownBubble);
     this.bindOutlineDrag();
     this.bindSplitDivider();
 
@@ -954,11 +984,21 @@ export class YeMindEditor {
       this.scheduleSave();
     });
     this.map.on("node_contextmenu", (event: MouseEvent, node: any) => {
+      if (this.canvasRightDrag?.consumeContextMenu()) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       if (!this.commands) return;
       this.activateNode(node);
       this.openContextMenu(event);
     });
     this.map.on("contextmenu", (event: MouseEvent) => {
+      if (this.canvasRightDrag?.consumeContextMenu()) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       this.openCanvasMenu(event);
     });
     this.map.on(

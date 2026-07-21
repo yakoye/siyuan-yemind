@@ -86,6 +86,7 @@ export function findShortcutConflicts(shortcuts: ShortcutMap): Record<ShortcutCo
 export function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return true;
+  if (target.closest('[data-outline-editor]')) return true;
   if (target.isContentEditable || target.contentEditable === 'true' || target.closest('[contenteditable="true"], [contenteditable=""], .ql-editor')) return true;
   return false;
 }

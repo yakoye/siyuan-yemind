@@ -1,5 +1,19 @@
 # YeMind Zen 功能矩阵
 
+## v0.5.22 已完成
+
+- [x] 折叠节点 live children 为空时仍从持久化子树识别为可展开分支
+- [x] Root、普通节点、数字按钮和大纲三角统一调用原生 `SET_NODE_EXPAND`
+- [x] 大纲三角不再由导航/聚焦副作用阻断展开
+- [x] `[data-outline-editor]` 及后代全部归类为可编辑目标
+- [x] 活动 Quill 会话在 Root 捕获阶段免受节点删除快捷键影响
+- [x] Backspace/Delete 在 Quill 编辑后停止向上游 window 快捷键传播
+- [x] 空白非 Root 行的明确结构删除语义保持不变
+- [x] pan/select 两种画布模式均支持右键平移
+- [x] 右键拖动超过阈值后显示抓手并抑制节点/空白菜单
+- [x] 静止右击仍正常显示菜单
+- [x] package/plugin/runtime 版本统一到 0.5.22
+
 ## v0.5.21 已完成
 
 - [x] Root 折叠状态不再被启动迁移强制改回展开

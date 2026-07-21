@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.22 — 2026-07-20
+
+- Fixed collapsed branch and Root expansion by checking persisted `nodeData.children` instead of the empty live `node.children` list before dispatching `SET_NODE_EXPAND`.
+- Routed both outline disclosure triangles and canvas hidden-count buttons through the same explicit native expand command; outline disclosure no longer runs navigation first.
+- Classified the outline editor host and descendants as editable targets and protected an active Quill session during the Root capture phase.
+- Stopped Backspace/Delete at the outline bubble boundary after Quill/default editing, preventing the upstream window shortcut from deleting the node; already-empty non-Root rows retain explicit structural deletion.
+- Added right-button canvas panning in both canvas modes with a 5 px movement threshold, grabbing cursor, incremental pan fallback in pan mode, and post-drag context-menu suppression for both nodes and blank canvas.
+- Added focused regressions for collapsed live-node expansion, Root expansion, editable-host recognition, right-drag gesture thresholds, pan/select behavior and menu suppression.
+
 ## 0.5.21 — 2026-07-20
 
 - Fixed a three-layer Root collapse conflict: editor startup no longer rewrites `expand: false`, outline flattening no longer forces Root open, and Root rows now render the same disclosure control as other branches.
