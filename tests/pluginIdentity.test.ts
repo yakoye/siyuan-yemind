@@ -8,6 +8,6 @@ describe('plugin identity', () => {
   it('uses the permanent SiYuan package id and YeMind Zen display name', () => {
     expect(plugin.name).toBe('siyuan-yemind-zen');
     expect(plugin.displayName.zh_CN).toBe('YeMind Zen');
-    expect(plugin.version).toBe('0.5.3');
+    expect(plugin.version).toBe('0.5.4');
   });
 });

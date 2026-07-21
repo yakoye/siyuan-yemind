@@ -16,6 +16,7 @@ import { createEditorTemplate } from './editorTemplate';
 import { renderOutlineHtml } from './outline';
 import { RichTextToolbar } from './RichTextToolbar';
 import { isEditableTarget, matchesShortcut } from './shortcuts';
+import { createSelectionPresentation } from './selectionPresentation';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -45,6 +46,7 @@ export class YeMindEditor {
   private searchInputEl!: HTMLInputElement;
   private replaceInputEl!: HTMLInputElement;
   private searchInfoEl!: HTMLElement;
+  private selectionCountEl!: HTMLElement;
   private richTextToolbar: RichTextToolbar | null = null;
   private settingsInitialized = false;
   private viewMode: ViewMode = 'map';
@@ -117,6 +119,7 @@ export class YeMindEditor {
     this.searchInputEl = this.options.container.querySelector('[data-role="search-input"]') as HTMLInputElement;
     this.replaceInputEl = this.options.container.querySelector('[data-role="replace-input"]') as HTMLInputElement;
     this.searchInfoEl = this.options.container.querySelector('[data-role="search-info"]') as HTMLElement;
+    this.selectionCountEl = this.options.container.querySelector('[data-role="selection-count"]') as HTMLElement;
     const layoutSelect = this.options.container.querySelector<HTMLSelectElement>('[data-action="layout"]');
     if (layoutSelect) layoutSelect.value = this.current.layout;
 
@@ -202,6 +205,7 @@ export class YeMindEditor {
         case 'fit': this.commands.fit(); break;
         case 'reset': this.commands.resetZoom(); break;
         case 'reset-layout': this.commands.resetLayout(); break;
+        case 'toggle-selection-mode': void this.toggleSelectionMode(); break;
         case 'zoom-in': this.commands.zoomIn(); break;
         case 'zoom-out': this.commands.zoomOut(); break;
         case 'view-map': this.setViewMode('map'); break;
@@ -294,6 +298,7 @@ export class YeMindEditor {
     });
     this.map.on('node_active', (node: any, list: any[]) => {
       this.rootEl.dataset.hasSelection = list.length > 0 ? 'true' : 'false';
+      this.updateSelectionPresentation(list.length);
       const active = node ?? list[0];
       const uid = active?.getData?.('uid');
       this.activateOutlineUid(uid ? String(uid) : '');
@@ -340,7 +345,7 @@ export class YeMindEditor {
       fitPadding: behavior.fitPadding,
     });
     this.map?.setThemeConfig(behavior.themeConfig);
-
+    this.updateSelectionPresentation();
 
     if (firstApply) {
       this.settingsInitialized = true;
@@ -349,6 +354,28 @@ export class YeMindEditor {
       this.toggleZen(settings.defaultZenMode);
       if (settings.autoFitOnOpen && !this.restoredViewOnOpen) window.setTimeout(() => this.commands?.fit(), 0);
     }
+  }
+
+  private async toggleSelectionMode(): Promise<void> {
+    const nextMode = this.settings.canvasMode === 'select' ? 'pan' : 'select';
+    await this.options.settingsStore.update({ canvasMode: nextMode });
+  }
+
+  private updateSelectionPresentation(count?: number): void {
+    const activeList = Array.isArray((this.map as any)?.renderer?.activeNodeList)
+      ? (this.map as any).renderer.activeNodeList
+      : [];
+    const presentation = createSelectionPresentation(count ?? activeList.length, this.settings.canvasMode);
+    this.rootEl.dataset.selectionMode = this.settings.canvasMode;
+    this.rootEl.dataset.multiSelection = String(presentation.isMultiple);
+    this.selectionCountEl.textContent = presentation.countText;
+    this.selectionCountEl.hidden = !presentation.isMultiple;
+    this.rootEl.querySelectorAll<HTMLElement>('[data-action="toggle-selection-mode"]').forEach((button) => {
+      button.classList.toggle('is-active', this.settings.canvasMode === 'select');
+      button.title = presentation.modeTitle;
+      button.setAttribute('aria-label', presentation.modeTitle);
+      button.setAttribute('aria-pressed', String(this.settings.canvasMode === 'select'));
+    });
   }
 
   private setViewMode(mode: ViewMode): void {
@@ -519,6 +546,10 @@ export class YeMindEditor {
         <p><b>Tab</b> 添加子节点，<b>Enter</b> 添加同级节点</p>
         <p><b>选中文字</b> 使用格式、行内链接、挖空、公式与代码工具</p>
         <p><b>右键节点</b> 直接切换待办，打开批注、概要与关联线</p>
+        <p><b>平移优先</b>：平移优先：左键拖动画布，Ctrl/Cmd + 左键框选</p>
+        <p><b>选择优先</b>：选择优先：左键框选，右键拖动画布</p>
+        <p><b>Ctrl/Cmd + 单击</b>：Ctrl/Cmd + 单击：增减节点选择</p>
+        <p><b>批量移动</b>：拖动任一已选节点：批量移动最上层所选子树</p>
         <p><b>Ctrl/Cmd + F</b> 搜索节点，顶部可切换导图、分屏和大纲</p>
       </div>`,
       width: '460px',

@@ -49,6 +49,7 @@ export function createEditorTemplate(title: string): string {
           <button data-action="fit" title="适配视图">⌖</button>
           <button data-action="reset" title="重置缩放">↺</button>
           <button data-action="reset-layout" title="整理布局">整</button>
+          <button data-action="toggle-selection-mode" title="平移优先：左键拖动画布；Ctrl/Cmd + 左键框选" aria-pressed="false">框</button>
           <button data-action="undo" title="撤销">↶</button>
           <button data-action="redo" title="重做">↷</button>
         </div>
@@ -58,6 +59,7 @@ export function createEditorTemplate(title: string): string {
         <div class="ymz-floating ymz-statusbar">
           <button class="ymz-status-title" data-role="title" title="${escapeHtml(title)}">${escapeHtml(title)}</button>
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
+          <span class="ymz-selection-count" data-role="selection-count" hidden></span>
           <button data-action="open-search" title="搜索">⌕</button>
           <button data-action="fit" title="适配视图">⌖</button>
           <button data-action="readonly" title="只读模式">锁</button>

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.4 — 2026-07-16
+
+- Exposed `simple-mind-map` native box selection through a persistent pan-priority / selection-priority toggle.
+- Kept selection ownership in the upstream `Select` plugin and Ctrl/Cmd node toggling in `MindMapNode`; no custom selection rectangle or active-node state was added.
+- Kept batch subtree movement in the upstream `Drag` plugin, which filters selected descendants to top-level selected subtrees before `MOVE_NODE_TO`, `INSERT_BEFORE`, or `INSERT_AFTER`.
+- Added a compact selected-node count that appears only for multi-selection.
+- Added accurate help and settings guidance for Ctrl/Cmd-click, box selection, selection-priority mode, and dragging any selected node to move the batch.
+- Added contract tests against the installed upstream Select, MindMapNode, and Drag implementations.
+
 ## 0.5.3 — 2026-07-16
 
 - Added same-map node subtree copy, cut and paste by delegating directly to `simple-mind-map` native `Render.copy`, `Render.cut` and `Render.paste` methods.

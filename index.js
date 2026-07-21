@@ -556,7 +556,7 @@ function createSettingsDialogTemplate(settings) {
           ${switchRow("默认只读模式", "禁止编辑，保留平移、缩放和展开折叠。", "defaultReadonlyMode", settings.defaultReadonlyMode)}
         </div>
         <div class="ymz-settings-group"><h3>画布操作习惯</h3>
-          ${selectRow("画布拖拽习惯", "在平移优先和选择优先之间切换。", "canvasMode", [
+          ${selectRow("画布拖拽习惯", "平移优先：左键拖动画布，Ctrl/Cmd + 左键框选；选择优先：左键框选，右键拖动画布。", "canvasMode", [
     option("pan", "平移优先", settings.canvasMode),
     option("select", "选择优先", settings.canvasMode)
   ].join(""))}
@@ -51612,6 +51612,7 @@ function createEditorTemplate(title) {
           <button data-action="fit" title="适配视图">⌖</button>
           <button data-action="reset" title="重置缩放">↺</button>
           <button data-action="reset-layout" title="整理布局">整</button>
+          <button data-action="toggle-selection-mode" title="平移优先：左键拖动画布；Ctrl/Cmd + 左键框选" aria-pressed="false">框</button>
           <button data-action="undo" title="撤销">↶</button>
           <button data-action="redo" title="重做">↷</button>
         </div>
@@ -51621,6 +51622,7 @@ function createEditorTemplate(title) {
         <div class="ymz-floating ymz-statusbar">
           <button class="ymz-status-title" data-role="title" title="${escapeHtml$1(title)}">${escapeHtml$1(title)}</button>
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
+          <span class="ymz-selection-count" data-role="selection-count" hidden></span>
           <button data-action="open-search" title="搜索">⌕</button>
           <button data-action="fit" title="适配视图">⌖</button>
           <button data-action="readonly" title="只读模式">锁</button>
@@ -51835,6 +51837,17 @@ class RichTextToolbar {
     this.element.style.maxWidth = `${window.innerWidth - 16}px`;
   }
 }
+function createSelectionPresentation(rawCount, mode) {
+  const count = Number.isFinite(rawCount) && rawCount > 0 ? Math.floor(rawCount) : 0;
+  const isSelectMode = mode === "select";
+  return {
+    count,
+    isMultiple: count > 1,
+    countText: count > 1 ? `已选 ${count}` : "",
+    modeLabel: isSelectMode ? "选择优先" : "平移优先",
+    modeTitle: isSelectMode ? "选择优先：左键框选；右键拖动画布" : "平移优先：左键拖动画布；Ctrl/Cmd + 左键框选"
+  };
+}
 class YeMindEditor {
   constructor(options) {
     __publicField(this, "map", null);
@@ -51856,6 +51869,7 @@ class YeMindEditor {
     __publicField(this, "searchInputEl");
     __publicField(this, "replaceInputEl");
     __publicField(this, "searchInfoEl");
+    __publicField(this, "selectionCountEl");
     __publicField(this, "richTextToolbar", null);
     __publicField(this, "settingsInitialized", false);
     __publicField(this, "viewMode", "map");
@@ -51949,6 +51963,7 @@ class YeMindEditor {
     this.searchInputEl = this.options.container.querySelector('[data-role="search-input"]');
     this.replaceInputEl = this.options.container.querySelector('[data-role="replace-input"]');
     this.searchInfoEl = this.options.container.querySelector('[data-role="search-info"]');
+    this.selectionCountEl = this.options.container.querySelector('[data-role="selection-count"]');
     const layoutSelect = this.options.container.querySelector('[data-action="layout"]');
     if (layoutSelect) layoutSelect.value = this.current.layout;
     let runtimeData = this.current.data;
@@ -52042,6 +52057,9 @@ class YeMindEditor {
           break;
         case "reset-layout":
           this.commands.resetLayout();
+          break;
+        case "toggle-selection-mode":
+          void this.toggleSelectionMode();
           break;
         case "zoom-in":
           this.commands.zoomIn();
@@ -52153,6 +52171,7 @@ class YeMindEditor {
     this.map.on("node_active", (node, list) => {
       var _a;
       this.rootEl.dataset.hasSelection = list.length > 0 ? "true" : "false";
+      this.updateSelectionPresentation(list.length);
       const active = node ?? list[0];
       const uid = (_a = active == null ? void 0 : active.getData) == null ? void 0 : _a.call(active, "uid");
       this.activateOutlineUid(uid ? String(uid) : "");
@@ -52198,6 +52217,7 @@ class YeMindEditor {
       fitPadding: behavior.fitPadding
     });
     (_c2 = this.map) == null ? void 0 : _c2.setThemeConfig(behavior.themeConfig);
+    this.updateSelectionPresentation();
     if (firstApply) {
       this.settingsInitialized = true;
       this.setViewMode(settings.defaultViewMode);
@@ -52208,6 +52228,25 @@ class YeMindEditor {
         return (_a2 = this.commands) == null ? void 0 : _a2.fit();
       }, 0);
     }
+  }
+  async toggleSelectionMode() {
+    const nextMode = this.settings.canvasMode === "select" ? "pan" : "select";
+    await this.options.settingsStore.update({ canvasMode: nextMode });
+  }
+  updateSelectionPresentation(count) {
+    var _a, _b;
+    const activeList = Array.isArray((_b = (_a = this.map) == null ? void 0 : _a.renderer) == null ? void 0 : _b.activeNodeList) ? this.map.renderer.activeNodeList : [];
+    const presentation = createSelectionPresentation(count ?? activeList.length, this.settings.canvasMode);
+    this.rootEl.dataset.selectionMode = this.settings.canvasMode;
+    this.rootEl.dataset.multiSelection = String(presentation.isMultiple);
+    this.selectionCountEl.textContent = presentation.countText;
+    this.selectionCountEl.hidden = !presentation.isMultiple;
+    this.rootEl.querySelectorAll('[data-action="toggle-selection-mode"]').forEach((button) => {
+      button.classList.toggle("is-active", this.settings.canvasMode === "select");
+      button.title = presentation.modeTitle;
+      button.setAttribute("aria-label", presentation.modeTitle);
+      button.setAttribute("aria-pressed", String(this.settings.canvasMode === "select"));
+    });
   }
   setViewMode(mode) {
     this.viewMode = mode;
@@ -52363,6 +52402,10 @@ class YeMindEditor {
         <p><b>Tab</b> 添加子节点，<b>Enter</b> 添加同级节点</p>
         <p><b>选中文字</b> 使用格式、行内链接、挖空、公式与代码工具</p>
         <p><b>右键节点</b> 直接切换待办，打开批注、概要与关联线</p>
+        <p><b>平移优先</b>：平移优先：左键拖动画布，Ctrl/Cmd + 左键框选</p>
+        <p><b>选择优先</b>：选择优先：左键框选，右键拖动画布</p>
+        <p><b>Ctrl/Cmd + 单击</b>：Ctrl/Cmd + 单击：增减节点选择</p>
+        <p><b>批量移动</b>：拖动任一已选节点：批量移动最上层所选子树</p>
         <p><b>Ctrl/Cmd + F</b> 搜索节点，顶部可切换导图、分屏和大纲</p>
       </div>`,
       width: "460px"
