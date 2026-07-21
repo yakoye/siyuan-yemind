@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.20 Verification Report
+# YeMind v0.5.20 Verification Report
 
 Date: 2026-07-20
 
@@ -16,7 +16,7 @@ v0.5.20 implements the requested structure, style and summary interaction batch:
 
 ## Official-source adaptation boundary
 
-The implementation follows the supplied KMind Zen 0.34.0 interaction and command model while retaining YeMind Zen's `simple-mind-map` structure, repository, history, checkpoints and persistence. No KMind private React state tree, document kernel, renderer or second history was imported.
+The implementation follows the supplied KMind Zen 0.34.0 interaction and command model while retaining YeMind's `simple-mind-map` structure, repository, history, checkpoints and persistence. No KMind private React state tree, document kernel, renderer or second history was imported.
 
 The installed public engine exposes three stable parent-child line styles (`curve`, `straight`, `direct`). v0.5.20 presents those native choices as icons rather than claiming unsupported private KMind edge routes.
 

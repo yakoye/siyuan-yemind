@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.21 Verification Report
+# YeMind v0.5.21 Verification Report
 
 Date: 2026-07-20
 
@@ -69,7 +69,7 @@ The findings remain in the existing Quill/simple-mind-map/uuid dependency chain.
 
 ```text
 Plugin ID: siyuan-yemind-zen
-Display name: YeMind Zen
+Display name: YeMind
 Package version: 0.5.21
 Plugin version: 0.5.21
 Runtime version: 0.5.21

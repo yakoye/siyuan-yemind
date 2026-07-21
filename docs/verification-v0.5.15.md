@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.15 Verification Report
+# YeMind v0.5.15 Verification Report
 
 Date: 2026-07-18
 
@@ -54,7 +54,7 @@ The findings remain in the existing Quill/simple-mind-map/uuid dependency chain.
 ## Data and runtime boundaries
 
 - Plugin ID remains `siyuan-yemind-zen`.
-- Display name remains `YeMind Zen`.
+- Display name remains `YeMind`.
 - Version is `0.5.15`.
 - Map/checkpoint file names and schemas are unchanged.
 - Outline rich text uses upstream `SET_NODE_TEXT` rich-text mode.

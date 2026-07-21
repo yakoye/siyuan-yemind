@@ -1,3 +1,11 @@
+## v0.8.0 已完成
+
+- [x] YeMind 公开品牌统一
+- [x] `siyuan-yemind` 工程包名和发布包名
+- [x] `YeMindPlugin` 源码入口
+- [x] 新 32/64/128/512 图标及 `#176B50` 颜色门禁
+- [x] 永久插件 ID 与旧数据兼容
+
 ## v0.7.1 已完成
 
 - [x] SVG / 非 HTMLElement 关闭控件安全激活
@@ -52,7 +60,7 @@
 - [x] 批注时间和操作右对齐
 - [x] 145 个测试文件 / 385 项测试发布门禁
 
-# YeMind Zen Feature Matrix
+# YeMind Feature Matrix
 
 ## v0.6.6 已完成
 
@@ -110,7 +118,7 @@
 - [x] v0.6.2 专项与历史用户反馈回归共同执行
 - [x] package/plugin/runtime 版本统一到 0.6.2
 
-# YeMind Zen 功能矩阵
+# YeMind 功能矩阵
 
 ## v0.6.1 已完成
 

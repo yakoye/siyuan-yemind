@@ -634,7 +634,7 @@ export class YeMindEditor {
       void this.options.repository
         .update(this.current.id, { data: runtimeData })
         .catch((error) => {
-          console.error("[YeMind Zen] migrated data save failed", error);
+          console.error("[YeMind] migrated data save failed", error);
           showMessage(
             "导图兼容数据保存失败，请勿立即关闭该标签",
             5000,
@@ -1524,7 +1524,7 @@ export class YeMindEditor {
         splitOutlineRatio: this.splitOutlineRatio,
       });
     } catch (error) {
-      console.error("[YeMind Zen] split ratio save failed", error);
+      console.error("[YeMind] split ratio save failed", error);
       showMessage("分屏比例保存失败，已保持当前显示", 4000, "error");
     }
   }
@@ -1534,7 +1534,7 @@ export class YeMindEditor {
     try {
       await this.options.settingsStore.update({ canvasMode: nextMode });
     } catch (error) {
-      console.error("[YeMind Zen] canvas mode save failed", error);
+      console.error("[YeMind] canvas mode save failed", error);
       showMessage("画布操作模式保存失败，已保持原设置", 4000, "error");
     }
   }
@@ -1670,7 +1670,7 @@ export class YeMindEditor {
           this.current.id,
           true,
         );
-        console.error("[YeMind Zen] safe resize failed", error);
+        console.error("[YeMind] safe resize failed", error);
       }
     });
   }
@@ -2098,7 +2098,7 @@ export class YeMindEditor {
   }
 
   private openCheckpointMenu(anchor: HTMLElement): void {
-    const menu = new Menu("siyuan-yemind-zen-checkpoint-menu");
+    const menu = new Menu("siyuan-yemind-checkpoint-menu");
     menu.addItem({
       icon: "iconAdd",
       label: "创建检查点",
@@ -2126,7 +2126,7 @@ export class YeMindEditor {
       await this.options.checkpointService.createManual(this.current.id, name);
       showMessage("检查点已创建");
     } catch (error) {
-      console.error("[YeMind Zen] create checkpoint failed", error);
+      console.error("[YeMind] create checkpoint failed", error);
       showMessage("检查点创建失败，请先确认导图已成功保存", 5000, "error");
     }
   }
@@ -2273,7 +2273,7 @@ export class YeMindEditor {
           image.src = dataUrl;
         }),
       onError: (error) => {
-        console.error("[YeMind Zen] node image input failed", error);
+        console.error("[YeMind] node image input failed", error);
         showMessage("图片读取失败，请重试", 4000, "error");
       },
     });
@@ -2307,7 +2307,7 @@ export class YeMindEditor {
 
   private flushPendingSave(): void {
     void this.saveNow().catch((error) => {
-      console.error("[YeMind Zen] close-time save failed", error);
+      console.error("[YeMind] close-time save failed", error);
     });
   }
 
@@ -2356,11 +2356,11 @@ export class YeMindEditor {
         this.current.id,
         true,
       );
-      console.error("[YeMind Zen] save failed", error);
+      console.error("[YeMind] save failed", error);
       if (!this.destroyed && revision === this.saveRevisions.current()) {
         this.saveStateEl.textContent = "保存失败";
         this.updateDiagnosticState({ saveState: "failed" });
-        showMessage("YeMind Zen 保存失败", 5000, "error");
+        showMessage("YeMind 保存失败", 5000, "error");
       }
       if (throwOnError) throw error;
     }
@@ -2465,14 +2465,14 @@ export class YeMindEditor {
       if (document.fullscreenElement) await document.exitFullscreen();
       else await this.rootEl.requestFullscreen();
     } catch (error) {
-      console.error("[YeMind Zen] fullscreen failed", error);
+      console.error("[YeMind] fullscreen failed", error);
       showMessage("当前环境无法切换全屏", 3000, "error");
     }
   }
 
   private openHelp(): void {
     const dialog = new Dialog({
-      title: "YeMind Zen 快速操作",
+      title: "YeMind 快速操作",
       content: `<div class="b3-dialog__content ymz-help">
         <p><b>双击</b> 编辑节点</p>
         <p><b>Tab</b> 添加子节点，<b>Enter</b> 添加同级节点</p>

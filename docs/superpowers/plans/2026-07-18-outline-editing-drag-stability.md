@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.18 大纲稳定性实施计划
+# YeMind v0.5.18 大纲稳定性实施计划
 
 > 基于已确认的 v0.5.17 根因，严格执行 RED → GREEN → REFACTOR。
 

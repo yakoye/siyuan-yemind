@@ -36,7 +36,7 @@ function renderSearchState(service: DiagnosticsService): string {
 
 export function openDiagnosticsDialog(service: DiagnosticsService): void {
   const dialog = new Dialog({
-    title: 'YeMind Zen 诊断与回归',
+    title: 'YeMind 诊断与回归',
     width: '760px',
     content: `<div class="b3-dialog__content ymz-diagnostics">
       <p class="ymz-diagnostics-note">全部检查在本机执行。默认诊断包不包含导图标题、节点正文、批注、链接或图片数据。</p>
@@ -102,7 +102,7 @@ export function openDiagnosticsDialog(service: DiagnosticsService): void {
         }
       } catch (error) {
         service.recordError('diagnostics', `dialog-${action}-failed`, error, undefined, true);
-        console.error('[YeMind Zen] diagnostics action failed', error);
+        console.error('[YeMind] diagnostics action failed', error);
         showMessage('诊断操作失败，请查看控制台', 5000, 'error');
       } finally {
         busy = false;

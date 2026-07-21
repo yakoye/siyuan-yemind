@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.1 验证记录
+# YeMind v0.5.1 验证记录
 
 验证日期：2026-07-16
 
@@ -8,7 +8,7 @@
 - `npm run check`：TypeScript `tsc --noEmit` 通过。
 - `npm run build`：Vite 生产构建通过，转换 839 个模块。
 - `node --check index.js`：生成的插件入口语法检查通过。
-- `plugin.json`：插件 ID 为 `siyuan-yemind-zen`，显示名为 `YeMind Zen`，版本为 `0.5.1`。
+- `plugin.json`：插件 ID 为 `siyuan-yemind-zen`，显示名为 `YeMind`，版本为 `0.5.1`。
 
 ## 已覆盖回归场景
 

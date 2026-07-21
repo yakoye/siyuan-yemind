@@ -1,4 +1,4 @@
-# YeMind Zen v0.6.5 Verification Report
+# YeMind v0.6.5 Verification Report
 
 Date: 2026-07-20
 
@@ -42,7 +42,7 @@ The online npm advisory request did not complete in the current environment. The
 
 ```text
 Plugin ID: siyuan-yemind-zen
-Display name: YeMind Zen
+Display name: YeMind
 Version: 0.6.5
 ```
 

@@ -1,12 +1,12 @@
-# YeMind Zen Superpowers Development Requirements
+# YeMind Superpowers Development Requirements
 
 ## Purpose
 
-本项目将上传的 Superpowers skills 纳入 YeMind Zen 的开发流程，用于约束需求分析、设计、计划、实现、调试、测试、审查、验证和分支收尾。项目级强制入口为根目录 `AGENTS.md`；完整 skills 位于 `.agents/skills/`。
+本项目将上传的 Superpowers skills 纳入 YeMind 的开发流程，用于约束需求分析、设计、计划、实现、调试、测试、审查、验证和分支收尾。项目级强制入口为根目录 `AGENTS.md`；完整 skills 位于 `.agents/skills/`。
 
 ## Current baseline
 
-当前稳定开发基线是 **YeMind Zen v0.5.13**。后续开发必须从该版本继续，不得回退到旧版或重新引入已经解决的问题。
+当前稳定开发基线是 **YeMind v0.8.0**。后续开发必须从该版本继续，不得回退到旧版或重新引入已经解决的问题。
 
 v0.5.10 至 v0.5.13 的受保护能力包括：
 
@@ -100,7 +100,7 @@ node --check <extracted-plugin>/index.js
 发生规则冲突时采用以下优先级：
 
 1. 用户在当前任务中的明确要求。
-2. 根目录 `AGENTS.md` 的 YeMind Zen 项目约束。
+2. 根目录 `AGENTS.md` 的 YeMind 项目约束。
 3. 对应 Superpowers `SKILL.md` 的通用流程。
 4. 既有项目惯例和历史文档。
 

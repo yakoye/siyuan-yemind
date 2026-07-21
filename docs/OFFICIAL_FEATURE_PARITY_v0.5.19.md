@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.19 官方功能对齐边界
+# YeMind v0.5.19 官方功能对齐边界
 
 ## 参考基线
 
@@ -8,7 +8,7 @@
 
 ## 对照结论
 
-| 主题 | KMind Zen 0.34.0 | YeMind Zen v0.5.19 | 边界 |
+| 主题 | KMind Zen 0.34.0 | YeMind v0.5.19 | 边界 |
 | --- | --- | --- | --- |
 | 连续大纲行 | 使用稳定实体行和独立编辑事务 | 使用稳定 UID keyed patch 与单活动 Quill | 不导入官方私有 ProseMirror/文档内核 |
 | 折叠状态 | 文档视图状态保存 collapsed node IDs | 当前编辑器维护局部 collapsed UID Set | 不把大纲按钮写回画布 `data.expand` |

@@ -21,6 +21,7 @@ describe('v0.6.4 SiYuan global search integration', () => {
     const html = renderGlobalSearchResults(collectGlobalMapMatches(maps, 'ATS'));
     expect(html).toContain('data-yemind-global-map="m1"');
     expect(html).toContain('data-yemind-global-node="ats"');
-    expect(html).toContain('YeMind Zen');
+    expect(html).toContain('YeMind');
+    expect(html).not.toContain('YeMind Zen');
   });
 });

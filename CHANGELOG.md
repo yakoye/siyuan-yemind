@@ -1,3 +1,12 @@
+## 0.8.0 — 2026-07-21
+
+- Rebranded the public product from YeMind to YeMind across the plugin manifest, settings, search, diagnostics, Dock, tabs and current documentation.
+- Renamed the npm engineering package and source plugin entry to `siyuan-yemind` and `YeMindPlugin`.
+- Replaced the old square `Ye` artwork with the user-provided mind-map logo in transparent 32, 64, 128 and 512 pixel assets.
+- Normalized every visible icon pixel to the exact theme color `#176B50`.
+- Kept the permanent SiYuan plugin ID `siyuan-yemind-zen` so upgrades continue to read existing maps, settings, checkpoints and plugin URLs.
+- Published the renamed release artifact as `siyuan-yemind-v0.8.0.zip`.
+
 ## 0.7.1 — 2026-07-21
 
 - Fixed global-search navigation failures caused by SiYuan close controls that are SVG or non-HTMLElement elements without a callable `.click()` method.
@@ -221,7 +230,7 @@
 
 ## 0.5.12 — 2026-07-17
 
-- Studied the user-provided KMind Zen 0.33.0 production bundle and adopted Scheme C: transplant verified interaction mechanisms while keeping YeMind Zen's current data model and `simple-mind-map` structural ownership.
+- Studied the user-provided KMind Zen 0.33.0 production bundle and adopted Scheme C: transplant verified interaction mechanisms while keeping YeMind's current data model and `simple-mind-map` structural ownership.
 - Reworked outline editing into commit-before-structure transactions with UID-based caret restoration and structure-operation serialization.
 - Added IME-safe Enter/Shift+Enter, Tab/Shift+Tab, empty deletion, visible-row navigation, and caret-boundary collapse/expand behavior.
 - Added an adjustable right-side split divider with animation-frame updates, keyboard adjustment, reset, bounds, and persisted ratio.
@@ -331,7 +340,7 @@
 
 ## 0.5.2 — 2026-07-16
 
-- Removed YeMind Zen's custom node-drag viewport capture/restore layer and delegated drag movement, subtree movement, sibling insertion and layout recalculation entirely to `simple-mind-map`.
+- Removed YeMind's custom node-drag viewport capture/restore layer and delegated drag movement, subtree movement, sibling insertion and layout recalculation entirely to `simple-mind-map`.
 - Locked the stable editor path to native structured drag; removed the experimental free-drag and post-drag viewport restoration controls from settings.
 - Kept edge auto-pan as the only optional native drag behavior and left it disabled by default.
 - Fixed restored SiYuan tabs opening before map storage was loaded by deferring editor mounting until plugin readiness.
@@ -406,7 +415,7 @@
 ## 0.2.0 — 2026-07-16
 
 - Renamed and standardized the plugin folder and ID as `siyuan-yemind-zen`.
-- Kept the SiYuan display name as `YeMind Zen`.
+- Kept the SiYuan display name as `YeMind`.
 - Completely replaced the transitional runtime with a source-built TypeScript + Vite runtime.
 - Adopted `simple-mind-map` as the active editor core.
 - Added persistent map repository and automatic saving.
@@ -419,7 +428,7 @@
 
 ## 0.1.0 — 2026-07-16
 
-- Created the YeMind Zen project and green `Ye` icon.
+- Created the YeMind project and green `Ye` icon.
 - Added the initial TypeScript/Vite source skeleton.
 - Added `simple-mind-map` as the planned editor core.
 - Kept a temporary transitional runtime for installation testing.

@@ -1,8 +1,8 @@
-# YeMind Zen v0.5.14 Official Visual Parity Design
+# YeMind v0.5.14 Official Visual Parity Design
 
 ## Goal
 
-Bring the existing YeMind Zen visual controls closer to KMind Zen 0.33.0 without importing KMind Zen's private document kernel, history, renderer, or persistence implementation.
+Bring the existing YeMind visual controls closer to KMind Zen 0.33.0 without importing KMind Zen's private document kernel, history, renderer, or persistence implementation.
 
 The first parity batch covers the user's explicit examples and the shared foundation needed by later parity work:
 
@@ -25,7 +25,7 @@ The official package exposes a bundled runtime with:
 - theme-defined node levels, backgrounds, relation colors and rainbow palettes;
 - a project-level theme document and a separate custom theme designer.
 
-The official theme schema cannot be passed directly to `simple-mind-map`. YeMind Zen therefore maps official tokens into the upstream theme fields while preserving the existing YeMind data, command, history and persistence contracts.
+The official theme schema cannot be passed directly to `simple-mind-map`. YeMind therefore maps official tokens into the upstream theme fields while preserving the existing YeMind data, command, history and persistence contracts.
 
 ## Architecture
 

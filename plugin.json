@@ -2,7 +2,7 @@
   "name": "siyuan-yemind-zen",
   "author": "gocoffee-local",
   "url": "",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "minAppVersion": "3.0.0",
   "backends": [
     "all"
@@ -16,8 +16,8 @@
   ],
   "disabledInPublish": true,
   "displayName": {
-    "default": "YeMind Zen",
-    "zh_CN": "YeMind Zen"
+    "default": "YeMind",
+    "zh_CN": "YeMind"
   },
   "description": {
     "default": "A local-first mind map plugin for SiYuan powered by simple-mind-map.",

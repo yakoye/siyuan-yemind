@@ -1,7 +1,7 @@
-# YeMind Zen v0.5.18 大纲编辑、拖拽与模糊显示重构设计
+# YeMind v0.5.18 大纲编辑、拖拽与模糊显示重构设计
 
 日期：2026-07-18  
-基线：YeMind Zen v0.5.17  
+基线：YeMind v0.5.17  
 官方参考：KMind Zen 0.34.0（用户提供的 `siyuan-kmind-zen-v0.3.4.zip`，以包内版本为准）
 
 ## 1. 目标

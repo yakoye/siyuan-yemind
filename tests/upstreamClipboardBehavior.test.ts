@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { copyNodeTree, getTopAncestorsFomNodeList } from 'simple-mind-map/src/utils/index';
 
-describe('simple-mind-map clipboard behavior relied on by YeMind Zen', () => {
+describe('simple-mind-map clipboard behavior relied on by YeMind', () => {
   it('keeps only the highest selected ancestors so descendant subtrees are not duplicated', () => {
     const root: any = { uid: 'root', isAncestor: (node: any) => node === child || node === grandchild };
     const child: any = { uid: 'child', isAncestor: (node: any) => node === grandchild };

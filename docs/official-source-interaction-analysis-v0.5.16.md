@@ -1,10 +1,10 @@
-# YeMind Zen v0.5.16 官方交互源码研究
+# YeMind v0.5.16 官方交互源码研究
 
 日期：2026-07-18
 
 ## 输入
 
-- YeMind Zen v0.5.15 完整源码；
+- YeMind v0.5.15 完整源码；
 - KMind Zen 0.33.0 思源插件生产包；
 - KMind Zen 中英文 README；
 - `simple-mind-map` 0.14.0-fix.3 源码。

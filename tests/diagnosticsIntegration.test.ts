@@ -8,7 +8,7 @@ function source(path: string): string {
 
 describe('v0.5.10 diagnostics integration', () => {
   it('exposes diagnostics from the top menu and command palette', () => {
-    const plugin = source('src/plugin/YeMindZenPlugin.ts');
+    const plugin = source('src/plugin/YeMindPlugin.ts');
     expect(plugin).toContain("label: '诊断与回归'");
     expect(plugin).toContain("langKey: 'openYeMindDiagnostics'");
     expect(plugin).toContain('openDiagnosticsDialog(this.diagnostics)');

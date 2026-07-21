@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.9 Verification Report
+# YeMind v0.5.9 Verification Report
 
 Date: 2026-07-17
 
@@ -82,13 +82,13 @@ Verified plugin identity:
 
 ```text
 Plugin ID: siyuan-yemind-zen
-Display name: YeMind Zen
+Display name: YeMind
 ```
 
 The production bundle contains the following expected markers:
 
 ```text
-YeMind Zen 诊断与回归
+YeMind 诊断与回归
 打开 YeMind 诊断与回归
 yemind-diagnostics-<timestamp>.zip
 diagnostics-probe.json
@@ -109,7 +109,7 @@ The suggested automated fixes would force breaking downgrades or dependency chan
 
 The build environment cannot launch the user's local SiYuan v3.7.2 desktop workspace. The following must therefore be verified in the real application:
 
-1. Open **YeMind Zen → 诊断与回归** from the top menu.
+1. Open **YeMind → 诊断与回归** from the top menu.
 2. Run the regression self-check and confirm that the temporary map and storage probe are removed afterward.
 3. Start recording, perform node selection, context-menu actions, toolbar actions, zoom, pan, save, and tab close/reopen, then stop recording.
 4. Export the default diagnostics ZIP and confirm that it contains no private map text.

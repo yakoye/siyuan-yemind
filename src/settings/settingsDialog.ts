@@ -47,7 +47,7 @@ export function openYeMindSettingsDialog(store: SettingsStore, options: Settings
   let draft = cloneSettings(store.get());
   let recordingCleanup: (() => void) | null = null;
   const dialog = new Dialog({
-    title: 'YeMind Zen 设置',
+    title: 'YeMind 设置',
     content: createSettingsDialogTemplate(draft),
     width: '880px',
     height: '78vh',
@@ -255,8 +255,8 @@ export function openYeMindSettingsDialog(store: SettingsStore, options: Settings
       await saveSettingsDraft(store, cloneSettings(draft));
       dialog.destroy();
     } catch (error) {
-      console.error('[YeMind Zen] settings save failed', error);
-      showMessage('YeMind Zen 设置保存失败，请检查存储后重试', 5000, 'error');
+      console.error('[YeMind] settings save failed', error);
+      showMessage('YeMind 设置保存失败，请检查存储后重试', 5000, 'error');
       saving = false;
       saveButton.textContent = originalText;
       saveButton.disabled = hasShortcutConflict;

@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.17 Verification Report
+# YeMind v0.5.17 Verification Report
 
 Date: 2026-07-18
 
@@ -82,7 +82,7 @@ The findings remain in the existing dependency chain. No bottom-layer dependency
 ## Data and runtime boundaries
 
 - Plugin ID: `siyuan-yemind-zen`.
-- Display name: `YeMind Zen`.
+- Display name: `YeMind`.
 - Version: `0.5.17` in package metadata, plugin metadata and runtime constants.
 - Existing map, checkpoint and settings file names are unchanged.
 - Outline drag operations remain upstream command/history operations.

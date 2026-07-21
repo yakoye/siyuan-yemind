@@ -94,6 +94,6 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
       if (action === 'safe-delete') options.onDeleteShortcut?.();
       return action !== 'allow';
     },
-    errorHandler: (_code: unknown, error: unknown) => console.error('[YeMind Zen]', error),
+    errorHandler: (_code: unknown, error: unknown) => console.error('[YeMind]', error),
   } as any);
 }

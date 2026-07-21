@@ -13,7 +13,7 @@ export function configureNodeDecorations(patch: Partial<NodeDecorationSettings>)
 }
 
 export const YEMIND_ICON_LIST = [{
-  name: 'YeMind Zen', type: 'yemind', list: [
+  name: 'YeMind', type: 'yemind', list: [
     { name: 'star', icon: svg('★') }, { name: 'flag', icon: svg('⚑') },
     { name: 'question', icon: svg('?') }, { name: 'idea', icon: svg('✦') },
     { name: 'check', icon: svg('✓') }, { name: 'warning', icon: svg('!') },

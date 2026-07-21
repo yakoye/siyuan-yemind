@@ -216,7 +216,7 @@ export function openImageDialog(commands: YeMindCommands): void {
       read: readFileAsDataUrl,
       measure: getImageSize,
       onError: (error) => {
-        console.error('[YeMind Zen] local image read failed', error);
+        console.error('[YeMind] local image read failed', error);
         showMessage('图片读取失败，请重新选择文件', 4000, 'error');
       },
     });

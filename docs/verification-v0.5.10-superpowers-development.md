@@ -1,10 +1,10 @@
-# YeMind Zen v0.5.10 Superpowers Development Integration Verification
+# YeMind v0.5.10 Superpowers Development Integration Verification
 
 Date: 2026-07-17
 
 ## Scope
 
-This integration adds project-level development rules and the uploaded Superpowers skill library to the YeMind Zen v0.5.10 source baseline. It does not change plugin runtime behavior, map data format, plugin identity, or version.
+This integration adds project-level development rules and the uploaded Superpowers skill library to the YeMind v0.5.10 source baseline. It does not change plugin runtime behavior, map data format, plugin identity, or version.
 
 ## Added development resources
 

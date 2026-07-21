@@ -1,4 +1,4 @@
 import './styles/index.css';
-import YeMindZenPlugin from './plugin/YeMindZenPlugin';
+import YeMindPlugin from './plugin/YeMindPlugin';
 
-export default YeMindZenPlugin;
+export default YeMindPlugin;

@@ -1,6 +1,6 @@
-# Superpowers in YeMind Zen
+# Superpowers in YeMind
 
-YeMind Zen uses the project rules in `AGENTS.md` together with the skills stored in `.agents/skills/`.
+YeMind uses the project rules in `AGENTS.md` together with the skills stored in `.agents/skills/`.
 
 - Project requirements: `DEVELOPMENT_REQUIREMENTS.md`
 - Design documents: `specs/`

@@ -1,18 +1,19 @@
-import { PLUGIN_VERSION } from './plugin/constants';
+import { PLUGIN_VERSION, PRODUCT_NAME, PROJECT_PACKAGE_NAME } from './plugin/constants';
 
 export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: '2026-07-21T12:20:00+08:00',
-  buildId: 'yemind-zen-v0.7.1-20260721',
-  productName: 'YeMind Zen',
+  buildTime: '2026-07-21T14:07:00+08:00',
+  buildId: 'yemind-v0.8.0-20260721',
+  productName: PRODUCT_NAME,
+  projectName: PROJECT_PACKAGE_NAME,
   tagline: '思源笔记中的思维导图、分屏大纲与知识整理插件。',
   officialReference: 'KMind Zen 0.34.0',
-  releaseSummary: '修复思源全局搜索关闭控件兼容性，使 Enter、双击和打开导图按钮能够稳定打开并定位节点。',
+  releaseSummary: '启用全新的 YeMind 品牌图标，并将公开产品名、工程名、源码入口和发布产物统一重命名为 YeMind。',
   highlights: [
-    '兼容思源全局搜索中 SVG 和非按钮关闭控件，不再直接假定存在 click() 方法。',
-    '关闭搜索窗口失败时仍继续打开导图，避免导航链路被关闭步骤阻断。',
-    '诊断自检可识别导航停滞，不再把长时间停在关闭阶段误判为通过。',
+    '使用用户提供的新导图图标，生成 32、64、128 和 512 像素透明资源，主色精确统一为 #176B50。',
+    '公开名称、设置、搜索、诊断、Dock、标签页和当前文档统一使用 YeMind 品牌。',
+    'npm 工程、源码插件类和发布压缩包统一改为 siyuan-yemind / YeMindPlugin；技术插件 ID 保留以兼容旧数据。',
   ],
 } as const;
 

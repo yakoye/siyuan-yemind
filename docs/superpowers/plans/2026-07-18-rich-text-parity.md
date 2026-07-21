@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.15 rich-text parity implementation plan
+# YeMind v0.5.15 rich-text parity implementation plan
 
 Date: 2026-07-18
 

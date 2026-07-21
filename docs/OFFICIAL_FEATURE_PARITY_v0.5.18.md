@@ -1,6 +1,6 @@
-# YeMind Zen v0.5.18 官方功能对齐边界
+# YeMind v0.5.18 官方功能对齐边界
 
-| 主题 | KMind Zen 0.34.0 | YeMind Zen v0.5.18 | 保留边界 |
+| 主题 | KMind Zen 0.34.0 | YeMind v0.5.18 | 保留边界 |
 |---|---|---|---|
 | 大纲编辑器 | 连续 ProseMirror/Tiptap 文档 | 单活动 Quill + 不移动活动行的 UID keyed patch | 不引入官方私有 schema/文档树 |
 | 普通文字同步 | 编辑事务内更新稳定块 | 文字提交后模型回流不重插活动行 | 节点正文仍用上游 `SET_NODE_TEXT` |

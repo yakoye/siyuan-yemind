@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.10 Verification Report
+# YeMind v0.5.10 Verification Report
 
 Date: 2026-07-17
 

@@ -1,4 +1,4 @@
-# YeMind Zen v0.6.6 Verification
+# YeMind v0.6.6 Verification
 
 Date: 2026-07-20
 

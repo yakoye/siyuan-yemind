@@ -1,4 +1,4 @@
-# YeMind Zen v0.6.4 Verification Report
+# YeMind v0.6.4 Verification Report
 
 Date: 2026-07-20
 
@@ -51,7 +51,7 @@ The findings remain in the existing dependency chain. No dependency was added or
 
 ```text
 Plugin ID: siyuan-yemind-zen
-Display name: YeMind Zen
+Display name: YeMind
 Version: 0.6.4
 ```
 

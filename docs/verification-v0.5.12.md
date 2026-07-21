@@ -1,17 +1,17 @@
-# YeMind Zen v0.5.12 Verification Report
+# YeMind v0.5.12 Verification Report
 
 Date: 2026-07-17
 
 ## Scope
 
-v0.5.12 ports the verified interaction mechanisms from the user-provided KMind Zen 0.33.0 public production bundle into the existing YeMind Zen architecture:
+v0.5.12 ports the verified interaction mechanisms from the user-provided KMind Zen 0.33.0 public production bundle into the existing YeMind architecture:
 
 1. commit-before-structure outline transactions and precise focus restoration;
 2. IME-safe keyboard editing, indent/outdent and collapse/expand;
 3. adjustable and persisted split ratio;
 4. animation-frame drag sampling, 60 ms/3-frame target stability and cubic parent guides.
 
-The release does not import KMind Zen's private document model, editor state, persistence, history or layout engine. It keeps YeMind Zen's plugin ID, storage names, map schema, diagnostics isolation, checkpoint storage and `simple-mind-map` structural ownership unchanged.
+The release does not import KMind Zen's private document model, editor state, persistence, history or layout engine. It keeps YeMind's plugin ID, storage names, map schema, diagnostics isolation, checkpoint storage and `simple-mind-map` structural ownership unchanged.
 
 ## Official source evidence reviewed
 
@@ -94,7 +94,7 @@ Focused coverage includes:
 
 ```text
 Plugin ID: siyuan-yemind-zen
-Display name: YeMind Zen
+Display name: YeMind
 Version: 0.5.12
 Archive file entries: 328
 Archive regular files: 287

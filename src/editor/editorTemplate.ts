@@ -5,7 +5,7 @@ export function createEditorTemplate(title: string, theme: unknown = 'kmind-defa
   return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
       <div class="ymz-canvas-wrap">
-        <div class="ymz-floating ymz-topbar" role="toolbar" aria-label="YeMind Zen 工具栏">
+        <div class="ymz-floating ymz-topbar" role="toolbar" aria-label="YeMind 工具栏">
           <button class="ymz-brand" data-action="fit" title="适配视图">YeMind</button>
           <span class="ymz-separator"></span>
           <button class="is-active" data-action="view-map">导图</button>

@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.18 官方大纲编辑与拖拽研究
+# YeMind v0.5.18 官方大纲编辑与拖拽研究
 
 日期：2026-07-18  
 官方参考：用户提供的 KMind Zen 包 `siyuan-kmind-zen-v0.3.4.zip`，包内版本为 0.34.0。

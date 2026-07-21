@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.15 Rich-text parity design
+# YeMind v0.5.15 Rich-text parity design
 
 Date: 2026-07-18
 

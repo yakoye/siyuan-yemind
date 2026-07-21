@@ -1,6 +1,6 @@
-# YeMind Zen v0.5.20 官方功能对齐边界
+# YeMind v0.5.20 官方功能对齐边界
 
-| 功能 | 官方 KMind Zen 0.34.0 | YeMind Zen v0.5.20 | 边界 |
+| 功能 | 官方 KMind Zen 0.34.0 | YeMind v0.5.20 | 边界 |
 |---|---|---|---|
 | 节点快速操作 | 编辑器内核绘制 | 编辑器局部 HTML 浮层 + 上游命令 | 不复制官方私有渲染器 |
 | 折叠同步 | 统一文档状态 | 原生 `expand` + `SET_NODE_EXPAND` | Root 本身固定 |

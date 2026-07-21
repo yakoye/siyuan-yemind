@@ -1,4 +1,4 @@
-# YeMind Zen v0.6.1 Official Interaction Adaptation Boundary
+# YeMind v0.6.1 Official Interaction Adaptation Boundary
 
 Date: 2026-07-20
 

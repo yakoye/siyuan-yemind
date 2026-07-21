@@ -1,6 +1,6 @@
-# YeMind Zen 语义化版本规则
+# YeMind 语义化版本规则
 
-YeMind Zen 使用 `Major.Minor.Patch`。
+YeMind 使用 `Major.Minor.Patch`。
 
 ## Major
 

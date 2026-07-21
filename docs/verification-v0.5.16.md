@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.16 Verification Report
+# YeMind v0.5.16 Verification Report
 
 Date: 2026-07-18
 
@@ -66,7 +66,7 @@ The findings remain in the existing dependency chain. No bottom-layer dependency
 ## Data and runtime boundaries
 
 - Plugin ID: `siyuan-yemind-zen`.
-- Display name: `YeMind Zen`.
+- Display name: `YeMind`.
 - Version: `0.5.16`.
 - Map, checkpoint and settings file names are unchanged.
 - Legacy `showNodeMenuButton` settings are ignored as unknown input.

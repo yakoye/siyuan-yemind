@@ -1,11 +1,11 @@
-# YeMind Zen v0.5.20 官方结构、样式与概要研究
+# YeMind v0.5.20 官方结构、样式与概要研究
 
 日期：2026-07-20
 
 ## 研究来源
 
 - 用户提供的 KMind Zen 0.34.0 思源插件源码包
-- 当前 YeMind Zen v0.5.19
+- 当前 YeMind v0.5.19
 - `simple-mind-map` 0.14.0-fix.3 源码
 
 ## 结论

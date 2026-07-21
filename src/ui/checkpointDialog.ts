@@ -70,7 +70,7 @@ export function openCheckpointManager(options: CheckpointDialogOptions): void {
         }
         render();
       } catch (error) {
-        console.error('[YeMind Zen] checkpoint operation failed', error);
+        console.error('[YeMind] checkpoint operation failed', error);
         showMessage('检查点操作失败，请稍后重试', 5000, 'error');
       } finally {
         busy = false;

@@ -1,8 +1,8 @@
-# YeMind Zen 与 KMind Zen 官方功能对照（v0.5.15）
+# YeMind 与 KMind Zen 官方功能对照（v0.5.15）
 
 本表以用户提供的 KMind Zen 0.33.0 运行源码为参考。v0.5.15 专门对照选区富文本工具栏、持续编辑器和弹层挂载机制；用户明确要求的颜色色板、默认重置和吸管属于在官方能力基础上的交互改进。原则仍是：复用 `simple-mind-map` 的结构、历史和持久化，独立移植可验证的交互机制，不嵌入 KMind 私有文档内核。
 
-| 功能域 | KMind Zen 官方实现 | YeMind Zen v0.5.15 | 状态 |
+| 功能域 | KMind Zen 官方实现 | YeMind v0.5.15 | 状态 |
 |---|---|---|---|
 | 宿主弹层隔离 | 编辑器局部 portal/overlay 层 | 所有 YeMind 浮层挂载 `.ymz-editor`，局部 stacking context | 已对齐目标 |
 | 节点文字编辑 | 持续富文本编辑器，选区驱动 | 上游 RichText，编辑文字/光标继承节点样式 | 已修复不可见问题 |

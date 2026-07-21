@@ -2820,14 +2820,14 @@ class DiagnosticsService {
     try {
       this.recorder.record(category, action, mapId, details, level2, force);
     } catch (error) {
-      console.warn("[YeMind Zen] diagnostic record failed", error);
+      console.warn("[YeMind] diagnostic record failed", error);
     }
   }
   recordError(category, action, error, mapId, force = true) {
     try {
       this.recorder.recordError(category, action, error, mapId, force);
     } catch (recordError) {
-      console.warn("[YeMind Zen] diagnostic error record failed", recordError);
+      console.warn("[YeMind] diagnostic error record failed", recordError);
     }
   }
   setEditorState(mapId, patch) {
@@ -2920,7 +2920,7 @@ class DiagnosticsService {
     const timeline2 = report.events.map((event) => JSON.stringify(event)).join("\n");
     const searchState = report.globalSearch;
     const summary = [
-      "# YeMind Zen 诊断摘要",
+      "# YeMind 诊断摘要",
       "",
       `- 生成时间：${new Date(report.generatedAt).toISOString()}`,
       `- 插件版本：${report.plugin.version}`,
@@ -2957,7 +2957,7 @@ class DiagnosticsService {
     zip.file("settings.json", JSON.stringify(this.options.settings.get(), null, 2));
     if (includeNodeText) zip.file("maps-with-content.json", JSON.stringify(this.options.maps.list(), null, 2));
     zip.file("README.txt", [
-      "YeMind Zen diagnostics package",
+      "YeMind diagnostics package",
       "",
       "This package is generated locally and is not uploaded automatically.",
       includeNodeText ? "WARNING: maps-with-content.json contains map titles, node text and other node data because the user explicitly enabled it." : "Map titles, node text, comments, links, images and private paths are excluded by default.",
@@ -3890,7 +3890,7 @@ function renderSearchState(service) {
 }
 function openDiagnosticsDialog(service) {
   const dialog = new siyuan.Dialog({
-    title: "YeMind Zen 诊断与回归",
+    title: "YeMind 诊断与回归",
     width: "760px",
     content: `<div class="b3-dialog__content ymz-diagnostics">
       <p class="ymz-diagnostics-note">全部检查在本机执行。默认诊断包不包含导图标题、节点正文、批注、链接或图片数据。</p>
@@ -3958,7 +3958,7 @@ function openDiagnosticsDialog(service) {
         }
       } catch (error) {
         service.recordError("diagnostics", `dialog-${action}-failed`, error, void 0, true);
-        console.error("[YeMind Zen] diagnostics action failed", error);
+        console.error("[YeMind] diagnostics action failed", error);
         siyuan.showMessage("诊断操作失败，请查看控制台", 5e3, "error");
       } finally {
         busy = false;
@@ -3970,29 +3970,32 @@ function openDiagnosticsDialog(service) {
     })();
   });
 }
+const PRODUCT_NAME = "YeMind";
+const LEGACY_PLUGIN_ID = "siyuan-yemind-zen";
 const MAP_STORAGE_NAME = "maps.json";
 const SETTINGS_STORAGE_NAME = "settings.json";
 const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.7.1";
+const PLUGIN_VERSION = "0.8.0";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
+const ROOT_ICON_URL = `/plugins/${LEGACY_PLUGIN_ID}/icon.png`;
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-21T12:20:00+08:00",
-  buildId: "yemind-zen-v0.7.1-20260721",
-  productName: "YeMind Zen",
+  buildTime: "2026-07-21T14:07:00+08:00",
+  buildId: "yemind-v0.8.0-20260721",
+  productName: PRODUCT_NAME,
   tagline: "思源笔记中的思维导图、分屏大纲与知识整理插件。",
   officialReference: "KMind Zen 0.34.0",
-  releaseSummary: "修复思源全局搜索关闭控件兼容性，使 Enter、双击和打开导图按钮能够稳定打开并定位节点。",
+  releaseSummary: "启用全新的 YeMind 品牌图标，并将公开产品名、工程名、源码入口和发布产物统一重命名为 YeMind。",
   highlights: [
-    "兼容思源全局搜索中 SVG 和非按钮关闭控件，不再直接假定存在 click() 方法。",
-    "关闭搜索窗口失败时仍继续打开导图，避免导航链路被关闭步骤阻断。",
-    "诊断自检可识别导航停滞，不再把长时间停在关闭阶段误判为通过。"
+    "使用用户提供的新导图图标，生成 32、64、128 和 512 像素透明资源，主色精确统一为 #176B50。",
+    "公开名称、设置、搜索、诊断、Dock、标签页和当前文档统一使用 YeMind 品牌。",
+    "npm 工程、源码插件类和发布压缩包统一改为 siyuan-yemind / YeMindPlugin；技术插件 ID 保留以兼容旧数据。"
   ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -4403,7 +4406,7 @@ function createSettingsDialogTemplate(settings) {
     </aside>
     <main class="ymz-settings-main">
       <section class="ymz-settings-page" data-settings-panel="general">
-        <header><h2>常规</h2><p>修改后点击保存，将应用到所有已打开的 YeMind Zen 标签页。</p></header>
+        <header><h2>常规</h2><p>修改后点击保存，将应用到所有已打开的 YeMind 标签页。</p></header>
         <div class="ymz-settings-group"><h3>默认视图模式</h3>
           ${selectRow("默认视图", "新打开导图时使用导图、大纲或分屏。", "defaultViewMode", [
     option$1("map", "导图", settings.defaultViewMode),
@@ -4516,7 +4519,7 @@ function createSettingsDialogTemplate(settings) {
       <section class="ymz-settings-page ymz-settings-about" data-settings-panel="about" hidden>
         <header><h2>关于</h2><p>${escapeHtml$a(RELEASE_INFO.tagline)}</p></header>
         <div class="ymz-about-hero">
-          <img src="/plugins/siyuan-yemind-zen/icon.png" alt="YeMind Zen">
+          <img src="${ROOT_ICON_URL}" alt="YeMind">
           <div><h3>${escapeHtml$a(RELEASE_INFO.productName)}</h3><p>${escapeHtml$a(RELEASE_INFO.releaseSummary)}</p></div>
         </div>
         <div class="ymz-settings-group ymz-about-version-card">
@@ -4583,7 +4586,7 @@ function openYeMindSettingsDialog(store, options = {}) {
   let draft = cloneSettings(store.get());
   let recordingCleanup = null;
   const dialog = new siyuan.Dialog({
-    title: "YeMind Zen 设置",
+    title: "YeMind 设置",
     content: createSettingsDialogTemplate(draft),
     width: "880px",
     height: "78vh",
@@ -4774,8 +4777,8 @@ function openYeMindSettingsDialog(store, options = {}) {
       await saveSettingsDraft(store, cloneSettings(draft));
       dialog.destroy();
     } catch (error) {
-      console.error("[YeMind Zen] settings save failed", error);
-      siyuan.showMessage("YeMind Zen 设置保存失败，请检查存储后重试", 5e3, "error");
+      console.error("[YeMind] settings save failed", error);
+      siyuan.showMessage("YeMind 设置保存失败，请检查存储后重试", 5e3, "error");
       saving = false;
       saveButton.textContent = originalText;
       saveButton.disabled = hasShortcutConflict;
@@ -4789,11 +4792,12 @@ function registerSettings(plugin, store, diagnostics) {
   button.textContent = "打开完整设置";
   button.addEventListener("click", () => openYeMindSettingsDialog(store, { diagnostics }));
   plugin.setting.addItem({
-    title: "YeMind Zen 设置",
+    title: "YeMind 设置",
     description: "常规设置、节点入口、富文本、代码块和快捷键统一在完整设置窗口中管理。",
     actionElement: button
   });
 }
+const YEMIND_ICON_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAEMElEQVR42sXXWaxccxwH8M85M4pbS0UpRSJE0wqKBFERexBLimorISKxe5CSWMIDYk0tiYjlwfqAxi5EiZYHURoRTeylQmqrNarVq+6Ml+/I33Tm3lt98E9O5szvnN/2/a2nmnDRdP/naQ7zrM7VRiu/63saqMI7tD4G1FHa2gDnqn5KuxX1Ymxhf9yIMwp6tR7K2zgZd+G0fjLqHpC1cTrexmG4B0+EXo0S9jZuwFPYHQ/j3l4y6h6eb4S5uBgHYs94cmCeN0YB+7a4HMfhcEzDOdglMup+CLQxBltgYWhf4BuMLRJzuJA28rsS74b+DlZhfGHoOga0w7wKL+MZzMBj2BG/xvq1fULR8X4Im2IcXsR0vIAf8V6BdE8EWnnhTLyJ2yJoPhbhNUwtkGrmGhP+3WL80iC4NEk4FkfjzyJBe5Zh58HKGFGeIzAngncNIt3wL8DHOD6GtPtU2Ih9oIrAoQKlBbl+S1heL/j/wt7YCVMSxrqHjNZwjagqMrwVxqoonXF4KQZMxFldNT+IT/FJyvezLq8bhb6hDjrNLvj/6tENm6HPSRlNxi99kNs4KM1N8jXCW/frinWR0WNxBe7GfkVP6CTaQZgXgZPDMy6QN7BJUHgIe4SniowWDsUDuAoDHXQ6BoxJTM/DJCxOA1mLNVG6Ol5sgw+wNR7BuaGvidCBgmdtrumpoAl5f2HHwGasOxE7p94HMwMejDdjQtsdX2EZnkyND+TdR6P8wuTIdri2CN+5QfeW8HyNY/BCJwfGY0UUwZK00hMjZG3a62AQuzTGnI+zk5Rbp3Q/x+Y4IbxD8fz9yF6Nn7GVIk5P42bcl7Z5Jy5LI+qc59Oi21iOb2PoIaHNT+gmp33vW/BejcdxCQ4uuuQ/ObAipTMp2X5NlDcSgjoZPljQFkfxdfgjipcXw6YzFxq4HjdlwE2I0T+jqrKSVcNsPJ04zsOWid1w51YcmcbUGGYpqdBuFj2g7rpvdbXnOzIPbseHKbuhopQHsX3yo9cSUxfodNa8fzWiVo+Z0C4Gz1vZCRYl01d0GT0+CM3IIrJRkGsXCK+zGzaHWclgM/yeKTYRR6XG98KXXXw7phVPyf3y0DfPcGv3CnXdozO2sU9m9zd4JbAvwwWYHeWNAuJGFM5OL/g8PAsiY0mqot2ts+6xSA6kpD7FKYn1HJyKHfBc0dtLWOuU6kTMDE+FkyJrfmT/ay9sdhkzhAOy0cwM/f3M+DfC3OwaWmUOdZ69Fdhn4Qe8mv8HpCX/Ux11j8T7LnGbmv/TgkI9il1/qPBuIEkrJblZZOu3EXVK5CPcHy8WZYpdiZ9GqOtyr/w+s+DZeHxQJuFHXSWu6vo2rApBszKW5wfCaj0+zzrvHptdcHEGVtWNQNXn47RbWf0fPtNGZXBzBCiH/bAc4YxKRnOEhNrQM6KMvwFCzzp2lYZ4awAAAABJRU5ErkJggg==";
 class YeMindDockView {
   constructor(host, element) {
     __publicField(this, "unsubscribe", null);
@@ -4822,7 +4826,7 @@ class YeMindDockView {
     if (this.destroyed) return;
     const maps = this.host.repository.list();
     const activeId = this.host.repository.getActiveMapId();
-    this.element.innerHTML = `<div class="ymz-dock__head"><span>YeMind Zen</span><button data-action="new" aria-label="新建导图" title="新建导图">＋</button><button data-action="refresh" aria-label="刷新" title="刷新">↻</button></div><div class="ymz-dock__body"></div>`;
+    this.element.innerHTML = `<div class="ymz-dock__head"><span>YeMind</span><button data-action="new" aria-label="新建导图" title="新建导图">＋</button><button data-action="refresh" aria-label="刷新" title="刷新">↻</button></div><div class="ymz-dock__body"></div>`;
     const body = this.element.querySelector(".ymz-dock__body");
     if (maps.length === 0) {
       body.innerHTML = '<div class="ymz-dock__empty">暂无导图</div>';
@@ -4860,7 +4864,7 @@ function registerYeMindDock(plugin, host) {
       position: "LeftBottom",
       size: { width: 280, height: 0 },
       icon: ICON_ID,
-      title: "YeMind Zen",
+      title: "YeMind",
       show: true
     },
     data: {},
@@ -56066,7 +56070,7 @@ function configureNodeDecorations(patch) {
   decorationSettings = { ...decorationSettings, ...patch };
 }
 const YEMIND_ICON_LIST = [{
-  name: "YeMind Zen",
+  name: "YeMind",
   type: "yemind",
   list: [
     { name: "star", icon: svg("★") },
@@ -56325,7 +56329,7 @@ function createMindMap(options) {
       if (action === "safe-delete") (_b = options.onDeleteShortcut) == null ? void 0 : _b.call(options);
       return action !== "allow";
     },
-    errorHandler: (_code, error) => console.error("[YeMind Zen]", error)
+    errorHandler: (_code, error) => console.error("[YeMind]", error)
   });
 }
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -57115,7 +57119,7 @@ function openCheckpointManager(options) {
         }
         render3();
       } catch (error) {
-        console.error("[YeMind Zen] checkpoint operation failed", error);
+        console.error("[YeMind] checkpoint operation failed", error);
         siyuan.showMessage("检查点操作失败，请稍后重试", 5e3, "error");
       } finally {
         busy = false;
@@ -57413,7 +57417,7 @@ function openImageDialog(commands) {
       read: readFileAsDataUrl,
       measure: getImageSize,
       onError: (error) => {
-        console.error("[YeMind Zen] local image read failed", error);
+        console.error("[YeMind] local image read failed", error);
         siyuan.showMessage("图片读取失败，请重新选择文件", 4e3, "error");
       }
     });
@@ -57664,7 +57668,7 @@ function createNodeMenuAvailability(input) {
 function openCanvasContextMenu(event, commands, options) {
   event.preventDefault();
   event.stopPropagation();
-  const menu = new siyuan.Menu("siyuan-yemind-zen-canvas-menu");
+  const menu = new siyuan.Menu("siyuan-yemind-canvas-menu");
   menu.element.classList.add("ymz-context-menu", "ymz-context-menu--canvas");
   const run = (action, callback) => () => {
     var _a;
@@ -57752,7 +57756,7 @@ function openNodeContextMenu(event, commands, options = {}) {
     hasCodeBlock: Boolean(commands.getCodeBlock()),
     canAddOuterFrame: commands.canAddOuterFrame()
   });
-  const menu = new siyuan.Menu("siyuan-yemind-zen-node-menu");
+  const menu = new siyuan.Menu("siyuan-yemind-node-menu");
   menu.element.classList.add("ymz-context-menu", "ymz-context-menu--node");
   const run = (action, callback) => () => {
     var _a;
@@ -57774,7 +57778,7 @@ function openNodeContextMenu(event, commands, options = {}) {
       { iconHTML: clipboardIcon("cut"), label: "剪切节点子树", accelerator: "Ctrl+X", disabled: !availability.cut, click: run("cut", () => commands.cut()) },
       { iconHTML: clipboardIcon("paste"), label: "粘贴节点子树", accelerator: "Ctrl+V", disabled: !availability.paste, click: run("paste", () => {
         void commands.paste().catch((error) => {
-          console.error("[YeMind Zen] node paste failed", error);
+          console.error("[YeMind] node paste failed", error);
           siyuan.showMessage("节点粘贴失败，请重试", 4e3, "error");
         });
       }) }
@@ -58003,7 +58007,7 @@ function createEditorTemplate(title, theme2 = "kmind-default", lineStyle = "curv
   return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
       <div class="ymz-canvas-wrap">
-        <div class="ymz-floating ymz-topbar" role="toolbar" aria-label="YeMind Zen 工具栏">
+        <div class="ymz-floating ymz-topbar" role="toolbar" aria-label="YeMind 工具栏">
           <button class="ymz-brand" data-action="fit" title="适配视图">YeMind</button>
           <span class="ymz-separator"></span>
           <button class="is-active" data-action="view-map">导图</button>
@@ -60977,7 +60981,7 @@ class YeMindEditor {
     if (normalized2.changed || sanitized.changed) {
       this.current.data = runtimeData;
       void this.options.repository.update(this.current.id, { data: runtimeData }).catch((error) => {
-        console.error("[YeMind Zen] migrated data save failed", error);
+        console.error("[YeMind] migrated data save failed", error);
         siyuan.showMessage(
           "导图兼容数据保存失败，请勿立即关闭该标签",
           5e3,
@@ -61847,7 +61851,7 @@ class YeMindEditor {
         splitOutlineRatio: this.splitOutlineRatio
       });
     } catch (error) {
-      console.error("[YeMind Zen] split ratio save failed", error);
+      console.error("[YeMind] split ratio save failed", error);
       siyuan.showMessage("分屏比例保存失败，已保持当前显示", 4e3, "error");
     }
   }
@@ -61856,7 +61860,7 @@ class YeMindEditor {
     try {
       await this.options.settingsStore.update({ canvasMode: nextMode });
     } catch (error) {
-      console.error("[YeMind Zen] canvas mode save failed", error);
+      console.error("[YeMind] canvas mode save failed", error);
       siyuan.showMessage("画布操作模式保存失败，已保持原设置", 4e3, "error");
     }
   }
@@ -61982,7 +61986,7 @@ class YeMindEditor {
           this.current.id,
           true
         );
-        console.error("[YeMind Zen] safe resize failed", error);
+        console.error("[YeMind] safe resize failed", error);
       }
     });
   }
@@ -62324,7 +62328,7 @@ class YeMindEditor {
     this.searchInfoEl.textContent = info.total > 0 ? `${current} / ${Math.max(0, info.total)}` : "无结果";
   }
   openCheckpointMenu(anchor) {
-    const menu = new siyuan.Menu("siyuan-yemind-zen-checkpoint-menu");
+    const menu = new siyuan.Menu("siyuan-yemind-checkpoint-menu");
     menu.addItem({
       icon: "iconAdd",
       label: "创建检查点",
@@ -62351,7 +62355,7 @@ class YeMindEditor {
       await this.options.checkpointService.createManual(this.current.id, name);
       siyuan.showMessage("检查点已创建");
     } catch (error) {
-      console.error("[YeMind Zen] create checkpoint failed", error);
+      console.error("[YeMind] create checkpoint failed", error);
       siyuan.showMessage("检查点创建失败，请先确认导图已成功保存", 5e3, "error");
     }
   }
@@ -62482,7 +62486,7 @@ class YeMindEditor {
         image.src = dataUrl;
       }),
       onError: (error) => {
-        console.error("[YeMind Zen] node image input failed", error);
+        console.error("[YeMind] node image input failed", error);
         siyuan.showMessage("图片读取失败，请重试", 4e3, "error");
       }
     });
@@ -62514,7 +62518,7 @@ class YeMindEditor {
   }
   flushPendingSave() {
     void this.saveNow().catch((error) => {
-      console.error("[YeMind Zen] close-time save failed", error);
+      console.error("[YeMind] close-time save failed", error);
     });
   }
   async saveNow() {
@@ -62561,11 +62565,11 @@ class YeMindEditor {
         this.current.id,
         true
       );
-      console.error("[YeMind Zen] save failed", error);
+      console.error("[YeMind] save failed", error);
       if (!this.destroyed && revision === this.saveRevisions.current()) {
         this.saveStateEl.textContent = "保存失败";
         this.updateDiagnosticState({ saveState: "failed" });
-        siyuan.showMessage("YeMind Zen 保存失败", 5e3, "error");
+        siyuan.showMessage("YeMind 保存失败", 5e3, "error");
       }
       if (throwOnError) throw error;
     }
@@ -62649,13 +62653,13 @@ class YeMindEditor {
       if (document.fullscreenElement) await document.exitFullscreen();
       else await this.rootEl.requestFullscreen();
     } catch (error) {
-      console.error("[YeMind Zen] fullscreen failed", error);
+      console.error("[YeMind] fullscreen failed", error);
       siyuan.showMessage("当前环境无法切换全屏", 3e3, "error");
     }
   }
   openHelp() {
     new siyuan.Dialog({
-      title: "YeMind Zen 快速操作",
+      title: "YeMind 快速操作",
       content: `<div class="b3-dialog__content ymz-help">
         <p><b>双击</b> 编辑节点</p>
         <p><b>Tab</b> 添加子节点，<b>Enter</b> 添加同级节点</p>
@@ -62772,7 +62776,7 @@ function registerYeMindTab(plugin, host) {
           (_a2 = state.unregister) == null ? void 0 : _a2.call(state);
           state.unregister = void 0;
           host.diagnostics.recordError("editor", "tab-mount-failed", error, mapId, true);
-          console.error("[YeMind Zen] map tab mount failed", error);
+          console.error("[YeMind] map tab mount failed", error);
           container.innerHTML = '<div class="ymz-missing"><b>导图加载失败</b><span>请关闭标签后重新打开；若持续出现，请检查控制台日志。</span></div>';
         }
       );
@@ -63058,8 +63062,8 @@ function renderGlobalSearchResults(matches, query = "") {
       <span class="b3-list-item__meta b3-list-item__meta--ellipsis ariaLabel" aria-label="${escapeHtml(resultPath(item))}">${escapeHtml(resultPath(item))}</span>
     </div>`;
   }).join("");
-  return `<section class="ymz-global-search-results" data-yemind-global-results data-yemind-global-signature="${escapeHtml(signature)}" role="group" aria-label="YeMind Zen 搜索结果">
-    <header class="ymz-global-search-results__header"><strong>YeMind Zen</strong><span>${matches.length} 条结果</span></header>
+  return `<section class="ymz-global-search-results" data-yemind-global-results data-yemind-global-signature="${escapeHtml(signature)}" role="group" aria-label="YeMind 搜索结果">
+    <header class="ymz-global-search-results__header"><strong>YeMind</strong><span>${matches.length} 条结果</span></header>
     <div class="ymz-global-search-results__list">${rows}</div>
   </section>`;
 }
@@ -63628,7 +63632,7 @@ function mountGlobalSearchResults(options) {
     state.observedRoot = null;
   }
 }
-class YeMindZenPlugin extends siyuan.Plugin {
+class YeMindPlugin extends siyuan.Plugin {
   constructor() {
     super(...arguments);
     __publicField(this, "repository");
@@ -63665,7 +63669,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
     });
   }
   onload() {
-    this.addIcons(`<symbol id="${ICON_ID}" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="7" fill="#176b50"/><text x="16" y="21" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Ye</text></symbol>
+    this.addIcons(`<symbol id="${ICON_ID}" viewBox="0 0 32 32"><image href="${YEMIND_ICON_DATA_URL}" x="0" y="0" width="32" height="32" preserveAspectRatio="xMidYMid meet"/></symbol>
       <symbol id="iconYeMindNote" viewBox="0 0 24 24"><path d="M6.5 3.75h8.8l3.2 3.2v13.3H6.5a2 2 0 0 1-2-2V5.75a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.2 3.9v3.4h3.2M8 11h7.5M8 14.5h7.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
       <symbol id="iconYeMindComment" viewBox="0 0 24 24"><path d="M6.25 4.75h11.5A2.5 2.5 0 0 1 20.25 7.25v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.25 2.9v-2.9A2.5 2.5 0 0 1 3.75 15.25v-8a2.5 2.5 0 0 1 2.5-2.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>`);
     this.repository = new MapRepository({
@@ -63743,7 +63747,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
       onRegistrationError: (name, error) => {
         this.diagnostics.recordError("plugin", "registration-failed", error, void 0, true);
         this.diagnostics.record("plugin", "registration-failed-step", void 0, { name }, "error", true);
-        console.error(`[YeMind Zen] ${name} registration failed`, error);
+        console.error(`[YeMind] ${name} registration failed`, error);
       }
     });
   }
@@ -63851,7 +63855,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
       try {
         await this.checkpointRepository.removeForMap(mapId);
       } catch (error) {
-        console.error("[YeMind Zen] checkpoint cleanup after map deletion failed", error);
+        console.error("[YeMind] checkpoint cleanup after map deletion failed", error);
       }
       this.tabRegistry.close(mapId);
     }, (error) => this.reportOperationFailure("删除导图", error));
@@ -63901,8 +63905,8 @@ class YeMindZenPlugin extends siyuan.Plugin {
   reportOperationFailure(action, error) {
     var _a;
     (_a = this.diagnostics) == null ? void 0 : _a.recordError("operation", `${action}-failed`, error, void 0, true);
-    console.error(`[YeMind Zen] ${action} failed`, error);
-    siyuan.showMessage(`YeMind Zen ${action}失败，请稍后重试`, 5e3, "error");
+    console.error(`[YeMind] ${action} failed`, error);
+    siyuan.showMessage(`YeMind ${action}失败，请稍后重试`, 5e3, "error");
   }
   async bootstrap() {
     this.diagnostics.record("plugin", "bootstrap-started", void 0, void 0, "info", true);
@@ -63911,14 +63915,14 @@ class YeMindZenPlugin extends siyuan.Plugin {
       this.diagnostics.record("plugin", "bootstrap-completed", void 0, { mapCount: this.repository.list().length, checkpointCount: this.checkpointRepository.listAll().length }, "info", true);
     } catch (error) {
       this.diagnostics.recordError("plugin", "bootstrap-failed", error, void 0, true);
-      console.error("[YeMind Zen] failed to load storage", error);
-      siyuan.showMessage("YeMind Zen 数据加载失败", 6e3, "error");
+      console.error("[YeMind] failed to load storage", error);
+      siyuan.showMessage("YeMind 数据加载失败", 6e3, "error");
     }
   }
   registerTopBar() {
     this.addTopBar({
       icon: ICON_ID,
-      title: "YeMind Zen",
+      title: "YeMind",
       position: "right",
       callback: (event) => {
         void this.openTopBarMenu(event);
@@ -63927,7 +63931,7 @@ class YeMindZenPlugin extends siyuan.Plugin {
   }
   async openTopBarMenu(event) {
     await this.ready;
-    const menu = new siyuan.Menu("siyuan-yemind-zen-top-menu");
+    const menu = new siyuan.Menu("siyuan-yemind-top-menu");
     menu.addItem({ icon: "iconAdd", label: "新建导图", click: () => {
       void this.createMap();
     } });
@@ -63971,5 +63975,5 @@ class YeMindZenPlugin extends siyuan.Plugin {
     });
   }
 }
-module.exports = YeMindZenPlugin;
+module.exports = YeMindPlugin;
 //# sourceMappingURL=index.js.map

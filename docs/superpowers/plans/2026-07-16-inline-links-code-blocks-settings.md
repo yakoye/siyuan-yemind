@@ -1,8 +1,8 @@
-# YeMind Zen Inline Links, Code Blocks and Settings Implementation Plan
+# YeMind Inline Links, Code Blocks and Settings Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add persistent inline hyperlinks, a complete language-aware code-block editor, and expanded live settings to YeMind Zen v0.4.0.
+**Goal:** Add persistent inline hyperlinks, a complete language-aware code-block editor, and expanded live settings to YeMind v0.4.0.
 
 **Architecture:** Extend the existing `simple-mind-map` RichText plugin with a YeMind-specific subclass that enables Quill link/code formats. Keep Quill manipulation behind command/helper modules, use small SiYuan dialogs for editing, and make `SettingsStore` the single live configuration source.
 

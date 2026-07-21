@@ -32,7 +32,7 @@ export interface CanvasContextMenuOptions {
 export function openCanvasContextMenu(event: MouseEvent, commands: YeMindCommands, options: CanvasContextMenuOptions): void {
   event.preventDefault();
   event.stopPropagation();
-  const menu = new Menu('siyuan-yemind-zen-canvas-menu');
+  const menu = new Menu('siyuan-yemind-canvas-menu');
   menu.element.classList.add('ymz-context-menu', 'ymz-context-menu--canvas');
   const run = (action: string, callback: () => void): (() => void) => () => {
     options.onAction?.(action);
@@ -119,7 +119,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
     canAddOuterFrame: commands.canAddOuterFrame(),
   });
 
-  const menu = new Menu('siyuan-yemind-zen-node-menu');
+  const menu = new Menu('siyuan-yemind-node-menu');
   menu.element.classList.add('ymz-context-menu', 'ymz-context-menu--node');
   const run = (action: string, callback: () => void): (() => void) => () => {
     options.onAction?.(action);
@@ -142,7 +142,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
       { iconHTML: clipboardIcon('cut'), label: '剪切节点子树', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) },
       { iconHTML: clipboardIcon('paste'), label: '粘贴节点子树', accelerator: 'Ctrl+V', disabled: !availability.paste, click: run('paste', () => {
         void commands.paste().catch((error) => {
-          console.error('[YeMind Zen] node paste failed', error);
+          console.error('[YeMind] node paste failed', error);
           showMessage('节点粘贴失败，请重试', 4000, 'error');
         });
       }) },

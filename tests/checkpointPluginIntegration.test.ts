@@ -9,14 +9,14 @@ function source(file: string): string {
 describe('checkpoint plugin integration', () => {
   it('uses a separate storage file and loads it during bootstrap', () => {
     const constants = source('src/plugin/constants.ts');
-    const plugin = source('src/plugin/YeMindZenPlugin.ts');
+    const plugin = source('src/plugin/YeMindPlugin.ts');
     expect(constants).toContain("CHECKPOINT_STORAGE_NAME = 'checkpoints.json'");
     expect(plugin).toContain('new CheckpointRepository');
     expect(plugin).toContain('this.checkpointRepository.load()');
   });
 
   it('injects checkpoint services into map tabs and cleans checkpoints after map deletion', () => {
-    const plugin = source('src/plugin/YeMindZenPlugin.ts');
+    const plugin = source('src/plugin/YeMindPlugin.ts');
     const tabs = source('src/plugin/tabs.ts');
     expect(tabs).toContain('checkpointRepository: host.checkpointRepository');
     expect(tabs).toContain('checkpointService: host.checkpointService');

@@ -13,6 +13,7 @@ import { openYeMindSettingsDialog } from '../settings/settingsDialog';
 import { SettingsStore } from '../settings/SettingsStore';
 import { RELEASE_INFO } from '../releaseInfo';
 import { CHECKPOINT_STORAGE_NAME, DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX, DIAGNOSTIC_LIFECYCLE_MAP_PREFIX, DIAGNOSTIC_PROBE_STORAGE_NAME, ICON_ID, MAP_STORAGE_NAME, PLUGIN_VERSION, SETTINGS_STORAGE_NAME, TAB_TYPE } from './constants';
+import { YEMIND_ICON_DATA_URL } from './yemindIcon';
 import { registerYeMindDock } from './dock';
 import type { YeMindPluginHost } from './host';
 import { registerYeMindTab } from './tabs';
@@ -22,7 +23,7 @@ import { runSafeOperation } from './operationSafety';
 import { initializePluginStartup } from './pluginStartup';
 import { destroyGlobalSearchIntegrations, mountGlobalSearchResults } from './globalSearch';
 
-export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost {
+export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
   repository!: MapRepository;
   settingsStore!: SettingsStore;
   checkpointRepository!: CheckpointRepository;
@@ -34,7 +35,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
   private globalSearchTimer: number | null = null;
 
   onload(): void {
-    this.addIcons(`<symbol id="${ICON_ID}" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="7" fill="#176b50"/><text x="16" y="21" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Ye</text></symbol>
+    this.addIcons(`<symbol id="${ICON_ID}" viewBox="0 0 32 32"><image href="${YEMIND_ICON_DATA_URL}" x="0" y="0" width="32" height="32" preserveAspectRatio="xMidYMid meet"/></symbol>
       <symbol id="iconYeMindNote" viewBox="0 0 24 24"><path d="M6.5 3.75h8.8l3.2 3.2v13.3H6.5a2 2 0 0 1-2-2V5.75a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.2 3.9v3.4h3.2M8 11h7.5M8 14.5h7.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
       <symbol id="iconYeMindComment" viewBox="0 0 24 24"><path d="M6.25 4.75h11.5A2.5 2.5 0 0 1 20.25 7.25v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.25 2.9v-2.9A2.5 2.5 0 0 1 3.75 15.25v-8a2.5 2.5 0 0 1 2.5-2.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>`);
     this.repository = new MapRepository({
@@ -106,7 +107,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
       onRegistrationError: (name, error) => {
         this.diagnostics.recordError('plugin', 'registration-failed', error, undefined, true);
         this.diagnostics.record('plugin', 'registration-failed-step', undefined, { name }, 'error', true);
-        console.error(`[YeMind Zen] ${name} registration failed`, error);
+        console.error(`[YeMind] ${name} registration failed`, error);
       },
     });
   }
@@ -224,7 +225,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
       try {
         await this.checkpointRepository.removeForMap(mapId);
       } catch (error) {
-        console.error('[YeMind Zen] checkpoint cleanup after map deletion failed', error);
+        console.error('[YeMind] checkpoint cleanup after map deletion failed', error);
       }
       this.tabRegistry.close(mapId);
     }, (error) => this.reportOperationFailure('删除导图', error));
@@ -288,8 +289,8 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
 
   private reportOperationFailure(action: string, error: unknown): void {
     this.diagnostics?.recordError('operation', `${action}-failed`, error, undefined, true);
-    console.error(`[YeMind Zen] ${action} failed`, error);
-    showMessage(`YeMind Zen ${action}失败，请稍后重试`, 5000, 'error');
+    console.error(`[YeMind] ${action} failed`, error);
+    showMessage(`YeMind ${action}失败，请稍后重试`, 5000, 'error');
   }
 
   private readonly onOpenPluginUrl = (event: CustomEvent<{ url: string }>): void => {
@@ -304,15 +305,15 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
       this.diagnostics.record('plugin', 'bootstrap-completed', undefined, { mapCount: this.repository.list().length, checkpointCount: this.checkpointRepository.listAll().length }, 'info', true);
     } catch (error) {
       this.diagnostics.recordError('plugin', 'bootstrap-failed', error, undefined, true);
-      console.error('[YeMind Zen] failed to load storage', error);
-      showMessage('YeMind Zen 数据加载失败', 6000, 'error');
+      console.error('[YeMind] failed to load storage', error);
+      showMessage('YeMind 数据加载失败', 6000, 'error');
     }
   }
 
   private registerTopBar(): void {
     this.addTopBar({
       icon: ICON_ID,
-      title: 'YeMind Zen',
+      title: 'YeMind',
       position: 'right',
       callback: (event) => {
         void this.openTopBarMenu(event);
@@ -322,7 +323,7 @@ export default class YeMindZenPlugin extends Plugin implements YeMindPluginHost 
 
   private async openTopBarMenu(event: MouseEvent): Promise<void> {
     await this.ready;
-    const menu = new Menu('siyuan-yemind-zen-top-menu');
+    const menu = new Menu('siyuan-yemind-top-menu');
     menu.addItem({ icon: 'iconAdd', label: '新建导图', click: () => { void this.createMap(); } });
     const maps = this.repository.list();
     if (maps.length > 0) {

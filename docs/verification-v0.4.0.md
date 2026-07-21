@@ -1,4 +1,4 @@
-# YeMind Zen v0.4.0 Verification
+# YeMind v0.4.0 Verification
 
 Verification commands:
 

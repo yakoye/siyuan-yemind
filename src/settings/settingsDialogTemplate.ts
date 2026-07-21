@@ -1,5 +1,6 @@
 import { canvasModeIcon } from '../editor/projectControls';
 import { RELEASE_INFO } from '../releaseInfo';
+import { ROOT_ICON_URL } from '../plugin/constants';
 import {
   DEFAULT_SHORTCUTS,
   type ShortcutCommand,
@@ -111,7 +112,7 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
     </aside>
     <main class="ymz-settings-main">
       <section class="ymz-settings-page" data-settings-panel="general">
-        <header><h2>常规</h2><p>修改后点击保存，将应用到所有已打开的 YeMind Zen 标签页。</p></header>
+        <header><h2>常规</h2><p>修改后点击保存，将应用到所有已打开的 YeMind 标签页。</p></header>
         <div class="ymz-settings-group"><h3>默认视图模式</h3>
           ${selectRow('默认视图', '新打开导图时使用导图、大纲或分屏。', 'defaultViewMode', [
             option('map', '导图', settings.defaultViewMode),
@@ -224,7 +225,7 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
       <section class="ymz-settings-page ymz-settings-about" data-settings-panel="about" hidden>
         <header><h2>关于</h2><p>${escapeHtml(RELEASE_INFO.tagline)}</p></header>
         <div class="ymz-about-hero">
-          <img src="/plugins/siyuan-yemind-zen/icon.png" alt="YeMind Zen">
+          <img src="${ROOT_ICON_URL}" alt="YeMind">
           <div><h3>${escapeHtml(RELEASE_INFO.productName)}</h3><p>${escapeHtml(RELEASE_INFO.releaseSummary)}</p></div>
         </div>
         <div class="ymz-settings-group ymz-about-version-card">

@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.14 Official Visual Parity Implementation Plan
+# YeMind v0.5.14 Official Visual Parity Implementation Plan
 
 ## Task 1: Theme adapter tests
 

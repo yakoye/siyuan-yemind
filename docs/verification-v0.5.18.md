@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.18 Verification Report
+# YeMind v0.5.18 Verification Report
 
 日期：2026-07-18
 

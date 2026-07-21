@@ -156,7 +156,7 @@ describe('v0.6.8 native SiYuan global-search integration', () => {
   });
 
   it('passes right-split intent through the plugin open pipeline', () => {
-    const pluginSource = readFileSync('src/plugin/YeMindZenPlugin.ts', 'utf8');
+    const pluginSource = readFileSync('src/plugin/YeMindPlugin.ts', 'utf8');
     expect(pluginSource).toContain("async openMap(mapId: string, options: { position?: 'right' } = {})");
     expect(pluginSource).toContain('position: options.position');
     expect(pluginSource).toContain('this.openMapAtNode(mapId, nodeUid, openOptions)');

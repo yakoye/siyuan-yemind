@@ -1,4 +1,4 @@
-# YeMind Zen Drag Interaction Fidelity Design
+# YeMind Drag Interaction Fidelity Design
 
 ## Goal
 
@@ -27,7 +27,7 @@ The official bundle resolves drag intent from the complete drag rectangle rather
 - pointer events are coalesced with `requestAnimationFrame`;
 - the visual guide uses the stable intent, while final mutation remains a native move/insert command.
 
-The official renderer does not draw the old structural connection as a live connection after detachment. YeMind Zen will hide the incoming source connection throughout the drag session and restore its SVG visibility only after the native drop lifecycle completes.
+The official renderer does not draw the old structural connection as a live connection after detachment. YeMind will hide the incoming source connection throughout the drag session and restore its SVG visibility only after the native drop lifecycle completes.
 
 ## Architecture
 

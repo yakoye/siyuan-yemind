@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.7 Verification
+# YeMind v0.5.7 Verification
 
 ## Scope
 
@@ -13,7 +13,7 @@ The tests execute the `parseAddNodeList` implementation from the installed `simp
 - nodes under different parents are grouped separately;
 - selecting an ancestor and descendant keeps only the top ancestor.
 
-YeMind Zen delegates creation to `ADD_OUTER_FRAME`, text editing to `showEditTextBox`, style changes to `updateActiveOuterFrame`, and deletion to `removeActiveOuterFrame`.
+YeMind delegates creation to `ADD_OUTER_FRAME`, text editing to `showEditTextBox`, style changes to `updateActiveOuterFrame`, and deletion to `removeActiveOuterFrame`.
 
 ## Automated verification
 

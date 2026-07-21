@@ -251,8 +251,8 @@ export function renderGlobalSearchResults(matches: GlobalMapMatch[], query = '')
       <span class="b3-list-item__meta b3-list-item__meta--ellipsis ariaLabel" aria-label="${escapeHtml(resultPath(item))}">${escapeHtml(resultPath(item))}</span>
     </div>`;
   }).join('');
-  return `<section class="ymz-global-search-results" data-yemind-global-results data-yemind-global-signature="${escapeHtml(signature)}" role="group" aria-label="YeMind Zen 搜索结果">
-    <header class="ymz-global-search-results__header"><strong>YeMind Zen</strong><span>${matches.length} 条结果</span></header>
+  return `<section class="ymz-global-search-results" data-yemind-global-results data-yemind-global-signature="${escapeHtml(signature)}" role="group" aria-label="YeMind 搜索结果">
+    <header class="ymz-global-search-results__header"><strong>YeMind</strong><span>${matches.length} 条结果</span></header>
     <div class="ymz-global-search-results__list">${rows}</div>
   </section>`;
 }

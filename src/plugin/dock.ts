@@ -30,7 +30,7 @@ class YeMindDockView {
     if (this.destroyed) return;
     const maps = this.host.repository.list();
     const activeId = this.host.repository.getActiveMapId();
-    this.element.innerHTML = `<div class="ymz-dock__head"><span>YeMind Zen</span><button data-action="new" aria-label="新建导图" title="新建导图">＋</button><button data-action="refresh" aria-label="刷新" title="刷新">↻</button></div><div class="ymz-dock__body"></div>`;
+    this.element.innerHTML = `<div class="ymz-dock__head"><span>YeMind</span><button data-action="new" aria-label="新建导图" title="新建导图">＋</button><button data-action="refresh" aria-label="刷新" title="刷新">↻</button></div><div class="ymz-dock__body"></div>`;
     const body = this.element.querySelector('.ymz-dock__body') as HTMLElement;
     if (maps.length === 0) {
       body.innerHTML = '<div class="ymz-dock__empty">暂无导图</div>';
@@ -68,7 +68,7 @@ export function registerYeMindDock(plugin: Plugin, host: YeMindPluginHost): void
       position: 'LeftBottom',
       size: { width: 280, height: 0 },
       icon: ICON_ID,
-      title: 'YeMind Zen',
+      title: 'YeMind',
       show: true,
     },
     data: {},

@@ -1,4 +1,4 @@
-# YeMind Zen v0.5.2 Verification
+# YeMind v0.5.2 Verification
 
 ## Scope
 

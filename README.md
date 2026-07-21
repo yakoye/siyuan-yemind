@@ -1,17 +1,19 @@
-# YeMind Zen
+# YeMind
 
-YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-map`.
+YeMind is a local-first mind-map plugin for SiYuan, powered by `simple-mind-map`.
 
-- Plugin folder and ID: `siyuan-yemind-zen`
-- Display name: `YeMind Zen`
-- Version: `0.7.1`
+- Engineering package: `siyuan-yemind`
+- Permanent SiYuan plugin ID / installed folder: `siyuan-yemind-zen` (retained for data-compatible upgrades)
+- Display name: `YeMind`
+- Version: `0.8.0`
 
-## v0.7.1: Global-search opening and diagnostics fix
+## v0.8.0: YeMind brand and project identity
 
-- Fixed `click is not a function` when SiYuan exposes the search close control as SVG or another non-button element.
-- Enter, result double-click and the preview Open Map button now share one protected navigation path.
-- Map opening continues even when closing the global-search surface requires a fallback.
-- Diagnostics now report stalled Enter/close/open navigation instead of a false pass.
+- Replaced the old square `Ye` icon with the user-provided mind-map logo.
+- Generated transparent 32, 64, 128 and 512 pixel assets using the exact theme color `#176B50`.
+- Renamed the public product, current UI, source entry and engineering package to YeMind / `YeMindPlugin` / `siyuan-yemind`.
+- Kept the permanent SiYuan plugin ID `siyuan-yemind-zen` so existing maps, settings, checkpoints, restored tabs and plugin links continue to work.
+- Release archives now use the `siyuan-yemind-vX.Y.Z.zip` name.
 
 ## v0.7.0: About, release identity and actionable diagnostics
 
@@ -77,4 +79,4 @@ See `README_zh_CN.md`, `FEATURE_MATRIX.md`, and `DEVELOPMENT_PLAN.md` for detail
 
 ## Development workflow
 
-YeMind Zen development follows the project rules in `AGENTS.md` and the bundled Superpowers skills under `.agents/skills/`. See `docs/superpowers/DEVELOPMENT_REQUIREMENTS.md` for the adapted workflow and completion gates. These development resources do not change the plugin runtime or map data format.
+YeMind development follows the project rules in `AGENTS.md` and the bundled Superpowers skills under `.agents/skills/`. See `docs/superpowers/DEVELOPMENT_REQUIREMENTS.md` for the adapted workflow and completion gates. These development resources do not change the plugin runtime or map data format.

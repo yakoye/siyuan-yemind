@@ -187,7 +187,7 @@ export class DiagnosticsService {
     try {
       this.recorder.record(category, action, mapId, details, level, force);
     } catch (error) {
-      console.warn('[YeMind Zen] diagnostic record failed', error);
+      console.warn('[YeMind] diagnostic record failed', error);
     }
   }
 
@@ -195,7 +195,7 @@ export class DiagnosticsService {
     try {
       this.recorder.recordError(category, action, error, mapId, force);
     } catch (recordError) {
-      console.warn('[YeMind Zen] diagnostic error record failed', recordError);
+      console.warn('[YeMind] diagnostic error record failed', recordError);
     }
   }
 
@@ -297,7 +297,7 @@ export class DiagnosticsService {
     const timeline = report.events.map((event) => JSON.stringify(event)).join('\n');
     const searchState = report.globalSearch;
     const summary = [
-      '# YeMind Zen 诊断摘要',
+      '# YeMind 诊断摘要',
       '',
       `- 生成时间：${new Date(report.generatedAt).toISOString()}`,
       `- 插件版本：${report.plugin.version}`,
@@ -335,7 +335,7 @@ export class DiagnosticsService {
     zip.file('settings.json', JSON.stringify(this.options.settings.get(), null, 2));
     if (includeNodeText) zip.file('maps-with-content.json', JSON.stringify(this.options.maps.list(), null, 2));
     zip.file('README.txt', [
-      'YeMind Zen diagnostics package', '',
+      'YeMind diagnostics package', '',
       'This package is generated locally and is not uploaded automatically.',
       includeNodeText
         ? 'WARNING: maps-with-content.json contains map titles, node text and other node data because the user explicitly enabled it.'
