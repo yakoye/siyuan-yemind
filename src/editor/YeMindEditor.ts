@@ -22,6 +22,7 @@ import { openCodeBlockDialog, openInlineLinkDialog } from '../ui/richTextDialogs
 import { calculateEditorStats } from './editorStats';
 import { createEditorTemplate } from './editorTemplate';
 import { renderOutlineHtml, resolveOutlineKeyAction } from './outline';
+import { DEFAULT_SPLIT_OUTLINE_RATIO, normalizeSplitOutlineRatio, ratioFromPointer } from './splitPane';
 import { RichTextToolbar } from './RichTextToolbar';
 import { isEditableTarget, matchesShortcut } from './shortcuts';
 import { createSelectionPresentation, promoteNodeToPrimary, shouldBlockRootDeleteShortcut } from './selectionPresentation';
@@ -43,6 +44,15 @@ export interface YeMindEditorOptions {
   onMissing?: () => void;
 }
 
+type OutlineFocusPlacement = 'start' | 'end' | 'select-all' | 'range';
+
+interface PendingOutlineFocus {
+  uid: string;
+  placement: OutlineFocusPlacement;
+  start?: number;
+  end?: number;
+}
+
 export class YeMindEditor {
   private map: MindMap | null = null;
   private commands: YeMindCommands | null = null;
@@ -55,6 +65,7 @@ export class YeMindEditor {
   private settings: YeMindSettings;
   private rootEl!: HTMLElement;
   private canvasEl!: HTMLElement;
+  private splitDividerEl!: HTMLElement;
   private outlineEl!: HTMLElement;
   private statsEl!: HTMLElement;
   private zoomEl!: HTMLElement;
@@ -75,7 +86,14 @@ export class YeMindEditor {
   private searchText = '';
   private applyingCheckpoint = false;
   private resizeFrame: number | null = null;
-  private pendingOutlineFocus: { uid: string; selectAll: boolean } | null = null;
+  private splitResizeFrame: number | null = null;
+  private splitDragPointerId: number | null = null;
+  private pendingSplitClientX: number | null = null;
+  private splitOutlineRatio = DEFAULT_SPLIT_OUTLINE_RATIO;
+  private outlineComposing = false;
+  private outlineTextCommitUid: string | null = null;
+  private outlineStructureBusy = false;
+  private pendingOutlineFocus: PendingOutlineFocus | null = null;
 
   private readonly onRootKeydown = (event: KeyboardEvent): void => {
     if (event.key === 'Escape' && this.commands?.isRelationCreating()) {
@@ -123,6 +141,7 @@ export class YeMindEditor {
     if (!map) throw new Error(`Map not found: ${options.mapId}`);
     this.current = map;
     this.settings = options.settingsStore.get();
+    this.splitOutlineRatio = normalizeSplitOutlineRatio(this.settings.splitOutlineRatio);
     this.mount();
   }
 
@@ -140,7 +159,10 @@ export class YeMindEditor {
     this.richTextToolbar = null;
     this.rootEl?.removeEventListener('keydown', this.onRootKeydown);
     if (this.resizeFrame !== null) window.cancelAnimationFrame(this.resizeFrame);
+    if (this.splitResizeFrame !== null) window.cancelAnimationFrame(this.splitResizeFrame);
     this.resizeFrame = null;
+    this.splitResizeFrame = null;
+    this.splitDragPointerId = null;
     this.map?.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
@@ -152,6 +174,7 @@ export class YeMindEditor {
     this.options.container.innerHTML = createEditorTemplate(this.current.title);
     this.rootEl = this.options.container.querySelector('.ymz-editor') as HTMLElement;
     this.canvasEl = this.options.container.querySelector('[data-role="canvas"]') as HTMLElement;
+    this.splitDividerEl = this.options.container.querySelector('[data-role="split-divider"]') as HTMLElement;
     this.outlineEl = this.options.container.querySelector('[data-role="outline"]') as HTMLElement;
     this.statsEl = this.options.container.querySelector('[data-role="stats"]') as HTMLElement;
     this.zoomEl = this.options.container.querySelector('[data-role="zoom"]') as HTMLElement;
@@ -246,10 +269,21 @@ export class YeMindEditor {
         return;
       }
 
+      const outlineToggle = (event.target as HTMLElement).closest<HTMLElement>('[data-outline-toggle]');
       const outlineRow = (event.target as HTMLElement).closest<HTMLElement>('[data-outline-uid]');
+      if (outlineToggle && outlineRow && this.commands) {
+        const uid = outlineRow.dataset.outlineUid ?? '';
+        const expanded = outlineRow.dataset.outlineExpanded === 'true';
+        this.commands.goToNode(uid);
+        this.activateOutlineUid(uid);
+        this.pendingOutlineFocus = { uid, placement: 'start' };
+        if (!this.commands.setNodeExpandedByUid(uid, !expanded)) this.pendingOutlineFocus = null;
+        return;
+      }
       if (outlineRow && this.commands) {
-        this.commands.goToNode(outlineRow.dataset.outlineUid ?? '');
-        this.activateOutlineUid(outlineRow.dataset.outlineUid ?? '');
+        const uid = outlineRow.dataset.outlineUid ?? '';
+        this.commands.goToNode(uid);
+        this.activateOutlineUid(uid);
         return;
       }
 
@@ -312,14 +346,6 @@ export class YeMindEditor {
       }
     });
 
-    this.outlineEl.addEventListener('pointerdown', (event) => {
-      const input = (event.target as HTMLElement).closest<HTMLTextAreaElement>('[data-outline-editor]');
-      const active = document.activeElement instanceof HTMLTextAreaElement
-        ? document.activeElement.closest<HTMLTextAreaElement>('[data-outline-editor]')
-        : null;
-      const uid = input?.closest<HTMLElement>('[data-outline-uid]')?.dataset.outlineUid ?? '';
-      if (input && active && input !== active && uid) this.pendingOutlineFocus = { uid, selectAll: false };
-    });
     this.outlineEl.addEventListener('focusin', (event) => {
       const input = (event.target as HTMLElement).closest<HTMLTextAreaElement>('[data-outline-editor]');
       const row = input?.closest<HTMLElement>('[data-outline-uid]');
@@ -329,6 +355,8 @@ export class YeMindEditor {
       this.commands.goToNode(uid);
       this.activateOutlineUid(uid);
     });
+    this.outlineEl.addEventListener('compositionstart', () => { this.outlineComposing = true; });
+    this.outlineEl.addEventListener('compositionend', () => { this.outlineComposing = false; });
     this.outlineEl.addEventListener('input', (event) => {
       const input = (event.target as HTMLElement).closest<HTMLTextAreaElement>('[data-outline-editor]');
       if (input) this.resizeOutlineInput(input);
@@ -343,6 +371,7 @@ export class YeMindEditor {
       }
       this.commitOutlineInput(input);
     }, true);
+    this.bindSplitDivider();
 
     this.rootEl.addEventListener('change', (event) => {
       const control = (event.target as HTMLElement).closest<HTMLInputElement | HTMLSelectElement>('[data-outer-frame-setting]');
@@ -395,7 +424,14 @@ export class YeMindEditor {
       this.current.data = data;
       this.options.diagnostics.record('editor', 'data-change', this.current.id, { nodeCount: calculateEditorStats(data).nodes });
       this.updateStats(data);
-      this.renderOutline(data);
+      if (this.outlineTextCommitUid) {
+        const row = Array.from(this.outlineEl.querySelectorAll<HTMLElement>('[data-outline-uid]'))
+          .find((item) => item.dataset.outlineUid === this.outlineTextCommitUid);
+        const input = row?.querySelector<HTMLTextAreaElement>('[data-outline-editor]');
+        if (input) this.resizeOutlineInput(input);
+      } else {
+        this.renderOutline(data);
+      }
       this.scheduleSave();
     });
     this.map.on('view_data_change', (viewData: Record<string, unknown>) => {
@@ -546,6 +582,7 @@ export class YeMindEditor {
     this.rootEl.dataset.nodeMenuButton = String(settings.showNodeMenuButton);
     this.rootEl.style.setProperty('--ymz-code-tab-size', String(settings.codeBlockTabSize));
     this.rootEl.style.setProperty('--ymz-code-font-size', `${settings.codeBlockFontSize}px`);
+    this.applySplitOutlineRatio(settings.splitOutlineRatio, false);
     const behavior = buildDragAndLayoutOptions(settings);
     const relationOptions = buildRelationOptions(settings);
     const outerFrameOptions = buildOuterFrameOptions(settings);
@@ -574,6 +611,85 @@ export class YeMindEditor {
       this.setViewMode(settings.defaultViewMode);
       this.setReadonly(settings.defaultReadonlyMode);
       this.toggleZen(settings.defaultZenMode);
+    }
+  }
+
+  private bindSplitDivider(): void {
+    const endDrag = (event: PointerEvent): void => {
+      if (this.splitDragPointerId !== event.pointerId) return;
+      this.flushSplitPointerUpdate();
+      this.splitDragPointerId = null;
+      this.splitDividerEl.classList.remove('is-dragging');
+      try { this.splitDividerEl.releasePointerCapture(event.pointerId); } catch {}
+      void this.persistSplitOutlineRatio();
+    };
+
+    this.splitDividerEl.addEventListener('pointerdown', (event) => {
+      if (this.viewMode !== 'split' || event.button !== 0) return;
+      event.preventDefault();
+      this.splitDragPointerId = event.pointerId;
+      this.splitDividerEl.classList.add('is-dragging');
+      this.splitDividerEl.setPointerCapture(event.pointerId);
+      this.queueSplitPointerUpdate(event.clientX);
+    });
+    this.splitDividerEl.addEventListener('pointermove', (event) => {
+      if (this.splitDragPointerId !== event.pointerId) return;
+      event.preventDefault();
+      this.queueSplitPointerUpdate(event.clientX);
+    });
+    this.splitDividerEl.addEventListener('pointerup', endDrag);
+    this.splitDividerEl.addEventListener('pointercancel', endDrag);
+    this.splitDividerEl.addEventListener('dblclick', (event) => {
+      if (this.viewMode !== 'split') return;
+      event.preventDefault();
+      this.applySplitOutlineRatio(DEFAULT_SPLIT_OUTLINE_RATIO, true);
+    });
+    this.splitDividerEl.addEventListener('keydown', (event) => {
+      if (this.viewMode !== 'split') return;
+      let next: number | null = null;
+      if (event.key === 'ArrowLeft') next = this.splitOutlineRatio + 0.02;
+      if (event.key === 'ArrowRight') next = this.splitOutlineRatio - 0.02;
+      if (event.key === 'Home') next = DEFAULT_SPLIT_OUTLINE_RATIO;
+      if (next === null) return;
+      event.preventDefault();
+      event.stopPropagation();
+      this.applySplitOutlineRatio(next, true);
+    });
+  }
+
+  private queueSplitPointerUpdate(clientX: number): void {
+    this.pendingSplitClientX = clientX;
+    if (this.splitResizeFrame !== null) return;
+    this.splitResizeFrame = window.requestAnimationFrame(() => {
+      this.splitResizeFrame = null;
+      this.flushSplitPointerUpdate();
+    });
+  }
+
+  private flushSplitPointerUpdate(): void {
+    if (this.pendingSplitClientX === null) return;
+    const clientX = this.pendingSplitClientX;
+    this.pendingSplitClientX = null;
+    const workspace = this.splitDividerEl.parentElement;
+    if (!workspace) return;
+    const rect = workspace.getBoundingClientRect();
+    this.applySplitOutlineRatio(ratioFromPointer(rect, clientX), false);
+  }
+
+  private applySplitOutlineRatio(value: unknown, persist: boolean): void {
+    this.splitOutlineRatio = normalizeSplitOutlineRatio(value);
+    this.rootEl.style.setProperty('--ymz-outline-ratio', `${(this.splitOutlineRatio * 100).toFixed(2)}%`);
+    this.splitDividerEl.setAttribute('aria-valuenow', String(Math.round(this.splitOutlineRatio * 100)));
+    if (this.viewMode === 'split') this.scheduleSafeResize();
+    if (persist) void this.persistSplitOutlineRatio();
+  }
+
+  private async persistSplitOutlineRatio(): Promise<void> {
+    try {
+      await this.options.settingsStore.update({ splitOutlineRatio: this.splitOutlineRatio });
+    } catch (error) {
+      console.error('[YeMind Zen] split ratio save failed', error);
+      showMessage('分屏比例保存失败，已保持当前显示', 4000, 'error');
     }
   }
 
@@ -679,6 +795,20 @@ export class YeMindEditor {
   }
 
   private renderOutline(data: MindMapTree): void {
+    if (!this.pendingOutlineFocus) {
+      const active = document.activeElement instanceof HTMLTextAreaElement
+        ? document.activeElement.closest<HTMLTextAreaElement>('[data-outline-editor]')
+        : null;
+      const uid = active?.closest<HTMLElement>('[data-outline-uid]')?.dataset.outlineUid ?? '';
+      if (active && uid && this.outlineEl.contains(active)) {
+        this.pendingOutlineFocus = {
+          uid,
+          placement: 'range',
+          start: active.selectionStart ?? 0,
+          end: active.selectionEnd ?? active.selectionStart ?? 0,
+        };
+      }
+    }
     const activeUid = String(this.commands?.getPrimaryNode()?.getData?.('uid') ?? '');
     const readonly = this.rootEl.dataset.readonly === 'true';
     this.outlineEl.setAttribute('aria-readonly', String(readonly));
@@ -693,15 +823,28 @@ export class YeMindEditor {
     if (!pending) return;
     window.requestAnimationFrame(() => {
       if (this.destroyed || !this.pendingOutlineFocus || this.pendingOutlineFocus.uid !== pending.uid) return;
-      const row = Array.from(this.outlineEl.querySelectorAll<HTMLElement>('[data-outline-uid]'))
-        .find((item) => item.dataset.outlineUid === pending.uid);
-      const input = row?.querySelector<HTMLTextAreaElement>('[data-outline-editor]');
+      const input = this.findOutlineInput(pending.uid);
       if (!input) return;
       this.pendingOutlineFocus = null;
       input.focus();
-      if (pending.selectAll) input.select();
+      const length = input.value.length;
+      if (pending.placement === 'select-all') input.select();
+      else if (pending.placement === 'start') input.setSelectionRange(0, 0);
+      else if (pending.placement === 'end') input.setSelectionRange(length, length);
+      else {
+        const start = Math.min(length, Math.max(0, pending.start ?? 0));
+        const end = Math.min(length, Math.max(start, pending.end ?? start));
+        input.setSelectionRange(start, end);
+      }
       this.activateOutlineUid(pending.uid);
+      input.scrollIntoView({ block: 'nearest' });
     });
+  }
+
+  private findOutlineInput(uid: string): HTMLTextAreaElement | null {
+    const row = Array.from(this.outlineEl.querySelectorAll<HTMLElement>('[data-outline-uid]'))
+      .find((item) => item.dataset.outlineUid === uid);
+    return row?.querySelector<HTMLTextAreaElement>('[data-outline-editor]') ?? null;
   }
 
   private commitOutlineInput(input: HTMLTextAreaElement): boolean {
@@ -709,39 +852,57 @@ export class YeMindEditor {
     const row = input.closest<HTMLElement>('[data-outline-uid]');
     const uid = row?.dataset.outlineUid ?? '';
     const original = input.dataset.outlineOriginal ?? '';
-    const next = input.value.trim();
+    const next = input.value.replace(/\r\n/g, '\n');
     if (!uid) return false;
-    if (!next) {
+    if (!next.trim()) {
       input.value = original;
+      this.resizeOutlineInput(input);
       return false;
     }
     if (next === original) return false;
-    if (!this.commands.setNodeTextByUid(uid, next)) return false;
+    this.outlineTextCommitUid = uid;
+    try {
+      if (!this.commands.setNodeTextByUid(uid, next)) return false;
+    } finally {
+      this.outlineTextCommitUid = null;
+    }
     input.value = next;
     input.dataset.outlineOriginal = next;
+    this.resizeOutlineInput(input);
     return true;
   }
 
   private handleOutlineKeydown(event: KeyboardEvent): void {
     const input = (event.target as HTMLElement).closest<HTMLTextAreaElement>('[data-outline-editor]');
     const row = input?.closest<HTMLElement>('[data-outline-uid]');
-    if (!input || !row || !this.commands) return;
+    if (!input || !row || !this.commands || this.outlineStructureBusy) return;
     const uid = row.dataset.outlineUid ?? '';
     const isRoot = row.dataset.outlineRoot === 'true';
+    const selectionStart = input.selectionStart ?? 0;
+    const selectionEnd = input.selectionEnd ?? selectionStart;
     const action = resolveOutlineKeyAction({
       key: event.key,
       empty: input.value.trim().length === 0,
       isRoot,
       readonly: this.commands.isReadonly(),
+      hasChildren: row.dataset.outlineHasChildren === 'true',
+      expanded: row.dataset.outlineExpanded === 'true',
+      atStart: selectionStart === 0 && selectionEnd === 0,
+      atEnd: selectionStart === input.value.length && selectionEnd === input.value.length,
+      composing: event.isComposing || this.outlineComposing,
       shiftKey: event.shiftKey,
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
     });
-    if (action === 'none') return;
+    if (action === 'none' || action === 'hard-break') return;
     event.preventDefault();
     event.stopPropagation();
 
     if (action === 'cancel') {
       input.value = input.dataset.outlineOriginal ?? input.value;
       input.dataset.outlineCancelled = 'true';
+      this.resizeOutlineInput(input);
       input.blur();
       return;
     }
@@ -749,23 +910,50 @@ export class YeMindEditor {
       this.focusOutlineNeighbor(input, action === 'previous' ? -1 : 1);
       return;
     }
-    if (action === 'remove') {
-      const inputs = Array.from(this.outlineEl.querySelectorAll<HTMLTextAreaElement>('[data-outline-editor]'));
-      const index = inputs.indexOf(input);
-      const fallback = inputs[index - 1] ?? inputs[index + 1];
-      const fallbackUid = fallback?.closest<HTMLElement>('[data-outline-uid]')?.dataset.outlineUid;
-      if (fallbackUid) this.pendingOutlineFocus = { uid: fallbackUid, selectAll: true };
-      if (!this.commands.removeNodeByUid(uid)) this.pendingOutlineFocus = null;
-      return;
-    }
 
-    this.commitOutlineInput(input);
-    const newUid = createOutlineUid();
-    this.pendingOutlineFocus = { uid: newUid, selectAll: true };
-    const inserted = action === 'insert-child'
-      ? this.commands.insertChildByUid(uid, newUid)
-      : this.commands.insertSiblingByUid(uid, newUid);
-    if (!inserted) this.pendingOutlineFocus = null;
+    this.outlineStructureBusy = true;
+    try {
+      if (action === 'remove') {
+        const inputs = Array.from(this.outlineEl.querySelectorAll<HTMLTextAreaElement>('[data-outline-editor]'));
+        const index = inputs.indexOf(input);
+        const previous = inputs[index - 1];
+        const next = inputs[index + 1];
+        const fallback = previous ?? next;
+        const fallbackUid = fallback?.closest<HTMLElement>('[data-outline-uid]')?.dataset.outlineUid ?? '';
+        if (fallbackUid) {
+          this.pendingOutlineFocus = {
+            uid: fallbackUid,
+            placement: previous ? 'end' : 'start',
+          };
+        }
+        if (!this.commands.removeNodeByUid(uid)) this.pendingOutlineFocus = null;
+        return;
+      }
+
+      this.commitOutlineInput(input);
+      if (action === 'collapse' || action === 'expand') {
+        this.pendingOutlineFocus = { uid, placement: action === 'collapse' ? 'start' : 'end' };
+        if (!this.commands.setNodeExpandedByUid(uid, action === 'expand')) this.pendingOutlineFocus = null;
+        return;
+      }
+      if (action === 'indent' || action === 'outdent') {
+        this.pendingOutlineFocus = { uid, placement: 'start' };
+        const changed = action === 'indent'
+          ? this.commands.indentNodeByUid(uid)
+          : this.commands.outdentNodeByUid(uid);
+        if (!changed) this.pendingOutlineFocus = null;
+        return;
+      }
+
+      const newUid = createOutlineUid();
+      this.pendingOutlineFocus = { uid: newUid, placement: 'start' };
+      const inserted = action === 'insert-child'
+        ? this.commands.insertChildByUid(uid, newUid)
+        : this.commands.insertSiblingByUid(uid, newUid);
+      if (!inserted) this.pendingOutlineFocus = null;
+    } finally {
+      this.outlineStructureBusy = false;
+    }
   }
 
   private resizeOutlineInput(input: HTMLTextAreaElement): void {
@@ -780,12 +968,13 @@ export class YeMindEditor {
     const target = inputs[current + offset];
     const uid = target?.closest<HTMLElement>('[data-outline-uid]')?.dataset.outlineUid ?? '';
     if (!target || !uid) return;
-    this.pendingOutlineFocus = { uid, selectAll: true };
-    const changed = this.commitOutlineInput(input);
-    if (changed) return;
-    this.pendingOutlineFocus = null;
+    this.commitOutlineInput(input);
     target.focus();
-    target.select();
+    const position = offset < 0 ? target.value.length : 0;
+    target.setSelectionRange(position, position);
+    target.scrollIntoView({ block: 'nearest' });
+    this.commands?.goToNode(uid);
+    this.activateOutlineUid(uid);
   }
 
   private activateOutlineUid(uid: string): void {

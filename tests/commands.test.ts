@@ -129,3 +129,38 @@ describe('outline command bridge', () => {
     expect(map.execCommand).not.toHaveBeenCalled();
   });
 });
+
+describe('official-style outline structure commands', () => {
+  it('indents under the previous sibling, outdents one level, and toggles expansion natively', () => {
+    const parent = { children: [] as any[] };
+    const previous = { isRoot: false, isGeneralization: false, parent };
+    const node = { isRoot: false, isGeneralization: false, layerIndex: 2, parent, children: [{}] };
+    parent.children = [previous, node];
+    const map = fakeMindMap() as any;
+    map.opt = { readonly: false };
+    map.renderer.findNodeByUid = vi.fn((uid: string) => uid === 'node' ? node : uid === 'previous' ? previous : null);
+    const commands = createCommandAdapter(map as never);
+
+    expect(commands.indentNodeByUid('node')).toBe(true);
+    expect(commands.outdentNodeByUid('node')).toBe(true);
+    expect(commands.setNodeExpandedByUid('node', false)).toBe(true);
+
+    expect(map.execCommand.mock.calls).toContainEqual(['MOVE_NODE_TO', [node], previous]);
+    expect(map.execCommand.mock.calls).toContainEqual(['MOVE_UP_ONE_LEVEL', node]);
+    expect(map.execCommand.mock.calls).toContainEqual(['SET_NODE_EXPAND', node, false]);
+  });
+
+  it('refuses indent for the first sibling and outdent at the first child level', () => {
+    const parent = { children: [] as any[] };
+    const node = { isRoot: false, isGeneralization: false, layerIndex: 1, parent };
+    parent.children = [node];
+    const map = fakeMindMap() as any;
+    map.opt = { readonly: false };
+    map.renderer.findNodeByUid = () => node;
+    const commands = createCommandAdapter(map as never);
+
+    expect(commands.indentNodeByUid('node')).toBe(false);
+    expect(commands.outdentNodeByUid('node')).toBe(false);
+    expect(map.execCommand).not.toHaveBeenCalled();
+  });
+});

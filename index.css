@@ -292,6 +292,21 @@
 }
 
 /* v0.5.11 startup and editable outline */
+
+/* v0.5.12 official KMind Zen interaction parity / 官方交互机制对齐 */
+.ymz-editor{--ymz-outline-ratio:42%}
+.ymz-split-divider{position:relative;z-index:8;display:none;flex:0 0 7px;min-width:7px;cursor:col-resize;touch-action:none;outline:0;background:transparent}
+.ymz-split-divider::before{content:"";position:absolute;top:0;bottom:0;left:3px;width:1px;background:var(--ymz-border);transition:width .12s ease,left .12s ease,background .12s ease}
+.ymz-split-divider:hover::before,.ymz-split-divider:focus-visible::before,.ymz-split-divider.is-dragging::before{left:2px;width:3px;background:var(--b3-theme-primary)}
+.ymz-editor[data-view="split"] .ymz-split-divider{display:block}
+.ymz-editor[data-view="split"] .ymz-outline{display:block;flex:0 0 var(--ymz-outline-ratio);border-left:0}
+.ymz-editor[data-view="outline"] .ymz-split-divider,.ymz-editor[data-view="map"] .ymz-split-divider{display:none}
+.ymz-outline-row__branch{display:inline-flex;align-items:center;justify-content:center;height:24px;margin:1px 0 0;padding:0;border:0;border-radius:5px;background:transparent;cursor:pointer;font-family:inherit}
+.ymz-outline-row__branch:hover:not(:disabled),.ymz-outline-row__branch:focus-visible{background:var(--b3-list-hover);color:var(--b3-theme-primary);outline:0}
+.ymz-outline-row__branch:disabled{cursor:default;opacity:.55}
+.ymz-outline-row__editor{white-space:pre-wrap;overflow-wrap:anywhere}
+.ymz-outline-row__editor::placeholder{color:var(--b3-theme-on-surface-light);opacity:.6}
+@media(max-width:720px){.ymz-editor[data-view="split"] .ymz-outline{flex-basis:var(--ymz-outline-ratio)}}
 /*!
  * Quill Editor v2.0.3
  * https://quilljs.com

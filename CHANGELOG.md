@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.12 — 2026-07-17
+
+- Studied the user-provided KMind Zen 0.33.0 public production bundle at the actual outline key-handler, drag-frame, target-stabilizer, and cubic-guide paths instead of inferring behavior from screenshots.
+- Ported commit-before-structure outline transactions and UID/range-based focus restoration without importing KMind Zen's private document model, persistence, history, or layout engine.
+- Added IME-safe outline keyboard semantics: Enter sibling/root child, Shift+Enter hard break, Tab indent, Shift+Tab outdent, empty Backspace/Delete removal, and caret-boundary ArrowLeft/ArrowRight collapse/expand.
+- Continued to delegate outline mutations to upstream `SET_NODE_TEXT`, `INSERT_NODE`, `INSERT_CHILD_NODE`, `MOVE_NODE_TO`, `MOVE_UP_ONE_LEVEL`, `REMOVE_NODE`, and `SET_NODE_EXPAND`.
+- Added a persisted 25%–70% split-outline ratio with pointer dragging, keyboard adjustment, double-click/Home reset, animation-frame updates, and safe canvas resizing.
+- Replaced upstream Drag's fixed 300 ms overlap throttle with animation-frame candidate sampling while retaining its native target calculation and final `MOVE_NODE_TO`, `INSERT_BEFORE`, and `INSERT_AFTER` commands.
+- Added the official 60 ms/3-frame candidate stabilizer, green `6 6` cubic target-parent guide, and red `3 6` original-parent fallback guide with distance-dependent opacity and width.
+- Added focused regressions for IME and keyboard actions, outline structure command bridges, collapsed descendants, split ratio/template/settings, target stability, cubic geometry, and guide styling.
+
 ## 0.5.11 — 2026-07-17
 
 - Analyzed the `yemind-diagnostics-20260717-130840.zip` runtime archive and proved that startup recorded `plugin/onload` but never reached `bootstrap-started`; the repository stayed unloaded until map creation called `ensureLoaded()`.

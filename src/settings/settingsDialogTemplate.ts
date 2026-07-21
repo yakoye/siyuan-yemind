@@ -100,6 +100,7 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
             option('split', '分屏', settings.defaultViewMode),
             option('outline', '大纲', settings.defaultViewMode),
           ].join(''))}
+          ${numberRow('分屏大纲宽度', '分屏模式中右侧大纲占工作区的比例；也可直接拖动分隔条。', 'splitOutlineRatio', settings.splitOutlineRatio, 0.25, 0.7, 0.01, '比例')}
           ${selectRow('默认布局', '新建导图时使用的结构。', 'defaultLayout', [
             option('logicalStructure', '向右逻辑图', settings.defaultLayout),
             option('logicalStructureLeft', '向左逻辑图', settings.defaultLayout),

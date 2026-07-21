@@ -4,9 +4,9 @@ YeMind Zen is a local-first mind-map plugin for SiYuan, powered by `simple-mind-
 
 - Plugin folder and ID: `siyuan-yemind-zen`
 - Display name: `YeMind Zen`
-- Version: `0.5.11`
+- Version: `0.5.12`
 
-v0.5.11 fixes startup restoration when a host-surface registration fails and turns split/full outline views into an editable outline backed by `simple-mind-map` native commands. Enter creates a sibling (or a child from the root), Tab creates a child, empty Backspace/Delete removes a non-root node, and arrow keys move between visible rows. Existing map storage and upstream structural algorithms remain unchanged.
+v0.5.12 studies the user-provided KMind Zen 0.33.0 public production bundle and ports its interaction mechanisms without importing its private editor state, persistence, history, or layout engine. Split and full-outline views now use commit-before-structure transactions, IME-safe keyboard handling, precise focus restoration, indent/outdent and collapse/expand commands. The split divider is adjustable and persisted. Structured dragging keeps `simple-mind-map` target calculation and drop commands while replacing the upstream 300 ms overlap throttle with animation-frame sampling, a 60 ms/3-frame stable target, and smooth cubic parent guides.
 
 See `README_zh_CN.md`, `FEATURE_MATRIX.md`, and `DEVELOPMENT_PLAN.md` for details.
 

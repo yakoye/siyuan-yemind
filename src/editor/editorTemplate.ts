@@ -43,6 +43,7 @@ export function createEditorTemplate(title: string): string {
 
         <div class="ymz-workspace">
           <div class="ymz-canvas" data-role="canvas"></div>
+          <div class="ymz-split-divider" data-role="split-divider" role="separator" aria-orientation="vertical" aria-label="调整导图和大纲宽度" aria-valuemin="25" aria-valuemax="70" aria-valuenow="42" tabindex="0"></div>
           <aside class="ymz-outline" data-role="outline" role="tree" aria-label="导图大纲"></aside>
         </div>
 

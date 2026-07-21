@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { renderOutlineHtml, resolveOutlineKeyAction } from '../src/editor/outline';
 
 const tree = {
-  data: { text: '<b>Root</b>', richText: true, uid: 'r' },
+  data: { text: '<b>Root</b>', richText: true, uid: 'r', expand: true },
   children: [
-    { data: { text: 'Child A', uid: 'a' }, children: [] },
+    { data: { text: 'Child A', uid: 'a', expand: false }, children: [
+      { data: { text: 'Hidden', uid: 'hidden' }, children: [] },
+    ] },
   ],
 };
 
@@ -14,26 +16,44 @@ describe('editable outline', () => {
     expect(html).toContain('role="treeitem"');
     expect(html).toContain('data-outline-uid="r"');
     expect(html).toContain('data-outline-root="true"');
+    expect(html).toContain('data-outline-expanded="true"');
     expect(html).toContain('data-outline-editor');
     expect(html).toContain('>Root</textarea>');
     expect(html).not.toContain('readonly');
+  });
+
+  it('hides descendants of collapsed nodes from the continuous outline', () => {
+    const html = renderOutlineHtml(tree, false);
+    expect(html).toContain('data-outline-uid="a"');
+    expect(html).not.toContain('data-outline-uid="hidden"');
   });
 
   it('renders readonly outline controls in readonly mode', () => {
     expect(renderOutlineHtml(tree, true)).toContain('readonly');
   });
 
-  it('maps editing keys to native outline actions', () => {
-    expect(resolveOutlineKeyAction({ key: 'Enter', empty: false, isRoot: false, readonly: false })).toBe('insert-sibling');
-    expect(resolveOutlineKeyAction({ key: 'Enter', empty: false, isRoot: true, readonly: false })).toBe('insert-child');
-    expect(resolveOutlineKeyAction({ key: 'Tab', empty: false, isRoot: false, readonly: false })).toBe('insert-child');
-    expect(resolveOutlineKeyAction({ key: 'Tab', empty: false, isRoot: false, readonly: false, shiftKey: true })).toBe('none');
-    expect(resolveOutlineKeyAction({ key: 'Backspace', empty: true, isRoot: false, readonly: false })).toBe('remove');
-    expect(resolveOutlineKeyAction({ key: 'Delete', empty: true, isRoot: false, readonly: false })).toBe('remove');
-    expect(resolveOutlineKeyAction({ key: 'Backspace', empty: true, isRoot: true, readonly: false })).toBe('none');
-    expect(resolveOutlineKeyAction({ key: 'ArrowUp', empty: false, isRoot: false, readonly: false })).toBe('previous');
-    expect(resolveOutlineKeyAction({ key: 'ArrowDown', empty: false, isRoot: false, readonly: false })).toBe('next');
-    expect(resolveOutlineKeyAction({ key: 'Escape', empty: false, isRoot: false, readonly: false })).toBe('cancel');
-    expect(resolveOutlineKeyAction({ key: 'Enter', empty: false, isRoot: false, readonly: true })).toBe('none');
+  it('matches official keyboard semantics and ignores IME composition', () => {
+    const base = { empty: false, isRoot: false, readonly: false, hasChildren: true, expanded: true, atStart: true, atEnd: true };
+    expect(resolveOutlineKeyAction({ ...base, key: 'Enter' })).toBe('insert-sibling');
+    expect(resolveOutlineKeyAction({ ...base, key: 'Enter', isRoot: true })).toBe('insert-child');
+    expect(resolveOutlineKeyAction({ ...base, key: 'Enter', shiftKey: true })).toBe('hard-break');
+    expect(resolveOutlineKeyAction({ ...base, key: 'Tab' })).toBe('indent');
+    expect(resolveOutlineKeyAction({ ...base, key: 'Tab', shiftKey: true })).toBe('outdent');
+    expect(resolveOutlineKeyAction({ ...base, key: 'ArrowLeft' })).toBe('collapse');
+    expect(resolveOutlineKeyAction({ ...base, key: 'ArrowRight', expanded: false })).toBe('expand');
+    expect(resolveOutlineKeyAction({ ...base, key: 'ArrowRight', expanded: true })).toBe('none');
+    expect(resolveOutlineKeyAction({ ...base, key: 'Backspace', empty: true })).toBe('remove');
+    expect(resolveOutlineKeyAction({ ...base, key: 'Delete', empty: true })).toBe('remove');
+    expect(resolveOutlineKeyAction({ ...base, key: 'Escape' })).toBe('cancel');
+    expect(resolveOutlineKeyAction({ ...base, key: 'Enter', composing: true })).toBe('none');
+    expect(resolveOutlineKeyAction({ ...base, key: 'Enter', readonly: true })).toBe('none');
+  });
+
+  it('only collapses or expands at the relevant caret boundary', () => {
+    const base = { empty: false, isRoot: false, readonly: false, hasChildren: true, expanded: true };
+    expect(resolveOutlineKeyAction({ ...base, key: 'ArrowLeft', atStart: false, atEnd: true })).toBe('none');
+    expect(resolveOutlineKeyAction({ ...base, key: 'ArrowLeft', atStart: true, atEnd: false })).toBe('collapse');
+    expect(resolveOutlineKeyAction({ ...base, key: 'ArrowRight', expanded: false, atStart: true, atEnd: false })).toBe('none');
+    expect(resolveOutlineKeyAction({ ...base, key: 'ArrowRight', expanded: false, atStart: false, atEnd: true })).toBe('expand');
   });
 });

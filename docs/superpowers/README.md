@@ -7,4 +7,4 @@ YeMind Zen uses the project rules in `AGENTS.md` together with the skills stored
 - Implementation plans: `plans/`
 - Skill library: `../../.agents/skills/`
 
-The skill files are development resources. They do not change the plugin runtime or the v0.5.11 map format.
+The skill files are development resources. They do not change the plugin runtime or the v0.5.12 map format.

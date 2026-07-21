@@ -1,33 +1,64 @@
 import { describe, expect, it } from 'vitest';
-import { calculateDragGuideEndpoints, resolveDragGuideTarget } from '../src/core/YeMindDrag';
+import {
+  calculateDragGuidePath,
+  calculateOriginalParentGuideStyle,
+  createDragCandidateState,
+  resolveDragGuideTarget,
+  updateStableDragCandidate,
+} from '../src/core/YeMindDrag';
 
-describe('YeMindDrag target guide', () => {
-  it('uses the upstream overlap node as the target parent', () => {
+describe('YeMindDrag official-style target guide', () => {
+  it('uses the upstream overlap node or sibling parent as the target parent', () => {
     const overlap = { uid: 'parent' };
     expect(resolveDragGuideTarget({ overlapNode: overlap, prevNode: null, nextNode: null })).toBe(overlap);
-  });
-
-  it('uses the upstream sibling parent for before/after insertion', () => {
     const parent = { uid: 'parent' };
     const sibling = { parent };
     expect(resolveDragGuideTarget({ overlapNode: null, prevNode: sibling, nextNode: null })).toBe(parent);
   });
 
-  it('keeps a guide to the original parent while no nearer upstream target is active', () => {
+  it('keeps the original parent while no stable nearer target exists', () => {
     const parent = { uid: 'original-parent' };
-    expect(resolveDragGuideTarget({
-      overlapNode: null,
-      prevNode: null,
-      nextNode: null,
-      mousedownNode: { parent },
-    })).toBe(parent);
+    expect(resolveDragGuideTarget({ overlapNode: null, prevNode: null, nextNode: null, mousedownNode: { parent } })).toBe(parent);
   });
 
-  it('connects the nearest edges instead of drawing through node centers', () => {
-    const result = calculateDragGuideEndpoints(
-      { x: 200, y: 100, width: 80, height: 40 },
-      { x: 20, y: 90, width: 100, height: 60 },
-    );
-    expect(result).toEqual({ startX: 200, startY: 120, endX: 120, endY: 120 });
+  it('requires both 60ms and three matching frames before changing the stable candidate', () => {
+    const none = { key: 'none', overlapNode: null, prevNode: null, nextNode: null };
+    const next = { key: 'child:parent', overlapNode: { uid: 'parent' }, prevNode: null, nextNode: null };
+    let state = createDragCandidateState(none);
+    state = updateStableDragCandidate(state, next, 0);
+    expect(state.stable.key).toBe('none');
+    state = updateStableDragCandidate(state, next, 30);
+    expect(state.stable.key).toBe('none');
+    state = updateStableDragCandidate(state, next, 61);
+    expect(state.stable.key).toBe('child:parent');
+  });
+
+  it('resets pending frames when the candidate changes', () => {
+    const none = { key: 'none', overlapNode: null, prevNode: null, nextNode: null };
+    const a = { key: 'child:a', overlapNode: { uid: 'a' }, prevNode: null, nextNode: null };
+    const b = { key: 'child:b', overlapNode: { uid: 'b' }, prevNode: null, nextNode: null };
+    let state = createDragCandidateState(none);
+    state = updateStableDragCandidate(state, a, 0);
+    state = updateStableDragCandidate(state, a, 40);
+    state = updateStableDragCandidate(state, b, 70);
+    expect(state.stable.key).toBe('none');
+    expect(state.pending?.candidate.key).toBe('child:b');
+    expect(state.pending?.frames).toBe(1);
+  });
+
+  it('draws cubic guides for horizontal and vertical layouts', () => {
+    const parent = { x: 20, y: 90, width: 100, height: 60 };
+    const ghost = { x: 200, y: 100, width: 80, height: 40 };
+    expect(calculateDragGuidePath(parent, ghost, 'horizontal')).toBe('M 120 120 C 160 120, 160 120, 200 120');
+    expect(calculateDragGuidePath(parent, ghost, 'vertical')).toBe('M 70 150 C 70 190, 240 60, 240 100');
+  });
+
+  it('fades and thins the original-parent guide as the ghost approaches its parent', () => {
+    const near = calculateOriginalParentGuideStyle(0);
+    const far = calculateOriginalParentGuideStyle(140);
+    expect(near.width).toBeCloseTo(2);
+    expect(far.width).toBeCloseTo(0.9);
+    expect(near.opacity).toBeCloseTo(0.3);
+    expect(far.opacity).toBeCloseTo(0.9);
   });
 });

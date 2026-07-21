@@ -44,6 +44,7 @@ export interface YeMindSettings {
   defaultReadonlyMode: boolean;
   showNodeMenuButton: boolean;
   defaultViewMode: ViewMode;
+  splitOutlineRatio: number;
   dragEdgeAutoPan: boolean;
   restoreSavedView: boolean;
   limitMindMapInCanvas: boolean;
@@ -94,6 +95,7 @@ export const DEFAULT_SETTINGS: YeMindSettings = {
   defaultReadonlyMode: false,
   showNodeMenuButton: true,
   defaultViewMode: 'map',
+  splitOutlineRatio: 0.42,
   dragEdgeAutoPan: false,
   restoreSavedView: true,
   limitMindMapInCanvas: false,
@@ -125,6 +127,13 @@ const SHORTCUT_COMMANDS = Object.keys(DEFAULT_SHORTCUTS) as ShortcutCommand[];
 function numberInRange(value: unknown, fallback: number, min: number, max: number): number {
   const number = Number(value);
   return Number.isFinite(number) && number >= min && number <= max ? number : fallback;
+}
+
+function numberClamped(value: unknown, fallback: number, min: number, max: number): number {
+  if (value === null || value === undefined || value === '') return fallback;
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(max, Math.max(min, number));
 }
 
 function integerClamped(value: unknown, fallback: number, min: number, max: number): number {
@@ -179,6 +188,7 @@ function normalizeSettings(value: Partial<YeMindSettings>): YeMindSettings {
     defaultReadonlyMode: booleanOrDefault(value.defaultReadonlyMode, DEFAULT_SETTINGS.defaultReadonlyMode),
     showNodeMenuButton: booleanOrDefault(value.showNodeMenuButton, DEFAULT_SETTINGS.showNodeMenuButton),
     defaultViewMode: VIEW_MODES.has(value.defaultViewMode as ViewMode) ? value.defaultViewMode as ViewMode : DEFAULT_SETTINGS.defaultViewMode,
+    splitOutlineRatio: numberClamped(value.splitOutlineRatio, DEFAULT_SETTINGS.splitOutlineRatio, 0.25, 0.7),
     dragEdgeAutoPan: booleanOrDefault(value.dragEdgeAutoPan, DEFAULT_SETTINGS.dragEdgeAutoPan),
     restoreSavedView: booleanOrDefault(value.restoreSavedView, DEFAULT_SETTINGS.restoreSavedView),
     limitMindMapInCanvas: booleanOrDefault(value.limitMindMapInCanvas, DEFAULT_SETTINGS.limitMindMapInCanvas),

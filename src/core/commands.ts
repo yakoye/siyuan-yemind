@@ -81,6 +81,9 @@ export interface YeMindCommands {
   insertSiblingByUid(uid: string, newUid: string): boolean;
   insertChildByUid(uid: string, newUid: string): boolean;
   removeNodeByUid(uid: string): boolean;
+  indentNodeByUid(uid: string): boolean;
+  outdentNodeByUid(uid: string): boolean;
+  setNodeExpandedByUid(uid: string, expanded: boolean): boolean;
 }
 
 export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
@@ -344,6 +347,31 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       const node = findNodeByUid(uid);
       if (!node || node.isRoot) return false;
       mindMap.execCommand('REMOVE_NODE', [node]);
+      return true;
+    },
+    indentNodeByUid: (uid) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isRoot || node.isGeneralization || !node.parent) return false;
+      const siblings = Array.isArray(node.parent.children) ? node.parent.children : [];
+      const index = siblings.indexOf(node);
+      const previous = index > 0 ? siblings[index - 1] : null;
+      if (!previous || previous.isGeneralization) return false;
+      mindMap.execCommand('MOVE_NODE_TO', [node], previous);
+      return true;
+    },
+    outdentNodeByUid: (uid) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isRoot || node.isGeneralization || Number(node.layerIndex) <= 1) return false;
+      mindMap.execCommand('MOVE_UP_ONE_LEVEL', node);
+      return true;
+    },
+    setNodeExpandedByUid: (uid, expanded) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isGeneralization || !Array.isArray(node.children) || node.children.length === 0) return false;
+      mindMap.execCommand('SET_NODE_EXPAND', node, expanded);
       return true;
     },
   };

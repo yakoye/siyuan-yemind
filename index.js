@@ -3460,6 +3460,7 @@ const DEFAULT_SETTINGS = {
   defaultReadonlyMode: false,
   showNodeMenuButton: true,
   defaultViewMode: "map",
+  splitOutlineRatio: 0.42,
   dragEdgeAutoPan: false,
   restoreSavedView: true,
   limitMindMapInCanvas: false,
@@ -3489,6 +3490,12 @@ const SHORTCUT_COMMANDS = Object.keys(DEFAULT_SHORTCUTS);
 function numberInRange(value, fallback, min, max) {
   const number = Number(value);
   return Number.isFinite(number) && number >= min && number <= max ? number : fallback;
+}
+function numberClamped(value, fallback, min, max) {
+  if (value === null || value === void 0 || value === "") return fallback;
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(max, Math.max(min, number));
 }
 function integerClamped(value, fallback, min, max) {
   if (value === null || value === void 0 || value === "") return fallback;
@@ -3537,6 +3544,7 @@ function normalizeSettings(value) {
     defaultReadonlyMode: booleanOrDefault(value.defaultReadonlyMode, DEFAULT_SETTINGS.defaultReadonlyMode),
     showNodeMenuButton: booleanOrDefault(value.showNodeMenuButton, DEFAULT_SETTINGS.showNodeMenuButton),
     defaultViewMode: VIEW_MODES.has(value.defaultViewMode) ? value.defaultViewMode : DEFAULT_SETTINGS.defaultViewMode,
+    splitOutlineRatio: numberClamped(value.splitOutlineRatio, DEFAULT_SETTINGS.splitOutlineRatio, 0.25, 0.7),
     dragEdgeAutoPan: booleanOrDefault(value.dragEdgeAutoPan, DEFAULT_SETTINGS.dragEdgeAutoPan),
     restoreSavedView: booleanOrDefault(value.restoreSavedView, DEFAULT_SETTINGS.restoreSavedView),
     limitMindMapInCanvas: booleanOrDefault(value.limitMindMapInCanvas, DEFAULT_SETTINGS.limitMindMapInCanvas),
@@ -3671,6 +3679,7 @@ function createSettingsDialogTemplate(settings) {
     option$1("split", "分屏", settings.defaultViewMode),
     option$1("outline", "大纲", settings.defaultViewMode)
   ].join(""))}
+          ${numberRow("分屏大纲宽度", "分屏模式中右侧大纲占工作区的比例；也可直接拖动分隔条。", "splitOutlineRatio", settings.splitOutlineRatio, 0.25, 0.7, 0.01, "比例")}
           ${selectRow("默认布局", "新建导图时使用的结构。", "defaultLayout", [
     option$1("logicalStructure", "向右逻辑图", settings.defaultLayout),
     option$1("logicalStructureLeft", "向左逻辑图", settings.defaultLayout),
@@ -3962,7 +3971,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.5.11";
+const PLUGIN_VERSION = "0.5.12";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -22765,46 +22774,46 @@ class Drag extends Base2 {
           break;
       }
     } else {
-      const nodeRect = this.getNodeRect(this.overlapNode);
+      const nodeRect2 = this.getNodeRect(this.overlapNode);
       dir = this.getNewChildNodeDir(this.overlapNode);
       switch (this.mindMap.opt.layout) {
         case LOGICAL_STRUCTURE:
         case MIND_MAP:
-          x2 = dir === RIGHT ? nodeRect.originRight + marginX : nodeRect.originLeft - this.placeholderWidth - marginX;
-          y2 = nodeRect.originTop + (nodeRect.originHeight - this.placeholderHeight) / 2;
+          x2 = dir === RIGHT ? nodeRect2.originRight + marginX : nodeRect2.originLeft - this.placeholderWidth - marginX;
+          y2 = nodeRect2.originTop + (nodeRect2.originHeight - this.placeholderHeight) / 2;
           break;
         case LOGICAL_STRUCTURE_LEFT:
-          x2 = nodeRect.originLeft - this.placeholderWidth - marginX;
-          y2 = nodeRect.originTop + (nodeRect.originHeight - this.placeholderHeight) / 2;
+          x2 = nodeRect2.originLeft - this.placeholderWidth - marginX;
+          y2 = nodeRect2.originTop + (nodeRect2.originHeight - this.placeholderHeight) / 2;
           break;
         case ORGANIZATION_STRUCTURE:
           rotate = true;
-          x2 = nodeRect.originLeft + (nodeRect.originWidth - this.placeholderHeight) / 2;
-          y2 = nodeRect.originBottom + marginX;
+          x2 = nodeRect2.originLeft + (nodeRect2.originWidth - this.placeholderHeight) / 2;
+          y2 = nodeRect2.originBottom + marginX;
           break;
         case CATALOG_ORGANIZATION:
           if (layerIndex === 0) {
             rotate = true;
           }
-          x2 = nodeRect.originLeft + nodeRect.originWidth * 0.5;
-          y2 = nodeRect.originBottom + marginX;
+          x2 = nodeRect2.originLeft + nodeRect2.originWidth * 0.5;
+          y2 = nodeRect2.originBottom + marginX;
           break;
         case TIMELINE:
           if (layerIndex === 0) {
             rotate = true;
           }
-          x2 = nodeRect.originLeft + nodeRect.originWidth * 0.5;
-          y2 = nodeRect.originBottom + marginY;
+          x2 = nodeRect2.originLeft + nodeRect2.originWidth * 0.5;
+          y2 = nodeRect2.originBottom + marginY;
           break;
         case TIMELINE2:
           if (layerIndex === 0) {
             rotate = true;
           }
-          x2 = nodeRect.originLeft + nodeRect.originWidth * 0.5;
+          x2 = nodeRect2.originLeft + nodeRect2.originWidth * 0.5;
           if (layerIndex === 1) {
-            y2 = dir === TOP ? nodeRect.originTop - this.placeholderHeight - marginX : nodeRect.originBottom + marginX;
+            y2 = dir === TOP ? nodeRect2.originTop - this.placeholderHeight - marginX : nodeRect2.originBottom + marginX;
           } else {
-            y2 = nodeRect.originBottom + marginX;
+            y2 = nodeRect2.originBottom + marginX;
           }
           break;
         case VERTICAL_TIMELINE:
@@ -22813,8 +22822,8 @@ class Drag extends Base2 {
           if (layerIndex === 0) {
             rotate = true;
           }
-          x2 = dir === RIGHT ? nodeRect.originRight + marginX : nodeRect.originLeft - this.placeholderWidth - marginX;
-          y2 = nodeRect.originTop + nodeRect.originHeight / 2 - halfPlaceholderHeight;
+          x2 = dir === RIGHT ? nodeRect2.originRight + marginX : nodeRect2.originLeft - this.placeholderWidth - marginX;
+          y2 = nodeRect2.originTop + nodeRect2.originHeight / 2 - halfPlaceholderHeight;
           break;
         case FISHBONE:
         case FISHBONE2:
@@ -22824,8 +22833,8 @@ class Drag extends Base2 {
             notRenderPlaceholder = true;
             this.mindMap.execCommand("SET_NODE_ACTIVE", this.overlapNode, true);
           } else {
-            x2 = nodeRect.originLeft + nodeRect.originWidth * 0.5;
-            y2 = dir === BOTTOM ? nodeRect.originTop - this.placeholderHeight - this.minOffset + halfPlaceholderHeight : nodeRect.originBottom + this.minOffset - halfPlaceholderHeight;
+            x2 = nodeRect2.originLeft + nodeRect2.originWidth * 0.5;
+            y2 = dir === BOTTOM ? nodeRect2.originTop - this.placeholderHeight - this.minOffset + halfPlaceholderHeight : nodeRect2.originBottom + this.minOffset - halfPlaceholderHeight;
           }
           break;
       }
@@ -22890,32 +22899,32 @@ class Drag extends Base2 {
     const { LEFT } = LAYOUT_GROW_DIR;
     const mouseMoveX = this.mouseMoveX;
     const mouseMoveY = this.mouseMoveY;
-    const nodeRect = this.getNodeRect(node);
+    const nodeRect2 = this.getNodeRect(node);
     const dir = this.getNewChildNodeDir(node);
     const layerIndex = node.layerIndex;
     if (isReverse) {
       checkList = checkList.reverse();
     }
-    let oneFourthHeight = nodeRect.originHeight / 4;
-    let { prevBrotherOffset, nextBrotherOffset } = this.getNodeDistanceToSiblingNode(checkList, node, nodeRect, "v");
-    if (nodeRect.left <= mouseMoveX && nodeRect.right >= mouseMoveX) {
+    let oneFourthHeight = nodeRect2.originHeight / 4;
+    let { prevBrotherOffset, nextBrotherOffset } = this.getNodeDistanceToSiblingNode(checkList, node, nodeRect2, "v");
+    if (nodeRect2.left <= mouseMoveX && nodeRect2.right >= mouseMoveX) {
       if (!this.overlapNode && !this.prevNode && !this.nextNode && !node.isRoot) {
-        let checkIsPrevNode = nextBrotherOffset > 0 ? mouseMoveY > nodeRect.bottom && mouseMoveY <= nodeRect.bottom + nextBrotherOffset : mouseMoveY >= nodeRect.bottom - oneFourthHeight && mouseMoveY <= nodeRect.bottom;
-        let checkIsNextNode = prevBrotherOffset > 0 ? mouseMoveY < nodeRect.top && mouseMoveY >= nodeRect.top - prevBrotherOffset : mouseMoveY >= nodeRect.top && mouseMoveY <= nodeRect.top + oneFourthHeight;
+        let checkIsPrevNode = nextBrotherOffset > 0 ? mouseMoveY > nodeRect2.bottom && mouseMoveY <= nodeRect2.bottom + nextBrotherOffset : mouseMoveY >= nodeRect2.bottom - oneFourthHeight && mouseMoveY <= nodeRect2.bottom;
+        let checkIsNextNode = prevBrotherOffset > 0 ? mouseMoveY < nodeRect2.top && mouseMoveY >= nodeRect2.top - prevBrotherOffset : mouseMoveY >= nodeRect2.top && mouseMoveY <= nodeRect2.top + oneFourthHeight;
         const { scaleY } = this.drawTransform;
-        let x2 = dir === LEFT ? nodeRect.originRight - this.placeholderWidth : nodeRect.originLeft;
+        let x2 = dir === LEFT ? nodeRect2.originRight - this.placeholderWidth : nodeRect2.originLeft;
         let notRenderLine = false;
         switch (layout2) {
           case VERTICAL_TIMELINE:
           case VERTICAL_TIMELINE2:
           case VERTICAL_TIMELINE3:
             if (layerIndex === 1) {
-              x2 = nodeRect.originLeft + nodeRect.originWidth / 2 - this.placeholderWidth / 2;
+              x2 = nodeRect2.originLeft + nodeRect2.originWidth / 2 - this.placeholderWidth / 2;
             }
             break;
           case RIGHT_FISHBONE:
           case RIGHT_FISHBONE2:
-            x2 = nodeRect.originLeft + nodeRect.originWidth - this.placeholderWidth;
+            x2 = nodeRect2.originLeft + nodeRect2.originWidth - this.placeholderWidth;
             break;
         }
         if (checkIsPrevNode) {
@@ -22924,7 +22933,7 @@ class Drag extends Base2 {
           } else {
             this.prevNode = node;
           }
-          let y2 = nodeRect.originBottom + nextBrotherOffset / scaleY - //nextBrotherOffset已经是实际间距的一半了
+          let y2 = nodeRect2.originBottom + nextBrotherOffset / scaleY - //nextBrotherOffset已经是实际间距的一半了
           this.placeholderHeight / 2;
           switch (layout2) {
             case FISHBONE:
@@ -22933,7 +22942,7 @@ class Drag extends Base2 {
             case RIGHT_FISHBONE2:
               if (layerIndex === 2) {
                 notRenderLine = true;
-                y2 = nodeRect.originBottom + this.minOffset - this.placeholderHeight / 2;
+                y2 = nodeRect2.originBottom + this.minOffset - this.placeholderHeight / 2;
               }
               break;
           }
@@ -22949,7 +22958,7 @@ class Drag extends Base2 {
           } else {
             this.nextNode = node;
           }
-          let y2 = nodeRect.originTop - this.placeholderHeight - prevBrotherOffset / scaleY + this.placeholderHeight / 2;
+          let y2 = nodeRect2.originTop - this.placeholderHeight - prevBrotherOffset / scaleY + this.placeholderHeight / 2;
           switch (layout2) {
             case FISHBONE:
             case FISHBONE2:
@@ -22957,7 +22966,7 @@ class Drag extends Base2 {
             case RIGHT_FISHBONE2:
               if (layerIndex === 2) {
                 notRenderLine = true;
-                y2 = nodeRect.originTop - this.placeholderHeight - this.minOffset + this.placeholderHeight / 2;
+                y2 = nodeRect2.originTop - this.placeholderHeight - this.minOffset + this.placeholderHeight / 2;
               }
               break;
           }
@@ -22976,7 +22985,7 @@ class Drag extends Base2 {
         nextBrotherOffset,
         size: oneFourthHeight,
         pos: mouseMoveY,
-        nodeRect
+        nodeRect: nodeRect2
       });
     }
   }
@@ -22994,21 +23003,21 @@ class Drag extends Base2 {
     } = LAYOUT;
     let mouseMoveX = this.mouseMoveX;
     let mouseMoveY = this.mouseMoveY;
-    let nodeRect = this.getNodeRect(node);
-    let oneFourthWidth = nodeRect.originWidth / 4;
-    let { prevBrotherOffset, nextBrotherOffset } = this.getNodeDistanceToSiblingNode(checkList, node, nodeRect, "h");
-    if (nodeRect.top <= mouseMoveY && nodeRect.bottom >= mouseMoveY) {
+    let nodeRect2 = this.getNodeRect(node);
+    let oneFourthWidth = nodeRect2.originWidth / 4;
+    let { prevBrotherOffset, nextBrotherOffset } = this.getNodeDistanceToSiblingNode(checkList, node, nodeRect2, "h");
+    if (nodeRect2.top <= mouseMoveY && nodeRect2.bottom >= mouseMoveY) {
       if (!this.overlapNode && !this.prevNode && !this.nextNode && !node.isRoot) {
-        let checkIsPrevNode = nextBrotherOffset > 0 ? mouseMoveX < nodeRect.right + nextBrotherOffset && mouseMoveX >= nodeRect.right : mouseMoveX <= nodeRect.right && mouseMoveX >= nodeRect.right - oneFourthWidth;
-        let checkIsNextNode = prevBrotherOffset > 0 ? mouseMoveX > nodeRect.left - prevBrotherOffset && mouseMoveX <= nodeRect.left : mouseMoveX <= nodeRect.left + oneFourthWidth && mouseMoveX >= nodeRect.left;
+        let checkIsPrevNode = nextBrotherOffset > 0 ? mouseMoveX < nodeRect2.right + nextBrotherOffset && mouseMoveX >= nodeRect2.right : mouseMoveX <= nodeRect2.right && mouseMoveX >= nodeRect2.right - oneFourthWidth;
+        let checkIsNextNode = prevBrotherOffset > 0 ? mouseMoveX > nodeRect2.left - prevBrotherOffset && mouseMoveX <= nodeRect2.left : mouseMoveX <= nodeRect2.left + oneFourthWidth && mouseMoveX >= nodeRect2.left;
         const { scaleX } = this.drawTransform;
         const layerIndex = node.layerIndex;
-        let y2 = nodeRect.originTop;
+        let y2 = nodeRect2.originTop;
         let notRenderLine = false;
         switch (layout2) {
           case TIMELINE:
           case TIMELINE2:
-            y2 = nodeRect.originTop + nodeRect.originHeight / 2 - this.placeholderWidth / 2;
+            y2 = nodeRect2.originTop + nodeRect2.originHeight / 2 - this.placeholderWidth / 2;
             break;
           case FISHBONE:
           case FISHBONE2:
@@ -23016,7 +23025,7 @@ class Drag extends Base2 {
           case RIGHT_FISHBONE2:
             if (layerIndex === 1) {
               notRenderLine = true;
-              y2 = nodeRect.originTop + nodeRect.originHeight / 2 - this.placeholderWidth / 2;
+              y2 = nodeRect2.originTop + nodeRect2.originHeight / 2 - this.placeholderWidth / 2;
             }
             break;
         }
@@ -23027,7 +23036,7 @@ class Drag extends Base2 {
             this.prevNode = node;
           }
           this.setPlaceholderRect({
-            x: nodeRect.originRight + nextBrotherOffset / scaleX - //nextBrotherOffset已经是实际间距的一半了
+            x: nodeRect2.originRight + nextBrotherOffset / scaleX - //nextBrotherOffset已经是实际间距的一半了
             this.placeholderHeight / 2,
             y: y2,
             rotate: true,
@@ -23040,7 +23049,7 @@ class Drag extends Base2 {
             this.nextNode = node;
           }
           this.setPlaceholderRect({
-            x: nodeRect.originLeft - this.placeholderHeight - prevBrotherOffset / scaleX + this.placeholderHeight / 2,
+            x: nodeRect2.originLeft - this.placeholderHeight - prevBrotherOffset / scaleX + this.placeholderHeight / 2,
             y: y2,
             rotate: true,
             notRenderLine
@@ -23054,12 +23063,12 @@ class Drag extends Base2 {
         nextBrotherOffset,
         size: oneFourthWidth,
         pos: mouseMoveX,
-        nodeRect
+        nodeRect: nodeRect2
       });
     }
   }
   // 获取节点距前一个和后一个节点的距离
-  getNodeDistanceToSiblingNode(checkList, node, nodeRect, dir) {
+  getNodeDistanceToSiblingNode(checkList, node, nodeRect2, dir) {
     const { TOP, LEFT, BOTTOM, RIGHT } = CONSTANTS.LAYOUT_GROW_DIR;
     let { scaleX, scaleY } = this.drawTransform;
     let dir1 = dir === "v" ? TOP : LEFT;
@@ -23080,7 +23089,7 @@ class Drag extends Base2 {
     let prevBrotherOffset = 0;
     if (prevBrother) {
       let prevNodeRect = this.getNodeRect(prevBrother);
-      prevBrotherOffset = nodeRect[dir1] - prevNodeRect[dir2];
+      prevBrotherOffset = nodeRect2[dir1] - prevNodeRect[dir2];
       prevBrotherOffset = prevBrotherOffset >= minOffset ? prevBrotherOffset / 2 : 0;
     } else {
       prevBrotherOffset = minOffset;
@@ -23088,7 +23097,7 @@ class Drag extends Base2 {
     let nextBrotherOffset = 0;
     if (nextBrother) {
       let nextNodeRect = this.getNodeRect(nextBrother);
-      nextBrotherOffset = nextNodeRect[dir1] - nodeRect[dir2];
+      nextBrotherOffset = nextNodeRect[dir1] - nodeRect2[dir2];
       nextBrotherOffset = nextBrotherOffset >= minOffset ? nextBrotherOffset / 2 : 0;
     } else {
       nextBrotherOffset = minOffset;
@@ -23158,13 +23167,13 @@ class Drag extends Base2 {
     nextBrotherOffset,
     size: size2,
     pos,
-    nodeRect
+    nodeRect: nodeRect2
   }) {
     const { TOP, LEFT, BOTTOM, RIGHT } = CONSTANTS.LAYOUT_GROW_DIR;
     let dir1 = dir === "v" ? TOP : LEFT;
     let dir2 = dir === "v" ? BOTTOM : RIGHT;
     if (!this.overlapNode && !this.prevNode && !this.nextNode) {
-      if (nodeRect[dir1] + (prevBrotherOffset > 0 ? 0 : size2) <= pos && nodeRect[dir2] - (nextBrotherOffset > 0 ? 0 : size2) >= pos) {
+      if (nodeRect2[dir1] + (prevBrotherOffset > 0 ? 0 : size2) <= pos && nodeRect2[dir2] - (nextBrotherOffset > 0 ? 0 : size2) >= pos) {
         this.overlapNode = node;
       }
     }
@@ -23287,6 +23296,8 @@ class Drag extends Base2 {
   }
 }
 Drag.instanceName = "drag";
+const OFFICIAL_TARGET_STABLE_MS = 60;
+const OFFICIAL_TARGET_STABLE_FRAMES = 3;
 function resolveDragGuideTarget(state) {
   var _a;
   if (state.overlapNode) return state.overlapNode;
@@ -23294,26 +23305,43 @@ function resolveDragGuideTarget(state) {
   if (sibling == null ? void 0 : sibling.parent) return sibling.parent;
   return ((_a = state.mousedownNode) == null ? void 0 : _a.parent) ?? null;
 }
-function calculateDragGuideEndpoints(source, target) {
-  const sourceCenterX = source.x + source.width / 2;
-  const sourceCenterY = source.y + source.height / 2;
-  const targetCenterX = target.x + target.width / 2;
-  const targetCenterY = target.y + target.height / 2;
-  const deltaX = targetCenterX - sourceCenterX;
-  const deltaY = targetCenterY - sourceCenterY;
-  if (Math.abs(deltaX) >= Math.abs(deltaY)) {
-    return {
-      startX: deltaX >= 0 ? source.x + source.width : source.x,
-      startY: sourceCenterY,
-      endX: deltaX >= 0 ? target.x : target.x + target.width,
-      endY: targetCenterY
-    };
+function createDragCandidateState(stable) {
+  return { stable, pending: null };
+}
+function updateStableDragCandidate(state, candidate, now, minimumDurationMs = OFFICIAL_TARGET_STABLE_MS, minimumFrames = OFFICIAL_TARGET_STABLE_FRAMES) {
+  var _a;
+  if (candidate.key === state.stable.key) return { stable: state.stable, pending: null };
+  if (((_a = state.pending) == null ? void 0 : _a.candidate.key) === candidate.key) {
+    const pending = { ...state.pending, frames: state.pending.frames + 1 };
+    if (now - pending.since >= minimumDurationMs && pending.frames >= minimumFrames) {
+      return { stable: candidate, pending: null };
+    }
+    return { stable: state.stable, pending };
   }
   return {
-    startX: sourceCenterX,
-    startY: deltaY >= 0 ? source.y + source.height : source.y,
-    endX: targetCenterX,
-    endY: deltaY >= 0 ? target.y : target.y + target.height
+    stable: state.stable,
+    pending: { candidate, since: now, frames: 1 }
+  };
+}
+function calculateDragGuidePath(parent, ghost, orientation) {
+  if (orientation === "vertical") {
+    const startX2 = parent.x + parent.width / 2;
+    const startY2 = parent.y + parent.height;
+    const endX2 = ghost.x + ghost.width / 2;
+    const endY2 = ghost.y;
+    return `M ${startX2} ${startY2} C ${startX2} ${startY2 + 40}, ${endX2} ${endY2 - 40}, ${endX2} ${endY2}`;
+  }
+  const startX = parent.x + parent.width;
+  const startY = parent.y + parent.height / 2;
+  const endX = ghost.x;
+  const endY = ghost.y + ghost.height / 2;
+  return `M ${startX} ${startY} C ${startX + 40} ${startY}, ${endX - 40} ${endY}, ${endX} ${endY}`;
+}
+function calculateOriginalParentGuideStyle(distance) {
+  const normalized = Math.max(0, Math.min(1, Number(distance) / 140));
+  return {
+    width: 2 - 1.1 * normalized,
+    opacity: 0.3 + 0.6 * normalized
   };
 }
 function normalizeRect(rect) {
@@ -23325,79 +23353,232 @@ function normalizeRect(rect) {
   if (![x2, y2, width2, height2].every(Number.isFinite) || width2 <= 0 || height2 <= 0) return null;
   return { x: x2, y: y2, width: width2, height: height2 };
 }
+function nodeUid(node) {
+  if (!node) return "";
+  const value = typeof node.getData === "function" ? node.getData("uid") : node.uid;
+  return String(value ?? "");
+}
+function candidateFromPlugin(plugin) {
+  if (plugin.overlapNode) {
+    return {
+      key: `child:${nodeUid(plugin.overlapNode)}`,
+      overlapNode: plugin.overlapNode,
+      prevNode: null,
+      nextNode: null
+    };
+  }
+  if (plugin.prevNode) {
+    return {
+      key: `after:${nodeUid(plugin.prevNode)}`,
+      overlapNode: null,
+      prevNode: plugin.prevNode,
+      nextNode: null
+    };
+  }
+  if (plugin.nextNode) {
+    return {
+      key: `before:${nodeUid(plugin.nextNode)}`,
+      overlapNode: null,
+      prevNode: null,
+      nextNode: plugin.nextNode
+    };
+  }
+  return { key: "none", overlapNode: null, prevNode: null, nextNode: null };
+}
+function applyCandidate(plugin, candidate) {
+  plugin.overlapNode = candidate.overlapNode;
+  plugin.prevNode = candidate.prevNode;
+  plugin.nextNode = candidate.nextNode;
+}
+function animationNow() {
+  return typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
+}
+function requestFrame(callback) {
+  if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+    return window.requestAnimationFrame(callback);
+  }
+  return setTimeout(() => callback(animationNow()), 16);
+}
+function cancelFrame(id) {
+  if (typeof window !== "undefined" && typeof window.cancelAnimationFrame === "function") {
+    window.cancelAnimationFrame(id);
+    return;
+  }
+  clearTimeout(id);
+}
+function isVerticalLayout(layout2) {
+  return layout2 === "organizationStructure" || layout2 === "catalogOrganization";
+}
+function nodeRect(plugin, node) {
+  var _a, _b, _c2, _d2;
+  return normalizeRect(((_b = (_a = node == null ? void 0 : node.group) == null ? void 0 : _a.rbox) == null ? void 0 : _b.call(_a, plugin.mindMap.otherDraw)) ?? ((_d2 = (_c2 = node == null ? void 0 : node.group) == null ? void 0 : _c2.bbox) == null ? void 0 : _d2.call(_c2)));
+}
+function ghostRect(plugin) {
+  var _a, _b, _c2, _d2;
+  return normalizeRect(((_b = (_a = plugin.clone) == null ? void 0 : _a.rbox) == null ? void 0 : _b.call(_a, plugin.mindMap.otherDraw)) ?? ((_d2 = (_c2 = plugin.clone) == null ? void 0 : _c2.bbox) == null ? void 0 : _d2.call(_c2)));
+}
+function endpointDistance(parent, ghost, orientation) {
+  if (orientation === "vertical") {
+    return Math.hypot(
+      ghost.x + ghost.width / 2 - (parent.x + parent.width / 2),
+      ghost.y - (parent.y + parent.height)
+    );
+  }
+  return Math.hypot(
+    ghost.x - (parent.x + parent.width),
+    ghost.y + ghost.height / 2 - (parent.y + parent.height / 2)
+  );
+}
 class YeMindDrag extends Drag {
-  constructor() {
-    super(...arguments);
-    __publicField(this, "yemindTargetGuideLine", null);
+  bindEvent() {
+    const plugin = this;
+    plugin.onNodeMousedown = plugin.onNodeMousedown.bind(this);
+    plugin.onMousemove = plugin.onMousemove.bind(this);
+    plugin.onMouseup = plugin.onMouseup.bind(this);
+    plugin.__ymzRawCheckOverlap = Drag.prototype.checkOverlapNode.bind(this);
+    plugin.__ymzCandidateState = createDragCandidateState(candidateFromPlugin(plugin));
+    plugin.__ymzOverlapFrame = null;
+    plugin.checkOverlapNode = () => this.scheduleOfficialCandidateCheck();
+    plugin.mindMap.on("node_mousedown", plugin.onNodeMousedown);
+    plugin.mindMap.on("mousemove", plugin.onMousemove);
+    plugin.mindMap.on("node_mouseup", plugin.onMouseup);
+    plugin.mindMap.on("mouseup", plugin.onMouseup);
   }
   createCloneNode() {
     super.createCloneNode();
-    this.ensureTargetGuideLine();
-    this.updateTargetGuideLine();
+    const plugin = this;
+    plugin.__ymzCandidateState = createDragCandidateState({
+      key: "none",
+      overlapNode: null,
+      prevNode: null,
+      nextNode: null
+    });
+    this.ensureGuideLines();
+    this.updateOfficialGuideLines();
   }
   onMove(x2, y2, event) {
     super.onMove(x2, y2, event);
-    this.updateTargetGuideLine();
+    this.updateOfficialGuideLines();
   }
-  checkOverlapNode() {
-    super.checkOverlapNode();
-    this.styleUpstreamPlaceholderLines();
-    this.updateTargetGuideLine();
+  async onMouseup(event) {
+    var _a;
+    const plugin = this;
+    this.flushOfficialCandidateCheck();
+    if ((_a = plugin.__ymzCandidateState) == null ? void 0 : _a.stable) applyCandidate(plugin, plugin.__ymzCandidateState.stable);
+    await super.onMouseup(event);
   }
   removeCloneNode() {
-    this.removeTargetGuideLine();
+    this.cancelCandidateFrame();
+    this.removeGuideLines();
     super.removeCloneNode();
   }
   beforePluginRemove() {
-    this.removeTargetGuideLine();
+    this.cancelCandidateFrame();
+    this.removeGuideLines();
     super.beforePluginRemove();
   }
   beforePluginDestroy() {
-    this.removeTargetGuideLine();
+    this.cancelCandidateFrame();
+    this.removeGuideLines();
     super.beforePluginDestroy();
   }
-  ensureTargetGuideLine() {
-    if (this.yemindTargetGuideLine) return;
+  scheduleOfficialCandidateCheck() {
     const plugin = this;
-    this.yemindTargetGuideLine = plugin.mindMap.otherDraw.path().fill({ color: "none" }).attr({ "pointer-events": "none" }).hide();
+    if (plugin.__ymzOverlapFrame !== null) return;
+    plugin.__ymzOverlapFrame = requestFrame((timestamp) => {
+      plugin.__ymzOverlapFrame = null;
+      this.runOfficialCandidateCheck(timestamp);
+    });
   }
-  updateTargetGuideLine() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l;
+  flushOfficialCandidateCheck() {
+    const plugin = this;
+    if (plugin.__ymzOverlapFrame === null) return;
+    cancelFrame(plugin.__ymzOverlapFrame);
+    plugin.__ymzOverlapFrame = null;
+    this.runOfficialCandidateCheck(animationNow());
+  }
+  runOfficialCandidateCheck(now) {
+    var _a;
+    const plugin = this;
+    if (!plugin.clone || !plugin.placeholder || !plugin.drawTransform) return;
+    (_a = plugin.__ymzRawCheckOverlap) == null ? void 0 : _a.call(plugin);
+    this.styleUpstreamPlaceholderLines();
+    const candidate = candidateFromPlugin(plugin);
+    plugin.__ymzCandidateState = updateStableDragCandidate(
+      plugin.__ymzCandidateState ?? createDragCandidateState(candidate),
+      candidate,
+      now
+    );
+    applyCandidate(plugin, plugin.__ymzCandidateState.stable);
+    this.updateOfficialGuideLines();
+  }
+  ensureGuideLines() {
+    const plugin = this;
+    if (!plugin.__ymzTargetGuideLine) {
+      plugin.__ymzTargetGuideLine = plugin.mindMap.otherDraw.path().fill({ color: "none" }).attr({ "pointer-events": "none" }).hide();
+    }
+    if (!plugin.__ymzOriginGuideLine) {
+      plugin.__ymzOriginGuideLine = plugin.mindMap.otherDraw.path().fill({ color: "none" }).attr({ "pointer-events": "none" }).hide();
+    }
+  }
+  updateOfficialGuideLines() {
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m;
     const plugin = this;
     if (!plugin.clone) {
-      (_b = (_a = this.yemindTargetGuideLine) == null ? void 0 : _a.hide) == null ? void 0 : _b.call(_a);
+      (_b = (_a = plugin.__ymzTargetGuideLine) == null ? void 0 : _a.hide) == null ? void 0 : _b.call(_a);
+      (_d2 = (_c2 = plugin.__ymzOriginGuideLine) == null ? void 0 : _c2.hide) == null ? void 0 : _d2.call(_c2);
       return;
     }
-    const target = resolveDragGuideTarget(plugin);
-    const sourceRect = normalizeRect(((_d2 = (_c2 = plugin.clone).rbox) == null ? void 0 : _d2.call(_c2, plugin.mindMap.otherDraw)) ?? ((_f = (_e = plugin.clone).bbox) == null ? void 0 : _f.call(_e)));
-    const targetRect = normalizeRect(((_h = (_g = target == null ? void 0 : target.group) == null ? void 0 : _g.rbox) == null ? void 0 : _h.call(_g, plugin.mindMap.otherDraw)) ?? ((_j = (_i = target == null ? void 0 : target.group) == null ? void 0 : _i.bbox) == null ? void 0 : _j.call(_i)));
-    if (!sourceRect || !targetRect) {
-      (_l = (_k = this.yemindTargetGuideLine) == null ? void 0 : _k.hide) == null ? void 0 : _l.call(_k);
+    this.ensureGuideLines();
+    const state = plugin.__ymzCandidateState ?? createDragCandidateState(candidateFromPlugin(plugin));
+    const stable = state.stable;
+    const ghost = ghostRect(plugin);
+    if (!ghost) {
+      (_f = (_e = plugin.__ymzTargetGuideLine) == null ? void 0 : _e.hide) == null ? void 0 : _f.call(_e);
+      (_h = (_g = plugin.__ymzOriginGuideLine) == null ? void 0 : _g.hide) == null ? void 0 : _h.call(_g);
       return;
     }
-    this.ensureTargetGuideLine();
-    const points = calculateDragGuideEndpoints(sourceRect, targetRect);
-    const config2 = plugin.mindMap.opt.dragPlaceholderLineConfig ?? {};
-    const color = config2.color || "#27896b";
-    const width2 = Number(config2.width) || 2;
-    const dasharray = config2.dasharray || "7,5";
-    this.yemindTargetGuideLine.plot(`M ${points.startX} ${points.startY} L ${points.endX} ${points.endY}`).stroke({ color, width: width2, linecap: "round" }).attr({ "stroke-dasharray": dasharray, opacity: 0.95 }).show().front();
+    const orientation = isVerticalLayout(String(plugin.mindMap.opt.layout)) ? "vertical" : "horizontal";
+    const stableTarget = stable.key === "none" ? null : resolveDragGuideTarget(stable);
+    const target = nodeRect(plugin, stableTarget);
+    if (target) {
+      plugin.__ymzTargetGuideLine.plot(calculateDragGuidePath(target, ghost, orientation)).stroke({ color: "rgba(34, 197, 94, 0.9)", width: 2.5, linecap: "round" }).attr({ "stroke-dasharray": "6 6", opacity: 1, "pointer-events": "none" }).show().front();
+    } else {
+      (_j = (_i = plugin.__ymzTargetGuideLine) == null ? void 0 : _i.hide) == null ? void 0 : _j.call(_i);
+    }
+    const originParent = ((_k = plugin.mousedownNode) == null ? void 0 : _k.parent) ?? null;
+    const origin = nodeRect(plugin, originParent);
+    if (origin && !stableTarget) {
+      const distance = endpointDistance(origin, ghost, orientation);
+      const style = calculateOriginalParentGuideStyle(distance);
+      plugin.__ymzOriginGuideLine.plot(calculateDragGuidePath(origin, ghost, orientation)).stroke({ color: `rgba(239, 68, 68, ${style.opacity.toFixed(3)})`, width: style.width, linecap: "round" }).attr({ "stroke-dasharray": "3 6", opacity: 1, "pointer-events": "none" }).show().front();
+    } else {
+      (_m = (_l = plugin.__ymzOriginGuideLine) == null ? void 0 : _l.hide) == null ? void 0 : _m.call(_l);
+    }
   }
   styleUpstreamPlaceholderLines() {
     const plugin = this;
-    const config2 = plugin.mindMap.opt.dragPlaceholderLineConfig ?? {};
-    const dasharray = config2.dasharray || "7,5";
     const lines = [plugin.placeHolderLine, ...plugin.placeHolderExtraLines ?? []].filter(Boolean);
     lines.forEach((line) => {
       var _a, _b;
-      (_a = line.attr) == null ? void 0 : _a.call(line, { "stroke-dasharray": dasharray, opacity: 0.95, "pointer-events": "none" });
+      (_a = line.attr) == null ? void 0 : _a.call(line, { "stroke-dasharray": "6 6", opacity: 0.95, "pointer-events": "none" });
       (_b = line.front) == null ? void 0 : _b.call(line);
     });
   }
-  removeTargetGuideLine() {
-    var _a, _b;
-    (_b = (_a = this.yemindTargetGuideLine) == null ? void 0 : _a.remove) == null ? void 0 : _b.call(_a);
-    this.yemindTargetGuideLine = null;
+  cancelCandidateFrame() {
+    const plugin = this;
+    if (plugin.__ymzOverlapFrame !== null && plugin.__ymzOverlapFrame !== void 0) {
+      cancelFrame(plugin.__ymzOverlapFrame);
+    }
+    plugin.__ymzOverlapFrame = null;
+  }
+  removeGuideLines() {
+    var _a, _b, _c2, _d2;
+    const plugin = this;
+    (_b = (_a = plugin.__ymzTargetGuideLine) == null ? void 0 : _a.remove) == null ? void 0 : _b.call(_a);
+    (_d2 = (_c2 = plugin.__ymzOriginGuideLine) == null ? void 0 : _c2.remove) == null ? void 0 : _d2.call(_c2);
+    plugin.__ymzTargetGuideLine = null;
+    plugin.__ymzOriginGuideLine = null;
   }
 }
 YeMindDrag.instanceName = "drag";
@@ -55328,6 +55509,31 @@ function createCommandAdapter(mindMap) {
       if (!node || node.isRoot) return false;
       mindMap.execCommand("REMOVE_NODE", [node]);
       return true;
+    },
+    indentNodeByUid: (uid) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isRoot || node.isGeneralization || !node.parent) return false;
+      const siblings2 = Array.isArray(node.parent.children) ? node.parent.children : [];
+      const index = siblings2.indexOf(node);
+      const previous = index > 0 ? siblings2[index - 1] : null;
+      if (!previous || previous.isGeneralization) return false;
+      mindMap.execCommand("MOVE_NODE_TO", [node], previous);
+      return true;
+    },
+    outdentNodeByUid: (uid) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isRoot || node.isGeneralization || Number(node.layerIndex) <= 1) return false;
+      mindMap.execCommand("MOVE_UP_ONE_LEVEL", node);
+      return true;
+    },
+    setNodeExpandedByUid: (uid, expanded) => {
+      if (!canMutate()) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isGeneralization || !Array.isArray(node.children) || node.children.length === 0) return false;
+      mindMap.execCommand("SET_NODE_EXPAND", node, expanded);
+      return true;
     }
   };
 }
@@ -56108,6 +56314,7 @@ function createEditorTemplate(title) {
 
         <div class="ymz-workspace">
           <div class="ymz-canvas" data-role="canvas"></div>
+          <div class="ymz-split-divider" data-role="split-divider" role="separator" aria-orientation="vertical" aria-label="调整导图和大纲宽度" aria-valuemin="25" aria-valuemax="70" aria-valuenow="42" tabindex="0"></div>
           <aside class="ymz-outline" data-role="outline" role="tree" aria-label="导图大纲"></aside>
         </div>
 
@@ -56176,36 +56383,63 @@ function plainText(tree) {
 function flattenOutline(tree) {
   const rows = [];
   const visit = (node, depth, path2) => {
+    const hasChildren = node.children.length > 0;
+    const expanded = node.data.expand !== false;
     rows.push({
       uid: String(node.data.uid ?? path2),
-      text: plainText(node) || "未命名节点",
+      text: plainText(node),
       depth,
-      hasChildren: node.children.length > 0,
+      hasChildren,
+      expanded,
       isRoot: depth === 0
     });
-    node.children.forEach((child, index) => visit(child, depth + 1, `${path2}.${index}`));
+    if (hasChildren && expanded) {
+      node.children.forEach((child, index) => visit(child, depth + 1, `${path2}.${index}`));
+    }
   };
   visit(tree, 0, "root");
   return rows;
 }
 function resolveOutlineKeyAction(context) {
+  if (context.composing) return "none";
   if (context.key === "ArrowUp") return "previous";
   if (context.key === "ArrowDown") return "next";
   if (context.key === "Escape") return "cancel";
   if (context.readonly) return "none";
-  if (context.key === "Enter") return context.isRoot ? "insert-child" : "insert-sibling";
-  if (context.key === "Tab") return context.shiftKey ? "none" : "insert-child";
+  const hasCommandModifier = Boolean(context.altKey || context.ctrlKey || context.metaKey);
+  if (context.key === "Enter") {
+    if (context.shiftKey && !hasCommandModifier) return "hard-break";
+    if (context.shiftKey || hasCommandModifier) return "none";
+    return context.isRoot ? "insert-child" : "insert-sibling";
+  }
+  if (context.key === "Tab" && !hasCommandModifier) return context.shiftKey ? "outdent" : "indent";
   if ((context.key === "Backspace" || context.key === "Delete") && context.empty && !context.isRoot) return "remove";
+  if (context.key === "ArrowLeft" && context.atStart && context.hasChildren && context.expanded) return "collapse";
+  if (context.key === "ArrowRight" && context.atEnd && context.hasChildren && context.expanded === false) return "expand";
   return "none";
 }
 function renderOutlineHtml(tree, readonly = false) {
   return flattenOutline(tree).map((row) => {
     const readonlyAttribute = readonly ? " readonly" : "";
-    return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" data-outline-uid="${escapeHtml(row.uid)}" data-outline-root="${row.isRoot}" style="--ymz-outline-depth:${row.depth}"><span class="ymz-outline-row__branch" aria-hidden="true">${row.hasChildren ? "▾" : "•"}</span><textarea class="ymz-outline-row__editor" data-outline-editor rows="1" data-outline-original="${escapeHtml(row.text)}" aria-label="编辑节点：${escapeHtml(row.text)}"${readonlyAttribute}>${escapeHtml(row.text)}</textarea></div>`;
+    const branch = row.hasChildren ? row.expanded ? "▾" : "▸" : "•";
+    const label = row.text || "空节点";
+    return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml(row.uid)}" data-outline-root="${row.isRoot}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" style="--ymz-outline-depth:${row.depth}"><button type="button" class="ymz-outline-row__branch" data-outline-toggle aria-label="${row.expanded ? "折叠" : "展开"}"${row.hasChildren ? "" : " disabled"}>${branch}</button><textarea class="ymz-outline-row__editor" data-outline-editor rows="1" data-outline-original="${escapeHtml(row.text)}" placeholder="空节点" aria-label="编辑节点：${escapeHtml(label)}"${readonlyAttribute}>${escapeHtml(row.text)}</textarea></div>`;
   }).join("");
 }
 function escapeHtml(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+const DEFAULT_SPLIT_OUTLINE_RATIO = 0.42;
+const MIN_SPLIT_OUTLINE_RATIO = 0.25;
+const MAX_SPLIT_OUTLINE_RATIO = 0.7;
+function normalizeSplitOutlineRatio(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return DEFAULT_SPLIT_OUTLINE_RATIO;
+  return Math.min(MAX_SPLIT_OUTLINE_RATIO, Math.max(MIN_SPLIT_OUTLINE_RATIO, number));
+}
+function ratioFromPointer(rect, clientX) {
+  if (!Number.isFinite(rect.width) || rect.width <= 0) return DEFAULT_SPLIT_OUTLINE_RATIO;
+  return normalizeSplitOutlineRatio((rect.left + rect.width - clientX) / rect.width);
 }
 const CLOZE_BACKGROUND = "#f5dfa0";
 function nextToggleFormat(name, formatInfo) {
@@ -56599,6 +56833,7 @@ class YeMindEditor {
     __publicField(this, "settings");
     __publicField(this, "rootEl");
     __publicField(this, "canvasEl");
+    __publicField(this, "splitDividerEl");
     __publicField(this, "outlineEl");
     __publicField(this, "statsEl");
     __publicField(this, "zoomEl");
@@ -56619,6 +56854,13 @@ class YeMindEditor {
     __publicField(this, "searchText", "");
     __publicField(this, "applyingCheckpoint", false);
     __publicField(this, "resizeFrame", null);
+    __publicField(this, "splitResizeFrame", null);
+    __publicField(this, "splitDragPointerId", null);
+    __publicField(this, "pendingSplitClientX", null);
+    __publicField(this, "splitOutlineRatio", DEFAULT_SPLIT_OUTLINE_RATIO);
+    __publicField(this, "outlineComposing", false);
+    __publicField(this, "outlineTextCommitUid", null);
+    __publicField(this, "outlineStructureBusy", false);
     __publicField(this, "pendingOutlineFocus", null);
     __publicField(this, "onRootKeydown", (event) => {
       var _a, _b;
@@ -56686,6 +56928,7 @@ class YeMindEditor {
     if (!map2) throw new Error(`Map not found: ${options.mapId}`);
     this.current = map2;
     this.settings = options.settingsStore.get();
+    this.splitOutlineRatio = normalizeSplitOutlineRatio(this.settings.splitOutlineRatio);
     this.mount();
   }
   resize() {
@@ -56702,7 +56945,10 @@ class YeMindEditor {
     this.richTextToolbar = null;
     (_d2 = this.rootEl) == null ? void 0 : _d2.removeEventListener("keydown", this.onRootKeydown);
     if (this.resizeFrame !== null) window.cancelAnimationFrame(this.resizeFrame);
+    if (this.splitResizeFrame !== null) window.cancelAnimationFrame(this.splitResizeFrame);
     this.resizeFrame = null;
+    this.splitResizeFrame = null;
+    this.splitDragPointerId = null;
     (_e = this.map) == null ? void 0 : _e.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
@@ -56713,6 +56959,7 @@ class YeMindEditor {
     this.options.container.innerHTML = createEditorTemplate(this.current.title);
     this.rootEl = this.options.container.querySelector(".ymz-editor");
     this.canvasEl = this.options.container.querySelector('[data-role="canvas"]');
+    this.splitDividerEl = this.options.container.querySelector('[data-role="split-divider"]');
     this.outlineEl = this.options.container.querySelector('[data-role="outline"]');
     this.statsEl = this.options.container.querySelector('[data-role="stats"]');
     this.zoomEl = this.options.container.querySelector('[data-role="zoom"]');
@@ -56802,10 +57049,21 @@ class YeMindEditor {
         this.openLink(anchor.href || anchor.getAttribute("href") || "");
         return;
       }
+      const outlineToggle = event.target.closest("[data-outline-toggle]");
       const outlineRow = event.target.closest("[data-outline-uid]");
+      if (outlineToggle && outlineRow && this.commands) {
+        const uid = outlineRow.dataset.outlineUid ?? "";
+        const expanded = outlineRow.dataset.outlineExpanded === "true";
+        this.commands.goToNode(uid);
+        this.activateOutlineUid(uid);
+        this.pendingOutlineFocus = { uid, placement: "start" };
+        if (!this.commands.setNodeExpandedByUid(uid, !expanded)) this.pendingOutlineFocus = null;
+        return;
+      }
       if (outlineRow && this.commands) {
-        this.commands.goToNode(outlineRow.dataset.outlineUid ?? "");
-        this.activateOutlineUid(outlineRow.dataset.outlineUid ?? "");
+        const uid = outlineRow.dataset.outlineUid ?? "";
+        this.commands.goToNode(uid);
+        this.activateOutlineUid(uid);
         return;
       }
       const searchButton = event.target.closest("[data-search-action]");
@@ -56905,13 +57163,6 @@ class YeMindEditor {
           break;
       }
     });
-    this.outlineEl.addEventListener("pointerdown", (event) => {
-      var _a2;
-      const input = event.target.closest("[data-outline-editor]");
-      const active = document.activeElement instanceof HTMLTextAreaElement ? document.activeElement.closest("[data-outline-editor]") : null;
-      const uid = ((_a2 = input == null ? void 0 : input.closest("[data-outline-uid]")) == null ? void 0 : _a2.dataset.outlineUid) ?? "";
-      if (input && active && input !== active && uid) this.pendingOutlineFocus = { uid, selectAll: false };
-    });
     this.outlineEl.addEventListener("focusin", (event) => {
       var _a2;
       const input = event.target.closest("[data-outline-editor]");
@@ -56921,6 +57172,12 @@ class YeMindEditor {
       if (((_a2 = this.pendingOutlineFocus) == null ? void 0 : _a2.uid) === uid) this.pendingOutlineFocus = null;
       this.commands.goToNode(uid);
       this.activateOutlineUid(uid);
+    });
+    this.outlineEl.addEventListener("compositionstart", () => {
+      this.outlineComposing = true;
+    });
+    this.outlineEl.addEventListener("compositionend", () => {
+      this.outlineComposing = false;
     });
     this.outlineEl.addEventListener("input", (event) => {
       const input = event.target.closest("[data-outline-editor]");
@@ -56936,6 +57193,7 @@ class YeMindEditor {
       }
       this.commitOutlineInput(input);
     }, true);
+    this.bindSplitDivider();
     this.rootEl.addEventListener("change", (event) => {
       const control = event.target.closest("[data-outer-frame-setting]");
       if (!control || !this.commands || this.commands.isReadonly()) return;
@@ -56985,7 +57243,13 @@ class YeMindEditor {
       this.current.data = data2;
       this.options.diagnostics.record("editor", "data-change", this.current.id, { nodeCount: calculateEditorStats(data2).nodes });
       this.updateStats(data2);
-      this.renderOutline(data2);
+      if (this.outlineTextCommitUid) {
+        const row = Array.from(this.outlineEl.querySelectorAll("[data-outline-uid]")).find((item) => item.dataset.outlineUid === this.outlineTextCommitUid);
+        const input = row == null ? void 0 : row.querySelector("[data-outline-editor]");
+        if (input) this.resizeOutlineInput(input);
+      } else {
+        this.renderOutline(data2);
+      }
       this.scheduleSave();
     });
     this.map.on("view_data_change", (viewData) => {
@@ -57130,6 +57394,7 @@ class YeMindEditor {
     this.rootEl.dataset.nodeMenuButton = String(settings.showNodeMenuButton);
     this.rootEl.style.setProperty("--ymz-code-tab-size", String(settings.codeBlockTabSize));
     this.rootEl.style.setProperty("--ymz-code-font-size", `${settings.codeBlockFontSize}px`);
+    this.applySplitOutlineRatio(settings.splitOutlineRatio, false);
     const behavior = buildDragAndLayoutOptions(settings);
     const relationOptions = buildRelationOptions(settings);
     const outerFrameOptions = buildOuterFrameOptions(settings);
@@ -57157,6 +57422,82 @@ class YeMindEditor {
       this.setViewMode(settings.defaultViewMode);
       this.setReadonly(settings.defaultReadonlyMode);
       this.toggleZen(settings.defaultZenMode);
+    }
+  }
+  bindSplitDivider() {
+    const endDrag = (event) => {
+      if (this.splitDragPointerId !== event.pointerId) return;
+      this.flushSplitPointerUpdate();
+      this.splitDragPointerId = null;
+      this.splitDividerEl.classList.remove("is-dragging");
+      try {
+        this.splitDividerEl.releasePointerCapture(event.pointerId);
+      } catch {
+      }
+      void this.persistSplitOutlineRatio();
+    };
+    this.splitDividerEl.addEventListener("pointerdown", (event) => {
+      if (this.viewMode !== "split" || event.button !== 0) return;
+      event.preventDefault();
+      this.splitDragPointerId = event.pointerId;
+      this.splitDividerEl.classList.add("is-dragging");
+      this.splitDividerEl.setPointerCapture(event.pointerId);
+      this.queueSplitPointerUpdate(event.clientX);
+    });
+    this.splitDividerEl.addEventListener("pointermove", (event) => {
+      if (this.splitDragPointerId !== event.pointerId) return;
+      event.preventDefault();
+      this.queueSplitPointerUpdate(event.clientX);
+    });
+    this.splitDividerEl.addEventListener("pointerup", endDrag);
+    this.splitDividerEl.addEventListener("pointercancel", endDrag);
+    this.splitDividerEl.addEventListener("dblclick", (event) => {
+      if (this.viewMode !== "split") return;
+      event.preventDefault();
+      this.applySplitOutlineRatio(DEFAULT_SPLIT_OUTLINE_RATIO, true);
+    });
+    this.splitDividerEl.addEventListener("keydown", (event) => {
+      if (this.viewMode !== "split") return;
+      let next2 = null;
+      if (event.key === "ArrowLeft") next2 = this.splitOutlineRatio + 0.02;
+      if (event.key === "ArrowRight") next2 = this.splitOutlineRatio - 0.02;
+      if (event.key === "Home") next2 = DEFAULT_SPLIT_OUTLINE_RATIO;
+      if (next2 === null) return;
+      event.preventDefault();
+      event.stopPropagation();
+      this.applySplitOutlineRatio(next2, true);
+    });
+  }
+  queueSplitPointerUpdate(clientX) {
+    this.pendingSplitClientX = clientX;
+    if (this.splitResizeFrame !== null) return;
+    this.splitResizeFrame = window.requestAnimationFrame(() => {
+      this.splitResizeFrame = null;
+      this.flushSplitPointerUpdate();
+    });
+  }
+  flushSplitPointerUpdate() {
+    if (this.pendingSplitClientX === null) return;
+    const clientX = this.pendingSplitClientX;
+    this.pendingSplitClientX = null;
+    const workspace = this.splitDividerEl.parentElement;
+    if (!workspace) return;
+    const rect = workspace.getBoundingClientRect();
+    this.applySplitOutlineRatio(ratioFromPointer(rect, clientX), false);
+  }
+  applySplitOutlineRatio(value, persist) {
+    this.splitOutlineRatio = normalizeSplitOutlineRatio(value);
+    this.rootEl.style.setProperty("--ymz-outline-ratio", `${(this.splitOutlineRatio * 100).toFixed(2)}%`);
+    this.splitDividerEl.setAttribute("aria-valuenow", String(Math.round(this.splitOutlineRatio * 100)));
+    if (this.viewMode === "split") this.scheduleSafeResize();
+    if (persist) void this.persistSplitOutlineRatio();
+  }
+  async persistSplitOutlineRatio() {
+    try {
+      await this.options.settingsStore.update({ splitOutlineRatio: this.splitOutlineRatio });
+    } catch (error) {
+      console.error("[YeMind Zen] split ratio save failed", error);
+      siyuan.showMessage("分屏比例保存失败，已保持当前显示", 4e3, "error");
     }
   }
   async toggleSelectionMode() {
@@ -57255,8 +57596,20 @@ class YeMindEditor {
     });
   }
   renderOutline(data2) {
-    var _a, _b, _c2;
-    const activeUid = String(((_c2 = (_b = (_a = this.commands) == null ? void 0 : _a.getPrimaryNode()) == null ? void 0 : _b.getData) == null ? void 0 : _c2.call(_b, "uid")) ?? "");
+    var _a, _b, _c2, _d2;
+    if (!this.pendingOutlineFocus) {
+      const active = document.activeElement instanceof HTMLTextAreaElement ? document.activeElement.closest("[data-outline-editor]") : null;
+      const uid = ((_a = active == null ? void 0 : active.closest("[data-outline-uid]")) == null ? void 0 : _a.dataset.outlineUid) ?? "";
+      if (active && uid && this.outlineEl.contains(active)) {
+        this.pendingOutlineFocus = {
+          uid,
+          placement: "range",
+          start: active.selectionStart ?? 0,
+          end: active.selectionEnd ?? active.selectionStart ?? 0
+        };
+      }
+    }
+    const activeUid = String(((_d2 = (_c2 = (_b = this.commands) == null ? void 0 : _b.getPrimaryNode()) == null ? void 0 : _c2.getData) == null ? void 0 : _d2.call(_c2, "uid")) ?? "");
     const readonly = this.rootEl.dataset.readonly === "true";
     this.outlineEl.setAttribute("aria-readonly", String(readonly));
     this.outlineEl.innerHTML = renderOutlineHtml(data2, readonly);
@@ -57269,52 +57622,82 @@ class YeMindEditor {
     if (!pending) return;
     window.requestAnimationFrame(() => {
       if (this.destroyed || !this.pendingOutlineFocus || this.pendingOutlineFocus.uid !== pending.uid) return;
-      const row = Array.from(this.outlineEl.querySelectorAll("[data-outline-uid]")).find((item) => item.dataset.outlineUid === pending.uid);
-      const input = row == null ? void 0 : row.querySelector("[data-outline-editor]");
+      const input = this.findOutlineInput(pending.uid);
       if (!input) return;
       this.pendingOutlineFocus = null;
       input.focus();
-      if (pending.selectAll) input.select();
+      const length2 = input.value.length;
+      if (pending.placement === "select-all") input.select();
+      else if (pending.placement === "start") input.setSelectionRange(0, 0);
+      else if (pending.placement === "end") input.setSelectionRange(length2, length2);
+      else {
+        const start = Math.min(length2, Math.max(0, pending.start ?? 0));
+        const end = Math.min(length2, Math.max(start, pending.end ?? start));
+        input.setSelectionRange(start, end);
+      }
       this.activateOutlineUid(pending.uid);
+      input.scrollIntoView({ block: "nearest" });
     });
+  }
+  findOutlineInput(uid) {
+    const row = Array.from(this.outlineEl.querySelectorAll("[data-outline-uid]")).find((item) => item.dataset.outlineUid === uid);
+    return (row == null ? void 0 : row.querySelector("[data-outline-editor]")) ?? null;
   }
   commitOutlineInput(input) {
     if (!this.commands || this.commands.isReadonly()) return false;
     const row = input.closest("[data-outline-uid]");
     const uid = (row == null ? void 0 : row.dataset.outlineUid) ?? "";
     const original = input.dataset.outlineOriginal ?? "";
-    const next2 = input.value.trim();
+    const next2 = input.value.replace(/\r\n/g, "\n");
     if (!uid) return false;
-    if (!next2) {
+    if (!next2.trim()) {
       input.value = original;
+      this.resizeOutlineInput(input);
       return false;
     }
     if (next2 === original) return false;
-    if (!this.commands.setNodeTextByUid(uid, next2)) return false;
+    this.outlineTextCommitUid = uid;
+    try {
+      if (!this.commands.setNodeTextByUid(uid, next2)) return false;
+    } finally {
+      this.outlineTextCommitUid = null;
+    }
     input.value = next2;
     input.dataset.outlineOriginal = next2;
+    this.resizeOutlineInput(input);
     return true;
   }
   handleOutlineKeydown(event) {
     var _a;
     const input = event.target.closest("[data-outline-editor]");
     const row = input == null ? void 0 : input.closest("[data-outline-uid]");
-    if (!input || !row || !this.commands) return;
+    if (!input || !row || !this.commands || this.outlineStructureBusy) return;
     const uid = row.dataset.outlineUid ?? "";
     const isRoot = row.dataset.outlineRoot === "true";
+    const selectionStart = input.selectionStart ?? 0;
+    const selectionEnd = input.selectionEnd ?? selectionStart;
     const action = resolveOutlineKeyAction({
       key: event.key,
       empty: input.value.trim().length === 0,
       isRoot,
       readonly: this.commands.isReadonly(),
-      shiftKey: event.shiftKey
+      hasChildren: row.dataset.outlineHasChildren === "true",
+      expanded: row.dataset.outlineExpanded === "true",
+      atStart: selectionStart === 0 && selectionEnd === 0,
+      atEnd: selectionStart === input.value.length && selectionEnd === input.value.length,
+      composing: event.isComposing || this.outlineComposing,
+      shiftKey: event.shiftKey,
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey
     });
-    if (action === "none") return;
+    if (action === "none" || action === "hard-break") return;
     event.preventDefault();
     event.stopPropagation();
     if (action === "cancel") {
       input.value = input.dataset.outlineOriginal ?? input.value;
       input.dataset.outlineCancelled = "true";
+      this.resizeOutlineInput(input);
       input.blur();
       return;
     }
@@ -57322,20 +57705,43 @@ class YeMindEditor {
       this.focusOutlineNeighbor(input, action === "previous" ? -1 : 1);
       return;
     }
-    if (action === "remove") {
-      const inputs = Array.from(this.outlineEl.querySelectorAll("[data-outline-editor]"));
-      const index = inputs.indexOf(input);
-      const fallback = inputs[index - 1] ?? inputs[index + 1];
-      const fallbackUid = (_a = fallback == null ? void 0 : fallback.closest("[data-outline-uid]")) == null ? void 0 : _a.dataset.outlineUid;
-      if (fallbackUid) this.pendingOutlineFocus = { uid: fallbackUid, selectAll: true };
-      if (!this.commands.removeNodeByUid(uid)) this.pendingOutlineFocus = null;
-      return;
+    this.outlineStructureBusy = true;
+    try {
+      if (action === "remove") {
+        const inputs = Array.from(this.outlineEl.querySelectorAll("[data-outline-editor]"));
+        const index = inputs.indexOf(input);
+        const previous = inputs[index - 1];
+        const next2 = inputs[index + 1];
+        const fallback = previous ?? next2;
+        const fallbackUid = ((_a = fallback == null ? void 0 : fallback.closest("[data-outline-uid]")) == null ? void 0 : _a.dataset.outlineUid) ?? "";
+        if (fallbackUid) {
+          this.pendingOutlineFocus = {
+            uid: fallbackUid,
+            placement: previous ? "end" : "start"
+          };
+        }
+        if (!this.commands.removeNodeByUid(uid)) this.pendingOutlineFocus = null;
+        return;
+      }
+      this.commitOutlineInput(input);
+      if (action === "collapse" || action === "expand") {
+        this.pendingOutlineFocus = { uid, placement: action === "collapse" ? "start" : "end" };
+        if (!this.commands.setNodeExpandedByUid(uid, action === "expand")) this.pendingOutlineFocus = null;
+        return;
+      }
+      if (action === "indent" || action === "outdent") {
+        this.pendingOutlineFocus = { uid, placement: "start" };
+        const changed = action === "indent" ? this.commands.indentNodeByUid(uid) : this.commands.outdentNodeByUid(uid);
+        if (!changed) this.pendingOutlineFocus = null;
+        return;
+      }
+      const newUid = createOutlineUid();
+      this.pendingOutlineFocus = { uid: newUid, placement: "start" };
+      const inserted = action === "insert-child" ? this.commands.insertChildByUid(uid, newUid) : this.commands.insertSiblingByUid(uid, newUid);
+      if (!inserted) this.pendingOutlineFocus = null;
+    } finally {
+      this.outlineStructureBusy = false;
     }
-    this.commitOutlineInput(input);
-    const newUid = createOutlineUid();
-    this.pendingOutlineFocus = { uid: newUid, selectAll: true };
-    const inserted = action === "insert-child" ? this.commands.insertChildByUid(uid, newUid) : this.commands.insertSiblingByUid(uid, newUid);
-    if (!inserted) this.pendingOutlineFocus = null;
   }
   resizeOutlineInput(input) {
     input.style.height = "auto";
@@ -57343,18 +57749,19 @@ class YeMindEditor {
     if (height2 > 0) input.style.height = `${Math.max(26, height2)}px`;
   }
   focusOutlineNeighbor(input, offset) {
-    var _a;
+    var _a, _b;
     const inputs = Array.from(this.outlineEl.querySelectorAll("[data-outline-editor]"));
     const current = inputs.indexOf(input);
     const target = inputs[current + offset];
     const uid = ((_a = target == null ? void 0 : target.closest("[data-outline-uid]")) == null ? void 0 : _a.dataset.outlineUid) ?? "";
     if (!target || !uid) return;
-    this.pendingOutlineFocus = { uid, selectAll: true };
-    const changed = this.commitOutlineInput(input);
-    if (changed) return;
-    this.pendingOutlineFocus = null;
+    this.commitOutlineInput(input);
     target.focus();
-    target.select();
+    const position2 = offset < 0 ? target.value.length : 0;
+    target.setSelectionRange(position2, position2);
+    target.scrollIntoView({ block: "nearest" });
+    (_b = this.commands) == null ? void 0 : _b.goToNode(uid);
+    this.activateOutlineUid(uid);
   }
   activateOutlineUid(uid) {
     this.outlineEl.querySelectorAll("[data-outline-uid]").forEach((row) => {
