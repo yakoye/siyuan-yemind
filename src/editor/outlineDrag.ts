@@ -1,3 +1,5 @@
+import { clamp, type TreeDropKind } from "../core/treeDropIntent";
+
 export type OutlineDropPosition = "before" | "inside" | "after";
 
 export interface OutlineDropIntentInput {
@@ -35,38 +37,38 @@ export interface OutlinePointerDropIntentInput extends OutlineDropIntentInput {
 
 export interface OutlinePointerDropIntent extends OutlineDropIntent {
   desiredDepth: number;
+  kind: Exclude<TreeDropKind, "none">;
 }
+
+const OUTLINE_EDGE_ZONE_PX = 7;
 
 export function isOutlinePointerInDragZone(input: { clientX: number; textLeft: number; tolerance?: number }): boolean {
   const tolerance = Math.max(0, input.tolerance ?? 0);
   return input.clientX < input.textLeft - tolerance;
 }
 
-export function resolveOutlineDropIntent(
-  input: OutlineDropIntentInput,
-): OutlineDropIntent | null {
+function outlineVerticalSlot(input: OutlineDropIntentInput): "before" | "after" | null {
   if (
     !input.sourceUid ||
     !input.targetUid ||
     input.sourceUid === input.targetUid ||
     input.rect.height <= 0
-  )
-    return null;
-  const ratio = Math.max(
-    0,
-    Math.min(1, (input.clientY - input.rect.top) / input.rect.height),
-  );
-  const position: OutlineDropPosition =
-    ratio < 0.25 ? "before" : ratio > 0.75 ? "after" : "inside";
-  return { targetUid: input.targetUid, position };
+  ) return null;
+  const edge = Math.min(OUTLINE_EDGE_ZONE_PX, Math.max(4, input.rect.height * 0.24));
+  const offset = input.clientY - input.rect.top;
+  if (offset >= 0 && offset <= edge) return "before";
+  if (offset >= input.rect.height - edge && offset <= input.rect.height) return "after";
+  return null;
 }
 
+export function resolveOutlineDropIntent(
+  input: OutlineDropIntentInput,
+): OutlineDropIntent | null {
+  const position = outlineVerticalSlot(input);
+  return position ? { targetUid: input.targetUid, position } : null;
+}
 
-/**
- * Active Quill/contenteditable surfaces own pointer selection completely.
- * Non-editing outline labels may still become row drags after the deliberate
- * long-press threshold.
- */
+/** Active rich-text/contenteditable surfaces always own text selection. */
 export function isOutlineTextSelectionTarget(
   target: Element | null,
   activeEditor: HTMLElement | null,
@@ -80,62 +82,59 @@ export function isOutlineTextSelectionTarget(
   );
 }
 
-/**
- * Row chrome behaves like a conventional draggable row. The text editor keeps
- * normal text selection until a deliberate long press plus movement occurs.
- */
+/** Structural dragging starts only from the dedicated gutter. */
 export function shouldStartOutlinePointerDrag(
   input: OutlineDragStartInput,
 ): boolean {
-  if (input.interactive || input.editing) return false;
-  if (input.distancePx < 6) return false;
-  if (!input.fromEditor) return true;
-  return input.elapsedMs >= 240;
+  if (input.interactive || input.editing || input.fromEditor) return false;
+  return input.distancePx >= 5;
 }
 
 /**
- * Resolve both the vertical insertion slot and the desired outline depth.
- * Horizontal movement to the right creates a child; moving left targets the
- * closest visible ancestor so the structure command never creates an invalid
- * intermediate depth.
+ * Resolve an explicit outline drop slot. The central part of a row is a neutral
+ * zone unless the pointer deliberately moves one indent to the right, in which
+ * case the source becomes a child. Moving left aligns the insertion marker to
+ * the closest visible ancestor. This prevents nearest-row guessing in gaps.
  */
 export function resolveOutlinePointerDropIntent(
   input: OutlinePointerDropIntentInput,
 ): OutlinePointerDropIntent | null {
-  const vertical = resolveOutlineDropIntent(input);
-  if (!vertical) return null;
+  if (!input.sourceUid || input.sourceUid === input.targetUid || input.rect.height <= 0) return null;
 
   const indent = Math.max(12, input.indentWidth || 0);
-  const ratio = Math.max(
-    0,
-    Math.min(1, (input.clientY - input.rect.top) / input.rect.height),
-  );
-  const movedRight = input.clientX >= input.targetTextLeft + indent * 0.6;
-  const movedLeft = input.clientX <= input.targetTextLeft - indent * 0.6;
-  const middle = ratio >= 0.25 && ratio <= 0.75;
-
-  if (movedRight || (middle && !movedLeft) || input.targetDepth <= 0) {
+  const movedRight = input.clientX >= input.targetTextLeft + indent * 0.45;
+  if (movedRight) {
     return {
       targetUid: input.targetUid,
       position: "inside",
       desiredDepth: input.targetDepth + 1,
+      kind: "child",
     };
   }
 
-  const depthDelta = Math.round(
-    (input.clientX - input.targetTextLeft) / indent,
-  );
-  const desiredDepth = Math.max(
-    1,
-    Math.min(input.targetDepth, input.targetDepth + depthDelta),
-  );
-  const ancestor = [...input.targetAncestors]
-    .reverse()
-    .find((item) => item.depth === desiredDepth);
+  const vertical = outlineVerticalSlot(input);
+  if (!vertical) return null;
+
+  const baseTextLeft = input.targetTextLeft - input.targetDepth * indent;
+  const rawDepth = Math.round((input.clientX - baseTextLeft) / indent);
+  const desiredDepth = clamp(rawDepth, 1, Math.max(1, input.targetDepth));
+  if (desiredDepth < input.targetDepth) {
+    const ancestor = [...input.targetAncestors]
+      .reverse()
+      .find((item) => item.depth === desiredDepth);
+    if (!ancestor) return null;
+    return {
+      targetUid: ancestor.uid,
+      position: "after",
+      desiredDepth,
+      kind: "after",
+    };
+  }
 
   return {
-    targetUid: ancestor?.uid ?? input.targetUid,
-    position: vertical.position === "inside" ? "after" : vertical.position,
-    desiredDepth,
+    targetUid: input.targetUid,
+    position: vertical,
+    desiredDepth: input.targetDepth,
+    kind: vertical,
   };
 }

@@ -42,4 +42,4 @@ Release packages contain code and documentation only.
 
 ## Compatibility
 
-Historical plugin links and theme identifiers are accepted through narrow internal aliases. Existing map/settings/checkpoint schemas do not require a v0.9.4 migration. Legacy outline controller source remains only for historical test compatibility and is not reachable from the v0.9.4 runtime bundle.
+Historical plugin links and theme identifiers are accepted through narrow internal aliases. Existing map/settings/checkpoint schemas do not require a v0.9.5 migration. Legacy outline controller source remains only for historical test compatibility and is not reachable from the v0.9.5 runtime bundle.

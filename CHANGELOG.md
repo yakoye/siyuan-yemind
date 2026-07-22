@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.9.5 - 2026-07-22
+
+- Rebuilt outline and canvas drag intent around shared NONE, BEFORE, AFTER and CHILD semantics.
+- Restricted outline structural drag to an invisible 14px move gutter while preserving native text selection in node content.
+- Reduced outline leaf squares to 5×5px and added YeMind-green depth-aligned insertion guides with a square origin marker.
+- Replaced clone-overlap canvas targeting with pointer-based geometry, explicit sibling edge slots and hierarchy-aware child tails.
+- Added neutral dead zones, immediate stale-target clearing, fast sibling stabilization and deliberate child dwell.
+- Kept dashed parent previews visible throughout dragging and added green structural insertion guides on the canvas.
+- Excluded dragged subtrees from hit testing and suppressed self, descendant, root and unchanged-position mutations.
+- Added Escape cancellation, no-op history protection and metadata-preserving subtree moves across outline and canvas.
+- Matched the trash-can artwork to the magnifier visual weight without changing image-action button boxes or hit areas.
+- Isolated image preview, delete and resize controls from structural canvas dragging.
+- Expanded permanent regression coverage to 15 domains and 170 scenario modules.
+
 ## 0.9.4 - 2026-07-22
 
 - Replaced the dual text/node outline modes with one continuous structured outline editor.

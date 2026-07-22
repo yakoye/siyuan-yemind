@@ -1,10 +1,18 @@
 import Drag from 'simple-mind-map/src/plugins/Drag';
 import {
+  calculateOfficialInsertionGuide,
+  emptyOfficialDragCandidate,
+  isOfficialDragCandidateNoop,
+  officialCandidateParent,
   resolveOfficialDragCandidate,
   resolveOfficialDragGuideOrientation,
   supportsOfficialDragGeometry,
   type OfficialDragCandidate,
 } from './officialDragIntent';
+import {
+  createStableTreeDropState,
+  updateStableTreeDropIntent,
+} from './treeDropIntent';
 
 export interface DragGuideRect {
   x: number;
@@ -83,28 +91,25 @@ export function resolveDragGuideTarget(state: {
 }
 
 export function createDragCandidateState(stable: DragCandidate): DragCandidateState {
-  return { stable, pending: null };
+  return createStableTreeDropState(stable) as DragCandidateState;
 }
 
 export function updateStableDragCandidate(
   state: DragCandidateState,
   candidate: DragCandidate,
   now: number,
-  minimumDurationMs = OFFICIAL_TARGET_STABLE_MS,
-  minimumFrames = OFFICIAL_TARGET_STABLE_FRAMES,
+  minimumDurationMs?: number,
+  minimumFrames?: number,
 ): DragCandidateState {
-  if (candidate.key === state.stable.key) return { stable: state.stable, pending: null };
-  if (state.pending?.candidate.key === candidate.key) {
-    const pending = { ...state.pending, frames: state.pending.frames + 1 };
-    if (now - pending.since >= minimumDurationMs && pending.frames >= minimumFrames) {
-      return { stable: candidate, pending: null };
-    }
-    return { stable: state.stable, pending };
-  }
-  return {
-    stable: state.stable,
-    pending: { candidate, since: now, frames: 1 },
-  };
+  const options = minimumDurationMs === undefined
+    ? undefined
+    : {
+        siblingDurationMs: minimumDurationMs,
+        siblingFrames: minimumFrames ?? 3,
+        childDurationMs: minimumDurationMs,
+        childFrames: minimumFrames ?? 3,
+      };
+  return updateStableTreeDropIntent(state as any, candidate as any, now, options) as DragCandidateState;
 }
 
 export function calculateDragGuidePath(
@@ -150,32 +155,70 @@ function nodeUid(node: any): string {
   return String(value ?? '');
 }
 
+
+function collectDragExcludedNodes(sources: any[]): any[] {
+  const excluded = new Set<any>();
+  const visit = (node: any): void => {
+    if (!node || excluded.has(node)) return;
+    excluded.add(node);
+    (node.children ?? []).forEach(visit);
+  };
+  (sources ?? []).forEach(visit);
+  return [...excluded];
+}
+
 function candidateFromPlugin(plugin: any): DragCandidate {
   if (plugin.overlapNode) {
+    const parent = plugin.overlapNode;
     return {
-      key: `child:${nodeUid(plugin.overlapNode)}`,
-      overlapNode: plugin.overlapNode,
+      key: `child:${nodeUid(parent)}`,
+      kind: 'child',
+      target: parent,
+      parent,
+      index: Array.isArray(parent.children) ? parent.children.length : 0,
+      overlapNode: parent,
       prevNode: null,
       nextNode: null,
+      targetNode: parent,
+      parentNode: parent,
+      score: 0,
     };
   }
   if (plugin.prevNode) {
+    const parent = plugin.prevNode.parent ?? null;
+    const index = Array.isArray(parent?.children) ? parent.children.indexOf(plugin.prevNode) + 1 : -1;
     return {
       key: `after:${nodeUid(plugin.prevNode)}`,
+      kind: 'after',
+      target: plugin.prevNode,
+      parent,
+      index,
       overlapNode: null,
       prevNode: plugin.prevNode,
       nextNode: null,
+      targetNode: plugin.prevNode,
+      parentNode: parent,
+      score: 0,
     };
   }
   if (plugin.nextNode) {
+    const parent = plugin.nextNode.parent ?? null;
+    const index = Array.isArray(parent?.children) ? parent.children.indexOf(plugin.nextNode) : -1;
     return {
       key: `before:${nodeUid(plugin.nextNode)}`,
+      kind: 'before',
+      target: plugin.nextNode,
+      parent,
+      index,
       overlapNode: null,
       prevNode: null,
       nextNode: plugin.nextNode,
+      targetNode: plugin.nextNode,
+      parentNode: parent,
+      score: 0,
     };
   }
-  return { key: 'none', overlapNode: null, prevNode: null, nextNode: null };
+  return emptyOfficialDragCandidate();
 }
 
 function applyCandidate(plugin: any, candidate: DragCandidate): void {
@@ -206,6 +249,16 @@ function cancelFrame(id: number): void {
 }
 
 function nodeRect(plugin: any, node: any): DragGuideRect | null {
+  if (!node) return null;
+  const native = plugin.getNodeRect?.(node);
+  if (native) {
+    return normalizeRect({
+      x: native.left,
+      y: native.top,
+      width: native.right - native.left,
+      height: native.bottom - native.top,
+    });
+  }
   return normalizeRect(node?.group?.rbox?.(plugin.mindMap.otherDraw) ?? node?.group?.bbox?.());
 }
 
@@ -227,9 +280,9 @@ function endpointDistance(parent: DragGuideRect, ghost: DragGuideRect, orientati
 }
 
 /**
- * Keeps the engine's native drop commands while applying YeMind's
- * rectangle/tail/lane intent sampling, per-frame coalescing and 60 ms /
- * three-frame target stabilisation to the installed renderer.
+ * Pointer-driven structural drag for the canvas. The native simple-mind-map
+ * move commands remain the single mutation path, while YeMind owns target
+ * intent, dead zones, hierarchy dwell, previews and cancellation.
  */
 export default class YeMindDrag extends Drag {
   bindEvent(): void {
@@ -238,15 +291,33 @@ export default class YeMindDrag extends Drag {
     plugin.onMousemove = plugin.onMousemove.bind(this);
     plugin.onMouseup = plugin.onMouseup.bind(this);
     plugin.__ymzRawCheckOverlap = Drag.prototype.checkOverlapNode.bind(this);
-    plugin.__ymzCandidateState = createDragCandidateState(candidateFromPlugin(plugin));
+    plugin.__ymzCandidateState = createDragCandidateState(emptyOfficialDragCandidate());
+    plugin.__ymzRawCandidate = emptyOfficialDragCandidate();
     plugin.__ymzOverlapFrame = null;
     plugin.__ymzIncomingLines = [];
+    plugin.__ymzOnKeydown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || (!plugin.isMousedown && !plugin.isDragging)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      this.cancelActiveDrag();
+    };
     plugin.checkOverlapNode = () => this.scheduleOfficialCandidateCheck();
 
     plugin.mindMap.on('node_mousedown', plugin.onNodeMousedown);
     plugin.mindMap.on('mousemove', plugin.onMousemove);
     plugin.mindMap.on('node_mouseup', plugin.onMouseup);
     plugin.mindMap.on('mouseup', plugin.onMouseup);
+    document.addEventListener('keydown', plugin.__ymzOnKeydown, true);
+  }
+
+  onNodeMousedown(node: any, event: MouseEvent): void {
+    const target = event.target as Element | null;
+    if (
+      target?.closest?.(
+        '.node-image-remove,.ymz-node-image-preview,.node-image-resize,.node-img-adjust,.node-img-handle button',
+      )
+    ) return;
+    super.onNodeMousedown(node, event);
   }
 
   createCloneNode(): void {
@@ -254,12 +325,9 @@ export default class YeMindDrag extends Drag {
     const hadClone = Boolean(plugin.clone);
     super.createCloneNode();
     if (hadClone || !plugin.clone) return;
-    plugin.__ymzCandidateState = createDragCandidateState({
-      key: 'none',
-      overlapNode: null,
-      prevNode: null,
-      nextNode: null,
-    });
+    const none = emptyOfficialDragCandidate();
+    plugin.__ymzCandidateState = createDragCandidateState(none);
+    plugin.__ymzRawCandidate = none;
     plugin.__ymzIncomingLines = captureIncomingDragLines(plugin.beingDragNodeList ?? []);
     this.ensureGuideLines();
     this.clearUpstreamPlaceholder();
@@ -275,7 +343,17 @@ export default class YeMindDrag extends Drag {
     const plugin = this as any;
     try {
       this.flushOfficialCandidateCheck();
-      if (plugin.__ymzCandidateState?.stable) applyCandidate(plugin, plugin.__ymzCandidateState.stable);
+      const raw: DragCandidate = plugin.__ymzRawCandidate ?? emptyOfficialDragCandidate();
+      const stable: DragCandidate = plugin.__ymzCandidateState?.stable ?? emptyOfficialDragCandidate();
+      const finalCandidate = raw.kind !== 'none' && raw.key === stable.key
+        ? stable
+        : emptyOfficialDragCandidate();
+      applyCandidate(
+        plugin,
+        isOfficialDragCandidateNoop(finalCandidate, plugin.beingDragNodeList ?? [])
+          ? emptyOfficialDragCandidate()
+          : finalCandidate,
+      );
       await super.onMouseup(event);
     } finally {
       this.restoreIncomingLines();
@@ -289,6 +367,8 @@ export default class YeMindDrag extends Drag {
   }
 
   beforePluginRemove(): void {
+    const plugin = this as any;
+    document.removeEventListener('keydown', plugin.__ymzOnKeydown, true);
     this.cancelCandidateFrame();
     this.removeGuideLines();
     this.restoreIncomingLines();
@@ -296,6 +376,8 @@ export default class YeMindDrag extends Drag {
   }
 
   beforePluginDestroy(): void {
+    const plugin = this as any;
+    document.removeEventListener('keydown', plugin.__ymzOnKeydown, true);
     this.cancelCandidateFrame();
     this.removeGuideLines();
     this.restoreIncomingLines();
@@ -313,9 +395,10 @@ export default class YeMindDrag extends Drag {
 
   private flushOfficialCandidateCheck(): void {
     const plugin = this as any;
-    if (plugin.__ymzOverlapFrame === null) return;
-    cancelFrame(plugin.__ymzOverlapFrame);
-    plugin.__ymzOverlapFrame = null;
+    if (plugin.__ymzOverlapFrame !== null) {
+      cancelFrame(plugin.__ymzOverlapFrame);
+      plugin.__ymzOverlapFrame = null;
+    }
     this.runOfficialCandidateCheck(animationNow());
   }
 
@@ -326,17 +409,14 @@ export default class YeMindDrag extends Drag {
     const layout = String(plugin.mindMap.opt.layout ?? 'logicalStructure');
     let candidate: DragCandidate;
     if (supportsOfficialDragGeometry(layout)) {
-      const ghost = ghostRect(plugin);
-      candidate = ghost
-        ? resolveOfficialDragCandidate({
-            layout,
-            ghost,
-            nodes: plugin.nodeList ?? [],
-            current: plugin.__ymzCandidateState?.stable
-              ?? { key: 'none', overlapNode: null, prevNode: null, nextNode: null },
-            getRect: (node) => nodeRect(plugin, node),
-          })
-        : { key: 'none', overlapNode: null, prevNode: null, nextNode: null };
+      candidate = resolveOfficialDragCandidate({
+        layout,
+        pointer: { x: Number(plugin.mouseMoveX), y: Number(plugin.mouseMoveY) },
+        nodes: plugin.nodeList ?? [],
+        excludedNodes: collectDragExcludedNodes(plugin.beingDragNodeList ?? []),
+        current: plugin.__ymzCandidateState?.stable ?? emptyOfficialDragCandidate(),
+        getRect: (node) => nodeRect(plugin, node),
+      });
       this.clearUpstreamPlaceholder();
     } else {
       plugin.__ymzRawCheckOverlap?.();
@@ -344,8 +424,9 @@ export default class YeMindDrag extends Drag {
       candidate = candidateFromPlugin(plugin);
     }
 
+    plugin.__ymzRawCandidate = candidate;
     plugin.__ymzCandidateState = updateStableDragCandidate(
-      plugin.__ymzCandidateState ?? createDragCandidateState(candidate),
+      plugin.__ymzCandidateState ?? createDragCandidateState(emptyOfficialDragCandidate()),
       candidate,
       now,
     );
@@ -373,6 +454,21 @@ export default class YeMindDrag extends Drag {
         .attr({ 'pointer-events': 'none' })
         .hide();
     }
+    if (!plugin.__ymzInsertionGuideLine) {
+      plugin.__ymzInsertionGuideLine = plugin.mindMap.otherDraw
+        .path()
+        .fill({ color: 'none' })
+        .attr({ 'pointer-events': 'none' })
+        .hide();
+    }
+    if (!plugin.__ymzInsertionGuideSquare) {
+      plugin.__ymzInsertionGuideSquare = plugin.mindMap.otherDraw
+        .rect(7, 7)
+        .radius(1)
+        .fill({ color: '#176b50' })
+        .attr({ 'pointer-events': 'none' })
+        .hide();
+    }
   }
 
   private updateOfficialGuideLines(): void {
@@ -380,27 +476,25 @@ export default class YeMindDrag extends Drag {
     if (!plugin.clone) {
       plugin.__ymzTargetGuideLine?.hide?.();
       plugin.__ymzOriginGuideLine?.hide?.();
+      plugin.__ymzInsertionGuideLine?.hide?.();
+      plugin.__ymzInsertionGuideSquare?.hide?.();
       return;
     }
     this.ensureGuideLines();
     const state: DragCandidateState = plugin.__ymzCandidateState
-      ?? createDragCandidateState(candidateFromPlugin(plugin));
+      ?? createDragCandidateState(emptyOfficialDragCandidate());
     const stable = state.stable;
     const ghost = ghostRect(plugin);
-    if (!ghost) {
-      plugin.__ymzTargetGuideLine?.hide?.();
-      plugin.__ymzOriginGuideLine?.hide?.();
-      return;
-    }
+    if (!ghost) return;
 
     const layout = String(plugin.mindMap.opt.layout ?? 'logicalStructure');
-    const stableTarget = stable.key === 'none' ? null : resolveDragGuideTarget(stable);
+    const stableTarget = stable.kind === 'none' ? null : officialCandidateParent(stable);
     const target = nodeRect(plugin, stableTarget);
     if (target) {
-      const targetOrientation: DragGuideOrientation = resolveOfficialDragGuideOrientation(layout, stableTarget);
+      const orientation: DragGuideOrientation = resolveOfficialDragGuideOrientation(layout, stableTarget);
       plugin.__ymzTargetGuideLine
-        .plot(calculateDragGuidePath(target, ghost, targetOrientation))
-        .stroke({ color: 'rgba(34, 197, 94, 0.9)', width: 2.5, linecap: 'round' })
+        .plot(calculateDragGuidePath(target, ghost, orientation))
+        .stroke({ color: 'rgba(23, 107, 80, 0.92)', width: 2.3, linecap: 'round' })
         .attr({ 'stroke-dasharray': '6 6', opacity: 1, 'pointer-events': 'none' })
         .show()
         .front();
@@ -411,17 +505,39 @@ export default class YeMindDrag extends Drag {
     const originParent = plugin.mousedownNode?.parent ?? null;
     const origin = nodeRect(plugin, originParent);
     if (origin && !stableTarget) {
-      const originOrientation: DragGuideOrientation = resolveOfficialDragGuideOrientation(layout, originParent);
-      const distance = endpointDistance(origin, ghost, originOrientation);
+      const orientation: DragGuideOrientation = resolveOfficialDragGuideOrientation(layout, originParent);
+      const distance = endpointDistance(origin, ghost, orientation);
       const style = calculateOriginalParentGuideStyle(distance);
       plugin.__ymzOriginGuideLine
-        .plot(calculateDragGuidePath(origin, ghost, originOrientation))
-        .stroke({ color: `rgba(239, 68, 68, ${style.opacity.toFixed(3)})`, width: style.width, linecap: 'round' })
-        .attr({ 'stroke-dasharray': '3 6', opacity: 1, 'pointer-events': 'none' })
+        .plot(calculateDragGuidePath(origin, ghost, orientation))
+        .stroke({ color: `rgba(100, 116, 139, ${Math.max(0.55, style.opacity).toFixed(3)})`, width: Math.max(1.2, style.width), linecap: 'round' })
+        .attr({ 'stroke-dasharray': '4 6', opacity: 1, 'pointer-events': 'none' })
         .show()
         .front();
     } else {
       plugin.__ymzOriginGuideLine?.hide?.();
+    }
+
+    const insertion = calculateOfficialInsertionGuide(
+      stable,
+      layout,
+      (node) => nodeRect(plugin, node),
+    );
+    if (insertion) {
+      plugin.__ymzInsertionGuideLine
+        .plot(insertion.path)
+        .stroke({ color: '#176b50', width: 2.2, linecap: 'round' })
+        .attr({ opacity: 1, 'pointer-events': 'none' })
+        .show()
+        .front();
+      plugin.__ymzInsertionGuideSquare
+        .move(insertion.squareX - 3.5, insertion.squareY - 3.5)
+        .fill({ color: '#176b50' })
+        .show()
+        .front();
+    } else {
+      plugin.__ymzInsertionGuideLine?.hide?.();
+      plugin.__ymzInsertionGuideSquare?.hide?.();
     }
   }
 
@@ -447,6 +563,20 @@ export default class YeMindDrag extends Drag {
     });
   }
 
+  private cancelActiveDrag(): void {
+    const plugin = this as any;
+    plugin.autoMove?.clearAutoMoveTimer?.();
+    plugin.isMousedown = false;
+    (plugin.beingDragNodeList ?? []).forEach((node: any) => {
+      node.setOpacity?.(1);
+      node.showChildren?.();
+      node.endDrag?.();
+    });
+    this.removeCloneNode();
+    this.restoreIncomingLines();
+    plugin.reset?.();
+  }
+
   private cancelCandidateFrame(): void {
     const plugin = this as any;
     if (plugin.__ymzOverlapFrame !== null && plugin.__ymzOverlapFrame !== undefined) {
@@ -459,8 +589,12 @@ export default class YeMindDrag extends Drag {
     const plugin = this as any;
     plugin.__ymzTargetGuideLine?.remove?.();
     plugin.__ymzOriginGuideLine?.remove?.();
+    plugin.__ymzInsertionGuideLine?.remove?.();
+    plugin.__ymzInsertionGuideSquare?.remove?.();
     plugin.__ymzTargetGuideLine = null;
     plugin.__ymzOriginGuideLine = null;
+    plugin.__ymzInsertionGuideLine = null;
+    plugin.__ymzInsertionGuideSquare = null;
   }
 }
 

@@ -16,8 +16,8 @@ describe('v0.9.4 structured outline visual contract', () => {
     expect(css).toContain('.ymz-outline-row:hover{background:#ececec}');
     expect(css).toContain('background:#deeae6!important');
     expect(css).toContain('.ymz-outline-row__triangle,\n.ymz-outline-row__leaf-square');
-    expect(css).toContain('width:7px;');
-    expect(css).toContain('height:7px;');
+    expect(css).toContain('.ymz-outline-row__triangle{width:7px;height:7px');
+    expect(css).toContain('.ymz-outline-row__leaf-square{width:5px;height:5px');
     expect(css).toContain('background:#000;');
     expect(css).toContain('var(--ymz-outline-guide-1)');
     expect(css).toContain('var(--ymz-outline-drop-depth');

@@ -4,3 +4,4 @@ import '../suites/drag-interactions/nativeDragLifecycle.suite';
 import '../suites/drag-interactions/officialDragIntent.suite';
 import '../suites/drag-interactions/v0522ExpandDeletePan.suite';
 import '../suites/drag-interactions/yeMindDrag.suite';
+import '../suites/drag-interactions/v095UnifiedTreeDrag.suite';

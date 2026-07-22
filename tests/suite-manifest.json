@@ -133,6 +133,7 @@
     "nativeDragLifecycle.suite.ts",
     "officialDragIntent.suite.ts",
     "v0522ExpandDeletePan.suite.ts",
+    "v095UnifiedTreeDrag.suite.ts",
     "yeMindDrag.suite.ts"
   ],
   "advanced-structures": [

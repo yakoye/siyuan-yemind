@@ -2,7 +2,7 @@
 
 ## Current baseline
 
-- Product version: 0.9.4
+- Product version: 0.9.5
 - Host baseline: SiYuan 3.7.3
 - Plugin ID and folder: `siyuan-yemind`
 
@@ -23,8 +23,8 @@
 
 ## Next priorities
 
-1. Validate v0.9.4 unified outline behavior in SiYuan 3.7.3 with real long documents and mixed rich content.
-2. Profile 1,000+ node outline editing and reduce unnecessary DOM reconciliation without weakening transaction safety.
+1. Validate v0.9.5 outline and canvas tree dragging in SiYuan 3.7.3 with large maps, mixed images and every supported layout family.
+2. Profile 1,000+ node outline editing and drag-target resolution, reducing unnecessary DOM or geometry work without weakening transaction safety.
 3. Expand import/export formats in isolated releases.
 4. Continue accessibility, screen-reader and keyboard-navigation coverage.
 5. Prepare a stable 1.0 compatibility and migration policy.

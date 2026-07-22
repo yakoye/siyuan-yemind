@@ -859,7 +859,9 @@
 /* v0.9.0 image actions and preview */
 .node-img-handle .node-image-remove,.node-img-handle .ymz-node-image-preview{border-radius:0 0 0 7px;box-shadow:0 1px 4px rgb(0 0 0 / 28%)}
 .node-img-handle .ymz-node-image-preview{border-radius:0 0 7px 0}
-.node-img-handle .node-image-remove svg,.node-img-handle .ymz-node-image-preview svg{width:100%;height:100%;display:block}
+.node-img-handle .node-image-remove{display:flex!important;align-items:center;justify-content:center}
+.node-img-handle .node-image-remove svg{width:18px!important;height:18px!important;display:block;flex:0 0 18px}
+.node-img-handle .ymz-node-image-preview svg{width:100%;height:100%;display:block}
 .node-img-handle .node-image-remove:hover,.node-img-handle .ymz-node-image-preview:hover{background:rgba(23,107,80,.9)!important}
 .ymz-image-lightbox{position:absolute;inset:0;z-index:1200;display:flex;flex-direction:column;background:color-mix(in srgb,#070a0d 88%,transparent);backdrop-filter:blur(5px);color:#fff}
 .ymz-image-lightbox[hidden]{display:none}
@@ -898,7 +900,7 @@
   box-shadow:0 2px 6px rgba(15,23,42,.13);
 }
 
-/* v0.9.4 unified structured outline editor */
+/* v0.9.5 unified structured outline and explicit gutter drag */
 .ymz-editor[data-view="split"] .ymz-outline,
 .ymz-editor[data-view="outline"] .ymz-outline{
   display:flex;
@@ -972,14 +974,16 @@
 .ymz-outline-row__editor{position:relative;z-index:1}
 .ymz-outline-row__drag{
   display:block;
-  width:7px;
+  width:14px;
   height:26px;
-  flex:0 0 7px;
+  flex:0 0 14px;
   margin:0;
-  cursor:grab;
+  cursor:move;
   touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
 }
-.ymz-outline-row__drag:active{cursor:grabbing}
+.ymz-outline-row__drag:active{cursor:move}
 .ymz-outline-row[data-outline-drag-source="false"] .ymz-outline-row__drag{cursor:default}
 .ymz-outline-row__branch{
   display:inline-flex;
@@ -1002,15 +1006,13 @@
 .ymz-outline-row__triangle,
 .ymz-outline-row__leaf-square{
   display:block;
-  width:7px;
-  height:7px;
-  flex:0 0 7px;
   background:#000;
   color:#000;
 }
+.ymz-outline-row__triangle{width:7px;height:7px;flex:0 0 7px}
+.ymz-outline-row__leaf-square{width:5px;height:5px;flex:0 0 5px;clip-path:none}
 .ymz-outline-row__triangle[data-direction="right"]{clip-path:polygon(18% 0,100% 50%,18% 100%)}
 .ymz-outline-row__triangle[data-direction="down"]{clip-path:polygon(0 18%,100% 18%,50% 100%)}
-.ymz-outline-row__leaf-square{clip-path:none}
 .ymz-outline-row__editor{
   display:block;
   flex:1;
@@ -1052,27 +1054,39 @@
 .ymz-outline-row__editor::selection,
 .ymz-outline-row__editor *::selection{background:color-mix(in srgb,var(--ymz-accent) 26%,transparent)}
 .ymz-outline-row.is-dragging{opacity:.42}
-.ymz-outline-row.is-drop-before::after,
-.ymz-outline-row.is-drop-after::after,
-.ymz-outline-row.is-drop-inside::after{
-  content:"";
+.ymz-outline-row.is-drop-before,
+.ymz-outline-row.is-drop-after,
+.ymz-outline-row.is-drop-inside{box-shadow:none!important}
+.ymz-outline-row.is-drop-inside:not(.is-active):not(:hover){background:transparent!important}
+.ymz-outline-row.is-drop-inside:hover{background:#ececec!important}
+.ymz-outline-row.is-drop-inside.is-active{background:#deeae6!important}
+.ymz-outline-row__drop-indicator{
   position:absolute;
-  z-index:8;
-  left:calc(6px + var(--ymz-outline-drop-depth,var(--ymz-outline-depth))*22px + 7px);
+  z-index:9;
+  left:calc(6px + var(--ymz-outline-drop-depth,var(--ymz-outline-depth))*22px + 14px);
   right:8px;
+  display:none;
   height:2px;
-  border-radius:2px;
+  border-radius:1px;
   background:var(--ymz-accent);
   pointer-events:none;
-  box-shadow:none;
 }
-.ymz-outline-row.is-drop-before::after{top:-1px}
-.ymz-outline-row.is-drop-after::after{bottom:-1px}
-.ymz-outline-row.is-drop-inside{
-  background:color-mix(in srgb,var(--ymz-accent) 10%,transparent)!important;
+.ymz-outline-row__drop-indicator::before{
+  content:"";
+  position:absolute;
+  left:-3px;
+  top:-2px;
+  width:6px;
+  height:6px;
+  border-radius:1px;
+  background:var(--ymz-accent);
 }
-.ymz-outline-row.is-drop-inside::after{bottom:-1px}
+.ymz-outline-row.is-drop-before .ymz-outline-row__drop-indicator{display:block;top:-1px}
+.ymz-outline-row.is-drop-after .ymz-outline-row__drop-indicator{display:block;bottom:-1px}
+.ymz-outline-row.is-drop-inside{background:color-mix(in srgb,var(--ymz-accent) 10%,transparent)!important}
+.ymz-outline-row.is-drop-inside .ymz-outline-row__drop-indicator{display:block;bottom:-1px}
 .ymz-outline-drag-ghost .ymz-outline-row__drag,
+.ymz-outline-drag-ghost .ymz-outline-row__drop-indicator,
 .ymz-outline-drag-ghost .ymz-outline-row__branch{display:none}
 .ymz-outline-drag-ghost .ymz-outline-row__editor{border:0!important;outline:0!important;box-shadow:none!important}
 @media(max-width:720px){

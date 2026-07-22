@@ -482,11 +482,17 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       }
       if (position === 'before') {
         if (target.isRoot) return false;
+        const siblings = Array.isArray(target.parent?.children) ? target.parent.children : [];
+        if (node.parent === target.parent && siblings.indexOf(node) === siblings.indexOf(target) - 1) return false;
         mindMap.execCommand('INSERT_BEFORE', [node], target);
       } else if (position === 'after') {
         if (target.isRoot) return false;
+        const siblings = Array.isArray(target.parent?.children) ? target.parent.children : [];
+        if (node.parent === target.parent && siblings.indexOf(node) === siblings.indexOf(target) + 1) return false;
         mindMap.execCommand('INSERT_AFTER', [node], target);
       } else {
+        const children = Array.isArray(target.children) ? target.children : [];
+        if (node.parent === target && children.at(-1) === node) return false;
         mindMap.execCommand('MOVE_NODE_TO', [node], target);
       }
       return true;

@@ -92,8 +92,8 @@ with sync_playwright() as p:
         raise RuntimeError(f'Unified surface contract failed: {surface}')
 
     marker = page.evaluate("""()=>{const tri=document.querySelector('[data-outline-uid=root] .ymz-outline-row__triangle');const square=document.querySelector('[data-outline-uid=c1] .ymz-outline-row__leaf-square');return{triangle:[getComputedStyle(tri).width,getComputedStyle(tri).height,getComputedStyle(tri).backgroundColor],square:[getComputedStyle(square).width,getComputedStyle(square).height,getComputedStyle(square).backgroundColor]}}""")
-    if marker['triangle'] != ['7px', '7px', 'rgb(0, 0, 0)'] or marker['square'] != marker['triangle']:
-        raise RuntimeError(f'Marker parity failed: {marker}')
+    if marker['triangle'] != ['7px', '7px', 'rgb(0, 0, 0)'] or marker['square'] != ['5px', '5px', 'rgb(0, 0, 0)']:
+        raise RuntimeError(f'Marker sizing failed: {marker}')
 
     # Two-stage Ctrl+A, then live selection must replace only the new range.
     select_range(page, 'a', 2)
@@ -212,9 +212,9 @@ with sync_playwright() as p:
     target_text_left = page.locator('[data-outline-uid="c1"] [data-outline-editor]').bounding_box()['x']
     page.mouse.move(source_box['x'] + 2, source_box['y'] + 8); page.mouse.down()
     page.mouse.move(target_text_left - 25, target_box['y'] + 2, steps=8)
-    drop = page.eval_on_selector('[data-outline-uid="c1"]', "e=>({before:e.classList.contains('is-drop-before'),depth:e.style.getPropertyValue('--ymz-outline-drop-depth')})")
+    drop = page.eval_on_selector('[data-outline-uid="c1"]', "e=>({after:e.classList.contains('is-drop-after'),depth:e.style.getPropertyValue('--ymz-outline-drop-depth')})")
     page.mouse.up()
-    if not drop['before'] or drop['depth'] != '1':
+    if not drop['after'] or drop['depth'] != '1':
         raise RuntimeError(f'Parent-aligned drop indicator failed: {drop}')
 
     # IME does not reconcile half-composed text.

@@ -125,6 +125,10 @@ interface OutlinePointerDragSession {
   dragging: boolean;
   ghost: HTMLElement | null;
   intent: OutlinePointerDropIntent | null;
+  pendingIntent: OutlinePointerDropIntent | null;
+  pendingSince: number;
+  lastClientX: number;
+  lastClientY: number;
 }
 
 export class YeMindEditor {
@@ -197,6 +201,8 @@ export class YeMindEditor {
     const sourceUid = row.dataset.outlineUid ?? "";
     if (!sourceUid || row.dataset.outlineRoot === "true") return;
     event.preventDefault();
+    event.stopImmediatePropagation();
+    this.outlineEl.setPointerCapture?.(event.pointerId);
     this.outlinePointerDrag = {
       pointerId: event.pointerId,
       sourceUid,
@@ -209,6 +215,10 @@ export class YeMindEditor {
       dragging: false,
       ghost: null,
       intent: null,
+      pendingIntent: null,
+      pendingSince: 0,
+      lastClientX: event.clientX,
+      lastClientY: event.clientY,
     };
   };
 
@@ -216,6 +226,9 @@ export class YeMindEditor {
     const session = this.outlinePointerDrag;
     if (!session || session.pointerId !== event.pointerId || !this.commands)
       return;
+    session.lastClientX = event.clientX;
+    session.lastClientY = event.clientY;
+    this.autoScrollOutlineDuringDrag(event.clientY);
     const distance = Math.hypot(
       event.clientX - session.startX,
       event.clientY - session.startY,
@@ -263,7 +276,21 @@ export class YeMindEditor {
       indentWidth: 22,
       targetAncestors: this.collectOutlineAncestors(targetRow),
     });
-    if (!intent) return;
+    if (!intent) {
+      session.pendingIntent = null;
+      return;
+    }
+    const intentKey = `${intent.kind}:${intent.targetUid}:${intent.desiredDepth}`;
+    const pendingKey = session.pendingIntent
+      ? `${session.pendingIntent.kind}:${session.pendingIntent.targetUid}:${session.pendingIntent.desiredDepth}`
+      : "";
+    if (intent.kind === "child" && intentKey !== pendingKey) {
+      session.pendingIntent = intent;
+      session.pendingSince = performance.now();
+      return;
+    }
+    if (intent.kind === "child" && performance.now() - session.pendingSince < 140) return;
+    session.pendingIntent = null;
     session.intent = intent;
     targetRow.classList.add(`is-drop-${intent.position}`);
     targetRow.style.setProperty(
@@ -276,8 +303,14 @@ export class YeMindEditor {
     const session = this.outlinePointerDrag;
     if (!session || session.pointerId !== event.pointerId) return;
     const { dragging, intent, sourceUid } = session;
+    this.outlineEl.releasePointerCapture?.(event.pointerId);
     this.cleanupOutlinePointerDrag();
-    if (!dragging || !intent || !this.commands) return;
+    if (!this.commands) return;
+    if (!dragging) {
+      this.commands.goToNode(sourceUid);
+      return;
+    }
+    if (!intent) return;
     event.preventDefault();
     this.suppressOutlineClickUntil = Date.now() + 300;
     const moved = this.commands.moveNodeByUid(
@@ -300,6 +333,7 @@ export class YeMindEditor {
 
   private readonly onOutlinePointerCancel = (event: PointerEvent): void => {
     if (this.outlinePointerDrag?.pointerId !== event.pointerId) return;
+    this.outlineEl.releasePointerCapture?.(event.pointerId);
     this.cleanupOutlinePointerDrag();
   };
 
@@ -504,10 +538,12 @@ export class YeMindEditor {
     this.outlineEl?.removeEventListener(
       "pointerdown",
       this.onOutlinePointerDown,
+      true,
     );
     window.removeEventListener("pointermove", this.onOutlinePointerMove);
     window.removeEventListener("pointerup", this.onOutlinePointerUp);
     window.removeEventListener("pointercancel", this.onOutlinePointerCancel);
+    window.removeEventListener("keydown", this.onOutlineDragKeyDown, true);
     this.cleanupOutlinePointerDrag();
     if (this.resizeFrame !== null)
       window.cancelAnimationFrame(this.resizeFrame);
@@ -1664,7 +1700,7 @@ export class YeMindEditor {
   }
 
   private bindOutlineDrag(): void {
-    this.outlineEl.addEventListener("pointerdown", this.onOutlinePointerDown);
+    this.outlineEl.addEventListener("pointerdown", this.onOutlinePointerDown, true);
     window.addEventListener("pointermove", this.onOutlinePointerMove, {
       passive: false,
     });
@@ -1672,6 +1708,25 @@ export class YeMindEditor {
       passive: false,
     });
     window.addEventListener("pointercancel", this.onOutlinePointerCancel);
+    window.addEventListener("keydown", this.onOutlineDragKeyDown, true);
+  }
+
+  private readonly onOutlineDragKeyDown = (event: KeyboardEvent): void => {
+    if (event.key !== "Escape" || !this.outlinePointerDrag) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const pointerId = this.outlinePointerDrag.pointerId;
+    this.outlineEl.releasePointerCapture?.(pointerId);
+    this.cleanupOutlinePointerDrag();
+  };
+
+  private autoScrollOutlineDuringDrag(clientY: number): void {
+    const rect = this.outlinePaneEl.getBoundingClientRect();
+    const edge = 34;
+    let delta = 0;
+    if (clientY < rect.top + edge) delta = -Math.ceil((rect.top + edge - clientY) / 5);
+    else if (clientY > rect.bottom - edge) delta = Math.ceil((clientY - (rect.bottom - edge)) / 5);
+    if (delta !== 0) this.outlinePaneEl.scrollTop += Math.max(-18, Math.min(18, delta));
   }
 
   private createOutlineDragGhost(row: HTMLElement): HTMLElement {

@@ -1,3 +1,9 @@
+import {
+  clamp,
+  distanceToRange,
+  type TreeDropIntent,
+} from './treeDropIntent';
+
 export interface OfficialDragRect {
   x: number;
   y: number;
@@ -5,17 +11,27 @@ export interface OfficialDragRect {
   height: number;
 }
 
-export interface OfficialDragCandidate {
-  key: string;
+export interface OfficialDragPoint {
+  x: number;
+  y: number;
+}
+
+export interface OfficialDragCandidate extends TreeDropIntent<any> {
   overlapNode: any | null;
   prevNode: any | null;
   nextNode: any | null;
+  targetNode: any | null;
+  parentNode: any | null;
+  score: number;
 }
 
 export interface ResolveOfficialDragCandidateOptions {
   layout: string;
-  ghost: OfficialDragRect;
+  pointer?: OfficialDragPoint;
+  /** Compatibility fallback for older tests/callers. Only its center is used. */
+  ghost?: OfficialDragRect;
   nodes: any[];
+  excludedNodes?: any[];
   current: OfficialDragCandidate;
   getRect: (node: any) => OfficialDragRect | null;
 }
@@ -23,29 +39,30 @@ export interface ResolveOfficialDragCandidateOptions {
 export type OfficialDragGrowthDirection = 'left' | 'right' | 'top' | 'bottom';
 type SiblingAxis = 'x' | 'y';
 
+interface SlotIntent {
+  parent: any;
+  siblings: any[];
+  nativeSiblings: any[];
+  visualIndex: number;
+  nativeIndex: number;
+  score: number;
+  axisDistance: number;
+  targetNode: any | null;
+  kind: 'before' | 'after';
+}
+
 interface ChildIntent {
   node: any;
   score: number;
   fromTail: boolean;
-  centerInsideTarget: boolean;
+  insideBody: boolean;
 }
 
-interface SiblingIntent {
-  parent: any;
-  siblings: any[];
-  index: number;
-  nativeIndex: number;
-  reverse: boolean;
-  score: number;
-}
-
-const CHILD_TAIL_SIZE = 80;
-const CHILD_ENTER_PADDING = 8;
-const CHILD_LEAVE_PADDING = 22;
-const SIBLING_LANE_PADDING = 44;
-const SIBLING_LANE_PADDING_ACTIVE = 72;
-const SIBLING_END_PADDING = 44;
-const SIBLING_END_PADDING_ACTIVE = 72;
+const CHILD_TAIL_LENGTH = 54;
+const CHILD_CROSS_PADDING = 9;
+const CHILD_BODY_PADDING = 4;
+const SIBLING_SLOT_RADIUS = 7;
+const SIBLING_CROSS_PADDING = 38;
 
 const OFFICIAL_GEOMETRY_LAYOUTS = new Set([
   'logicalStructure',
@@ -64,12 +81,28 @@ export function supportsOfficialDragGeometry(layout: string): boolean {
   return OFFICIAL_GEOMETRY_LAYOUTS.has(String(layout));
 }
 
+export function emptyOfficialDragCandidate(): OfficialDragCandidate {
+  return {
+    key: 'none',
+    kind: 'none',
+    target: null,
+    parent: null,
+    index: -1,
+    overlapNode: null,
+    prevNode: null,
+    nextNode: null,
+    targetNode: null,
+    parentNode: null,
+    score: Number.POSITIVE_INFINITY,
+  };
+}
+
 function finiteRect(rect: OfficialDragRect | null | undefined): rect is OfficialDragRect {
   return Boolean(
-    rect
-      && [rect.x, rect.y, rect.width, rect.height].every(Number.isFinite)
-      && rect.width > 0
-      && rect.height > 0,
+    rect &&
+      [rect.x, rect.y, rect.width, rect.height].every(Number.isFinite) &&
+      rect.width > 0 &&
+      rect.height > 0,
   );
 }
 
@@ -79,64 +112,33 @@ function nodeUid(node: any): string {
   return String(value ?? '');
 }
 
-function expandRect(rect: OfficialDragRect, xPadding: number, yPadding = xPadding): OfficialDragRect {
-  return {
-    x: rect.x - xPadding,
-    y: rect.y - yPadding,
-    width: rect.width + xPadding * 2,
-    height: rect.height + yPadding * 2,
-  };
-}
-
-function intersectionArea(a: OfficialDragRect, b: OfficialDragRect): number {
-  const left = Math.max(a.x, b.x);
-  const top = Math.max(a.y, b.y);
-  const right = Math.min(a.x + a.width, b.x + b.width);
-  const bottom = Math.min(a.y + a.height, b.y + b.height);
-  const width = right - left;
-  const height = bottom - top;
-  return width <= 0 || height <= 0 ? 0 : width * height;
-}
-
-function rectCenter(rect: OfficialDragRect): { x: number; y: number } {
+function rectCenter(rect: OfficialDragRect): OfficialDragPoint {
   return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
 }
 
-function containsPoint(rect: OfficialDragRect, point: { x: number; y: number }): boolean {
-  return point.x >= rect.x
-    && point.x <= rect.x + rect.width
-    && point.y >= rect.y
-    && point.y <= rect.y + rect.height;
+function containsPoint(rect: OfficialDragRect, point: OfficialDragPoint): boolean {
+  return (
+    point.x >= rect.x &&
+    point.x <= rect.x + rect.width &&
+    point.y >= rect.y &&
+    point.y <= rect.y + rect.height
+  );
 }
 
-function unionRects(rects: OfficialDragRect[]): OfficialDragRect | null {
-  if (rects.length === 0) return null;
-  let minX = Number.POSITIVE_INFINITY;
-  let minY = Number.POSITIVE_INFINITY;
-  let maxX = Number.NEGATIVE_INFINITY;
-  let maxY = Number.NEGATIVE_INFINITY;
-  rects.forEach((rect) => {
-    minX = Math.min(minX, rect.x);
-    minY = Math.min(minY, rect.y);
-    maxX = Math.max(maxX, rect.x + rect.width);
-    maxY = Math.max(maxY, rect.y + rect.height);
-  });
-  if (![minX, minY, maxX, maxY].every(Number.isFinite)) return null;
-  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+function expandRect(rect: OfficialDragRect, x: number, y = x): OfficialDragRect {
+  return {
+    x: rect.x - x,
+    y: rect.y - y,
+    width: rect.width + x * 2,
+    height: rect.height + y * 2,
+  };
 }
 
-function tailRect(rect: OfficialDragRect, direction: OfficialDragGrowthDirection): OfficialDragRect {
-  switch (direction) {
-    case 'left':
-      return { x: rect.x - CHILD_TAIL_SIZE, y: rect.y, width: CHILD_TAIL_SIZE, height: rect.height };
-    case 'top':
-      return { x: rect.x, y: rect.y - CHILD_TAIL_SIZE, width: rect.width, height: CHILD_TAIL_SIZE };
-    case 'bottom':
-      return { x: rect.x, y: rect.y + rect.height, width: rect.width, height: CHILD_TAIL_SIZE };
-    case 'right':
-    default:
-      return { x: rect.x + rect.width, y: rect.y, width: CHILD_TAIL_SIZE, height: rect.height };
+function pointFromOptions(options: ResolveOfficialDragCandidateOptions): OfficialDragPoint | null {
+  if (options.pointer && Number.isFinite(options.pointer.x) && Number.isFinite(options.pointer.y)) {
+    return options.pointer;
   }
+  return finiteRect(options.ghost) ? rectCenter(options.ghost) : null;
 }
 
 function normalizedDirection(value: unknown): OfficialDragGrowthDirection | null {
@@ -154,7 +156,6 @@ export function resolveOfficialDragGrowthDirection(layout: string, node: any): O
     case 'mindMap':
       return normalizedDirection(node?.dir) === 'left' ? 'left' : 'right';
     case 'organizationStructure':
-      return 'bottom';
     case 'catalogOrganization':
       return 'bottom';
     case 'timeline':
@@ -162,8 +163,7 @@ export function resolveOfficialDragGrowthDirection(layout: string, node: any): O
     case 'timeline2': {
       const layer = Number(node?.layerIndex ?? 0);
       if (layer === 0) return 'right';
-      const direction = normalizedDirection(node?.dir);
-      return direction === 'top' ? 'top' : 'bottom';
+      return normalizedDirection(node?.dir) === 'top' ? 'top' : 'bottom';
     }
     case 'verticalTimeline':
     case 'verticalTimeline2':
@@ -199,180 +199,385 @@ function siblingAxis(layout: string, parent: any): SiblingAxis {
 }
 
 function reversesVisualSiblingOrder(layout: string, parent: any): boolean {
-  return layout === 'timeline2'
-    && Number(parent?.layerIndex ?? 0) === 1
-    && normalizedDirection(parent?.dir) === 'top';
+  return (
+    layout === 'timeline2' &&
+    Number(parent?.layerIndex ?? 0) === 1 &&
+    normalizedDirection(parent?.dir) === 'top'
+  );
 }
 
-function sameNode(a: any, b: any): boolean {
-  if (a === b) return true;
-  const aUid = nodeUid(a);
-  return Boolean(aUid && aUid === nodeUid(b));
-}
-
-function currentSiblingParent(current: OfficialDragCandidate): any | null {
-  return current.prevNode?.parent ?? current.nextNode?.parent ?? null;
-}
-
-function resolveChildIntent(options: ResolveOfficialDragCandidateOptions): ChildIntent | null {
-  const center = rectCenter(options.ghost);
-  let best: ChildIntent | null = null;
-
-  options.nodes.forEach((node) => {
-    const uid = nodeUid(node);
-    const rect = options.getRect(node);
-    if (!uid || !finiteRect(rect) || node?.isGeneralization) return;
-
-    const active = sameNode(options.current.overlapNode, node);
-    const padding = active ? CHILD_LEAVE_PADDING : CHILD_ENTER_PADDING;
-    const bodyScore = intersectionArea(options.ghost, expandRect(rect, padding));
-    const tailScore = intersectionArea(
-      options.ghost,
-      expandRect(tailRect(rect, resolveOfficialDragGrowthDirection(options.layout, node)), padding),
-    );
-    const score = Math.max(bodyScore, tailScore);
-    if (score <= 0) return;
-
-    const intent: ChildIntent = {
-      node,
-      score,
-      fromTail: tailScore > 0 && bodyScore <= 0,
-      centerInsideTarget: containsPoint(rect, center),
-    };
-    if (!best || intent.score > best.score) {
-      best = intent;
-    }
-  });
-
-  return best;
+function tailRect(
+  rect: OfficialDragRect,
+  direction: OfficialDragGrowthDirection,
+): OfficialDragRect {
+  switch (direction) {
+    case 'left':
+      return {
+        x: rect.x - CHILD_TAIL_LENGTH,
+        y: rect.y - CHILD_CROSS_PADDING,
+        width: CHILD_TAIL_LENGTH,
+        height: rect.height + CHILD_CROSS_PADDING * 2,
+      };
+    case 'top':
+      return {
+        x: rect.x - CHILD_CROSS_PADDING,
+        y: rect.y - CHILD_TAIL_LENGTH,
+        width: rect.width + CHILD_CROSS_PADDING * 2,
+        height: CHILD_TAIL_LENGTH,
+      };
+    case 'bottom':
+      return {
+        x: rect.x - CHILD_CROSS_PADDING,
+        y: rect.y + rect.height,
+        width: rect.width + CHILD_CROSS_PADDING * 2,
+        height: CHILD_TAIL_LENGTH,
+      };
+    case 'right':
+    default:
+      return {
+        x: rect.x + rect.width,
+        y: rect.y - CHILD_CROSS_PADDING,
+        width: CHILD_TAIL_LENGTH,
+        height: rect.height + CHILD_CROSS_PADDING * 2,
+      };
+  }
 }
 
 function branchFilteredSiblings(
   layout: string,
   parent: any,
   siblings: any[],
-  ghost: OfficialDragRect,
+  pointer: OfficialDragPoint,
   getRect: (node: any) => OfficialDragRect | null,
 ): any[] {
   if (layout !== 'mindMap') return siblings;
   const parentRect = getRect(parent);
   if (!finiteRect(parentRect)) return siblings;
-  const branch = rectCenter(ghost).x < rectCenter(parentRect).x ? 'left' : 'right';
+  const branch = pointer.x < rectCenter(parentRect).x ? 'left' : 'right';
   const filtered = siblings.filter((node) => {
     const direction = normalizedDirection(node?.dir);
     if (direction === 'left' || direction === 'right') return direction === branch;
     const rect = getRect(node);
-    return finiteRect(rect) ? (rectCenter(rect).x < rectCenter(parentRect).x ? 'left' : 'right') === branch : false;
+    return finiteRect(rect)
+      ? (rectCenter(rect).x < rectCenter(parentRect).x ? 'left' : 'right') === branch
+      : false;
   });
   return filtered.length > 0 ? filtered : siblings;
 }
 
-function resolveSiblingIntent(options: ResolveOfficialDragCandidateOptions): SiblingIntent | null {
-  const available = new Set(options.nodes);
+function orderedSiblings(
+  layout: string,
+  parent: any,
+  available: Set<any>,
+  pointer: OfficialDragPoint,
+  getRect: (node: any) => OfficialDragRect | null,
+): any[] {
+  let siblings = Array.isArray(parent?.children)
+    ? parent.children.filter((child: any) => available.has(child) && finiteRect(getRect(child)))
+    : [];
+  siblings = branchFilteredSiblings(layout, parent, siblings, pointer, getRect);
+  const axis = siblingAxis(layout, parent);
+  return [...siblings].sort((a, b) => {
+    const aRect = getRect(a)!;
+    const bRect = getRect(b)!;
+    const delta = axis === 'x'
+      ? rectCenter(aRect).x - rectCenter(bRect).x
+      : rectCenter(aRect).y - rectCenter(bRect).y;
+    return Math.abs(delta) > 0.5 ? delta : nodeUid(a).localeCompare(nodeUid(b));
+  });
+}
+
+function resolveSiblingSlot(
+  options: ResolveOfficialDragCandidateOptions,
+  pointer: OfficialDragPoint,
+): SlotIntent | null {
+  const excluded = new Set(options.excludedNodes ?? []);
+  const available = new Set(options.nodes.filter((node) => !excluded.has(node)));
   const seenParents = new Set<any>();
-  const activeParent = currentSiblingParent(options.current);
-  let best: SiblingIntent | null = null;
+  let best: SlotIntent | null = null;
 
   options.nodes.forEach((node) => {
+    if (excluded.has(node)) return;
     const parent = node?.parent;
     if (!parent || seenParents.has(parent)) return;
     seenParents.add(parent);
-
-    let siblings = Array.isArray(parent.children)
-      ? parent.children.filter((child: any) => available.has(child) && finiteRect(options.getRect(child)))
-      : [];
-    siblings = branchFilteredSiblings(options.layout, parent, siblings, options.ghost, options.getRect);
+    const siblings = orderedSiblings(options.layout, parent, available, pointer, options.getRect);
     if (siblings.length === 0) return;
-
-    const rects = siblings.map(options.getRect).filter(finiteRect);
-    const bounds = unionRects(rects);
-    if (!bounds) return;
-
-    const active = sameNode(activeParent, parent);
-    const lane = active ? SIBLING_LANE_PADDING_ACTIVE : SIBLING_LANE_PADDING;
-    const end = active ? SIBLING_END_PADDING_ACTIVE : SIBLING_END_PADDING;
+    const nativeSiblings = Array.isArray(parent.children)
+      ? parent.children.filter((child: any) => siblings.includes(child))
+      : [];
     const axis = siblingAxis(options.layout, parent);
-    const laneBounds = axis === 'y'
-      ? expandRect(bounds, lane, end)
-      : expandRect(bounds, end, lane);
-    const overlap = intersectionArea(options.ghost, laneBounds);
-    if (overlap <= 0) return;
+    const rects = siblings.map(options.getRect).filter(finiteRect);
+    const minCross = Math.min(...rects.map((rect) => axis === 'y' ? rect.x : rect.y));
+    const maxCross = Math.max(...rects.map((rect) => axis === 'y' ? rect.x + rect.width : rect.y + rect.height));
+    const crossValue = axis === 'y' ? pointer.x : pointer.y;
+    const crossDistance = distanceToRange(
+      crossValue,
+      minCross - SIBLING_CROSS_PADDING,
+      maxCross + SIBLING_CROSS_PADDING,
+    );
+    if (crossDistance > SIBLING_CROSS_PADDING) return;
 
-    const score = overlap / Math.max(1, laneBounds.width * laneBounds.height);
-    const center = rectCenter(options.ghost);
-    const ordered = [...siblings].sort((a, b) => {
-      const aRect = options.getRect(a)!;
-      const bRect = options.getRect(b)!;
-      const delta = axis === 'x'
-        ? rectCenter(aRect).x - rectCenter(bRect).x
-        : rectCenter(aRect).y - rectCenter(bRect).y;
-      return Math.abs(delta) > 0.5 ? delta : nodeUid(a).localeCompare(nodeUid(b));
-    });
-    let index = 0;
-    for (const sibling of ordered) {
+    const slots: Array<{ coordinate: number; visualIndex: number; targetNode: any; kind: 'before' | 'after' }> = [];
+    siblings.forEach((sibling, index) => {
       const rect = options.getRect(sibling);
-      if (!finiteRect(rect)) continue;
-      const siblingCenter = rectCenter(rect);
-      const before = axis === 'x' ? center.x < siblingCenter.x : center.y < siblingCenter.y;
-      if (before) break;
-      index += 1;
-    }
+      if (!finiteRect(rect)) return;
+      slots.push({
+        coordinate: axis === 'y' ? rect.y : rect.x,
+        visualIndex: index,
+        targetNode: sibling,
+        kind: 'before',
+      });
+      if (index === siblings.length - 1) {
+        slots.push({
+          coordinate: axis === 'y' ? rect.y + rect.height : rect.x + rect.width,
+          visualIndex: siblings.length,
+          targetNode: sibling,
+          kind: 'after',
+        });
+      }
+    });
 
-    const reverse = reversesVisualSiblingOrder(options.layout, parent);
-    const nativeIndex = reverse ? ordered.length - index : index;
-    const intent: SiblingIntent = {
-      parent,
-      siblings: ordered,
-      index,
-      nativeIndex,
-      reverse,
-      score,
-    };
-    if (!best || intent.score > best.score) {
-      best = intent;
-    }
+    const axisValue = axis === 'y' ? pointer.y : pointer.x;
+    slots.forEach((slot) => {
+      const axisDistance = Math.abs(axisValue - slot.coordinate);
+      if (axisDistance > SIBLING_SLOT_RADIUS) return;
+      const reverse = reversesVisualSiblingOrder(options.layout, parent);
+      const nativeIndex = reverse ? siblings.length - slot.visualIndex : slot.visualIndex;
+      const score = axisDistance + crossDistance * 0.18;
+      const candidate: SlotIntent = {
+        parent,
+        siblings,
+        nativeSiblings,
+        visualIndex: slot.visualIndex,
+        nativeIndex,
+        score,
+        axisDistance,
+        targetNode: slot.targetNode,
+        kind: slot.kind,
+      };
+      if (!best || score < best.score) best = candidate;
+    });
   });
-
   return best;
 }
 
-function childCandidate(intent: ChildIntent): OfficialDragCandidate {
-  return {
-    key: `child:${nodeUid(intent.node)}`,
-    overlapNode: intent.node,
-    prevNode: null,
-    nextNode: null,
-  };
+function resolveChildTarget(
+  options: ResolveOfficialDragCandidateOptions,
+  pointer: OfficialDragPoint,
+): ChildIntent | null {
+  const excluded = new Set(options.excludedNodes ?? []);
+  let best: ChildIntent | null = null;
+  options.nodes.forEach((node) => {
+    if (excluded.has(node)) return;
+    const rect = options.getRect(node);
+    if (!finiteRect(rect) || node?.isGeneralization) return;
+    const insideBody = containsPoint(expandRect(rect, CHILD_BODY_PADDING), pointer);
+    const fromTail = containsPoint(
+      tailRect(rect, resolveOfficialDragGrowthDirection(options.layout, node)),
+      pointer,
+    );
+    if (!insideBody && !fromTail) return;
+    const center = rectCenter(rect);
+    const score = Math.hypot(pointer.x - center.x, pointer.y - center.y) - (fromTail ? 20 : 0);
+    const candidate = { node, score, fromTail, insideBody };
+    if (!best || score < best.score) best = candidate;
+  });
+  return best;
 }
 
-function siblingCandidate(intent: SiblingIntent): OfficialDragCandidate {
-  const prevNode = intent.reverse
-    ? (intent.index < intent.siblings.length ? intent.siblings[intent.index] ?? null : null)
-    : (intent.index > 0 ? intent.siblings[intent.index - 1] ?? null : null);
-  const nextNode = intent.reverse
-    ? (intent.index > 0 ? intent.siblings[intent.index - 1] ?? null : null)
-    : (intent.index < intent.siblings.length ? intent.siblings[intent.index] ?? null : null);
-  if (!prevNode && !nextNode) {
-    return { key: 'none', overlapNode: null, prevNode: null, nextNode: null };
-  }
+function slotCandidate(
+  slot: SlotIntent,
+  kind: 'before' | 'after' = slot.kind,
+): OfficialDragCandidate {
+  const nextNode = slot.nativeIndex < slot.nativeSiblings.length
+    ? slot.nativeSiblings[slot.nativeIndex] ?? null
+    : null;
+  const prevNode = slot.nativeIndex > 0
+    ? slot.nativeSiblings[slot.nativeIndex - 1] ?? null
+    : null;
   return {
-    key: `sibling:${nodeUid(intent.parent)}:${intent.nativeIndex}`,
+    key: `${kind}:${nodeUid(slot.parent)}:${slot.nativeIndex}`,
+    kind,
+    target: slot.targetNode,
+    parent: slot.parent,
+    index: slot.nativeIndex,
     overlapNode: null,
-    prevNode,
+    prevNode: nextNode ? null : prevNode,
     nextNode,
+    targetNode: slot.targetNode,
+    parentNode: slot.parent,
+    score: slot.score,
   };
 }
 
-export function resolveOfficialDragCandidate(options: ResolveOfficialDragCandidateOptions): OfficialDragCandidate {
-  if (!finiteRect(options.ghost)) {
-    return { key: 'none', overlapNode: null, prevNode: null, nextNode: null };
+function childCandidate(
+  options: ResolveOfficialDragCandidateOptions,
+  pointer: OfficialDragPoint,
+  child: ChildIntent,
+): OfficialDragCandidate {
+  const excluded = new Set(options.excludedNodes ?? []);
+  const available = new Set(options.nodes.filter((node) => !excluded.has(node)));
+  const children = orderedSiblings(options.layout, child.node, available, pointer, options.getRect);
+  if (children.length === 0) {
+    return {
+      key: `child:${nodeUid(child.node)}:0`,
+      kind: 'child',
+      target: child.node,
+      parent: child.node,
+      index: 0,
+      overlapNode: child.node,
+      prevNode: null,
+      nextNode: null,
+      targetNode: child.node,
+      parentNode: child.node,
+      score: child.score,
+    };
   }
 
-  const child = resolveChildIntent(options);
-  const sibling = resolveSiblingIntent(options);
-  if (child?.fromTail) return childCandidate(child);
-  if (sibling && (!child || !child.centerInsideTarget)) return siblingCandidate(sibling);
-  if (child) return childCandidate(child);
-  if (sibling) return siblingCandidate(sibling);
-  return { key: 'none', overlapNode: null, prevNode: null, nextNode: null };
+  const axis = siblingAxis(options.layout, child.node);
+  const value = axis === 'y' ? pointer.y : pointer.x;
+  let visualIndex = 0;
+  for (const item of children) {
+    const rect = options.getRect(item);
+    if (!finiteRect(rect)) continue;
+    const center = axis === 'y' ? rectCenter(rect).y : rectCenter(rect).x;
+    if (value < center) break;
+    visualIndex += 1;
+  }
+  const reverse = reversesVisualSiblingOrder(options.layout, child.node);
+  const nativeIndex = reverse ? children.length - visualIndex : visualIndex;
+  const nativeChildren = Array.isArray(child.node.children)
+    ? child.node.children.filter((item: any) => children.includes(item))
+    : [];
+  const nextNode = nativeIndex < nativeChildren.length ? nativeChildren[nativeIndex] ?? null : null;
+  const prevNode = nativeIndex > 0 ? nativeChildren[nativeIndex - 1] ?? null : null;
+  return {
+    key: `child:${nodeUid(child.node)}:${nativeIndex}`,
+    kind: 'child',
+    target: child.node,
+    parent: child.node,
+    index: nativeIndex,
+    overlapNode: null,
+    prevNode: nextNode ? null : prevNode,
+    nextNode,
+    targetNode: child.node,
+    parentNode: child.node,
+    score: child.score,
+  };
+}
+
+/**
+ * Pointer-based tree intent. The dragged clone never participates in hit
+ * testing, so a large image node cannot trigger a target while the pointer is
+ * still in the neutral gap between nodes.
+ */
+export function resolveOfficialDragCandidate(
+  options: ResolveOfficialDragCandidateOptions,
+): OfficialDragCandidate {
+  const pointer = pointFromOptions(options);
+  if (!pointer) return emptyOfficialDragCandidate();
+
+  const sibling = resolveSiblingSlot(options, pointer);
+  const child = resolveChildTarget(options, pointer);
+
+  // A precise sibling edge wins over a body hit. Entering the outward tail is
+  // an explicit hierarchy gesture and therefore wins over a nearby slot.
+  if (child?.fromTail) return childCandidate(options, pointer, child);
+  if (sibling && sibling.axisDistance <= SIBLING_SLOT_RADIUS) return slotCandidate(sibling);
+  if (child) return childCandidate(options, pointer, child);
+  return emptyOfficialDragCandidate();
+}
+
+export function officialCandidateParent(candidate: OfficialDragCandidate): any | null {
+  return candidate.parentNode ?? candidate.overlapNode ?? candidate.prevNode?.parent ?? candidate.nextNode?.parent ?? null;
+}
+
+export function isOfficialDragCandidateNoop(
+  candidate: OfficialDragCandidate,
+  sources: any[],
+): boolean {
+  if (candidate.kind === 'none' || !candidate.parentNode || sources.length === 0) return true;
+  const sourceSet = new Set(sources);
+  if (!sources.every((node) => node?.parent === candidate.parentNode)) return false;
+  const original = Array.isArray(candidate.parentNode.children)
+    ? candidate.parentNode.children
+    : [];
+  const firstSourceIndex = original.findIndex((node: any) => sourceSet.has(node));
+  if (firstSourceIndex < 0) return false;
+  const insertionIndex = original
+    .slice(0, firstSourceIndex)
+    .filter((node: any) => !sourceSet.has(node)).length;
+  const sourceOrder = original.filter((node: any) => sourceSet.has(node));
+  return insertionIndex === candidate.index && sourceOrder.every((node: any, index: number) => node === sources[index]);
+}
+
+export interface OfficialInsertionGuide {
+  path: string;
+  squareX: number;
+  squareY: number;
+  orientation: 'horizontal' | 'vertical';
+}
+
+function lineFromSlot(
+  rect: OfficialDragRect,
+  axis: SiblingAxis,
+  before: boolean,
+): OfficialInsertionGuide {
+  if (axis === 'y') {
+    const y = before ? rect.y : rect.y + rect.height;
+    const x1 = rect.x - 8;
+    const x2 = rect.x + rect.width + 24;
+    return { path: `M ${x1} ${y} L ${x2} ${y}`, squareX: x1, squareY: y, orientation: 'horizontal' };
+  }
+  const x = before ? rect.x : rect.x + rect.width;
+  const y1 = rect.y - 8;
+  const y2 = rect.y + rect.height + 24;
+  return { path: `M ${x} ${y1} L ${x} ${y2}`, squareX: x, squareY: y1, orientation: 'vertical' };
+}
+
+export function calculateOfficialInsertionGuide(
+  candidate: OfficialDragCandidate,
+  layout: string,
+  getRect: (node: any) => OfficialDragRect | null,
+): OfficialInsertionGuide | null {
+  if (candidate.kind === 'none' || !candidate.parentNode) return null;
+  const axis = siblingAxis(layout, candidate.parentNode);
+  if (candidate.nextNode) {
+    const rect = getRect(candidate.nextNode);
+    return finiteRect(rect) ? lineFromSlot(rect, axis, true) : null;
+  }
+  if (candidate.prevNode) {
+    const rect = getRect(candidate.prevNode);
+    return finiteRect(rect) ? lineFromSlot(rect, axis, false) : null;
+  }
+  const parentRect = getRect(candidate.parentNode);
+  if (!finiteRect(parentRect)) return null;
+  const direction = resolveOfficialDragGrowthDirection(layout, candidate.parentNode);
+  if (direction === 'left') {
+    const x = parentRect.x - 34;
+    const y1 = parentRect.y - 7;
+    const y2 = parentRect.y + parentRect.height + 7;
+    return { path: `M ${x} ${y1} L ${x} ${y2}`, squareX: x, squareY: y1, orientation: 'vertical' };
+  }
+  if (direction === 'top') {
+    const y = parentRect.y - 34;
+    const x1 = parentRect.x - 7;
+    const x2 = parentRect.x + parentRect.width + 7;
+    return { path: `M ${x1} ${y} L ${x2} ${y}`, squareX: x1, squareY: y, orientation: 'horizontal' };
+  }
+  if (direction === 'bottom') {
+    const y = parentRect.y + parentRect.height + 34;
+    const x1 = parentRect.x - 7;
+    const x2 = parentRect.x + parentRect.width + 7;
+    return { path: `M ${x1} ${y} L ${x2} ${y}`, squareX: x1, squareY: y, orientation: 'horizontal' };
+  }
+  const x = parentRect.x + parentRect.width + 34;
+  const y1 = parentRect.y - 7;
+  const y2 = parentRect.y + parentRect.height + 7;
+  return { path: `M ${x} ${y1} L ${x} ${y2}`, squareX: x, squareY: y1, orientation: 'vertical' };
+}
+
+export function clampOfficialIndex(value: number, length: number): number {
+  return clamp(value, 0, Math.max(0, length));
 }

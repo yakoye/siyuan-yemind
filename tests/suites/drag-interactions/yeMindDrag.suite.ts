@@ -8,9 +8,19 @@ import {
   captureIncomingDragLines,
   restoreIncomingDragLines,
 } from '../../../src/core/YeMindDrag';
+import { emptyOfficialDragCandidate, type OfficialDragCandidate } from '../../../src/core/officialDragIntent';
 
-describe('YeMindDrag official-style target guide', () => {
-  it('uses the upstream overlap node or sibling parent as the target parent', () => {
+function child(uid: string): OfficialDragCandidate {
+  const target = { uid };
+  return {
+    key: `child:${uid}:0`, kind: 'child', target, parent: target, index: 0,
+    overlapNode: target, prevNode: null, nextNode: null,
+    targetNode: target, parentNode: target, score: 0,
+  };
+}
+
+describe('YeMindDrag pointer target guide', () => {
+  it('uses the target parent for child and sibling candidates', () => {
     const overlap = { uid: 'parent' };
     expect(resolveDragGuideTarget({ overlapNode: overlap, prevNode: null, nextNode: null })).toBe(overlap);
     const parent = { uid: 'parent' };
@@ -18,36 +28,36 @@ describe('YeMindDrag official-style target guide', () => {
     expect(resolveDragGuideTarget({ overlapNode: null, prevNode: sibling, nextNode: null })).toBe(parent);
   });
 
-  it('keeps the original parent while no stable nearer target exists', () => {
-    const parent = { uid: 'original-parent' };
-    expect(resolveDragGuideTarget({ overlapNode: null, prevNode: null, nextNode: null, mousedownNode: { parent } })).toBe(parent);
+  it('clears a stale stable target immediately when the pointer enters NONE', () => {
+    let state = createDragCandidateState(child('parent'));
+    state = updateStableDragCandidate(state, emptyOfficialDragCandidate(), 20);
+    expect(state.stable.kind).toBe('none');
+    expect(state.pending).toBeNull();
   });
 
-  it('requires both 60ms and three matching frames before changing the stable candidate', () => {
-    const none = { key: 'none', overlapNode: null, prevNode: null, nextNode: null };
-    const next = { key: 'child:parent', overlapNode: { uid: 'parent' }, prevNode: null, nextNode: null };
+  it('requires deliberate dwell before changing hierarchy to a child', () => {
+    const none = emptyOfficialDragCandidate();
+    const next = child('parent');
     let state = createDragCandidateState(none);
     state = updateStableDragCandidate(state, next, 0);
-    expect(state.stable.key).toBe('none');
-    state = updateStableDragCandidate(state, next, 30);
-    expect(state.stable.key).toBe('none');
-    state = updateStableDragCandidate(state, next, 61);
-    expect(state.stable.key).toBe('child:parent');
+    state = updateStableDragCandidate(state, next, 80);
+    expect(state.stable.kind).toBe('none');
+    state = updateStableDragCandidate(state, next, 151);
+    expect(state.stable.key).toBe(next.key);
   });
 
-  it('resets pending frames when the candidate changes', () => {
-    const none = { key: 'none', overlapNode: null, prevNode: null, nextNode: null };
-    const a = { key: 'child:a', overlapNode: { uid: 'a' }, prevNode: null, nextNode: null };
-    const b = { key: 'child:b', overlapNode: { uid: 'b' }, prevNode: null, nextNode: null };
-    let state = createDragCandidateState(none);
-    state = updateStableDragCandidate(state, a, 0);
-    state = updateStableDragCandidate(state, a, 40);
-    state = updateStableDragCandidate(state, b, 70);
-    expect(state.stable.key).toBe('none');
-    expect(state.pending?.candidate.key).toBe('child:b');
-    expect(state.pending?.frames).toBe(1);
+  it('allows sibling slots to stabilise faster than hierarchy changes', () => {
+    const target = { uid: 'target', parent: { uid: 'parent' } };
+    const sibling: OfficialDragCandidate = {
+      key: 'before:parent:0', kind: 'before', target, parent: target.parent, index: 0,
+      overlapNode: null, prevNode: null, nextNode: target,
+      targetNode: target, parentNode: target.parent, score: 0,
+    };
+    let state = createDragCandidateState(emptyOfficialDragCandidate());
+    state = updateStableDragCandidate(state, sibling, 0);
+    state = updateStableDragCandidate(state, sibling, 25);
+    expect(state.stable.key).toBe(sibling.key);
   });
-
 
   it('hides incoming parent lines during drag and restores their original visibility', () => {
     const visibleLine = {
@@ -70,7 +80,6 @@ describe('YeMindDrag official-style target guide', () => {
     const snapshots = captureIncomingDragLines([first, second]);
     expect(visibleLine.shown).toBe(false);
     expect(hiddenLine.shown).toBe(false);
-
     restoreIncomingDragLines(snapshots);
     expect(visibleLine.shown).toBe(true);
     expect(hiddenLine.shown).toBe(false);
@@ -83,7 +92,7 @@ describe('YeMindDrag official-style target guide', () => {
     expect(calculateDragGuidePath(parent, ghost, 'vertical')).toBe('M 70 150 C 70 190, 240 60, 240 100');
   });
 
-  it('fades and thins the original-parent guide as the ghost approaches its parent', () => {
+  it('keeps a readable neutral original-parent guide at every distance', () => {
     const near = calculateOriginalParentGuideStyle(0);
     const far = calculateOriginalParentGuideStyle(140);
     expect(near.width).toBeCloseTo(2);
