@@ -24,10 +24,17 @@ export function synchronizeCanvasRichTextVisibility(map: MindMapRuntime | null |
   wrapper.style.setProperty('caret-color', textColor, 'important');
   wrapper.style.setProperty('-webkit-text-fill-color', 'currentColor', 'important');
   wrapper.style.setProperty('background', safeBackground, 'important');
+  wrapper.style.setProperty('border', '0', 'important');
+  wrapper.style.setProperty('outline', '0', 'important');
+  wrapper.style.setProperty('box-shadow', 'none', 'important');
   wrapper.querySelectorAll<HTMLElement>('.ql-container,.ql-editor').forEach((element) => {
     element.style.setProperty('color', 'inherit', 'important');
     element.style.setProperty('caret-color', 'currentColor', 'important');
     element.style.setProperty('-webkit-text-fill-color', 'currentColor', 'important');
+    element.style.setProperty('border', '0', 'important');
+    element.style.setProperty('outline', '0', 'important');
+    element.style.setProperty('box-shadow', 'none', 'important');
+    element.style.setProperty('background', 'transparent', 'important');
   });
   return true;
 }

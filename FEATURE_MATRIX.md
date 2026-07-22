@@ -15,7 +15,8 @@
 | Outline structure editing | Enter, Shift+Enter, Tab/Shift+Tab, atomic multiline replacement and stable UID/metadata preservation |
 | Outline drag | Full indent-cell move gutter, 5px threshold and stable YeMind-green depth-aligned BEFORE/AFTER/CHILD guides |
 | Outline presentation | Black 7px triangles, black 5px leaf squares, indent-rainbow guides, flat `#ececec` hover and `#deeae6` active state |
-| Canvas drag | Right-logical nearest-node local zones, continuous real-time candidate-parent green dashed link, live room preview and atomic subtree moves |
+| Canvas drag | Right-logical nearest-node local zones, continuous real-time candidate-parent green dashed link, live room preview, uninterrupted unaffected solid edges and atomic subtree moves |
+| Canvas text editing | Node-owned visual state with caret/native selection only; no extra Quill, contenteditable or browser focus frame |
 | Drag safety | Self/descendant/root/no-op rejection, Escape cancellation, one-step undo and stable UID/metadata preservation |
 | Image actions | Equal outer action boxes, visually balanced preview/delete artwork and event isolation from structural dragging |
 | Persistence | Local maps, settings, checkpoints, autosave and restore protection |

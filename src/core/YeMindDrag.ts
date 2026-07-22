@@ -13,6 +13,12 @@ import {
   createStableTreeDropState,
   updateStableTreeDropIntent,
 } from './treeDropIntent';
+import {
+  createShiftedIncomingLineOverlays,
+  dragLineIsVisible,
+  restoreShiftedIncomingLineOverlays,
+  type PreviewIncomingLineSnapshot,
+} from './dragPreviewEdges';
 
 export interface DragGuideRect {
   x: number;
@@ -39,19 +45,6 @@ export interface IncomingDragLineSnapshot {
   wasVisible: boolean;
 }
 
-function lineIsVisible(line: any): boolean {
-  if (!line) return false;
-  if (typeof line.visible === 'function') {
-    try {
-      return Boolean(line.visible());
-    } catch {
-      return true;
-    }
-  }
-  const display = line.node?.style?.display ?? line.attr?.('display');
-  return display !== 'none';
-}
-
 export function captureIncomingDragLines(nodes: any[]): IncomingDragLineSnapshot[] {
   const snapshots: IncomingDragLineSnapshot[] = [];
   const seen = new Set<any>();
@@ -61,7 +54,7 @@ export function captureIncomingDragLines(nodes: any[]): IncomingDragLineSnapshot
     const line = index >= 0 ? parent?._lines?.[index] : null;
     if (!line || seen.has(line)) return;
     seen.add(line);
-    snapshots.push({ line, wasVisible: lineIsVisible(line) });
+    snapshots.push({ line, wasVisible: dragLineIsVisible(line) });
     line.hide?.();
   });
   return snapshots;
@@ -281,15 +274,10 @@ interface PreviewTransformSnapshot {
   transition: string;
 }
 
-interface PreviewVisibilitySnapshot {
-  element: any;
-  wasVisible: boolean;
-}
-
 interface LogicalRoomPreview {
   key: string;
   transforms: PreviewTransformSnapshot[];
-  hiddenLines: PreviewVisibilitySnapshot[];
+  incomingLines: PreviewIncomingLineSnapshot[];
 }
 
 function svgTransform(element: any): { translateX: number; translateY: number } {
@@ -334,6 +322,7 @@ function previewGap(plugin: any): number {
   const bottom = Math.max(...rects.map((rect) => rect.y + rect.height));
   return Math.max(44, Math.min(360, bottom - top + 18));
 }
+
 function endpointDistance(parent: DragGuideRect, ghost: DragGuideRect, orientation: DragGuideOrientation): number {
   if (orientation === 'vertical') {
     return Math.hypot(
@@ -679,28 +668,20 @@ export default class YeMindDrag extends Drag {
       plugin.__ymzLogicalRoomPreview = {
         key: candidate.key,
         transforms: [],
-        hiddenLines: [],
+        incomingLines: [],
       } satisfies LogicalRoomPreview;
       return;
     }
 
     const deltaY = previewGap(plugin);
     const elements = new Set<any>();
-    const hiddenLines: PreviewVisibilitySnapshot[] = [];
     rootsToShift.forEach((root: any) => {
-      const incomingIndex = Array.isArray(root?.parent?.children)
-        ? root.parent.children.indexOf(root)
-        : -1;
-      const incoming = incomingIndex >= 0 ? root?.parent?._lines?.[incomingIndex] : null;
-      if (incoming && !hiddenLines.some((item) => item.element === incoming)) {
-        hiddenLines.push({ element: incoming, wasVisible: lineIsVisible(incoming) });
-        incoming.hide?.();
-      }
       collectSubtreeNodes(root).forEach((node) => {
         if (node?.group) elements.add(node.group);
         (node?._lines ?? []).forEach((line: any) => elements.add(line));
       });
     });
+    const incomingLines = createShiftedIncomingLineOverlays(plugin, rootsToShift, deltaY);
 
     const transforms: PreviewTransformSnapshot[] = [];
     elements.forEach((element) => {
@@ -718,7 +699,7 @@ export default class YeMindDrag extends Drag {
     plugin.__ymzLogicalRoomPreview = {
       key: candidate.key,
       transforms,
-      hiddenLines,
+      incomingLines,
     } satisfies LogicalRoomPreview;
   }
 
@@ -737,10 +718,7 @@ export default class YeMindDrag extends Drag {
       const transition = snapshot.transition;
       setTimeout(() => setElementTransition(element, transition), 120);
     });
-    preview.hiddenLines.forEach(({ element, wasVisible }) => {
-      if (wasVisible) element.show?.();
-      else element.hide?.();
-    });
+    restoreShiftedIncomingLineOverlays(preview.incomingLines);
     plugin.__ymzLogicalRoomPreview = null;
   }
 

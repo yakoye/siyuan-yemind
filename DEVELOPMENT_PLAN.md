@@ -2,7 +2,7 @@
 
 ## Current baseline
 
-- Product version: 0.9.7
+- Product version: 0.9.8
 - Host baseline: SiYuan 3.7.3
 - Plugin ID and folder: `siyuan-yemind`
 
@@ -23,7 +23,7 @@
 
 ## Next priorities
 
-1. Validate v0.9.7 nearest-node right-logical dragging in SiYuan 3.7.3 with dense, wide, tall and image nodes before generalizing it to other layouts.
+1. Validate v0.9.8 right-logical edge continuity and flat canvas text editing in SiYuan 3.7.3 with dense, wide, tall, image and multi-level nodes before generalizing the drag preview to other layouts.
 2. Profile 1,000+ node outline editing and drag-target resolution, reducing unnecessary DOM or geometry work without weakening transaction safety.
 3. Expand import/export formats in isolated releases.
 4. Continue accessibility, screen-reader and keyboard-navigation coverage.

@@ -72,8 +72,8 @@ describe('YeMind plugin identity and install layout', () => {
     expect(manifest.displayName.default).toBe('YeMind');
     expect(manifest.displayName.zh_CN).toBe('YeMind');
     expect(packageJson.name).toBe('siyuan-yemind');
-    expect(manifest.version).toBe('0.9.7');
-    expect(packageJson.version).toBe('0.9.7');
+    expect(manifest.version).toBe('0.9.8');
+    expect(packageJson.version).toBe('0.9.8');
   });
 
   it('uses the renamed YeMindPlugin source entry and removes the old current source filename', () => {
@@ -120,8 +120,8 @@ describe('YeMind plugin identity and install layout', () => {
       'FEATURE_MATRIX.md', 'MIGRATION_STATUS.md', 'AGENTS.md', 'ARCHITECTURE.md',
       ...Array.from(new Set([
         'docs/DIAGNOSTICS_GUIDE.md', 'docs/VERSIONING.md',
-        'docs/TEST_COVERAGE_MATRIX_v0.9.7.md', 'docs/verification-v0.9.7.md',
-        'docs/PRODUCT_BOUNDARIES_v0.9.7.md',
+        'docs/TEST_COVERAGE_MATRIX_v0.9.8.md', 'docs/verification-v0.9.8.md',
+        'docs/PRODUCT_BOUNDARIES_v0.9.8.md',
       ])),
     ].map((file) => readFileSync(resolve(file), 'utf8')).join('\n');
     expect(publicDocs).not.toMatch(/kmind/i);

@@ -5,14 +5,14 @@
 - Plugin ID: `siyuan-yemind`
 - Install folder: `data/plugins/siyuan-yemind/`
 - Storage folder: `data/storage/petal/siyuan-yemind/`
-- Current version: `0.9.7`
+- Current version: `0.9.8`
 
 ## Compatibility retained internally
 
 - Historical plugin protocol links remain readable.
 - Historical theme IDs normalize to current YeMind themes.
-- Existing map, settings and checkpoint files require no v0.9.7 schema migration.
-- The previous outline mode preference is ignored because v0.9.7 exposes one unified outline surface; map content is unchanged.
+- Existing map, settings and checkpoint files require no v0.9.8 schema migration.
+- The previous outline mode preference remains ignored because the current release exposes one unified outline surface; map content is unchanged.
 
 ## Release safety
 

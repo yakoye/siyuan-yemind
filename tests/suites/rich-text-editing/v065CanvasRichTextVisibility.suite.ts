@@ -15,7 +15,14 @@ describe('v0.6.5 canvas rich-text visibility regression', () => {
     expect(wrapper.style.getPropertyValue('color')).toBe('rgb(30, 41, 59)');
     expect(wrapper.style.getPropertyPriority('color')).toBe('important');
     expect(wrapper.style.background).toBe('rgb(255, 255, 255)');
-    expect(wrapper.querySelector<HTMLElement>('.ql-editor')!.style.color).toBe('inherit');
+    expect(wrapper.style.border).toBe('0px');
+    expect(wrapper.style.outline).toBe('0px');
+    expect(wrapper.style.boxShadow).toBe('none');
+    const editor = wrapper.querySelector<HTMLElement>('.ql-editor')!;
+    expect(editor.style.color).toBe('inherit');
+    expect(editor.style.border).toBe('0px');
+    expect(editor.style.outline).toBe('0px');
+    expect(editor.style.boxShadow).toBe('none');
   });
 });
 

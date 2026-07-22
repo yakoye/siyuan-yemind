@@ -136,7 +136,8 @@
     "v095UnifiedTreeDrag.suite.ts",
     "yeMindDrag.suite.ts",
     "v096LogicalDragAndOutlineEditing.suite.ts",
-    "v097NearestNodeCanvasDrag.suite.ts"
+    "v097NearestNodeCanvasDrag.suite.ts",
+    "v098DragEdgeContinuity.suite.ts"
   ],
   "advanced-structures": [
     "editorMultiSelectionIntegration.suite.ts",

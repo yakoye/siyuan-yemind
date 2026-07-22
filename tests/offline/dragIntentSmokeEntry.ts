@@ -5,6 +5,10 @@ import {
 } from '../../src/core/officialDragIntent';
 import { resolveOutlinePointerDropIntent } from '../../src/editor/outlineDrag';
 import { createStableTreeDropState, updateStableTreeDropIntent } from '../../src/core/treeDropIntent';
+import {
+  createShiftedIncomingLineOverlays,
+  restoreShiftedIncomingLineOverlays,
+} from '../../src/core/dragPreviewEdges';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -78,6 +82,48 @@ assert(state.stable.key === child.key, 'child dwell did not stabilise');
 state = updateStableTreeDropIntent(state, emptyOfficialDragCandidate(), 160);
 assert(state.stable.kind === 'none', 'NONE must clear stale target immediately');
 
+const createdLines: any[] = [];
+const line = () => ({
+  shown: true,
+  removed: false,
+  renderedTop: -1,
+  visible() { return this.shown; },
+  fill() { return this; },
+  attr() { return this; },
+  hide() { this.shown = false; return this; },
+  show() { this.shown = true; return this; },
+  remove() { this.removed = true; return this; },
+});
+const firstPreview = { top: 10 } as any;
+const secondPreview = { top: 40 } as any;
+const thirdPreview = { top: 70 } as any;
+const originalLines = [line(), line(), line()];
+const previewParent: any = {
+  children: [firstPreview, secondPreview, thirdPreview],
+  _lines: originalLines,
+  lineDraw: { path: () => { const item = line(); createdLines.push(item); return item; } },
+  renderer: {
+    layout: {
+      renderLine(value: any, overlays: any[]) {
+        value.children.forEach((item: any, index: number) => {
+          overlays[index].renderedTop = item.top;
+        });
+      },
+    },
+  },
+  style: { getStyle: () => 'curve' },
+  styleLine() {},
+};
+[firstPreview, secondPreview, thirdPreview].forEach((item) => { item.parent = previewParent; });
+const previewLines = createShiftedIncomingLineOverlays({ mindMap: {} }, [secondPreview, thirdPreview], 50);
+assert(originalLines[0].shown, 'unaffected incoming edge must stay visible');
+assert(!originalLines[1].shown && !originalLines[2].shown, 'shifted original edges must be replaced temporarily');
+assert(createdLines[1].renderedTop === 90 && createdLines[2].renderedTop === 120, 'preview edges must use shifted endpoints');
+assert(secondPreview.top === 40 && thirdPreview.top === 70, 'preview edge rendering must restore node geometry');
+restoreShiftedIncomingLineOverlays(previewLines);
+assert(originalLines.every((item) => item.shown), 'original edges must restore after preview cleanup');
+assert(previewLines.every((item) => item.overlay.removed), 'temporary preview edges must be removed');
+
 export default {
   canvasNearestLocalTarget: true,
   canvasBefore: true,
@@ -87,4 +133,5 @@ export default {
   outlineParentAlignment: true,
   hierarchyDwell: true,
   staleTargetCleared: true,
+  incomingEdgesPreserved: true,
 };

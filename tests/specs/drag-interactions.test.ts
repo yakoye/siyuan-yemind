@@ -7,3 +7,4 @@ import '../suites/drag-interactions/yeMindDrag.suite';
 import '../suites/drag-interactions/v095UnifiedTreeDrag.suite';
 import '../suites/drag-interactions/v096LogicalDragAndOutlineEditing.suite';
 import '../suites/drag-interactions/v097NearestNodeCanvasDrag.suite';
+import '../suites/drag-interactions/v098DragEdgeContinuity.suite';

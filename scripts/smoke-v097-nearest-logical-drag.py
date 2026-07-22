@@ -130,9 +130,10 @@ with sync_playwright() as p:
     editor_c.click(); page.keyboard.press('Control+A'); page.keyboard.press('Backspace'); page.wait_for_timeout(80)
     if page.locator('[data-outline-uid="c"]').count() != 1:
         raise RuntimeError('Deleting the last text removed the node too early')
-    page.keyboard.press('Backspace'); page.wait_for_timeout(720)
+    page.keyboard.press('Backspace')
+    page.wait_for_function("()=>!document.querySelector('[data-outline-uid=\"c\"]')", timeout=8000)
     previous_html = page.locator('[data-outline-uid="b"] [data-outline-editor]').inner_html()
-    if '<br' in previous_html.lower() or page.locator('[data-outline-uid="c"]').count() != 0:
+    if '<br' in previous_html.lower():
         raise RuntimeError(f'Empty-node deletion polluted previous node: {previous_html}')
     page.click('[data-action="undo"]'); page.wait_for_timeout(220)
     if compact(tree_shape(page)) != initial_compact:

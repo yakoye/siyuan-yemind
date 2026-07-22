@@ -1070,3 +1070,21 @@
   .ymz-editor[data-view="split"] .ymz-outline,
   .ymz-editor[data-view="outline"] .ymz-outline{padding:58px 8px 60px}
 }
+
+/* v0.9.8 canvas drag edge continuity and flat text editing */
+.ymz-editor .smm-richtext-node-edit-wrap,
+.ymz-editor .smm-richtext-node-edit-wrap:focus,
+.ymz-editor .smm-richtext-node-edit-wrap:focus-visible,
+.ymz-editor .smm-richtext-node-edit-wrap:focus-within,
+.ymz-editor .smm-richtext-node-edit-wrap .ql-container,
+.ymz-editor .smm-richtext-node-edit-wrap .ql-container:focus,
+.ymz-editor .smm-richtext-node-edit-wrap .ql-container:focus-within,
+.ymz-editor .smm-richtext-node-edit-wrap .ql-editor,
+.ymz-editor .smm-richtext-node-edit-wrap .ql-editor:focus,
+.ymz-editor .smm-richtext-node-edit-wrap .ql-editor:focus-visible{
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+}
+.ymz-editor .smm-richtext-node-edit-wrap .ql-container,
+.ymz-editor .smm-richtext-node-edit-wrap .ql-editor{background:transparent!important}

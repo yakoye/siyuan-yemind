@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.8 - 2026-07-22
+
+- Preserved unaffected solid tree edges during right-logical room-making previews.
+- Replaced only shifted sibling incoming edges with temporary correctly anchored overlays instead of hiding whole parent branches.
+- Kept the dragged subtree root's original incoming edge isolated behind the continuous green candidate-parent guide.
+- Restored original line visibility exactly on candidate changes, Escape cancellation and preview cleanup.
+- Removed Quill/contenteditable/browser focus borders, outlines and shadows from canvas node text editing.
+- Kept node theme/selection appearance, caret and native text selection as the only editing-state signals.
+- Added permanent unit, offline and Chromium regressions for edge continuity and flat editing.
+
 ## 0.9.7 - 2026-07-22
 
 - Replaced fixed right-logical lanes and tiny edge hotspots with nearest-node enlarged local target boxes.

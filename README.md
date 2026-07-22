@@ -2,8 +2,17 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.7`  
+Current version: `0.9.8`  
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.8
+
+- Keeps every unaffected solid parent-child edge visible while room-making moves sibling subtrees during a drag.
+- Re-renders only the incoming edge whose child endpoint moves, keeping the parent endpoint fixed and the preview endpoint attached to the shifted node.
+- Restores original edges exactly when the candidate changes, the drag is cancelled or the preview is cleared, without adding data or history mutations.
+- Continues to use one always-visible green dashed candidate-parent link as the temporary replacement for the dragged subtree root's original incoming edge.
+- Removes Quill, contenteditable and browser focus borders/outlines/shadows during canvas text editing, leaving only the node appearance, caret and native text selection.
+- Adds permanent offline and Chromium regression coverage for edge continuity, parent switching, cancellation and flat editing presentation.
 
 ## v0.9.7
 
