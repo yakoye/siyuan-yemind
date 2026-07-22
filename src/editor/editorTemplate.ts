@@ -58,16 +58,8 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
         <div class="ymz-workspace">
           <div class="ymz-canvas" data-role="canvas"></div>
           <div class="ymz-split-divider" data-role="split-divider" role="separator" aria-orientation="vertical" aria-label="调整导图和大纲宽度" aria-valuemin="25" aria-valuemax="70" aria-valuenow="42" tabindex="0"></div>
-          <aside class="ymz-outline" data-role="outline" data-outline-mode="text" aria-label="导图大纲">
-            <div class="ymz-outline-toolbar" role="toolbar" aria-label="大纲编辑模式">
-              <div class="ymz-outline-mode-switch" role="group" aria-label="大纲编辑模式">
-                <button type="button" data-outline-mode-button="text" aria-pressed="true" title="连续文本编辑">文本</button>
-                <button type="button" data-outline-mode-button="tree" aria-pressed="false" title="节点树编辑">节点</button>
-              </div>
-              <span class="ymz-outline-text-status" data-role="outline-text-status">自动同步</span>
-            </div>
-            <div class="ymz-outline-tree" data-role="outline-tree" role="tree" aria-label="节点树大纲"></div>
-            <textarea class="ymz-outline-text-editor" data-role="outline-text-editor" aria-label="连续文本大纲编辑器" spellcheck="false" placeholder="每行一个节点；缩进表示层级"></textarea>
+          <aside class="ymz-outline" data-role="outline" aria-label="导图大纲">
+            <div class="ymz-outline-tree ymz-structured-outline" data-role="outline-tree" role="tree" aria-label="结构化大纲编辑器" spellcheck="false"></div>
           </aside>
         </div>
 

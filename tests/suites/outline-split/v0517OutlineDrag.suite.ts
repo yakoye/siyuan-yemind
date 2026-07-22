@@ -1,21 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
 import { resolveOutlineDropIntent } from "../../../src/editor/outlineDrag";
 import { createCommandAdapter } from "../../../src/core/commands";
-import { renderOutlineHtml } from "../../../src/editor/outline";
 import fs from "node:fs";
 import path from "node:path";
 
-const tree = {
-  data: { text: "Root", uid: "root" },
-  children: [{ data: { text: "A", uid: "a" }, children: [] }],
-};
-
-describe("official-style outline row drag", () => {
-  it("marks movable rows without exposing a dedicated six-dot handle", () => {
-    const html = renderOutlineHtml(tree, false);
-    expect(html).not.toContain("data-outline-drag-handle");
-    expect(html).not.toContain('draggable="true"');
-    expect((html.match(/data-outline-drag-source=/g) ?? []).length).toBe(2);
+describe("structured outline gutter drag", () => {
+  it("exposes a dedicated non-editable gutter handle while keeping row text selectable", () => {
+    const source = fs.readFileSync(
+      path.resolve("src/editor/StructuredOutlineEditorController.ts"),
+      "utf8",
+    );
+    expect(source).toContain("data-outline-drag-handle");
+    expect(source).toContain('contenteditable="false"');
+    expect(source).toContain("data-outline-editor");
+    expect(source).not.toContain('draggable="true"');
   });
 
   it("resolves before, inside and after drop zones", () => {
@@ -54,25 +52,29 @@ describe("official-style outline row drag", () => {
     ).toBeNull();
   });
 
-  it("commits and detaches the active editor before a pointer structure move", () => {
+  it("flushes the unified editor before a pointer structure move and commits through the structure command", () => {
     const source = fs.readFileSync(
       path.resolve("src/editor/YeMindEditor.ts"),
       "utf8",
     );
+    const downBlock = source.slice(
+      source.indexOf("private readonly onOutlinePointerDown"),
+      source.indexOf("private readonly onOutlinePointerMove"),
+    );
+    expect(downBlock).toContain('[data-outline-drag-handle]');
+    expect(downBlock).not.toContain("shouldStartOutlinePointerDrag");
+
     const dragBlock = source.slice(
       source.indexOf("private readonly onOutlinePointerMove"),
       source.indexOf("private readonly onOutlinePointerUp"),
     );
-    expect(
-      dragBlock.search(/commitAndDetach\(["']pointer-drag-start["']\)/),
-    ).toBeGreaterThan(-1);
+    expect(dragBlock).toContain('flush("pointer-drag-start")');
+
     const dropBlock = source.slice(
       source.indexOf("private readonly onOutlinePointerUp"),
       source.indexOf("private readonly onOutlinePointerCancel"),
     );
-    expect(dropBlock.indexOf("this.commands.moveNodeByUid")).toBeGreaterThan(
-      -1,
-    );
+    expect(dropBlock).toContain("this.commands.moveNodeByUid");
   });
 
   it("maps drop intent to upstream structure commands and rejects descendants", () => {

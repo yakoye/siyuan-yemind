@@ -21,3 +21,6 @@ import '../suites/outline-split/v085SplitFocusIntegration.suite';
 import '../suites/outline-split/v085SplitFocusOwnership.suite';
 import '../suites/outline-split/v093OutlineTextDocument.suite';
 import '../suites/outline-split/v093OutlineTextEditor.suite';
+import '../suites/outline-split/v094StructuredOutlineDocument.suite';
+import '../suites/outline-split/v094StructuredOutlineEditor.suite';
+import '../suites/outline-split/v094StructuredOutlineVisual.suite';

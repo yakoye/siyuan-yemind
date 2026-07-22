@@ -46,23 +46,14 @@ import {
 import { calculateEditorStats } from "./editorStats";
 import { createEditorTemplate } from "./editorTemplate";
 import {
-  outlineStructureSignature,
-  patchOutlineTree,
-  resolveOutlineKeyAction,
-  resolveOutlineToggleState,
-} from "./outline";
-import {
   resolveOutlinePointerDropIntent,
-  isOutlinePointerInDragZone,
-  isOutlineTextSelectionTarget,
-  shouldStartOutlinePointerDrag,
   type OutlineDropPosition,
   type OutlinePointerDropIntent,
 } from "./outlineDrag";
 import {
-  OutlineRichTextController,
-  type OutlineFocusPlacement,
-} from "./OutlineRichTextController";
+  StructuredOutlineEditorController,
+  type StructuredOutlineFocusPlacement,
+} from "./StructuredOutlineEditorController";
 import {
   DEFAULT_SPLIT_OUTLINE_RATIO,
   normalizeSplitOutlineRatio,
@@ -103,7 +94,6 @@ import { normalizeNodeNote } from "../content/nodeNoteState";
 import { CanvasRightDragController } from "./canvasRightDrag";
 import { scheduleFocusedNodeHighlight } from "./focusHighlight";
 import { EditingSurfaceCoordinator } from "./editingSurfaceCoordinator";
-import { OutlineTextEditorController } from "./OutlineTextEditorController";
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -118,7 +108,7 @@ export interface YeMindEditorOptions {
 
 interface PendingOutlineFocus {
   uid: string;
-  placement: OutlineFocusPlacement;
+  placement: StructuredOutlineFocusPlacement;
   start?: number;
   end?: number;
 }
@@ -152,8 +142,6 @@ export class YeMindEditor {
   private splitDividerEl!: HTMLElement;
   private outlinePaneEl!: HTMLElement;
   private outlineEl!: HTMLElement;
-  private outlineTextEditorEl!: HTMLTextAreaElement;
-  private outlineTextStatusEl!: HTMLElement;
   private statsEl!: HTMLElement;
   private zoomEl!: HTMLElement;
   private saveStateEl!: HTMLElement;
@@ -175,9 +163,7 @@ export class YeMindEditor {
   private nodeQuickActions: NodeQuickActionsController | null = null;
   private canvasRightDrag: CanvasRightDragController | null = null;
   private cancelFocusedNodeHighlight: (() => void) | null = null;
-  private outlineRichText: OutlineRichTextController | null = null;
-  private outlineTextEditor: OutlineTextEditorController | null = null;
-  private outlineMode: "text" | "tree" = "text";
+  private outlineRichText: StructuredOutlineEditorController | null = null;
   private settingsInitialized = false;
   private viewMode: ViewMode = "map";
   private searchText = "";
@@ -187,10 +173,7 @@ export class YeMindEditor {
   private splitDragPointerId: number | null = null;
   private pendingSplitClientX: number | null = null;
   private splitOutlineRatio = DEFAULT_SPLIT_OUTLINE_RATIO;
-  private outlineTextCommitUid: string | null = null;
-  private outlineStructureBusy = false;
   private outlinePointerDrag: OutlinePointerDragSession | null = null;
-  private outlineStructureKey = "";
   private suppressOutlineClickUntil = 0;
   private readonly editingSurface = new EditingSurfaceCoordinator<PendingOutlineFocus>();
   private appearanceObserver: MutationObserver | null = null;
@@ -206,31 +189,14 @@ export class YeMindEditor {
   };
 
   private readonly onOutlinePointerDown = (event: PointerEvent): void => {
-    if (event.button !== 0 || !this.commands || this.commands.isReadonly())
-      return;
+    if (event.button !== 0 || !this.commands || this.commands.isReadonly()) return;
     const target = event.target as HTMLElement;
-    const row = target.closest<HTMLElement>("[data-outline-uid]");
-    if (!row || row.dataset.outlineDragSource !== "true") return;
+    const handle = target.closest<HTMLElement>("[data-outline-drag-handle]");
+    const row = handle?.closest<HTMLElement>("[data-outline-uid]");
+    if (!handle || !row || row.dataset.outlineDragSource !== "true") return;
     const sourceUid = row.dataset.outlineUid ?? "";
     if (!sourceUid || row.dataset.outlineRoot === "true") return;
-    const editor = row.querySelector<HTMLElement>("[data-outline-editor]");
-    if (!editor || !isOutlinePointerInDragZone({
-      clientX: event.clientX,
-      textLeft: editor.getBoundingClientRect().left,
-    })) return;
-    const fromEditor = Boolean(target.closest("[data-outline-editor]"));
-    const editing = isOutlineTextSelectionTarget(
-      target,
-      this.outlineRichText?.activeHost ?? null,
-    );
-    const interactive =
-      editing ||
-      Boolean(
-        target.closest(
-          'button,a,input,textarea,select,[role="button"],[contenteditable="true"],.ql-editor',
-        ),
-      );
-    if (interactive) return;
+    event.preventDefault();
     this.outlinePointerDrag = {
       pointerId: event.pointerId,
       sourceUid,
@@ -238,8 +204,8 @@ export class YeMindEditor {
       startX: event.clientX,
       startY: event.clientY,
       startedAt: performance.now(),
-      fromEditor,
-      interactive,
+      fromEditor: false,
+      interactive: false,
       dragging: false,
       ghost: null,
       intent: null,
@@ -255,16 +221,9 @@ export class YeMindEditor {
       event.clientY - session.startY,
     );
     if (!session.dragging) {
-      const start = shouldStartOutlinePointerDrag({
-        interactive: session.interactive,
-        fromEditor: session.fromEditor,
-        editing: false,
-        elapsedMs: performance.now() - session.startedAt,
-        distancePx: distance,
-      });
-      if (!start) return;
+      if (distance < 5) return;
       event.preventDefault();
-      this.outlineRichText?.commitAndDetach("pointer-drag-start");
+      this.outlineRichText?.flush("pointer-drag-start");
       session.dragging = true;
       session.sourceRow.classList.add("is-dragging");
       session.ghost = this.createOutlineDragGhost(session.sourceRow);
@@ -507,8 +466,6 @@ export class YeMindEditor {
       this.current.id,
       { dirty: this.saveRevisions.isDirty() },
     );
-    this.outlineTextEditor?.destroy();
-    this.outlineTextEditor = null;
     this.outlineRichText?.destroy();
     this.outlineRichText = null;
     this.flushPendingSave();
@@ -592,12 +549,6 @@ export class YeMindEditor {
     ) as HTMLElement;
     this.outlineEl = this.options.container.querySelector(
       '[data-role="outline-tree"]',
-    ) as HTMLElement;
-    this.outlineTextEditorEl = this.options.container.querySelector(
-      '[data-role="outline-text-editor"]',
-    ) as HTMLTextAreaElement;
-    this.outlineTextStatusEl = this.options.container.querySelector(
-      '[data-role="outline-text-status"]',
     ) as HTMLElement;
     this.statsEl = this.options.container.querySelector(
       '[data-role="stats"]',
@@ -727,39 +678,39 @@ export class YeMindEditor {
       onAction: (action) =>
         this.options.diagnostics.record("rich-text", action, this.current.id),
     });
-    this.outlineRichText = new OutlineRichTextController({
-      root: this.rootEl,
+    this.outlineRichText = new StructuredOutlineEditorController({
+      root: this.outlineEl,
+      getTree: () => this.current.data,
       isReadonly: () => Boolean(this.commands?.isReadonly()),
-      onCommit: (uid, html) => this.commitOutlineRichText(uid, html),
+      onApply: (tree, details) => {
+        const applied = Boolean(this.commands?.replaceTree(tree));
+        if (applied) this.current.data = tree;
+        this.options.diagnostics.record("outline", "structured-apply", this.current.id, {
+          ...details,
+          applied,
+        });
+        return applied;
+      },
+      onActivate: (uid) => {
+        if (!uid || !this.commands) return;
+        this.claimOutlineInteraction("structured-outline");
+        this.commands.goToNode(uid);
+        this.activateOutlineUid(uid);
+      },
+      onToggle: (uid, expanded) => this.setOutlineExpanded(uid, expanded),
+      onUndo: () => this.commands?.undo(),
+      onRedo: () => this.commands?.redo(),
       onDiagnostic: (action, details) =>
-        this.options.diagnostics.record(
-          "outline",
-          action,
-          this.current.id,
-          details,
-        ),
+        this.options.diagnostics.record("outline", action, this.current.id, details),
       onSelectionChange: (hasRange, rect, format, target) => {
         this.richTextToolbar?.update(hasRange, rect, format, target);
       },
     });
-    this.outlineTextEditor = new OutlineTextEditorController({
-      textarea: this.outlineTextEditorEl,
-      status: this.outlineTextStatusEl,
-      getTree: () => this.current.data,
-      isReadonly: () => Boolean(this.commands?.isReadonly()),
-      onApply: (tree) => Boolean(this.commands?.replaceTree(tree)),
-      onDiagnostic: (action, details) =>
-        this.options.diagnostics.record("outline-text", action, this.current.id, details),
-    });
-    this.setOutlineMode("text", false);
     this.rootEl.addEventListener("keydown", this.onRootKeydown, true);
     this.rootEl.addEventListener("paste", this.onImagePaste);
     this.canvasEl.addEventListener("dragover", this.onImageDragOver);
     this.canvasEl.addEventListener("drop", this.onImageDrop);
     this.canvasEl.addEventListener("pointerdown", this.onCanvasPointerDown, true);
-    this.outlineTextEditorEl.addEventListener("focus", () => {
-      this.claimOutlineInteraction("outline-text-focus");
-    });
 
     this.bindToolbar();
     this.bindMapEvents();
@@ -809,43 +760,6 @@ export class YeMindEditor {
         event.preventDefault();
         event.stopPropagation();
         this.openLink(anchor.href || anchor.getAttribute("href") || "");
-        return;
-      }
-
-      const outlineModeButton = (event.target as HTMLElement).closest<HTMLButtonElement>(
-        "[data-outline-mode-button]",
-      );
-      if (outlineModeButton) {
-        event.preventDefault();
-        const mode = outlineModeButton.dataset.outlineModeButton === "tree" ? "tree" : "text";
-        this.setOutlineMode(mode);
-        return;
-      }
-
-      const outlineToggle = (event.target as HTMLElement).closest<HTMLElement>(
-        "[data-outline-toggle]",
-      );
-      const outlineRow = (event.target as HTMLElement).closest<HTMLElement>(
-        "[data-outline-uid]",
-      );
-      if (outlineToggle && outlineRow && this.commands) {
-        event.preventDefault();
-        event.stopPropagation();
-        const uid = outlineRow.dataset.outlineUid ?? "";
-        const next = resolveOutlineToggleState({
-          hasChildren: outlineRow.dataset.outlineHasChildren === "true",
-          expanded: outlineRow.dataset.outlineExpanded === "true",
-        });
-        if (!uid || next === null) return;
-        this.activateOutlineUid(uid);
-        this.setOutlineExpanded(uid, next);
-        return;
-      }
-      if (outlineRow && this.commands) {
-        if (Date.now() < this.suppressOutlineClickUntil) return;
-        const uid = outlineRow.dataset.outlineUid ?? "";
-        this.commands.goToNode(uid);
-        this.activateOutlineUid(uid);
         return;
       }
 
@@ -967,45 +881,6 @@ export class YeMindEditor {
       }
     });
 
-    this.outlineEl.addEventListener("focusin", (event) => {
-      const editor = (event.target as HTMLElement).closest<HTMLElement>(
-        "[data-outline-editor]",
-      );
-      const row = editor?.closest<HTMLElement>("[data-outline-uid]");
-      const uid = row?.dataset.outlineUid ?? "";
-      if (!editor || !uid || !this.commands || !this.outlineRichText) return;
-      this.claimOutlineInteraction("outline-focusin");
-      const ticket = this.editingSurface.pending;
-      const request =
-        ticket?.request.uid === uid
-          ? this.editingSurface.take(ticket) ?? undefined
-          : undefined;
-      this.outlineRichText.activate(editor, uid, request);
-      this.commands.goToNode(uid);
-      this.activateOutlineUid(uid);
-    });
-    this.outlineEl.addEventListener("dblclick", (event) => {
-      const editor = (event.target as HTMLElement).closest<HTMLElement>("[data-outline-editor]");
-      const row = editor?.closest<HTMLElement>("[data-outline-uid]");
-      const uid = row?.dataset.outlineUid ?? "";
-      if (!editor || !uid || !this.outlineRichText || this.commands?.isReadonly()) return;
-      event.preventDefault();
-      event.stopPropagation();
-      this.claimOutlineInteraction("outline-double-click");
-      this.outlineRichText.activate(editor, uid, {
-        placement: editor.dataset.outlinePristine === "true" ? "select-all" : "end",
-      });
-      this.activateOutlineUid(uid);
-      this.options.diagnostics.record("outline", "double-click-edit", this.current.id, {
-        pristine: editor.dataset.outlinePristine === "true",
-      });
-    });
-    // Capture structural keys before Quill's own keyboard module consumes them.
-    this.outlineEl.addEventListener(
-      "keydown",
-      (event) => this.handleOutlineKeydown(event),
-      true,
-    );
     this.outlinePaneEl.addEventListener("keydown", this.onOutlineKeydownBubble);
     this.bindOutlineDrag();
     this.bindSplitDivider();
@@ -1246,10 +1121,7 @@ export class YeMindEditor {
     this.map.on("node_active", (node: any, list: any[]) => {
       const activeOutlineHost = this.outlineRichText?.activeHost ?? null;
       const activeElement = document.activeElement;
-      if (
-        activeOutlineHost &&
-        (!activeElement || !activeOutlineHost.contains(activeElement))
-      ) {
+      if (activeOutlineHost && (!activeElement || !this.outlineEl.contains(activeElement))) {
         this.claimCanvasInteraction("canvas-node-active");
       }
       this.rootEl.dataset.hasSelection = list.length > 0 ? "true" : "false";
@@ -1903,33 +1775,6 @@ export class YeMindEditor {
     );
   }
 
-  private setOutlineMode(mode: "text" | "tree", record = true): void {
-    if (!this.outlinePaneEl) return;
-    const previous = this.outlineMode;
-    if (mode === "text") {
-      this.outlineRichText?.commitAndDetach("outline-mode-text");
-      this.outlineTextEditor?.activate(this.current.data);
-    } else {
-      this.outlineTextEditor?.deactivate("outline-mode-tree");
-    }
-    this.outlineMode = mode;
-    this.outlinePaneEl.dataset.outlineMode = mode;
-    this.outlinePaneEl
-      .querySelectorAll<HTMLButtonElement>("[data-outline-mode-button]")
-      .forEach((button) => {
-        const active = button.dataset.outlineModeButton === mode;
-        button.setAttribute("aria-pressed", String(active));
-        button.classList.toggle("is-active", active);
-      });
-    if (mode === "tree") this.renderOutline(this.current.data);
-    if (record && previous !== mode) {
-      this.options.diagnostics.record("outline", "mode-changed", this.current.id, {
-        previous,
-        mode,
-      });
-    }
-  }
-
   private claimOutlineInteraction(reason: string): void {
     const transition = this.editingSurface.claimOutline();
     if (transition.previousOwner === "outline") return;
@@ -1942,17 +1787,9 @@ export class YeMindEditor {
   }
 
   private claimCanvasInteraction(reason: string): void {
-    const textApplied = this.outlineTextEditor?.flush(`surface-change:${reason}`) ?? false;
-    const hadActiveOutlineEditor = Boolean(this.outlineRichText?.activeHost);
+    const outlineApplied = this.outlineRichText?.flush(`surface-change:${reason}`) ?? false;
     const transition = this.editingSurface.claimCanvas();
-    if (hadActiveOutlineEditor) {
-      this.outlineRichText?.commitAndDetach(`surface-change:${reason}`);
-    }
-    if (
-      hadActiveOutlineEditor ||
-      transition.cancelledPending ||
-      transition.previousOwner !== "canvas"
-    ) {
+    if (transition.previousOwner !== "canvas" || outlineApplied) {
       this.options.diagnostics.record(
         "editing-surface",
         "canvas-claimed",
@@ -1960,247 +1797,33 @@ export class YeMindEditor {
         {
           reason,
           previousOwner: transition.previousOwner,
-          detachedOutlineEditor: hadActiveOutlineEditor,
-          cancelledPending: transition.cancelledPending,
-          textDocumentApplied: textApplied,
+          outlineApplied,
         },
       );
     }
   }
 
-  private queueOutlineFocus(request: PendingOutlineFocus | null): void {
-    if (!request) {
-      this.editingSurface.clearPending();
-      return;
-    }
-    this.editingSurface.queueOutline(request);
-    this.options.diagnostics.record(
-      "editing-surface",
-      "outline-focus-queued",
-      this.current.id,
-      { placement: request.placement },
-    );
-  }
-
   private renderOutline(data: MindMapTree): void {
-    this.outlineTextEditor?.syncFromTree(data);
-    const activeEditor = this.outlineRichText?.activeHost ?? null;
-    const activeUid =
-      activeEditor?.closest<HTMLElement>("[data-outline-uid]")?.dataset
-        .outlineUid ?? null;
     const readonly = this.rootEl.dataset.readonly === "true";
-    const nextStructureKey = outlineStructureSignature(data);
-    const structureChanged = Boolean(
-      this.outlineStructureKey && this.outlineStructureKey !== nextStructureKey,
-    );
-    const pendingTicket = this.editingSurface.pending;
     this.outlinePaneEl.setAttribute("aria-readonly", String(readonly));
     this.outlineEl.setAttribute("aria-readonly", String(readonly));
-
-    if (pendingTicket || (structureChanged && activeEditor && activeUid)) {
-      // Focus restoration is explicit. A structure change originating from the
-      // canvas must close a stale outline editor, never infer that the old row
-      // should become active again.
-      this.outlineRichText?.commitAndDetach(
-        pendingTicket ? "explicit-outline-focus" : "external-structure-change",
-      );
-      patchOutlineTree(this.outlineEl, data, readonly, null);
-    } else {
-      patchOutlineTree(this.outlineEl, data, readonly, activeUid);
-    }
-    this.outlineStructureKey = nextStructureKey;
-
+    this.outlineRichText?.syncFromTree(data);
     const selectedUid = String(
       this.commands?.getPrimaryNode()?.getData?.("uid") ?? "",
     );
     this.activateOutlineUid(selectedUid);
-    this.restorePendingOutlineFocus();
-  }
-
-  private restorePendingOutlineFocus(): void {
-    const ticket = this.editingSurface.pending;
-    if (!ticket) return;
-    window.requestAnimationFrame(() => {
-      if (this.destroyed || !this.editingSurface.isCurrent(ticket)) return;
-      const pending = ticket.request;
-      const editor = this.findOutlineInput(pending.uid);
-      if (!editor || !this.outlineRichText) {
-        this.editingSurface.clearPending();
-        return;
-      }
-      const request = this.editingSurface.take(ticket);
-      if (!request) return;
-      this.outlineRichText.activate(editor, request.uid, request);
-      this.activateOutlineUid(request.uid);
-      this.options.diagnostics.record(
-        "editing-surface",
-        "outline-focus-restored",
-        this.current.id,
-        { placement: request.placement },
-      );
-    });
-  }
-
-  private findOutlineInput(uid: string): HTMLElement | null {
-    const row = Array.from(
-      this.outlineEl.querySelectorAll<HTMLElement>("[data-outline-uid]"),
-    ).find((item) => item.dataset.outlineUid === uid);
-    return row?.querySelector<HTMLElement>("[data-outline-editor]") ?? null;
-  }
-
-  private commitOutlineRichText(uid: string, html: string): boolean {
-    if (!this.commands || this.commands.isReadonly() || !uid) return false;
-    this.outlineTextCommitUid = uid;
-    try {
-      return this.commands.setNodeRichTextByUid(uid, html);
-    } finally {
-      this.outlineTextCommitUid = null;
-    }
-  }
-
-  private handleOutlineKeydown(event: KeyboardEvent): void {
-    const editor = (event.target as HTMLElement).closest<HTMLElement>(
-      "[data-outline-editor]",
-    );
-    const row = editor?.closest<HTMLElement>("[data-outline-uid]");
-    if (
-      !editor ||
-      !row ||
-      !this.commands ||
-      !this.outlineRichText ||
-      this.outlineStructureBusy
-    )
-      return;
-    const uid = row.dataset.outlineUid ?? "";
-    this.claimOutlineInteraction("outline-keydown");
-    if (this.outlineRichText.activeHost !== editor)
-      this.outlineRichText.activate(editor, uid);
-    const selection = this.outlineRichText.getSelectionState(editor);
-    const isRoot = row.dataset.outlineRoot === "true";
-    const action = resolveOutlineKeyAction({
-      key: event.key,
-      empty: selection.text.trim().length === 0,
-      isRoot,
-      readonly: this.commands.isReadonly(),
-      hasChildren: row.dataset.outlineHasChildren === "true",
-      expanded: row.dataset.outlineExpanded === "true",
-      atStart: selection.start === 0 && selection.end === 0,
-      atEnd:
-        selection.start === selection.length &&
-        selection.end === selection.length,
-      composing: event.isComposing || this.outlineRichText.isComposing,
-      shiftKey: event.shiftKey,
-      altKey: event.altKey,
-      ctrlKey: event.ctrlKey,
-      metaKey: event.metaKey,
-    });
-    if (action === "none" || action === "hard-break") return;
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (action === "cancel") {
-      this.outlineRichText.cancel();
-      editor.blur();
-      return;
-    }
-    if (action === "previous" || action === "next") {
-      this.focusOutlineNeighbor(editor, action === "previous" ? -1 : 1);
-      return;
-    }
-    if (action === "delete-empty") {
-      const focusUid = this.outlineDeleteFocusUid(row);
-      this.outlineStructureBusy = true;
-      try {
-        this.queueOutlineFocus(
-          focusUid ? { uid: focusUid, placement: "end" } : null,
-        );
-        this.outlineRichText.discardAndDetach("delete-empty");
-        if (!this.commands.removeNodeByUid(uid)) this.queueOutlineFocus(null);
-      } finally {
-        this.outlineStructureBusy = false;
-      }
-      return;
-    }
-
-    this.outlineStructureBusy = true;
-    try {
-      this.outlineRichText.flush(editor);
-      if (action === "collapse" || action === "expand") {
-        this.queueOutlineFocus({
-          uid,
-          placement: action === "collapse" ? "start" : "end",
-        });
-        this.setOutlineExpanded(uid, action === "expand");
-        return;
-      }
-      if (action === "indent" || action === "outdent") {
-        this.queueOutlineFocus({ uid, placement: "start" });
-        const changed =
-          action === "indent"
-            ? this.commands.indentNodeByUid(uid)
-            : this.commands.outdentNodeByUid(uid);
-        if (!changed) this.queueOutlineFocus(null);
-        return;
-      }
-
-      const newUid = createOutlineUid();
-      this.queueOutlineFocus({ uid: newUid, placement: "start" });
-      const inserted =
-        action === "insert-child"
-          ? this.commands.insertChildByUid(uid, newUid)
-          : this.commands.insertSiblingByUid(uid, newUid);
-      if (!inserted) this.queueOutlineFocus(null);
-    } finally {
-      this.outlineStructureBusy = false;
-    }
   }
 
   private setOutlineExpanded(uid: string, expanded: boolean): void {
     if (!uid || !this.commands) return;
+    this.outlineRichText?.flush("before-toggle");
     if (this.commands.setNodeExpandedByUid(uid, expanded)) {
       this.nodeQuickActions?.scheduleRefresh();
     }
   }
 
-  private outlineDeleteFocusUid(row: HTMLElement): string | null {
-    const rows = Array.from(
-      this.outlineEl.querySelectorAll<HTMLElement>(":scope > [data-outline-uid]"),
-    );
-    const index = rows.indexOf(row);
-    if (index < 0) return null;
-    const candidate = rows[index - 1] ?? rows[index + 1] ?? null;
-    return candidate?.dataset.outlineUid || null;
-  }
-
-  private focusOutlineNeighbor(editor: HTMLElement, offset: number): void {
-    if (!this.outlineRichText) return;
-    const editors = Array.from(
-      this.outlineEl.querySelectorAll<HTMLElement>("[data-outline-editor]"),
-    );
-    const current = editors.indexOf(editor);
-    const target = editors[current + offset];
-    const uid =
-      target?.closest<HTMLElement>("[data-outline-uid]")?.dataset.outlineUid ??
-      "";
-    if (!target || !uid) return;
-    this.claimOutlineInteraction("outline-neighbor");
-    this.outlineRichText.flush(editor);
-    this.outlineRichText.activate(target, uid, {
-      placement: offset < 0 ? "end" : "start",
-    });
-    this.commands?.goToNode(uid);
-    this.activateOutlineUid(uid);
-  }
-
   private activateOutlineUid(uid: string): void {
-    this.outlineEl
-      .querySelectorAll<HTMLElement>("[data-outline-uid]")
-      .forEach((row) => {
-        row.classList.toggle(
-          "is-active",
-          Boolean(uid) && row.dataset.outlineUid === uid,
-        );
-      });
+    this.outlineRichText?.activateUid(uid, false);
   }
 
   private openSearchPanel(): void {
@@ -2615,7 +2238,6 @@ export class YeMindEditor {
       this.settings.showRichTextToolbar && !enabled,
     );
     this.outlineRichText?.setReadonly(enabled);
-    this.outlineTextEditor?.setReadonly(enabled);
     this.map.setMode(enabled ? "readonly" : "edit");
     this.renderOutline(this.current.data);
     this.options.diagnostics.record(
@@ -2665,11 +2287,4 @@ export class YeMindEditor {
     });
     void dialog;
   }
-}
-
-function createOutlineUid(): string {
-  return (
-    globalThis.crypto?.randomUUID?.() ??
-    `outline-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-  );
 }

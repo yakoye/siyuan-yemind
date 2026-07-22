@@ -2,28 +2,29 @@
 
 ## Current baseline
 
-- Product version: 0.9.3
+- Product version: 0.9.4
 - Host baseline: SiYuan 3.7.3
 - Plugin ID and folder: `siyuan-yemind`
 
 ## Completed foundations
 
 - Local map, settings and checkpoint repositories.
-- Canvas, split outline and outline editing.
+- Canvas, split outline and full outline views.
 - Stable UID-based node transactions and focus ownership.
 - Rich-text editing, node images, notes, comments and styles.
 - Global search integration and node navigation.
-- Structured diagnostics and release verification.
-- Domain-organized regression suite.
+- Structured diagnostics and domain-organized regression suite.
 - Complete theme text, fill, border and line color system.
 - Atomic whole-map appearance refresh with viewport and selection preservation.
-- Continuous outline document with native multiline editing and indentation-based import.
-- Hover-owned node quick actions with a pointer-safe bridge.
+- Unified structured outline with native cross-node selection, staged select-all and selection-aware paste.
+- Indentation-based hierarchy import, UID/metadata preservation and failure rollback.
+- Dedicated outline drag gutter with aligned insertion feedback.
+- Hover-owned canvas node quick actions with a pointer-safe bridge.
 
 ## Next priorities
 
-1. Validate v0.9.3 root coverage, hover controls and continuous outline workflows in SiYuan 3.7.3 on real large maps.
-2. Improve large-map performance without weakening transaction safety.
+1. Validate v0.9.4 unified outline behavior in SiYuan 3.7.3 with real long documents and mixed rich content.
+2. Profile 1,000+ node outline editing and reduce unnecessary DOM reconciliation without weakening transaction safety.
 3. Expand import/export formats in isolated releases.
-4. Continue accessibility and keyboard navigation coverage.
+4. Continue accessibility, screen-reader and keyboard-navigation coverage.
 5. Prepare a stable 1.0 compatibility and migration policy.

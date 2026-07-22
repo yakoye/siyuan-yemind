@@ -7,20 +7,28 @@ YeMind is a local-first SiYuan mind-map plugin built with TypeScript, Vite, Quil
 - `src/plugin/`: SiYuan lifecycle, Dock, tabs, global search and protocol links.
 - `src/model/`: map and checkpoint repositories, schema normalization and persistence.
 - `src/core/`: engine registration, commands, drag behavior, themes, palettes and decorations.
-- `src/editor/`: canvas, split outline, continuous outline document, rich-text node outline, focus ownership and project controls.
+- `src/editor/`: canvas, unified structured outline, selection/clipboard coordination, focus ownership and project controls.
 - `src/ui/`: dialogs, menus, color panels, image preview and diagnostics surfaces.
 - `src/settings/`: settings storage and About/shortcut/general pages.
 - `src/diagnostics/`: structured event timeline, self-checks and exportable diagnostic archives.
 
 ## State ownership
 
-- Repository data is authoritative for maps, appearance and view state.
-- Engine commands own structural mutations and history.
-- Stable node UIDs bridge canvas rerenders, outline rows and search results.
-- Canvas, continuous text outline and node-tree outline share one map tree but never keep parallel authoritative data.
-- Continuous outline edits reconcile stable UIDs and commit through one undoable engine `updateData()` transaction.
-- Canvas and outline share map data but never share an implicit focus-restoration ticket.
-- Images, notes, comments, tags and local styles are node data fields.
+- Repository map data is authoritative for structure, content, appearance and view state.
+- `simple-mind-map` commands own structural mutations and undo/redo history.
+- Stable node UIDs bridge canvas rerenders, structured outline rows, search results and checkpoints.
+- The structured outline is an editing projection, not a second persisted document.
+- Outline DOM transactions are converted back to one `MindMapTree` and committed through the upstream undoable `updateData()` path; `setData()` is intentionally not used.
+- Canvas and outline own focus independently. Text selection is never interpreted as node dragging; structural drag begins only in the outline gutter.
+- Images, notes, comments, tags, todo state and local styles remain node data fields and survive ordinary title/hierarchy editing.
+
+## Unified outline model
+
+- One `contenteditable` root owns every visible node row, allowing native selection across rows.
+- Each row carries stable UID, depth, collapsed state and semantic controls; controls are `contenteditable=false`.
+- Collapsed descendants remain in the logical projection but are hidden visually, so whole-outline copy remains complete while ordinary mouse selection follows visible content.
+- Selection, paste and drag are routed through explicit coordinators rather than separate text/tree modes.
+- Current-node replacement, cross-node replacement and indentation import are atomic and rollback if the tree transaction is rejected.
 
 ## Persistence
 
@@ -34,4 +42,4 @@ Release packages contain code and documentation only.
 
 ## Compatibility
 
-Historical plugin links and theme identifiers are accepted through narrow internal aliases. New links, resources, diagnostics and persisted identities use `siyuan-yemind` and current YeMind identifiers.
+Historical plugin links and theme identifiers are accepted through narrow internal aliases. Existing map/settings/checkpoint schemas do not require a v0.9.4 migration. Legacy outline controller source remains only for historical test compatibility and is not reachable from the v0.9.4 runtime bundle.

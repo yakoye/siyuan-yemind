@@ -177,7 +177,10 @@
     "v085SplitFocusIntegration.suite.ts",
     "v085SplitFocusOwnership.suite.ts",
     "v093OutlineTextDocument.suite.ts",
-    "v093OutlineTextEditor.suite.ts"
+    "v093OutlineTextEditor.suite.ts",
+    "v094StructuredOutlineDocument.suite.ts",
+    "v094StructuredOutlineEditor.suite.ts",
+    "v094StructuredOutlineVisual.suite.ts"
   ],
   "search-navigation": [
     "searchCommands.suite.ts",

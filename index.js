@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.3 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.4 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -38,11 +38,11 @@ const releaseInfo_1 = __require(23);
 const constants_1 = __require(24);
 const dock_1 = __require(30);
 const tabs_1 = __require(31);
-const OpenMapTabRegistry_1 = __require(241);
-const pluginUrl_1 = __require(242);
-const operationSafety_1 = __require(243);
-const pluginStartup_1 = __require(244);
-const globalSearch_1 = __require(245);
+const OpenMapTabRegistry_1 = __require(240);
+const pluginUrl_1 = __require(241);
+const operationSafety_1 = __require(242);
+const pluginStartup_1 = __require(243);
+const globalSearch_1 = __require(244);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -6668,20 +6668,20 @@ const constants_1 = __require(24);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-22T13:30:00+09:00',
-    buildId: 'yemind-v0.9.3-20260722',
+    buildTime: '2026-07-22T17:30:00+09:00',
+    buildId: 'yemind-v0.9.4-20260722',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
-    tagline: '思源笔记中的思维导图、分屏大纲与知识整理插件。',
+    tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '修复中心主题透底与节点悬停操作，并将分屏大纲升级为可批量选择、复制和缩进粘贴的连续文本编辑器。',
+    releaseSummary: '将分屏与纯大纲重构为单一结构化编辑器，统一节点操作、跨节点文本选择、层级粘贴和可视化拖放。',
     highlights: [
-        '透明中心主题自动使用当前主题或项目背景色，分支线不再透过文字区域。',
-        '节点无需先选中，鼠标悬停即可显示添加、折叠和展开操作；指针跨越按钮间隙时控件保持有效。',
-        '分屏与大纲默认提供一个连续文本编辑器，支持跨节点多行选择、复制、剪切、粘贴和替换。',
-        '粘贴空格或 Tab 缩进的目录文本会自动生成层级，并通过一次可撤销的整树事务同步到画布。',
-        '中文输入法完成组合输入后才同步；完全改写标题仍保留节点身份、备注、标签、图片和局部样式。',
-        '保留节点树模式用于富文本、拖动和展开折叠，文本与节点模式共享同一份导图数据。',
+        '删除文本/节点双模式，整棵大纲由一个连续结构化编辑器承载，节点外观与原生跨行文本选择同时成立。',
+        'Ctrl/Cmd+A 首次选择当前节点正文，再次选择完整大纲；跨节点选区可直接提升为全大纲选择。',
+        '粘贴严格替换当前真实选区，支持富文本、纯文本、跨节点替换、缩进目录导入和一次事务撤销。',
+        '分支三角与叶子方点统一为等大的纯黑标记，保留 indent-rainbow 层级引导线与扁平悬停/当前行背景。',
+        '节点拖动仅从专用 gutter 发起，并提供同级前后、父级对齐和子节点插入线反馈。',
+        '选区格式工具栏只在选择完成后出现；中文输入法、只读复制、UID 与节点元数据均有独立保护。',
     ],
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -6714,7 +6714,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.3';
+exports.PLUGIN_VERSION = '0.9.4';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -7467,10 +7467,10 @@ function escapeHtml(value) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
 const YeMindEditor_1 = __require(32);
-const deferredMount_1 = __require(239);
+const deferredMount_1 = __require(238);
 const constants_1 = __require(24);
-const visibleElement_1 = __require(224);
-const tabNodeFocus_1 = __require(240);
+const visibleElement_1 = __require(225);
+const tabNodeFocus_1 = __require(239);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -7579,36 +7579,34 @@ const nodeContentDialogs_1 = __require(201);
 const richTextDialogs_1 = __require(207);
 const editorStats_1 = __require(208);
 const editorTemplate_1 = __require(209);
-const outline_1 = __require(210);
-const outlineDrag_1 = __require(211);
-const OutlineRichTextController_1 = __require(212);
-const splitPane_1 = __require(213);
-const RichTextToolbar_1 = __require(214);
+const outlineDrag_1 = __require(210);
+const StructuredOutlineEditorController_1 = __require(211);
+const splitPane_1 = __require(214);
+const RichTextToolbar_1 = __require(215);
 const shortcuts_1 = __require(25);
-const selectionPresentation_1 = __require(218);
-const saveRevision_1 = __require(219);
-const relationPresentation_1 = __require(220);
-const outerFramePresentation_1 = __require(221);
-const toolbarAvailability_1 = __require(222);
-const linkNavigation_1 = __require(223);
-const visibleElement_1 = __require(224);
+const selectionPresentation_1 = __require(219);
+const saveRevision_1 = __require(220);
+const relationPresentation_1 = __require(221);
+const outerFramePresentation_1 = __require(222);
+const toolbarAvailability_1 = __require(223);
+const linkNavigation_1 = __require(224);
+const visibleElement_1 = __require(225);
 const imageFileLoading_1 = __require(202);
-const nodeImageInput_1 = __require(225);
-const nodeHoverPreview_1 = __require(226);
-const imageLightbox_1 = __require(227);
-const nodeStylePanel_1 = __require(228);
-const projectStylePanel_1 = __require(229);
-const canvasRichTextVisibility_1 = __require(230);
-const searchPanelState_1 = __require(231);
+const nodeImageInput_1 = __require(226);
+const nodeHoverPreview_1 = __require(227);
+const imageLightbox_1 = __require(228);
+const nodeStylePanel_1 = __require(229);
+const projectStylePanel_1 = __require(230);
+const canvasRichTextVisibility_1 = __require(231);
+const searchPanelState_1 = __require(232);
 const projectStyle_1 = __require(14);
-const appearanceTransaction_1 = __require(232);
-const nodeQuickActions_1 = __require(233);
+const appearanceTransaction_1 = __require(233);
+const nodeQuickActions_1 = __require(234);
 const projectControls_1 = __require(28);
 const nodeNoteState_1 = __require(185);
-const canvasRightDrag_1 = __require(234);
-const focusHighlight_1 = __require(235);
-const editingSurfaceCoordinator_1 = __require(236);
-const OutlineTextEditorController_1 = __require(237);
+const canvasRightDrag_1 = __require(235);
+const focusHighlight_1 = __require(236);
+const editingSurfaceCoordinator_1 = __require(237);
 class YeMindEditor {
     constructor(options) {
         this.options = options;
@@ -7628,8 +7626,6 @@ class YeMindEditor {
         this.canvasRightDrag = null;
         this.cancelFocusedNodeHighlight = null;
         this.outlineRichText = null;
-        this.outlineTextEditor = null;
-        this.outlineMode = "text";
         this.settingsInitialized = false;
         this.viewMode = "map";
         this.searchText = "";
@@ -7639,10 +7635,7 @@ class YeMindEditor {
         this.splitDragPointerId = null;
         this.pendingSplitClientX = null;
         this.splitOutlineRatio = splitPane_1.DEFAULT_SPLIT_OUTLINE_RATIO;
-        this.outlineTextCommitUid = null;
-        this.outlineStructureBusy = false;
         this.outlinePointerDrag = null;
-        this.outlineStructureKey = "";
         this.suppressOutlineClickUntil = 0;
         this.editingSurface = new editingSurfaceCoordinator_1.EditingSurfaceCoordinator();
         this.appearanceObserver = null;
@@ -7660,24 +7653,14 @@ class YeMindEditor {
             if (event.button !== 0 || !this.commands || this.commands.isReadonly())
                 return;
             const target = event.target;
-            const row = target.closest("[data-outline-uid]");
-            if (!row || row.dataset.outlineDragSource !== "true")
+            const handle = target.closest("[data-outline-drag-handle]");
+            const row = handle?.closest("[data-outline-uid]");
+            if (!handle || !row || row.dataset.outlineDragSource !== "true")
                 return;
             const sourceUid = row.dataset.outlineUid ?? "";
             if (!sourceUid || row.dataset.outlineRoot === "true")
                 return;
-            const editor = row.querySelector("[data-outline-editor]");
-            if (!editor || !(0, outlineDrag_1.isOutlinePointerInDragZone)({
-                clientX: event.clientX,
-                textLeft: editor.getBoundingClientRect().left,
-            }))
-                return;
-            const fromEditor = Boolean(target.closest("[data-outline-editor]"));
-            const editing = (0, outlineDrag_1.isOutlineTextSelectionTarget)(target, this.outlineRichText?.activeHost ?? null);
-            const interactive = editing ||
-                Boolean(target.closest('button,a,input,textarea,select,[role="button"],[contenteditable="true"],.ql-editor'));
-            if (interactive)
-                return;
+            event.preventDefault();
             this.outlinePointerDrag = {
                 pointerId: event.pointerId,
                 sourceUid,
@@ -7685,8 +7668,8 @@ class YeMindEditor {
                 startX: event.clientX,
                 startY: event.clientY,
                 startedAt: performance.now(),
-                fromEditor,
-                interactive,
+                fromEditor: false,
+                interactive: false,
                 dragging: false,
                 ghost: null,
                 intent: null,
@@ -7698,17 +7681,10 @@ class YeMindEditor {
                 return;
             const distance = Math.hypot(event.clientX - session.startX, event.clientY - session.startY);
             if (!session.dragging) {
-                const start = (0, outlineDrag_1.shouldStartOutlinePointerDrag)({
-                    interactive: session.interactive,
-                    fromEditor: session.fromEditor,
-                    editing: false,
-                    elapsedMs: performance.now() - session.startedAt,
-                    distancePx: distance,
-                });
-                if (!start)
+                if (distance < 5)
                     return;
                 event.preventDefault();
-                this.outlineRichText?.commitAndDetach("pointer-drag-start");
+                this.outlineRichText?.flush("pointer-drag-start");
                 session.dragging = true;
                 session.sourceRow.classList.add("is-dragging");
                 session.ghost = this.createOutlineDragGhost(session.sourceRow);
@@ -7913,8 +7889,6 @@ class YeMindEditor {
     }
     destroy() {
         this.options.diagnostics.record("editor", "destroy-started", this.current.id, { dirty: this.saveRevisions.isDirty() });
-        this.outlineTextEditor?.destroy();
-        this.outlineTextEditor = null;
         this.outlineRichText?.destroy();
         this.outlineRichText = null;
         this.flushPendingSave();
@@ -7974,8 +7948,6 @@ class YeMindEditor {
         this.splitDividerEl = this.options.container.querySelector('[data-role="split-divider"]');
         this.outlinePaneEl = this.options.container.querySelector('[data-role="outline"]');
         this.outlineEl = this.options.container.querySelector('[data-role="outline-tree"]');
-        this.outlineTextEditorEl = this.options.container.querySelector('[data-role="outline-text-editor"]');
-        this.outlineTextStatusEl = this.options.container.querySelector('[data-role="outline-text-status"]');
         this.statsEl = this.options.container.querySelector('[data-role="stats"]');
         this.zoomEl = this.options.container.querySelector('[data-role="zoom"]');
         this.saveStateEl = this.options.container.querySelector('[data-role="save-state"]');
@@ -8063,32 +8035,40 @@ class YeMindEditor {
             onCodeBlock: (target) => (0, richTextDialogs_1.openCodeBlockDialog)(target, this.settings),
             onAction: (action) => this.options.diagnostics.record("rich-text", action, this.current.id),
         });
-        this.outlineRichText = new OutlineRichTextController_1.OutlineRichTextController({
-            root: this.rootEl,
+        this.outlineRichText = new StructuredOutlineEditorController_1.StructuredOutlineEditorController({
+            root: this.outlineEl,
+            getTree: () => this.current.data,
             isReadonly: () => Boolean(this.commands?.isReadonly()),
-            onCommit: (uid, html) => this.commitOutlineRichText(uid, html),
+            onApply: (tree, details) => {
+                const applied = Boolean(this.commands?.replaceTree(tree));
+                if (applied)
+                    this.current.data = tree;
+                this.options.diagnostics.record("outline", "structured-apply", this.current.id, {
+                    ...details,
+                    applied,
+                });
+                return applied;
+            },
+            onActivate: (uid) => {
+                if (!uid || !this.commands)
+                    return;
+                this.claimOutlineInteraction("structured-outline");
+                this.commands.goToNode(uid);
+                this.activateOutlineUid(uid);
+            },
+            onToggle: (uid, expanded) => this.setOutlineExpanded(uid, expanded),
+            onUndo: () => this.commands?.undo(),
+            onRedo: () => this.commands?.redo(),
             onDiagnostic: (action, details) => this.options.diagnostics.record("outline", action, this.current.id, details),
             onSelectionChange: (hasRange, rect, format, target) => {
                 this.richTextToolbar?.update(hasRange, rect, format, target);
             },
         });
-        this.outlineTextEditor = new OutlineTextEditorController_1.OutlineTextEditorController({
-            textarea: this.outlineTextEditorEl,
-            status: this.outlineTextStatusEl,
-            getTree: () => this.current.data,
-            isReadonly: () => Boolean(this.commands?.isReadonly()),
-            onApply: (tree) => Boolean(this.commands?.replaceTree(tree)),
-            onDiagnostic: (action, details) => this.options.diagnostics.record("outline-text", action, this.current.id, details),
-        });
-        this.setOutlineMode("text", false);
         this.rootEl.addEventListener("keydown", this.onRootKeydown, true);
         this.rootEl.addEventListener("paste", this.onImagePaste);
         this.canvasEl.addEventListener("dragover", this.onImageDragOver);
         this.canvasEl.addEventListener("drop", this.onImageDrop);
         this.canvasEl.addEventListener("pointerdown", this.onCanvasPointerDown, true);
-        this.outlineTextEditorEl.addEventListener("focus", () => {
-            this.claimOutlineInteraction("outline-text-focus");
-        });
         this.bindToolbar();
         this.bindMapEvents();
         this.bindAppearanceObserver();
@@ -8132,37 +8112,6 @@ class YeMindEditor {
                 event.preventDefault();
                 event.stopPropagation();
                 this.openLink(anchor.href || anchor.getAttribute("href") || "");
-                return;
-            }
-            const outlineModeButton = event.target.closest("[data-outline-mode-button]");
-            if (outlineModeButton) {
-                event.preventDefault();
-                const mode = outlineModeButton.dataset.outlineModeButton === "tree" ? "tree" : "text";
-                this.setOutlineMode(mode);
-                return;
-            }
-            const outlineToggle = event.target.closest("[data-outline-toggle]");
-            const outlineRow = event.target.closest("[data-outline-uid]");
-            if (outlineToggle && outlineRow && this.commands) {
-                event.preventDefault();
-                event.stopPropagation();
-                const uid = outlineRow.dataset.outlineUid ?? "";
-                const next = (0, outline_1.resolveOutlineToggleState)({
-                    hasChildren: outlineRow.dataset.outlineHasChildren === "true",
-                    expanded: outlineRow.dataset.outlineExpanded === "true",
-                });
-                if (!uid || next === null)
-                    return;
-                this.activateOutlineUid(uid);
-                this.setOutlineExpanded(uid, next);
-                return;
-            }
-            if (outlineRow && this.commands) {
-                if (Date.now() < this.suppressOutlineClickUntil)
-                    return;
-                const uid = outlineRow.dataset.outlineUid ?? "";
-                this.commands.goToNode(uid);
-                this.activateOutlineUid(uid);
                 return;
             }
             const searchButton = event.target.closest("[data-search-action]");
@@ -8273,40 +8222,6 @@ class YeMindEditor {
                     break;
             }
         });
-        this.outlineEl.addEventListener("focusin", (event) => {
-            const editor = event.target.closest("[data-outline-editor]");
-            const row = editor?.closest("[data-outline-uid]");
-            const uid = row?.dataset.outlineUid ?? "";
-            if (!editor || !uid || !this.commands || !this.outlineRichText)
-                return;
-            this.claimOutlineInteraction("outline-focusin");
-            const ticket = this.editingSurface.pending;
-            const request = ticket?.request.uid === uid
-                ? this.editingSurface.take(ticket) ?? undefined
-                : undefined;
-            this.outlineRichText.activate(editor, uid, request);
-            this.commands.goToNode(uid);
-            this.activateOutlineUid(uid);
-        });
-        this.outlineEl.addEventListener("dblclick", (event) => {
-            const editor = event.target.closest("[data-outline-editor]");
-            const row = editor?.closest("[data-outline-uid]");
-            const uid = row?.dataset.outlineUid ?? "";
-            if (!editor || !uid || !this.outlineRichText || this.commands?.isReadonly())
-                return;
-            event.preventDefault();
-            event.stopPropagation();
-            this.claimOutlineInteraction("outline-double-click");
-            this.outlineRichText.activate(editor, uid, {
-                placement: editor.dataset.outlinePristine === "true" ? "select-all" : "end",
-            });
-            this.activateOutlineUid(uid);
-            this.options.diagnostics.record("outline", "double-click-edit", this.current.id, {
-                pristine: editor.dataset.outlinePristine === "true",
-            });
-        });
-        // Capture structural keys before Quill's own keyboard module consumes them.
-        this.outlineEl.addEventListener("keydown", (event) => this.handleOutlineKeydown(event), true);
         this.outlinePaneEl.addEventListener("keydown", this.onOutlineKeydownBubble);
         this.bindOutlineDrag();
         this.bindSplitDivider();
@@ -8513,8 +8428,7 @@ class YeMindEditor {
         this.map.on("node_active", (node, list) => {
             const activeOutlineHost = this.outlineRichText?.activeHost ?? null;
             const activeElement = document.activeElement;
-            if (activeOutlineHost &&
-                (!activeElement || !activeOutlineHost.contains(activeElement))) {
+            if (activeOutlineHost && (!activeElement || !this.outlineEl.contains(activeElement))) {
                 this.claimCanvasInteraction("canvas-node-active");
             }
             this.rootEl.dataset.hasSelection = list.length > 0 ? "true" : "false";
@@ -9067,35 +8981,6 @@ class YeMindEditor {
             return clientY >= rect.top && clientY <= rect.bottom;
         }) ?? null);
     }
-    setOutlineMode(mode, record = true) {
-        if (!this.outlinePaneEl)
-            return;
-        const previous = this.outlineMode;
-        if (mode === "text") {
-            this.outlineRichText?.commitAndDetach("outline-mode-text");
-            this.outlineTextEditor?.activate(this.current.data);
-        }
-        else {
-            this.outlineTextEditor?.deactivate("outline-mode-tree");
-        }
-        this.outlineMode = mode;
-        this.outlinePaneEl.dataset.outlineMode = mode;
-        this.outlinePaneEl
-            .querySelectorAll("[data-outline-mode-button]")
-            .forEach((button) => {
-            const active = button.dataset.outlineModeButton === mode;
-            button.setAttribute("aria-pressed", String(active));
-            button.classList.toggle("is-active", active);
-        });
-        if (mode === "tree")
-            this.renderOutline(this.current.data);
-        if (record && previous !== mode) {
-            this.options.diagnostics.record("outline", "mode-changed", this.current.id, {
-                previous,
-                mode,
-            });
-        }
-    }
     claimOutlineInteraction(reason) {
         const transition = this.editingSurface.claimOutline();
         if (transition.previousOwner === "outline")
@@ -9103,223 +8988,34 @@ class YeMindEditor {
         this.options.diagnostics.record("editing-surface", "outline-claimed", this.current.id, { reason, previousOwner: transition.previousOwner });
     }
     claimCanvasInteraction(reason) {
-        const textApplied = this.outlineTextEditor?.flush(`surface-change:${reason}`) ?? false;
-        const hadActiveOutlineEditor = Boolean(this.outlineRichText?.activeHost);
+        const outlineApplied = this.outlineRichText?.flush(`surface-change:${reason}`) ?? false;
         const transition = this.editingSurface.claimCanvas();
-        if (hadActiveOutlineEditor) {
-            this.outlineRichText?.commitAndDetach(`surface-change:${reason}`);
-        }
-        if (hadActiveOutlineEditor ||
-            transition.cancelledPending ||
-            transition.previousOwner !== "canvas") {
+        if (transition.previousOwner !== "canvas" || outlineApplied) {
             this.options.diagnostics.record("editing-surface", "canvas-claimed", this.current.id, {
                 reason,
                 previousOwner: transition.previousOwner,
-                detachedOutlineEditor: hadActiveOutlineEditor,
-                cancelledPending: transition.cancelledPending,
-                textDocumentApplied: textApplied,
+                outlineApplied,
             });
         }
     }
-    queueOutlineFocus(request) {
-        if (!request) {
-            this.editingSurface.clearPending();
-            return;
-        }
-        this.editingSurface.queueOutline(request);
-        this.options.diagnostics.record("editing-surface", "outline-focus-queued", this.current.id, { placement: request.placement });
-    }
     renderOutline(data) {
-        this.outlineTextEditor?.syncFromTree(data);
-        const activeEditor = this.outlineRichText?.activeHost ?? null;
-        const activeUid = activeEditor?.closest("[data-outline-uid]")?.dataset
-            .outlineUid ?? null;
         const readonly = this.rootEl.dataset.readonly === "true";
-        const nextStructureKey = (0, outline_1.outlineStructureSignature)(data);
-        const structureChanged = Boolean(this.outlineStructureKey && this.outlineStructureKey !== nextStructureKey);
-        const pendingTicket = this.editingSurface.pending;
         this.outlinePaneEl.setAttribute("aria-readonly", String(readonly));
         this.outlineEl.setAttribute("aria-readonly", String(readonly));
-        if (pendingTicket || (structureChanged && activeEditor && activeUid)) {
-            // Focus restoration is explicit. A structure change originating from the
-            // canvas must close a stale outline editor, never infer that the old row
-            // should become active again.
-            this.outlineRichText?.commitAndDetach(pendingTicket ? "explicit-outline-focus" : "external-structure-change");
-            (0, outline_1.patchOutlineTree)(this.outlineEl, data, readonly, null);
-        }
-        else {
-            (0, outline_1.patchOutlineTree)(this.outlineEl, data, readonly, activeUid);
-        }
-        this.outlineStructureKey = nextStructureKey;
+        this.outlineRichText?.syncFromTree(data);
         const selectedUid = String(this.commands?.getPrimaryNode()?.getData?.("uid") ?? "");
         this.activateOutlineUid(selectedUid);
-        this.restorePendingOutlineFocus();
-    }
-    restorePendingOutlineFocus() {
-        const ticket = this.editingSurface.pending;
-        if (!ticket)
-            return;
-        window.requestAnimationFrame(() => {
-            if (this.destroyed || !this.editingSurface.isCurrent(ticket))
-                return;
-            const pending = ticket.request;
-            const editor = this.findOutlineInput(pending.uid);
-            if (!editor || !this.outlineRichText) {
-                this.editingSurface.clearPending();
-                return;
-            }
-            const request = this.editingSurface.take(ticket);
-            if (!request)
-                return;
-            this.outlineRichText.activate(editor, request.uid, request);
-            this.activateOutlineUid(request.uid);
-            this.options.diagnostics.record("editing-surface", "outline-focus-restored", this.current.id, { placement: request.placement });
-        });
-    }
-    findOutlineInput(uid) {
-        const row = Array.from(this.outlineEl.querySelectorAll("[data-outline-uid]")).find((item) => item.dataset.outlineUid === uid);
-        return row?.querySelector("[data-outline-editor]") ?? null;
-    }
-    commitOutlineRichText(uid, html) {
-        if (!this.commands || this.commands.isReadonly() || !uid)
-            return false;
-        this.outlineTextCommitUid = uid;
-        try {
-            return this.commands.setNodeRichTextByUid(uid, html);
-        }
-        finally {
-            this.outlineTextCommitUid = null;
-        }
-    }
-    handleOutlineKeydown(event) {
-        const editor = event.target.closest("[data-outline-editor]");
-        const row = editor?.closest("[data-outline-uid]");
-        if (!editor ||
-            !row ||
-            !this.commands ||
-            !this.outlineRichText ||
-            this.outlineStructureBusy)
-            return;
-        const uid = row.dataset.outlineUid ?? "";
-        this.claimOutlineInteraction("outline-keydown");
-        if (this.outlineRichText.activeHost !== editor)
-            this.outlineRichText.activate(editor, uid);
-        const selection = this.outlineRichText.getSelectionState(editor);
-        const isRoot = row.dataset.outlineRoot === "true";
-        const action = (0, outline_1.resolveOutlineKeyAction)({
-            key: event.key,
-            empty: selection.text.trim().length === 0,
-            isRoot,
-            readonly: this.commands.isReadonly(),
-            hasChildren: row.dataset.outlineHasChildren === "true",
-            expanded: row.dataset.outlineExpanded === "true",
-            atStart: selection.start === 0 && selection.end === 0,
-            atEnd: selection.start === selection.length &&
-                selection.end === selection.length,
-            composing: event.isComposing || this.outlineRichText.isComposing,
-            shiftKey: event.shiftKey,
-            altKey: event.altKey,
-            ctrlKey: event.ctrlKey,
-            metaKey: event.metaKey,
-        });
-        if (action === "none" || action === "hard-break")
-            return;
-        event.preventDefault();
-        event.stopPropagation();
-        if (action === "cancel") {
-            this.outlineRichText.cancel();
-            editor.blur();
-            return;
-        }
-        if (action === "previous" || action === "next") {
-            this.focusOutlineNeighbor(editor, action === "previous" ? -1 : 1);
-            return;
-        }
-        if (action === "delete-empty") {
-            const focusUid = this.outlineDeleteFocusUid(row);
-            this.outlineStructureBusy = true;
-            try {
-                this.queueOutlineFocus(focusUid ? { uid: focusUid, placement: "end" } : null);
-                this.outlineRichText.discardAndDetach("delete-empty");
-                if (!this.commands.removeNodeByUid(uid))
-                    this.queueOutlineFocus(null);
-            }
-            finally {
-                this.outlineStructureBusy = false;
-            }
-            return;
-        }
-        this.outlineStructureBusy = true;
-        try {
-            this.outlineRichText.flush(editor);
-            if (action === "collapse" || action === "expand") {
-                this.queueOutlineFocus({
-                    uid,
-                    placement: action === "collapse" ? "start" : "end",
-                });
-                this.setOutlineExpanded(uid, action === "expand");
-                return;
-            }
-            if (action === "indent" || action === "outdent") {
-                this.queueOutlineFocus({ uid, placement: "start" });
-                const changed = action === "indent"
-                    ? this.commands.indentNodeByUid(uid)
-                    : this.commands.outdentNodeByUid(uid);
-                if (!changed)
-                    this.queueOutlineFocus(null);
-                return;
-            }
-            const newUid = createOutlineUid();
-            this.queueOutlineFocus({ uid: newUid, placement: "start" });
-            const inserted = action === "insert-child"
-                ? this.commands.insertChildByUid(uid, newUid)
-                : this.commands.insertSiblingByUid(uid, newUid);
-            if (!inserted)
-                this.queueOutlineFocus(null);
-        }
-        finally {
-            this.outlineStructureBusy = false;
-        }
     }
     setOutlineExpanded(uid, expanded) {
         if (!uid || !this.commands)
             return;
+        this.outlineRichText?.flush("before-toggle");
         if (this.commands.setNodeExpandedByUid(uid, expanded)) {
             this.nodeQuickActions?.scheduleRefresh();
         }
     }
-    outlineDeleteFocusUid(row) {
-        const rows = Array.from(this.outlineEl.querySelectorAll(":scope > [data-outline-uid]"));
-        const index = rows.indexOf(row);
-        if (index < 0)
-            return null;
-        const candidate = rows[index - 1] ?? rows[index + 1] ?? null;
-        return candidate?.dataset.outlineUid || null;
-    }
-    focusOutlineNeighbor(editor, offset) {
-        if (!this.outlineRichText)
-            return;
-        const editors = Array.from(this.outlineEl.querySelectorAll("[data-outline-editor]"));
-        const current = editors.indexOf(editor);
-        const target = editors[current + offset];
-        const uid = target?.closest("[data-outline-uid]")?.dataset.outlineUid ??
-            "";
-        if (!target || !uid)
-            return;
-        this.claimOutlineInteraction("outline-neighbor");
-        this.outlineRichText.flush(editor);
-        this.outlineRichText.activate(target, uid, {
-            placement: offset < 0 ? "end" : "start",
-        });
-        this.commands?.goToNode(uid);
-        this.activateOutlineUid(uid);
-    }
     activateOutlineUid(uid) {
-        this.outlineEl
-            .querySelectorAll("[data-outline-uid]")
-            .forEach((row) => {
-            row.classList.toggle("is-active", Boolean(uid) && row.dataset.outlineUid === uid);
-        });
+        this.outlineRichText?.activateUid(uid, false);
     }
     openSearchPanel() {
         this.searchPanelEl.hidden = false;
@@ -9695,7 +9391,6 @@ class YeMindEditor {
             this.commands.cancelRelation();
         this.richTextToolbar?.setEnabled(this.settings.showRichTextToolbar && !enabled);
         this.outlineRichText?.setReadonly(enabled);
-        this.outlineTextEditor?.setReadonly(enabled);
         this.map.setMode(enabled ? "readonly" : "edit");
         this.renderOutline(this.current.data);
         this.options.diagnostics.record("editor", "readonly-changed", this.current.id, { enabled });
@@ -9742,10 +9437,6 @@ class YeMindEditor {
     }
 }
 exports.YeMindEditor = YeMindEditor;
-function createOutlineUid() {
-    return (globalThis.crypto?.randomUUID?.() ??
-        `outline-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`);
-}
 
 },
 33: function(module, exports, __require, __externalRequire) {
@@ -72819,16 +72510,8 @@ function createEditorTemplate(title, theme = 'yemind-default', lineStyle = 'curv
         <div class="ymz-workspace">
           <div class="ymz-canvas" data-role="canvas"></div>
           <div class="ymz-split-divider" data-role="split-divider" role="separator" aria-orientation="vertical" aria-label="调整导图和大纲宽度" aria-valuemin="25" aria-valuemax="70" aria-valuenow="42" tabindex="0"></div>
-          <aside class="ymz-outline" data-role="outline" data-outline-mode="text" aria-label="导图大纲">
-            <div class="ymz-outline-toolbar" role="toolbar" aria-label="大纲编辑模式">
-              <div class="ymz-outline-mode-switch" role="group" aria-label="大纲编辑模式">
-                <button type="button" data-outline-mode-button="text" aria-pressed="true" title="连续文本编辑">文本</button>
-                <button type="button" data-outline-mode-button="tree" aria-pressed="false" title="节点树编辑">节点</button>
-              </div>
-              <span class="ymz-outline-text-status" data-role="outline-text-status">自动同步</span>
-            </div>
-            <div class="ymz-outline-tree" data-role="outline-tree" role="tree" aria-label="节点树大纲"></div>
-            <textarea class="ymz-outline-text-editor" data-role="outline-text-editor" aria-label="连续文本大纲编辑器" spellcheck="false" placeholder="每行一个节点；缩进表示层级"></textarea>
+          <aside class="ymz-outline" data-role="outline" aria-label="导图大纲">
+            <div class="ymz-outline-tree ymz-structured-outline" data-role="outline-tree" role="tree" aria-label="结构化大纲编辑器" spellcheck="false"></div>
           </aside>
         </div>
 
@@ -72907,274 +72590,6 @@ function escapeHtml(value) {
 
 },
 210: function(module, exports, __require, __externalRequire) {
-// /src/editor/outline.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.generalizationList = generalizationList;
-exports.flattenOutline = flattenOutline;
-exports.pruneOutlineCollapsedUids = pruneOutlineCollapsedUids;
-exports.resolveOutlineKeyAction = resolveOutlineKeyAction;
-exports.renderOutlineHtml = renderOutlineHtml;
-exports.resolveOutlineToggleState = resolveOutlineToggleState;
-exports.outlineStructureSignature = outlineStructureSignature;
-exports.patchOutlineTree = patchOutlineTree;
-exports.sanitizeOutlineHtml = sanitizeOutlineHtml;
-const sanitizeRichHtml_1 = __require(186);
-const textEditingPolicy_1 = __require(18);
-function plainTextFromHtml(value) {
-    const element = document.createElement("div");
-    element.innerHTML = value;
-    return (element.textContent ?? "").replace(/\u00a0/g, " ").trim();
-}
-function dataText(data) {
-    const value = String(data.text ?? "");
-    if (data.richText) {
-        return {
-            text: plainTextFromHtml(value),
-            html: sanitizeOutlineHtml(value),
-            richText: true,
-        };
-    }
-    return {
-        text: value,
-        html: escapeHtml(value).replaceAll("\n", "<br>"),
-        richText: false,
-    };
-}
-/** Build the outline from the persisted node expand state. */
-function generalizationList(data) {
-    const value = data.generalization;
-    if (Array.isArray(value))
-        return value.filter((item) => Boolean(item && typeof item === "object"));
-    return value && typeof value === "object" ? [value] : [];
-}
-function flattenOutline(tree) {
-    const rows = [];
-    const visit = (node, depth, path) => {
-        const children = Array.isArray(node.children) ? node.children : [];
-        const hasChildren = children.length > 0;
-        const uid = String(node.data.uid ?? path);
-        const expanded = node.data.expand !== false;
-        rows.push({
-            uid,
-            ...dataText(node.data),
-            depth,
-            hasChildren,
-            expanded,
-            isRoot: depth === 0,
-            pristine: (0, textEditingPolicy_1.isPristineNodeTextData)(node.data),
-        });
-        if (expanded) {
-            if (hasChildren)
-                children.forEach((child, index) => visit(child, depth + 1, `${path}.${index}`));
-            generalizationList(node.data).forEach((summary, index) => {
-                const summaryUid = String(summary.uid ?? `${uid}.summary.${index}`);
-                rows.push({
-                    uid: summaryUid,
-                    ...dataText(summary),
-                    depth: depth + 1,
-                    hasChildren: false,
-                    expanded: true,
-                    isRoot: false,
-                    isGeneralization: true,
-                    pristine: (0, textEditingPolicy_1.isPristineNodeTextData)(summary),
-                });
-            });
-        }
-    };
-    visit(tree, 0, "root");
-    return rows;
-}
-/** @deprecated Outline expansion is persisted in node data. */
-function pruneOutlineCollapsedUids(_tree, collapsedUids) {
-    collapsedUids.clear();
-}
-function resolveOutlineKeyAction(context) {
-    if (context.composing)
-        return "none";
-    if (context.key === "ArrowUp")
-        return context.atStart ? "previous" : "none";
-    if (context.key === "ArrowDown")
-        return context.atEnd ? "next" : "none";
-    if (context.key === "Escape")
-        return "cancel";
-    if (context.readonly)
-        return "none";
-    const hasCommandModifier = Boolean(context.altKey || context.ctrlKey || context.metaKey);
-    if ((context.key === "Backspace" || context.key === "Delete") &&
-        context.empty &&
-        !context.isRoot &&
-        !context.shiftKey &&
-        !hasCommandModifier) {
-        return "delete-empty";
-    }
-    if (context.key === "Enter") {
-        if (context.shiftKey && !hasCommandModifier)
-            return "hard-break";
-        if (context.shiftKey || hasCommandModifier)
-            return "none";
-        return context.isRoot ? "insert-child" : "insert-sibling";
-    }
-    if (context.key === "Tab" && !hasCommandModifier)
-        return context.shiftKey ? "outdent" : "indent";
-    if (context.key === "ArrowLeft" &&
-        context.atStart &&
-        context.hasChildren &&
-        context.expanded)
-        return "collapse";
-    if (context.key === "ArrowRight" &&
-        context.atEnd &&
-        context.hasChildren &&
-        context.expanded === false)
-        return "expand";
-    return "none";
-}
-function rowHtml(row, readonly) {
-    const tabindex = readonly ? "-1" : "0";
-    const branch = row.expanded ? "▾" : "▸";
-    const label = row.text || "空节点";
-    const encodedOriginal = encodeURIComponent(row.html);
-    const leaf = !row.hasChildren && !row.isRoot && !row.isGeneralization;
-    const toggle = row.hasChildren
-        ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle aria-label="${row.expanded ? "折叠" : "展开"}">${branch}</button>`
-        : `<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" aria-hidden="true">${leaf ? '<span class="ymz-outline-row__leaf-dot"></span>' : ''}</span>`;
-    return `<div class="ymz-outline-row" role="treeitem" aria-level="${row.depth + 1}" aria-expanded="${row.hasChildren ? row.expanded : "false"}" data-outline-uid="${escapeHtml(row.uid)}" data-outline-root="${row.isRoot}" data-outline-generalization="${Boolean(row.isGeneralization)}" data-outline-leaf="${leaf}" data-outline-has-children="${row.hasChildren}" data-outline-expanded="${row.expanded}" data-outline-drag-source="${readonly || row.isRoot || row.isGeneralization ? "false" : "true"}" style="--ymz-outline-depth:${row.depth}">${toggle}<div class="ymz-outline-row__editor" data-outline-editor data-outline-original="${escapeHtml(encodedOriginal)}" data-outline-rich-text="${row.richText}" data-outline-pristine="${row.pristine}" data-placeholder="空节点" aria-label="编辑节点：${escapeHtml(label)}" tabindex="${tabindex}"${readonly ? ' aria-readonly="true"' : ""}>${row.html}</div></div>`;
-}
-function renderOutlineHtml(tree, readonly = false) {
-    return flattenOutline(tree)
-        .map((row) => rowHtml(row, readonly))
-        .join("");
-}
-function resolveOutlineToggleState(input) {
-    return input.hasChildren ? !input.expanded : null;
-}
-/**
- * A signature of structural and outline-disclosure state only. Text and rich
- * formatting are deliberately excluded so ordinary typing never tears down the
- * active editor session.
- */
-function outlineStructureSignature(tree) {
-    return flattenOutline(tree)
-        .map((row) => `${row.uid}:${row.depth}:${row.hasChildren ? 1 : 0}:${row.expanded ? 1 : 0}`)
-        .join("|");
-}
-/**
- * Patch outline rows by stable UID. Existing rows that are already in the correct
- * order are not reinserted: moving an active contenteditable node through a
- * DocumentFragment makes browsers drop focus and selection.
- */
-function patchOutlineTree(container, tree, readonly = false, activeUid = null) {
-    const rows = flattenOutline(tree);
-    const existing = new Map();
-    container
-        .querySelectorAll(":scope > [data-outline-uid]")
-        .forEach((row) => {
-        existing.set(row.dataset.outlineUid ?? "", row);
-    });
-    const keep = new Set();
-    const desired = [];
-    rows.forEach((data) => {
-        keep.add(data.uid);
-        let row = existing.get(data.uid);
-        if (!row) {
-            const wrapper = document.createElement("div");
-            wrapper.innerHTML = rowHtml(data, readonly);
-            row = wrapper.firstElementChild;
-        }
-        else {
-            row.setAttribute("aria-level", String(data.depth + 1));
-            row.setAttribute("aria-expanded", data.hasChildren ? String(data.expanded) : "false");
-            row.dataset.outlineRoot = String(data.isRoot);
-            row.dataset.outlineGeneralization = String(Boolean(data.isGeneralization));
-            const leaf = !data.hasChildren && !data.isRoot && !data.isGeneralization;
-            row.dataset.outlineLeaf = String(leaf);
-            row.dataset.outlineHasChildren = String(data.hasChildren);
-            row.dataset.outlineExpanded = String(data.expanded);
-            row.dataset.outlinePristine = String(data.pristine);
-            row.dataset.outlineDragSource = String(!readonly && !data.isRoot && !data.isGeneralization);
-            row.style.setProperty("--ymz-outline-depth", String(data.depth));
-            const existingToggle = row.querySelector("[data-outline-toggle]");
-            if (data.hasChildren) {
-                let toggle = existingToggle;
-                if (!toggle) {
-                    const placeholder = row.querySelector(".ymz-outline-row__branch--placeholder");
-                    toggle = document.createElement("button");
-                    toggle.type = "button";
-                    toggle.className = "ymz-outline-row__branch";
-                    toggle.dataset.outlineToggle = "";
-                    placeholder?.replaceWith(toggle);
-                }
-                toggle.textContent = data.expanded ? "▾" : "▸";
-                toggle.setAttribute("aria-label", data.expanded ? "折叠" : "展开");
-            }
-            else if (existingToggle) {
-                const placeholder = document.createElement("span");
-                placeholder.className =
-                    "ymz-outline-row__branch ymz-outline-row__branch--placeholder";
-                placeholder.setAttribute("aria-hidden", "true");
-                if (leaf) {
-                    const dot = document.createElement("span");
-                    dot.className = "ymz-outline-row__leaf-dot";
-                    placeholder.appendChild(dot);
-                }
-                existingToggle.replaceWith(placeholder);
-            }
-            const placeholder = row.querySelector(".ymz-outline-row__branch--placeholder");
-            if (placeholder) {
-                const dot = placeholder.querySelector(".ymz-outline-row__leaf-dot");
-                if (leaf && !dot) {
-                    const nextDot = document.createElement("span");
-                    nextDot.className = "ymz-outline-row__leaf-dot";
-                    placeholder.appendChild(nextDot);
-                }
-                else if (!leaf && dot)
-                    dot.remove();
-            }
-            const editor = row.querySelector("[data-outline-editor]");
-            if (editor) {
-                editor.tabIndex = readonly ? -1 : 0;
-                if (readonly)
-                    editor.setAttribute("aria-readonly", "true");
-                else
-                    editor.removeAttribute("aria-readonly");
-                if (data.uid !== activeUid) {
-                    editor.innerHTML = data.html;
-                    editor.dataset.outlineOriginal = encodeURIComponent(data.html);
-                    editor.dataset.outlineRichText = String(data.richText);
-                    editor.setAttribute("aria-label", `编辑节点：${data.text || "空节点"}`);
-                }
-            }
-        }
-        desired.push(row);
-    });
-    existing.forEach((row, uid) => {
-        if (!keep.has(uid))
-            row.remove();
-    });
-    let cursor = container.firstElementChild;
-    desired.forEach((row) => {
-        if (row === cursor) {
-            cursor = cursor.nextElementSibling;
-            return;
-        }
-        container.insertBefore(row, cursor);
-    });
-}
-/** Allow the Quill subset emitted by YeMind while removing executable markup. */
-function sanitizeOutlineHtml(value) {
-    return (0, sanitizeRichHtml_1.sanitizeRichHtml)(value);
-}
-function escapeHtml(value) {
-    return value
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-
-},
-211: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73259,2965 +72674,829 @@ function resolveOutlinePointerDropIntent(input) {
 }
 
 },
-212: function(module, exports, __require, __externalRequire) {
-// /src/editor/OutlineRichTextController.ts
+211: function(module, exports, __require, __externalRequire) {
+// /src/editor/StructuredOutlineEditorController.ts
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OutlineRichTextController = void 0;
-const quill_1 = __importDefault(__require(97));
-const codeBlock_1 = __require(195);
-const YeMindRichText_1 = __require(181);
-const textEditingPolicy_1 = __require(18);
-function decodeOriginal(host) {
+exports.StructuredOutlineEditorController = void 0;
+const sanitizeRichHtml_1 = __require(186);
+const outlineTextDocument_1 = __require(212);
+const structuredOutlineDocument_1 = __require(213);
+const INDENT_SIZE = 22;
+const PLAIN_INDENT = '    ';
+const BLOCK_TAGS = new Set(['DIV', 'P', 'LI', 'UL', 'OL', 'SECTION', 'ARTICLE']);
+function escapeHtml(value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;')
+        .replaceAll('\n', '<br>');
+}
+function textLength(element) {
+    return (element.innerText || element.textContent || '').replace(/\u00a0/g, ' ').length;
+}
+function nodeTextLength(node) {
+    if (node.nodeType === Node.TEXT_NODE)
+        return node.nodeValue?.length ?? 0;
+    if (node instanceof HTMLBRElement)
+        return 1;
+    return Array.from(node.childNodes).reduce((sum, child) => sum + nodeTextLength(child), 0);
+}
+function offsetWithin(root, node, offset) {
+    if (!root.contains(node) && root !== node)
+        return 0;
+    const range = document.createRange();
+    range.selectNodeContents(root);
     try {
-        return decodeURIComponent(host.dataset.outlineOriginal ?? "");
+        range.setEnd(node, offset);
     }
     catch {
-        return host.innerHTML;
+        return 0;
     }
+    const fragment = range.cloneContents();
+    const wrapper = document.createElement('div');
+    wrapper.append(fragment);
+    return (wrapper.innerText || wrapper.textContent || '').replace(/\u00a0/g, ' ').length;
 }
-function normalizeHtml(html) {
-    return html === "<p><br></p>" ? "" : html;
-}
-/**
- * A single active Quill instance is reused conceptually across outline rows.
- * Inactive rows remain lightweight HTML; structure changes still go through
- * simple-mind-map commands owned by YeMindEditor.
- */
-class OutlineRichTextController {
-    constructor(options) {
-        this.options = options;
-        this.quill = null;
-        this.host = null;
-        this.uid = "";
-        this.originalHtml = "";
-        this.sessionStartHtml = "";
-        this.range = null;
-        this.lastRange = null;
-        this.commitTimer = null;
-        this.composing = false;
-        this.committing = false;
-        this.onEditorKeyDown = (event) => {
-            if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== "a" || !this.quill)
-                return;
-            event.preventDefault();
-            event.stopPropagation();
-            const length = (0, textEditingPolicy_1.editableTextLength)(this.quill);
-            this.quill.setSelection(0, length, quill_1.default.sources.USER);
-            this.range = { index: 0, length };
-            this.options.onDiagnostic?.("select-all-shortcut", { length });
-        };
-        this.onCompositionStart = () => {
-            this.composing = true;
-            this.options.onDiagnostic?.("composition-start");
-        };
-        this.onCompositionEnd = () => {
-            this.composing = false;
-            this.options.onDiagnostic?.("composition-end");
-            this.scheduleCommit();
-        };
-        this.onTextChange = () => {
-            this.options.onDiagnostic?.("text-change", {
-                composing: this.composing,
-                textLength: this.plainText().length,
-            });
-            if (!this.composing)
-                this.scheduleCommit();
-        };
-        this.onSelectionChange = (range) => {
-            this.lastRange = this.range;
-            this.range = range;
-            if (!range || !this.quill || !this.host) {
-                this.options.onSelectionChange(false, null, null, this);
-                return;
+function domPointAtOffset(root, targetOffset) {
+    let remaining = Math.max(0, targetOffset);
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ALL, {
+        acceptNode(node) {
+            if (node === root)
+                return NodeFilter.FILTER_SKIP;
+            if (node instanceof HTMLElement) {
+                const blocker = node.closest('[contenteditable="false"]');
+                if (blocker && root.contains(blocker))
+                    return NodeFilter.FILTER_REJECT;
             }
-            const bounds = this.quill.getBounds(range.index, range.length) ?? {
-                left: 0,
-                top: 0,
-                right: 0,
-                bottom: 0,
-                width: 0,
-            };
-            const rect = this.quill.root.getBoundingClientRect();
-            const rectInfo = {
-                left: bounds.left + rect.left,
-                top: bounds.top + rect.top,
-                right: bounds.right + rect.left,
-                bottom: bounds.bottom + rect.top,
-                width: bounds.width,
-            };
-            const hasRange = range.length > 0;
-            const format = this.quill.getFormat(range.index, range.length);
-            this.options.onSelectionChange(hasRange, rectInfo, format, this);
-        };
-        (0, YeMindRichText_1.registerYeMindFormats)();
-    }
-    get activeHost() {
-        return this.host;
-    }
-    get isComposing() {
-        return this.composing;
-    }
-    activate(host, uid, request) {
-        if (this.host === host && this.quill) {
-            if (request)
-                this.focus(request);
-            return;
-        }
-        this.detach(true);
-        this.host = host;
-        this.uid = uid;
-        this.options.onDiagnostic?.("edit-start", { uidLength: uid.length });
-        this.originalHtml = decodeOriginal(host);
-        host.classList.add("is-editing");
-        host.innerHTML = this.originalHtml;
-        this.quill = new quill_1.default(host, {
-            modules: { toolbar: false },
-            formats: [...YeMindRichText_1.YEMIND_RICH_TEXT_FORMATS],
-            readOnly: this.options.isReadonly(),
-        });
-        this.quill.root.setAttribute("spellcheck", "false");
-        // Quill canonicalizes tags (for example <b> to <strong>). Treat that
-        // canonical initial value as unchanged so merely focusing a row does not
-        // convert a plain node into rich text.
-        this.originalHtml = normalizeHtml(this.quill.root.innerHTML);
-        this.sessionStartHtml = this.originalHtml;
-        host.dataset.outlineOriginal = encodeURIComponent(this.originalHtml);
-        this.quill.root.addEventListener("keydown", this.onEditorKeyDown, true);
-        this.quill.root.addEventListener("compositionstart", this.onCompositionStart);
-        this.quill.root.addEventListener("compositionend", this.onCompositionEnd);
-        this.quill.on("selection-change", this.onSelectionChange);
-        this.quill.on("text-change", this.onTextChange);
-        this.focus(request);
-    }
-    setReadonly(readonly) {
-        this.quill?.enable(!readonly);
-    }
-    focus(request = { placement: "end" }) {
-        if (!this.quill)
-            return;
-        window.requestAnimationFrame(() => {
-            if (!this.quill)
-                return;
-            this.quill.root.focus({ preventScroll: true });
-            const length = Math.max(0, this.quill.getLength() - 1);
-            let start = length;
-            let end = length;
-            if (request.placement === "start")
-                start = end = 0;
-            else if (request.placement === "select-all") {
-                start = 0;
-                end = length;
-            }
-            else if (request.placement === "range") {
-                start = Math.min(length, Math.max(0, request.start ?? 0));
-                end = Math.min(length, Math.max(start, request.end ?? start));
-            }
-            this.quill.setSelection(start, end - start, quill_1.default.sources.SILENT);
-            this.range = { index: start, length: end - start };
-            const scrollIntoView = this.host?.scrollIntoView;
-            if (typeof scrollIntoView === "function")
-                scrollIntoView.call(this.host, { block: "nearest" });
-        });
-    }
-    getSelectionState(host = this.host) {
-        if (!host)
-            return { text: "", length: 0, start: 0, end: 0 };
-        if (host === this.host && this.quill) {
-            const text = this.plainText();
-            const current = this.quill.getSelection() ??
-                this.range ??
-                this.lastRange ?? { index: 0, length: 0 };
-            return {
-                text,
-                length: text.length,
-                start: Math.min(text.length, Math.max(0, Number(current.index ?? 0))),
-                end: Math.min(text.length, Math.max(0, Number(current.index ?? 0) + Number(current.length ?? 0))),
-            };
-        }
-        const text = host.textContent?.replace(/\u00a0/g, " ").trim() ?? "";
-        return { text, length: text.length, start: 0, end: 0 };
-    }
-    flush(host = this.host) {
-        if (!host ||
-            host !== this.host ||
-            !this.quill ||
-            !this.uid ||
-            this.committing)
-            return false;
-        if (this.commitTimer !== null) {
-            window.clearTimeout(this.commitTimer);
-            this.commitTimer = null;
-        }
-        const html = normalizeHtml(this.quill.root.innerHTML);
-        const text = this.plainText();
-        if (html === this.originalHtml)
-            return false;
-        this.committing = true;
-        try {
-            const changed = this.options.onCommit(this.uid, html);
-            this.options.onDiagnostic?.("commit", {
-                changed,
-                textLength: text.length,
-                htmlLength: html.length,
-            });
-            if (changed) {
-                this.originalHtml = html;
-                host.dataset.outlineOriginal = encodeURIComponent(html);
-                host.dataset.outlineRichText = "true";
-            }
-            return changed;
-        }
-        finally {
-            this.committing = false;
-        }
-    }
-    commitAndDetach(reason) {
-        if (!this.host)
-            return;
-        this.flush();
-        this.detach(false, reason);
-    }
-    /** Detach an editor whose backing node is about to be removed. */
-    discardAndDetach(reason) {
-        this.detach(false, reason);
-    }
-    cancel() {
-        if (!this.host)
-            return;
-        if (this.commitTimer !== null)
-            window.clearTimeout(this.commitTimer);
-        this.commitTimer = null;
-        const host = this.host;
-        const uid = this.uid;
-        const original = this.sessionStartHtml;
-        const current = this.quill
-            ? normalizeHtml(this.quill.root.innerHTML)
-            : this.originalHtml;
-        this.detach(false);
-        this.options.onDiagnostic?.("cancel", { changed: current !== original });
-        if (uid && current !== original)
-            this.options.onCommit(uid, original);
-        host.innerHTML = original;
-        host.dataset.outlineOriginal = encodeURIComponent(original);
-    }
-    detach(commit, reason = commit ? "commit" : "detach") {
-        if (!this.host)
-            return;
-        if (commit)
-            this.flush();
-        if (this.commitTimer !== null)
-            window.clearTimeout(this.commitTimer);
-        this.commitTimer = null;
-        const host = this.host;
-        const html = this.quill
-            ? normalizeHtml(this.quill.root.innerHTML)
-            : this.originalHtml;
-        if (this.quill) {
-            this.quill.root.removeEventListener("keydown", this.onEditorKeyDown, true);
-            this.quill.root.removeEventListener("compositionstart", this.onCompositionStart);
-            this.quill.root.removeEventListener("compositionend", this.onCompositionEnd);
-            this.quill.off("selection-change", this.onSelectionChange);
-            this.quill.off("text-change", this.onTextChange);
-        }
-        host.classList.remove("is-editing");
-        this.options.onDiagnostic?.("editor-destroy", { commit, reason });
-        host.innerHTML = html;
-        this.options.onSelectionChange(false, null, null, this);
-        this.quill = null;
-        this.host = null;
-        this.uid = "";
-        this.sessionStartHtml = "";
-        this.range = null;
-        this.lastRange = null;
-    }
-    destroy() {
-        this.detach(true);
-    }
-    getSelectedText() {
-        const range = this.activeRange();
-        if (!this.quill || !range)
-            return "";
-        return String(this.quill.getText(range.index, range.length) ?? "").trim();
-    }
-    getSelectedInlineLink() {
-        const range = this.activeRange();
-        if (!this.quill || !range)
-            return "";
-        const value = this.quill.getFormat(range.index, range.length)?.link;
-        return typeof value === "string" ? value : "";
-    }
-    setInlineLink(link) {
-        this.formatText({ link: link || false });
-    }
-    toggleInlineCode() {
-        const range = this.activeRange();
-        if (!this.quill || !range || !range.length)
-            return;
-        const current = Boolean(this.quill.getFormat(range.index, range.length)?.code);
-        this.formatText({ code: !current });
-    }
-    getCodeBlock() {
-        const range = this.activeRange();
-        return this.quill ? (0, codeBlock_1.findCurrentCodeBlock)(this.quill, range) : null;
-    }
-    saveCodeBlock(code, language = "plain") {
-        const range = this.activeRange();
-        if (!this.quill || !range)
-            return;
-        const existing = (0, codeBlock_1.findCurrentCodeBlock)(this.quill, range);
-        (0, codeBlock_1.replaceCodeBlock)(this.quill, existing ?? range, code, language);
-        this.restoreRange(range);
-    }
-    removeCodeBlockFormat() {
-        const range = this.activeRange();
-        const block = this.quill ? (0, codeBlock_1.findCurrentCodeBlock)(this.quill, range) : null;
-        if (this.quill && block)
-            (0, codeBlock_1.removeCodeBlockFormat)(this.quill, block);
-    }
-    deleteCodeBlock() {
-        const range = this.activeRange();
-        const block = this.quill ? (0, codeBlock_1.findCurrentCodeBlock)(this.quill, range) : null;
-        if (this.quill && block)
-            (0, codeBlock_1.deleteCodeBlock)(this.quill, block);
-    }
-    insertFormula(formula, mode = "inline") {
-        const range = this.activeRange();
-        if (!this.quill || !range)
-            return;
-        const value = mode === "block" ? `\\displaystyle{${formula}}` : formula;
-        if (range.length > 0)
-            this.quill.deleteText(range.index, range.length, quill_1.default.sources.USER);
-        if (mode === "block") {
-            this.quill.insertText(range.index, "\n", quill_1.default.sources.USER);
-            this.quill.insertEmbed(range.index + 1, "formula", value, quill_1.default.sources.USER);
-            this.quill.insertText(range.index + 2, "\n", quill_1.default.sources.USER);
-            this.restoreRange({ index: range.index + 3, length: 0 });
-        }
-        else {
-            this.quill.insertEmbed(range.index, "formula", value, quill_1.default.sources.USER);
-            this.restoreRange({ index: range.index + 1, length: 0 });
-        }
-    }
-    formatText(config) {
-        const range = this.activeRange();
-        if (!this.quill || !range || !range.length || this.options.isReadonly())
-            return;
-        this.quill.formatText(range.index, range.length, config, quill_1.default.sources.USER);
-        this.restoreRange(range);
-    }
-    clearTextFormat() {
-        const range = this.activeRange();
-        if (!this.quill || !range || !range.length || this.options.isReadonly())
-            return;
-        this.quill.removeFormat(range.index, range.length, quill_1.default.sources.USER);
-        this.restoreRange(range);
-    }
-    setCloze(enabled) {
-        this.formatText(enabled
-            ? { background: "#f5dfa0", color: "transparent" }
-            : { background: false, color: false });
-    }
-    activeRange() {
-        return this.quill?.getSelection() ?? this.range ?? this.lastRange ?? null;
-    }
-    plainText() {
-        if (!this.quill)
-            return "";
-        return String(this.quill.getText(0, Math.max(0, this.quill.getLength() - 1)) ?? "").replace(/\u00a0/g, " ");
-    }
-    restoreSelection() {
-        const range = this.activeRange();
-        if (range)
-            this.restoreRange(range);
-    }
-    restoreRange(range) {
-        this.range = { index: range.index, length: range.length };
-        this.quill?.setSelection(range.index, range.length, quill_1.default.sources.SILENT);
-    }
-    scheduleCommit() {
-        if (this.commitTimer !== null)
-            window.clearTimeout(this.commitTimer);
-        this.commitTimer = window.setTimeout(() => {
-            this.commitTimer = null;
-            this.flush();
-        }, 160);
-    }
-}
-exports.OutlineRichTextController = OutlineRichTextController;
-
-},
-213: function(module, exports, __require, __externalRequire) {
-// /src/editor/splitPane.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.MAX_SPLIT_OUTLINE_RATIO = exports.MIN_SPLIT_OUTLINE_RATIO = exports.DEFAULT_SPLIT_OUTLINE_RATIO = void 0;
-exports.normalizeSplitOutlineRatio = normalizeSplitOutlineRatio;
-exports.ratioFromPointer = ratioFromPointer;
-exports.DEFAULT_SPLIT_OUTLINE_RATIO = 0.42;
-exports.MIN_SPLIT_OUTLINE_RATIO = 0.25;
-exports.MAX_SPLIT_OUTLINE_RATIO = 0.7;
-function normalizeSplitOutlineRatio(value) {
-    const number = Number(value);
-    if (!Number.isFinite(number))
-        return exports.DEFAULT_SPLIT_OUTLINE_RATIO;
-    return Math.min(exports.MAX_SPLIT_OUTLINE_RATIO, Math.max(exports.MIN_SPLIT_OUTLINE_RATIO, number));
-}
-function ratioFromPointer(rect, clientX) {
-    if (!Number.isFinite(rect.width) || rect.width <= 0)
-        return exports.DEFAULT_SPLIT_OUTLINE_RATIO;
-    return normalizeSplitOutlineRatio((rect.left + rect.width - clientX) / rect.width);
-}
-
-},
-214: function(module, exports, __require, __externalRequire) {
-// /src/editor/RichTextToolbar.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.RichTextToolbar = void 0;
-const YeMindRichText_1 = __require(181);
-const richTextActions_1 = __require(215);
-const colorPresentation_1 = __require(216);
-const colorPalette_1 = __require(217);
-function option(value, label) {
-    return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
-}
-function sizeOptions() {
-    return YeMindRichText_1.YEMIND_SIZE_VALUES.map((value) => option(value, value.replace("px", ""))).join("");
-}
-function fontOptions() {
-    const labels = ["无衬线", "衬线", "微软雅黑", "宋体", "等宽"];
-    return YeMindRichText_1.YEMIND_FONT_VALUES.map((value, index) => option(value, labels[index] ?? value)).join("");
-}
-class RichTextToolbar {
-    constructor(root, initialTarget, callbacks = {}) {
-        this.root = root;
-        this.callbacks = callbacks;
-        this.formatInfo = {};
-        this.enabled = true;
-        this.interacting = false;
-        this.target = null;
-        this.activeColorKind = "color";
-        this.colorSessionOriginal = false;
-        this.onDocumentMouseDown = (event) => {
-            const node = event.target;
-            if (!this.element.contains(node) && !this.colorPopover.contains(node))
-                this.hide();
-        };
-        this.onWindowMouseUp = () => {
-            window.setTimeout(() => {
-                this.interacting = false;
-            }, 0);
-        };
-        this.target = initialTarget;
-        this.element = document.createElement("div");
-        this.element.className = "ymz-rich-toolbar";
-        this.element.hidden = true;
-        this.element.innerHTML = `
-      <button type="button" data-rich-action="bold" title="加粗"><b>B</b></button>
-      <button type="button" data-rich-action="italic" title="斜体"><i>I</i></button>
-      <button type="button" data-rich-action="underline" title="下划线"><u>U</u></button>
-      <button type="button" data-rich-action="strike" title="删除线"><s>S</s></button>
-      <button type="button" data-rich-action="inline-code" title="行内代码">&lt;/&gt;</button>
-      <button type="button" data-rich-action="code-block" title="代码块">代码块</button>
-      <span class="ymz-rich-toolbar__separator"></span>
-      <button type="button" class="ymz-rich-color" data-rich-action="color-menu" title="文字颜色"><span>A</span><i data-rich-swatch="color"></i></button>
-      <button type="button" class="ymz-rich-color" data-rich-action="background-menu" title="背景颜色"><span>Bg</span><i data-rich-swatch="background"></i></button>
-      <select data-rich-field="size" title="字号">
-        <option value="">自动</option>${sizeOptions()}
-      </select>
-      <select data-rich-field="font" title="字体">
-        <option value="">继承</option>${fontOptions()}
-      </select>
-      <span class="ymz-rich-toolbar__separator"></span>
-      <button type="button" data-rich-action="link" title="行内链接">链接</button>
-      <button type="button" data-rich-action="cloze" title="模糊/取消模糊">模糊</button>
-      <button type="button" data-rich-action="formula" title="插入公式" aria-label="插入公式"><span class="ymz-formula-symbol" aria-hidden="true">π</span></button>
-      <button type="button" data-rich-action="clear" title="清除全部格式">清除</button>`;
-        this.colorPopover = document.createElement("div");
-        this.colorPopover.className = "ymz-color-popover";
-        this.colorPopover.hidden = true;
-        this.colorPopover.innerHTML = (0, colorPalette_1.colorPaletteInnerHtml)();
-        this.customColorInput = document.createElement("input");
-        this.customColorInput.type = "color";
-        this.customColorInput.className = "ymz-color-popover__native";
-        this.customColorInput.tabIndex = -1;
-        this.customColorInput.setAttribute("aria-hidden", "true");
-        this.colorPopover.appendChild(this.customColorInput);
-        // Keep every editor overlay inside its own clipping/stacking context. This is
-        // critical when SiYuan opens Settings or another host dialog above a tab.
-        this.root.append(this.element, this.colorPopover);
-        document.addEventListener("mousedown", this.onDocumentMouseDown, true);
-        window.addEventListener("mouseup", this.onWindowMouseUp, true);
-        this.bind();
-    }
-    setEnabled(enabled) {
-        this.enabled = enabled;
-        if (!enabled)
-            this.hide();
-    }
-    update(hasRange, rectInfo, formatInfo, target) {
-        if (target)
-            this.target = target;
-        if (!this.enabled) {
-            this.hide();
-            return;
-        }
-        if (!hasRange || !rectInfo) {
-            if (!this.interacting)
-                this.hide();
-            return;
-        }
-        this.formatInfo = formatInfo ?? {};
-        this.syncState();
-        this.element.hidden = false;
-        this.position(rectInfo);
-    }
-    hide() {
-        this.element.hidden = true;
-        this.colorPopover.hidden = true;
-    }
-    destroy() {
-        document.removeEventListener("mousedown", this.onDocumentMouseDown, true);
-        window.removeEventListener("mouseup", this.onWindowMouseUp, true);
-        this.element.remove();
-        this.colorPopover.remove();
-        this.target = null;
-    }
-    bind() {
-        const markInteracting = (event) => {
-            this.interacting = true;
-            const target = event.target;
-            const isTextInput = target instanceof HTMLInputElement && target.type !== "color";
-            if (!isTextInput)
-                event.preventDefault();
-            event.stopPropagation();
-        };
-        this.element.addEventListener("mousedown", markInteracting);
-        this.colorPopover.addEventListener("mousedown", markInteracting);
-        const isolateInputEvent = (event) => event.stopPropagation();
-        [
-            "keydown",
-            "keyup",
-            "beforeinput",
-            "input",
-            "paste",
-            "compositionstart",
-            "compositionupdate",
-            "compositionend",
-        ].forEach((type) => this.colorPopover.addEventListener(type, isolateInputEvent));
-        this.element.addEventListener("click", (event) => {
-            const button = event.target.closest("[data-rich-action]");
-            if (!button || !this.target)
-                return;
-            const action = button.dataset.richAction ?? "";
-            this.callbacks.onAction?.(action);
-            if (["bold", "italic", "underline", "strike"].includes(action)) {
-                this.target.formatText((0, richTextActions_1.nextToggleFormat)(action, this.formatInfo));
-                this.formatInfo[action] = !Boolean(this.formatInfo[action]);
-                this.syncState();
-                return;
-            }
-            switch (action) {
-                case "inline-code":
-                    this.target.toggleInlineCode();
-                    this.formatInfo.code = !Boolean(this.formatInfo.code);
-                    this.syncState();
-                    break;
-                case "code-block":
-                    this.colorPopover.hidden = true;
-                    this.element.hidden = true;
-                    this.callbacks.onCodeBlock?.(this.target);
-                    break;
-                case "link":
-                    this.colorPopover.hidden = true;
-                    this.element.hidden = true;
-                    this.callbacks.onLink?.(this.target);
-                    break;
-                case "cloze": {
-                    const next = !(0, richTextActions_1.isClozeFormat)(this.formatInfo);
-                    this.target.setCloze(next);
-                    this.formatInfo.color = next ? "transparent" : undefined;
-                    this.formatInfo.background = next ? "#f5dfa0" : undefined;
-                    this.syncState();
-                    break;
-                }
-                case "formula":
-                    this.colorPopover.hidden = true;
-                    this.element.hidden = true;
-                    this.callbacks.onFormula?.(this.target);
-                    break;
-                case "clear":
-                    this.target.clearTextFormat();
-                    this.formatInfo = {};
-                    this.syncState();
-                    break;
-                case "color-menu":
-                    this.openColorPopover("color", button);
-                    break;
-                case "background-menu":
-                    this.openColorPopover("background", button);
-                    break;
-            }
-        });
-        this.colorPopover.addEventListener("click", (event) => {
-            const swatch = event.target.closest("[data-color-value]");
-            if (swatch) {
-                this.applyColor(swatch.dataset.colorValue || false, true);
-                return;
-            }
-            const action = event.target.closest("[data-color-action]")?.dataset.colorAction;
-            if (action === "reset")
-                this.applyColor(false, true);
-            if (action === "custom") {
-                const current = this.formatInfo[this.activeColorKind];
-                this.customColorInput.value =
-                    typeof current === "string" && /^#[0-9a-f]{6}$/i.test(current)
-                        ? current
-                        : "#000000";
-                this.customColorInput.click();
-            }
-        });
-        this.customColorInput.addEventListener("input", () => this.applyColor(this.customColorInput.value, false));
-        this.bindEditableColorInput("hex");
-        this.bindEditableColorInput("rgb");
-        this.element
-            .querySelector('[data-rich-field="size"]')
-            ?.addEventListener("change", (event) => {
-            this.callbacks.onAction?.("size");
-            this.target?.formatText({
-                size: event.target.value || false,
-            });
-        });
-        this.element
-            .querySelector('[data-rich-field="font"]')
-            ?.addEventListener("change", (event) => {
-            this.callbacks.onAction?.("font");
-            this.target?.formatText({
-                font: event.target.value || false,
-            });
-        });
-    }
-    openColorPopover(kind, anchor) {
-        this.activeColorKind = kind;
-        this.colorSessionOriginal =
-            typeof this.formatInfo[kind] === "string"
-                ? this.formatInfo[kind]
-                : false;
-        this.colorPopover.dataset.kind = kind;
-        this.syncColorReadout();
-        this.colorPopover.hidden = false;
-        const rootRect = this.root.getBoundingClientRect();
-        const anchorRect = anchor.getBoundingClientRect();
-        const width = this.colorPopover.offsetWidth || 320;
-        const height = this.colorPopover.offsetHeight || 145;
-        const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
-        const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
-        const left = Math.max(8, Math.min(anchorRect.left - rootRect.left, rootWidth - width - 8));
-        const below = anchorRect.bottom - rootRect.top + 6;
-        const above = anchorRect.top - rootRect.top - height - 6;
-        const top = below + height <= rootHeight - 8 ? below : Math.max(8, above);
-        this.colorPopover.style.left = `${Math.round(left)}px`;
-        this.colorPopover.style.top = `${Math.round(top)}px`;
-    }
-    bindEditableColorInput(kind) {
-        const input = this.colorPopover.querySelector(`[data-color-input="${kind}"]`);
-        if (!input)
-            return;
-        input.addEventListener("input", () => {
-            const parsed = (0, colorPresentation_1.parseEditableColor)(input.value);
-            input.setAttribute("aria-invalid", parsed ? "false" : "true");
-            if (!parsed)
-                return;
-            const other = this.colorPopover.querySelector(`[data-color-input="${kind === "hex" ? "rgb" : "hex"}"]`);
-            if (other) {
-                other.value = kind === "hex" ? parsed.rgb : parsed.hex;
-                other.setAttribute("aria-invalid", "false");
-            }
-            this.applyColor(parsed.hex, false, false);
-        });
-        input.addEventListener("keydown", (event) => {
-            if (event.key === "Escape") {
-                event.preventDefault();
-                this.cancelColorEditing();
-            }
-        });
-    }
-    cancelColorEditing() {
-        if (!this.target) {
-            this.colorPopover.hidden = true;
-            return;
-        }
-        this.target.restoreSelection?.();
-        this.target.formatText({
-            [this.activeColorKind]: this.colorSessionOriginal,
-        });
-        this.formatInfo[this.activeColorKind] =
-            this.colorSessionOriginal || undefined;
-        this.syncState();
-        this.colorPopover.hidden = true;
-    }
-    applyColor(value, close = true, syncInputs = true) {
-        if (!this.target)
-            return;
-        this.callbacks.onAction?.(this.activeColorKind);
-        this.target.restoreSelection?.();
-        this.target.formatText({ [this.activeColorKind]: value });
-        this.formatInfo[this.activeColorKind] = value || undefined;
-        this.syncState(syncInputs);
-        if (close)
-            this.colorPopover.hidden = true;
-    }
-    syncColorReadout() {
-        const presentation = (0, colorPresentation_1.presentColor)(this.formatInfo[this.activeColorKind]);
-        const editable = (0, colorPresentation_1.parseEditableColor)(this.formatInfo[this.activeColorKind]);
-        const hex = this.colorPopover.querySelector('[data-color-input="hex"]');
-        const rgb = this.colorPopover.querySelector('[data-color-input="rgb"]');
-        if (hex) {
-            hex.value =
-                editable?.hex ?? (presentation.hex === "默认" ? "" : presentation.hex);
-            hex.setAttribute("aria-invalid", "false");
-        }
-        if (rgb) {
-            rgb.value = editable?.rgb ?? "";
-            rgb.setAttribute("aria-invalid", "false");
-        }
-        const hexReadout = this.colorPopover.querySelector('[data-color-readout="hex"]');
-        const rgbReadout = this.colorPopover.querySelector('[data-color-readout="rgb"]');
-        if (hexReadout)
-            hexReadout.textContent = presentation.hex;
-        if (rgbReadout)
-            rgbReadout.textContent = presentation.rgb;
-    }
-    syncState(syncInputs = true) {
-        ["bold", "italic", "underline", "strike"].forEach((name) => {
-            this.element
-                .querySelector(`[data-rich-action="${name}"]`)
-                ?.classList.toggle("is-active", Boolean(this.formatInfo[name]));
-        });
-        this.element
-            .querySelector('[data-rich-action="inline-code"]')
-            ?.classList.toggle("is-active", Boolean(this.formatInfo.code));
-        this.element
-            .querySelector('[data-rich-action="link"]')
-            ?.classList.toggle("is-active", Boolean(this.formatInfo.link));
-        this.element
-            .querySelector('[data-rich-action="code-block"]')
-            ?.classList.toggle("is-active", Boolean(this.formatInfo["code-block"]));
-        const cloze = this.element.querySelector('[data-rich-action="cloze"]');
-        const clozeActive = (0, richTextActions_1.isClozeFormat)(this.formatInfo);
-        cloze?.classList.toggle("is-active", clozeActive);
-        if (cloze)
-            cloze.textContent = clozeActive ? "取消模糊" : "模糊";
-        const size = this.element.querySelector('[data-rich-field="size"]');
-        if (size)
-            size.value =
-                typeof this.formatInfo.size === "string" ? this.formatInfo.size : "";
-        const font = this.element.querySelector('[data-rich-field="font"]');
-        if (font)
-            font.value =
-                typeof this.formatInfo.font === "string" ? this.formatInfo.font : "";
-        const color = typeof this.formatInfo.color === "string" &&
-            this.formatInfo.color !== "transparent"
-            ? this.formatInfo.color
-            : "currentColor";
-        const background = typeof this.formatInfo.background === "string"
-            ? this.formatInfo.background
-            : "transparent";
-        this.element
-            .querySelector('[data-rich-swatch="color"]')
-            ?.style.setProperty("--ymz-current-color", color);
-        this.element
-            .querySelector('[data-rich-swatch="background"]')
-            ?.style.setProperty("--ymz-current-color", background);
-        if (syncInputs)
-            this.syncColorReadout();
-    }
-    position(rect) {
-        const rootRect = this.root.getBoundingClientRect();
-        const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
-        const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
-        const width = Math.min(this.element.scrollWidth || 820, Math.max(240, rootWidth - 16));
-        const localLeft = rect.left - rootRect.left;
-        const localTop = rect.top - rootRect.top;
-        const localBottom = rect.bottom - rootRect.top;
-        const left = Math.max(8, Math.min(localLeft + (rect.width ?? 0) / 2 - width / 2, rootWidth - width - 8));
-        const measuredHeight = this.element.offsetHeight || 44;
-        const below = localBottom + 8;
-        const top = below + measuredHeight < rootHeight
-            ? below
-            : Math.max(8, localTop - measuredHeight - 8);
-        this.element.style.left = `${Math.round(left)}px`;
-        this.element.style.top = `${Math.round(top)}px`;
-        this.element.style.maxWidth = `${Math.max(240, rootWidth - 16)}px`;
-    }
-}
-exports.RichTextToolbar = RichTextToolbar;
-
-},
-215: function(module, exports, __require, __externalRequire) {
-// /src/editor/richTextActions.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.RICH_TEXT_ACTIONS = exports.CLOZE_BACKGROUND = void 0;
-exports.nextToggleFormat = nextToggleFormat;
-exports.isClozeFormat = isClozeFormat;
-exports.CLOZE_BACKGROUND = '#f5dfa0';
-exports.RICH_TEXT_ACTIONS = [
-    { id: 'bold', label: 'B', title: '加粗' },
-    { id: 'italic', label: 'I', title: '斜体' },
-    { id: 'underline', label: 'U', title: '下划线' },
-    { id: 'strike', label: 'S', title: '删除线' },
-    { id: 'cloze', label: '模糊', title: '模糊/取消模糊' },
-    { id: 'formula', label: 'π', title: '插入公式' },
-    { id: 'clear', label: '×', title: '清除格式' },
-];
-function nextToggleFormat(name, formatInfo) {
-    return { [name]: !Boolean(formatInfo?.[name]) };
-}
-function isClozeFormat(formatInfo) {
-    if (!formatInfo)
-        return false;
-    const color = String(formatInfo.color ?? '').toLowerCase().replaceAll(' ', '');
-    const background = String(formatInfo.background ?? '').toLowerCase().replaceAll(' ', '');
-    return color === 'transparent'
-        || color === 'rgba(0,0,0,0)'
-        || background === exports.CLOZE_BACKGROUND;
-}
-
-},
-216: function(module, exports, __require, __externalRequire) {
-// /src/editor/colorPresentation.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.normalizeHexColor = normalizeHexColor;
-exports.parseEditableColor = parseEditableColor;
-exports.presentColor = presentColor;
-function normalizeHexColor(value) {
-    if (typeof value !== 'string')
-        return null;
-    const input = value.trim();
-    const short = /^#([0-9a-f]{3})$/i.exec(input);
-    if (short) {
-        const [r, g, b] = short[1].split('');
-        return `#${r}${r}${g}${g}${b}${b}`.toUpperCase();
-    }
-    const long = /^#([0-9a-f]{6})$/i.exec(input);
-    return long ? `#${long[1].toUpperCase()}` : null;
-}
-function rgbFromCss(value) {
-    const match = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,[^)]*)?\s*\)$/i.exec(value.trim());
-    if (!match)
-        return null;
-    const channels = match.slice(1, 4).map(Number);
-    if (channels.some((channel) => channel < 0 || channel > 255))
-        return null;
-    return channels;
-}
-function rgbFromEditable(value) {
-    const css = rgbFromCss(value);
-    if (css)
-        return css;
-    const match = /^\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*$/.exec(value);
-    if (!match)
-        return null;
-    const channels = match.slice(1, 4).map(Number);
-    if (channels.some((channel) => channel < 0 || channel > 255))
-        return null;
-    return channels;
-}
-function toHex(channels) {
-    return `#${channels.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`.toUpperCase();
-}
-function channelsFromHex(hex) {
-    return [
-        Number.parseInt(hex.slice(1, 3), 16),
-        Number.parseInt(hex.slice(3, 5), 16),
-        Number.parseInt(hex.slice(5, 7), 16),
-    ];
-}
-function parseEditableColor(value) {
-    if (typeof value !== 'string')
-        return null;
-    const hex = normalizeHexColor(value);
-    const channels = hex ? channelsFromHex(hex) : rgbFromEditable(value);
-    if (!channels)
-        return null;
-    return { hex: hex ?? toHex(channels), rgb: channels.join(', ') };
-}
-function presentColor(value) {
-    const editable = parseEditableColor(value);
-    if (!editable)
-        return { hex: '默认', rgb: '继承节点颜色' };
-    return { hex: editable.hex, rgb: `RGB(${editable.rgb})` };
-}
-
-},
-217: function(module, exports, __require, __externalRequire) {
-// /src/editor/colorPalette.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.COLOR_SWATCHES = void 0;
-exports.colorSwatchesHtml = colorSwatchesHtml;
-exports.colorPaletteInnerHtml = colorPaletteInnerHtml;
-exports.COLOR_SWATCHES = [
-    '#5f6368', '#9aa0a6', '#f4f4f4', '#ff4d3d', '#ff7a18', '#ffc400', '#d7e600', '#8ed600', '#43c59e', '#66cbd1', '#58b9e8', '#9aa8ff', '#ce78e8',
-    '#3c4043', '#777b80', '#d9d9d9', '#d92d20', '#e04b12', '#f59f00', '#b5c900', '#52b415', '#268c55', '#0c8d96', '#147cae', '#6975db', '#a144bd',
-    '#202124', '#4f5358', '#b7b7b7', '#a61b0d', '#bd3408', '#d67a00', '#859900', '#2d7c10', '#1b633d', '#08707c', '#0b5d86', '#4d54a8', '#7d2d91',
-    '#000000', '#303134', '#8d8d8d', '#7a1308', '#8e2505', '#a85700', '#586b00', '#245d12', '#174d32', '#07535c', '#074663', '#383d78', '#5b2069',
-];
-function colorSwatchesHtml() {
-    return exports.COLOR_SWATCHES.map((value) => `<button type="button" class="ymz-color-popover__swatch" data-color-value="${value}" style="--ymz-swatch:${value}" title="${value}" aria-label="${value}"></button>`).join('');
-}
-function colorPaletteInnerHtml() {
-    return `<div class="ymz-color-popover__grid">${colorSwatchesHtml()}</div>
-    <div class="ymz-color-popover__footer">
-      <button type="button" data-color-action="reset">重置默认</button>
-      <button type="button" data-color-action="custom">更多颜色</button>
-    </div>
-    <div class="ymz-color-popover__current" aria-live="polite">
-      <label><span>HEX</span><input type="text" spellcheck="false" autocomplete="off" data-color-input="hex" value="" aria-label="十六进制颜色"></label>
-      <label><span>RGB</span><input type="text" spellcheck="false" autocomplete="off" data-color-input="rgb" value="" aria-label="RGB 颜色"></label>
-      <span class="ymz-sr-only" data-color-readout="hex">默认</span>
-      <span class="ymz-sr-only" data-color-readout="rgb">继承颜色</span>
-    </div>`;
-}
-
-},
-218: function(module, exports, __require, __externalRequire) {
-// /src/editor/selectionPresentation.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createSelectionPresentation = createSelectionPresentation;
-exports.promoteNodeToPrimary = promoteNodeToPrimary;
-exports.shouldBlockRootDeleteShortcut = shouldBlockRootDeleteShortcut;
-function createSelectionPresentation(rawCount, mode) {
-    const count = Number.isFinite(rawCount) && rawCount > 0 ? Math.floor(rawCount) : 0;
-    const isSelectMode = mode === 'select';
-    return {
-        count,
-        isMultiple: count > 1,
-        countText: count > 1 ? `已选 ${count}` : '',
-        modeLabel: isSelectMode ? '选（选择优先）' : '拖（拖动优先）',
-        modeShortLabel: isSelectMode ? '选' : '拖',
-        modeTitle: isSelectMode
-            ? '选（选择优先）：左键框选，右键拖动画布'
-            : '拖（拖动优先）：左键拖动画布，Ctrl/Cmd + 左键框选',
-    };
-}
-/**
- * Keep the existing multi-selection while making the node that opened the
- * context menu the command target (activeNodeList[0]).
- */
-function promoteNodeToPrimary(renderer, node) {
-    const list = Array.isArray(renderer?.activeNodeList) ? renderer.activeNodeList : null;
-    if (!list || !node)
-        return false;
-    const index = list.indexOf(node);
-    if (index <= 0)
-        return false;
-    list.splice(index, 1);
-    list.unshift(node);
-    renderer.emitNodeActiveEvent?.();
-    return true;
-}
-/** Prevent the upstream root-delete shortcut from clearing the complete map. */
-function shouldBlockRootDeleteShortcut(key, nodes) {
-    if (key !== 'Backspace' && key !== 'Delete')
-        return false;
-    return Array.isArray(nodes) && nodes.some((node) => Boolean(node?.isRoot));
-}
-
-},
-219: function(module, exports, __require, __externalRequire) {
-// /src/editor/saveRevision.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SaveRevisionTracker = void 0;
-/** Tracks autosave revisions so stale async completions cannot report current data as saved. */
-class SaveRevisionTracker {
-    constructor() {
-        this.latestRevision = 0;
-        this.savedRevision = 0;
-    }
-    markChanged() {
-        this.latestRevision += 1;
-        return this.latestRevision;
-    }
-    current() {
-        return this.latestRevision;
-    }
-    markSaved(revision) {
-        if (revision !== this.latestRevision)
-            return false;
-        this.savedRevision = Math.max(this.savedRevision, revision);
-        return true;
-    }
-    isDirty() {
-        return this.savedRevision < this.latestRevision;
-    }
-}
-exports.SaveRevisionTracker = SaveRevisionTracker;
-
-},
-220: function(module, exports, __require, __externalRequire) {
-// /src/editor/relationPresentation.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createRelationPresentation = createRelationPresentation;
-function createRelationPresentation(input) {
-    if (input.isCreating) {
-        return { mode: 'creating', hidden: false, hint: '点击目标节点完成关联，Esc 取消' };
-    }
-    if (input.isActive) {
-        return { mode: 'active', hidden: false, hint: '关联线已选中，可拖动端点和控制点' };
-    }
-    return { mode: 'idle', hidden: true, hint: '' };
-}
-
-},
-221: function(module, exports, __require, __externalRequire) {
-// /src/editor/outerFramePresentation.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.hexToRgba = hexToRgba;
-exports.createOuterFramePresentation = createOuterFramePresentation;
-const DEFAULT_STROKE = '#0984e3';
-const DEFAULT_FILL = '#0984e3';
-function colorToHex(value, fallback) {
-    if (typeof value !== 'string')
-        return fallback;
-    const color = value.trim();
-    const short = /^#([0-9a-f]{3})$/i.exec(color);
-    if (short)
-        return `#${short[1].split('').map((item) => item + item).join('').toLowerCase()}`;
-    const full = /^#([0-9a-f]{6})(?:[0-9a-f]{2})?$/i.exec(color);
-    if (full)
-        return `#${full[1].toLowerCase()}`;
-    const rgb = /^rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)/i.exec(color);
-    if (!rgb)
-        return fallback;
-    const parts = rgb.slice(1, 4).map((part) => Math.min(255, Math.max(0, Math.round(Number(part)))));
-    return `#${parts.map((part) => part.toString(16).padStart(2, '0')).join('')}`;
-}
-function hexToRgba(value, alpha = 0.08) {
-    const hex = colorToHex(value, DEFAULT_FILL).slice(1);
-    const red = Number.parseInt(hex.slice(0, 2), 16);
-    const green = Number.parseInt(hex.slice(2, 4), 16);
-    const blue = Number.parseInt(hex.slice(4, 6), 16);
-    return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-}
-function createOuterFramePresentation(input) {
-    const style = input.activeStyle;
-    if (!style) {
-        return {
-            hidden: true,
-            readonly: input.readonly,
-            hint: '',
-            strokeColor: DEFAULT_STROKE,
-            fill: DEFAULT_FILL,
-            strokeDasharray: '5,5',
-            textAlign: 'left',
-        };
-    }
-    const text = typeof style.text === 'string' ? style.text.trim() : '';
-    const dasharray = style.strokeDasharray === 'none' ? 'none' : '5,5';
-    const align = style.textAlign === 'center' || style.textAlign === 'right' ? style.textAlign : 'left';
-    return {
-        hidden: false,
-        readonly: input.readonly,
-        hint: text ? `外框已选中 · ${text}` : '外框已选中',
-        strokeColor: colorToHex(style.strokeColor, DEFAULT_STROKE),
-        fill: colorToHex(style.fill, DEFAULT_FILL),
-        strokeDasharray: dasharray,
-        textAlign: align,
-    };
-}
-
-},
-222: function(module, exports, __require, __externalRequire) {
-// /src/editor/toolbarAvailability.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createToolbarAvailability = createToolbarAvailability;
-function createToolbarAvailability(input) {
-    const editable = !input.readonly;
-    const hasSelection = input.selectedCount > 0;
-    const regularPrimary = hasSelection && !input.primaryIsGeneralization;
-    const removable = input.hasRemovableSelection ?? (hasSelection && !input.primaryIsRoot);
-    return {
-        undo: editable,
-        redo: editable,
-        addChild: editable && regularPrimary,
-        addSibling: editable && regularPrimary && !input.primaryIsRoot,
-        remove: editable && removable,
-        resetLayout: editable,
-        layout: editable,
-    };
-}
-
-},
-223: function(module, exports, __require, __externalRequire) {
-// /src/editor/linkNavigation.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.resolveLinkNavigation = resolveLinkNavigation;
-const inlineLink_1 = __require(205);
-function resolveLinkNavigation(value, externalMode) {
-    const href = (0, inlineLink_1.normalizeInlineLink)(value, true);
-    if (!href)
-        return null;
-    return {
-        href,
-        target: href.toLowerCase().startsWith('siyuan://') ? 'siyuan' : externalMode,
-    };
-}
-
-},
-224: function(module, exports, __require, __externalRequire) {
-// /src/plugin/visibleElement.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.hasNonZeroSize = hasNonZeroSize;
-exports.waitForNonZeroSize = waitForNonZeroSize;
-function hasNonZeroSize(element) {
-    const rect = element.getBoundingClientRect();
-    const width = Number(rect.width || element.clientWidth || 0);
-    const height = Number(rect.height || element.clientHeight || 0);
-    return Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0;
-}
-function waitForNonZeroSize(element, options = {}) {
-    if (options.isCancelled?.())
-        return Promise.resolve(false);
-    if (hasNonZeroSize(element))
-        return Promise.resolve(true);
-    const pollMs = Math.max(1, Math.floor(options.pollMs ?? 50));
-    return new Promise((resolve) => {
-        let done = false;
-        let timer = null;
-        let observer = null;
-        const finish = (value) => {
-            if (done)
-                return;
-            done = true;
-            if (timer !== null)
-                window.clearTimeout(timer);
-            timer = null;
-            observer?.disconnect();
-            observer = null;
-            resolve(value);
-        };
-        const schedule = () => {
-            if (done)
-                return;
-            if (timer !== null)
-                window.clearTimeout(timer);
-            timer = window.setTimeout(() => {
-                timer = null;
-                check();
-            }, pollMs);
-        };
-        const check = () => {
-            if (done)
-                return;
-            if (options.isCancelled?.()) {
-                finish(false);
-                return;
-            }
-            if (hasNonZeroSize(element)) {
-                finish(true);
-                return;
-            }
-            schedule();
-        };
-        if (typeof ResizeObserver !== 'undefined') {
-            observer = new ResizeObserver(() => check());
-            observer.observe(element);
-        }
-        schedule();
+            if (node.nodeType === Node.TEXT_NODE || node instanceof HTMLBRElement)
+                return NodeFilter.FILTER_ACCEPT;
+            return NodeFilter.FILTER_SKIP;
+        },
     });
-}
-
-},
-225: function(module, exports, __require, __externalRequire) {
-// /src/ui/nodeImageInput.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.hasImageFile = hasImageFile;
-exports.extractImageFile = extractImageFile;
-exports.findRenderedNodeAtClientPoint = findRenderedNodeAtClientPoint;
-function hasImageFile(dataTransfer) {
-    if (!dataTransfer)
-        return false;
-    if (Array.from(dataTransfer.items ?? []).some((item) => item.kind === 'file' && item.type.toLowerCase().startsWith('image/'))) {
-        return true;
-    }
-    return Array.from(dataTransfer.files ?? []).some((file) => file.type.toLowerCase().startsWith('image/'));
-}
-function extractImageFile(dataTransfer) {
-    if (!dataTransfer)
-        return null;
-    for (const item of Array.from(dataTransfer.items ?? [])) {
-        if (item.kind !== 'file')
-            continue;
-        const file = item.getAsFile();
-        if (file?.type.toLowerCase().startsWith('image/'))
-            return file;
-    }
-    return Array.from(dataTransfer.files ?? []).find((file) => file.type.toLowerCase().startsWith('image/')) ?? null;
-}
-function renderedChildren(node) {
-    const children = Array.isArray(node?.children) ? node.children : [];
-    const generalizations = Array.isArray(node?._generalizationList)
-        ? node._generalizationList.map((item) => item?.generalizationNode).filter(Boolean)
-        : [];
-    return [...children, ...generalizations];
-}
-function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
-    const root = mindMap?.renderer?.root;
-    if (!root || typeof mindMap?.toPos !== 'function')
-        return null;
-    const local = mindMap.toPos(clientX, clientY);
-    const transform = mindMap?.draw?.transform?.() ?? {};
-    const scaleX = Number(transform.scaleX) || 1;
-    const scaleY = Number(transform.scaleY) || 1;
-    const mapX = (Number(local.x) - (Number(transform.translateX) || 0)) / scaleX;
-    const mapY = (Number(local.y) - (Number(transform.translateY) || 0)) / scaleY;
-    let match = null;
-    const visit = (node) => {
-        const left = Number(node?.left);
-        const top = Number(node?.top);
-        const width = Number(node?.width);
-        const height = Number(node?.height);
-        if ([left, top, width, height].every(Number.isFinite)
-            && mapX >= left && mapX <= left + width
-            && mapY >= top && mapY <= top + height)
-            match = node;
-        renderedChildren(node).forEach(visit);
-    };
-    visit(root);
-    return match;
-}
-
-},
-226: function(module, exports, __require, __externalRequire) {
-// /src/ui/nodeHoverPreview.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.NodeHoverPreview = void 0;
-exports.computeHoverPreviewPlacement = computeHoverPreviewPlacement;
-exports.buildHoverPreviewHtml = buildHoverPreviewHtml;
-const sanitizeRichHtml_1 = __require(186);
-const commentsPresentation_1 = __require(204);
-function escapeHtml(value) {
-    return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
-}
-function intersects(a, b) {
-    return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-}
-function candidateRect(left, top, width, height) {
-    return { left, top, width, height, right: left + width, bottom: top + height };
-}
-function inside(rect, root, margin) {
-    return rect.left >= root.left + margin
-        && rect.top >= root.top + margin
-        && rect.right <= root.right - margin
-        && rect.bottom <= root.bottom - margin;
-}
-function clamp(value, min, max) {
-    return Math.max(min, Math.min(value, max));
-}
-function computeHoverPreviewPlacement(input) {
-    const gap = Math.max(0, input.gap ?? 8);
-    const margin = Math.max(0, input.margin ?? 8);
-    const root = input.root;
-    const anchor = input.anchor;
-    const desiredWidth = Math.max(80, input.preview.width);
-    const desiredHeight = Math.max(48, input.preview.height);
-    const maxWidth = Math.max(40, root.width - margin * 2);
-    const maxHeight = Math.max(40, root.height - margin * 2);
-    const width = Math.min(desiredWidth, maxWidth);
-    const height = Math.min(desiredHeight, maxHeight);
-    const centeredTop = anchor.top + (anchor.height - height) / 2;
-    const centeredLeft = anchor.left + (anchor.width - width) / 2;
-    const candidates = [
-        { placement: 'right-bottom', left: anchor.right + gap, top: anchor.top },
-        { placement: 'right-top', left: anchor.right + gap, top: anchor.bottom - height },
-        { placement: 'left-bottom', left: anchor.left - gap - width, top: anchor.top },
-        { placement: 'left-top', left: anchor.left - gap - width, top: anchor.bottom - height },
-        { placement: 'right', left: anchor.right + gap, top: centeredTop },
-        { placement: 'left', left: anchor.left - gap - width, top: centeredTop },
-        { placement: 'bottom-right', left: anchor.left, top: anchor.bottom + gap },
-        { placement: 'bottom-left', left: anchor.right - width, top: anchor.bottom + gap },
-        { placement: 'top-right', left: anchor.left, top: anchor.top - gap - height },
-        { placement: 'top-left', left: anchor.right - width, top: anchor.top - gap - height },
-    ];
-    for (const candidate of candidates) {
-        const rect = candidateRect(candidate.left, candidate.top, width, height);
-        if (inside(rect, root, margin) && !intersects(rect, anchor)) {
-            return { ...candidate, width, height };
+    let current = walker.nextNode();
+    let lastText = null;
+    while (current) {
+        const length = current instanceof HTMLBRElement ? 1 : current.nodeValue?.length ?? 0;
+        if (remaining <= length) {
+            if (current instanceof HTMLBRElement) {
+                const parent = current.parentNode ?? root;
+                const index = Array.from(parent.childNodes).indexOf(current);
+                return { node: parent, offset: remaining === 0 ? index : index + 1 };
+            }
+            return { node: current, offset: remaining };
         }
+        remaining -= length;
+        lastText = current;
+        current = walker.nextNode();
     }
-    const sideCandidates = [
-        {
-            placement: 'left-adaptive',
-            width: Math.max(40, Math.min(width, anchor.left - gap - (root.left + margin))),
-            height,
-            left: root.left + margin,
-            top: centeredTop,
-        },
-        {
-            placement: 'right-adaptive',
-            width: Math.max(40, Math.min(width, root.right - margin - (anchor.right + gap))),
-            height,
-            left: anchor.right + gap,
-            top: centeredTop,
-        },
-        {
-            placement: 'top-adaptive',
-            width,
-            height: Math.max(40, Math.min(height, anchor.top - gap - (root.top + margin))),
-            left: centeredLeft,
-            top: root.top + margin,
-        },
-        {
-            placement: 'bottom-adaptive',
-            width,
-            height: Math.max(40, Math.min(height, root.bottom - margin - (anchor.bottom + gap))),
-            left: centeredLeft,
-            top: anchor.bottom + gap,
-        },
-    ].map((candidate) => ({
-        ...candidate,
-        left: clamp(candidate.left, root.left + margin, root.right - margin - candidate.width),
-        top: clamp(candidate.top, root.top + margin, root.bottom - margin - candidate.height),
-    })).filter((candidate) => candidate.width >= 40 && candidate.height >= 40)
-        .sort((a, b) => b.width * b.height - a.width * a.height);
-    const adaptive = sideCandidates.find((candidate) => !intersects(candidateRect(candidate.left, candidate.top, candidate.width, candidate.height), anchor));
-    if (adaptive)
-        return adaptive;
-    const fallbackWidth = Math.min(width, maxWidth);
-    const fallbackHeight = Math.min(height, Math.max(40, anchor.top - root.top - gap - margin));
+    if (lastText?.nodeType === Node.TEXT_NODE) {
+        return { node: lastText, offset: lastText.nodeValue?.length ?? 0 };
+    }
+    return { node: root, offset: root.childNodes.length };
+}
+function closestRow(node) {
+    const element = node instanceof Element ? node : node?.parentElement;
+    return element?.closest('[data-outline-uid]') ?? null;
+}
+function closestEditor(node) {
+    const element = node instanceof Element ? node : node?.parentElement;
+    return element?.closest('[data-outline-editor]') ?? null;
+}
+function inlineHtmlFromClipboard(value) {
+    const template = document.createElement('template');
+    template.innerHTML = (0, sanitizeRichHtml_1.sanitizeRichHtml)(value);
+    template.content.querySelectorAll(BLOCK_TAGS.size ? Array.from(BLOCK_TAGS).join(',').toLowerCase() : 'div').forEach((block) => {
+        const fragment = document.createDocumentFragment();
+        while (block.firstChild)
+            fragment.append(block.firstChild);
+        if (block.nextSibling)
+            fragment.append(document.createElement('br'));
+        block.replaceWith(fragment);
+    });
+    return template.innerHTML;
+}
+function stripLeadingClipboardIndent(value) {
+    const template = document.createElement('template');
+    template.innerHTML = (0, sanitizeRichHtml_1.sanitizeRichHtml)(value);
+    const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node) {
+        const current = node.nodeValue ?? '';
+        if (current.length > 0) {
+            node.nodeValue = current.replace(/^[\t \u00a0\u3000]+/, '');
+            break;
+        }
+        node = walker.nextNode();
+    }
+    return template.innerHTML;
+}
+function clipboardRichLines(value, expectedCount) {
+    if (!value || expectedCount <= 0)
+        return null;
+    const template = document.createElement('template');
+    template.innerHTML = (0, sanitizeRichHtml_1.sanitizeRichHtml)(value);
+    const topLevel = Array.from(template.content.childNodes);
+    const blockNodes = topLevel.filter((node) => node instanceof HTMLElement && ['DIV', 'P', 'LI', 'SECTION', 'ARTICLE'].includes(node.tagName));
+    let lines = [];
+    if (blockNodes.length === expectedCount && topLevel.every((node) => node.nodeType === Node.TEXT_NODE ? !(node.nodeValue ?? '').trim() : blockNodes.includes(node))) {
+        lines = blockNodes.map((node) => stripLeadingClipboardIndent(node.innerHTML));
+    }
+    else if (expectedCount === 1) {
+        lines = [stripLeadingClipboardIndent(template.innerHTML)];
+    }
+    else {
+        const normalized = template.innerHTML
+            .replace(/<\/(?:div|p|li|section|article)>\s*/gi, '<br>')
+            .replace(/<(?:div|p|li|section|article)\b[^>]*>/gi, '');
+        lines = normalized.split(/<br\s*\/?\s*>/i).map(stripLeadingClipboardIndent);
+        while (lines.length && !(0, structuredOutlineDocument_1.structuredOutlineHtmlToText)(lines[lines.length - 1]))
+            lines.pop();
+    }
+    return lines.length === expectedCount ? lines.map((line) => (0, sanitizeRichHtml_1.sanitizeRichHtml)(line)) : null;
+}
+function rangeHtml(editor, startOffset, endOffset) {
+    const start = domPointAtOffset(editor, Math.max(0, startOffset));
+    const end = domPointAtOffset(editor, Math.max(startOffset, endOffset));
+    const range = document.createRange();
+    range.setStart(start.node, start.offset);
+    range.setEnd(end.node, end.offset);
+    const wrapper = document.createElement('div');
+    wrapper.append(range.cloneContents());
+    return (0, sanitizeRichHtml_1.sanitizeRichHtml)(wrapper.innerHTML);
+}
+function selectionRect(range) {
+    const rect = range.getBoundingClientRect();
+    if (!rect || (!rect.width && !rect.height))
+        return null;
     return {
-        placement: 'top-fallback',
-        width: fallbackWidth,
-        height: fallbackHeight,
-        left: clamp(centeredLeft, root.left + margin, root.right - margin - fallbackWidth),
-        top: Math.max(root.top + margin, anchor.top - gap - fallbackHeight),
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
     };
 }
-function buildHoverPreviewHtml(type, value) {
-    if (type === 'note') {
-        const note = value;
-        return note?.html ? `<div class="ymz-node-hover-preview__note">${(0, sanitizeRichHtml_1.sanitizeRichHtml)(note.html)}</div>` : '<div class="ymz-empty-hint">暂无备注</div>';
+function commandState(name) {
+    try {
+        return Boolean(document.queryCommandState(name));
     }
-    const comments = Array.isArray(value) ? value : [];
-    if (!comments.length)
-        return '<div class="ymz-empty-hint">暂无批注</div>';
-    return `<div class="ymz-node-hover-preview__comments">${comments.map((comment) => `<div class="ymz-node-hover-preview__comment"><div class="ymz-node-hover-preview__comment-text">${escapeHtml(comment.text).replaceAll('\n', '<br>')}</div><time class="ymz-node-hover-preview__comment-time" datetime="${new Date(comment.createdAt).toISOString()}">${(0, commentsPresentation_1.formatCommentTimestamp)(comment.createdAt)}</time></div>`).join('')}</div>`;
-}
-class NodeHoverPreview {
-    constructor(root) {
-        this.root = root;
-        this.showTimer = null;
-        this.hideTimer = null;
-        this.anchor = null;
-        this.element = document.createElement('div');
-        this.element.className = 'ymz-node-hover-preview';
-        this.element.hidden = true;
-        this.element.addEventListener('pointerenter', () => this.cancelHide());
-        this.element.addEventListener('pointerleave', () => this.scheduleHide());
-        root.appendChild(this.element);
-    }
-    show(type, value, anchor, delay = 220) {
-        this.cancelTimers();
-        this.anchor = anchor;
-        this.showTimer = window.setTimeout(() => {
-            this.showTimer = null;
-            this.element.dataset.type = type;
-            this.element.innerHTML = buildHoverPreviewHtml(type, value);
-            this.element.hidden = false;
-            this.position(anchor);
-        }, delay);
-    }
-    scheduleHide(delay = 160) {
-        if (this.showTimer !== null)
-            window.clearTimeout(this.showTimer);
-        this.showTimer = null;
-        this.cancelHide();
-        this.hideTimer = window.setTimeout(() => this.hide(), delay);
-    }
-    hide() {
-        this.cancelTimers();
-        this.element.hidden = true;
-        this.element.innerHTML = '';
-        this.element.style.removeProperty('width');
-        this.element.style.removeProperty('max-height');
-        delete this.element.dataset.placement;
-        this.anchor = null;
-    }
-    destroy() {
-        this.hide();
-        this.element.remove();
-    }
-    cancelHide() {
-        if (this.hideTimer !== null)
-            window.clearTimeout(this.hideTimer);
-        this.hideTimer = null;
-    }
-    cancelTimers() {
-        if (this.showTimer !== null)
-            window.clearTimeout(this.showTimer);
-        this.showTimer = null;
-        this.cancelHide();
-    }
-    position(anchor) {
-        const rootRect = this.root.getBoundingClientRect();
-        const anchorRect = anchor.getBoundingClientRect();
-        const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
-        const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
-        const normalizedRoot = {
-            left: rootRect.left,
-            top: rootRect.top,
-            right: rootRect.left + rootWidth,
-            bottom: rootRect.top + rootHeight,
-            width: rootWidth,
-            height: rootHeight,
-        };
-        const desiredWidth = Math.min(360, Math.max(180, this.element.offsetWidth || 360));
-        const desiredHeight = Math.min(320, Math.max(80, this.element.offsetHeight || 220));
-        const placement = computeHoverPreviewPlacement({
-            root: normalizedRoot,
-            anchor: anchorRect,
-            preview: { width: desiredWidth, height: desiredHeight },
-        });
-        this.element.dataset.placement = placement.placement;
-        this.element.style.width = `${Math.round(placement.width)}px`;
-        this.element.style.maxHeight = `${Math.round(placement.height)}px`;
-        this.element.style.left = `${Math.round(placement.left - rootRect.left)}px`;
-        this.element.style.top = `${Math.round(placement.top - rootRect.top)}px`;
-    }
-}
-exports.NodeHoverPreview = NodeHoverPreview;
-
-},
-227: function(module, exports, __require, __externalRequire) {
-// /src/ui/imageLightbox.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ImageLightbox = exports.IMAGE_PREVIEW_MAX_SCALE = exports.IMAGE_PREVIEW_MIN_SCALE = void 0;
-exports.clampImagePreviewScale = clampImagePreviewScale;
-exports.nextImagePreviewScale = nextImagePreviewScale;
-exports.IMAGE_PREVIEW_MIN_SCALE = 0.2;
-exports.IMAGE_PREVIEW_MAX_SCALE = 6;
-function clampImagePreviewScale(value) {
-    return Math.max(exports.IMAGE_PREVIEW_MIN_SCALE, Math.min(exports.IMAGE_PREVIEW_MAX_SCALE, Math.round(value * 100) / 100));
-}
-function nextImagePreviewScale(current, deltaY) {
-    const factor = deltaY < 0 ? 1.12 : 1 / 1.12;
-    return clampImagePreviewScale(current * factor);
-}
-class ImageLightbox {
-    constructor(root) {
-        this.root = root;
-        this.scale = 1;
-        this.naturalWidth = 0;
-        this.naturalHeight = 0;
-        this.onLoad = () => {
-            this.naturalWidth = this.image.naturalWidth || 1;
-            this.naturalHeight = this.image.naturalHeight || 1;
-            const availableWidth = Math.max(120, this.stage.clientWidth - 48);
-            const availableHeight = Math.max(120, this.stage.clientHeight - 48);
-            this.scale = clampImagePreviewScale(Math.min(1, availableWidth / this.naturalWidth, availableHeight / this.naturalHeight));
-            this.sync();
-        };
-        this.onWheel = (event) => {
-            if (this.overlay.hidden)
-                return;
-            event.preventDefault();
-            this.scale = nextImagePreviewScale(this.scale, event.deltaY);
-            this.sync();
-        };
-        this.onClick = (event) => {
-            const target = event.target;
-            if (target === this.overlay || target === this.stage || target.closest('[data-action="close"]')) {
-                this.hide();
-                return;
-            }
-            if (target.closest('[data-action="reset"]')) {
-                this.scale = 1;
-                this.sync();
-            }
-        };
-        this.onKeydown = (event) => {
-            if (!this.overlay.hidden && event.key === 'Escape') {
-                event.preventDefault();
-                this.hide();
-            }
-        };
-        this.overlay = document.createElement('div');
-        this.overlay.className = 'ymz-image-lightbox';
-        this.overlay.hidden = true;
-        this.overlay.innerHTML = `<div class="ymz-image-lightbox__toolbar"><span data-role="scale">100%</span><button type="button" data-action="reset" aria-label="恢复原始比例">1:1</button><button type="button" data-action="close" aria-label="关闭图片预览">×</button></div><div class="ymz-image-lightbox__stage"><img alt=""></div>`;
-        this.stage = this.overlay.querySelector('.ymz-image-lightbox__stage');
-        this.image = this.overlay.querySelector('img');
-        this.scaleLabel = this.overlay.querySelector('[data-role="scale"]');
-        this.overlay.addEventListener('click', this.onClick);
-        this.overlay.addEventListener('wheel', this.onWheel, { passive: false });
-        document.addEventListener('keydown', this.onKeydown, true);
-        this.image.addEventListener('load', this.onLoad);
-        root.appendChild(this.overlay);
-    }
-    show(source, title = '') {
-        if (!source)
-            return;
-        this.overlay.hidden = false;
-        this.image.alt = title;
-        this.image.title = title;
-        this.scale = 1;
-        this.naturalWidth = 0;
-        this.naturalHeight = 0;
-        this.image.src = source;
-        this.sync();
-    }
-    hide() {
-        this.overlay.hidden = true;
-        this.image.removeAttribute('src');
-        this.image.removeAttribute('style');
-        this.scale = 1;
-    }
-    destroy() {
-        this.overlay.removeEventListener('click', this.onClick);
-        this.overlay.removeEventListener('wheel', this.onWheel);
-        document.removeEventListener('keydown', this.onKeydown, true);
-        this.image.removeEventListener('load', this.onLoad);
-        this.overlay.remove();
-    }
-    sync() {
-        this.scaleLabel.textContent = `${Math.round(this.scale * 100)}%`;
-        if (this.naturalWidth > 0 && this.naturalHeight > 0) {
-            this.image.style.width = `${Math.round(this.naturalWidth * this.scale)}px`;
-            this.image.style.height = `${Math.round(this.naturalHeight * this.scale)}px`;
-        }
-    }
-}
-exports.ImageLightbox = ImageLightbox;
-
-},
-228: function(module, exports, __require, __externalRequire) {
-// /src/ui/nodeStylePanel.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.NodeStylePanel = void 0;
-const colorPalette_1 = __require(217);
-const colorPresentation_1 = __require(216);
-const INPUT_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
-function toInputValue(value) {
-    return value === null || value === undefined ? '' : String(value);
-}
-function isNodeColorKey(value) {
-    return value === 'fillColor' || value === 'borderColor' || value === 'color';
-}
-class NodeStylePanel {
-    constructor(root, commands) {
-        this.root = root;
-        this.commands = commands;
-        this.current = {};
-        this.activeColorKey = 'fillColor';
-        this.stopEditorEvent = (event) => event.stopPropagation();
-        this.onDocumentMouseDown = (event) => {
-            const target = event.target;
-            if (!target)
-                return;
-            if (!this.colorPopover.hidden && !this.colorPopover.contains(target))
-                this.colorPopover.hidden = true;
-        };
-        this.onColorPopoverMouseDown = (event) => {
-            const target = event.target;
-            const isTextInput = target instanceof HTMLInputElement && target.type !== 'color';
-            if (!isTextInput)
-                event.preventDefault();
-            event.stopPropagation();
-        };
-        this.onNativeColorInput = () => this.applyColor(this.customColorInput.value, false);
-        this.onColorPopoverClick = (event) => {
-            const target = event.target;
-            const swatch = target.closest('[data-color-value]');
-            if (swatch) {
-                this.applyColor(swatch.dataset.colorValue || null);
-                return;
-            }
-            const action = target.closest('[data-color-action]')?.dataset.colorAction;
-            if (action === 'reset')
-                this.applyColor(null);
-            if (action === 'custom') {
-                const value = this.current[this.activeColorKey];
-                this.customColorInput.value = typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : '#000000';
-                this.customColorInput.click();
-            }
-        };
-        this.onInput = (event) => {
-            const control = event.target.closest('[data-node-style]');
-            if (!control || control.type !== 'number')
-                return;
-            this.applyControl(control);
-        };
-        this.onChange = (event) => {
-            const control = event.target.closest('[data-node-style]');
-            if (control)
-                this.applyControl(control);
-        };
-        this.onClick = (event) => {
-            event.stopPropagation();
-            const target = event.target;
-            const action = target.closest('[data-node-style-action]')?.dataset.nodeStyleAction;
-            if (action === 'close') {
-                this.hide();
-                return;
-            }
-            const colorTrigger = target.closest('[data-node-color-trigger]');
-            const colorKey = colorTrigger?.dataset.nodeColorTrigger;
-            if (colorTrigger && isNodeColorKey(colorKey)) {
-                this.openColorPopover(colorKey, colorTrigger);
-                return;
-            }
-            if (this.commands.isReadonly())
-                return;
-            if (action === 'fit-width') {
-                this.commands.setActiveNodeStyle({ width: null });
-                this.refresh();
-                return;
-            }
-            if (action === 'reset') {
-                this.commands.resetActiveNodeStyle();
-                this.refresh();
-                return;
-            }
-            const clear = target.closest('[data-node-style-clear]')?.dataset.nodeStyleClear;
-            if (clear) {
-                this.commands.setActiveNodeStyle({ [clear]: null });
-                this.refresh();
-                return;
-            }
-            const toggle = target.closest('[data-node-style-toggle]');
-            if (toggle) {
-                const key = toggle.dataset.nodeStyleToggle;
-                const expected = toggle.dataset.nodeStyleValue ?? '';
-                this.commands.setActiveNodeStyle({ [key]: this.current[key] === expected ? null : expected });
-                this.refresh();
-                return;
-            }
-            const set = target.closest('[data-node-style-set]');
-            if (set) {
-                const key = set.dataset.nodeStyleSet;
-                this.commands.setActiveNodeStyle({ [key]: set.dataset.nodeStyleValue ?? null });
-                this.refresh();
-            }
-        };
-        this.panel = root.querySelector('[data-role="node-style-panel"]');
-        this.colorPopover = document.createElement('div');
-        this.colorPopover.className = 'ymz-color-popover ymz-node-color-popover';
-        this.colorPopover.hidden = true;
-        this.colorPopover.innerHTML = (0, colorPalette_1.colorPaletteInnerHtml)();
-        this.customColorInput = document.createElement('input');
-        this.customColorInput.type = 'color';
-        this.customColorInput.className = 'ymz-color-popover__native';
-        this.customColorInput.tabIndex = -1;
-        this.customColorInput.setAttribute('aria-hidden', 'true');
-        this.colorPopover.appendChild(this.customColorInput);
-        root.appendChild(this.colorPopover);
-        if (!this.panel)
-            return;
-        this.panel.addEventListener('click', this.onClick);
-        this.panel.addEventListener('change', this.onChange);
-        this.panel.addEventListener('input', this.onInput, true);
-        INPUT_EVENTS.forEach((type) => this.panel?.addEventListener(type, this.stopEditorEvent));
-        this.panel.addEventListener('pointerdown', this.stopEditorEvent);
-        this.colorPopover.addEventListener('click', this.onColorPopoverClick);
-        this.colorPopover.addEventListener('mousedown', this.onColorPopoverMouseDown);
-        INPUT_EVENTS.forEach((type) => this.colorPopover.addEventListener(type, this.stopEditorEvent));
-        this.customColorInput.addEventListener('input', this.onNativeColorInput);
-        this.bindEditableColorInput('hex');
-        this.bindEditableColorInput('rgb');
-        document.addEventListener('mousedown', this.onDocumentMouseDown, true);
-    }
-    destroy() {
-        if (this.panel) {
-            this.panel.removeEventListener('click', this.onClick);
-            this.panel.removeEventListener('change', this.onChange);
-            this.panel.removeEventListener('input', this.onInput, true);
-            INPUT_EVENTS.forEach((type) => this.panel?.removeEventListener(type, this.stopEditorEvent));
-            this.panel.removeEventListener('pointerdown', this.stopEditorEvent);
-        }
-        this.colorPopover.removeEventListener('click', this.onColorPopoverClick);
-        this.colorPopover.removeEventListener('mousedown', this.onColorPopoverMouseDown);
-        INPUT_EVENTS.forEach((type) => this.colorPopover.removeEventListener(type, this.stopEditorEvent));
-        this.customColorInput.removeEventListener('input', this.onNativeColorInput);
-        document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
-        this.colorPopover.remove();
-    }
-    show() {
-        if (!this.panel)
-            return;
-        this.refresh();
-        this.panel.hidden = false;
-    }
-    hide() {
-        if (this.panel)
-            this.panel.hidden = true;
-        this.colorPopover.hidden = true;
-    }
-    refresh() {
-        if (!this.panel)
-            return;
-        this.current = this.commands.getActiveNodeStyle() ?? {};
-        this.panel.querySelectorAll('[data-node-style]').forEach((control) => {
-            const key = control.dataset.nodeStyle;
-            if (!key)
-                return;
-            control.value = toInputValue(this.current[key]);
-        });
-        this.panel.querySelectorAll('[data-node-style-toggle],[data-node-style-set]').forEach((button) => {
-            const key = (button.dataset.nodeStyleToggle ?? button.dataset.nodeStyleSet);
-            const value = button.dataset.nodeStyleValue;
-            button.classList.toggle('is-active', Boolean(key && value && this.current[key] === value));
-            button.setAttribute('aria-pressed', String(Boolean(key && value && this.current[key] === value)));
-        });
-        ['fillColor', 'borderColor', 'color'].forEach((key) => this.syncColorTrigger(key));
-        this.panel.dataset.readonly = String(this.commands.isReadonly());
-        this.panel.querySelectorAll('input,select,button').forEach((control) => {
-            if (control.dataset.nodeStyleAction === 'close')
-                return;
-            control.disabled = this.commands.isReadonly();
-        });
-    }
-    applyControl(control) {
-        const key = control.dataset.nodeStyle;
-        if (!key || this.commands.isReadonly())
-            return;
-        this.commands.setActiveNodeStyle({ [key]: control.value || null });
-        this.current = { ...this.current, [key]: control.value || null };
-    }
-    applyColor(value, close = true) {
-        if (this.commands.isReadonly())
-            return;
-        this.commands.setActiveNodeStyle({ [this.activeColorKey]: value });
-        this.current = { ...this.current, [this.activeColorKey]: value };
-        this.syncColorTrigger(this.activeColorKey);
-        this.syncColorInputs();
-        if (close)
-            this.colorPopover.hidden = true;
-    }
-    syncColorTrigger(key) {
-        if (!this.panel)
-            return;
-        const value = typeof this.current[key] === 'string' ? String(this.current[key]) : '';
-        const swatch = this.panel.querySelector(`[data-node-color-swatch="${key}"]`);
-        const label = this.panel.querySelector(`[data-node-color-label="${key}"]`);
-        swatch?.style.setProperty('--ymz-current-color', value || 'transparent');
-        if (label)
-            label.textContent = value || '默认';
-    }
-    syncColorInputs() {
-        const value = this.current[this.activeColorKey];
-        const presentation = (0, colorPresentation_1.presentColor)(value);
-        const editable = (0, colorPresentation_1.parseEditableColor)(value);
-        const hex = this.colorPopover.querySelector('[data-color-input="hex"]');
-        const rgb = this.colorPopover.querySelector('[data-color-input="rgb"]');
-        if (hex) {
-            hex.value = editable?.hex ?? '';
-            hex.setAttribute('aria-invalid', 'false');
-        }
-        if (rgb) {
-            rgb.value = editable?.rgb ?? '';
-            rgb.setAttribute('aria-invalid', 'false');
-        }
-        const hexReadout = this.colorPopover.querySelector('[data-color-readout="hex"]');
-        const rgbReadout = this.colorPopover.querySelector('[data-color-readout="rgb"]');
-        if (hexReadout)
-            hexReadout.textContent = presentation.hex;
-        if (rgbReadout)
-            rgbReadout.textContent = presentation.rgb;
-    }
-    openColorPopover(key, anchor) {
-        this.activeColorKey = key;
-        this.syncColorInputs();
-        this.colorPopover.hidden = false;
-        const rootRect = this.root.getBoundingClientRect();
-        const anchorRect = anchor.getBoundingClientRect();
-        const width = this.colorPopover.offsetWidth || 318;
-        const height = this.colorPopover.offsetHeight || 260;
-        const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
-        const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
-        const left = Math.max(8, Math.min(anchorRect.left - rootRect.left, rootWidth - width - 8));
-        const below = anchorRect.bottom - rootRect.top + 6;
-        const above = anchorRect.top - rootRect.top - height - 6;
-        const top = below + height <= rootHeight - 8 ? below : Math.max(8, above);
-        this.colorPopover.style.left = `${Math.round(left)}px`;
-        this.colorPopover.style.top = `${Math.round(top)}px`;
-    }
-    bindEditableColorInput(kind) {
-        const input = this.colorPopover.querySelector(`[data-color-input="${kind}"]`);
-        if (!input)
-            return;
-        input.addEventListener('input', () => {
-            const parsed = (0, colorPresentation_1.parseEditableColor)(input.value);
-            input.setAttribute('aria-invalid', parsed ? 'false' : 'true');
-            if (!parsed)
-                return;
-            const other = this.colorPopover.querySelector(`[data-color-input="${kind === 'hex' ? 'rgb' : 'hex'}"]`);
-            if (other) {
-                other.value = kind === 'hex' ? parsed.rgb : parsed.hex;
-                other.setAttribute('aria-invalid', 'false');
-            }
-            this.applyColor(parsed.hex, false);
-        });
-        input.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape')
-                this.colorPopover.hidden = true;
-        });
-    }
-}
-exports.NodeStylePanel = NodeStylePanel;
-
-},
-229: function(module, exports, __require, __externalRequire) {
-// /src/ui/projectStylePanel.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProjectStylePanel = void 0;
-const projectStyle_1 = __require(14);
-const colorPalette_1 = __require(217);
-const colorPresentation_1 = __require(216);
-const colorSchemes_1 = __require(15);
-const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
-class ProjectStylePanel {
-    constructor(root, initial, readonly, onChange) {
-        this.root = root;
-        this.readonly = readonly;
-        this.onChange = onChange;
-        this.stop = (event) => event.stopPropagation();
-        this.onDocumentMouseDown = (event) => {
-            if (!this.panel || this.panel.hidden)
-                return;
-            const target = event.target;
-            if (target && this.colorPopover.contains(target))
-                return;
-            if (target && this.panel.contains(target)) {
-                this.colorPopover.hidden = true;
-                return;
-            }
-            this.hide();
-        };
-        this.onColorPopoverMouseDown = (event) => {
-            const target = event.target;
-            const isTextInput = target instanceof HTMLInputElement && target.type !== 'color';
-            if (!isTextInput)
-                event.preventDefault();
-            event.stopPropagation();
-        };
-        this.onNativeColorInput = () => this.applyBackgroundColor(this.customColorInput.value, false);
-        this.onColorPopoverClick = (event) => {
-            const target = event.target;
-            const swatch = target.closest('[data-color-value]');
-            if (swatch) {
-                this.applyBackgroundColor(swatch.dataset.colorValue || null);
-                return;
-            }
-            const action = target.closest('[data-color-action]')?.dataset.colorAction;
-            if (action === 'reset')
-                this.applyBackgroundColor(null);
-            if (action === 'custom') {
-                const value = this.style.backgroundColor;
-                this.customColorInput.value = typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : '#000000';
-                this.customColorInput.click();
-            }
-        };
-        this.onControl = (event) => {
-            const target = event.target;
-            if (target.dataset.projectStyle === 'rainbowLines') {
-                this.commit({ rainbowLines: target.checked });
-            }
-            else if (target.dataset.projectStyle === 'rainbowScheme') {
-                this.commit({ rainbowScheme: target.value, rainbowLines: true });
-            }
-            else if (target.dataset.projectSpacing) {
-                const horizontal = this.panel?.querySelector('[data-project-spacing="horizontal"]');
-                const vertical = this.panel?.querySelector('[data-project-spacing="vertical"]');
-                this.commit({
-                    density: 'custom',
-                    customMarginX: Number(horizontal?.value),
-                    customMarginY: Number(vertical?.value),
-                });
-            }
-        };
-        this.onClick = (event) => {
-            event.stopPropagation();
-            const target = event.target;
-            const action = target.closest('[data-project-style-action]')?.dataset.projectStyleAction;
-            const colorTrigger = target.closest('[data-project-color-trigger]');
-            if (colorTrigger) {
-                this.openColorPopover(colorTrigger);
-                return;
-            }
-            if (action === 'close')
-                return this.hide();
-            if (action === 'reset') {
-                this.commit({ density: 'default', rainbowLines: null, rainbowScheme: null, backgroundColor: null, customMarginX: undefined, customMarginY: undefined });
-                return;
-            }
-            const density = target.closest('[data-project-density]')?.dataset.projectDensity;
-            if (density) {
-                this.commit({ density });
-                return;
-            }
-            const background = target.closest('[data-project-background]')?.dataset.projectBackground;
-            if (background !== undefined)
-                this.commit({ backgroundColor: background || null });
-        };
-        this.style = (0, projectStyle_1.normalizeProjectStyle)(initial);
-        this.panel = root.querySelector('[data-role="project-style-panel"]');
-        this.colorPopover = document.createElement('div');
-        this.colorPopover.className = 'ymz-color-popover ymz-project-color-popover';
-        this.colorPopover.hidden = true;
-        this.colorPopover.innerHTML = (0, colorPalette_1.colorPaletteInnerHtml)();
-        this.customColorInput = document.createElement('input');
-        this.customColorInput.type = 'color';
-        this.customColorInput.className = 'ymz-color-popover__native';
-        this.customColorInput.tabIndex = -1;
-        this.customColorInput.setAttribute('aria-hidden', 'true');
-        this.colorPopover.appendChild(this.customColorInput);
-        root.appendChild(this.colorPopover);
-        if (!this.panel)
-            return;
-        this.panel.addEventListener('click', this.onClick);
-        this.panel.addEventListener('change', this.onControl);
-        this.panel.addEventListener('input', this.onControl);
-        BLOCKED_EVENTS.forEach((type) => this.panel?.addEventListener(type, this.stop));
-        this.panel.addEventListener('pointerdown', this.stop);
-        this.colorPopover.addEventListener('click', this.onColorPopoverClick);
-        this.colorPopover.addEventListener('mousedown', this.onColorPopoverMouseDown);
-        BLOCKED_EVENTS.forEach((type) => this.colorPopover.addEventListener(type, this.stop));
-        this.customColorInput.addEventListener('input', this.onNativeColorInput);
-        this.bindEditableColorInput('hex');
-        this.bindEditableColorInput('rgb');
-        document.addEventListener('mousedown', this.onDocumentMouseDown, true);
-        this.refresh();
-    }
-    destroy() {
-        if (!this.panel)
-            return;
-        this.panel.removeEventListener('click', this.onClick);
-        this.panel.removeEventListener('change', this.onControl);
-        this.panel.removeEventListener('input', this.onControl);
-        BLOCKED_EVENTS.forEach((type) => this.panel?.removeEventListener(type, this.stop));
-        this.panel.removeEventListener('pointerdown', this.stop);
-        this.colorPopover.removeEventListener('click', this.onColorPopoverClick);
-        this.colorPopover.removeEventListener('mousedown', this.onColorPopoverMouseDown);
-        BLOCKED_EVENTS.forEach((type) => this.colorPopover.removeEventListener(type, this.stop));
-        this.customColorInput.removeEventListener('input', this.onNativeColorInput);
-        document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
-        this.colorPopover.remove();
-    }
-    show() {
-        if (!this.panel)
-            return;
-        this.refresh();
-        this.panel.hidden = false;
-    }
-    hide() {
-        if (this.panel)
-            this.panel.hidden = true;
-        this.colorPopover.hidden = true;
-    }
-    setStyle(style) {
-        this.style = (0, projectStyle_1.normalizeProjectStyle)(style);
-        this.refresh();
-    }
-    commit(patch) {
-        if (this.readonly())
-            return;
-        this.style = (0, projectStyle_1.normalizeProjectStyle)({ ...this.style, ...patch });
-        this.onChange(this.style);
-        this.refresh();
-    }
-    refresh() {
-        if (!this.panel)
-            return;
-        this.panel.querySelectorAll('[data-project-density]').forEach((button) => {
-            const active = button.dataset.projectDensity === this.style.density;
-            button.classList.toggle('is-active', active);
-            button.setAttribute('aria-pressed', String(active));
-        });
-        const horizontal = this.panel.querySelector('[data-project-spacing="horizontal"]');
-        const vertical = this.panel.querySelector('[data-project-spacing="vertical"]');
-        const presetSpacing = (0, projectStyle_1.densitySpacing)(this.style.density, this.style.customMarginX, this.style.customMarginY).node;
-        if (horizontal)
-            horizontal.value = String(this.style.customMarginX ?? presetSpacing?.marginX ?? 42);
-        if (vertical)
-            vertical.value = String(this.style.customMarginY ?? presetSpacing?.marginY ?? 11);
-        const rainbow = this.panel.querySelector('[data-project-style="rainbowLines"]');
-        if (rainbow) {
-            rainbow.checked = this.style.rainbowLines === true;
-            rainbow.indeterminate = this.style.rainbowLines === null;
-        }
-        const rainbowScheme = this.panel.querySelector('[data-project-style="rainbowScheme"]');
-        const selectedScheme = (0, colorSchemes_1.normalizeColorSchemeId)(this.style.rainbowScheme) ?? 'rainbow';
-        if (rainbowScheme)
-            rainbowScheme.value = selectedScheme;
-        const rainbowPreview = this.panel.querySelector('[data-project-rainbow-preview]');
-        const colors = (0, colorSchemes_1.getColorScheme)(selectedScheme)?.colors ?? [];
-        if (rainbowPreview)
-            rainbowPreview.style.background = colors.length ? `linear-gradient(90deg, ${colors.join(',')})` : '';
-        this.syncBackgroundTrigger();
-        this.panel.querySelectorAll('[data-project-background]').forEach((button) => {
-            button.classList.toggle('is-active', (button.dataset.projectBackground || null) === this.style.backgroundColor);
-        });
-        this.panel.querySelectorAll('input,button').forEach((control) => {
-            if (control.dataset.projectStyleAction === 'close')
-                return;
-            control.disabled = this.readonly();
-        });
-    }
-    syncBackgroundTrigger() {
-        if (!this.panel)
-            return;
-        const value = this.style.backgroundColor ?? '';
-        const swatch = this.panel.querySelector('[data-project-color-swatch="backgroundColor"]');
-        const label = this.panel.querySelector('[data-project-color-label="backgroundColor"]');
-        swatch?.style.setProperty('--ymz-current-color', value || 'transparent');
-        if (label)
-            label.textContent = value || '默认';
-    }
-    syncColorInputs() {
-        const presentation = (0, colorPresentation_1.presentColor)(this.style.backgroundColor);
-        const editable = (0, colorPresentation_1.parseEditableColor)(this.style.backgroundColor);
-        const hex = this.colorPopover.querySelector('[data-color-input="hex"]');
-        const rgb = this.colorPopover.querySelector('[data-color-input="rgb"]');
-        if (hex) {
-            hex.value = editable?.hex ?? '';
-            hex.setAttribute('aria-invalid', 'false');
-        }
-        if (rgb) {
-            rgb.value = editable?.rgb ?? '';
-            rgb.setAttribute('aria-invalid', 'false');
-        }
-        const hexReadout = this.colorPopover.querySelector('[data-color-readout="hex"]');
-        const rgbReadout = this.colorPopover.querySelector('[data-color-readout="rgb"]');
-        if (hexReadout)
-            hexReadout.textContent = presentation.hex;
-        if (rgbReadout)
-            rgbReadout.textContent = presentation.rgb;
-    }
-    applyBackgroundColor(value, close = true) {
-        this.commit({ backgroundColor: value });
-        this.syncColorInputs();
-        if (close)
-            this.colorPopover.hidden = true;
-    }
-    openColorPopover(anchor) {
-        this.syncColorInputs();
-        this.colorPopover.hidden = false;
-        const rootRect = this.root.getBoundingClientRect();
-        const anchorRect = anchor.getBoundingClientRect();
-        const width = this.colorPopover.offsetWidth || 318;
-        const height = this.colorPopover.offsetHeight || 260;
-        const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
-        const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
-        const left = Math.max(8, Math.min(anchorRect.left - rootRect.left, rootWidth - width - 8));
-        const below = anchorRect.bottom - rootRect.top + 6;
-        const above = anchorRect.top - rootRect.top - height - 6;
-        const top = below + height <= rootHeight - 8 ? below : Math.max(8, above);
-        this.colorPopover.style.left = `${Math.round(left)}px`;
-        this.colorPopover.style.top = `${Math.round(top)}px`;
-    }
-    bindEditableColorInput(kind) {
-        const input = this.colorPopover.querySelector(`[data-color-input="${kind}"]`);
-        if (!input)
-            return;
-        input.addEventListener('input', () => {
-            const parsed = (0, colorPresentation_1.parseEditableColor)(input.value);
-            input.setAttribute('aria-invalid', parsed ? 'false' : 'true');
-            if (!parsed)
-                return;
-            const other = this.colorPopover.querySelector(`[data-color-input="${kind === 'hex' ? 'rgb' : 'hex'}"]`);
-            if (other) {
-                other.value = kind === 'hex' ? parsed.rgb : parsed.hex;
-                other.setAttribute('aria-invalid', 'false');
-            }
-            this.applyBackgroundColor(parsed.hex, false);
-        });
-        input.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape')
-                this.colorPopover.hidden = true;
-        });
-    }
-}
-exports.ProjectStylePanel = ProjectStylePanel;
-
-},
-230: function(module, exports, __require, __externalRequire) {
-// /src/editor/canvasRichTextVisibility.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.synchronizeCanvasRichTextVisibility = synchronizeCanvasRichTextVisibility;
-function cssColor(value, fallback) {
-    const text = typeof value === 'string' ? value.trim() : '';
-    return text || fallback;
-}
-function synchronizeCanvasRichTextVisibility(map) {
-    const runtime = map?.richText;
-    const wrapper = runtime?.textEditNode;
-    const node = runtime?.node;
-    if (!wrapper || !node)
+    catch {
         return false;
-    const textColor = cssColor(node.style?.merge?.('color'), '#1f2937');
-    const safeBackground = cssColor(map?.renderer?.textEdit?.getBackground?.(node), 'var(--b3-theme-background, #ffffff)');
-    wrapper.style.setProperty('color', textColor, 'important');
-    wrapper.style.setProperty('caret-color', textColor, 'important');
-    wrapper.style.setProperty('-webkit-text-fill-color', 'currentColor', 'important');
-    wrapper.style.setProperty('background', safeBackground, 'important');
-    wrapper.querySelectorAll('.ql-container,.ql-editor').forEach((element) => {
-        element.style.setProperty('color', 'inherit', 'important');
-        element.style.setProperty('caret-color', 'currentColor', 'important');
-        element.style.setProperty('-webkit-text-fill-color', 'currentColor', 'important');
-    });
-    return true;
-}
-
-},
-231: function(module, exports, __require, __externalRequire) {
-// /src/editor/searchPanelState.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.setSearchReplaceExpanded = setSearchReplaceExpanded;
-function setSearchReplaceExpanded(panel, expanded) {
-    panel.dataset.replaceExpanded = String(expanded);
-    const row = panel.querySelector('[data-role="replace-row"]');
-    if (row)
-        row.hidden = !expanded;
-    const button = panel.querySelector('[data-search-action="toggle-replace"]');
-    if (!button)
-        return;
-    button.textContent = expanded ? '⌄' : '›';
-    button.setAttribute('aria-expanded', String(expanded));
-    button.setAttribute('title', expanded ? '收起替换' : '展开替换');
-    button.setAttribute('aria-label', expanded ? '收起替换' : '展开替换');
-}
-
-},
-232: function(module, exports, __require, __externalRequire) {
-// /src/core/appearanceTransaction.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.applyMapAppearanceTransaction = applyMapAppearanceTransaction;
-const themeColorRuntime_1 = __require(191);
-const APPEARANCE_RENDER_SOURCE = 'changeTheme';
-const REVISION_BY_MAP = new WeakMap();
-const ACTIVE_NODE_UIDS_BY_MAP = new WeakMap();
-function readNodeUid(node) {
-    const direct = node?.getData?.('uid');
-    if (typeof direct === 'string' && direct)
-        return direct;
-    const data = node?.getData?.();
-    const candidates = [
-        data?.uid,
-        node?.nodeData?.data?.uid,
-        node?.nodeData?.uid,
-        node?.data?.uid,
-        node?.uid,
-    ];
-    return candidates.find((value) => typeof value === 'string' && value) ?? null;
-}
-function replaceRainbowLinesConfig(map, config) {
-    const exact = {
-        ...config,
-        open: Boolean(config.open),
-        colorsList: Array.isArray(config.colorsList) ? [...config.colorsList] : [],
-    };
-    if (map.opt && typeof map.opt === 'object') {
-        const previous = { ...map.opt };
-        map.emit?.('before_update_config', map.opt);
-        // simple-mind-map updateConfig() deep-merges arrays and would concatenate
-        // old and new palette colors. Rainbow palettes require replacement semantics.
-        map.opt.rainbowLinesConfig = exact;
-        map.emit?.('after_update_config', map.opt, previous);
-        return;
     }
-    map.updateConfig({ rainbowLinesConfig: exact });
 }
-function captureActiveNodeUids(map) {
-    const active = Array.isArray(map.renderer?.activeNodeList)
-        ? map.renderer.activeNodeList
-        : [];
-    return [...new Set(active.map(readNodeUid).filter((uid) => Boolean(uid)))];
+function commandValue(name) {
+    try {
+        return String(document.queryCommandValue(name) ?? '');
+    }
+    catch {
+        return '';
+    }
 }
-function restoreActiveNodes(map, uids) {
-    if (uids.length === 0)
-        return;
-    const renderer = map.renderer;
-    if (!renderer?.findNodeByUid)
-        return;
-    const nodes = uids
-        .map((uid) => renderer.findNodeByUid?.(uid))
-        .filter((node) => Boolean(node));
-    if (nodes.length === 0)
-        return;
-    if (typeof renderer.activeMultiNode === 'function') {
-        renderer.activeMultiNode(nodes);
-        return;
-    }
-    if (typeof renderer.addNodeToActiveList === 'function') {
-        for (const node of nodes)
-            renderer.addNodeToActiveList(node, true);
-        renderer.emitNodeActiveEvent?.(nodes[nodes.length - 1]);
-    }
+function blockKey(block) {
+    return `${block.kind}:${block.uid}`;
+}
+function richHtmlForText(value) {
+    return escapeHtml(value);
+}
+function isImageClipboard(data) {
+    return Array.from(data?.items ?? []).some((item) => item.kind === 'file' && item.type.startsWith('image/'));
 }
 /**
- * Apply all visual configuration as one renderer transaction.
+ * One structured outline editing surface.
  *
- * Theme, per-level runtime colors and rainbow-line configuration are updated
- * before a single complete redraw. This prevents the renderer from reusing
- * stale node/line caches while keeping view transform and local node styles.
+ * Every row remains a semantic node block, while all row labels inherit one
+ * contenteditable root. Native browser selection can therefore cross any
+ * number of nodes without introducing a second textarea representation.
  */
-function applyMapAppearanceTransaction(options) {
-    const { map, themeConfig, rainbowLinesConfig, colorAppearance, useThemeLineColors, rootBackground, render = true, afterRender, } = options;
-    (0, themeColorRuntime_1.configureThemeColorRuntime)(map, {
-        appearance: colorAppearance,
-        useThemeLineColors,
-        rootBackground,
-    });
-    map.setThemeConfig(themeConfig, true);
-    replaceRainbowLinesConfig(map, rainbowLinesConfig);
-    if (!render)
-        return;
-    const mapKey = map;
-    const revision = (REVISION_BY_MAP.get(mapKey) ?? 0) + 1;
-    REVISION_BY_MAP.set(mapKey, revision);
-    // A full redraw temporarily clears renderer.activeNodeList. When several
-    // appearance changes are requested before the first redraw completes, keep
-    // the last non-empty snapshot so the newest transaction can restore it.
-    const currentActiveNodeUids = captureActiveNodeUids(map);
-    if (currentActiveNodeUids.length > 0) {
-        ACTIVE_NODE_UIDS_BY_MAP.set(mapKey, currentActiveNodeUids);
-    }
-    const activeNodeUids = ACTIVE_NODE_UIDS_BY_MAP.get(mapKey) ?? [];
-    const complete = () => {
-        if (REVISION_BY_MAP.get(mapKey) !== revision)
-            return;
-        ACTIVE_NODE_UIDS_BY_MAP.delete(mapKey);
-        restoreActiveNodes(map, activeNodeUids);
-        afterRender?.();
-    };
-    if (typeof map.reRender === 'function') {
-        map.reRender(complete, APPEARANCE_RENDER_SOURCE);
-        return;
-    }
-    // Compatibility fallback for test doubles or older compatible renderers.
-    // Production simple-mind-map exposes reRender(), which is always preferred.
-    map.render?.(complete, APPEARANCE_RENDER_SOURCE);
-}
-
-},
-233: function(module, exports, __require, __externalRequire) {
-// /src/editor/nodeQuickActions.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.NodeQuickActionsController = void 0;
-exports.describeNodeQuickActions = describeNodeQuickActions;
-function describeNodeQuickActions(state) {
-    const childCount = Math.max(0, Math.trunc(Number(state.childCount) || 0));
-    if (!state.selected && !state.hovered)
-        return [];
-    const actions = [];
-    if (childCount > 0) {
-        actions.push(state.expanded
-            ? { action: 'collapse', label: `折叠 ${childCount} 个子孙节点`, text: '−' }
-            : { action: 'expand', label: `展开 ${childCount} 个子孙节点`, text: String(childCount) });
-    }
-    actions.push({ action: 'add-child', label: '添加子节点', text: '+' });
-    return actions;
-}
-function descendantCount(node) {
-    const children = Array.isArray(node?.nodeData?.children)
-        ? node.nodeData.children
-        : Array.isArray(node?.children)
-            ? node.children
-            : [];
-    return children.reduce((total, child) => total + 1 + descendantCount(child), 0);
-}
-function visibleNodeList(root) {
-    if (!root)
-        return [];
-    const list = [];
-    const visit = (node) => {
-        if (!node)
-            return;
-        list.push(node);
-        if (node.getData?.('expand') === false)
-            return;
-        const children = Array.isArray(node.children) ? node.children : [];
-        children.forEach(visit);
-    };
-    visit(root);
-    return list;
-}
-/**
- * Hover/selection quick actions with a pointer-safe bridge between an SVG node
- * and the HTML buttons. Actions remain alive briefly while the pointer crosses
- * the small visual gap, so the controls do not disappear before they can be
- * clicked.
- */
-class NodeQuickActionsController {
-    constructor(options) {
-        this.options = options;
-        this.frame = 0;
-        this.hideTimer = null;
-        this.hoveredUid = null;
-        this.nodeElementToUid = new Map();
-        this.onCanvasPointerOver = (event) => {
-            const uid = this.eventNodeUid(event);
-            if (uid)
-                this.setHovered(uid);
-        };
-        this.onCanvasPointerOut = (event) => {
-            const uid = this.eventNodeUid(event);
-            if (!uid)
-                return;
-            const related = event.relatedTarget;
-            if (related instanceof Node && event.currentTarget.contains(related)) {
-                const nextUid = related instanceof Element
-                    ? [...this.nodeElementToUid.entries()].find(([element]) => element === related || element.contains(related))?.[1]
-                    : null;
-                if (nextUid === uid)
-                    return;
-            }
-            this.scheduleHide(uid);
-        };
-        this.onActionPointerOver = (event) => {
-            const host = event.target.closest('[data-node-uid]');
-            const uid = host?.dataset.nodeUid;
-            if (uid)
-                this.setHovered(uid);
-        };
-        this.onActionPointerOut = (event) => {
-            const host = event.target.closest('[data-node-uid]');
-            const uid = host?.dataset.nodeUid;
-            if (!host || !uid)
-                return;
-            const related = event.relatedTarget;
-            if (related instanceof Node && host.contains(related))
-                return;
-            this.scheduleHide(uid);
-        };
-        this.onClick = (event) => {
-            const button = event.target.closest('[data-node-quick-action]');
-            const host = button?.closest('[data-node-uid]');
-            if (!button || !host)
-                return;
-            event.preventDefault();
-            event.stopPropagation();
-            const uid = host.dataset.nodeUid ?? '';
-            if (!uid)
-                return;
-            const action = button.dataset.nodeQuickAction;
-            if (action === 'add-child')
-                this.options.onAddChild(uid);
-            if (action === 'collapse')
-                this.options.onSetExpanded(uid, false);
-            if (action === 'expand')
-                this.options.onSetExpanded(uid, true);
-            this.setHovered(uid);
-        };
-        this.layer = document.createElement('div');
-        this.layer.className = 'ymz-node-quick-actions-layer';
-        this.layer.setAttribute('aria-hidden', 'false');
-        this.options.root.querySelector('.ymz-canvas-wrap')?.appendChild(this.layer);
-        this.layer.addEventListener('click', this.onClick);
-        this.layer.addEventListener('pointerover', this.onActionPointerOver);
-        this.layer.addEventListener('pointerout', this.onActionPointerOut);
-        this.options.canvas.addEventListener('pointerover', this.onCanvasPointerOver);
-        this.options.canvas.addEventListener('pointerout', this.onCanvasPointerOut);
-    }
-    destroy() {
-        cancelAnimationFrame(this.frame);
-        this.cancelHide();
-        this.layer.removeEventListener('click', this.onClick);
-        this.layer.removeEventListener('pointerover', this.onActionPointerOver);
-        this.layer.removeEventListener('pointerout', this.onActionPointerOut);
-        this.options.canvas.removeEventListener('pointerover', this.onCanvasPointerOver);
-        this.options.canvas.removeEventListener('pointerout', this.onCanvasPointerOut);
-        this.layer.remove();
-        this.nodeElementToUid.clear();
-    }
-    scheduleRefresh() {
-        cancelAnimationFrame(this.frame);
-        this.frame = requestAnimationFrame(() => this.refresh());
-    }
-    refresh() {
-        this.frame = 0;
-        this.layer.replaceChildren();
-        this.nodeElementToUid.clear();
-        if (this.options.readonly())
-            return;
-        const rootRect = this.options.root.getBoundingClientRect();
-        const activeNodes = this.options.getActiveNodes();
-        visibleNodeList(this.options.getRendererRoot()).forEach((node) => {
-            if (node?.isGeneralization || !node?.group?.node)
-                return;
-            const uid = String(node.getData?.('uid') ?? '');
-            if (!uid)
-                return;
-            const nodeElement = node.group.node;
-            this.nodeElementToUid.set(nodeElement, uid);
-            const rect = nodeElement.getBoundingClientRect();
-            if (!rect.width && !rect.height)
-                return;
-            const selected = activeNodes.includes(node) || node.getData?.('isActive') === true;
-            const hovered = this.hoveredUid === uid;
-            const descriptors = describeNodeQuickActions({
-                isRoot: Boolean(node.isRoot),
-                childCount: descendantCount(node),
-                expanded: node.getData?.('expand') !== false,
-                selected,
-                hovered,
-            });
-            if (descriptors.length === 0)
-                return;
-            const container = document.createElement('div');
-            container.className = 'ymz-node-quick-actions';
-            container.dataset.nodeUid = uid;
-            container.dataset.quickHovered = String(hovered);
-            container.style.left = `${rect.right - rootRect.left + 5}px`;
-            container.style.top = `${rect.top - rootRect.top + rect.height / 2}px`;
-            descriptors.forEach((descriptor) => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = `ymz-node-quick-action ymz-node-quick-action--${descriptor.action}`;
-                button.dataset.nodeQuickAction = descriptor.action;
-                button.title = descriptor.label;
-                button.setAttribute('aria-label', descriptor.label);
-                button.textContent = descriptor.text;
-                container.appendChild(button);
-            });
-            this.layer.appendChild(container);
-        });
-    }
-    eventNodeUid(event) {
-        for (const item of event.composedPath()) {
-            if (item instanceof Element) {
-                const uid = this.nodeElementToUid.get(item);
-                if (uid)
-                    return uid;
-            }
-        }
-        return null;
-    }
-    setHovered(uid) {
-        this.cancelHide();
-        if (this.hoveredUid === uid)
-            return;
-        this.hoveredUid = uid;
-        this.scheduleRefresh();
-    }
-    scheduleHide(uid) {
-        this.cancelHide();
-        this.hideTimer = window.setTimeout(() => {
-            this.hideTimer = null;
-            if (this.hoveredUid === uid)
-                this.setHovered(null);
-        }, 220);
-    }
-    cancelHide() {
-        if (this.hideTimer !== null)
-            window.clearTimeout(this.hideTimer);
-        this.hideTimer = null;
-    }
-}
-exports.NodeQuickActionsController = NodeQuickActionsController;
-
-},
-234: function(module, exports, __require, __externalRequire) {
-// /src/editor/canvasRightDrag.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CanvasRightDragController = exports.CanvasRightDragGesture = void 0;
-exports.shouldSuppressCanvasContextMenu = shouldSuppressCanvasContextMenu;
-class CanvasRightDragGesture {
-    constructor(threshold = 5) {
-        this.threshold = threshold;
-        this.active = false;
-        this.dragging = false;
-        this.startX = 0;
-        this.startY = 0;
-        this.lastX = 0;
-        this.lastY = 0;
-        this.suppressMenu = false;
-        this.contextSuppressedDuringDrag = false;
-    }
-    pointerDown(event) {
-        if (event.button !== 2)
-            return false;
-        this.active = true;
-        this.dragging = false;
-        this.suppressMenu = false;
-        this.contextSuppressedDuringDrag = false;
-        this.startX = this.lastX = event.clientX;
-        this.startY = this.lastY = event.clientY;
-        return true;
-    }
-    pointerMove(event) {
-        if (!this.active)
-            return { dragging: false, dx: 0, dy: 0 };
-        const total = Math.hypot(event.clientX - this.startX, event.clientY - this.startY);
-        if (!this.dragging && total <= this.threshold) {
-            this.lastX = event.clientX;
-            this.lastY = event.clientY;
-            return { dragging: false, dx: 0, dy: 0 };
-        }
-        const dx = event.clientX - this.lastX;
-        const dy = event.clientY - this.lastY;
-        this.dragging = true;
-        this.lastX = event.clientX;
-        this.lastY = event.clientY;
-        return { dragging: true, dx, dy };
-    }
-    pointerUp() {
-        if (!this.active)
-            return false;
-        const dragged = this.dragging;
-        this.active = false;
-        this.dragging = false;
-        this.suppressMenu = dragged && !this.contextSuppressedDuringDrag;
-        return dragged;
-    }
-    cancel() {
-        this.active = false;
-        this.dragging = false;
-    }
-    consumeContextMenu() {
-        if (this.active && this.dragging) {
-            this.contextSuppressedDuringDrag = true;
-            return true;
-        }
-        if (!this.suppressMenu)
-            return false;
-        this.suppressMenu = false;
-        return true;
-    }
-    get isDragging() {
-        return this.dragging;
-    }
-}
-exports.CanvasRightDragGesture = CanvasRightDragGesture;
-function shouldSuppressCanvasContextMenu(gesture) {
-    return gesture.consumeContextMenu();
-}
-class CanvasRightDragController {
-    constructor(options) {
-        this.options = options;
-        this.gesture = new CanvasRightDragGesture(5);
-        this.onMouseDown = (event) => {
-            this.gesture.pointerDown(event);
-        };
-        this.onMouseMove = (event) => {
-            const result = this.gesture.pointerMove(event);
-            if (!result.dragging)
-                return;
-            event.preventDefault();
-            this.options.root.classList.add("is-canvas-right-dragging");
-            if (this.options.mode() === "pan" && (result.dx || result.dy)) {
-                this.options.map.view?.translateXY?.(result.dx, result.dy);
-            }
-        };
-        this.finishGesture = () => {
-            this.gesture.pointerUp();
-            this.options.root.classList.remove("is-canvas-right-dragging");
-        };
-        this.onMouseUp = () => {
-            this.finishGesture();
-        };
-        this.onWindowMouseUp = (event) => {
-            if (event.button !== 2 && !this.gesture.isDragging)
-                return;
-            this.finishGesture();
-        };
-        this.onWindowBlur = () => {
-            this.cancel();
-        };
-        options.map.on?.("mousedown", this.onMouseDown);
-        options.map.on?.("mousemove", this.onMouseMove);
-        options.map.on?.("mouseup", this.onMouseUp);
-        window.addEventListener("mouseup", this.onWindowMouseUp, true);
-        window.addEventListener("blur", this.onWindowBlur);
-    }
-    destroy() {
-        this.options.map.off?.("mousedown", this.onMouseDown);
-        this.options.map.off?.("mousemove", this.onMouseMove);
-        this.options.map.off?.("mouseup", this.onMouseUp);
-        window.removeEventListener("mouseup", this.onWindowMouseUp, true);
-        window.removeEventListener("blur", this.onWindowBlur);
-        this.cancel();
-    }
-    consumeContextMenu() {
-        return this.gesture.consumeContextMenu();
-    }
-    cancel() {
-        this.gesture.cancel();
-        this.options.root.classList.remove("is-canvas-right-dragging");
-    }
-}
-exports.CanvasRightDragController = CanvasRightDragController;
-
-},
-235: function(module, exports, __require, __externalRequire) {
-// /src/editor/focusHighlight.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.scheduleFocusedNodeHighlight = scheduleFocusedNodeHighlight;
-/**
- * Waits for a node hidden behind collapsed ancestors to be rendered, then adds
- * the upstream highlight class briefly. The returned cleanup is idempotent.
- */
-function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
-    const maxAttempts = Math.max(1, options.attempts ?? 20);
-    const duration = Math.max(0, options.duration ?? 1500);
-    const scheduleFrame = options.scheduleFrame ?? ((callback) => window.requestAnimationFrame(callback));
-    const cancelFrame = options.cancelFrame ?? ((id) => window.cancelAnimationFrame(id));
-    const scheduleTimer = options.scheduleTimer ?? ((callback, delay) => window.setTimeout(callback, delay));
-    const cancelTimer = options.cancelTimer ?? ((id) => window.clearTimeout(id));
-    let cancelled = false;
-    let frameId = null;
-    let timerId = null;
-    let highlighted = null;
-    const stopHighlight = () => {
-        highlighted?.closeHighlight?.();
-        highlighted = null;
-        if (timerId !== null) {
-            cancelTimer(timerId);
-            timerId = null;
-        }
-    };
-    const attempt = (remaining) => {
-        frameId = scheduleFrame(() => {
-            frameId = null;
-            if (cancelled)
-                return;
-            const node = renderer()?.findNodeByUid?.(uid) ?? null;
-            if (!node && remaining > 1) {
-                attempt(remaining - 1);
-                return;
-            }
-            if (!node) {
-                options.onMissing?.();
-                return;
-            }
-            highlighted = node;
-            options.onFound?.();
-            node.highlight?.();
-            timerId = scheduleTimer(() => {
-                timerId = null;
-                if (!cancelled)
-                    stopHighlight();
-            }, duration);
-        });
-    };
-    attempt(maxAttempts);
-    return () => {
-        if (cancelled)
-            return;
-        cancelled = true;
-        if (frameId !== null)
-            cancelFrame(frameId);
-        frameId = null;
-        stopHighlight();
-    };
-}
-
-},
-236: function(module, exports, __require, __externalRequire) {
-// /src/editor/editingSurfaceCoordinator.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.EditingSurfaceCoordinator = void 0;
-/**
- * Coordinates the two text-editing surfaces used by split mode.
- *
- * Only explicit outline commands may create a focus restoration ticket.
- * Canvas ownership always invalidates that ticket, so a later model patch
- * cannot resurrect a previously edited outline row.
- */
-class EditingSurfaceCoordinator {
-    constructor() {
-        this.currentOwner = 'none';
-        this.generation = 0;
-        this.currentPending = null;
-    }
-    get owner() {
-        return this.currentOwner;
-    }
-    get pending() {
-        return this.currentPending;
-    }
-    claimOutline() {
-        const previousOwner = this.currentOwner;
-        this.currentOwner = 'outline';
-        return {
-            previousOwner,
-            owner: this.currentOwner,
-            cancelledPending: false,
-        };
-    }
-    claimCanvas() {
-        const previousOwner = this.currentOwner;
-        const cancelledPending = Boolean(this.currentPending);
-        this.currentOwner = 'canvas';
-        this.generation += 1;
-        this.currentPending = null;
-        return { previousOwner, owner: this.currentOwner, cancelledPending };
-    }
-    release() {
-        const previousOwner = this.currentOwner;
-        const cancelledPending = Boolean(this.currentPending);
-        this.currentOwner = 'none';
-        this.generation += 1;
-        this.currentPending = null;
-        return { previousOwner, owner: this.currentOwner, cancelledPending };
-    }
-    queueOutline(request) {
-        this.currentOwner = 'outline';
-        const ticket = {
-            generation: ++this.generation,
-            request,
-        };
-        this.currentPending = ticket;
-        return ticket;
-    }
-    clearPending() {
-        if (!this.currentPending)
-            return false;
-        this.generation += 1;
-        this.currentPending = null;
-        return true;
-    }
-    isCurrent(ticket) {
-        return Boolean(ticket &&
-            this.currentOwner === 'outline' &&
-            this.currentPending === ticket &&
-            ticket.generation === this.generation);
-    }
-    take(ticket) {
-        if (!this.isCurrent(ticket))
-            return null;
-        this.currentPending = null;
-        return ticket.request;
-    }
-    takeCurrent() {
-        const ticket = this.currentPending;
-        return ticket ? this.take(ticket) : null;
-    }
-}
-exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
-
-},
-237: function(module, exports, __require, __externalRequire) {
-// /src/editor/OutlineTextEditorController.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.OutlineTextEditorController = void 0;
-const outlineTextDocument_1 = __require(238);
-/**
- * One-document outline editor.
- *
- * Unlike the row-based rich-text outline, this controller deliberately uses a
- * single native textarea. Native selection, clipboard and IME behavior then
- * span any number of nodes. The whole document is reconciled back to the map
- * as one undoable tree transaction.
- */
-class OutlineTextEditorController {
+class StructuredOutlineEditorController {
     constructor(options) {
         this.options = options;
         this.timer = null;
-        this.active = false;
         this.dirty = false;
         this.applying = false;
         this.composing = false;
-        this.lastAppliedText = '';
+        this.pointerSelecting = false;
+        this.wholeOutlineSelected = false;
+        this.wholeSelectionRange = null;
+        this.forcePlainPaste = false;
+        this.savedRange = null;
+        this.activeUid = '';
+        this.activeEditor = null;
+        this.lastAppliedSignature = '';
+        this.suppressSelectionChange = false;
         this.onInput = () => {
+            if (this.applying)
+                return;
+            this.clearWholeSelection();
             this.markDirty(this.composing ? 'composition-input' : 'input');
         };
         this.onCompositionStart = () => {
             this.composing = true;
             this.cancelTimer();
-            this.updateStatus('正在输入…');
         };
         this.onCompositionEnd = () => {
             this.composing = false;
             this.markDirty('composition-end');
         };
-        this.onFocus = () => {
-            this.options.onDiagnostic?.('text-focus');
+        this.onClick = (event) => {
+            const target = event.target;
+            const row = target.closest('[data-outline-uid]');
+            if (!row)
+                return;
+            const uid = row.dataset.outlineUid ?? '';
+            const toggle = target.closest('[data-outline-toggle]');
+            if (toggle && row.dataset.outlineHasChildren === 'true') {
+                event.preventDefault();
+                event.stopPropagation();
+                this.options.onToggle(uid, row.dataset.outlineExpanded !== 'true');
+                return;
+            }
+            if (target.closest('[data-outline-drag-handle]'))
+                return;
+            this.activateUid(uid, false);
+            if (!this.options.isReadonly())
+                this.options.onActivate(uid);
+        };
+        this.onFocusIn = (event) => {
+            const editor = closestEditor(event.target);
+            const row = editor?.closest('[data-outline-uid]');
+            if (!editor || !row)
+                return;
+            const uid = row.dataset.outlineUid ?? '';
+            this.activeEditor = editor;
+            this.activateUid(uid, false);
+            if (!this.options.isReadonly())
+                this.options.onActivate(uid);
         };
         this.onBlur = () => {
-            this.flush('blur');
+            window.setTimeout(() => {
+                if (!this.options.root.contains(document.activeElement))
+                    this.flush('blur');
+            }, 0);
         };
-        this.onKeydown = (event) => {
-            if (this.options.isReadonly() || this.composing || event.isComposing)
-                return;
-            const textarea = this.options.textarea;
-            if ((event.ctrlKey || event.metaKey) && (event.key === 'Enter' || event.key.toLowerCase() === 's')) {
-                event.preventDefault();
-                this.flush(event.key === 'Enter' ? 'shortcut-apply' : 'shortcut-save');
-                return;
-            }
-            if (event.key === 'Tab' && !event.ctrlKey && !event.metaKey && !event.altKey) {
-                event.preventDefault();
-                const edit = (0, outlineTextDocument_1.editOutlineSelectionIndent)(textarea.value, textarea.selectionStart, textarea.selectionEnd, event.shiftKey);
-                textarea.value = edit.value;
-                textarea.setSelectionRange(edit.selectionStart, edit.selectionEnd);
-                this.markDirty(event.shiftKey ? 'outdent' : 'indent');
-                return;
-            }
-            if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey) {
-                event.preventDefault();
-                const edit = (0, outlineTextDocument_1.insertOutlineNewline)(textarea.value, textarea.selectionStart, textarea.selectionEnd);
-                textarea.value = edit.value;
-                textarea.setSelectionRange(edit.selectionStart, edit.selectionEnd);
-                this.markDirty('newline');
+        this.onPointerDown = (event) => {
+            this.clearWholeSelection();
+            this.pointerSelecting = Boolean(event.target?.closest('[data-outline-editor]'));
+            if (this.pointerSelecting && this.options.isReadonly())
+                this.options.root.focus({ preventScroll: true });
+            this.options.onSelectionChange(false, null, null, this);
+        };
+        this.onPointerUp = () => {
+            this.pointerSelecting = false;
+            window.setTimeout(() => this.publishSelection(), 0);
+        };
+        this.onKeyUp = (event) => {
+            if (event.key === 'Shift' || event.shiftKey || ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) {
+                window.setTimeout(() => this.publishSelection(), 0);
             }
         };
-        this.debounceMs = Math.max(100, options.debounceMs ?? 450);
-        this.baseTree = options.getTree();
-        this.options.textarea.addEventListener('input', this.onInput);
-        this.options.textarea.addEventListener('keydown', this.onKeydown);
-        this.options.textarea.addEventListener('blur', this.onBlur);
-        this.options.textarea.addEventListener('focus', this.onFocus);
-        this.options.textarea.addEventListener('compositionstart', this.onCompositionStart);
-        this.options.textarea.addEventListener('compositionend', this.onCompositionEnd);
+        this.onDocumentSelectionChange = () => {
+            if (this.suppressSelectionChange)
+                return;
+            const selection = window.getSelection();
+            if (!selection || !this.options.root.contains(selection.anchorNode)) {
+                this.clearWholeSelection();
+                return;
+            }
+            const currentRange = selection.rangeCount ? selection.getRangeAt(0) : null;
+            if (this.wholeOutlineSelected && (!currentRange || !this.matchesWholeSelection(currentRange))) {
+                this.clearWholeSelection();
+            }
+            const editor = closestEditor(selection.focusNode);
+            const row = editor?.closest('[data-outline-uid]');
+            const uid = row?.dataset.outlineUid ?? '';
+            if (uid && uid !== this.activeUid) {
+                this.activeEditor = editor;
+                this.activateUid(uid, false);
+                if (!this.options.isReadonly())
+                    this.options.onActivate(uid);
+            }
+            if (selection.isCollapsed) {
+                this.clearWholeSelection();
+                this.options.onSelectionChange(false, null, null, this);
+            }
+            else if (!this.pointerSelecting) {
+                this.savedRange = currentRange?.cloneRange() ?? null;
+            }
+        };
+        this.onKeyDown = (event) => {
+            if (event.isComposing || this.composing)
+                return;
+            const command = event.ctrlKey || event.metaKey;
+            if (command && !event.altKey && event.key.toLowerCase() === 'a') {
+                event.preventDefault();
+                event.stopPropagation();
+                this.handleSelectAll();
+                return;
+            }
+            if (command && event.shiftKey && event.key.toLowerCase() === 'v') {
+                if (!this.options.isReadonly()) {
+                    this.forcePlainPaste = true;
+                    window.setTimeout(() => { this.forcePlainPaste = false; }, 0);
+                }
+                return;
+            }
+            if (this.options.isReadonly())
+                return;
+            if (command && !event.altKey && event.key.toLowerCase() === 's') {
+                event.preventDefault();
+                event.stopPropagation();
+                this.flush('shortcut-save');
+                return;
+            }
+            if (command && !event.altKey && event.key.toLowerCase() === 'z') {
+                event.preventDefault();
+                event.stopPropagation();
+                this.flush('before-undo');
+                if (event.shiftKey)
+                    this.options.onRedo();
+                else
+                    this.options.onUndo();
+                return;
+            }
+            if (command && !event.altKey && event.key.toLowerCase() === 'y') {
+                event.preventDefault();
+                event.stopPropagation();
+                this.flush('before-redo');
+                this.options.onRedo();
+                return;
+            }
+            if (event.key === 'Tab' && !command && !event.altKey) {
+                event.preventDefault();
+                event.stopPropagation();
+                this.adjustSelectedDepth(event.shiftKey ? -1 : 1);
+                return;
+            }
+            if (event.key === 'Enter' && !command && !event.altKey) {
+                event.preventDefault();
+                event.stopPropagation();
+                if (event.shiftKey) {
+                    this.insertInlineHtml('<br>');
+                    this.markDirty('hard-break');
+                }
+                else {
+                    this.replaceSelectionWithText('\n', 'enter');
+                }
+                return;
+            }
+            if (event.key === 'Backspace' || event.key === 'Delete') {
+                event.stopPropagation();
+                const context = this.selectionContext();
+                if (!context)
+                    return;
+                if (!context.collapsed || context.spansRows) {
+                    event.preventDefault();
+                    this.replaceSelectionWithText('', event.key.toLowerCase());
+                    return;
+                }
+                const state = this.getSelectionState(context.startEditor);
+                const boundary = event.key === 'Backspace' ? state.start === 0 : state.end === state.length;
+                if (boundary && context.startRow.dataset.outlineRoot !== 'true') {
+                    const neighbor = this.visibleNeighbor(context.startRow, event.key === 'Backspace' ? -1 : 1);
+                    if (neighbor) {
+                        event.preventDefault();
+                        this.mergeRows(neighbor, context.startRow, event.key === 'Backspace');
+                    }
+                }
+                return;
+            }
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                const context = this.selectionContext();
+                if (!context || !context.collapsed)
+                    return;
+                const state = this.getSelectionState(context.startEditor);
+                const hasChildren = context.startRow.dataset.outlineHasChildren === 'true';
+                const expanded = context.startRow.dataset.outlineExpanded === 'true';
+                if (event.key === 'ArrowLeft' && state.start === 0 && hasChildren && expanded) {
+                    event.preventDefault();
+                    this.options.onToggle(context.start.uid, false);
+                }
+                if (event.key === 'ArrowRight' && state.end === state.length && hasChildren && !expanded) {
+                    event.preventDefault();
+                    this.options.onToggle(context.start.uid, true);
+                }
+            }
+        };
+        this.onCopy = (event) => {
+            if (!event.clipboardData)
+                return;
+            const context = this.selectionContext();
+            const whole = this.isWholeSelectionActive(context?.range ?? null);
+            if (!context && !whole)
+                return;
+            event.preventDefault();
+            const plain = whole
+                ? (0, outlineTextDocument_1.serializeOutlineText)(this.options.getTree())
+                : this.selectedStructuredPlainText(context);
+            event.clipboardData.setData('text/plain', plain);
+            event.clipboardData.setData('text/html', this.selectedStructuredHtml(context, plain, whole));
+            this.options.onDiagnostic?.('copy', {
+                whole,
+                textLength: plain.length,
+            });
+        };
+        this.onCut = (event) => {
+            if (this.options.isReadonly()) {
+                this.onCopy(event);
+                return;
+            }
+            this.onCopy(event);
+            if (event.defaultPrevented)
+                this.replaceSelectionWithText('', 'cut');
+        };
+        this.onPaste = (event) => {
+            if (this.options.isReadonly() || !event.clipboardData || isImageClipboard(event.clipboardData))
+                return;
+            const text = event.clipboardData.getData('text/plain');
+            const html = this.forcePlainPaste ? '' : event.clipboardData.getData('text/html');
+            if (!text && !html)
+                return;
+            event.preventDefault();
+            event.stopPropagation();
+            const context = this.selectionContext();
+            const whole = this.isWholeSelectionActive(context?.range ?? null);
+            const multiline = /\r|\n/.test(text);
+            if (!whole && context && !context.spansRows && !multiline) {
+                this.insertInlineHtml(html ? inlineHtmlFromClipboard(html) : escapeHtml(text));
+                this.markDirty('paste-inline');
+                this.placeSelectionToolbarLater();
+                return;
+            }
+            const parsed = (0, outlineTextDocument_1.parseOutlineText)(text);
+            const richLines = html ? clipboardRichLines(html, parsed.lines.length) : null;
+            this.replaceSelectionWithText(text, 'paste', richLines ?? undefined);
+        };
+        this.debounceMs = Math.max(120, options.debounceMs ?? 380);
+        this.lastTree = options.getTree();
+        this.options.root.classList.add('ymz-structured-outline');
+        this.options.root.setAttribute('role', 'tree');
+        this.options.root.setAttribute('spellcheck', 'false');
+        this.options.root.setAttribute('aria-label', '结构化大纲编辑器');
+        this.options.root.tabIndex = 0;
+        this.bind();
         this.setReadonly(options.isReadonly());
-        this.syncFromTree(this.baseTree, true);
+        this.syncFromTree(this.lastTree, true);
+    }
+    get activeHost() {
+        return this.activeEditor;
+    }
+    get isComposing() {
+        return this.composing;
     }
     get isDirty() {
         return this.dirty;
     }
-    get isActive() {
-        return this.active;
-    }
-    activate(tree) {
-        this.active = true;
-        this.baseTree = tree;
-        if (!this.dirty && !this.applying)
-            this.syncFromTree(tree, true);
-        this.updateStatus(this.dirty ? '等待同步…' : '自动同步');
-    }
-    deactivate(reason = 'mode-change') {
-        this.flush(reason);
-        this.active = false;
-        this.cancelTimer();
-    }
     setReadonly(readonly) {
-        this.options.textarea.readOnly = readonly;
-        this.options.textarea.setAttribute('aria-readonly', String(readonly));
-        if (readonly) {
+        this.options.root.contentEditable = String(!readonly);
+        this.options.root.setAttribute('aria-readonly', String(readonly));
+        this.options.root.querySelectorAll('[data-outline-editor]').forEach((editor) => {
+            if (readonly)
+                editor.setAttribute('aria-readonly', 'true');
+            else
+                editor.removeAttribute('aria-readonly');
+        });
+        if (readonly)
             this.cancelTimer();
-            this.updateStatus('只读');
-        }
-        else if (this.active) {
-            this.updateStatus(this.dirty ? '等待同步…' : '自动同步');
-        }
     }
-    /** Synchronize canvas/tree changes without destroying an in-progress selection. */
     syncFromTree(tree, force = false) {
-        this.baseTree = tree;
+        this.lastTree = tree;
         if (this.applying)
             return;
-        if (!force && this.dirty) {
-            this.updateStatus('当前文本尚未同步');
+        if (!force && this.dirty && this.options.root.contains(document.activeElement))
             return;
-        }
-        const text = (0, outlineTextDocument_1.serializeOutlineText)(tree);
-        if (text !== this.options.textarea.value) {
-            const focused = document.activeElement === this.options.textarea;
-            const start = this.options.textarea.selectionStart;
-            const end = this.options.textarea.selectionEnd;
-            this.options.textarea.value = text;
-            if (focused) {
-                const safeStart = Math.min(start, text.length);
-                const safeEnd = Math.min(end, text.length);
-                this.options.textarea.setSelectionRange(safeStart, safeEnd);
-            }
-        }
-        this.lastAppliedText = text;
+        const bookmark = this.captureSelectionBookmark();
+        const blocks = (0, structuredOutlineDocument_1.flattenStructuredOutline)(tree);
+        this.patchBlocks(blocks, bookmark);
+        this.lastAppliedSignature = this.domSignature();
         this.dirty = false;
-        if (this.active)
-            this.updateStatus(this.options.isReadonly() ? '只读' : '自动同步');
+    }
+    activate(host, uid, request) {
+        this.activeEditor = host;
+        this.activeUid = uid;
+        this.activateUid(uid, false);
+        if (this.options.isReadonly())
+            return;
+        this.options.root.focus({ preventScroll: true });
+        const length = textLength(host);
+        let start = length;
+        let end = length;
+        if (request?.placement === 'start')
+            start = end = 0;
+        else if (request?.placement === 'select-all') {
+            start = 0;
+            end = length;
+        }
+        else if (request?.placement === 'range') {
+            start = Math.max(0, Math.min(length, request.start ?? 0));
+            end = Math.max(start, Math.min(length, request.end ?? start));
+        }
+        this.selectEditorRange(host, start, end);
+        host.scrollIntoView?.({ block: 'nearest' });
+    }
+    activateUid(uid, scroll = false) {
+        this.activeUid = uid;
+        this.options.root.querySelectorAll('[data-outline-uid]').forEach((row) => {
+            row.classList.toggle('is-active', Boolean(uid) && row.dataset.outlineUid === uid);
+        });
+        const row = this.rowByUid(uid);
+        this.activeEditor = row?.querySelector('[data-outline-editor]') ?? null;
+        if (scroll)
+            row?.scrollIntoView?.({ block: 'nearest' });
+    }
+    getSelectionState(host = this.activeEditor) {
+        if (!host)
+            return { text: '', length: 0, start: 0, end: 0 };
+        const text = (host.innerText || host.textContent || '').replace(/\u00a0/g, ' ');
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0)
+            return { text, length: text.length, start: 0, end: 0 };
+        const range = selection.getRangeAt(0);
+        if (!host.contains(range.startContainer) || !host.contains(range.endContainer)) {
+            return { text, length: text.length, start: 0, end: 0 };
+        }
+        return {
+            text,
+            length: text.length,
+            start: offsetWithin(host, range.startContainer, range.startOffset),
+            end: offsetWithin(host, range.endContainer, range.endOffset),
+        };
     }
     flush(reason = 'manual') {
         this.cancelTimer();
         if (!this.dirty || this.options.isReadonly() || this.composing)
             return false;
-        const value = this.options.textarea.value;
-        if (value === this.lastAppliedText) {
-            this.dirty = false;
-            this.updateStatus('自动同步');
-            return false;
-        }
-        const parsed = (0, outlineTextDocument_1.parseOutlineText)(value);
-        const result = (0, outlineTextDocument_1.reconcileOutlineText)(this.baseTree, parsed);
+        const bookmark = this.captureSelectionBookmark();
+        const blocks = this.collectBlocks();
+        const result = (0, structuredOutlineDocument_1.buildTreeFromStructuredOutline)(this.lastTree, blocks);
         this.applying = true;
         let applied = false;
+        let failure = null;
         try {
-            applied = this.options.onApply(result.tree, result);
+            applied = this.options.onApply(result.tree, {
+                reason,
+                nodeCount: result.nodeCount,
+                reusedNodeCount: result.reusedNodeCount,
+                createdNodeCount: result.createdNodeCount,
+            });
+        }
+        catch (error) {
+            failure = error;
         }
         finally {
             this.applying = false;
         }
         if (!applied) {
-            this.updateStatus('同步失败');
-            this.options.onDiagnostic?.('text-apply-rejected', { reason, nodeCount: result.nodeCount });
+            // A structured edit is atomic: if the map transaction rejects or throws,
+            // restore the last committed projection instead of leaving a half-applied
+            // outline document on screen.
+            this.dirty = false;
+            this.clearWholeSelection();
+            this.patchBlocks((0, structuredOutlineDocument_1.flattenStructuredOutline)(this.lastTree), bookmark);
+            this.lastAppliedSignature = this.domSignature();
+            this.options.onDiagnostic?.('apply-rejected', {
+                reason,
+                nodeCount: result.nodeCount,
+                error: failure instanceof Error ? failure.message : failure ? String(failure) : '',
+            });
             return false;
         }
-        this.baseTree = result.tree;
-        this.lastAppliedText = value;
+        this.lastTree = result.tree;
+        this.lastAppliedSignature = this.domSignature();
         this.dirty = false;
-        const summary = result.implicitRoot
-            ? `已同步 · 保留中心主题，导入 ${result.topLevelCount} 个一级条目`
-            : `已同步 · ${result.nodeCount} 个节点`;
-        this.updateStatus(summary);
-        this.options.onDiagnostic?.('text-applied', {
+        this.options.onDiagnostic?.('applied', {
             reason,
             nodeCount: result.nodeCount,
             reusedNodeCount: result.reusedNodeCount,
             createdNodeCount: result.createdNodeCount,
-            implicitRoot: result.implicitRoot,
-            topLevelCount: result.topLevelCount,
-            indentWidth: result.indentWidth,
         });
         return true;
+    }
+    commitAndDetach(reason = 'surface-change') {
+        this.flush(reason);
+    }
+    discardAndDetach(_reason = 'discard') {
+        this.cancelTimer();
+        this.dirty = false;
+        this.syncFromTree(this.options.getTree(), true);
+    }
+    cancel() {
+        this.cancelTimer();
+        this.dirty = false;
+        this.syncFromTree(this.lastTree, true);
     }
     destroy() {
         this.flush('destroy');
         this.cancelTimer();
-        this.options.textarea.removeEventListener('input', this.onInput);
-        this.options.textarea.removeEventListener('keydown', this.onKeydown);
-        this.options.textarea.removeEventListener('blur', this.onBlur);
-        this.options.textarea.removeEventListener('focus', this.onFocus);
-        this.options.textarea.removeEventListener('compositionstart', this.onCompositionStart);
-        this.options.textarea.removeEventListener('compositionend', this.onCompositionEnd);
+        this.unbind();
+        this.options.onSelectionChange(false, null, null, this);
+    }
+    restoreSelection() {
+        if (!this.savedRange)
+            return;
+        const selection = window.getSelection();
+        if (!selection)
+            return;
+        selection.removeAllRanges();
+        selection.addRange(this.savedRange.cloneRange());
+    }
+    getSelectedText() {
+        const selection = window.getSelection();
+        return selection && this.options.root.contains(selection.anchorNode)
+            ? selection.toString()
+            : '';
+    }
+    getSelectedInlineLink() {
+        const range = this.currentRange();
+        const element = range ? closestElement(range.commonAncestorContainer) : null;
+        return element?.closest('a[href]')?.getAttribute('href') ?? '';
+    }
+    setInlineLink(link) {
+        this.restoreSelection();
+        if (!this.currentRange() || this.options.isReadonly())
+            return;
+        if (link)
+            document.execCommand('createLink', false, link);
+        else
+            document.execCommand('unlink');
+        this.afterFormatting('link');
+    }
+    toggleInlineCode() {
+        this.restoreSelection();
+        const range = this.currentRange();
+        if (!range || range.collapsed || this.options.isReadonly())
+            return;
+        const element = closestElement(range.commonAncestorContainer)?.closest('code');
+        if (element) {
+            const parent = element.parentNode;
+            while (element.firstChild)
+                parent?.insertBefore(element.firstChild, element);
+            element.remove();
+        }
+        else {
+            this.wrapSelection('code');
+        }
+        this.afterFormatting('inline-code');
+    }
+    getCodeBlock() {
+        const range = this.currentRange();
+        const pre = range ? closestElement(range.commonAncestorContainer)?.closest('pre') : null;
+        if (!pre)
+            return null;
+        const editor = pre.closest('[data-outline-editor]');
+        if (!editor)
+            return null;
+        const index = offsetWithin(editor, pre, 0);
+        return {
+            index,
+            length: pre.textContent?.length ?? 0,
+            code: pre.textContent ?? '',
+            language: pre.dataset.language || 'plain',
+        };
+    }
+    saveCodeBlock(code, language = 'plain') {
+        this.restoreSelection();
+        const range = this.currentRange();
+        if (!range || this.options.isReadonly())
+            return;
+        const existing = closestElement(range.commonAncestorContainer)?.closest('pre');
+        const pre = existing ?? document.createElement('pre');
+        pre.dataset.language = language || 'plain';
+        pre.textContent = code.replace(/\r\n?/g, '\n');
+        if (!existing) {
+            range.deleteContents();
+            range.insertNode(pre);
+        }
+        this.placeCaretAfter(pre);
+        this.afterFormatting('code-block-save');
+    }
+    removeCodeBlockFormat() {
+        this.restoreSelection();
+        const range = this.currentRange();
+        const pre = range ? closestElement(range.commonAncestorContainer)?.closest('pre') : null;
+        if (!pre || this.options.isReadonly())
+            return;
+        const fragment = document.createDocumentFragment();
+        const lines = (pre.textContent ?? '').split('\n');
+        lines.forEach((line, index) => {
+            if (index)
+                fragment.append(document.createElement('br'));
+            fragment.append(document.createTextNode(line));
+        });
+        pre.replaceWith(fragment);
+        this.afterFormatting('code-block-remove-format');
+    }
+    deleteCodeBlock() {
+        this.restoreSelection();
+        const range = this.currentRange();
+        const pre = range ? closestElement(range.commonAncestorContainer)?.closest('pre') : null;
+        if (!pre || this.options.isReadonly())
+            return;
+        const editor = pre.closest('[data-outline-editor]');
+        pre.remove();
+        if (editor)
+            this.selectEditorRange(editor, Math.min(textLength(editor), 0), Math.min(textLength(editor), 0));
+        this.afterFormatting('code-block-delete');
+    }
+    insertFormula(formula, mode = 'inline') {
+        this.restoreSelection();
+        const range = this.currentRange();
+        if (!range || this.options.isReadonly())
+            return;
+        range.deleteContents();
+        const span = document.createElement(mode === 'block' ? 'div' : 'span');
+        span.className = 'ql-formula';
+        span.dataset.value = mode === 'block' ? `\\displaystyle{${formula}}` : formula;
+        span.setAttribute('contenteditable', 'false');
+        span.textContent = formula;
+        range.insertNode(span);
+        this.placeCaretAfter(span);
+        this.afterFormatting('formula');
+    }
+    formatText(config) {
+        this.restoreSelection();
+        if (this.options.isReadonly() || !this.currentRange() || this.currentRange()?.collapsed)
+            return;
+        Object.entries(config).forEach(([key, value]) => {
+            if (['bold', 'italic', 'underline', 'strike'].includes(key)) {
+                const command = key === 'strike' ? 'strikeThrough' : key;
+                document.execCommand(command, false, value === false ? undefined : undefined);
+                return;
+            }
+            if (key === 'color') {
+                document.execCommand('foreColor', false, value === false ? 'inherit' : String(value));
+                return;
+            }
+            if (key === 'background') {
+                document.execCommand('hiliteColor', false, value === false ? 'transparent' : String(value));
+                return;
+            }
+            if (key === 'font') {
+                if (value)
+                    document.execCommand('fontName', false, String(value));
+                return;
+            }
+            if (key === 'size' && value)
+                this.applyInlineStyle({ fontSize: String(value) });
+        });
+        this.afterFormatting('format');
+    }
+    clearTextFormat() {
+        this.restoreSelection();
+        if (this.options.isReadonly() || !this.currentRange())
+            return;
+        document.execCommand('removeFormat');
+        document.execCommand('unlink');
+        this.afterFormatting('clear-format');
+    }
+    setCloze(enabled) {
+        this.formatText(enabled
+            ? { color: 'transparent', background: '#f5dfa0' }
+            : { color: false, background: false });
+    }
+    bind() {
+        const root = this.options.root;
+        root.addEventListener('input', this.onInput);
+        root.addEventListener('keydown', this.onKeyDown, true);
+        root.addEventListener('keyup', this.onKeyUp);
+        root.addEventListener('paste', this.onPaste, true);
+        root.addEventListener('copy', this.onCopy, true);
+        root.addEventListener('cut', this.onCut, true);
+        root.addEventListener('pointerdown', this.onPointerDown);
+        root.addEventListener('pointerup', this.onPointerUp);
+        root.addEventListener('focusin', this.onFocusIn);
+        root.addEventListener('click', this.onClick);
+        root.addEventListener('blur', this.onBlur, true);
+        root.addEventListener('compositionstart', this.onCompositionStart);
+        root.addEventListener('compositionend', this.onCompositionEnd);
+        document.addEventListener('selectionchange', this.onDocumentSelectionChange);
+    }
+    unbind() {
+        const root = this.options.root;
+        root.removeEventListener('input', this.onInput);
+        root.removeEventListener('keydown', this.onKeyDown, true);
+        root.removeEventListener('keyup', this.onKeyUp);
+        root.removeEventListener('paste', this.onPaste, true);
+        root.removeEventListener('copy', this.onCopy, true);
+        root.removeEventListener('cut', this.onCut, true);
+        root.removeEventListener('pointerdown', this.onPointerDown);
+        root.removeEventListener('pointerup', this.onPointerUp);
+        root.removeEventListener('focusin', this.onFocusIn);
+        root.removeEventListener('click', this.onClick);
+        root.removeEventListener('blur', this.onBlur, true);
+        root.removeEventListener('compositionstart', this.onCompositionStart);
+        root.removeEventListener('compositionend', this.onCompositionEnd);
+        document.removeEventListener('selectionchange', this.onDocumentSelectionChange);
     }
     markDirty(reason) {
         if (this.options.isReadonly())
             return;
-        this.dirty = this.options.textarea.value !== this.lastAppliedText;
-        this.updateStatus(this.dirty ? '等待同步…' : '自动同步');
-        if (!this.dirty) {
-            this.cancelTimer();
-            return;
-        }
+        this.dirty = this.domSignature() !== this.lastAppliedSignature;
         this.cancelTimer();
+        if (!this.dirty || this.composing)
+            return;
         this.timer = window.setTimeout(() => {
             this.timer = null;
             this.flush(reason);
@@ -76228,15 +73507,658 @@ class OutlineTextEditorController {
             window.clearTimeout(this.timer);
         this.timer = null;
     }
-    updateStatus(text) {
-        this.options.status.textContent = text;
-        this.options.status.title = text;
+    patchBlocks(blocks, bookmark) {
+        const root = this.options.root;
+        const existing = new Map();
+        root.querySelectorAll(':scope > [data-outline-uid]').forEach((row) => {
+            existing.set(`${row.dataset.outlineKind ?? 'node'}:${row.dataset.outlineUid ?? ''}`, row);
+        });
+        const desired = [];
+        const selectionUids = new Set([bookmark?.anchor.uid, bookmark?.focus.uid].filter(Boolean));
+        blocks.forEach((block) => {
+            const key = blockKey(block);
+            let row = existing.get(key);
+            if (!row)
+                row = this.createRow(block);
+            else
+                this.patchRow(row, block, selectionUids.has(block.uid));
+            desired.push(row);
+            existing.delete(key);
+        });
+        existing.forEach((row) => row.remove());
+        let cursor = root.firstElementChild;
+        desired.forEach((row) => {
+            if (row === cursor) {
+                cursor = cursor.nextElementSibling;
+                return;
+            }
+            root.insertBefore(row, cursor);
+        });
+        if (bookmark)
+            this.restoreSelectionBookmark(bookmark);
+    }
+    createRow(block) {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = this.rowHtml(block);
+        return wrapper.firstElementChild;
+    }
+    rowHtml(block) {
+        const leaf = !block.hasChildren;
+        const marker = block.hasChildren
+            ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle contenteditable="false" tabindex="-1" aria-label="${block.expanded ? '折叠' : '展开'}"><span class="ymz-outline-row__triangle" data-direction="${block.expanded ? 'down' : 'right'}"></span></button>`
+            : `<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" contenteditable="false" aria-hidden="true"><span class="ymz-outline-row__leaf-square"></span></span>`;
+        return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : 'false'}" data-outline-uid="${escapeHtml(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml(block.parentUid ?? '')}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${!block.isRoot && block.kind === 'node'}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" aria-hidden="true"></span>${marker}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${(0, structuredOutlineDocument_1.structuredOutlineIsRichHtml)(block.html)}">${block.html}</div></div>`;
+    }
+    patchRow(row, block, selectionProtected) {
+        row.setAttribute('aria-level', String(block.depth + 1));
+        row.setAttribute('aria-expanded', block.hasChildren ? String(block.expanded) : 'false');
+        row.dataset.outlineParentUid = block.parentUid ?? '';
+        row.dataset.outlineRoot = String(block.isRoot);
+        row.dataset.outlineHidden = String(block.hidden);
+        row.dataset.outlineLeaf = String(!block.hasChildren);
+        row.dataset.outlineHasChildren = String(block.hasChildren);
+        row.dataset.outlineExpanded = String(block.expanded);
+        row.dataset.outlineDragSource = String(!block.isRoot && block.kind === 'node');
+        row.style.setProperty('--ymz-outline-depth', String(block.depth));
+        let marker = row.querySelector('.ymz-outline-row__branch');
+        if (block.hasChildren) {
+            if (!(marker instanceof HTMLButtonElement)) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'ymz-outline-row__branch';
+                button.dataset.outlineToggle = '';
+                button.contentEditable = 'false';
+                button.tabIndex = -1;
+                marker?.replaceWith(button);
+                marker = button;
+            }
+            marker.setAttribute('aria-label', block.expanded ? '折叠' : '展开');
+            marker.innerHTML = `<span class="ymz-outline-row__triangle" data-direction="${block.expanded ? 'down' : 'right'}"></span>`;
+        }
+        else if (marker instanceof HTMLButtonElement) {
+            const placeholder = document.createElement('span');
+            placeholder.className = 'ymz-outline-row__branch ymz-outline-row__branch--placeholder';
+            placeholder.contentEditable = 'false';
+            placeholder.setAttribute('aria-hidden', 'true');
+            placeholder.innerHTML = '<span class="ymz-outline-row__leaf-square"></span>';
+            marker.replaceWith(placeholder);
+        }
+        const editor = row.querySelector('[data-outline-editor]');
+        if (editor) {
+            editor.dataset.outlinePristine = String(block.pristine);
+            editor.dataset.outlineRichText = String((0, structuredOutlineDocument_1.structuredOutlineIsRichHtml)(block.html));
+            if (this.options.isReadonly())
+                editor.setAttribute('aria-readonly', 'true');
+            else
+                editor.removeAttribute('aria-readonly');
+            if (!selectionProtected && !this.dirty && editor.innerHTML !== block.html)
+                editor.innerHTML = block.html;
+        }
+    }
+    collectBlocks() {
+        const rows = Array.from(this.options.root.querySelectorAll(':scope > [data-outline-uid]'));
+        const existing = new Map((0, structuredOutlineDocument_1.flattenStructuredOutline)(this.lastTree).map((block) => [blockKey(block), block]));
+        return rows.map((row, index) => {
+            const uid = row.dataset.outlineUid || (0, structuredOutlineDocument_1.createStructuredOutlineUid)();
+            const kind = row.dataset.outlineKind === 'summary' ? 'summary' : 'node';
+            const editor = row.querySelector('[data-outline-editor]');
+            const html = (0, sanitizeRichHtml_1.sanitizeRichHtml)(editor?.innerHTML ?? '');
+            const previous = existing.get(`${kind}:${uid}`);
+            return {
+                uid,
+                kind,
+                depth: Math.max(0, Number.parseInt(row.style.getPropertyValue('--ymz-outline-depth') || '0', 10) || 0),
+                html,
+                text: (0, structuredOutlineDocument_1.structuredOutlineHtmlToText)(html),
+                parentUid: row.dataset.outlineParentUid || previous?.parentUid || null,
+                hidden: row.dataset.outlineHidden === 'true',
+                expanded: row.dataset.outlineExpanded !== 'false',
+                hasChildren: row.dataset.outlineHasChildren === 'true',
+                isRoot: index === 0,
+                pristine: row.dataset.outlinePristine === 'true',
+            };
+        });
+    }
+    domSignature() {
+        return this.collectBlocks().map((block) => `${block.kind}|${block.uid}|${block.depth}|${block.expanded ? 1 : 0}|${block.html}`).join('\u001e');
+    }
+    selectionContext() {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0 || !this.options.root.contains(selection.anchorNode) || !this.options.root.contains(selection.focusNode))
+            return null;
+        const range = selection.getRangeAt(0);
+        const startEditor = closestEditor(range.startContainer);
+        const endEditor = closestEditor(range.endContainer);
+        const startRow = startEditor?.closest('[data-outline-uid]');
+        const endRow = endEditor?.closest('[data-outline-uid]');
+        if (!startEditor || !endEditor || !startRow || !endRow)
+            return null;
+        return {
+            selection,
+            range,
+            start: { uid: startRow.dataset.outlineUid ?? '', offset: offsetWithin(startEditor, range.startContainer, range.startOffset) },
+            end: { uid: endRow.dataset.outlineUid ?? '', offset: offsetWithin(endEditor, range.endContainer, range.endOffset) },
+            startEditor,
+            endEditor,
+            startRow,
+            endRow,
+            collapsed: range.collapsed,
+            spansRows: startRow !== endRow,
+        };
+    }
+    captureSelectionBookmark() {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0 || !this.options.root.contains(selection.anchorNode) || !this.options.root.contains(selection.focusNode))
+            return null;
+        const anchorEditor = closestEditor(selection.anchorNode);
+        const focusEditor = closestEditor(selection.focusNode);
+        const anchorRow = anchorEditor?.closest('[data-outline-uid]');
+        const focusRow = focusEditor?.closest('[data-outline-uid]');
+        if (!anchorEditor || !focusEditor || !anchorRow || !focusRow)
+            return null;
+        return {
+            anchor: { uid: anchorRow.dataset.outlineUid ?? '', offset: offsetWithin(anchorEditor, selection.anchorNode, selection.anchorOffset) },
+            focus: { uid: focusRow.dataset.outlineUid ?? '', offset: offsetWithin(focusEditor, selection.focusNode, selection.focusOffset) },
+            whole: this.wholeOutlineSelected,
+        };
+    }
+    restoreSelectionBookmark(bookmark) {
+        const anchorEditor = this.editorByUid(bookmark.anchor.uid);
+        const focusEditor = this.editorByUid(bookmark.focus.uid);
+        if (!anchorEditor || !focusEditor)
+            return;
+        const anchor = domPointAtOffset(anchorEditor, bookmark.anchor.offset);
+        const focus = domPointAtOffset(focusEditor, bookmark.focus.offset);
+        const selection = window.getSelection();
+        if (!selection)
+            return;
+        this.suppressSelectionChange = true;
+        try {
+            selection.removeAllRanges();
+            if (typeof selection.setBaseAndExtent === 'function') {
+                selection.setBaseAndExtent(anchor.node, anchor.offset, focus.node, focus.offset);
+            }
+            else {
+                const range = document.createRange();
+                range.setStart(anchor.node, anchor.offset);
+                range.setEnd(focus.node, focus.offset);
+                selection.addRange(range);
+            }
+            this.wholeOutlineSelected = bookmark.whole;
+            this.wholeSelectionRange = bookmark.whole && selection.rangeCount
+                ? selection.getRangeAt(0).cloneRange()
+                : null;
+        }
+        finally {
+            this.suppressSelectionChange = false;
+        }
+    }
+    clearWholeSelection() {
+        this.wholeOutlineSelected = false;
+        this.wholeSelectionRange = null;
+    }
+    isWholeSelectionActive(range) {
+        if (!this.wholeOutlineSelected)
+            return false;
+        if (range && this.matchesWholeSelection(range))
+            return true;
+        this.clearWholeSelection();
+        return false;
+    }
+    matchesWholeSelection(range) {
+        const expected = this.wholeSelectionRange;
+        if (!expected)
+            return false;
+        try {
+            return range.compareBoundaryPoints(Range.START_TO_START, expected) === 0
+                && range.compareBoundaryPoints(Range.END_TO_END, expected) === 0;
+        }
+        catch {
+            return false;
+        }
+    }
+    handleSelectAll() {
+        const context = this.selectionContext();
+        if (!context)
+            return;
+        const state = this.getSelectionState(context.startEditor);
+        const wholeActive = this.isWholeSelectionActive(context.range);
+        const currentRowFullySelected = !context.spansRows && state.start === 0 && state.end === state.length && state.length >= 0;
+        if (!context.spansRows && !currentRowFullySelected && !wholeActive) {
+            this.clearWholeSelection();
+            this.selectEditorRange(context.startEditor, 0, state.length);
+            this.savedRange = window.getSelection()?.rangeCount ? window.getSelection().getRangeAt(0).cloneRange() : null;
+            this.options.onDiagnostic?.('select-all-node', { uid: context.start.uid, length: state.length });
+            this.publishSelection();
+            return;
+        }
+        const visibleEditors = Array.from(this.options.root.querySelectorAll(':scope > [data-outline-hidden="false"] [data-outline-editor], :scope > [data-outline-hidden="false"] > [data-outline-editor]'));
+        const first = visibleEditors[0];
+        const last = visibleEditors[visibleEditors.length - 1];
+        if (!first || !last)
+            return;
+        const start = domPointAtOffset(first, 0);
+        const end = domPointAtOffset(last, textLength(last));
+        const range = document.createRange();
+        range.setStart(start.node, start.offset);
+        range.setEnd(end.node, end.offset);
+        const selection = window.getSelection();
+        this.suppressSelectionChange = true;
+        try {
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+            this.wholeOutlineSelected = true;
+            this.wholeSelectionRange = range.cloneRange();
+            this.savedRange = range.cloneRange();
+        }
+        finally {
+            this.suppressSelectionChange = false;
+        }
+        this.options.onDiagnostic?.('select-all-outline', { nodeCount: (0, structuredOutlineDocument_1.flattenStructuredOutline)(this.options.getTree()).length });
+        this.publishSelection();
+    }
+    selectEditorRange(editor, startOffset, endOffset) {
+        this.clearWholeSelection();
+        const start = domPointAtOffset(editor, startOffset);
+        const end = domPointAtOffset(editor, endOffset);
+        const range = document.createRange();
+        range.setStart(start.node, start.offset);
+        range.setEnd(end.node, end.offset);
+        const selection = window.getSelection();
+        this.suppressSelectionChange = true;
+        try {
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+            this.savedRange = range.cloneRange();
+        }
+        finally {
+            this.suppressSelectionChange = false;
+        }
+    }
+    replaceSelectionWithText(value, reason, richLines) {
+        const context = this.selectionContext();
+        if (this.isWholeSelectionActive(context?.range ?? null)) {
+            this.replaceWholeOutline(value, reason, richLines);
+            return;
+        }
+        if (!context)
+            return;
+        const parsed = (0, outlineTextDocument_1.parseOutlineText)(value);
+        if (!context.spansRows && parsed.lines.length <= 1) {
+            this.insertInlineHtml(escapeHtml(parsed.lines[0]?.text ?? ''));
+            this.markDirty(reason);
+            this.flush(reason);
+            return;
+        }
+        const blocks = this.collectBlocks();
+        const rowOrder = Array.from(this.options.root.querySelectorAll(':scope > [data-outline-uid]'));
+        const startIndex = rowOrder.indexOf(context.startRow);
+        const endIndex = rowOrder.indexOf(context.endRow);
+        if (startIndex < 0 || endIndex < 0)
+            return;
+        const startBlock = blocks[startIndex];
+        const endBlock = blocks[endIndex];
+        const startText = (0, structuredOutlineDocument_1.structuredOutlineHtmlToText)(startBlock.html);
+        const endText = (0, structuredOutlineDocument_1.structuredOutlineHtmlToText)(endBlock.html);
+        const prefix = startText.slice(0, context.start.offset);
+        const suffix = endText.slice(context.end.offset);
+        const prefixHtml = rangeHtml(context.startEditor, 0, context.start.offset);
+        const suffixHtml = rangeHtml(context.endEditor, context.end.offset, textLength(context.endEditor));
+        const lines = parsed.lines.length ? parsed.lines : [{ text: '', depth: 0, rawIndent: '', sourceLine: 1 }];
+        const firstDepth = lines[0]?.depth ?? 0;
+        const inserted = lines.map((line, index) => {
+            const useEnd = index === lines.length - 1 && endIndex !== startIndex;
+            const base = index === 0 ? startBlock : useEnd ? endBlock : startBlock;
+            const text = `${index === 0 ? prefix : ''}${line.text}${index === lines.length - 1 ? suffix : ''}`;
+            const pastedHtml = richLines?.[index] ?? richHtmlForText(line.text);
+            const html = `${index === 0 ? prefixHtml : ''}${pastedHtml}${index === lines.length - 1 ? suffixHtml : ''}`;
+            return {
+                ...base,
+                uid: index === 0 ? startBlock.uid : useEnd ? endBlock.uid : (0, structuredOutlineDocument_1.createStructuredOutlineUid)(),
+                kind: 'node',
+                depth: Math.max(0, startBlock.depth + line.depth - firstDepth),
+                html,
+                text,
+                parentUid: null,
+                hidden: false,
+                expanded: index === 0 ? startBlock.expanded : true,
+                hasChildren: false,
+                isRoot: startBlock.isRoot && index === 0,
+                pristine: false,
+            };
+        });
+        const selectedVisibleKeys = new Set();
+        rowOrder.slice(Math.min(startIndex, endIndex), Math.max(startIndex, endIndex) + 1).forEach((row) => {
+            if (row.dataset.outlineHidden !== 'true')
+                selectedVisibleKeys.add(`${row.dataset.outlineKind ?? 'node'}:${row.dataset.outlineUid ?? ''}`);
+        });
+        let next;
+        if (startIndex === endIndex) {
+            // Replacing one node must not silently move its existing subtree under a
+            // newly pasted sibling. New pasted children are inserted first, the
+            // original children remain attached to the reused boundary node, and
+            // pasted siblings follow the preserved subtree.
+            let descendantsEnd = startIndex + 1;
+            while (descendantsEnd < blocks.length && blocks[descendantsEnd].depth > startBlock.depth)
+                descendantsEnd += 1;
+            const foundSibling = startBlock.isRoot
+                ? -1
+                : inserted.findIndex((block, index) => index > 0 && block.depth <= startBlock.depth);
+            const splitAt = foundSibling < 1 ? inserted.length : foundSibling;
+            next = [
+                ...blocks.slice(0, startIndex),
+                ...inserted.slice(0, splitAt),
+                ...blocks.slice(startIndex + 1, descendantsEnd),
+                ...inserted.slice(splitAt),
+                ...blocks.slice(descendantsEnd),
+            ];
+        }
+        else {
+            next = [];
+            blocks.forEach((block, index) => {
+                const key = blockKey(block);
+                if (index === startIndex) {
+                    next.push(...inserted);
+                    return;
+                }
+                if (index === endIndex)
+                    return;
+                if (selectedVisibleKeys.has(key) && index > startIndex && index < endIndex)
+                    return;
+                next.push(block);
+            });
+        }
+        const normalized = (0, structuredOutlineDocument_1.normalizeStructuredOutlineDepths)(next);
+        this.replaceDomBlocks(normalized, reason);
+        const targetBlock = inserted[inserted.length - 1];
+        window.requestAnimationFrame(() => {
+            const editor = this.editorByUid(targetBlock.uid);
+            if (!editor)
+                return;
+            const caret = Math.max(0, textLength(editor) - suffix.length);
+            this.selectEditorRange(editor, caret, caret);
+            this.activateUid(targetBlock.uid, true);
+            this.options.onActivate(targetBlock.uid);
+        });
+    }
+    replaceWholeOutline(value, reason, richLines) {
+        const parsed = (0, outlineTextDocument_1.parseOutlineText)(value);
+        const existing = (0, structuredOutlineDocument_1.flattenStructuredOutline)(this.lastTree).filter((block) => block.kind === 'node');
+        const root = existing[0];
+        let blocks = [];
+        if (parsed.lines.length === 0) {
+            blocks = [{ ...root, html: '', text: '', depth: 0, hidden: false, isRoot: true, pristine: false }];
+        }
+        else if (parsed.topLevelCount === 1 && parsed.lines[0].depth === 0) {
+            blocks = parsed.lines.map((line, index) => ({
+                ...(index === 0 ? root : existing[index] ?? root),
+                uid: index === 0 ? root.uid : existing[index]?.uid ?? (0, structuredOutlineDocument_1.createStructuredOutlineUid)(),
+                kind: 'node',
+                depth: line.depth,
+                html: richLines?.[index] ?? richHtmlForText(line.text),
+                text: line.text,
+                parentUid: null,
+                hidden: false,
+                expanded: true,
+                hasChildren: false,
+                isRoot: index === 0,
+                pristine: false,
+            }));
+        }
+        else {
+            blocks = [{ ...root, depth: 0, hidden: false, isRoot: true }];
+            parsed.lines.forEach((line, index) => {
+                const old = existing[index + 1];
+                blocks.push({
+                    ...(old ?? root),
+                    uid: old?.uid ?? (0, structuredOutlineDocument_1.createStructuredOutlineUid)(),
+                    kind: 'node',
+                    depth: line.depth + 1,
+                    html: richLines?.[index] ?? richHtmlForText(line.text),
+                    text: line.text,
+                    parentUid: root.uid,
+                    hidden: false,
+                    expanded: true,
+                    hasChildren: false,
+                    isRoot: false,
+                    pristine: false,
+                });
+            });
+        }
+        this.clearWholeSelection();
+        this.replaceDomBlocks((0, structuredOutlineDocument_1.normalizeStructuredOutlineDepths)(blocks), reason);
+        const last = blocks[blocks.length - 1] ?? root;
+        window.requestAnimationFrame(() => {
+            const editor = this.editorByUid(last.uid);
+            if (editor)
+                this.selectEditorRange(editor, textLength(editor), textLength(editor));
+        });
+    }
+    replaceDomBlocks(blocks, reason) {
+        const bookmark = null;
+        this.patchBlocks(blocks, bookmark);
+        this.dirty = true;
+        this.flush(reason);
+    }
+    insertInlineHtml(html) {
+        const range = this.currentRange();
+        if (!range)
+            return;
+        range.deleteContents();
+        const template = document.createElement('template');
+        template.innerHTML = (0, sanitizeRichHtml_1.sanitizeRichHtml)(html);
+        const fragment = template.content;
+        const last = fragment.lastChild;
+        range.insertNode(fragment);
+        if (last)
+            this.placeCaretAfter(last);
+        this.clearWholeSelection();
+    }
+    adjustSelectedDepth(delta) {
+        const context = this.selectionContext();
+        if (!context)
+            return;
+        const range = context.range;
+        const rows = Array.from(this.options.root.querySelectorAll(':scope > [data-outline-uid]')).filter((row) => {
+            if (row.dataset.outlineHidden === 'true' || row.dataset.outlineKind === 'summary')
+                return false;
+            const editor = row.querySelector('[data-outline-editor]');
+            return Boolean(editor && (range.intersectsNode(editor) || row === context.startRow));
+        });
+        const bookmark = this.captureSelectionBookmark();
+        rows.forEach((row) => {
+            if (row.dataset.outlineRoot === 'true')
+                return;
+            const current = Number.parseInt(row.style.getPropertyValue('--ymz-outline-depth') || '1', 10) || 1;
+            let next = Math.max(1, current + delta);
+            if (delta > 0) {
+                const previous = this.visibleNeighbor(row, -1);
+                const previousDepth = previous ? Number.parseInt(previous.style.getPropertyValue('--ymz-outline-depth') || '0', 10) || 0 : 0;
+                next = Math.min(next, previousDepth + 1);
+            }
+            row.style.setProperty('--ymz-outline-depth', String(next));
+            row.setAttribute('aria-level', String(next + 1));
+        });
+        this.markDirty(delta > 0 ? 'indent' : 'outdent');
+        this.flush(delta > 0 ? 'indent' : 'outdent');
+        if (bookmark)
+            this.restoreSelectionBookmark(bookmark);
+    }
+    mergeRows(neighbor, current, backward) {
+        const first = backward ? neighbor : current;
+        const second = backward ? current : neighbor;
+        const firstEditor = first.querySelector('[data-outline-editor]');
+        const secondEditor = second.querySelector('[data-outline-editor]');
+        if (!firstEditor || !secondEditor)
+            return;
+        const caret = textLength(firstEditor);
+        firstEditor.innerHTML = `${firstEditor.innerHTML}${secondEditor.innerHTML}`;
+        second.remove();
+        this.markDirty('merge-node');
+        this.flush('merge-node');
+        window.requestAnimationFrame(() => this.selectEditorRange(firstEditor, caret, caret));
+    }
+    selectedStructuredPlainText(context) {
+        if (!context.spansRows)
+            return context.selection.toString();
+        const rows = Array.from(this.options.root.querySelectorAll(':scope > [data-outline-uid]'));
+        const startIndex = rows.indexOf(context.startRow);
+        const endIndex = rows.indexOf(context.endRow);
+        const low = Math.min(startIndex, endIndex);
+        const high = Math.max(startIndex, endIndex);
+        const lines = [];
+        rows.slice(low, high + 1).forEach((row, offset) => {
+            if (row.dataset.outlineHidden === 'true')
+                return;
+            const editor = row.querySelector('[data-outline-editor]');
+            if (!editor)
+                return;
+            const depth = Number.parseInt(row.style.getPropertyValue('--ymz-outline-depth') || '0', 10) || 0;
+            let text = (editor.innerText || editor.textContent || '').replace(/\u00a0/g, ' ');
+            if (low + offset === startIndex)
+                text = text.slice(context.start.offset);
+            if (low + offset === endIndex)
+                text = text.slice(0, context.end.offset);
+            lines.push(`${PLAIN_INDENT.repeat(depth)}${text}`);
+        });
+        return lines.join('\n');
+    }
+    selectedStructuredHtml(context, plain, whole = false) {
+        if (whole) {
+            return (0, structuredOutlineDocument_1.flattenStructuredOutline)(this.options.getTree())
+                .filter((block) => block.kind === 'node')
+                .map((block) => `<div data-yemind-outline-depth="${block.depth}">${escapeHtml(PLAIN_INDENT.repeat(block.depth))}${block.html}</div>`)
+                .join('');
+        }
+        if (!context)
+            return plain.split('\n').map((line) => `<div>${escapeHtml(line)}</div>`).join('');
+        if (!context.spansRows) {
+            const fragment = context.range.cloneContents();
+            const wrapper = document.createElement('div');
+            wrapper.append(fragment);
+            return (0, sanitizeRichHtml_1.sanitizeRichHtml)(wrapper.innerHTML);
+        }
+        const rows = Array.from(this.options.root.querySelectorAll(':scope > [data-outline-uid]'));
+        const startIndex = rows.indexOf(context.startRow);
+        const endIndex = rows.indexOf(context.endRow);
+        const low = Math.min(startIndex, endIndex);
+        const high = Math.max(startIndex, endIndex);
+        return rows.slice(low, high + 1)
+            .map((row, offset) => {
+            if (row.dataset.outlineHidden === 'true')
+                return '';
+            const editor = row.querySelector('[data-outline-editor]');
+            if (!editor)
+                return '';
+            const index = low + offset;
+            const depth = Number.parseInt(row.style.getPropertyValue('--ymz-outline-depth') || '0', 10) || 0;
+            const start = index === startIndex ? context.start.offset : 0;
+            const end = index === endIndex ? context.end.offset : textLength(editor);
+            return `<div data-yemind-outline-depth="${depth}">${escapeHtml(PLAIN_INDENT.repeat(depth))}${rangeHtml(editor, start, end)}</div>`;
+        })
+            .filter(Boolean)
+            .join('');
+    }
+    publishSelection() {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0 || !this.options.root.contains(selection.anchorNode)) {
+            this.options.onSelectionChange(false, null, null, this);
+            return;
+        }
+        const range = selection.getRangeAt(0);
+        if (range.collapsed) {
+            this.options.onSelectionChange(false, null, null, this);
+            return;
+        }
+        this.savedRange = range.cloneRange();
+        const rect = selectionRect(range);
+        this.options.onSelectionChange(Boolean(rect), rect, this.currentFormat(), this);
+    }
+    currentFormat() {
+        const range = this.currentRange();
+        const element = range ? closestElement(range.commonAncestorContainer) : null;
+        const style = element ? getComputedStyle(element) : null;
+        return {
+            bold: commandState('bold') || Number.parseInt(style?.fontWeight ?? '400', 10) >= 600,
+            italic: commandState('italic') || style?.fontStyle === 'italic',
+            underline: commandState('underline') || style?.textDecorationLine.includes('underline'),
+            strike: commandState('strikeThrough') || style?.textDecorationLine.includes('line-through'),
+            code: Boolean(element?.closest('code')),
+            link: element?.closest('a[href]')?.href ?? '',
+            color: commandValue('foreColor') || style?.color,
+            background: commandValue('hiliteColor') || style?.backgroundColor,
+            font: commandValue('fontName') || style?.fontFamily,
+            size: style?.fontSize,
+        };
+    }
+    afterFormatting(reason) {
+        this.markDirty(`format:${reason}`);
+        this.flush(`format:${reason}`);
+        this.publishSelection();
+    }
+    wrapSelection(tag, styles) {
+        const range = this.currentRange();
+        if (!range || range.collapsed)
+            return null;
+        const element = document.createElement(tag);
+        if (styles)
+            Object.assign(element.style, styles);
+        try {
+            range.surroundContents(element);
+        }
+        catch {
+            const fragment = range.extractContents();
+            element.append(fragment);
+            range.insertNode(element);
+        }
+        const nextRange = document.createRange();
+        nextRange.selectNodeContents(element);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(nextRange);
+        this.savedRange = nextRange.cloneRange();
+        return element;
+    }
+    applyInlineStyle(styles) {
+        this.wrapSelection('span', styles);
+    }
+    placeCaretAfter(node) {
+        const range = document.createRange();
+        range.setStartAfter(node);
+        range.collapse(true);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        this.savedRange = range.cloneRange();
+    }
+    currentRange() {
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount && this.options.root.contains(selection.anchorNode))
+            return selection.getRangeAt(0);
+        return this.savedRange?.cloneRange() ?? null;
+    }
+    placeSelectionToolbarLater() {
+        window.setTimeout(() => this.publishSelection(), 0);
+    }
+    visibleNeighbor(row, offset) {
+        const rows = Array.from(this.options.root.querySelectorAll(':scope > [data-outline-uid][data-outline-hidden="false"]'));
+        const index = rows.indexOf(row);
+        return rows[index + offset] ?? null;
+    }
+    rowByUid(uid) {
+        return Array.from(this.options.root.querySelectorAll(':scope > [data-outline-uid]')).find((row) => row.dataset.outlineUid === uid) ?? null;
+    }
+    editorByUid(uid) {
+        return this.rowByUid(uid)?.querySelector('[data-outline-editor]') ?? null;
     }
 }
-exports.OutlineTextEditorController = OutlineTextEditorController;
+exports.StructuredOutlineEditorController = StructuredOutlineEditorController;
+function closestElement(node) {
+    return node instanceof Element ? node : node?.parentElement ?? null;
+}
 
 },
-238: function(module, exports, __require, __externalRequire) {
+212: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineTextDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76625,7 +74547,2627 @@ function insertOutlineNewline(value, selectionStart, selectionEnd) {
 }
 
 },
-239: function(module, exports, __require, __externalRequire) {
+213: function(module, exports, __require, __externalRequire) {
+// /src/editor/structuredOutlineDocument.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.structuredOutlineHtmlToText = structuredOutlineHtmlToText;
+exports.structuredOutlineIsRichHtml = structuredOutlineIsRichHtml;
+exports.flattenStructuredOutline = flattenStructuredOutline;
+exports.normalizeStructuredOutlineDepths = normalizeStructuredOutlineDepths;
+exports.buildTreeFromStructuredOutline = buildTreeFromStructuredOutline;
+exports.parseStructuredOutlinePaste = parseStructuredOutlinePaste;
+exports.serializeStructuredOutlineBlocks = serializeStructuredOutlineBlocks;
+exports.createStructuredOutlineUid = createStructuredOutlineUid;
+const sanitizeRichHtml_1 = __require(186);
+const outlineTextDocument_1 = __require(212);
+function cloneValue(value) {
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(value);
+        }
+        catch {
+            // Map data is JSON-compatible; fall through to the deterministic clone.
+        }
+    }
+    return JSON.parse(JSON.stringify(value));
+}
+function escapeHtml(value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;')
+        .replaceAll('\n', '<br>');
+}
+function structuredOutlineHtmlToText(value) {
+    const source = String(value ?? '');
+    if (typeof document === 'undefined') {
+        return source
+            .replace(/<br\s*\/?\s*>/gi, '\n')
+            .replace(/<\/p\s*>/gi, '\n')
+            .replace(/<\/div\s*>/gi, '\n')
+            .replace(/<[^>]*>/g, '')
+            .replace(/&nbsp;/gi, ' ')
+            .trimEnd();
+    }
+    const element = document.createElement('div');
+    element.innerHTML = (0, sanitizeRichHtml_1.sanitizeRichHtml)(source);
+    return (element.innerText || element.textContent || '')
+        .replace(/\u00a0/g, ' ')
+        .replace(/\r\n?/g, '\n')
+        .trimEnd();
+}
+function structuredOutlineIsRichHtml(value) {
+    const normalized = String(value ?? '').trim();
+    if (!normalized)
+        return false;
+    return /<(?:strong|b|em|i|u|s|strike|code|pre|a|span|mark|sub|sup|img|svg|mjx-container|ql-formula)\b/i.test(normalized);
+}
+function displayHtml(data) {
+    const value = String(data.text ?? '');
+    return data.richText ? (0, sanitizeRichHtml_1.sanitizeRichHtml)(value) : escapeHtml(value);
+}
+function summaries(data) {
+    const value = data.generalization;
+    if (Array.isArray(value)) {
+        return value.filter((item) => Boolean(item && typeof item === 'object'));
+    }
+    return value && typeof value === 'object' ? [value] : [];
+}
+function flattenStructuredOutline(tree) {
+    const blocks = [];
+    const visit = (node, depth, parentUid, hiddenByAncestor, path) => {
+        const uid = String(node.data.uid ?? path);
+        const children = Array.isArray(node.children) ? node.children : [];
+        const expanded = node.data.expand !== false;
+        const html = displayHtml(node.data);
+        blocks.push({
+            uid,
+            depth,
+            html,
+            text: (0, outlineTextDocument_1.outlineNodePlainText)(node.data),
+            kind: 'node',
+            parentUid,
+            hidden: hiddenByAncestor,
+            expanded,
+            hasChildren: children.length > 0,
+            isRoot: depth === 0,
+            pristine: node.data.yemindTextPristine === true && node.data.yemindTextEdited !== true,
+        });
+        const descendantsHidden = hiddenByAncestor || !expanded;
+        children.forEach((child, index) => visit(child, depth + 1, uid, descendantsHidden, `${path}.${index}`));
+        summaries(node.data).forEach((summary, index) => {
+            const summaryUid = String(summary.uid ?? `${uid}.summary.${index}`);
+            blocks.push({
+                uid: summaryUid,
+                depth: depth + 1,
+                html: displayHtml(summary),
+                text: (0, outlineTextDocument_1.outlineNodePlainText)(summary),
+                kind: 'summary',
+                parentUid: uid,
+                hidden: descendantsHidden,
+                expanded: true,
+                hasChildren: false,
+                isRoot: false,
+                pristine: summary.yemindTextPristine === true && summary.yemindTextEdited !== true,
+            });
+        });
+    };
+    visit(tree, 0, null, false, 'root');
+    return blocks;
+}
+function indexExistingData(tree) {
+    const nodes = new Map();
+    const summaryData = new Map();
+    const visit = (node, path) => {
+        const uid = String(node.data.uid ?? path);
+        nodes.set(uid, cloneValue({ ...node.data, uid }));
+        summaries(node.data).forEach((summary, index) => {
+            const summaryUid = String(summary.uid ?? `${uid}.summary.${index}`);
+            summaryData.set(summaryUid, cloneValue({ ...summary, uid: summaryUid }));
+        });
+        (node.children ?? []).forEach((child, index) => visit(child, `${path}.${index}`));
+    };
+    visit(tree, 'root');
+    return { nodes, summaries: summaryData };
+}
+function normalizedBlockHtml(block) {
+    const sanitized = (0, sanitizeRichHtml_1.sanitizeRichHtml)(String(block.html ?? ''));
+    const text = structuredOutlineHtmlToText(sanitized || escapeHtml(String(block.text ?? '')));
+    const richText = structuredOutlineIsRichHtml(sanitized);
+    return {
+        html: richText ? sanitized : escapeHtml(text),
+        text,
+        richText,
+    };
+}
+function updatedData(base, block) {
+    const value = normalizedBlockHtml(block);
+    const data = cloneValue(base ?? { text: '' });
+    data.uid = block.uid;
+    data.text = value.richText ? value.html : value.text;
+    data.richText = value.richText;
+    data.yemindTextPristine = false;
+    data.yemindTextEdited = true;
+    if (block.kind === 'node')
+        data.expand = block.expanded;
+    return data;
+}
+function normalizeStructuredOutlineDepths(blocks) {
+    let previousDepth = 0;
+    return blocks.map((block, index) => {
+        let depth = Math.max(0, Math.trunc(block.depth));
+        if (index === 0)
+            depth = 0;
+        else
+            depth = Math.max(1, Math.min(depth, previousDepth + 1));
+        previousDepth = depth;
+        return { ...block, depth, isRoot: index === 0, parentUid: index === 0 ? null : block.parentUid };
+    });
+}
+function buildTreeFromStructuredOutline(baseTree, inputBlocks) {
+    const normalBlocks = normalizeStructuredOutlineDepths(inputBlocks.filter((block) => block.kind === 'node'));
+    if (normalBlocks.length === 0) {
+        normalBlocks.push({
+            uid: String(baseTree.data.uid ?? 'root'),
+            depth: 0,
+            html: '',
+            text: '',
+            kind: 'node',
+            parentUid: null,
+            hidden: false,
+            expanded: true,
+            hasChildren: false,
+            isRoot: true,
+            pristine: false,
+        });
+    }
+    const existing = indexExistingData(baseTree);
+    let reusedNodeCount = 0;
+    let createdNodeCount = 0;
+    const treeByUid = new Map();
+    const stack = [];
+    let root = null;
+    normalBlocks.forEach((block, index) => {
+        const normalizedDepth = index === 0 ? 0 : Math.max(1, Math.min(block.depth, stack.length));
+        const base = existing.nodes.get(block.uid);
+        if (base)
+            reusedNodeCount += 1;
+        else
+            createdNodeCount += 1;
+        const node = {
+            data: updatedData(base, { ...block, depth: normalizedDepth }),
+            children: [],
+        };
+        treeByUid.set(block.uid, node);
+        if (index === 0) {
+            root = node;
+            stack.length = 0;
+            stack.push(node);
+            return;
+        }
+        const parentDepth = Math.max(0, normalizedDepth - 1);
+        const parent = stack[parentDepth] ?? root;
+        parent.children.push(node);
+        stack[normalizedDepth] = node;
+        stack.length = normalizedDepth + 1;
+    });
+    const groupedSummaries = new Map();
+    inputBlocks
+        .filter((block) => block.kind === 'summary' && block.parentUid)
+        .forEach((block) => {
+        const base = existing.summaries.get(block.uid);
+        const data = updatedData(base, block);
+        const list = groupedSummaries.get(block.parentUid) ?? [];
+        list.push(data);
+        groupedSummaries.set(block.parentUid, list);
+    });
+    groupedSummaries.forEach((value, parentUid) => {
+        const parent = treeByUid.get(parentUid);
+        if (parent)
+            parent.data.generalization = value.length === 1 ? value[0] : value;
+    });
+    return {
+        tree: root,
+        nodeCount: normalBlocks.length,
+        reusedNodeCount,
+        createdNodeCount,
+    };
+}
+function parseStructuredOutlinePaste(value) {
+    const parsed = (0, outlineTextDocument_1.parseOutlineText)(value);
+    return parsed.lines.map((line) => ({ text: line.text, depth: line.depth }));
+}
+function serializeStructuredOutlineBlocks(blocks, includeHidden = true) {
+    return blocks
+        .filter((block) => block.kind === 'node' && (includeHidden || !block.hidden))
+        .map((block) => `${outlineTextDocument_1.OUTLINE_TEXT_INDENT.repeat(block.depth)}${block.text}`)
+        .join('\n');
+}
+function createStructuredOutlineUid() {
+    const random = globalThis.crypto?.randomUUID?.();
+    if (random)
+        return `ym-${random}`;
+    return `ym-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+},
+214: function(module, exports, __require, __externalRequire) {
+// /src/editor/splitPane.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MAX_SPLIT_OUTLINE_RATIO = exports.MIN_SPLIT_OUTLINE_RATIO = exports.DEFAULT_SPLIT_OUTLINE_RATIO = void 0;
+exports.normalizeSplitOutlineRatio = normalizeSplitOutlineRatio;
+exports.ratioFromPointer = ratioFromPointer;
+exports.DEFAULT_SPLIT_OUTLINE_RATIO = 0.42;
+exports.MIN_SPLIT_OUTLINE_RATIO = 0.25;
+exports.MAX_SPLIT_OUTLINE_RATIO = 0.7;
+function normalizeSplitOutlineRatio(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number))
+        return exports.DEFAULT_SPLIT_OUTLINE_RATIO;
+    return Math.min(exports.MAX_SPLIT_OUTLINE_RATIO, Math.max(exports.MIN_SPLIT_OUTLINE_RATIO, number));
+}
+function ratioFromPointer(rect, clientX) {
+    if (!Number.isFinite(rect.width) || rect.width <= 0)
+        return exports.DEFAULT_SPLIT_OUTLINE_RATIO;
+    return normalizeSplitOutlineRatio((rect.left + rect.width - clientX) / rect.width);
+}
+
+},
+215: function(module, exports, __require, __externalRequire) {
+// /src/editor/RichTextToolbar.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RichTextToolbar = void 0;
+const YeMindRichText_1 = __require(181);
+const richTextActions_1 = __require(216);
+const colorPresentation_1 = __require(217);
+const colorPalette_1 = __require(218);
+function option(value, label) {
+    return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
+}
+function sizeOptions() {
+    return YeMindRichText_1.YEMIND_SIZE_VALUES.map((value) => option(value, value.replace("px", ""))).join("");
+}
+function fontOptions() {
+    const labels = ["无衬线", "衬线", "微软雅黑", "宋体", "等宽"];
+    return YeMindRichText_1.YEMIND_FONT_VALUES.map((value, index) => option(value, labels[index] ?? value)).join("");
+}
+class RichTextToolbar {
+    constructor(root, initialTarget, callbacks = {}) {
+        this.root = root;
+        this.callbacks = callbacks;
+        this.formatInfo = {};
+        this.enabled = true;
+        this.interacting = false;
+        this.target = null;
+        this.activeColorKind = "color";
+        this.colorSessionOriginal = false;
+        this.onDocumentMouseDown = (event) => {
+            const node = event.target;
+            if (!this.element.contains(node) && !this.colorPopover.contains(node))
+                this.hide();
+        };
+        this.onWindowMouseUp = () => {
+            window.setTimeout(() => {
+                this.interacting = false;
+            }, 0);
+        };
+        this.target = initialTarget;
+        this.element = document.createElement("div");
+        this.element.className = "ymz-rich-toolbar";
+        this.element.hidden = true;
+        this.element.innerHTML = `
+      <button type="button" data-rich-action="bold" title="加粗"><b>B</b></button>
+      <button type="button" data-rich-action="italic" title="斜体"><i>I</i></button>
+      <button type="button" data-rich-action="underline" title="下划线"><u>U</u></button>
+      <button type="button" data-rich-action="strike" title="删除线"><s>S</s></button>
+      <button type="button" data-rich-action="inline-code" title="行内代码">&lt;/&gt;</button>
+      <button type="button" data-rich-action="code-block" title="代码块">代码块</button>
+      <span class="ymz-rich-toolbar__separator"></span>
+      <button type="button" class="ymz-rich-color" data-rich-action="color-menu" title="文字颜色"><span>A</span><i data-rich-swatch="color"></i></button>
+      <button type="button" class="ymz-rich-color" data-rich-action="background-menu" title="背景颜色"><span>Bg</span><i data-rich-swatch="background"></i></button>
+      <select data-rich-field="size" title="字号">
+        <option value="">自动</option>${sizeOptions()}
+      </select>
+      <select data-rich-field="font" title="字体">
+        <option value="">继承</option>${fontOptions()}
+      </select>
+      <span class="ymz-rich-toolbar__separator"></span>
+      <button type="button" data-rich-action="link" title="行内链接">链接</button>
+      <button type="button" data-rich-action="cloze" title="模糊/取消模糊">模糊</button>
+      <button type="button" data-rich-action="formula" title="插入公式" aria-label="插入公式"><span class="ymz-formula-symbol" aria-hidden="true">π</span></button>
+      <button type="button" data-rich-action="clear" title="清除全部格式">清除</button>`;
+        this.colorPopover = document.createElement("div");
+        this.colorPopover.className = "ymz-color-popover";
+        this.colorPopover.hidden = true;
+        this.colorPopover.innerHTML = (0, colorPalette_1.colorPaletteInnerHtml)();
+        this.customColorInput = document.createElement("input");
+        this.customColorInput.type = "color";
+        this.customColorInput.className = "ymz-color-popover__native";
+        this.customColorInput.tabIndex = -1;
+        this.customColorInput.setAttribute("aria-hidden", "true");
+        this.colorPopover.appendChild(this.customColorInput);
+        // Keep every editor overlay inside its own clipping/stacking context. This is
+        // critical when SiYuan opens Settings or another host dialog above a tab.
+        this.root.append(this.element, this.colorPopover);
+        document.addEventListener("mousedown", this.onDocumentMouseDown, true);
+        window.addEventListener("mouseup", this.onWindowMouseUp, true);
+        this.bind();
+    }
+    setEnabled(enabled) {
+        this.enabled = enabled;
+        if (!enabled)
+            this.hide();
+    }
+    update(hasRange, rectInfo, formatInfo, target) {
+        if (target)
+            this.target = target;
+        if (!this.enabled) {
+            this.hide();
+            return;
+        }
+        if (!hasRange || !rectInfo) {
+            if (!this.interacting)
+                this.hide();
+            return;
+        }
+        this.formatInfo = formatInfo ?? {};
+        this.syncState();
+        this.element.hidden = false;
+        this.position(rectInfo);
+    }
+    hide() {
+        this.element.hidden = true;
+        this.colorPopover.hidden = true;
+    }
+    destroy() {
+        document.removeEventListener("mousedown", this.onDocumentMouseDown, true);
+        window.removeEventListener("mouseup", this.onWindowMouseUp, true);
+        this.element.remove();
+        this.colorPopover.remove();
+        this.target = null;
+    }
+    bind() {
+        const markInteracting = (event) => {
+            this.interacting = true;
+            const target = event.target;
+            const isTextInput = target instanceof HTMLInputElement && target.type !== "color";
+            if (!isTextInput)
+                event.preventDefault();
+            event.stopPropagation();
+        };
+        this.element.addEventListener("mousedown", markInteracting);
+        this.colorPopover.addEventListener("mousedown", markInteracting);
+        const isolateInputEvent = (event) => event.stopPropagation();
+        [
+            "keydown",
+            "keyup",
+            "beforeinput",
+            "input",
+            "paste",
+            "compositionstart",
+            "compositionupdate",
+            "compositionend",
+        ].forEach((type) => this.colorPopover.addEventListener(type, isolateInputEvent));
+        this.element.addEventListener("click", (event) => {
+            const button = event.target.closest("[data-rich-action]");
+            if (!button || !this.target)
+                return;
+            const action = button.dataset.richAction ?? "";
+            this.callbacks.onAction?.(action);
+            if (["bold", "italic", "underline", "strike"].includes(action)) {
+                this.target.formatText((0, richTextActions_1.nextToggleFormat)(action, this.formatInfo));
+                this.formatInfo[action] = !Boolean(this.formatInfo[action]);
+                this.syncState();
+                return;
+            }
+            switch (action) {
+                case "inline-code":
+                    this.target.toggleInlineCode();
+                    this.formatInfo.code = !Boolean(this.formatInfo.code);
+                    this.syncState();
+                    break;
+                case "code-block":
+                    this.colorPopover.hidden = true;
+                    this.element.hidden = true;
+                    this.callbacks.onCodeBlock?.(this.target);
+                    break;
+                case "link":
+                    this.colorPopover.hidden = true;
+                    this.element.hidden = true;
+                    this.callbacks.onLink?.(this.target);
+                    break;
+                case "cloze": {
+                    const next = !(0, richTextActions_1.isClozeFormat)(this.formatInfo);
+                    this.target.setCloze(next);
+                    this.formatInfo.color = next ? "transparent" : undefined;
+                    this.formatInfo.background = next ? "#f5dfa0" : undefined;
+                    this.syncState();
+                    break;
+                }
+                case "formula":
+                    this.colorPopover.hidden = true;
+                    this.element.hidden = true;
+                    this.callbacks.onFormula?.(this.target);
+                    break;
+                case "clear":
+                    this.target.clearTextFormat();
+                    this.formatInfo = {};
+                    this.syncState();
+                    break;
+                case "color-menu":
+                    this.openColorPopover("color", button);
+                    break;
+                case "background-menu":
+                    this.openColorPopover("background", button);
+                    break;
+            }
+        });
+        this.colorPopover.addEventListener("click", (event) => {
+            const swatch = event.target.closest("[data-color-value]");
+            if (swatch) {
+                this.applyColor(swatch.dataset.colorValue || false, true);
+                return;
+            }
+            const action = event.target.closest("[data-color-action]")?.dataset.colorAction;
+            if (action === "reset")
+                this.applyColor(false, true);
+            if (action === "custom") {
+                const current = this.formatInfo[this.activeColorKind];
+                this.customColorInput.value =
+                    typeof current === "string" && /^#[0-9a-f]{6}$/i.test(current)
+                        ? current
+                        : "#000000";
+                this.customColorInput.click();
+            }
+        });
+        this.customColorInput.addEventListener("input", () => this.applyColor(this.customColorInput.value, false));
+        this.bindEditableColorInput("hex");
+        this.bindEditableColorInput("rgb");
+        this.element
+            .querySelector('[data-rich-field="size"]')
+            ?.addEventListener("change", (event) => {
+            this.callbacks.onAction?.("size");
+            this.target?.formatText({
+                size: event.target.value || false,
+            });
+        });
+        this.element
+            .querySelector('[data-rich-field="font"]')
+            ?.addEventListener("change", (event) => {
+            this.callbacks.onAction?.("font");
+            this.target?.formatText({
+                font: event.target.value || false,
+            });
+        });
+    }
+    openColorPopover(kind, anchor) {
+        this.activeColorKind = kind;
+        this.colorSessionOriginal =
+            typeof this.formatInfo[kind] === "string"
+                ? this.formatInfo[kind]
+                : false;
+        this.colorPopover.dataset.kind = kind;
+        this.syncColorReadout();
+        this.colorPopover.hidden = false;
+        const rootRect = this.root.getBoundingClientRect();
+        const anchorRect = anchor.getBoundingClientRect();
+        const width = this.colorPopover.offsetWidth || 320;
+        const height = this.colorPopover.offsetHeight || 145;
+        const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
+        const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
+        const left = Math.max(8, Math.min(anchorRect.left - rootRect.left, rootWidth - width - 8));
+        const below = anchorRect.bottom - rootRect.top + 6;
+        const above = anchorRect.top - rootRect.top - height - 6;
+        const top = below + height <= rootHeight - 8 ? below : Math.max(8, above);
+        this.colorPopover.style.left = `${Math.round(left)}px`;
+        this.colorPopover.style.top = `${Math.round(top)}px`;
+    }
+    bindEditableColorInput(kind) {
+        const input = this.colorPopover.querySelector(`[data-color-input="${kind}"]`);
+        if (!input)
+            return;
+        input.addEventListener("input", () => {
+            const parsed = (0, colorPresentation_1.parseEditableColor)(input.value);
+            input.setAttribute("aria-invalid", parsed ? "false" : "true");
+            if (!parsed)
+                return;
+            const other = this.colorPopover.querySelector(`[data-color-input="${kind === "hex" ? "rgb" : "hex"}"]`);
+            if (other) {
+                other.value = kind === "hex" ? parsed.rgb : parsed.hex;
+                other.setAttribute("aria-invalid", "false");
+            }
+            this.applyColor(parsed.hex, false, false);
+        });
+        input.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+                event.preventDefault();
+                this.cancelColorEditing();
+            }
+        });
+    }
+    cancelColorEditing() {
+        if (!this.target) {
+            this.colorPopover.hidden = true;
+            return;
+        }
+        this.target.restoreSelection?.();
+        this.target.formatText({
+            [this.activeColorKind]: this.colorSessionOriginal,
+        });
+        this.formatInfo[this.activeColorKind] =
+            this.colorSessionOriginal || undefined;
+        this.syncState();
+        this.colorPopover.hidden = true;
+    }
+    applyColor(value, close = true, syncInputs = true) {
+        if (!this.target)
+            return;
+        this.callbacks.onAction?.(this.activeColorKind);
+        this.target.restoreSelection?.();
+        this.target.formatText({ [this.activeColorKind]: value });
+        this.formatInfo[this.activeColorKind] = value || undefined;
+        this.syncState(syncInputs);
+        if (close)
+            this.colorPopover.hidden = true;
+    }
+    syncColorReadout() {
+        const presentation = (0, colorPresentation_1.presentColor)(this.formatInfo[this.activeColorKind]);
+        const editable = (0, colorPresentation_1.parseEditableColor)(this.formatInfo[this.activeColorKind]);
+        const hex = this.colorPopover.querySelector('[data-color-input="hex"]');
+        const rgb = this.colorPopover.querySelector('[data-color-input="rgb"]');
+        if (hex) {
+            hex.value =
+                editable?.hex ?? (presentation.hex === "默认" ? "" : presentation.hex);
+            hex.setAttribute("aria-invalid", "false");
+        }
+        if (rgb) {
+            rgb.value = editable?.rgb ?? "";
+            rgb.setAttribute("aria-invalid", "false");
+        }
+        const hexReadout = this.colorPopover.querySelector('[data-color-readout="hex"]');
+        const rgbReadout = this.colorPopover.querySelector('[data-color-readout="rgb"]');
+        if (hexReadout)
+            hexReadout.textContent = presentation.hex;
+        if (rgbReadout)
+            rgbReadout.textContent = presentation.rgb;
+    }
+    syncState(syncInputs = true) {
+        ["bold", "italic", "underline", "strike"].forEach((name) => {
+            this.element
+                .querySelector(`[data-rich-action="${name}"]`)
+                ?.classList.toggle("is-active", Boolean(this.formatInfo[name]));
+        });
+        this.element
+            .querySelector('[data-rich-action="inline-code"]')
+            ?.classList.toggle("is-active", Boolean(this.formatInfo.code));
+        this.element
+            .querySelector('[data-rich-action="link"]')
+            ?.classList.toggle("is-active", Boolean(this.formatInfo.link));
+        this.element
+            .querySelector('[data-rich-action="code-block"]')
+            ?.classList.toggle("is-active", Boolean(this.formatInfo["code-block"]));
+        const cloze = this.element.querySelector('[data-rich-action="cloze"]');
+        const clozeActive = (0, richTextActions_1.isClozeFormat)(this.formatInfo);
+        cloze?.classList.toggle("is-active", clozeActive);
+        if (cloze)
+            cloze.textContent = clozeActive ? "取消模糊" : "模糊";
+        const size = this.element.querySelector('[data-rich-field="size"]');
+        if (size)
+            size.value =
+                typeof this.formatInfo.size === "string" ? this.formatInfo.size : "";
+        const font = this.element.querySelector('[data-rich-field="font"]');
+        if (font)
+            font.value =
+                typeof this.formatInfo.font === "string" ? this.formatInfo.font : "";
+        const color = typeof this.formatInfo.color === "string" &&
+            this.formatInfo.color !== "transparent"
+            ? this.formatInfo.color
+            : "currentColor";
+        const background = typeof this.formatInfo.background === "string"
+            ? this.formatInfo.background
+            : "transparent";
+        this.element
+            .querySelector('[data-rich-swatch="color"]')
+            ?.style.setProperty("--ymz-current-color", color);
+        this.element
+            .querySelector('[data-rich-swatch="background"]')
+            ?.style.setProperty("--ymz-current-color", background);
+        if (syncInputs)
+            this.syncColorReadout();
+    }
+    position(rect) {
+        const rootRect = this.root.getBoundingClientRect();
+        const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
+        const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
+        const width = Math.min(this.element.scrollWidth || 820, Math.max(240, rootWidth - 16));
+        const localLeft = rect.left - rootRect.left;
+        const localTop = rect.top - rootRect.top;
+        const localBottom = rect.bottom - rootRect.top;
+        const left = Math.max(8, Math.min(localLeft + (rect.width ?? 0) / 2 - width / 2, rootWidth - width - 8));
+        const measuredHeight = this.element.offsetHeight || 44;
+        const below = localBottom + 8;
+        const top = below + measuredHeight < rootHeight
+            ? below
+            : Math.max(8, localTop - measuredHeight - 8);
+        this.element.style.left = `${Math.round(left)}px`;
+        this.element.style.top = `${Math.round(top)}px`;
+        this.element.style.maxWidth = `${Math.max(240, rootWidth - 16)}px`;
+    }
+}
+exports.RichTextToolbar = RichTextToolbar;
+
+},
+216: function(module, exports, __require, __externalRequire) {
+// /src/editor/richTextActions.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RICH_TEXT_ACTIONS = exports.CLOZE_BACKGROUND = void 0;
+exports.nextToggleFormat = nextToggleFormat;
+exports.isClozeFormat = isClozeFormat;
+exports.CLOZE_BACKGROUND = '#f5dfa0';
+exports.RICH_TEXT_ACTIONS = [
+    { id: 'bold', label: 'B', title: '加粗' },
+    { id: 'italic', label: 'I', title: '斜体' },
+    { id: 'underline', label: 'U', title: '下划线' },
+    { id: 'strike', label: 'S', title: '删除线' },
+    { id: 'cloze', label: '模糊', title: '模糊/取消模糊' },
+    { id: 'formula', label: 'π', title: '插入公式' },
+    { id: 'clear', label: '×', title: '清除格式' },
+];
+function nextToggleFormat(name, formatInfo) {
+    return { [name]: !Boolean(formatInfo?.[name]) };
+}
+function isClozeFormat(formatInfo) {
+    if (!formatInfo)
+        return false;
+    const color = String(formatInfo.color ?? '').toLowerCase().replaceAll(' ', '');
+    const background = String(formatInfo.background ?? '').toLowerCase().replaceAll(' ', '');
+    return color === 'transparent'
+        || color === 'rgba(0,0,0,0)'
+        || background === exports.CLOZE_BACKGROUND;
+}
+
+},
+217: function(module, exports, __require, __externalRequire) {
+// /src/editor/colorPresentation.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.normalizeHexColor = normalizeHexColor;
+exports.parseEditableColor = parseEditableColor;
+exports.presentColor = presentColor;
+function normalizeHexColor(value) {
+    if (typeof value !== 'string')
+        return null;
+    const input = value.trim();
+    const short = /^#([0-9a-f]{3})$/i.exec(input);
+    if (short) {
+        const [r, g, b] = short[1].split('');
+        return `#${r}${r}${g}${g}${b}${b}`.toUpperCase();
+    }
+    const long = /^#([0-9a-f]{6})$/i.exec(input);
+    return long ? `#${long[1].toUpperCase()}` : null;
+}
+function rgbFromCss(value) {
+    const match = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,[^)]*)?\s*\)$/i.exec(value.trim());
+    if (!match)
+        return null;
+    const channels = match.slice(1, 4).map(Number);
+    if (channels.some((channel) => channel < 0 || channel > 255))
+        return null;
+    return channels;
+}
+function rgbFromEditable(value) {
+    const css = rgbFromCss(value);
+    if (css)
+        return css;
+    const match = /^\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*$/.exec(value);
+    if (!match)
+        return null;
+    const channels = match.slice(1, 4).map(Number);
+    if (channels.some((channel) => channel < 0 || channel > 255))
+        return null;
+    return channels;
+}
+function toHex(channels) {
+    return `#${channels.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`.toUpperCase();
+}
+function channelsFromHex(hex) {
+    return [
+        Number.parseInt(hex.slice(1, 3), 16),
+        Number.parseInt(hex.slice(3, 5), 16),
+        Number.parseInt(hex.slice(5, 7), 16),
+    ];
+}
+function parseEditableColor(value) {
+    if (typeof value !== 'string')
+        return null;
+    const hex = normalizeHexColor(value);
+    const channels = hex ? channelsFromHex(hex) : rgbFromEditable(value);
+    if (!channels)
+        return null;
+    return { hex: hex ?? toHex(channels), rgb: channels.join(', ') };
+}
+function presentColor(value) {
+    const editable = parseEditableColor(value);
+    if (!editable)
+        return { hex: '默认', rgb: '继承节点颜色' };
+    return { hex: editable.hex, rgb: `RGB(${editable.rgb})` };
+}
+
+},
+218: function(module, exports, __require, __externalRequire) {
+// /src/editor/colorPalette.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.COLOR_SWATCHES = void 0;
+exports.colorSwatchesHtml = colorSwatchesHtml;
+exports.colorPaletteInnerHtml = colorPaletteInnerHtml;
+exports.COLOR_SWATCHES = [
+    '#5f6368', '#9aa0a6', '#f4f4f4', '#ff4d3d', '#ff7a18', '#ffc400', '#d7e600', '#8ed600', '#43c59e', '#66cbd1', '#58b9e8', '#9aa8ff', '#ce78e8',
+    '#3c4043', '#777b80', '#d9d9d9', '#d92d20', '#e04b12', '#f59f00', '#b5c900', '#52b415', '#268c55', '#0c8d96', '#147cae', '#6975db', '#a144bd',
+    '#202124', '#4f5358', '#b7b7b7', '#a61b0d', '#bd3408', '#d67a00', '#859900', '#2d7c10', '#1b633d', '#08707c', '#0b5d86', '#4d54a8', '#7d2d91',
+    '#000000', '#303134', '#8d8d8d', '#7a1308', '#8e2505', '#a85700', '#586b00', '#245d12', '#174d32', '#07535c', '#074663', '#383d78', '#5b2069',
+];
+function colorSwatchesHtml() {
+    return exports.COLOR_SWATCHES.map((value) => `<button type="button" class="ymz-color-popover__swatch" data-color-value="${value}" style="--ymz-swatch:${value}" title="${value}" aria-label="${value}"></button>`).join('');
+}
+function colorPaletteInnerHtml() {
+    return `<div class="ymz-color-popover__grid">${colorSwatchesHtml()}</div>
+    <div class="ymz-color-popover__footer">
+      <button type="button" data-color-action="reset">重置默认</button>
+      <button type="button" data-color-action="custom">更多颜色</button>
+    </div>
+    <div class="ymz-color-popover__current" aria-live="polite">
+      <label><span>HEX</span><input type="text" spellcheck="false" autocomplete="off" data-color-input="hex" value="" aria-label="十六进制颜色"></label>
+      <label><span>RGB</span><input type="text" spellcheck="false" autocomplete="off" data-color-input="rgb" value="" aria-label="RGB 颜色"></label>
+      <span class="ymz-sr-only" data-color-readout="hex">默认</span>
+      <span class="ymz-sr-only" data-color-readout="rgb">继承颜色</span>
+    </div>`;
+}
+
+},
+219: function(module, exports, __require, __externalRequire) {
+// /src/editor/selectionPresentation.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createSelectionPresentation = createSelectionPresentation;
+exports.promoteNodeToPrimary = promoteNodeToPrimary;
+exports.shouldBlockRootDeleteShortcut = shouldBlockRootDeleteShortcut;
+function createSelectionPresentation(rawCount, mode) {
+    const count = Number.isFinite(rawCount) && rawCount > 0 ? Math.floor(rawCount) : 0;
+    const isSelectMode = mode === 'select';
+    return {
+        count,
+        isMultiple: count > 1,
+        countText: count > 1 ? `已选 ${count}` : '',
+        modeLabel: isSelectMode ? '选（选择优先）' : '拖（拖动优先）',
+        modeShortLabel: isSelectMode ? '选' : '拖',
+        modeTitle: isSelectMode
+            ? '选（选择优先）：左键框选，右键拖动画布'
+            : '拖（拖动优先）：左键拖动画布，Ctrl/Cmd + 左键框选',
+    };
+}
+/**
+ * Keep the existing multi-selection while making the node that opened the
+ * context menu the command target (activeNodeList[0]).
+ */
+function promoteNodeToPrimary(renderer, node) {
+    const list = Array.isArray(renderer?.activeNodeList) ? renderer.activeNodeList : null;
+    if (!list || !node)
+        return false;
+    const index = list.indexOf(node);
+    if (index <= 0)
+        return false;
+    list.splice(index, 1);
+    list.unshift(node);
+    renderer.emitNodeActiveEvent?.();
+    return true;
+}
+/** Prevent the upstream root-delete shortcut from clearing the complete map. */
+function shouldBlockRootDeleteShortcut(key, nodes) {
+    if (key !== 'Backspace' && key !== 'Delete')
+        return false;
+    return Array.isArray(nodes) && nodes.some((node) => Boolean(node?.isRoot));
+}
+
+},
+220: function(module, exports, __require, __externalRequire) {
+// /src/editor/saveRevision.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SaveRevisionTracker = void 0;
+/** Tracks autosave revisions so stale async completions cannot report current data as saved. */
+class SaveRevisionTracker {
+    constructor() {
+        this.latestRevision = 0;
+        this.savedRevision = 0;
+    }
+    markChanged() {
+        this.latestRevision += 1;
+        return this.latestRevision;
+    }
+    current() {
+        return this.latestRevision;
+    }
+    markSaved(revision) {
+        if (revision !== this.latestRevision)
+            return false;
+        this.savedRevision = Math.max(this.savedRevision, revision);
+        return true;
+    }
+    isDirty() {
+        return this.savedRevision < this.latestRevision;
+    }
+}
+exports.SaveRevisionTracker = SaveRevisionTracker;
+
+},
+221: function(module, exports, __require, __externalRequire) {
+// /src/editor/relationPresentation.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createRelationPresentation = createRelationPresentation;
+function createRelationPresentation(input) {
+    if (input.isCreating) {
+        return { mode: 'creating', hidden: false, hint: '点击目标节点完成关联，Esc 取消' };
+    }
+    if (input.isActive) {
+        return { mode: 'active', hidden: false, hint: '关联线已选中，可拖动端点和控制点' };
+    }
+    return { mode: 'idle', hidden: true, hint: '' };
+}
+
+},
+222: function(module, exports, __require, __externalRequire) {
+// /src/editor/outerFramePresentation.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.hexToRgba = hexToRgba;
+exports.createOuterFramePresentation = createOuterFramePresentation;
+const DEFAULT_STROKE = '#0984e3';
+const DEFAULT_FILL = '#0984e3';
+function colorToHex(value, fallback) {
+    if (typeof value !== 'string')
+        return fallback;
+    const color = value.trim();
+    const short = /^#([0-9a-f]{3})$/i.exec(color);
+    if (short)
+        return `#${short[1].split('').map((item) => item + item).join('').toLowerCase()}`;
+    const full = /^#([0-9a-f]{6})(?:[0-9a-f]{2})?$/i.exec(color);
+    if (full)
+        return `#${full[1].toLowerCase()}`;
+    const rgb = /^rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)/i.exec(color);
+    if (!rgb)
+        return fallback;
+    const parts = rgb.slice(1, 4).map((part) => Math.min(255, Math.max(0, Math.round(Number(part)))));
+    return `#${parts.map((part) => part.toString(16).padStart(2, '0')).join('')}`;
+}
+function hexToRgba(value, alpha = 0.08) {
+    const hex = colorToHex(value, DEFAULT_FILL).slice(1);
+    const red = Number.parseInt(hex.slice(0, 2), 16);
+    const green = Number.parseInt(hex.slice(2, 4), 16);
+    const blue = Number.parseInt(hex.slice(4, 6), 16);
+    return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+function createOuterFramePresentation(input) {
+    const style = input.activeStyle;
+    if (!style) {
+        return {
+            hidden: true,
+            readonly: input.readonly,
+            hint: '',
+            strokeColor: DEFAULT_STROKE,
+            fill: DEFAULT_FILL,
+            strokeDasharray: '5,5',
+            textAlign: 'left',
+        };
+    }
+    const text = typeof style.text === 'string' ? style.text.trim() : '';
+    const dasharray = style.strokeDasharray === 'none' ? 'none' : '5,5';
+    const align = style.textAlign === 'center' || style.textAlign === 'right' ? style.textAlign : 'left';
+    return {
+        hidden: false,
+        readonly: input.readonly,
+        hint: text ? `外框已选中 · ${text}` : '外框已选中',
+        strokeColor: colorToHex(style.strokeColor, DEFAULT_STROKE),
+        fill: colorToHex(style.fill, DEFAULT_FILL),
+        strokeDasharray: dasharray,
+        textAlign: align,
+    };
+}
+
+},
+223: function(module, exports, __require, __externalRequire) {
+// /src/editor/toolbarAvailability.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createToolbarAvailability = createToolbarAvailability;
+function createToolbarAvailability(input) {
+    const editable = !input.readonly;
+    const hasSelection = input.selectedCount > 0;
+    const regularPrimary = hasSelection && !input.primaryIsGeneralization;
+    const removable = input.hasRemovableSelection ?? (hasSelection && !input.primaryIsRoot);
+    return {
+        undo: editable,
+        redo: editable,
+        addChild: editable && regularPrimary,
+        addSibling: editable && regularPrimary && !input.primaryIsRoot,
+        remove: editable && removable,
+        resetLayout: editable,
+        layout: editable,
+    };
+}
+
+},
+224: function(module, exports, __require, __externalRequire) {
+// /src/editor/linkNavigation.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.resolveLinkNavigation = resolveLinkNavigation;
+const inlineLink_1 = __require(205);
+function resolveLinkNavigation(value, externalMode) {
+    const href = (0, inlineLink_1.normalizeInlineLink)(value, true);
+    if (!href)
+        return null;
+    return {
+        href,
+        target: href.toLowerCase().startsWith('siyuan://') ? 'siyuan' : externalMode,
+    };
+}
+
+},
+225: function(module, exports, __require, __externalRequire) {
+// /src/plugin/visibleElement.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.hasNonZeroSize = hasNonZeroSize;
+exports.waitForNonZeroSize = waitForNonZeroSize;
+function hasNonZeroSize(element) {
+    const rect = element.getBoundingClientRect();
+    const width = Number(rect.width || element.clientWidth || 0);
+    const height = Number(rect.height || element.clientHeight || 0);
+    return Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0;
+}
+function waitForNonZeroSize(element, options = {}) {
+    if (options.isCancelled?.())
+        return Promise.resolve(false);
+    if (hasNonZeroSize(element))
+        return Promise.resolve(true);
+    const pollMs = Math.max(1, Math.floor(options.pollMs ?? 50));
+    return new Promise((resolve) => {
+        let done = false;
+        let timer = null;
+        let observer = null;
+        const finish = (value) => {
+            if (done)
+                return;
+            done = true;
+            if (timer !== null)
+                window.clearTimeout(timer);
+            timer = null;
+            observer?.disconnect();
+            observer = null;
+            resolve(value);
+        };
+        const schedule = () => {
+            if (done)
+                return;
+            if (timer !== null)
+                window.clearTimeout(timer);
+            timer = window.setTimeout(() => {
+                timer = null;
+                check();
+            }, pollMs);
+        };
+        const check = () => {
+            if (done)
+                return;
+            if (options.isCancelled?.()) {
+                finish(false);
+                return;
+            }
+            if (hasNonZeroSize(element)) {
+                finish(true);
+                return;
+            }
+            schedule();
+        };
+        if (typeof ResizeObserver !== 'undefined') {
+            observer = new ResizeObserver(() => check());
+            observer.observe(element);
+        }
+        schedule();
+    });
+}
+
+},
+226: function(module, exports, __require, __externalRequire) {
+// /src/ui/nodeImageInput.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.hasImageFile = hasImageFile;
+exports.extractImageFile = extractImageFile;
+exports.findRenderedNodeAtClientPoint = findRenderedNodeAtClientPoint;
+function hasImageFile(dataTransfer) {
+    if (!dataTransfer)
+        return false;
+    if (Array.from(dataTransfer.items ?? []).some((item) => item.kind === 'file' && item.type.toLowerCase().startsWith('image/'))) {
+        return true;
+    }
+    return Array.from(dataTransfer.files ?? []).some((file) => file.type.toLowerCase().startsWith('image/'));
+}
+function extractImageFile(dataTransfer) {
+    if (!dataTransfer)
+        return null;
+    for (const item of Array.from(dataTransfer.items ?? [])) {
+        if (item.kind !== 'file')
+            continue;
+        const file = item.getAsFile();
+        if (file?.type.toLowerCase().startsWith('image/'))
+            return file;
+    }
+    return Array.from(dataTransfer.files ?? []).find((file) => file.type.toLowerCase().startsWith('image/')) ?? null;
+}
+function renderedChildren(node) {
+    const children = Array.isArray(node?.children) ? node.children : [];
+    const generalizations = Array.isArray(node?._generalizationList)
+        ? node._generalizationList.map((item) => item?.generalizationNode).filter(Boolean)
+        : [];
+    return [...children, ...generalizations];
+}
+function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
+    const root = mindMap?.renderer?.root;
+    if (!root || typeof mindMap?.toPos !== 'function')
+        return null;
+    const local = mindMap.toPos(clientX, clientY);
+    const transform = mindMap?.draw?.transform?.() ?? {};
+    const scaleX = Number(transform.scaleX) || 1;
+    const scaleY = Number(transform.scaleY) || 1;
+    const mapX = (Number(local.x) - (Number(transform.translateX) || 0)) / scaleX;
+    const mapY = (Number(local.y) - (Number(transform.translateY) || 0)) / scaleY;
+    let match = null;
+    const visit = (node) => {
+        const left = Number(node?.left);
+        const top = Number(node?.top);
+        const width = Number(node?.width);
+        const height = Number(node?.height);
+        if ([left, top, width, height].every(Number.isFinite)
+            && mapX >= left && mapX <= left + width
+            && mapY >= top && mapY <= top + height)
+            match = node;
+        renderedChildren(node).forEach(visit);
+    };
+    visit(root);
+    return match;
+}
+
+},
+227: function(module, exports, __require, __externalRequire) {
+// /src/ui/nodeHoverPreview.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.NodeHoverPreview = void 0;
+exports.computeHoverPreviewPlacement = computeHoverPreviewPlacement;
+exports.buildHoverPreviewHtml = buildHoverPreviewHtml;
+const sanitizeRichHtml_1 = __require(186);
+const commentsPresentation_1 = __require(204);
+function escapeHtml(value) {
+    return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+}
+function intersects(a, b) {
+    return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
+function candidateRect(left, top, width, height) {
+    return { left, top, width, height, right: left + width, bottom: top + height };
+}
+function inside(rect, root, margin) {
+    return rect.left >= root.left + margin
+        && rect.top >= root.top + margin
+        && rect.right <= root.right - margin
+        && rect.bottom <= root.bottom - margin;
+}
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(value, max));
+}
+function computeHoverPreviewPlacement(input) {
+    const gap = Math.max(0, input.gap ?? 8);
+    const margin = Math.max(0, input.margin ?? 8);
+    const root = input.root;
+    const anchor = input.anchor;
+    const desiredWidth = Math.max(80, input.preview.width);
+    const desiredHeight = Math.max(48, input.preview.height);
+    const maxWidth = Math.max(40, root.width - margin * 2);
+    const maxHeight = Math.max(40, root.height - margin * 2);
+    const width = Math.min(desiredWidth, maxWidth);
+    const height = Math.min(desiredHeight, maxHeight);
+    const centeredTop = anchor.top + (anchor.height - height) / 2;
+    const centeredLeft = anchor.left + (anchor.width - width) / 2;
+    const candidates = [
+        { placement: 'right-bottom', left: anchor.right + gap, top: anchor.top },
+        { placement: 'right-top', left: anchor.right + gap, top: anchor.bottom - height },
+        { placement: 'left-bottom', left: anchor.left - gap - width, top: anchor.top },
+        { placement: 'left-top', left: anchor.left - gap - width, top: anchor.bottom - height },
+        { placement: 'right', left: anchor.right + gap, top: centeredTop },
+        { placement: 'left', left: anchor.left - gap - width, top: centeredTop },
+        { placement: 'bottom-right', left: anchor.left, top: anchor.bottom + gap },
+        { placement: 'bottom-left', left: anchor.right - width, top: anchor.bottom + gap },
+        { placement: 'top-right', left: anchor.left, top: anchor.top - gap - height },
+        { placement: 'top-left', left: anchor.right - width, top: anchor.top - gap - height },
+    ];
+    for (const candidate of candidates) {
+        const rect = candidateRect(candidate.left, candidate.top, width, height);
+        if (inside(rect, root, margin) && !intersects(rect, anchor)) {
+            return { ...candidate, width, height };
+        }
+    }
+    const sideCandidates = [
+        {
+            placement: 'left-adaptive',
+            width: Math.max(40, Math.min(width, anchor.left - gap - (root.left + margin))),
+            height,
+            left: root.left + margin,
+            top: centeredTop,
+        },
+        {
+            placement: 'right-adaptive',
+            width: Math.max(40, Math.min(width, root.right - margin - (anchor.right + gap))),
+            height,
+            left: anchor.right + gap,
+            top: centeredTop,
+        },
+        {
+            placement: 'top-adaptive',
+            width,
+            height: Math.max(40, Math.min(height, anchor.top - gap - (root.top + margin))),
+            left: centeredLeft,
+            top: root.top + margin,
+        },
+        {
+            placement: 'bottom-adaptive',
+            width,
+            height: Math.max(40, Math.min(height, root.bottom - margin - (anchor.bottom + gap))),
+            left: centeredLeft,
+            top: anchor.bottom + gap,
+        },
+    ].map((candidate) => ({
+        ...candidate,
+        left: clamp(candidate.left, root.left + margin, root.right - margin - candidate.width),
+        top: clamp(candidate.top, root.top + margin, root.bottom - margin - candidate.height),
+    })).filter((candidate) => candidate.width >= 40 && candidate.height >= 40)
+        .sort((a, b) => b.width * b.height - a.width * a.height);
+    const adaptive = sideCandidates.find((candidate) => !intersects(candidateRect(candidate.left, candidate.top, candidate.width, candidate.height), anchor));
+    if (adaptive)
+        return adaptive;
+    const fallbackWidth = Math.min(width, maxWidth);
+    const fallbackHeight = Math.min(height, Math.max(40, anchor.top - root.top - gap - margin));
+    return {
+        placement: 'top-fallback',
+        width: fallbackWidth,
+        height: fallbackHeight,
+        left: clamp(centeredLeft, root.left + margin, root.right - margin - fallbackWidth),
+        top: Math.max(root.top + margin, anchor.top - gap - fallbackHeight),
+    };
+}
+function buildHoverPreviewHtml(type, value) {
+    if (type === 'note') {
+        const note = value;
+        return note?.html ? `<div class="ymz-node-hover-preview__note">${(0, sanitizeRichHtml_1.sanitizeRichHtml)(note.html)}</div>` : '<div class="ymz-empty-hint">暂无备注</div>';
+    }
+    const comments = Array.isArray(value) ? value : [];
+    if (!comments.length)
+        return '<div class="ymz-empty-hint">暂无批注</div>';
+    return `<div class="ymz-node-hover-preview__comments">${comments.map((comment) => `<div class="ymz-node-hover-preview__comment"><div class="ymz-node-hover-preview__comment-text">${escapeHtml(comment.text).replaceAll('\n', '<br>')}</div><time class="ymz-node-hover-preview__comment-time" datetime="${new Date(comment.createdAt).toISOString()}">${(0, commentsPresentation_1.formatCommentTimestamp)(comment.createdAt)}</time></div>`).join('')}</div>`;
+}
+class NodeHoverPreview {
+    constructor(root) {
+        this.root = root;
+        this.showTimer = null;
+        this.hideTimer = null;
+        this.anchor = null;
+        this.element = document.createElement('div');
+        this.element.className = 'ymz-node-hover-preview';
+        this.element.hidden = true;
+        this.element.addEventListener('pointerenter', () => this.cancelHide());
+        this.element.addEventListener('pointerleave', () => this.scheduleHide());
+        root.appendChild(this.element);
+    }
+    show(type, value, anchor, delay = 220) {
+        this.cancelTimers();
+        this.anchor = anchor;
+        this.showTimer = window.setTimeout(() => {
+            this.showTimer = null;
+            this.element.dataset.type = type;
+            this.element.innerHTML = buildHoverPreviewHtml(type, value);
+            this.element.hidden = false;
+            this.position(anchor);
+        }, delay);
+    }
+    scheduleHide(delay = 160) {
+        if (this.showTimer !== null)
+            window.clearTimeout(this.showTimer);
+        this.showTimer = null;
+        this.cancelHide();
+        this.hideTimer = window.setTimeout(() => this.hide(), delay);
+    }
+    hide() {
+        this.cancelTimers();
+        this.element.hidden = true;
+        this.element.innerHTML = '';
+        this.element.style.removeProperty('width');
+        this.element.style.removeProperty('max-height');
+        delete this.element.dataset.placement;
+        this.anchor = null;
+    }
+    destroy() {
+        this.hide();
+        this.element.remove();
+    }
+    cancelHide() {
+        if (this.hideTimer !== null)
+            window.clearTimeout(this.hideTimer);
+        this.hideTimer = null;
+    }
+    cancelTimers() {
+        if (this.showTimer !== null)
+            window.clearTimeout(this.showTimer);
+        this.showTimer = null;
+        this.cancelHide();
+    }
+    position(anchor) {
+        const rootRect = this.root.getBoundingClientRect();
+        const anchorRect = anchor.getBoundingClientRect();
+        const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
+        const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
+        const normalizedRoot = {
+            left: rootRect.left,
+            top: rootRect.top,
+            right: rootRect.left + rootWidth,
+            bottom: rootRect.top + rootHeight,
+            width: rootWidth,
+            height: rootHeight,
+        };
+        const desiredWidth = Math.min(360, Math.max(180, this.element.offsetWidth || 360));
+        const desiredHeight = Math.min(320, Math.max(80, this.element.offsetHeight || 220));
+        const placement = computeHoverPreviewPlacement({
+            root: normalizedRoot,
+            anchor: anchorRect,
+            preview: { width: desiredWidth, height: desiredHeight },
+        });
+        this.element.dataset.placement = placement.placement;
+        this.element.style.width = `${Math.round(placement.width)}px`;
+        this.element.style.maxHeight = `${Math.round(placement.height)}px`;
+        this.element.style.left = `${Math.round(placement.left - rootRect.left)}px`;
+        this.element.style.top = `${Math.round(placement.top - rootRect.top)}px`;
+    }
+}
+exports.NodeHoverPreview = NodeHoverPreview;
+
+},
+228: function(module, exports, __require, __externalRequire) {
+// /src/ui/imageLightbox.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ImageLightbox = exports.IMAGE_PREVIEW_MAX_SCALE = exports.IMAGE_PREVIEW_MIN_SCALE = void 0;
+exports.clampImagePreviewScale = clampImagePreviewScale;
+exports.nextImagePreviewScale = nextImagePreviewScale;
+exports.IMAGE_PREVIEW_MIN_SCALE = 0.2;
+exports.IMAGE_PREVIEW_MAX_SCALE = 6;
+function clampImagePreviewScale(value) {
+    return Math.max(exports.IMAGE_PREVIEW_MIN_SCALE, Math.min(exports.IMAGE_PREVIEW_MAX_SCALE, Math.round(value * 100) / 100));
+}
+function nextImagePreviewScale(current, deltaY) {
+    const factor = deltaY < 0 ? 1.12 : 1 / 1.12;
+    return clampImagePreviewScale(current * factor);
+}
+class ImageLightbox {
+    constructor(root) {
+        this.root = root;
+        this.scale = 1;
+        this.naturalWidth = 0;
+        this.naturalHeight = 0;
+        this.onLoad = () => {
+            this.naturalWidth = this.image.naturalWidth || 1;
+            this.naturalHeight = this.image.naturalHeight || 1;
+            const availableWidth = Math.max(120, this.stage.clientWidth - 48);
+            const availableHeight = Math.max(120, this.stage.clientHeight - 48);
+            this.scale = clampImagePreviewScale(Math.min(1, availableWidth / this.naturalWidth, availableHeight / this.naturalHeight));
+            this.sync();
+        };
+        this.onWheel = (event) => {
+            if (this.overlay.hidden)
+                return;
+            event.preventDefault();
+            this.scale = nextImagePreviewScale(this.scale, event.deltaY);
+            this.sync();
+        };
+        this.onClick = (event) => {
+            const target = event.target;
+            if (target === this.overlay || target === this.stage || target.closest('[data-action="close"]')) {
+                this.hide();
+                return;
+            }
+            if (target.closest('[data-action="reset"]')) {
+                this.scale = 1;
+                this.sync();
+            }
+        };
+        this.onKeydown = (event) => {
+            if (!this.overlay.hidden && event.key === 'Escape') {
+                event.preventDefault();
+                this.hide();
+            }
+        };
+        this.overlay = document.createElement('div');
+        this.overlay.className = 'ymz-image-lightbox';
+        this.overlay.hidden = true;
+        this.overlay.innerHTML = `<div class="ymz-image-lightbox__toolbar"><span data-role="scale">100%</span><button type="button" data-action="reset" aria-label="恢复原始比例">1:1</button><button type="button" data-action="close" aria-label="关闭图片预览">×</button></div><div class="ymz-image-lightbox__stage"><img alt=""></div>`;
+        this.stage = this.overlay.querySelector('.ymz-image-lightbox__stage');
+        this.image = this.overlay.querySelector('img');
+        this.scaleLabel = this.overlay.querySelector('[data-role="scale"]');
+        this.overlay.addEventListener('click', this.onClick);
+        this.overlay.addEventListener('wheel', this.onWheel, { passive: false });
+        document.addEventListener('keydown', this.onKeydown, true);
+        this.image.addEventListener('load', this.onLoad);
+        root.appendChild(this.overlay);
+    }
+    show(source, title = '') {
+        if (!source)
+            return;
+        this.overlay.hidden = false;
+        this.image.alt = title;
+        this.image.title = title;
+        this.scale = 1;
+        this.naturalWidth = 0;
+        this.naturalHeight = 0;
+        this.image.src = source;
+        this.sync();
+    }
+    hide() {
+        this.overlay.hidden = true;
+        this.image.removeAttribute('src');
+        this.image.removeAttribute('style');
+        this.scale = 1;
+    }
+    destroy() {
+        this.overlay.removeEventListener('click', this.onClick);
+        this.overlay.removeEventListener('wheel', this.onWheel);
+        document.removeEventListener('keydown', this.onKeydown, true);
+        this.image.removeEventListener('load', this.onLoad);
+        this.overlay.remove();
+    }
+    sync() {
+        this.scaleLabel.textContent = `${Math.round(this.scale * 100)}%`;
+        if (this.naturalWidth > 0 && this.naturalHeight > 0) {
+            this.image.style.width = `${Math.round(this.naturalWidth * this.scale)}px`;
+            this.image.style.height = `${Math.round(this.naturalHeight * this.scale)}px`;
+        }
+    }
+}
+exports.ImageLightbox = ImageLightbox;
+
+},
+229: function(module, exports, __require, __externalRequire) {
+// /src/ui/nodeStylePanel.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.NodeStylePanel = void 0;
+const colorPalette_1 = __require(218);
+const colorPresentation_1 = __require(217);
+const INPUT_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
+function toInputValue(value) {
+    return value === null || value === undefined ? '' : String(value);
+}
+function isNodeColorKey(value) {
+    return value === 'fillColor' || value === 'borderColor' || value === 'color';
+}
+class NodeStylePanel {
+    constructor(root, commands) {
+        this.root = root;
+        this.commands = commands;
+        this.current = {};
+        this.activeColorKey = 'fillColor';
+        this.stopEditorEvent = (event) => event.stopPropagation();
+        this.onDocumentMouseDown = (event) => {
+            const target = event.target;
+            if (!target)
+                return;
+            if (!this.colorPopover.hidden && !this.colorPopover.contains(target))
+                this.colorPopover.hidden = true;
+        };
+        this.onColorPopoverMouseDown = (event) => {
+            const target = event.target;
+            const isTextInput = target instanceof HTMLInputElement && target.type !== 'color';
+            if (!isTextInput)
+                event.preventDefault();
+            event.stopPropagation();
+        };
+        this.onNativeColorInput = () => this.applyColor(this.customColorInput.value, false);
+        this.onColorPopoverClick = (event) => {
+            const target = event.target;
+            const swatch = target.closest('[data-color-value]');
+            if (swatch) {
+                this.applyColor(swatch.dataset.colorValue || null);
+                return;
+            }
+            const action = target.closest('[data-color-action]')?.dataset.colorAction;
+            if (action === 'reset')
+                this.applyColor(null);
+            if (action === 'custom') {
+                const value = this.current[this.activeColorKey];
+                this.customColorInput.value = typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : '#000000';
+                this.customColorInput.click();
+            }
+        };
+        this.onInput = (event) => {
+            const control = event.target.closest('[data-node-style]');
+            if (!control || control.type !== 'number')
+                return;
+            this.applyControl(control);
+        };
+        this.onChange = (event) => {
+            const control = event.target.closest('[data-node-style]');
+            if (control)
+                this.applyControl(control);
+        };
+        this.onClick = (event) => {
+            event.stopPropagation();
+            const target = event.target;
+            const action = target.closest('[data-node-style-action]')?.dataset.nodeStyleAction;
+            if (action === 'close') {
+                this.hide();
+                return;
+            }
+            const colorTrigger = target.closest('[data-node-color-trigger]');
+            const colorKey = colorTrigger?.dataset.nodeColorTrigger;
+            if (colorTrigger && isNodeColorKey(colorKey)) {
+                this.openColorPopover(colorKey, colorTrigger);
+                return;
+            }
+            if (this.commands.isReadonly())
+                return;
+            if (action === 'fit-width') {
+                this.commands.setActiveNodeStyle({ width: null });
+                this.refresh();
+                return;
+            }
+            if (action === 'reset') {
+                this.commands.resetActiveNodeStyle();
+                this.refresh();
+                return;
+            }
+            const clear = target.closest('[data-node-style-clear]')?.dataset.nodeStyleClear;
+            if (clear) {
+                this.commands.setActiveNodeStyle({ [clear]: null });
+                this.refresh();
+                return;
+            }
+            const toggle = target.closest('[data-node-style-toggle]');
+            if (toggle) {
+                const key = toggle.dataset.nodeStyleToggle;
+                const expected = toggle.dataset.nodeStyleValue ?? '';
+                this.commands.setActiveNodeStyle({ [key]: this.current[key] === expected ? null : expected });
+                this.refresh();
+                return;
+            }
+            const set = target.closest('[data-node-style-set]');
+            if (set) {
+                const key = set.dataset.nodeStyleSet;
+                this.commands.setActiveNodeStyle({ [key]: set.dataset.nodeStyleValue ?? null });
+                this.refresh();
+            }
+        };
+        this.panel = root.querySelector('[data-role="node-style-panel"]');
+        this.colorPopover = document.createElement('div');
+        this.colorPopover.className = 'ymz-color-popover ymz-node-color-popover';
+        this.colorPopover.hidden = true;
+        this.colorPopover.innerHTML = (0, colorPalette_1.colorPaletteInnerHtml)();
+        this.customColorInput = document.createElement('input');
+        this.customColorInput.type = 'color';
+        this.customColorInput.className = 'ymz-color-popover__native';
+        this.customColorInput.tabIndex = -1;
+        this.customColorInput.setAttribute('aria-hidden', 'true');
+        this.colorPopover.appendChild(this.customColorInput);
+        root.appendChild(this.colorPopover);
+        if (!this.panel)
+            return;
+        this.panel.addEventListener('click', this.onClick);
+        this.panel.addEventListener('change', this.onChange);
+        this.panel.addEventListener('input', this.onInput, true);
+        INPUT_EVENTS.forEach((type) => this.panel?.addEventListener(type, this.stopEditorEvent));
+        this.panel.addEventListener('pointerdown', this.stopEditorEvent);
+        this.colorPopover.addEventListener('click', this.onColorPopoverClick);
+        this.colorPopover.addEventListener('mousedown', this.onColorPopoverMouseDown);
+        INPUT_EVENTS.forEach((type) => this.colorPopover.addEventListener(type, this.stopEditorEvent));
+        this.customColorInput.addEventListener('input', this.onNativeColorInput);
+        this.bindEditableColorInput('hex');
+        this.bindEditableColorInput('rgb');
+        document.addEventListener('mousedown', this.onDocumentMouseDown, true);
+    }
+    destroy() {
+        if (this.panel) {
+            this.panel.removeEventListener('click', this.onClick);
+            this.panel.removeEventListener('change', this.onChange);
+            this.panel.removeEventListener('input', this.onInput, true);
+            INPUT_EVENTS.forEach((type) => this.panel?.removeEventListener(type, this.stopEditorEvent));
+            this.panel.removeEventListener('pointerdown', this.stopEditorEvent);
+        }
+        this.colorPopover.removeEventListener('click', this.onColorPopoverClick);
+        this.colorPopover.removeEventListener('mousedown', this.onColorPopoverMouseDown);
+        INPUT_EVENTS.forEach((type) => this.colorPopover.removeEventListener(type, this.stopEditorEvent));
+        this.customColorInput.removeEventListener('input', this.onNativeColorInput);
+        document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
+        this.colorPopover.remove();
+    }
+    show() {
+        if (!this.panel)
+            return;
+        this.refresh();
+        this.panel.hidden = false;
+    }
+    hide() {
+        if (this.panel)
+            this.panel.hidden = true;
+        this.colorPopover.hidden = true;
+    }
+    refresh() {
+        if (!this.panel)
+            return;
+        this.current = this.commands.getActiveNodeStyle() ?? {};
+        this.panel.querySelectorAll('[data-node-style]').forEach((control) => {
+            const key = control.dataset.nodeStyle;
+            if (!key)
+                return;
+            control.value = toInputValue(this.current[key]);
+        });
+        this.panel.querySelectorAll('[data-node-style-toggle],[data-node-style-set]').forEach((button) => {
+            const key = (button.dataset.nodeStyleToggle ?? button.dataset.nodeStyleSet);
+            const value = button.dataset.nodeStyleValue;
+            button.classList.toggle('is-active', Boolean(key && value && this.current[key] === value));
+            button.setAttribute('aria-pressed', String(Boolean(key && value && this.current[key] === value)));
+        });
+        ['fillColor', 'borderColor', 'color'].forEach((key) => this.syncColorTrigger(key));
+        this.panel.dataset.readonly = String(this.commands.isReadonly());
+        this.panel.querySelectorAll('input,select,button').forEach((control) => {
+            if (control.dataset.nodeStyleAction === 'close')
+                return;
+            control.disabled = this.commands.isReadonly();
+        });
+    }
+    applyControl(control) {
+        const key = control.dataset.nodeStyle;
+        if (!key || this.commands.isReadonly())
+            return;
+        this.commands.setActiveNodeStyle({ [key]: control.value || null });
+        this.current = { ...this.current, [key]: control.value || null };
+    }
+    applyColor(value, close = true) {
+        if (this.commands.isReadonly())
+            return;
+        this.commands.setActiveNodeStyle({ [this.activeColorKey]: value });
+        this.current = { ...this.current, [this.activeColorKey]: value };
+        this.syncColorTrigger(this.activeColorKey);
+        this.syncColorInputs();
+        if (close)
+            this.colorPopover.hidden = true;
+    }
+    syncColorTrigger(key) {
+        if (!this.panel)
+            return;
+        const value = typeof this.current[key] === 'string' ? String(this.current[key]) : '';
+        const swatch = this.panel.querySelector(`[data-node-color-swatch="${key}"]`);
+        const label = this.panel.querySelector(`[data-node-color-label="${key}"]`);
+        swatch?.style.setProperty('--ymz-current-color', value || 'transparent');
+        if (label)
+            label.textContent = value || '默认';
+    }
+    syncColorInputs() {
+        const value = this.current[this.activeColorKey];
+        const presentation = (0, colorPresentation_1.presentColor)(value);
+        const editable = (0, colorPresentation_1.parseEditableColor)(value);
+        const hex = this.colorPopover.querySelector('[data-color-input="hex"]');
+        const rgb = this.colorPopover.querySelector('[data-color-input="rgb"]');
+        if (hex) {
+            hex.value = editable?.hex ?? '';
+            hex.setAttribute('aria-invalid', 'false');
+        }
+        if (rgb) {
+            rgb.value = editable?.rgb ?? '';
+            rgb.setAttribute('aria-invalid', 'false');
+        }
+        const hexReadout = this.colorPopover.querySelector('[data-color-readout="hex"]');
+        const rgbReadout = this.colorPopover.querySelector('[data-color-readout="rgb"]');
+        if (hexReadout)
+            hexReadout.textContent = presentation.hex;
+        if (rgbReadout)
+            rgbReadout.textContent = presentation.rgb;
+    }
+    openColorPopover(key, anchor) {
+        this.activeColorKey = key;
+        this.syncColorInputs();
+        this.colorPopover.hidden = false;
+        const rootRect = this.root.getBoundingClientRect();
+        const anchorRect = anchor.getBoundingClientRect();
+        const width = this.colorPopover.offsetWidth || 318;
+        const height = this.colorPopover.offsetHeight || 260;
+        const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
+        const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
+        const left = Math.max(8, Math.min(anchorRect.left - rootRect.left, rootWidth - width - 8));
+        const below = anchorRect.bottom - rootRect.top + 6;
+        const above = anchorRect.top - rootRect.top - height - 6;
+        const top = below + height <= rootHeight - 8 ? below : Math.max(8, above);
+        this.colorPopover.style.left = `${Math.round(left)}px`;
+        this.colorPopover.style.top = `${Math.round(top)}px`;
+    }
+    bindEditableColorInput(kind) {
+        const input = this.colorPopover.querySelector(`[data-color-input="${kind}"]`);
+        if (!input)
+            return;
+        input.addEventListener('input', () => {
+            const parsed = (0, colorPresentation_1.parseEditableColor)(input.value);
+            input.setAttribute('aria-invalid', parsed ? 'false' : 'true');
+            if (!parsed)
+                return;
+            const other = this.colorPopover.querySelector(`[data-color-input="${kind === 'hex' ? 'rgb' : 'hex'}"]`);
+            if (other) {
+                other.value = kind === 'hex' ? parsed.rgb : parsed.hex;
+                other.setAttribute('aria-invalid', 'false');
+            }
+            this.applyColor(parsed.hex, false);
+        });
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape')
+                this.colorPopover.hidden = true;
+        });
+    }
+}
+exports.NodeStylePanel = NodeStylePanel;
+
+},
+230: function(module, exports, __require, __externalRequire) {
+// /src/ui/projectStylePanel.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ProjectStylePanel = void 0;
+const projectStyle_1 = __require(14);
+const colorPalette_1 = __require(218);
+const colorPresentation_1 = __require(217);
+const colorSchemes_1 = __require(15);
+const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
+class ProjectStylePanel {
+    constructor(root, initial, readonly, onChange) {
+        this.root = root;
+        this.readonly = readonly;
+        this.onChange = onChange;
+        this.stop = (event) => event.stopPropagation();
+        this.onDocumentMouseDown = (event) => {
+            if (!this.panel || this.panel.hidden)
+                return;
+            const target = event.target;
+            if (target && this.colorPopover.contains(target))
+                return;
+            if (target && this.panel.contains(target)) {
+                this.colorPopover.hidden = true;
+                return;
+            }
+            this.hide();
+        };
+        this.onColorPopoverMouseDown = (event) => {
+            const target = event.target;
+            const isTextInput = target instanceof HTMLInputElement && target.type !== 'color';
+            if (!isTextInput)
+                event.preventDefault();
+            event.stopPropagation();
+        };
+        this.onNativeColorInput = () => this.applyBackgroundColor(this.customColorInput.value, false);
+        this.onColorPopoverClick = (event) => {
+            const target = event.target;
+            const swatch = target.closest('[data-color-value]');
+            if (swatch) {
+                this.applyBackgroundColor(swatch.dataset.colorValue || null);
+                return;
+            }
+            const action = target.closest('[data-color-action]')?.dataset.colorAction;
+            if (action === 'reset')
+                this.applyBackgroundColor(null);
+            if (action === 'custom') {
+                const value = this.style.backgroundColor;
+                this.customColorInput.value = typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : '#000000';
+                this.customColorInput.click();
+            }
+        };
+        this.onControl = (event) => {
+            const target = event.target;
+            if (target.dataset.projectStyle === 'rainbowLines') {
+                this.commit({ rainbowLines: target.checked });
+            }
+            else if (target.dataset.projectStyle === 'rainbowScheme') {
+                this.commit({ rainbowScheme: target.value, rainbowLines: true });
+            }
+            else if (target.dataset.projectSpacing) {
+                const horizontal = this.panel?.querySelector('[data-project-spacing="horizontal"]');
+                const vertical = this.panel?.querySelector('[data-project-spacing="vertical"]');
+                this.commit({
+                    density: 'custom',
+                    customMarginX: Number(horizontal?.value),
+                    customMarginY: Number(vertical?.value),
+                });
+            }
+        };
+        this.onClick = (event) => {
+            event.stopPropagation();
+            const target = event.target;
+            const action = target.closest('[data-project-style-action]')?.dataset.projectStyleAction;
+            const colorTrigger = target.closest('[data-project-color-trigger]');
+            if (colorTrigger) {
+                this.openColorPopover(colorTrigger);
+                return;
+            }
+            if (action === 'close')
+                return this.hide();
+            if (action === 'reset') {
+                this.commit({ density: 'default', rainbowLines: null, rainbowScheme: null, backgroundColor: null, customMarginX: undefined, customMarginY: undefined });
+                return;
+            }
+            const density = target.closest('[data-project-density]')?.dataset.projectDensity;
+            if (density) {
+                this.commit({ density });
+                return;
+            }
+            const background = target.closest('[data-project-background]')?.dataset.projectBackground;
+            if (background !== undefined)
+                this.commit({ backgroundColor: background || null });
+        };
+        this.style = (0, projectStyle_1.normalizeProjectStyle)(initial);
+        this.panel = root.querySelector('[data-role="project-style-panel"]');
+        this.colorPopover = document.createElement('div');
+        this.colorPopover.className = 'ymz-color-popover ymz-project-color-popover';
+        this.colorPopover.hidden = true;
+        this.colorPopover.innerHTML = (0, colorPalette_1.colorPaletteInnerHtml)();
+        this.customColorInput = document.createElement('input');
+        this.customColorInput.type = 'color';
+        this.customColorInput.className = 'ymz-color-popover__native';
+        this.customColorInput.tabIndex = -1;
+        this.customColorInput.setAttribute('aria-hidden', 'true');
+        this.colorPopover.appendChild(this.customColorInput);
+        root.appendChild(this.colorPopover);
+        if (!this.panel)
+            return;
+        this.panel.addEventListener('click', this.onClick);
+        this.panel.addEventListener('change', this.onControl);
+        this.panel.addEventListener('input', this.onControl);
+        BLOCKED_EVENTS.forEach((type) => this.panel?.addEventListener(type, this.stop));
+        this.panel.addEventListener('pointerdown', this.stop);
+        this.colorPopover.addEventListener('click', this.onColorPopoverClick);
+        this.colorPopover.addEventListener('mousedown', this.onColorPopoverMouseDown);
+        BLOCKED_EVENTS.forEach((type) => this.colorPopover.addEventListener(type, this.stop));
+        this.customColorInput.addEventListener('input', this.onNativeColorInput);
+        this.bindEditableColorInput('hex');
+        this.bindEditableColorInput('rgb');
+        document.addEventListener('mousedown', this.onDocumentMouseDown, true);
+        this.refresh();
+    }
+    destroy() {
+        if (!this.panel)
+            return;
+        this.panel.removeEventListener('click', this.onClick);
+        this.panel.removeEventListener('change', this.onControl);
+        this.panel.removeEventListener('input', this.onControl);
+        BLOCKED_EVENTS.forEach((type) => this.panel?.removeEventListener(type, this.stop));
+        this.panel.removeEventListener('pointerdown', this.stop);
+        this.colorPopover.removeEventListener('click', this.onColorPopoverClick);
+        this.colorPopover.removeEventListener('mousedown', this.onColorPopoverMouseDown);
+        BLOCKED_EVENTS.forEach((type) => this.colorPopover.removeEventListener(type, this.stop));
+        this.customColorInput.removeEventListener('input', this.onNativeColorInput);
+        document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
+        this.colorPopover.remove();
+    }
+    show() {
+        if (!this.panel)
+            return;
+        this.refresh();
+        this.panel.hidden = false;
+    }
+    hide() {
+        if (this.panel)
+            this.panel.hidden = true;
+        this.colorPopover.hidden = true;
+    }
+    setStyle(style) {
+        this.style = (0, projectStyle_1.normalizeProjectStyle)(style);
+        this.refresh();
+    }
+    commit(patch) {
+        if (this.readonly())
+            return;
+        this.style = (0, projectStyle_1.normalizeProjectStyle)({ ...this.style, ...patch });
+        this.onChange(this.style);
+        this.refresh();
+    }
+    refresh() {
+        if (!this.panel)
+            return;
+        this.panel.querySelectorAll('[data-project-density]').forEach((button) => {
+            const active = button.dataset.projectDensity === this.style.density;
+            button.classList.toggle('is-active', active);
+            button.setAttribute('aria-pressed', String(active));
+        });
+        const horizontal = this.panel.querySelector('[data-project-spacing="horizontal"]');
+        const vertical = this.panel.querySelector('[data-project-spacing="vertical"]');
+        const presetSpacing = (0, projectStyle_1.densitySpacing)(this.style.density, this.style.customMarginX, this.style.customMarginY).node;
+        if (horizontal)
+            horizontal.value = String(this.style.customMarginX ?? presetSpacing?.marginX ?? 42);
+        if (vertical)
+            vertical.value = String(this.style.customMarginY ?? presetSpacing?.marginY ?? 11);
+        const rainbow = this.panel.querySelector('[data-project-style="rainbowLines"]');
+        if (rainbow) {
+            rainbow.checked = this.style.rainbowLines === true;
+            rainbow.indeterminate = this.style.rainbowLines === null;
+        }
+        const rainbowScheme = this.panel.querySelector('[data-project-style="rainbowScheme"]');
+        const selectedScheme = (0, colorSchemes_1.normalizeColorSchemeId)(this.style.rainbowScheme) ?? 'rainbow';
+        if (rainbowScheme)
+            rainbowScheme.value = selectedScheme;
+        const rainbowPreview = this.panel.querySelector('[data-project-rainbow-preview]');
+        const colors = (0, colorSchemes_1.getColorScheme)(selectedScheme)?.colors ?? [];
+        if (rainbowPreview)
+            rainbowPreview.style.background = colors.length ? `linear-gradient(90deg, ${colors.join(',')})` : '';
+        this.syncBackgroundTrigger();
+        this.panel.querySelectorAll('[data-project-background]').forEach((button) => {
+            button.classList.toggle('is-active', (button.dataset.projectBackground || null) === this.style.backgroundColor);
+        });
+        this.panel.querySelectorAll('input,button').forEach((control) => {
+            if (control.dataset.projectStyleAction === 'close')
+                return;
+            control.disabled = this.readonly();
+        });
+    }
+    syncBackgroundTrigger() {
+        if (!this.panel)
+            return;
+        const value = this.style.backgroundColor ?? '';
+        const swatch = this.panel.querySelector('[data-project-color-swatch="backgroundColor"]');
+        const label = this.panel.querySelector('[data-project-color-label="backgroundColor"]');
+        swatch?.style.setProperty('--ymz-current-color', value || 'transparent');
+        if (label)
+            label.textContent = value || '默认';
+    }
+    syncColorInputs() {
+        const presentation = (0, colorPresentation_1.presentColor)(this.style.backgroundColor);
+        const editable = (0, colorPresentation_1.parseEditableColor)(this.style.backgroundColor);
+        const hex = this.colorPopover.querySelector('[data-color-input="hex"]');
+        const rgb = this.colorPopover.querySelector('[data-color-input="rgb"]');
+        if (hex) {
+            hex.value = editable?.hex ?? '';
+            hex.setAttribute('aria-invalid', 'false');
+        }
+        if (rgb) {
+            rgb.value = editable?.rgb ?? '';
+            rgb.setAttribute('aria-invalid', 'false');
+        }
+        const hexReadout = this.colorPopover.querySelector('[data-color-readout="hex"]');
+        const rgbReadout = this.colorPopover.querySelector('[data-color-readout="rgb"]');
+        if (hexReadout)
+            hexReadout.textContent = presentation.hex;
+        if (rgbReadout)
+            rgbReadout.textContent = presentation.rgb;
+    }
+    applyBackgroundColor(value, close = true) {
+        this.commit({ backgroundColor: value });
+        this.syncColorInputs();
+        if (close)
+            this.colorPopover.hidden = true;
+    }
+    openColorPopover(anchor) {
+        this.syncColorInputs();
+        this.colorPopover.hidden = false;
+        const rootRect = this.root.getBoundingClientRect();
+        const anchorRect = anchor.getBoundingClientRect();
+        const width = this.colorPopover.offsetWidth || 318;
+        const height = this.colorPopover.offsetHeight || 260;
+        const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
+        const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
+        const left = Math.max(8, Math.min(anchorRect.left - rootRect.left, rootWidth - width - 8));
+        const below = anchorRect.bottom - rootRect.top + 6;
+        const above = anchorRect.top - rootRect.top - height - 6;
+        const top = below + height <= rootHeight - 8 ? below : Math.max(8, above);
+        this.colorPopover.style.left = `${Math.round(left)}px`;
+        this.colorPopover.style.top = `${Math.round(top)}px`;
+    }
+    bindEditableColorInput(kind) {
+        const input = this.colorPopover.querySelector(`[data-color-input="${kind}"]`);
+        if (!input)
+            return;
+        input.addEventListener('input', () => {
+            const parsed = (0, colorPresentation_1.parseEditableColor)(input.value);
+            input.setAttribute('aria-invalid', parsed ? 'false' : 'true');
+            if (!parsed)
+                return;
+            const other = this.colorPopover.querySelector(`[data-color-input="${kind === 'hex' ? 'rgb' : 'hex'}"]`);
+            if (other) {
+                other.value = kind === 'hex' ? parsed.rgb : parsed.hex;
+                other.setAttribute('aria-invalid', 'false');
+            }
+            this.applyBackgroundColor(parsed.hex, false);
+        });
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape')
+                this.colorPopover.hidden = true;
+        });
+    }
+}
+exports.ProjectStylePanel = ProjectStylePanel;
+
+},
+231: function(module, exports, __require, __externalRequire) {
+// /src/editor/canvasRichTextVisibility.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.synchronizeCanvasRichTextVisibility = synchronizeCanvasRichTextVisibility;
+function cssColor(value, fallback) {
+    const text = typeof value === 'string' ? value.trim() : '';
+    return text || fallback;
+}
+function synchronizeCanvasRichTextVisibility(map) {
+    const runtime = map?.richText;
+    const wrapper = runtime?.textEditNode;
+    const node = runtime?.node;
+    if (!wrapper || !node)
+        return false;
+    const textColor = cssColor(node.style?.merge?.('color'), '#1f2937');
+    const safeBackground = cssColor(map?.renderer?.textEdit?.getBackground?.(node), 'var(--b3-theme-background, #ffffff)');
+    wrapper.style.setProperty('color', textColor, 'important');
+    wrapper.style.setProperty('caret-color', textColor, 'important');
+    wrapper.style.setProperty('-webkit-text-fill-color', 'currentColor', 'important');
+    wrapper.style.setProperty('background', safeBackground, 'important');
+    wrapper.querySelectorAll('.ql-container,.ql-editor').forEach((element) => {
+        element.style.setProperty('color', 'inherit', 'important');
+        element.style.setProperty('caret-color', 'currentColor', 'important');
+        element.style.setProperty('-webkit-text-fill-color', 'currentColor', 'important');
+    });
+    return true;
+}
+
+},
+232: function(module, exports, __require, __externalRequire) {
+// /src/editor/searchPanelState.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.setSearchReplaceExpanded = setSearchReplaceExpanded;
+function setSearchReplaceExpanded(panel, expanded) {
+    panel.dataset.replaceExpanded = String(expanded);
+    const row = panel.querySelector('[data-role="replace-row"]');
+    if (row)
+        row.hidden = !expanded;
+    const button = panel.querySelector('[data-search-action="toggle-replace"]');
+    if (!button)
+        return;
+    button.textContent = expanded ? '⌄' : '›';
+    button.setAttribute('aria-expanded', String(expanded));
+    button.setAttribute('title', expanded ? '收起替换' : '展开替换');
+    button.setAttribute('aria-label', expanded ? '收起替换' : '展开替换');
+}
+
+},
+233: function(module, exports, __require, __externalRequire) {
+// /src/core/appearanceTransaction.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.applyMapAppearanceTransaction = applyMapAppearanceTransaction;
+const themeColorRuntime_1 = __require(191);
+const APPEARANCE_RENDER_SOURCE = 'changeTheme';
+const REVISION_BY_MAP = new WeakMap();
+const ACTIVE_NODE_UIDS_BY_MAP = new WeakMap();
+function readNodeUid(node) {
+    const direct = node?.getData?.('uid');
+    if (typeof direct === 'string' && direct)
+        return direct;
+    const data = node?.getData?.();
+    const candidates = [
+        data?.uid,
+        node?.nodeData?.data?.uid,
+        node?.nodeData?.uid,
+        node?.data?.uid,
+        node?.uid,
+    ];
+    return candidates.find((value) => typeof value === 'string' && value) ?? null;
+}
+function replaceRainbowLinesConfig(map, config) {
+    const exact = {
+        ...config,
+        open: Boolean(config.open),
+        colorsList: Array.isArray(config.colorsList) ? [...config.colorsList] : [],
+    };
+    if (map.opt && typeof map.opt === 'object') {
+        const previous = { ...map.opt };
+        map.emit?.('before_update_config', map.opt);
+        // simple-mind-map updateConfig() deep-merges arrays and would concatenate
+        // old and new palette colors. Rainbow palettes require replacement semantics.
+        map.opt.rainbowLinesConfig = exact;
+        map.emit?.('after_update_config', map.opt, previous);
+        return;
+    }
+    map.updateConfig({ rainbowLinesConfig: exact });
+}
+function captureActiveNodeUids(map) {
+    const active = Array.isArray(map.renderer?.activeNodeList)
+        ? map.renderer.activeNodeList
+        : [];
+    return [...new Set(active.map(readNodeUid).filter((uid) => Boolean(uid)))];
+}
+function restoreActiveNodes(map, uids) {
+    if (uids.length === 0)
+        return;
+    const renderer = map.renderer;
+    if (!renderer?.findNodeByUid)
+        return;
+    const nodes = uids
+        .map((uid) => renderer.findNodeByUid?.(uid))
+        .filter((node) => Boolean(node));
+    if (nodes.length === 0)
+        return;
+    if (typeof renderer.activeMultiNode === 'function') {
+        renderer.activeMultiNode(nodes);
+        return;
+    }
+    if (typeof renderer.addNodeToActiveList === 'function') {
+        for (const node of nodes)
+            renderer.addNodeToActiveList(node, true);
+        renderer.emitNodeActiveEvent?.(nodes[nodes.length - 1]);
+    }
+}
+/**
+ * Apply all visual configuration as one renderer transaction.
+ *
+ * Theme, per-level runtime colors and rainbow-line configuration are updated
+ * before a single complete redraw. This prevents the renderer from reusing
+ * stale node/line caches while keeping view transform and local node styles.
+ */
+function applyMapAppearanceTransaction(options) {
+    const { map, themeConfig, rainbowLinesConfig, colorAppearance, useThemeLineColors, rootBackground, render = true, afterRender, } = options;
+    (0, themeColorRuntime_1.configureThemeColorRuntime)(map, {
+        appearance: colorAppearance,
+        useThemeLineColors,
+        rootBackground,
+    });
+    map.setThemeConfig(themeConfig, true);
+    replaceRainbowLinesConfig(map, rainbowLinesConfig);
+    if (!render)
+        return;
+    const mapKey = map;
+    const revision = (REVISION_BY_MAP.get(mapKey) ?? 0) + 1;
+    REVISION_BY_MAP.set(mapKey, revision);
+    // A full redraw temporarily clears renderer.activeNodeList. When several
+    // appearance changes are requested before the first redraw completes, keep
+    // the last non-empty snapshot so the newest transaction can restore it.
+    const currentActiveNodeUids = captureActiveNodeUids(map);
+    if (currentActiveNodeUids.length > 0) {
+        ACTIVE_NODE_UIDS_BY_MAP.set(mapKey, currentActiveNodeUids);
+    }
+    const activeNodeUids = ACTIVE_NODE_UIDS_BY_MAP.get(mapKey) ?? [];
+    const complete = () => {
+        if (REVISION_BY_MAP.get(mapKey) !== revision)
+            return;
+        ACTIVE_NODE_UIDS_BY_MAP.delete(mapKey);
+        restoreActiveNodes(map, activeNodeUids);
+        afterRender?.();
+    };
+    if (typeof map.reRender === 'function') {
+        map.reRender(complete, APPEARANCE_RENDER_SOURCE);
+        return;
+    }
+    // Compatibility fallback for test doubles or older compatible renderers.
+    // Production simple-mind-map exposes reRender(), which is always preferred.
+    map.render?.(complete, APPEARANCE_RENDER_SOURCE);
+}
+
+},
+234: function(module, exports, __require, __externalRequire) {
+// /src/editor/nodeQuickActions.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.NodeQuickActionsController = void 0;
+exports.describeNodeQuickActions = describeNodeQuickActions;
+function describeNodeQuickActions(state) {
+    const childCount = Math.max(0, Math.trunc(Number(state.childCount) || 0));
+    if (!state.selected && !state.hovered)
+        return [];
+    const actions = [];
+    if (childCount > 0) {
+        actions.push(state.expanded
+            ? { action: 'collapse', label: `折叠 ${childCount} 个子孙节点`, text: '−' }
+            : { action: 'expand', label: `展开 ${childCount} 个子孙节点`, text: String(childCount) });
+    }
+    actions.push({ action: 'add-child', label: '添加子节点', text: '+' });
+    return actions;
+}
+function descendantCount(node) {
+    const children = Array.isArray(node?.nodeData?.children)
+        ? node.nodeData.children
+        : Array.isArray(node?.children)
+            ? node.children
+            : [];
+    return children.reduce((total, child) => total + 1 + descendantCount(child), 0);
+}
+function visibleNodeList(root) {
+    if (!root)
+        return [];
+    const list = [];
+    const visit = (node) => {
+        if (!node)
+            return;
+        list.push(node);
+        if (node.getData?.('expand') === false)
+            return;
+        const children = Array.isArray(node.children) ? node.children : [];
+        children.forEach(visit);
+    };
+    visit(root);
+    return list;
+}
+/**
+ * Hover/selection quick actions with a pointer-safe bridge between an SVG node
+ * and the HTML buttons. Actions remain alive briefly while the pointer crosses
+ * the small visual gap, so the controls do not disappear before they can be
+ * clicked.
+ */
+class NodeQuickActionsController {
+    constructor(options) {
+        this.options = options;
+        this.frame = 0;
+        this.hideTimer = null;
+        this.hoveredUid = null;
+        this.nodeElementToUid = new Map();
+        this.onCanvasPointerOver = (event) => {
+            const uid = this.eventNodeUid(event);
+            if (uid)
+                this.setHovered(uid);
+        };
+        this.onCanvasPointerOut = (event) => {
+            const uid = this.eventNodeUid(event);
+            if (!uid)
+                return;
+            const related = event.relatedTarget;
+            if (related instanceof Node && event.currentTarget.contains(related)) {
+                const nextUid = related instanceof Element
+                    ? [...this.nodeElementToUid.entries()].find(([element]) => element === related || element.contains(related))?.[1]
+                    : null;
+                if (nextUid === uid)
+                    return;
+            }
+            this.scheduleHide(uid);
+        };
+        this.onActionPointerOver = (event) => {
+            const host = event.target.closest('[data-node-uid]');
+            const uid = host?.dataset.nodeUid;
+            if (uid)
+                this.setHovered(uid);
+        };
+        this.onActionPointerOut = (event) => {
+            const host = event.target.closest('[data-node-uid]');
+            const uid = host?.dataset.nodeUid;
+            if (!host || !uid)
+                return;
+            const related = event.relatedTarget;
+            if (related instanceof Node && host.contains(related))
+                return;
+            this.scheduleHide(uid);
+        };
+        this.onClick = (event) => {
+            const button = event.target.closest('[data-node-quick-action]');
+            const host = button?.closest('[data-node-uid]');
+            if (!button || !host)
+                return;
+            event.preventDefault();
+            event.stopPropagation();
+            const uid = host.dataset.nodeUid ?? '';
+            if (!uid)
+                return;
+            const action = button.dataset.nodeQuickAction;
+            if (action === 'add-child')
+                this.options.onAddChild(uid);
+            if (action === 'collapse')
+                this.options.onSetExpanded(uid, false);
+            if (action === 'expand')
+                this.options.onSetExpanded(uid, true);
+            this.setHovered(uid);
+        };
+        this.layer = document.createElement('div');
+        this.layer.className = 'ymz-node-quick-actions-layer';
+        this.layer.setAttribute('aria-hidden', 'false');
+        this.options.root.querySelector('.ymz-canvas-wrap')?.appendChild(this.layer);
+        this.layer.addEventListener('click', this.onClick);
+        this.layer.addEventListener('pointerover', this.onActionPointerOver);
+        this.layer.addEventListener('pointerout', this.onActionPointerOut);
+        this.options.canvas.addEventListener('pointerover', this.onCanvasPointerOver);
+        this.options.canvas.addEventListener('pointerout', this.onCanvasPointerOut);
+    }
+    destroy() {
+        cancelAnimationFrame(this.frame);
+        this.cancelHide();
+        this.layer.removeEventListener('click', this.onClick);
+        this.layer.removeEventListener('pointerover', this.onActionPointerOver);
+        this.layer.removeEventListener('pointerout', this.onActionPointerOut);
+        this.options.canvas.removeEventListener('pointerover', this.onCanvasPointerOver);
+        this.options.canvas.removeEventListener('pointerout', this.onCanvasPointerOut);
+        this.layer.remove();
+        this.nodeElementToUid.clear();
+    }
+    scheduleRefresh() {
+        cancelAnimationFrame(this.frame);
+        this.frame = requestAnimationFrame(() => this.refresh());
+    }
+    refresh() {
+        this.frame = 0;
+        this.layer.replaceChildren();
+        this.nodeElementToUid.clear();
+        if (this.options.readonly())
+            return;
+        const rootRect = this.options.root.getBoundingClientRect();
+        const activeNodes = this.options.getActiveNodes();
+        visibleNodeList(this.options.getRendererRoot()).forEach((node) => {
+            if (node?.isGeneralization || !node?.group?.node)
+                return;
+            const uid = String(node.getData?.('uid') ?? '');
+            if (!uid)
+                return;
+            const nodeElement = node.group.node;
+            this.nodeElementToUid.set(nodeElement, uid);
+            const rect = nodeElement.getBoundingClientRect();
+            if (!rect.width && !rect.height)
+                return;
+            const selected = activeNodes.includes(node) || node.getData?.('isActive') === true;
+            const hovered = this.hoveredUid === uid;
+            const descriptors = describeNodeQuickActions({
+                isRoot: Boolean(node.isRoot),
+                childCount: descendantCount(node),
+                expanded: node.getData?.('expand') !== false,
+                selected,
+                hovered,
+            });
+            if (descriptors.length === 0)
+                return;
+            const container = document.createElement('div');
+            container.className = 'ymz-node-quick-actions';
+            container.dataset.nodeUid = uid;
+            container.dataset.quickHovered = String(hovered);
+            container.style.left = `${rect.right - rootRect.left + 5}px`;
+            container.style.top = `${rect.top - rootRect.top + rect.height / 2}px`;
+            descriptors.forEach((descriptor) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `ymz-node-quick-action ymz-node-quick-action--${descriptor.action}`;
+                button.dataset.nodeQuickAction = descriptor.action;
+                button.title = descriptor.label;
+                button.setAttribute('aria-label', descriptor.label);
+                button.textContent = descriptor.text;
+                container.appendChild(button);
+            });
+            this.layer.appendChild(container);
+        });
+    }
+    eventNodeUid(event) {
+        for (const item of event.composedPath()) {
+            if (item instanceof Element) {
+                const uid = this.nodeElementToUid.get(item);
+                if (uid)
+                    return uid;
+            }
+        }
+        return null;
+    }
+    setHovered(uid) {
+        this.cancelHide();
+        if (this.hoveredUid === uid)
+            return;
+        this.hoveredUid = uid;
+        this.scheduleRefresh();
+    }
+    scheduleHide(uid) {
+        this.cancelHide();
+        this.hideTimer = window.setTimeout(() => {
+            this.hideTimer = null;
+            if (this.hoveredUid === uid)
+                this.setHovered(null);
+        }, 220);
+    }
+    cancelHide() {
+        if (this.hideTimer !== null)
+            window.clearTimeout(this.hideTimer);
+        this.hideTimer = null;
+    }
+}
+exports.NodeQuickActionsController = NodeQuickActionsController;
+
+},
+235: function(module, exports, __require, __externalRequire) {
+// /src/editor/canvasRightDrag.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CanvasRightDragController = exports.CanvasRightDragGesture = void 0;
+exports.shouldSuppressCanvasContextMenu = shouldSuppressCanvasContextMenu;
+class CanvasRightDragGesture {
+    constructor(threshold = 5) {
+        this.threshold = threshold;
+        this.active = false;
+        this.dragging = false;
+        this.startX = 0;
+        this.startY = 0;
+        this.lastX = 0;
+        this.lastY = 0;
+        this.suppressMenu = false;
+        this.contextSuppressedDuringDrag = false;
+    }
+    pointerDown(event) {
+        if (event.button !== 2)
+            return false;
+        this.active = true;
+        this.dragging = false;
+        this.suppressMenu = false;
+        this.contextSuppressedDuringDrag = false;
+        this.startX = this.lastX = event.clientX;
+        this.startY = this.lastY = event.clientY;
+        return true;
+    }
+    pointerMove(event) {
+        if (!this.active)
+            return { dragging: false, dx: 0, dy: 0 };
+        const total = Math.hypot(event.clientX - this.startX, event.clientY - this.startY);
+        if (!this.dragging && total <= this.threshold) {
+            this.lastX = event.clientX;
+            this.lastY = event.clientY;
+            return { dragging: false, dx: 0, dy: 0 };
+        }
+        const dx = event.clientX - this.lastX;
+        const dy = event.clientY - this.lastY;
+        this.dragging = true;
+        this.lastX = event.clientX;
+        this.lastY = event.clientY;
+        return { dragging: true, dx, dy };
+    }
+    pointerUp() {
+        if (!this.active)
+            return false;
+        const dragged = this.dragging;
+        this.active = false;
+        this.dragging = false;
+        this.suppressMenu = dragged && !this.contextSuppressedDuringDrag;
+        return dragged;
+    }
+    cancel() {
+        this.active = false;
+        this.dragging = false;
+    }
+    consumeContextMenu() {
+        if (this.active && this.dragging) {
+            this.contextSuppressedDuringDrag = true;
+            return true;
+        }
+        if (!this.suppressMenu)
+            return false;
+        this.suppressMenu = false;
+        return true;
+    }
+    get isDragging() {
+        return this.dragging;
+    }
+}
+exports.CanvasRightDragGesture = CanvasRightDragGesture;
+function shouldSuppressCanvasContextMenu(gesture) {
+    return gesture.consumeContextMenu();
+}
+class CanvasRightDragController {
+    constructor(options) {
+        this.options = options;
+        this.gesture = new CanvasRightDragGesture(5);
+        this.onMouseDown = (event) => {
+            this.gesture.pointerDown(event);
+        };
+        this.onMouseMove = (event) => {
+            const result = this.gesture.pointerMove(event);
+            if (!result.dragging)
+                return;
+            event.preventDefault();
+            this.options.root.classList.add("is-canvas-right-dragging");
+            if (this.options.mode() === "pan" && (result.dx || result.dy)) {
+                this.options.map.view?.translateXY?.(result.dx, result.dy);
+            }
+        };
+        this.finishGesture = () => {
+            this.gesture.pointerUp();
+            this.options.root.classList.remove("is-canvas-right-dragging");
+        };
+        this.onMouseUp = () => {
+            this.finishGesture();
+        };
+        this.onWindowMouseUp = (event) => {
+            if (event.button !== 2 && !this.gesture.isDragging)
+                return;
+            this.finishGesture();
+        };
+        this.onWindowBlur = () => {
+            this.cancel();
+        };
+        options.map.on?.("mousedown", this.onMouseDown);
+        options.map.on?.("mousemove", this.onMouseMove);
+        options.map.on?.("mouseup", this.onMouseUp);
+        window.addEventListener("mouseup", this.onWindowMouseUp, true);
+        window.addEventListener("blur", this.onWindowBlur);
+    }
+    destroy() {
+        this.options.map.off?.("mousedown", this.onMouseDown);
+        this.options.map.off?.("mousemove", this.onMouseMove);
+        this.options.map.off?.("mouseup", this.onMouseUp);
+        window.removeEventListener("mouseup", this.onWindowMouseUp, true);
+        window.removeEventListener("blur", this.onWindowBlur);
+        this.cancel();
+    }
+    consumeContextMenu() {
+        return this.gesture.consumeContextMenu();
+    }
+    cancel() {
+        this.gesture.cancel();
+        this.options.root.classList.remove("is-canvas-right-dragging");
+    }
+}
+exports.CanvasRightDragController = CanvasRightDragController;
+
+},
+236: function(module, exports, __require, __externalRequire) {
+// /src/editor/focusHighlight.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.scheduleFocusedNodeHighlight = scheduleFocusedNodeHighlight;
+/**
+ * Waits for a node hidden behind collapsed ancestors to be rendered, then adds
+ * the upstream highlight class briefly. The returned cleanup is idempotent.
+ */
+function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
+    const maxAttempts = Math.max(1, options.attempts ?? 20);
+    const duration = Math.max(0, options.duration ?? 1500);
+    const scheduleFrame = options.scheduleFrame ?? ((callback) => window.requestAnimationFrame(callback));
+    const cancelFrame = options.cancelFrame ?? ((id) => window.cancelAnimationFrame(id));
+    const scheduleTimer = options.scheduleTimer ?? ((callback, delay) => window.setTimeout(callback, delay));
+    const cancelTimer = options.cancelTimer ?? ((id) => window.clearTimeout(id));
+    let cancelled = false;
+    let frameId = null;
+    let timerId = null;
+    let highlighted = null;
+    const stopHighlight = () => {
+        highlighted?.closeHighlight?.();
+        highlighted = null;
+        if (timerId !== null) {
+            cancelTimer(timerId);
+            timerId = null;
+        }
+    };
+    const attempt = (remaining) => {
+        frameId = scheduleFrame(() => {
+            frameId = null;
+            if (cancelled)
+                return;
+            const node = renderer()?.findNodeByUid?.(uid) ?? null;
+            if (!node && remaining > 1) {
+                attempt(remaining - 1);
+                return;
+            }
+            if (!node) {
+                options.onMissing?.();
+                return;
+            }
+            highlighted = node;
+            options.onFound?.();
+            node.highlight?.();
+            timerId = scheduleTimer(() => {
+                timerId = null;
+                if (!cancelled)
+                    stopHighlight();
+            }, duration);
+        });
+    };
+    attempt(maxAttempts);
+    return () => {
+        if (cancelled)
+            return;
+        cancelled = true;
+        if (frameId !== null)
+            cancelFrame(frameId);
+        frameId = null;
+        stopHighlight();
+    };
+}
+
+},
+237: function(module, exports, __require, __externalRequire) {
+// /src/editor/editingSurfaceCoordinator.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.EditingSurfaceCoordinator = void 0;
+/**
+ * Coordinates the two text-editing surfaces used by split mode.
+ *
+ * Only explicit outline commands may create a focus restoration ticket.
+ * Canvas ownership always invalidates that ticket, so a later model patch
+ * cannot resurrect a previously edited outline row.
+ */
+class EditingSurfaceCoordinator {
+    constructor() {
+        this.currentOwner = 'none';
+        this.generation = 0;
+        this.currentPending = null;
+    }
+    get owner() {
+        return this.currentOwner;
+    }
+    get pending() {
+        return this.currentPending;
+    }
+    claimOutline() {
+        const previousOwner = this.currentOwner;
+        this.currentOwner = 'outline';
+        return {
+            previousOwner,
+            owner: this.currentOwner,
+            cancelledPending: false,
+        };
+    }
+    claimCanvas() {
+        const previousOwner = this.currentOwner;
+        const cancelledPending = Boolean(this.currentPending);
+        this.currentOwner = 'canvas';
+        this.generation += 1;
+        this.currentPending = null;
+        return { previousOwner, owner: this.currentOwner, cancelledPending };
+    }
+    release() {
+        const previousOwner = this.currentOwner;
+        const cancelledPending = Boolean(this.currentPending);
+        this.currentOwner = 'none';
+        this.generation += 1;
+        this.currentPending = null;
+        return { previousOwner, owner: this.currentOwner, cancelledPending };
+    }
+    queueOutline(request) {
+        this.currentOwner = 'outline';
+        const ticket = {
+            generation: ++this.generation,
+            request,
+        };
+        this.currentPending = ticket;
+        return ticket;
+    }
+    clearPending() {
+        if (!this.currentPending)
+            return false;
+        this.generation += 1;
+        this.currentPending = null;
+        return true;
+    }
+    isCurrent(ticket) {
+        return Boolean(ticket &&
+            this.currentOwner === 'outline' &&
+            this.currentPending === ticket &&
+            ticket.generation === this.generation);
+    }
+    take(ticket) {
+        if (!this.isCurrent(ticket))
+            return null;
+        this.currentPending = null;
+        return ticket.request;
+    }
+    takeCurrent() {
+        const ticket = this.currentPending;
+        return ticket ? this.take(ticket) : null;
+    }
+}
+exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
+
+},
+238: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76647,7 +77189,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-240: function(module, exports, __require, __externalRequire) {
+239: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76671,7 +77213,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-241: function(module, exports, __require, __externalRequire) {
+240: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76727,7 +77269,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-242: function(module, exports, __require, __externalRequire) {
+241: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76753,7 +77295,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-243: function(module, exports, __require, __externalRequire) {
+242: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76769,7 +77311,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-244: function(module, exports, __require, __externalRequire) {
+243: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76796,7 +77338,7 @@ function initializePluginStartup(options) {
 }
 
 },
-245: function(module, exports, __require, __externalRequire) {
+244: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

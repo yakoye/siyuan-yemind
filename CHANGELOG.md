@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.4 - 2026-07-22
+
+- Replaced the dual text/node outline modes with one continuous structured outline editor.
+- Added native cross-node selection, staged current-node/full-outline `Ctrl/Cmd+A`, and selection-aware copy, cut and paste.
+- Added atomic single-node, cross-node and indentation-based multiline replacement with stable UID and metadata preservation.
+- Preserved unselected child subtrees when multiline paste reuses an existing boundary node.
+- Added safe rich-text clipboard handling, plain-text paste, hidden-descendant copy rules, IME protection and readonly selection/copy.
+- Replaced leaf circles with equal-size black squares while retaining black expand/collapse triangles and indent-rainbow guides.
+- Flattened hover and active row presentation to background/text state only, without borders, outlines, shadows or left accent bars.
+- Restricted structural dragging to a dedicated gutter and added depth-aligned before, inside and after insertion indicators.
+- Delayed the formatting toolbar until pointer or keyboard selection completes.
+- Expanded permanent regression coverage to 15 domains and 169 scenario modules.
+
 ## 0.9.3 - 2026-07-22
 
 - Filled transparent center topics with the effective theme or project canvas background.
