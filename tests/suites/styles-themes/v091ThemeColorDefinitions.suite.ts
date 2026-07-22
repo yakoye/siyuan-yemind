@@ -75,7 +75,7 @@ describe('v0.9.2 complete theme color and border definitions', () => {
     const appearance = getThemeColorAppearance('scheme-dawn', 'dark')!;
     const branch = appearance.branches[2];
     expect(resolveThemeNodeColors(appearance, 0, 2)).toEqual({
-      fillColor: appearance.centerBackground,
+      fillColor: appearance.centerBackground === 'transparent' ? appearance.background : appearance.centerBackground,
       color: appearance.centerText,
       borderColor: appearance.centerBorder,
     });

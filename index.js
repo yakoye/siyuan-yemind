@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.2 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.3 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -38,11 +38,11 @@ const releaseInfo_1 = __require(23);
 const constants_1 = __require(24);
 const dock_1 = __require(30);
 const tabs_1 = __require(31);
-const OpenMapTabRegistry_1 = __require(239);
-const pluginUrl_1 = __require(240);
-const operationSafety_1 = __require(241);
-const pluginStartup_1 = __require(242);
-const globalSearch_1 = __require(243);
+const OpenMapTabRegistry_1 = __require(241);
+const pluginUrl_1 = __require(242);
+const operationSafety_1 = __require(243);
+const pluginStartup_1 = __require(244);
+const globalSearch_1 = __require(245);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -6669,18 +6669,19 @@ exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
     buildTime: '2026-07-22T13:30:00+09:00',
-    buildId: 'yemind-v0.9.2-20260722',
+    buildId: 'yemind-v0.9.3-20260722',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、分屏大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '补全主题节点边框颜色，并统一修复主题与彩虹连线切换后的即时完整重绘。',
+    releaseSummary: '修复中心主题透底与节点悬停操作，并将分屏大纲升级为可批量选择、复制和缩进粘贴的连续文本编辑器。',
     highlights: [
-        '19 套命名主题增加中心、一级、二级和普通节点边框颜色，三套基础主题沿用各自浅色和深色描边配置。',
-        '主题、彩虹连线和层级颜色改为一次原子外观事务，配置完成后只执行一次完整重绘。',
-        '切换主题或彩虹连线后立即刷新节点、连线、关联线和外框，不再依赖后续结构变化触发。',
-        '完整重绘保留缩放、平移和节点选择，不写入节点局部样式，也不增加撤销历史。',
-        '主题 JSON、菜单、运行时、测试和发布文档继续由同一数据源同步生成与验证。',
+        '透明中心主题自动使用当前主题或项目背景色，分支线不再透过文字区域。',
+        '节点无需先选中，鼠标悬停即可显示添加、折叠和展开操作；指针跨越按钮间隙时控件保持有效。',
+        '分屏与大纲默认提供一个连续文本编辑器，支持跨节点多行选择、复制、剪切、粘贴和替换。',
+        '粘贴空格或 Tab 缩进的目录文本会自动生成层级，并通过一次可撤销的整树事务同步到画布。',
+        '中文输入法完成组合输入后才同步；完全改写标题仍保留节点身份、备注、标签、图片和局部样式。',
+        '保留节点树模式用于富文本、拖动和展开折叠，文本与节点模式共享同一份导图数据。',
     ],
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -6713,7 +6714,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.2';
+exports.PLUGIN_VERSION = '0.9.3';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -7466,10 +7467,10 @@ function escapeHtml(value) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
 const YeMindEditor_1 = __require(32);
-const deferredMount_1 = __require(237);
+const deferredMount_1 = __require(239);
 const constants_1 = __require(24);
 const visibleElement_1 = __require(224);
-const tabNodeFocus_1 = __require(238);
+const tabNodeFocus_1 = __require(240);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -7607,6 +7608,7 @@ const nodeNoteState_1 = __require(185);
 const canvasRightDrag_1 = __require(234);
 const focusHighlight_1 = __require(235);
 const editingSurfaceCoordinator_1 = __require(236);
+const OutlineTextEditorController_1 = __require(237);
 class YeMindEditor {
     constructor(options) {
         this.options = options;
@@ -7626,6 +7628,8 @@ class YeMindEditor {
         this.canvasRightDrag = null;
         this.cancelFocusedNodeHighlight = null;
         this.outlineRichText = null;
+        this.outlineTextEditor = null;
+        this.outlineMode = "text";
         this.settingsInitialized = false;
         this.viewMode = "map";
         this.searchText = "";
@@ -7805,7 +7809,7 @@ class YeMindEditor {
         };
         this.onOutlineKeydownBubble = (event) => {
             if ((event.key === "Backspace" || event.key === "Delete") &&
-                event.target?.closest?.("[data-outline-editor]")) {
+                event.target?.closest?.("[data-outline-editor], [data-role=\"outline-text-editor\"]")) {
                 // Quill/default text editing already ran at the target. Stop the event
                 // here so simple-mind-map's window shortcut cannot reinterpret it as
                 // structural node deletion.
@@ -7909,6 +7913,8 @@ class YeMindEditor {
     }
     destroy() {
         this.options.diagnostics.record("editor", "destroy-started", this.current.id, { dirty: this.saveRevisions.isDirty() });
+        this.outlineTextEditor?.destroy();
+        this.outlineTextEditor = null;
         this.outlineRichText?.destroy();
         this.outlineRichText = null;
         this.flushPendingSave();
@@ -7936,7 +7942,7 @@ class YeMindEditor {
         this.cancelFocusedNodeHighlight?.();
         this.cancelFocusedNodeHighlight = null;
         this.rootEl?.removeEventListener("keydown", this.onRootKeydown, true);
-        this.outlineEl?.removeEventListener("keydown", this.onOutlineKeydownBubble);
+        this.outlinePaneEl?.removeEventListener("keydown", this.onOutlineKeydownBubble);
         this.rootEl?.removeEventListener("paste", this.onImagePaste);
         this.canvasEl?.removeEventListener("dragover", this.onImageDragOver);
         this.canvasEl?.removeEventListener("drop", this.onImageDrop);
@@ -7966,7 +7972,10 @@ class YeMindEditor {
         this.rootEl = this.options.container.querySelector(".ymz-editor");
         this.canvasEl = this.options.container.querySelector('[data-role="canvas"]');
         this.splitDividerEl = this.options.container.querySelector('[data-role="split-divider"]');
-        this.outlineEl = this.options.container.querySelector('[data-role="outline"]');
+        this.outlinePaneEl = this.options.container.querySelector('[data-role="outline"]');
+        this.outlineEl = this.options.container.querySelector('[data-role="outline-tree"]');
+        this.outlineTextEditorEl = this.options.container.querySelector('[data-role="outline-text-editor"]');
+        this.outlineTextStatusEl = this.options.container.querySelector('[data-role="outline-text-status"]');
         this.statsEl = this.options.container.querySelector('[data-role="stats"]');
         this.zoomEl = this.options.container.querySelector('[data-role="zoom"]');
         this.saveStateEl = this.options.container.querySelector('[data-role="save-state"]');
@@ -8063,11 +8072,23 @@ class YeMindEditor {
                 this.richTextToolbar?.update(hasRange, rect, format, target);
             },
         });
+        this.outlineTextEditor = new OutlineTextEditorController_1.OutlineTextEditorController({
+            textarea: this.outlineTextEditorEl,
+            status: this.outlineTextStatusEl,
+            getTree: () => this.current.data,
+            isReadonly: () => Boolean(this.commands?.isReadonly()),
+            onApply: (tree) => Boolean(this.commands?.replaceTree(tree)),
+            onDiagnostic: (action, details) => this.options.diagnostics.record("outline-text", action, this.current.id, details),
+        });
+        this.setOutlineMode("text", false);
         this.rootEl.addEventListener("keydown", this.onRootKeydown, true);
         this.rootEl.addEventListener("paste", this.onImagePaste);
         this.canvasEl.addEventListener("dragover", this.onImageDragOver);
         this.canvasEl.addEventListener("drop", this.onImageDrop);
         this.canvasEl.addEventListener("pointerdown", this.onCanvasPointerDown, true);
+        this.outlineTextEditorEl.addEventListener("focus", () => {
+            this.claimOutlineInteraction("outline-text-focus");
+        });
         this.bindToolbar();
         this.bindMapEvents();
         this.bindAppearanceObserver();
@@ -8111,6 +8132,13 @@ class YeMindEditor {
                 event.preventDefault();
                 event.stopPropagation();
                 this.openLink(anchor.href || anchor.getAttribute("href") || "");
+                return;
+            }
+            const outlineModeButton = event.target.closest("[data-outline-mode-button]");
+            if (outlineModeButton) {
+                event.preventDefault();
+                const mode = outlineModeButton.dataset.outlineModeButton === "tree" ? "tree" : "text";
+                this.setOutlineMode(mode);
                 return;
             }
             const outlineToggle = event.target.closest("[data-outline-toggle]");
@@ -8279,7 +8307,7 @@ class YeMindEditor {
         });
         // Capture structural keys before Quill's own keyboard module consumes them.
         this.outlineEl.addEventListener("keydown", (event) => this.handleOutlineKeydown(event), true);
-        this.outlineEl.addEventListener("keydown", this.onOutlineKeydownBubble);
+        this.outlinePaneEl.addEventListener("keydown", this.onOutlineKeydownBubble);
         this.bindOutlineDrag();
         this.bindSplitDivider();
         this.rootEl.addEventListener("change", (event) => {
@@ -8686,6 +8714,7 @@ class YeMindEditor {
             rainbowLinesConfig: projectAppearance.rainbow,
             colorAppearance: appearance.colorAppearance,
             useThemeLineColors: normalizedProjectStyle.rainbowLines === null,
+            rootBackground: String(projectAppearance.themeConfig.backgroundColor ?? appearance.colorAppearance.background),
             render,
             afterRender: () => {
                 this.map?.associativeLine?.renderAllLines?.();
@@ -9038,6 +9067,35 @@ class YeMindEditor {
             return clientY >= rect.top && clientY <= rect.bottom;
         }) ?? null);
     }
+    setOutlineMode(mode, record = true) {
+        if (!this.outlinePaneEl)
+            return;
+        const previous = this.outlineMode;
+        if (mode === "text") {
+            this.outlineRichText?.commitAndDetach("outline-mode-text");
+            this.outlineTextEditor?.activate(this.current.data);
+        }
+        else {
+            this.outlineTextEditor?.deactivate("outline-mode-tree");
+        }
+        this.outlineMode = mode;
+        this.outlinePaneEl.dataset.outlineMode = mode;
+        this.outlinePaneEl
+            .querySelectorAll("[data-outline-mode-button]")
+            .forEach((button) => {
+            const active = button.dataset.outlineModeButton === mode;
+            button.setAttribute("aria-pressed", String(active));
+            button.classList.toggle("is-active", active);
+        });
+        if (mode === "tree")
+            this.renderOutline(this.current.data);
+        if (record && previous !== mode) {
+            this.options.diagnostics.record("outline", "mode-changed", this.current.id, {
+                previous,
+                mode,
+            });
+        }
+    }
     claimOutlineInteraction(reason) {
         const transition = this.editingSurface.claimOutline();
         if (transition.previousOwner === "outline")
@@ -9045,6 +9103,7 @@ class YeMindEditor {
         this.options.diagnostics.record("editing-surface", "outline-claimed", this.current.id, { reason, previousOwner: transition.previousOwner });
     }
     claimCanvasInteraction(reason) {
+        const textApplied = this.outlineTextEditor?.flush(`surface-change:${reason}`) ?? false;
         const hadActiveOutlineEditor = Boolean(this.outlineRichText?.activeHost);
         const transition = this.editingSurface.claimCanvas();
         if (hadActiveOutlineEditor) {
@@ -9058,6 +9117,7 @@ class YeMindEditor {
                 previousOwner: transition.previousOwner,
                 detachedOutlineEditor: hadActiveOutlineEditor,
                 cancelledPending: transition.cancelledPending,
+                textDocumentApplied: textApplied,
             });
         }
     }
@@ -9070,6 +9130,7 @@ class YeMindEditor {
         this.options.diagnostics.record("editing-surface", "outline-focus-queued", this.current.id, { placement: request.placement });
     }
     renderOutline(data) {
+        this.outlineTextEditor?.syncFromTree(data);
         const activeEditor = this.outlineRichText?.activeHost ?? null;
         const activeUid = activeEditor?.closest("[data-outline-uid]")?.dataset
             .outlineUid ?? null;
@@ -9077,6 +9138,7 @@ class YeMindEditor {
         const nextStructureKey = (0, outline_1.outlineStructureSignature)(data);
         const structureChanged = Boolean(this.outlineStructureKey && this.outlineStructureKey !== nextStructureKey);
         const pendingTicket = this.editingSurface.pending;
+        this.outlinePaneEl.setAttribute("aria-readonly", String(readonly));
         this.outlineEl.setAttribute("aria-readonly", String(readonly));
         if (pendingTicket || (structureChanged && activeEditor && activeUid)) {
             // Focus restoration is explicit. A structure change originating from the
@@ -9633,6 +9695,7 @@ class YeMindEditor {
             this.commands.cancelRelation();
         this.richTextToolbar?.setEnabled(this.settings.showRichTextToolbar && !enabled);
         this.outlineRichText?.setReadonly(enabled);
+        this.outlineTextEditor?.setReadonly(enabled);
         this.map.setMode(enabled ? "readonly" : "edit");
         this.renderOutline(this.current.data);
         this.options.diagnostics.record("editor", "readonly-changed", this.current.id, { enabled });
@@ -9787,6 +9850,7 @@ function createMindMap(options) {
     (0, themeColorRuntime_1.configureThemeColorRuntime)(mindMap, {
         appearance: appearance.colorAppearance,
         useThemeLineColors: true,
+        rootBackground: String(appearance.themeConfig.backgroundColor ?? appearance.colorAppearance.background),
     });
     return mindMap;
 }
@@ -70616,10 +70680,20 @@ function resolveThemeBranch(appearance, branchIndex) {
     const index = normalizeThemeBranchIndex(branchIndex, appearance.cycleLength);
     return appearance.branches[index] ?? appearance.branches[0];
 }
-function resolveThemeNodeColors(appearance, layerIndex, branchIndex) {
+function isTransparentColor(value) {
+    const normalized = String(value ?? '').trim().toLowerCase().replace(/\s+/g, '');
+    return !normalized
+        || normalized === 'transparent'
+        || normalized === 'rgba(0,0,0,0)'
+        || normalized === 'hsla(0,0%,0%,0)'
+        || normalized === '#00000000'
+        || normalized === '#0000';
+}
+function resolveThemeNodeColors(appearance, layerIndex, branchIndex, rootBackground) {
     if (layerIndex <= 0) {
+        const fallback = isTransparentColor(rootBackground) ? appearance.background : rootBackground;
         return {
-            fillColor: appearance.centerBackground,
+            fillColor: isTransparentColor(appearance.centerBackground) ? fallback : appearance.centerBackground,
             color: appearance.centerText,
             borderColor: appearance.centerBorder,
         };
@@ -70650,7 +70724,7 @@ function resolveThemeNodeColors(appearance, layerIndex, branchIndex) {
 }
 class ThemeColorRuntime {
     constructor() {
-        this.config = { appearance: null, useThemeLineColors: false };
+        this.config = { appearance: null, useThemeLineColors: false, rootBackground: undefined };
         this.positionByData = new WeakMap();
         this.ownedGetters = new WeakSet();
     }
@@ -70712,7 +70786,7 @@ class ThemeColorRuntime {
         const position = this.positionByData.get(data);
         if (!appearance || !position)
             return undefined;
-        return resolveThemeNodeColors(appearance, position.layerIndex, position.branchIndex)[key];
+        return resolveThemeNodeColors(appearance, position.layerIndex, position.branchIndex, this.config.rootBackground)[key];
     }
 }
 const RUNTIME_BY_MAP = new WeakMap();
@@ -71278,6 +71352,17 @@ function createCommandAdapter(mindMap) {
             if (!node || node.isGeneralization || persistedChildren.length === 0)
                 return false;
             mindMap.execCommand('SET_NODE_EXPAND', node, expanded);
+            return true;
+        },
+        replaceTree: (data) => {
+            if (!canMutate())
+                return false;
+            const updateData = mindMap.updateData;
+            if (typeof updateData !== 'function')
+                return false;
+            // updateData is the upstream undoable whole-tree transaction. setData()
+            // would clear history and is therefore intentionally not used here.
+            updateData.call(mindMap, data);
             return true;
         },
         moveNodeByUid: (uid, targetUid, position) => {
@@ -72734,7 +72819,17 @@ function createEditorTemplate(title, theme = 'yemind-default', lineStyle = 'curv
         <div class="ymz-workspace">
           <div class="ymz-canvas" data-role="canvas"></div>
           <div class="ymz-split-divider" data-role="split-divider" role="separator" aria-orientation="vertical" aria-label="调整导图和大纲宽度" aria-valuemin="25" aria-valuemax="70" aria-valuenow="42" tabindex="0"></div>
-          <aside class="ymz-outline" data-role="outline" role="tree" aria-label="导图大纲"></aside>
+          <aside class="ymz-outline" data-role="outline" data-outline-mode="text" aria-label="导图大纲">
+            <div class="ymz-outline-toolbar" role="toolbar" aria-label="大纲编辑模式">
+              <div class="ymz-outline-mode-switch" role="group" aria-label="大纲编辑模式">
+                <button type="button" data-outline-mode-button="text" aria-pressed="true" title="连续文本编辑">文本</button>
+                <button type="button" data-outline-mode-button="tree" aria-pressed="false" title="节点树编辑">节点</button>
+              </div>
+              <span class="ymz-outline-text-status" data-role="outline-text-status">自动同步</span>
+            </div>
+            <div class="ymz-outline-tree" data-role="outline-tree" role="tree" aria-label="节点树大纲"></div>
+            <textarea class="ymz-outline-text-editor" data-role="outline-text-editor" aria-label="连续文本大纲编辑器" spellcheck="false" placeholder="每行一个节点；缩进表示层级"></textarea>
+          </aside>
         </div>
 
         <div class="ymz-floating ymz-leftbar" role="toolbar" aria-label="画布工具">
@@ -75389,10 +75484,11 @@ function restoreActiveNodes(map, uids) {
  * stale node/line caches while keeping view transform and local node styles.
  */
 function applyMapAppearanceTransaction(options) {
-    const { map, themeConfig, rainbowLinesConfig, colorAppearance, useThemeLineColors, render = true, afterRender, } = options;
+    const { map, themeConfig, rainbowLinesConfig, colorAppearance, useThemeLineColors, rootBackground, render = true, afterRender, } = options;
     (0, themeColorRuntime_1.configureThemeColorRuntime)(map, {
         appearance: colorAppearance,
         useThemeLineColors,
+        rootBackground,
     });
     map.setThemeConfig(themeConfig, true);
     replaceRainbowLinesConfig(map, rainbowLinesConfig);
@@ -75434,22 +75530,13 @@ exports.NodeQuickActionsController = void 0;
 exports.describeNodeQuickActions = describeNodeQuickActions;
 function describeNodeQuickActions(state) {
     const childCount = Math.max(0, Math.trunc(Number(state.childCount) || 0));
-    if (childCount > 0 && !state.expanded) {
-        return [{
-                action: 'expand',
-                label: `展开 ${childCount} 个子孙节点`,
-                text: String(childCount),
-            }];
-    }
-    if (!state.selected)
+    if (!state.selected && !state.hovered)
         return [];
     const actions = [];
     if (childCount > 0) {
-        actions.push({
-            action: 'collapse',
-            label: `折叠 ${childCount} 个子孙节点`,
-            text: '−',
-        });
+        actions.push(state.expanded
+            ? { action: 'collapse', label: `折叠 ${childCount} 个子孙节点`, text: '−' }
+            : { action: 'expand', label: `展开 ${childCount} 个子孙节点`, text: String(childCount) });
     }
     actions.push({ action: 'add-child', label: '添加子节点', text: '+' });
     return actions;
@@ -75470,8 +75557,7 @@ function visibleNodeList(root) {
         if (!node)
             return;
         list.push(node);
-        const expanded = node.getData?.('expand') !== false;
-        if (!expanded)
+        if (node.getData?.('expand') === false)
             return;
         const children = Array.isArray(node.children) ? node.children : [];
         children.forEach(visit);
@@ -75479,10 +75565,54 @@ function visibleNodeList(root) {
     visit(root);
     return list;
 }
+/**
+ * Hover/selection quick actions with a pointer-safe bridge between an SVG node
+ * and the HTML buttons. Actions remain alive briefly while the pointer crosses
+ * the small visual gap, so the controls do not disappear before they can be
+ * clicked.
+ */
 class NodeQuickActionsController {
     constructor(options) {
         this.options = options;
         this.frame = 0;
+        this.hideTimer = null;
+        this.hoveredUid = null;
+        this.nodeElementToUid = new Map();
+        this.onCanvasPointerOver = (event) => {
+            const uid = this.eventNodeUid(event);
+            if (uid)
+                this.setHovered(uid);
+        };
+        this.onCanvasPointerOut = (event) => {
+            const uid = this.eventNodeUid(event);
+            if (!uid)
+                return;
+            const related = event.relatedTarget;
+            if (related instanceof Node && event.currentTarget.contains(related)) {
+                const nextUid = related instanceof Element
+                    ? [...this.nodeElementToUid.entries()].find(([element]) => element === related || element.contains(related))?.[1]
+                    : null;
+                if (nextUid === uid)
+                    return;
+            }
+            this.scheduleHide(uid);
+        };
+        this.onActionPointerOver = (event) => {
+            const host = event.target.closest('[data-node-uid]');
+            const uid = host?.dataset.nodeUid;
+            if (uid)
+                this.setHovered(uid);
+        };
+        this.onActionPointerOut = (event) => {
+            const host = event.target.closest('[data-node-uid]');
+            const uid = host?.dataset.nodeUid;
+            if (!host || !uid)
+                return;
+            const related = event.relatedTarget;
+            if (related instanceof Node && host.contains(related))
+                return;
+            this.scheduleHide(uid);
+        };
         this.onClick = (event) => {
             const button = event.target.closest('[data-node-quick-action]');
             const host = button?.closest('[data-node-uid]');
@@ -75500,17 +75630,28 @@ class NodeQuickActionsController {
                 this.options.onSetExpanded(uid, false);
             if (action === 'expand')
                 this.options.onSetExpanded(uid, true);
+            this.setHovered(uid);
         };
         this.layer = document.createElement('div');
         this.layer.className = 'ymz-node-quick-actions-layer';
         this.layer.setAttribute('aria-hidden', 'false');
         this.options.root.querySelector('.ymz-canvas-wrap')?.appendChild(this.layer);
         this.layer.addEventListener('click', this.onClick);
+        this.layer.addEventListener('pointerover', this.onActionPointerOver);
+        this.layer.addEventListener('pointerout', this.onActionPointerOut);
+        this.options.canvas.addEventListener('pointerover', this.onCanvasPointerOver);
+        this.options.canvas.addEventListener('pointerout', this.onCanvasPointerOut);
     }
     destroy() {
         cancelAnimationFrame(this.frame);
+        this.cancelHide();
         this.layer.removeEventListener('click', this.onClick);
+        this.layer.removeEventListener('pointerover', this.onActionPointerOver);
+        this.layer.removeEventListener('pointerout', this.onActionPointerOut);
+        this.options.canvas.removeEventListener('pointerover', this.onCanvasPointerOver);
+        this.options.canvas.removeEventListener('pointerout', this.onCanvasPointerOut);
         this.layer.remove();
+        this.nodeElementToUid.clear();
     }
     scheduleRefresh() {
         cancelAnimationFrame(this.frame);
@@ -75519,33 +75660,37 @@ class NodeQuickActionsController {
     refresh() {
         this.frame = 0;
         this.layer.replaceChildren();
+        this.nodeElementToUid.clear();
         if (this.options.readonly())
             return;
         const rootRect = this.options.root.getBoundingClientRect();
+        const activeNodes = this.options.getActiveNodes();
         visibleNodeList(this.options.getRendererRoot()).forEach((node) => {
             if (node?.isGeneralization || !node?.group?.node)
                 return;
             const uid = String(node.getData?.('uid') ?? '');
             if (!uid)
                 return;
-            const rect = node.group.node.getBoundingClientRect();
+            const nodeElement = node.group.node;
+            this.nodeElementToUid.set(nodeElement, uid);
+            const rect = nodeElement.getBoundingClientRect();
             if (!rect.width && !rect.height)
                 return;
-            const childCount = descendantCount(node);
-            const expanded = node.getData?.('expand') !== false;
-            const selected = this.options.getActiveNodes().includes(node)
-                || node.getData?.('isActive') === true;
+            const selected = activeNodes.includes(node) || node.getData?.('isActive') === true;
+            const hovered = this.hoveredUid === uid;
             const descriptors = describeNodeQuickActions({
                 isRoot: Boolean(node.isRoot),
-                childCount,
-                expanded,
+                childCount: descendantCount(node),
+                expanded: node.getData?.('expand') !== false,
                 selected,
+                hovered,
             });
             if (descriptors.length === 0)
                 return;
             const container = document.createElement('div');
             container.className = 'ymz-node-quick-actions';
             container.dataset.nodeUid = uid;
+            container.dataset.quickHovered = String(hovered);
             container.style.left = `${rect.right - rootRect.left + 5}px`;
             container.style.top = `${rect.top - rootRect.top + rect.height / 2}px`;
             descriptors.forEach((descriptor) => {
@@ -75560,6 +75705,36 @@ class NodeQuickActionsController {
             });
             this.layer.appendChild(container);
         });
+    }
+    eventNodeUid(event) {
+        for (const item of event.composedPath()) {
+            if (item instanceof Element) {
+                const uid = this.nodeElementToUid.get(item);
+                if (uid)
+                    return uid;
+            }
+        }
+        return null;
+    }
+    setHovered(uid) {
+        this.cancelHide();
+        if (this.hoveredUid === uid)
+            return;
+        this.hoveredUid = uid;
+        this.scheduleRefresh();
+    }
+    scheduleHide(uid) {
+        this.cancelHide();
+        this.hideTimer = window.setTimeout(() => {
+            this.hideTimer = null;
+            if (this.hoveredUid === uid)
+                this.setHovered(null);
+        }, 220);
+    }
+    cancelHide() {
+        if (this.hideTimer !== null)
+            window.clearTimeout(this.hideTimer);
+        this.hideTimer = null;
     }
 }
 exports.NodeQuickActionsController = NodeQuickActionsController;
@@ -75849,6 +76024,608 @@ exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
 
 },
 237: function(module, exports, __require, __externalRequire) {
+// /src/editor/OutlineTextEditorController.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OutlineTextEditorController = void 0;
+const outlineTextDocument_1 = __require(238);
+/**
+ * One-document outline editor.
+ *
+ * Unlike the row-based rich-text outline, this controller deliberately uses a
+ * single native textarea. Native selection, clipboard and IME behavior then
+ * span any number of nodes. The whole document is reconciled back to the map
+ * as one undoable tree transaction.
+ */
+class OutlineTextEditorController {
+    constructor(options) {
+        this.options = options;
+        this.timer = null;
+        this.active = false;
+        this.dirty = false;
+        this.applying = false;
+        this.composing = false;
+        this.lastAppliedText = '';
+        this.onInput = () => {
+            this.markDirty(this.composing ? 'composition-input' : 'input');
+        };
+        this.onCompositionStart = () => {
+            this.composing = true;
+            this.cancelTimer();
+            this.updateStatus('正在输入…');
+        };
+        this.onCompositionEnd = () => {
+            this.composing = false;
+            this.markDirty('composition-end');
+        };
+        this.onFocus = () => {
+            this.options.onDiagnostic?.('text-focus');
+        };
+        this.onBlur = () => {
+            this.flush('blur');
+        };
+        this.onKeydown = (event) => {
+            if (this.options.isReadonly() || this.composing || event.isComposing)
+                return;
+            const textarea = this.options.textarea;
+            if ((event.ctrlKey || event.metaKey) && (event.key === 'Enter' || event.key.toLowerCase() === 's')) {
+                event.preventDefault();
+                this.flush(event.key === 'Enter' ? 'shortcut-apply' : 'shortcut-save');
+                return;
+            }
+            if (event.key === 'Tab' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                event.preventDefault();
+                const edit = (0, outlineTextDocument_1.editOutlineSelectionIndent)(textarea.value, textarea.selectionStart, textarea.selectionEnd, event.shiftKey);
+                textarea.value = edit.value;
+                textarea.setSelectionRange(edit.selectionStart, edit.selectionEnd);
+                this.markDirty(event.shiftKey ? 'outdent' : 'indent');
+                return;
+            }
+            if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                event.preventDefault();
+                const edit = (0, outlineTextDocument_1.insertOutlineNewline)(textarea.value, textarea.selectionStart, textarea.selectionEnd);
+                textarea.value = edit.value;
+                textarea.setSelectionRange(edit.selectionStart, edit.selectionEnd);
+                this.markDirty('newline');
+            }
+        };
+        this.debounceMs = Math.max(100, options.debounceMs ?? 450);
+        this.baseTree = options.getTree();
+        this.options.textarea.addEventListener('input', this.onInput);
+        this.options.textarea.addEventListener('keydown', this.onKeydown);
+        this.options.textarea.addEventListener('blur', this.onBlur);
+        this.options.textarea.addEventListener('focus', this.onFocus);
+        this.options.textarea.addEventListener('compositionstart', this.onCompositionStart);
+        this.options.textarea.addEventListener('compositionend', this.onCompositionEnd);
+        this.setReadonly(options.isReadonly());
+        this.syncFromTree(this.baseTree, true);
+    }
+    get isDirty() {
+        return this.dirty;
+    }
+    get isActive() {
+        return this.active;
+    }
+    activate(tree) {
+        this.active = true;
+        this.baseTree = tree;
+        if (!this.dirty && !this.applying)
+            this.syncFromTree(tree, true);
+        this.updateStatus(this.dirty ? '等待同步…' : '自动同步');
+    }
+    deactivate(reason = 'mode-change') {
+        this.flush(reason);
+        this.active = false;
+        this.cancelTimer();
+    }
+    setReadonly(readonly) {
+        this.options.textarea.readOnly = readonly;
+        this.options.textarea.setAttribute('aria-readonly', String(readonly));
+        if (readonly) {
+            this.cancelTimer();
+            this.updateStatus('只读');
+        }
+        else if (this.active) {
+            this.updateStatus(this.dirty ? '等待同步…' : '自动同步');
+        }
+    }
+    /** Synchronize canvas/tree changes without destroying an in-progress selection. */
+    syncFromTree(tree, force = false) {
+        this.baseTree = tree;
+        if (this.applying)
+            return;
+        if (!force && this.dirty) {
+            this.updateStatus('当前文本尚未同步');
+            return;
+        }
+        const text = (0, outlineTextDocument_1.serializeOutlineText)(tree);
+        if (text !== this.options.textarea.value) {
+            const focused = document.activeElement === this.options.textarea;
+            const start = this.options.textarea.selectionStart;
+            const end = this.options.textarea.selectionEnd;
+            this.options.textarea.value = text;
+            if (focused) {
+                const safeStart = Math.min(start, text.length);
+                const safeEnd = Math.min(end, text.length);
+                this.options.textarea.setSelectionRange(safeStart, safeEnd);
+            }
+        }
+        this.lastAppliedText = text;
+        this.dirty = false;
+        if (this.active)
+            this.updateStatus(this.options.isReadonly() ? '只读' : '自动同步');
+    }
+    flush(reason = 'manual') {
+        this.cancelTimer();
+        if (!this.dirty || this.options.isReadonly() || this.composing)
+            return false;
+        const value = this.options.textarea.value;
+        if (value === this.lastAppliedText) {
+            this.dirty = false;
+            this.updateStatus('自动同步');
+            return false;
+        }
+        const parsed = (0, outlineTextDocument_1.parseOutlineText)(value);
+        const result = (0, outlineTextDocument_1.reconcileOutlineText)(this.baseTree, parsed);
+        this.applying = true;
+        let applied = false;
+        try {
+            applied = this.options.onApply(result.tree, result);
+        }
+        finally {
+            this.applying = false;
+        }
+        if (!applied) {
+            this.updateStatus('同步失败');
+            this.options.onDiagnostic?.('text-apply-rejected', { reason, nodeCount: result.nodeCount });
+            return false;
+        }
+        this.baseTree = result.tree;
+        this.lastAppliedText = value;
+        this.dirty = false;
+        const summary = result.implicitRoot
+            ? `已同步 · 保留中心主题，导入 ${result.topLevelCount} 个一级条目`
+            : `已同步 · ${result.nodeCount} 个节点`;
+        this.updateStatus(summary);
+        this.options.onDiagnostic?.('text-applied', {
+            reason,
+            nodeCount: result.nodeCount,
+            reusedNodeCount: result.reusedNodeCount,
+            createdNodeCount: result.createdNodeCount,
+            implicitRoot: result.implicitRoot,
+            topLevelCount: result.topLevelCount,
+            indentWidth: result.indentWidth,
+        });
+        return true;
+    }
+    destroy() {
+        this.flush('destroy');
+        this.cancelTimer();
+        this.options.textarea.removeEventListener('input', this.onInput);
+        this.options.textarea.removeEventListener('keydown', this.onKeydown);
+        this.options.textarea.removeEventListener('blur', this.onBlur);
+        this.options.textarea.removeEventListener('focus', this.onFocus);
+        this.options.textarea.removeEventListener('compositionstart', this.onCompositionStart);
+        this.options.textarea.removeEventListener('compositionend', this.onCompositionEnd);
+    }
+    markDirty(reason) {
+        if (this.options.isReadonly())
+            return;
+        this.dirty = this.options.textarea.value !== this.lastAppliedText;
+        this.updateStatus(this.dirty ? '等待同步…' : '自动同步');
+        if (!this.dirty) {
+            this.cancelTimer();
+            return;
+        }
+        this.cancelTimer();
+        this.timer = window.setTimeout(() => {
+            this.timer = null;
+            this.flush(reason);
+        }, this.debounceMs);
+    }
+    cancelTimer() {
+        if (this.timer !== null)
+            window.clearTimeout(this.timer);
+        this.timer = null;
+    }
+    updateStatus(text) {
+        this.options.status.textContent = text;
+        this.options.status.title = text;
+    }
+}
+exports.OutlineTextEditorController = OutlineTextEditorController;
+
+},
+238: function(module, exports, __require, __externalRequire) {
+// /src/editor/outlineTextDocument.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OUTLINE_TEXT_INDENT = void 0;
+exports.outlineNodePlainText = outlineNodePlainText;
+exports.serializeOutlineText = serializeOutlineText;
+exports.unescapeImportedOutlineText = unescapeImportedOutlineText;
+exports.parseOutlineText = parseOutlineText;
+exports.outlineTextSimilarity = outlineTextSimilarity;
+exports.reconcileOutlineText = reconcileOutlineText;
+exports.editOutlineSelectionIndent = editOutlineSelectionIndent;
+exports.insertOutlineNewline = insertOutlineNewline;
+exports.OUTLINE_TEXT_INDENT = '    ';
+const TAB_WIDTH = 4;
+function cloneData(value) {
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(value);
+        }
+        catch {
+            // Fall through to the JSON-compatible map-data clone below.
+        }
+    }
+    return JSON.parse(JSON.stringify(value));
+}
+function htmlToPlainText(value) {
+    if (typeof document !== 'undefined') {
+        const element = document.createElement('div');
+        element.innerHTML = value;
+        return element.textContent ?? '';
+    }
+    return value
+        .replace(/<br\s*\/?\s*>/gi, '\n')
+        .replace(/<\/p\s*>/gi, '\n')
+        .replace(/<[^>]*>/g, '');
+}
+function outlineNodePlainText(data) {
+    const source = String(data.text ?? '');
+    const value = data.richText ? htmlToPlainText(source) : source;
+    return value
+        .replace(/\u00a0/g, ' ')
+        .replace(/\r\n?/g, '\n')
+        .replace(/[\t ]*\n[\t ]*/g, ' ')
+        .trim();
+}
+function flattenTree(tree) {
+    const lines = [];
+    const visit = (node, depth, path) => {
+        const uid = String(node.data.uid ?? path);
+        lines.push({
+            uid,
+            depth,
+            path,
+            text: outlineNodePlainText(node.data),
+            data: cloneData({ ...node.data, uid }),
+        });
+        const children = Array.isArray(node.children) ? node.children : [];
+        children.forEach((child, index) => visit(child, depth + 1, `${path}.${index}`));
+    };
+    visit(tree, 0, 'root');
+    return lines;
+}
+function serializeOutlineText(tree, indent = exports.OUTLINE_TEXT_INDENT) {
+    return flattenTree(tree)
+        .map((line) => `${indent.repeat(line.depth)}${line.text}`)
+        .join('\n');
+}
+function indentColumns(value) {
+    let columns = 0;
+    for (const char of value) {
+        if (char === '\t')
+            columns += TAB_WIDTH;
+        else if (char === ' ' || char === '\u00a0')
+            columns += 1;
+        else
+            break;
+    }
+    return columns;
+}
+function greatestCommonDivisor(a, b) {
+    let left = Math.abs(Math.trunc(a));
+    let right = Math.abs(Math.trunc(b));
+    while (right)
+        [left, right] = [right, left % right];
+    return left;
+}
+function inferIndentWidth(values) {
+    const positive = [...new Set(values.filter((value) => value > 0))].sort((a, b) => a - b);
+    if (positive.length === 0)
+        return exports.OUTLINE_TEXT_INDENT.length;
+    const exactCandidate = [4, 2, 3, 8].find((candidate) => positive.every((value) => value % candidate === 0));
+    if (exactCandidate)
+        return exactCandidate;
+    const gcd = positive.reduce((result, value) => greatestCommonDivisor(result, value));
+    if (gcd > 1)
+        return gcd;
+    return Math.max(1, positive[0]);
+}
+function unescapeImportedOutlineText(value) {
+    return value.replace(/\\([:;])/g, '$1');
+}
+function parseOutlineText(value) {
+    const source = String(value ?? '').replace(/\r\n?/g, '\n');
+    const rawLines = source.split('\n');
+    while (rawLines.length > 0 && rawLines[0].trim() === '')
+        rawLines.shift();
+    while (rawLines.length > 0 && rawLines[rawLines.length - 1].trim() === '')
+        rawLines.pop();
+    if (rawLines.length === 0) {
+        return { lines: [], indentWidth: exports.OUTLINE_TEXT_INDENT.length, topLevelCount: 0, implicitRoot: false };
+    }
+    const measured = rawLines.map((raw, index) => {
+        const match = raw.match(/^[\t \u00a0]*/)?.[0] ?? '';
+        return {
+            raw,
+            sourceLine: index + 1,
+            rawIndent: match,
+            columns: indentColumns(match),
+            text: unescapeImportedOutlineText(raw.slice(match.length)),
+        };
+    });
+    const nonBlank = measured.filter((line) => line.text.trim().length > 0);
+    const baseIndent = nonBlank.length > 0 ? Math.min(...nonBlank.map((line) => line.columns)) : 0;
+    const normalizedIndents = nonBlank.map((line) => Math.max(0, line.columns - baseIndent));
+    const indentWidth = inferIndentWidth(normalizedIndents);
+    const lines = [];
+    let previousDepth = 0;
+    measured.forEach((line) => {
+        const relative = Math.max(0, line.columns - baseIndent);
+        let depth = line.text.trim().length === 0 && line.rawIndent.length === 0
+            ? previousDepth
+            : Math.max(0, Math.round(relative / indentWidth));
+        depth = Math.min(depth, previousDepth + 1);
+        lines.push({
+            text: line.text,
+            depth,
+            rawIndent: line.rawIndent,
+            sourceLine: line.sourceLine,
+        });
+        previousDepth = depth;
+    });
+    const topLevelCount = lines.filter((line) => line.depth === 0).length;
+    return {
+        lines,
+        indentWidth,
+        topLevelCount,
+        implicitRoot: topLevelCount > 1,
+    };
+}
+function lineKey(line) {
+    return `${line.depth}\u0000${line.text}`;
+}
+function outlinePaths(lines) {
+    if (lines.length === 0)
+        return [];
+    const paths = ['root'];
+    const pathAtDepth = ['root'];
+    const nextChildIndex = [0];
+    lines.slice(1).forEach((line) => {
+        const depth = Math.max(1, Math.min(Math.trunc(line.depth), pathAtDepth.length));
+        const parentPath = pathAtDepth[depth - 1] ?? 'root';
+        const childIndex = nextChildIndex[depth - 1] ?? 0;
+        nextChildIndex[depth - 1] = childIndex + 1;
+        const path = `${parentPath}.${childIndex}`;
+        paths.push(path);
+        pathAtDepth[depth] = path;
+        pathAtDepth.length = depth + 1;
+        nextChildIndex[depth] = 0;
+        nextChildIndex.length = depth + 1;
+    });
+    return paths;
+}
+function bigrams(value) {
+    const normalized = value.trim().toLocaleLowerCase();
+    if (normalized.length < 2)
+        return normalized ? [normalized] : [];
+    const result = [];
+    for (let index = 0; index < normalized.length - 1; index += 1) {
+        result.push(normalized.slice(index, index + 2));
+    }
+    return result;
+}
+function outlineTextSimilarity(left, right) {
+    if (left === right)
+        return 1;
+    if (!left || !right)
+        return 0;
+    const leftParts = bigrams(left);
+    const rightParts = bigrams(right);
+    if (leftParts.length === 0 || rightParts.length === 0)
+        return 0;
+    const rightCounts = new Map();
+    rightParts.forEach((part) => rightCounts.set(part, (rightCounts.get(part) ?? 0) + 1));
+    let overlap = 0;
+    leftParts.forEach((part) => {
+        const count = rightCounts.get(part) ?? 0;
+        if (count <= 0)
+            return;
+        overlap += 1;
+        rightCounts.set(part, count - 1);
+    });
+    return (2 * overlap) / (leftParts.length + rightParts.length);
+}
+function updateMatchedData(existing, text) {
+    const data = cloneData(existing.data);
+    data.uid = existing.uid;
+    if (existing.text !== text) {
+        data.text = text;
+        data.richText = false;
+        data.yemindTextPristine = false;
+        data.yemindTextEdited = true;
+    }
+    if (data.expand === undefined)
+        data.expand = true;
+    return data;
+}
+function newNodeData(text, uid) {
+    return {
+        uid,
+        text,
+        richText: false,
+        expand: true,
+        yemindTextPristine: false,
+        yemindTextEdited: true,
+    };
+}
+function defaultUidFactory() {
+    return globalThis.crypto?.randomUUID?.() ?? `outline-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+function reconcileOutlineText(currentTree, parsed, uidFactory = defaultUidFactory) {
+    const existing = flattenTree(currentTree);
+    const existingRoot = existing[0];
+    const incoming = parsed.lines;
+    if (incoming.length === 0) {
+        const rootData = updateMatchedData(existingRoot, '');
+        return {
+            tree: { data: rootData, children: [] },
+            nodeCount: 1,
+            reusedNodeCount: 1,
+            createdNodeCount: 0,
+            topLevelCount: 0,
+            implicitRoot: false,
+            indentWidth: parsed.indentWidth,
+        };
+    }
+    const desired = parsed.implicitRoot
+        ? [
+            { text: existingRoot.text, depth: 0, sourceLine: 0, rawIndent: '' },
+            ...incoming.map((line) => ({ ...line, depth: line.depth + 1 })),
+        ]
+        : incoming.map((line, index) => ({ ...line, depth: index === 0 ? 0 : Math.max(1, line.depth) }));
+    const matched = new Map();
+    const used = new Set();
+    matched.set(0, existingRoot);
+    used.add(existingRoot.uid);
+    const byExact = new Map();
+    const byText = new Map();
+    const byPath = new Map();
+    existing.slice(1).forEach((line) => {
+        const exact = lineKey(line);
+        byExact.set(exact, [...(byExact.get(exact) ?? []), line]);
+        byText.set(line.text, [...(byText.get(line.text) ?? []), line]);
+        byPath.set(line.path, line);
+    });
+    const take = (list) => {
+        const value = list?.find((candidate) => !used.has(candidate.uid)) ?? null;
+        if (value)
+            used.add(value.uid);
+        return value;
+    };
+    desired.slice(1).forEach((line, offset) => {
+        const index = offset + 1;
+        const exact = take(byExact.get(lineKey(line)));
+        if (exact)
+            matched.set(index, exact);
+    });
+    desired.slice(1).forEach((line, offset) => {
+        const index = offset + 1;
+        if (matched.has(index))
+            return;
+        const sameText = take(byText.get(line.text));
+        if (sameText)
+            matched.set(index, sameText);
+    });
+    const desiredPaths = outlinePaths(desired);
+    desired.slice(1).forEach((_line, offset) => {
+        const index = offset + 1;
+        if (matched.has(index))
+            return;
+        const samePath = byPath.get(desiredPaths[index]);
+        if (!samePath || used.has(samePath.uid))
+            return;
+        used.add(samePath.uid);
+        matched.set(index, samePath);
+    });
+    desired.slice(1).forEach((line, offset) => {
+        const index = offset + 1;
+        if (matched.has(index))
+            return;
+        const positional = existing[index];
+        if (!positional || used.has(positional.uid))
+            return;
+        if (outlineTextSimilarity(positional.text, line.text) < 0.45)
+            return;
+        used.add(positional.uid);
+        matched.set(index, positional);
+    });
+    const rootMatch = matched.get(0) ?? existingRoot;
+    const rootText = parsed.implicitRoot ? existingRoot.text : desired[0].text;
+    const root = {
+        data: updateMatchedData(rootMatch, rootText),
+        children: [],
+    };
+    const stack = [root];
+    let reusedNodeCount = 1;
+    let createdNodeCount = 0;
+    desired.slice(1).forEach((line, offset) => {
+        const index = offset + 1;
+        const depth = Math.max(1, Math.min(line.depth, stack.length));
+        const existingLine = matched.get(index);
+        const data = existingLine
+            ? updateMatchedData(existingLine, line.text)
+            : newNodeData(line.text, uidFactory());
+        if (existingLine)
+            reusedNodeCount += 1;
+        else
+            createdNodeCount += 1;
+        const node = { data, children: [] };
+        const parent = stack[depth - 1] ?? root;
+        parent.children.push(node);
+        stack[depth] = node;
+        stack.length = depth + 1;
+    });
+    return {
+        tree: root,
+        nodeCount: desired.length,
+        reusedNodeCount,
+        createdNodeCount,
+        topLevelCount: parsed.topLevelCount,
+        implicitRoot: parsed.implicitRoot,
+        indentWidth: parsed.indentWidth,
+    };
+}
+function selectedLineRange(value, selectionStart, selectionEnd) {
+    const start = value.lastIndexOf('\n', Math.max(0, selectionStart - 1)) + 1;
+    let end = value.indexOf('\n', selectionEnd);
+    if (end < 0)
+        end = value.length;
+    return { start, end };
+}
+function editOutlineSelectionIndent(value, selectionStart, selectionEnd, outdent, indent = exports.OUTLINE_TEXT_INDENT) {
+    const range = selectedLineRange(value, selectionStart, selectionEnd);
+    const selected = value.slice(range.start, range.end);
+    const lines = selected.split('\n');
+    let startAdjustment = 0;
+    let endAdjustment = 0;
+    const nextLines = lines.map((line, index) => {
+        if (!outdent) {
+            if (index === 0)
+                startAdjustment = indent.length;
+            endAdjustment += indent.length;
+            return indent + line;
+        }
+        const removable = line.startsWith('\t') ? 1 : Math.min(indent.length, line.match(/^ */)?.[0].length ?? 0);
+        if (index === 0)
+            startAdjustment = -Math.min(removable, Math.max(0, selectionStart - range.start));
+        endAdjustment -= removable;
+        return line.slice(removable);
+    });
+    const replacement = nextLines.join('\n');
+    return {
+        value: value.slice(0, range.start) + replacement + value.slice(range.end),
+        selectionStart: Math.max(range.start, selectionStart + startAdjustment),
+        selectionEnd: Math.max(range.start, selectionEnd + endAdjustment),
+    };
+}
+function insertOutlineNewline(value, selectionStart, selectionEnd) {
+    const lineStart = value.lastIndexOf('\n', Math.max(0, selectionStart - 1)) + 1;
+    const indent = value.slice(lineStart, selectionStart).match(/^[\t ]*/)?.[0] ?? '';
+    const insertion = `\n${indent}`;
+    return {
+        value: value.slice(0, selectionStart) + insertion + value.slice(selectionEnd),
+        selectionStart: selectionStart + insertion.length,
+        selectionEnd: selectionStart + insertion.length,
+    };
+}
+
+},
+239: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75870,7 +76647,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-238: function(module, exports, __require, __externalRequire) {
+240: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75894,7 +76671,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-239: function(module, exports, __require, __externalRequire) {
+241: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75950,7 +76727,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-240: function(module, exports, __require, __externalRequire) {
+242: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75976,7 +76753,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-241: function(module, exports, __require, __externalRequire) {
+243: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75992,7 +76769,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-242: function(module, exports, __require, __externalRequire) {
+244: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76019,7 +76796,7 @@ function initializePluginStartup(options) {
 }
 
 },
-243: function(module, exports, __require, __externalRequire) {
+245: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

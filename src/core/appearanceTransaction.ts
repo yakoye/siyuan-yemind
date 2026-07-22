@@ -23,6 +23,7 @@ export interface ApplyMapAppearanceOptions {
   rainbowLinesConfig: Record<string, unknown>;
   colorAppearance: ThemeColorAppearance;
   useThemeLineColors: boolean;
+  rootBackground?: string;
   render?: boolean;
   afterRender?: () => void;
 }
@@ -106,6 +107,7 @@ export function applyMapAppearanceTransaction(options: ApplyMapAppearanceOptions
     rainbowLinesConfig,
     colorAppearance,
     useThemeLineColors,
+    rootBackground,
     render = true,
     afterRender,
   } = options;
@@ -113,6 +115,7 @@ export function applyMapAppearanceTransaction(options: ApplyMapAppearanceOptions
   configureThemeColorRuntime(map, {
     appearance: colorAppearance,
     useThemeLineColors,
+    rootBackground,
   });
   map.setThemeConfig(themeConfig, true);
   replaceRainbowLinesConfig(map, rainbowLinesConfig);

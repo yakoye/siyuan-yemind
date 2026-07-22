@@ -116,6 +116,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
   configureThemeColorRuntime(mindMap, {
     appearance: appearance.colorAppearance,
     useThemeLineColors: true,
+    rootBackground: String(appearance.themeConfig.backgroundColor ?? appearance.colorAppearance.background),
   });
   return mindMap;
 }

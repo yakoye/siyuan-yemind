@@ -1,4 +1,5 @@
 import type MindMap from 'simple-mind-map';
+import type { MindMapTree } from '../model/types';
 import { toggleTodo as nextTodo, type NodeComment, type NodeTodo } from '../content/nodeContentState';
 import type { NodeNote } from '../content/nodeNoteState';
 import { deleteCodeBlock, findCurrentCodeBlock, removeCodeBlockFormat, replaceCodeBlock, type CodeBlockSnapshot } from '../editor/codeBlock';
@@ -97,6 +98,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   outdentNodeByUid(uid: string): boolean;
   setNodeExpandedByUid(uid: string, expanded: boolean): boolean;
   moveNodeByUid(uid: string, targetUid: string, position: 'before' | 'inside' | 'after'): boolean;
+  replaceTree(data: MindMapTree): boolean;
 }
 
 export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
@@ -457,6 +459,15 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
             : [];
       if (!node || node.isGeneralization || persistedChildren.length === 0) return false;
       mindMap.execCommand('SET_NODE_EXPAND', node, expanded);
+      return true;
+    },
+    replaceTree: (data) => {
+      if (!canMutate()) return false;
+      const updateData = (mindMap as any).updateData;
+      if (typeof updateData !== 'function') return false;
+      // updateData is the upstream undoable whole-tree transaction. setData()
+      // would clear history and is therefore intentionally not used here.
+      updateData.call(mindMap, data);
       return true;
     },
     moveNodeByUid: (uid, targetUid, position) => {

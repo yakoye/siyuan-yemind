@@ -2,7 +2,7 @@
 
 ## Current baseline
 
-- Product version: 0.9.2
+- Product version: 0.9.3
 - Host baseline: SiYuan 3.7.3
 - Plugin ID and folder: `siyuan-yemind`
 
@@ -17,10 +17,12 @@
 - Domain-organized regression suite.
 - Complete theme text, fill, border and line color system.
 - Atomic whole-map appearance refresh with viewport and selection preservation.
+- Continuous outline document with native multiline editing and indentation-based import.
+- Hover-owned node quick actions with a pointer-safe bridge.
 
 ## Next priorities
 
-1. Validate v0.9.2 borders and atomic theme/rainbow refresh in SiYuan 3.7.3 light and dark modes.
+1. Validate v0.9.3 root coverage, hover controls and continuous outline workflows in SiYuan 3.7.3 on real large maps.
 2. Improve large-map performance without weakening transaction safety.
 3. Expand import/export formats in isolated releases.
 4. Continue accessibility and keyboard navigation coverage.

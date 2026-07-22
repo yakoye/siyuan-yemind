@@ -7,3 +7,4 @@ import '../suites/commands-selection/selectionPrimary.suite';
 import '../suites/commands-selection/shortcutSafety.suite';
 import '../suites/commands-selection/shortcuts.suite';
 import '../suites/commands-selection/upstreamClipboardBehavior.suite';
+import '../suites/commands-selection/v093NodeQuickHover.suite';

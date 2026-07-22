@@ -2,13 +2,14 @@
 
 | Area | Current capability |
 |---|---|
-| Views | Canvas, split outline and full outline |
-| Structure | Add, delete, move, reorder, fold, summary, outer frame and relation line |
+| Views | Canvas, split outline and full outline; continuous text and node-tree outline modes |
+| Structure | Add, delete, move, reorder, fold, summary, outer frame, relation line and indentation-based bulk tree import |
 | Content | Rich text, links, formulas, code, images, notes, comments, tags, icons and todo |
 | Appearance | 22 themes, 25 light/dark appearances, density, background and named rainbow lines |
 | Theme colors | Per-level text, fill, border and parent-child line colors with 1/3/4/6 branch cycles |
-| Appearance refresh | One atomic full redraw; immediate theme/rainbow updates; viewport and selection preserved |
+| Appearance refresh | One atomic full redraw; immediate theme/rainbow updates; viewport and selection preserved; transparent root resolves to canvas background |
 | Local style priority | Node-local text, fill, border and line values override whole-map themes |
 | Persistence | Local maps, settings, checkpoints, autosave and restore protection |
 | Integration | SiYuan tabs, Dock, protocol links and global-search node navigation |
+| Outline editing | Native multiline selection/copy/paste, Tab/Shift+Tab hierarchy editing, stable UID reconciliation and one undoable whole-tree transaction |
 | Reliability | Structured diagnostics and 15-domain manifest-controlled regression architecture |

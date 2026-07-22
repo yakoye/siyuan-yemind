@@ -103,6 +103,7 @@ import { normalizeNodeNote } from "../content/nodeNoteState";
 import { CanvasRightDragController } from "./canvasRightDrag";
 import { scheduleFocusedNodeHighlight } from "./focusHighlight";
 import { EditingSurfaceCoordinator } from "./editingSurfaceCoordinator";
+import { OutlineTextEditorController } from "./OutlineTextEditorController";
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -149,7 +150,10 @@ export class YeMindEditor {
   private rootEl!: HTMLElement;
   private canvasEl!: HTMLElement;
   private splitDividerEl!: HTMLElement;
+  private outlinePaneEl!: HTMLElement;
   private outlineEl!: HTMLElement;
+  private outlineTextEditorEl!: HTMLTextAreaElement;
+  private outlineTextStatusEl!: HTMLElement;
   private statsEl!: HTMLElement;
   private zoomEl!: HTMLElement;
   private saveStateEl!: HTMLElement;
@@ -172,6 +176,8 @@ export class YeMindEditor {
   private canvasRightDrag: CanvasRightDragController | null = null;
   private cancelFocusedNodeHighlight: (() => void) | null = null;
   private outlineRichText: OutlineRichTextController | null = null;
+  private outlineTextEditor: OutlineTextEditorController | null = null;
+  private outlineMode: "text" | "tree" = "text";
   private settingsInitialized = false;
   private viewMode: ViewMode = "map";
   private searchText = "";
@@ -376,7 +382,7 @@ export class YeMindEditor {
   private readonly onOutlineKeydownBubble = (event: KeyboardEvent): void => {
     if (
       (event.key === "Backspace" || event.key === "Delete") &&
-      (event.target as HTMLElement | null)?.closest?.("[data-outline-editor]")
+      (event.target as HTMLElement | null)?.closest?.("[data-outline-editor], [data-role=\"outline-text-editor\"]")
     ) {
       // Quill/default text editing already ran at the target. Stop the event
       // here so simple-mind-map's window shortcut cannot reinterpret it as
@@ -501,6 +507,8 @@ export class YeMindEditor {
       this.current.id,
       { dirty: this.saveRevisions.isDirty() },
     );
+    this.outlineTextEditor?.destroy();
+    this.outlineTextEditor = null;
     this.outlineRichText?.destroy();
     this.outlineRichText = null;
     this.flushPendingSave();
@@ -531,7 +539,7 @@ export class YeMindEditor {
     this.cancelFocusedNodeHighlight?.();
     this.cancelFocusedNodeHighlight = null;
     this.rootEl?.removeEventListener("keydown", this.onRootKeydown, true);
-    this.outlineEl?.removeEventListener("keydown", this.onOutlineKeydownBubble);
+    this.outlinePaneEl?.removeEventListener("keydown", this.onOutlineKeydownBubble);
     this.rootEl?.removeEventListener("paste", this.onImagePaste);
     this.canvasEl?.removeEventListener("dragover", this.onImageDragOver);
     this.canvasEl?.removeEventListener("drop", this.onImageDrop);
@@ -579,8 +587,17 @@ export class YeMindEditor {
     this.splitDividerEl = this.options.container.querySelector(
       '[data-role="split-divider"]',
     ) as HTMLElement;
-    this.outlineEl = this.options.container.querySelector(
+    this.outlinePaneEl = this.options.container.querySelector(
       '[data-role="outline"]',
+    ) as HTMLElement;
+    this.outlineEl = this.options.container.querySelector(
+      '[data-role="outline-tree"]',
+    ) as HTMLElement;
+    this.outlineTextEditorEl = this.options.container.querySelector(
+      '[data-role="outline-text-editor"]',
+    ) as HTMLTextAreaElement;
+    this.outlineTextStatusEl = this.options.container.querySelector(
+      '[data-role="outline-text-status"]',
     ) as HTMLElement;
     this.statsEl = this.options.container.querySelector(
       '[data-role="stats"]',
@@ -725,11 +742,24 @@ export class YeMindEditor {
         this.richTextToolbar?.update(hasRange, rect, format, target);
       },
     });
+    this.outlineTextEditor = new OutlineTextEditorController({
+      textarea: this.outlineTextEditorEl,
+      status: this.outlineTextStatusEl,
+      getTree: () => this.current.data,
+      isReadonly: () => Boolean(this.commands?.isReadonly()),
+      onApply: (tree) => Boolean(this.commands?.replaceTree(tree)),
+      onDiagnostic: (action, details) =>
+        this.options.diagnostics.record("outline-text", action, this.current.id, details),
+    });
+    this.setOutlineMode("text", false);
     this.rootEl.addEventListener("keydown", this.onRootKeydown, true);
     this.rootEl.addEventListener("paste", this.onImagePaste);
     this.canvasEl.addEventListener("dragover", this.onImageDragOver);
     this.canvasEl.addEventListener("drop", this.onImageDrop);
     this.canvasEl.addEventListener("pointerdown", this.onCanvasPointerDown, true);
+    this.outlineTextEditorEl.addEventListener("focus", () => {
+      this.claimOutlineInteraction("outline-text-focus");
+    });
 
     this.bindToolbar();
     this.bindMapEvents();
@@ -779,6 +809,16 @@ export class YeMindEditor {
         event.preventDefault();
         event.stopPropagation();
         this.openLink(anchor.href || anchor.getAttribute("href") || "");
+        return;
+      }
+
+      const outlineModeButton = (event.target as HTMLElement).closest<HTMLButtonElement>(
+        "[data-outline-mode-button]",
+      );
+      if (outlineModeButton) {
+        event.preventDefault();
+        const mode = outlineModeButton.dataset.outlineModeButton === "tree" ? "tree" : "text";
+        this.setOutlineMode(mode);
         return;
       }
 
@@ -966,7 +1006,7 @@ export class YeMindEditor {
       (event) => this.handleOutlineKeydown(event),
       true,
     );
-    this.outlineEl.addEventListener("keydown", this.onOutlineKeydownBubble);
+    this.outlinePaneEl.addEventListener("keydown", this.onOutlineKeydownBubble);
     this.bindOutlineDrag();
     this.bindSplitDivider();
 
@@ -1452,6 +1492,7 @@ export class YeMindEditor {
       rainbowLinesConfig: projectAppearance.rainbow,
       colorAppearance: appearance.colorAppearance,
       useThemeLineColors: normalizedProjectStyle.rainbowLines === null,
+      rootBackground: String(projectAppearance.themeConfig.backgroundColor ?? appearance.colorAppearance.background),
       render,
       afterRender: () => {
         (this.map as any)?.associativeLine?.renderAllLines?.();
@@ -1862,6 +1903,33 @@ export class YeMindEditor {
     );
   }
 
+  private setOutlineMode(mode: "text" | "tree", record = true): void {
+    if (!this.outlinePaneEl) return;
+    const previous = this.outlineMode;
+    if (mode === "text") {
+      this.outlineRichText?.commitAndDetach("outline-mode-text");
+      this.outlineTextEditor?.activate(this.current.data);
+    } else {
+      this.outlineTextEditor?.deactivate("outline-mode-tree");
+    }
+    this.outlineMode = mode;
+    this.outlinePaneEl.dataset.outlineMode = mode;
+    this.outlinePaneEl
+      .querySelectorAll<HTMLButtonElement>("[data-outline-mode-button]")
+      .forEach((button) => {
+        const active = button.dataset.outlineModeButton === mode;
+        button.setAttribute("aria-pressed", String(active));
+        button.classList.toggle("is-active", active);
+      });
+    if (mode === "tree") this.renderOutline(this.current.data);
+    if (record && previous !== mode) {
+      this.options.diagnostics.record("outline", "mode-changed", this.current.id, {
+        previous,
+        mode,
+      });
+    }
+  }
+
   private claimOutlineInteraction(reason: string): void {
     const transition = this.editingSurface.claimOutline();
     if (transition.previousOwner === "outline") return;
@@ -1874,6 +1942,7 @@ export class YeMindEditor {
   }
 
   private claimCanvasInteraction(reason: string): void {
+    const textApplied = this.outlineTextEditor?.flush(`surface-change:${reason}`) ?? false;
     const hadActiveOutlineEditor = Boolean(this.outlineRichText?.activeHost);
     const transition = this.editingSurface.claimCanvas();
     if (hadActiveOutlineEditor) {
@@ -1893,6 +1962,7 @@ export class YeMindEditor {
           previousOwner: transition.previousOwner,
           detachedOutlineEditor: hadActiveOutlineEditor,
           cancelledPending: transition.cancelledPending,
+          textDocumentApplied: textApplied,
         },
       );
     }
@@ -1913,6 +1983,7 @@ export class YeMindEditor {
   }
 
   private renderOutline(data: MindMapTree): void {
+    this.outlineTextEditor?.syncFromTree(data);
     const activeEditor = this.outlineRichText?.activeHost ?? null;
     const activeUid =
       activeEditor?.closest<HTMLElement>("[data-outline-uid]")?.dataset
@@ -1923,6 +1994,7 @@ export class YeMindEditor {
       this.outlineStructureKey && this.outlineStructureKey !== nextStructureKey,
     );
     const pendingTicket = this.editingSurface.pending;
+    this.outlinePaneEl.setAttribute("aria-readonly", String(readonly));
     this.outlineEl.setAttribute("aria-readonly", String(readonly));
 
     if (pendingTicket || (structureChanged && activeEditor && activeUid)) {
@@ -2543,6 +2615,7 @@ export class YeMindEditor {
       this.settings.showRichTextToolbar && !enabled,
     );
     this.outlineRichText?.setReadonly(enabled);
+    this.outlineTextEditor?.setReadonly(enabled);
     this.map.setMode(enabled ? "readonly" : "edit");
     this.renderOutline(this.current.data);
     this.options.diagnostics.record(

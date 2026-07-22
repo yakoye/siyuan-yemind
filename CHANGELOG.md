@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.3 - 2026-07-22
+
+- Filled transparent center topics with the effective theme or project canvas background.
+- Rebuilt node quick actions around pointer hover and a delayed node-to-button interaction bridge.
+- Added a continuous document outline with native multiline selection, copy/cut/paste and replacement.
+- Added indentation inference, escaped punctuation normalization and hierarchy import for external outlines and table-of-contents text.
+- Added Tab/Shift+Tab batch indentation and automatic indentation continuation on Enter.
+- Reconciled document edits with stable node UIDs and metadata, committed through one undoable `updateData()` transaction.
+- Added structural-path reconciliation for completely rewritten labels and protected Chinese IME composition from partial synchronization.
+- Retained the synchronized node-tree mode for rich-text editing, drag and expand/collapse operations.
+- Expanded permanent regression coverage to 15 domains and 166 scenario modules.
+
 ## 0.9.2 - 2026-07-22
 
 - Added center, first-level, second-level and normal-node border colors to the complete theme data model.

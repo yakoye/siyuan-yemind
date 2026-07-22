@@ -58,7 +58,7 @@ function runThemeSmoke(): Record<string, unknown> {
   const level1Colors = resolveThemeNodeColors(dawn, 1, 0);
   const level2Colors = resolveThemeNodeColors(dawn, 2, 0);
   const normalColors = resolveThemeNodeColors(dawn, 3, 0);
-  assert(rootColors.fillColor === dawn.centerBackground && rootColors.color === dawn.centerText && rootColors.borderColor === dawn.centerBorder, 'center colors mismatch');
+  assert(rootColors.fillColor === dawn.background && rootColors.color === dawn.centerText && rootColors.borderColor === dawn.centerBorder, 'center colors mismatch');
   assert(level1Colors.lineColor === dawn.branches[0].centerToLevel1Line, 'center-to-level1 line mismatch');
   assert(level2Colors.lineColor === dawn.branches[0].level1ToLevel2Line, 'level1-to-level2 line mismatch');
   assert(normalColors.lineColor === dawn.branches[0].level2ToNormalLine, 'level2-to-normal line mismatch');
@@ -83,7 +83,7 @@ function runThemeSmoke(): Record<string, unknown> {
   configureThemeColorRuntime(mindMap, { appearance: dawn, useThemeLineColors: true });
   const result = mindMap.renderer._render();
   assert(result === 'rendered' && renderCalls === 1, 'renderer wrapper failed');
-  assert(tree.data.fillColor === dawn.centerBackground, 'runtime center fill mismatch');
+  assert(tree.data.fillColor === dawn.background, 'runtime center fill mismatch');
   assert(tree.children[0].data.fillColor === dawn.branches[0].level1Background, 'runtime level1 fill mismatch');
   assert(tree.children[0].data.borderColor === dawn.branches[0].level1Border, 'runtime level1 border mismatch');
   assert(tree.children[0].children[0].data.color === dawn.branches[0].level2Text, 'runtime level2 text mismatch');

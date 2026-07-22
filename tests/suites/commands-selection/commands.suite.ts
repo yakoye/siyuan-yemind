@@ -138,6 +138,36 @@ describe('outline command bridge', () => {
     expect(map.execCommand.mock.calls).toContainEqual(['SET_NODE_EXPAND', node, false]);
   });
 
+  it('replaces the continuous outline through the upstream undoable whole-tree transaction', () => {
+    const map = fakeMindMap() as any;
+    map.opt = { readonly: false };
+    map.updateData = vi.fn();
+    map.setData = vi.fn();
+    const commands = createCommandAdapter(map as never);
+    const nextTree = {
+      data: { uid: 'root', text: 'Root' },
+      children: [{ data: { uid: 'child', text: 'Child' }, children: [] }],
+    };
+
+    expect(commands.replaceTree(nextTree)).toBe(true);
+    expect(map.updateData).toHaveBeenCalledOnce();
+    expect(map.updateData).toHaveBeenCalledWith(nextTree);
+    expect(map.setData).not.toHaveBeenCalled();
+  });
+
+  it('refuses whole-tree replacement when readonly or when the upstream transaction is unavailable', () => {
+    const nextTree = { data: { uid: 'root', text: 'Root' }, children: [] };
+    const readonlyMap = fakeMindMap() as any;
+    readonlyMap.getConfig = () => true;
+    readonlyMap.updateData = vi.fn();
+    expect(createCommandAdapter(readonlyMap as never).replaceTree(nextTree)).toBe(false);
+    expect(readonlyMap.updateData).not.toHaveBeenCalled();
+
+    const incompleteMap = fakeMindMap() as any;
+    incompleteMap.opt = { readonly: false };
+    expect(createCommandAdapter(incompleteMap as never).replaceTree(nextTree)).toBe(false);
+  });
+
   it('refuses outline mutations in readonly mode and refuses root deletion', () => {
     const root = { isRoot: true, isGeneralization: false, getData: (key?: string) => key === 'uid' ? 'root' : {} };
     const map = fakeMindMap() as any;

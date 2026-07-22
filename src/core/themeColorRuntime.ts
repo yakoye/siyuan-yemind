@@ -10,6 +10,8 @@ export interface ResolvedThemeNodeColors {
 export interface ThemeColorRuntimeConfig {
   appearance: ThemeColorAppearance | null;
   useThemeLineColors: boolean;
+  /** Effective canvas background after project-level overrides. */
+  rootBackground?: string;
 }
 
 interface TreeNodeLike {
@@ -39,14 +41,26 @@ export function resolveThemeBranch(
   return appearance.branches[index] ?? appearance.branches[0];
 }
 
+function isTransparentColor(value: unknown): boolean {
+  const normalized = String(value ?? '').trim().toLowerCase().replace(/\s+/g, '');
+  return !normalized
+    || normalized === 'transparent'
+    || normalized === 'rgba(0,0,0,0)'
+    || normalized === 'hsla(0,0%,0%,0)'
+    || normalized === '#00000000'
+    || normalized === '#0000';
+}
+
 export function resolveThemeNodeColors(
   appearance: ThemeColorAppearance,
   layerIndex: number,
   branchIndex: number,
+  rootBackground?: string,
 ): ResolvedThemeNodeColors {
   if (layerIndex <= 0) {
+    const fallback = isTransparentColor(rootBackground) ? appearance.background : rootBackground!;
     return {
-      fillColor: appearance.centerBackground,
+      fillColor: isTransparentColor(appearance.centerBackground) ? fallback : appearance.centerBackground,
       color: appearance.centerText,
       borderColor: appearance.centerBorder,
     };
@@ -77,7 +91,7 @@ export function resolveThemeNodeColors(
 }
 
 class ThemeColorRuntime {
-  private config: ThemeColorRuntimeConfig = { appearance: null, useThemeLineColors: false };
+  private config: ThemeColorRuntimeConfig = { appearance: null, useThemeLineColors: false, rootBackground: undefined };
   private readonly positionByData = new WeakMap<Record<string, unknown>, NodePosition>();
   private readonly ownedGetters = new WeakSet<Function>();
 
@@ -140,7 +154,12 @@ class ThemeColorRuntime {
     const appearance = this.config.appearance;
     const position = this.positionByData.get(data);
     if (!appearance || !position) return undefined;
-    return resolveThemeNodeColors(appearance, position.layerIndex, position.branchIndex)[key];
+    return resolveThemeNodeColors(
+      appearance,
+      position.layerIndex,
+      position.branchIndex,
+      this.config.rootBackground,
+    )[key];
   }
 }
 

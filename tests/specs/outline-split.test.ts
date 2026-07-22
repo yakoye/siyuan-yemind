@@ -19,3 +19,5 @@ import '../suites/outline-split/v061OutlineSelection.suite';
 import '../suites/outline-split/v064OutlineLeafDrag.suite';
 import '../suites/outline-split/v085SplitFocusIntegration.suite';
 import '../suites/outline-split/v085SplitFocusOwnership.suite';
+import '../suites/outline-split/v093OutlineTextDocument.suite';
+import '../suites/outline-split/v093OutlineTextEditor.suite';

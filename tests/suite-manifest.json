@@ -47,7 +47,8 @@
     "v082DockIconTheme.suite.ts",
     "v090ColorSchemes.suite.ts",
     "v091ThemeColorDefinitions.suite.ts",
-    "v092AppearanceRefresh.suite.ts"
+    "v092AppearanceRefresh.suite.ts",
+    "v093RootBackground.suite.ts"
   ],
   "commands-selection": [
     "commands.suite.ts",
@@ -57,7 +58,8 @@
     "selectionPrimary.suite.ts",
     "shortcutSafety.suite.ts",
     "shortcuts.suite.ts",
-    "upstreamClipboardBehavior.suite.ts"
+    "upstreamClipboardBehavior.suite.ts",
+    "v093NodeQuickHover.suite.ts"
   ],
   "node-content": [
     "commentsDialogPresentation.suite.ts",
@@ -173,7 +175,9 @@
     "v061OutlineSelection.suite.ts",
     "v064OutlineLeafDrag.suite.ts",
     "v085SplitFocusIntegration.suite.ts",
-    "v085SplitFocusOwnership.suite.ts"
+    "v085SplitFocusOwnership.suite.ts",
+    "v093OutlineTextDocument.suite.ts",
+    "v093OutlineTextEditor.suite.ts"
   ],
   "search-navigation": [
     "searchCommands.suite.ts",

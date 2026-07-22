@@ -7,7 +7,7 @@ YeMind is a local-first SiYuan mind-map plugin built with TypeScript, Vite, Quil
 - `src/plugin/`: SiYuan lifecycle, Dock, tabs, global search and protocol links.
 - `src/model/`: map and checkpoint repositories, schema normalization and persistence.
 - `src/core/`: engine registration, commands, drag behavior, themes, palettes and decorations.
-- `src/editor/`: canvas, split outline, rich-text editing, focus ownership and project controls.
+- `src/editor/`: canvas, split outline, continuous outline document, rich-text node outline, focus ownership and project controls.
 - `src/ui/`: dialogs, menus, color panels, image preview and diagnostics surfaces.
 - `src/settings/`: settings storage and About/shortcut/general pages.
 - `src/diagnostics/`: structured event timeline, self-checks and exportable diagnostic archives.
@@ -17,6 +17,8 @@ YeMind is a local-first SiYuan mind-map plugin built with TypeScript, Vite, Quil
 - Repository data is authoritative for maps, appearance and view state.
 - Engine commands own structural mutations and history.
 - Stable node UIDs bridge canvas rerenders, outline rows and search results.
+- Canvas, continuous text outline and node-tree outline share one map tree but never keep parallel authoritative data.
+- Continuous outline edits reconcile stable UIDs and commit through one undoable engine `updateData()` transaction.
 - Canvas and outline share map data but never share an implicit focus-restoration ticket.
 - Images, notes, comments, tags and local styles are node data fields.
 
