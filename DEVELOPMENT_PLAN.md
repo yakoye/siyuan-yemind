@@ -2,7 +2,7 @@
 
 ## Current baseline
 
-- Product version: 0.9.0
+- Product version: 0.9.1
 - Host baseline: SiYuan 3.7.3
 - Plugin ID and folder: `siyuan-yemind`
 
@@ -19,7 +19,7 @@
 
 ## Next priorities
 
-1. Validate v0.9.0 image preview and theme appearance in SiYuan 3.7.3 light and dark modes.
+1. Validate v0.9.1 complete theme palettes and image appearance in SiYuan 3.7.3 light and dark modes.
 2. Improve large-map performance without weakening transaction safety.
 3. Expand import/export formats in isolated releases.
 4. Continue accessibility and keyboard navigation coverage.

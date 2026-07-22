@@ -3035,211 +3035,211 @@ function downloadDiagnosticsArchive(blob, filename) {
   anchor.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 1e3);
 }
+const define = (value) => value;
 const YEMIND_COLOR_SCHEMES = [
-  { id: "dawn", label: "晨曦", colors: ["#ff6b6b", "#ff9f68", "#a8d4bd", "#8edbd7", "#62c8e5", "#d07ae8"], background: "#ffffff", text: "#172033" },
-  { id: "rainbow", label: "彩虹", colors: ["#f04444", "#f39a43", "#e8c600", "#81c995", "#62d2c9", "#60bde7", "#5261d8", "#d075e4"], background: "#ffffff", text: "#172033" },
-  { id: "vitality", label: "活力", colors: ["#ffffff", "#f4f4f4", "#ff2d1a", "#f5c400", "#2f45dc", "#070707"], background: "#ffffff", text: "#111111" },
-  { id: "dance", label: "舞动", colors: ["#4f5ee6", "#eb4660", "#ffffff", "#fff8e7", "#bd1021", "#3a3123"], background: "#ffffff", text: "#161a2b" },
-  { id: "code", label: "代码", colors: ["#fff0b0", "#c8ffb1", "#ffffff", "#cf7df0", "#84b4f0", "#3e4349"], background: "#2c2d30", darkBackground: "#2c2d30", text: "#17191d", darkText: "#f5f7fa" },
-  { id: "harmony", label: "和风", colors: ["#ffffff", "#ffb3b3", "#ff7a36", "#84a9f6", "#544fd4", "#25217b"], background: "#ffffff", text: "#1f2548" },
-  { id: "island", label: "岛屿", colors: ["#ffe9d8", "#dec2ad", "#c59477", "#c7c5b5", "#abae98", "#737865"], background: "#ffe8d6", text: "#4b463f" },
-  { id: "rose", label: "玫瑰", colors: ["#fff0f3", "#ffd0da", "#ffa8bb", "#ff6d8c", "#d5104d", "#a90b3f"], background: "#fff0f3", text: "#8f2344" },
-  { id: "mint", label: "薄荷", colors: ["#ffffff", "#d8faf7", "#a5edf0", "#76d9de", "#23b6b2", "#007e78"], background: "#ffffff", text: "#086d6b" },
-  { id: "green-tea", label: "绿茶", colors: ["#d9d6c3", "#bfb89a", "#66a272", "#687f59", "#416449", "#203a26"], background: "#1f2b1d", darkBackground: "#1f2b1d", text: "#1d2a1d", darkText: "#f1f2df" }
+    { "id": "yemind-default", "label": "YeMind 默认", "category": "基础", "colors": ["#64748B", "#176B50", "#2563EB", "#9333EA", "#EA580C", "#BE123C"], "background": "#F8FAFC", "text": "#0F172A", "darkBackground": "#0B1220", "darkText": "#E2E8F0", "theme": { "background": "#F8FAFC", "centerText": "#0F172A", "centerBackground": "#FFFFFF", "cycleLength": 6, "branches": [{ "centerToLevel1Line": "#64748B", "level1Text": "#0F172A", "level1Background": "#FFFFFF", "level1ToLevel2Line": "#94A3B8", "level2Text": "#0F172A", "level2Background": "#FFFFFF", "level2ToNormalLine": "#CBD5E1", "normalText": "#0F172A", "normalBackground": "#FFFFFF" }, { "centerToLevel1Line": "#176B50", "level1Text": "#0F172A", "level1Background": "#E8F5F0", "level1ToLevel2Line": "#27896B", "level2Text": "#164E3D", "level2Background": "#F1FAF6", "level2ToNormalLine": "#6AB49B", "normalText": "#164E3D", "normalBackground": "#FFFFFF" }, { "centerToLevel1Line": "#2563EB", "level1Text": "#0F172A", "level1Background": "#EAF2FF", "level1ToLevel2Line": "#3B82F6", "level2Text": "#1E3A8A", "level2Background": "#F2F7FF", "level2ToNormalLine": "#93C5FD", "normalText": "#1E3A8A", "normalBackground": "#FFFFFF" }, { "centerToLevel1Line": "#9333EA", "level1Text": "#0F172A", "level1Background": "#F4EAFF", "level1ToLevel2Line": "#A855F7", "level2Text": "#581C87", "level2Background": "#FAF5FF", "level2ToNormalLine": "#D8B4FE", "normalText": "#581C87", "normalBackground": "#FFFFFF" }, { "centerToLevel1Line": "#EA580C", "level1Text": "#0F172A", "level1Background": "#FFF1E8", "level1ToLevel2Line": "#F97316", "level2Text": "#7C2D12", "level2Background": "#FFF7ED", "level2ToNormalLine": "#FDBA74", "normalText": "#7C2D12", "normalBackground": "#FFFFFF" }, { "centerToLevel1Line": "#BE123C", "level1Text": "#0F172A", "level1Background": "#FFEAF0", "level1ToLevel2Line": "#E11D48", "level2Text": "#881337", "level2Background": "#FFF1F2", "level2ToNormalLine": "#FDA4AF", "normalText": "#881337", "normalBackground": "#FFFFFF" }] }, "darkTheme": { "background": "#0B1220", "centerText": "#E2E8F0", "centerBackground": "#0B1220", "cycleLength": 6, "branches": [{ "centerToLevel1Line": "#94A3B8", "level1Text": "#E2E8F0", "level1Background": "#111B2E", "level1ToLevel2Line": "#64748B", "level2Text": "#E2E8F0", "level2Background": "#111B2E", "level2ToNormalLine": "#475569", "normalText": "#E2E8F0", "normalBackground": "#0B1220" }, { "centerToLevel1Line": "#5DD0AA", "level1Text": "#E8FFF6", "level1Background": "#123A2E", "level1ToLevel2Line": "#3FAF88", "level2Text": "#D8F8EB", "level2Background": "#102D25", "level2ToNormalLine": "#28765D", "normalText": "#D8F8EB", "normalBackground": "#0B1220" }, { "centerToLevel1Line": "#60A5FA", "level1Text": "#EFF6FF", "level1Background": "#172C55", "level1ToLevel2Line": "#3B82F6", "level2Text": "#DBEAFE", "level2Background": "#13233F", "level2ToNormalLine": "#2563EB", "normalText": "#DBEAFE", "normalBackground": "#0B1220" }, { "centerToLevel1Line": "#C084FC", "level1Text": "#FAF5FF", "level1Background": "#3B1D58", "level1ToLevel2Line": "#A855F7", "level2Text": "#F3E8FF", "level2Background": "#2B1740", "level2ToNormalLine": "#7E22CE", "normalText": "#F3E8FF", "normalBackground": "#0B1220" }, { "centerToLevel1Line": "#FB923C", "level1Text": "#FFF7ED", "level1Background": "#4A2511", "level1ToLevel2Line": "#F97316", "level2Text": "#FFEDD5", "level2Background": "#342012", "level2ToNormalLine": "#C2410C", "normalText": "#FFEDD5", "normalBackground": "#0B1220" }, { "centerToLevel1Line": "#FB7185", "level1Text": "#FFF1F2", "level1Background": "#4A1725", "level1ToLevel2Line": "#E11D48", "level2Text": "#FFE4E6", "level2Background": "#35131D", "level2ToNormalLine": "#BE123C", "normalText": "#FFE4E6", "normalBackground": "#0B1220" }] } },
+    { "id": "ink-branch", "label": "Ink Branch", "category": "基础", "colors": ["#151515", "#3749B5", "#525252", "#737373"], "background": "#FFFFFF", "text": "#3749B5", "darkBackground": "#0A0A0A", "darkText": "#93A4FF", "theme": { "background": "#FFFFFF", "centerText": "#3749B5", "centerBackground": "transparent", "cycleLength": 4, "branches": [{ "centerToLevel1Line": "#151515", "level1Text": "#111111", "level1Background": "transparent", "level1ToLevel2Line": "#151515", "level2Text": "#111111", "level2Background": "transparent", "level2ToNormalLine": "#151515", "normalText": "#111111", "normalBackground": "transparent" }, { "centerToLevel1Line": "#3749B5", "level1Text": "#3749B5", "level1Background": "transparent", "level1ToLevel2Line": "#3749B5", "level2Text": "#111111", "level2Background": "transparent", "level2ToNormalLine": "#3749B5", "normalText": "#111111", "normalBackground": "transparent" }, { "centerToLevel1Line": "#525252", "level1Text": "#111111", "level1Background": "transparent", "level1ToLevel2Line": "#525252", "level2Text": "#111111", "level2Background": "transparent", "level2ToNormalLine": "#525252", "normalText": "#111111", "normalBackground": "transparent" }, { "centerToLevel1Line": "#737373", "level1Text": "#111111", "level1Background": "transparent", "level1ToLevel2Line": "#737373", "level2Text": "#111111", "level2Background": "transparent", "level2ToNormalLine": "#737373", "normalText": "#111111", "normalBackground": "transparent" }] }, "darkTheme": { "background": "#0A0A0A", "centerText": "#93A4FF", "centerBackground": "transparent", "cycleLength": 4, "branches": [{ "centerToLevel1Line": "#F5F5F5", "level1Text": "#F5F5F5", "level1Background": "transparent", "level1ToLevel2Line": "#F5F5F5", "level2Text": "#F5F5F5", "level2Background": "transparent", "level2ToNormalLine": "#F5F5F5", "normalText": "#F5F5F5", "normalBackground": "transparent" }, { "centerToLevel1Line": "#93A4FF", "level1Text": "#93A4FF", "level1Background": "transparent", "level1ToLevel2Line": "#93A4FF", "level2Text": "#F5F5F5", "level2Background": "transparent", "level2ToNormalLine": "#93A4FF", "normalText": "#F5F5F5", "normalBackground": "transparent" }, { "centerToLevel1Line": "#D4D4D4", "level1Text": "#F5F5F5", "level1Background": "transparent", "level1ToLevel2Line": "#D4D4D4", "level2Text": "#F5F5F5", "level2Background": "transparent", "level2ToNormalLine": "#D4D4D4", "normalText": "#F5F5F5", "normalBackground": "transparent" }, { "centerToLevel1Line": "#A3A3A3", "level1Text": "#F5F5F5", "level1Background": "transparent", "level1ToLevel2Line": "#A3A3A3", "level2Text": "#F5F5F5", "level2Background": "transparent", "level2ToNormalLine": "#A3A3A3", "normalText": "#F5F5F5", "normalBackground": "transparent" }] } },
+    { "id": "material-3-basic", "label": "Material 3 Basic", "category": "基础", "colors": ["#6750A4", "#7D5260", "#00639A", "#386A20", "#984061", "#006A60"], "background": "#FEF7FF", "text": "#21005D", "darkBackground": "#141218", "darkText": "#FEF7FF", "theme": { "background": "#FEF7FF", "centerText": "#21005D", "centerBackground": "#EADDFF", "cycleLength": 6, "branches": [{ "centerToLevel1Line": "#6750A4", "level1Text": "#21005D", "level1Background": "#EADDFF", "level1ToLevel2Line": "#6750A4", "level2Text": "#1D192B", "level2Background": "#E8DEF8", "level2ToNormalLine": "#6750A4", "normalText": "#1C1B1F", "normalBackground": "#F3EDF7" }, { "centerToLevel1Line": "#7D5260", "level1Text": "#31111D", "level1Background": "#FFD8E4", "level1ToLevel2Line": "#7D5260", "level2Text": "#31111D", "level2Background": "#FFD8E4", "level2ToNormalLine": "#7D5260", "normalText": "#1C1B1F", "normalBackground": "#F3EDF7" }, { "centerToLevel1Line": "#00639A", "level1Text": "#001D32", "level1Background": "#CDE5FF", "level1ToLevel2Line": "#00639A", "level2Text": "#001D32", "level2Background": "#CDE5FF", "level2ToNormalLine": "#00639A", "normalText": "#1C1B1F", "normalBackground": "#F3EDF7" }, { "centerToLevel1Line": "#386A20", "level1Text": "#102000", "level1Background": "#B7F397", "level1ToLevel2Line": "#386A20", "level2Text": "#102000", "level2Background": "#B7F397", "level2ToNormalLine": "#386A20", "normalText": "#1C1B1F", "normalBackground": "#F3EDF7" }, { "centerToLevel1Line": "#984061", "level1Text": "#3E001D", "level1Background": "#FFD9E2", "level1ToLevel2Line": "#984061", "level2Text": "#3E001D", "level2Background": "#FFD9E2", "level2ToNormalLine": "#984061", "normalText": "#1C1B1F", "normalBackground": "#F3EDF7" }, { "centerToLevel1Line": "#006A60", "level1Text": "#00201C", "level1Background": "#74F8E5", "level1ToLevel2Line": "#006A60", "level2Text": "#00201C", "level2Background": "#74F8E5", "level2ToNormalLine": "#006A60", "normalText": "#1C1B1F", "normalBackground": "#F3EDF7" }] }, "darkTheme": { "background": "#141218", "centerText": "#FEF7FF", "centerBackground": "#4F378B", "cycleLength": 6, "branches": [{ "centerToLevel1Line": "#D0BCFF", "level1Text": "#FEF7FF", "level1Background": "#4F378B", "level1ToLevel2Line": "#D0BCFF", "level2Text": "#E6E1E5", "level2Background": "#332D41", "level2ToNormalLine": "#D0BCFF", "normalText": "#E6E1E5", "normalBackground": "#211F26" }, { "centerToLevel1Line": "#EFB8C8", "level1Text": "#FFD8E4", "level1Background": "#633B48", "level1ToLevel2Line": "#EFB8C8", "level2Text": "#FFD8E4", "level2Background": "#49303A", "level2ToNormalLine": "#EFB8C8", "normalText": "#E6E1E5", "normalBackground": "#211F26" }, { "centerToLevel1Line": "#92CCFF", "level1Text": "#CDE5FF", "level1Background": "#004A75", "level1ToLevel2Line": "#92CCFF", "level2Text": "#CDE5FF", "level2Background": "#16364B", "level2ToNormalLine": "#92CCFF", "normalText": "#E6E1E5", "normalBackground": "#211F26" }, { "centerToLevel1Line": "#9BD67D", "level1Text": "#B7F397", "level1Background": "#205107", "level1ToLevel2Line": "#9BD67D", "level2Text": "#B7F397", "level2Background": "#263C1C", "level2ToNormalLine": "#9BD67D", "normalText": "#E6E1E5", "normalBackground": "#211F26" }, { "centerToLevel1Line": "#FFB0C8", "level1Text": "#FFD9E2", "level1Background": "#7A2948", "level1ToLevel2Line": "#FFB0C8", "level2Text": "#FFD9E2", "level2Background": "#513040", "level2ToNormalLine": "#FFB0C8", "normalText": "#E6E1E5", "normalBackground": "#211F26" }, { "centerToLevel1Line": "#82D5C9", "level1Text": "#74F8E5", "level1Background": "#005047", "level1ToLevel2Line": "#82D5C9", "level2Text": "#74F8E5", "level2Background": "#173B36", "level2ToNormalLine": "#82D5C9", "normalText": "#E6E1E5", "normalBackground": "#211F26" }] } },
+    { "id": "dawn", "label": "晨曦", "category": "缤纷", "colors": ["#FF6B6B", "#FF9F69", "#97D3B6", "#88E2D7", "#6FD0F9", "#E18BEE"], "background": "#FFFFFF", "text": "#000000", "theme": { "background": "#FFFFFF", "centerText": "#000000", "centerBackground": "transparent", "cycleLength": 6, "branches": [{ "centerToLevel1Line": "#FF6B6B", "level1Text": "#000000", "level1Background": "#FF6B6B", "level1ToLevel2Line": "#FF6B6B", "level2Text": "#660000", "level2Background": "#FEE0E0", "level2ToNormalLine": "#FF6B6B", "normalText": "#660000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FF9F69", "level1Text": "#000000", "level1Background": "#FF9F69", "level1ToLevel2Line": "#FF9F69", "level2Text": "#662400", "level2Background": "#FEEBE0", "level2ToNormalLine": "#FF9F69", "normalText": "#662400", "normalBackground": "transparent" }, { "centerToLevel1Line": "#97D3B6", "level1Text": "#000000", "level1Background": "#97D3B6", "level1ToLevel2Line": "#97D3B6", "level2Text": "#1E4733", "level2Background": "#E9F5EF", "level2ToNormalLine": "#97D3B6", "normalText": "#1E4733", "normalBackground": "transparent" }, { "centerToLevel1Line": "#88E2D7", "level1Text": "#000000", "level1Background": "#88E2D7", "level1ToLevel2Line": "#88E2D7", "level2Text": "#13524A", "level2Background": "#E7F9F7", "level2ToNormalLine": "#88E2D7", "normalText": "#13524A", "normalBackground": "transparent" }, { "centerToLevel1Line": "#6FD0F9", "level1Text": "#000000", "level1Background": "#6FD0F9", "level1ToLevel2Line": "#6FD0F9", "level2Text": "#044661", "level2Background": "#E2F6FE", "level2ToNormalLine": "#6FD0F9", "normalText": "#044661", "normalBackground": "transparent" }, { "centerToLevel1Line": "#E18BEE", "level1Text": "#000000", "level1Background": "#E18BEE", "level1ToLevel2Line": "#E18BEE", "level2Text": "#4E0D58", "level2Background": "#F9E8FC", "level2ToNormalLine": "#E18BEE", "normalText": "#4E0D58", "normalBackground": "transparent" }] } },
+    { "id": "rainbow", "label": "彩虹", "category": "缤纷", "colors": ["#F9423A", "#F6A04D", "#F3D321", "#00BC7B", "#486AFF", "#4D49BE"], "background": "#FFFFFF", "text": "#000229", "theme": { "background": "#FFFFFF", "centerText": "#000229", "centerBackground": "transparent", "cycleLength": 6, "branches": [{ "centerToLevel1Line": "#F9423A", "level1Text": "#FFFFFF", "level1Background": "#F9423A", "level1ToLevel2Line": "#F9423A", "level2Text": "#620703", "level2Background": "#FDD8D7", "level2ToNormalLine": "#F9423A", "normalText": "#620703", "normalBackground": "transparent" }, { "centerToLevel1Line": "#F6A04D", "level1Text": "#000000", "level1Background": "#F6A04D", "level1ToLevel2Line": "#F6A04D", "level2Text": "#613204", "level2Background": "#FCEBDA", "level2ToNormalLine": "#F6A04D", "normalText": "#613204", "normalBackground": "transparent" }, { "centerToLevel1Line": "#F3D321", "level1Text": "#000000", "level1Background": "#F3D321", "level1ToLevel2Line": "#F3D321", "level2Text": "#605205", "level2Background": "#FCF5D2", "level2ToNormalLine": "#F3D321", "normalText": "#605205", "normalBackground": "transparent" }, { "centerToLevel1Line": "#00BC7B", "level1Text": "#000000", "level1Background": "#00BC7B", "level1ToLevel2Line": "#00BC7B", "level2Text": "#006642", "level2Background": "#CCF2E5", "level2ToNormalLine": "#00BC7B", "normalText": "#006642", "normalBackground": "transparent" }, { "centerToLevel1Line": "#486AFF", "level1Text": "#FFFFFF", "level1Background": "#486AFF", "level1ToLevel2Line": "#486AFF", "level2Text": "#001266", "level2Background": "#DAE1FF", "level2ToNormalLine": "#486AFF", "normalText": "#001266", "normalBackground": "transparent" }, { "centerToLevel1Line": "#4D49BE", "level1Text": "#FFFFFF", "level1Background": "#4D49BE", "level1ToLevel2Line": "#4D49BE", "level2Text": "#1C1A4B", "level2Background": "#DBDBF2", "level2ToNormalLine": "#4D49BE", "normalText": "#1C1A4B", "normalBackground": "transparent" }] } },
+    { "id": "vitality", "label": "活力", "category": "缤纷", "colors": ["#F22816", "#F2B807", "#233ED9", "#F22816", "#F2B807", "#233ED9"], "background": "#FFFFFF", "text": "#000000", "theme": { "background": "#FFFFFF", "centerText": "#000000", "centerBackground": "transparent", "cycleLength": 3, "branches": [{ "centerToLevel1Line": "#F22816", "level1Text": "#FFFFFF", "level1Background": "#F22816", "level1ToLevel2Line": "#F22816", "level2Text": "#600C05", "level2Background": "#FCD4D0", "level2ToNormalLine": "#F22816", "normalText": "#600C05", "normalBackground": "transparent" }, { "centerToLevel1Line": "#F2B807", "level1Text": "#000000", "level1Background": "#F2B807", "level1ToLevel2Line": "#F2B807", "level2Text": "#634B02", "level2Background": "#FCF1CD", "level2ToNormalLine": "#F2B807", "normalText": "#634B02", "normalBackground": "transparent" }, { "centerToLevel1Line": "#233ED9", "level1Text": "#FFFFFF", "level1Background": "#233ED9", "level1ToLevel2Line": "#233ED9", "level2Text": "#0E1957", "level2Background": "#D3D8F7", "level2ToNormalLine": "#233ED9", "normalText": "#0E1957", "normalBackground": "transparent" }, { "centerToLevel1Line": "#F22816", "level1Text": "#FFFFFF", "level1Background": "#F22816", "level1ToLevel2Line": "#F22816", "level2Text": "#600C05", "level2Background": "#FCD4D0", "level2ToNormalLine": "#F22816", "normalText": "#600C05", "normalBackground": "transparent" }, { "centerToLevel1Line": "#F2B807", "level1Text": "#000000", "level1Background": "#F2B807", "level1ToLevel2Line": "#F2B807", "level2Text": "#634B02", "level2Background": "#FCF1CD", "level2ToNormalLine": "#F2B807", "normalText": "#634B02", "normalBackground": "transparent" }, { "centerToLevel1Line": "#233ED9", "level1Text": "#FFFFFF", "level1Background": "#233ED9", "level1ToLevel2Line": "#233ED9", "level2Text": "#0E1957", "level2Background": "#D3D8F7", "level2ToNormalLine": "#233ED9", "normalText": "#0E1957", "normalBackground": "transparent" }] } },
+    { "id": "dance", "label": "舞动", "category": "缤纷", "colors": ["#4E60EF", "#EB4758", "#AA0E1D", "#4E60EF", "#EB4758", "#AA0E1D"], "background": "#FFFFFF", "text": "#363026", "theme": { "background": "#FFFFFF", "centerText": "#363026", "centerBackground": "transparent", "cycleLength": 3, "branches": [{ "centerToLevel1Line": "#4E60EF", "level1Text": "#FFFFFF", "level1Background": "#4E60EF", "level1ToLevel2Line": "#4E60EF", "level2Text": "#08115D", "level2Background": "#DCDFFC", "level2ToNormalLine": "#4E60EF", "normalText": "#08115D", "normalBackground": "transparent" }, { "centerToLevel1Line": "#EB4758", "level1Text": "#FFFFFF", "level1Background": "#EB4758", "level1ToLevel2Line": "#EB4758", "level2Text": "#5C0A12", "level2Background": "#FBDADE", "level2ToNormalLine": "#EB4758", "normalText": "#5C0A12", "normalBackground": "transparent" }, { "centerToLevel1Line": "#AA0E1D", "level1Text": "#FFFFFF", "level1Background": "#AA0E1D", "level1ToLevel2Line": "#AA0E1D", "level2Text": "#5E0710", "level2Background": "#EECFD2", "level2ToNormalLine": "#AA0E1D", "normalText": "#5E0710", "normalBackground": "transparent" }, { "centerToLevel1Line": "#4E60EF", "level1Text": "#FFFFFF", "level1Background": "#4E60EF", "level1ToLevel2Line": "#4E60EF", "level2Text": "#08115D", "level2Background": "#DCDFFC", "level2ToNormalLine": "#4E60EF", "normalText": "#08115D", "normalBackground": "transparent" }, { "centerToLevel1Line": "#EB4758", "level1Text": "#FFFFFF", "level1Background": "#EB4758", "level1ToLevel2Line": "#EB4758", "level2Text": "#5C0A12", "level2Background": "#FBDADE", "level2ToNormalLine": "#EB4758", "normalText": "#5C0A12", "normalBackground": "transparent" }, { "centerToLevel1Line": "#AA0E1D", "level1Text": "#FFFFFF", "level1Background": "#AA0E1D", "level1ToLevel2Line": "#AA0E1D", "level2Text": "#5E0710", "level2Background": "#EECFD2", "level2ToNormalLine": "#AA0E1D", "normalText": "#5E0710", "normalBackground": "transparent" }] } },
+    { "id": "code", "label": "代码", "category": "缤纷", "colors": ["#FFF0B8", "#CBFFB8", "#DB8FFF", "#8ABEFF", "#FFF0B8", "#CBFFB8"], "background": "#2C2D30", "text": "#FFFFFF", "theme": { "background": "#2C2D30", "centerText": "#FFFFFF", "centerBackground": "transparent", "cycleLength": 4, "branches": [{ "centerToLevel1Line": "#FFF0B8", "level1Text": "#000000", "level1Background": "#FFF0B8", "level1ToLevel2Line": "#FFF0B8", "level2Text": "#FFFFFF", "level2Background": "#56544B", "level2ToNormalLine": "#FFF0B8", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#CBFFB8", "level1Text": "#000000", "level1Background": "#CBFFB8", "level1ToLevel2Line": "#CBFFB8", "level2Text": "#FFFFFF", "level2Background": "#4C574B", "level2ToNormalLine": "#CBFFB8", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#DB8FFF", "level1Text": "#000000", "level1Background": "#DB8FFF", "level1ToLevel2Line": "#DB8FFF", "level2Text": "#FFFFFF", "level2Background": "#4F4159", "level2ToNormalLine": "#DB8FFF", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#8ABEFF", "level1Text": "#000000", "level1Background": "#8ABEFF", "level1ToLevel2Line": "#8ABEFF", "level2Text": "#FFFFFF", "level2Background": "#3F4A59", "level2ToNormalLine": "#8ABEFF", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FFF0B8", "level1Text": "#000000", "level1Background": "#FFF0B8", "level1ToLevel2Line": "#FFF0B8", "level2Text": "#FFFFFF", "level2Background": "#56544B", "level2ToNormalLine": "#FFF0B8", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#CBFFB8", "level1Text": "#000000", "level1Background": "#CBFFB8", "level1ToLevel2Line": "#CBFFB8", "level2Text": "#FFFFFF", "level2Background": "#4C574B", "level2ToNormalLine": "#CBFFB8", "normalText": "#FFFFFF", "normalBackground": "transparent" }] }, "darkBackground": "#2C2D30", "darkText": "#FFFFFF" },
+    { "id": "harmony", "label": "和风", "category": "缤纷", "colors": ["#FFABAA", "#FF7B31", "#8CB5FF", "#4A51D9", "#FFABAA", "#FF7B31"], "background": "#FFFFFF", "text": "#191959", "theme": { "background": "#FFFFFF", "centerText": "#191959", "centerBackground": "transparent", "cycleLength": 4, "branches": [{ "centerToLevel1Line": "#FFABAA", "level1Text": "#000000", "level1Background": "#FFABAA", "level1ToLevel2Line": "#FFABAA", "level2Text": "#660100", "level2Background": "#FFEEEE", "level2ToNormalLine": "#FFABAA", "normalText": "#660100", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FF7B31", "level1Text": "#000000", "level1Background": "#FF7B31", "level1ToLevel2Line": "#FF7B31", "level2Text": "#662400", "level2Background": "#FFE5D6", "level2ToNormalLine": "#FF7B31", "normalText": "#662400", "normalBackground": "transparent" }, { "centerToLevel1Line": "#8CB5FF", "level1Text": "#000000", "level1Background": "#8CB5FF", "level1ToLevel2Line": "#8CB5FF", "level2Text": "#002466", "level2Background": "#E7EFFE", "level2ToNormalLine": "#8CB5FF", "normalText": "#002466", "normalBackground": "transparent" }, { "centerToLevel1Line": "#4A51D9", "level1Text": "#FFFFFF", "level1Background": "#4A51D9", "level1ToLevel2Line": "#4A51D9", "level2Text": "#111454", "level2Background": "#DBDCF7", "level2ToNormalLine": "#4A51D9", "normalText": "#111454", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FFABAA", "level1Text": "#000000", "level1Background": "#FFABAA", "level1ToLevel2Line": "#FFABAA", "level2Text": "#660100", "level2Background": "#FFEEEE", "level2ToNormalLine": "#FFABAA", "normalText": "#660100", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FF7B31", "level1Text": "#000000", "level1Background": "#FF7B31", "level1ToLevel2Line": "#FF7B31", "level2Text": "#662400", "level2Background": "#FFE5D6", "level2ToNormalLine": "#FF7B31", "normalText": "#662400", "normalBackground": "transparent" }] } },
+    { "id": "island", "label": "岛屿", "category": "缤纷", "colors": ["#DDBEA9", "#CB997E", "#B7B7A4", "#A5A58D", "#DDBEA9", "#CB997E"], "background": "#FFE8D6", "text": "#6B705C", "theme": { "background": "#FFE8D6", "centerText": "#6B705C", "centerBackground": "transparent", "cycleLength": 4, "branches": [{ "centerToLevel1Line": "#DDBEA9", "level1Text": "#000000", "level1Background": "#DDBEA9", "level1ToLevel2Line": "#DDBEA9", "level2Text": "#492E1C", "level2Background": "#F8E0CD", "level2ToNormalLine": "#DDBEA9", "normalText": "#492E1C", "normalBackground": "transparent" }, { "centerToLevel1Line": "#CB997E", "level1Text": "#000000", "level1Background": "#CB997E", "level1ToLevel2Line": "#CB997E", "level2Text": "#482C1D", "level2Background": "#F5D9C4", "level2ToNormalLine": "#CB997E", "normalText": "#482C1D", "normalBackground": "transparent" }, { "centerToLevel1Line": "#B7B7A4", "level1Text": "#000000", "level1Background": "#B7B7A4", "level1ToLevel2Line": "#B7B7A4", "level2Text": "#38392D", "level2Background": "#F0DECB", "level2ToNormalLine": "#B7B7A4", "normalText": "#38392D", "normalBackground": "transparent" }, { "centerToLevel1Line": "#A5A58D", "level1Text": "#000000", "level1Background": "#A5A58D", "level1ToLevel2Line": "#A5A58D", "level2Text": "#38392D", "level2Background": "#EDDBC7", "level2ToNormalLine": "#A5A58D", "normalText": "#38392D", "normalBackground": "transparent" }, { "centerToLevel1Line": "#DDBEA9", "level1Text": "#000000", "level1Background": "#DDBEA9", "level1ToLevel2Line": "#DDBEA9", "level2Text": "#492E1C", "level2Background": "#F8E0CD", "level2ToNormalLine": "#DDBEA9", "normalText": "#492E1C", "normalBackground": "transparent" }, { "centerToLevel1Line": "#CB997E", "level1Text": "#000000", "level1Background": "#CB997E", "level1ToLevel2Line": "#CB997E", "level2Text": "#482C1D", "level2Background": "#F5D9C4", "level2ToNormalLine": "#CB997E", "normalText": "#482C1D", "normalBackground": "transparent" }] } },
+    { "id": "rose", "label": "玫瑰", "category": "缤纷", "colors": ["#FFB3C1", "#FF758F", "#C9184A", "#FFB3C1", "#FF758F", "#C9184A"], "background": "#FFF0F3", "text": "#A4133C", "theme": { "background": "#FFF0F3", "centerText": "#A4133C", "centerBackground": "transparent", "cycleLength": 3, "branches": [{ "centerToLevel1Line": "#FFB3C1", "level1Text": "#000000", "level1Background": "#FFB3C1", "level1ToLevel2Line": "#FFB3C1", "level2Text": "#660012", "level2Background": "#FFE4E9", "level2ToNormalLine": "#FFB3C1", "normalText": "#660012", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FF758F", "level1Text": "#000000", "level1Background": "#FF758F", "level1ToLevel2Line": "#FF758F", "level2Text": "#660013", "level2Background": "#FFD7DF", "level2ToNormalLine": "#FF758F", "normalText": "#660013", "normalBackground": "transparent" }, { "centerToLevel1Line": "#C9184A", "level1Text": "#FFFFFF", "level1Background": "#C9184A", "level1ToLevel2Line": "#C9184A", "level2Text": "#5B0A21", "level2Background": "#F4C5D1", "level2ToNormalLine": "#C9184A", "normalText": "#5B0A21", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FFB3C1", "level1Text": "#000000", "level1Background": "#FFB3C1", "level1ToLevel2Line": "#FFB3C1", "level2Text": "#660012", "level2Background": "#FFE4E9", "level2ToNormalLine": "#FFB3C1", "normalText": "#660012", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FF758F", "level1Text": "#000000", "level1Background": "#FF758F", "level1ToLevel2Line": "#FF758F", "level2Text": "#660013", "level2Background": "#FFD7DF", "level2ToNormalLine": "#FF758F", "normalText": "#660013", "normalBackground": "transparent" }, { "centerToLevel1Line": "#C9184A", "level1Text": "#FFFFFF", "level1Background": "#C9184A", "level1ToLevel2Line": "#C9184A", "level2Text": "#5B0A21", "level2Background": "#F4C5D1", "level2ToNormalLine": "#C9184A", "normalText": "#5B0A21", "normalBackground": "transparent" }] } },
+    { "id": "mint", "label": "薄荷", "category": "缤纷", "colors": ["#9CEAEF", "#68D8D6", "#06AFA9", "#9CEAEF", "#68D8D6", "#06AFA9"], "background": "#FFFFFF", "text": "#046562", "theme": { "background": "#FFFFFF", "centerText": "#046562", "centerBackground": "transparent", "cycleLength": 3, "branches": [{ "centerToLevel1Line": "#9CEAEF", "level1Text": "#000000", "level1Background": "#9CEAEF", "level1ToLevel2Line": "#9CEAEF", "level2Text": "#0E5357", "level2Background": "#EBFBFC", "level2ToNormalLine": "#9CEAEF", "normalText": "#0E5357", "normalBackground": "transparent" }, { "centerToLevel1Line": "#68D8D6", "level1Text": "#000000", "level1Background": "#68D8D6", "level1ToLevel2Line": "#68D8D6", "level2Text": "#14514F", "level2Background": "#E1F7F7", "level2ToNormalLine": "#68D8D6", "normalText": "#14514F", "normalBackground": "transparent" }, { "centerToLevel1Line": "#06AFA9", "level1Text": "#000000", "level1Background": "#06AFA9", "level1ToLevel2Line": "#06AFA9", "level2Text": "#03625F", "level2Background": "#CDEFEE", "level2ToNormalLine": "#06AFA9", "normalText": "#03625F", "normalBackground": "transparent" }, { "centerToLevel1Line": "#9CEAEF", "level1Text": "#000000", "level1Background": "#9CEAEF", "level1ToLevel2Line": "#9CEAEF", "level2Text": "#0E5357", "level2Background": "#EBFBFC", "level2ToNormalLine": "#9CEAEF", "normalText": "#0E5357", "normalBackground": "transparent" }, { "centerToLevel1Line": "#68D8D6", "level1Text": "#000000", "level1Background": "#68D8D6", "level1ToLevel2Line": "#68D8D6", "level2Text": "#14514F", "level2Background": "#E1F7F7", "level2ToNormalLine": "#68D8D6", "normalText": "#14514F", "normalBackground": "transparent" }, { "centerToLevel1Line": "#06AFA9", "level1Text": "#000000", "level1Background": "#06AFA9", "level1ToLevel2Line": "#06AFA9", "level2Text": "#03625F", "level2Background": "#CDEFEE", "level2ToNormalLine": "#06AFA9", "normalText": "#03625F", "normalBackground": "transparent" }] } },
+    { "id": "green-tea", "label": "绿茶", "category": "缤纷", "colors": ["#B6AD90", "#579360", "#656D4A", "#265834", "#B6AD90", "#579360"], "background": "#1F2B1D", "text": "#D6D9C3", "theme": { "background": "#1F2B1D", "centerText": "#D6D9C3", "centerBackground": "transparent", "cycleLength": 4, "branches": [{ "centerToLevel1Line": "#B6AD90", "level1Text": "#000000", "level1Background": "#B6AD90", "level1ToLevel2Line": "#B6AD90", "level2Text": "#FFFFFF", "level2Background": "#3D4534", "level2ToNormalLine": "#B6AD90", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#579360", "level1Text": "#FFFFFF", "level1Background": "#579360", "level1ToLevel2Line": "#579360", "level2Text": "#FFFFFF", "level2Background": "#2A3F2A", "level2ToNormalLine": "#579360", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#656D4A", "level1Text": "#FFFFFF", "level1Background": "#656D4A", "level1ToLevel2Line": "#656D4A", "level2Text": "#FFFFFF", "level2Background": "#2D3826", "level2ToNormalLine": "#656D4A", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#265834", "level1Text": "#FFFFFF", "level1Background": "#265834", "level1ToLevel2Line": "#265834", "level2Text": "#FFFFFF", "level2Background": "#213421", "level2ToNormalLine": "#265834", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#B6AD90", "level1Text": "#000000", "level1Background": "#B6AD90", "level1ToLevel2Line": "#B6AD90", "level2Text": "#FFFFFF", "level2Background": "#3D4534", "level2ToNormalLine": "#B6AD90", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#579360", "level1Text": "#FFFFFF", "level1Background": "#579360", "level1ToLevel2Line": "#579360", "level2Text": "#FFFFFF", "level2Background": "#2A3F2A", "level2ToNormalLine": "#579360", "normalText": "#FFFFFF", "normalBackground": "transparent" }] }, "darkBackground": "#1F2B1D", "darkText": "#D6D9C3" },
+    { "id": "eternity", "label": "永恒", "category": "经典", "colors": ["#141414", "#141414", "#141414", "#141414", "#141414", "#141414"], "background": "#FFFFFF", "text": "#3949AB", "theme": { "background": "#FFFFFF", "centerText": "#3949AB", "centerBackground": "transparent", "cycleLength": 1, "branches": [{ "centerToLevel1Line": "#141414", "level1Text": "#000000", "level1Background": "#EEEEEE", "level1ToLevel2Line": "#141414", "level2Text": "#000000", "level2Background": "#EEEEEE", "level2ToNormalLine": "#141414", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#141414", "level1Text": "#000000", "level1Background": "#EEEEEE", "level1ToLevel2Line": "#141414", "level2Text": "#000000", "level2Background": "#EEEEEE", "level2ToNormalLine": "#141414", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#141414", "level1Text": "#000000", "level1Background": "#EEEEEE", "level1ToLevel2Line": "#141414", "level2Text": "#000000", "level2Background": "#EEEEEE", "level2ToNormalLine": "#141414", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#141414", "level1Text": "#000000", "level1Background": "#EEEEEE", "level1ToLevel2Line": "#141414", "level2Text": "#000000", "level2Background": "#EEEEEE", "level2ToNormalLine": "#141414", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#141414", "level1Text": "#000000", "level1Background": "#EEEEEE", "level1ToLevel2Line": "#141414", "level2Text": "#000000", "level2Background": "#EEEEEE", "level2ToNormalLine": "#141414", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#141414", "level1Text": "#000000", "level1Background": "#EEEEEE", "level1ToLevel2Line": "#141414", "level2Text": "#000000", "level2Background": "#EEEEEE", "level2ToNormalLine": "#141414", "normalText": "#000000", "normalBackground": "transparent" }] } },
+    { "id": "cream", "label": "奶油", "category": "经典", "colors": ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"], "background": "#FFE0E5", "text": "#000000", "theme": { "background": "#FFE0E5", "centerText": "#000000", "centerBackground": "transparent", "cycleLength": 1, "branches": [{ "centerToLevel1Line": "#FFFFFF", "level1Text": "#000000", "level1Background": "#FFFFFF", "level1ToLevel2Line": "#FFFFFF", "level2Text": "#000000", "level2Background": "#FFFFFF", "level2ToNormalLine": "#FFFFFF", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FFFFFF", "level1Text": "#000000", "level1Background": "#FFFFFF", "level1ToLevel2Line": "#FFFFFF", "level2Text": "#000000", "level2Background": "#FFFFFF", "level2ToNormalLine": "#FFFFFF", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FFFFFF", "level1Text": "#000000", "level1Background": "#FFFFFF", "level1ToLevel2Line": "#FFFFFF", "level2Text": "#000000", "level2Background": "#FFFFFF", "level2ToNormalLine": "#FFFFFF", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FFFFFF", "level1Text": "#000000", "level1Background": "#FFFFFF", "level1ToLevel2Line": "#FFFFFF", "level2Text": "#000000", "level2Background": "#FFFFFF", "level2ToNormalLine": "#FFFFFF", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FFFFFF", "level1Text": "#000000", "level1Background": "#FFFFFF", "level1ToLevel2Line": "#FFFFFF", "level2Text": "#000000", "level2Background": "#FFFFFF", "level2ToNormalLine": "#FFFFFF", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FFFFFF", "level1Text": "#000000", "level1Background": "#FFFFFF", "level1ToLevel2Line": "#FFFFFF", "level2Text": "#000000", "level2Background": "#FFFFFF", "level2ToNormalLine": "#FFFFFF", "normalText": "#000000", "normalBackground": "transparent" }] } },
+    { "id": "flower-sea", "label": "花海", "category": "经典", "colors": ["#4A1019", "#4A1019", "#4A1019", "#4A1019", "#4A1019", "#4A1019"], "background": "#FFFFFF", "text": "#A61D39", "theme": { "background": "#FFFFFF", "centerText": "#A61D39", "centerBackground": "transparent", "cycleLength": 1, "branches": [{ "centerToLevel1Line": "#4A1019", "level1Text": "#FFFFFF", "level1Background": "#D02F48", "level1ToLevel2Line": "#4A1019", "level2Text": "#000000", "level2Background": "#E5E5E5", "level2ToNormalLine": "#4A1019", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#4A1019", "level1Text": "#FFFFFF", "level1Background": "#D02F48", "level1ToLevel2Line": "#4A1019", "level2Text": "#000000", "level2Background": "#E5E5E5", "level2ToNormalLine": "#4A1019", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#4A1019", "level1Text": "#FFFFFF", "level1Background": "#D02F48", "level1ToLevel2Line": "#4A1019", "level2Text": "#000000", "level2Background": "#E5E5E5", "level2ToNormalLine": "#4A1019", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#4A1019", "level1Text": "#FFFFFF", "level1Background": "#D02F48", "level1ToLevel2Line": "#4A1019", "level2Text": "#000000", "level2Background": "#E5E5E5", "level2ToNormalLine": "#4A1019", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#4A1019", "level1Text": "#FFFFFF", "level1Background": "#D02F48", "level1ToLevel2Line": "#4A1019", "level2Text": "#000000", "level2Background": "#E5E5E5", "level2ToNormalLine": "#4A1019", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#4A1019", "level1Text": "#FFFFFF", "level1Background": "#D02F48", "level1ToLevel2Line": "#4A1019", "level2Text": "#000000", "level2Background": "#E5E5E5", "level2ToNormalLine": "#4A1019", "normalText": "#000000", "normalBackground": "transparent" }] } },
+    { "id": "coral", "label": "珊瑚", "category": "经典", "colors": ["#FDF1F1", "#FDF1F1", "#FDF1F1", "#FDF1F1", "#FDF1F1", "#FDF1F1"], "background": "#140407", "text": "#EF6C70", "theme": { "background": "#140407", "centerText": "#EF6C70", "centerBackground": "transparent", "cycleLength": 1, "branches": [{ "centerToLevel1Line": "#FDF1F1", "level1Text": "#FFFFFF", "level1Background": "#D02F48", "level1ToLevel2Line": "#FDF1F1", "level2Text": "#FFFFFF", "level2Background": "#7C1C2B", "level2ToNormalLine": "#FDF1F1", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FDF1F1", "level1Text": "#FFFFFF", "level1Background": "#D02F48", "level1ToLevel2Line": "#FDF1F1", "level2Text": "#FFFFFF", "level2Background": "#7C1C2B", "level2ToNormalLine": "#FDF1F1", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FDF1F1", "level1Text": "#FFFFFF", "level1Background": "#D02F48", "level1ToLevel2Line": "#FDF1F1", "level2Text": "#FFFFFF", "level2Background": "#7C1C2B", "level2ToNormalLine": "#FDF1F1", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FDF1F1", "level1Text": "#FFFFFF", "level1Background": "#D02F48", "level1ToLevel2Line": "#FDF1F1", "level2Text": "#FFFFFF", "level2Background": "#7C1C2B", "level2ToNormalLine": "#FDF1F1", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FDF1F1", "level1Text": "#FFFFFF", "level1Background": "#D02F48", "level1ToLevel2Line": "#FDF1F1", "level2Text": "#FFFFFF", "level2Background": "#7C1C2B", "level2ToNormalLine": "#FDF1F1", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FDF1F1", "level1Text": "#FFFFFF", "level1Background": "#D02F48", "level1ToLevel2Line": "#FDF1F1", "level2Text": "#FFFFFF", "level2Background": "#7C1C2B", "level2ToNormalLine": "#FDF1F1", "normalText": "#FFFFFF", "normalBackground": "transparent" }] }, "darkBackground": "#140407", "darkText": "#EF6C70" },
+    { "id": "brilliant", "label": "绚丽", "category": "经典", "colors": ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"], "background": "#D02F48", "text": "#000000", "theme": { "background": "#D02F48", "centerText": "#000000", "centerBackground": "transparent", "cycleLength": 1, "branches": [{ "centerToLevel1Line": "#FFFFFF", "level1Text": "#000000", "level1Background": "#FFFFFF", "level1ToLevel2Line": "#FFFFFF", "level2Text": "#FFFFFF", "level2Background": "#7C1C2B", "level2ToNormalLine": "#FFFFFF", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FFFFFF", "level1Text": "#000000", "level1Background": "#FFFFFF", "level1ToLevel2Line": "#FFFFFF", "level2Text": "#FFFFFF", "level2Background": "#7C1C2B", "level2ToNormalLine": "#FFFFFF", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FFFFFF", "level1Text": "#000000", "level1Background": "#FFFFFF", "level1ToLevel2Line": "#FFFFFF", "level2Text": "#FFFFFF", "level2Background": "#7C1C2B", "level2ToNormalLine": "#FFFFFF", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FFFFFF", "level1Text": "#000000", "level1Background": "#FFFFFF", "level1ToLevel2Line": "#FFFFFF", "level2Text": "#FFFFFF", "level2Background": "#7C1C2B", "level2ToNormalLine": "#FFFFFF", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FFFFFF", "level1Text": "#000000", "level1Background": "#FFFFFF", "level1ToLevel2Line": "#FFFFFF", "level2Text": "#FFFFFF", "level2Background": "#7C1C2B", "level2ToNormalLine": "#FFFFFF", "normalText": "#FFFFFF", "normalBackground": "transparent" }, { "centerToLevel1Line": "#FFFFFF", "level1Text": "#000000", "level1Background": "#FFFFFF", "level1ToLevel2Line": "#FFFFFF", "level2Text": "#FFFFFF", "level2Background": "#7C1C2B", "level2ToNormalLine": "#FFFFFF", "normalText": "#FFFFFF", "normalBackground": "transparent" }] }, "darkBackground": "#D02F48", "darkText": "#000000" },
+    { "id": "champagne", "label": "香槟", "category": "经典", "colors": ["#88675E", "#88675E", "#88675E", "#88675E", "#88675E", "#88675E"], "background": "#EEE8E6", "text": "#000000", "theme": { "background": "#EEE8E6", "centerText": "#000000", "centerBackground": "transparent", "cycleLength": 1, "branches": [{ "centerToLevel1Line": "#88675E", "level1Text": "#000000", "level1Background": "#C1ABA5", "level1ToLevel2Line": "#88675E", "level2Text": "#000000", "level2Background": "#E6DDDA", "level2ToNormalLine": "#88675E", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#88675E", "level1Text": "#000000", "level1Background": "#C1ABA5", "level1ToLevel2Line": "#88675E", "level2Text": "#000000", "level2Background": "#E6DDDA", "level2ToNormalLine": "#88675E", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#88675E", "level1Text": "#000000", "level1Background": "#C1ABA5", "level1ToLevel2Line": "#88675E", "level2Text": "#000000", "level2Background": "#E6DDDA", "level2ToNormalLine": "#88675E", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#88675E", "level1Text": "#000000", "level1Background": "#C1ABA5", "level1ToLevel2Line": "#88675E", "level2Text": "#000000", "level2Background": "#E6DDDA", "level2ToNormalLine": "#88675E", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#88675E", "level1Text": "#000000", "level1Background": "#C1ABA5", "level1ToLevel2Line": "#88675E", "level2Text": "#000000", "level2Background": "#E6DDDA", "level2ToNormalLine": "#88675E", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#88675E", "level1Text": "#000000", "level1Background": "#C1ABA5", "level1ToLevel2Line": "#88675E", "level2Text": "#000000", "level2Background": "#E6DDDA", "level2ToNormalLine": "#88675E", "normalText": "#000000", "normalBackground": "transparent" }] } },
+    { "id": "perfume", "label": "香水", "category": "经典", "colors": ["#201E14", "#201E14", "#201E14", "#201E14", "#201E14", "#201E14"], "background": "#EFE6C6", "text": "#000000", "theme": { "background": "#EFE6C6", "centerText": "#000000", "centerBackground": "transparent", "cycleLength": 1, "branches": [{ "centerToLevel1Line": "#201E14", "level1Text": "#000000", "level1Background": "#AB9446", "level1ToLevel2Line": "#201E14", "level2Text": "#000000", "level2Background": "#AB9446", "level2ToNormalLine": "#201E14", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#201E14", "level1Text": "#000000", "level1Background": "#AB9446", "level1ToLevel2Line": "#201E14", "level2Text": "#000000", "level2Background": "#AB9446", "level2ToNormalLine": "#201E14", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#201E14", "level1Text": "#000000", "level1Background": "#AB9446", "level1ToLevel2Line": "#201E14", "level2Text": "#000000", "level2Background": "#AB9446", "level2ToNormalLine": "#201E14", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#201E14", "level1Text": "#000000", "level1Background": "#AB9446", "level1ToLevel2Line": "#201E14", "level2Text": "#000000", "level2Background": "#AB9446", "level2ToNormalLine": "#201E14", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#201E14", "level1Text": "#000000", "level1Background": "#AB9446", "level1ToLevel2Line": "#201E14", "level2Text": "#000000", "level2Background": "#AB9446", "level2ToNormalLine": "#201E14", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#201E14", "level1Text": "#000000", "level1Background": "#AB9446", "level1ToLevel2Line": "#201E14", "level2Text": "#000000", "level2Background": "#AB9446", "level2ToNormalLine": "#201E14", "normalText": "#000000", "normalBackground": "transparent" }] } },
+    { "id": "zen-heart", "label": "禅心", "category": "经典", "colors": ["#232323", "#232323", "#232323", "#232323", "#232323", "#232323"], "background": "#FFFFFF", "text": "#000000", "theme": { "background": "#FFFFFF", "centerText": "#000000", "centerBackground": "transparent", "cycleLength": 1, "branches": [{ "centerToLevel1Line": "#232323", "level1Text": "#000000", "level1Background": "#D6D6D6", "level1ToLevel2Line": "#232323", "level2Text": "#000000", "level2Background": "#D6D6D6", "level2ToNormalLine": "#232323", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#232323", "level1Text": "#000000", "level1Background": "#D6D6D6", "level1ToLevel2Line": "#232323", "level2Text": "#000000", "level2Background": "#D6D6D6", "level2ToNormalLine": "#232323", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#232323", "level1Text": "#000000", "level1Background": "#D6D6D6", "level1ToLevel2Line": "#232323", "level2Text": "#000000", "level2Background": "#D6D6D6", "level2ToNormalLine": "#232323", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#232323", "level1Text": "#000000", "level1Background": "#D6D6D6", "level1ToLevel2Line": "#232323", "level2Text": "#000000", "level2Background": "#D6D6D6", "level2ToNormalLine": "#232323", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#232323", "level1Text": "#000000", "level1Background": "#D6D6D6", "level1ToLevel2Line": "#232323", "level2Text": "#000000", "level2Background": "#D6D6D6", "level2ToNormalLine": "#232323", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#232323", "level1Text": "#000000", "level1Background": "#D6D6D6", "level1ToLevel2Line": "#232323", "level2Text": "#000000", "level2Background": "#D6D6D6", "level2ToNormalLine": "#232323", "normalText": "#000000", "normalBackground": "transparent" }] } },
+    { "id": "rhythm", "label": "律动", "category": "经典", "colors": ["#F44336", "#F44336", "#F44336", "#F44336", "#F44336", "#F44336"], "background": "#FFFFFF", "text": "#F44336", "theme": { "background": "#FFFFFF", "centerText": "#F44336", "centerBackground": "transparent", "cycleLength": 1, "branches": [{ "centerToLevel1Line": "#F44336", "level1Text": "#FFFFFF", "level1Background": "#F44336", "level1ToLevel2Line": "#F44336", "level2Text": "#FFFFFF", "level2Background": "#F44336", "level2ToNormalLine": "#F44336", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#F44336", "level1Text": "#FFFFFF", "level1Background": "#F44336", "level1ToLevel2Line": "#F44336", "level2Text": "#FFFFFF", "level2Background": "#F44336", "level2ToNormalLine": "#F44336", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#F44336", "level1Text": "#FFFFFF", "level1Background": "#F44336", "level1ToLevel2Line": "#F44336", "level2Text": "#FFFFFF", "level2Background": "#F44336", "level2ToNormalLine": "#F44336", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#F44336", "level1Text": "#FFFFFF", "level1Background": "#F44336", "level1ToLevel2Line": "#F44336", "level2Text": "#FFFFFF", "level2Background": "#F44336", "level2ToNormalLine": "#F44336", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#F44336", "level1Text": "#FFFFFF", "level1Background": "#F44336", "level1ToLevel2Line": "#F44336", "level2Text": "#FFFFFF", "level2Background": "#F44336", "level2ToNormalLine": "#F44336", "normalText": "#000000", "normalBackground": "transparent" }, { "centerToLevel1Line": "#F44336", "level1Text": "#FFFFFF", "level1Background": "#F44336", "level1ToLevel2Line": "#F44336", "level2Text": "#FFFFFF", "level2Background": "#F44336", "level2ToNormalLine": "#F44336", "normalText": "#000000", "normalBackground": "transparent" }] } },
 ];
 const SCHEME_MAP = new Map(YEMIND_COLOR_SCHEMES.map((scheme) => [scheme.id, scheme]));
-function normalizeColorSchemeId(value) {
-  return typeof value === "string" && SCHEME_MAP.has(value) ? value : null;
-}
-function getColorScheme(value) {
-  const id = normalizeColorSchemeId(value);
-  return id ? SCHEME_MAP.get(id) ?? null : null;
-}
-function rainbowSchemeOptionsHtml(selected) {
-  const value = normalizeColorSchemeId(selected) ?? "rainbow";
-  return YEMIND_COLOR_SCHEMES.map((scheme) => `<option value="${scheme.id}"${scheme.id === value ? " selected" : ""}>${scheme.label}</option>`).join("");
-}
+function normalizeColorSchemeId(value) { return typeof value === 'string' && SCHEME_MAP.has(value) ? value : null; }
+function getColorScheme(value) { const id = normalizeColorSchemeId(value); return id ? SCHEME_MAP.get(id) ?? null : null; }
+function getThemeColorDefinition(value, appearance = 'light') { const scheme = getColorScheme(value); if (!scheme)
+    return null; return appearance === 'dark' ? (scheme.darkTheme ?? scheme.theme) : scheme.theme; }
+function rainbowSchemeOptionsHtml(selected) { const value = normalizeColorSchemeId(selected) ?? 'rainbow'; return ['基础', '缤纷', '经典'].map((group) => `<optgroup label="${group}">${YEMIND_COLOR_SCHEMES.filter((scheme) => scheme.category === group).map((scheme) => `<option value="${scheme.id}"${scheme.id === value ? ' selected' : ''}>${scheme.label}</option>`).join('')}</optgroup>`).join(''); }
+
 const FONT_SANS = 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif';
 const FONT_MONO = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
-const RAINBOW = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
-function level$1(fillColor, color2, borderColor, borderWidth, borderRadius, fontSize, fontWeight) {
-  return { fillColor, color: color2, borderColor, borderWidth, borderRadius, fontSize, fontWeight };
+function themeLevel(fillColor, color, borderColor, borderWidth, borderRadius, fontSize, fontWeight) {
+    return { fillColor, color, borderColor, borderWidth, borderRadius, fontSize, fontWeight };
 }
-const defaultLight = {
-  backgroundColor: "#f8fafc",
-  lineColor: "#94a3b8",
-  generalizationLineColor: "#94a3b8",
-  associativeLineColor: "#f59e0b",
-  root: level$1("#ffffff", "#0f172a", "#cbd5e1", 2, 10, 14, "400"),
-  second: level$1("#ffffff", "#0f172a", "#cbd5e1", 2, 10, 14, "400"),
-  node: level$1("#ffffff", "#0f172a", "#cbd5e1", 2, 10, 14, "400"),
-  rainbow: { open: false, colorsList: RAINBOW },
-  lineWidth: 2,
-  lineRadius: 10
-};
-const defaultDark = {
-  backgroundColor: "#0b1220",
-  lineColor: "rgba(148,163,184,.62)",
-  generalizationLineColor: "rgba(148,163,184,.72)",
-  associativeLineColor: "#f59e0b",
-  root: level$1("#0b1220", "#e2e8f0", "rgba(148,163,184,.45)", 2, 10, 14, "400"),
-  second: level$1("#0b1220", "#e2e8f0", "rgba(148,163,184,.45)", 2, 10, 14, "400"),
-  node: level$1("#0b1220", "#e2e8f0", "rgba(148,163,184,.45)", 2, 10, 14, "400"),
-  rainbow: { open: false, colorsList: RAINBOW },
-  lineWidth: 2,
-  lineRadius: 10
-};
-const inkLight = {
-  backgroundColor: "#ffffff",
-  lineColor: "#151515",
-  generalizationLineColor: "#151515",
-  associativeLineColor: "#737373",
-  root: level$1("transparent", "#3749b5", "transparent", 0, 0, 26, "800"),
-  second: level$1("transparent", "#111111", "transparent", 0, 0, 18, "700"),
-  node: level$1("transparent", "#111111", "transparent", 0, 0, 14, "600"),
-  rainbow: { open: false, colorsList: ["#151515", "#3749b5", "#525252", "#737373"] },
-  nodeUseLineStyle: true,
-  lineWidth: 4,
-  lineRadius: 0
-};
-const inkDark = {
-  backgroundColor: "#0a0a0a",
-  lineColor: "#f5f5f5",
-  generalizationLineColor: "#f5f5f5",
-  associativeLineColor: "#a3a3a3",
-  root: level$1("transparent", "#93a4ff", "transparent", 0, 0, 26, "800"),
-  second: level$1("transparent", "#f5f5f5", "transparent", 0, 0, 18, "700"),
-  node: level$1("transparent", "#f5f5f5", "transparent", 0, 0, 14, "600"),
-  rainbow: { open: false, colorsList: ["#f5f5f5", "#93a4ff", "#d4d4d4", "#a3a3a3"] },
-  nodeUseLineStyle: true,
-  lineWidth: 4,
-  lineRadius: 0
-};
-const materialLight = {
-  backgroundColor: "#fef7ff",
-  lineColor: "#79747e",
-  generalizationLineColor: "#cac4d0",
-  associativeLineColor: "#7d5260",
-  root: level$1("#eaddff", "#21005d", "transparent", 0, 16, 16, "700"),
-  second: level$1("#e8def8", "#1d192b", "transparent", 0, 16, 15, "600"),
-  node: level$1("#f3edf7", "#1c1b1f", "transparent", 0, 16, 14, "450"),
-  rainbow: { open: false, colorsList: ["#6750a4", "#7d5260", "#00639a", "#386a20", "#984061", "#006a60"] },
-  lineWidth: 2,
-  lineRadius: 16,
-  lineDasharray: "6,4"
-};
-const materialDark = {
-  backgroundColor: "#141218",
-  lineColor: "#938f99",
-  generalizationLineColor: "#49454f",
-  associativeLineColor: "#efb8c8",
-  root: level$1("#4f378b", "#fef7ff", "transparent", 0, 16, 16, "700"),
-  second: level$1("#332d41", "#e6e1e5", "transparent", 0, 16, 15, "600"),
-  node: level$1("#211f26", "#e6e1e5", "transparent", 0, 16, 14, "450"),
-  rainbow: { open: false, colorsList: ["#d0bcff", "#efb8c8", "#92ccff", "#9bd67d", "#ffb0c8", "#82d5c9"] },
-  lineWidth: 2,
-  lineRadius: 16,
-  lineDasharray: "6,4"
-};
-function contrastText(color2) {
-  const hex2 = color2.replace("#", "");
-  const r = Number.parseInt(hex2.slice(0, 2), 16);
-  const g = Number.parseInt(hex2.slice(2, 4), 16);
-  const b = Number.parseInt(hex2.slice(4, 6), 16);
-  return (r * 299 + g * 587 + b * 114) / 1e3 > 150 ? "#141414" : "#ffffff";
+function branchAt(definition, index) {
+    return definition.branches[index % Math.max(1, definition.cycleLength)] ?? definition.branches[0];
 }
-function schemeVariant(id, appearance) {
-  const scheme = getColorScheme(id);
-  const background = appearance === "dark" ? scheme.darkBackground ?? scheme.background : scheme.background;
-  const colors = [...scheme.colors];
-  const strong = colors[Math.min(colors.length - 1, 4)];
-  const medium = colors[Math.min(colors.length - 1, 2)];
-  const light = colors[Math.min(colors.length - 1, 1)];
-  const rootText = appearance === "dark" ? scheme.darkText ?? "#f5f5f5" : scheme.text ?? "#202020";
-  return {
-    backgroundColor: background,
-    lineColor: strong,
-    generalizationLineColor: medium,
-    associativeLineColor: colors[0],
-    root: level$1("transparent", rootText, "transparent", 0, 0, 25, "800"),
-    second: level$1(strong, contrastText(strong), "transparent", 0, 10, 18, "700"),
-    node: level$1(light, contrastText(light), "transparent", 0, 8, 14, "400"),
-    rainbow: { open: true, colorsList: colors },
-    lineWidth: 2.4,
-    lineRadius: 16
-  };
+function themeVariant(schemeId, appearance) {
+    const scheme = getColorScheme(schemeId);
+    const definition = getThemeColorDefinition(schemeId, appearance);
+    const first = branchAt(definition, 0);
+    const isInk = schemeId === 'ink-branch';
+    const isMaterial = schemeId === 'material-3-basic';
+    const isDefault = schemeId === 'yemind-default';
+    const radius = isInk ? 0 : isMaterial ? 16 : isDefault ? 10 : 10;
+    const lineWidth = isInk ? 4 : isMaterial ? 2 : isDefault ? 2 : 2.4;
+    return {
+        backgroundColor: definition.background,
+        lineColor: first.centerToLevel1Line,
+        generalizationLineColor: first.level1ToLevel2Line,
+        associativeLineColor: first.level2ToNormalLine,
+        root: themeLevel(definition.centerBackground, definition.centerText, isDefault ? first.centerToLevel1Line : 'transparent', isDefault ? 2 : 0, radius, isInk ? 26 : isMaterial ? 16 : 25, '800'),
+        second: themeLevel(first.level1Background, first.level1Text, isDefault ? first.centerToLevel1Line : 'transparent', isDefault ? 2 : 0, radius, isInk ? 18 : isMaterial ? 15 : 18, '700'),
+        node: themeLevel(first.level2Background, first.level2Text, isDefault ? first.level1ToLevel2Line : 'transparent', isDefault ? 2 : 0, isInk ? 0 : isMaterial ? 16 : 8, 14, isInk ? '600' : '400'),
+        rainbow: {
+            open: scheme.category !== '基础',
+            colorsList: definition.branches.map((branch) => branch.centerToLevel1Line),
+        },
+        branchPalette: definition.branches,
+        nodeUseLineStyle: isInk,
+        lineWidth,
+        lineRadius: isInk ? 0 : isMaterial ? 16 : 16,
+        lineDasharray: isMaterial ? '6,4' : 'none',
+    };
 }
-const BASE_PRESETS = [
-  { id: "yemind-default", label: "YeMind 默认", description: "清晰圆角与中性背景", group: "基础", light: defaultLight, dark: defaultDark },
-  { id: "ink-branch", label: "Ink Branch", description: "粗线条极简分支", group: "基础", light: inkLight, dark: inkDark },
-  { id: "material-3-basic", label: "Material 3 Basic", description: "柔和圆角 Material 风格", group: "基础", light: materialLight, dark: materialDark }
-];
-const YEMIND_THEME_PRESETS = [
-  ...BASE_PRESETS,
-  ...YEMIND_COLOR_SCHEMES.map((scheme) => ({
-    id: `scheme-${scheme.id}`,
-    label: scheme.label,
-    description: `${scheme.label}配色方案`,
-    group: "配色方案",
-    light: schemeVariant(scheme.id, "light"),
-    dark: schemeVariant(scheme.id, "dark")
-  }))
-];
+const BASE_THEME_IDS = new Set(['yemind-default', 'ink-branch', 'material-3-basic']);
+const YEMIND_THEME_PRESETS = YEMIND_COLOR_SCHEMES.map((scheme) => {
+    const id = BASE_THEME_IDS.has(scheme.id) ? scheme.id : `scheme-${scheme.id}`;
+    return {
+        id,
+        colorSchemeId: scheme.id,
+        label: scheme.label,
+        description: `${scheme.label}完整配色`,
+        group: scheme.category,
+        light: themeVariant(scheme.id, 'light'),
+        dark: themeVariant(scheme.id, 'dark'),
+    };
+});
 const THEME_IDS = new Set(YEMIND_THEME_PRESETS.map((item) => item.id));
 const LEGACY_THEME_ALIASES = {
-  default: "yemind-default",
-  "kmind-default": "yemind-default",
-  "kmind-baseline-fork-ink": "ink-branch",
-  "kmind-material-3": "material-3-basic",
-  "kmind-material-3-slate": "yemind-default",
-  "kmind-candy-pop": "scheme-rainbow",
-  "kmind-material-3-rounded-orthogonal-ocean": "scheme-mint",
-  "kmind-material-3-rounded-orthogonal-forest": "scheme-green-tea",
-  "kmind-material-3-rounded-orthogonal-citrus": "scheme-dawn",
-  "kmind-material-3-rounded-orthogonal-rose": "scheme-rose",
-  "kmind-material-3-rounded-orthogonal-violet": "scheme-dance",
-  "kmind-material-3-rounded-orthogonal-aqua": "scheme-mint",
-  "kmind-midnight-neon": "scheme-code",
-  "kmind-rainbow-breeze": "scheme-rainbow"
+    default: 'yemind-default',
+    'kmind-default': 'yemind-default',
+    'kmind-baseline-fork-ink': 'ink-branch',
+    'kmind-material-3': 'material-3-basic',
+    'kmind-material-3-slate': 'yemind-default',
+    'kmind-candy-pop': 'scheme-rainbow',
+    'kmind-material-3-rounded-orthogonal-ocean': 'scheme-mint',
+    'kmind-material-3-rounded-orthogonal-forest': 'scheme-green-tea',
+    'kmind-material-3-rounded-orthogonal-citrus': 'scheme-dawn',
+    'kmind-material-3-rounded-orthogonal-rose': 'scheme-rose',
+    'kmind-material-3-rounded-orthogonal-violet': 'scheme-dance',
+    'kmind-material-3-rounded-orthogonal-aqua': 'scheme-mint',
+    'kmind-midnight-neon': 'scheme-code',
+    'kmind-rainbow-breeze': 'scheme-rainbow',
 };
-const LINE_STYLES = /* @__PURE__ */ new Set(["curve", "straight", "direct"]);
+const LINE_STYLES = new Set(['curve', 'straight', 'direct']);
 function normalizeThemePresetId(value) {
-  if (typeof value === "string" && LEGACY_THEME_ALIASES[value]) return LEGACY_THEME_ALIASES[value];
-  return typeof value === "string" && THEME_IDS.has(value) ? value : "yemind-default";
+    if (typeof value === 'string' && LEGACY_THEME_ALIASES[value])
+        return LEGACY_THEME_ALIASES[value];
+    return typeof value === 'string' && THEME_IDS.has(value) ? value : 'yemind-default';
 }
 function normalizeLineStyle(value) {
-  return typeof value === "string" && LINE_STYLES.has(value) ? value : "curve";
+    return typeof value === 'string' && LINE_STYLES.has(value)
+        ? value
+        : 'curve';
 }
-function detectAppearance(root2 = typeof document === "undefined" ? null : document.documentElement) {
-  const candidates = root2 ? [root2, ...typeof document !== "undefined" && root2 === document.documentElement && document.body ? [document.body] : []] : [];
-  for (const candidate of candidates) {
-    const element = candidate;
-    const values = [element.dataset.themeMode, element.dataset.theme, element.getAttribute("data-color-mode"), element.getAttribute("data-theme-mode"), element.className].filter(Boolean).join(" ").toLowerCase();
-    if (/(^|\s|[-_])(dark|midnight)(\s|$|[-_])/.test(` ${values} `)) return "dark";
-    if (/(^|\s|[-_])light(\s|$|[-_])/.test(` ${values} `)) return "light";
-  }
-  return typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+function detectAppearance(root = typeof document === 'undefined' ? null : document.documentElement) {
+    const candidates = root
+        ? [root, ...(typeof document !== 'undefined' && root === document.documentElement && document.body ? [document.body] : [])]
+        : [];
+    for (const candidate of candidates) {
+        const element = candidate;
+        const values = [
+            element.dataset.themeMode,
+            element.dataset.theme,
+            element.getAttribute('data-color-mode'),
+            element.getAttribute('data-theme-mode'),
+            element.className,
+        ].filter(Boolean).join(' ').toLowerCase();
+        if (/(^|\s|[-_])(dark|midnight)(\s|$|[-_])/.test(` ${values} `))
+            return 'dark';
+        if (/(^|\s|[-_])light(\s|$|[-_])/.test(` ${values} `))
+            return 'light';
+    }
+    return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 function cloneLevel(style, marginX, marginY) {
-  return { shape: "rectangle", fillColor: style.fillColor, fontFamily: FONT_SANS, color: style.color, fontSize: style.fontSize, fontWeight: style.fontWeight, fontStyle: "normal", borderColor: style.borderColor, borderWidth: style.borderWidth, borderDasharray: "none", borderRadius: style.borderRadius, textDecoration: "none", textAlign: "left", marginX, marginY };
+    return {
+        shape: 'rectangle',
+        fillColor: style.fillColor,
+        fontFamily: FONT_SANS,
+        color: style.color,
+        fontSize: style.fontSize,
+        fontWeight: style.fontWeight,
+        fontStyle: 'normal',
+        borderColor: style.borderColor,
+        borderWidth: style.borderWidth,
+        borderDasharray: 'none',
+        borderRadius: style.borderRadius,
+        textDecoration: 'none',
+        textAlign: 'left',
+        marginX,
+        marginY,
+    };
 }
 function buildThemeConfig(options) {
-  const presetId = normalizeThemePresetId(options.presetId);
-  const preset = YEMIND_THEME_PRESETS.find((item) => item.id === presetId) ?? YEMIND_THEME_PRESETS[0];
-  const variant = options.appearance === "dark" ? preset.dark : preset.light;
-  const spacing2 = options.spacingConfig ?? {};
-  const lineStyle = normalizeLineStyle(options.lineStyle);
-  const root2 = { ...cloneLevel(variant.root, 0, 0), ...spacing2.root ?? {} };
-  if (presetId === "ink-branch") root2.fontFamily = FONT_MONO;
-  const second = { ...cloneLevel(variant.second, 100, 38), ...spacing2.second ?? {} };
-  const node = { ...cloneLevel(variant.node, 54, 12), ...spacing2.node ?? {} };
-  const generalization = { ...cloneLevel(variant.second, 80, 30), fillColor: variant.second.fillColor, ...spacing2.generalization ?? {} };
-  return { presetId, themeConfig: { paddingX: 12, paddingY: 7, lineWidth: variant.lineWidth ?? 2, lineColor: variant.lineColor, lineDasharray: variant.lineDasharray ?? "none", lineStyle, rootLineKeepSameInCurve: true, rootLineStartPositionKeepSameInCurve: false, lineRadius: variant.lineRadius ?? 10, generalizationLineWidth: Math.max(1, (variant.lineWidth ?? 2) - 0.5), generalizationLineColor: variant.generalizationLineColor, associativeLineWidth: 2, associativeLineColor: variant.associativeLineColor, associativeLineActiveWidth: 6, associativeLineActiveColor: variant.root.color, associativeLineTextColor: variant.node.color, backgroundColor: variant.backgroundColor, nodeUseLineStyle: Boolean(variant.nodeUseLineStyle), root: root2, second, node, generalization }, rainbow: { open: variant.rainbow.open, colorsList: [...variant.rainbow.colorsList] } };
+    const presetId = normalizeThemePresetId(options.presetId);
+    const preset = YEMIND_THEME_PRESETS.find((item) => item.id === presetId) ?? YEMIND_THEME_PRESETS[0];
+    const variant = options.appearance === 'dark' ? preset.dark : preset.light;
+    const spacing = options.spacingConfig ?? {};
+    const lineStyle = normalizeLineStyle(options.lineStyle);
+    const root = { ...cloneLevel(variant.root, 0, 0), ...(spacing.root ?? {}) };
+    if (presetId === 'ink-branch')
+        root.fontFamily = FONT_MONO;
+    const second = { ...cloneLevel(variant.second, 100, 38), ...(spacing.second ?? {}) };
+    const node = { ...cloneLevel(variant.node, 54, 12), ...(spacing.node ?? {}) };
+    const generalization = {
+        ...cloneLevel(variant.second, 80, 30),
+        fillColor: variant.second.fillColor,
+        ...(spacing.generalization ?? {}),
+    };
+    return {
+        presetId,
+        colorSchemeId: preset.colorSchemeId,
+        themeConfig: {
+            paddingX: 12,
+            paddingY: 7,
+            lineWidth: variant.lineWidth ?? 2,
+            lineColor: variant.lineColor,
+            lineDasharray: variant.lineDasharray ?? 'none',
+            lineStyle,
+            rootLineKeepSameInCurve: true,
+            rootLineStartPositionKeepSameInCurve: false,
+            lineRadius: variant.lineRadius ?? 10,
+            generalizationLineWidth: Math.max(1, (variant.lineWidth ?? 2) - .5),
+            generalizationLineColor: variant.generalizationLineColor,
+            associativeLineWidth: 2,
+            associativeLineColor: variant.associativeLineColor,
+            associativeLineActiveWidth: 6,
+            associativeLineActiveColor: variant.root.color,
+            associativeLineTextColor: variant.node.color,
+            backgroundColor: variant.backgroundColor,
+            nodeUseLineStyle: Boolean(variant.nodeUseLineStyle),
+            root,
+            second,
+            node,
+            generalization,
+        },
+        rainbow: { open: variant.rainbow.open, colorsList: [...variant.rainbow.colorsList] },
+        branchPalette: variant.branchPalette,
+    };
 }
 function themeOptionsHtml(selected) {
-  const value = normalizeThemePresetId(selected);
-  return ["基础", "配色方案"].map((group) => `<optgroup label="${group}">${YEMIND_THEME_PRESETS.filter((preset) => preset.group === group).map((preset) => `<option value="${preset.id}"${preset.id === value ? " selected" : ""}>${preset.label}</option>`).join("")}</optgroup>`).join("");
+    const value = normalizeThemePresetId(selected);
+    return ['基础', '缤纷', '经典']
+        .map((group) => `<optgroup label="${group}">${YEMIND_THEME_PRESETS
+        .filter((preset) => preset.group === group)
+        .map((preset) => `<option value="${preset.id}"${preset.id === value ? ' selected' : ''}>${preset.label}</option>`)
+        .join('')}</optgroup>`)
+        .join('');
 }
+
 const YEMIND_LAYOUT_PRESETS = [
   { id: "logicalStructure", label: "向右逻辑图", family: "logic" },
   { id: "logicalStructureLeft", label: "向左逻辑图", family: "logic" },
@@ -3981,7 +3981,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.9.0";
+const PLUGIN_VERSION = "0.9.1";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -3989,12 +3989,12 @@ const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-21T23:45:00+08:00",
-  buildId: "yemind-v0.9.0-20260721",
+  buildTime: "2026-07-22T11:30:00+08:00",
+  buildId: "yemind-v0.9.1-20260722",
   productName: PRODUCT_NAME,
   tagline: "思源笔记中的思维导图、分屏大纲与知识整理插件。",
   hostBaseline: "SiYuan 3.7.3",
-  releaseSummary: "新增图片安全操作与沉浸预览，扩展彩虹连线配色，并重做整图主题方案。",
+  releaseSummary: "补齐十九套命名主题的完整层级颜色，并统一基础主题的配色控制。",
   highlights: [
     "节点图片增加左上角放大预览和右上角删除图标，删除前必须二次确认。",
     "图片预览支持遮罩显示、滚轮缩放、恢复 1:1、点击空白或按 Esc 关闭。",

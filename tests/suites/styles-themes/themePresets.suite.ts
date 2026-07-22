@@ -25,30 +25,24 @@ describe('YeMind theme presets', () => {
     expect(result.themeConfig.backgroundColor).toBe('#f8fafc');
   });
 
-  it('provides the retained base themes and ten named color schemes', () => {
+  it('provides three base themes and nineteen complete named themes', () => {
     const ids = YEMIND_THEME_PRESETS.map((item) => item.id);
     expect(ids).toEqual([
-      'yemind-default',
-      'ink-branch',
-      'material-3-basic',
-      'scheme-dawn',
-      'scheme-rainbow',
-      'scheme-vitality',
-      'scheme-dance',
-      'scheme-code',
-      'scheme-harmony',
-      'scheme-island',
-      'scheme-rose',
-      'scheme-mint',
-      'scheme-green-tea',
+      'yemind-default', 'ink-branch', 'material-3-basic',
+      'scheme-dawn', 'scheme-rainbow', 'scheme-vitality', 'scheme-dance', 'scheme-code',
+      'scheme-harmony', 'scheme-island', 'scheme-rose', 'scheme-mint', 'scheme-green-tea',
+      'scheme-eternity', 'scheme-cream', 'scheme-flower-sea', 'scheme-coral', 'scheme-brilliant',
+      'scheme-champagne', 'scheme-perfume', 'scheme-zen-heart', 'scheme-rhythm',
     ]);
-    expect(YEMIND_THEME_PRESETS.map((item) => item.label)).toEqual(expect.arrayContaining([
+    expect(YEMIND_THEME_PRESETS.map((item) => item.label)).toEqual([
       'YeMind 默认', 'Ink Branch', 'Material 3 Basic',
       '晨曦', '彩虹', '活力', '舞动', '代码', '和风', '岛屿', '玫瑰', '薄荷', '绿茶',
-    ]));
+      '永恒', '奶油', '花海', '珊瑚', '绚丽', '香槟', '香水', '禅心', '律动',
+    ]);
     const options = themeOptionsHtml('scheme-mint');
     expect(options).toContain('<optgroup label="基础">');
-    expect(options).toContain('<optgroup label="配色方案">');
+    expect(options).toContain('<optgroup label="缤纷">');
+    expect(options).toContain('<optgroup label="经典">');
     expect(options).toContain('<option value="scheme-mint" selected>薄荷</option>');
 
     const light = buildThemeConfig({ presetId: 'yemind-default', appearance: 'light', lineStyle: 'curve' });

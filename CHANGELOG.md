@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.1 - 2026-07-22
+
+- 补齐 19 套命名主题的完整层级颜色字段。
+- 基础三主题统一接入完整配色控制模型。
+- 主题与彩虹连线选项按基础、缤纷、经典分类。
+- 内置颜色源文档与 JSON，作为主题配置单一来源。
+
 ## 0.9.0 - 2026-07-21
 
 - Added a trash-can image removal control with confirmation before deletion.
