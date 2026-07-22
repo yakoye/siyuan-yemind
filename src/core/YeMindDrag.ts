@@ -75,9 +75,6 @@ export function restoreIncomingDragLines(snapshots: IncomingDragLineSnapshot[]):
   });
 }
 
-const LOGICAL_CHILD_STABLE_MS = 120;
-const LOGICAL_CHILD_STABLE_FRAMES = 2;
-
 export function resolveDragGuideTarget(state: {
   overlapNode?: any;
   prevNode?: any;
@@ -248,7 +245,7 @@ function cancelFrame(id: number): void {
   clearTimeout(id);
 }
 
-function nodeRect(plugin: any, node: any): DragGuideRect | null {
+function nodeHitRect(plugin: any, node: any): DragGuideRect | null {
   if (!node) return null;
   const native = plugin.getNodeRect?.(node);
   if (native) {
@@ -260,6 +257,16 @@ function nodeRect(plugin: any, node: any): DragGuideRect | null {
     });
   }
   return normalizeRect(node?.group?.rbox?.(plugin.mindMap.otherDraw) ?? node?.group?.bbox?.());
+}
+
+function nodeSceneRect(_plugin: any, node: any): DragGuideRect | null {
+  if (!node) return null;
+  return normalizeRect({
+    x: Number(node.left),
+    y: Number(node.top),
+    width: Number(node.width),
+    height: Number(node.height),
+  });
 }
 
 function ghostRect(plugin: any): DragGuideRect | null {
@@ -318,7 +325,7 @@ function previewGap(plugin: any): number {
   const rects: DragGuideRect[] = [];
   (plugin.beingDragNodeList ?? []).forEach((root: any) => {
     collectSubtreeNodes(root).forEach((node) => {
-      const rect = nodeRect(plugin, node);
+      const rect = nodeSceneRect(plugin, node);
       if (rect) rects.push(rect);
     });
   });
@@ -398,7 +405,13 @@ export default class YeMindDrag extends Drag {
 
   onMove(x: number, y: number, event: MouseEvent): void {
     super.onMove(x, y, event);
-    this.updateOfficialGuideLines();
+    // The right logical reference layout resolves its local target on every
+    // pointer move so the parent preview never lags behind the dragged node.
+    if (String((this as any).mindMap.opt.layout ?? 'logicalStructure') === 'logicalStructure') {
+      this.flushOfficialCandidateCheck();
+    } else {
+      this.updateOfficialGuideLines();
+    }
   }
 
   async onMouseup(event: MouseEvent): Promise<void> {
@@ -410,9 +423,11 @@ export default class YeMindDrag extends Drag {
       // Sibling ordering is explicit from the upper/lower half of a target row
       // and should commit on release immediately. Becoming a child changes
       // hierarchy and therefore still requires the deliberate dwell candidate.
-      const resolved = raw.kind === 'child'
-        ? (raw.key === stable.key ? stable : emptyOfficialDragCandidate())
-        : raw;
+      const resolved = String(plugin.mindMap.opt.layout ?? 'logicalStructure') === 'logicalStructure'
+        ? raw
+        : raw.kind === 'child'
+          ? (raw.key === stable.key ? stable : emptyOfficialDragCandidate())
+          : raw;
       const finalCandidate = isOfficialDragCandidateNoop(
         resolved,
         plugin.beingDragNodeList ?? [],
@@ -484,7 +499,7 @@ export default class YeMindDrag extends Drag {
         nodes: plugin.nodeList ?? [],
         excludedNodes: collectDragExcludedNodes(plugin.beingDragNodeList ?? []),
         current: plugin.__ymzCandidateState?.stable ?? emptyOfficialDragCandidate(),
-        getRect: (node) => nodeRect(plugin, node),
+        getRect: (node) => nodeHitRect(plugin, node),
       });
       this.clearUpstreamPlaceholder();
     } else {
@@ -497,12 +512,7 @@ export default class YeMindDrag extends Drag {
     const currentState = plugin.__ymzCandidateState
       ?? createDragCandidateState(emptyOfficialDragCandidate());
     plugin.__ymzCandidateState = layout === 'logicalStructure'
-      ? updateStableTreeDropIntent(currentState as any, candidate as any, now, {
-          siblingDurationMs: 0,
-          siblingFrames: 1,
-          childDurationMs: LOGICAL_CHILD_STABLE_MS,
-          childFrames: LOGICAL_CHILD_STABLE_FRAMES,
-        }) as DragCandidateState
+      ? { stable: candidate, pending: null }
       : updateStableDragCandidate(currentState, candidate, now);
 
     const stable = isOfficialDragCandidateNoop(
@@ -577,12 +587,19 @@ export default class YeMindDrag extends Drag {
 
     const layout = String(plugin.mindMap.opt.layout ?? 'logicalStructure');
     const stableTarget = stable.kind === 'none' ? null : officialCandidateParent(stable);
-    const target = nodeRect(plugin, stableTarget);
+    // During a right-logical drag the green dashed line is continuous. Before
+    // a local target is acquired it stays connected to the original parent;
+    // as soon as the nearest-node local zone changes, it switches in the same
+    // pointer frame to the parent encoded by that single candidate object.
+    const previewParent = layout === 'logicalStructure'
+      ? stableTarget ?? plugin.mousedownNode?.parent ?? null
+      : stableTarget;
+    const target = nodeSceneRect(plugin, previewParent);
     if (target) {
-      const orientation: DragGuideOrientation = resolveOfficialDragGuideOrientation(layout, stableTarget);
+      const orientation: DragGuideOrientation = resolveOfficialDragGuideOrientation(layout, previewParent);
       plugin.__ymzTargetGuideLine
         .plot(calculateDragGuidePath(target, ghost, orientation))
-        .stroke({ color: 'rgba(23, 107, 80, 0.92)', width: 2.3, linecap: 'round' })
+        .stroke({ color: 'rgba(23, 107, 80, 0.96)', width: 2.3, linecap: 'round' })
         .attr({ 'stroke-dasharray': '6 6', opacity: 1, 'pointer-events': 'none' })
         .show()
         .front();
@@ -602,7 +619,7 @@ export default class YeMindDrag extends Drag {
     }
 
     const originParent = plugin.mousedownNode?.parent ?? null;
-    const origin = nodeRect(plugin, originParent);
+    const origin = nodeSceneRect(plugin, originParent);
     if (origin && !stableTarget) {
       const orientation: DragGuideOrientation = resolveOfficialDragGuideOrientation(layout, originParent);
       const distance = endpointDistance(origin, ghost, orientation);
@@ -620,7 +637,7 @@ export default class YeMindDrag extends Drag {
     const insertion = calculateOfficialInsertionGuide(
       stable,
       layout,
-      (node) => nodeRect(plugin, node),
+      (node) => nodeSceneRect(plugin, node),
     );
     if (insertion) {
       plugin.__ymzInsertionGuideLine

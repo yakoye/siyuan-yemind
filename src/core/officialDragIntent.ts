@@ -467,87 +467,155 @@ function childCandidate(
   };
 }
 
+interface LogicalLocalIntent {
+  node: any;
+  rect: OfficialDragRect;
+  candidate: OfficialDragCandidate;
+  score: number;
+  distance: number;
+  strong: boolean;
+}
+
+const LOGICAL_LOCAL_LEFT_PADDING = 46;
+const LOGICAL_LOCAL_RIGHT_PADDING = 62;
+const LOGICAL_LOCAL_MIN_VERTICAL_PADDING = 12;
+const LOGICAL_LOCAL_MAX_VERTICAL_PADDING = 28;
+const LOGICAL_LOCAL_MAX_DISTANCE = 96;
+const LOGICAL_CHILD_SPLIT_RATIO = 0.62;
+const LOGICAL_TARGET_HYSTERESIS = 14;
+
+function pointDistanceToRect(point: OfficialDragPoint, rect: OfficialDragRect): number {
+  return Math.hypot(
+    distanceToRange(point.x, rect.x, rect.x + rect.width),
+    distanceToRange(point.y, rect.y, rect.y + rect.height),
+  );
+}
+
+function logicalExpandedRect(rect: OfficialDragRect, retention = false): OfficialDragRect {
+  const vertical = clamp(
+    rect.height * (retention ? 0.72 : 0.52),
+    LOGICAL_LOCAL_MIN_VERTICAL_PADDING,
+    retention ? LOGICAL_LOCAL_MAX_VERTICAL_PADDING + 10 : LOGICAL_LOCAL_MAX_VERTICAL_PADDING,
+  );
+  const left = retention ? LOGICAL_LOCAL_LEFT_PADDING + 10 : LOGICAL_LOCAL_LEFT_PADDING;
+  const right = retention ? LOGICAL_LOCAL_RIGHT_PADDING + 14 : LOGICAL_LOCAL_RIGHT_PADDING;
+  return {
+    x: rect.x - left,
+    y: rect.y - vertical,
+    width: rect.width + left + right,
+    height: rect.height + vertical * 2,
+  };
+}
+
+function logicalCandidateForNode(
+  options: ResolveOfficialDragCandidateOptions,
+  pointer: OfficialDragPoint,
+  node: any,
+  rect: OfficialDragRect,
+): LogicalLocalIntent | null {
+  const expanded = logicalExpandedRect(rect);
+  const distance = pointDistanceToRect(pointer, expanded);
+  if (distance > LOGICAL_LOCAL_MAX_DISTANCE) return null;
+
+  // The local target is split like the user's cross diagram. The right part of
+  // the node and its outward tail both mean CHILD. The left part is split by
+  // the horizontal centre into BEFORE and AFTER under the node's current parent.
+  const childSplitX = rect.x + rect.width * LOGICAL_CHILD_SPLIT_RATIO;
+  const inVerticalBand = pointer.y >= expanded.y && pointer.y <= expanded.y + expanded.height;
+  const childZone = inVerticalBand && pointer.x >= childSplitX;
+  const insideActual = containsPoint(rect, pointer);
+  const insideExpanded = containsPoint(expanded, pointer);
+  const center = rectCenter(rect);
+
+  if (!node?.parent || childZone) {
+    const child: ChildIntent = {
+      node,
+      score: distance + Math.abs(pointer.y - center.y) * 0.08 - (childZone ? 12 : 0),
+      fromTail: pointer.x > rect.x + rect.width,
+      insideBody: insideActual,
+    };
+    return {
+      node,
+      rect,
+      candidate: childCandidate(options, pointer, child),
+      score: child.score,
+      distance,
+      strong: insideActual || (childZone && insideExpanded),
+    };
+  }
+
+  const available = new Set(options.nodes.filter((item) => !(options.excludedNodes ?? []).includes(item)));
+  const siblings = Array.isArray(node.parent.children)
+    ? node.parent.children.filter((item: any) => available.has(item))
+    : [];
+  const nativeIndex = Math.max(0, siblings.indexOf(node));
+  const kind: 'before' | 'after' = pointer.y < center.y ? 'before' : 'after';
+  const slotIndex = kind === 'before' ? nativeIndex : nativeIndex + 1;
+  const slot: SlotIntent = {
+    parent: node.parent,
+    siblings,
+    nativeSiblings: siblings,
+    visualIndex: slotIndex,
+    nativeIndex: slotIndex,
+    score: distance + Math.abs(pointer.y - center.y) * 0.1,
+    axisDistance: Math.abs(pointer.y - center.y),
+    targetNode: node,
+    kind,
+  };
+  return {
+    node,
+    rect,
+    candidate: slotCandidate(slot, kind),
+    score: slot.score,
+    distance,
+    strong: insideActual,
+  };
+}
+
+function currentLogicalTarget(
+  options: ResolveOfficialDragCandidateOptions,
+  pointer: OfficialDragPoint,
+): LogicalLocalIntent | null {
+  const node = options.current?.targetNode ?? options.current?.target ?? null;
+  if (!node || (options.excludedNodes ?? []).includes(node)) return null;
+  const rect = options.getRect(node);
+  if (!finiteRect(rect) || !containsPoint(logicalExpandedRect(rect, true), pointer)) return null;
+  return logicalCandidateForNode(options, pointer, node, rect);
+}
+
 function resolveRightLogicalCandidate(
   options: ResolveOfficialDragCandidateOptions,
   pointer: OfficialDragPoint,
 ): OfficialDragCandidate {
   const excluded = new Set(options.excludedNodes ?? []);
-  const available = new Set(options.nodes.filter((node) => !excluded.has(node)));
+  const intents: LogicalLocalIntent[] = [];
 
-  // Becoming a child is an explicit tail gesture. The tail begins in the last
-  // third of the node and extends to the right, so merely crossing the body of
-  // a node while sorting siblings cannot unexpectedly change hierarchy.
-  let childHit: ChildIntent | null = null;
   options.nodes.forEach((node) => {
     if (excluded.has(node) || node?.isGeneralization) return;
     const rect = options.getRect(node);
     if (!finiteRect(rect)) return;
-    const tailStart = rect.x + rect.width * 0.68;
-    const tailEnd = rect.x + rect.width + 62;
-    const vertical = pointer.y >= rect.y - 8 && pointer.y <= rect.y + rect.height + 8;
-    if (!vertical || pointer.x < tailStart || pointer.x > tailEnd) return;
-    const score = Math.abs(pointer.y - rectCenter(rect).y) + Math.max(0, pointer.x - rect.x - rect.width) * 0.08;
-    const candidate: ChildIntent = { node, score, fromTail: true, insideBody: pointer.x <= rect.x + rect.width };
-    if (!childHit || score < childHit.score) childHit = candidate;
+    const intent = logicalCandidateForNode(options, pointer, node, rect);
+    if (intent) intents.push(intent);
   });
-  if (childHit) return childCandidate(options, pointer, childHit);
 
-  // Sorting uses the whole visual row rather than a seven-pixel edge. Each
-  // target owns the vertical space halfway to its adjacent siblings; the upper
-  // half means BEFORE and the lower half means AFTER. This makes the intended
-  // result stable and lets the destination node visibly make room.
-  let best: SlotIntent | null = null;
-  const seenParents = new Set<any>();
-  options.nodes.forEach((node) => {
-    if (excluded.has(node)) return;
-    const parent = node?.parent;
-    if (!parent || seenParents.has(parent)) return;
-    seenParents.add(parent);
-    const siblings = orderedSiblings('logicalStructure', parent, available, pointer, options.getRect);
-    if (!siblings.length) return;
-    const nativeSiblings = Array.isArray(parent.children)
-      ? parent.children.filter((child: any) => siblings.includes(child))
-      : [];
-    siblings.forEach((targetNode, visualIndex) => {
-      const rect = options.getRect(targetNode);
-      if (!finiteRect(rect)) return;
-      const previousRect = visualIndex > 0 ? options.getRect(siblings[visualIndex - 1]) : null;
-      const nextRect = visualIndex + 1 < siblings.length ? options.getRect(siblings[visualIndex + 1]) : null;
-      const center = rectCenter(rect).y;
-      const previousGap = finiteRect(previousRect)
-        ? Math.max(0, rect.y - (previousRect.y + previousRect.height))
-        : rect.height;
-      const nextGap = finiteRect(nextRect)
-        ? Math.max(0, nextRect.y - (rect.y + rect.height))
-        : rect.height;
-      // A target owns its actual row plus a forgiving nearby band, but a real
-      // neutral corridor remains between distant rows. Releasing in that
-      // corridor never guesses a destination.
-      const topPadding = clamp(previousGap * 0.28, 8, 20);
-      const bottomPadding = clamp(nextGap * 0.28, 8, 20);
-      const top = rect.y - topPadding;
-      const bottom = rect.y + rect.height + bottomPadding;
-      const xDistance = distanceToRange(pointer.x, rect.x - 48, rect.x + rect.width + 8);
-      if (pointer.y < top || pointer.y > bottom || xDistance > 18) return;
-      const kind: 'before' | 'after' = pointer.y < center ? 'before' : 'after';
-      const slotIndex = kind === 'before' ? visualIndex : visualIndex + 1;
-      const score = Math.abs(pointer.y - center) + xDistance * 0.25;
-      const candidate: SlotIntent = {
-        parent,
-        siblings,
-        nativeSiblings,
-        visualIndex: slotIndex,
-        nativeIndex: slotIndex,
-        score,
-        axisDistance: Math.abs(pointer.y - center),
-        targetNode,
-        kind,
-      };
-      if (!best || score < best.score) best = candidate;
-    });
+  if (intents.length === 0) return emptyOfficialDragCandidate();
+  intents.sort((a, b) => {
+    if (a.strong !== b.strong) return a.strong ? -1 : 1;
+    if (Math.abs(a.score - b.score) > 0.5) return a.score - b.score;
+    return nodeUid(a.node).localeCompare(nodeUid(b.node));
   });
-  const resolvedBest = best as SlotIntent | null;
-  return resolvedBest ? slotCandidate(resolvedBest, resolvedBest.kind) : emptyOfficialDragCandidate();
+
+  const best = intents[0];
+  const current = currentLogicalTarget(options, pointer);
+  if (
+    current &&
+    current.node !== best.node &&
+    !best.strong &&
+    current.score <= best.score + LOGICAL_TARGET_HYSTERESIS
+  ) {
+    return current.candidate;
+  }
+  return best.candidate;
 }
 
 /**

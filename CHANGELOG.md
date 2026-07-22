@@ -1,16 +1,22 @@
 # Changelog
 
+## 0.9.7 - 2026-07-22
+
+- Replaced fixed right-logical lanes and tiny edge hotspots with nearest-node enlarged local target boxes.
+- Split every local box into sibling-before, sibling-after and child-side semantics for unequal node widths and heights.
+- Added sticky-target hysteresis while allowing immediate switches on strong body/tail hits.
+- Kept the green dashed parent preview continuously visible from drag start through release.
+- Used the original parent only as a no-target fallback and switched to each candidate parent in the same pointer frame.
+- Fixed mixed coordinate spaces by drawing both parent and ghost endpoints in scene coordinates.
+- Made parent link, room-making preview and final command consume one candidate object.
+- Added permanent unit, offline and Chromium coverage for continuous links and real-time parent switching.
+
 ## 0.9.6 - 2026-07-22
 
-- Expanded outline drag initiation from a narrow gutter to the complete indentation cell between the active rainbow guide and row marker.
-- Made Enter split the active node or create a sibling, retained Shift+Enter soft breaks, and added two-stage empty-node deletion without Chromium placeholder leakage.
-- Stabilized outline BEFORE/AFTER guides with whole-row vertical zones, row-gap locking and horizontally snapped parent/same/child depths.
-- Normalized inherited selection typography to the visible `默认字体` option instead of an empty font field.
-- Rebuilt right-growing logical-structure drag intent around explicit sibling rows, a deliberate node-tail child zone and real neutral corridors.
-- Removed canvas insertion guides and root fallbacks; the green dashed preview now identifies only the actual candidate parent.
-- Added live destination-node displacement for sibling and child candidates while keeping dragged ghosts out of target collision.
-- Preserved subtree UIDs and metadata, rejected unchanged/invalid targets, and kept every successful move to one undoable command.
-- Added permanent browser regression coverage for outline Enter/delete, stable drag zones, font fallback, logical neutral/before/after/child drops, preview displacement and cancellation.
+- Added explicit outline Enter splitting, soft breaks and two-stage empty-node deletion.
+- Expanded outline drag initiation to the full indent cell and stabilized depth-aligned green guides.
+- Fixed inherited-font toolbar presentation.
+- Removed right-logical canvas insertion guides and introduced live room-making with one candidate-parent dashed link.
 
 ## 0.9.5 - 2026-07-22
 

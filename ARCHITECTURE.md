@@ -42,12 +42,4 @@ Release packages contain code and documentation only.
 
 ## Compatibility
 
-Historical plugin links and theme identifiers are accepted through narrow internal aliases. Existing map/settings/checkpoint schemas do not require a v0.9.6 migration. Legacy outline controller source remains only for historical test compatibility and is not reachable from the v0.9.6 runtime bundle.
-
-
-## v0.9.6 drag specialization
-
-- Tree legality and mutation remain shared, but outline and canvas expose different geometry and previews.
-- Outline drag uses a full indentation-cell source, stable row before/after zones and depth-snapped green guides.
-- Right-growing logical canvas drag uses pointer-only target geometry, live destination displacement and one dashed candidate-parent link; it intentionally renders no insertion line.
-- Other layout families continue through their existing adapter until the right-logical interaction is accepted as the reference behavior.
+Historical plugin links and theme identifiers are accepted through narrow internal aliases. Existing map/settings/checkpoint schemas do not require a v0.9.7 migration. Legacy outline controller source remains only for historical test compatibility and is not reachable from the v0.9.7 runtime bundle.

@@ -6,3 +6,4 @@ import '../suites/drag-interactions/v0522ExpandDeletePan.suite';
 import '../suites/drag-interactions/yeMindDrag.suite';
 import '../suites/drag-interactions/v095UnifiedTreeDrag.suite';
 import '../suites/drag-interactions/v096LogicalDragAndOutlineEditing.suite';
+import '../suites/drag-interactions/v097NearestNodeCanvasDrag.suite';

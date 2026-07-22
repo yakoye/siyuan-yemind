@@ -135,7 +135,8 @@
     "v0522ExpandDeletePan.suite.ts",
     "v095UnifiedTreeDrag.suite.ts",
     "yeMindDrag.suite.ts",
-    "v096LogicalDragAndOutlineEditing.suite.ts"
+    "v096LogicalDragAndOutlineEditing.suite.ts",
+    "v097NearestNodeCanvasDrag.suite.ts"
   ],
   "advanced-structures": [
     "editorMultiSelectionIntegration.suite.ts",

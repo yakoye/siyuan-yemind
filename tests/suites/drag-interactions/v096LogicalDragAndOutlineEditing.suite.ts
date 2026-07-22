@@ -38,7 +38,7 @@ describe('v0.9.6 outline editing and right-logical drag reference', () => {
     });
   });
 
-  it('uses a neutral corridor, row halves and an explicit tail in logicalStructure', () => {
+  it('uses nearest-node local quadrants and an explicit child side in logicalStructure', () => {
     const parent = node('parent', { x: 20, y: 100, width: 80, height: 40 });
     const first = node('first', { x: 160, y: 70, width: 100, height: 36 }, parent);
     const second = node('second', { x: 160, y: 180, width: 100, height: 36 }, parent);
@@ -47,7 +47,9 @@ describe('v0.9.6 outline editing and right-logical drag reference', () => {
       layout: 'logicalStructure', nodes: [parent, first, second],
       current: emptyOfficialDragCandidate(), getRect: (value: any) => value.rect,
     };
-    expect(resolveOfficialDragCandidate({ ...options, pointer: { x: 290, y: 142 } }).kind).toBe('none');
+    expect(resolveOfficialDragCandidate({ ...options, pointer: { x: 290, y: 142 } })).toMatchObject({
+      kind: 'after', parentNode: parent, targetNode: first,
+    });
     expect(resolveOfficialDragCandidate({ ...options, pointer: { x: 210, y: 181 } })).toMatchObject({
       kind: 'before', parentNode: parent, nextNode: second,
     });
@@ -82,6 +84,7 @@ describe('v0.9.6 outline editing and right-logical drag reference', () => {
     expect(source).toContain('plugin.__ymzInsertionGuideLine?.hide?.()');
     expect(source).toContain('this.updateLogicalRoomPreview(stable)');
     expect(source).toContain("setElementTransition(element, 'transform 130ms ease')");
-    expect(source).toContain("const resolved = raw.kind === 'child'");
+    expect(source).toContain("? raw");
+    expect(source).toContain('stableTarget ?? plugin.mousedownNode?.parent');
   });
 });

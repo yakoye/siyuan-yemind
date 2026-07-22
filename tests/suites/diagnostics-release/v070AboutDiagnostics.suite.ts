@@ -41,9 +41,9 @@ describe('v0.7.x about and diagnostics release contract', () => {
     expect(html).toContain(RELEASE_INFO.hostBaseline);
   });
 
-  it('uses semantic minor version 0.9.6 consistently', () => {
-    expect(RELEASE_INFO.version).toBe('0.9.6');
-    expect(resolveVersionConsistency('0.9.6')).toEqual({ manifest: '0.9.6', runtime: '0.9.6', build: '0.9.6', consistent: true });
+  it('uses semantic minor version 0.9.7 consistently', () => {
+    expect(RELEASE_INFO.version).toBe('0.9.7');
+    expect(resolveVersionConsistency('0.9.7')).toEqual({ manifest: '0.9.7', runtime: '0.9.7', build: '0.9.7', consistent: true });
   });
 
   it('keeps package, lockfile, manifest, runtime metadata and release docs on one identity', () => {
@@ -53,10 +53,10 @@ describe('v0.7.x about and diagnostics release contract', () => {
     const readme = readFileSync(resolve(process.cwd(), 'README_zh_CN.md'), 'utf8');
     const changelog = readFileSync(resolve(process.cwd(), 'CHANGELOG.md'), 'utf8');
     for (const version of [packageJson.version, packageLock.version, packageLock.packages[''].version, manifest.version, RELEASE_INFO.version, RELEASE_INFO.buildVersion]) {
-      expect(version).toBe('0.9.6');
+      expect(version).toBe('0.9.7');
     }
-    expect(readme).toContain('当前版本：`0.9.6`');
-    expect(changelog).toContain('## 0.9.6');
+    expect(readme).toContain('当前版本：`0.9.7`');
+    expect(changelog).toContain('## 0.9.7');
   });
 
   it('exports structured diagnostics files for direct analysis', async () => {

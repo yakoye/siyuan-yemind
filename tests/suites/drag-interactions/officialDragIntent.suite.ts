@@ -25,7 +25,7 @@ function node(uid: string, rect: { x: number; y: number; width: number; height: 
 const current = () => emptyOfficialDragCandidate();
 
 describe('pointer-based structural drag intent', () => {
-  it('keeps the large neutral gap between sibling nodes as NONE', () => {
+  it('assigns the space between unequal sibling nodes to the nearest local target', () => {
     const parent = node('parent', { x: 20, y: 100, width: 80, height: 40 });
     const first = node('first', { x: 160, y: 70, width: 100, height: 36 }, parent);
     const second = node('second', { x: 160, y: 180, width: 100, height: 36 }, parent);
@@ -39,7 +39,9 @@ describe('pointer-based structural drag intent', () => {
       getRect: (value) => value.rect,
     });
 
-    expect(candidate.kind).toBe('none');
+    expect(candidate.kind).toBe('after');
+    expect(candidate.parentNode).toBe(parent);
+    expect(candidate.targetNode).toBe(first);
   });
 
   it('resolves a pointer near the upper edge as a sibling BEFORE slot', () => {

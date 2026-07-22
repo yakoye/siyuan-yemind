@@ -2,18 +2,23 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.6`  
+Current version: `0.9.7`  
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.7
+
+- Rebuilds right-logical dragging around the nearest legal node and an enlarged per-node local target box, so unequal node sizes do not require fixed global lanes.
+- Uses the target's left upper/lower halves for sibling before/after and its right half/outward extension for child placement.
+- Adds sticky-target hysteresis between dense neighbours while preserving immediate switching when the pointer enters a new node body or child side.
+- Keeps one YeMind-green dashed parent link visible throughout the drag: original parent fallback first, then real-time candidate-parent switching.
+- Draws parent and ghost endpoints in one scene coordinate system and makes the dashed link, room preview and final commit consume the same candidate.
 
 ## v0.9.6
 
-- Enlarges outline structural drag initiation to the complete indentation cell while preserving native text selection in node content.
-- Makes Enter split or create sibling nodes, Shift+Enter insert a soft break, and empty-row Backspace delete in two stages without adding blank lines to the previous node.
-- Stabilizes outline drop guides with whole-row before/after zones and horizontally snapped parent/same/child depths.
-- Shows `Default font` for inherited selection typography instead of leaving the formatting toolbar field blank.
-- Rebuilds right-growing logical-structure dragging without canvas insertion lines: the green dashed preview identifies only the actual candidate parent.
-- Uses target upper/lower zones for sibling ordering, an explicit right-tail zone for child placement, and no-op behavior for neutral space or unchanged positions.
-- Moves destination nodes during drag to expose the pending structure while preserving subtree UIDs, metadata and one-step undo.
+- Added native outline Enter splitting, Shift+Enter soft breaks and two-stage empty-node deletion.
+- Expanded the outline drag hit area to the complete indent cell and stabilized green depth-aligned guides.
+- Displayed “Default font” semantics instead of an empty inherited-font field.
+- Removed right-logical canvas insertion lines in favour of one candidate-parent dashed link and live room making.
 
 ## v0.9.5
 

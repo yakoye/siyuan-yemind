@@ -33,8 +33,8 @@ const options = {
   getRect: (value: any) => value.rect,
 };
 
-const neutral = resolveOfficialDragCandidate({ ...options, pointer: { x: 290, y: 142 } });
-assert(neutral.kind === 'none', 'canvas neutral gap must remain NONE');
+const nearest = resolveOfficialDragCandidate({ ...options, pointer: { x: 290, y: 142 } });
+assert(nearest.kind === 'after' && nearest.parentNode === parent && nearest.targetNode === first, 'canvas nearest local target mismatch');
 const before = resolveOfficialDragCandidate({ ...options, pointer: { x: 210, y: 179 } });
 assert(before.kind === 'before' && before.nextNode === second && before.index === 1, 'canvas BEFORE slot mismatch');
 const child = resolveOfficialDragCandidate({ ...options, pointer: { x: 278, y: 88 } });
@@ -79,7 +79,7 @@ state = updateStableTreeDropIntent(state, emptyOfficialDragCandidate(), 160);
 assert(state.stable.kind === 'none', 'NONE must clear stale target immediately');
 
 export default {
-  canvasNeutralGap: true,
+  canvasNearestLocalTarget: true,
   canvasBefore: true,
   canvasChild: true,
   canvasNoop: true,

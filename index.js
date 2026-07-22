@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.6 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.7 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -6668,20 +6668,20 @@ const constants_1 = __require(24);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-22T12:20:00Z',
-    buildId: 'yemind-v0.9.6-20260722',
+    buildTime: '2026-07-22T13:40:00Z',
+    buildId: 'yemind-v0.9.7-20260722',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '稳定统一大纲的结构编辑与拖放，并为向右逻辑图重建无插入线、候选父级明确且节点实时让位的画布拖动体验。',
+    releaseSummary: '重建向右逻辑图的最近节点局部拖放判定，使绿色候选父级虚线在整个拖动期间持续存在并随目标实时切换。',
     highlights: [
-        '大纲拖动命中扩展到完整缩进单元格，正文继续用于文本选择；绿色插入线采用整行上下区和横向层级吸附，避免闪烁。',
-        'Enter 创建或拆分兄弟节点，Shift+Enter 插入软换行；空节点采用两阶段删除，不再给上一个节点追加空行。',
-        '选区格式工具栏的字体字段在继承主题字体时显示“默认字体”，未知或混合字体不再留下空白控件。',
-        '向右逻辑图删除画布插入线，只显示绿色候选父级虚线；无有效目标时不再错误连接 Root。',
-        '同级拖放由目标节点上下区决定，子节点拖放只在明确进入节点尾部时生效，原位置与中性空白区均保持不变。',
-        '有效画布候选会实时移动目标兄弟或子节点，为被拖子树让出空间；移动保留 UID、元数据和完整子树，并只产生一条撤销记录。',
+        '向右逻辑图以最近合法节点为局部目标，按节点左侧上/下区决定同级前后，按节点右半部及右侧扩展区决定成为子节点。',
+        '不同宽高节点使用各自放大的局部判定盒，不再依赖固定全局泳道；相邻目标之间加入候选保持与迟滞，减少闪烁。',
+        '绿色虚线在拖动开始后始终存在：无新目标时连接原父节点，进入局部目标后在同一指针帧切换到候选父节点。',
+        '修复虚线坐标空间混用：父节点和拖动影子统一在场景坐标中绘制，避免穿过 Root、错位或连接到错误节点。',
+        '候选父节点、兄弟索引、节点让位预览和最终提交共享同一个 DropCandidate，避免预览与实际落点不一致。',
+        '保留原子移动、单步撤销、Esc 取消、完整子树与 UID/备注/标签/图片/局部样式保护。',
     ],
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -6714,7 +6714,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.6';
+exports.PLUGIN_VERSION = '0.9.7';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -30848,8 +30848,6 @@ function restoreIncomingDragLines(snapshots) {
             line.hide?.();
     });
 }
-const LOGICAL_CHILD_STABLE_MS = 120;
-const LOGICAL_CHILD_STABLE_FRAMES = 2;
 function resolveDragGuideTarget(state) {
     if (state.overlapNode)
         return state.overlapNode;
@@ -30997,7 +30995,7 @@ function cancelFrame(id) {
     }
     clearTimeout(id);
 }
-function nodeRect(plugin, node) {
+function nodeHitRect(plugin, node) {
     if (!node)
         return null;
     const native = plugin.getNodeRect?.(node);
@@ -31010,6 +31008,16 @@ function nodeRect(plugin, node) {
         });
     }
     return normalizeRect(node?.group?.rbox?.(plugin.mindMap.otherDraw) ?? node?.group?.bbox?.());
+}
+function nodeSceneRect(_plugin, node) {
+    if (!node)
+        return null;
+    return normalizeRect({
+        x: Number(node.left),
+        y: Number(node.top),
+        width: Number(node.width),
+        height: Number(node.height),
+    });
 }
 function ghostRect(plugin) {
     return normalizeRect(plugin.clone?.rbox?.(plugin.mindMap.otherDraw) ?? plugin.clone?.bbox?.());
@@ -31045,7 +31053,7 @@ function previewGap(plugin) {
     const rects = [];
     (plugin.beingDragNodeList ?? []).forEach((root) => {
         collectSubtreeNodes(root).forEach((node) => {
-            const rect = nodeRect(plugin, node);
+            const rect = nodeSceneRect(plugin, node);
             if (rect)
                 rects.push(rect);
         });
@@ -31115,7 +31123,14 @@ class YeMindDrag extends Drag_1.default {
     }
     onMove(x, y, event) {
         super.onMove(x, y, event);
-        this.updateOfficialGuideLines();
+        // The right logical reference layout resolves its local target on every
+        // pointer move so the parent preview never lags behind the dragged node.
+        if (String(this.mindMap.opt.layout ?? 'logicalStructure') === 'logicalStructure') {
+            this.flushOfficialCandidateCheck();
+        }
+        else {
+            this.updateOfficialGuideLines();
+        }
     }
     async onMouseup(event) {
         const plugin = this;
@@ -31126,9 +31141,11 @@ class YeMindDrag extends Drag_1.default {
             // Sibling ordering is explicit from the upper/lower half of a target row
             // and should commit on release immediately. Becoming a child changes
             // hierarchy and therefore still requires the deliberate dwell candidate.
-            const resolved = raw.kind === 'child'
-                ? (raw.key === stable.key ? stable : (0, officialDragIntent_1.emptyOfficialDragCandidate)())
-                : raw;
+            const resolved = String(plugin.mindMap.opt.layout ?? 'logicalStructure') === 'logicalStructure'
+                ? raw
+                : raw.kind === 'child'
+                    ? (raw.key === stable.key ? stable : (0, officialDragIntent_1.emptyOfficialDragCandidate)())
+                    : raw;
             const finalCandidate = (0, officialDragIntent_1.isOfficialDragCandidateNoop)(resolved, plugin.beingDragNodeList ?? [])
                 ? (0, officialDragIntent_1.emptyOfficialDragCandidate)()
                 : resolved;
@@ -31193,7 +31210,7 @@ class YeMindDrag extends Drag_1.default {
                 nodes: plugin.nodeList ?? [],
                 excludedNodes: collectDragExcludedNodes(plugin.beingDragNodeList ?? []),
                 current: plugin.__ymzCandidateState?.stable ?? (0, officialDragIntent_1.emptyOfficialDragCandidate)(),
-                getRect: (node) => nodeRect(plugin, node),
+                getRect: (node) => nodeHitRect(plugin, node),
             });
             this.clearUpstreamPlaceholder();
         }
@@ -31206,12 +31223,7 @@ class YeMindDrag extends Drag_1.default {
         const currentState = plugin.__ymzCandidateState
             ?? createDragCandidateState((0, officialDragIntent_1.emptyOfficialDragCandidate)());
         plugin.__ymzCandidateState = layout === 'logicalStructure'
-            ? (0, treeDropIntent_1.updateStableTreeDropIntent)(currentState, candidate, now, {
-                siblingDurationMs: 0,
-                siblingFrames: 1,
-                childDurationMs: LOGICAL_CHILD_STABLE_MS,
-                childFrames: LOGICAL_CHILD_STABLE_FRAMES,
-            })
+            ? { stable: candidate, pending: null }
             : updateStableDragCandidate(currentState, candidate, now);
         const stable = (0, officialDragIntent_1.isOfficialDragCandidateNoop)(plugin.__ymzCandidateState.stable, plugin.beingDragNodeList ?? [])
             ? (0, officialDragIntent_1.emptyOfficialDragCandidate)()
@@ -31278,12 +31290,19 @@ class YeMindDrag extends Drag_1.default {
             return;
         const layout = String(plugin.mindMap.opt.layout ?? 'logicalStructure');
         const stableTarget = stable.kind === 'none' ? null : (0, officialDragIntent_1.officialCandidateParent)(stable);
-        const target = nodeRect(plugin, stableTarget);
+        // During a right-logical drag the green dashed line is continuous. Before
+        // a local target is acquired it stays connected to the original parent;
+        // as soon as the nearest-node local zone changes, it switches in the same
+        // pointer frame to the parent encoded by that single candidate object.
+        const previewParent = layout === 'logicalStructure'
+            ? stableTarget ?? plugin.mousedownNode?.parent ?? null
+            : stableTarget;
+        const target = nodeSceneRect(plugin, previewParent);
         if (target) {
-            const orientation = (0, officialDragIntent_1.resolveOfficialDragGuideOrientation)(layout, stableTarget);
+            const orientation = (0, officialDragIntent_1.resolveOfficialDragGuideOrientation)(layout, previewParent);
             plugin.__ymzTargetGuideLine
                 .plot(calculateDragGuidePath(target, ghost, orientation))
-                .stroke({ color: 'rgba(23, 107, 80, 0.92)', width: 2.3, linecap: 'round' })
+                .stroke({ color: 'rgba(23, 107, 80, 0.96)', width: 2.3, linecap: 'round' })
                 .attr({ 'stroke-dasharray': '6 6', opacity: 1, 'pointer-events': 'none' })
                 .show()
                 .front();
@@ -31302,7 +31321,7 @@ class YeMindDrag extends Drag_1.default {
             return;
         }
         const originParent = plugin.mousedownNode?.parent ?? null;
-        const origin = nodeRect(plugin, originParent);
+        const origin = nodeSceneRect(plugin, originParent);
         if (origin && !stableTarget) {
             const orientation = (0, officialDragIntent_1.resolveOfficialDragGuideOrientation)(layout, originParent);
             const distance = endpointDistance(origin, ghost, orientation);
@@ -31317,7 +31336,7 @@ class YeMindDrag extends Drag_1.default {
         else {
             plugin.__ymzOriginGuideLine?.hide?.();
         }
-        const insertion = (0, officialDragIntent_1.calculateOfficialInsertionGuide)(stable, layout, (node) => nodeRect(plugin, node));
+        const insertion = (0, officialDragIntent_1.calculateOfficialInsertionGuide)(stable, layout, (node) => nodeSceneRect(plugin, node));
         if (insertion) {
             plugin.__ymzInsertionGuideLine
                 .plot(insertion.path)
@@ -33056,93 +33075,124 @@ function childCandidate(options, pointer, child) {
         score: child.score,
     };
 }
+const LOGICAL_LOCAL_LEFT_PADDING = 46;
+const LOGICAL_LOCAL_RIGHT_PADDING = 62;
+const LOGICAL_LOCAL_MIN_VERTICAL_PADDING = 12;
+const LOGICAL_LOCAL_MAX_VERTICAL_PADDING = 28;
+const LOGICAL_LOCAL_MAX_DISTANCE = 96;
+const LOGICAL_CHILD_SPLIT_RATIO = 0.62;
+const LOGICAL_TARGET_HYSTERESIS = 14;
+function pointDistanceToRect(point, rect) {
+    return Math.hypot((0, treeDropIntent_1.distanceToRange)(point.x, rect.x, rect.x + rect.width), (0, treeDropIntent_1.distanceToRange)(point.y, rect.y, rect.y + rect.height));
+}
+function logicalExpandedRect(rect, retention = false) {
+    const vertical = (0, treeDropIntent_1.clamp)(rect.height * (retention ? 0.72 : 0.52), LOGICAL_LOCAL_MIN_VERTICAL_PADDING, retention ? LOGICAL_LOCAL_MAX_VERTICAL_PADDING + 10 : LOGICAL_LOCAL_MAX_VERTICAL_PADDING);
+    const left = retention ? LOGICAL_LOCAL_LEFT_PADDING + 10 : LOGICAL_LOCAL_LEFT_PADDING;
+    const right = retention ? LOGICAL_LOCAL_RIGHT_PADDING + 14 : LOGICAL_LOCAL_RIGHT_PADDING;
+    return {
+        x: rect.x - left,
+        y: rect.y - vertical,
+        width: rect.width + left + right,
+        height: rect.height + vertical * 2,
+    };
+}
+function logicalCandidateForNode(options, pointer, node, rect) {
+    const expanded = logicalExpandedRect(rect);
+    const distance = pointDistanceToRect(pointer, expanded);
+    if (distance > LOGICAL_LOCAL_MAX_DISTANCE)
+        return null;
+    // The local target is split like the user's cross diagram. The right part of
+    // the node and its outward tail both mean CHILD. The left part is split by
+    // the horizontal centre into BEFORE and AFTER under the node's current parent.
+    const childSplitX = rect.x + rect.width * LOGICAL_CHILD_SPLIT_RATIO;
+    const inVerticalBand = pointer.y >= expanded.y && pointer.y <= expanded.y + expanded.height;
+    const childZone = inVerticalBand && pointer.x >= childSplitX;
+    const insideActual = containsPoint(rect, pointer);
+    const insideExpanded = containsPoint(expanded, pointer);
+    const center = rectCenter(rect);
+    if (!node?.parent || childZone) {
+        const child = {
+            node,
+            score: distance + Math.abs(pointer.y - center.y) * 0.08 - (childZone ? 12 : 0),
+            fromTail: pointer.x > rect.x + rect.width,
+            insideBody: insideActual,
+        };
+        return {
+            node,
+            rect,
+            candidate: childCandidate(options, pointer, child),
+            score: child.score,
+            distance,
+            strong: insideActual || (childZone && insideExpanded),
+        };
+    }
+    const available = new Set(options.nodes.filter((item) => !(options.excludedNodes ?? []).includes(item)));
+    const siblings = Array.isArray(node.parent.children)
+        ? node.parent.children.filter((item) => available.has(item))
+        : [];
+    const nativeIndex = Math.max(0, siblings.indexOf(node));
+    const kind = pointer.y < center.y ? 'before' : 'after';
+    const slotIndex = kind === 'before' ? nativeIndex : nativeIndex + 1;
+    const slot = {
+        parent: node.parent,
+        siblings,
+        nativeSiblings: siblings,
+        visualIndex: slotIndex,
+        nativeIndex: slotIndex,
+        score: distance + Math.abs(pointer.y - center.y) * 0.1,
+        axisDistance: Math.abs(pointer.y - center.y),
+        targetNode: node,
+        kind,
+    };
+    return {
+        node,
+        rect,
+        candidate: slotCandidate(slot, kind),
+        score: slot.score,
+        distance,
+        strong: insideActual,
+    };
+}
+function currentLogicalTarget(options, pointer) {
+    const node = options.current?.targetNode ?? options.current?.target ?? null;
+    if (!node || (options.excludedNodes ?? []).includes(node))
+        return null;
+    const rect = options.getRect(node);
+    if (!finiteRect(rect) || !containsPoint(logicalExpandedRect(rect, true), pointer))
+        return null;
+    return logicalCandidateForNode(options, pointer, node, rect);
+}
 function resolveRightLogicalCandidate(options, pointer) {
     const excluded = new Set(options.excludedNodes ?? []);
-    const available = new Set(options.nodes.filter((node) => !excluded.has(node)));
-    // Becoming a child is an explicit tail gesture. The tail begins in the last
-    // third of the node and extends to the right, so merely crossing the body of
-    // a node while sorting siblings cannot unexpectedly change hierarchy.
-    let childHit = null;
+    const intents = [];
     options.nodes.forEach((node) => {
         if (excluded.has(node) || node?.isGeneralization)
             return;
         const rect = options.getRect(node);
         if (!finiteRect(rect))
             return;
-        const tailStart = rect.x + rect.width * 0.68;
-        const tailEnd = rect.x + rect.width + 62;
-        const vertical = pointer.y >= rect.y - 8 && pointer.y <= rect.y + rect.height + 8;
-        if (!vertical || pointer.x < tailStart || pointer.x > tailEnd)
-            return;
-        const score = Math.abs(pointer.y - rectCenter(rect).y) + Math.max(0, pointer.x - rect.x - rect.width) * 0.08;
-        const candidate = { node, score, fromTail: true, insideBody: pointer.x <= rect.x + rect.width };
-        if (!childHit || score < childHit.score)
-            childHit = candidate;
+        const intent = logicalCandidateForNode(options, pointer, node, rect);
+        if (intent)
+            intents.push(intent);
     });
-    if (childHit)
-        return childCandidate(options, pointer, childHit);
-    // Sorting uses the whole visual row rather than a seven-pixel edge. Each
-    // target owns the vertical space halfway to its adjacent siblings; the upper
-    // half means BEFORE and the lower half means AFTER. This makes the intended
-    // result stable and lets the destination node visibly make room.
-    let best = null;
-    const seenParents = new Set();
-    options.nodes.forEach((node) => {
-        if (excluded.has(node))
-            return;
-        const parent = node?.parent;
-        if (!parent || seenParents.has(parent))
-            return;
-        seenParents.add(parent);
-        const siblings = orderedSiblings('logicalStructure', parent, available, pointer, options.getRect);
-        if (!siblings.length)
-            return;
-        const nativeSiblings = Array.isArray(parent.children)
-            ? parent.children.filter((child) => siblings.includes(child))
-            : [];
-        siblings.forEach((targetNode, visualIndex) => {
-            const rect = options.getRect(targetNode);
-            if (!finiteRect(rect))
-                return;
-            const previousRect = visualIndex > 0 ? options.getRect(siblings[visualIndex - 1]) : null;
-            const nextRect = visualIndex + 1 < siblings.length ? options.getRect(siblings[visualIndex + 1]) : null;
-            const center = rectCenter(rect).y;
-            const previousGap = finiteRect(previousRect)
-                ? Math.max(0, rect.y - (previousRect.y + previousRect.height))
-                : rect.height;
-            const nextGap = finiteRect(nextRect)
-                ? Math.max(0, nextRect.y - (rect.y + rect.height))
-                : rect.height;
-            // A target owns its actual row plus a forgiving nearby band, but a real
-            // neutral corridor remains between distant rows. Releasing in that
-            // corridor never guesses a destination.
-            const topPadding = (0, treeDropIntent_1.clamp)(previousGap * 0.28, 8, 20);
-            const bottomPadding = (0, treeDropIntent_1.clamp)(nextGap * 0.28, 8, 20);
-            const top = rect.y - topPadding;
-            const bottom = rect.y + rect.height + bottomPadding;
-            const xDistance = (0, treeDropIntent_1.distanceToRange)(pointer.x, rect.x - 48, rect.x + rect.width + 8);
-            if (pointer.y < top || pointer.y > bottom || xDistance > 18)
-                return;
-            const kind = pointer.y < center ? 'before' : 'after';
-            const slotIndex = kind === 'before' ? visualIndex : visualIndex + 1;
-            const score = Math.abs(pointer.y - center) + xDistance * 0.25;
-            const candidate = {
-                parent,
-                siblings,
-                nativeSiblings,
-                visualIndex: slotIndex,
-                nativeIndex: slotIndex,
-                score,
-                axisDistance: Math.abs(pointer.y - center),
-                targetNode,
-                kind,
-            };
-            if (!best || score < best.score)
-                best = candidate;
-        });
+    if (intents.length === 0)
+        return emptyOfficialDragCandidate();
+    intents.sort((a, b) => {
+        if (a.strong !== b.strong)
+            return a.strong ? -1 : 1;
+        if (Math.abs(a.score - b.score) > 0.5)
+            return a.score - b.score;
+        return nodeUid(a.node).localeCompare(nodeUid(b.node));
     });
-    const resolvedBest = best;
-    return resolvedBest ? slotCandidate(resolvedBest, resolvedBest.kind) : emptyOfficialDragCandidate();
+    const best = intents[0];
+    const current = currentLogicalTarget(options, pointer);
+    if (current &&
+        current.node !== best.node &&
+        !best.strong &&
+        current.score <= best.score + LOGICAL_TARGET_HYSTERESIS) {
+        return current.candidate;
+    }
+    return best.candidate;
 }
 /**
  * Pointer-based tree intent. The dragged clone never participates in hit
