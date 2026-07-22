@@ -90,6 +90,15 @@ function textLength(element: HTMLElement): number {
   return (element.innerText || element.textContent || '').replace(/\u00a0/g, ' ').length;
 }
 
+function editorIsSemanticallyEmpty(element: HTMLElement): boolean {
+  // Chromium represents an emptied editable block as <p><br></p>. innerText
+  // exposes that placeholder as a newline even though the user-visible node is
+  // empty, so structural editing must inspect actual text content instead.
+  return (element.textContent ?? '')
+    .replace(/[\u00a0\u200b\ufeff]/g, '')
+    .trim().length === 0;
+}
+
 function nodeTextLength(node: Node): number {
   if (node.nodeType === Node.TEXT_NODE) return node.nodeValue?.length ?? 0;
   if (node instanceof HTMLBRElement) return 1;
@@ -785,8 +794,9 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       if (event.shiftKey) {
         this.insertInlineHtml('<br>');
         this.markDirty('hard-break');
+        this.flush('hard-break');
       } else {
-        this.replaceSelectionWithText('\n', 'enter');
+        this.splitSelectionToSibling();
       }
       return;
     }
@@ -802,11 +812,19 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       const state = this.getSelectionState(context.startEditor);
       const boundary = event.key === 'Backspace' ? state.start === 0 : state.end === state.length;
       if (boundary && context.startRow.dataset.outlineRoot !== 'true') {
-        const neighbor = this.visibleNeighbor(context.startRow, event.key === 'Backspace' ? -1 : 1);
-        if (neighbor) {
-          event.preventDefault();
-          this.mergeRows(neighbor, context.startRow, event.key === 'Backspace');
+        event.preventDefault();
+        if (editorIsSemanticallyEmpty(context.startEditor)) {
+          const emptyRow = context.startRow;
+          const backward = event.key === 'Backspace';
+          // Removing the event target synchronously during keydown lets some
+          // Chromium builds continue the native Backspace operation against
+          // the previous block, producing an unwanted <p><br></p>. Complete
+          // the cancelled key event first, then commit the structural delete.
+          window.requestAnimationFrame(() => this.removeEmptyRow(emptyRow, backward));
+          return;
         }
+        const neighbor = this.visibleNeighbor(context.startRow, event.key === 'Backspace' ? -1 : 1);
+        if (neighbor) this.mergeRows(neighbor, context.startRow, event.key === 'Backspace');
       }
       return;
     }
@@ -1133,6 +1151,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
 
   private selectEditorRange(editor: HTMLElement, startOffset: number, endOffset: number): void {
     this.clearWholeSelection();
+    editor.focus({ preventScroll: true });
     const start = domPointAtOffset(editor, startOffset);
     const end = domPointAtOffset(editor, endOffset);
     const range = document.createRange();
@@ -1147,6 +1166,125 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     } finally {
       this.suppressSelectionChange = false;
     }
+  }
+
+  private splitSelectionToSibling(): void {
+    const context = this.selectionContext();
+    if (!context) return;
+    if (context.spansRows) {
+      // Collapse a cross-row selection first, then split at the restored caret.
+      // Both actions still travel through the same structured outline mutation
+      // path and never delegate block creation to contenteditable defaults.
+      this.replaceSelectionWithText('', 'enter-selection');
+      window.requestAnimationFrame(() => this.splitSelectionToSibling());
+      return;
+    }
+
+    const blocks = this.collectBlocks();
+    const rows = Array.from(
+      this.options.root.querySelectorAll<HTMLElement>(':scope > [data-outline-uid]'),
+    );
+    const index = rows.indexOf(context.startRow);
+    const current = blocks[index];
+    if (index < 0 || !current || current.kind !== 'node') return;
+
+    const length = textLength(context.startEditor);
+    const prefixHtml = rangeHtml(context.startEditor, 0, context.start.offset);
+    const suffixHtml = rangeHtml(context.startEditor, context.end.offset, length);
+    const prefixText = structuredOutlineHtmlToText(prefixHtml);
+    const suffixText = structuredOutlineHtmlToText(suffixHtml);
+    const nextUid = createStructuredOutlineUid();
+    const nextDepth = current.isRoot ? 1 : current.depth;
+    const nextBlock: StructuredOutlineBlock = {
+      uid: nextUid,
+      kind: 'node',
+      depth: nextDepth,
+      html: suffixHtml,
+      text: suffixText,
+      parentUid: current.isRoot ? current.uid : current.parentUid,
+      hidden: false,
+      expanded: true,
+      hasChildren: false,
+      isRoot: false,
+      pristine: false,
+    };
+    const updatedCurrent: StructuredOutlineBlock = {
+      ...current,
+      html: prefixHtml,
+      text: prefixText,
+      pristine: false,
+    };
+
+    let insertionIndex: number;
+    if (current.isRoot) {
+      insertionIndex = index + 1;
+    } else {
+      insertionIndex = index + 1;
+      while (insertionIndex < blocks.length && blocks[insertionIndex].depth > current.depth) {
+        insertionIndex += 1;
+      }
+    }
+    const next = [
+      ...blocks.slice(0, index),
+      updatedCurrent,
+      ...blocks.slice(index + 1, insertionIndex),
+      nextBlock,
+      ...blocks.slice(insertionIndex),
+    ];
+    this.replaceDomBlocks(normalizeStructuredOutlineDepths(next), 'enter-split-node');
+    window.requestAnimationFrame(() => {
+      const editor = this.editorByUid(nextUid);
+      if (!editor) return;
+      this.selectEditorRange(editor, 0, 0);
+      this.activateUid(nextUid, true);
+      this.options.onActivate(nextUid);
+    });
+  }
+
+  private removeEmptyRow(row: HTMLElement, backward: boolean): void {
+    if (row.dataset.outlineRoot === 'true') return;
+    const blocks = this.collectBlocks();
+    const rows = Array.from(
+      this.options.root.querySelectorAll<HTMLElement>(':scope > [data-outline-uid]'),
+    );
+    const index = rows.indexOf(row);
+    const current = blocks[index];
+    if (index < 0 || !current) return;
+    const emptyEditor = row.querySelector<HTMLElement>('[data-outline-editor]');
+    if (emptyEditor) emptyEditor.replaceChildren();
+    const neighbor = this.visibleNeighbor(row, backward ? -1 : 1)
+      ?? this.visibleNeighbor(row, backward ? 1 : -1);
+    const neighborUid = neighbor?.dataset.outlineUid ?? '';
+    const neighborEditor = neighbor?.querySelector<HTMLElement>('[data-outline-editor]') ?? null;
+    const neighborCaret = neighborEditor
+      ? (backward ? textLength(neighborEditor) : 0)
+      : 0;
+    // Move the live browser selection away from the soon-to-be-removed block
+    // before patching the contenteditable document. Chromium otherwise preserves
+    // the caret by transplanting the empty <p><br></p> into the previous row.
+    if (neighborEditor) this.selectEditorRange(neighborEditor, neighborCaret, neighborCaret);
+    const currentDepth = current.depth;
+    let descendantsEnd = index + 1;
+    while (descendantsEnd < blocks.length && blocks[descendantsEnd].depth > currentDepth) {
+      descendantsEnd += 1;
+    }
+    const promotedDescendants = blocks
+      .slice(index + 1, descendantsEnd)
+      .map((block) => ({ ...block, depth: Math.max(1, block.depth - 1) }));
+    const next = [
+      ...blocks.slice(0, index),
+      ...promotedDescendants,
+      ...blocks.slice(descendantsEnd),
+    ];
+    this.replaceDomBlocks(normalizeStructuredOutlineDepths(next), 'remove-empty-node');
+    window.requestAnimationFrame(() => {
+      const editor = this.editorByUid(neighborUid);
+      if (!editor) return;
+      const caret = backward ? textLength(editor) : 0;
+      this.selectEditorRange(editor, caret, caret);
+      this.activateUid(neighborUid, true);
+      this.options.onActivate(neighborUid);
+    });
   }
 
   private replaceSelectionWithText(value: string, reason: string, richLines?: readonly string[]): void {
@@ -1354,7 +1492,9 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     const secondEditor = second.querySelector<HTMLElement>('[data-outline-editor]');
     if (!firstEditor || !secondEditor) return;
     const caret = textLength(firstEditor);
-    firstEditor.innerHTML = `${firstEditor.innerHTML}${secondEditor.innerHTML}`;
+    const firstHtml = editorIsSemanticallyEmpty(firstEditor) ? '' : firstEditor.innerHTML;
+    const secondHtml = editorIsSemanticallyEmpty(secondEditor) ? '' : secondEditor.innerHTML;
+    firstEditor.innerHTML = `${firstHtml}${secondHtml}`;
     second.remove();
     this.markDirty('merge-node');
     this.flush('merge-node');

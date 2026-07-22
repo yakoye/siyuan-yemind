@@ -12,10 +12,10 @@
 | Outline model | One structured contenteditable document; no user-facing text/node mode split |
 | Outline selection | Native cross-row ranges; first Ctrl/Cmd+A selects the current node, second selects the complete outline |
 | Clipboard | Selection replacement, rich/plain paste, indented tree import, hidden-descendant whole copy and safe external text/html output |
-| Outline structure editing | Enter, Shift+Enter, Tab/Shift+Tab, atomic multiline replacement and stable UID/metadata preservation |
-| Outline drag | Invisible move gutter, 5px threshold, neutral dead zones and YeMind-green depth-aligned BEFORE/AFTER/CHILD guides |
+| Outline structure editing | Enter splits/creates siblings, Shift+Enter inserts soft breaks, empty nodes use two-stage Backspace deletion, plus Tab/Shift+Tab and atomic multiline replacement |
+| Outline drag | Full indentation-cell move area, 5px threshold, whole-row BEFORE/AFTER locking and YeMind-green parent/same/child depth snapping |
 | Outline presentation | Black 7px triangles, black 5px leaf squares, indent-rainbow guides, flat `#ececec` hover and `#deeae6` active state |
-| Canvas drag | Pointer-driven tree targets, neutral gaps, candidate-parent dashed links, green insertion guides and layout-aware subtree moves |
+| Right logical canvas drag | Pointer-driven sibling rows and explicit child-tail target, live node displacement, green candidate-parent dashed link and no canvas insertion line |
 | Drag safety | Self/descendant/root/no-op rejection, Escape cancellation, one-step undo and stable UID/metadata preservation |
 | Image actions | Equal outer action boxes, visually balanced preview/delete artwork and event isolation from structural dragging |
 | Persistence | Local maps, settings, checkpoints, autosave and restore protection |

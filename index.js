@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.5 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.6 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -6668,20 +6668,20 @@ const constants_1 = __require(24);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-22T10:09:05Z',
-    buildId: 'yemind-v0.9.5-20260722',
+    buildTime: '2026-07-22T12:20:00Z',
+    buildId: 'yemind-v0.9.6-20260722',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '重建大纲与画布树结构拖放判定，加入明确中性区、层级插入反馈、稳定候选和图片工具事件隔离。',
+    releaseSummary: '稳定统一大纲的结构编辑与拖放，并为向右逻辑图重建无插入线、候选父级明确且节点实时让位的画布拖动体验。',
     highlights: [
-        '大纲节点仅从隐形 gutter 启动结构拖动，正文继续用于跨节点文本选择；叶子方点缩小为 5×5px。',
-        '大纲插入位置使用 YeMind 绿色横线和方形起点，支持同级前后、子节点与父级对齐，并保留彩虹缩进线。',
-        '画布拖动改为鼠标指针驱动，拖动影子不再参与碰撞；节点间中性区域松手保持原状。',
-        '画布虚线始终显示当前候选父节点，绿色插入线明确 BEFORE、AFTER 与 CHILD 的最终结构位置。',
-        '拖动候选采用同级快速响应、子级短暂驻留和 NONE 立即清除，避免旧目标残留与层级抖动。',
-        '图片垃圾桶内部图形缩小到与放大镜视觉重量一致，按钮背景和命中范围保持不变，图片工具不会启动节点拖动。',
+        '大纲拖动命中扩展到完整缩进单元格，正文继续用于文本选择；绿色插入线采用整行上下区和横向层级吸附，避免闪烁。',
+        'Enter 创建或拆分兄弟节点，Shift+Enter 插入软换行；空节点采用两阶段删除，不再给上一个节点追加空行。',
+        '选区格式工具栏的字体字段在继承主题字体时显示“默认字体”，未知或混合字体不再留下空白控件。',
+        '向右逻辑图删除画布插入线，只显示绿色候选父级虚线；无有效目标时不再错误连接 Root。',
+        '同级拖放由目标节点上下区决定，子节点拖放只在明确进入节点尾部时生效，原位置与中性空白区均保持不变。',
+        '有效画布候选会实时移动目标兄弟或子节点，为被拖子树让出空间；移动保留 UID、元数据和完整子树，并只产生一条撤销记录。',
     ],
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -6714,7 +6714,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.5';
+exports.PLUGIN_VERSION = '0.9.6';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -7707,15 +7707,17 @@ class YeMindEditor {
                 session.ghost.style.transform = `translate3d(${event.clientX + 14}px,${event.clientY + 10}px,0)`;
             }
             const targetRow = this.findOutlineRowAtPoint(event.clientX, event.clientY);
-            this.clearOutlineDropState();
-            session.intent = null;
-            if (!targetRow || this.isOutlineDescendantRow(session.sourceRow, targetRow))
+            if (!targetRow || this.isOutlineDescendantRow(session.sourceRow, targetRow)) {
+                session.intent = null;
+                session.pendingIntent = null;
+                this.clearOutlineDropState();
                 return;
+            }
             const targetUid = targetRow.dataset.outlineUid ?? "";
             const editor = targetRow.querySelector("[data-outline-editor]");
             if (!targetUid || !editor)
                 return;
-            const intent = (0, outlineDrag_1.resolveOutlinePointerDropIntent)({
+            const candidate = (0, outlineDrag_1.resolveOutlinePointerDropIntent)({
                 sourceUid: session.sourceUid,
                 targetUid,
                 clientX: event.clientX,
@@ -7726,25 +7728,35 @@ class YeMindEditor {
                 indentWidth: 22,
                 targetAncestors: this.collectOutlineAncestors(targetRow),
             });
-            if (!intent) {
+            if (!candidate) {
+                session.intent = null;
                 session.pendingIntent = null;
+                this.clearOutlineDropState();
                 return;
             }
-            const intentKey = `${intent.kind}:${intent.targetUid}:${intent.desiredDepth}`;
-            const pendingKey = session.pendingIntent
-                ? `${session.pendingIntent.kind}:${session.pendingIntent.targetUid}:${session.pendingIntent.desiredDepth}`
+            const keyOf = (intent) => intent
+                ? `${intent.kind}:${intent.targetUid}:${intent.position}:${intent.desiredDepth}`
                 : "";
-            if (intent.kind === "child" && intentKey !== pendingKey) {
-                session.pendingIntent = intent;
-                session.pendingSince = performance.now();
-                return;
+            const candidateKey = keyOf(candidate);
+            const stableKey = keyOf(session.intent);
+            const pendingKey = keyOf(session.pendingIntent);
+            // Sibling/parent slots should react immediately. Becoming a child is the
+            // only hierarchy-changing gesture and therefore keeps a short dwell. While
+            // the child candidate is pending, the last stable green guide stays visible
+            // instead of blinking off on every pointermove.
+            if (candidate.kind === "child" && candidateKey !== stableKey) {
+                if (candidateKey !== pendingKey) {
+                    session.pendingIntent = candidate;
+                    session.pendingSince = performance.now();
+                }
+                if (performance.now() - session.pendingSince < 110) {
+                    this.renderOutlineDropIntent(session.intent);
+                    return;
+                }
             }
-            if (intent.kind === "child" && performance.now() - session.pendingSince < 140)
-                return;
             session.pendingIntent = null;
-            session.intent = intent;
-            targetRow.classList.add(`is-drop-${intent.position}`);
-            targetRow.style.setProperty("--ymz-outline-drop-depth", String(intent.desiredDepth));
+            session.intent = candidate;
+            this.renderOutlineDropIntent(candidate);
         };
         this.onOutlinePointerUp = (event) => {
             const session = this.outlinePointerDrag;
@@ -8974,6 +8986,16 @@ class YeMindEditor {
         this.outlinePointerDrag = null;
         this.clearOutlineDropState();
     }
+    renderOutlineDropIntent(intent) {
+        this.clearOutlineDropState();
+        if (!intent)
+            return;
+        const row = Array.from(this.outlineEl.querySelectorAll(":scope > [data-outline-uid]")).find((item) => item.dataset.outlineUid === intent.targetUid);
+        if (!row)
+            return;
+        row.classList.add(`is-drop-${intent.position}`);
+        row.style.setProperty("--ymz-outline-drop-depth", String(intent.desiredDepth));
+    }
     clearOutlineDropState() {
         this.outlineEl
             .querySelectorAll("[data-outline-uid]")
@@ -9024,15 +9046,36 @@ class YeMindEditor {
         return false;
     }
     findOutlineRowAtPoint(clientX, clientY) {
+        const paneRect = this.outlinePaneEl.getBoundingClientRect();
+        if (clientX < paneRect.left ||
+            clientX > paneRect.right ||
+            clientY < paneRect.top ||
+            clientY > paneRect.bottom)
+            return null;
         const pointed = document
             .elementFromPoint?.(clientX, clientY)
             ?.closest("[data-outline-uid]");
         if (pointed && this.outlineEl.contains(pointed))
             return pointed;
-        return (Array.from(this.outlineEl.querySelectorAll(":scope > [data-outline-uid]")).find((row) => {
-            const rect = row.getBoundingClientRect();
-            return clientY >= rect.top && clientY <= rect.bottom;
-        }) ?? null);
+        const rows = Array.from(this.outlineEl.querySelectorAll(':scope > [data-outline-uid][data-outline-hidden="false"]'));
+        if (!rows.length)
+            return null;
+        const rects = rows.map((row) => ({ row, rect: row.getBoundingClientRect() }));
+        for (let index = 0; index < rects.length; index += 1) {
+            const current = rects[index];
+            const center = current.rect.top + current.rect.height / 2;
+            const previous = rects[index - 1]?.rect;
+            const next = rects[index + 1]?.rect;
+            const top = previous
+                ? (previous.top + previous.height / 2 + center) / 2
+                : current.rect.top - current.rect.height / 2;
+            const bottom = next
+                ? (center + next.top + next.height / 2) / 2
+                : current.rect.bottom + current.rect.height / 2;
+            if (clientY >= top && clientY < bottom)
+                return current.row;
+        }
+        return null;
     }
     claimOutlineInteraction(reason) {
         const transition = this.editingSurface.claimOutline();
@@ -30805,8 +30848,8 @@ function restoreIncomingDragLines(snapshots) {
             line.hide?.();
     });
 }
-const OFFICIAL_TARGET_STABLE_MS = 60;
-const OFFICIAL_TARGET_STABLE_FRAMES = 3;
+const LOGICAL_CHILD_STABLE_MS = 120;
+const LOGICAL_CHILD_STABLE_FRAMES = 2;
 function resolveDragGuideTarget(state) {
     if (state.overlapNode)
         return state.overlapNode;
@@ -30971,6 +31014,48 @@ function nodeRect(plugin, node) {
 function ghostRect(plugin) {
     return normalizeRect(plugin.clone?.rbox?.(plugin.mindMap.otherDraw) ?? plugin.clone?.bbox?.());
 }
+function svgTransform(element) {
+    const value = element?.transform?.() ?? {};
+    return {
+        translateX: Number(value.translateX) || 0,
+        translateY: Number(value.translateY) || 0,
+    };
+}
+function elementTransition(element) {
+    return String(element?.node?.style?.transition ?? '');
+}
+function setElementTransition(element, value) {
+    if (element?.node?.style)
+        element.node.style.transition = value;
+}
+function collectSubtreeNodes(root) {
+    const result = [];
+    const seen = new Set();
+    const visit = (node) => {
+        if (!node || seen.has(node))
+            return;
+        seen.add(node);
+        result.push(node);
+        (node.children ?? []).forEach(visit);
+    };
+    visit(root);
+    return result;
+}
+function previewGap(plugin) {
+    const rects = [];
+    (plugin.beingDragNodeList ?? []).forEach((root) => {
+        collectSubtreeNodes(root).forEach((node) => {
+            const rect = nodeRect(plugin, node);
+            if (rect)
+                rects.push(rect);
+        });
+    });
+    if (!rects.length)
+        return 44;
+    const top = Math.min(...rects.map((rect) => rect.y));
+    const bottom = Math.max(...rects.map((rect) => rect.y + rect.height));
+    return Math.max(44, Math.min(360, bottom - top + 18));
+}
 function endpointDistance(parent, ghost, orientation) {
     if (orientation === 'vertical') {
         return Math.hypot(ghost.x + ghost.width / 2 - (parent.x + parent.width / 2), ghost.y - (parent.y + parent.height));
@@ -30993,6 +31078,7 @@ class YeMindDrag extends Drag_1.default {
         plugin.__ymzRawCandidate = (0, officialDragIntent_1.emptyOfficialDragCandidate)();
         plugin.__ymzOverlapFrame = null;
         plugin.__ymzIncomingLines = [];
+        plugin.__ymzLogicalRoomPreview = null;
         plugin.__ymzOnKeydown = (event) => {
             if (event.key !== 'Escape' || (!plugin.isMousedown && !plugin.isDragging))
                 return;
@@ -31037,12 +31123,16 @@ class YeMindDrag extends Drag_1.default {
             this.flushOfficialCandidateCheck();
             const raw = plugin.__ymzRawCandidate ?? (0, officialDragIntent_1.emptyOfficialDragCandidate)();
             const stable = plugin.__ymzCandidateState?.stable ?? (0, officialDragIntent_1.emptyOfficialDragCandidate)();
-            const finalCandidate = raw.kind !== 'none' && raw.key === stable.key
-                ? stable
-                : (0, officialDragIntent_1.emptyOfficialDragCandidate)();
-            applyCandidate(plugin, (0, officialDragIntent_1.isOfficialDragCandidateNoop)(finalCandidate, plugin.beingDragNodeList ?? [])
+            // Sibling ordering is explicit from the upper/lower half of a target row
+            // and should commit on release immediately. Becoming a child changes
+            // hierarchy and therefore still requires the deliberate dwell candidate.
+            const resolved = raw.kind === 'child'
+                ? (raw.key === stable.key ? stable : (0, officialDragIntent_1.emptyOfficialDragCandidate)())
+                : raw;
+            const finalCandidate = (0, officialDragIntent_1.isOfficialDragCandidateNoop)(resolved, plugin.beingDragNodeList ?? [])
                 ? (0, officialDragIntent_1.emptyOfficialDragCandidate)()
-                : finalCandidate);
+                : resolved;
+            applyCandidate(plugin, finalCandidate);
             await super.onMouseup(event);
         }
         finally {
@@ -31051,6 +31141,7 @@ class YeMindDrag extends Drag_1.default {
     }
     removeCloneNode() {
         this.cancelCandidateFrame();
+        this.clearLogicalRoomPreview();
         this.removeGuideLines();
         super.removeCloneNode();
     }
@@ -31058,6 +31149,7 @@ class YeMindDrag extends Drag_1.default {
         const plugin = this;
         document.removeEventListener('keydown', plugin.__ymzOnKeydown, true);
         this.cancelCandidateFrame();
+        this.clearLogicalRoomPreview();
         this.removeGuideLines();
         this.restoreIncomingLines();
         super.beforePluginRemove();
@@ -31066,6 +31158,7 @@ class YeMindDrag extends Drag_1.default {
         const plugin = this;
         document.removeEventListener('keydown', plugin.__ymzOnKeydown, true);
         this.cancelCandidateFrame();
+        this.clearLogicalRoomPreview();
         this.removeGuideLines();
         this.restoreIncomingLines();
         super.beforePluginDestroy();
@@ -31110,8 +31203,24 @@ class YeMindDrag extends Drag_1.default {
             candidate = candidateFromPlugin(plugin);
         }
         plugin.__ymzRawCandidate = candidate;
-        plugin.__ymzCandidateState = updateStableDragCandidate(plugin.__ymzCandidateState ?? createDragCandidateState((0, officialDragIntent_1.emptyOfficialDragCandidate)()), candidate, now);
-        applyCandidate(plugin, plugin.__ymzCandidateState.stable);
+        const currentState = plugin.__ymzCandidateState
+            ?? createDragCandidateState((0, officialDragIntent_1.emptyOfficialDragCandidate)());
+        plugin.__ymzCandidateState = layout === 'logicalStructure'
+            ? (0, treeDropIntent_1.updateStableTreeDropIntent)(currentState, candidate, now, {
+                siblingDurationMs: 0,
+                siblingFrames: 1,
+                childDurationMs: LOGICAL_CHILD_STABLE_MS,
+                childFrames: LOGICAL_CHILD_STABLE_FRAMES,
+            })
+            : updateStableDragCandidate(currentState, candidate, now);
+        const stable = (0, officialDragIntent_1.isOfficialDragCandidateNoop)(plugin.__ymzCandidateState.stable, plugin.beingDragNodeList ?? [])
+            ? (0, officialDragIntent_1.emptyOfficialDragCandidate)()
+            : plugin.__ymzCandidateState.stable;
+        applyCandidate(plugin, stable);
+        if (layout === 'logicalStructure')
+            this.updateLogicalRoomPreview(stable);
+        else
+            this.clearLogicalRoomPreview();
         this.updateOfficialGuideLines();
         if (plugin.clone && plugin.__ymzCandidateState.pending) {
             this.scheduleOfficialCandidateCheck();
@@ -31161,7 +31270,9 @@ class YeMindDrag extends Drag_1.default {
         this.ensureGuideLines();
         const state = plugin.__ymzCandidateState
             ?? createDragCandidateState((0, officialDragIntent_1.emptyOfficialDragCandidate)());
-        const stable = state.stable;
+        const stable = (0, officialDragIntent_1.isOfficialDragCandidateNoop)(state.stable, plugin.beingDragNodeList ?? [])
+            ? (0, officialDragIntent_1.emptyOfficialDragCandidate)()
+            : state.stable;
         const ghost = ghostRect(plugin);
         if (!ghost)
             return;
@@ -31179,6 +31290,16 @@ class YeMindDrag extends Drag_1.default {
         }
         else {
             plugin.__ymzTargetGuideLine?.hide?.();
+        }
+        // The right-growing logical layout uses only one preview language: the
+        // green dashed line points at the parent that will own the dragged node.
+        // There is no root fallback and no canvas insertion line; sibling order is
+        // communicated by the live room-making preview.
+        if (layout === 'logicalStructure') {
+            plugin.__ymzOriginGuideLine?.hide?.();
+            plugin.__ymzInsertionGuideLine?.hide?.();
+            plugin.__ymzInsertionGuideSquare?.hide?.();
+            return;
         }
         const originParent = plugin.mousedownNode?.parent ?? null;
         const origin = nodeRect(plugin, originParent);
@@ -31214,6 +31335,90 @@ class YeMindDrag extends Drag_1.default {
             plugin.__ymzInsertionGuideLine?.hide?.();
             plugin.__ymzInsertionGuideSquare?.hide?.();
         }
+    }
+    updateLogicalRoomPreview(candidate) {
+        const plugin = this;
+        const current = plugin.__ymzLogicalRoomPreview ?? null;
+        if (candidate.kind === 'none' || !candidate.parentNode) {
+            this.clearLogicalRoomPreview();
+            return;
+        }
+        if (current?.key === candidate.key)
+            return;
+        this.clearLogicalRoomPreview();
+        const sourceRoots = plugin.beingDragNodeList ?? [];
+        const sourceSet = new Set();
+        sourceRoots.forEach((root) => collectSubtreeNodes(root).forEach((node) => sourceSet.add(node)));
+        const siblings = Array.isArray(candidate.parentNode.children)
+            ? candidate.parentNode.children.filter((node) => !sourceSet.has(node))
+            : [];
+        const index = Math.max(0, Math.min(siblings.length, Number(candidate.index) || 0));
+        const rootsToShift = siblings.slice(index);
+        if (!rootsToShift.length) {
+            plugin.__ymzLogicalRoomPreview = {
+                key: candidate.key,
+                transforms: [],
+                hiddenLines: [],
+            };
+            return;
+        }
+        const deltaY = previewGap(plugin);
+        const elements = new Set();
+        const hiddenLines = [];
+        rootsToShift.forEach((root) => {
+            const incomingIndex = Array.isArray(root?.parent?.children)
+                ? root.parent.children.indexOf(root)
+                : -1;
+            const incoming = incomingIndex >= 0 ? root?.parent?._lines?.[incomingIndex] : null;
+            if (incoming && !hiddenLines.some((item) => item.element === incoming)) {
+                hiddenLines.push({ element: incoming, wasVisible: lineIsVisible(incoming) });
+                incoming.hide?.();
+            }
+            collectSubtreeNodes(root).forEach((node) => {
+                if (node?.group)
+                    elements.add(node.group);
+                (node?._lines ?? []).forEach((line) => elements.add(line));
+            });
+        });
+        const transforms = [];
+        elements.forEach((element) => {
+            const before = svgTransform(element);
+            const transition = elementTransition(element);
+            transforms.push({
+                element,
+                translateX: before.translateX,
+                translateY: before.translateY,
+                transition,
+            });
+            setElementTransition(element, 'transform 130ms ease');
+            element.translate?.(0, deltaY);
+        });
+        plugin.__ymzLogicalRoomPreview = {
+            key: candidate.key,
+            transforms,
+            hiddenLines,
+        };
+    }
+    clearLogicalRoomPreview() {
+        const plugin = this;
+        const preview = plugin.__ymzLogicalRoomPreview ?? null;
+        if (!preview)
+            return;
+        preview.transforms.forEach((snapshot) => {
+            const current = svgTransform(snapshot.element);
+            setElementTransition(snapshot.element, 'transform 100ms ease');
+            snapshot.element.translate?.(snapshot.translateX - current.translateX, snapshot.translateY - current.translateY);
+            const element = snapshot.element;
+            const transition = snapshot.transition;
+            setTimeout(() => setElementTransition(element, transition), 120);
+        });
+        preview.hiddenLines.forEach(({ element, wasVisible }) => {
+            if (wasVisible)
+                element.show?.();
+            else
+                element.hide?.();
+        });
+        plugin.__ymzLogicalRoomPreview = null;
     }
     clearUpstreamPlaceholder() {
         const plugin = this;
@@ -32851,6 +33056,94 @@ function childCandidate(options, pointer, child) {
         score: child.score,
     };
 }
+function resolveRightLogicalCandidate(options, pointer) {
+    const excluded = new Set(options.excludedNodes ?? []);
+    const available = new Set(options.nodes.filter((node) => !excluded.has(node)));
+    // Becoming a child is an explicit tail gesture. The tail begins in the last
+    // third of the node and extends to the right, so merely crossing the body of
+    // a node while sorting siblings cannot unexpectedly change hierarchy.
+    let childHit = null;
+    options.nodes.forEach((node) => {
+        if (excluded.has(node) || node?.isGeneralization)
+            return;
+        const rect = options.getRect(node);
+        if (!finiteRect(rect))
+            return;
+        const tailStart = rect.x + rect.width * 0.68;
+        const tailEnd = rect.x + rect.width + 62;
+        const vertical = pointer.y >= rect.y - 8 && pointer.y <= rect.y + rect.height + 8;
+        if (!vertical || pointer.x < tailStart || pointer.x > tailEnd)
+            return;
+        const score = Math.abs(pointer.y - rectCenter(rect).y) + Math.max(0, pointer.x - rect.x - rect.width) * 0.08;
+        const candidate = { node, score, fromTail: true, insideBody: pointer.x <= rect.x + rect.width };
+        if (!childHit || score < childHit.score)
+            childHit = candidate;
+    });
+    if (childHit)
+        return childCandidate(options, pointer, childHit);
+    // Sorting uses the whole visual row rather than a seven-pixel edge. Each
+    // target owns the vertical space halfway to its adjacent siblings; the upper
+    // half means BEFORE and the lower half means AFTER. This makes the intended
+    // result stable and lets the destination node visibly make room.
+    let best = null;
+    const seenParents = new Set();
+    options.nodes.forEach((node) => {
+        if (excluded.has(node))
+            return;
+        const parent = node?.parent;
+        if (!parent || seenParents.has(parent))
+            return;
+        seenParents.add(parent);
+        const siblings = orderedSiblings('logicalStructure', parent, available, pointer, options.getRect);
+        if (!siblings.length)
+            return;
+        const nativeSiblings = Array.isArray(parent.children)
+            ? parent.children.filter((child) => siblings.includes(child))
+            : [];
+        siblings.forEach((targetNode, visualIndex) => {
+            const rect = options.getRect(targetNode);
+            if (!finiteRect(rect))
+                return;
+            const previousRect = visualIndex > 0 ? options.getRect(siblings[visualIndex - 1]) : null;
+            const nextRect = visualIndex + 1 < siblings.length ? options.getRect(siblings[visualIndex + 1]) : null;
+            const center = rectCenter(rect).y;
+            const previousGap = finiteRect(previousRect)
+                ? Math.max(0, rect.y - (previousRect.y + previousRect.height))
+                : rect.height;
+            const nextGap = finiteRect(nextRect)
+                ? Math.max(0, nextRect.y - (rect.y + rect.height))
+                : rect.height;
+            // A target owns its actual row plus a forgiving nearby band, but a real
+            // neutral corridor remains between distant rows. Releasing in that
+            // corridor never guesses a destination.
+            const topPadding = (0, treeDropIntent_1.clamp)(previousGap * 0.28, 8, 20);
+            const bottomPadding = (0, treeDropIntent_1.clamp)(nextGap * 0.28, 8, 20);
+            const top = rect.y - topPadding;
+            const bottom = rect.y + rect.height + bottomPadding;
+            const xDistance = (0, treeDropIntent_1.distanceToRange)(pointer.x, rect.x - 48, rect.x + rect.width + 8);
+            if (pointer.y < top || pointer.y > bottom || xDistance > 18)
+                return;
+            const kind = pointer.y < center ? 'before' : 'after';
+            const slotIndex = kind === 'before' ? visualIndex : visualIndex + 1;
+            const score = Math.abs(pointer.y - center) + xDistance * 0.25;
+            const candidate = {
+                parent,
+                siblings,
+                nativeSiblings,
+                visualIndex: slotIndex,
+                nativeIndex: slotIndex,
+                score,
+                axisDistance: Math.abs(pointer.y - center),
+                targetNode,
+                kind,
+            };
+            if (!best || score < best.score)
+                best = candidate;
+        });
+    });
+    const resolvedBest = best;
+    return resolvedBest ? slotCandidate(resolvedBest, resolvedBest.kind) : emptyOfficialDragCandidate();
+}
 /**
  * Pointer-based tree intent. The dragged clone never participates in hit
  * testing, so a large image node cannot trigger a target while the pointer is
@@ -32860,10 +33153,13 @@ function resolveOfficialDragCandidate(options) {
     const pointer = pointFromOptions(options);
     if (!pointer)
         return emptyOfficialDragCandidate();
+    if (options.layout === 'logicalStructure') {
+        return resolveRightLogicalCandidate(options, pointer);
+    }
     const sibling = resolveSiblingSlot(options, pointer);
     const child = resolveChildTarget(options, pointer);
-    // A precise sibling edge wins over a body hit. Entering the outward tail is
-    // an explicit hierarchy gesture and therefore wins over a nearby slot.
+    // Other layouts retain the geometry adapter while the right-growing logical
+    // layout acts as the reference implementation for the new drag model.
     if (child?.fromTail)
         return childCandidate(options, pointer, child);
     if (sibling && sibling.axisDistance <= SIBLING_SLOT_RADIUS)
@@ -72990,7 +73286,7 @@ exports.isOutlineTextSelectionTarget = isOutlineTextSelectionTarget;
 exports.shouldStartOutlinePointerDrag = shouldStartOutlinePointerDrag;
 exports.resolveOutlinePointerDropIntent = resolveOutlinePointerDropIntent;
 const treeDropIntent_1 = __require(88);
-const OUTLINE_EDGE_ZONE_PX = 7;
+const OUTLINE_ROW_SPLIT_RATIO = 0.5;
 function isOutlinePointerInDragZone(input) {
     const tolerance = Math.max(0, input.tolerance ?? 0);
     return input.clientX < input.textLeft - tolerance;
@@ -73001,13 +73297,12 @@ function outlineVerticalSlot(input) {
         input.sourceUid === input.targetUid ||
         input.rect.height <= 0)
         return null;
-    const edge = Math.min(OUTLINE_EDGE_ZONE_PX, Math.max(4, input.rect.height * 0.24));
-    const offset = input.clientY - input.rect.top;
-    if (offset >= 0 && offset <= edge)
-        return "before";
-    if (offset >= input.rect.height - edge && offset <= input.rect.height)
-        return "after";
-    return null;
+    // Once the pointer is associated with a row, its whole vertical hit area is
+    // actionable. The upper half means BEFORE and the lower half means AFTER.
+    // This deliberately removes the narrow edge-only zones that made the green
+    // insertion guide blink while the pointer crossed ordinary row content.
+    const offset = (0, treeDropIntent_1.clamp)(input.clientY - input.rect.top, 0, input.rect.height);
+    return offset < input.rect.height * OUTLINE_ROW_SPLIT_RATIO ? "before" : "after";
 }
 function resolveOutlineDropIntent(input) {
     const position = outlineVerticalSlot(input);
@@ -73030,10 +73325,10 @@ function shouldStartOutlinePointerDrag(input) {
     return input.distancePx >= 5;
 }
 /**
- * Resolve an explicit outline drop slot. The central part of a row is a neutral
- * zone unless the pointer deliberately moves one indent to the right, in which
- * case the source becomes a child. Moving left aligns the insertion marker to
- * the closest visible ancestor. This prevents nearest-row guessing in gaps.
+ * Resolve an explicit outline drop slot. Every locked row has a stable upper
+ * and lower half. Horizontal movement snaps the insertion guide to a parent,
+ * sibling or child depth. The controller adds hysteresis so small pointer
+ * tremors do not make the guide jump between adjacent depth columns.
  */
 function resolveOutlinePointerDropIntent(input) {
     if (!input.sourceUid || input.sourceUid === input.targetUid || input.rect.height <= 0)
@@ -73098,6 +73393,14 @@ function escapeHtml(value) {
 }
 function textLength(element) {
     return (element.innerText || element.textContent || '').replace(/\u00a0/g, ' ').length;
+}
+function editorIsSemanticallyEmpty(element) {
+    // Chromium represents an emptied editable block as <p><br></p>. innerText
+    // exposes that placeholder as a newline even though the user-visible node is
+    // empty, so structural editing must inspect actual text content instead.
+    return (element.textContent ?? '')
+        .replace(/[\u00a0\u200b\ufeff]/g, '')
+        .trim().length === 0;
 }
 function nodeTextLength(node) {
     if (node.nodeType === Node.TEXT_NODE)
@@ -73438,9 +73741,10 @@ class StructuredOutlineEditorController {
                 if (event.shiftKey) {
                     this.insertInlineHtml('<br>');
                     this.markDirty('hard-break');
+                    this.flush('hard-break');
                 }
                 else {
-                    this.replaceSelectionWithText('\n', 'enter');
+                    this.splitSelectionToSibling();
                 }
                 return;
             }
@@ -73457,11 +73761,20 @@ class StructuredOutlineEditorController {
                 const state = this.getSelectionState(context.startEditor);
                 const boundary = event.key === 'Backspace' ? state.start === 0 : state.end === state.length;
                 if (boundary && context.startRow.dataset.outlineRoot !== 'true') {
-                    const neighbor = this.visibleNeighbor(context.startRow, event.key === 'Backspace' ? -1 : 1);
-                    if (neighbor) {
-                        event.preventDefault();
-                        this.mergeRows(neighbor, context.startRow, event.key === 'Backspace');
+                    event.preventDefault();
+                    if (editorIsSemanticallyEmpty(context.startEditor)) {
+                        const emptyRow = context.startRow;
+                        const backward = event.key === 'Backspace';
+                        // Removing the event target synchronously during keydown lets some
+                        // Chromium builds continue the native Backspace operation against
+                        // the previous block, producing an unwanted <p><br></p>. Complete
+                        // the cancelled key event first, then commit the structural delete.
+                        window.requestAnimationFrame(() => this.removeEmptyRow(emptyRow, backward));
+                        return;
                     }
+                    const neighbor = this.visibleNeighbor(context.startRow, event.key === 'Backspace' ? -1 : 1);
+                    if (neighbor)
+                        this.mergeRows(neighbor, context.startRow, event.key === 'Backspace');
                 }
                 return;
             }
@@ -74161,6 +74474,7 @@ class StructuredOutlineEditorController {
     }
     selectEditorRange(editor, startOffset, endOffset) {
         this.clearWholeSelection();
+        editor.focus({ preventScroll: true });
         const start = domPointAtOffset(editor, startOffset);
         const end = domPointAtOffset(editor, endOffset);
         const range = document.createRange();
@@ -74176,6 +74490,125 @@ class StructuredOutlineEditorController {
         finally {
             this.suppressSelectionChange = false;
         }
+    }
+    splitSelectionToSibling() {
+        const context = this.selectionContext();
+        if (!context)
+            return;
+        if (context.spansRows) {
+            // Collapse a cross-row selection first, then split at the restored caret.
+            // Both actions still travel through the same structured outline mutation
+            // path and never delegate block creation to contenteditable defaults.
+            this.replaceSelectionWithText('', 'enter-selection');
+            window.requestAnimationFrame(() => this.splitSelectionToSibling());
+            return;
+        }
+        const blocks = this.collectBlocks();
+        const rows = Array.from(this.options.root.querySelectorAll(':scope > [data-outline-uid]'));
+        const index = rows.indexOf(context.startRow);
+        const current = blocks[index];
+        if (index < 0 || !current || current.kind !== 'node')
+            return;
+        const length = textLength(context.startEditor);
+        const prefixHtml = rangeHtml(context.startEditor, 0, context.start.offset);
+        const suffixHtml = rangeHtml(context.startEditor, context.end.offset, length);
+        const prefixText = (0, structuredOutlineDocument_1.structuredOutlineHtmlToText)(prefixHtml);
+        const suffixText = (0, structuredOutlineDocument_1.structuredOutlineHtmlToText)(suffixHtml);
+        const nextUid = (0, structuredOutlineDocument_1.createStructuredOutlineUid)();
+        const nextDepth = current.isRoot ? 1 : current.depth;
+        const nextBlock = {
+            uid: nextUid,
+            kind: 'node',
+            depth: nextDepth,
+            html: suffixHtml,
+            text: suffixText,
+            parentUid: current.isRoot ? current.uid : current.parentUid,
+            hidden: false,
+            expanded: true,
+            hasChildren: false,
+            isRoot: false,
+            pristine: false,
+        };
+        const updatedCurrent = {
+            ...current,
+            html: prefixHtml,
+            text: prefixText,
+            pristine: false,
+        };
+        let insertionIndex;
+        if (current.isRoot) {
+            insertionIndex = index + 1;
+        }
+        else {
+            insertionIndex = index + 1;
+            while (insertionIndex < blocks.length && blocks[insertionIndex].depth > current.depth) {
+                insertionIndex += 1;
+            }
+        }
+        const next = [
+            ...blocks.slice(0, index),
+            updatedCurrent,
+            ...blocks.slice(index + 1, insertionIndex),
+            nextBlock,
+            ...blocks.slice(insertionIndex),
+        ];
+        this.replaceDomBlocks((0, structuredOutlineDocument_1.normalizeStructuredOutlineDepths)(next), 'enter-split-node');
+        window.requestAnimationFrame(() => {
+            const editor = this.editorByUid(nextUid);
+            if (!editor)
+                return;
+            this.selectEditorRange(editor, 0, 0);
+            this.activateUid(nextUid, true);
+            this.options.onActivate(nextUid);
+        });
+    }
+    removeEmptyRow(row, backward) {
+        if (row.dataset.outlineRoot === 'true')
+            return;
+        const blocks = this.collectBlocks();
+        const rows = Array.from(this.options.root.querySelectorAll(':scope > [data-outline-uid]'));
+        const index = rows.indexOf(row);
+        const current = blocks[index];
+        if (index < 0 || !current)
+            return;
+        const emptyEditor = row.querySelector('[data-outline-editor]');
+        if (emptyEditor)
+            emptyEditor.replaceChildren();
+        const neighbor = this.visibleNeighbor(row, backward ? -1 : 1)
+            ?? this.visibleNeighbor(row, backward ? 1 : -1);
+        const neighborUid = neighbor?.dataset.outlineUid ?? '';
+        const neighborEditor = neighbor?.querySelector('[data-outline-editor]') ?? null;
+        const neighborCaret = neighborEditor
+            ? (backward ? textLength(neighborEditor) : 0)
+            : 0;
+        // Move the live browser selection away from the soon-to-be-removed block
+        // before patching the contenteditable document. Chromium otherwise preserves
+        // the caret by transplanting the empty <p><br></p> into the previous row.
+        if (neighborEditor)
+            this.selectEditorRange(neighborEditor, neighborCaret, neighborCaret);
+        const currentDepth = current.depth;
+        let descendantsEnd = index + 1;
+        while (descendantsEnd < blocks.length && blocks[descendantsEnd].depth > currentDepth) {
+            descendantsEnd += 1;
+        }
+        const promotedDescendants = blocks
+            .slice(index + 1, descendantsEnd)
+            .map((block) => ({ ...block, depth: Math.max(1, block.depth - 1) }));
+        const next = [
+            ...blocks.slice(0, index),
+            ...promotedDescendants,
+            ...blocks.slice(descendantsEnd),
+        ];
+        this.replaceDomBlocks((0, structuredOutlineDocument_1.normalizeStructuredOutlineDepths)(next), 'remove-empty-node');
+        window.requestAnimationFrame(() => {
+            const editor = this.editorByUid(neighborUid);
+            if (!editor)
+                return;
+            const caret = backward ? textLength(editor) : 0;
+            this.selectEditorRange(editor, caret, caret);
+            this.activateUid(neighborUid, true);
+            this.options.onActivate(neighborUid);
+        });
     }
     replaceSelectionWithText(value, reason, richLines) {
         const context = this.selectionContext();
@@ -74394,7 +74827,9 @@ class StructuredOutlineEditorController {
         if (!firstEditor || !secondEditor)
             return;
         const caret = textLength(firstEditor);
-        firstEditor.innerHTML = `${firstEditor.innerHTML}${secondEditor.innerHTML}`;
+        const firstHtml = editorIsSemanticallyEmpty(firstEditor) ? '' : firstEditor.innerHTML;
+        const secondHtml = editorIsSemanticallyEmpty(secondEditor) ? '' : secondEditor.innerHTML;
+        firstEditor.innerHTML = `${firstHtml}${secondHtml}`;
         second.remove();
         this.markDirty('merge-node');
         this.flush('merge-node');
@@ -75276,7 +75711,7 @@ class RichTextToolbar {
         <option value="">自动</option>${sizeOptions()}
       </select>
       <select data-rich-field="font" title="字体">
-        <option value="">继承</option>${fontOptions()}
+        <option value="">默认字体</option>${fontOptions()}
       </select>
       <span class="ymz-rich-toolbar__separator"></span>
       <button type="button" data-rich-action="link" title="行内链接">链接</button>
@@ -75563,9 +75998,18 @@ class RichTextToolbar {
             size.value =
                 typeof this.formatInfo.size === "string" ? this.formatInfo.size : "";
         const font = this.element.querySelector('[data-rich-field="font"]');
-        if (font)
-            font.value =
-                typeof this.formatInfo.font === "string" ? this.formatInfo.font : "";
+        if (font) {
+            const currentFont = typeof this.formatInfo.font === "string"
+                ? this.formatInfo.font.trim()
+                : "";
+            // Computed CSS commonly returns a full fallback stack which is not one
+            // of the explicit editor choices. Assigning that unknown value to a
+            // native select makes the control render as an empty box, so normalize
+            // inherited/unknown/mixed fonts to the visible default option.
+            font.value = YeMindRichText_1.YEMIND_FONT_VALUES.includes(currentFont)
+                ? currentFont
+                : "";
+        }
         const color = typeof this.formatInfo.color === "string" &&
             this.formatInfo.color !== "transparent"
             ? this.formatInfo.color

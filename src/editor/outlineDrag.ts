@@ -40,7 +40,7 @@ export interface OutlinePointerDropIntent extends OutlineDropIntent {
   kind: Exclude<TreeDropKind, "none">;
 }
 
-const OUTLINE_EDGE_ZONE_PX = 7;
+const OUTLINE_ROW_SPLIT_RATIO = 0.5;
 
 export function isOutlinePointerInDragZone(input: { clientX: number; textLeft: number; tolerance?: number }): boolean {
   const tolerance = Math.max(0, input.tolerance ?? 0);
@@ -54,11 +54,12 @@ function outlineVerticalSlot(input: OutlineDropIntentInput): "before" | "after" 
     input.sourceUid === input.targetUid ||
     input.rect.height <= 0
   ) return null;
-  const edge = Math.min(OUTLINE_EDGE_ZONE_PX, Math.max(4, input.rect.height * 0.24));
-  const offset = input.clientY - input.rect.top;
-  if (offset >= 0 && offset <= edge) return "before";
-  if (offset >= input.rect.height - edge && offset <= input.rect.height) return "after";
-  return null;
+  // Once the pointer is associated with a row, its whole vertical hit area is
+  // actionable. The upper half means BEFORE and the lower half means AFTER.
+  // This deliberately removes the narrow edge-only zones that made the green
+  // insertion guide blink while the pointer crossed ordinary row content.
+  const offset = clamp(input.clientY - input.rect.top, 0, input.rect.height);
+  return offset < input.rect.height * OUTLINE_ROW_SPLIT_RATIO ? "before" : "after";
 }
 
 export function resolveOutlineDropIntent(
@@ -91,10 +92,10 @@ export function shouldStartOutlinePointerDrag(
 }
 
 /**
- * Resolve an explicit outline drop slot. The central part of a row is a neutral
- * zone unless the pointer deliberately moves one indent to the right, in which
- * case the source becomes a child. Moving left aligns the insertion marker to
- * the closest visible ancestor. This prevents nearest-row guessing in gaps.
+ * Resolve an explicit outline drop slot. Every locked row has a stable upper
+ * and lower half. Horizontal movement snaps the insertion guide to a parent,
+ * sibling or child depth. The controller adds hysteresis so small pointer
+ * tremors do not make the guide jump between adjacent depth columns.
  */
 export function resolveOutlinePointerDropIntent(
   input: OutlinePointerDropIntentInput,

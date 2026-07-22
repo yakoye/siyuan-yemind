@@ -16,7 +16,7 @@ describe("structured outline gutter drag", () => {
     expect(source).not.toContain('draggable="true"');
   });
 
-  it("resolves explicit before/after edge zones and leaves the middle neutral", () => {
+  it("uses the whole target row with stable before/after halves", () => {
     const rect = { top: 100, height: 40 };
     expect(
       resolveOutlineDropIntent({
@@ -33,7 +33,7 @@ describe("structured outline gutter drag", () => {
         clientY: 120,
         rect,
       }),
-    ).toBeNull();
+    ).toEqual({ targetUid: "b", position: "after" });
     expect(
       resolveOutlineDropIntent({
         sourceUid: "a",

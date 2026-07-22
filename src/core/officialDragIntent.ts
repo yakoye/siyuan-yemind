@@ -467,6 +467,89 @@ function childCandidate(
   };
 }
 
+function resolveRightLogicalCandidate(
+  options: ResolveOfficialDragCandidateOptions,
+  pointer: OfficialDragPoint,
+): OfficialDragCandidate {
+  const excluded = new Set(options.excludedNodes ?? []);
+  const available = new Set(options.nodes.filter((node) => !excluded.has(node)));
+
+  // Becoming a child is an explicit tail gesture. The tail begins in the last
+  // third of the node and extends to the right, so merely crossing the body of
+  // a node while sorting siblings cannot unexpectedly change hierarchy.
+  let childHit: ChildIntent | null = null;
+  options.nodes.forEach((node) => {
+    if (excluded.has(node) || node?.isGeneralization) return;
+    const rect = options.getRect(node);
+    if (!finiteRect(rect)) return;
+    const tailStart = rect.x + rect.width * 0.68;
+    const tailEnd = rect.x + rect.width + 62;
+    const vertical = pointer.y >= rect.y - 8 && pointer.y <= rect.y + rect.height + 8;
+    if (!vertical || pointer.x < tailStart || pointer.x > tailEnd) return;
+    const score = Math.abs(pointer.y - rectCenter(rect).y) + Math.max(0, pointer.x - rect.x - rect.width) * 0.08;
+    const candidate: ChildIntent = { node, score, fromTail: true, insideBody: pointer.x <= rect.x + rect.width };
+    if (!childHit || score < childHit.score) childHit = candidate;
+  });
+  if (childHit) return childCandidate(options, pointer, childHit);
+
+  // Sorting uses the whole visual row rather than a seven-pixel edge. Each
+  // target owns the vertical space halfway to its adjacent siblings; the upper
+  // half means BEFORE and the lower half means AFTER. This makes the intended
+  // result stable and lets the destination node visibly make room.
+  let best: SlotIntent | null = null;
+  const seenParents = new Set<any>();
+  options.nodes.forEach((node) => {
+    if (excluded.has(node)) return;
+    const parent = node?.parent;
+    if (!parent || seenParents.has(parent)) return;
+    seenParents.add(parent);
+    const siblings = orderedSiblings('logicalStructure', parent, available, pointer, options.getRect);
+    if (!siblings.length) return;
+    const nativeSiblings = Array.isArray(parent.children)
+      ? parent.children.filter((child: any) => siblings.includes(child))
+      : [];
+    siblings.forEach((targetNode, visualIndex) => {
+      const rect = options.getRect(targetNode);
+      if (!finiteRect(rect)) return;
+      const previousRect = visualIndex > 0 ? options.getRect(siblings[visualIndex - 1]) : null;
+      const nextRect = visualIndex + 1 < siblings.length ? options.getRect(siblings[visualIndex + 1]) : null;
+      const center = rectCenter(rect).y;
+      const previousGap = finiteRect(previousRect)
+        ? Math.max(0, rect.y - (previousRect.y + previousRect.height))
+        : rect.height;
+      const nextGap = finiteRect(nextRect)
+        ? Math.max(0, nextRect.y - (rect.y + rect.height))
+        : rect.height;
+      // A target owns its actual row plus a forgiving nearby band, but a real
+      // neutral corridor remains between distant rows. Releasing in that
+      // corridor never guesses a destination.
+      const topPadding = clamp(previousGap * 0.28, 8, 20);
+      const bottomPadding = clamp(nextGap * 0.28, 8, 20);
+      const top = rect.y - topPadding;
+      const bottom = rect.y + rect.height + bottomPadding;
+      const xDistance = distanceToRange(pointer.x, rect.x - 48, rect.x + rect.width + 8);
+      if (pointer.y < top || pointer.y > bottom || xDistance > 18) return;
+      const kind: 'before' | 'after' = pointer.y < center ? 'before' : 'after';
+      const slotIndex = kind === 'before' ? visualIndex : visualIndex + 1;
+      const score = Math.abs(pointer.y - center) + xDistance * 0.25;
+      const candidate: SlotIntent = {
+        parent,
+        siblings,
+        nativeSiblings,
+        visualIndex: slotIndex,
+        nativeIndex: slotIndex,
+        score,
+        axisDistance: Math.abs(pointer.y - center),
+        targetNode,
+        kind,
+      };
+      if (!best || score < best.score) best = candidate;
+    });
+  });
+  const resolvedBest = best as SlotIntent | null;
+  return resolvedBest ? slotCandidate(resolvedBest, resolvedBest.kind) : emptyOfficialDragCandidate();
+}
+
 /**
  * Pointer-based tree intent. The dragged clone never participates in hit
  * testing, so a large image node cannot trigger a target while the pointer is
@@ -478,11 +561,15 @@ export function resolveOfficialDragCandidate(
   const pointer = pointFromOptions(options);
   if (!pointer) return emptyOfficialDragCandidate();
 
+  if (options.layout === 'logicalStructure') {
+    return resolveRightLogicalCandidate(options, pointer);
+  }
+
   const sibling = resolveSiblingSlot(options, pointer);
   const child = resolveChildTarget(options, pointer);
 
-  // A precise sibling edge wins over a body hit. Entering the outward tail is
-  // an explicit hierarchy gesture and therefore wins over a nearby slot.
+  // Other layouts retain the geometry adapter while the right-growing logical
+  // layout acts as the reference implementation for the new drag model.
   if (child?.fromTail) return childCandidate(options, pointer, child);
   if (sibling && sibling.axisDistance <= SIBLING_SLOT_RADIUS) return slotCandidate(sibling);
   if (child) return childCandidate(options, pointer, child);

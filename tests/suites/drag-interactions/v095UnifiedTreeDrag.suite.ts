@@ -39,13 +39,13 @@ describe('v0.9.5 unified tree drag contract', () => {
     expect(result.kind).toBe('none');
   });
 
-  it('keeps the outline centre neutral and starts only after a five-pixel gutter gesture', () => {
+  it('keeps the outline row stable and starts only after a five-pixel gutter gesture', () => {
     const base = {
       sourceUid: 'source', targetUid: 'target', clientX: 100, clientY: 120,
       rect: { top: 100, height: 40 }, targetTextLeft: 120, targetDepth: 2,
       indentWidth: 22, targetAncestors: [{ uid: 'root', depth: 0 }, { uid: 'parent', depth: 1 }, { uid: 'target', depth: 2 }],
     };
-    expect(resolveOutlinePointerDropIntent(base)).toBeNull();
+    expect(resolveOutlinePointerDropIntent(base)?.kind).toBe("after");
     expect(shouldStartOutlinePointerDrag({ interactive: false, fromEditor: false, elapsedMs: 0, distancePx: 4.9 })).toBe(false);
     expect(shouldStartOutlinePointerDrag({ interactive: false, fromEditor: false, elapsedMs: 0, distancePx: 5 })).toBe(true);
   });
@@ -53,7 +53,7 @@ describe('v0.9.5 unified tree drag contract', () => {
   it('uses an invisible move gutter, five-pixel leaf square and green depth-aligned insertion marker', () => {
     const css = readFileSync('src/styles/index.css', 'utf8');
     expect(css).toContain('.ymz-outline-row__drag{');
-    expect(css).toContain('width:14px');
+    expect(css).toContain('width:22px');
     expect(css).toContain('cursor:move');
     expect(css).toContain('.ymz-outline-row__leaf-square{width:5px;height:5px');
     expect(css).toContain('background:var(--ymz-accent)');

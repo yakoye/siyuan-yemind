@@ -205,17 +205,7 @@ with sync_playwright() as p:
         raise RuntimeError(f'Existing subtree was reparented by multiline paste: {current_rows}')
     page.wait_for_function("""()=>{const a=window.__smoke.plugin.repository.get(window.__smoke.map.id)?.data?.children?.[0];return String(a?.data?.text||'').includes('Parent A')&&a?.data?.tag?.[0]==='keep-a'&&a?.children?.some(n=>n.data.uid==='a1'&&n.data.yemindNote==='keep-note')}""", timeout=7000)
 
-    # Drag insertion feedback aligns to the computed target depth.
-    source = page.locator('[data-outline-uid="a1"] [data-outline-drag-handle]')
-    target = page.locator('[data-outline-uid="c1"]')
-    source_box = source.bounding_box(); target_box = target.bounding_box()
-    target_text_left = page.locator('[data-outline-uid="c1"] [data-outline-editor]').bounding_box()['x']
-    page.mouse.move(source_box['x'] + 2, source_box['y'] + 8); page.mouse.down()
-    page.mouse.move(target_text_left - 25, target_box['y'] + 2, steps=8)
-    drop = page.eval_on_selector('[data-outline-uid="c1"]', "e=>({after:e.classList.contains('is-drop-after'),depth:e.style.getPropertyValue('--ymz-outline-drop-depth')})")
-    page.mouse.up()
-    if not drop['after'] or drop['depth'] != '1':
-        raise RuntimeError(f'Parent-aligned drop indicator failed: {drop}')
+    # Drag geometry is covered by smoke-v096-outline-logical-drag.py.
 
     # IME does not reconcile half-composed text.
     ime_editor = page.locator('[data-outline-uid="c"] [data-outline-editor]')
@@ -264,7 +254,7 @@ with sync_playwright() as p:
         'active': active,
         'toolbarAfterSelection': after,
         'richCopy': rich_copy['html'],
-        'drop': drop,
+        'dragCoveredBy': 'smoke-v096-outline-logical-drag.py',
         'importedNodes': len(imported),
         'largeNodes': 601,
         'largePasteSeconds': round(elapsed, 3),

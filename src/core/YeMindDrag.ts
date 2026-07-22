@@ -75,8 +75,8 @@ export function restoreIncomingDragLines(snapshots: IncomingDragLineSnapshot[]):
   });
 }
 
-const OFFICIAL_TARGET_STABLE_MS = 60;
-const OFFICIAL_TARGET_STABLE_FRAMES = 3;
+const LOGICAL_CHILD_STABLE_MS = 120;
+const LOGICAL_CHILD_STABLE_FRAMES = 2;
 
 export function resolveDragGuideTarget(state: {
   overlapNode?: any;
@@ -266,6 +266,67 @@ function ghostRect(plugin: any): DragGuideRect | null {
   return normalizeRect(plugin.clone?.rbox?.(plugin.mindMap.otherDraw) ?? plugin.clone?.bbox?.());
 }
 
+
+interface PreviewTransformSnapshot {
+  element: any;
+  translateX: number;
+  translateY: number;
+  transition: string;
+}
+
+interface PreviewVisibilitySnapshot {
+  element: any;
+  wasVisible: boolean;
+}
+
+interface LogicalRoomPreview {
+  key: string;
+  transforms: PreviewTransformSnapshot[];
+  hiddenLines: PreviewVisibilitySnapshot[];
+}
+
+function svgTransform(element: any): { translateX: number; translateY: number } {
+  const value = element?.transform?.() ?? {};
+  return {
+    translateX: Number(value.translateX) || 0,
+    translateY: Number(value.translateY) || 0,
+  };
+}
+
+function elementTransition(element: any): string {
+  return String(element?.node?.style?.transition ?? '');
+}
+
+function setElementTransition(element: any, value: string): void {
+  if (element?.node?.style) element.node.style.transition = value;
+}
+
+function collectSubtreeNodes(root: any): any[] {
+  const result: any[] = [];
+  const seen = new Set<any>();
+  const visit = (node: any): void => {
+    if (!node || seen.has(node)) return;
+    seen.add(node);
+    result.push(node);
+    (node.children ?? []).forEach(visit);
+  };
+  visit(root);
+  return result;
+}
+
+function previewGap(plugin: any): number {
+  const rects: DragGuideRect[] = [];
+  (plugin.beingDragNodeList ?? []).forEach((root: any) => {
+    collectSubtreeNodes(root).forEach((node) => {
+      const rect = nodeRect(plugin, node);
+      if (rect) rects.push(rect);
+    });
+  });
+  if (!rects.length) return 44;
+  const top = Math.min(...rects.map((rect) => rect.y));
+  const bottom = Math.max(...rects.map((rect) => rect.y + rect.height));
+  return Math.max(44, Math.min(360, bottom - top + 18));
+}
 function endpointDistance(parent: DragGuideRect, ghost: DragGuideRect, orientation: DragGuideOrientation): number {
   if (orientation === 'vertical') {
     return Math.hypot(
@@ -295,6 +356,7 @@ export default class YeMindDrag extends Drag {
     plugin.__ymzRawCandidate = emptyOfficialDragCandidate();
     plugin.__ymzOverlapFrame = null;
     plugin.__ymzIncomingLines = [];
+    plugin.__ymzLogicalRoomPreview = null;
     plugin.__ymzOnKeydown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || (!plugin.isMousedown && !plugin.isDragging)) return;
       event.preventDefault();
@@ -345,15 +407,19 @@ export default class YeMindDrag extends Drag {
       this.flushOfficialCandidateCheck();
       const raw: DragCandidate = plugin.__ymzRawCandidate ?? emptyOfficialDragCandidate();
       const stable: DragCandidate = plugin.__ymzCandidateState?.stable ?? emptyOfficialDragCandidate();
-      const finalCandidate = raw.kind !== 'none' && raw.key === stable.key
-        ? stable
-        : emptyOfficialDragCandidate();
-      applyCandidate(
-        plugin,
-        isOfficialDragCandidateNoop(finalCandidate, plugin.beingDragNodeList ?? [])
-          ? emptyOfficialDragCandidate()
-          : finalCandidate,
-      );
+      // Sibling ordering is explicit from the upper/lower half of a target row
+      // and should commit on release immediately. Becoming a child changes
+      // hierarchy and therefore still requires the deliberate dwell candidate.
+      const resolved = raw.kind === 'child'
+        ? (raw.key === stable.key ? stable : emptyOfficialDragCandidate())
+        : raw;
+      const finalCandidate = isOfficialDragCandidateNoop(
+        resolved,
+        plugin.beingDragNodeList ?? [],
+      )
+        ? emptyOfficialDragCandidate()
+        : resolved;
+      applyCandidate(plugin, finalCandidate);
       await super.onMouseup(event);
     } finally {
       this.restoreIncomingLines();
@@ -362,6 +428,7 @@ export default class YeMindDrag extends Drag {
 
   removeCloneNode(): void {
     this.cancelCandidateFrame();
+    this.clearLogicalRoomPreview();
     this.removeGuideLines();
     super.removeCloneNode();
   }
@@ -370,6 +437,7 @@ export default class YeMindDrag extends Drag {
     const plugin = this as any;
     document.removeEventListener('keydown', plugin.__ymzOnKeydown, true);
     this.cancelCandidateFrame();
+    this.clearLogicalRoomPreview();
     this.removeGuideLines();
     this.restoreIncomingLines();
     super.beforePluginRemove();
@@ -379,6 +447,7 @@ export default class YeMindDrag extends Drag {
     const plugin = this as any;
     document.removeEventListener('keydown', plugin.__ymzOnKeydown, true);
     this.cancelCandidateFrame();
+    this.clearLogicalRoomPreview();
     this.removeGuideLines();
     this.restoreIncomingLines();
     super.beforePluginDestroy();
@@ -425,12 +494,26 @@ export default class YeMindDrag extends Drag {
     }
 
     plugin.__ymzRawCandidate = candidate;
-    plugin.__ymzCandidateState = updateStableDragCandidate(
-      plugin.__ymzCandidateState ?? createDragCandidateState(emptyOfficialDragCandidate()),
-      candidate,
-      now,
-    );
-    applyCandidate(plugin, plugin.__ymzCandidateState.stable);
+    const currentState = plugin.__ymzCandidateState
+      ?? createDragCandidateState(emptyOfficialDragCandidate());
+    plugin.__ymzCandidateState = layout === 'logicalStructure'
+      ? updateStableTreeDropIntent(currentState as any, candidate as any, now, {
+          siblingDurationMs: 0,
+          siblingFrames: 1,
+          childDurationMs: LOGICAL_CHILD_STABLE_MS,
+          childFrames: LOGICAL_CHILD_STABLE_FRAMES,
+        }) as DragCandidateState
+      : updateStableDragCandidate(currentState, candidate, now);
+
+    const stable = isOfficialDragCandidateNoop(
+      plugin.__ymzCandidateState.stable,
+      plugin.beingDragNodeList ?? [],
+    )
+      ? emptyOfficialDragCandidate()
+      : plugin.__ymzCandidateState.stable;
+    applyCandidate(plugin, stable);
+    if (layout === 'logicalStructure') this.updateLogicalRoomPreview(stable);
+    else this.clearLogicalRoomPreview();
     this.updateOfficialGuideLines();
 
     if (plugin.clone && plugin.__ymzCandidateState.pending) {
@@ -483,7 +566,12 @@ export default class YeMindDrag extends Drag {
     this.ensureGuideLines();
     const state: DragCandidateState = plugin.__ymzCandidateState
       ?? createDragCandidateState(emptyOfficialDragCandidate());
-    const stable = state.stable;
+    const stable = isOfficialDragCandidateNoop(
+      state.stable,
+      plugin.beingDragNodeList ?? [],
+    )
+      ? emptyOfficialDragCandidate()
+      : state.stable;
     const ghost = ghostRect(plugin);
     if (!ghost) return;
 
@@ -500,6 +588,17 @@ export default class YeMindDrag extends Drag {
         .front();
     } else {
       plugin.__ymzTargetGuideLine?.hide?.();
+    }
+
+    // The right-growing logical layout uses only one preview language: the
+    // green dashed line points at the parent that will own the dragged node.
+    // There is no root fallback and no canvas insertion line; sibling order is
+    // communicated by the live room-making preview.
+    if (layout === 'logicalStructure') {
+      plugin.__ymzOriginGuideLine?.hide?.();
+      plugin.__ymzInsertionGuideLine?.hide?.();
+      plugin.__ymzInsertionGuideSquare?.hide?.();
+      return;
     }
 
     const originParent = plugin.mousedownNode?.parent ?? null;
@@ -539,6 +638,93 @@ export default class YeMindDrag extends Drag {
       plugin.__ymzInsertionGuideLine?.hide?.();
       plugin.__ymzInsertionGuideSquare?.hide?.();
     }
+  }
+
+  private updateLogicalRoomPreview(candidate: DragCandidate): void {
+    const plugin = this as any;
+    const current: LogicalRoomPreview | null = plugin.__ymzLogicalRoomPreview ?? null;
+    if (candidate.kind === 'none' || !candidate.parentNode) {
+      this.clearLogicalRoomPreview();
+      return;
+    }
+    if (current?.key === candidate.key) return;
+    this.clearLogicalRoomPreview();
+
+    const sourceRoots = plugin.beingDragNodeList ?? [];
+    const sourceSet = new Set<any>();
+    sourceRoots.forEach((root: any) => collectSubtreeNodes(root).forEach((node) => sourceSet.add(node)));
+    const siblings = Array.isArray(candidate.parentNode.children)
+      ? candidate.parentNode.children.filter((node: any) => !sourceSet.has(node))
+      : [];
+    const index = Math.max(0, Math.min(siblings.length, Number(candidate.index) || 0));
+    const rootsToShift = siblings.slice(index);
+    if (!rootsToShift.length) {
+      plugin.__ymzLogicalRoomPreview = {
+        key: candidate.key,
+        transforms: [],
+        hiddenLines: [],
+      } satisfies LogicalRoomPreview;
+      return;
+    }
+
+    const deltaY = previewGap(plugin);
+    const elements = new Set<any>();
+    const hiddenLines: PreviewVisibilitySnapshot[] = [];
+    rootsToShift.forEach((root: any) => {
+      const incomingIndex = Array.isArray(root?.parent?.children)
+        ? root.parent.children.indexOf(root)
+        : -1;
+      const incoming = incomingIndex >= 0 ? root?.parent?._lines?.[incomingIndex] : null;
+      if (incoming && !hiddenLines.some((item) => item.element === incoming)) {
+        hiddenLines.push({ element: incoming, wasVisible: lineIsVisible(incoming) });
+        incoming.hide?.();
+      }
+      collectSubtreeNodes(root).forEach((node) => {
+        if (node?.group) elements.add(node.group);
+        (node?._lines ?? []).forEach((line: any) => elements.add(line));
+      });
+    });
+
+    const transforms: PreviewTransformSnapshot[] = [];
+    elements.forEach((element) => {
+      const before = svgTransform(element);
+      const transition = elementTransition(element);
+      transforms.push({
+        element,
+        translateX: before.translateX,
+        translateY: before.translateY,
+        transition,
+      });
+      setElementTransition(element, 'transform 130ms ease');
+      element.translate?.(0, deltaY);
+    });
+    plugin.__ymzLogicalRoomPreview = {
+      key: candidate.key,
+      transforms,
+      hiddenLines,
+    } satisfies LogicalRoomPreview;
+  }
+
+  private clearLogicalRoomPreview(): void {
+    const plugin = this as any;
+    const preview: LogicalRoomPreview | null = plugin.__ymzLogicalRoomPreview ?? null;
+    if (!preview) return;
+    preview.transforms.forEach((snapshot) => {
+      const current = svgTransform(snapshot.element);
+      setElementTransition(snapshot.element, 'transform 100ms ease');
+      snapshot.element.translate?.(
+        snapshot.translateX - current.translateX,
+        snapshot.translateY - current.translateY,
+      );
+      const element = snapshot.element;
+      const transition = snapshot.transition;
+      setTimeout(() => setElementTransition(element, transition), 120);
+    });
+    preview.hiddenLines.forEach(({ element, wasVisible }) => {
+      if (wasVisible) element.show?.();
+      else element.hide?.();
+    });
+    plugin.__ymzLogicalRoomPreview = null;
   }
 
   private clearUpstreamPlaceholder(): void {

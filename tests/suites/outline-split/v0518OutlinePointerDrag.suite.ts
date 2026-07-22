@@ -24,7 +24,7 @@ describe("v0.9.5 structured outline pointer drag", () => {
     expect(source).toContain("target.closest('[data-outline-drag-handle]')");
   });
 
-  it("uses explicit edge slots, a neutral middle and deliberate child indentation", () => {
+  it("uses stable full-row slots and deliberate child indentation", () => {
     const base = {
       sourceUid: "source",
       targetUid: "target",
@@ -53,7 +53,9 @@ describe("v0.9.5 structured outline pointer drag", () => {
       desiredDepth: 2,
       kind: "before",
     });
-    expect(resolveOutlinePointerDropIntent({ ...base, clientX: 120, clientY: 120 })).toBeNull();
+    expect(resolveOutlinePointerDropIntent({ ...base, clientX: 120, clientY: 120 })).toEqual({
+      targetUid: "target", position: "after", desiredDepth: 2, kind: "after",
+    });
     expect(resolveOutlinePointerDropIntent({ ...base, clientX: 96, clientY: 138 })).toEqual({
       targetUid: "parent",
       position: "after",
@@ -73,9 +75,9 @@ describe("v0.9.5 structured outline pointer drag", () => {
     expect(css).toContain("height:6px");
   });
 
-  it("keeps a 14px move-cursor gutter and a 5px leaf square", () => {
+  it("keeps a full 22px indent-cell move gutter and a 5px leaf square", () => {
     const css = fs.readFileSync(path.resolve("src/styles/index.css"), "utf8");
-    expect(css).toMatch(/\.ymz-outline-row__drag\{[\s\S]*?width:14px;[\s\S]*?cursor:move/);
+    expect(css).toMatch(/\.ymz-outline-row__drag\{[\s\S]*?width:22px;[\s\S]*?cursor:move/);
     expect(css).toMatch(/\.ymz-outline-row__leaf-square\{width:5px;height:5px/);
     expect(css).toMatch(/\.ymz-outline-row__triangle\{width:7px;height:7px/);
   });

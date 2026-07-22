@@ -256,16 +256,18 @@ export class YeMindEditor {
       session.ghost.style.transform = `translate3d(${event.clientX + 14}px,${event.clientY + 10}px,0)`;
     }
     const targetRow = this.findOutlineRowAtPoint(event.clientX, event.clientY);
-    this.clearOutlineDropState();
-    session.intent = null;
-    if (!targetRow || this.isOutlineDescendantRow(session.sourceRow, targetRow))
+    if (!targetRow || this.isOutlineDescendantRow(session.sourceRow, targetRow)) {
+      session.intent = null;
+      session.pendingIntent = null;
+      this.clearOutlineDropState();
       return;
+    }
     const targetUid = targetRow.dataset.outlineUid ?? "";
     const editor = targetRow.querySelector<HTMLElement>(
       "[data-outline-editor]",
     );
     if (!targetUid || !editor) return;
-    const intent = resolveOutlinePointerDropIntent({
+    const candidate = resolveOutlinePointerDropIntent({
       sourceUid: session.sourceUid,
       targetUid,
       clientX: event.clientX,
@@ -276,27 +278,38 @@ export class YeMindEditor {
       indentWidth: 22,
       targetAncestors: this.collectOutlineAncestors(targetRow),
     });
-    if (!intent) {
+    if (!candidate) {
+      session.intent = null;
       session.pendingIntent = null;
+      this.clearOutlineDropState();
       return;
     }
-    const intentKey = `${intent.kind}:${intent.targetUid}:${intent.desiredDepth}`;
-    const pendingKey = session.pendingIntent
-      ? `${session.pendingIntent.kind}:${session.pendingIntent.targetUid}:${session.pendingIntent.desiredDepth}`
+
+    const keyOf = (intent: OutlinePointerDropIntent | null): string => intent
+      ? `${intent.kind}:${intent.targetUid}:${intent.position}:${intent.desiredDepth}`
       : "";
-    if (intent.kind === "child" && intentKey !== pendingKey) {
-      session.pendingIntent = intent;
-      session.pendingSince = performance.now();
-      return;
+    const candidateKey = keyOf(candidate);
+    const stableKey = keyOf(session.intent);
+    const pendingKey = keyOf(session.pendingIntent);
+
+    // Sibling/parent slots should react immediately. Becoming a child is the
+    // only hierarchy-changing gesture and therefore keeps a short dwell. While
+    // the child candidate is pending, the last stable green guide stays visible
+    // instead of blinking off on every pointermove.
+    if (candidate.kind === "child" && candidateKey !== stableKey) {
+      if (candidateKey !== pendingKey) {
+        session.pendingIntent = candidate;
+        session.pendingSince = performance.now();
+      }
+      if (performance.now() - session.pendingSince < 110) {
+        this.renderOutlineDropIntent(session.intent);
+        return;
+      }
     }
-    if (intent.kind === "child" && performance.now() - session.pendingSince < 140) return;
+
     session.pendingIntent = null;
-    session.intent = intent;
-    targetRow.classList.add(`is-drop-${intent.position}`);
-    targetRow.style.setProperty(
-      "--ymz-outline-drop-depth",
-      String(intent.desiredDepth),
-    );
+    session.intent = candidate;
+    this.renderOutlineDropIntent(candidate);
   };
 
   private readonly onOutlinePointerUp = (event: PointerEvent): void => {
@@ -1748,6 +1761,20 @@ export class YeMindEditor {
     this.clearOutlineDropState();
   }
 
+  private renderOutlineDropIntent(intent: OutlinePointerDropIntent | null): void {
+    this.clearOutlineDropState();
+    if (!intent) return;
+    const row = Array.from(
+      this.outlineEl.querySelectorAll<HTMLElement>(":scope > [data-outline-uid]"),
+    ).find((item) => item.dataset.outlineUid === intent.targetUid);
+    if (!row) return;
+    row.classList.add(`is-drop-${intent.position}`);
+    row.style.setProperty(
+      "--ymz-outline-drop-depth",
+      String(intent.desiredDepth),
+    );
+  }
+
   private clearOutlineDropState(): void {
     this.outlineEl
       .querySelectorAll<HTMLElement>("[data-outline-uid]")
@@ -1814,20 +1841,39 @@ export class YeMindEditor {
     clientX: number,
     clientY: number,
   ): HTMLElement | null {
+    const paneRect = this.outlinePaneEl.getBoundingClientRect();
+    if (
+      clientX < paneRect.left ||
+      clientX > paneRect.right ||
+      clientY < paneRect.top ||
+      clientY > paneRect.bottom
+    ) return null;
     const pointed = document
       .elementFromPoint?.(clientX, clientY)
       ?.closest<HTMLElement>("[data-outline-uid]");
     if (pointed && this.outlineEl.contains(pointed)) return pointed;
-    return (
-      Array.from(
-        this.outlineEl.querySelectorAll<HTMLElement>(
-          ":scope > [data-outline-uid]",
-        ),
-      ).find((row) => {
-        const rect = row.getBoundingClientRect();
-        return clientY >= rect.top && clientY <= rect.bottom;
-      }) ?? null
+
+    const rows = Array.from(
+      this.outlineEl.querySelectorAll<HTMLElement>(
+        ':scope > [data-outline-uid][data-outline-hidden="false"]',
+      ),
     );
+    if (!rows.length) return null;
+    const rects = rows.map((row) => ({ row, rect: row.getBoundingClientRect() }));
+    for (let index = 0; index < rects.length; index += 1) {
+      const current = rects[index];
+      const center = current.rect.top + current.rect.height / 2;
+      const previous = rects[index - 1]?.rect;
+      const next = rects[index + 1]?.rect;
+      const top = previous
+        ? (previous.top + previous.height / 2 + center) / 2
+        : current.rect.top - current.rect.height / 2;
+      const bottom = next
+        ? (center + next.top + next.height / 2) / 2
+        : current.rect.bottom + current.rect.height / 2;
+      if (clientY >= top && clientY < bottom) return current.row;
+    }
+    return null;
   }
 
   private claimOutlineInteraction(reason: string): void {

@@ -2,8 +2,18 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.5`  
+Current version: `0.9.6`  
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.6
+
+- Enlarges outline structural drag initiation to the complete indentation cell while preserving native text selection in node content.
+- Makes Enter split or create sibling nodes, Shift+Enter insert a soft break, and empty-row Backspace delete in two stages without adding blank lines to the previous node.
+- Stabilizes outline drop guides with whole-row before/after zones and horizontally snapped parent/same/child depths.
+- Shows `Default font` for inherited selection typography instead of leaving the formatting toolbar field blank.
+- Rebuilds right-growing logical-structure dragging without canvas insertion lines: the green dashed preview identifies only the actual candidate parent.
+- Uses target upper/lower zones for sibling ordering, an explicit right-tail zone for child placement, and no-op behavior for neutral space or unchanged positions.
+- Moves destination nodes during drag to expose the pending structure while preserving subtree UIDs, metadata and one-step undo.
 
 ## v0.9.5
 

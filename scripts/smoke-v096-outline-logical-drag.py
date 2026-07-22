@@ -83,7 +83,7 @@ with sync_playwright() as p:
     page.add_script_tag(content=wrapped)
     page.evaluate("""async()=>{
       const P=window.__YeMindExport;const plugin=new P();plugin.onload();await plugin.whenReady();
-      const map=await plugin.repository.create('v0.9.5 Drag Smoke','logicalStructure');
+      const map=await plugin.repository.create('v0.9.6 Outline and Logical Drag Smoke','logicalStructure');
       await plugin.repository.update(map.id,{data:{data:{uid:'root',text:'Root',expand:true},children:[
         {data:{uid:'a',text:'Node A',expand:true,tag:['keep-a']},children:[{data:{uid:'a1',text:'Node A1',yemindNote:'keep-a1'},children:[]}]},
         {data:{uid:'b',text:'Node B',expand:true,tag:['keep-b']},children:[{data:{uid:'b1',text:'Node B1',yemindNote:'keep-b1'},children:[]}]},
@@ -111,6 +111,43 @@ with sync_playwright() as p:
         raise RuntimeError(f'Outline gutter contract failed: {visual}')
     if visual['square'] != ['5px', '5px', 'rgb(0, 0, 0)'] or visual['triangle'] != ['7px', '7px', 'rgb(0, 0, 0)']:
         raise RuntimeError(f'Outline marker contract failed: {visual}')
+
+    # Enter creates a sibling, focus follows it, and normal typing edits it.
+    editor_a = page.locator('[data-outline-uid="a"] [data-outline-editor]')
+    editor_a.click(); page.keyboard.press('End'); page.keyboard.press('Enter'); page.wait_for_timeout(120)
+    new_uid = page.evaluate("()=>document.querySelector('.ymz-outline-row.is-active')?.dataset?.outlineUid||''")
+    if not new_uid:
+        raise RuntimeError('Enter did not create an outline sibling')
+    page.keyboard.type('Enter Node'); page.wait_for_timeout(720)
+    page.wait_for_function("uid=>{const root=window.__smoke.plugin.repository.get(window.__smoke.map.id).data;return root.children.some(n=>n.data.uid===uid&&String(n.data.text).includes('Enter Node'))}", arg=new_uid)
+    page.click('[data-action="undo"]'); page.wait_for_timeout(220)
+    if compact(tree_shape(page)) != initial_compact:
+        page.click('[data-action="undo"]'); wait_shape(page, initial_compact)
+
+    # Empty-node deletion is two-stage and must not transplant <p><br></p> into
+    # the previous node.
+    editor_c = page.locator('[data-outline-uid="c"] [data-outline-editor]')
+    editor_c.click(); page.keyboard.press('Control+A'); page.keyboard.press('Backspace'); page.wait_for_timeout(80)
+    if page.locator('[data-outline-uid="c"]').count() != 1:
+        raise RuntimeError('Deleting the last text removed the node too early')
+    page.keyboard.press('Backspace'); page.wait_for_timeout(720)
+    previous_html = page.locator('[data-outline-uid="b"] [data-outline-editor]').inner_html()
+    if '<br' in previous_html.lower() or page.locator('[data-outline-uid="c"]').count() != 0:
+        raise RuntimeError(f'Empty-node deletion polluted previous node: {previous_html}')
+    page.click('[data-action="undo"]'); page.wait_for_timeout(220)
+    if compact(tree_shape(page)) != initial_compact:
+        page.click('[data-action="undo"]'); wait_shape(page, initial_compact)
+
+    # The font field must always have a visible label for inherited text.
+    editor_a = page.locator('[data-outline-uid="a"] [data-outline-editor]')
+    editor_a.click(); page.keyboard.press('Control+A'); page.wait_for_timeout(120)
+    font_field = page.locator('[data-rich-field="font"]')
+    if font_field.count() == 0:
+        raise RuntimeError('Selection toolbar font field did not appear')
+    font_label = font_field.locator('option:checked').inner_text()
+    if font_label != '默认字体':
+        raise RuntimeError(f'Inherited font rendered blank/incorrect: {font_label!r}')
+    page.keyboard.press('Escape'); page.mouse.click(20, 20); page.wait_for_timeout(80)
 
     # Body dragging remains native text selection and never creates a structural ghost.
     editor = outline_box(page, 'a', 'editor')
@@ -187,10 +224,26 @@ with sync_playwright() as p:
     page.mouse.move(c['x'] + 20, c['y'] + c['height'] / 2); page.mouse.down()
     page.mouse.move(a['x'] + a['width'] / 2, a['y'] + 2, steps=14); page.wait_for_timeout(90)
     before_guides = visible_guides(page)
+    shifted_a = canvas_box(page, 'Node A')
+    shifted_b = canvas_box(page, 'Node B')
+    if shifted_a['y'] <= a['y'] + 10 or shifted_b['y'] <= b_box['y'] + 10:
+        raise RuntimeError(f'Canvas room preview did not shift siblings: {shifted_a}, {shifted_b}')
     if any(item['stroke'] == '#176b50' and not item['dash'] for item in before_guides) or not any(item['dash'] == '6 6' for item in before_guides):
         raise RuntimeError(f'Canvas BEFORE guides failed: {before_guides}')
     page.mouse.up()
     page.wait_for_function("""()=>window.__smoke.plugin.repository.get(window.__smoke.map.id).data.children[0].data.uid==='c'""", timeout=8000)
+    page.click('[data-action="undo"]'); wait_shape(page, initial_compact); page.wait_for_timeout(200)
+
+    # AFTER uses the same parent guide and makes following siblings move down.
+    c = canvas_box(page, 'Node C'); a = canvas_box(page, 'Node A'); b_before_after = canvas_box(page, 'Node B')
+    page.mouse.move(c['x'] + 20, c['y'] + c['height'] / 2); page.mouse.down()
+    page.mouse.move(a['x'] + a['width'] * 0.45, a['y'] + a['height'] - 2, steps=14); page.wait_for_timeout(90)
+    after_guides = visible_guides(page)
+    b_shifted_after = canvas_box(page, 'Node B')
+    if b_shifted_after['y'] <= b_before_after['y'] + 10 or any(item['stroke'] == '#176b50' and not item['dash'] for item in after_guides) or not any(item['dash'] == '6 6' for item in after_guides):
+        raise RuntimeError(f'Canvas AFTER room/guide failed: guides={after_guides}, before={b_before_after}, shifted={b_shifted_after}')
+    page.mouse.up()
+    page.wait_for_function("()=>window.__smoke.plugin.repository.get(window.__smoke.map.id).data.children.map(n=>n.data.uid).join(',')==='a,c,b'", timeout=8000)
     page.click('[data-action="undo"]'); wait_shape(page, initial_compact); page.wait_for_timeout(200)
 
     # CHILD connects the dashed preview to B and inserts C after B1.
@@ -230,7 +283,11 @@ with sync_playwright() as p:
         'parentAligned': parent_aligned,
         'canvasNeutralGuides': neutral_guides,
         'canvasBeforeGuides': before_guides,
+        'canvasAfterGuides': after_guides,
         'canvasChildGuides': child_guides,
+        'enterAndEmptyDelete': True,
+        'fontLabel': font_label,
+        'logicalRoomMaking': True,
         'metadataPreserved': True,
         'pageErrors': len(page_errors),
         'consoleErrors': len(console_errors),

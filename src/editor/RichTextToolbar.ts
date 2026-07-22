@@ -86,7 +86,7 @@ export class RichTextToolbar {
         <option value="">自动</option>${sizeOptions()}
       </select>
       <select data-rich-field="font" title="字体">
-        <option value="">继承</option>${fontOptions()}
+        <option value="">默认字体</option>${fontOptions()}
       </select>
       <span class="ymz-rich-toolbar__separator"></span>
       <button type="button" data-rich-action="link" title="行内链接">链接</button>
@@ -423,9 +423,18 @@ export class RichTextToolbar {
     const font = this.element.querySelector<HTMLSelectElement>(
       '[data-rich-field="font"]',
     );
-    if (font)
-      font.value =
-        typeof this.formatInfo.font === "string" ? this.formatInfo.font : "";
+    if (font) {
+      const currentFont = typeof this.formatInfo.font === "string"
+        ? this.formatInfo.font.trim()
+        : "";
+      // Computed CSS commonly returns a full fallback stack which is not one
+      // of the explicit editor choices. Assigning that unknown value to a
+      // native select makes the control render as an empty box, so normalize
+      // inherited/unknown/mixed fonts to the visible default option.
+      font.value = (YEMIND_FONT_VALUES as readonly string[]).includes(currentFont)
+        ? currentFont
+        : "";
+    }
     const color =
       typeof this.formatInfo.color === "string" &&
       this.formatInfo.color !== "transparent"

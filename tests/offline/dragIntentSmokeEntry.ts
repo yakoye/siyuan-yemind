@@ -1,5 +1,4 @@
 import {
-  calculateOfficialInsertionGuide,
   emptyOfficialDragCandidate,
   isOfficialDragCandidateNoop,
   resolveOfficialDragCandidate,
@@ -40,7 +39,6 @@ const before = resolveOfficialDragCandidate({ ...options, pointer: { x: 210, y: 
 assert(before.kind === 'before' && before.nextNode === second && before.index === 1, 'canvas BEFORE slot mismatch');
 const child = resolveOfficialDragCandidate({ ...options, pointer: { x: 278, y: 88 } });
 assert(child.kind === 'child' && child.parentNode === first, 'canvas child tail mismatch');
-assert(calculateOfficialInsertionGuide(before, 'logicalStructure', (value) => value.rect)?.orientation === 'horizontal', 'canvas insertion guide mismatch');
 
 const source = node('source', { x: 160, y: 10, width: 100, height: 36 }, parent);
 parent.children = [source, first, second];
@@ -66,7 +64,7 @@ const outlineBase = {
     { uid: 'target', depth: 2 },
   ],
 };
-assert(resolveOutlinePointerDropIntent(outlineBase) === null, 'outline middle must be neutral');
+assert(resolveOutlinePointerDropIntent(outlineBase)?.kind === 'after', 'outline lower half must remain a stable AFTER target');
 assert(resolveOutlinePointerDropIntent({ ...outlineBase, clientY: 103 })?.kind === 'before', 'outline BEFORE mismatch');
 assert(resolveOutlinePointerDropIntent({ ...outlineBase, clientX: 154 })?.kind === 'child', 'outline CHILD mismatch');
 assert(resolveOutlinePointerDropIntent({ ...outlineBase, clientX: 96, clientY: 138 })?.targetUid === 'parent', 'outline parent alignment mismatch');
@@ -85,7 +83,7 @@ export default {
   canvasBefore: true,
   canvasChild: true,
   canvasNoop: true,
-  outlineNeutralGap: true,
+  outlineFullRowTarget: true,
   outlineParentAlignment: true,
   hierarchyDwell: true,
   staleTargetCleared: true,
