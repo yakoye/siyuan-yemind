@@ -1,14 +1,19 @@
 # Changelog
 
+## 0.9.9 - 2026-07-23
+
+- Unified outline row indentation, drag gutter, marker columns and indent guides under one geometry model.
+- Removed the redundant guide to the left of the root marker.
+- Moved the first guide to the midpoint between root and first-level marker columns.
+- Positioned deeper guides at the midpoint between each adjacent pair of marker columns while retaining the four-color cycle.
+- Kept drag indicator depth calculations on the same indentation variables.
+- Added permanent CSS and Chromium geometry regression coverage.
+
 ## 0.9.8 - 2026-07-22
 
-- Preserved unaffected solid tree edges during right-logical room-making previews.
-- Replaced only shifted sibling incoming edges with temporary correctly anchored overlays instead of hiding whole parent branches.
-- Kept the dragged subtree root's original incoming edge isolated behind the continuous green candidate-parent guide.
-- Restored original line visibility exactly on candidate changes, Escape cancellation and preview cleanup.
-- Removed Quill/contenteditable/browser focus borders, outlines and shadows from canvas node text editing.
-- Kept node theme/selection appearance, caret and native text selection as the only editing-state signals.
-- Added permanent unit, offline and Chromium regressions for edge continuity and flat editing.
+- Preserved unaffected solid tree edges throughout right-logical drag previews.
+- Replaced only shifted incoming edges with temporary preview-coordinate overlays.
+- Removed extra canvas rich-text focus frames while preserving the text caret and native selection.
 
 ## 0.9.7 - 2026-07-22
 

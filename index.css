@@ -364,7 +364,6 @@
 /* v0.5.19 outline-local disclosure and VS Code-style indent guides */
 .ymz-outline{--ymz-outline-guide-1:color-mix(in srgb,#5b8def 42%,transparent);--ymz-outline-guide-2:color-mix(in srgb,#d99a2b 40%,transparent);--ymz-outline-guide-3:color-mix(in srgb,#38a169 38%,transparent);--ymz-outline-guide-4:color-mix(in srgb,#9b6bd3 38%,transparent)}
 .ymz-outline-row{position:relative}
-.ymz-outline-row::before{content:"";position:absolute;z-index:0;top:0;bottom:0;left:8px;width:calc(var(--ymz-outline-depth,0)*22px);background-image:linear-gradient(to right,transparent 0 10px,var(--ymz-outline-guide-1) 10px 11px,transparent 11px 32px,var(--ymz-outline-guide-2) 32px 33px,transparent 33px 54px,var(--ymz-outline-guide-3) 54px 55px,transparent 55px 76px,var(--ymz-outline-guide-4) 76px 77px,transparent 77px 88px);background-size:88px 100%;background-repeat:repeat-x;pointer-events:none}
 .ymz-outline-row__branch,.ymz-outline-row__editor{position:relative;z-index:1}
 
 /* v0.5.20 project controls */
@@ -889,6 +888,18 @@
 .ymz-editor[data-view="outline"] .ymz-outline{padding-inline:clamp(24px,7vw,96px)}
 .ymz-outline-tree,
 .ymz-structured-outline{
+  --ymz-outline-indent:22px;
+  --ymz-outline-row-start:6px;
+  --ymz-outline-drag-width:22px;
+  --ymz-outline-branch-width:16px;
+  --ymz-outline-branch-half:8px;
+  --ymz-outline-indent-half:11px;
+  --ymz-outline-guide-start:calc(
+    var(--ymz-outline-row-start)
+    + var(--ymz-outline-drag-width)
+    + var(--ymz-outline-branch-half)
+    + var(--ymz-outline-indent-half)
+  );
   flex:1 1 auto;
   min-width:0;
   min-height:0;
@@ -909,7 +920,7 @@
   align-items:flex-start;
   width:100%;
   min-height:30px;
-  padding:2px 8px 2px calc(6px + var(--ymz-outline-depth,0)*22px);
+  padding:2px 8px 2px calc(var(--ymz-outline-row-start) + var(--ymz-outline-depth,0)*var(--ymz-outline-indent));
   border:0!important;
   border-radius:6px;
   outline:0!important;
@@ -934,26 +945,26 @@
   z-index:0;
   top:0;
   bottom:0;
-  left:6px;
-  width:calc(var(--ymz-outline-depth,0)*22px);
+  left:var(--ymz-outline-guide-start);
+  width:max(0px,calc(var(--ymz-outline-depth,0)*var(--ymz-outline-indent) - (var(--ymz-outline-indent) - 1px)));
   background-image:linear-gradient(to right,
-    transparent 0 10px,var(--ymz-outline-guide-1) 10px 11px,
-    transparent 11px 32px,var(--ymz-outline-guide-2) 32px 33px,
-    transparent 33px 54px,var(--ymz-outline-guide-3) 54px 55px,
-    transparent 55px 76px,var(--ymz-outline-guide-4) 76px 77px,
-    transparent 77px 88px);
+    var(--ymz-outline-guide-1) 0 1px,transparent 1px 22px,
+    var(--ymz-outline-guide-2) 22px 23px,transparent 23px 44px,
+    var(--ymz-outline-guide-3) 44px 45px,transparent 45px 66px,
+    var(--ymz-outline-guide-4) 66px 67px,transparent 67px 88px);
   background-size:88px 100%;
   background-repeat:repeat-x;
   pointer-events:none;
 }
+.ymz-outline-row[data-outline-root="true"]::before{content:none}
 .ymz-outline-row__drag,
 .ymz-outline-row__branch,
 .ymz-outline-row__editor{position:relative;z-index:1}
 .ymz-outline-row__drag{
   display:block;
-  width:22px;
+  width:var(--ymz-outline-drag-width);
   height:26px;
-  flex:0 0 22px;
+  flex:0 0 var(--ymz-outline-drag-width);
   margin:0;
   cursor:move;
   touch-action:none;
@@ -966,9 +977,9 @@
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:16px;
+  width:var(--ymz-outline-branch-width);
   height:26px;
-  flex:0 0 16px;
+  flex:0 0 var(--ymz-outline-branch-width);
   margin:0;
   padding:0;
   border:0!important;
@@ -1040,7 +1051,7 @@
 .ymz-outline-row__drop-indicator{
   position:absolute;
   z-index:9;
-  left:calc(6px + var(--ymz-outline-drop-depth,var(--ymz-outline-depth))*22px + 22px);
+  left:calc(var(--ymz-outline-row-start) + var(--ymz-outline-drop-depth,var(--ymz-outline-depth))*var(--ymz-outline-indent) + var(--ymz-outline-drag-width));
   right:8px;
   display:none;
   height:2px;

@@ -21,8 +21,6 @@ YeMind is a local-first SiYuan mind-map plugin built with TypeScript, Vite, Quil
 - Outline DOM transactions are converted back to one `MindMapTree` and committed through the upstream undoable `updateData()` path; `setData()` is intentionally not used.
 - Canvas and outline own focus independently. Text selection is never interpreted as node dragging; structural drag begins only in the outline gutter.
 - Images, notes, comments, tags, todo state and local styles remain node data fields and survive ordinary title/hierarchy editing.
-- Right-logical room-making treats ordinary tree edges at edge granularity: the dragged root incoming edge is temporarily replaced by the green candidate-parent guide, unaffected edges remain untouched, and shifted sibling incoming edges are rendered as temporary overlays with a fixed parent endpoint and shifted child endpoint.
-- Canvas rich-text editing is visually transparent to the node shell. Quill and browser focus frames are suppressed inside the editor scope, while the node theme/selection presentation, caret and native text selection remain visible.
 
 ## Unified outline model
 
@@ -31,6 +29,7 @@ YeMind is a local-first SiYuan mind-map plugin built with TypeScript, Vite, Quil
 - Collapsed descendants remain in the logical projection but are hidden visually, so whole-outline copy remains complete while ordinary mouse selection follows visible content.
 - Selection, paste and drag are routed through explicit coordinators rather than separate text/tree modes.
 - Current-node replacement, cross-node replacement and indentation import are atomic and rollback if the tree transaction is rejected.
+- Outline row start, depth step, drag gutter, marker column and indent-rainbow guides share one geometry contract; the Root has no guide and each descendant guide lies halfway between adjacent marker columns.
 
 ## Persistence
 
@@ -44,4 +43,4 @@ Release packages contain code and documentation only.
 
 ## Compatibility
 
-Historical plugin links and theme identifiers are accepted through narrow internal aliases. Existing map/settings/checkpoint schemas do not require a v0.9.8 migration. Legacy outline controller source remains only for historical test compatibility and is not reachable from the v0.9.8 runtime bundle.
+Historical plugin links and theme identifiers are accepted through narrow internal aliases. Existing map/settings/checkpoint schemas do not require a v0.9.9 migration. Legacy outline controller source remains only for historical test compatibility and is not reachable from the v0.9.9 runtime bundle.

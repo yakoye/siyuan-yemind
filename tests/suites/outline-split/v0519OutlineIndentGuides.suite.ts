@@ -8,7 +8,7 @@ describe('v0.5.19 outline indent guides', () => {
   it('draws non-interactive indent-rainbow guides from the row depth variable', () => {
     expect(css).toContain('.ymz-outline-row::before');
     expect(css).toContain('pointer-events:none');
-    expect(css).toContain('calc(var(--ymz-outline-depth,0)*22px)');
+    expect(css).toContain('var(--ymz-outline-depth,0)*var(--ymz-outline-indent)');
     expect(css).toContain('--ymz-outline-guide-1');
     expect(css).toContain('--ymz-outline-guide-2');
     expect(css).toContain('--ymz-outline-guide-3');

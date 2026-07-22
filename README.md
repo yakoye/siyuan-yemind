@@ -2,17 +2,22 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.8`  
+Current version: `0.9.9`  
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.9
+
+- Rebuilds outline indent-guide geometry from one shared set of row-start, indent, drag-gutter and marker-column variables.
+- Removes the redundant guide left of the root and places the first guide exactly halfway between root and first-level marker columns.
+- Places every deeper guide halfway between adjacent marker columns while retaining the four-color indent-rainbow cycle.
+- Keeps marker, text and drag hit areas fixed; hover, active, expand/collapse and drag feedback no longer shift guide coordinates.
+- Adds CSS-contract and real Chromium geometry regression coverage.
 
 ## v0.9.8
 
-- Keeps every unaffected solid parent-child edge visible while room-making moves sibling subtrees during a drag.
-- Re-renders only the incoming edge whose child endpoint moves, keeping the parent endpoint fixed and the preview endpoint attached to the shifted node.
-- Restores original edges exactly when the candidate changes, the drag is cancelled or the preview is cleared, without adding data or history mutations.
-- Continues to use one always-visible green dashed candidate-parent link as the temporary replacement for the dragged subtree root's original incoming edge.
-- Removes Quill, contenteditable and browser focus borders/outlines/shadows during canvas text editing, leaving only the node appearance, caret and native text selection.
-- Adds permanent offline and Chromium regression coverage for edge continuity, parent switching, cancellation and flat editing presentation.
+- Preserves unaffected solid parent-child edges while another subtree is being dragged and preview siblings make room.
+- Replaces only the dragged subtree root's original incoming edge with the continuous green candidate-parent preview.
+- Removes extra canvas rich-text editing borders, outlines and shadows while retaining the caret and native text selection.
 
 ## v0.9.7
 

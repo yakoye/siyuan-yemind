@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.8 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.9 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -6668,21 +6668,20 @@ const constants_1 = __require(24);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-22T16:10:00Z',
-    buildId: 'yemind-v0.9.8-20260722',
+    buildTime: '2026-07-23T00:30:00Z',
+    buildId: 'yemind-v0.9.9-20260723',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '保留拖动让位期间未受影响的普通分支实线，并移除画布文字编辑器叠加的额外焦点框。',
+    releaseSummary: '统一修正结构化大纲彩虹缩进线的层级几何，使每条引导线位于父子节点符号列之间且 Root 不再出现多余引导线。',
     highlights: [
-        '向右逻辑图拖动让位时只替换需要移动端点的入线，其他正常父子实线始终保持可见。',
-        '为让位子树生成临时入线覆盖层：父节点端点保持固定，子节点端点跟随预览位置，取消或切换候选后完整恢复原线。',
-        '被拖子树根节点原入线继续由绿色候选父级虚线替代，兄弟分支和其他层级连线不再被整组隐藏。',
-        '双击编辑画布节点时清除 Quill 容器、编辑正文和浏览器焦点的额外 border、outline 与 box-shadow。',
-        '编辑状态仅保留节点自身主题/选中外观、文字光标和系统原生文字选区，节点尺寸与位置不因进入编辑而跳动。',
-        '新增离线与真实 Chromium 回归，覆盖拖动实线连续性、候选父级切换、取消恢复和无额外编辑框。',
-    ],
+        '大纲行、拖动 gutter、三角/方点和彩虹缩进线改用同一组几何变量，避免后续尺寸调整再次造成错位。',
+        'Root 不绘制缩进引导线；一级线位于 Root 与一级节点符号之间，后续层级按 22px 等距递进。',
+        '彩虹线颜色循环从一级开始，深层节点继续使用 1/2/3/4 色周期，不改变文字、图标和拖动区域位置。',
+        '拖动插入指示线沿用相同缩进变量，展开、折叠、hover、选中和结构拖动不会推动彩虹线。',
+        '新增 CSS 契约与真实 Chromium 几何回归，直接比较父子符号中心和引导线坐标。',
+    ]
 };
 function resolveVersionConsistency(manifestVersion) {
     const manifest = manifestVersion || 'unknown';
@@ -6714,7 +6713,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.8';
+exports.PLUGIN_VERSION = '0.9.9';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
