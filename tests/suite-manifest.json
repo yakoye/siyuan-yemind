@@ -45,7 +45,8 @@
     "v066DensityPanelSearchFit.suite.ts",
     "v067ProjectColorSearchComments.suite.ts",
     "v082DockIconTheme.suite.ts",
-    "v090ColorSchemes.suite.ts"
+    "v090ColorSchemes.suite.ts",
+    "v091ThemeColorDefinitions.suite.ts"
   ],
   "commands-selection": [
     "commands.suite.ts",

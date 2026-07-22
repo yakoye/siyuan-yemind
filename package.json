@@ -5,10 +5,16 @@
   "description": "A SiYuan mind-map plugin built around simple-mind-map.",
   "license": "MIT",
   "scripts": {
+    "generate:theme-colors": "node scripts/generate-theme-color-data.mjs",
+    "predev": "npm run generate:theme-colors",
     "dev": "vite build --watch --mode development",
+    "prebuild": "npm run generate:theme-colors",
     "build": "vite build && node scripts/copy-build.mjs",
+    "precheck": "npm run generate:theme-colors",
     "check": "tsc --noEmit",
+    "pretest": "npm run generate:theme-colors",
     "test": "node scripts/check-test-structure.mjs && vitest run --pool=forks --poolOptions.forks.singleFork=true",
+    "pretest:watch": "npm run generate:theme-colors",
     "test:watch": "vitest",
     "test:structure": "node scripts/check-test-structure.mjs"
   },
@@ -17,8 +23,7 @@
     "parchment": "^3.0.0",
     "quill": "^2.0.3",
     "quill-delta": "^5.1.0",
-    "simple-mind-map": "0.14.0-fix.3",
-    "siyuan": "^1.1.4"
+    "simple-mind-map": "0.14.0-fix.3"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

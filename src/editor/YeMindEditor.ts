@@ -96,6 +96,7 @@ import { ProjectStylePanel } from "../ui/projectStylePanel";
 import { synchronizeCanvasRichTextVisibility } from "./canvasRichTextVisibility";
 import { setSearchReplaceExpanded } from "./searchPanelState";
 import { normalizeProjectStyle, resolveProjectAppearance } from "./projectStyle";
+import { configureThemeColorRuntime } from "../core/themeColorRuntime";
 import { NodeQuickActionsController } from "./nodeQuickActions";
 import { canvasModeIcon, lineStyleIcon } from "./projectControls";
 import { normalizeNodeNote } from "../content/nodeNoteState";
@@ -1446,6 +1447,11 @@ export class YeMindEditor {
     this.canvasEl.style.backgroundColor = String(
       projectAppearance.themeConfig.backgroundColor ?? "",
     );
+    const normalizedProjectStyle = normalizeProjectStyle(this.current.projectStyle);
+    configureThemeColorRuntime(this.map, {
+      appearance: appearance.colorAppearance,
+      useThemeLineColors: normalizedProjectStyle.rainbowLines === null,
+    });
     this.map.setThemeConfig(projectAppearance.themeConfig, true);
     this.map.updateConfig({ rainbowLinesConfig: projectAppearance.rainbow });
     if (render) this.map.render();

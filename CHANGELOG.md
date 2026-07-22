@@ -2,10 +2,14 @@
 
 ## 0.9.1 - 2026-07-22
 
-- 补齐 19 套命名主题的完整层级颜色字段。
-- 基础三主题统一接入完整配色控制模型。
-- 主题与彩虹连线选项按基础、缤纷、经典分类。
-- 内置颜色源文档与 JSON，作为主题配置单一来源。
+- Added complete layered color definitions for all 19 named themes.
+- Added separate background, text and connection colors for center, first-level, second-level and ordinary nodes.
+- Added 1, 3, 4 and 6-color branch cycles from the source theme records.
+- Completed light and dark appearances for YeMind Default, Ink Branch and Material 3 Basic.
+- Expanded the public registry to 22 themes backed by 25 generated appearance definitions.
+- Added a JSON-to-TypeScript generator and automatic regeneration before development, build, type checking and tests.
+- Preserved local node style precedence without serializing generated theme fallback colors.
+- Added dedicated v0.9.1 regression coverage and updated the suite structure to 15 domains and 161 scenario modules.
 
 ## 0.9.0 - 2026-07-21
 

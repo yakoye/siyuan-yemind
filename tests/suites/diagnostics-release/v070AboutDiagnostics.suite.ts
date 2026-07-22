@@ -41,7 +41,7 @@ describe('v0.7.x about and diagnostics release contract', () => {
     expect(html).toContain(RELEASE_INFO.hostBaseline);
   });
 
-  it('uses semantic patch version 0.9.1 consistently', () => {
+  it('uses semantic minor version 0.9.1 consistently', () => {
     expect(RELEASE_INFO.version).toBe('0.9.1');
     expect(resolveVersionConsistency('0.9.1')).toEqual({ manifest: '0.9.1', runtime: '0.9.1', build: '0.9.1', consistent: true });
   });

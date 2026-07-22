@@ -9,6 +9,7 @@ import { buildOuterFrameOptions } from './outerFrameConfig';
 import { resolveUpstreamShortcutAction } from '../editor/shortcutSafety';
 import { buildThemeConfig, detectAppearance, type YeMindLineStyle } from './themePresets';
 import { imageDeleteIcon } from './YeMindNodeImgAdjust';
+import { configureThemeColorRuntime, installThemeColorRuntime } from './themeColorRuntime';
 
 export interface CreateMindMapOptions {
   el: HTMLElement;
@@ -53,7 +54,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
 
   const editorRoot = options.el.closest<HTMLElement>('.ymz-editor') ?? options.el;
 
-  return new MindMap({
+  const mindMap = new MindMap({
     el: options.el,
     customInnerElsAppendTo: editorRoot,
     data: options.data,
@@ -111,4 +112,10 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     },
     errorHandler: (_code: unknown, error: unknown) => console.error('[YeMind]', error),
   } as any);
+  installThemeColorRuntime(mindMap);
+  configureThemeColorRuntime(mindMap, {
+    appearance: appearance.colorAppearance,
+    useThemeLineColors: true,
+  });
+  return mindMap;
 }

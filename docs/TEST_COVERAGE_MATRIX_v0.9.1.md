@@ -1,12 +1,14 @@
 # YeMind v0.9.1 test coverage matrix
 
 | Domain | v0.9.1 coverage |
-|---|---|
-| Node content | trash icon, preview icon placement, confirmation guard, image lightbox, tooltip removal |
-| Styles and themes | ten palette registry, selector rendering, palette application, thirteen public themes, backgrounds |
-| Storage and checkpoints | `rainbowScheme` normalization, persistence and restore |
-| UI shell | theme and project-style controls remain available and responsive |
-| Rich text / outline / drag | all existing regression suites remain active |
-| Diagnostics and release | version identity, About page, archive structure and flat ZIP checks |
-
-| Theme catalog | 22 schemes, exact 19-theme JSON parity, three complete base themes, selector/config generation |
+| --- | --- |
+| Theme source data | schema, name order, categories, color format, six branch records |
+| Base themes | three presets, independent light and dark appearances |
+| Theme registry | 22 public themes, group counts and option rendering |
+| Generated appearances | 25 definitions: 6 base, 10 vivid and 9 classic |
+| Node colors | center, first-level, second-level and ordinary node text/background |
+| Connection colors | center-to-first, first-to-second and second-to-ordinary |
+| Branch cycles | 1, 3, 4 and 6-color repetition |
+| Local styles | explicit text/background/line precedence and non-persistence |
+| Project styles | explicit rainbow line ownership without losing node colors |
+| Build integration | deterministic generation before build, check and tests |

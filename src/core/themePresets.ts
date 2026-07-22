@@ -1,10 +1,9 @@
 import {
-  YEMIND_COLOR_SCHEMES,
-  getColorScheme,
-  getThemeColorDefinition,
-  type YeMindThemeBranchColors,
-  type YeMindThemeColorDefinition,
-} from './colorSchemes';
+  YEMIND_THEME_COLOR_APPEARANCES,
+  getThemeColorAppearance,
+  type ThemeColorAppearance,
+  type ThemeColorCategory,
+} from './themeColorData';
 
 export type YeMindAppearance = 'light' | 'dark';
 export type YeMindLineStyle = 'curve' | 'straight' | 'direct';
@@ -20,6 +19,7 @@ interface NodeLevelStyle {
 }
 
 interface ThemeVariant {
+  colorAppearance: ThemeColorAppearance;
   backgroundColor: string;
   lineColor: string;
   generalizationLineColor: string;
@@ -28,7 +28,6 @@ interface ThemeVariant {
   second: NodeLevelStyle;
   node: NodeLevelStyle;
   rainbow: { open: boolean; colorsList: string[] };
-  branchPalette: readonly YeMindThemeBranchColors[];
   nodeUseLineStyle?: boolean;
   lineWidth?: number;
   lineRadius?: number;
@@ -37,10 +36,9 @@ interface ThemeVariant {
 
 export interface YeMindThemePreset {
   id: string;
-  colorSchemeId: string;
   label: string;
   description: string;
-  group: '基础' | '缤纷' | '经典';
+  group: ThemeColorCategory;
   light: ThemeVariant;
   dark: ThemeVariant;
 }
@@ -60,77 +58,124 @@ function level(
   return { fillColor, color, borderColor, borderWidth, borderRadius, fontSize, fontWeight };
 }
 
-function branchAt(definition: YeMindThemeColorDefinition, index: number): YeMindThemeBranchColors {
-  return definition.branches[index % Math.max(1, definition.cycleLength)] ?? definition.branches[0];
+function requiredAppearance(presetId: string, appearance: YeMindAppearance): ThemeColorAppearance {
+  const item = getThemeColorAppearance(presetId, appearance);
+  if (!item) throw new Error(`Missing theme color appearance: ${presetId}/${appearance}`);
+  return item;
 }
 
-function themeVariant(schemeId: string, appearance: YeMindAppearance): ThemeVariant {
-  const scheme = getColorScheme(schemeId)!;
-  const definition = getThemeColorDefinition(schemeId, appearance)!;
-  const first = branchAt(definition, 0);
-  const isInk = schemeId === 'ink-branch';
-  const isMaterial = schemeId === 'material-3-basic';
-  const isDefault = schemeId === 'yemind-default';
-  const radius = isInk ? 0 : isMaterial ? 16 : isDefault ? 10 : 10;
-  const lineWidth = isInk ? 4 : isMaterial ? 2 : isDefault ? 2 : 2.4;
+function buildVariant(
+  colors: ThemeColorAppearance,
+  visual: 'default' | 'ink' | 'material' | 'scheme',
+): ThemeVariant {
+  const branch = colors.branches[0];
+  const colorList = colors.branches
+    .slice(0, colors.cycleLength)
+    .map((item) => item.centerToLevel1Line);
+  if (visual === 'default') {
+    return {
+      colorAppearance: colors,
+      backgroundColor: colors.background,
+      lineColor: branch.centerToLevel1Line,
+      generalizationLineColor: branch.level1ToLevel2Line,
+      associativeLineColor: '#F59E0B',
+      root: level(colors.centerBackground, colors.centerText, colors.appearance === 'dark' ? '#64748B' : '#CBD5E1', 2, 10, 14, '400'),
+      second: level(branch.level1Background, branch.level1Text, colors.appearance === 'dark' ? '#64748B' : '#CBD5E1', 2, 10, 14, '400'),
+      node: level(branch.level2Background, branch.level2Text, colors.appearance === 'dark' ? '#64748B' : '#CBD5E1', 2, 10, 14, '400'),
+      rainbow: { open: false, colorsList: colorList },
+      lineWidth: 2,
+      lineRadius: 10,
+    };
+  }
+  if (visual === 'ink') {
+    return {
+      colorAppearance: colors,
+      backgroundColor: colors.background,
+      lineColor: branch.centerToLevel1Line,
+      generalizationLineColor: branch.level1ToLevel2Line,
+      associativeLineColor: colors.appearance === 'dark' ? '#A3A3A3' : '#737373',
+      root: level(colors.centerBackground, colors.centerText, 'transparent', 0, 0, 26, '800'),
+      second: level(branch.level1Background, branch.level1Text, 'transparent', 0, 0, 18, '700'),
+      node: level(branch.level2Background, branch.level2Text, 'transparent', 0, 0, 14, '600'),
+      rainbow: { open: false, colorsList: colorList },
+      nodeUseLineStyle: true,
+      lineWidth: 4,
+      lineRadius: 0,
+    };
+  }
+  if (visual === 'material') {
+    return {
+      colorAppearance: colors,
+      backgroundColor: colors.background,
+      lineColor: branch.centerToLevel1Line,
+      generalizationLineColor: branch.level1ToLevel2Line,
+      associativeLineColor: colors.appearance === 'dark' ? '#EFB8C8' : '#7D5260',
+      root: level(colors.centerBackground, colors.centerText, 'transparent', 0, 16, 16, '700'),
+      second: level(branch.level1Background, branch.level1Text, 'transparent', 0, 16, 15, '600'),
+      node: level(branch.level2Background, branch.level2Text, 'transparent', 0, 16, 14, '450'),
+      rainbow: { open: false, colorsList: colorList },
+      lineWidth: 2,
+      lineRadius: 16,
+      lineDasharray: '6,4',
+    };
+  }
   return {
-    backgroundColor: definition.background,
-    lineColor: first.centerToLevel1Line,
-    generalizationLineColor: first.level1ToLevel2Line,
-    associativeLineColor: first.level2ToNormalLine,
-    root: level(
-      definition.centerBackground,
-      definition.centerText,
-      isDefault ? first.centerToLevel1Line : 'transparent',
-      isDefault ? 2 : 0,
-      radius,
-      isInk ? 26 : isMaterial ? 16 : 25,
-      '800',
-    ),
-    second: level(
-      first.level1Background,
-      first.level1Text,
-      isDefault ? first.centerToLevel1Line : 'transparent',
-      isDefault ? 2 : 0,
-      radius,
-      isInk ? 18 : isMaterial ? 15 : 18,
-      '700',
-    ),
-    node: level(
-      first.level2Background,
-      first.level2Text,
-      isDefault ? first.level1ToLevel2Line : 'transparent',
-      isDefault ? 2 : 0,
-      isInk ? 0 : isMaterial ? 16 : 8,
-      14,
-      isInk ? '600' : '400',
-    ),
-    rainbow: {
-      open: scheme.category !== '基础',
-      colorsList: definition.branches.map((branch) => branch.centerToLevel1Line),
-    },
-    branchPalette: definition.branches,
-    nodeUseLineStyle: isInk,
-    lineWidth,
-    lineRadius: isInk ? 0 : isMaterial ? 16 : 16,
-    lineDasharray: isMaterial ? '6,4' : 'none',
+    colorAppearance: colors,
+    backgroundColor: colors.background,
+    lineColor: branch.centerToLevel1Line,
+    generalizationLineColor: branch.level1ToLevel2Line,
+    associativeLineColor: branch.centerToLevel1Line,
+    root: level(colors.centerBackground, colors.centerText, 'transparent', 0, 0, 25, '800'),
+    second: level(branch.level1Background, branch.level1Text, 'transparent', 0, 10, 18, '700'),
+    node: level(branch.level2Background, branch.level2Text, 'transparent', 0, 8, 14, '400'),
+    rainbow: { open: true, colorsList: colorList },
+    lineWidth: 2.4,
+    lineRadius: 16,
   };
 }
 
-const BASE_THEME_IDS = new Set(['yemind-default', 'ink-branch', 'material-3-basic']);
+const BASE_PRESETS: YeMindThemePreset[] = [
+  {
+    id: 'yemind-default',
+    label: 'YeMind 默认',
+    description: '清晰圆角与中性背景',
+    group: '基础',
+    light: buildVariant(requiredAppearance('yemind-default', 'light'), 'default'),
+    dark: buildVariant(requiredAppearance('yemind-default', 'dark'), 'default'),
+  },
+  {
+    id: 'ink-branch',
+    label: 'Ink Branch',
+    description: '粗线条极简分支',
+    group: '基础',
+    light: buildVariant(requiredAppearance('ink-branch', 'light'), 'ink'),
+    dark: buildVariant(requiredAppearance('ink-branch', 'dark'), 'ink'),
+  },
+  {
+    id: 'material-3-basic',
+    label: 'Material 3 Basic',
+    description: '柔和圆角 Material 风格',
+    group: '基础',
+    light: buildVariant(requiredAppearance('material-3-basic', 'light'), 'material'),
+    dark: buildVariant(requiredAppearance('material-3-basic', 'dark'), 'material'),
+  },
+];
 
-export const YEMIND_THEME_PRESETS: readonly YeMindThemePreset[] = YEMIND_COLOR_SCHEMES.map((scheme) => {
-  const id = BASE_THEME_IDS.has(scheme.id) ? scheme.id : `scheme-${scheme.id}`;
-  return {
-    id,
-    colorSchemeId: scheme.id,
-    label: scheme.label,
-    description: `${scheme.label}完整配色`,
-    group: scheme.category,
-    light: themeVariant(scheme.id, 'light'),
-    dark: themeVariant(scheme.id, 'dark'),
-  };
-});
+const COLOR_PRESETS: YeMindThemePreset[] = YEMIND_THEME_COLOR_APPEARANCES
+  .filter((item) => item.appearance === 'fixed')
+  .map((item) => ({
+    id: item.presetId,
+    label: item.name,
+    description: `${item.name}主题`,
+    group: item.category,
+    light: buildVariant(item, 'scheme'),
+    dark: buildVariant(item, 'scheme'),
+  }));
+
+export const YEMIND_THEME_PRESETS: readonly YeMindThemePreset[] = [
+  ...BASE_PRESETS,
+  ...COLOR_PRESETS,
+] as const;
 
 const THEME_IDS = new Set(YEMIND_THEME_PRESETS.map((item) => item.id));
 const LEGACY_THEME_ALIASES: Record<string, string> = {
@@ -180,7 +225,9 @@ export function detectAppearance(
     if (/(^|\s|[-_])(dark|midnight)(\s|$|[-_])/.test(` ${values} `)) return 'dark';
     if (/(^|\s|[-_])light(\s|$|[-_])/.test(` ${values} `)) return 'light';
   }
-  return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
 }
 
 function cloneLevel(style: NodeLevelStyle, marginX: number, marginY: number): Record<string, unknown> {
@@ -210,10 +257,9 @@ export function buildThemeConfig(options: {
   spacingConfig?: Record<string, any>;
 }): {
   presetId: string;
-  colorSchemeId: string;
   themeConfig: Record<string, any>;
   rainbow: { open: boolean; colorsList: string[] };
-  branchPalette: readonly YeMindThemeBranchColors[];
+  colorAppearance: ThemeColorAppearance;
 } {
   const presetId = normalizeThemePresetId(options.presetId);
   const preset = YEMIND_THEME_PRESETS.find((item) => item.id === presetId) ?? YEMIND_THEME_PRESETS[0];
@@ -231,7 +277,7 @@ export function buildThemeConfig(options: {
   };
   return {
     presetId,
-    colorSchemeId: preset.colorSchemeId,
+    colorAppearance: variant.colorAppearance,
     themeConfig: {
       paddingX: 12,
       paddingY: 7,
@@ -242,7 +288,7 @@ export function buildThemeConfig(options: {
       rootLineKeepSameInCurve: true,
       rootLineStartPositionKeepSameInCurve: false,
       lineRadius: variant.lineRadius ?? 10,
-      generalizationLineWidth: Math.max(1, (variant.lineWidth ?? 2) - .5),
+      generalizationLineWidth: Math.max(1, (variant.lineWidth ?? 2) - 0.5),
       generalizationLineColor: variant.generalizationLineColor,
       associativeLineWidth: 2,
       associativeLineColor: variant.associativeLineColor,
@@ -257,7 +303,6 @@ export function buildThemeConfig(options: {
       generalization,
     },
     rainbow: { open: variant.rainbow.open, colorsList: [...variant.rainbow.colorsList] },
-    branchPalette: variant.branchPalette,
   };
 }
 

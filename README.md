@@ -7,16 +7,13 @@ Host baseline: SiYuan `3.7.3`
 
 ## v0.9.1
 
-- Complete 19 named theme palettes with per-level colors and branch lines.
-- Unify YeMind Default, Ink Branch, and Material 3 Basic under the same color model.
-
-## v0.9.0
-
-- Safe node-image deletion with confirmation.
-- In-editor image lightbox with wheel zoom, reset and multiple close gestures.
-- Clean note/comment hover previews without native title overlays.
-- Ten named rainbow-line palettes and matching whole-map themes.
-- Three retained base themes: YeMind Default, Ink Branch and Material 3 Basic.
+- Complete layered color definitions for 19 named themes.
+- Separate colors for the map background, center, first-level, second-level and ordinary nodes.
+- Separate center-to-first, first-to-second and second-to-ordinary connection colors.
+- Three base themes with independent light and dark appearances.
+- 22 public themes and 25 generated appearance definitions.
+- JSON-driven theme color generation before build, type checking and tests.
+- Local node text, background and line colors remain authoritative.
 
 ## Install
 

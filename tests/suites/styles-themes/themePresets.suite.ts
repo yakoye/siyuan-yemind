@@ -8,6 +8,13 @@ import {
   themeOptionsHtml,
 } from '../../../src/core/themePresets';
 
+const EXPECTED_SCHEME_IDS = [
+  'scheme-dawn', 'scheme-rainbow', 'scheme-vitality', 'scheme-dance', 'scheme-code',
+  'scheme-harmony', 'scheme-island', 'scheme-rose', 'scheme-mint', 'scheme-green-tea',
+  'scheme-eternity', 'scheme-cream', 'scheme-flower-sea', 'scheme-coral', 'scheme-vivid',
+  'scheme-champagne', 'scheme-perfume', 'scheme-zen', 'scheme-rhythm',
+];
+
 describe('YeMind theme presets', () => {
   it('uses YeMind Default and curved parent-child edges by default', () => {
     expect(normalizeThemePresetId('default')).toBe('yemind-default');
@@ -22,23 +29,18 @@ describe('YeMind theme presets', () => {
 
     expect(result.themeConfig.lineStyle).toBe('curve');
     expect(result.themeConfig.rootLineKeepSameInCurve).toBe(true);
-    expect(result.themeConfig.backgroundColor).toBe('#f8fafc');
+    expect(result.themeConfig.backgroundColor).toBe('#F8FAFC');
   });
 
-  it('provides three base themes and nineteen complete named themes', () => {
-    const ids = YEMIND_THEME_PRESETS.map((item) => item.id);
-    expect(ids).toEqual([
-      'yemind-default', 'ink-branch', 'material-3-basic',
-      'scheme-dawn', 'scheme-rainbow', 'scheme-vitality', 'scheme-dance', 'scheme-code',
-      'scheme-harmony', 'scheme-island', 'scheme-rose', 'scheme-mint', 'scheme-green-tea',
-      'scheme-eternity', 'scheme-cream', 'scheme-flower-sea', 'scheme-coral', 'scheme-brilliant',
-      'scheme-champagne', 'scheme-perfume', 'scheme-zen-heart', 'scheme-rhythm',
+  it('provides three base themes and all nineteen named themes', () => {
+    expect(YEMIND_THEME_PRESETS.map((item) => item.id)).toEqual([
+      'yemind-default', 'ink-branch', 'material-3-basic', ...EXPECTED_SCHEME_IDS,
     ]);
-    expect(YEMIND_THEME_PRESETS.map((item) => item.label)).toEqual([
-      'YeMind 默认', 'Ink Branch', 'Material 3 Basic',
-      '晨曦', '彩虹', '活力', '舞动', '代码', '和风', '岛屿', '玫瑰', '薄荷', '绿茶',
-      '永恒', '奶油', '花海', '珊瑚', '绚丽', '香槟', '香水', '禅心', '律动',
-    ]);
+    expect(YEMIND_THEME_PRESETS).toHaveLength(22);
+    expect(YEMIND_THEME_PRESETS.filter((item) => item.group === '基础')).toHaveLength(3);
+    expect(YEMIND_THEME_PRESETS.filter((item) => item.group === '缤纷')).toHaveLength(10);
+    expect(YEMIND_THEME_PRESETS.filter((item) => item.group === '经典')).toHaveLength(9);
+
     const options = themeOptionsHtml('scheme-mint');
     expect(options).toContain('<optgroup label="基础">');
     expect(options).toContain('<optgroup label="缤纷">');
@@ -51,13 +53,13 @@ describe('YeMind theme presets', () => {
     expect(light.themeConfig.root.fillColor).not.toBe(dark.themeConfig.root.fillColor);
   });
 
-  it('applies scheme background, node colors and rainbow branches together', () => {
+  it('applies complete theme background, node colors and branch cycle together', () => {
     const result = buildThemeConfig({ presetId: 'scheme-rose', appearance: 'light', lineStyle: 'curve' });
-    expect(result.themeConfig.backgroundColor).toBe('#fff0f3');
+    expect(result.themeConfig.backgroundColor).toBe('#FFF0F3');
     expect(result.themeConfig.second.fillColor).toMatch(/^#/);
     expect(result.themeConfig.node.fillColor).toMatch(/^#/);
     expect(result.rainbow.open).toBe(true);
-    expect(result.rainbow.colorsList).toHaveLength(6);
+    expect(result.rainbow.colorsList).toHaveLength(result.colorAppearance.cycleLength);
   });
 
   it('keeps user spacing settings authoritative over preset spacing', () => {
@@ -75,7 +77,7 @@ describe('YeMind theme presets', () => {
     expect(result.themeConfig.second).toMatchObject({ marginX: 132, marginY: 44 });
     expect(result.themeConfig.node).toMatchObject({ marginX: 66, marginY: 18 });
     expect(result.rainbow.open).toBe(true);
-    expect(result.rainbow.colorsList.length).toBeGreaterThanOrEqual(6);
+    expect([1, 3, 4, 6]).toContain(result.rainbow.colorsList.length);
   });
 
   it('migrates historical theme identifiers without exposing them in the theme list', () => {

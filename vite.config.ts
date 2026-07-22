@@ -12,7 +12,7 @@ export default defineConfig({
       external: ['siyuan'],
       output: {
         exports: 'default',
-        assetFileNames: (assetInfo) => assetInfo.name?.endsWith('.css') ? 'index.css' : 'assets/[name]-[hash][extname]',
+        assetFileNames: (assetInfo: { name?: string }) => assetInfo.name?.endsWith('.css') ? 'index.css' : 'assets/[name]-[hash][extname]',
       },
     },
     outDir: 'dist',
