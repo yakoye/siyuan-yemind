@@ -1,42 +1,14 @@
 # YeMind feature matrix
 
-## Views and structure
-
-- [x] Mind-map canvas
-- [x] Split canvas and outline
-- [x] Outline-only view
-- [x] Add, delete, fold and move nodes
-- [x] Cross-level outline drag
-- [x] Summary, outer frame and associative line
-
-## Editing and content
-
-- [x] Canvas and outline rich-text editing
-- [x] Clipboard, IME, selection and formatting toolbar
-- [x] Formula, code block and inline link
-- [x] Todo, note, comments, tags and icons
-- [x] Node image paste, drop, proportional resize and removal confirmation
-- [x] Image lightbox with wheel zoom
-
-## Appearance
-
-- [x] Node-level style panel
-- [x] Whole-map density and background
-- [x] Ten rainbow-line palettes
-- [x] Three base themes and ten named color-scheme themes
-- [x] Light/dark host adaptation
-
-## Reliability
-
-- [x] Auto-save and revision safety
-- [x] Checkpoints and protected recovery snapshots
-- [x] Global-search result preview and node navigation
-- [x] Structured diagnostics archive
-- [x] 15-domain regression suite and release ZIP revalidation
-
-## Planned
-
-- [ ] Additional import/export formats
-- [ ] Larger-map performance profiling
-- [ ] Expanded accessibility audit
-- [ ] Stable 1.0 migration contract
+| Area | Current capability |
+|---|---|
+| Views | Canvas, split outline and full outline |
+| Structure | Add, delete, move, reorder, fold, summary, outer frame and relation line |
+| Content | Rich text, links, formulas, code, images, notes, comments, tags, icons and todo |
+| Appearance | 22 themes, 25 light/dark appearances, density, background and named rainbow lines |
+| Theme colors | Per-level text, fill, border and parent-child line colors with 1/3/4/6 branch cycles |
+| Appearance refresh | One atomic full redraw; immediate theme/rainbow updates; viewport and selection preserved |
+| Local style priority | Node-local text, fill, border and line values override whole-map themes |
+| Persistence | Local maps, settings, checkpoints, autosave and restore protection |
+| Integration | SiYuan tabs, Dock, protocol links and global-search node navigation |
+| Reliability | Structured diagnostics and 15-domain manifest-controlled regression architecture |

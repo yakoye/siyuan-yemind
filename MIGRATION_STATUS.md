@@ -5,13 +5,13 @@
 - Plugin ID: `siyuan-yemind`
 - Install folder: `data/plugins/siyuan-yemind/`
 - Storage folder: `data/storage/petal/siyuan-yemind/`
-- Current version: `0.9.0`
+- Current version: `0.9.2`
 
 ## Compatibility retained internally
 
 - Historical plugin protocol links remain readable.
 - Historical theme IDs normalize to current YeMind themes.
-- Existing map, settings and checkpoint files require no v0.9.0 schema migration.
+- Existing map, settings and checkpoint files require no v0.9.2 schema migration.
 
 ## Release safety
 

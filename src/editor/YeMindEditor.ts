@@ -96,7 +96,7 @@ import { ProjectStylePanel } from "../ui/projectStylePanel";
 import { synchronizeCanvasRichTextVisibility } from "./canvasRichTextVisibility";
 import { setSearchReplaceExpanded } from "./searchPanelState";
 import { normalizeProjectStyle, resolveProjectAppearance } from "./projectStyle";
-import { configureThemeColorRuntime } from "../core/themeColorRuntime";
+import { applyMapAppearanceTransaction } from "../core/appearanceTransaction";
 import { NodeQuickActionsController } from "./nodeQuickActions";
 import { canvasModeIcon, lineStyleIcon } from "./projectControls";
 import { normalizeNodeNote } from "../content/nodeNoteState";
@@ -1410,8 +1410,6 @@ export class YeMindEditor {
       ...outerFrameOptions,
     });
     this.applyMapAppearance();
-    (this.map as any)?.associativeLine?.renderAllLines?.();
-    (this.map as any)?.outerFrame?.renderOuterFrames?.();
     this.updateRelationPresentation();
     this.updateOuterFramePresentation();
     this.updateSelectionPresentation();
@@ -1448,15 +1446,20 @@ export class YeMindEditor {
       projectAppearance.themeConfig.backgroundColor ?? "",
     );
     const normalizedProjectStyle = normalizeProjectStyle(this.current.projectStyle);
-    configureThemeColorRuntime(this.map, {
-      appearance: appearance.colorAppearance,
+    applyMapAppearanceTransaction({
+      map: this.map,
+      themeConfig: projectAppearance.themeConfig,
+      rainbowLinesConfig: projectAppearance.rainbow,
+      colorAppearance: appearance.colorAppearance,
       useThemeLineColors: normalizedProjectStyle.rainbowLines === null,
+      render,
+      afterRender: () => {
+        (this.map as any)?.associativeLine?.renderAllLines?.();
+        (this.map as any)?.outerFrame?.renderOuterFrames?.();
+        this.nodeQuickActions?.scheduleRefresh();
+        this.updateSelectionPresentation();
+      },
     });
-    this.map.setThemeConfig(projectAppearance.themeConfig, true);
-    this.map.updateConfig({ rainbowLinesConfig: projectAppearance.rainbow });
-    if (render) this.map.render();
-    (this.map as any)?.associativeLine?.renderAllLines?.();
-    (this.map as any)?.outerFrame?.renderOuterFrames?.();
   }
 
   private bindAppearanceObserver(): void {

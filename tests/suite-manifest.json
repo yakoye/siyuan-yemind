@@ -46,7 +46,8 @@
     "v067ProjectColorSearchComments.suite.ts",
     "v082DockIconTheme.suite.ts",
     "v090ColorSchemes.suite.ts",
-    "v091ThemeColorDefinitions.suite.ts"
+    "v091ThemeColorDefinitions.suite.ts",
+    "v092AppearanceRefresh.suite.ts"
   ],
   "commands-selection": [
     "commands.suite.ts",

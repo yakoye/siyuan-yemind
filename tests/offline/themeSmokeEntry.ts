@@ -39,7 +39,7 @@ function runThemeSmoke(): Record<string, unknown> {
   for (const appearance of YEMIND_THEME_COLOR_APPEARANCES) {
     assert([1, 3, 4, 6].includes(appearance.cycleLength), `${appearance.id}: invalid cycle`);
     assert(appearance.branches.length === 6, `${appearance.id}: must contain six branch definitions`);
-    for (const value of [appearance.background, appearance.centerText, appearance.centerBackground]) {
+    for (const value of [appearance.background, appearance.centerText, appearance.centerBackground, appearance.centerBorder]) {
       assert(isColor(value), `${appearance.id}: invalid top-level color ${String(value)}`);
     }
     for (const branch of appearance.branches) {
@@ -52,23 +52,24 @@ function runThemeSmoke(): Record<string, unknown> {
   assert(normalizeThemeBranchIndex(-1, 6) === 5, 'negative branch index wrapping failed');
   assert(normalizeThemeBranchIndex(7, 6) === 1, 'positive branch index wrapping failed');
 
-  const dawn = getThemeColorAppearance('scheme-dawn', 'fixed');
+  const dawn = getThemeColorAppearance('scheme-dawn', 'light');
   assert(dawn, 'dawn appearance missing');
   const rootColors = resolveThemeNodeColors(dawn, 0, 0);
   const level1Colors = resolveThemeNodeColors(dawn, 1, 0);
   const level2Colors = resolveThemeNodeColors(dawn, 2, 0);
   const normalColors = resolveThemeNodeColors(dawn, 3, 0);
-  assert(rootColors.fillColor === dawn.centerBackground && rootColors.color === dawn.centerText, 'center colors mismatch');
+  assert(rootColors.fillColor === dawn.centerBackground && rootColors.color === dawn.centerText && rootColors.borderColor === dawn.centerBorder, 'center colors mismatch');
   assert(level1Colors.lineColor === dawn.branches[0].centerToLevel1Line, 'center-to-level1 line mismatch');
   assert(level2Colors.lineColor === dawn.branches[0].level1ToLevel2Line, 'level1-to-level2 line mismatch');
   assert(normalColors.lineColor === dawn.branches[0].level2ToNormalLine, 'level2-to-normal line mismatch');
 
   const localFill = '#123456';
+  const localBorder = '#654321';
   const tree: any = {
     data: { text: 'root' },
     children: [
       { data: { text: 'branch-a' }, children: [{ data: { text: 'level-2' }, children: [{ data: { text: 'normal' } }] }] },
-      { data: { text: 'branch-b', fillColor: localFill }, children: [] },
+      { data: { text: 'branch-b', fillColor: localFill, borderColor: localBorder }, children: [] },
     ],
   };
   let renderCalls = 0;
@@ -84,14 +85,16 @@ function runThemeSmoke(): Record<string, unknown> {
   assert(result === 'rendered' && renderCalls === 1, 'renderer wrapper failed');
   assert(tree.data.fillColor === dawn.centerBackground, 'runtime center fill mismatch');
   assert(tree.children[0].data.fillColor === dawn.branches[0].level1Background, 'runtime level1 fill mismatch');
+  assert(tree.children[0].data.borderColor === dawn.branches[0].level1Border, 'runtime level1 border mismatch');
   assert(tree.children[0].children[0].data.color === dawn.branches[0].level2Text, 'runtime level2 text mismatch');
   assert(tree.children[0].children[0].children[0].data.lineColor === dawn.branches[0].level2ToNormalLine, 'runtime normal line mismatch');
   assert(tree.children[1].data.fillColor === localFill, 'local node fill must override theme');
+  assert(tree.children[1].data.borderColor === localBorder, 'local node border must override theme');
   assert(Object.prototype.propertyIsEnumerable.call(tree.children[1].data, 'fillColor'), 'local override must remain enumerable');
 
   const serialized = JSON.stringify(tree);
   assert(!serialized.includes(dawn.centerBackground), 'generated center style must not be serialized');
-  assert(serialized.includes(localFill), 'local style must be serialized');
+  assert(serialized.includes(localFill) && serialized.includes(localBorder), 'local styles must be serialized');
   assert(!Object.prototype.propertyIsEnumerable.call(tree.data, 'fillColor'), 'generated fill accessor must be non-enumerable');
 
   configureThemeColorRuntime(mindMap, { appearance: dawn, useThemeLineColors: false });
@@ -111,6 +114,7 @@ function runThemeSmoke(): Record<string, unknown> {
     cycles: [...cycleCoverage].sort(),
     runtimeSerializationProtected: true,
     localStylePriority: true,
+    borderColorCoverage: true,
     lineOwnershipSwitch: true,
   };
 }

@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.1 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.2 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -38,11 +38,11 @@ const releaseInfo_1 = __require(23);
 const constants_1 = __require(24);
 const dock_1 = __require(30);
 const tabs_1 = __require(31);
-const OpenMapTabRegistry_1 = __require(238);
-const pluginUrl_1 = __require(239);
-const operationSafety_1 = __require(240);
-const pluginStartup_1 = __require(241);
-const globalSearch_1 = __require(242);
+const OpenMapTabRegistry_1 = __require(239);
+const pluginUrl_1 = __require(240);
+const operationSafety_1 = __require(241);
+const pluginStartup_1 = __require(242);
+const globalSearch_1 = __require(243);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -2944,6 +2944,9 @@ const FONT_MONO = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liber
 function level(fillColor, color, borderColor, borderWidth, borderRadius, fontSize, fontWeight) {
     return { fillColor, color, borderColor, borderWidth, borderRadius, fontSize, fontWeight };
 }
+function borderWidth(color) {
+    return color === 'transparent' ? 0 : 2;
+}
 function requiredAppearance(presetId, appearance) {
     const item = (0, themeColorData_1.getThemeColorAppearance)(presetId, appearance);
     if (!item)
@@ -2962,9 +2965,9 @@ function buildVariant(colors, visual) {
             lineColor: branch.centerToLevel1Line,
             generalizationLineColor: branch.level1ToLevel2Line,
             associativeLineColor: '#F59E0B',
-            root: level(colors.centerBackground, colors.centerText, colors.appearance === 'dark' ? '#64748B' : '#CBD5E1', 2, 10, 14, '400'),
-            second: level(branch.level1Background, branch.level1Text, colors.appearance === 'dark' ? '#64748B' : '#CBD5E1', 2, 10, 14, '400'),
-            node: level(branch.level2Background, branch.level2Text, colors.appearance === 'dark' ? '#64748B' : '#CBD5E1', 2, 10, 14, '400'),
+            root: level(colors.centerBackground, colors.centerText, colors.centerBorder, borderWidth(colors.centerBorder), 10, 14, '400'),
+            second: level(branch.level1Background, branch.level1Text, branch.level1Border, borderWidth(branch.level1Border), 10, 14, '400'),
+            node: level(branch.level2Background, branch.level2Text, branch.level2Border, borderWidth(branch.level2Border), 10, 14, '400'),
             rainbow: { open: false, colorsList: colorList },
             lineWidth: 2,
             lineRadius: 10,
@@ -2977,9 +2980,9 @@ function buildVariant(colors, visual) {
             lineColor: branch.centerToLevel1Line,
             generalizationLineColor: branch.level1ToLevel2Line,
             associativeLineColor: colors.appearance === 'dark' ? '#A3A3A3' : '#737373',
-            root: level(colors.centerBackground, colors.centerText, 'transparent', 0, 0, 26, '800'),
-            second: level(branch.level1Background, branch.level1Text, 'transparent', 0, 0, 18, '700'),
-            node: level(branch.level2Background, branch.level2Text, 'transparent', 0, 0, 14, '600'),
+            root: level(colors.centerBackground, colors.centerText, colors.centerBorder, borderWidth(colors.centerBorder), 0, 26, '800'),
+            second: level(branch.level1Background, branch.level1Text, branch.level1Border, borderWidth(branch.level1Border), 0, 18, '700'),
+            node: level(branch.level2Background, branch.level2Text, branch.level2Border, borderWidth(branch.level2Border), 0, 14, '600'),
             rainbow: { open: false, colorsList: colorList },
             nodeUseLineStyle: true,
             lineWidth: 4,
@@ -2993,9 +2996,9 @@ function buildVariant(colors, visual) {
             lineColor: branch.centerToLevel1Line,
             generalizationLineColor: branch.level1ToLevel2Line,
             associativeLineColor: colors.appearance === 'dark' ? '#EFB8C8' : '#7D5260',
-            root: level(colors.centerBackground, colors.centerText, 'transparent', 0, 16, 16, '700'),
-            second: level(branch.level1Background, branch.level1Text, 'transparent', 0, 16, 15, '600'),
-            node: level(branch.level2Background, branch.level2Text, 'transparent', 0, 16, 14, '450'),
+            root: level(colors.centerBackground, colors.centerText, colors.centerBorder, borderWidth(colors.centerBorder), 16, 16, '700'),
+            second: level(branch.level1Background, branch.level1Text, branch.level1Border, borderWidth(branch.level1Border), 16, 15, '600'),
+            node: level(branch.level2Background, branch.level2Text, branch.level2Border, borderWidth(branch.level2Border), 16, 14, '450'),
             rainbow: { open: false, colorsList: colorList },
             lineWidth: 2,
             lineRadius: 16,
@@ -3008,9 +3011,9 @@ function buildVariant(colors, visual) {
         lineColor: branch.centerToLevel1Line,
         generalizationLineColor: branch.level1ToLevel2Line,
         associativeLineColor: branch.centerToLevel1Line,
-        root: level(colors.centerBackground, colors.centerText, 'transparent', 0, 0, 25, '800'),
-        second: level(branch.level1Background, branch.level1Text, 'transparent', 0, 10, 18, '700'),
-        node: level(branch.level2Background, branch.level2Text, 'transparent', 0, 8, 14, '400'),
+        root: level(colors.centerBackground, colors.centerText, colors.centerBorder, borderWidth(colors.centerBorder), 0, 25, '800'),
+        second: level(branch.level1Background, branch.level1Text, branch.level1Border, borderWidth(branch.level1Border), 10, 18, '700'),
+        node: level(branch.level2Background, branch.level2Text, branch.level2Border, borderWidth(branch.level2Border), 8, 14, '400'),
         rainbow: { open: true, colorsList: colorList },
         lineWidth: 2.4,
         lineRadius: 16,
@@ -3186,7 +3189,7 @@ function themeOptionsHtml(selected) {
 // /src/core/themeColorData.ts
 "use strict";
 // This file is generated by scripts/generate-theme-color-data.mjs.
-// Edit docs/theme-colors/yemind_theme_colors.json for the 19 source themes.
+// Edit docs/theme-colors/yemind_theme_colors_with_borders.json for the 19 source themes.
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.YEMIND_THEME_COLOR_APPEARANCES = exports.YEMIND_THEME_SOURCE_NAMES = void 0;
 exports.getThemeColorAppearance = getThemeColorAppearance;
@@ -3221,73 +3224,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#F8FAFC",
         "centerText": "#0F172A",
         "centerBackground": "#FFFFFF",
+        "centerBorder": "#CBD5E1",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#94A3B8",
                 "level1Text": "#0F172A",
                 "level1Background": "#FFFFFF",
+                "level1Border": "#CBD5E1",
                 "level1ToLevel2Line": "#94A3B8",
                 "level2Text": "#0F172A",
                 "level2Background": "#FFFFFF",
+                "level2Border": "#CBD5E1",
                 "level2ToNormalLine": "#94A3B8",
                 "normalText": "#0F172A",
-                "normalBackground": "#FFFFFF"
+                "normalBackground": "#FFFFFF",
+                "normalBorder": "#CBD5E1"
             },
             {
                 "centerToLevel1Line": "#94A3B8",
                 "level1Text": "#0F172A",
                 "level1Background": "#FFFFFF",
+                "level1Border": "#CBD5E1",
                 "level1ToLevel2Line": "#94A3B8",
                 "level2Text": "#0F172A",
                 "level2Background": "#FFFFFF",
+                "level2Border": "#CBD5E1",
                 "level2ToNormalLine": "#94A3B8",
                 "normalText": "#0F172A",
-                "normalBackground": "#FFFFFF"
+                "normalBackground": "#FFFFFF",
+                "normalBorder": "#CBD5E1"
             },
             {
                 "centerToLevel1Line": "#94A3B8",
                 "level1Text": "#0F172A",
                 "level1Background": "#FFFFFF",
+                "level1Border": "#CBD5E1",
                 "level1ToLevel2Line": "#94A3B8",
                 "level2Text": "#0F172A",
                 "level2Background": "#FFFFFF",
+                "level2Border": "#CBD5E1",
                 "level2ToNormalLine": "#94A3B8",
                 "normalText": "#0F172A",
-                "normalBackground": "#FFFFFF"
+                "normalBackground": "#FFFFFF",
+                "normalBorder": "#CBD5E1"
             },
             {
                 "centerToLevel1Line": "#94A3B8",
                 "level1Text": "#0F172A",
                 "level1Background": "#FFFFFF",
+                "level1Border": "#CBD5E1",
                 "level1ToLevel2Line": "#94A3B8",
                 "level2Text": "#0F172A",
                 "level2Background": "#FFFFFF",
+                "level2Border": "#CBD5E1",
                 "level2ToNormalLine": "#94A3B8",
                 "normalText": "#0F172A",
-                "normalBackground": "#FFFFFF"
+                "normalBackground": "#FFFFFF",
+                "normalBorder": "#CBD5E1"
             },
             {
                 "centerToLevel1Line": "#94A3B8",
                 "level1Text": "#0F172A",
                 "level1Background": "#FFFFFF",
+                "level1Border": "#CBD5E1",
                 "level1ToLevel2Line": "#94A3B8",
                 "level2Text": "#0F172A",
                 "level2Background": "#FFFFFF",
+                "level2Border": "#CBD5E1",
                 "level2ToNormalLine": "#94A3B8",
                 "normalText": "#0F172A",
-                "normalBackground": "#FFFFFF"
+                "normalBackground": "#FFFFFF",
+                "normalBorder": "#CBD5E1"
             },
             {
                 "centerToLevel1Line": "#94A3B8",
                 "level1Text": "#0F172A",
                 "level1Background": "#FFFFFF",
+                "level1Border": "#CBD5E1",
                 "level1ToLevel2Line": "#94A3B8",
                 "level2Text": "#0F172A",
                 "level2Background": "#FFFFFF",
+                "level2Border": "#CBD5E1",
                 "level2ToNormalLine": "#94A3B8",
                 "normalText": "#0F172A",
-                "normalBackground": "#FFFFFF"
+                "normalBackground": "#FFFFFF",
+                "normalBorder": "#CBD5E1"
             }
         ]
     },
@@ -3300,73 +3322,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#0B1220",
         "centerText": "#E2E8F0",
         "centerBackground": "#0B1220",
+        "centerBorder": "#64748B",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#94A3B8",
                 "level1Text": "#E2E8F0",
                 "level1Background": "#0B1220",
+                "level1Border": "#64748B",
                 "level1ToLevel2Line": "#94A3B8",
                 "level2Text": "#E2E8F0",
                 "level2Background": "#0B1220",
+                "level2Border": "#64748B",
                 "level2ToNormalLine": "#94A3B8",
                 "normalText": "#E2E8F0",
-                "normalBackground": "#0B1220"
+                "normalBackground": "#0B1220",
+                "normalBorder": "#64748B"
             },
             {
                 "centerToLevel1Line": "#94A3B8",
                 "level1Text": "#E2E8F0",
                 "level1Background": "#0B1220",
+                "level1Border": "#64748B",
                 "level1ToLevel2Line": "#94A3B8",
                 "level2Text": "#E2E8F0",
                 "level2Background": "#0B1220",
+                "level2Border": "#64748B",
                 "level2ToNormalLine": "#94A3B8",
                 "normalText": "#E2E8F0",
-                "normalBackground": "#0B1220"
+                "normalBackground": "#0B1220",
+                "normalBorder": "#64748B"
             },
             {
                 "centerToLevel1Line": "#94A3B8",
                 "level1Text": "#E2E8F0",
                 "level1Background": "#0B1220",
+                "level1Border": "#64748B",
                 "level1ToLevel2Line": "#94A3B8",
                 "level2Text": "#E2E8F0",
                 "level2Background": "#0B1220",
+                "level2Border": "#64748B",
                 "level2ToNormalLine": "#94A3B8",
                 "normalText": "#E2E8F0",
-                "normalBackground": "#0B1220"
+                "normalBackground": "#0B1220",
+                "normalBorder": "#64748B"
             },
             {
                 "centerToLevel1Line": "#94A3B8",
                 "level1Text": "#E2E8F0",
                 "level1Background": "#0B1220",
+                "level1Border": "#64748B",
                 "level1ToLevel2Line": "#94A3B8",
                 "level2Text": "#E2E8F0",
                 "level2Background": "#0B1220",
+                "level2Border": "#64748B",
                 "level2ToNormalLine": "#94A3B8",
                 "normalText": "#E2E8F0",
-                "normalBackground": "#0B1220"
+                "normalBackground": "#0B1220",
+                "normalBorder": "#64748B"
             },
             {
                 "centerToLevel1Line": "#94A3B8",
                 "level1Text": "#E2E8F0",
                 "level1Background": "#0B1220",
+                "level1Border": "#64748B",
                 "level1ToLevel2Line": "#94A3B8",
                 "level2Text": "#E2E8F0",
                 "level2Background": "#0B1220",
+                "level2Border": "#64748B",
                 "level2ToNormalLine": "#94A3B8",
                 "normalText": "#E2E8F0",
-                "normalBackground": "#0B1220"
+                "normalBackground": "#0B1220",
+                "normalBorder": "#64748B"
             },
             {
                 "centerToLevel1Line": "#94A3B8",
                 "level1Text": "#E2E8F0",
                 "level1Background": "#0B1220",
+                "level1Border": "#64748B",
                 "level1ToLevel2Line": "#94A3B8",
                 "level2Text": "#E2E8F0",
                 "level2Background": "#0B1220",
+                "level2Border": "#64748B",
                 "level2ToNormalLine": "#94A3B8",
                 "normalText": "#E2E8F0",
-                "normalBackground": "#0B1220"
+                "normalBackground": "#0B1220",
+                "normalBorder": "#64748B"
             }
         ]
     },
@@ -3379,73 +3420,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FFFFFF",
         "centerText": "#3749B5",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#151515",
                 "level1Text": "#111111",
                 "level1Background": "transparent",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#151515",
                 "level2Text": "#111111",
                 "level2Background": "transparent",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#151515",
                 "normalText": "#111111",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#151515",
                 "level1Text": "#111111",
                 "level1Background": "transparent",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#151515",
                 "level2Text": "#111111",
                 "level2Background": "transparent",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#151515",
                 "normalText": "#111111",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#151515",
                 "level1Text": "#111111",
                 "level1Background": "transparent",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#151515",
                 "level2Text": "#111111",
                 "level2Background": "transparent",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#151515",
                 "normalText": "#111111",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#151515",
                 "level1Text": "#111111",
                 "level1Background": "transparent",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#151515",
                 "level2Text": "#111111",
                 "level2Background": "transparent",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#151515",
                 "normalText": "#111111",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#151515",
                 "level1Text": "#111111",
                 "level1Background": "transparent",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#151515",
                 "level2Text": "#111111",
                 "level2Background": "transparent",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#151515",
                 "normalText": "#111111",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#151515",
                 "level1Text": "#111111",
                 "level1Background": "transparent",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#151515",
                 "level2Text": "#111111",
                 "level2Background": "transparent",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#151515",
                 "normalText": "#111111",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -3458,73 +3518,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#0A0A0A",
         "centerText": "#93A4FF",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#F5F5F5",
                 "level1Text": "#F5F5F5",
                 "level1Background": "transparent",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F5F5F5",
                 "level2Text": "#F5F5F5",
                 "level2Background": "transparent",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F5F5F5",
                 "normalText": "#F5F5F5",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F5F5F5",
                 "level1Text": "#F5F5F5",
                 "level1Background": "transparent",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F5F5F5",
                 "level2Text": "#F5F5F5",
                 "level2Background": "transparent",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F5F5F5",
                 "normalText": "#F5F5F5",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F5F5F5",
                 "level1Text": "#F5F5F5",
                 "level1Background": "transparent",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F5F5F5",
                 "level2Text": "#F5F5F5",
                 "level2Background": "transparent",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F5F5F5",
                 "normalText": "#F5F5F5",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F5F5F5",
                 "level1Text": "#F5F5F5",
                 "level1Background": "transparent",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F5F5F5",
                 "level2Text": "#F5F5F5",
                 "level2Background": "transparent",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F5F5F5",
                 "normalText": "#F5F5F5",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F5F5F5",
                 "level1Text": "#F5F5F5",
                 "level1Background": "transparent",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F5F5F5",
                 "level2Text": "#F5F5F5",
                 "level2Background": "transparent",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F5F5F5",
                 "normalText": "#F5F5F5",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F5F5F5",
                 "level1Text": "#F5F5F5",
                 "level1Background": "transparent",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F5F5F5",
                 "level2Text": "#F5F5F5",
                 "level2Background": "transparent",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F5F5F5",
                 "normalText": "#F5F5F5",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -3537,73 +3616,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FEF7FF",
         "centerText": "#21005D",
         "centerBackground": "#EADDFF",
+        "centerBorder": "transparent",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#79747E",
                 "level1Text": "#1D192B",
                 "level1Background": "#E8DEF8",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#79747E",
                 "level2Text": "#1C1B1F",
                 "level2Background": "#F3EDF7",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#79747E",
                 "normalText": "#1C1B1F",
-                "normalBackground": "#F3EDF7"
+                "normalBackground": "#F3EDF7",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#79747E",
                 "level1Text": "#1D192B",
                 "level1Background": "#E8DEF8",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#79747E",
                 "level2Text": "#1C1B1F",
                 "level2Background": "#F3EDF7",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#79747E",
                 "normalText": "#1C1B1F",
-                "normalBackground": "#F3EDF7"
+                "normalBackground": "#F3EDF7",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#79747E",
                 "level1Text": "#1D192B",
                 "level1Background": "#E8DEF8",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#79747E",
                 "level2Text": "#1C1B1F",
                 "level2Background": "#F3EDF7",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#79747E",
                 "normalText": "#1C1B1F",
-                "normalBackground": "#F3EDF7"
+                "normalBackground": "#F3EDF7",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#79747E",
                 "level1Text": "#1D192B",
                 "level1Background": "#E8DEF8",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#79747E",
                 "level2Text": "#1C1B1F",
                 "level2Background": "#F3EDF7",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#79747E",
                 "normalText": "#1C1B1F",
-                "normalBackground": "#F3EDF7"
+                "normalBackground": "#F3EDF7",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#79747E",
                 "level1Text": "#1D192B",
                 "level1Background": "#E8DEF8",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#79747E",
                 "level2Text": "#1C1B1F",
                 "level2Background": "#F3EDF7",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#79747E",
                 "normalText": "#1C1B1F",
-                "normalBackground": "#F3EDF7"
+                "normalBackground": "#F3EDF7",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#79747E",
                 "level1Text": "#1D192B",
                 "level1Background": "#E8DEF8",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#79747E",
                 "level2Text": "#1C1B1F",
                 "level2Background": "#F3EDF7",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#79747E",
                 "normalText": "#1C1B1F",
-                "normalBackground": "#F3EDF7"
+                "normalBackground": "#F3EDF7",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -3616,73 +3714,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#141218",
         "centerText": "#FEF7FF",
         "centerBackground": "#4F378B",
+        "centerBorder": "transparent",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#938F99",
                 "level1Text": "#E6E1E5",
                 "level1Background": "#332D41",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#938F99",
                 "level2Text": "#E6E1E5",
                 "level2Background": "#211F26",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#938F99",
                 "normalText": "#E6E1E5",
-                "normalBackground": "#211F26"
+                "normalBackground": "#211F26",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#938F99",
                 "level1Text": "#E6E1E5",
                 "level1Background": "#332D41",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#938F99",
                 "level2Text": "#E6E1E5",
                 "level2Background": "#211F26",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#938F99",
                 "normalText": "#E6E1E5",
-                "normalBackground": "#211F26"
+                "normalBackground": "#211F26",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#938F99",
                 "level1Text": "#E6E1E5",
                 "level1Background": "#332D41",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#938F99",
                 "level2Text": "#E6E1E5",
                 "level2Background": "#211F26",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#938F99",
                 "normalText": "#E6E1E5",
-                "normalBackground": "#211F26"
+                "normalBackground": "#211F26",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#938F99",
                 "level1Text": "#E6E1E5",
                 "level1Background": "#332D41",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#938F99",
                 "level2Text": "#E6E1E5",
                 "level2Background": "#211F26",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#938F99",
                 "normalText": "#E6E1E5",
-                "normalBackground": "#211F26"
+                "normalBackground": "#211F26",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#938F99",
                 "level1Text": "#E6E1E5",
                 "level1Background": "#332D41",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#938F99",
                 "level2Text": "#E6E1E5",
                 "level2Background": "#211F26",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#938F99",
                 "normalText": "#E6E1E5",
-                "normalBackground": "#211F26"
+                "normalBackground": "#211F26",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#938F99",
                 "level1Text": "#E6E1E5",
                 "level1Background": "#332D41",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#938F99",
                 "level2Text": "#E6E1E5",
                 "level2Background": "#211F26",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#938F99",
                 "normalText": "#E6E1E5",
-                "normalBackground": "#211F26"
+                "normalBackground": "#211F26",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -3695,73 +3812,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FFFFFF",
         "centerText": "#000000",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 6,
         "branches": [
             {
                 "centerToLevel1Line": "#FF6B6B",
                 "level1Text": "#000000",
                 "level1Background": "#FF6B6B",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FF6B6B",
                 "level2Text": "#660000",
                 "level2Background": "#FEE0E0",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FF6B6B",
                 "normalText": "#660000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FF9F69",
                 "level1Text": "#000000",
                 "level1Background": "#FF9F69",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FF9F69",
                 "level2Text": "#662400",
                 "level2Background": "#FEEBE0",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FF9F69",
                 "normalText": "#662400",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#97D3B6",
                 "level1Text": "#000000",
                 "level1Background": "#97D3B6",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#97D3B6",
                 "level2Text": "#1E4733",
                 "level2Background": "#E9F5EF",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#97D3B6",
                 "normalText": "#1E4733",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#88E2D7",
                 "level1Text": "#000000",
                 "level1Background": "#88E2D7",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#88E2D7",
                 "level2Text": "#13524A",
                 "level2Background": "#E7F9F7",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#88E2D7",
                 "normalText": "#13524A",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#6FD0F9",
                 "level1Text": "#000000",
                 "level1Background": "#6FD0F9",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#6FD0F9",
                 "level2Text": "#044661",
                 "level2Background": "#E2F6FE",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#6FD0F9",
                 "normalText": "#044661",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#E18BEE",
                 "level1Text": "#000000",
                 "level1Background": "#E18BEE",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#E18BEE",
                 "level2Text": "#4E0D58",
                 "level2Background": "#F9E8FC",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#E18BEE",
                 "normalText": "#4E0D58",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -3774,73 +3910,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FFFFFF",
         "centerText": "#000229",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 6,
         "branches": [
             {
                 "centerToLevel1Line": "#F9423A",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#F9423A",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F9423A",
                 "level2Text": "#620703",
                 "level2Background": "#FDD8D7",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F9423A",
                 "normalText": "#620703",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F6A04D",
                 "level1Text": "#000000",
                 "level1Background": "#F6A04D",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F6A04D",
                 "level2Text": "#613204",
                 "level2Background": "#FCEBDA",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F6A04D",
                 "normalText": "#613204",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F3D321",
                 "level1Text": "#000000",
                 "level1Background": "#F3D321",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F3D321",
                 "level2Text": "#605205",
                 "level2Background": "#FCF5D2",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F3D321",
                 "normalText": "#605205",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#00BC7B",
                 "level1Text": "#000000",
                 "level1Background": "#00BC7B",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#00BC7B",
                 "level2Text": "#006642",
                 "level2Background": "#CCF2E5",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#00BC7B",
                 "normalText": "#006642",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#486AFF",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#486AFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#486AFF",
                 "level2Text": "#001266",
                 "level2Background": "#DAE1FF",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#486AFF",
                 "normalText": "#001266",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#4D49BE",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#4D49BE",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#4D49BE",
                 "level2Text": "#1C1A4B",
                 "level2Background": "#DBDBF2",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#4D49BE",
                 "normalText": "#1C1A4B",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -3853,73 +4008,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FFFFFF",
         "centerText": "#000000",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 3,
         "branches": [
             {
                 "centerToLevel1Line": "#F22816",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#F22816",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F22816",
                 "level2Text": "#600C05",
                 "level2Background": "#FCD4D0",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F22816",
                 "normalText": "#600C05",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F2B807",
                 "level1Text": "#000000",
                 "level1Background": "#F2B807",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F2B807",
                 "level2Text": "#634B02",
                 "level2Background": "#FCF1CD",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F2B807",
                 "normalText": "#634B02",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#233ED9",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#233ED9",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#233ED9",
                 "level2Text": "#0E1957",
                 "level2Background": "#D3D8F7",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#233ED9",
                 "normalText": "#0E1957",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F22816",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#F22816",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F22816",
                 "level2Text": "#600C05",
                 "level2Background": "#FCD4D0",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F22816",
                 "normalText": "#600C05",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F2B807",
                 "level1Text": "#000000",
                 "level1Background": "#F2B807",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F2B807",
                 "level2Text": "#634B02",
                 "level2Background": "#FCF1CD",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F2B807",
                 "normalText": "#634B02",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#233ED9",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#233ED9",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#233ED9",
                 "level2Text": "#0E1957",
                 "level2Background": "#D3D8F7",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#233ED9",
                 "normalText": "#0E1957",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -3932,73 +4106,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FFFFFF",
         "centerText": "#363026",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 3,
         "branches": [
             {
                 "centerToLevel1Line": "#4E60EF",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#4E60EF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#4E60EF",
                 "level2Text": "#08115D",
                 "level2Background": "#DCDFFC",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#4E60EF",
                 "normalText": "#08115D",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#EB4758",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#EB4758",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#EB4758",
                 "level2Text": "#5C0A12",
                 "level2Background": "#FBDADE",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#EB4758",
                 "normalText": "#5C0A12",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#AA0E1D",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#AA0E1D",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#AA0E1D",
                 "level2Text": "#5E0710",
                 "level2Background": "#EECFD2",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#AA0E1D",
                 "normalText": "#5E0710",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#4E60EF",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#4E60EF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#4E60EF",
                 "level2Text": "#08115D",
                 "level2Background": "#DCDFFC",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#4E60EF",
                 "normalText": "#08115D",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#EB4758",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#EB4758",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#EB4758",
                 "level2Text": "#5C0A12",
                 "level2Background": "#FBDADE",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#EB4758",
                 "normalText": "#5C0A12",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#AA0E1D",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#AA0E1D",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#AA0E1D",
                 "level2Text": "#5E0710",
                 "level2Background": "#EECFD2",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#AA0E1D",
                 "normalText": "#5E0710",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -4011,73 +4204,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#2C2D30",
         "centerText": "#FFFFFF",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 4,
         "branches": [
             {
                 "centerToLevel1Line": "#FFF0B8",
                 "level1Text": "#000000",
                 "level1Background": "#FFF0B8",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFF0B8",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#56544B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFF0B8",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#CBFFB8",
                 "level1Text": "#000000",
                 "level1Background": "#CBFFB8",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#CBFFB8",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#4C574B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#CBFFB8",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#DB8FFF",
                 "level1Text": "#000000",
                 "level1Background": "#DB8FFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#DB8FFF",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#4F4159",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#DB8FFF",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#8ABEFF",
                 "level1Text": "#000000",
                 "level1Background": "#8ABEFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#8ABEFF",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#3F4A59",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#8ABEFF",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FFF0B8",
                 "level1Text": "#000000",
                 "level1Background": "#FFF0B8",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFF0B8",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#56544B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFF0B8",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#CBFFB8",
                 "level1Text": "#000000",
                 "level1Background": "#CBFFB8",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#CBFFB8",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#4C574B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#CBFFB8",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -4090,73 +4302,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FFFFFF",
         "centerText": "#191959",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 4,
         "branches": [
             {
                 "centerToLevel1Line": "#FFABAA",
                 "level1Text": "#000000",
                 "level1Background": "#FFABAA",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFABAA",
                 "level2Text": "#660100",
                 "level2Background": "#FFEEEE",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFABAA",
                 "normalText": "#660100",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FF7B31",
                 "level1Text": "#000000",
                 "level1Background": "#FF7B31",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FF7B31",
                 "level2Text": "#662400",
                 "level2Background": "#FFE5D6",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FF7B31",
                 "normalText": "#662400",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#8CB5FF",
                 "level1Text": "#000000",
                 "level1Background": "#8CB5FF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#8CB5FF",
                 "level2Text": "#002466",
                 "level2Background": "#E7EFFE",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#8CB5FF",
                 "normalText": "#002466",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#4A51D9",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#4A51D9",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#4A51D9",
                 "level2Text": "#111454",
                 "level2Background": "#DBDCF7",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#4A51D9",
                 "normalText": "#111454",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FFABAA",
                 "level1Text": "#000000",
                 "level1Background": "#FFABAA",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFABAA",
                 "level2Text": "#660100",
                 "level2Background": "#FFEEEE",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFABAA",
                 "normalText": "#660100",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FF7B31",
                 "level1Text": "#000000",
                 "level1Background": "#FF7B31",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FF7B31",
                 "level2Text": "#662400",
                 "level2Background": "#FFE5D6",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FF7B31",
                 "normalText": "#662400",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -4169,73 +4400,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FFE8D6",
         "centerText": "#6B705C",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 4,
         "branches": [
             {
                 "centerToLevel1Line": "#DDBEA9",
                 "level1Text": "#000000",
                 "level1Background": "#DDBEA9",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#DDBEA9",
                 "level2Text": "#492E1C",
                 "level2Background": "#F8E0CD",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#DDBEA9",
                 "normalText": "#492E1C",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#CB997E",
                 "level1Text": "#000000",
                 "level1Background": "#CB997E",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#CB997E",
                 "level2Text": "#482C1D",
                 "level2Background": "#F5D9C4",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#CB997E",
                 "normalText": "#482C1D",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#B7B7A4",
                 "level1Text": "#000000",
                 "level1Background": "#B7B7A4",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#B7B7A4",
                 "level2Text": "#38392D",
                 "level2Background": "#F0DECB",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#B7B7A4",
                 "normalText": "#38392D",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#A5A58D",
                 "level1Text": "#000000",
                 "level1Background": "#A5A58D",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#A5A58D",
                 "level2Text": "#38392D",
                 "level2Background": "#EDDBC7",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#A5A58D",
                 "normalText": "#38392D",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#DDBEA9",
                 "level1Text": "#000000",
                 "level1Background": "#DDBEA9",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#DDBEA9",
                 "level2Text": "#492E1C",
                 "level2Background": "#F8E0CD",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#DDBEA9",
                 "normalText": "#492E1C",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#CB997E",
                 "level1Text": "#000000",
                 "level1Background": "#CB997E",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#CB997E",
                 "level2Text": "#482C1D",
                 "level2Background": "#F5D9C4",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#CB997E",
                 "normalText": "#482C1D",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -4248,73 +4498,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FFF0F3",
         "centerText": "#A4133C",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 3,
         "branches": [
             {
                 "centerToLevel1Line": "#FFB3C1",
                 "level1Text": "#000000",
                 "level1Background": "#FFB3C1",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFB3C1",
                 "level2Text": "#660012",
                 "level2Background": "#FFE4E9",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFB3C1",
                 "normalText": "#660012",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FF758F",
                 "level1Text": "#000000",
                 "level1Background": "#FF758F",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FF758F",
                 "level2Text": "#660013",
                 "level2Background": "#FFD7DF",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FF758F",
                 "normalText": "#660013",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#C9184A",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#C9184A",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#C9184A",
                 "level2Text": "#5B0A21",
                 "level2Background": "#F4C5D1",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#C9184A",
                 "normalText": "#5B0A21",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FFB3C1",
                 "level1Text": "#000000",
                 "level1Background": "#FFB3C1",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFB3C1",
                 "level2Text": "#660012",
                 "level2Background": "#FFE4E9",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFB3C1",
                 "normalText": "#660012",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FF758F",
                 "level1Text": "#000000",
                 "level1Background": "#FF758F",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FF758F",
                 "level2Text": "#660013",
                 "level2Background": "#FFD7DF",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FF758F",
                 "normalText": "#660013",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#C9184A",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#C9184A",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#C9184A",
                 "level2Text": "#5B0A21",
                 "level2Background": "#F4C5D1",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#C9184A",
                 "normalText": "#5B0A21",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -4327,73 +4596,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FFFFFF",
         "centerText": "#046562",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 3,
         "branches": [
             {
                 "centerToLevel1Line": "#9CEAEF",
                 "level1Text": "#000000",
                 "level1Background": "#9CEAEF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#9CEAEF",
                 "level2Text": "#0E5357",
                 "level2Background": "#EBFBFC",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#9CEAEF",
                 "normalText": "#0E5357",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#68D8D6",
                 "level1Text": "#000000",
                 "level1Background": "#68D8D6",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#68D8D6",
                 "level2Text": "#14514F",
                 "level2Background": "#E1F7F7",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#68D8D6",
                 "normalText": "#14514F",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#06AFA9",
                 "level1Text": "#000000",
                 "level1Background": "#06AFA9",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#06AFA9",
                 "level2Text": "#03625F",
                 "level2Background": "#CDEFEE",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#06AFA9",
                 "normalText": "#03625F",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#9CEAEF",
                 "level1Text": "#000000",
                 "level1Background": "#9CEAEF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#9CEAEF",
                 "level2Text": "#0E5357",
                 "level2Background": "#EBFBFC",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#9CEAEF",
                 "normalText": "#0E5357",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#68D8D6",
                 "level1Text": "#000000",
                 "level1Background": "#68D8D6",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#68D8D6",
                 "level2Text": "#14514F",
                 "level2Background": "#E1F7F7",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#68D8D6",
                 "normalText": "#14514F",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#06AFA9",
                 "level1Text": "#000000",
                 "level1Background": "#06AFA9",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#06AFA9",
                 "level2Text": "#03625F",
                 "level2Background": "#CDEFEE",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#06AFA9",
                 "normalText": "#03625F",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -4406,73 +4694,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#1F2B1D",
         "centerText": "#D6D9C3",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 4,
         "branches": [
             {
                 "centerToLevel1Line": "#B6AD90",
                 "level1Text": "#000000",
                 "level1Background": "#B6AD90",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#B6AD90",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#3D4534",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#B6AD90",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#579360",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#579360",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#579360",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#2A3F2A",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#579360",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#656D4A",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#656D4A",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#656D4A",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#2D3826",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#656D4A",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#265834",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#265834",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#265834",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#213421",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#265834",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#B6AD90",
                 "level1Text": "#000000",
                 "level1Background": "#B6AD90",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#B6AD90",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#3D4534",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#B6AD90",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#579360",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#579360",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#579360",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#2A3F2A",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#579360",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -4485,73 +4792,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FFFFFF",
         "centerText": "#3949AB",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#141414",
                 "level1Text": "#000000",
                 "level1Background": "#EEEEEE",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#141414",
                 "level2Text": "#000000",
                 "level2Background": "#EEEEEE",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#141414",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#141414",
                 "level1Text": "#000000",
                 "level1Background": "#EEEEEE",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#141414",
                 "level2Text": "#000000",
                 "level2Background": "#EEEEEE",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#141414",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#141414",
                 "level1Text": "#000000",
                 "level1Background": "#EEEEEE",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#141414",
                 "level2Text": "#000000",
                 "level2Background": "#EEEEEE",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#141414",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#141414",
                 "level1Text": "#000000",
                 "level1Background": "#EEEEEE",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#141414",
                 "level2Text": "#000000",
                 "level2Background": "#EEEEEE",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#141414",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#141414",
                 "level1Text": "#000000",
                 "level1Background": "#EEEEEE",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#141414",
                 "level2Text": "#000000",
                 "level2Background": "#EEEEEE",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#141414",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#141414",
                 "level1Text": "#000000",
                 "level1Background": "#EEEEEE",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#141414",
                 "level2Text": "#000000",
                 "level2Background": "#EEEEEE",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#141414",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -4564,73 +4890,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FFE0E5",
         "centerText": "#000000",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#FFFFFF",
                 "level1Text": "#000000",
                 "level1Background": "#FFFFFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFFFFF",
                 "level2Text": "#000000",
                 "level2Background": "#FFFFFF",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFFFFF",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FFFFFF",
                 "level1Text": "#000000",
                 "level1Background": "#FFFFFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFFFFF",
                 "level2Text": "#000000",
                 "level2Background": "#FFFFFF",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFFFFF",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FFFFFF",
                 "level1Text": "#000000",
                 "level1Background": "#FFFFFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFFFFF",
                 "level2Text": "#000000",
                 "level2Background": "#FFFFFF",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFFFFF",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FFFFFF",
                 "level1Text": "#000000",
                 "level1Background": "#FFFFFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFFFFF",
                 "level2Text": "#000000",
                 "level2Background": "#FFFFFF",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFFFFF",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FFFFFF",
                 "level1Text": "#000000",
                 "level1Background": "#FFFFFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFFFFF",
                 "level2Text": "#000000",
                 "level2Background": "#FFFFFF",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFFFFF",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FFFFFF",
                 "level1Text": "#000000",
                 "level1Background": "#FFFFFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFFFFF",
                 "level2Text": "#000000",
                 "level2Background": "#FFFFFF",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFFFFF",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -4643,73 +4988,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FFFFFF",
         "centerText": "#A61D39",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#4A1019",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#D02F48",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#4A1019",
                 "level2Text": "#000000",
                 "level2Background": "#E5E5E5",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#4A1019",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#4A1019",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#D02F48",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#4A1019",
                 "level2Text": "#000000",
                 "level2Background": "#E5E5E5",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#4A1019",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#4A1019",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#D02F48",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#4A1019",
                 "level2Text": "#000000",
                 "level2Background": "#E5E5E5",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#4A1019",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#4A1019",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#D02F48",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#4A1019",
                 "level2Text": "#000000",
                 "level2Background": "#E5E5E5",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#4A1019",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#4A1019",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#D02F48",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#4A1019",
                 "level2Text": "#000000",
                 "level2Background": "#E5E5E5",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#4A1019",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#4A1019",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#D02F48",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#4A1019",
                 "level2Text": "#000000",
                 "level2Background": "#E5E5E5",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#4A1019",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -4722,73 +5086,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#140407",
         "centerText": "#EF6C70",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#FDF1F1",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#D02F48",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FDF1F1",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#7C1C2B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FDF1F1",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FDF1F1",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#D02F48",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FDF1F1",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#7C1C2B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FDF1F1",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FDF1F1",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#D02F48",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FDF1F1",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#7C1C2B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FDF1F1",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FDF1F1",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#D02F48",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FDF1F1",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#7C1C2B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FDF1F1",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FDF1F1",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#D02F48",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FDF1F1",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#7C1C2B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FDF1F1",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FDF1F1",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#D02F48",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FDF1F1",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#7C1C2B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FDF1F1",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -4801,73 +5184,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#D02F48",
         "centerText": "#000000",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#FFFFFF",
                 "level1Text": "#000000",
                 "level1Background": "#FFFFFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFFFFF",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#7C1C2B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFFFFF",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FFFFFF",
                 "level1Text": "#000000",
                 "level1Background": "#FFFFFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFFFFF",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#7C1C2B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFFFFF",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FFFFFF",
                 "level1Text": "#000000",
                 "level1Background": "#FFFFFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFFFFF",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#7C1C2B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFFFFF",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FFFFFF",
                 "level1Text": "#000000",
                 "level1Background": "#FFFFFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFFFFF",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#7C1C2B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFFFFF",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FFFFFF",
                 "level1Text": "#000000",
                 "level1Background": "#FFFFFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFFFFF",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#7C1C2B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFFFFF",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#FFFFFF",
                 "level1Text": "#000000",
                 "level1Background": "#FFFFFF",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#FFFFFF",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#7C1C2B",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#FFFFFF",
                 "normalText": "#FFFFFF",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -4880,73 +5282,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#EEE8E6",
         "centerText": "#000000",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#88675E",
                 "level1Text": "#000000",
                 "level1Background": "#C1ABA5",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#88675E",
                 "level2Text": "#000000",
                 "level2Background": "#E6DDDA",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#88675E",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#88675E",
                 "level1Text": "#000000",
                 "level1Background": "#C1ABA5",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#88675E",
                 "level2Text": "#000000",
                 "level2Background": "#E6DDDA",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#88675E",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#88675E",
                 "level1Text": "#000000",
                 "level1Background": "#C1ABA5",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#88675E",
                 "level2Text": "#000000",
                 "level2Background": "#E6DDDA",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#88675E",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#88675E",
                 "level1Text": "#000000",
                 "level1Background": "#C1ABA5",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#88675E",
                 "level2Text": "#000000",
                 "level2Background": "#E6DDDA",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#88675E",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#88675E",
                 "level1Text": "#000000",
                 "level1Background": "#C1ABA5",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#88675E",
                 "level2Text": "#000000",
                 "level2Background": "#E6DDDA",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#88675E",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#88675E",
                 "level1Text": "#000000",
                 "level1Background": "#C1ABA5",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#88675E",
                 "level2Text": "#000000",
                 "level2Background": "#E6DDDA",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#88675E",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -4959,73 +5380,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#EFE6C6",
         "centerText": "#000000",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#201E14",
                 "level1Text": "#000000",
                 "level1Background": "#AB9446",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#201E14",
                 "level2Text": "#000000",
                 "level2Background": "#AB9446",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#201E14",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#201E14",
                 "level1Text": "#000000",
                 "level1Background": "#AB9446",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#201E14",
                 "level2Text": "#000000",
                 "level2Background": "#AB9446",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#201E14",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#201E14",
                 "level1Text": "#000000",
                 "level1Background": "#AB9446",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#201E14",
                 "level2Text": "#000000",
                 "level2Background": "#AB9446",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#201E14",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#201E14",
                 "level1Text": "#000000",
                 "level1Background": "#AB9446",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#201E14",
                 "level2Text": "#000000",
                 "level2Background": "#AB9446",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#201E14",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#201E14",
                 "level1Text": "#000000",
                 "level1Background": "#AB9446",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#201E14",
                 "level2Text": "#000000",
                 "level2Background": "#AB9446",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#201E14",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#201E14",
                 "level1Text": "#000000",
                 "level1Background": "#AB9446",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#201E14",
                 "level2Text": "#000000",
                 "level2Background": "#AB9446",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#201E14",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -5038,73 +5478,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FFFFFF",
         "centerText": "#000000",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#232323",
                 "level1Text": "#000000",
                 "level1Background": "#D6D6D6",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#232323",
                 "level2Text": "#000000",
                 "level2Background": "#D6D6D6",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#232323",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#232323",
                 "level1Text": "#000000",
                 "level1Background": "#D6D6D6",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#232323",
                 "level2Text": "#000000",
                 "level2Background": "#D6D6D6",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#232323",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#232323",
                 "level1Text": "#000000",
                 "level1Background": "#D6D6D6",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#232323",
                 "level2Text": "#000000",
                 "level2Background": "#D6D6D6",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#232323",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#232323",
                 "level1Text": "#000000",
                 "level1Background": "#D6D6D6",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#232323",
                 "level2Text": "#000000",
                 "level2Background": "#D6D6D6",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#232323",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#232323",
                 "level1Text": "#000000",
                 "level1Background": "#D6D6D6",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#232323",
                 "level2Text": "#000000",
                 "level2Background": "#D6D6D6",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#232323",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#232323",
                 "level1Text": "#000000",
                 "level1Background": "#D6D6D6",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#232323",
                 "level2Text": "#000000",
                 "level2Background": "#D6D6D6",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#232323",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     },
@@ -5117,73 +5576,92 @@ exports.YEMIND_THEME_COLOR_APPEARANCES = [
         "background": "#FFFFFF",
         "centerText": "#F44336",
         "centerBackground": "transparent",
+        "centerBorder": "transparent",
         "cycleLength": 1,
         "branches": [
             {
                 "centerToLevel1Line": "#F44336",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#F44336",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F44336",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#F44336",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F44336",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F44336",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#F44336",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F44336",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#F44336",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F44336",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F44336",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#F44336",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F44336",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#F44336",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F44336",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F44336",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#F44336",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F44336",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#F44336",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F44336",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F44336",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#F44336",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F44336",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#F44336",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F44336",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             },
             {
                 "centerToLevel1Line": "#F44336",
                 "level1Text": "#FFFFFF",
                 "level1Background": "#F44336",
+                "level1Border": "transparent",
                 "level1ToLevel2Line": "#F44336",
                 "level2Text": "#FFFFFF",
                 "level2Background": "#F44336",
+                "level2Border": "transparent",
                 "level2ToNormalLine": "#F44336",
                 "normalText": "#000000",
-                "normalBackground": "transparent"
+                "normalBackground": "transparent",
+                "normalBorder": "transparent"
             }
         ]
     }
@@ -6190,19 +6668,19 @@ const constants_1 = __require(24);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-22T09:00:00+09:00',
-    buildId: 'yemind-v0.9.1-20260722',
+    buildTime: '2026-07-22T13:30:00+09:00',
+    buildId: 'yemind-v0.9.2-20260722',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、分屏大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '补全 19 套主题的分层节点、文字和连线颜色，并统一主题数据生成与运行时渲染。',
+    releaseSummary: '补全主题节点边框颜色，并统一修复主题与彩虹连线切换后的即时完整重绘。',
     highlights: [
-        '完整接入晨曦、彩虹、活力、舞动、代码、和风、岛屿、玫瑰、薄荷、绿茶、永恒、奶油、花海、珊瑚、绚丽、香槟、香水、禅心和律动 19 套主题。',
-        '每套主题分别控制导图背景、中心节点、一级节点、二级节点、普通节点及三个层级的父子连线颜色。',
-        '三套基础主题补齐浅色和深色配置，主题注册表共 22 套主题、25 个实际外观定义。',
-        '主题颜色由 JSON 单一数据源自动生成，构建、检查和测试前会重新生成运行时代码。',
-        '节点局部文字色、背景色和连线色继续优先于整图主题，生成样式不会写入导图数据。',
+        '19 套命名主题增加中心、一级、二级和普通节点边框颜色，三套基础主题沿用各自浅色和深色描边配置。',
+        '主题、彩虹连线和层级颜色改为一次原子外观事务，配置完成后只执行一次完整重绘。',
+        '切换主题或彩虹连线后立即刷新节点、连线、关联线和外框，不再依赖后续结构变化触发。',
+        '完整重绘保留缩放、平移和节点选择，不写入节点局部样式，也不增加撤销历史。',
+        '主题 JSON、菜单、运行时、测试和发布文档继续由同一数据源同步生成与验证。',
     ],
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -6235,7 +6713,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.1';
+exports.PLUGIN_VERSION = '0.9.2';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -6988,10 +7466,10 @@ function escapeHtml(value) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
 const YeMindEditor_1 = __require(32);
-const deferredMount_1 = __require(236);
+const deferredMount_1 = __require(237);
 const constants_1 = __require(24);
 const visibleElement_1 = __require(224);
-const tabNodeFocus_1 = __require(237);
+const tabNodeFocus_1 = __require(238);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -7122,13 +7600,13 @@ const projectStylePanel_1 = __require(229);
 const canvasRichTextVisibility_1 = __require(230);
 const searchPanelState_1 = __require(231);
 const projectStyle_1 = __require(14);
-const themeColorRuntime_1 = __require(191);
-const nodeQuickActions_1 = __require(232);
+const appearanceTransaction_1 = __require(232);
+const nodeQuickActions_1 = __require(233);
 const projectControls_1 = __require(28);
 const nodeNoteState_1 = __require(185);
-const canvasRightDrag_1 = __require(233);
-const focusHighlight_1 = __require(234);
-const editingSurfaceCoordinator_1 = __require(235);
+const canvasRightDrag_1 = __require(234);
+const focusHighlight_1 = __require(235);
+const editingSurfaceCoordinator_1 = __require(236);
 class YeMindEditor {
     constructor(options) {
         this.options = options;
@@ -8169,8 +8647,6 @@ class YeMindEditor {
             ...outerFrameOptions,
         });
         this.applyMapAppearance();
-        this.map?.associativeLine?.renderAllLines?.();
-        this.map?.outerFrame?.renderOuterFrames?.();
         this.updateRelationPresentation();
         this.updateOuterFramePresentation();
         this.updateSelectionPresentation();
@@ -8204,16 +8680,20 @@ class YeMindEditor {
         });
         this.canvasEl.style.backgroundColor = String(projectAppearance.themeConfig.backgroundColor ?? "");
         const normalizedProjectStyle = (0, projectStyle_1.normalizeProjectStyle)(this.current.projectStyle);
-        (0, themeColorRuntime_1.configureThemeColorRuntime)(this.map, {
-            appearance: appearance.colorAppearance,
+        (0, appearanceTransaction_1.applyMapAppearanceTransaction)({
+            map: this.map,
+            themeConfig: projectAppearance.themeConfig,
+            rainbowLinesConfig: projectAppearance.rainbow,
+            colorAppearance: appearance.colorAppearance,
             useThemeLineColors: normalizedProjectStyle.rainbowLines === null,
+            render,
+            afterRender: () => {
+                this.map?.associativeLine?.renderAllLines?.();
+                this.map?.outerFrame?.renderOuterFrames?.();
+                this.nodeQuickActions?.scheduleRefresh();
+                this.updateSelectionPresentation();
+            },
         });
-        this.map.setThemeConfig(projectAppearance.themeConfig, true);
-        this.map.updateConfig({ rainbowLinesConfig: projectAppearance.rainbow });
-        if (render)
-            this.map.render();
-        this.map?.associativeLine?.renderAllLines?.();
-        this.map?.outerFrame?.renderOuterFrames?.();
     }
     bindAppearanceObserver() {
         this.appearanceMode = (0, themePresets_1.detectAppearance)();
@@ -70126,7 +70606,7 @@ exports.resolveThemeBranch = resolveThemeBranch;
 exports.resolveThemeNodeColors = resolveThemeNodeColors;
 exports.installThemeColorRuntime = installThemeColorRuntime;
 exports.configureThemeColorRuntime = configureThemeColorRuntime;
-const STYLE_KEYS = ['fillColor', 'color', 'lineColor'];
+const STYLE_KEYS = ['fillColor', 'color', 'borderColor', 'lineColor'];
 function normalizeThemeBranchIndex(branchIndex, cycleLength) {
     const safeCycle = [1, 3, 4, 6].includes(cycleLength) ? cycleLength : 1;
     const safeIndex = Number.isFinite(branchIndex) ? Math.trunc(branchIndex) : 0;
@@ -70141,6 +70621,7 @@ function resolveThemeNodeColors(appearance, layerIndex, branchIndex) {
         return {
             fillColor: appearance.centerBackground,
             color: appearance.centerText,
+            borderColor: appearance.centerBorder,
         };
     }
     const branch = resolveThemeBranch(appearance, branchIndex);
@@ -70148,6 +70629,7 @@ function resolveThemeNodeColors(appearance, layerIndex, branchIndex) {
         return {
             fillColor: branch.level1Background,
             color: branch.level1Text,
+            borderColor: branch.level1Border,
             lineColor: branch.centerToLevel1Line,
         };
     }
@@ -70155,12 +70637,14 @@ function resolveThemeNodeColors(appearance, layerIndex, branchIndex) {
         return {
             fillColor: branch.level2Background,
             color: branch.level2Text,
+            borderColor: branch.level2Border,
             lineColor: branch.level1ToLevel2Line,
         };
     }
     return {
         fillColor: branch.normalBackground,
         color: branch.normalText,
+        borderColor: branch.normalBorder,
         lineColor: branch.level2ToNormalLine,
     };
 }
@@ -70184,6 +70668,7 @@ class ThemeColorRuntime {
             this.positionByData.set(data, { layerIndex, branchIndex });
             this.syncAccessor(data, 'fillColor', true);
             this.syncAccessor(data, 'color', true);
+            this.syncAccessor(data, 'borderColor', true);
             this.syncAccessor(data, 'lineColor', layerIndex > 0 && this.config.useThemeLineColors);
         }
         const children = Array.isArray(node.children) ? node.children : [];
@@ -74830,6 +75315,118 @@ function setSearchReplaceExpanded(panel, expanded) {
 
 },
 232: function(module, exports, __require, __externalRequire) {
+// /src/core/appearanceTransaction.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.applyMapAppearanceTransaction = applyMapAppearanceTransaction;
+const themeColorRuntime_1 = __require(191);
+const APPEARANCE_RENDER_SOURCE = 'changeTheme';
+const REVISION_BY_MAP = new WeakMap();
+const ACTIVE_NODE_UIDS_BY_MAP = new WeakMap();
+function readNodeUid(node) {
+    const direct = node?.getData?.('uid');
+    if (typeof direct === 'string' && direct)
+        return direct;
+    const data = node?.getData?.();
+    const candidates = [
+        data?.uid,
+        node?.nodeData?.data?.uid,
+        node?.nodeData?.uid,
+        node?.data?.uid,
+        node?.uid,
+    ];
+    return candidates.find((value) => typeof value === 'string' && value) ?? null;
+}
+function replaceRainbowLinesConfig(map, config) {
+    const exact = {
+        ...config,
+        open: Boolean(config.open),
+        colorsList: Array.isArray(config.colorsList) ? [...config.colorsList] : [],
+    };
+    if (map.opt && typeof map.opt === 'object') {
+        const previous = { ...map.opt };
+        map.emit?.('before_update_config', map.opt);
+        // simple-mind-map updateConfig() deep-merges arrays and would concatenate
+        // old and new palette colors. Rainbow palettes require replacement semantics.
+        map.opt.rainbowLinesConfig = exact;
+        map.emit?.('after_update_config', map.opt, previous);
+        return;
+    }
+    map.updateConfig({ rainbowLinesConfig: exact });
+}
+function captureActiveNodeUids(map) {
+    const active = Array.isArray(map.renderer?.activeNodeList)
+        ? map.renderer.activeNodeList
+        : [];
+    return [...new Set(active.map(readNodeUid).filter((uid) => Boolean(uid)))];
+}
+function restoreActiveNodes(map, uids) {
+    if (uids.length === 0)
+        return;
+    const renderer = map.renderer;
+    if (!renderer?.findNodeByUid)
+        return;
+    const nodes = uids
+        .map((uid) => renderer.findNodeByUid?.(uid))
+        .filter((node) => Boolean(node));
+    if (nodes.length === 0)
+        return;
+    if (typeof renderer.activeMultiNode === 'function') {
+        renderer.activeMultiNode(nodes);
+        return;
+    }
+    if (typeof renderer.addNodeToActiveList === 'function') {
+        for (const node of nodes)
+            renderer.addNodeToActiveList(node, true);
+        renderer.emitNodeActiveEvent?.(nodes[nodes.length - 1]);
+    }
+}
+/**
+ * Apply all visual configuration as one renderer transaction.
+ *
+ * Theme, per-level runtime colors and rainbow-line configuration are updated
+ * before a single complete redraw. This prevents the renderer from reusing
+ * stale node/line caches while keeping view transform and local node styles.
+ */
+function applyMapAppearanceTransaction(options) {
+    const { map, themeConfig, rainbowLinesConfig, colorAppearance, useThemeLineColors, render = true, afterRender, } = options;
+    (0, themeColorRuntime_1.configureThemeColorRuntime)(map, {
+        appearance: colorAppearance,
+        useThemeLineColors,
+    });
+    map.setThemeConfig(themeConfig, true);
+    replaceRainbowLinesConfig(map, rainbowLinesConfig);
+    if (!render)
+        return;
+    const mapKey = map;
+    const revision = (REVISION_BY_MAP.get(mapKey) ?? 0) + 1;
+    REVISION_BY_MAP.set(mapKey, revision);
+    // A full redraw temporarily clears renderer.activeNodeList. When several
+    // appearance changes are requested before the first redraw completes, keep
+    // the last non-empty snapshot so the newest transaction can restore it.
+    const currentActiveNodeUids = captureActiveNodeUids(map);
+    if (currentActiveNodeUids.length > 0) {
+        ACTIVE_NODE_UIDS_BY_MAP.set(mapKey, currentActiveNodeUids);
+    }
+    const activeNodeUids = ACTIVE_NODE_UIDS_BY_MAP.get(mapKey) ?? [];
+    const complete = () => {
+        if (REVISION_BY_MAP.get(mapKey) !== revision)
+            return;
+        ACTIVE_NODE_UIDS_BY_MAP.delete(mapKey);
+        restoreActiveNodes(map, activeNodeUids);
+        afterRender?.();
+    };
+    if (typeof map.reRender === 'function') {
+        map.reRender(complete, APPEARANCE_RENDER_SOURCE);
+        return;
+    }
+    // Compatibility fallback for test doubles or older compatible renderers.
+    // Production simple-mind-map exposes reRender(), which is always preferred.
+    map.render?.(complete, APPEARANCE_RENDER_SOURCE);
+}
+
+},
+233: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeQuickActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -74968,7 +75565,7 @@ class NodeQuickActionsController {
 exports.NodeQuickActionsController = NodeQuickActionsController;
 
 },
-233: function(module, exports, __require, __externalRequire) {
+234: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRightDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75101,7 +75698,7 @@ class CanvasRightDragController {
 exports.CanvasRightDragController = CanvasRightDragController;
 
 },
-234: function(module, exports, __require, __externalRequire) {
+235: function(module, exports, __require, __externalRequire) {
 // /src/editor/focusHighlight.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75166,7 +75763,7 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
 }
 
 },
-235: function(module, exports, __require, __externalRequire) {
+236: function(module, exports, __require, __externalRequire) {
 // /src/editor/editingSurfaceCoordinator.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75251,7 +75848,7 @@ class EditingSurfaceCoordinator {
 exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
 
 },
-236: function(module, exports, __require, __externalRequire) {
+237: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75273,7 +75870,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-237: function(module, exports, __require, __externalRequire) {
+238: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75297,7 +75894,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-238: function(module, exports, __require, __externalRequire) {
+239: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75353,7 +75950,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-239: function(module, exports, __require, __externalRequire) {
+240: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75379,7 +75976,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-240: function(module, exports, __require, __externalRequire) {
+241: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75395,7 +75992,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-241: function(module, exports, __require, __externalRequire) {
+242: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75422,7 +76019,7 @@ function initializePluginStartup(options) {
 }
 
 },
-242: function(module, exports, __require, __externalRequire) {
+243: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

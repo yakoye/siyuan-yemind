@@ -76,15 +76,95 @@ with sync_playwright() as p:
       const root = window.__pluginSmoke?.container;
       return root?.querySelector('[data-role="canvas"] svg') || root?.querySelector('.ymz-missing');
     }""", timeout=30000)
-    theme_switch = page.evaluate("""async () => {
-      const { plugin, map, container } = window.__pluginSmoke;
-      const themeSelect = container.querySelector('select[data-action="theme"]');
+    initial_visual = page.evaluate("""() => {
+      const container = window.__pluginSmoke.container;
+      const svg = container.querySelector('[data-role="canvas"] svg');
+      const shapes = [...svg.querySelectorAll('.smm-node-shape')];
+      const lines = [...svg.querySelectorAll('.smm-line-container path')];
+      return {
+        transform: svg.querySelector('.smm-container')?.getAttribute('transform') || '',
+        root: { fill: shapes[0]?.getAttribute('fill'), stroke: shapes[0]?.getAttribute('stroke'), width: shapes[0]?.getAttribute('stroke-width') },
+        branch: { fill: shapes[1]?.getAttribute('fill'), stroke: shapes[1]?.getAttribute('stroke'), width: shapes[1]?.getAttribute('stroke-width') },
+        lineColors: lines.map(line => line.getAttribute('stroke')),
+      };
+    }""")
+    page.evaluate("""() => {
+      const themeSelect = window.__pluginSmoke.container.querySelector('select[data-action="theme"]');
       themeSelect.value = 'scheme-dawn';
       themeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-      await new Promise(resolve => setTimeout(resolve, 900));
+    }""")
+    page.wait_for_function("""() => {
+      const svg = window.__pluginSmoke.container.querySelector('[data-role="canvas"] svg');
+      const shape = svg?.querySelectorAll('.smm-node-shape')[1];
+      const line = svg?.querySelector('.smm-line-container path');
+      return shape?.getAttribute('fill') === '#ff6b6b' && line?.getAttribute('stroke') === '#ff6b6b';
+    }""", timeout=3000)
+    theme_visual = page.evaluate("""() => {
+      const { plugin, map, container } = window.__pluginSmoke;
+      const svg = container.querySelector('[data-role="canvas"] svg');
+      const shapes = [...svg.querySelectorAll('.smm-node-shape')];
+      const lines = [...svg.querySelectorAll('.smm-line-container path')];
       return {
-        selectedTheme: themeSelect.value,
+        transform: svg.querySelector('.smm-container')?.getAttribute('transform') || '',
+        root: { fill: shapes[0]?.getAttribute('fill'), stroke: shapes[0]?.getAttribute('stroke'), width: shapes[0]?.getAttribute('stroke-width') },
+        branch: { fill: shapes[1]?.getAttribute('fill'), stroke: shapes[1]?.getAttribute('stroke'), width: shapes[1]?.getAttribute('stroke-width') },
+        lineColors: lines.map(line => line.getAttribute('stroke')),
+        selectedTheme: container.querySelector('select[data-action="theme"]')?.value || '',
         persistedTheme: plugin.repository.get(map.id)?.theme || '',
+      };
+    }""")
+    page.evaluate("""() => {
+      const select = window.__pluginSmoke.container.querySelector('select[data-project-style="rainbowScheme"]');
+      select.value = 'code';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }""")
+    page.wait_for_function("""() => {
+      const lines = window.__pluginSmoke.container.querySelectorAll('.smm-line-container path');
+      return lines[0]?.getAttribute('stroke') === '#fff0b8' && lines[1]?.getAttribute('stroke') === '#cbffb8';
+    }""", timeout=3000)
+    page.wait_for_timeout(700)
+    rainbow_visual = page.evaluate("""() => {
+      const { plugin, map, container } = window.__pluginSmoke;
+      const svg = container.querySelector('[data-role="canvas"] svg');
+      const shapes = [...svg.querySelectorAll('.smm-node-shape')];
+      const lines = [...svg.querySelectorAll('.smm-line-container path')];
+      return {
+        transform: svg.querySelector('.smm-container')?.getAttribute('transform') || '',
+        branchFill: shapes[1]?.getAttribute('fill'),
+        lineColors: lines.map(line => line.getAttribute('stroke')),
+        persistedTheme: plugin.repository.get(map.id)?.theme || '',
+        persistedProjectStyle: plugin.repository.get(map.id)?.projectStyle || null,
+      };
+    }""")
+    page.evaluate("""() => {
+      const themeSelect = window.__pluginSmoke.container.querySelector('select[data-action="theme"]');
+      themeSelect.value = 'yemind-default';
+      themeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    }""")
+    page.wait_for_function("""() => {
+      const shapes = window.__pluginSmoke.container.querySelectorAll('.smm-node-shape');
+      return shapes[0]?.getAttribute('fill') === '#ffffff' &&
+        shapes[0]?.getAttribute('stroke') === '#cbd5e1' &&
+        shapes[1]?.getAttribute('fill') === '#ffffff' &&
+        shapes[1]?.getAttribute('stroke') === '#cbd5e1';
+    }""", timeout=3000)
+    page.evaluate("""() => { document.documentElement.dataset.themeMode = 'dark'; }""")
+    page.wait_for_function("""() => {
+      const shapes = window.__pluginSmoke.container.querySelectorAll('.smm-node-shape');
+      return shapes[0]?.getAttribute('fill') === '#0b1220' &&
+        shapes[0]?.getAttribute('stroke') === '#64748b' &&
+        shapes[1]?.getAttribute('fill') === '#0b1220' &&
+        shapes[1]?.getAttribute('stroke') === '#64748b';
+    }""", timeout=3000)
+    dark_visual = page.evaluate("""() => {
+      const { container } = window.__pluginSmoke;
+      const svg = container.querySelector('[data-role="canvas"] svg');
+      const shapes = [...svg.querySelectorAll('.smm-node-shape')];
+      return {
+        transform: svg.querySelector('.smm-container')?.getAttribute('transform') || '',
+        appearance: container.querySelector('.ymz-editor')?.dataset.appearance || '',
+        root: { fill: shapes[0]?.getAttribute('fill'), stroke: shapes[0]?.getAttribute('stroke'), width: shapes[0]?.getAttribute('stroke-width') },
+        branch: { fill: shapes[1]?.getAttribute('fill'), stroke: shapes[1]?.getAttribute('stroke'), width: shapes[1]?.getAttribute('stroke-width') },
       };
     }""")
     result = page.evaluate("""() => {
@@ -114,7 +194,25 @@ with sync_playwright() as p:
       raise RuntimeError('Console errors:\n' + '\n'.join(console_errors))
     if not result['editorMounted'] or not result['svgMounted'] or result['themeOptionCount'] != 22:
       raise RuntimeError(f'Editor smoke failed: setup={setup}, result={result}')
-    if theme_switch != {'selectedTheme': 'scheme-dawn', 'persistedTheme': 'scheme-dawn'}:
-      raise RuntimeError(f'Theme switch persistence failed: {theme_switch}')
-    print(result)
+    if initial_visual['root'] != {'fill': '#ffffff', 'stroke': '#cbd5e1', 'width': '2'}:
+      raise RuntimeError(f'Initial border rendering failed: {initial_visual}')
+    if theme_visual['branch'] != {'fill': '#ff6b6b', 'stroke': 'transparent', 'width': '0'}:
+      raise RuntimeError(f'Immediate theme refresh failed: {theme_visual}')
+    if theme_visual['selectedTheme'] != 'scheme-dawn':
+      raise RuntimeError(f'Theme selection failed: {theme_visual}')
+    if rainbow_visual['lineColors'][:2] != ['#fff0b8', '#cbffb8']:
+      raise RuntimeError(f'Immediate rainbow refresh failed: {rainbow_visual}')
+    if rainbow_visual['branchFill'] != '#ff6b6b':
+      raise RuntimeError(f'Rainbow change overwrote theme node colors: {rainbow_visual}')
+    if rainbow_visual['persistedTheme'] != 'scheme-dawn':
+      raise RuntimeError(f'Theme persistence failed: {rainbow_visual}')
+    if rainbow_visual['persistedProjectStyle'].get('rainbowScheme') != 'code' or rainbow_visual['persistedProjectStyle'].get('rainbowLines') is not True:
+      raise RuntimeError(f'Rainbow persistence failed: {rainbow_visual}')
+    if dark_visual['appearance'] != 'dark' or dark_visual['root'] != {'fill': '#0b1220', 'stroke': '#64748b', 'width': '2'}:
+      raise RuntimeError(f'Host dark appearance refresh failed: {dark_visual}')
+    if dark_visual['branch'] != {'fill': '#0b1220', 'stroke': '#64748b', 'width': '2'}:
+      raise RuntimeError(f'Dark border rendering failed: {dark_visual}')
+    if len({initial_visual['transform'], theme_visual['transform'], rainbow_visual['transform'], dark_visual['transform']}) != 1:
+      raise RuntimeError(f'Appearance refresh changed the viewport: {initial_visual}, {theme_visual}, {rainbow_visual}, {dark_visual}')
+    print({'editor': result, 'initial': initial_visual, 'theme': theme_visual, 'rainbow': rainbow_visual, 'dark': dark_visual})
     browser.close()

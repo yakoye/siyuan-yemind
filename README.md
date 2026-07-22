@@ -2,18 +2,28 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.1`  
+Current version: `0.9.2`  
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.2
+
+- Added center, first-level, second-level and normal-node border colors to all named themes.
+- Unified theme and rainbow-line changes into one atomic appearance transaction followed by one complete redraw.
+- Theme and rainbow palette changes now refresh immediately while preserving zoom, pan, selection and local node styles.
 
 ## v0.9.1
 
-- Complete layered color definitions for 19 named themes.
-- Separate colors for the map background, center, first-level, second-level and ordinary nodes.
-- Separate center-to-first, first-to-second and second-to-ordinary connection colors.
-- Three base themes with independent light and dark appearances.
-- 22 public themes and 25 generated appearance definitions.
-- JSON-driven theme color generation before build, type checking and tests.
-- Local node text, background and line colors remain authoritative.
+- Completed all 19 named theme definitions for center and descendant node levels.
+- Registered 22 public themes backed by one generated runtime catalog.
+- Preserved node-local text, fill and line styles above whole-map theme values.
+
+## v0.9.0
+
+- Safe node-image deletion with confirmation.
+- In-editor image lightbox with wheel zoom, reset and multiple close gestures.
+- Clean note/comment hover previews without native title overlays.
+- Ten named rainbow-line palettes and matching whole-map themes.
+- Three retained base themes: YeMind Default, Ink Branch and Material 3 Basic.
 
 ## Install
 

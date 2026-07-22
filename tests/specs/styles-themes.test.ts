@@ -16,3 +16,4 @@ import '../suites/styles-themes/v067ProjectColorSearchComments.suite';
 import '../suites/styles-themes/v082DockIconTheme.suite';
 import '../suites/styles-themes/v090ColorSchemes.suite';
 import '../suites/styles-themes/v091ThemeColorDefinitions.suite';
+import '../suites/styles-themes/v092AppearanceRefresh.suite';

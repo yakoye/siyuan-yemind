@@ -3,6 +3,7 @@ import type { ThemeColorAppearance, ThemeColorBranch } from './themeColorData';
 export interface ResolvedThemeNodeColors {
   fillColor: string;
   color: string;
+  borderColor: string;
   lineColor?: string;
 }
 
@@ -21,7 +22,7 @@ interface NodePosition {
   branchIndex: number;
 }
 
-const STYLE_KEYS = ['fillColor', 'color', 'lineColor'] as const;
+const STYLE_KEYS = ['fillColor', 'color', 'borderColor', 'lineColor'] as const;
 type RuntimeStyleKey = typeof STYLE_KEYS[number];
 
 export function normalizeThemeBranchIndex(branchIndex: number, cycleLength: number): number {
@@ -47,6 +48,7 @@ export function resolveThemeNodeColors(
     return {
       fillColor: appearance.centerBackground,
       color: appearance.centerText,
+      borderColor: appearance.centerBorder,
     };
   }
   const branch = resolveThemeBranch(appearance, branchIndex);
@@ -54,6 +56,7 @@ export function resolveThemeNodeColors(
     return {
       fillColor: branch.level1Background,
       color: branch.level1Text,
+      borderColor: branch.level1Border,
       lineColor: branch.centerToLevel1Line,
     };
   }
@@ -61,12 +64,14 @@ export function resolveThemeNodeColors(
     return {
       fillColor: branch.level2Background,
       color: branch.level2Text,
+      borderColor: branch.level2Border,
       lineColor: branch.level1ToLevel2Line,
     };
   }
   return {
     fillColor: branch.normalBackground,
     color: branch.normalText,
+    borderColor: branch.normalBorder,
     lineColor: branch.level2ToNormalLine,
   };
 }
@@ -91,6 +96,7 @@ class ThemeColorRuntime {
       this.positionByData.set(data, { layerIndex, branchIndex });
       this.syncAccessor(data, 'fillColor', true);
       this.syncAccessor(data, 'color', true);
+      this.syncAccessor(data, 'borderColor', true);
       this.syncAccessor(data, 'lineColor', layerIndex > 0 && this.config.useThemeLineColors);
     }
     const children = Array.isArray(node.children) ? node.children : [];

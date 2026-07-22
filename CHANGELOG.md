@@ -1,15 +1,21 @@
 # Changelog
 
+## 0.9.2 - 2026-07-22
+
+- Added center, first-level, second-level and normal-node border colors to the complete theme data model.
+- Replaced separate theme/rainbow refresh paths with one atomic appearance transaction.
+- Fixed theme changes not appearing until a later structural render.
+- Fixed rainbow-line palette changes not appearing immediately.
+- Preserved viewport transforms and active-node selection across complete appearance redraws.
+- Kept node-local text, fill, border and line styles above whole-map theme fallbacks.
+- Expanded permanent regression coverage to 15 domains and 162 scenario modules.
+
 ## 0.9.1 - 2026-07-22
 
-- Added complete layered color definitions for all 19 named themes.
-- Added separate background, text and connection colors for center, first-level, second-level and ordinary nodes.
-- Added 1, 3, 4 and 6-color branch cycles from the source theme records.
-- Completed light and dark appearances for YeMind Default, Ink Branch and Material 3 Basic.
-- Expanded the public registry to 22 themes backed by 25 generated appearance definitions.
-- Added a JSON-to-TypeScript generator and automatic regeneration before development, build, type checking and tests.
-- Preserved local node style precedence without serializing generated theme fallback colors.
-- Added dedicated v0.9.1 regression coverage and updated the suite structure to 15 domains and 161 scenario modules.
+- Completed the 19 named theme definitions for center, first-level, second-level and normal-node text, fill and line colors.
+- Added three complete base themes with light and dark appearances.
+- Generated runtime theme data from one checked-in JSON source and registered 22 public themes.
+- Preserved node-local text, fill and line styles above theme fallbacks.
 
 ## 0.9.0 - 2026-07-21
 

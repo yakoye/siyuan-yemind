@@ -58,6 +58,11 @@ function level(
   return { fillColor, color, borderColor, borderWidth, borderRadius, fontSize, fontWeight };
 }
 
+
+function borderWidth(color: string): number {
+  return color === 'transparent' ? 0 : 2;
+}
+
 function requiredAppearance(presetId: string, appearance: YeMindAppearance): ThemeColorAppearance {
   const item = getThemeColorAppearance(presetId, appearance);
   if (!item) throw new Error(`Missing theme color appearance: ${presetId}/${appearance}`);
@@ -79,9 +84,9 @@ function buildVariant(
       lineColor: branch.centerToLevel1Line,
       generalizationLineColor: branch.level1ToLevel2Line,
       associativeLineColor: '#F59E0B',
-      root: level(colors.centerBackground, colors.centerText, colors.appearance === 'dark' ? '#64748B' : '#CBD5E1', 2, 10, 14, '400'),
-      second: level(branch.level1Background, branch.level1Text, colors.appearance === 'dark' ? '#64748B' : '#CBD5E1', 2, 10, 14, '400'),
-      node: level(branch.level2Background, branch.level2Text, colors.appearance === 'dark' ? '#64748B' : '#CBD5E1', 2, 10, 14, '400'),
+      root: level(colors.centerBackground, colors.centerText, colors.centerBorder, borderWidth(colors.centerBorder), 10, 14, '400'),
+      second: level(branch.level1Background, branch.level1Text, branch.level1Border, borderWidth(branch.level1Border), 10, 14, '400'),
+      node: level(branch.level2Background, branch.level2Text, branch.level2Border, borderWidth(branch.level2Border), 10, 14, '400'),
       rainbow: { open: false, colorsList: colorList },
       lineWidth: 2,
       lineRadius: 10,
@@ -94,9 +99,9 @@ function buildVariant(
       lineColor: branch.centerToLevel1Line,
       generalizationLineColor: branch.level1ToLevel2Line,
       associativeLineColor: colors.appearance === 'dark' ? '#A3A3A3' : '#737373',
-      root: level(colors.centerBackground, colors.centerText, 'transparent', 0, 0, 26, '800'),
-      second: level(branch.level1Background, branch.level1Text, 'transparent', 0, 0, 18, '700'),
-      node: level(branch.level2Background, branch.level2Text, 'transparent', 0, 0, 14, '600'),
+      root: level(colors.centerBackground, colors.centerText, colors.centerBorder, borderWidth(colors.centerBorder), 0, 26, '800'),
+      second: level(branch.level1Background, branch.level1Text, branch.level1Border, borderWidth(branch.level1Border), 0, 18, '700'),
+      node: level(branch.level2Background, branch.level2Text, branch.level2Border, borderWidth(branch.level2Border), 0, 14, '600'),
       rainbow: { open: false, colorsList: colorList },
       nodeUseLineStyle: true,
       lineWidth: 4,
@@ -110,9 +115,9 @@ function buildVariant(
       lineColor: branch.centerToLevel1Line,
       generalizationLineColor: branch.level1ToLevel2Line,
       associativeLineColor: colors.appearance === 'dark' ? '#EFB8C8' : '#7D5260',
-      root: level(colors.centerBackground, colors.centerText, 'transparent', 0, 16, 16, '700'),
-      second: level(branch.level1Background, branch.level1Text, 'transparent', 0, 16, 15, '600'),
-      node: level(branch.level2Background, branch.level2Text, 'transparent', 0, 16, 14, '450'),
+      root: level(colors.centerBackground, colors.centerText, colors.centerBorder, borderWidth(colors.centerBorder), 16, 16, '700'),
+      second: level(branch.level1Background, branch.level1Text, branch.level1Border, borderWidth(branch.level1Border), 16, 15, '600'),
+      node: level(branch.level2Background, branch.level2Text, branch.level2Border, borderWidth(branch.level2Border), 16, 14, '450'),
       rainbow: { open: false, colorsList: colorList },
       lineWidth: 2,
       lineRadius: 16,
@@ -125,9 +130,9 @@ function buildVariant(
     lineColor: branch.centerToLevel1Line,
     generalizationLineColor: branch.level1ToLevel2Line,
     associativeLineColor: branch.centerToLevel1Line,
-    root: level(colors.centerBackground, colors.centerText, 'transparent', 0, 0, 25, '800'),
-    second: level(branch.level1Background, branch.level1Text, 'transparent', 0, 10, 18, '700'),
-    node: level(branch.level2Background, branch.level2Text, 'transparent', 0, 8, 14, '400'),
+    root: level(colors.centerBackground, colors.centerText, colors.centerBorder, borderWidth(colors.centerBorder), 0, 25, '800'),
+    second: level(branch.level1Background, branch.level1Text, branch.level1Border, borderWidth(branch.level1Border), 10, 18, '700'),
+    node: level(branch.level2Background, branch.level2Text, branch.level2Border, borderWidth(branch.level2Border), 8, 14, '400'),
     rainbow: { open: true, colorsList: colorList },
     lineWidth: 2.4,
     lineRadius: 16,
