@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.14 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.15 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -39,11 +39,11 @@ const releaseInfo_1 = __require(29);
 const constants_1 = __require(28);
 const dock_1 = __require(37);
 const tabs_1 = __require(38);
-const OpenMapTabRegistry_1 = __require(254);
-const pluginUrl_1 = __require(255);
-const operationSafety_1 = __require(256);
-const pluginStartup_1 = __require(257);
-const globalSearch_1 = __require(258);
+const OpenMapTabRegistry_1 = __require(255);
+const pluginUrl_1 = __require(256);
+const operationSafety_1 = __require(257);
+const pluginStartup_1 = __require(258);
+const globalSearch_1 = __require(259);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -6988,7 +6988,7 @@ exports.default = {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = {
-    "version": "1.1.0",
+    "version": "1.0.0",
     "type": "svg-directory-collection",
     "assetRoot": "assets",
     "collectionRoot": "clipart",
@@ -15847,7 +15847,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.14';
+exports.PLUGIN_VERSION = '0.9.15';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -15864,19 +15864,18 @@ const constants_1 = __require(28);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-23T10:30:00Z',
-    buildId: 'yemind-v0.9.14-20260723',
+    buildTime: '2026-07-23T12:30:00Z',
+    buildId: 'yemind-v0.9.15-20260723',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '将多选概要合并为一个范围概要，统一节点文字与外框的测量世代，并隔离拖动优先模式下的右键框选。',
+    releaseSummary: '根据 SVG 的真实固有宽高或 viewBox 计算剪贴图尺寸，保持原始纵横比，并自动修复旧版 72×72 默认插入节点。',
     highlights: [
-        '多选节点添加概要时，按最低公共祖先投影为一个连续范围，只创建一个综合概要。',
-        '富文本测量缓存迁移到保留编辑器样式的离屏宿主，迁移后只进行一次完整重排，避免文字和节点框来自不同渲染世代。',
-        '隐藏标签页恢复、缩放和重新布局后，长文本、自定义宽度、图片节点继续保持正确边界。',
-        '拖动优先模式中，右键拖动只平移画布，不再显示框选矩形，也不会改变当前节点选择。',
-        '普通右键单击仍可打开原有上下文菜单。',
+        '剪贴图插入不再强制写入 72×72，而是将原始宽高等比缩放到 72px 边界框内。',
+        '同时支持带 width/height、仅带 viewBox 以及浏览器已加载尺寸的 SVG。',
+        '打开旧导图时自动识别带 yemindClipartId 的旧 72×72 默认节点并恢复真实比例。',
+        '修正本地资源契约和测试中的剪贴图总数与分类计数，当前为 13 类 764 个。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -16821,10 +16820,10 @@ function escapeHtml(value) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
 const YeMindEditor_1 = __require(39);
-const deferredMount_1 = __require(252);
+const deferredMount_1 = __require(253);
 const constants_1 = __require(28);
-const visibleElement_1 = __require(237);
-const tabNodeFocus_1 = __require(253);
+const visibleElement_1 = __require(238);
+const tabNodeFocus_1 = __require(254);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -16927,45 +16926,46 @@ const relationData_1 = __require(203);
 const commands_1 = __require(204);
 const nodeDecorations_1 = __require(194);
 const registerPlugins_1 = __require(90);
-const checkpointDialog_1 = __require(209);
-const contextMenu_1 = __require(212);
+const checkpointDialog_1 = __require(210);
+const contextMenu_1 = __require(213);
 const dialogs_1 = __require(25);
-const nodeContentDialogs_1 = __require(213);
-const richTextDialogs_1 = __require(219);
-const editorStats_1 = __require(220);
-const editorTemplate_1 = __require(221);
-const outlineDrag_1 = __require(222);
-const StructuredOutlineEditorController_1 = __require(223);
-const splitPane_1 = __require(226);
-const RichTextToolbar_1 = __require(227);
+const nodeContentDialogs_1 = __require(214);
+const richTextDialogs_1 = __require(220);
+const editorStats_1 = __require(221);
+const editorTemplate_1 = __require(222);
+const outlineDrag_1 = __require(223);
+const StructuredOutlineEditorController_1 = __require(224);
+const splitPane_1 = __require(227);
+const RichTextToolbar_1 = __require(228);
 const shortcuts_1 = __require(32);
-const selectionPresentation_1 = __require(231);
-const saveRevision_1 = __require(232);
-const relationPresentation_1 = __require(233);
-const outerFramePresentation_1 = __require(234);
-const toolbarAvailability_1 = __require(235);
-const linkNavigation_1 = __require(236);
-const visibleElement_1 = __require(237);
-const imageFileLoading_1 = __require(214);
-const nodeImageInput_1 = __require(238);
-const nodeHoverPreview_1 = __require(239);
-const imageLightbox_1 = __require(240);
-const nodeStylePanel_1 = __require(241);
-const projectStylePanel_1 = __require(242);
-const layoutGalleryPanel_1 = __require(243);
-const localAssetDialogs_1 = __require(244);
+const selectionPresentation_1 = __require(232);
+const saveRevision_1 = __require(233);
+const relationPresentation_1 = __require(234);
+const outerFramePresentation_1 = __require(235);
+const toolbarAvailability_1 = __require(236);
+const linkNavigation_1 = __require(237);
+const visibleElement_1 = __require(238);
+const imageFileLoading_1 = __require(215);
+const nodeImageInput_1 = __require(239);
+const nodeHoverPreview_1 = __require(240);
+const imageLightbox_1 = __require(241);
+const nodeStylePanel_1 = __require(242);
+const projectStylePanel_1 = __require(243);
+const layoutGalleryPanel_1 = __require(244);
+const localAssetDialogs_1 = __require(245);
 const layoutAssetPresets_1 = __require(14);
 const measurementHost_1 = __require(202);
-const canvasRichTextVisibility_1 = __require(245);
-const searchPanelState_1 = __require(246);
+const canvasRichTextVisibility_1 = __require(246);
+const searchPanelState_1 = __require(247);
 const projectStyle_1 = __require(20);
-const appearanceTransaction_1 = __require(247);
-const nodeQuickActions_1 = __require(248);
+const appearanceTransaction_1 = __require(248);
+const nodeQuickActions_1 = __require(249);
 const projectControls_1 = __require(35);
 const nodeNoteState_1 = __require(195);
-const canvasRightDrag_1 = __require(249);
-const focusHighlight_1 = __require(250);
-const editingSurfaceCoordinator_1 = __require(251);
+const canvasRightDrag_1 = __require(250);
+const focusHighlight_1 = __require(251);
+const editingSurfaceCoordinator_1 = __require(252);
+const clipartGeometry_1 = __require(209);
 class YeMindEditor {
     constructor(options) {
         this.options = options;
@@ -17367,6 +17367,55 @@ class YeMindEditor {
         this.options.diagnostics.record("editor", "destroy-completed", this.current.id);
         this.options.container.innerHTML = "";
     }
+    async repairLegacyClipartGeometry(attempt = 0) {
+        const map = this.map;
+        const root = map?.renderer?.root;
+        if (!map || !root) {
+            if (map && !this.destroyed && attempt < 4) {
+                window.setTimeout(() => {
+                    void this.repairLegacyClipartGeometry(attempt + 1);
+                }, 40 * (attempt + 1));
+            }
+            return;
+        }
+        const candidates = [];
+        const visit = (node) => {
+            if (!node)
+                return;
+            const data = node.getData?.();
+            if ((0, clipartGeometry_1.isLegacyDefaultClipartGeometry)(data))
+                candidates.push(node);
+            const children = Array.isArray(node.children) ? node.children : [];
+            children.forEach(visit);
+        };
+        visit(root);
+        let repaired = 0;
+        for (const node of candidates) {
+            const data = node.getData?.();
+            const source = String(data?.image ?? '').trim();
+            if (!source)
+                continue;
+            const size = await (0, clipartGeometry_1.resolveClipartDisplaySize)(source);
+            if (this.destroyed || this.map !== map || !size.resolved)
+                continue;
+            map.execCommand('SET_NODE_IMAGE', node, {
+                url: source,
+                title: String(data?.imageTitle ?? ''),
+                width: size.width,
+                height: size.height,
+                custom: true,
+            });
+            map.execCommand('SET_NODE_DATA', node, {
+                yemindClipartGeometryVersion: clipartGeometry_1.CLIPART_GEOMETRY_VERSION,
+            });
+            repaired += 1;
+        }
+        if (repaired > 0) {
+            this.options.diagnostics.record('node-image', 'clipart-geometry-repaired', this.current.id, {
+                repaired,
+            });
+        }
+    }
     mount() {
         this.current.theme = (0, themePresets_1.normalizeThemePresetId)(this.current.theme);
         this.current.lineStyle = (0, themePresets_1.normalizeLineStyle)(this.current.lineStyle);
@@ -17503,6 +17552,9 @@ class YeMindEditor {
         this.canvasEl.addEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
         this.bindToolbar();
         this.bindMapEvents();
+        window.requestAnimationFrame(() => {
+            void this.repairLegacyClipartGeometry();
+        });
         this.bindAppearanceObserver();
         this.repositoryUnsubscribe = this.options.repository.subscribe((state) => {
             const next = state.maps.find((item) => item.id === this.current.id);
@@ -81013,6 +81065,7 @@ const nodeContentState_1 = __require(205);
 const codeBlock_1 = __require(206);
 const nodeStyle_1 = __require(207);
 const combinedSummary_1 = __require(208);
+const clipartGeometry_1 = __require(209);
 function createCommandAdapter(mindMap) {
     const activeNodes = () => Array.isArray(mindMap.renderer?.activeNodeList)
         ? mindMap.renderer.activeNodeList
@@ -81263,7 +81316,11 @@ function createCommandAdapter(mindMap) {
                 return;
             forEachActive((node) => {
                 mindMap.execCommand('SET_NODE_IMAGE', node, image);
-                mindMap.execCommand('SET_NODE_DATA', node, { yemindClipartId: image.id, imgPlacement: 'top' });
+                mindMap.execCommand('SET_NODE_DATA', node, {
+                    yemindClipartId: image.id,
+                    yemindClipartGeometryVersion: clipartGeometry_1.CLIPART_GEOMETRY_VERSION,
+                    imgPlacement: 'top',
+                });
             });
         },
         insertFormula: (formula, mode = 'inline') => {
@@ -81958,14 +82015,139 @@ function addCombinedSummary(mindMap, selectedNodes) {
 
 },
 209: function(module, exports, __require, __externalRequire) {
+// /src/core/clipartGeometry.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CLIPART_GEOMETRY_VERSION = exports.DEFAULT_CLIPART_BOX_SIZE = void 0;
+exports.parseSvgIntrinsicSize = parseSvgIntrinsicSize;
+exports.fitClipartSize = fitClipartSize;
+exports.resolveClipartDisplaySize = resolveClipartDisplaySize;
+exports.isLegacyDefaultClipartGeometry = isLegacyDefaultClipartGeometry;
+exports.DEFAULT_CLIPART_BOX_SIZE = 72;
+exports.CLIPART_GEOMETRY_VERSION = 2;
+const geometryCache = new Map();
+function positiveNumber(value) {
+    const number = Number(value);
+    return Number.isFinite(number) && number > 0 ? number : null;
+}
+function svgLength(value) {
+    const text = String(value ?? '').trim();
+    if (!text || text.endsWith('%'))
+        return null;
+    const match = text.match(/^([+]?(?:\d+(?:\.\d*)?|\.\d+))(?:px|pt|pc|mm|cm|in)?$/i);
+    return match ? positiveNumber(match[1]) : null;
+}
+function svgAttribute(tag, name) {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = tag.match(new RegExp(`\\b${escaped}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, 'i'));
+    return match ? (match[1] ?? match[2] ?? null) : null;
+}
+/**
+ * Reads the authored SVG viewport ratio. Explicit width/height are preferred
+ * because SVG documents without a viewBox otherwise stretch when embedded in
+ * a square <image> viewport. The viewBox is used when intrinsic dimensions are
+ * omitted or expressed as percentages.
+ */
+function parseSvgIntrinsicSize(source) {
+    const svgTag = String(source ?? '').match(/<svg\b[^>]*>/i)?.[0];
+    if (!svgTag)
+        return null;
+    const width = svgLength(svgAttribute(svgTag, 'width'));
+    const height = svgLength(svgAttribute(svgTag, 'height'));
+    if (width && height)
+        return { width, height };
+    const viewBox = svgAttribute(svgTag, 'viewBox');
+    if (!viewBox)
+        return null;
+    const values = viewBox.trim().split(/[\s,]+/g).map((part) => Number.parseFloat(part));
+    const viewBoxWidth = positiveNumber(values[2]);
+    const viewBoxHeight = positiveNumber(values[3]);
+    return viewBoxWidth && viewBoxHeight ? { width: viewBoxWidth, height: viewBoxHeight } : null;
+}
+function fitClipartSize(intrinsic, maxWidth = exports.DEFAULT_CLIPART_BOX_SIZE, maxHeight = exports.DEFAULT_CLIPART_BOX_SIZE) {
+    const width = positiveNumber(intrinsic.width);
+    const height = positiveNumber(intrinsic.height);
+    const boxWidth = positiveNumber(maxWidth) ?? exports.DEFAULT_CLIPART_BOX_SIZE;
+    const boxHeight = positiveNumber(maxHeight) ?? exports.DEFAULT_CLIPART_BOX_SIZE;
+    if (!width || !height)
+        return { width: boxWidth, height: boxHeight };
+    const scale = Math.min(boxWidth / width, boxHeight / height);
+    const round = (value) => Math.max(1, Math.round(value * 100) / 100);
+    return {
+        width: round(width * scale),
+        height: round(height * scale),
+    };
+}
+function imageIntrinsicSize(image) {
+    const width = positiveNumber(image?.naturalWidth);
+    const height = positiveNumber(image?.naturalHeight);
+    return width && height ? { width, height } : null;
+}
+async function resolveIntrinsicSize(url, image) {
+    try {
+        const response = await fetch(url, { cache: 'force-cache' });
+        if (response.ok) {
+            const parsed = parseSvgIntrinsicSize(await response.text());
+            if (parsed)
+                return { ...fitClipartSize(parsed), resolved: true, source: 'svg' };
+        }
+    }
+    catch {
+        // The already-loaded picker image remains a reliable fallback when fetch
+        // is blocked by a custom protocol or a transient host restriction.
+    }
+    const intrinsic = imageIntrinsicSize(image);
+    if (intrinsic)
+        return { ...fitClipartSize(intrinsic), resolved: true, source: 'image' };
+    return {
+        width: exports.DEFAULT_CLIPART_BOX_SIZE,
+        height: exports.DEFAULT_CLIPART_BOX_SIZE,
+        resolved: false,
+        source: 'fallback',
+    };
+}
+function resolveClipartDisplaySize(url, image) {
+    const key = String(url ?? '').trim();
+    if (!key)
+        return Promise.resolve({
+            width: exports.DEFAULT_CLIPART_BOX_SIZE,
+            height: exports.DEFAULT_CLIPART_BOX_SIZE,
+            resolved: false,
+            source: 'fallback',
+        });
+    const cached = geometryCache.get(key);
+    if (cached)
+        return cached;
+    const pending = resolveIntrinsicSize(key, image).catch(() => ({
+        width: exports.DEFAULT_CLIPART_BOX_SIZE,
+        height: exports.DEFAULT_CLIPART_BOX_SIZE,
+        resolved: false,
+        source: 'fallback',
+    }));
+    geometryCache.set(key, pending);
+    return pending;
+}
+function isLegacyDefaultClipartGeometry(data) {
+    if (!data?.yemindClipartId || Number(data.yemindClipartGeometryVersion ?? 0) >= exports.CLIPART_GEOMETRY_VERSION)
+        return false;
+    const width = Number(data.imageSize?.width);
+    const height = Number(data.imageSize?.height);
+    return Boolean(data.image)
+        && data.imageSize?.custom === true
+        && Math.abs(width - exports.DEFAULT_CLIPART_BOX_SIZE) < 0.01
+        && Math.abs(height - exports.DEFAULT_CLIPART_BOX_SIZE) < 0.01;
+}
+
+},
+210: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.openCheckpointManager = openCheckpointManager;
 const siyuan_1 = __externalRequire("siyuan");
-const checkpointPresentation_1 = __require(210);
+const checkpointPresentation_1 = __require(211);
 const dialogs_1 = __require(25);
-const checkpointDialogTemplate_1 = __require(211);
+const checkpointDialogTemplate_1 = __require(212);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -82032,7 +82214,7 @@ function openCheckpointManager(options) {
 }
 
 },
-210: function(module, exports, __require, __externalRequire) {
+211: function(module, exports, __require, __externalRequire) {
 // /src/checkpoints/checkpointPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82068,12 +82250,12 @@ function renderCheckpointListHtml(checkpoints, options) {
 }
 
 },
-211: function(module, exports, __require, __externalRequire) {
+212: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialogTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildCheckpointDialogContent = buildCheckpointDialogContent;
-const checkpointPresentation_1 = __require(210);
+const checkpointPresentation_1 = __require(211);
 function buildCheckpointDialogContent(checkpoints, readonly) {
     return `<div class="b3-dialog__content ymz-checkpoint-dialog">
     <div class="ymz-checkpoint-dialog__intro">检查点保存在独立历史文件中。恢复前会自动保存当前状态为保护检查点。</div>
@@ -82085,7 +82267,7 @@ function buildCheckpointDialogContent(checkpoints, readonly) {
 }
 
 },
-212: function(module, exports, __require, __externalRequire) {
+213: function(module, exports, __require, __externalRequire) {
 // /src/ui/contextMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82095,8 +82277,8 @@ const siyuan_1 = __externalRequire("siyuan");
 const layoutPresets_1 = __require(13);
 const themePresets_1 = __require(11);
 const projectControls_1 = __require(35);
-const nodeContentDialogs_1 = __require(213);
-const nodeContentMenu_1 = __require(218);
+const nodeContentDialogs_1 = __require(214);
+const nodeContentMenu_1 = __require(219);
 function openCanvasContextMenu(event, commands, options) {
     event.preventDefault();
     event.stopPropagation();
@@ -82228,7 +82410,7 @@ function openNodeContextMenu(event, commands, options = {}) {
 }
 
 },
-213: function(module, exports, __require, __externalRequire) {
+214: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82241,12 +82423,12 @@ exports.openImageDialog = openImageDialog;
 exports.openNoteDialog = openNoteDialog;
 exports.openCommentsDialog = openCommentsDialog;
 exports.showNodeActionUnavailable = showNodeActionUnavailable;
-const imageFileLoading_1 = __require(214);
+const imageFileLoading_1 = __require(215);
 const siyuan_1 = __externalRequire("siyuan");
 const nodeContentState_1 = __require(205);
-const dialogResize_1 = __require(215);
-const commentsPresentation_1 = __require(216);
-const inlineLink_1 = __require(217);
+const dialogResize_1 = __require(216);
+const commentsPresentation_1 = __require(217);
+const inlineLink_1 = __require(218);
 const nodeNoteState_1 = __require(195);
 function activeData(commands) {
     return commands.getPrimaryNodeData() ?? {};
@@ -82651,7 +82833,7 @@ function escapeAttribute(value) {
 }
 
 },
-214: function(module, exports, __require, __externalRequire) {
+215: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageFileLoading.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82669,7 +82851,7 @@ async function loadImageFileSelection(file, dependencies) {
 }
 
 },
-215: function(module, exports, __require, __externalRequire) {
+216: function(module, exports, __require, __externalRequire) {
 // /src/ui/dialogResize.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82736,7 +82918,7 @@ function bindDialogResize(handle, container) {
 }
 
 },
-216: function(module, exports, __require, __externalRequire) {
+217: function(module, exports, __require, __externalRequire) {
 // /src/ui/commentsPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82786,7 +82968,7 @@ function escapeAttribute(value) {
 }
 
 },
-217: function(module, exports, __require, __externalRequire) {
+218: function(module, exports, __require, __externalRequire) {
 // /src/editor/inlineLink.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82814,7 +82996,7 @@ function isSiyuanInlineLink(value) {
 }
 
 },
-218: function(module, exports, __require, __externalRequire) {
+219: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82883,7 +83065,7 @@ function createNodeMenuAvailability(input) {
 }
 
 },
-219: function(module, exports, __require, __externalRequire) {
+220: function(module, exports, __require, __externalRequire) {
 // /src/ui/richTextDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82891,7 +83073,7 @@ exports.CODE_LANGUAGES = void 0;
 exports.openInlineLinkDialog = openInlineLinkDialog;
 exports.openCodeBlockDialog = openCodeBlockDialog;
 const siyuan_1 = __externalRequire("siyuan");
-const inlineLink_1 = __require(217);
+const inlineLink_1 = __require(218);
 const CODE_LANGUAGES = [
     ['plain', '纯文本'],
     ['javascript', 'JavaScript'],
@@ -83031,7 +83213,7 @@ function openCodeBlockDialog(commands, settings) {
 }
 
 },
-220: function(module, exports, __require, __externalRequire) {
+221: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorStats.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83064,7 +83246,7 @@ function calculateEditorStats(tree) {
 }
 
 },
-221: function(module, exports, __require, __externalRequire) {
+222: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83213,7 +83395,7 @@ function escapeHtml(value) {
 }
 
 },
-222: function(module, exports, __require, __externalRequire) {
+223: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83308,14 +83490,14 @@ function resolveOutlinePointerDropIntent(input) {
 }
 
 },
-223: function(module, exports, __require, __externalRequire) {
+224: function(module, exports, __require, __externalRequire) {
 // /src/editor/StructuredOutlineEditorController.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StructuredOutlineEditorController = void 0;
 const sanitizeRichHtml_1 = __require(196);
-const outlineTextDocument_1 = __require(224);
-const structuredOutlineDocument_1 = __require(225);
+const outlineTextDocument_1 = __require(225);
+const structuredOutlineDocument_1 = __require(226);
 const INDENT_SIZE = 22;
 const PLAIN_INDENT = '    ';
 const BLOCK_TAGS = new Set(['DIV', 'P', 'LI', 'UL', 'OL', 'SECTION', 'ARTICLE']);
@@ -85027,7 +85209,7 @@ function closestElement(node) {
 }
 
 },
-224: function(module, exports, __require, __externalRequire) {
+225: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineTextDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85416,7 +85598,7 @@ function insertOutlineNewline(value, selectionStart, selectionEnd) {
 }
 
 },
-225: function(module, exports, __require, __externalRequire) {
+226: function(module, exports, __require, __externalRequire) {
 // /src/editor/structuredOutlineDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85429,7 +85611,7 @@ exports.parseStructuredOutlinePaste = parseStructuredOutlinePaste;
 exports.serializeStructuredOutlineBlocks = serializeStructuredOutlineBlocks;
 exports.createStructuredOutlineUid = createStructuredOutlineUid;
 const sanitizeRichHtml_1 = __require(196);
-const outlineTextDocument_1 = __require(224);
+const outlineTextDocument_1 = __require(225);
 function cloneValue(value) {
     if (typeof structuredClone === 'function') {
         try {
@@ -85663,7 +85845,7 @@ function createStructuredOutlineUid() {
 }
 
 },
-226: function(module, exports, __require, __externalRequire) {
+227: function(module, exports, __require, __externalRequire) {
 // /src/editor/splitPane.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85686,15 +85868,15 @@ function ratioFromPointer(rect, clientX) {
 }
 
 },
-227: function(module, exports, __require, __externalRequire) {
+228: function(module, exports, __require, __externalRequire) {
 // /src/editor/RichTextToolbar.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RichTextToolbar = void 0;
 const YeMindRichText_1 = __require(191);
-const richTextActions_1 = __require(228);
-const colorPresentation_1 = __require(229);
-const colorPalette_1 = __require(230);
+const richTextActions_1 = __require(229);
+const colorPresentation_1 = __require(230);
+const colorPalette_1 = __require(231);
 function option(value, label) {
     return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -86114,7 +86296,7 @@ class RichTextToolbar {
 exports.RichTextToolbar = RichTextToolbar;
 
 },
-228: function(module, exports, __require, __externalRequire) {
+229: function(module, exports, __require, __externalRequire) {
 // /src/editor/richTextActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86145,7 +86327,7 @@ function isClozeFormat(formatInfo) {
 }
 
 },
-229: function(module, exports, __require, __externalRequire) {
+230: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86212,7 +86394,7 @@ function presentColor(value) {
 }
 
 },
-230: function(module, exports, __require, __externalRequire) {
+231: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPalette.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86243,7 +86425,7 @@ function colorPaletteInnerHtml() {
 }
 
 },
-231: function(module, exports, __require, __externalRequire) {
+232: function(module, exports, __require, __externalRequire) {
 // /src/editor/selectionPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86304,7 +86486,7 @@ function shouldBlockRootDeleteShortcut(key, nodes) {
 }
 
 },
-232: function(module, exports, __require, __externalRequire) {
+233: function(module, exports, __require, __externalRequire) {
 // /src/editor/saveRevision.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86335,7 +86517,7 @@ class SaveRevisionTracker {
 exports.SaveRevisionTracker = SaveRevisionTracker;
 
 },
-233: function(module, exports, __require, __externalRequire) {
+234: function(module, exports, __require, __externalRequire) {
 // /src/editor/relationPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86351,7 +86533,7 @@ function createRelationPresentation(input) {
 }
 
 },
-234: function(module, exports, __require, __externalRequire) {
+235: function(module, exports, __require, __externalRequire) {
 // /src/editor/outerFramePresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86410,7 +86592,7 @@ function createOuterFramePresentation(input) {
 }
 
 },
-235: function(module, exports, __require, __externalRequire) {
+236: function(module, exports, __require, __externalRequire) {
 // /src/editor/toolbarAvailability.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86432,12 +86614,12 @@ function createToolbarAvailability(input) {
 }
 
 },
-236: function(module, exports, __require, __externalRequire) {
+237: function(module, exports, __require, __externalRequire) {
 // /src/editor/linkNavigation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolveLinkNavigation = resolveLinkNavigation;
-const inlineLink_1 = __require(217);
+const inlineLink_1 = __require(218);
 function resolveLinkNavigation(value, externalMode) {
     const href = (0, inlineLink_1.normalizeInlineLink)(value, true);
     if (!href)
@@ -86449,7 +86631,7 @@ function resolveLinkNavigation(value, externalMode) {
 }
 
 },
-237: function(module, exports, __require, __externalRequire) {
+238: function(module, exports, __require, __externalRequire) {
 // /src/plugin/visibleElement.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86514,7 +86696,7 @@ function waitForNonZeroSize(element, options = {}) {
 }
 
 },
-238: function(module, exports, __require, __externalRequire) {
+239: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeImageInput.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86575,7 +86757,7 @@ function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
 }
 
 },
-239: function(module, exports, __require, __externalRequire) {
+240: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeHoverPreview.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86583,7 +86765,7 @@ exports.NodeHoverPreview = void 0;
 exports.computeHoverPreviewPlacement = computeHoverPreviewPlacement;
 exports.buildHoverPreviewHtml = buildHoverPreviewHtml;
 const sanitizeRichHtml_1 = __require(196);
-const commentsPresentation_1 = __require(216);
+const commentsPresentation_1 = __require(217);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -86776,7 +86958,7 @@ class NodeHoverPreview {
 exports.NodeHoverPreview = NodeHoverPreview;
 
 },
-240: function(module, exports, __require, __externalRequire) {
+241: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageLightbox.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86879,13 +87061,13 @@ class ImageLightbox {
 exports.ImageLightbox = ImageLightbox;
 
 },
-241: function(module, exports, __require, __externalRequire) {
+242: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeStylePanel = void 0;
-const colorPalette_1 = __require(230);
-const colorPresentation_1 = __require(229);
+const colorPalette_1 = __require(231);
+const colorPresentation_1 = __require(230);
 const INPUT_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 function toInputValue(value) {
     return value === null || value === undefined ? '' : String(value);
@@ -87196,14 +87378,14 @@ class NodeStylePanel {
 exports.NodeStylePanel = NodeStylePanel;
 
 },
-242: function(module, exports, __require, __externalRequire) {
+243: function(module, exports, __require, __externalRequire) {
 // /src/ui/projectStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectStylePanel = void 0;
 const projectStyle_1 = __require(20);
-const colorPalette_1 = __require(230);
-const colorPresentation_1 = __require(229);
+const colorPalette_1 = __require(231);
+const colorPresentation_1 = __require(230);
 const colorSchemes_1 = __require(21);
 const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 class ProjectStylePanel {
@@ -87504,7 +87686,7 @@ class ProjectStylePanel {
 exports.ProjectStylePanel = ProjectStylePanel;
 
 },
-243: function(module, exports, __require, __externalRequire) {
+244: function(module, exports, __require, __externalRequire) {
 // /src/ui/layoutGalleryPanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87602,7 +87784,7 @@ class LayoutGalleryPanel {
 exports.LayoutGalleryPanel = LayoutGalleryPanel;
 
 },
-244: function(module, exports, __require, __externalRequire) {
+245: function(module, exports, __require, __externalRequire) {
 // /src/ui/localAssetDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87611,6 +87793,7 @@ exports.openClipartPicker = openClipartPicker;
 const siyuan_1 = __externalRequire("siyuan");
 const localAssetCatalogs_1 = __require(15);
 const nodeContentState_1 = __require(205);
+const clipartGeometry_1 = __require(209);
 function applyStyle(element, style) {
     Object.assign(element.style, style);
 }
@@ -87726,13 +87909,18 @@ function openClipartPicker(commands, options = {}) {
             const label = document.createElement('span');
             label.textContent = item.label;
             button.append(img, label);
-            button.addEventListener('click', () => {
+            button.addEventListener('click', async () => {
+                if (button.disabled)
+                    return;
+                button.disabled = true;
+                const url = resolver.clipartUrl(item.relativePath);
+                const size = await (0, clipartGeometry_1.resolveClipartDisplaySize)(url, img);
                 commands.setClipart({
                     id: item.id,
-                    url: resolver.clipartUrl(item.relativePath),
+                    url,
                     title: item.label,
-                    width: 72,
-                    height: 72,
+                    width: size.width,
+                    height: size.height,
                     custom: true,
                 });
                 dialog.destroy();
@@ -87748,7 +87936,7 @@ function openClipartPicker(commands, options = {}) {
 }
 
 },
-245: function(module, exports, __require, __externalRequire) {
+246: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRichTextVisibility.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87785,7 +87973,7 @@ function synchronizeCanvasRichTextVisibility(map) {
 }
 
 },
-246: function(module, exports, __require, __externalRequire) {
+247: function(module, exports, __require, __externalRequire) {
 // /src/editor/searchPanelState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87805,7 +87993,7 @@ function setSearchReplaceExpanded(panel, expanded) {
 }
 
 },
-247: function(module, exports, __require, __externalRequire) {
+248: function(module, exports, __require, __externalRequire) {
 // /src/core/appearanceTransaction.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87918,7 +88106,7 @@ function applyMapAppearanceTransaction(options) {
 }
 
 },
-248: function(module, exports, __require, __externalRequire) {
+249: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeQuickActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88136,7 +88324,7 @@ class NodeQuickActionsController {
 exports.NodeQuickActionsController = NodeQuickActionsController;
 
 },
-249: function(module, exports, __require, __externalRequire) {
+250: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRightDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88315,7 +88503,7 @@ class CanvasRightDragController {
 exports.CanvasRightDragController = CanvasRightDragController;
 
 },
-250: function(module, exports, __require, __externalRequire) {
+251: function(module, exports, __require, __externalRequire) {
 // /src/editor/focusHighlight.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88380,7 +88568,7 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
 }
 
 },
-251: function(module, exports, __require, __externalRequire) {
+252: function(module, exports, __require, __externalRequire) {
 // /src/editor/editingSurfaceCoordinator.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88465,7 +88653,7 @@ class EditingSurfaceCoordinator {
 exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
 
 },
-252: function(module, exports, __require, __externalRequire) {
+253: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88487,7 +88675,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-253: function(module, exports, __require, __externalRequire) {
+254: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88511,7 +88699,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-254: function(module, exports, __require, __externalRequire) {
+255: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88567,7 +88755,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-255: function(module, exports, __require, __externalRequire) {
+256: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88593,7 +88781,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-256: function(module, exports, __require, __externalRequire) {
+257: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88609,7 +88797,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-257: function(module, exports, __require, __externalRequire) {
+258: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88636,7 +88824,7 @@ function initializePluginStartup(options) {
 }
 
 },
-258: function(module, exports, __require, __externalRequire) {
+259: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

@@ -1,6 +1,6 @@
-# YeMind v0.9.14 overlay package
+# YeMind v0.9.15 resource-excluded update package
 
-This ZIP is an overlay patch for an existing `siyuan-yemind` project that already contains the fixed local resources:
+This ZIP is a resource-excluded update package for an existing `siyuan-yemind` project that already contains the fixed local resources:
 
 - `assets/clipart/`
 - `assets/icons/marker-sprite.png`
@@ -8,4 +8,4 @@ This ZIP is an overlay patch for an existing `siyuan-yemind` project that alread
 
 Extract it over the existing plugin directory. Do not delete the existing asset directories first.
 
-This package intentionally excludes those large visual files. A standalone clean installation must include the fixed resources separately. The archive also excludes `maps.json`, `settings.json`, `checkpoints.json`, diagnostics data and all other user-created storage files.
+The file name no longer uses an `-overlay` suffix, but the package still intentionally excludes those large visual files. A standalone clean installation must include the fixed resources separately. The archive also excludes `maps.json`, `settings.json`, `checkpoints.json`, diagnostics data and all other user-created storage files.

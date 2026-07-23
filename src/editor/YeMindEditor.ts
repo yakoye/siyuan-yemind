@@ -99,6 +99,11 @@ import { normalizeNodeNote } from "../content/nodeNoteState";
 import { CanvasRightDragController } from "./canvasRightDrag";
 import { scheduleFocusedNodeHighlight } from "./focusHighlight";
 import { EditingSurfaceCoordinator } from "./editingSurfaceCoordinator";
+import {
+  CLIPART_GEOMETRY_VERSION,
+  isLegacyDefaultClipartGeometry,
+  resolveClipartDisplaySize,
+} from "../core/clipartGeometry";
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -596,6 +601,55 @@ export class YeMindEditor {
     this.options.container.innerHTML = "";
   }
 
+
+  private async repairLegacyClipartGeometry(attempt = 0): Promise<void> {
+    const map = this.map as any;
+    const root = map?.renderer?.root;
+    if (!map || !root) {
+      if (map && !this.destroyed && attempt < 4) {
+        window.setTimeout(() => {
+          void this.repairLegacyClipartGeometry(attempt + 1);
+        }, 40 * (attempt + 1));
+      }
+      return;
+    }
+
+    const candidates: any[] = [];
+    const visit = (node: any): void => {
+      if (!node) return;
+      const data = node.getData?.() as Record<string, any> | undefined;
+      if (isLegacyDefaultClipartGeometry(data)) candidates.push(node);
+      const children = Array.isArray(node.children) ? node.children : [];
+      children.forEach(visit);
+    };
+    visit(root);
+
+    let repaired = 0;
+    for (const node of candidates) {
+      const data = node.getData?.() as Record<string, any> | undefined;
+      const source = String(data?.image ?? '').trim();
+      if (!source) continue;
+      const size = await resolveClipartDisplaySize(source);
+      if (this.destroyed || this.map !== map || !size.resolved) continue;
+      map.execCommand('SET_NODE_IMAGE', node, {
+        url: source,
+        title: String(data?.imageTitle ?? ''),
+        width: size.width,
+        height: size.height,
+        custom: true,
+      });
+      map.execCommand('SET_NODE_DATA', node, {
+        yemindClipartGeometryVersion: CLIPART_GEOMETRY_VERSION,
+      });
+      repaired += 1;
+    }
+    if (repaired > 0) {
+      this.options.diagnostics.record('node-image', 'clipart-geometry-repaired', this.current.id, {
+        repaired,
+      });
+    }
+  }
+
   private mount(): void {
     this.current.theme = normalizeThemePresetId(this.current.theme);
     this.current.lineStyle = normalizeLineStyle(this.current.lineStyle);
@@ -793,6 +847,9 @@ export class YeMindEditor {
 
     this.bindToolbar();
     this.bindMapEvents();
+    window.requestAnimationFrame(() => {
+      void this.repairLegacyClipartGeometry();
+    });
     this.bindAppearanceObserver();
     this.repositoryUnsubscribe = this.options.repository.subscribe((state) => {
       const next = state.maps.find((item) => item.id === this.current.id);

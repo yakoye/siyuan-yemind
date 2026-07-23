@@ -106,7 +106,7 @@ with sync_playwright() as p:
     if '{} 添加综合概要' not in menu['labels']:
         raise RuntimeError(f'Combined summary menu missing: {menu}')
     page.evaluate("""()=>window.__lastMenu.items.find(item=>item.label==='{} 添加综合概要').click()""")
-    page.wait_for_timeout(450)
+    page.wait_for_timeout(950)
     summary_state = page.evaluate("""()=>{
       const doc=window.__smoke.plugin.repository.get(window.__smoke.fresh.id);
       const found=[];const walk=node=>{const g=node.data?.generalization;if(g)found.push({uid:node.data.uid,value:Array.isArray(g)?g:[g]});(node.children||[]).forEach(walk)};walk(doc.data);

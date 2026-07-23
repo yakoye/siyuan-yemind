@@ -3,19 +3,18 @@ import { PLUGIN_VERSION, PRODUCT_NAME, PROJECT_PACKAGE_NAME } from './plugin/con
 export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: '2026-07-23T10:30:00Z',
-  buildId: 'yemind-v0.9.14-20260723',
+  buildTime: '2026-07-23T12:30:00Z',
+  buildId: 'yemind-v0.9.15-20260723',
   productName: PRODUCT_NAME,
   projectName: PROJECT_PACKAGE_NAME,
   tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
   hostBaseline: 'SiYuan 3.7.3',
-  releaseSummary: '将多选概要合并为一个范围概要，统一节点文字与外框的测量世代，并隔离拖动优先模式下的右键框选。',
+  releaseSummary: '根据 SVG 的真实固有宽高或 viewBox 计算剪贴图尺寸，保持原始纵横比，并自动修复旧版 72×72 默认插入节点。',
   highlights: [
-    '多选节点添加概要时，按最低公共祖先投影为一个连续范围，只创建一个综合概要。',
-    '富文本测量缓存迁移到保留编辑器样式的离屏宿主，迁移后只进行一次完整重排，避免文字和节点框来自不同渲染世代。',
-    '隐藏标签页恢复、缩放和重新布局后，长文本、自定义宽度、图片节点继续保持正确边界。',
-    '拖动优先模式中，右键拖动只平移画布，不再显示框选矩形，也不会改变当前节点选择。',
-    '普通右键单击仍可打开原有上下文菜单。',
+    '剪贴图插入不再强制写入 72×72，而是将原始宽高等比缩放到 72px 边界框内。',
+    '同时支持带 width/height、仅带 viewBox 以及浏览器已加载尺寸的 SVG。',
+    '打开旧导图时自动识别带 yemindClipartId 的旧 72×72 默认节点并恢复真实比例。',
+    '修正本地资源契约和测试中的剪贴图总数与分类计数，当前为 13 类 764 个。',
   ]
 } as const;
 

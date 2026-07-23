@@ -11,6 +11,7 @@ import {
   type MarkerItem,
 } from '../core/localAssetCatalogs';
 import { normalizeStringList } from '../content/nodeContentState';
+import { resolveClipartDisplaySize } from '../core/clipartGeometry';
 
 function applyStyle(element: HTMLElement, style: Record<string, string>): void {
   Object.assign(element.style, style);
@@ -133,13 +134,17 @@ export function openClipartPicker(
       const label = document.createElement('span');
       label.textContent = item.label;
       button.append(img, label);
-      button.addEventListener('click', () => {
+      button.addEventListener('click', async () => {
+        if (button.disabled) return;
+        button.disabled = true;
+        const url = resolver.clipartUrl(item.relativePath);
+        const size = await resolveClipartDisplaySize(url, img);
         commands.setClipart({
           id: item.id,
-          url: resolver.clipartUrl(item.relativePath),
+          url,
           title: item.label,
-          width: 72,
-          height: 72,
+          width: size.width,
+          height: size.height,
           custom: true,
         });
         dialog.destroy();

@@ -16,7 +16,7 @@ describe('v0.9.12 fixed local assets', () => {
   it('uses catalogs as the runtime source of truth', () => {
     expect(markerCatalog.total).toBe(126);
     expect(markerCatalog.groups).toHaveLength(8);
-    expect(clipartCatalog.total).toBe(806);
+    expect(clipartCatalog.total).toBe(764);
     expect(clipartCatalog.categories).toHaveLength(13);
     expect(layoutCatalog.total).toBe(28);
     expect(YEMIND_LAYOUT_ASSET_PRESETS).toHaveLength(28);
@@ -43,6 +43,7 @@ describe('v0.9.12 fixed local assets', () => {
 
   it('searches clipart by label and category', () => {
     expect(searchClipart('河马').some((item) => item.id === 'animal-001')).toBe(true);
+    expect(searchClipart('熊猫').some((item) => item.id === 'animal-013')).toBe(true);
     expect(searchClipart('', 'animal')).toHaveLength(60);
     expect(searchClipart('河马', 'technology')).toHaveLength(0);
   });

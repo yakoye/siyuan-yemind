@@ -2,8 +2,15 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.14`  
+Current version: `0.9.15`  
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.15 proportional clipart geometry
+
+- Clipart insertion now reads authored SVG `width`/`height`, falling back to `viewBox`, instead of forcing every item to `72 × 72`.
+- Landscape, portrait and square assets are fitted proportionally inside a 72px box, and node frames use the resulting display size.
+- Legacy default clipart nodes with `yemindClipartId` and the old square geometry are repaired automatically when a map opens.
+- The local asset contract now matches the corrected set of 764 SVGs in 13 categories.
 
 ## v0.9.14 combined summaries, stable geometry and right-drag isolation
 
@@ -25,10 +32,10 @@ Host baseline: SiYuan `3.7.3`
 ## v0.9.12 local assets
 
 - 126 marker icons in eight groups, rendered from the fixed local sprite.
-- 806 searchable clipart SVGs in thirteen categories, placed above node text.
+- 764 searchable clipart SVGs in thirteen categories, placed above node text.
 - 28 layout thumbnails in seven visual groups, with persisted layout preset identity.
 - Runtime paths are resolved from the actual SiYuan plugin base URL; catalogs are authoritative.
-- The default AI artifact is an overlay package and intentionally excludes fixed visual resources.
+- The default AI artifact is a resource-excluded update package and intentionally omits fixed visual resources while keeping the ordinary versioned ZIP filename.
 
 
 ## v0.9.10

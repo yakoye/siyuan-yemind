@@ -72,8 +72,8 @@ describe('YeMind plugin identity and install layout', () => {
     expect(manifest.displayName.default).toBe('YeMind');
     expect(manifest.displayName.zh_CN).toBe('YeMind');
     expect(packageJson.name).toBe('siyuan-yemind');
-    expect(manifest.version).toBe('0.9.14');
-    expect(packageJson.version).toBe('0.9.14');
+    expect(manifest.version).toBe('0.9.15');
+    expect(packageJson.version).toBe('0.9.15');
   });
 
   it('uses the renamed YeMindPlugin source entry and removes the old current source filename', () => {
@@ -89,7 +89,7 @@ describe('YeMind plugin identity and install layout', () => {
     ['assets/yemind-icon-64.png', 64],
     ['assets/yemind-icon-128.png', 128],
     ['icon.png', 512],
-  ])('validates %s when present and accepts documented overlay omission', (path, size) => {
+  ])('validates %s when present and accepts documented resource-package omission', (path, size) => {
     if (!existsSync(resolve(path))) {
       const notice = readFileSync(resolve('OVERLAY_PACKAGE_NOTICE.md'), 'utf8');
       expect(notice).toContain('intentionally excludes');
@@ -126,8 +126,8 @@ describe('YeMind plugin identity and install layout', () => {
       'FEATURE_MATRIX.md', 'MIGRATION_STATUS.md', 'AGENTS.md', 'ARCHITECTURE.md',
       ...Array.from(new Set([
         'docs/DIAGNOSTICS_GUIDE.md', 'docs/VERSIONING.md',
-        'docs/TEST_COVERAGE_MATRIX_v0.9.14.md', 'docs/verification-v0.9.14.md',
-        'docs/PRODUCT_BOUNDARIES_v0.9.14.md',
+        'docs/TEST_COVERAGE_MATRIX_v0.9.15.md', 'docs/verification-v0.9.15.md',
+        'docs/PRODUCT_BOUNDARIES_v0.9.15.md',
       ])),
     ].map((file) => readFileSync(resolve(file), 'utf8')).join('\n');
     expect(publicDocs).not.toMatch(/kmind/i);

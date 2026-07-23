@@ -32,10 +32,10 @@
 |---|---|
 | 126 marker icons / 8 groups | Complete |
 | Click existing marker to open same category | Complete |
-| 806 clipart SVGs / 13 categories | Complete |
+| 764 clipart SVGs / 13 categories | Complete |
 | Clipart label search and paged grid | Complete |
 | Clipart above node text | Complete |
 | 28 layout thumbnails / 7 groups | Complete |
 | Persist visual layout preset identity | Complete |
 | Runtime catalog loading without directory scanning | Complete |
-| Overlay packaging without duplicate fixed assets | Complete |
+| Resource-excluded update packaging without duplicate fixed assets | Complete |

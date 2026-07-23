@@ -6,6 +6,7 @@ import { deleteCodeBlock, findCurrentCodeBlock, removeCodeBlockFormat, replaceCo
 import type { RichTextFormattingTarget } from '../editor/richTextTarget';
 import { normalizeNodeStylePatch, nodeStyleSnapshot, type NodeStylePatch } from '../editor/nodeStyle';
 import { addCombinedSummary } from './combinedSummary';
+import { CLIPART_GEOMETRY_VERSION } from './clipartGeometry';
 
 export interface NodeImageInput {
   url: string | null;
@@ -311,7 +312,11 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       if (!canMutate()) return;
       forEachActive((node) => {
         mindMap.execCommand('SET_NODE_IMAGE', node, image);
-        mindMap.execCommand('SET_NODE_DATA', node, { yemindClipartId: image.id, imgPlacement: 'top' });
+        mindMap.execCommand('SET_NODE_DATA', node, {
+          yemindClipartId: image.id,
+          yemindClipartGeometryVersion: CLIPART_GEOMETRY_VERSION,
+          imgPlacement: 'top',
+        });
       });
     },
     insertFormula: (formula, mode = 'inline') => {

@@ -62,3 +62,7 @@ Historical plugin links and theme identifiers are accepted through narrow intern
 Multi-selection summary planning is handled by `src/core/combinedSummary.ts`. It removes selected descendants covered by a selected ancestor, finds the lowest common ancestor of the remaining nodes, projects them to direct children and invokes the native summary command once for a single contiguous range.
 
 Rich-text and custom-content measurement caches live in one off-screen host that mirrors the active `.ymz-editor` class, data attributes and CSS variables. Cache relocation schedules one full render rather than a partial rerender so text, node shape and layout are computed in the same generation. Drag-first right-button panning explicitly cancels the upstream Select gesture before movement begins.
+
+## Proportional clipart geometry (v0.9.15)
+
+Clipart insertion is coordinated by `src/core/clipartGeometry.ts`. The picker resolves the authored SVG viewport from numeric `width`/`height` or `viewBox`, fits that ratio inside the 72px default box and persists the resulting width and height through the native `SET_NODE_IMAGE` command. A geometry-version marker distinguishes new proportional nodes from the old hard-coded `72 × 72` default. When an existing map opens, legacy clipart nodes carrying `yemindClipartId` are repaired once from the original local SVG URL without changing ordinary user images or manually resized clipart.

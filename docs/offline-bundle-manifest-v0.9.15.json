@@ -1,0 +1,1047 @@
+{
+  "entry": "/src/index.ts",
+  "moduleCount": 260,
+  "sourceMapBase": "v0.9.0-index.js.map",
+  "modules": [
+    {
+      "id": 0,
+      "path": "/src/index.ts"
+    },
+    {
+      "id": 1,
+      "path": "/virtual/empty.js"
+    },
+    {
+      "id": 2,
+      "path": "/src/plugin/YeMindPlugin.ts"
+    },
+    {
+      "id": 3,
+      "path": "/src/checkpoints/CheckpointService.ts"
+    },
+    {
+      "id": 4,
+      "path": "/src/compat/pluginIdentityMigration.ts"
+    },
+    {
+      "id": 5,
+      "path": "/src/diagnostics/DiagnosticsService.ts"
+    },
+    {
+      "id": 6,
+      "path": "/node_modules/jszip/dist/jszip.min.js"
+    },
+    {
+      "id": 7,
+      "path": "/src/diagnostics/DiagnosticsRecorder.ts"
+    },
+    {
+      "id": 8,
+      "path": "/src/diagnostics/selfCheck.ts"
+    },
+    {
+      "id": 9,
+      "path": "/src/diagnostics/isolatedLifecycleProbe.ts"
+    },
+    {
+      "id": 10,
+      "path": "/src/model/CheckpointRepository.ts"
+    },
+    {
+      "id": 11,
+      "path": "/src/core/themePresets.ts"
+    },
+    {
+      "id": 12,
+      "path": "/src/core/themeColorData.ts"
+    },
+    {
+      "id": 13,
+      "path": "/src/core/layoutPresets.ts"
+    },
+    {
+      "id": 14,
+      "path": "/src/core/layoutAssetPresets.ts"
+    },
+    {
+      "id": 15,
+      "path": "/src/core/localAssetCatalogs.ts"
+    },
+    {
+      "id": 16,
+      "path": "/src/data/marker-catalog.json"
+    },
+    {
+      "id": 17,
+      "path": "/src/data/clipart-catalog.json"
+    },
+    {
+      "id": 18,
+      "path": "/src/data/layout-catalog.local.json"
+    },
+    {
+      "id": 19,
+      "path": "/src/config/yemind-local-assets.ts"
+    },
+    {
+      "id": 20,
+      "path": "/src/editor/projectStyle.ts"
+    },
+    {
+      "id": 21,
+      "path": "/src/core/colorSchemes.ts"
+    },
+    {
+      "id": 22,
+      "path": "/src/model/MapRepository.ts"
+    },
+    {
+      "id": 23,
+      "path": "/src/model/defaultMap.ts"
+    },
+    {
+      "id": 24,
+      "path": "/src/editor/textEditingPolicy.ts"
+    },
+    {
+      "id": 25,
+      "path": "/src/ui/dialogs.ts"
+    },
+    {
+      "id": 26,
+      "path": "/src/ui/diagnosticsDialog.ts"
+    },
+    {
+      "id": 27,
+      "path": "/src/ui/aboutDialog.ts"
+    },
+    {
+      "id": 28,
+      "path": "/src/plugin/constants.ts"
+    },
+    {
+      "id": 29,
+      "path": "/src/releaseInfo.ts"
+    },
+    {
+      "id": 30,
+      "path": "/src/settings/settings.ts"
+    },
+    {
+      "id": 31,
+      "path": "/src/settings/settingsDialog.ts"
+    },
+    {
+      "id": 32,
+      "path": "/src/editor/shortcuts.ts"
+    },
+    {
+      "id": 33,
+      "path": "/src/settings/SettingsStore.ts"
+    },
+    {
+      "id": 34,
+      "path": "/src/settings/settingsDialogTemplate.ts"
+    },
+    {
+      "id": 35,
+      "path": "/src/editor/projectControls.ts"
+    },
+    {
+      "id": 36,
+      "path": "/src/settings/saveSettingsDraft.ts"
+    },
+    {
+      "id": 37,
+      "path": "/src/plugin/dock.ts"
+    },
+    {
+      "id": 38,
+      "path": "/src/plugin/tabs.ts"
+    },
+    {
+      "id": 39,
+      "path": "/src/editor/YeMindEditor.ts"
+    },
+    {
+      "id": 40,
+      "path": "/src/core/createMindMap.ts"
+    },
+    {
+      "id": 41,
+      "path": "/node_modules/simple-mind-map/index.js"
+    },
+    {
+      "id": 42,
+      "path": "/node_modules/simple-mind-map/src/core/view/View.js"
+    },
+    {
+      "id": 43,
+      "path": "/node_modules/simple-mind-map/src/constants/constant.js"
+    },
+    {
+      "id": 44,
+      "path": "/node_modules/simple-mind-map/src/core/event/Event.js"
+    },
+    {
+      "id": 45,
+      "path": "/node_modules/eventemitter3/index.js"
+    },
+    {
+      "id": 46,
+      "path": "/node_modules/simple-mind-map/src/core/render/Render.js"
+    },
+    {
+      "id": 47,
+      "path": "/node_modules/deepmerge/dist/es.js"
+    },
+    {
+      "id": 48,
+      "path": "/node_modules/simple-mind-map/src/layouts/LogicalStructure.js"
+    },
+    {
+      "id": 49,
+      "path": "/node_modules/simple-mind-map/src/layouts/Base.js"
+    },
+    {
+      "id": 50,
+      "path": "/node_modules/simple-mind-map/src/core/render/node/MindMapNode.js"
+    },
+    {
+      "id": 51,
+      "path": "/node_modules/simple-mind-map/src/core/render/node/Style.js"
+    },
+    {
+      "id": 52,
+      "path": "/node_modules/simple-mind-map/src/utils/index.js"
+    },
+    {
+      "id": 53,
+      "path": "/node_modules/uuid/index.js"
+    },
+    {
+      "id": 54,
+      "path": "/node_modules/uuid/dist/esm-browser/v4.js"
+    },
+    {
+      "id": 55,
+      "path": "/node_modules/uuid/dist/esm-browser/native.js"
+    },
+    {
+      "id": 56,
+      "path": "/node_modules/uuid/dist/esm-browser/rng.js"
+    },
+    {
+      "id": 57,
+      "path": "/node_modules/uuid/dist/esm-browser/stringify.js"
+    },
+    {
+      "id": 58,
+      "path": "/node_modules/uuid/dist/esm-browser/validate.js"
+    },
+    {
+      "id": 59,
+      "path": "/node_modules/simple-mind-map/src/utils/mersenneTwister.js"
+    },
+    {
+      "id": 60,
+      "path": "/node_modules/@svgdotjs/svg.js/dist/svg.esm.js"
+    },
+    {
+      "id": 61,
+      "path": "/node_modules/simple-mind-map/src/theme/default.js"
+    },
+    {
+      "id": 62,
+      "path": "/node_modules/simple-mind-map/src/core/render/node/Shape.js"
+    },
+    {
+      "id": 63,
+      "path": "/node_modules/simple-mind-map/src/core/render/node/nodeGeneralization.js"
+    },
+    {
+      "id": 64,
+      "path": "/node_modules/simple-mind-map/src/core/render/node/nodeExpandBtn.js"
+    },
+    {
+      "id": 65,
+      "path": "/node_modules/simple-mind-map/src/svg/btns.js"
+    },
+    {
+      "id": 66,
+      "path": "/node_modules/simple-mind-map/src/core/render/node/nodeCommandWraps.js"
+    },
+    {
+      "id": 67,
+      "path": "/node_modules/simple-mind-map/src/core/render/node/nodeCreateContents.js"
+    },
+    {
+      "id": 68,
+      "path": "/node_modules/simple-mind-map/src/svg/icons.js"
+    },
+    {
+      "id": 69,
+      "path": "/node_modules/simple-mind-map/src/core/render/node/nodeExpandBtnPlaceholderRect.js"
+    },
+    {
+      "id": 70,
+      "path": "/node_modules/simple-mind-map/src/core/render/node/nodeModifyWidth.js"
+    },
+    {
+      "id": 71,
+      "path": "/node_modules/simple-mind-map/src/core/render/node/nodeCooperate.js"
+    },
+    {
+      "id": 72,
+      "path": "/node_modules/simple-mind-map/src/core/render/node/quickCreateChildBtn.js"
+    },
+    {
+      "id": 73,
+      "path": "/node_modules/simple-mind-map/src/core/render/node/nodeLayout.js"
+    },
+    {
+      "id": 74,
+      "path": "/node_modules/simple-mind-map/src/utils/Lru.js"
+    },
+    {
+      "id": 75,
+      "path": "/node_modules/simple-mind-map/src/layouts/MindMap.js"
+    },
+    {
+      "id": 76,
+      "path": "/node_modules/simple-mind-map/src/layouts/CatalogOrganization.js"
+    },
+    {
+      "id": 77,
+      "path": "/node_modules/simple-mind-map/src/layouts/OrganizationStructure.js"
+    },
+    {
+      "id": 78,
+      "path": "/node_modules/simple-mind-map/src/layouts/Timeline.js"
+    },
+    {
+      "id": 79,
+      "path": "/node_modules/simple-mind-map/src/layouts/VerticalTimeline.js"
+    },
+    {
+      "id": 80,
+      "path": "/node_modules/simple-mind-map/src/layouts/Fishbone.js"
+    },
+    {
+      "id": 81,
+      "path": "/node_modules/simple-mind-map/src/layouts/fishboneUtils.js"
+    },
+    {
+      "id": 82,
+      "path": "/node_modules/simple-mind-map/src/core/render/TextEdit.js"
+    },
+    {
+      "id": 83,
+      "path": "/node_modules/simple-mind-map/src/theme/index.js"
+    },
+    {
+      "id": 84,
+      "path": "/node_modules/simple-mind-map/src/core/command/KeyCommand.js"
+    },
+    {
+      "id": 85,
+      "path": "/node_modules/simple-mind-map/src/core/command/keyMap.js"
+    },
+    {
+      "id": 86,
+      "path": "/node_modules/simple-mind-map/src/core/command/Command.js"
+    },
+    {
+      "id": 87,
+      "path": "/node_modules/simple-mind-map/package.json"
+    },
+    {
+      "id": 88,
+      "path": "/node_modules/simple-mind-map/src/utils/BatchExecution.js"
+    },
+    {
+      "id": 89,
+      "path": "/node_modules/simple-mind-map/src/constants/defaultOptions.js"
+    },
+    {
+      "id": 90,
+      "path": "/src/core/registerPlugins.ts"
+    },
+    {
+      "id": 91,
+      "path": "/src/core/YeMindDrag.ts"
+    },
+    {
+      "id": 92,
+      "path": "/node_modules/simple-mind-map/src/plugins/Drag.js"
+    },
+    {
+      "id": 93,
+      "path": "/node_modules/simple-mind-map/src/utils/AutoMove.js"
+    },
+    {
+      "id": 94,
+      "path": "/src/core/officialDragIntent.ts"
+    },
+    {
+      "id": 95,
+      "path": "/src/core/treeDropIntent.ts"
+    },
+    {
+      "id": 96,
+      "path": "/src/core/dragPreviewEdges.ts"
+    },
+    {
+      "id": 97,
+      "path": "/node_modules/simple-mind-map/src/plugins/Select.js"
+    },
+    {
+      "id": 98,
+      "path": "/node_modules/simple-mind-map/src/plugins/MiniMap.js"
+    },
+    {
+      "id": 99,
+      "path": "/node_modules/simple-mind-map/src/plugins/Search.js"
+    },
+    {
+      "id": 100,
+      "path": "/node_modules/simple-mind-map/src/plugins/Export.js"
+    },
+    {
+      "id": 101,
+      "path": "/node_modules/simple-mind-map/src/utils/simulateCSSBackgroundInCanvas.js"
+    },
+    {
+      "id": 102,
+      "path": "/node_modules/simple-mind-map/src/parse/toMarkdown.js"
+    },
+    {
+      "id": 103,
+      "path": "/node_modules/simple-mind-map/src/parse/toTxt.js"
+    },
+    {
+      "id": 104,
+      "path": "/node_modules/simple-mind-map/src/plugins/Formula.js"
+    },
+    {
+      "id": 105,
+      "path": "/node_modules/katex/dist/katex.mjs"
+    },
+    {
+      "id": 106,
+      "path": "/node_modules/quill/quill.js"
+    },
+    {
+      "id": 107,
+      "path": "/node_modules/quill/core.js"
+    },
+    {
+      "id": 108,
+      "path": "/node_modules/quill/core/quill.js"
+    },
+    {
+      "id": 109,
+      "path": "/node_modules/lodash-es/index.js"
+    },
+    {
+      "id": 110,
+      "path": "/node_modules/lodash.clonedeep/index.js"
+    },
+    {
+      "id": 111,
+      "path": "/node_modules/lodash.isequal/index.js"
+    },
+    {
+      "id": 112,
+      "path": "/node_modules/parchment/dist/parchment.js"
+    },
+    {
+      "id": 113,
+      "path": "/node_modules/quill-delta/index.js"
+    },
+    {
+      "id": 114,
+      "path": "/node_modules/quill-delta/dist/Delta.js"
+    },
+    {
+      "id": 115,
+      "path": "/node_modules/fast-diff/diff.js"
+    },
+    {
+      "id": 116,
+      "path": "/node_modules/quill-delta/dist/AttributeMap.js"
+    },
+    {
+      "id": 117,
+      "path": "/node_modules/quill-delta/dist/Op.js"
+    },
+    {
+      "id": 118,
+      "path": "/node_modules/quill-delta/dist/OpIterator.js"
+    },
+    {
+      "id": 119,
+      "path": "/node_modules/quill/core/editor.js"
+    },
+    {
+      "id": 120,
+      "path": "/node_modules/quill/blots/block.js"
+    },
+    {
+      "id": 121,
+      "path": "/node_modules/quill/blots/break.js"
+    },
+    {
+      "id": 122,
+      "path": "/node_modules/quill/blots/inline.js"
+    },
+    {
+      "id": 123,
+      "path": "/node_modules/quill/blots/text.js"
+    },
+    {
+      "id": 124,
+      "path": "/node_modules/quill/blots/cursor.js"
+    },
+    {
+      "id": 125,
+      "path": "/node_modules/quill/core/selection.js"
+    },
+    {
+      "id": 126,
+      "path": "/node_modules/quill/core/emitter.js"
+    },
+    {
+      "id": 127,
+      "path": "/node_modules/quill/node_modules/eventemitter3/index.js"
+    },
+    {
+      "id": 128,
+      "path": "/node_modules/quill/core/instances.js"
+    },
+    {
+      "id": 129,
+      "path": "/node_modules/quill/core/logger.js"
+    },
+    {
+      "id": 130,
+      "path": "/node_modules/quill/core/module.js"
+    },
+    {
+      "id": 131,
+      "path": "/node_modules/quill/core/composition.js"
+    },
+    {
+      "id": 132,
+      "path": "/node_modules/quill/blots/embed.js"
+    },
+    {
+      "id": 133,
+      "path": "/node_modules/quill/core/theme.js"
+    },
+    {
+      "id": 134,
+      "path": "/node_modules/quill/core/utils/scrollRectIntoView.js"
+    },
+    {
+      "id": 135,
+      "path": "/node_modules/quill/core/utils/createRegistryWithFormats.js"
+    },
+    {
+      "id": 136,
+      "path": "/node_modules/quill/blots/container.js"
+    },
+    {
+      "id": 137,
+      "path": "/node_modules/quill/blots/scroll.js"
+    },
+    {
+      "id": 138,
+      "path": "/node_modules/quill/modules/clipboard.js"
+    },
+    {
+      "id": 139,
+      "path": "/node_modules/quill/formats/align.js"
+    },
+    {
+      "id": 140,
+      "path": "/node_modules/quill/formats/background.js"
+    },
+    {
+      "id": 141,
+      "path": "/node_modules/quill/formats/color.js"
+    },
+    {
+      "id": 142,
+      "path": "/node_modules/quill/formats/code.js"
+    },
+    {
+      "id": 143,
+      "path": "/node_modules/quill/formats/direction.js"
+    },
+    {
+      "id": 144,
+      "path": "/node_modules/quill/formats/font.js"
+    },
+    {
+      "id": 145,
+      "path": "/node_modules/quill/formats/size.js"
+    },
+    {
+      "id": 146,
+      "path": "/node_modules/quill/modules/keyboard.js"
+    },
+    {
+      "id": 147,
+      "path": "/node_modules/quill/modules/normalizeExternalHTML/index.js"
+    },
+    {
+      "id": 148,
+      "path": "/node_modules/quill/modules/normalizeExternalHTML/normalizers/googleDocs.js"
+    },
+    {
+      "id": 149,
+      "path": "/node_modules/quill/modules/normalizeExternalHTML/normalizers/msWord.js"
+    },
+    {
+      "id": 150,
+      "path": "/node_modules/quill/modules/history.js"
+    },
+    {
+      "id": 151,
+      "path": "/node_modules/quill/modules/uploader.js"
+    },
+    {
+      "id": 152,
+      "path": "/node_modules/quill/modules/input.js"
+    },
+    {
+      "id": 153,
+      "path": "/node_modules/quill/modules/uiNode.js"
+    },
+    {
+      "id": 154,
+      "path": "/node_modules/quill/formats/indent.js"
+    },
+    {
+      "id": 155,
+      "path": "/node_modules/quill/formats/blockquote.js"
+    },
+    {
+      "id": 156,
+      "path": "/node_modules/quill/formats/header.js"
+    },
+    {
+      "id": 157,
+      "path": "/node_modules/quill/formats/list.js"
+    },
+    {
+      "id": 158,
+      "path": "/node_modules/quill/formats/bold.js"
+    },
+    {
+      "id": 159,
+      "path": "/node_modules/quill/formats/italic.js"
+    },
+    {
+      "id": 160,
+      "path": "/node_modules/quill/formats/link.js"
+    },
+    {
+      "id": 161,
+      "path": "/node_modules/quill/formats/script.js"
+    },
+    {
+      "id": 162,
+      "path": "/node_modules/quill/formats/strike.js"
+    },
+    {
+      "id": 163,
+      "path": "/node_modules/quill/formats/underline.js"
+    },
+    {
+      "id": 164,
+      "path": "/node_modules/quill/formats/formula.js"
+    },
+    {
+      "id": 165,
+      "path": "/node_modules/quill/formats/image.js"
+    },
+    {
+      "id": 166,
+      "path": "/node_modules/quill/formats/video.js"
+    },
+    {
+      "id": 167,
+      "path": "/node_modules/quill/modules/syntax.js"
+    },
+    {
+      "id": 168,
+      "path": "/node_modules/quill/modules/table.js"
+    },
+    {
+      "id": 169,
+      "path": "/node_modules/quill/formats/table.js"
+    },
+    {
+      "id": 170,
+      "path": "/node_modules/quill/modules/toolbar.js"
+    },
+    {
+      "id": 171,
+      "path": "/node_modules/quill/ui/icons.js"
+    },
+    {
+      "id": 172,
+      "path": "/node_modules/quill/ui/picker.js"
+    },
+    {
+      "id": 173,
+      "path": "/node_modules/quill/ui/color-picker.js"
+    },
+    {
+      "id": 174,
+      "path": "/node_modules/quill/ui/icon-picker.js"
+    },
+    {
+      "id": 175,
+      "path": "/node_modules/quill/ui/tooltip.js"
+    },
+    {
+      "id": 176,
+      "path": "/node_modules/quill/themes/bubble.js"
+    },
+    {
+      "id": 177,
+      "path": "/node_modules/quill/themes/base.js"
+    },
+    {
+      "id": 178,
+      "path": "/node_modules/quill/themes/snow.js"
+    },
+    {
+      "id": 179,
+      "path": "/node_modules/simple-mind-map/src/plugins/FormulaStyle.js"
+    },
+    {
+      "id": 180,
+      "path": "/src/core/YeMindAssociativeLine.ts"
+    },
+    {
+      "id": 181,
+      "path": "/node_modules/simple-mind-map/src/plugins/AssociativeLine.js"
+    },
+    {
+      "id": 182,
+      "path": "/node_modules/simple-mind-map/src/plugins/associativeLine/associativeLineUtils.js"
+    },
+    {
+      "id": 183,
+      "path": "/node_modules/simple-mind-map/src/plugins/associativeLine/associativeLineControls.js"
+    },
+    {
+      "id": 184,
+      "path": "/node_modules/simple-mind-map/src/plugins/associativeLine/associativeLineText.js"
+    },
+    {
+      "id": 185,
+      "path": "/node_modules/simple-mind-map/src/plugins/OuterFrame.js"
+    },
+    {
+      "id": 186,
+      "path": "/node_modules/simple-mind-map/src/plugins/outerFrame/outerFrameUtils.js"
+    },
+    {
+      "id": 187,
+      "path": "/node_modules/simple-mind-map/src/plugins/outerFrame/outerFrameText.js"
+    },
+    {
+      "id": 188,
+      "path": "/src/core/YeMindNodeImgAdjust.ts"
+    },
+    {
+      "id": 189,
+      "path": "/node_modules/simple-mind-map/src/plugins/NodeImgAdjust.js"
+    },
+    {
+      "id": 190,
+      "path": "/node_modules/simple-mind-map/src/plugins/RainbowLines.js"
+    },
+    {
+      "id": 191,
+      "path": "/src/editor/YeMindRichText.ts"
+    },
+    {
+      "id": 192,
+      "path": "/node_modules/simple-mind-map/src/plugins/RichText.js"
+    },
+    {
+      "id": 193,
+      "path": "/src/editor/richTextGeometry.ts"
+    },
+    {
+      "id": 194,
+      "path": "/src/core/nodeDecorations.ts"
+    },
+    {
+      "id": 195,
+      "path": "/src/content/nodeNoteState.ts"
+    },
+    {
+      "id": 196,
+      "path": "/src/content/sanitizeRichHtml.ts"
+    },
+    {
+      "id": 197,
+      "path": "/src/core/dragBehavior.ts"
+    },
+    {
+      "id": 198,
+      "path": "/src/core/relationConfig.ts"
+    },
+    {
+      "id": 199,
+      "path": "/src/core/outerFrameConfig.ts"
+    },
+    {
+      "id": 200,
+      "path": "/src/editor/shortcutSafety.ts"
+    },
+    {
+      "id": 201,
+      "path": "/src/core/themeColorRuntime.ts"
+    },
+    {
+      "id": 202,
+      "path": "/src/core/measurementHost.ts"
+    },
+    {
+      "id": 203,
+      "path": "/src/core/relationData.ts"
+    },
+    {
+      "id": 204,
+      "path": "/src/core/commands.ts"
+    },
+    {
+      "id": 205,
+      "path": "/src/content/nodeContentState.ts"
+    },
+    {
+      "id": 206,
+      "path": "/src/editor/codeBlock.ts"
+    },
+    {
+      "id": 207,
+      "path": "/src/editor/nodeStyle.ts"
+    },
+    {
+      "id": 208,
+      "path": "/src/core/combinedSummary.ts"
+    },
+    {
+      "id": 209,
+      "path": "/src/core/clipartGeometry.ts"
+    },
+    {
+      "id": 210,
+      "path": "/src/ui/checkpointDialog.ts"
+    },
+    {
+      "id": 211,
+      "path": "/src/checkpoints/checkpointPresentation.ts"
+    },
+    {
+      "id": 212,
+      "path": "/src/ui/checkpointDialogTemplate.ts"
+    },
+    {
+      "id": 213,
+      "path": "/src/ui/contextMenu.ts"
+    },
+    {
+      "id": 214,
+      "path": "/src/ui/nodeContentDialogs.ts"
+    },
+    {
+      "id": 215,
+      "path": "/src/ui/imageFileLoading.ts"
+    },
+    {
+      "id": 216,
+      "path": "/src/ui/dialogResize.ts"
+    },
+    {
+      "id": 217,
+      "path": "/src/ui/commentsPresentation.ts"
+    },
+    {
+      "id": 218,
+      "path": "/src/editor/inlineLink.ts"
+    },
+    {
+      "id": 219,
+      "path": "/src/ui/nodeContentMenu.ts"
+    },
+    {
+      "id": 220,
+      "path": "/src/ui/richTextDialogs.ts"
+    },
+    {
+      "id": 221,
+      "path": "/src/editor/editorStats.ts"
+    },
+    {
+      "id": 222,
+      "path": "/src/editor/editorTemplate.ts"
+    },
+    {
+      "id": 223,
+      "path": "/src/editor/outlineDrag.ts"
+    },
+    {
+      "id": 224,
+      "path": "/src/editor/StructuredOutlineEditorController.ts"
+    },
+    {
+      "id": 225,
+      "path": "/src/editor/outlineTextDocument.ts"
+    },
+    {
+      "id": 226,
+      "path": "/src/editor/structuredOutlineDocument.ts"
+    },
+    {
+      "id": 227,
+      "path": "/src/editor/splitPane.ts"
+    },
+    {
+      "id": 228,
+      "path": "/src/editor/RichTextToolbar.ts"
+    },
+    {
+      "id": 229,
+      "path": "/src/editor/richTextActions.ts"
+    },
+    {
+      "id": 230,
+      "path": "/src/editor/colorPresentation.ts"
+    },
+    {
+      "id": 231,
+      "path": "/src/editor/colorPalette.ts"
+    },
+    {
+      "id": 232,
+      "path": "/src/editor/selectionPresentation.ts"
+    },
+    {
+      "id": 233,
+      "path": "/src/editor/saveRevision.ts"
+    },
+    {
+      "id": 234,
+      "path": "/src/editor/relationPresentation.ts"
+    },
+    {
+      "id": 235,
+      "path": "/src/editor/outerFramePresentation.ts"
+    },
+    {
+      "id": 236,
+      "path": "/src/editor/toolbarAvailability.ts"
+    },
+    {
+      "id": 237,
+      "path": "/src/editor/linkNavigation.ts"
+    },
+    {
+      "id": 238,
+      "path": "/src/plugin/visibleElement.ts"
+    },
+    {
+      "id": 239,
+      "path": "/src/ui/nodeImageInput.ts"
+    },
+    {
+      "id": 240,
+      "path": "/src/ui/nodeHoverPreview.ts"
+    },
+    {
+      "id": 241,
+      "path": "/src/ui/imageLightbox.ts"
+    },
+    {
+      "id": 242,
+      "path": "/src/ui/nodeStylePanel.ts"
+    },
+    {
+      "id": 243,
+      "path": "/src/ui/projectStylePanel.ts"
+    },
+    {
+      "id": 244,
+      "path": "/src/ui/layoutGalleryPanel.ts"
+    },
+    {
+      "id": 245,
+      "path": "/src/ui/localAssetDialogs.ts"
+    },
+    {
+      "id": 246,
+      "path": "/src/editor/canvasRichTextVisibility.ts"
+    },
+    {
+      "id": 247,
+      "path": "/src/editor/searchPanelState.ts"
+    },
+    {
+      "id": 248,
+      "path": "/src/core/appearanceTransaction.ts"
+    },
+    {
+      "id": 249,
+      "path": "/src/editor/nodeQuickActions.ts"
+    },
+    {
+      "id": 250,
+      "path": "/src/editor/canvasRightDrag.ts"
+    },
+    {
+      "id": 251,
+      "path": "/src/editor/focusHighlight.ts"
+    },
+    {
+      "id": 252,
+      "path": "/src/editor/editingSurfaceCoordinator.ts"
+    },
+    {
+      "id": 253,
+      "path": "/src/plugin/deferredMount.ts"
+    },
+    {
+      "id": 254,
+      "path": "/src/plugin/tabNodeFocus.ts"
+    },
+    {
+      "id": 255,
+      "path": "/src/plugin/OpenMapTabRegistry.ts"
+    },
+    {
+      "id": 256,
+      "path": "/src/plugin/pluginUrl.ts"
+    },
+    {
+      "id": 257,
+      "path": "/src/plugin/operationSafety.ts"
+    },
+    {
+      "id": 258,
+      "path": "/src/plugin/pluginStartup.ts"
+    },
+    {
+      "id": 259,
+      "path": "/src/plugin/globalSearch.ts"
+    }
+  ]
+}

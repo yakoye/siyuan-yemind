@@ -7,7 +7,7 @@ YeMind keeps its large visual resources permanently under the plugin project and
 ```text
 siyuan-yemind/
 ├─ assets/
-│  ├─ clipart/                 # 806 SVG files, 13 categories
+│  ├─ clipart/                 # 764 SVG files, 13 categories
 │  ├─ icons/
 │  │  └─ marker-sprite.png     # 126 marker icons
 │  └─ layout-thumbnails/       # 28 SVG thumbnails
@@ -73,11 +73,11 @@ Use the existing SVG files directly. Do not recolor them again at runtime.
 
 ## AI ZIP rule
 
-Default development package:
+Default development/update package:
 
 ```json
 {
-  "mode": "overlay-patch",
+  "mode": "resource-excluded-update",
   "requiresExistingLocalAssets": true
 }
 ```

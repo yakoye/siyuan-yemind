@@ -13,7 +13,7 @@
     "clipart": {
       "root": "clipart",
       "catalog": "src/data/clipart-catalog.json",
-      "total": 806,
+      "total": 764,
       "categories": [
         {
           "id": "animal",
@@ -25,7 +25,7 @@
           "id": "plant",
           "label": "植物",
           "folder": "02_植物",
-          "count": 71
+          "count": 29
         },
         {
           "id": "environment",
@@ -108,7 +108,7 @@
     ]
   },
   "packaging": {
-    "defaultMode": "overlay-patch",
+    "defaultMode": "resource-excluded-update",
     "requiresExistingLocalAssets": true,
     "standaloneReleaseMustIncludeAssets": true,
     "excludeFromOverlayZip": [

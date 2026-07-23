@@ -2,7 +2,7 @@
 
 ## Current baseline
 
-- Product version: 0.9.14
+- Product version: 0.9.15
 - Host baseline: SiYuan 3.7.3
 - Plugin ID and folder: `siyuan-yemind`
 
@@ -24,7 +24,7 @@
 
 ## Next priorities
 
-1. Validate v0.9.14 combined summary ranges, long-text/image-node geometry and right-drag isolation in SiYuan 3.7.3.
+1. Validate v0.9.15 proportional clipart insertion, legacy 72×72 repair and corrected 764-item catalog in SiYuan 3.7.3.
 2. Profile 1,000+ node outline editing and drag-target resolution, reducing unnecessary DOM or geometry work without weakening transaction safety.
 3. Expand import/export formats in isolated releases.
 4. Continue accessibility, screen-reader and keyboard-navigation coverage.

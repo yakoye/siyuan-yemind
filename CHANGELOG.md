@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.15 - 2026-07-23
+
+- Replaced the fixed `72 × 72` clipart insertion size with intrinsic SVG geometry fitted proportionally inside a 72px box.
+- Preferred authored SVG `width`/`height`, fell back to `viewBox`, and finally used the already-loaded image dimensions when direct fetch is unavailable.
+- Added automatic repair for legacy default clipart nodes carrying `yemindClipartId` and the old square `72 × 72` geometry.
+- Synchronized the corrected local asset contract and regression expectations to 13 categories and 764 clipart SVGs.
+- Added permanent v0.9.15 aspect-ratio, parser, migration and source-contract regressions.
+
 ## 0.9.14 - 2026-07-23
 
 - Replaced per-node multi-selection summaries with one combined summary projected to a contiguous range under the lowest common ancestor.
@@ -23,7 +31,7 @@
 ## 0.9.12 - 2026-07-23
 
 - Integrated 126 catalog-driven marker icons from the fixed local sprite; clicking a marker opens its category.
-- Added a searchable 806-item clipart picker in 13 categories and place clipart above node text.
+- Added a searchable 764-item clipart picker in 13 categories and place clipart above node text.
 - Added a 28-item, seven-group visual layout gallery and persisted the selected `layoutPresetId`.
 - Added runtime plugin-base URL resolution and prohibited directory scanning or embedded large visual resources.
 - Added overlay-package rules, asset contract documentation, offline contract checks and Chromium interaction coverage.
