@@ -7,7 +7,6 @@ import {
   openCommentsDialog,
   openNoteDialog,
   openFormulaDialog,
-  openIconsDialog,
   openImageDialog,
   openLinkDialog,
   openTagsDialog,
@@ -79,6 +78,8 @@ export interface NodeContextMenuOptions {
   onNodeLink?: () => void;
   onRelation?: () => void;
   onNodeStyle?: () => void;
+  onMarkers?: () => void;
+  onClipart?: () => void;
   onAction?: (action: string) => void;
 }
 
@@ -154,8 +155,9 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
       { icon: 'iconYeMindNote', label: '备注', disabled: !availability.nodeContent, click: run('note', () => openNoteDialog(commands)) },
       { icon: 'iconYeMindComment', label: '批注', disabled: !availability.nodeContent, click: run('comments', () => openCommentsDialog(commands)) },
       { icon: 'iconTags', label: '标签', disabled: !availability.nodeContent, click: run('tags', () => openTagsDialog(commands)) },
-      { icon: 'iconEmoji', label: '图标', disabled: !availability.nodeContent, click: run('icons', () => openIconsDialog(commands)) },
+      { icon: 'iconEmoji', label: '图标', disabled: !availability.nodeContent, click: run('icons', () => options.onMarkers?.()) },
       { icon: 'iconLink', label: '链接', disabled: !availability.nodeContent, click: run('node-link', () => options.onNodeLink ? options.onNodeLink() : openLinkDialog(commands)) },
+      { icon: 'iconImage', label: '剪贴图', disabled: !availability.nodeContent, click: run('clipart', () => options.onClipart?.()) },
       { icon: 'iconImage', label: '图片', disabled: !availability.nodeContent, click: run('image', () => openImageDialog(commands)) },
       { icon: 'iconCode', label: '代码块', disabled: !availability.codeBlock, click: run('code-block', () => options.onCodeBlock?.()) },
       { icon: 'iconMath', label: '公式', disabled: !availability.nodeContent, click: run('formula', () => openFormulaDialog(commands)) },

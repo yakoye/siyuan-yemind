@@ -29,21 +29,20 @@ function service() {
 }
 
 describe('v0.7.x about and diagnostics release contract', () => {
-  it('renders an About page with version, release highlights and support actions', () => {
-    const html = createSettingsDialogTemplate(DEFAULT_SETTINGS);
-    expect(html).toContain('data-settings-page="about"');
-    expect(html).toContain('data-settings-panel="about"');
-    expect(html).toContain(RELEASE_INFO.version);
-    expect(html).toContain(RELEASE_INFO.releaseSummary);
-    expect(html).toContain('data-about-action="copy-version"');
-    expect(html).toContain('data-about-action="export-diagnostics"');
-    expect(html).toContain('data-about-version="manifest"');
-    expect(html).toContain(RELEASE_INFO.hostBaseline);
+  it('keeps About as a standalone release and support surface', () => {
+    const settingsHtml = createSettingsDialogTemplate(DEFAULT_SETTINGS);
+    const aboutSource = readFileSync(resolve(process.cwd(), 'src/ui/aboutDialog.ts'), 'utf8');
+    expect(settingsHtml).not.toContain('data-settings-page="about"');
+    expect(aboutSource).toContain('RELEASE_INFO.releaseSummary');
+    expect(aboutSource).toContain('data-about-action="copy-version"');
+    expect(aboutSource).toContain('data-about-action="export-diagnostics"');
+    expect(aboutSource).toContain('data-about-version="manifest"');
+    expect(aboutSource).toContain('RELEASE_INFO.hostBaseline');
   });
 
-  it('uses semantic minor version 0.9.8 consistently', () => {
-    expect(RELEASE_INFO.version).toBe('0.9.8');
-    expect(resolveVersionConsistency('0.9.8')).toEqual({ manifest: '0.9.8', runtime: '0.9.8', build: '0.9.8', consistent: true });
+  it('uses the current semantic version consistently', () => {
+    expect(RELEASE_INFO.version).toBe('0.9.13');
+    expect(resolveVersionConsistency('0.9.13')).toEqual({ manifest: '0.9.13', runtime: '0.9.13', build: '0.9.13', consistent: true });
   });
 
   it('keeps package, lockfile, manifest, runtime metadata and release docs on one identity', () => {
@@ -53,10 +52,10 @@ describe('v0.7.x about and diagnostics release contract', () => {
     const readme = readFileSync(resolve(process.cwd(), 'README_zh_CN.md'), 'utf8');
     const changelog = readFileSync(resolve(process.cwd(), 'CHANGELOG.md'), 'utf8');
     for (const version of [packageJson.version, packageLock.version, packageLock.packages[''].version, manifest.version, RELEASE_INFO.version, RELEASE_INFO.buildVersion]) {
-      expect(version).toBe('0.9.8');
+      expect(version).toBe('0.9.13');
     }
-    expect(readme).toContain('当前版本：`0.9.8`');
-    expect(changelog).toContain('## 0.9.8');
+    expect(readme).toContain('当前版本：`0.9.13`');
+    expect(changelog).toContain('## 0.9.13');
   });
 
   it('exports structured diagnostics files for direct analysis', async () => {

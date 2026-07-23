@@ -9,6 +9,11 @@ import { openYeMindSettingsDialog } from './settingsDialog';
  * dialog from exposing two different sets of options.
  */
 export function registerSettings(plugin: Plugin, store: SettingsStore, diagnostics?: DiagnosticsService): void {
+  // Some SiYuan startup paths expose plugin.setting only after layout setup.
+  // Top-bar settings remain available, so skip this optional native entry instead
+  // of aborting the rest of plugin registration.
+  if (!plugin.setting?.addItem) return;
+
   const button = document.createElement('button');
   button.className = 'b3-button b3-button--outline';
   button.textContent = '打开完整设置';

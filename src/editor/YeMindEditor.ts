@@ -64,6 +64,7 @@ import { isEditableTarget, matchesShortcut } from "./shortcuts";
 import {
   createSelectionPresentation,
   promoteNodeToPrimary,
+  restoreContextMenuSelection,
 } from "./selectionPresentation";
 import { SaveRevisionTracker } from "./saveRevision";
 import { createRelationPresentation } from "./relationPresentation";
@@ -84,6 +85,10 @@ import { NodeHoverPreview } from "../ui/nodeHoverPreview";
 import { ImageLightbox } from "../ui/imageLightbox";
 import { NodeStylePanel } from "../ui/nodeStylePanel";
 import { ProjectStylePanel } from "../ui/projectStylePanel";
+import { LayoutGalleryPanel } from "../ui/layoutGalleryPanel";
+import { openClipartPicker, openMarkerPicker } from "../ui/localAssetDialogs";
+import { normalizeLayoutAssetId } from "../core/layoutAssetPresets";
+import { stabilizeMindMapMeasurementHost } from "../core/measurementHost";
 import { synchronizeCanvasRichTextVisibility } from "./canvasRichTextVisibility";
 import { setSearchReplaceExpanded } from "./searchPanelState";
 import { normalizeProjectStyle, resolveProjectAppearance } from "./projectStyle";
@@ -104,6 +109,7 @@ export interface YeMindEditorOptions {
   checkpointService: CheckpointService;
   diagnostics: DiagnosticsService;
   onMissing?: () => void;
+  pluginBaseUrl?: string;
 }
 
 interface PendingOutlineFocus {
@@ -164,8 +170,10 @@ export class YeMindEditor {
   private imageLightbox: ImageLightbox | null = null;
   private nodeStylePanel: NodeStylePanel | null = null;
   private projectStylePanel: ProjectStylePanel | null = null;
+  private layoutGalleryPanel: LayoutGalleryPanel | null = null;
   private nodeQuickActions: NodeQuickActionsController | null = null;
   private canvasRightDrag: CanvasRightDragController | null = null;
+  private contextMenuSelectionSnapshot: { nodes: any[]; target: any } | null = null;
   private cancelFocusedNodeHighlight: (() => void) | null = null;
   private outlineRichText: StructuredOutlineEditorController | null = null;
   private settingsInitialized = false;
@@ -189,13 +197,16 @@ export class YeMindEditor {
 
   private readonly onCanvasPointerDown = (event: PointerEvent): void => {
     if (event.button !== 0) return;
-    const target = event.target as Element | null;
-    const isImageInteraction = Boolean(
-      target?.closest?.('.node-img-handle')
-      || target?.tagName?.toLowerCase() === 'image',
-    );
-    if (!isImageInteraction) (this.map as any)?.nodeImgAdjust?.unpin?.();
     this.claimCanvasInteraction("canvas-pointerdown");
+  };
+
+  private readonly onCanvasContextMenuCapture = (event: MouseEvent): void => {
+    this.contextMenuSelectionSnapshot = null;
+    if (!this.map || !this.commands) return;
+    const nodes = this.commands.getActiveNodes();
+    if (nodes.length < 2) return;
+    const target = findRenderedNodeAtClientPoint(this.map, event.clientX, event.clientY);
+    if (target && nodes.includes(target)) this.contextMenuSelectionSnapshot = { nodes: [...nodes], target };
   };
 
   private readonly onOutlinePointerDown = (event: PointerEvent): void => {
@@ -542,6 +553,8 @@ export class YeMindEditor {
     this.nodeStylePanel = null;
     this.projectStylePanel?.destroy();
     this.projectStylePanel = null;
+    this.layoutGalleryPanel?.destroy();
+    this.layoutGalleryPanel = null;
     this.nodeQuickActions?.destroy();
     this.nodeQuickActions = null;
     this.canvasRightDrag?.destroy();
@@ -554,6 +567,7 @@ export class YeMindEditor {
     this.canvasEl?.removeEventListener("dragover", this.onImageDragOver);
     this.canvasEl?.removeEventListener("drop", this.onImageDrop);
     this.canvasEl?.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
+    this.canvasEl?.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
     this.outlineEl?.removeEventListener(
       "pointerdown",
       this.onOutlinePointerDown,
@@ -693,6 +707,7 @@ export class YeMindEditor {
       onHyperlink: (href) => this.openLink(href),
       onDeleteShortcut: () => this.commands?.remove(),
       onConfirmDeleteImage: () => this.confirmDeleteNodeImage(),
+      pluginBaseUrl: this.options.pluginBaseUrl,
     });
     this.commands = createCommandAdapter(this.map);
     this.canvasRightDrag = new CanvasRightDragController({
@@ -710,6 +725,14 @@ export class YeMindEditor {
         this.applyMapAppearance();
         this.scheduleSave();
       },
+    );
+    this.current.layoutPresetId = normalizeLayoutAssetId(this.current.layoutPresetId, this.current.layout);
+    this.layoutGalleryPanel = new LayoutGalleryPanel(
+      this.rootEl,
+      this.options.pluginBaseUrl,
+      this.current.layoutPresetId,
+      () => Boolean(this.commands?.isReadonly()),
+      (presetId, layout) => this.setLayoutPreset(presetId, layout),
     );
     this.nodeQuickActions = new NodeQuickActionsController({
       root: this.rootEl,
@@ -766,6 +789,7 @@ export class YeMindEditor {
     this.canvasEl.addEventListener("dragover", this.onImageDragOver);
     this.canvasEl.addEventListener("drop", this.onImageDrop);
     this.canvasEl.addEventListener("pointerdown", this.onCanvasPointerDown, true);
+    this.canvasEl.addEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
 
     this.bindToolbar();
     this.bindMapEvents();
@@ -916,7 +940,13 @@ export class YeMindEditor {
           this.projectStylePanel?.hide();
           this.nodeStylePanel?.toggle(button);
           break;
+        case "layout-gallery":
+          this.nodeStylePanel?.hide();
+          this.projectStylePanel?.hide();
+          this.layoutGalleryPanel?.toggle(button);
+          break;
         case "project-style":
+          this.layoutGalleryPanel?.hide();
           this.nodeStylePanel?.hide();
           this.projectStylePanel?.toggle(button);
           break;
@@ -990,13 +1020,23 @@ export class YeMindEditor {
       ?.addEventListener("change", (event) => this.setLineStyle((event.target as HTMLSelectElement).value));
   }
 
-  private setLayout(value: string): void {
+  private setLayoutPreset(presetId: string, value: string): void {
+    if (!this.map || this.commands?.isReadonly()) return;
+    this.current.layoutPresetId = normalizeLayoutAssetId(presetId, value);
+    this.setLayout(value, false);
+    this.layoutGalleryPanel?.setSelected(this.current.layoutPresetId);
+    this.options.diagnostics.record("appearance", "layout-preset-changed", this.current.id, { presetId: this.current.layoutPresetId, layout: value });
+  }
+
+  private setLayout(value: string, inferPreset = true): void {
     if (!this.map || this.commands?.isReadonly()) return;
     this.current.layout = value;
+    if (inferPreset) this.current.layoutPresetId = normalizeLayoutAssetId(undefined, value);
     this.map.setLayout(value);
     const select = this.rootEl.querySelector<HTMLSelectElement>('[data-action="layout"]');
     if (select) select.value = value;
-    this.options.diagnostics.record("appearance", "layout-changed", this.current.id, { layout: value });
+    this.layoutGalleryPanel?.setSelected(this.current.layoutPresetId);
+    this.options.diagnostics.record("appearance", "layout-changed", this.current.id, { layout: value, presetId: this.current.layoutPresetId });
     this.nodeQuickActions?.scheduleRefresh();
     this.scheduleSave();
   }
@@ -1090,12 +1130,24 @@ export class YeMindEditor {
         return;
       }
       if (!this.commands) return;
-      const activeNodes = this.commands.getActiveNodes();
-      if (!activeNodes.includes(node)) this.activateOnlyNode(node);
-      else this.activateNode(node);
+      const renderer = (this.map as any)?.renderer;
+      const snapshot = this.contextMenuSelectionSnapshot;
+      this.contextMenuSelectionSnapshot = null;
+      if (
+        snapshot !== null &&
+        snapshot.target === node &&
+        restoreContextMenuSelection(renderer, snapshot.nodes, node)
+      ) {
+        this.updateSelectionPresentation(snapshot.nodes.length);
+      } else {
+        const activeNodes = this.commands.getActiveNodes();
+        if (!activeNodes.includes(node)) this.activateOnlyNode(node);
+        else this.activateNode(node);
+      }
       this.openContextMenu(event);
     });
     this.map.on("contextmenu", (event: MouseEvent) => {
+      this.contextMenuSelectionSnapshot = null;
       if (this.canvasRightDrag?.consumeContextMenu()) {
         event.preventDefault();
         event.stopPropagation();
@@ -1122,18 +1174,7 @@ export class YeMindEditor {
       event?.stopPropagation?.();
       if (!node || !img) return;
       this.activateOnlyNode(node);
-      (this.map as any)?.nodeImgAdjust?.pin?.(node, img);
       this.nodeQuickActions?.scheduleRefresh();
-    });
-    this.map.on("node_img_dblclick", (node: any, event: MouseEvent, img: any) => {
-      event?.preventDefault?.();
-      event?.stopPropagation?.();
-      if (!node || !img) return;
-      this.activateOnlyNode(node);
-      (this.map as any)?.nodeImgAdjust?.pin?.(node, img);
-      const source = String(node?.getData?.("image") ?? "");
-      const title = String(node?.getData?.("imageTitle") ?? "");
-      if (source) this.imageLightbox?.show(source, title);
     });
     this.map.on("yemind_node_image_preview", (node: any) => {
       const source = String(node?.getData?.("image") ?? "");
@@ -1227,6 +1268,16 @@ export class YeMindEditor {
     this.map.on("node_click", () =>
       window.setTimeout(() => this.updateRelationPresentation(), 0),
     );
+    this.map.on("node_icon_click", (node: any, iconValue: string, event: MouseEvent) => {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      if (!this.commands || this.commands.isReadonly()) return;
+      this.activateOnlyNode(node);
+      const groupId = String(iconValue ?? '').startsWith('yemarker')
+        ? String(iconValue).slice('yemarker'.length).split('_')[0]
+        : null;
+      openMarkerPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, initialGroupId: groupId });
+    });
     this.map.on("draw_click", () =>
       window.setTimeout(() => this.updateRelationPresentation(), 0),
     );
@@ -1253,6 +1304,8 @@ export class YeMindEditor {
       onNodeLink: () =>
         openLinkDialog(this.commands!, this.settings.inlineLinkAutoHttps),
       onRelation: () => this.beginRelation(),
+      onMarkers: () => openMarkerPicker(this.commands!, { pluginBaseUrl: this.options.pluginBaseUrl }),
+      onClipart: () => openClipartPicker(this.commands!, { pluginBaseUrl: this.options.pluginBaseUrl }),
       onNodeStyle: () => {
         this.projectStylePanel?.hide();
         this.nodeStylePanel?.show({ x: event.clientX, y: event.clientY });
@@ -1730,6 +1783,7 @@ export class YeMindEditor {
         return;
       }
       try {
+        stabilizeMindMapMeasurementHost(this.map as any);
         this.map.resize();
         this.updateDiagnosticState();
       } catch (error) {
@@ -2090,6 +2144,7 @@ export class YeMindEditor {
       this.current.theme = normalizeThemePresetId(restored.theme);
       this.current.lineStyle = normalizeLineStyle(restored.lineStyle);
       this.current.projectStyle = normalizeProjectStyle(restored.projectStyle);
+      this.current.layoutPresetId = normalizeLayoutAssetId(restored.layoutPresetId, restored.layout);
       const viewData = normalizePersistedViewData(restored.viewData);
       if (this.viewMode !== "outline" && hasNonZeroSize(this.canvasEl))
         this.map.resize();
@@ -2103,6 +2158,7 @@ export class YeMindEditor {
         '[data-action="layout"]',
       );
       if (layoutSelect) layoutSelect.value = restored.layout;
+      this.layoutGalleryPanel?.setSelected(this.current.layoutPresetId);
       const themeSelect = this.rootEl.querySelector<HTMLSelectElement>(
         '[data-action="theme"]',
       );
@@ -2263,6 +2319,7 @@ export class YeMindEditor {
       const patch = {
         data: sanitized.tree,
         layout: this.map.getLayout(),
+        layoutPresetId: normalizeLayoutAssetId(this.current.layoutPresetId, this.map.getLayout()),
         theme: normalizeThemePresetId(this.current.theme),
         lineStyle: normalizeLineStyle(this.current.lineStyle),
         projectStyle: normalizeProjectStyle(this.current.projectStyle),
@@ -2270,6 +2327,7 @@ export class YeMindEditor {
       };
       this.current.data = sanitized.tree;
       this.current.layout = patch.layout;
+      this.current.layoutPresetId = patch.layoutPresetId;
       this.current.theme = patch.theme;
       this.current.lineStyle = patch.lineStyle;
       this.current.projectStyle = patch.projectStyle;

@@ -1,5 +1,6 @@
 import type { NodeComment, NodeTodo } from '../content/nodeContentState';
 import { normalizeNodeNote } from '../content/nodeNoteState';
+import { createMarkerIconList } from './localAssetCatalogs';
 
 export interface NodeDecorationSettings {
   showTodoBadge: boolean;
@@ -12,13 +13,20 @@ export function configureNodeDecorations(patch: Partial<NodeDecorationSettings>)
   decorationSettings = { ...decorationSettings, ...patch };
 }
 
-export const YEMIND_ICON_LIST = [{
+export const YEMIND_LEGACY_ICON_LIST = [{
   name: 'YeMind', type: 'yemind', list: [
     { name: 'star', icon: svg('★') }, { name: 'flag', icon: svg('⚑') },
     { name: 'question', icon: svg('?') }, { name: 'idea', icon: svg('✦') },
     { name: 'check', icon: svg('✓') }, { name: 'warning', icon: svg('!') },
   ],
 }];
+
+export function createYemindIconList(pluginBaseUrl?: string): Array<Record<string, unknown>> {
+  return [...YEMIND_LEGACY_ICON_LIST, ...createMarkerIconList(pluginBaseUrl)];
+}
+
+/** Backward-compatible default used by tests and non-SiYuan previews. */
+export const YEMIND_ICON_LIST = createYemindIconList();
 
 function svg(text: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#176b50"/><text x="16" y="21" text-anchor="middle" font-size="17" font-family="Arial,sans-serif" font-weight="700" fill="#fff">${text}</text></svg>`;

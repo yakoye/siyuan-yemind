@@ -2,7 +2,7 @@ import MindMap from 'simple-mind-map';
 import type { MindMapTree } from '../model/types';
 import { registerMindMapPlugins } from './registerPlugins';
 import type { YeMindSettings } from '../settings/SettingsStore';
-import { createNodePrefixContent, createNodePostfixContent, YEMIND_ICON_LIST } from './nodeDecorations';
+import { createNodePrefixContent, createNodePostfixContent, createYemindIconList } from './nodeDecorations';
 import { buildDragAndLayoutOptions, normalizePersistedViewData } from './dragBehavior';
 import { buildRelationOptions } from './relationConfig';
 import { buildOuterFrameOptions } from './outerFrameConfig';
@@ -10,6 +10,7 @@ import { resolveUpstreamShortcutAction } from '../editor/shortcutSafety';
 import { buildThemeConfig, detectAppearance, type YeMindLineStyle } from './themePresets';
 import { imageDeleteIcon } from './YeMindNodeImgAdjust';
 import { configureThemeColorRuntime, installThemeColorRuntime } from './themeColorRuntime';
+import { stabilizeMindMapMeasurementHost } from './measurementHost';
 
 export interface CreateMindMapOptions {
   el: HTMLElement;
@@ -23,6 +24,7 @@ export interface CreateMindMapOptions {
   onHyperlink?: (href: string) => void;
   onDeleteShortcut?: () => void;
   onConfirmDeleteImage?: (node: any) => Promise<boolean>;
+  pluginBaseUrl?: string;
 }
 
 
@@ -93,7 +95,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     addHistoryOnInit: true,
     defaultInsertSecondLevelNodeText: '新节点',
     defaultInsertBelowSecondLevelNodeText: '新节点',
-    iconList: YEMIND_ICON_LIST,
+    iconList: createYemindIconList(options.pluginBaseUrl),
     createNodePrefixContent,
     createNodePostfixContent,
     openRealtimeRenderOnNodeTextEdit: true,
@@ -112,6 +114,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     },
     errorHandler: (_code: unknown, error: unknown) => console.error('[YeMind]', error),
   } as any);
+  stabilizeMindMapMeasurementHost(mindMap as any);
   installThemeColorRuntime(mindMap);
   configureThemeColorRuntime(mindMap, {
     appearance: appearance.colorAppearance,

@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.11 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.13 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -28,21 +28,22 @@ const pluginIdentityMigration_1 = __require(4);
 const DiagnosticsService_1 = __require(5);
 const isolatedLifecycleProbe_1 = __require(9);
 const CheckpointRepository_1 = __require(10);
-const MapRepository_1 = __require(16);
-const dialogs_1 = __require(19);
-const diagnosticsDialog_1 = __require(20);
-const settings_1 = __require(21);
-const settingsDialog_1 = __require(22);
-const SettingsStore_1 = __require(26);
-const releaseInfo_1 = __require(23);
-const constants_1 = __require(24);
-const dock_1 = __require(30);
-const tabs_1 = __require(31);
-const OpenMapTabRegistry_1 = __require(243);
-const pluginUrl_1 = __require(244);
-const operationSafety_1 = __require(245);
-const pluginStartup_1 = __require(246);
-const globalSearch_1 = __require(247);
+const MapRepository_1 = __require(22);
+const dialogs_1 = __require(25);
+const diagnosticsDialog_1 = __require(26);
+const aboutDialog_1 = __require(27);
+const settings_1 = __require(30);
+const settingsDialog_1 = __require(31);
+const SettingsStore_1 = __require(33);
+const releaseInfo_1 = __require(29);
+const constants_1 = __require(28);
+const dock_1 = __require(37);
+const tabs_1 = __require(38);
+const OpenMapTabRegistry_1 = __require(253);
+const pluginUrl_1 = __require(254);
+const operationSafety_1 = __require(255);
+const pluginStartup_1 = __require(256);
+const globalSearch_1 = __require(257);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -370,7 +371,8 @@ class YeMindPlugin extends siyuan_1.Plugin {
         }
         menu.addSeparator();
         menu.addItem({ icon: 'iconSettings', label: '设置', click: () => (0, settingsDialog_1.openYeMindSettingsDialog)(this.settingsStore, { diagnostics: this.diagnostics }) });
-        menu.addItem({ icon: 'iconInfo', label: '诊断与回归', click: () => (0, diagnosticsDialog_1.openDiagnosticsDialog)(this.diagnostics) });
+        menu.addItem({ icon: 'iconInfo', label: '关于 YeMind', click: () => (0, aboutDialog_1.openYeMindAboutDialog)({ diagnostics: this.diagnostics }) });
+        menu.addItem({ icon: 'iconBug', label: '诊断与回归', click: () => (0, diagnosticsDialog_1.openDiagnosticsDialog)(this.diagnostics) });
         menu.open({ x: event.clientX, y: event.clientY });
     }
     registerCommands() {
@@ -379,6 +381,11 @@ class YeMindPlugin extends siyuan_1.Plugin {
             langText: '新建 YeMind 导图',
             hotkey: '⌥⇧M',
             callback: () => { void this.createMap(); },
+        });
+        this.addCommand({
+            langKey: 'openYeMindAbout',
+            langText: '关于 YeMind',
+            callback: () => (0, aboutDialog_1.openYeMindAboutDialog)({ diagnostics: this.diagnostics }),
         });
         this.addCommand({
             langKey: 'openYeMindDiagnostics',
@@ -2717,7 +2724,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.runIsolatedLifecycleProbe = runIsolatedLifecycleProbe;
 const CheckpointService_1 = __require(3);
 const CheckpointRepository_1 = __require(10);
-const MapRepository_1 = __require(16);
+const MapRepository_1 = __require(22);
 async function runIsolatedLifecycleProbe(storage, layout = 'logicalStructure') {
     const result = {
         create: false,
@@ -2765,7 +2772,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CheckpointRepository = void 0;
 const themePresets_1 = __require(11);
 const layoutPresets_1 = __require(13);
-const projectStyle_1 = __require(14);
+const layoutAssetPresets_1 = __require(14);
+const projectStyle_1 = __require(20);
 const clone = (value) => JSON.parse(JSON.stringify(value));
 function countNodes(tree) {
     return 1 + (tree.children ?? []).reduce((total, child) => total + countNodes(child), 0);
@@ -2787,6 +2795,7 @@ function normalizeCheckpoint(value) {
         snapshot: {
             data: clone(candidate.snapshot.data),
             layout: (0, layoutPresets_1.normalizeLayoutId)(candidate.snapshot.layout),
+            layoutPresetId: (0, layoutAssetPresets_1.normalizeLayoutAssetId)(candidate.snapshot.layoutPresetId, candidate.snapshot.layout),
             theme: (0, themePresets_1.normalizeThemePresetId)(candidate.snapshot.theme),
             lineStyle: (0, themePresets_1.normalizeLineStyle)(candidate.snapshot.lineStyle),
             projectStyle: (0, projectStyle_1.normalizeProjectStyle)(candidate.snapshot.projectStyle),
@@ -2851,6 +2860,7 @@ class CheckpointRepository {
                 snapshot: {
                     data: clone(map.data),
                     layout: map.layout,
+                    layoutPresetId: map.layoutPresetId,
                     theme: map.theme,
                     lineStyle: map.lineStyle,
                     projectStyle: (0, projectStyle_1.normalizeProjectStyle)(map.projectStyle),
@@ -3161,8 +3171,8 @@ function buildThemeConfig(options) {
             generalizationLineColor: variant.generalizationLineColor,
             associativeLineWidth: 2,
             associativeLineColor: variant.associativeLineColor,
-            associativeLineActiveWidth: 6,
-            associativeLineActiveColor: variant.root.color,
+            associativeLineActiveWidth: 3,
+            associativeLineActiveColor: '#2563eb',
             associativeLineTextColor: variant.node.color,
             backgroundColor: variant.backgroundColor,
             nodeUseLineStyle: Boolean(variant.nodeUseLineStyle),
@@ -5723,6 +5733,9731 @@ function layoutOptionsHtml(selected) {
 
 },
 14: function(module, exports, __require, __externalRequire) {
+// /src/core/layoutAssetPresets.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.YEMIND_LAYOUT_ASSET_PRESETS = void 0;
+exports.normalizeLayoutAssetId = normalizeLayoutAssetId;
+exports.getLayoutAssetPreset = getLayoutAssetPreset;
+const localAssetCatalogs_1 = __require(15);
+const layoutPresets_1 = __require(13);
+const ENGINE_LAYOUT_BY_ASSET_ID = {
+    mindmap: 'mindMap',
+    'reverse-mindmap': 'logicalStructureLeft',
+    'balanced-down': 'mindMap',
+    'right-mindmap': 'logicalStructure',
+    'left-mindmap': 'logicalStructureLeft',
+    'tree-right-down': 'catalogOrganization',
+    'tree-left-down': 'catalogOrganization',
+    'tree-down-symmetric': 'organizationStructure',
+    'tree-up-symmetric': 'organizationStructure',
+    'tree-right-up': 'catalogOrganization',
+    'tree-left-up': 'catalogOrganization',
+    'timeline-right': 'timeline',
+    'timeline-left': 'timeline2',
+    'timeline-down': 'verticalTimeline',
+    'timeline-up': 'verticalTimeline2',
+    'timeline-s': 'verticalTimeline3',
+    'organization-down': 'organizationStructure',
+    'organization-bidirectional': 'catalogOrganization',
+    'organization-up': 'organizationStructure',
+    'fishbone-left': 'fishbone2',
+    'fishbone-right': 'rightFishbone2',
+    'tree-table-top-title': 'catalogOrganization',
+    'tree-table-left-title': 'logicalStructure',
+    'radial-sector': 'mindMap',
+    circle: 'mindMap',
+    bubble: 'mindMap',
+    'bracket-right': 'logicalStructure',
+    'bracket-left': 'logicalStructureLeft',
+};
+exports.YEMIND_LAYOUT_ASSET_PRESETS = localAssetCatalogs_1.layoutCatalog.items.map((item) => ({
+    ...item,
+    engineLayout: (0, layoutPresets_1.normalizeLayoutId)(ENGINE_LAYOUT_BY_ASSET_ID[item.id] ?? 'logicalStructure'),
+}));
+function normalizeLayoutAssetId(value, engineLayout) {
+    const id = String(value ?? '');
+    if (exports.YEMIND_LAYOUT_ASSET_PRESETS.some((item) => item.id === id))
+        return id;
+    const engine = (0, layoutPresets_1.normalizeLayoutId)(engineLayout);
+    return exports.YEMIND_LAYOUT_ASSET_PRESETS.find((item) => item.engineLayout === engine)?.id ?? 'right-mindmap';
+}
+function getLayoutAssetPreset(id) {
+    const normalized = normalizeLayoutAssetId(id);
+    return exports.YEMIND_LAYOUT_ASSET_PRESETS.find((item) => item.id === normalized) ?? exports.YEMIND_LAYOUT_ASSET_PRESETS[0];
+}
+
+},
+15: function(module, exports, __require, __externalRequire) {
+// /src/core/localAssetCatalogs.ts
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.layoutCatalog = exports.clipartCatalog = exports.markerCatalog = void 0;
+exports.normalizePluginBaseUrl = normalizePluginBaseUrl;
+exports.createRuntimeAssetResolver = createRuntimeAssetResolver;
+exports.markerValue = markerValue;
+exports.markerIdFromValue = markerIdFromValue;
+exports.markerItemFromValue = markerItemFromValue;
+exports.markerGroupForValue = markerGroupForValue;
+exports.markerSvg = markerSvg;
+exports.createMarkerIconList = createMarkerIconList;
+exports.markerButtonStyle = markerButtonStyle;
+exports.searchClipart = searchClipart;
+exports.groupLayouts = groupLayouts;
+const marker_catalog_json_1 = __importDefault(__require(16));
+const clipart_catalog_json_1 = __importDefault(__require(17));
+const layout_catalog_local_json_1 = __importDefault(__require(18));
+const yemind_local_assets_1 = __require(19);
+exports.markerCatalog = marker_catalog_json_1.default;
+exports.clipartCatalog = clipart_catalog_json_1.default;
+exports.layoutCatalog = layout_catalog_local_json_1.default;
+function normalizePluginBaseUrl(value) {
+    const normalized = String(value ?? '').trim().replace(/\/+$/g, '');
+    return normalized || '/plugins/siyuan-yemind';
+}
+function createRuntimeAssetResolver(pluginBaseUrl) {
+    return (0, yemind_local_assets_1.createYemindAssetResolver)(normalizePluginBaseUrl(pluginBaseUrl));
+}
+function markerValue(item) {
+    return `yemarker${item.groupId}_${item.id}`;
+}
+function markerIdFromValue(value) {
+    const text = String(value ?? '');
+    if (!text.startsWith('yemarker'))
+        return null;
+    const separator = text.indexOf('_');
+    if (separator < 0)
+        return null;
+    const id = text.slice(separator + 1);
+    return exports.markerCatalog.items.some((item) => item.id === id) ? id : null;
+}
+function markerItemFromValue(value) {
+    const id = markerIdFromValue(value);
+    return id ? exports.markerCatalog.items.find((item) => item.id === id) ?? null : null;
+}
+function markerGroupForValue(value) {
+    return markerItemFromValue(value)?.groupId ?? null;
+}
+function parsePosition(value) {
+    const parts = value.trim().split(/\s+/g).map((part) => Number.parseFloat(part));
+    return [Number.isFinite(parts[0]) ? parts[0] : 0, Number.isFinite(parts[1]) ? parts[1] : 0];
+}
+function xmlAttribute(value) {
+    return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+function markerSvg(spriteUrl, item) {
+    const [x, y] = parsePosition(item.backgroundPosition);
+    const width = exports.markerCatalog.iconSize.width;
+    const height = exports.markerCatalog.iconSize.height;
+    const patternId = `ymz-marker-${item.groupId}-${item.id}`.replace(/[^a-zA-Z0-9_-]/g, '-');
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}"><defs><pattern id="${patternId}" patternUnits="userSpaceOnUse" width="${width}" height="${height}"><image href="${xmlAttribute(spriteUrl)}" x="${x}" y="${y}" width="${exports.markerCatalog.displaySize.width}" height="${exports.markerCatalog.displaySize.height}" preserveAspectRatio="none"/></pattern></defs><rect width="${width}" height="${height}" fill="url(#${patternId})"/></svg>`;
+}
+function createMarkerIconList(pluginBaseUrl) {
+    const resolver = createRuntimeAssetResolver(pluginBaseUrl);
+    const sprite = resolver.markerSpriteUrl();
+    const groups = exports.markerCatalog.groups.map((group) => ({
+        name: group.label,
+        type: `yemarker${group.id}`,
+        list: exports.markerCatalog.items
+            .filter((item) => item.groupId === group.id)
+            .map((item) => ({ name: item.id, icon: markerSvg(sprite, item) })),
+    }));
+    return groups;
+}
+function markerButtonStyle(pluginBaseUrl, item) {
+    return (0, yemind_local_assets_1.getYemindMarkerStyle)(createRuntimeAssetResolver(pluginBaseUrl).markerSpriteUrl(), item);
+}
+function searchClipart(query, categoryId) {
+    const keyword = query.trim().toLocaleLowerCase();
+    return exports.clipartCatalog.items.filter((item) => {
+        if (categoryId && item.categoryId !== categoryId)
+            return false;
+        return !keyword || item.label.toLocaleLowerCase().includes(keyword);
+    });
+}
+function groupLayouts() {
+    const output = [];
+    for (const item of exports.layoutCatalog.items) {
+        let group = output.find((entry) => entry.id === item.groupId);
+        if (!group) {
+            group = { id: item.groupId, label: item.groupLabel, items: [] };
+            output.push(group);
+        }
+        group.items.push(item);
+    }
+    return output;
+}
+
+},
+16: function(module, exports, __require, __externalRequire) {
+// /src/data/marker-catalog.json
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = {
+    "version": "1.0.0",
+    "type": "css-sprite",
+    "image": "icons/marker-sprite.png",
+    "sourceSize": {
+        "width": 760,
+        "height": 976
+    },
+    "displaySize": {
+        "width": 380,
+        "height": 488
+    },
+    "iconSize": {
+        "width": 28,
+        "height": 28
+    },
+    "grid": {
+        "startX": 14,
+        "startY": 14,
+        "stepX": 36,
+        "stepY": 36,
+        "columns": 10
+    },
+    "total": 126,
+    "groups": [
+        {
+            "id": "priority",
+            "label": "优先级",
+            "count": 30,
+            "startIndex": 0
+        },
+        {
+            "id": "progress",
+            "label": "进度",
+            "count": 9,
+            "startIndex": 30
+        },
+        {
+            "id": "emoji",
+            "label": "表情",
+            "count": 18,
+            "startIndex": 39
+        },
+        {
+            "id": "avatar",
+            "label": "人像",
+            "count": 7,
+            "startIndex": 57
+        },
+        {
+            "id": "star",
+            "label": "星",
+            "count": 7,
+            "startIndex": 64
+        },
+        {
+            "id": "flag",
+            "label": "旗帜",
+            "count": 7,
+            "startIndex": 71
+        },
+        {
+            "id": "arrow",
+            "label": "箭头",
+            "count": 10,
+            "startIndex": 78
+        },
+        {
+            "id": "symbol",
+            "label": "符号",
+            "count": 38,
+            "startIndex": 88
+        }
+    ],
+    "items": [
+        {
+            "id": "priority-01",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 1,
+            "globalIndex": 0,
+            "backgroundPosition": "-14px -14px"
+        },
+        {
+            "id": "priority-02",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 2,
+            "globalIndex": 1,
+            "backgroundPosition": "-50px -14px"
+        },
+        {
+            "id": "priority-03",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 3,
+            "globalIndex": 2,
+            "backgroundPosition": "-86px -14px"
+        },
+        {
+            "id": "priority-04",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 4,
+            "globalIndex": 3,
+            "backgroundPosition": "-122px -14px"
+        },
+        {
+            "id": "priority-05",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 5,
+            "globalIndex": 4,
+            "backgroundPosition": "-158px -14px"
+        },
+        {
+            "id": "priority-06",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 6,
+            "globalIndex": 5,
+            "backgroundPosition": "-194px -14px"
+        },
+        {
+            "id": "priority-07",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 7,
+            "globalIndex": 6,
+            "backgroundPosition": "-230px -14px"
+        },
+        {
+            "id": "priority-08",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 8,
+            "globalIndex": 7,
+            "backgroundPosition": "-266px -14px"
+        },
+        {
+            "id": "priority-09",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 9,
+            "globalIndex": 8,
+            "backgroundPosition": "-302px -14px"
+        },
+        {
+            "id": "priority-10",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 10,
+            "globalIndex": 9,
+            "backgroundPosition": "-338px -14px"
+        },
+        {
+            "id": "priority-11",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 11,
+            "globalIndex": 10,
+            "backgroundPosition": "-14px -50px"
+        },
+        {
+            "id": "priority-12",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 12,
+            "globalIndex": 11,
+            "backgroundPosition": "-50px -50px"
+        },
+        {
+            "id": "priority-13",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 13,
+            "globalIndex": 12,
+            "backgroundPosition": "-86px -50px"
+        },
+        {
+            "id": "priority-14",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 14,
+            "globalIndex": 13,
+            "backgroundPosition": "-122px -50px"
+        },
+        {
+            "id": "priority-15",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 15,
+            "globalIndex": 14,
+            "backgroundPosition": "-158px -50px"
+        },
+        {
+            "id": "priority-16",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 16,
+            "globalIndex": 15,
+            "backgroundPosition": "-194px -50px"
+        },
+        {
+            "id": "priority-17",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 17,
+            "globalIndex": 16,
+            "backgroundPosition": "-230px -50px"
+        },
+        {
+            "id": "priority-18",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 18,
+            "globalIndex": 17,
+            "backgroundPosition": "-266px -50px"
+        },
+        {
+            "id": "priority-19",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 19,
+            "globalIndex": 18,
+            "backgroundPosition": "-302px -50px"
+        },
+        {
+            "id": "priority-20",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 20,
+            "globalIndex": 19,
+            "backgroundPosition": "-338px -50px"
+        },
+        {
+            "id": "priority-21",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 21,
+            "globalIndex": 20,
+            "backgroundPosition": "-14px -86px"
+        },
+        {
+            "id": "priority-22",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 22,
+            "globalIndex": 21,
+            "backgroundPosition": "-50px -86px"
+        },
+        {
+            "id": "priority-23",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 23,
+            "globalIndex": 22,
+            "backgroundPosition": "-86px -86px"
+        },
+        {
+            "id": "priority-24",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 24,
+            "globalIndex": 23,
+            "backgroundPosition": "-122px -86px"
+        },
+        {
+            "id": "priority-25",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 25,
+            "globalIndex": 24,
+            "backgroundPosition": "-158px -86px"
+        },
+        {
+            "id": "priority-26",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 26,
+            "globalIndex": 25,
+            "backgroundPosition": "-194px -86px"
+        },
+        {
+            "id": "priority-27",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 27,
+            "globalIndex": 26,
+            "backgroundPosition": "-230px -86px"
+        },
+        {
+            "id": "priority-28",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 28,
+            "globalIndex": 27,
+            "backgroundPosition": "-266px -86px"
+        },
+        {
+            "id": "priority-29",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 29,
+            "globalIndex": 28,
+            "backgroundPosition": "-302px -86px"
+        },
+        {
+            "id": "priority-30",
+            "groupId": "priority",
+            "groupLabel": "优先级",
+            "orderInGroup": 30,
+            "globalIndex": 29,
+            "backgroundPosition": "-338px -86px"
+        },
+        {
+            "id": "progress-01",
+            "groupId": "progress",
+            "groupLabel": "进度",
+            "orderInGroup": 1,
+            "globalIndex": 30,
+            "backgroundPosition": "-14px -122px"
+        },
+        {
+            "id": "progress-02",
+            "groupId": "progress",
+            "groupLabel": "进度",
+            "orderInGroup": 2,
+            "globalIndex": 31,
+            "backgroundPosition": "-50px -122px"
+        },
+        {
+            "id": "progress-03",
+            "groupId": "progress",
+            "groupLabel": "进度",
+            "orderInGroup": 3,
+            "globalIndex": 32,
+            "backgroundPosition": "-86px -122px"
+        },
+        {
+            "id": "progress-04",
+            "groupId": "progress",
+            "groupLabel": "进度",
+            "orderInGroup": 4,
+            "globalIndex": 33,
+            "backgroundPosition": "-122px -122px"
+        },
+        {
+            "id": "progress-05",
+            "groupId": "progress",
+            "groupLabel": "进度",
+            "orderInGroup": 5,
+            "globalIndex": 34,
+            "backgroundPosition": "-158px -122px"
+        },
+        {
+            "id": "progress-06",
+            "groupId": "progress",
+            "groupLabel": "进度",
+            "orderInGroup": 6,
+            "globalIndex": 35,
+            "backgroundPosition": "-194px -122px"
+        },
+        {
+            "id": "progress-07",
+            "groupId": "progress",
+            "groupLabel": "进度",
+            "orderInGroup": 7,
+            "globalIndex": 36,
+            "backgroundPosition": "-230px -122px"
+        },
+        {
+            "id": "progress-08",
+            "groupId": "progress",
+            "groupLabel": "进度",
+            "orderInGroup": 8,
+            "globalIndex": 37,
+            "backgroundPosition": "-266px -122px"
+        },
+        {
+            "id": "progress-09",
+            "groupId": "progress",
+            "groupLabel": "进度",
+            "orderInGroup": 9,
+            "globalIndex": 38,
+            "backgroundPosition": "-302px -122px"
+        },
+        {
+            "id": "emoji-01",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 1,
+            "globalIndex": 39,
+            "backgroundPosition": "-338px -122px"
+        },
+        {
+            "id": "emoji-02",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 2,
+            "globalIndex": 40,
+            "backgroundPosition": "-14px -158px"
+        },
+        {
+            "id": "emoji-03",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 3,
+            "globalIndex": 41,
+            "backgroundPosition": "-50px -158px"
+        },
+        {
+            "id": "emoji-04",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 4,
+            "globalIndex": 42,
+            "backgroundPosition": "-86px -158px"
+        },
+        {
+            "id": "emoji-05",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 5,
+            "globalIndex": 43,
+            "backgroundPosition": "-122px -158px"
+        },
+        {
+            "id": "emoji-06",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 6,
+            "globalIndex": 44,
+            "backgroundPosition": "-158px -158px"
+        },
+        {
+            "id": "emoji-07",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 7,
+            "globalIndex": 45,
+            "backgroundPosition": "-194px -158px"
+        },
+        {
+            "id": "emoji-08",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 8,
+            "globalIndex": 46,
+            "backgroundPosition": "-230px -158px"
+        },
+        {
+            "id": "emoji-09",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 9,
+            "globalIndex": 47,
+            "backgroundPosition": "-266px -158px"
+        },
+        {
+            "id": "emoji-10",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 10,
+            "globalIndex": 48,
+            "backgroundPosition": "-302px -158px"
+        },
+        {
+            "id": "emoji-11",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 11,
+            "globalIndex": 49,
+            "backgroundPosition": "-338px -158px"
+        },
+        {
+            "id": "emoji-12",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 12,
+            "globalIndex": 50,
+            "backgroundPosition": "-14px -194px"
+        },
+        {
+            "id": "emoji-13",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 13,
+            "globalIndex": 51,
+            "backgroundPosition": "-50px -194px"
+        },
+        {
+            "id": "emoji-14",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 14,
+            "globalIndex": 52,
+            "backgroundPosition": "-86px -194px"
+        },
+        {
+            "id": "emoji-15",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 15,
+            "globalIndex": 53,
+            "backgroundPosition": "-122px -194px"
+        },
+        {
+            "id": "emoji-16",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 16,
+            "globalIndex": 54,
+            "backgroundPosition": "-158px -194px"
+        },
+        {
+            "id": "emoji-17",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 17,
+            "globalIndex": 55,
+            "backgroundPosition": "-194px -194px"
+        },
+        {
+            "id": "emoji-18",
+            "groupId": "emoji",
+            "groupLabel": "表情",
+            "orderInGroup": 18,
+            "globalIndex": 56,
+            "backgroundPosition": "-230px -194px"
+        },
+        {
+            "id": "avatar-01",
+            "groupId": "avatar",
+            "groupLabel": "人像",
+            "orderInGroup": 1,
+            "globalIndex": 57,
+            "backgroundPosition": "-266px -194px"
+        },
+        {
+            "id": "avatar-02",
+            "groupId": "avatar",
+            "groupLabel": "人像",
+            "orderInGroup": 2,
+            "globalIndex": 58,
+            "backgroundPosition": "-302px -194px"
+        },
+        {
+            "id": "avatar-03",
+            "groupId": "avatar",
+            "groupLabel": "人像",
+            "orderInGroup": 3,
+            "globalIndex": 59,
+            "backgroundPosition": "-338px -194px"
+        },
+        {
+            "id": "avatar-04",
+            "groupId": "avatar",
+            "groupLabel": "人像",
+            "orderInGroup": 4,
+            "globalIndex": 60,
+            "backgroundPosition": "-14px -230px"
+        },
+        {
+            "id": "avatar-05",
+            "groupId": "avatar",
+            "groupLabel": "人像",
+            "orderInGroup": 5,
+            "globalIndex": 61,
+            "backgroundPosition": "-50px -230px"
+        },
+        {
+            "id": "avatar-06",
+            "groupId": "avatar",
+            "groupLabel": "人像",
+            "orderInGroup": 6,
+            "globalIndex": 62,
+            "backgroundPosition": "-86px -230px"
+        },
+        {
+            "id": "avatar-07",
+            "groupId": "avatar",
+            "groupLabel": "人像",
+            "orderInGroup": 7,
+            "globalIndex": 63,
+            "backgroundPosition": "-122px -230px"
+        },
+        {
+            "id": "star-01",
+            "groupId": "star",
+            "groupLabel": "星",
+            "orderInGroup": 1,
+            "globalIndex": 64,
+            "backgroundPosition": "-158px -230px"
+        },
+        {
+            "id": "star-02",
+            "groupId": "star",
+            "groupLabel": "星",
+            "orderInGroup": 2,
+            "globalIndex": 65,
+            "backgroundPosition": "-194px -230px"
+        },
+        {
+            "id": "star-03",
+            "groupId": "star",
+            "groupLabel": "星",
+            "orderInGroup": 3,
+            "globalIndex": 66,
+            "backgroundPosition": "-230px -230px"
+        },
+        {
+            "id": "star-04",
+            "groupId": "star",
+            "groupLabel": "星",
+            "orderInGroup": 4,
+            "globalIndex": 67,
+            "backgroundPosition": "-266px -230px"
+        },
+        {
+            "id": "star-05",
+            "groupId": "star",
+            "groupLabel": "星",
+            "orderInGroup": 5,
+            "globalIndex": 68,
+            "backgroundPosition": "-302px -230px"
+        },
+        {
+            "id": "star-06",
+            "groupId": "star",
+            "groupLabel": "星",
+            "orderInGroup": 6,
+            "globalIndex": 69,
+            "backgroundPosition": "-338px -230px"
+        },
+        {
+            "id": "star-07",
+            "groupId": "star",
+            "groupLabel": "星",
+            "orderInGroup": 7,
+            "globalIndex": 70,
+            "backgroundPosition": "-14px -266px"
+        },
+        {
+            "id": "flag-01",
+            "groupId": "flag",
+            "groupLabel": "旗帜",
+            "orderInGroup": 1,
+            "globalIndex": 71,
+            "backgroundPosition": "-50px -266px"
+        },
+        {
+            "id": "flag-02",
+            "groupId": "flag",
+            "groupLabel": "旗帜",
+            "orderInGroup": 2,
+            "globalIndex": 72,
+            "backgroundPosition": "-86px -266px"
+        },
+        {
+            "id": "flag-03",
+            "groupId": "flag",
+            "groupLabel": "旗帜",
+            "orderInGroup": 3,
+            "globalIndex": 73,
+            "backgroundPosition": "-122px -266px"
+        },
+        {
+            "id": "flag-04",
+            "groupId": "flag",
+            "groupLabel": "旗帜",
+            "orderInGroup": 4,
+            "globalIndex": 74,
+            "backgroundPosition": "-158px -266px"
+        },
+        {
+            "id": "flag-05",
+            "groupId": "flag",
+            "groupLabel": "旗帜",
+            "orderInGroup": 5,
+            "globalIndex": 75,
+            "backgroundPosition": "-194px -266px"
+        },
+        {
+            "id": "flag-06",
+            "groupId": "flag",
+            "groupLabel": "旗帜",
+            "orderInGroup": 6,
+            "globalIndex": 76,
+            "backgroundPosition": "-230px -266px"
+        },
+        {
+            "id": "flag-07",
+            "groupId": "flag",
+            "groupLabel": "旗帜",
+            "orderInGroup": 7,
+            "globalIndex": 77,
+            "backgroundPosition": "-266px -266px"
+        },
+        {
+            "id": "arrow-01",
+            "groupId": "arrow",
+            "groupLabel": "箭头",
+            "orderInGroup": 1,
+            "globalIndex": 78,
+            "backgroundPosition": "-302px -266px"
+        },
+        {
+            "id": "arrow-02",
+            "groupId": "arrow",
+            "groupLabel": "箭头",
+            "orderInGroup": 2,
+            "globalIndex": 79,
+            "backgroundPosition": "-338px -266px"
+        },
+        {
+            "id": "arrow-03",
+            "groupId": "arrow",
+            "groupLabel": "箭头",
+            "orderInGroup": 3,
+            "globalIndex": 80,
+            "backgroundPosition": "-14px -302px"
+        },
+        {
+            "id": "arrow-04",
+            "groupId": "arrow",
+            "groupLabel": "箭头",
+            "orderInGroup": 4,
+            "globalIndex": 81,
+            "backgroundPosition": "-50px -302px"
+        },
+        {
+            "id": "arrow-05",
+            "groupId": "arrow",
+            "groupLabel": "箭头",
+            "orderInGroup": 5,
+            "globalIndex": 82,
+            "backgroundPosition": "-86px -302px"
+        },
+        {
+            "id": "arrow-06",
+            "groupId": "arrow",
+            "groupLabel": "箭头",
+            "orderInGroup": 6,
+            "globalIndex": 83,
+            "backgroundPosition": "-122px -302px"
+        },
+        {
+            "id": "arrow-07",
+            "groupId": "arrow",
+            "groupLabel": "箭头",
+            "orderInGroup": 7,
+            "globalIndex": 84,
+            "backgroundPosition": "-158px -302px"
+        },
+        {
+            "id": "arrow-08",
+            "groupId": "arrow",
+            "groupLabel": "箭头",
+            "orderInGroup": 8,
+            "globalIndex": 85,
+            "backgroundPosition": "-194px -302px"
+        },
+        {
+            "id": "arrow-09",
+            "groupId": "arrow",
+            "groupLabel": "箭头",
+            "orderInGroup": 9,
+            "globalIndex": 86,
+            "backgroundPosition": "-230px -302px"
+        },
+        {
+            "id": "arrow-10",
+            "groupId": "arrow",
+            "groupLabel": "箭头",
+            "orderInGroup": 10,
+            "globalIndex": 87,
+            "backgroundPosition": "-266px -302px"
+        },
+        {
+            "id": "symbol-01",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 1,
+            "globalIndex": 88,
+            "backgroundPosition": "-302px -302px"
+        },
+        {
+            "id": "symbol-02",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 2,
+            "globalIndex": 89,
+            "backgroundPosition": "-338px -302px"
+        },
+        {
+            "id": "symbol-03",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 3,
+            "globalIndex": 90,
+            "backgroundPosition": "-14px -338px"
+        },
+        {
+            "id": "symbol-04",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 4,
+            "globalIndex": 91,
+            "backgroundPosition": "-50px -338px"
+        },
+        {
+            "id": "symbol-05",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 5,
+            "globalIndex": 92,
+            "backgroundPosition": "-86px -338px"
+        },
+        {
+            "id": "symbol-06",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 6,
+            "globalIndex": 93,
+            "backgroundPosition": "-122px -338px"
+        },
+        {
+            "id": "symbol-07",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 7,
+            "globalIndex": 94,
+            "backgroundPosition": "-158px -338px"
+        },
+        {
+            "id": "symbol-08",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 8,
+            "globalIndex": 95,
+            "backgroundPosition": "-194px -338px"
+        },
+        {
+            "id": "symbol-09",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 9,
+            "globalIndex": 96,
+            "backgroundPosition": "-230px -338px"
+        },
+        {
+            "id": "symbol-10",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 10,
+            "globalIndex": 97,
+            "backgroundPosition": "-266px -338px"
+        },
+        {
+            "id": "symbol-11",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 11,
+            "globalIndex": 98,
+            "backgroundPosition": "-302px -338px"
+        },
+        {
+            "id": "symbol-12",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 12,
+            "globalIndex": 99,
+            "backgroundPosition": "-338px -338px"
+        },
+        {
+            "id": "symbol-13",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 13,
+            "globalIndex": 100,
+            "backgroundPosition": "-14px -374px"
+        },
+        {
+            "id": "symbol-14",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 14,
+            "globalIndex": 101,
+            "backgroundPosition": "-50px -374px"
+        },
+        {
+            "id": "symbol-15",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 15,
+            "globalIndex": 102,
+            "backgroundPosition": "-86px -374px"
+        },
+        {
+            "id": "symbol-16",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 16,
+            "globalIndex": 103,
+            "backgroundPosition": "-122px -374px"
+        },
+        {
+            "id": "symbol-17",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 17,
+            "globalIndex": 104,
+            "backgroundPosition": "-158px -374px"
+        },
+        {
+            "id": "symbol-18",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 18,
+            "globalIndex": 105,
+            "backgroundPosition": "-194px -374px"
+        },
+        {
+            "id": "symbol-19",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 19,
+            "globalIndex": 106,
+            "backgroundPosition": "-230px -374px"
+        },
+        {
+            "id": "symbol-20",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 20,
+            "globalIndex": 107,
+            "backgroundPosition": "-266px -374px"
+        },
+        {
+            "id": "symbol-21",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 21,
+            "globalIndex": 108,
+            "backgroundPosition": "-302px -374px"
+        },
+        {
+            "id": "symbol-22",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 22,
+            "globalIndex": 109,
+            "backgroundPosition": "-338px -374px"
+        },
+        {
+            "id": "symbol-23",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 23,
+            "globalIndex": 110,
+            "backgroundPosition": "-14px -410px"
+        },
+        {
+            "id": "symbol-24",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 24,
+            "globalIndex": 111,
+            "backgroundPosition": "-50px -410px"
+        },
+        {
+            "id": "symbol-25",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 25,
+            "globalIndex": 112,
+            "backgroundPosition": "-86px -410px"
+        },
+        {
+            "id": "symbol-26",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 26,
+            "globalIndex": 113,
+            "backgroundPosition": "-122px -410px"
+        },
+        {
+            "id": "symbol-27",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 27,
+            "globalIndex": 114,
+            "backgroundPosition": "-158px -410px"
+        },
+        {
+            "id": "symbol-28",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 28,
+            "globalIndex": 115,
+            "backgroundPosition": "-194px -410px"
+        },
+        {
+            "id": "symbol-29",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 29,
+            "globalIndex": 116,
+            "backgroundPosition": "-230px -410px"
+        },
+        {
+            "id": "symbol-30",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 30,
+            "globalIndex": 117,
+            "backgroundPosition": "-266px -410px"
+        },
+        {
+            "id": "symbol-31",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 31,
+            "globalIndex": 118,
+            "backgroundPosition": "-302px -410px"
+        },
+        {
+            "id": "symbol-32",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 32,
+            "globalIndex": 119,
+            "backgroundPosition": "-338px -410px"
+        },
+        {
+            "id": "symbol-33",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 33,
+            "globalIndex": 120,
+            "backgroundPosition": "-14px -446px"
+        },
+        {
+            "id": "symbol-34",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 34,
+            "globalIndex": 121,
+            "backgroundPosition": "-50px -446px"
+        },
+        {
+            "id": "symbol-35",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 35,
+            "globalIndex": 122,
+            "backgroundPosition": "-86px -446px"
+        },
+        {
+            "id": "symbol-36",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 36,
+            "globalIndex": 123,
+            "backgroundPosition": "-122px -446px"
+        },
+        {
+            "id": "symbol-37",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 37,
+            "globalIndex": 124,
+            "backgroundPosition": "-158px -446px"
+        },
+        {
+            "id": "symbol-38",
+            "groupId": "symbol",
+            "groupLabel": "符号",
+            "orderInGroup": 38,
+            "globalIndex": 125,
+            "backgroundPosition": "-194px -446px"
+        }
+    ]
+};
+
+},
+17: function(module, exports, __require, __externalRequire) {
+// /src/data/clipart-catalog.json
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = {
+    "version": "1.0.0",
+    "type": "svg-directory-collection",
+    "assetRoot": "assets",
+    "collectionRoot": "clipart",
+    "total": 806,
+    "categories": [
+        {
+            "id": "animal",
+            "label": "动物",
+            "folder": "01_动物",
+            "count": 60
+        },
+        {
+            "id": "plant",
+            "label": "植物",
+            "folder": "02_植物",
+            "count": 71
+        },
+        {
+            "id": "environment",
+            "label": "环境保护",
+            "folder": "03_环境保护",
+            "count": 37
+        },
+        {
+            "id": "weather",
+            "label": "天气",
+            "folder": "04_天气",
+            "count": 26
+        },
+        {
+            "id": "travel",
+            "label": "旅行",
+            "folder": "05_旅行",
+            "count": 59
+        },
+        {
+            "id": "business-office",
+            "label": "商务办公",
+            "folder": "06_商务办公",
+            "count": 117
+        },
+        {
+            "id": "profession",
+            "label": "职业",
+            "folder": "07_职业",
+            "count": 34
+        },
+        {
+            "id": "technology",
+            "label": "科技",
+            "folder": "08_科技",
+            "count": 89
+        },
+        {
+            "id": "education",
+            "label": "教育",
+            "folder": "09_教育",
+            "count": 58
+        },
+        {
+            "id": "food",
+            "label": "食品",
+            "folder": "10_食品",
+            "count": 112
+        },
+        {
+            "id": "festival",
+            "label": "节日",
+            "folder": "11_节日",
+            "count": 71
+        },
+        {
+            "id": "emoji",
+            "label": "表情",
+            "folder": "12_表情",
+            "count": 33
+        },
+        {
+            "id": "sports-equipment",
+            "label": "体育器材",
+            "folder": "13_体育器材",
+            "count": 39
+        }
+    ],
+    "items": [
+        {
+            "id": "animal-001",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 1,
+            "label": "河马",
+            "fileName": "001_河马.svg",
+            "relativePath": "clipart/01_动物/001_河马.svg"
+        },
+        {
+            "id": "animal-002",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 2,
+            "label": "蜜蜂",
+            "fileName": "002_蜜蜂.svg",
+            "relativePath": "clipart/01_动物/002_蜜蜂.svg"
+        },
+        {
+            "id": "animal-003",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 3,
+            "label": "牛",
+            "fileName": "003_牛.svg",
+            "relativePath": "clipart/01_动物/003_牛.svg"
+        },
+        {
+            "id": "animal-004",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 4,
+            "label": "兔子",
+            "fileName": "004_兔子.svg",
+            "relativePath": "clipart/01_动物/004_兔子.svg"
+        },
+        {
+            "id": "animal-005",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 5,
+            "label": "老虎",
+            "fileName": "005_老虎.svg",
+            "relativePath": "clipart/01_动物/005_老虎.svg"
+        },
+        {
+            "id": "animal-006",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 6,
+            "label": "老鼠",
+            "fileName": "006_老鼠.svg",
+            "relativePath": "clipart/01_动物/006_老鼠.svg"
+        },
+        {
+            "id": "animal-007",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 7,
+            "label": "马",
+            "fileName": "007_马.svg",
+            "relativePath": "clipart/01_动物/007_马.svg"
+        },
+        {
+            "id": "animal-008",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 8,
+            "label": "鸡",
+            "fileName": "008_鸡.svg",
+            "relativePath": "clipart/01_动物/008_鸡.svg"
+        },
+        {
+            "id": "animal-009",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 9,
+            "label": "鸭",
+            "fileName": "009_鸭.svg",
+            "relativePath": "clipart/01_动物/009_鸭.svg"
+        },
+        {
+            "id": "animal-010",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 10,
+            "label": "鹿",
+            "fileName": "010_鹿.svg",
+            "relativePath": "clipart/01_动物/010_鹿.svg"
+        },
+        {
+            "id": "animal-011",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 11,
+            "label": "狮子",
+            "fileName": "011_狮子.svg",
+            "relativePath": "clipart/01_动物/011_狮子.svg"
+        },
+        {
+            "id": "animal-012",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 12,
+            "label": "大象",
+            "fileName": "012_大象.svg",
+            "relativePath": "clipart/01_动物/012_大象.svg"
+        },
+        {
+            "id": "animal-013",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 13,
+            "label": "虎皮兰",
+            "fileName": "013_虎皮兰.svg",
+            "relativePath": "clipart/01_动物/013_虎皮兰.svg"
+        },
+        {
+            "id": "animal-014",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 14,
+            "label": "长春藤",
+            "fileName": "014_长春藤.svg",
+            "relativePath": "clipart/01_动物/014_长春藤.svg"
+        },
+        {
+            "id": "animal-015",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 15,
+            "label": "蕨类植物",
+            "fileName": "015_蕨类植物.svg",
+            "relativePath": "clipart/01_动物/015_蕨类植物.svg"
+        },
+        {
+            "id": "animal-016",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 16,
+            "label": "铁树",
+            "fileName": "016_铁树.svg",
+            "relativePath": "clipart/01_动物/016_铁树.svg"
+        },
+        {
+            "id": "animal-017",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 17,
+            "label": "天堂鸟",
+            "fileName": "017_天堂鸟.svg",
+            "relativePath": "clipart/01_动物/017_天堂鸟.svg"
+        },
+        {
+            "id": "animal-018",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 18,
+            "label": "仙人掌",
+            "fileName": "018_仙人掌.svg",
+            "relativePath": "clipart/01_动物/018_仙人掌.svg"
+        },
+        {
+            "id": "animal-019",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 19,
+            "label": "梅花",
+            "fileName": "019_梅花.svg",
+            "relativePath": "clipart/01_动物/019_梅花.svg"
+        },
+        {
+            "id": "animal-020",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 20,
+            "label": "五行草",
+            "fileName": "020_五行草.svg",
+            "relativePath": "clipart/01_动物/020_五行草.svg"
+        },
+        {
+            "id": "animal-021",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 21,
+            "label": "竹子",
+            "fileName": "021_竹子.svg",
+            "relativePath": "clipart/01_动物/021_竹子.svg"
+        },
+        {
+            "id": "animal-022",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 22,
+            "label": "春羽",
+            "fileName": "022_春羽.svg",
+            "relativePath": "clipart/01_动物/022_春羽.svg"
+        },
+        {
+            "id": "animal-023",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 23,
+            "label": "四叶草",
+            "fileName": "023_四叶草.svg",
+            "relativePath": "clipart/01_动物/023_四叶草.svg"
+        },
+        {
+            "id": "animal-024",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 24,
+            "label": "云",
+            "fileName": "024_云.svg",
+            "relativePath": "clipart/01_动物/024_云.svg"
+        },
+        {
+            "id": "animal-025",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 25,
+            "label": "环境保护",
+            "fileName": "025_环境保护.svg",
+            "relativePath": "clipart/01_动物/025_环境保护.svg"
+        },
+        {
+            "id": "animal-026",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 26,
+            "label": "工厂",
+            "fileName": "026_工厂.svg",
+            "relativePath": "clipart/01_动物/026_工厂.svg"
+        },
+        {
+            "id": "animal-027",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 27,
+            "label": "烟",
+            "fileName": "027_烟.svg",
+            "relativePath": "clipart/01_动物/027_烟.svg"
+        },
+        {
+            "id": "animal-028",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 28,
+            "label": "浓烟",
+            "fileName": "028_浓烟.svg",
+            "relativePath": "clipart/01_动物/028_浓烟.svg"
+        },
+        {
+            "id": "animal-029",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 29,
+            "label": "污水处理厂",
+            "fileName": "029_污水处理厂.svg",
+            "relativePath": "clipart/01_动物/029_污水处理厂.svg"
+        },
+        {
+            "id": "animal-030",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 30,
+            "label": "海马",
+            "fileName": "030_海马.svg",
+            "relativePath": "clipart/01_动物/030_海马.svg"
+        },
+        {
+            "id": "animal-031",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 31,
+            "label": "龙虾",
+            "fileName": "031_龙虾.svg",
+            "relativePath": "clipart/01_动物/031_龙虾.svg"
+        },
+        {
+            "id": "animal-032",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 32,
+            "label": "海螺",
+            "fileName": "032_海螺.svg",
+            "relativePath": "clipart/01_动物/032_海螺.svg"
+        },
+        {
+            "id": "animal-033",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 33,
+            "label": "水母",
+            "fileName": "033_水母.svg",
+            "relativePath": "clipart/01_动物/033_水母.svg"
+        },
+        {
+            "id": "animal-034",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 34,
+            "label": "海星",
+            "fileName": "034_海星.svg",
+            "relativePath": "clipart/01_动物/034_海星.svg"
+        },
+        {
+            "id": "animal-035",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 35,
+            "label": "海豚",
+            "fileName": "035_海豚.svg",
+            "relativePath": "clipart/01_动物/035_海豚.svg"
+        },
+        {
+            "id": "animal-036",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 36,
+            "label": "金鱼",
+            "fileName": "036_金鱼.svg",
+            "relativePath": "clipart/01_动物/036_金鱼.svg"
+        },
+        {
+            "id": "animal-037",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 37,
+            "label": "乌龟",
+            "fileName": "037_乌龟.svg",
+            "relativePath": "clipart/01_动物/037_乌龟.svg"
+        },
+        {
+            "id": "animal-038",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 38,
+            "label": "章鱼",
+            "fileName": "038_章鱼.svg",
+            "relativePath": "clipart/01_动物/038_章鱼.svg"
+        },
+        {
+            "id": "animal-039",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 39,
+            "label": "墨鱼",
+            "fileName": "039_墨鱼.svg",
+            "relativePath": "clipart/01_动物/039_墨鱼.svg"
+        },
+        {
+            "id": "animal-040",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 40,
+            "label": "海狮",
+            "fileName": "040_海狮.svg",
+            "relativePath": "clipart/01_动物/040_海狮.svg"
+        },
+        {
+            "id": "animal-041",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 41,
+            "label": "海豹",
+            "fileName": "041_海豹.svg",
+            "relativePath": "clipart/01_动物/041_海豹.svg"
+        },
+        {
+            "id": "animal-042",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 42,
+            "label": "河豚",
+            "fileName": "042_河豚.svg",
+            "relativePath": "clipart/01_动物/042_河豚.svg"
+        },
+        {
+            "id": "animal-043",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 43,
+            "label": "魔鬼鱼",
+            "fileName": "043_魔鬼鱼.svg",
+            "relativePath": "clipart/01_动物/043_魔鬼鱼.svg"
+        },
+        {
+            "id": "animal-044",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 44,
+            "label": "鱼",
+            "fileName": "044_鱼.svg",
+            "relativePath": "clipart/01_动物/044_鱼.svg"
+        },
+        {
+            "id": "animal-045",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 45,
+            "label": "鲸鱼",
+            "fileName": "045_鲸鱼.svg",
+            "relativePath": "clipart/01_动物/045_鲸鱼.svg"
+        },
+        {
+            "id": "animal-046",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 46,
+            "label": "贝壳",
+            "fileName": "046_贝壳.svg",
+            "relativePath": "clipart/01_动物/046_贝壳.svg"
+        },
+        {
+            "id": "animal-047",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 47,
+            "label": "三角鱼",
+            "fileName": "047_三角鱼.svg",
+            "relativePath": "clipart/01_动物/047_三角鱼.svg"
+        },
+        {
+            "id": "animal-048",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 48,
+            "label": "海带",
+            "fileName": "048_海带.svg",
+            "relativePath": "clipart/01_动物/048_海带.svg"
+        },
+        {
+            "id": "animal-049",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 49,
+            "label": "海藻",
+            "fileName": "049_海藻.svg",
+            "relativePath": "clipart/01_动物/049_海藻.svg"
+        },
+        {
+            "id": "animal-050",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 50,
+            "label": "蜜蜂_2",
+            "fileName": "050_蜜蜂_2.svg",
+            "relativePath": "clipart/01_动物/050_蜜蜂_2.svg"
+        },
+        {
+            "id": "animal-051",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 51,
+            "label": "瓢虫",
+            "fileName": "051_瓢虫.svg",
+            "relativePath": "clipart/01_动物/051_瓢虫.svg"
+        },
+        {
+            "id": "animal-052",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 52,
+            "label": "蚂蚁",
+            "fileName": "052_蚂蚁.svg",
+            "relativePath": "clipart/01_动物/052_蚂蚁.svg"
+        },
+        {
+            "id": "animal-053",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 53,
+            "label": "苍蝇",
+            "fileName": "053_苍蝇.svg",
+            "relativePath": "clipart/01_动物/053_苍蝇.svg"
+        },
+        {
+            "id": "animal-054",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 54,
+            "label": "蝴蝶",
+            "fileName": "054_蝴蝶.svg",
+            "relativePath": "clipart/01_动物/054_蝴蝶.svg"
+        },
+        {
+            "id": "animal-055",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 55,
+            "label": "蜻蜓",
+            "fileName": "055_蜻蜓.svg",
+            "relativePath": "clipart/01_动物/055_蜻蜓.svg"
+        },
+        {
+            "id": "animal-056",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 56,
+            "label": "毛毛虫",
+            "fileName": "056_毛毛虫.svg",
+            "relativePath": "clipart/01_动物/056_毛毛虫.svg"
+        },
+        {
+            "id": "animal-057",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 57,
+            "label": "蚊子",
+            "fileName": "057_蚊子.svg",
+            "relativePath": "clipart/01_动物/057_蚊子.svg"
+        },
+        {
+            "id": "animal-058",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 58,
+            "label": "蝉",
+            "fileName": "058_蝉.svg",
+            "relativePath": "clipart/01_动物/058_蝉.svg"
+        },
+        {
+            "id": "animal-059",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 59,
+            "label": "蜈蚣",
+            "fileName": "059_蜈蚣.svg",
+            "relativePath": "clipart/01_动物/059_蜈蚣.svg"
+        },
+        {
+            "id": "animal-060",
+            "categoryId": "animal",
+            "categoryLabel": "动物",
+            "folder": "01_动物",
+            "index": 60,
+            "label": "蝎子",
+            "fileName": "060_蝎子.svg",
+            "relativePath": "clipart/01_动物/060_蝎子.svg"
+        },
+        {
+            "id": "plant-001",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 1,
+            "label": "圣诞花环",
+            "fileName": "001_圣诞花环.svg",
+            "relativePath": "clipart/02_植物/001_圣诞花环.svg"
+        },
+        {
+            "id": "plant-002",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 2,
+            "label": "房子",
+            "fileName": "002_房子.svg",
+            "relativePath": "clipart/02_植物/002_房子.svg"
+        },
+        {
+            "id": "plant-003",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 3,
+            "label": "圣诞球",
+            "fileName": "003_圣诞球.svg",
+            "relativePath": "clipart/02_植物/003_圣诞球.svg"
+        },
+        {
+            "id": "plant-004",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 4,
+            "label": "圣诞树",
+            "fileName": "004_圣诞树.svg",
+            "relativePath": "clipart/02_植物/004_圣诞树.svg"
+        },
+        {
+            "id": "plant-005",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 5,
+            "label": "圣诞帽",
+            "fileName": "005_圣诞帽.svg",
+            "relativePath": "clipart/02_植物/005_圣诞帽.svg"
+        },
+        {
+            "id": "plant-006",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 6,
+            "label": "圣诞帽_2",
+            "fileName": "006_圣诞帽_2.svg",
+            "relativePath": "clipart/02_植物/006_圣诞帽_2.svg"
+        },
+        {
+            "id": "plant-007",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 7,
+            "label": "雪花",
+            "fileName": "007_雪花.svg",
+            "relativePath": "clipart/02_植物/007_雪花.svg"
+        },
+        {
+            "id": "plant-008",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 8,
+            "label": "雪人",
+            "fileName": "008_雪人.svg",
+            "relativePath": "clipart/02_植物/008_雪人.svg"
+        },
+        {
+            "id": "plant-009",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 9,
+            "label": "鹿角",
+            "fileName": "009_鹿角.svg",
+            "relativePath": "clipart/02_植物/009_鹿角.svg"
+        },
+        {
+            "id": "plant-010",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 10,
+            "label": "礼物",
+            "fileName": "010_礼物.svg",
+            "relativePath": "clipart/02_植物/010_礼物.svg"
+        },
+        {
+            "id": "plant-011",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 11,
+            "label": "微笑",
+            "fileName": "011_微笑.svg",
+            "relativePath": "clipart/02_植物/011_微笑.svg"
+        },
+        {
+            "id": "plant-012",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 12,
+            "label": "邪魅一笑",
+            "fileName": "012_邪魅一笑.svg",
+            "relativePath": "clipart/02_植物/012_邪魅一笑.svg"
+        },
+        {
+            "id": "plant-013",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 13,
+            "label": "睡觉",
+            "fileName": "013_睡觉.svg",
+            "relativePath": "clipart/02_植物/013_睡觉.svg"
+        },
+        {
+            "id": "plant-014",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 14,
+            "label": "淘气的",
+            "fileName": "014_淘气的.svg",
+            "relativePath": "clipart/02_植物/014_淘气的.svg"
+        },
+        {
+            "id": "plant-015",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 15,
+            "label": "尴尬",
+            "fileName": "015_尴尬.svg",
+            "relativePath": "clipart/02_植物/015_尴尬.svg"
+        },
+        {
+            "id": "plant-016",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 16,
+            "label": "微笑_2",
+            "fileName": "016_微笑_2.svg",
+            "relativePath": "clipart/02_植物/016_微笑_2.svg"
+        },
+        {
+            "id": "plant-017",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 17,
+            "label": "哭",
+            "fileName": "017_哭.svg",
+            "relativePath": "clipart/02_植物/017_哭.svg"
+        },
+        {
+            "id": "plant-018",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 18,
+            "label": "溜冰鞋",
+            "fileName": "018_溜冰鞋.svg",
+            "relativePath": "clipart/02_植物/018_溜冰鞋.svg"
+        },
+        {
+            "id": "plant-019",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 19,
+            "label": "举重",
+            "fileName": "019_举重.svg",
+            "relativePath": "clipart/02_植物/019_举重.svg"
+        },
+        {
+            "id": "plant-020",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 20,
+            "label": "拳击",
+            "fileName": "020_拳击.svg",
+            "relativePath": "clipart/02_植物/020_拳击.svg"
+        },
+        {
+            "id": "plant-021",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 21,
+            "label": "保龄球",
+            "fileName": "021_保龄球.svg",
+            "relativePath": "clipart/02_植物/021_保龄球.svg"
+        },
+        {
+            "id": "plant-022",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 22,
+            "label": "圣诞球_2",
+            "fileName": "022_圣诞球_2.svg",
+            "relativePath": "clipart/02_植物/022_圣诞球_2.svg"
+        },
+        {
+            "id": "plant-023",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 23,
+            "label": "雪橇",
+            "fileName": "023_雪橇.svg",
+            "relativePath": "clipart/02_植物/023_雪橇.svg"
+        },
+        {
+            "id": "plant-024",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 24,
+            "label": "姜饼人",
+            "fileName": "024_姜饼人.svg",
+            "relativePath": "clipart/02_植物/024_姜饼人.svg"
+        },
+        {
+            "id": "plant-025",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 25,
+            "label": "爆竹",
+            "fileName": "025_爆竹.svg",
+            "relativePath": "clipart/02_植物/025_爆竹.svg"
+        },
+        {
+            "id": "plant-026",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 26,
+            "label": "锣鼓",
+            "fileName": "026_锣鼓.svg",
+            "relativePath": "clipart/02_植物/026_锣鼓.svg"
+        },
+        {
+            "id": "plant-027",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 27,
+            "label": "幸运袋",
+            "fileName": "027_幸运袋.svg",
+            "relativePath": "clipart/02_植物/027_幸运袋.svg"
+        },
+        {
+            "id": "plant-028",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 28,
+            "label": "红包",
+            "fileName": "028_红包.svg",
+            "relativePath": "clipart/02_植物/028_红包.svg"
+        },
+        {
+            "id": "plant-029",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 29,
+            "label": "饺子",
+            "fileName": "029_饺子.svg",
+            "relativePath": "clipart/02_植物/029_饺子.svg"
+        },
+        {
+            "id": "plant-030",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 30,
+            "label": "灯笼",
+            "fileName": "030_灯笼.svg",
+            "relativePath": "clipart/02_植物/030_灯笼.svg"
+        },
+        {
+            "id": "plant-031",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 31,
+            "label": "见钱眼开",
+            "fileName": "031_见钱眼开.svg",
+            "relativePath": "clipart/02_植物/031_见钱眼开.svg"
+        },
+        {
+            "id": "plant-032",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 32,
+            "label": "可爱的",
+            "fileName": "032_可爱的.svg",
+            "relativePath": "clipart/02_植物/032_可爱的.svg"
+        },
+        {
+            "id": "plant-033",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 33,
+            "label": "刺激",
+            "fileName": "033_刺激.svg",
+            "relativePath": "clipart/02_植物/033_刺激.svg"
+        },
+        {
+            "id": "plant-034",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 34,
+            "label": "烟花",
+            "fileName": "034_烟花.svg",
+            "relativePath": "clipart/02_植物/034_烟花.svg"
+        },
+        {
+            "id": "plant-035",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 35,
+            "label": "驴打滚",
+            "fileName": "035_驴打滚.svg",
+            "relativePath": "clipart/02_植物/035_驴打滚.svg"
+        },
+        {
+            "id": "plant-036",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 36,
+            "label": "烟花_2",
+            "fileName": "036_烟花_2.svg",
+            "relativePath": "clipart/02_植物/036_烟花_2.svg"
+        },
+        {
+            "id": "plant-037",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 37,
+            "label": "中国结",
+            "fileName": "037_中国结.svg",
+            "relativePath": "clipart/02_植物/037_中国结.svg"
+        },
+        {
+            "id": "plant-038",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 38,
+            "label": "冰糖葫芦",
+            "fileName": "038_冰糖葫芦.svg",
+            "relativePath": "clipart/02_植物/038_冰糖葫芦.svg"
+        },
+        {
+            "id": "plant-039",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 39,
+            "label": "棉花",
+            "fileName": "039_棉花.svg",
+            "relativePath": "clipart/02_植物/039_棉花.svg"
+        },
+        {
+            "id": "plant-040",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 40,
+            "label": "礼物_2",
+            "fileName": "040_礼物_2.svg",
+            "relativePath": "clipart/02_植物/040_礼物_2.svg"
+        },
+        {
+            "id": "plant-041",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 41,
+            "label": "玫瑰花",
+            "fileName": "041_玫瑰花.svg",
+            "relativePath": "clipart/02_植物/041_玫瑰花.svg"
+        },
+        {
+            "id": "plant-042",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 42,
+            "label": "一箭穿心",
+            "fileName": "042_一箭穿心.svg",
+            "relativePath": "clipart/02_植物/042_一箭穿心.svg"
+        },
+        {
+            "id": "plant-043",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 43,
+            "label": "同心锁",
+            "fileName": "043_同心锁.svg",
+            "relativePath": "clipart/02_植物/043_同心锁.svg"
+        },
+        {
+            "id": "plant-044",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 44,
+            "label": "巧克力",
+            "fileName": "044_巧克力.svg",
+            "relativePath": "clipart/02_植物/044_巧克力.svg"
+        },
+        {
+            "id": "plant-045",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 45,
+            "label": "鸳鸯",
+            "fileName": "045_鸳鸯.svg",
+            "relativePath": "clipart/02_植物/045_鸳鸯.svg"
+        },
+        {
+            "id": "plant-046",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 46,
+            "label": "爱",
+            "fileName": "046_爱.svg",
+            "relativePath": "clipart/02_植物/046_爱.svg"
+        },
+        {
+            "id": "plant-047",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 47,
+            "label": "婚纱",
+            "fileName": "047_婚纱.svg",
+            "relativePath": "clipart/02_植物/047_婚纱.svg"
+        },
+        {
+            "id": "plant-048",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 48,
+            "label": "截止",
+            "fileName": "048_截止.svg",
+            "relativePath": "clipart/02_植物/048_截止.svg"
+        },
+        {
+            "id": "plant-049",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 49,
+            "label": "项链",
+            "fileName": "049_项链.svg",
+            "relativePath": "clipart/02_植物/049_项链.svg"
+        },
+        {
+            "id": "plant-050",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 50,
+            "label": "情书",
+            "fileName": "050_情书.svg",
+            "relativePath": "clipart/02_植物/050_情书.svg"
+        },
+        {
+            "id": "plant-051",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 51,
+            "label": "皇冠",
+            "fileName": "051_皇冠.svg",
+            "relativePath": "clipart/02_植物/051_皇冠.svg"
+        },
+        {
+            "id": "plant-052",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 52,
+            "label": "情侣照",
+            "fileName": "052_情侣照.svg",
+            "relativePath": "clipart/02_植物/052_情侣照.svg"
+        },
+        {
+            "id": "plant-053",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 53,
+            "label": "头骨",
+            "fileName": "053_头骨.svg",
+            "relativePath": "clipart/02_植物/053_头骨.svg"
+        },
+        {
+            "id": "plant-054",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 54,
+            "label": "墓地",
+            "fileName": "054_墓地.svg",
+            "relativePath": "clipart/02_植物/054_墓地.svg"
+        },
+        {
+            "id": "plant-055",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 55,
+            "label": "巫师帽",
+            "fileName": "055_巫师帽.svg",
+            "relativePath": "clipart/02_植物/055_巫师帽.svg"
+        },
+        {
+            "id": "plant-056",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 56,
+            "label": "枫叶",
+            "fileName": "056_枫叶.svg",
+            "relativePath": "clipart/02_植物/056_枫叶.svg"
+        },
+        {
+            "id": "plant-057",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 57,
+            "label": "复活节彩蛋",
+            "fileName": "057_复活节彩蛋.svg",
+            "relativePath": "clipart/02_植物/057_复活节彩蛋.svg"
+        },
+        {
+            "id": "plant-058",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 58,
+            "label": "南瓜灯笼",
+            "fileName": "058_南瓜灯笼.svg",
+            "relativePath": "clipart/02_植物/058_南瓜灯笼.svg"
+        },
+        {
+            "id": "plant-059",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 59,
+            "label": "鬼",
+            "fileName": "059_鬼.svg",
+            "relativePath": "clipart/02_植物/059_鬼.svg"
+        },
+        {
+            "id": "plant-060",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 60,
+            "label": "蝙蝠",
+            "fileName": "060_蝙蝠.svg",
+            "relativePath": "clipart/02_植物/060_蝙蝠.svg"
+        },
+        {
+            "id": "plant-061",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 61,
+            "label": "面具",
+            "fileName": "061_面具.svg",
+            "relativePath": "clipart/02_植物/061_面具.svg"
+        },
+        {
+            "id": "plant-062",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 62,
+            "label": "龙舟",
+            "fileName": "062_龙舟.svg",
+            "relativePath": "clipart/02_植物/062_龙舟.svg"
+        },
+        {
+            "id": "plant-063",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 63,
+            "label": "咸鸭蛋",
+            "fileName": "063_咸鸭蛋.svg",
+            "relativePath": "clipart/02_植物/063_咸鸭蛋.svg"
+        },
+        {
+            "id": "plant-064",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 64,
+            "label": "粽叶",
+            "fileName": "064_粽叶.svg",
+            "relativePath": "clipart/02_植物/064_粽叶.svg"
+        },
+        {
+            "id": "plant-065",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 65,
+            "label": "粽子",
+            "fileName": "065_粽子.svg",
+            "relativePath": "clipart/02_植物/065_粽子.svg"
+        },
+        {
+            "id": "plant-066",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 66,
+            "label": "帽子",
+            "fileName": "066_帽子.svg",
+            "relativePath": "clipart/02_植物/066_帽子.svg"
+        },
+        {
+            "id": "plant-067",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 67,
+            "label": "小蛋糕",
+            "fileName": "067_小蛋糕.svg",
+            "relativePath": "clipart/02_植物/067_小蛋糕.svg"
+        },
+        {
+            "id": "plant-068",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 68,
+            "label": "蜡烛",
+            "fileName": "068_蜡烛.svg",
+            "relativePath": "clipart/02_植物/068_蜡烛.svg"
+        },
+        {
+            "id": "plant-069",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 69,
+            "label": "气球",
+            "fileName": "069_气球.svg",
+            "relativePath": "clipart/02_植物/069_气球.svg"
+        },
+        {
+            "id": "plant-070",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 70,
+            "label": "酒杯",
+            "fileName": "070_酒杯.svg",
+            "relativePath": "clipart/02_植物/070_酒杯.svg"
+        },
+        {
+            "id": "plant-071",
+            "categoryId": "plant",
+            "categoryLabel": "植物",
+            "folder": "02_植物",
+            "index": 71,
+            "label": "蛋糕",
+            "fileName": "071_蛋糕.svg",
+            "relativePath": "clipart/02_植物/071_蛋糕.svg"
+        },
+        {
+            "id": "environment-001",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 1,
+            "label": "保护水资源",
+            "fileName": "001_保护水资源.svg",
+            "relativePath": "clipart/03_环境保护/001_保护水资源.svg"
+        },
+        {
+            "id": "environment-002",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 2,
+            "label": "保护地球",
+            "fileName": "002_保护地球.svg",
+            "relativePath": "clipart/03_环境保护/002_保护地球.svg"
+        },
+        {
+            "id": "environment-003",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 3,
+            "label": "节能灯泡",
+            "fileName": "003_节能灯泡.svg",
+            "relativePath": "clipart/03_环境保护/003_节能灯泡.svg"
+        },
+        {
+            "id": "environment-004",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 4,
+            "label": "电动汽车",
+            "fileName": "004_电动汽车.svg",
+            "relativePath": "clipart/03_环境保护/004_电动汽车.svg"
+        },
+        {
+            "id": "environment-005",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 5,
+            "label": "太阳能",
+            "fileName": "005_太阳能.svg",
+            "relativePath": "clipart/03_环境保护/005_太阳能.svg"
+        },
+        {
+            "id": "environment-006",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 6,
+            "label": "垃圾桶",
+            "fileName": "006_垃圾桶.svg",
+            "relativePath": "clipart/03_环境保护/006_垃圾桶.svg"
+        },
+        {
+            "id": "environment-007",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 7,
+            "label": "自行车",
+            "fileName": "007_自行车.svg",
+            "relativePath": "clipart/03_环境保护/007_自行车.svg"
+        },
+        {
+            "id": "environment-008",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 8,
+            "label": "太阳",
+            "fileName": "008_太阳.svg",
+            "relativePath": "clipart/03_环境保护/008_太阳.svg"
+        },
+        {
+            "id": "environment-009",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 9,
+            "label": "废物处理中心",
+            "fileName": "009_废物处理中心.svg",
+            "relativePath": "clipart/03_环境保护/009_废物处理中心.svg"
+        },
+        {
+            "id": "environment-010",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 10,
+            "label": "风车",
+            "fileName": "010_风车.svg",
+            "relativePath": "clipart/03_环境保护/010_风车.svg"
+        },
+        {
+            "id": "environment-011",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 11,
+            "label": "风车_2",
+            "fileName": "011_风车_2.svg",
+            "relativePath": "clipart/03_环境保护/011_风车_2.svg"
+        },
+        {
+            "id": "environment-012",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 12,
+            "label": "环保袋",
+            "fileName": "012_环保袋.svg",
+            "relativePath": "clipart/03_环境保护/012_环保袋.svg"
+        },
+        {
+            "id": "environment-013",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 13,
+            "label": "水循环",
+            "fileName": "013_水循环.svg",
+            "relativePath": "clipart/03_环境保护/013_水循环.svg"
+        },
+        {
+            "id": "environment-014",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 14,
+            "label": "水循环_2",
+            "fileName": "014_水循环_2.svg",
+            "relativePath": "clipart/03_环境保护/014_水循环_2.svg"
+        },
+        {
+            "id": "environment-015",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 15,
+            "label": "环保标签",
+            "fileName": "015_环保标签.svg",
+            "relativePath": "clipart/03_环境保护/015_环保标签.svg"
+        },
+        {
+            "id": "environment-016",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 16,
+            "label": "环境奖",
+            "fileName": "016_环境奖.svg",
+            "relativePath": "clipart/03_环境保护/016_环境奖.svg"
+        },
+        {
+            "id": "environment-017",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 17,
+            "label": "绿色的叶子",
+            "fileName": "017_绿色的叶子.svg",
+            "relativePath": "clipart/03_环境保护/017_绿色的叶子.svg"
+        },
+        {
+            "id": "environment-018",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 18,
+            "label": "绿色的叶子_2",
+            "fileName": "018_绿色的叶子_2.svg",
+            "relativePath": "clipart/03_环境保护/018_绿色的叶子_2.svg"
+        },
+        {
+            "id": "environment-019",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 19,
+            "label": "玻璃",
+            "fileName": "019_玻璃.svg",
+            "relativePath": "clipart/03_环境保护/019_玻璃.svg"
+        },
+        {
+            "id": "environment-020",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 20,
+            "label": "充电",
+            "fileName": "020_充电.svg",
+            "relativePath": "clipart/03_环境保护/020_充电.svg"
+        },
+        {
+            "id": "environment-021",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 21,
+            "label": "纸",
+            "fileName": "021_纸.svg",
+            "relativePath": "clipart/03_环境保护/021_纸.svg"
+        },
+        {
+            "id": "environment-022",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 22,
+            "label": "热气球",
+            "fileName": "022_热气球.svg",
+            "relativePath": "clipart/03_环境保护/022_热气球.svg"
+        },
+        {
+            "id": "environment-023",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 23,
+            "label": "仙人掌",
+            "fileName": "023_仙人掌.svg",
+            "relativePath": "clipart/03_环境保护/023_仙人掌.svg"
+        },
+        {
+            "id": "environment-024",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 24,
+            "label": "云",
+            "fileName": "024_云.svg",
+            "relativePath": "clipart/03_环境保护/024_云.svg"
+        },
+        {
+            "id": "environment-025",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 25,
+            "label": "环境保护",
+            "fileName": "025_环境保护.svg",
+            "relativePath": "clipart/03_环境保护/025_环境保护.svg"
+        },
+        {
+            "id": "environment-026",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 26,
+            "label": "工厂",
+            "fileName": "026_工厂.svg",
+            "relativePath": "clipart/03_环境保护/026_工厂.svg"
+        },
+        {
+            "id": "environment-027",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 27,
+            "label": "烟",
+            "fileName": "027_烟.svg",
+            "relativePath": "clipart/03_环境保护/027_烟.svg"
+        },
+        {
+            "id": "environment-028",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 28,
+            "label": "浓烟",
+            "fileName": "028_浓烟.svg",
+            "relativePath": "clipart/03_环境保护/028_浓烟.svg"
+        },
+        {
+            "id": "environment-029",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 29,
+            "label": "污水处理厂",
+            "fileName": "029_污水处理厂.svg",
+            "relativePath": "clipart/03_环境保护/029_污水处理厂.svg"
+        },
+        {
+            "id": "environment-030",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 30,
+            "label": "水龙头",
+            "fileName": "030_水龙头.svg",
+            "relativePath": "clipart/03_环境保护/030_水龙头.svg"
+        },
+        {
+            "id": "environment-031",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 31,
+            "label": "方向",
+            "fileName": "031_方向.svg",
+            "relativePath": "clipart/03_环境保护/031_方向.svg"
+        },
+        {
+            "id": "environment-032",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 32,
+            "label": "纸箱",
+            "fileName": "032_纸箱.svg",
+            "relativePath": "clipart/03_环境保护/032_纸箱.svg"
+        },
+        {
+            "id": "environment-033",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 33,
+            "label": "仙人掌_2",
+            "fileName": "033_仙人掌_2.svg",
+            "relativePath": "clipart/03_环境保护/033_仙人掌_2.svg"
+        },
+        {
+            "id": "environment-034",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 34,
+            "label": "植物",
+            "fileName": "034_植物.svg",
+            "relativePath": "clipart/03_环境保护/034_植物.svg"
+        },
+        {
+            "id": "environment-035",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 35,
+            "label": "树",
+            "fileName": "035_树.svg",
+            "relativePath": "clipart/03_环境保护/035_树.svg"
+        },
+        {
+            "id": "environment-036",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 36,
+            "label": "废物处理中心_2",
+            "fileName": "036_废物处理中心_2.svg",
+            "relativePath": "clipart/03_环境保护/036_废物处理中心_2.svg"
+        },
+        {
+            "id": "environment-037",
+            "categoryId": "environment",
+            "categoryLabel": "环境保护",
+            "folder": "03_环境保护",
+            "index": 37,
+            "label": "清洁",
+            "fileName": "037_清洁.svg",
+            "relativePath": "clipart/03_环境保护/037_清洁.svg"
+        },
+        {
+            "id": "weather-001",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 1,
+            "label": "多云",
+            "fileName": "001_多云.svg",
+            "relativePath": "clipart/04_天气/001_多云.svg"
+        },
+        {
+            "id": "weather-002",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 2,
+            "label": "多云_2",
+            "fileName": "002_多云_2.svg",
+            "relativePath": "clipart/04_天气/002_多云_2.svg"
+        },
+        {
+            "id": "weather-003",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 3,
+            "label": "节能灯泡",
+            "fileName": "003_节能灯泡.svg",
+            "relativePath": "clipart/04_天气/003_节能灯泡.svg"
+        },
+        {
+            "id": "weather-004",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 4,
+            "label": "电动汽车",
+            "fileName": "004_电动汽车.svg",
+            "relativePath": "clipart/04_天气/004_电动汽车.svg"
+        },
+        {
+            "id": "weather-005",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 5,
+            "label": "太阳能",
+            "fileName": "005_太阳能.svg",
+            "relativePath": "clipart/04_天气/005_太阳能.svg"
+        },
+        {
+            "id": "weather-006",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 6,
+            "label": "垃圾桶",
+            "fileName": "006_垃圾桶.svg",
+            "relativePath": "clipart/04_天气/006_垃圾桶.svg"
+        },
+        {
+            "id": "weather-007",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 7,
+            "label": "自行车",
+            "fileName": "007_自行车.svg",
+            "relativePath": "clipart/04_天气/007_自行车.svg"
+        },
+        {
+            "id": "weather-008",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 8,
+            "label": "太阳",
+            "fileName": "008_太阳.svg",
+            "relativePath": "clipart/04_天气/008_太阳.svg"
+        },
+        {
+            "id": "weather-009",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 9,
+            "label": "废物处理中心",
+            "fileName": "009_废物处理中心.svg",
+            "relativePath": "clipart/04_天气/009_废物处理中心.svg"
+        },
+        {
+            "id": "weather-010",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 10,
+            "label": "风车",
+            "fileName": "010_风车.svg",
+            "relativePath": "clipart/04_天气/010_风车.svg"
+        },
+        {
+            "id": "weather-011",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 11,
+            "label": "风车_2",
+            "fileName": "011_风车_2.svg",
+            "relativePath": "clipart/04_天气/011_风车_2.svg"
+        },
+        {
+            "id": "weather-012",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 12,
+            "label": "暴雪",
+            "fileName": "012_暴雪.svg",
+            "relativePath": "clipart/04_天气/012_暴雪.svg"
+        },
+        {
+            "id": "weather-013",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 13,
+            "label": "夜间降雪",
+            "fileName": "013_夜间降雪.svg",
+            "relativePath": "clipart/04_天气/013_夜间降雪.svg"
+        },
+        {
+            "id": "weather-014",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 14,
+            "label": "夜间降雨",
+            "fileName": "014_夜间降雨.svg",
+            "relativePath": "clipart/04_天气/014_夜间降雨.svg"
+        },
+        {
+            "id": "weather-015",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 15,
+            "label": "日出",
+            "fileName": "015_日出.svg",
+            "relativePath": "clipart/04_天气/015_日出.svg"
+        },
+        {
+            "id": "weather-016",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 16,
+            "label": "晚上",
+            "fileName": "016_晚上.svg",
+            "relativePath": "clipart/04_天气/016_晚上.svg"
+        },
+        {
+            "id": "weather-017",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 17,
+            "label": "彩虹",
+            "fileName": "017_彩虹.svg",
+            "relativePath": "clipart/04_天气/017_彩虹.svg"
+        },
+        {
+            "id": "weather-018",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 18,
+            "label": "风向",
+            "fileName": "018_风向.svg",
+            "relativePath": "clipart/04_天气/018_风向.svg"
+        },
+        {
+            "id": "weather-019",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 19,
+            "label": "雷阵雨",
+            "fileName": "019_雷阵雨.svg",
+            "relativePath": "clipart/04_天气/019_雷阵雨.svg"
+        },
+        {
+            "id": "weather-020",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 20,
+            "label": "冰雹",
+            "fileName": "020_冰雹.svg",
+            "relativePath": "clipart/04_天气/020_冰雹.svg"
+        },
+        {
+            "id": "weather-021",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 21,
+            "label": "多云的夜晚",
+            "fileName": "021_多云的夜晚.svg",
+            "relativePath": "clipart/04_天气/021_多云的夜晚.svg"
+        },
+        {
+            "id": "weather-022",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 22,
+            "label": "高温",
+            "fileName": "022_高温.svg",
+            "relativePath": "clipart/04_天气/022_高温.svg"
+        },
+        {
+            "id": "weather-023",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 23,
+            "label": "低温",
+            "fileName": "023_低温.svg",
+            "relativePath": "clipart/04_天气/023_低温.svg"
+        },
+        {
+            "id": "weather-024",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 24,
+            "label": "龙卷风",
+            "fileName": "024_龙卷风.svg",
+            "relativePath": "clipart/04_天气/024_龙卷风.svg"
+        },
+        {
+            "id": "weather-025",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 25,
+            "label": "星星",
+            "fileName": "025_星星.svg",
+            "relativePath": "clipart/04_天气/025_星星.svg"
+        },
+        {
+            "id": "weather-026",
+            "categoryId": "weather",
+            "categoryLabel": "天气",
+            "folder": "04_天气",
+            "index": 26,
+            "label": "沙尘",
+            "fileName": "026_沙尘.svg",
+            "relativePath": "clipart/04_天气/026_沙尘.svg"
+        },
+        {
+            "id": "travel-001",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 1,
+            "label": "银行卡",
+            "fileName": "001_银行卡.svg",
+            "relativePath": "clipart/05_旅行/001_银行卡.svg"
+        },
+        {
+            "id": "travel-002",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 2,
+            "label": "钱包",
+            "fileName": "002_钱包.svg",
+            "relativePath": "clipart/05_旅行/002_钱包.svg"
+        },
+        {
+            "id": "travel-003",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 3,
+            "label": "记录",
+            "fileName": "003_记录.svg",
+            "relativePath": "clipart/05_旅行/003_记录.svg"
+        },
+        {
+            "id": "travel-004",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 4,
+            "label": "时间",
+            "fileName": "004_时间.svg",
+            "relativePath": "clipart/05_旅行/004_时间.svg"
+        },
+        {
+            "id": "travel-005",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 5,
+            "label": "票",
+            "fileName": "005_票.svg",
+            "relativePath": "clipart/05_旅行/005_票.svg"
+        },
+        {
+            "id": "travel-006",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 6,
+            "label": "景观",
+            "fileName": "006_景观.svg",
+            "relativePath": "clipart/05_旅行/006_景观.svg"
+        },
+        {
+            "id": "travel-007",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 7,
+            "label": "指南针",
+            "fileName": "007_指南针.svg",
+            "relativePath": "clipart/05_旅行/007_指南针.svg"
+        },
+        {
+            "id": "travel-008",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 8,
+            "label": "手提袋",
+            "fileName": "008_手提袋.svg",
+            "relativePath": "clipart/05_旅行/008_手提袋.svg"
+        },
+        {
+            "id": "travel-009",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 9,
+            "label": "签证",
+            "fileName": "009_签证.svg",
+            "relativePath": "clipart/05_旅行/009_签证.svg"
+        },
+        {
+            "id": "travel-010",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 10,
+            "label": "机票",
+            "fileName": "010_机票.svg",
+            "relativePath": "clipart/05_旅行/010_机票.svg"
+        },
+        {
+            "id": "travel-011",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 11,
+            "label": "出租车",
+            "fileName": "011_出租车.svg",
+            "relativePath": "clipart/05_旅行/011_出租车.svg"
+        },
+        {
+            "id": "travel-012",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 12,
+            "label": "相机",
+            "fileName": "012_相机.svg",
+            "relativePath": "clipart/05_旅行/012_相机.svg"
+        },
+        {
+            "id": "travel-013",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 13,
+            "label": "夹子",
+            "fileName": "013_夹子.svg",
+            "relativePath": "clipart/05_旅行/013_夹子.svg"
+        },
+        {
+            "id": "travel-014",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 14,
+            "label": "出租车_2",
+            "fileName": "014_出租车_2.svg",
+            "relativePath": "clipart/05_旅行/014_出租车_2.svg"
+        },
+        {
+            "id": "travel-015",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 15,
+            "label": "飞机",
+            "fileName": "015_飞机.svg",
+            "relativePath": "clipart/05_旅行/015_飞机.svg"
+        },
+        {
+            "id": "travel-016",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 16,
+            "label": "地球仪",
+            "fileName": "016_地球仪.svg",
+            "relativePath": "clipart/05_旅行/016_地球仪.svg"
+        },
+        {
+            "id": "travel-017",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 17,
+            "label": "点赞",
+            "fileName": "017_点赞.svg",
+            "relativePath": "clipart/05_旅行/017_点赞.svg"
+        },
+        {
+            "id": "travel-018",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 18,
+            "label": "点踩",
+            "fileName": "018_点踩.svg",
+            "relativePath": "clipart/05_旅行/018_点踩.svg"
+        },
+        {
+            "id": "travel-019",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 19,
+            "label": "地球",
+            "fileName": "019_地球.svg",
+            "relativePath": "clipart/05_旅行/019_地球.svg"
+        },
+        {
+            "id": "travel-020",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 20,
+            "label": "鼠标",
+            "fileName": "020_鼠标.svg",
+            "relativePath": "clipart/05_旅行/020_鼠标.svg"
+        },
+        {
+            "id": "travel-021",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 21,
+            "label": "贵宾",
+            "fileName": "021_贵宾.svg",
+            "relativePath": "clipart/05_旅行/021_贵宾.svg"
+        },
+        {
+            "id": "travel-022",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 22,
+            "label": "文件",
+            "fileName": "022_文件.svg",
+            "relativePath": "clipart/05_旅行/022_文件.svg"
+        },
+        {
+            "id": "travel-023",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 23,
+            "label": "日历",
+            "fileName": "023_日历.svg",
+            "relativePath": "clipart/05_旅行/023_日历.svg"
+        },
+        {
+            "id": "travel-024",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 24,
+            "label": "打开邮件",
+            "fileName": "024_打开邮件.svg",
+            "relativePath": "clipart/05_旅行/024_打开邮件.svg"
+        },
+        {
+            "id": "travel-025",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 25,
+            "label": "邮件",
+            "fileName": "025_邮件.svg",
+            "relativePath": "clipart/05_旅行/025_邮件.svg"
+        },
+        {
+            "id": "travel-026",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 26,
+            "label": "公文包",
+            "fileName": "026_公文包.svg",
+            "relativePath": "clipart/05_旅行/026_公文包.svg"
+        },
+        {
+            "id": "travel-027",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 27,
+            "label": "商店",
+            "fileName": "027_商店.svg",
+            "relativePath": "clipart/05_旅行/027_商店.svg"
+        },
+        {
+            "id": "travel-028",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 28,
+            "label": "闹钟",
+            "fileName": "028_闹钟.svg",
+            "relativePath": "clipart/05_旅行/028_闹钟.svg"
+        },
+        {
+            "id": "travel-029",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 29,
+            "label": "触摸屏",
+            "fileName": "029_触摸屏.svg",
+            "relativePath": "clipart/05_旅行/029_触摸屏.svg"
+        },
+        {
+            "id": "travel-030",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 30,
+            "label": "沟通",
+            "fileName": "030_沟通.svg",
+            "relativePath": "clipart/05_旅行/030_沟通.svg"
+        },
+        {
+            "id": "travel-031",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 31,
+            "label": "智能手机",
+            "fileName": "031_智能手机.svg",
+            "relativePath": "clipart/05_旅行/031_智能手机.svg"
+        },
+        {
+            "id": "travel-032",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 32,
+            "label": "剪刀",
+            "fileName": "032_剪刀.svg",
+            "relativePath": "clipart/05_旅行/032_剪刀.svg"
+        },
+        {
+            "id": "travel-033",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 33,
+            "label": "同理心",
+            "fileName": "033_同理心.svg",
+            "relativePath": "clipart/05_旅行/033_同理心.svg"
+        },
+        {
+            "id": "travel-034",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 34,
+            "label": "制服",
+            "fileName": "034_制服.svg",
+            "relativePath": "clipart/05_旅行/034_制服.svg"
+        },
+        {
+            "id": "travel-035",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 35,
+            "label": "摩托车",
+            "fileName": "035_摩托车.svg",
+            "relativePath": "clipart/05_旅行/035_摩托车.svg"
+        },
+        {
+            "id": "travel-036",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 36,
+            "label": "车",
+            "fileName": "036_车.svg",
+            "relativePath": "clipart/05_旅行/036_车.svg"
+        },
+        {
+            "id": "travel-037",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 37,
+            "label": "高铁",
+            "fileName": "037_高铁.svg",
+            "relativePath": "clipart/05_旅行/037_高铁.svg"
+        },
+        {
+            "id": "travel-038",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 38,
+            "label": "旅游大巴",
+            "fileName": "038_旅游大巴.svg",
+            "relativePath": "clipart/05_旅行/038_旅游大巴.svg"
+        },
+        {
+            "id": "travel-039",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 39,
+            "label": "红绿灯",
+            "fileName": "039_红绿灯.svg",
+            "relativePath": "clipart/05_旅行/039_红绿灯.svg"
+        },
+        {
+            "id": "travel-040",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 40,
+            "label": "摩托车_2",
+            "fileName": "040_摩托车_2.svg",
+            "relativePath": "clipart/05_旅行/040_摩托车_2.svg"
+        },
+        {
+            "id": "travel-041",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 41,
+            "label": "公共汽车",
+            "fileName": "041_公共汽车.svg",
+            "relativePath": "clipart/05_旅行/041_公共汽车.svg"
+        },
+        {
+            "id": "travel-042",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 42,
+            "label": "轮船",
+            "fileName": "042_轮船.svg",
+            "relativePath": "clipart/05_旅行/042_轮船.svg"
+        },
+        {
+            "id": "travel-043",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 43,
+            "label": "游艇",
+            "fileName": "043_游艇.svg",
+            "relativePath": "clipart/05_旅行/043_游艇.svg"
+        },
+        {
+            "id": "travel-044",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 44,
+            "label": "卡车",
+            "fileName": "044_卡车.svg",
+            "relativePath": "clipart/05_旅行/044_卡车.svg"
+        },
+        {
+            "id": "travel-045",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 45,
+            "label": "拖拉机",
+            "fileName": "045_拖拉机.svg",
+            "relativePath": "clipart/05_旅行/045_拖拉机.svg"
+        },
+        {
+            "id": "travel-046",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 46,
+            "label": "自行车",
+            "fileName": "046_自行车.svg",
+            "relativePath": "clipart/05_旅行/046_自行车.svg"
+        },
+        {
+            "id": "travel-047",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 47,
+            "label": "船",
+            "fileName": "047_船.svg",
+            "relativePath": "clipart/05_旅行/047_船.svg"
+        },
+        {
+            "id": "travel-048",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 48,
+            "label": "压路机",
+            "fileName": "048_压路机.svg",
+            "relativePath": "clipart/05_旅行/048_压路机.svg"
+        },
+        {
+            "id": "travel-049",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 49,
+            "label": "摩托车_3",
+            "fileName": "049_摩托车_3.svg",
+            "relativePath": "clipart/05_旅行/049_摩托车_3.svg"
+        },
+        {
+            "id": "travel-050",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 50,
+            "label": "潜艇",
+            "fileName": "050_潜艇.svg",
+            "relativePath": "clipart/05_旅行/050_潜艇.svg"
+        },
+        {
+            "id": "travel-051",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 51,
+            "label": "路线",
+            "fileName": "051_路线.svg",
+            "relativePath": "clipart/05_旅行/051_路线.svg"
+        },
+        {
+            "id": "travel-052",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 52,
+            "label": "标签",
+            "fileName": "052_标签.svg",
+            "relativePath": "clipart/05_旅行/052_标签.svg"
+        },
+        {
+            "id": "travel-053",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 53,
+            "label": "购物袋",
+            "fileName": "053_购物袋.svg",
+            "relativePath": "clipart/05_旅行/053_购物袋.svg"
+        },
+        {
+            "id": "travel-054",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 54,
+            "label": "合作",
+            "fileName": "054_合作.svg",
+            "relativePath": "clipart/05_旅行/054_合作.svg"
+        },
+        {
+            "id": "travel-055",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 55,
+            "label": "时间_2",
+            "fileName": "055_时间_2.svg",
+            "relativePath": "clipart/05_旅行/055_时间_2.svg"
+        },
+        {
+            "id": "travel-056",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 56,
+            "label": "目标",
+            "fileName": "056_目标.svg",
+            "relativePath": "clipart/05_旅行/056_目标.svg"
+        },
+        {
+            "id": "travel-057",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 57,
+            "label": "增加",
+            "fileName": "057_增加.svg",
+            "relativePath": "clipart/05_旅行/057_增加.svg"
+        },
+        {
+            "id": "travel-058",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 58,
+            "label": "下降",
+            "fileName": "058_下降.svg",
+            "relativePath": "clipart/05_旅行/058_下降.svg"
+        },
+        {
+            "id": "travel-059",
+            "categoryId": "travel",
+            "categoryLabel": "旅行",
+            "folder": "05_旅行",
+            "index": 59,
+            "label": "团结",
+            "fileName": "059_团结.svg",
+            "relativePath": "clipart/05_旅行/059_团结.svg"
+        },
+        {
+            "id": "business-office-001",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 1,
+            "label": "徽章",
+            "fileName": "001_徽章.svg",
+            "relativePath": "clipart/06_商务办公/001_徽章.svg"
+        },
+        {
+            "id": "business-office-002",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 2,
+            "label": "胶水",
+            "fileName": "002_胶水.svg",
+            "relativePath": "clipart/06_商务办公/002_胶水.svg"
+        },
+        {
+            "id": "business-office-003",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 3,
+            "label": "简历",
+            "fileName": "003_简历.svg",
+            "relativePath": "clipart/06_商务办公/003_简历.svg"
+        },
+        {
+            "id": "business-office-004",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 4,
+            "label": "邮戳",
+            "fileName": "004_邮戳.svg",
+            "relativePath": "clipart/06_商务办公/004_邮戳.svg"
+        },
+        {
+            "id": "business-office-005",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 5,
+            "label": "打印机",
+            "fileName": "005_打印机.svg",
+            "relativePath": "clipart/06_商务办公/005_打印机.svg"
+        },
+        {
+            "id": "business-office-006",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 6,
+            "label": "黄金",
+            "fileName": "006_黄金.svg",
+            "relativePath": "clipart/06_商务办公/006_黄金.svg"
+        },
+        {
+            "id": "business-office-007",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 7,
+            "label": "黄金_2",
+            "fileName": "007_黄金_2.svg",
+            "relativePath": "clipart/06_商务办公/007_黄金_2.svg"
+        },
+        {
+            "id": "business-office-008",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 8,
+            "label": "钱包",
+            "fileName": "008_钱包.svg",
+            "relativePath": "clipart/06_商务办公/008_钱包.svg"
+        },
+        {
+            "id": "business-office-009",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 9,
+            "label": "钱包_2",
+            "fileName": "009_钱包_2.svg",
+            "relativePath": "clipart/06_商务办公/009_钱包_2.svg"
+        },
+        {
+            "id": "business-office-010",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 10,
+            "label": "台灯",
+            "fileName": "010_台灯.svg",
+            "relativePath": "clipart/06_商务办公/010_台灯.svg"
+        },
+        {
+            "id": "business-office-011",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 11,
+            "label": "笔",
+            "fileName": "011_笔.svg",
+            "relativePath": "clipart/06_商务办公/011_笔.svg"
+        },
+        {
+            "id": "business-office-012",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 12,
+            "label": "订书机",
+            "fileName": "012_订书机.svg",
+            "relativePath": "clipart/06_商务办公/012_订书机.svg"
+        },
+        {
+            "id": "business-office-013",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 13,
+            "label": "夹子",
+            "fileName": "013_夹子.svg",
+            "relativePath": "clipart/06_商务办公/013_夹子.svg"
+        },
+        {
+            "id": "business-office-014",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 14,
+            "label": "出租车",
+            "fileName": "014_出租车.svg",
+            "relativePath": "clipart/06_商务办公/014_出租车.svg"
+        },
+        {
+            "id": "business-office-015",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 15,
+            "label": "飞机",
+            "fileName": "015_飞机.svg",
+            "relativePath": "clipart/06_商务办公/015_飞机.svg"
+        },
+        {
+            "id": "business-office-016",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 16,
+            "label": "地球仪",
+            "fileName": "016_地球仪.svg",
+            "relativePath": "clipart/06_商务办公/016_地球仪.svg"
+        },
+        {
+            "id": "business-office-017",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 17,
+            "label": "点赞",
+            "fileName": "017_点赞.svg",
+            "relativePath": "clipart/06_商务办公/017_点赞.svg"
+        },
+        {
+            "id": "business-office-018",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 18,
+            "label": "点踩",
+            "fileName": "018_点踩.svg",
+            "relativePath": "clipart/06_商务办公/018_点踩.svg"
+        },
+        {
+            "id": "business-office-019",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 19,
+            "label": "地球",
+            "fileName": "019_地球.svg",
+            "relativePath": "clipart/06_商务办公/019_地球.svg"
+        },
+        {
+            "id": "business-office-020",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 20,
+            "label": "鼠标",
+            "fileName": "020_鼠标.svg",
+            "relativePath": "clipart/06_商务办公/020_鼠标.svg"
+        },
+        {
+            "id": "business-office-021",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 21,
+            "label": "贵宾",
+            "fileName": "021_贵宾.svg",
+            "relativePath": "clipart/06_商务办公/021_贵宾.svg"
+        },
+        {
+            "id": "business-office-022",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 22,
+            "label": "文件",
+            "fileName": "022_文件.svg",
+            "relativePath": "clipart/06_商务办公/022_文件.svg"
+        },
+        {
+            "id": "business-office-023",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 23,
+            "label": "空乘",
+            "fileName": "023_空乘.svg",
+            "relativePath": "clipart/06_商务办公/023_空乘.svg"
+        },
+        {
+            "id": "business-office-024",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 24,
+            "label": "军人",
+            "fileName": "024_军人.svg",
+            "relativePath": "clipart/06_商务办公/024_军人.svg"
+        },
+        {
+            "id": "business-office-025",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 25,
+            "label": "服务员",
+            "fileName": "025_服务员.svg",
+            "relativePath": "clipart/06_商务办公/025_服务员.svg"
+        },
+        {
+            "id": "business-office-026",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 26,
+            "label": "牧师",
+            "fileName": "026_牧师.svg",
+            "relativePath": "clipart/06_商务办公/026_牧师.svg"
+        },
+        {
+            "id": "business-office-027",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 27,
+            "label": "法官",
+            "fileName": "027_法官.svg",
+            "relativePath": "clipart/06_商务办公/027_法官.svg"
+        },
+        {
+            "id": "business-office-028",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 28,
+            "label": "男人",
+            "fileName": "028_男人.svg",
+            "relativePath": "clipart/06_商务办公/028_男人.svg"
+        },
+        {
+            "id": "business-office-029",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 29,
+            "label": "家庭主妇",
+            "fileName": "029_家庭主妇.svg",
+            "relativePath": "clipart/06_商务办公/029_家庭主妇.svg"
+        },
+        {
+            "id": "business-office-030",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 30,
+            "label": "急救箱",
+            "fileName": "030_急救箱.svg",
+            "relativePath": "clipart/06_商务办公/030_急救箱.svg"
+        },
+        {
+            "id": "business-office-031",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 31,
+            "label": "呼吸器",
+            "fileName": "031_呼吸器.svg",
+            "relativePath": "clipart/06_商务办公/031_呼吸器.svg"
+        },
+        {
+            "id": "business-office-032",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 32,
+            "label": "药丸",
+            "fileName": "032_药丸.svg",
+            "relativePath": "clipart/06_商务办公/032_药丸.svg"
+        },
+        {
+            "id": "business-office-033",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 33,
+            "label": "胶囊",
+            "fileName": "033_胶囊.svg",
+            "relativePath": "clipart/06_商务办公/033_胶囊.svg"
+        },
+        {
+            "id": "business-office-034",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 34,
+            "label": "医院",
+            "fileName": "034_医院.svg",
+            "relativePath": "clipart/06_商务办公/034_医院.svg"
+        },
+        {
+            "id": "business-office-035",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 35,
+            "label": "电脑",
+            "fileName": "035_电脑.svg",
+            "relativePath": "clipart/06_商务办公/035_电脑.svg"
+        },
+        {
+            "id": "business-office-036",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 36,
+            "label": "笔记本",
+            "fileName": "036_笔记本.svg",
+            "relativePath": "clipart/06_商务办公/036_笔记本.svg"
+        },
+        {
+            "id": "business-office-037",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 37,
+            "label": "车",
+            "fileName": "037_车.svg",
+            "relativePath": "clipart/06_商务办公/037_车.svg"
+        },
+        {
+            "id": "business-office-038",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 38,
+            "label": "购物车",
+            "fileName": "038_购物车.svg",
+            "relativePath": "clipart/06_商务办公/038_购物车.svg"
+        },
+        {
+            "id": "business-office-039",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 39,
+            "label": "计算器",
+            "fileName": "039_计算器.svg",
+            "relativePath": "clipart/06_商务办公/039_计算器.svg"
+        },
+        {
+            "id": "business-office-040",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 40,
+            "label": "仓库",
+            "fileName": "040_仓库.svg",
+            "relativePath": "clipart/06_商务办公/040_仓库.svg"
+        },
+        {
+            "id": "business-office-041",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 41,
+            "label": "银行",
+            "fileName": "041_银行.svg",
+            "relativePath": "clipart/06_商务办公/041_银行.svg"
+        },
+        {
+            "id": "business-office-042",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 42,
+            "label": "银行_2",
+            "fileName": "042_银行_2.svg",
+            "relativePath": "clipart/06_商务办公/042_银行_2.svg"
+        },
+        {
+            "id": "business-office-043",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 43,
+            "label": "交换",
+            "fileName": "043_交换.svg",
+            "relativePath": "clipart/06_商务办公/043_交换.svg"
+        },
+        {
+            "id": "business-office-044",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 44,
+            "label": "地址本",
+            "fileName": "044_地址本.svg",
+            "relativePath": "clipart/06_商务办公/044_地址本.svg"
+        },
+        {
+            "id": "business-office-045",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 45,
+            "label": "天平",
+            "fileName": "045_天平.svg",
+            "relativePath": "clipart/06_商务办公/045_天平.svg"
+        },
+        {
+            "id": "business-office-046",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 46,
+            "label": "灯泡",
+            "fileName": "046_灯泡.svg",
+            "relativePath": "clipart/06_商务办公/046_灯泡.svg"
+        },
+        {
+            "id": "business-office-047",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 47,
+            "label": "视频",
+            "fileName": "047_视频.svg",
+            "relativePath": "clipart/06_商务办公/047_视频.svg"
+        },
+        {
+            "id": "business-office-048",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 48,
+            "label": "位置",
+            "fileName": "048_位置.svg",
+            "relativePath": "clipart/06_商务办公/048_位置.svg"
+        },
+        {
+            "id": "business-office-049",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 49,
+            "label": "定位",
+            "fileName": "049_定位.svg",
+            "relativePath": "clipart/06_商务办公/049_定位.svg"
+        },
+        {
+            "id": "business-office-050",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 50,
+            "label": "地图",
+            "fileName": "050_地图.svg",
+            "relativePath": "clipart/06_商务办公/050_地图.svg"
+        },
+        {
+            "id": "business-office-051",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 51,
+            "label": "路线",
+            "fileName": "051_路线.svg",
+            "relativePath": "clipart/06_商务办公/051_路线.svg"
+        },
+        {
+            "id": "business-office-052",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 52,
+            "label": "标签",
+            "fileName": "052_标签.svg",
+            "relativePath": "clipart/06_商务办公/052_标签.svg"
+        },
+        {
+            "id": "business-office-053",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 53,
+            "label": "购物袋",
+            "fileName": "053_购物袋.svg",
+            "relativePath": "clipart/06_商务办公/053_购物袋.svg"
+        },
+        {
+            "id": "business-office-054",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 54,
+            "label": "合作",
+            "fileName": "054_合作.svg",
+            "relativePath": "clipart/06_商务办公/054_合作.svg"
+        },
+        {
+            "id": "business-office-055",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 55,
+            "label": "时间",
+            "fileName": "055_时间.svg",
+            "relativePath": "clipart/06_商务办公/055_时间.svg"
+        },
+        {
+            "id": "business-office-056",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 56,
+            "label": "目标",
+            "fileName": "056_目标.svg",
+            "relativePath": "clipart/06_商务办公/056_目标.svg"
+        },
+        {
+            "id": "business-office-057",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 57,
+            "label": "增加",
+            "fileName": "057_增加.svg",
+            "relativePath": "clipart/06_商务办公/057_增加.svg"
+        },
+        {
+            "id": "business-office-058",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 58,
+            "label": "下降",
+            "fileName": "058_下降.svg",
+            "relativePath": "clipart/06_商务办公/058_下降.svg"
+        },
+        {
+            "id": "business-office-059",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 59,
+            "label": "团结",
+            "fileName": "059_团结.svg",
+            "relativePath": "clipart/06_商务办公/059_团结.svg"
+        },
+        {
+            "id": "business-office-060",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 60,
+            "label": "柱状图",
+            "fileName": "060_柱状图.svg",
+            "relativePath": "clipart/06_商务办公/060_柱状图.svg"
+        },
+        {
+            "id": "business-office-061",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 61,
+            "label": "电话通信",
+            "fileName": "061_电话通信.svg",
+            "relativePath": "clipart/06_商务办公/061_电话通信.svg"
+        },
+        {
+            "id": "business-office-062",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 62,
+            "label": "纸夹",
+            "fileName": "062_纸夹.svg",
+            "relativePath": "clipart/06_商务办公/062_纸夹.svg"
+        },
+        {
+            "id": "business-office-063",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 63,
+            "label": "饼状图",
+            "fileName": "063_饼状图.svg",
+            "relativePath": "clipart/06_商务办公/063_饼状图.svg"
+        },
+        {
+            "id": "business-office-064",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 64,
+            "label": "U盘",
+            "fileName": "064_U盘.svg",
+            "relativePath": "clipart/06_商务办公/064_U盘.svg"
+        },
+        {
+            "id": "business-office-065",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 65,
+            "label": "图钉",
+            "fileName": "065_图钉.svg",
+            "relativePath": "clipart/06_商务办公/065_图钉.svg"
+        },
+        {
+            "id": "business-office-066",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 66,
+            "label": "全球",
+            "fileName": "066_全球.svg",
+            "relativePath": "clipart/06_商务办公/066_全球.svg"
+        },
+        {
+            "id": "business-office-067",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 67,
+            "label": "笔记本_2",
+            "fileName": "067_笔记本_2.svg",
+            "relativePath": "clipart/06_商务办公/067_笔记本_2.svg"
+        },
+        {
+            "id": "business-office-068",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 68,
+            "label": "安全",
+            "fileName": "068_安全.svg",
+            "relativePath": "clipart/06_商务办公/068_安全.svg"
+        },
+        {
+            "id": "business-office-069",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 69,
+            "label": "保护",
+            "fileName": "069_保护.svg",
+            "relativePath": "clipart/06_商务办公/069_保护.svg"
+        },
+        {
+            "id": "business-office-070",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 70,
+            "label": "黄金_3",
+            "fileName": "070_黄金_3.svg",
+            "relativePath": "clipart/06_商务办公/070_黄金_3.svg"
+        },
+        {
+            "id": "business-office-071",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 71,
+            "label": "纸币",
+            "fileName": "071_纸币.svg",
+            "relativePath": "clipart/06_商务办公/071_纸币.svg"
+        },
+        {
+            "id": "business-office-072",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 72,
+            "label": "收银机",
+            "fileName": "072_收银机.svg",
+            "relativePath": "clipart/06_商务办公/072_收银机.svg"
+        },
+        {
+            "id": "business-office-073",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 73,
+            "label": "名片",
+            "fileName": "073_名片.svg",
+            "relativePath": "clipart/06_商务办公/073_名片.svg"
+        },
+        {
+            "id": "business-office-074",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 74,
+            "label": "个人",
+            "fileName": "074_个人.svg",
+            "relativePath": "clipart/06_商务办公/074_个人.svg"
+        },
+        {
+            "id": "business-office-075",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 75,
+            "label": "员工",
+            "fileName": "075_员工.svg",
+            "relativePath": "clipart/06_商务办公/075_员工.svg"
+        },
+        {
+            "id": "business-office-076",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 76,
+            "label": "寻找商机",
+            "fileName": "076_寻找商机.svg",
+            "relativePath": "clipart/06_商务办公/076_寻找商机.svg"
+        },
+        {
+            "id": "business-office-077",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 77,
+            "label": "文件夹",
+            "fileName": "077_文件夹.svg",
+            "relativePath": "clipart/06_商务办公/077_文件夹.svg"
+        },
+        {
+            "id": "business-office-078",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 78,
+            "label": "发票",
+            "fileName": "078_发票.svg",
+            "relativePath": "clipart/06_商务办公/078_发票.svg"
+        },
+        {
+            "id": "business-office-079",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 79,
+            "label": "省钱",
+            "fileName": "079_省钱.svg",
+            "relativePath": "clipart/06_商务办公/079_省钱.svg"
+        },
+        {
+            "id": "business-office-080",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 80,
+            "label": "宣传",
+            "fileName": "080_宣传.svg",
+            "relativePath": "clipart/06_商务办公/080_宣传.svg"
+        },
+        {
+            "id": "business-office-081",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 81,
+            "label": "奖杯",
+            "fileName": "081_奖杯.svg",
+            "relativePath": "clipart/06_商务办公/081_奖杯.svg"
+        },
+        {
+            "id": "business-office-082",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 82,
+            "label": "竞争",
+            "fileName": "082_竞争.svg",
+            "relativePath": "clipart/06_商务办公/082_竞争.svg"
+        },
+        {
+            "id": "business-office-083",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 83,
+            "label": "游戏",
+            "fileName": "083_游戏.svg",
+            "relativePath": "clipart/06_商务办公/083_游戏.svg"
+        },
+        {
+            "id": "business-office-084",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 84,
+            "label": "奖牌",
+            "fileName": "084_奖牌.svg",
+            "relativePath": "clipart/06_商务办公/084_奖牌.svg"
+        },
+        {
+            "id": "business-office-085",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 85,
+            "label": "礼物",
+            "fileName": "085_礼物.svg",
+            "relativePath": "clipart/06_商务办公/085_礼物.svg"
+        },
+        {
+            "id": "business-office-086",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 86,
+            "label": "保护_2",
+            "fileName": "086_保护_2.svg",
+            "relativePath": "clipart/06_商务办公/086_保护_2.svg"
+        },
+        {
+            "id": "business-office-087",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 87,
+            "label": "绩效",
+            "fileName": "087_绩效.svg",
+            "relativePath": "clipart/06_商务办公/087_绩效.svg"
+        },
+        {
+            "id": "business-office-088",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 88,
+            "label": "视频_2",
+            "fileName": "088_视频_2.svg",
+            "relativePath": "clipart/06_商务办公/088_视频_2.svg"
+        },
+        {
+            "id": "business-office-089",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 89,
+            "label": "规划",
+            "fileName": "089_规划.svg",
+            "relativePath": "clipart/06_商务办公/089_规划.svg"
+        },
+        {
+            "id": "business-office-090",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 90,
+            "label": "纸箱",
+            "fileName": "090_纸箱.svg",
+            "relativePath": "clipart/06_商务办公/090_纸箱.svg"
+        },
+        {
+            "id": "business-office-091",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 91,
+            "label": "放大镜",
+            "fileName": "091_放大镜.svg",
+            "relativePath": "clipart/06_商务办公/091_放大镜.svg"
+        },
+        {
+            "id": "business-office-092",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 92,
+            "label": "保存",
+            "fileName": "092_保存.svg",
+            "relativePath": "clipart/06_商务办公/092_保存.svg"
+        },
+        {
+            "id": "business-office-093",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 93,
+            "label": "指纹",
+            "fileName": "093_指纹.svg",
+            "relativePath": "clipart/06_商务办公/093_指纹.svg"
+        },
+        {
+            "id": "business-office-094",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 94,
+            "label": "日程",
+            "fileName": "094_日程.svg",
+            "relativePath": "clipart/06_商务办公/094_日程.svg"
+        },
+        {
+            "id": "business-office-095",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 95,
+            "label": "客户服务",
+            "fileName": "095_客户服务.svg",
+            "relativePath": "clipart/06_商务办公/095_客户服务.svg"
+        },
+        {
+            "id": "business-office-096",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 96,
+            "label": "锁",
+            "fileName": "096_锁.svg",
+            "relativePath": "clipart/06_商务办公/096_锁.svg"
+        },
+        {
+            "id": "business-office-097",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 97,
+            "label": "植物",
+            "fileName": "097_植物.svg",
+            "relativePath": "clipart/06_商务办公/097_植物.svg"
+        },
+        {
+            "id": "business-office-098",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 98,
+            "label": "女人",
+            "fileName": "098_女人.svg",
+            "relativePath": "clipart/06_商务办公/098_女人.svg"
+        },
+        {
+            "id": "business-office-099",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 99,
+            "label": "男人_2",
+            "fileName": "099_男人_2.svg",
+            "relativePath": "clipart/06_商务办公/099_男人_2.svg"
+        },
+        {
+            "id": "business-office-100",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 100,
+            "label": "组织结构",
+            "fileName": "100_组织结构.svg",
+            "relativePath": "clipart/06_商务办公/100_组织结构.svg"
+        },
+        {
+            "id": "business-office-101",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 101,
+            "label": "会议",
+            "fileName": "101_会议.svg",
+            "relativePath": "clipart/06_商务办公/101_会议.svg"
+        },
+        {
+            "id": "business-office-102",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 102,
+            "label": "宣讲",
+            "fileName": "102_宣讲.svg",
+            "relativePath": "clipart/06_商务办公/102_宣讲.svg"
+        },
+        {
+            "id": "business-office-103",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 103,
+            "label": "业务",
+            "fileName": "103_业务.svg",
+            "relativePath": "clipart/06_商务办公/103_业务.svg"
+        },
+        {
+            "id": "business-office-104",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 104,
+            "label": "标签_2",
+            "fileName": "104_标签_2.svg",
+            "relativePath": "clipart/06_商务办公/104_标签_2.svg"
+        },
+        {
+            "id": "business-office-105",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 105,
+            "label": "加班",
+            "fileName": "105_加班.svg",
+            "relativePath": "clipart/06_商务办公/105_加班.svg"
+        },
+        {
+            "id": "business-office-106",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 106,
+            "label": "咖啡",
+            "fileName": "106_咖啡.svg",
+            "relativePath": "clipart/06_商务办公/106_咖啡.svg"
+        },
+        {
+            "id": "business-office-107",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 107,
+            "label": "拍卖",
+            "fileName": "107_拍卖.svg",
+            "relativePath": "clipart/06_商务办公/107_拍卖.svg"
+        },
+        {
+            "id": "business-office-108",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 108,
+            "label": "充电",
+            "fileName": "108_充电.svg",
+            "relativePath": "clipart/06_商务办公/108_充电.svg"
+        },
+        {
+            "id": "business-office-109",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 109,
+            "label": "项目管理",
+            "fileName": "109_项目管理.svg",
+            "relativePath": "clipart/06_商务办公/109_项目管理.svg"
+        },
+        {
+            "id": "business-office-110",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 110,
+            "label": "设置",
+            "fileName": "110_设置.svg",
+            "relativePath": "clipart/06_商务办公/110_设置.svg"
+        },
+        {
+            "id": "business-office-111",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 111,
+            "label": "垃圾桶",
+            "fileName": "111_垃圾桶.svg",
+            "relativePath": "clipart/06_商务办公/111_垃圾桶.svg"
+        },
+        {
+            "id": "business-office-112",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 112,
+            "label": "加速",
+            "fileName": "112_加速.svg",
+            "relativePath": "clipart/06_商务办公/112_加速.svg"
+        },
+        {
+            "id": "business-office-113",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 113,
+            "label": "上传",
+            "fileName": "113_上传.svg",
+            "relativePath": "clipart/06_商务办公/113_上传.svg"
+        },
+        {
+            "id": "business-office-114",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 114,
+            "label": "下载",
+            "fileName": "114_下载.svg",
+            "relativePath": "clipart/06_商务办公/114_下载.svg"
+        },
+        {
+            "id": "business-office-115",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 115,
+            "label": "视图",
+            "fileName": "115_视图.svg",
+            "relativePath": "clipart/06_商务办公/115_视图.svg"
+        },
+        {
+            "id": "business-office-116",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 116,
+            "label": "录制视频",
+            "fileName": "116_录制视频.svg",
+            "relativePath": "clipart/06_商务办公/116_录制视频.svg"
+        },
+        {
+            "id": "business-office-117",
+            "categoryId": "business-office",
+            "categoryLabel": "商务办公",
+            "folder": "06_商务办公",
+            "index": 117,
+            "label": "文件_2",
+            "fileName": "117_文件_2.svg",
+            "relativePath": "clipart/06_商务办公/117_文件_2.svg"
+        },
+        {
+            "id": "profession-001",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 1,
+            "label": "程序员",
+            "fileName": "001_程序员.svg",
+            "relativePath": "clipart/07_职业/001_程序员.svg"
+        },
+        {
+            "id": "profession-002",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 2,
+            "label": "白领",
+            "fileName": "002_白领.svg",
+            "relativePath": "clipart/07_职业/002_白领.svg"
+        },
+        {
+            "id": "profession-003",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 3,
+            "label": "老师",
+            "fileName": "003_老师.svg",
+            "relativePath": "clipart/07_职业/003_老师.svg"
+        },
+        {
+            "id": "profession-004",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 4,
+            "label": "空乘",
+            "fileName": "004_空乘.svg",
+            "relativePath": "clipart/07_职业/004_空乘.svg"
+        },
+        {
+            "id": "profession-005",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 5,
+            "label": "运动员",
+            "fileName": "005_运动员.svg",
+            "relativePath": "clipart/07_职业/005_运动员.svg"
+        },
+        {
+            "id": "profession-006",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 6,
+            "label": "厨师",
+            "fileName": "006_厨师.svg",
+            "relativePath": "clipart/07_职业/006_厨师.svg"
+        },
+        {
+            "id": "profession-007",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 7,
+            "label": "学生",
+            "fileName": "007_学生.svg",
+            "relativePath": "clipart/07_职业/007_学生.svg"
+        },
+        {
+            "id": "profession-008",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 8,
+            "label": "护士",
+            "fileName": "008_护士.svg",
+            "relativePath": "clipart/07_职业/008_护士.svg"
+        },
+        {
+            "id": "profession-009",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 9,
+            "label": "医生",
+            "fileName": "009_医生.svg",
+            "relativePath": "clipart/07_职业/009_医生.svg"
+        },
+        {
+            "id": "profession-010",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 10,
+            "label": "牙医",
+            "fileName": "010_牙医.svg",
+            "relativePath": "clipart/07_职业/010_牙医.svg"
+        },
+        {
+            "id": "profession-011",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 11,
+            "label": "主席",
+            "fileName": "011_主席.svg",
+            "relativePath": "clipart/07_职业/011_主席.svg"
+        },
+        {
+            "id": "profession-012",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 12,
+            "label": "警察",
+            "fileName": "012_警察.svg",
+            "relativePath": "clipart/07_职业/012_警察.svg"
+        },
+        {
+            "id": "profession-013",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 13,
+            "label": "客户服务",
+            "fileName": "013_客户服务.svg",
+            "relativePath": "clipart/07_职业/013_客户服务.svg"
+        },
+        {
+            "id": "profession-014",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 14,
+            "label": "白领_2",
+            "fileName": "014_白领_2.svg",
+            "relativePath": "clipart/07_职业/014_白领_2.svg"
+        },
+        {
+            "id": "profession-015",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 15,
+            "label": "阿拉伯",
+            "fileName": "015_阿拉伯.svg",
+            "relativePath": "clipart/07_职业/015_阿拉伯.svg"
+        },
+        {
+            "id": "profession-016",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 16,
+            "label": "修女",
+            "fileName": "016_修女.svg",
+            "relativePath": "clipart/07_职业/016_修女.svg"
+        },
+        {
+            "id": "profession-017",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 17,
+            "label": "员工",
+            "fileName": "017_员工.svg",
+            "relativePath": "clipart/07_职业/017_员工.svg"
+        },
+        {
+            "id": "profession-018",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 18,
+            "label": "经理",
+            "fileName": "018_经理.svg",
+            "relativePath": "clipart/07_职业/018_经理.svg"
+        },
+        {
+            "id": "profession-019",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 19,
+            "label": "发型师",
+            "fileName": "019_发型师.svg",
+            "relativePath": "clipart/07_职业/019_发型师.svg"
+        },
+        {
+            "id": "profession-020",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 20,
+            "label": "工人",
+            "fileName": "020_工人.svg",
+            "relativePath": "clipart/07_职业/020_工人.svg"
+        },
+        {
+            "id": "profession-021",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 21,
+            "label": "圣诞老人",
+            "fileName": "021_圣诞老人.svg",
+            "relativePath": "clipart/07_职业/021_圣诞老人.svg"
+        },
+        {
+            "id": "profession-022",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 22,
+            "label": "工程师",
+            "fileName": "022_工程师.svg",
+            "relativePath": "clipart/07_职业/022_工程师.svg"
+        },
+        {
+            "id": "profession-023",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 23,
+            "label": "空乘_2",
+            "fileName": "023_空乘_2.svg",
+            "relativePath": "clipart/07_职业/023_空乘_2.svg"
+        },
+        {
+            "id": "profession-024",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 24,
+            "label": "军人",
+            "fileName": "024_军人.svg",
+            "relativePath": "clipart/07_职业/024_军人.svg"
+        },
+        {
+            "id": "profession-025",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 25,
+            "label": "服务员",
+            "fileName": "025_服务员.svg",
+            "relativePath": "clipart/07_职业/025_服务员.svg"
+        },
+        {
+            "id": "profession-026",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 26,
+            "label": "牧师",
+            "fileName": "026_牧师.svg",
+            "relativePath": "clipart/07_职业/026_牧师.svg"
+        },
+        {
+            "id": "profession-027",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 27,
+            "label": "法官",
+            "fileName": "027_法官.svg",
+            "relativePath": "clipart/07_职业/027_法官.svg"
+        },
+        {
+            "id": "profession-028",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 28,
+            "label": "男人",
+            "fileName": "028_男人.svg",
+            "relativePath": "clipart/07_职业/028_男人.svg"
+        },
+        {
+            "id": "profession-029",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 29,
+            "label": "家庭主妇",
+            "fileName": "029_家庭主妇.svg",
+            "relativePath": "clipart/07_职业/029_家庭主妇.svg"
+        },
+        {
+            "id": "profession-030",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 30,
+            "label": "男孩",
+            "fileName": "030_男孩.svg",
+            "relativePath": "clipart/07_职业/030_男孩.svg"
+        },
+        {
+            "id": "profession-031",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 31,
+            "label": "女孩",
+            "fileName": "031_女孩.svg",
+            "relativePath": "clipart/07_职业/031_女孩.svg"
+        },
+        {
+            "id": "profession-032",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 32,
+            "label": "男人_2",
+            "fileName": "032_男人_2.svg",
+            "relativePath": "clipart/07_职业/032_男人_2.svg"
+        },
+        {
+            "id": "profession-033",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 33,
+            "label": "男孩_2",
+            "fileName": "033_男孩_2.svg",
+            "relativePath": "clipart/07_职业/033_男孩_2.svg"
+        },
+        {
+            "id": "profession-034",
+            "categoryId": "profession",
+            "categoryLabel": "职业",
+            "folder": "07_职业",
+            "index": 34,
+            "label": "农民",
+            "fileName": "034_农民.svg",
+            "relativePath": "clipart/07_职业/034_农民.svg"
+        },
+        {
+            "id": "technology-001",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 1,
+            "label": "外星人",
+            "fileName": "001_外星人.svg",
+            "relativePath": "clipart/08_科技/001_外星人.svg"
+        },
+        {
+            "id": "technology-002",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 2,
+            "label": "雷达",
+            "fileName": "002_雷达.svg",
+            "relativePath": "clipart/08_科技/002_雷达.svg"
+        },
+        {
+            "id": "technology-003",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 3,
+            "label": "机器人",
+            "fileName": "003_机器人.svg",
+            "relativePath": "clipart/08_科技/003_机器人.svg"
+        },
+        {
+            "id": "technology-004",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 4,
+            "label": "卫星",
+            "fileName": "004_卫星.svg",
+            "relativePath": "clipart/08_科技/004_卫星.svg"
+        },
+        {
+            "id": "technology-005",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 5,
+            "label": "火箭",
+            "fileName": "005_火箭.svg",
+            "relativePath": "clipart/08_科技/005_火箭.svg"
+        },
+        {
+            "id": "technology-006",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 6,
+            "label": "卫星_2",
+            "fileName": "006_卫星_2.svg",
+            "relativePath": "clipart/08_科技/006_卫星_2.svg"
+        },
+        {
+            "id": "technology-007",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 7,
+            "label": "光",
+            "fileName": "007_光.svg",
+            "relativePath": "clipart/08_科技/007_光.svg"
+        },
+        {
+            "id": "technology-008",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 8,
+            "label": "技术",
+            "fileName": "008_技术.svg",
+            "relativePath": "clipart/08_科技/008_技术.svg"
+        },
+        {
+            "id": "technology-009",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 9,
+            "label": "显微镜",
+            "fileName": "009_显微镜.svg",
+            "relativePath": "clipart/08_科技/009_显微镜.svg"
+        },
+        {
+            "id": "technology-010",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 10,
+            "label": "雷达_2",
+            "fileName": "010_雷达_2.svg",
+            "relativePath": "clipart/08_科技/010_雷达_2.svg"
+        },
+        {
+            "id": "technology-011",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 11,
+            "label": "USB",
+            "fileName": "011_USB.svg",
+            "relativePath": "clipart/08_科技/011_USB.svg"
+        },
+        {
+            "id": "technology-012",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 12,
+            "label": "MP3",
+            "fileName": "012_MP3.svg",
+            "relativePath": "clipart/08_科技/012_MP3.svg"
+        },
+        {
+            "id": "technology-013",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 13,
+            "label": "鼠标",
+            "fileName": "013_鼠标.svg",
+            "relativePath": "clipart/08_科技/013_鼠标.svg"
+        },
+        {
+            "id": "technology-014",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 14,
+            "label": "烧瓶",
+            "fileName": "014_烧瓶.svg",
+            "relativePath": "clipart/08_科技/014_烧瓶.svg"
+        },
+        {
+            "id": "technology-015",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 15,
+            "label": "耳机",
+            "fileName": "015_耳机.svg",
+            "relativePath": "clipart/08_科技/015_耳机.svg"
+        },
+        {
+            "id": "technology-016",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 16,
+            "label": "路由器",
+            "fileName": "016_路由器.svg",
+            "relativePath": "clipart/08_科技/016_路由器.svg"
+        },
+        {
+            "id": "technology-017",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 17,
+            "label": "卫星_3",
+            "fileName": "017_卫星_3.svg",
+            "relativePath": "clipart/08_科技/017_卫星_3.svg"
+        },
+        {
+            "id": "technology-018",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 18,
+            "label": "雷达_3",
+            "fileName": "018_雷达_3.svg",
+            "relativePath": "clipart/08_科技/018_雷达_3.svg"
+        },
+        {
+            "id": "technology-019",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 19,
+            "label": "麦克风",
+            "fileName": "019_麦克风.svg",
+            "relativePath": "clipart/08_科技/019_麦克风.svg"
+        },
+        {
+            "id": "technology-020",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 20,
+            "label": "音量",
+            "fileName": "020_音量.svg",
+            "relativePath": "clipart/08_科技/020_音量.svg"
+        },
+        {
+            "id": "technology-021",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 21,
+            "label": "望远镜",
+            "fileName": "021_望远镜.svg",
+            "relativePath": "clipart/08_科技/021_望远镜.svg"
+        },
+        {
+            "id": "technology-022",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 22,
+            "label": "大脑",
+            "fileName": "022_大脑.svg",
+            "relativePath": "clipart/08_科技/022_大脑.svg"
+        },
+        {
+            "id": "technology-023",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 23,
+            "label": "双螺旋结构",
+            "fileName": "023_双螺旋结构.svg",
+            "relativePath": "clipart/08_科技/023_双螺旋结构.svg"
+        },
+        {
+            "id": "technology-024",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 24,
+            "label": "心电图",
+            "fileName": "024_心电图.svg",
+            "relativePath": "clipart/08_科技/024_心电图.svg"
+        },
+        {
+            "id": "technology-025",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 25,
+            "label": "分子结构",
+            "fileName": "025_分子结构.svg",
+            "relativePath": "clipart/08_科技/025_分子结构.svg"
+        },
+        {
+            "id": "technology-026",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 26,
+            "label": "胎儿",
+            "fileName": "026_胎儿.svg",
+            "relativePath": "clipart/08_科技/026_胎儿.svg"
+        },
+        {
+            "id": "technology-027",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 27,
+            "label": "家庭",
+            "fileName": "027_家庭.svg",
+            "relativePath": "clipart/08_科技/027_家庭.svg"
+        },
+        {
+            "id": "technology-028",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 28,
+            "label": "显微镜_2",
+            "fileName": "028_显微镜_2.svg",
+            "relativePath": "clipart/08_科技/028_显微镜_2.svg"
+        },
+        {
+            "id": "technology-029",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 29,
+            "label": "形式",
+            "fileName": "029_形式.svg",
+            "relativePath": "clipart/08_科技/029_形式.svg"
+        },
+        {
+            "id": "technology-030",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 30,
+            "label": "急救箱",
+            "fileName": "030_急救箱.svg",
+            "relativePath": "clipart/08_科技/030_急救箱.svg"
+        },
+        {
+            "id": "technology-031",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 31,
+            "label": "呼吸器",
+            "fileName": "031_呼吸器.svg",
+            "relativePath": "clipart/08_科技/031_呼吸器.svg"
+        },
+        {
+            "id": "technology-032",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 32,
+            "label": "药丸",
+            "fileName": "032_药丸.svg",
+            "relativePath": "clipart/08_科技/032_药丸.svg"
+        },
+        {
+            "id": "technology-033",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 33,
+            "label": "胶囊",
+            "fileName": "033_胶囊.svg",
+            "relativePath": "clipart/08_科技/033_胶囊.svg"
+        },
+        {
+            "id": "technology-034",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 34,
+            "label": "医院",
+            "fileName": "034_医院.svg",
+            "relativePath": "clipart/08_科技/034_医院.svg"
+        },
+        {
+            "id": "technology-035",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 35,
+            "label": "温度计",
+            "fileName": "035_温度计.svg",
+            "relativePath": "clipart/08_科技/035_温度计.svg"
+        },
+        {
+            "id": "technology-036",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 36,
+            "label": "救护车",
+            "fileName": "036_救护车.svg",
+            "relativePath": "clipart/08_科技/036_救护车.svg"
+        },
+        {
+            "id": "technology-037",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 37,
+            "label": "实验",
+            "fileName": "037_实验.svg",
+            "relativePath": "clipart/08_科技/037_实验.svg"
+        },
+        {
+            "id": "technology-038",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 38,
+            "label": "拐杖",
+            "fileName": "038_拐杖.svg",
+            "relativePath": "clipart/08_科技/038_拐杖.svg"
+        },
+        {
+            "id": "technology-039",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 39,
+            "label": "拐杖_2",
+            "fileName": "039_拐杖_2.svg",
+            "relativePath": "clipart/08_科技/039_拐杖_2.svg"
+        },
+        {
+            "id": "technology-040",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 40,
+            "label": "举手",
+            "fileName": "040_举手.svg",
+            "relativePath": "clipart/08_科技/040_举手.svg"
+        },
+        {
+            "id": "technology-041",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 41,
+            "label": "足迹",
+            "fileName": "041_足迹.svg",
+            "relativePath": "clipart/08_科技/041_足迹.svg"
+        },
+        {
+            "id": "technology-042",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 42,
+            "label": "日程",
+            "fileName": "042_日程.svg",
+            "relativePath": "clipart/08_科技/042_日程.svg"
+        },
+        {
+            "id": "technology-043",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 43,
+            "label": "同心锁",
+            "fileName": "043_同心锁.svg",
+            "relativePath": "clipart/08_科技/043_同心锁.svg"
+        },
+        {
+            "id": "technology-044",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 44,
+            "label": "巧克力",
+            "fileName": "044_巧克力.svg",
+            "relativePath": "clipart/08_科技/044_巧克力.svg"
+        },
+        {
+            "id": "technology-045",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 45,
+            "label": "鸳鸯",
+            "fileName": "045_鸳鸯.svg",
+            "relativePath": "clipart/08_科技/045_鸳鸯.svg"
+        },
+        {
+            "id": "technology-046",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 46,
+            "label": "爱",
+            "fileName": "046_爱.svg",
+            "relativePath": "clipart/08_科技/046_爱.svg"
+        },
+        {
+            "id": "technology-047",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 47,
+            "label": "婚纱",
+            "fileName": "047_婚纱.svg",
+            "relativePath": "clipart/08_科技/047_婚纱.svg"
+        },
+        {
+            "id": "technology-048",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 48,
+            "label": "截止",
+            "fileName": "048_截止.svg",
+            "relativePath": "clipart/08_科技/048_截止.svg"
+        },
+        {
+            "id": "technology-049",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 49,
+            "label": "项链",
+            "fileName": "049_项链.svg",
+            "relativePath": "clipart/08_科技/049_项链.svg"
+        },
+        {
+            "id": "technology-050",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 50,
+            "label": "情书",
+            "fileName": "050_情书.svg",
+            "relativePath": "clipart/08_科技/050_情书.svg"
+        },
+        {
+            "id": "technology-051",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 51,
+            "label": "皇冠",
+            "fileName": "051_皇冠.svg",
+            "relativePath": "clipart/08_科技/051_皇冠.svg"
+        },
+        {
+            "id": "technology-052",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 52,
+            "label": "情侣照",
+            "fileName": "052_情侣照.svg",
+            "relativePath": "clipart/08_科技/052_情侣照.svg"
+        },
+        {
+            "id": "technology-053",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 53,
+            "label": "头骨",
+            "fileName": "053_头骨.svg",
+            "relativePath": "clipart/08_科技/053_头骨.svg"
+        },
+        {
+            "id": "technology-054",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 54,
+            "label": "墓地",
+            "fileName": "054_墓地.svg",
+            "relativePath": "clipart/08_科技/054_墓地.svg"
+        },
+        {
+            "id": "technology-055",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 55,
+            "label": "巫师帽",
+            "fileName": "055_巫师帽.svg",
+            "relativePath": "clipart/08_科技/055_巫师帽.svg"
+        },
+        {
+            "id": "technology-056",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 56,
+            "label": "枫叶",
+            "fileName": "056_枫叶.svg",
+            "relativePath": "clipart/08_科技/056_枫叶.svg"
+        },
+        {
+            "id": "technology-057",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 57,
+            "label": "复活节彩蛋",
+            "fileName": "057_复活节彩蛋.svg",
+            "relativePath": "clipart/08_科技/057_复活节彩蛋.svg"
+        },
+        {
+            "id": "technology-058",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 58,
+            "label": "南瓜灯笼",
+            "fileName": "058_南瓜灯笼.svg",
+            "relativePath": "clipart/08_科技/058_南瓜灯笼.svg"
+        },
+        {
+            "id": "technology-059",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 59,
+            "label": "X线",
+            "fileName": "059_X线.svg",
+            "relativePath": "clipart/08_科技/059_X线.svg"
+        },
+        {
+            "id": "technology-060",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 60,
+            "label": "药水",
+            "fileName": "060_药水.svg",
+            "relativePath": "clipart/08_科技/060_药水.svg"
+        },
+        {
+            "id": "technology-061",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 61,
+            "label": "病毒",
+            "fileName": "061_病毒.svg",
+            "relativePath": "clipart/08_科技/061_病毒.svg"
+        },
+        {
+            "id": "technology-062",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 62,
+            "label": "病毒_2",
+            "fileName": "062_病毒_2.svg",
+            "relativePath": "clipart/08_科技/062_病毒_2.svg"
+        },
+        {
+            "id": "technology-063",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 63,
+            "label": "心",
+            "fileName": "063_心.svg",
+            "relativePath": "clipart/08_科技/063_心.svg"
+        },
+        {
+            "id": "technology-064",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 64,
+            "label": "牙医",
+            "fileName": "064_牙医.svg",
+            "relativePath": "clipart/08_科技/064_牙医.svg"
+        },
+        {
+            "id": "technology-065",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 65,
+            "label": "护士",
+            "fileName": "065_护士.svg",
+            "relativePath": "clipart/08_科技/065_护士.svg"
+        },
+        {
+            "id": "technology-066",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 66,
+            "label": "桌面显示器",
+            "fileName": "066_桌面显示器.svg",
+            "relativePath": "clipart/08_科技/066_桌面显示器.svg"
+        },
+        {
+            "id": "technology-067",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 67,
+            "label": "平板",
+            "fileName": "067_平板.svg",
+            "relativePath": "clipart/08_科技/067_平板.svg"
+        },
+        {
+            "id": "technology-068",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 68,
+            "label": "电脑",
+            "fileName": "068_电脑.svg",
+            "relativePath": "clipart/08_科技/068_电脑.svg"
+        },
+        {
+            "id": "technology-069",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 69,
+            "label": "电视",
+            "fileName": "069_电视.svg",
+            "relativePath": "clipart/08_科技/069_电视.svg"
+        },
+        {
+            "id": "technology-070",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 70,
+            "label": "笔记本",
+            "fileName": "070_笔记本.svg",
+            "relativePath": "clipart/08_科技/070_笔记本.svg"
+        },
+        {
+            "id": "technology-071",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 71,
+            "label": "手机",
+            "fileName": "071_手机.svg",
+            "relativePath": "clipart/08_科技/071_手机.svg"
+        },
+        {
+            "id": "technology-072",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 72,
+            "label": "手表",
+            "fileName": "072_手表.svg",
+            "relativePath": "clipart/08_科技/072_手表.svg"
+        },
+        {
+            "id": "technology-073",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 73,
+            "label": "智能手表",
+            "fileName": "073_智能手表.svg",
+            "relativePath": "clipart/08_科技/073_智能手表.svg"
+        },
+        {
+            "id": "technology-074",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 74,
+            "label": "智能手表_2",
+            "fileName": "074_智能手表_2.svg",
+            "relativePath": "clipart/08_科技/074_智能手表_2.svg"
+        },
+        {
+            "id": "technology-075",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 75,
+            "label": "眼镜",
+            "fileName": "075_眼镜.svg",
+            "relativePath": "clipart/08_科技/075_眼镜.svg"
+        },
+        {
+            "id": "technology-076",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 76,
+            "label": "数据库",
+            "fileName": "076_数据库.svg",
+            "relativePath": "clipart/08_科技/076_数据库.svg"
+        },
+        {
+            "id": "technology-077",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 77,
+            "label": "AR",
+            "fileName": "077_AR.svg",
+            "relativePath": "clipart/08_科技/077_AR.svg"
+        },
+        {
+            "id": "technology-078",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 78,
+            "label": "传真",
+            "fileName": "078_传真.svg",
+            "relativePath": "clipart/08_科技/078_传真.svg"
+        },
+        {
+            "id": "technology-079",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 79,
+            "label": "无人机",
+            "fileName": "079_无人机.svg",
+            "relativePath": "clipart/08_科技/079_无人机.svg"
+        },
+        {
+            "id": "technology-080",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 80,
+            "label": "摄像头",
+            "fileName": "080_摄像头.svg",
+            "relativePath": "clipart/08_科技/080_摄像头.svg"
+        },
+        {
+            "id": "technology-081",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 81,
+            "label": "Mp3",
+            "fileName": "081_Mp3.svg",
+            "relativePath": "clipart/08_科技/081_Mp3.svg"
+        },
+        {
+            "id": "technology-082",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 82,
+            "label": "手绘板",
+            "fileName": "082_手绘板.svg",
+            "relativePath": "clipart/08_科技/082_手绘板.svg"
+        },
+        {
+            "id": "technology-083",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 83,
+            "label": "投影仪",
+            "fileName": "083_投影仪.svg",
+            "relativePath": "clipart/08_科技/083_投影仪.svg"
+        },
+        {
+            "id": "technology-084",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 84,
+            "label": "保存",
+            "fileName": "084_保存.svg",
+            "relativePath": "clipart/08_科技/084_保存.svg"
+        },
+        {
+            "id": "technology-085",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 85,
+            "label": "手机_2",
+            "fileName": "085_手机_2.svg",
+            "relativePath": "clipart/08_科技/085_手机_2.svg"
+        },
+        {
+            "id": "technology-086",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 86,
+            "label": "游戏机",
+            "fileName": "086_游戏机.svg",
+            "relativePath": "clipart/08_科技/086_游戏机.svg"
+        },
+        {
+            "id": "technology-087",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 87,
+            "label": "芯片",
+            "fileName": "087_芯片.svg",
+            "relativePath": "clipart/08_科技/087_芯片.svg"
+        },
+        {
+            "id": "technology-088",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 88,
+            "label": "烤箱",
+            "fileName": "088_烤箱.svg",
+            "relativePath": "clipart/08_科技/088_烤箱.svg"
+        },
+        {
+            "id": "technology-089",
+            "categoryId": "technology",
+            "categoryLabel": "科技",
+            "folder": "08_科技",
+            "index": 89,
+            "label": "5G",
+            "fileName": "089_5G.svg",
+            "relativePath": "clipart/08_科技/089_5G.svg"
+        },
+        {
+            "id": "education-001",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 1,
+            "label": "台灯",
+            "fileName": "001_台灯.svg",
+            "relativePath": "clipart/09_教育/001_台灯.svg"
+        },
+        {
+            "id": "education-002",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 2,
+            "label": "尺子",
+            "fileName": "002_尺子.svg",
+            "relativePath": "clipart/09_教育/002_尺子.svg"
+        },
+        {
+            "id": "education-003",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 3,
+            "label": "黑板",
+            "fileName": "003_黑板.svg",
+            "relativePath": "clipart/09_教育/003_黑板.svg"
+        },
+        {
+            "id": "education-004",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 4,
+            "label": "铅笔",
+            "fileName": "004_铅笔.svg",
+            "relativePath": "clipart/09_教育/004_铅笔.svg"
+        },
+        {
+            "id": "education-005",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 5,
+            "label": "书包",
+            "fileName": "005_书包.svg",
+            "relativePath": "clipart/09_教育/005_书包.svg"
+        },
+        {
+            "id": "education-006",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 6,
+            "label": "书",
+            "fileName": "006_书.svg",
+            "relativePath": "clipart/09_教育/006_书.svg"
+        },
+        {
+            "id": "education-007",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 7,
+            "label": "英语",
+            "fileName": "007_英语.svg",
+            "relativePath": "clipart/09_教育/007_英语.svg"
+        },
+        {
+            "id": "education-008",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 8,
+            "label": "化学",
+            "fileName": "008_化学.svg",
+            "relativePath": "clipart/09_教育/008_化学.svg"
+        },
+        {
+            "id": "education-009",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 9,
+            "label": "生物",
+            "fileName": "009_生物.svg",
+            "relativePath": "clipart/09_教育/009_生物.svg"
+        },
+        {
+            "id": "education-010",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 10,
+            "label": "数学",
+            "fileName": "010_数学.svg",
+            "relativePath": "clipart/09_教育/010_数学.svg"
+        },
+        {
+            "id": "education-011",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 11,
+            "label": "物理",
+            "fileName": "011_物理.svg",
+            "relativePath": "clipart/09_教育/011_物理.svg"
+        },
+        {
+            "id": "education-012",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 12,
+            "label": "历史",
+            "fileName": "012_历史.svg",
+            "relativePath": "clipart/09_教育/012_历史.svg"
+        },
+        {
+            "id": "education-013",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 13,
+            "label": "地理",
+            "fileName": "013_地理.svg",
+            "relativePath": "clipart/09_教育/013_地理.svg"
+        },
+        {
+            "id": "education-014",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 14,
+            "label": "天文学",
+            "fileName": "014_天文学.svg",
+            "relativePath": "clipart/09_教育/014_天文学.svg"
+        },
+        {
+            "id": "education-015",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 15,
+            "label": "体育",
+            "fileName": "015_体育.svg",
+            "relativePath": "clipart/09_教育/015_体育.svg"
+        },
+        {
+            "id": "education-016",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 16,
+            "label": "音乐",
+            "fileName": "016_音乐.svg",
+            "relativePath": "clipart/09_教育/016_音乐.svg"
+        },
+        {
+            "id": "education-017",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 17,
+            "label": "分子结构",
+            "fileName": "017_分子结构.svg",
+            "relativePath": "clipart/09_教育/017_分子结构.svg"
+        },
+        {
+            "id": "education-018",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 18,
+            "label": "放大镜",
+            "fileName": "018_放大镜.svg",
+            "relativePath": "clipart/09_教育/018_放大镜.svg"
+        },
+        {
+            "id": "education-019",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 19,
+            "label": "灯泡",
+            "fileName": "019_灯泡.svg",
+            "relativePath": "clipart/09_教育/019_灯泡.svg"
+        },
+        {
+            "id": "education-020",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 20,
+            "label": "橡皮擦",
+            "fileName": "020_橡皮擦.svg",
+            "relativePath": "clipart/09_教育/020_橡皮擦.svg"
+        },
+        {
+            "id": "education-021",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 21,
+            "label": "手表",
+            "fileName": "021_手表.svg",
+            "relativePath": "clipart/09_教育/021_手表.svg"
+        },
+        {
+            "id": "education-022",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 22,
+            "label": "指南针",
+            "fileName": "022_指南针.svg",
+            "relativePath": "clipart/09_教育/022_指南针.svg"
+        },
+        {
+            "id": "education-023",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 23,
+            "label": "笔筒",
+            "fileName": "023_笔筒.svg",
+            "relativePath": "clipart/09_教育/023_笔筒.svg"
+        },
+        {
+            "id": "education-024",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 24,
+            "label": "奖牌",
+            "fileName": "024_奖牌.svg",
+            "relativePath": "clipart/09_教育/024_奖牌.svg"
+        },
+        {
+            "id": "education-025",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 25,
+            "label": "学士帽",
+            "fileName": "025_学士帽.svg",
+            "relativePath": "clipart/09_教育/025_学士帽.svg"
+        },
+        {
+            "id": "education-026",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 26,
+            "label": "学校",
+            "fileName": "026_学校.svg",
+            "relativePath": "clipart/09_教育/026_学校.svg"
+        },
+        {
+            "id": "education-027",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 27,
+            "label": "证书",
+            "fileName": "027_证书.svg",
+            "relativePath": "clipart/09_教育/027_证书.svg"
+        },
+        {
+            "id": "education-028",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 28,
+            "label": "圆规",
+            "fileName": "028_圆规.svg",
+            "relativePath": "clipart/09_教育/028_圆规.svg"
+        },
+        {
+            "id": "education-029",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 29,
+            "label": "调色板",
+            "fileName": "029_调色板.svg",
+            "relativePath": "clipart/09_教育/029_调色板.svg"
+        },
+        {
+            "id": "education-030",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 30,
+            "label": "沙漏",
+            "fileName": "030_沙漏.svg",
+            "relativePath": "clipart/09_教育/030_沙漏.svg"
+        },
+        {
+            "id": "education-031",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 31,
+            "label": "显微镜",
+            "fileName": "031_显微镜.svg",
+            "relativePath": "clipart/09_教育/031_显微镜.svg"
+        },
+        {
+            "id": "education-032",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 32,
+            "label": "教科书",
+            "fileName": "032_教科书.svg",
+            "relativePath": "clipart/09_教育/032_教科书.svg"
+        },
+        {
+            "id": "education-033",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 33,
+            "label": "校车",
+            "fileName": "033_校车.svg",
+            "relativePath": "clipart/09_教育/033_校车.svg"
+        },
+        {
+            "id": "education-034",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 34,
+            "label": "笔记本",
+            "fileName": "034_笔记本.svg",
+            "relativePath": "clipart/09_教育/034_笔记本.svg"
+        },
+        {
+            "id": "education-035",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 35,
+            "label": "刀",
+            "fileName": "035_刀.svg",
+            "relativePath": "clipart/09_教育/035_刀.svg"
+        },
+        {
+            "id": "education-036",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 36,
+            "label": "跳舞",
+            "fileName": "036_跳舞.svg",
+            "relativePath": "clipart/09_教育/036_跳舞.svg"
+        },
+        {
+            "id": "education-037",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 37,
+            "label": "闹钟",
+            "fileName": "037_闹钟.svg",
+            "relativePath": "clipart/09_教育/037_闹钟.svg"
+        },
+        {
+            "id": "education-038",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 38,
+            "label": "眼镜",
+            "fileName": "038_眼镜.svg",
+            "relativePath": "clipart/09_教育/038_眼镜.svg"
+        },
+        {
+            "id": "education-039",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 39,
+            "label": "时钟",
+            "fileName": "039_时钟.svg",
+            "relativePath": "clipart/09_教育/039_时钟.svg"
+        },
+        {
+            "id": "education-040",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 40,
+            "label": "举手",
+            "fileName": "040_举手.svg",
+            "relativePath": "clipart/09_教育/040_举手.svg"
+        },
+        {
+            "id": "education-041",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 41,
+            "label": "足迹",
+            "fileName": "041_足迹.svg",
+            "relativePath": "clipart/09_教育/041_足迹.svg"
+        },
+        {
+            "id": "education-042",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 42,
+            "label": "日程",
+            "fileName": "042_日程.svg",
+            "relativePath": "clipart/09_教育/042_日程.svg"
+        },
+        {
+            "id": "education-043",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 43,
+            "label": "视频",
+            "fileName": "043_视频.svg",
+            "relativePath": "clipart/09_教育/043_视频.svg"
+        },
+        {
+            "id": "education-044",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 44,
+            "label": "游戏",
+            "fileName": "044_游戏.svg",
+            "relativePath": "clipart/09_教育/044_游戏.svg"
+        },
+        {
+            "id": "education-045",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 45,
+            "label": "卷笔刀",
+            "fileName": "045_卷笔刀.svg",
+            "relativePath": "clipart/09_教育/045_卷笔刀.svg"
+        },
+        {
+            "id": "education-046",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 46,
+            "label": "毕业证书",
+            "fileName": "046_毕业证书.svg",
+            "relativePath": "clipart/09_教育/046_毕业证书.svg"
+        },
+        {
+            "id": "education-047",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 47,
+            "label": "列表",
+            "fileName": "047_列表.svg",
+            "relativePath": "clipart/09_教育/047_列表.svg"
+        },
+        {
+            "id": "education-048",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 48,
+            "label": "心理学",
+            "fileName": "048_心理学.svg",
+            "relativePath": "clipart/09_教育/048_心理学.svg"
+        },
+        {
+            "id": "education-049",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 49,
+            "label": "耳机",
+            "fileName": "049_耳机.svg",
+            "relativePath": "clipart/09_教育/049_耳机.svg"
+        },
+        {
+            "id": "education-050",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 50,
+            "label": "在线课程",
+            "fileName": "050_在线课程.svg",
+            "relativePath": "clipart/09_教育/050_在线课程.svg"
+        },
+        {
+            "id": "education-051",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 51,
+            "label": "教学",
+            "fileName": "051_教学.svg",
+            "relativePath": "clipart/09_教育/051_教学.svg"
+        },
+        {
+            "id": "education-052",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 52,
+            "label": "去上学",
+            "fileName": "052_去上学.svg",
+            "relativePath": "clipart/09_教育/052_去上学.svg"
+        },
+        {
+            "id": "education-053",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 53,
+            "label": "网页",
+            "fileName": "053_网页.svg",
+            "relativePath": "clipart/09_教育/053_网页.svg"
+        },
+        {
+            "id": "education-054",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 54,
+            "label": "麦克风",
+            "fileName": "054_麦克风.svg",
+            "relativePath": "clipart/09_教育/054_麦克风.svg"
+        },
+        {
+            "id": "education-055",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 55,
+            "label": "算盘",
+            "fileName": "055_算盘.svg",
+            "relativePath": "clipart/09_教育/055_算盘.svg"
+        },
+        {
+            "id": "education-056",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 56,
+            "label": "笔",
+            "fileName": "056_笔.svg",
+            "relativePath": "clipart/09_教育/056_笔.svg"
+        },
+        {
+            "id": "education-057",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 57,
+            "label": "水彩的钢笔",
+            "fileName": "057_水彩的钢笔.svg",
+            "relativePath": "clipart/09_教育/057_水彩的钢笔.svg"
+        },
+        {
+            "id": "education-058",
+            "categoryId": "education",
+            "categoryLabel": "教育",
+            "folder": "09_教育",
+            "index": 58,
+            "label": "毛笔",
+            "fileName": "058_毛笔.svg",
+            "relativePath": "clipart/09_教育/058_毛笔.svg"
+        },
+        {
+            "id": "food-001",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 1,
+            "label": "松子",
+            "fileName": "001_松子.svg",
+            "relativePath": "clipart/10_食品/001_松子.svg"
+        },
+        {
+            "id": "food-002",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 2,
+            "label": "杏仁",
+            "fileName": "002_杏仁.svg",
+            "relativePath": "clipart/10_食品/002_杏仁.svg"
+        },
+        {
+            "id": "food-003",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 3,
+            "label": "开心果",
+            "fileName": "003_开心果.svg",
+            "relativePath": "clipart/10_食品/003_开心果.svg"
+        },
+        {
+            "id": "food-004",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 4,
+            "label": "夏威夷果",
+            "fileName": "004_夏威夷果.svg",
+            "relativePath": "clipart/10_食品/004_夏威夷果.svg"
+        },
+        {
+            "id": "food-005",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 5,
+            "label": "腰果",
+            "fileName": "005_腰果.svg",
+            "relativePath": "clipart/10_食品/005_腰果.svg"
+        },
+        {
+            "id": "food-006",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 6,
+            "label": "核桃",
+            "fileName": "006_核桃.svg",
+            "relativePath": "clipart/10_食品/006_核桃.svg"
+        },
+        {
+            "id": "food-007",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 7,
+            "label": "红枣",
+            "fileName": "007_红枣.svg",
+            "relativePath": "clipart/10_食品/007_红枣.svg"
+        },
+        {
+            "id": "food-008",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 8,
+            "label": "栗子",
+            "fileName": "008_栗子.svg",
+            "relativePath": "clipart/10_食品/008_栗子.svg"
+        },
+        {
+            "id": "food-009",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 9,
+            "label": "榛子",
+            "fileName": "009_榛子.svg",
+            "relativePath": "clipart/10_食品/009_榛子.svg"
+        },
+        {
+            "id": "food-010",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 10,
+            "label": "三明治",
+            "fileName": "010_三明治.svg",
+            "relativePath": "clipart/10_食品/010_三明治.svg"
+        },
+        {
+            "id": "food-011",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 11,
+            "label": "花生",
+            "fileName": "011_花生.svg",
+            "relativePath": "clipart/10_食品/011_花生.svg"
+        },
+        {
+            "id": "food-012",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 12,
+            "label": "瓜子",
+            "fileName": "012_瓜子.svg",
+            "relativePath": "clipart/10_食品/012_瓜子.svg"
+        },
+        {
+            "id": "food-013",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 13,
+            "label": "葡萄干",
+            "fileName": "013_葡萄干.svg",
+            "relativePath": "clipart/10_食品/013_葡萄干.svg"
+        },
+        {
+            "id": "food-014",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 14,
+            "label": "甜甜圈",
+            "fileName": "014_甜甜圈.svg",
+            "relativePath": "clipart/10_食品/014_甜甜圈.svg"
+        },
+        {
+            "id": "food-015",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 15,
+            "label": "披萨",
+            "fileName": "015_披萨.svg",
+            "relativePath": "clipart/10_食品/015_披萨.svg"
+        },
+        {
+            "id": "food-016",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 16,
+            "label": "牛角包",
+            "fileName": "016_牛角包.svg",
+            "relativePath": "clipart/10_食品/016_牛角包.svg"
+        },
+        {
+            "id": "food-017",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 17,
+            "label": "面包",
+            "fileName": "017_面包.svg",
+            "relativePath": "clipart/10_食品/017_面包.svg"
+        },
+        {
+            "id": "food-018",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 18,
+            "label": "布丁",
+            "fileName": "018_布丁.svg",
+            "relativePath": "clipart/10_食品/018_布丁.svg"
+        },
+        {
+            "id": "food-019",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 19,
+            "label": "蛋糕",
+            "fileName": "019_蛋糕.svg",
+            "relativePath": "clipart/10_食品/019_蛋糕.svg"
+        },
+        {
+            "id": "food-020",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 20,
+            "label": "虎皮卷",
+            "fileName": "020_虎皮卷.svg",
+            "relativePath": "clipart/10_食品/020_虎皮卷.svg"
+        },
+        {
+            "id": "food-021",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 21,
+            "label": "饼干",
+            "fileName": "021_饼干.svg",
+            "relativePath": "clipart/10_食品/021_饼干.svg"
+        },
+        {
+            "id": "food-022",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 22,
+            "label": "饼干_2",
+            "fileName": "022_饼干_2.svg",
+            "relativePath": "clipart/10_食品/022_饼干_2.svg"
+        },
+        {
+            "id": "food-023",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 23,
+            "label": "马卡龙",
+            "fileName": "023_马卡龙.svg",
+            "relativePath": "clipart/10_食品/023_马卡龙.svg"
+        },
+        {
+            "id": "food-024",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 24,
+            "label": "铜锣烧",
+            "fileName": "024_铜锣烧.svg",
+            "relativePath": "clipart/10_食品/024_铜锣烧.svg"
+        },
+        {
+            "id": "food-025",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 25,
+            "label": "奶酪",
+            "fileName": "025_奶酪.svg",
+            "relativePath": "clipart/10_食品/025_奶酪.svg"
+        },
+        {
+            "id": "food-026",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 26,
+            "label": "汉堡",
+            "fileName": "026_汉堡.svg",
+            "relativePath": "clipart/10_食品/026_汉堡.svg"
+        },
+        {
+            "id": "food-027",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 27,
+            "label": "华夫饼",
+            "fileName": "027_华夫饼.svg",
+            "relativePath": "clipart/10_食品/027_华夫饼.svg"
+        },
+        {
+            "id": "food-028",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 28,
+            "label": "吐司面包",
+            "fileName": "028_吐司面包.svg",
+            "relativePath": "clipart/10_食品/028_吐司面包.svg"
+        },
+        {
+            "id": "food-029",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 29,
+            "label": "菠萝面包",
+            "fileName": "029_菠萝面包.svg",
+            "relativePath": "clipart/10_食品/029_菠萝面包.svg"
+        },
+        {
+            "id": "food-030",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 30,
+            "label": "梨",
+            "fileName": "030_梨.svg",
+            "relativePath": "clipart/10_食品/030_梨.svg"
+        },
+        {
+            "id": "food-031",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 31,
+            "label": "橙子",
+            "fileName": "031_橙子.svg",
+            "relativePath": "clipart/10_食品/031_橙子.svg"
+        },
+        {
+            "id": "food-032",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 32,
+            "label": "樱桃",
+            "fileName": "032_樱桃.svg",
+            "relativePath": "clipart/10_食品/032_樱桃.svg"
+        },
+        {
+            "id": "food-033",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 33,
+            "label": "牛油果",
+            "fileName": "033_牛油果.svg",
+            "relativePath": "clipart/10_食品/033_牛油果.svg"
+        },
+        {
+            "id": "food-034",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 34,
+            "label": "草莓",
+            "fileName": "034_草莓.svg",
+            "relativePath": "clipart/10_食品/034_草莓.svg"
+        },
+        {
+            "id": "food-035",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 35,
+            "label": "猕猴桃",
+            "fileName": "035_猕猴桃.svg",
+            "relativePath": "clipart/10_食品/035_猕猴桃.svg"
+        },
+        {
+            "id": "food-036",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 36,
+            "label": "芒果",
+            "fileName": "036_芒果.svg",
+            "relativePath": "clipart/10_食品/036_芒果.svg"
+        },
+        {
+            "id": "food-037",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 37,
+            "label": "苹果",
+            "fileName": "037_苹果.svg",
+            "relativePath": "clipart/10_食品/037_苹果.svg"
+        },
+        {
+            "id": "food-038",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 38,
+            "label": "西瓜",
+            "fileName": "038_西瓜.svg",
+            "relativePath": "clipart/10_食品/038_西瓜.svg"
+        },
+        {
+            "id": "food-039",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 39,
+            "label": "菠萝",
+            "fileName": "039_菠萝.svg",
+            "relativePath": "clipart/10_食品/039_菠萝.svg"
+        },
+        {
+            "id": "food-040",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 40,
+            "label": "榴莲",
+            "fileName": "040_榴莲.svg",
+            "relativePath": "clipart/10_食品/040_榴莲.svg"
+        },
+        {
+            "id": "food-041",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 41,
+            "label": "葡萄干_2",
+            "fileName": "041_葡萄干_2.svg",
+            "relativePath": "clipart/10_食品/041_葡萄干_2.svg"
+        },
+        {
+            "id": "food-042",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 42,
+            "label": "黄瓜",
+            "fileName": "042_黄瓜.svg",
+            "relativePath": "clipart/10_食品/042_黄瓜.svg"
+        },
+        {
+            "id": "food-043",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 43,
+            "label": "柠檬",
+            "fileName": "043_柠檬.svg",
+            "relativePath": "clipart/10_食品/043_柠檬.svg"
+        },
+        {
+            "id": "food-044",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 44,
+            "label": "椰子",
+            "fileName": "044_椰子.svg",
+            "relativePath": "clipart/10_食品/044_椰子.svg"
+        },
+        {
+            "id": "food-045",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 45,
+            "label": "枇杷",
+            "fileName": "045_枇杷.svg",
+            "relativePath": "clipart/10_食品/045_枇杷.svg"
+        },
+        {
+            "id": "food-046",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 46,
+            "label": "蓝莓",
+            "fileName": "046_蓝莓.svg",
+            "relativePath": "clipart/10_食品/046_蓝莓.svg"
+        },
+        {
+            "id": "food-047",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 47,
+            "label": "火龙果",
+            "fileName": "047_火龙果.svg",
+            "relativePath": "clipart/10_食品/047_火龙果.svg"
+        },
+        {
+            "id": "food-048",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 48,
+            "label": "香蕉",
+            "fileName": "048_香蕉.svg",
+            "relativePath": "clipart/10_食品/048_香蕉.svg"
+        },
+        {
+            "id": "food-049",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 49,
+            "label": "桃子",
+            "fileName": "049_桃子.svg",
+            "relativePath": "clipart/10_食品/049_桃子.svg"
+        },
+        {
+            "id": "food-050",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 50,
+            "label": "石榴",
+            "fileName": "050_石榴.svg",
+            "relativePath": "clipart/10_食品/050_石榴.svg"
+        },
+        {
+            "id": "food-051",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 51,
+            "label": "杨桃",
+            "fileName": "051_杨桃.svg",
+            "relativePath": "clipart/10_食品/051_杨桃.svg"
+        },
+        {
+            "id": "food-052",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 52,
+            "label": "龙眼",
+            "fileName": "052_龙眼.svg",
+            "relativePath": "clipart/10_食品/052_龙眼.svg"
+        },
+        {
+            "id": "food-053",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 53,
+            "label": "荔枝",
+            "fileName": "053_荔枝.svg",
+            "relativePath": "clipart/10_食品/053_荔枝.svg"
+        },
+        {
+            "id": "food-054",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 54,
+            "label": "冰淇淋",
+            "fileName": "054_冰淇淋.svg",
+            "relativePath": "clipart/10_食品/054_冰淇淋.svg"
+        },
+        {
+            "id": "food-055",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 55,
+            "label": "巧克力",
+            "fileName": "055_巧克力.svg",
+            "relativePath": "clipart/10_食品/055_巧克力.svg"
+        },
+        {
+            "id": "food-056",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 56,
+            "label": "冰淇淋_2",
+            "fileName": "056_冰淇淋_2.svg",
+            "relativePath": "clipart/10_食品/056_冰淇淋_2.svg"
+        },
+        {
+            "id": "food-057",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 57,
+            "label": "糖果",
+            "fileName": "057_糖果.svg",
+            "relativePath": "clipart/10_食品/057_糖果.svg"
+        },
+        {
+            "id": "food-058",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 58,
+            "label": "棒棒糖",
+            "fileName": "058_棒棒糖.svg",
+            "relativePath": "clipart/10_食品/058_棒棒糖.svg"
+        },
+        {
+            "id": "food-059",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 59,
+            "label": "酸奶",
+            "fileName": "059_酸奶.svg",
+            "relativePath": "clipart/10_食品/059_酸奶.svg"
+        },
+        {
+            "id": "food-060",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 60,
+            "label": "火腿香肠",
+            "fileName": "060_火腿香肠.svg",
+            "relativePath": "clipart/10_食品/060_火腿香肠.svg"
+        },
+        {
+            "id": "food-061",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 61,
+            "label": "爆米花",
+            "fileName": "061_爆米花.svg",
+            "relativePath": "clipart/10_食品/061_爆米花.svg"
+        },
+        {
+            "id": "food-062",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 62,
+            "label": "炸薯条",
+            "fileName": "062_炸薯条.svg",
+            "relativePath": "clipart/10_食品/062_炸薯条.svg"
+        },
+        {
+            "id": "food-063",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 63,
+            "label": "煎蛋",
+            "fileName": "063_煎蛋.svg",
+            "relativePath": "clipart/10_食品/063_煎蛋.svg"
+        },
+        {
+            "id": "food-064",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 64,
+            "label": "虾",
+            "fileName": "064_虾.svg",
+            "relativePath": "clipart/10_食品/064_虾.svg"
+        },
+        {
+            "id": "food-065",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 65,
+            "label": "鸡翅",
+            "fileName": "065_鸡翅.svg",
+            "relativePath": "clipart/10_食品/065_鸡翅.svg"
+        },
+        {
+            "id": "food-066",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 66,
+            "label": "扇贝",
+            "fileName": "066_扇贝.svg",
+            "relativePath": "clipart/10_食品/066_扇贝.svg"
+        },
+        {
+            "id": "food-067",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 67,
+            "label": "秋刀鱼",
+            "fileName": "067_秋刀鱼.svg",
+            "relativePath": "clipart/10_食品/067_秋刀鱼.svg"
+        },
+        {
+            "id": "food-068",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 68,
+            "label": "烧烤",
+            "fileName": "068_烧烤.svg",
+            "relativePath": "clipart/10_食品/068_烧烤.svg"
+        },
+        {
+            "id": "food-069",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 69,
+            "label": "鸡腿",
+            "fileName": "069_鸡腿.svg",
+            "relativePath": "clipart/10_食品/069_鸡腿.svg"
+        },
+        {
+            "id": "food-070",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 70,
+            "label": "包子",
+            "fileName": "070_包子.svg",
+            "relativePath": "clipart/10_食品/070_包子.svg"
+        },
+        {
+            "id": "food-071",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 71,
+            "label": "蟹",
+            "fileName": "071_蟹.svg",
+            "relativePath": "clipart/10_食品/071_蟹.svg"
+        },
+        {
+            "id": "food-072",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 72,
+            "label": "牛排",
+            "fileName": "072_牛排.svg",
+            "relativePath": "clipart/10_食品/072_牛排.svg"
+        },
+        {
+            "id": "food-073",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 73,
+            "label": "鸡",
+            "fileName": "073_鸡.svg",
+            "relativePath": "clipart/10_食品/073_鸡.svg"
+        },
+        {
+            "id": "food-074",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 74,
+            "label": "粽子",
+            "fileName": "074_粽子.svg",
+            "relativePath": "clipart/10_食品/074_粽子.svg"
+        },
+        {
+            "id": "food-075",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 75,
+            "label": "面条",
+            "fileName": "075_面条.svg",
+            "relativePath": "clipart/10_食品/075_面条.svg"
+        },
+        {
+            "id": "food-076",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 76,
+            "label": "米饭",
+            "fileName": "076_米饭.svg",
+            "relativePath": "clipart/10_食品/076_米饭.svg"
+        },
+        {
+            "id": "food-077",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 77,
+            "label": "饭团",
+            "fileName": "077_饭团.svg",
+            "relativePath": "clipart/10_食品/077_饭团.svg"
+        },
+        {
+            "id": "food-078",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 78,
+            "label": "蜂蜜",
+            "fileName": "078_蜂蜜.svg",
+            "relativePath": "clipart/10_食品/078_蜂蜜.svg"
+        },
+        {
+            "id": "food-079",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 79,
+            "label": "培根",
+            "fileName": "079_培根.svg",
+            "relativePath": "clipart/10_食品/079_培根.svg"
+        },
+        {
+            "id": "food-080",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 80,
+            "label": "莲藕",
+            "fileName": "080_莲藕.svg",
+            "relativePath": "clipart/10_食品/080_莲藕.svg"
+        },
+        {
+            "id": "food-081",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 81,
+            "label": "番茄",
+            "fileName": "081_番茄.svg",
+            "relativePath": "clipart/10_食品/081_番茄.svg"
+        },
+        {
+            "id": "food-082",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 82,
+            "label": "玉米",
+            "fileName": "082_玉米.svg",
+            "relativePath": "clipart/10_食品/082_玉米.svg"
+        },
+        {
+            "id": "food-083",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 83,
+            "label": "胡萝卜",
+            "fileName": "083_胡萝卜.svg",
+            "relativePath": "clipart/10_食品/083_胡萝卜.svg"
+        },
+        {
+            "id": "food-084",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 84,
+            "label": "西兰花",
+            "fileName": "084_西兰花.svg",
+            "relativePath": "clipart/10_食品/084_西兰花.svg"
+        },
+        {
+            "id": "food-085",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 85,
+            "label": "茄子",
+            "fileName": "085_茄子.svg",
+            "relativePath": "clipart/10_食品/085_茄子.svg"
+        },
+        {
+            "id": "food-086",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 86,
+            "label": "洋葱",
+            "fileName": "086_洋葱.svg",
+            "relativePath": "clipart/10_食品/086_洋葱.svg"
+        },
+        {
+            "id": "food-087",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 87,
+            "label": "苦瓜",
+            "fileName": "087_苦瓜.svg",
+            "relativePath": "clipart/10_食品/087_苦瓜.svg"
+        },
+        {
+            "id": "food-088",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 88,
+            "label": "香菇",
+            "fileName": "088_香菇.svg",
+            "relativePath": "clipart/10_食品/088_香菇.svg"
+        },
+        {
+            "id": "food-089",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 89,
+            "label": "辣椒",
+            "fileName": "089_辣椒.svg",
+            "relativePath": "clipart/10_食品/089_辣椒.svg"
+        },
+        {
+            "id": "food-090",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 90,
+            "label": "南瓜",
+            "fileName": "090_南瓜.svg",
+            "relativePath": "clipart/10_食品/090_南瓜.svg"
+        },
+        {
+            "id": "food-091",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 91,
+            "label": "豌豆",
+            "fileName": "091_豌豆.svg",
+            "relativePath": "clipart/10_食品/091_豌豆.svg"
+        },
+        {
+            "id": "food-092",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 92,
+            "label": "菜花",
+            "fileName": "092_菜花.svg",
+            "relativePath": "clipart/10_食品/092_菜花.svg"
+        },
+        {
+            "id": "food-093",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 93,
+            "label": "卷心菜",
+            "fileName": "093_卷心菜.svg",
+            "relativePath": "clipart/10_食品/093_卷心菜.svg"
+        },
+        {
+            "id": "food-094",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 94,
+            "label": "萝卜",
+            "fileName": "094_萝卜.svg",
+            "relativePath": "clipart/10_食品/094_萝卜.svg"
+        },
+        {
+            "id": "food-095",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 95,
+            "label": "蔬菜",
+            "fileName": "095_蔬菜.svg",
+            "relativePath": "clipart/10_食品/095_蔬菜.svg"
+        },
+        {
+            "id": "food-096",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 96,
+            "label": "姜",
+            "fileName": "096_姜.svg",
+            "relativePath": "clipart/10_食品/096_姜.svg"
+        },
+        {
+            "id": "food-097",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 97,
+            "label": "秋葵",
+            "fileName": "097_秋葵.svg",
+            "relativePath": "clipart/10_食品/097_秋葵.svg"
+        },
+        {
+            "id": "food-098",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 98,
+            "label": "大蒜",
+            "fileName": "098_大蒜.svg",
+            "relativePath": "clipart/10_食品/098_大蒜.svg"
+        },
+        {
+            "id": "food-099",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 99,
+            "label": "土豆",
+            "fileName": "099_土豆.svg",
+            "relativePath": "clipart/10_食品/099_土豆.svg"
+        },
+        {
+            "id": "food-100",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 100,
+            "label": "生菜",
+            "fileName": "100_生菜.svg",
+            "relativePath": "clipart/10_食品/100_生菜.svg"
+        },
+        {
+            "id": "food-101",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 101,
+            "label": "芹菜",
+            "fileName": "101_芹菜.svg",
+            "relativePath": "clipart/10_食品/101_芹菜.svg"
+        },
+        {
+            "id": "food-102",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 102,
+            "label": "竹笋",
+            "fileName": "102_竹笋.svg",
+            "relativePath": "clipart/10_食品/102_竹笋.svg"
+        },
+        {
+            "id": "food-103",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 103,
+            "label": "葱",
+            "fileName": "103_葱.svg",
+            "relativePath": "clipart/10_食品/103_葱.svg"
+        },
+        {
+            "id": "food-104",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 104,
+            "label": "豆腐",
+            "fileName": "104_豆腐.svg",
+            "relativePath": "clipart/10_食品/104_豆腐.svg"
+        },
+        {
+            "id": "food-105",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 105,
+            "label": "啤酒",
+            "fileName": "105_啤酒.svg",
+            "relativePath": "clipart/10_食品/105_啤酒.svg"
+        },
+        {
+            "id": "food-106",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 106,
+            "label": "咖啡",
+            "fileName": "106_咖啡.svg",
+            "relativePath": "clipart/10_食品/106_咖啡.svg"
+        },
+        {
+            "id": "food-107",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 107,
+            "label": "果汁",
+            "fileName": "107_果汁.svg",
+            "relativePath": "clipart/10_食品/107_果汁.svg"
+        },
+        {
+            "id": "food-108",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 108,
+            "label": "可乐",
+            "fileName": "108_可乐.svg",
+            "relativePath": "clipart/10_食品/108_可乐.svg"
+        },
+        {
+            "id": "food-109",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 109,
+            "label": "奶茶",
+            "fileName": "109_奶茶.svg",
+            "relativePath": "clipart/10_食品/109_奶茶.svg"
+        },
+        {
+            "id": "food-110",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 110,
+            "label": "牛奶",
+            "fileName": "110_牛奶.svg",
+            "relativePath": "clipart/10_食品/110_牛奶.svg"
+        },
+        {
+            "id": "food-111",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 111,
+            "label": "绿茶",
+            "fileName": "111_绿茶.svg",
+            "relativePath": "clipart/10_食品/111_绿茶.svg"
+        },
+        {
+            "id": "food-112",
+            "categoryId": "food",
+            "categoryLabel": "食品",
+            "folder": "10_食品",
+            "index": 112,
+            "label": "花茶",
+            "fileName": "112_花茶.svg",
+            "relativePath": "clipart/10_食品/112_花茶.svg"
+        },
+        {
+            "id": "festival-001",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 1,
+            "label": "圣诞花环",
+            "fileName": "001_圣诞花环.svg",
+            "relativePath": "clipart/11_节日/001_圣诞花环.svg"
+        },
+        {
+            "id": "festival-002",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 2,
+            "label": "房子",
+            "fileName": "002_房子.svg",
+            "relativePath": "clipart/11_节日/002_房子.svg"
+        },
+        {
+            "id": "festival-003",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 3,
+            "label": "圣诞球",
+            "fileName": "003_圣诞球.svg",
+            "relativePath": "clipart/11_节日/003_圣诞球.svg"
+        },
+        {
+            "id": "festival-004",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 4,
+            "label": "圣诞树",
+            "fileName": "004_圣诞树.svg",
+            "relativePath": "clipart/11_节日/004_圣诞树.svg"
+        },
+        {
+            "id": "festival-005",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 5,
+            "label": "圣诞帽",
+            "fileName": "005_圣诞帽.svg",
+            "relativePath": "clipart/11_节日/005_圣诞帽.svg"
+        },
+        {
+            "id": "festival-006",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 6,
+            "label": "圣诞帽_2",
+            "fileName": "006_圣诞帽_2.svg",
+            "relativePath": "clipart/11_节日/006_圣诞帽_2.svg"
+        },
+        {
+            "id": "festival-007",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 7,
+            "label": "雪花",
+            "fileName": "007_雪花.svg",
+            "relativePath": "clipart/11_节日/007_雪花.svg"
+        },
+        {
+            "id": "festival-008",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 8,
+            "label": "雪人",
+            "fileName": "008_雪人.svg",
+            "relativePath": "clipart/11_节日/008_雪人.svg"
+        },
+        {
+            "id": "festival-009",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 9,
+            "label": "鹿角",
+            "fileName": "009_鹿角.svg",
+            "relativePath": "clipart/11_节日/009_鹿角.svg"
+        },
+        {
+            "id": "festival-010",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 10,
+            "label": "礼物",
+            "fileName": "010_礼物.svg",
+            "relativePath": "clipart/11_节日/010_礼物.svg"
+        },
+        {
+            "id": "festival-011",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 11,
+            "label": "水晶球",
+            "fileName": "011_水晶球.svg",
+            "relativePath": "clipart/11_节日/011_水晶球.svg"
+        },
+        {
+            "id": "festival-012",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 12,
+            "label": "圣诞老人",
+            "fileName": "012_圣诞老人.svg",
+            "relativePath": "clipart/11_节日/012_圣诞老人.svg"
+        },
+        {
+            "id": "festival-013",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 13,
+            "label": "驯鹿",
+            "fileName": "013_驯鹿.svg",
+            "relativePath": "clipart/11_节日/013_驯鹿.svg"
+        },
+        {
+            "id": "festival-014",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 14,
+            "label": "冬青",
+            "fileName": "014_冬青.svg",
+            "relativePath": "clipart/11_节日/014_冬青.svg"
+        },
+        {
+            "id": "festival-015",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 15,
+            "label": "棒棒糖",
+            "fileName": "015_棒棒糖.svg",
+            "relativePath": "clipart/11_节日/015_棒棒糖.svg"
+        },
+        {
+            "id": "festival-016",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 16,
+            "label": "糖果",
+            "fileName": "016_糖果.svg",
+            "relativePath": "clipart/11_节日/016_糖果.svg"
+        },
+        {
+            "id": "festival-017",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 17,
+            "label": "手套",
+            "fileName": "017_手套.svg",
+            "relativePath": "clipart/11_节日/017_手套.svg"
+        },
+        {
+            "id": "festival-018",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 18,
+            "label": "拐杖",
+            "fileName": "018_拐杖.svg",
+            "relativePath": "clipart/11_节日/018_拐杖.svg"
+        },
+        {
+            "id": "festival-019",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 19,
+            "label": "圣诞袜",
+            "fileName": "019_圣诞袜.svg",
+            "relativePath": "clipart/11_节日/019_圣诞袜.svg"
+        },
+        {
+            "id": "festival-020",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 20,
+            "label": "钟",
+            "fileName": "020_钟.svg",
+            "relativePath": "clipart/11_节日/020_钟.svg"
+        },
+        {
+            "id": "festival-021",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 21,
+            "label": "圣诞树_2",
+            "fileName": "021_圣诞树_2.svg",
+            "relativePath": "clipart/11_节日/021_圣诞树_2.svg"
+        },
+        {
+            "id": "festival-022",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 22,
+            "label": "圣诞球_2",
+            "fileName": "022_圣诞球_2.svg",
+            "relativePath": "clipart/11_节日/022_圣诞球_2.svg"
+        },
+        {
+            "id": "festival-023",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 23,
+            "label": "雪橇",
+            "fileName": "023_雪橇.svg",
+            "relativePath": "clipart/11_节日/023_雪橇.svg"
+        },
+        {
+            "id": "festival-024",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 24,
+            "label": "姜饼人",
+            "fileName": "024_姜饼人.svg",
+            "relativePath": "clipart/11_节日/024_姜饼人.svg"
+        },
+        {
+            "id": "festival-025",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 25,
+            "label": "爆竹",
+            "fileName": "025_爆竹.svg",
+            "relativePath": "clipart/11_节日/025_爆竹.svg"
+        },
+        {
+            "id": "festival-026",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 26,
+            "label": "锣鼓",
+            "fileName": "026_锣鼓.svg",
+            "relativePath": "clipart/11_节日/026_锣鼓.svg"
+        },
+        {
+            "id": "festival-027",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 27,
+            "label": "幸运袋",
+            "fileName": "027_幸运袋.svg",
+            "relativePath": "clipart/11_节日/027_幸运袋.svg"
+        },
+        {
+            "id": "festival-028",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 28,
+            "label": "红包",
+            "fileName": "028_红包.svg",
+            "relativePath": "clipart/11_节日/028_红包.svg"
+        },
+        {
+            "id": "festival-029",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 29,
+            "label": "饺子",
+            "fileName": "029_饺子.svg",
+            "relativePath": "clipart/11_节日/029_饺子.svg"
+        },
+        {
+            "id": "festival-030",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 30,
+            "label": "灯笼",
+            "fileName": "030_灯笼.svg",
+            "relativePath": "clipart/11_节日/030_灯笼.svg"
+        },
+        {
+            "id": "festival-031",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 31,
+            "label": "福字",
+            "fileName": "031_福字.svg",
+            "relativePath": "clipart/11_节日/031_福字.svg"
+        },
+        {
+            "id": "festival-032",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 32,
+            "label": "元宝",
+            "fileName": "032_元宝.svg",
+            "relativePath": "clipart/11_节日/032_元宝.svg"
+        },
+        {
+            "id": "festival-033",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 33,
+            "label": "鼓",
+            "fileName": "033_鼓.svg",
+            "relativePath": "clipart/11_节日/033_鼓.svg"
+        },
+        {
+            "id": "festival-034",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 34,
+            "label": "烟花",
+            "fileName": "034_烟花.svg",
+            "relativePath": "clipart/11_节日/034_烟花.svg"
+        },
+        {
+            "id": "festival-035",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 35,
+            "label": "驴打滚",
+            "fileName": "035_驴打滚.svg",
+            "relativePath": "clipart/11_节日/035_驴打滚.svg"
+        },
+        {
+            "id": "festival-036",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 36,
+            "label": "烟花_2",
+            "fileName": "036_烟花_2.svg",
+            "relativePath": "clipart/11_节日/036_烟花_2.svg"
+        },
+        {
+            "id": "festival-037",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 37,
+            "label": "中国结",
+            "fileName": "037_中国结.svg",
+            "relativePath": "clipart/11_节日/037_中国结.svg"
+        },
+        {
+            "id": "festival-038",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 38,
+            "label": "冰糖葫芦",
+            "fileName": "038_冰糖葫芦.svg",
+            "relativePath": "clipart/11_节日/038_冰糖葫芦.svg"
+        },
+        {
+            "id": "festival-039",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 39,
+            "label": "棉花",
+            "fileName": "039_棉花.svg",
+            "relativePath": "clipart/11_节日/039_棉花.svg"
+        },
+        {
+            "id": "festival-040",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 40,
+            "label": "礼物_2",
+            "fileName": "040_礼物_2.svg",
+            "relativePath": "clipart/11_节日/040_礼物_2.svg"
+        },
+        {
+            "id": "festival-041",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 41,
+            "label": "玫瑰花",
+            "fileName": "041_玫瑰花.svg",
+            "relativePath": "clipart/11_节日/041_玫瑰花.svg"
+        },
+        {
+            "id": "festival-042",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 42,
+            "label": "一箭穿心",
+            "fileName": "042_一箭穿心.svg",
+            "relativePath": "clipart/11_节日/042_一箭穿心.svg"
+        },
+        {
+            "id": "festival-043",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 43,
+            "label": "同心锁",
+            "fileName": "043_同心锁.svg",
+            "relativePath": "clipart/11_节日/043_同心锁.svg"
+        },
+        {
+            "id": "festival-044",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 44,
+            "label": "巧克力",
+            "fileName": "044_巧克力.svg",
+            "relativePath": "clipart/11_节日/044_巧克力.svg"
+        },
+        {
+            "id": "festival-045",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 45,
+            "label": "鸳鸯",
+            "fileName": "045_鸳鸯.svg",
+            "relativePath": "clipart/11_节日/045_鸳鸯.svg"
+        },
+        {
+            "id": "festival-046",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 46,
+            "label": "爱",
+            "fileName": "046_爱.svg",
+            "relativePath": "clipart/11_节日/046_爱.svg"
+        },
+        {
+            "id": "festival-047",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 47,
+            "label": "婚纱",
+            "fileName": "047_婚纱.svg",
+            "relativePath": "clipart/11_节日/047_婚纱.svg"
+        },
+        {
+            "id": "festival-048",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 48,
+            "label": "截止",
+            "fileName": "048_截止.svg",
+            "relativePath": "clipart/11_节日/048_截止.svg"
+        },
+        {
+            "id": "festival-049",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 49,
+            "label": "项链",
+            "fileName": "049_项链.svg",
+            "relativePath": "clipart/11_节日/049_项链.svg"
+        },
+        {
+            "id": "festival-050",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 50,
+            "label": "情书",
+            "fileName": "050_情书.svg",
+            "relativePath": "clipart/11_节日/050_情书.svg"
+        },
+        {
+            "id": "festival-051",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 51,
+            "label": "皇冠",
+            "fileName": "051_皇冠.svg",
+            "relativePath": "clipart/11_节日/051_皇冠.svg"
+        },
+        {
+            "id": "festival-052",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 52,
+            "label": "情侣照",
+            "fileName": "052_情侣照.svg",
+            "relativePath": "clipart/11_节日/052_情侣照.svg"
+        },
+        {
+            "id": "festival-053",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 53,
+            "label": "头骨",
+            "fileName": "053_头骨.svg",
+            "relativePath": "clipart/11_节日/053_头骨.svg"
+        },
+        {
+            "id": "festival-054",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 54,
+            "label": "墓地",
+            "fileName": "054_墓地.svg",
+            "relativePath": "clipart/11_节日/054_墓地.svg"
+        },
+        {
+            "id": "festival-055",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 55,
+            "label": "巫师帽",
+            "fileName": "055_巫师帽.svg",
+            "relativePath": "clipart/11_节日/055_巫师帽.svg"
+        },
+        {
+            "id": "festival-056",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 56,
+            "label": "枫叶",
+            "fileName": "056_枫叶.svg",
+            "relativePath": "clipart/11_节日/056_枫叶.svg"
+        },
+        {
+            "id": "festival-057",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 57,
+            "label": "复活节彩蛋",
+            "fileName": "057_复活节彩蛋.svg",
+            "relativePath": "clipart/11_节日/057_复活节彩蛋.svg"
+        },
+        {
+            "id": "festival-058",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 58,
+            "label": "南瓜灯笼",
+            "fileName": "058_南瓜灯笼.svg",
+            "relativePath": "clipart/11_节日/058_南瓜灯笼.svg"
+        },
+        {
+            "id": "festival-059",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 59,
+            "label": "鬼",
+            "fileName": "059_鬼.svg",
+            "relativePath": "clipart/11_节日/059_鬼.svg"
+        },
+        {
+            "id": "festival-060",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 60,
+            "label": "蝙蝠",
+            "fileName": "060_蝙蝠.svg",
+            "relativePath": "clipart/11_节日/060_蝙蝠.svg"
+        },
+        {
+            "id": "festival-061",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 61,
+            "label": "面具",
+            "fileName": "061_面具.svg",
+            "relativePath": "clipart/11_节日/061_面具.svg"
+        },
+        {
+            "id": "festival-062",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 62,
+            "label": "龙舟",
+            "fileName": "062_龙舟.svg",
+            "relativePath": "clipart/11_节日/062_龙舟.svg"
+        },
+        {
+            "id": "festival-063",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 63,
+            "label": "咸鸭蛋",
+            "fileName": "063_咸鸭蛋.svg",
+            "relativePath": "clipart/11_节日/063_咸鸭蛋.svg"
+        },
+        {
+            "id": "festival-064",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 64,
+            "label": "粽叶",
+            "fileName": "064_粽叶.svg",
+            "relativePath": "clipart/11_节日/064_粽叶.svg"
+        },
+        {
+            "id": "festival-065",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 65,
+            "label": "粽子",
+            "fileName": "065_粽子.svg",
+            "relativePath": "clipart/11_节日/065_粽子.svg"
+        },
+        {
+            "id": "festival-066",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 66,
+            "label": "帽子",
+            "fileName": "066_帽子.svg",
+            "relativePath": "clipart/11_节日/066_帽子.svg"
+        },
+        {
+            "id": "festival-067",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 67,
+            "label": "小蛋糕",
+            "fileName": "067_小蛋糕.svg",
+            "relativePath": "clipart/11_节日/067_小蛋糕.svg"
+        },
+        {
+            "id": "festival-068",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 68,
+            "label": "蜡烛",
+            "fileName": "068_蜡烛.svg",
+            "relativePath": "clipart/11_节日/068_蜡烛.svg"
+        },
+        {
+            "id": "festival-069",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 69,
+            "label": "气球",
+            "fileName": "069_气球.svg",
+            "relativePath": "clipart/11_节日/069_气球.svg"
+        },
+        {
+            "id": "festival-070",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 70,
+            "label": "酒杯",
+            "fileName": "070_酒杯.svg",
+            "relativePath": "clipart/11_节日/070_酒杯.svg"
+        },
+        {
+            "id": "festival-071",
+            "categoryId": "festival",
+            "categoryLabel": "节日",
+            "folder": "11_节日",
+            "index": 71,
+            "label": "蛋糕",
+            "fileName": "071_蛋糕.svg",
+            "relativePath": "clipart/11_节日/071_蛋糕.svg"
+        },
+        {
+            "id": "emoji-001",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 1,
+            "label": "平静",
+            "fileName": "001_平静.svg",
+            "relativePath": "clipart/12_表情/001_平静.svg"
+        },
+        {
+            "id": "emoji-002",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 2,
+            "label": "大笑",
+            "fileName": "002_大笑.svg",
+            "relativePath": "clipart/12_表情/002_大笑.svg"
+        },
+        {
+            "id": "emoji-003",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 3,
+            "label": "惊讶",
+            "fileName": "003_惊讶.svg",
+            "relativePath": "clipart/12_表情/003_惊讶.svg"
+        },
+        {
+            "id": "emoji-004",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 4,
+            "label": "亲亲",
+            "fileName": "004_亲亲.svg",
+            "relativePath": "clipart/12_表情/004_亲亲.svg"
+        },
+        {
+            "id": "emoji-005",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 5,
+            "label": "悲伤",
+            "fileName": "005_悲伤.svg",
+            "relativePath": "clipart/12_表情/005_悲伤.svg"
+        },
+        {
+            "id": "emoji-006",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 6,
+            "label": "笑哭",
+            "fileName": "006_笑哭.svg",
+            "relativePath": "clipart/12_表情/006_笑哭.svg"
+        },
+        {
+            "id": "emoji-007",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 7,
+            "label": "闭嘴",
+            "fileName": "007_闭嘴.svg",
+            "relativePath": "clipart/12_表情/007_闭嘴.svg"
+        },
+        {
+            "id": "emoji-008",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 8,
+            "label": "痛苦",
+            "fileName": "008_痛苦.svg",
+            "relativePath": "clipart/12_表情/008_痛苦.svg"
+        },
+        {
+            "id": "emoji-009",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 9,
+            "label": "喜欢",
+            "fileName": "009_喜欢.svg",
+            "relativePath": "clipart/12_表情/009_喜欢.svg"
+        },
+        {
+            "id": "emoji-010",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 10,
+            "label": "咯咯地笑",
+            "fileName": "010_咯咯地笑.svg",
+            "relativePath": "clipart/12_表情/010_咯咯地笑.svg"
+        },
+        {
+            "id": "emoji-011",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 11,
+            "label": "微笑",
+            "fileName": "011_微笑.svg",
+            "relativePath": "clipart/12_表情/011_微笑.svg"
+        },
+        {
+            "id": "emoji-012",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 12,
+            "label": "邪魅一笑",
+            "fileName": "012_邪魅一笑.svg",
+            "relativePath": "clipart/12_表情/012_邪魅一笑.svg"
+        },
+        {
+            "id": "emoji-013",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 13,
+            "label": "睡觉",
+            "fileName": "013_睡觉.svg",
+            "relativePath": "clipart/12_表情/013_睡觉.svg"
+        },
+        {
+            "id": "emoji-014",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 14,
+            "label": "淘气的",
+            "fileName": "014_淘气的.svg",
+            "relativePath": "clipart/12_表情/014_淘气的.svg"
+        },
+        {
+            "id": "emoji-015",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 15,
+            "label": "尴尬",
+            "fileName": "015_尴尬.svg",
+            "relativePath": "clipart/12_表情/015_尴尬.svg"
+        },
+        {
+            "id": "emoji-016",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 16,
+            "label": "微笑_2",
+            "fileName": "016_微笑_2.svg",
+            "relativePath": "clipart/12_表情/016_微笑_2.svg"
+        },
+        {
+            "id": "emoji-017",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 17,
+            "label": "哭",
+            "fileName": "017_哭.svg",
+            "relativePath": "clipart/12_表情/017_哭.svg"
+        },
+        {
+            "id": "emoji-018",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 18,
+            "label": "酷",
+            "fileName": "018_酷.svg",
+            "relativePath": "clipart/12_表情/018_酷.svg"
+        },
+        {
+            "id": "emoji-019",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 19,
+            "label": "很生气",
+            "fileName": "019_很生气.svg",
+            "relativePath": "clipart/12_表情/019_很生气.svg"
+        },
+        {
+            "id": "emoji-020",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 20,
+            "label": "晕",
+            "fileName": "020_晕.svg",
+            "relativePath": "clipart/12_表情/020_晕.svg"
+        },
+        {
+            "id": "emoji-021",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 21,
+            "label": "无语",
+            "fileName": "021_无语.svg",
+            "relativePath": "clipart/12_表情/021_无语.svg"
+        },
+        {
+            "id": "emoji-022",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 22,
+            "label": "目瞪口呆",
+            "fileName": "022_目瞪口呆.svg",
+            "relativePath": "clipart/12_表情/022_目瞪口呆.svg"
+        },
+        {
+            "id": "emoji-023",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 23,
+            "label": "受伤的",
+            "fileName": "023_受伤的.svg",
+            "relativePath": "clipart/12_表情/023_受伤的.svg"
+        },
+        {
+            "id": "emoji-024",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 24,
+            "label": "口罩",
+            "fileName": "024_口罩.svg",
+            "relativePath": "clipart/12_表情/024_口罩.svg"
+        },
+        {
+            "id": "emoji-025",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 25,
+            "label": "睡觉_2",
+            "fileName": "025_睡觉_2.svg",
+            "relativePath": "clipart/12_表情/025_睡觉_2.svg"
+        },
+        {
+            "id": "emoji-026",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 26,
+            "label": "白眼",
+            "fileName": "026_白眼.svg",
+            "relativePath": "clipart/12_表情/026_白眼.svg"
+        },
+        {
+            "id": "emoji-027",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 27,
+            "label": "鬼脸",
+            "fileName": "027_鬼脸.svg",
+            "relativePath": "clipart/12_表情/027_鬼脸.svg"
+        },
+        {
+            "id": "emoji-028",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 28,
+            "label": "呕吐",
+            "fileName": "028_呕吐.svg",
+            "relativePath": "clipart/12_表情/028_呕吐.svg"
+        },
+        {
+            "id": "emoji-029",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 29,
+            "label": "奸笑",
+            "fileName": "029_奸笑.svg",
+            "relativePath": "clipart/12_表情/029_奸笑.svg"
+        },
+        {
+            "id": "emoji-030",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 30,
+            "label": "奋斗",
+            "fileName": "030_奋斗.svg",
+            "relativePath": "clipart/12_表情/030_奋斗.svg"
+        },
+        {
+            "id": "emoji-031",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 31,
+            "label": "见钱眼开",
+            "fileName": "031_见钱眼开.svg",
+            "relativePath": "clipart/12_表情/031_见钱眼开.svg"
+        },
+        {
+            "id": "emoji-032",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 32,
+            "label": "可爱的",
+            "fileName": "032_可爱的.svg",
+            "relativePath": "clipart/12_表情/032_可爱的.svg"
+        },
+        {
+            "id": "emoji-033",
+            "categoryId": "emoji",
+            "categoryLabel": "表情",
+            "folder": "12_表情",
+            "index": 33,
+            "label": "刺激",
+            "fileName": "033_刺激.svg",
+            "relativePath": "clipart/12_表情/033_刺激.svg"
+        },
+        {
+            "id": "sports-equipment-001",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 1,
+            "label": "篮球",
+            "fileName": "001_篮球.svg",
+            "relativePath": "clipart/13_体育器材/001_篮球.svg"
+        },
+        {
+            "id": "sports-equipment-002",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 2,
+            "label": "排球",
+            "fileName": "002_排球.svg",
+            "relativePath": "clipart/13_体育器材/002_排球.svg"
+        },
+        {
+            "id": "sports-equipment-003",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 3,
+            "label": "足球",
+            "fileName": "003_足球.svg",
+            "relativePath": "clipart/13_体育器材/003_足球.svg"
+        },
+        {
+            "id": "sports-equipment-004",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 4,
+            "label": "棒球",
+            "fileName": "004_棒球.svg",
+            "relativePath": "clipart/13_体育器材/004_棒球.svg"
+        },
+        {
+            "id": "sports-equipment-005",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 5,
+            "label": "台球",
+            "fileName": "005_台球.svg",
+            "relativePath": "clipart/13_体育器材/005_台球.svg"
+        },
+        {
+            "id": "sports-equipment-006",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 6,
+            "label": "铅球",
+            "fileName": "006_铅球.svg",
+            "relativePath": "clipart/13_体育器材/006_铅球.svg"
+        },
+        {
+            "id": "sports-equipment-007",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 7,
+            "label": "网球",
+            "fileName": "007_网球.svg",
+            "relativePath": "clipart/13_体育器材/007_网球.svg"
+        },
+        {
+            "id": "sports-equipment-008",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 8,
+            "label": "运动衫",
+            "fileName": "008_运动衫.svg",
+            "relativePath": "clipart/13_体育器材/008_运动衫.svg"
+        },
+        {
+            "id": "sports-equipment-009",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 9,
+            "label": "球",
+            "fileName": "009_球.svg",
+            "relativePath": "clipart/13_体育器材/009_球.svg"
+        },
+        {
+            "id": "sports-equipment-010",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 10,
+            "label": "橄榄球",
+            "fileName": "010_橄榄球.svg",
+            "relativePath": "clipart/13_体育器材/010_橄榄球.svg"
+        },
+        {
+            "id": "sports-equipment-011",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 11,
+            "label": "台球_2",
+            "fileName": "011_台球_2.svg",
+            "relativePath": "clipart/13_体育器材/011_台球_2.svg"
+        },
+        {
+            "id": "sports-equipment-012",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 12,
+            "label": "羽毛球",
+            "fileName": "012_羽毛球.svg",
+            "relativePath": "clipart/13_体育器材/012_羽毛球.svg"
+        },
+        {
+            "id": "sports-equipment-013",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 13,
+            "label": "滑板",
+            "fileName": "013_滑板.svg",
+            "relativePath": "clipart/13_体育器材/013_滑板.svg"
+        },
+        {
+            "id": "sports-equipment-014",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 14,
+            "label": "乒乓球",
+            "fileName": "014_乒乓球.svg",
+            "relativePath": "clipart/13_体育器材/014_乒乓球.svg"
+        },
+        {
+            "id": "sports-equipment-015",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 15,
+            "label": "高尔夫球",
+            "fileName": "015_高尔夫球.svg",
+            "relativePath": "clipart/13_体育器材/015_高尔夫球.svg"
+        },
+        {
+            "id": "sports-equipment-016",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 16,
+            "label": "溜冰鞋",
+            "fileName": "016_溜冰鞋.svg",
+            "relativePath": "clipart/13_体育器材/016_溜冰鞋.svg"
+        },
+        {
+            "id": "sports-equipment-017",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 17,
+            "label": "泳镜",
+            "fileName": "017_泳镜.svg",
+            "relativePath": "clipart/13_体育器材/017_泳镜.svg"
+        },
+        {
+            "id": "sports-equipment-018",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 18,
+            "label": "溜冰鞋_2",
+            "fileName": "018_溜冰鞋_2.svg",
+            "relativePath": "clipart/13_体育器材/018_溜冰鞋_2.svg"
+        },
+        {
+            "id": "sports-equipment-019",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 19,
+            "label": "举重",
+            "fileName": "019_举重.svg",
+            "relativePath": "clipart/13_体育器材/019_举重.svg"
+        },
+        {
+            "id": "sports-equipment-020",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 20,
+            "label": "拳击",
+            "fileName": "020_拳击.svg",
+            "relativePath": "clipart/13_体育器材/020_拳击.svg"
+        },
+        {
+            "id": "sports-equipment-021",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 21,
+            "label": "保龄球",
+            "fileName": "021_保龄球.svg",
+            "relativePath": "clipart/13_体育器材/021_保龄球.svg"
+        },
+        {
+            "id": "sports-equipment-022",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 22,
+            "label": "呼啦圈",
+            "fileName": "022_呼啦圈.svg",
+            "relativePath": "clipart/13_体育器材/022_呼啦圈.svg"
+        },
+        {
+            "id": "sports-equipment-023",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 23,
+            "label": "排名",
+            "fileName": "023_排名.svg",
+            "relativePath": "clipart/13_体育器材/023_排名.svg"
+        },
+        {
+            "id": "sports-equipment-024",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 24,
+            "label": "救生圈",
+            "fileName": "024_救生圈.svg",
+            "relativePath": "clipart/13_体育器材/024_救生圈.svg"
+        },
+        {
+            "id": "sports-equipment-025",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 25,
+            "label": "红旗",
+            "fileName": "025_红旗.svg",
+            "relativePath": "clipart/13_体育器材/025_红旗.svg"
+        },
+        {
+            "id": "sports-equipment-026",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 26,
+            "label": "橄榄球头盔",
+            "fileName": "026_橄榄球头盔.svg",
+            "relativePath": "clipart/13_体育器材/026_橄榄球头盔.svg"
+        },
+        {
+            "id": "sports-equipment-027",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 27,
+            "label": "行李",
+            "fileName": "027_行李.svg",
+            "relativePath": "clipart/13_体育器材/027_行李.svg"
+        },
+        {
+            "id": "sports-equipment-028",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 28,
+            "label": "吹口哨",
+            "fileName": "028_吹口哨.svg",
+            "relativePath": "clipart/13_体育器材/028_吹口哨.svg"
+        },
+        {
+            "id": "sports-equipment-029",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 29,
+            "label": "划船",
+            "fileName": "029_划船.svg",
+            "relativePath": "clipart/13_体育器材/029_划船.svg"
+        },
+        {
+            "id": "sports-equipment-030",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 30,
+            "label": "足球场",
+            "fileName": "030_足球场.svg",
+            "relativePath": "clipart/13_体育器材/030_足球场.svg"
+        },
+        {
+            "id": "sports-equipment-031",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 31,
+            "label": "奖牌",
+            "fileName": "031_奖牌.svg",
+            "relativePath": "clipart/13_体育器材/031_奖牌.svg"
+        },
+        {
+            "id": "sports-equipment-032",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 32,
+            "label": "潜水",
+            "fileName": "032_潜水.svg",
+            "relativePath": "clipart/13_体育器材/032_潜水.svg"
+        },
+        {
+            "id": "sports-equipment-033",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 33,
+            "label": "跳绳",
+            "fileName": "033_跳绳.svg",
+            "relativePath": "clipart/13_体育器材/033_跳绳.svg"
+        },
+        {
+            "id": "sports-equipment-034",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 34,
+            "label": "击剑",
+            "fileName": "034_击剑.svg",
+            "relativePath": "clipart/13_体育器材/034_击剑.svg"
+        },
+        {
+            "id": "sports-equipment-035",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 35,
+            "label": "跆拳道",
+            "fileName": "035_跆拳道.svg",
+            "relativePath": "clipart/13_体育器材/035_跆拳道.svg"
+        },
+        {
+            "id": "sports-equipment-036",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 36,
+            "label": "曲棍球",
+            "fileName": "036_曲棍球.svg",
+            "relativePath": "clipart/13_体育器材/036_曲棍球.svg"
+        },
+        {
+            "id": "sports-equipment-037",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 37,
+            "label": "握力器",
+            "fileName": "037_握力器.svg",
+            "relativePath": "clipart/13_体育器材/037_握力器.svg"
+        },
+        {
+            "id": "sports-equipment-038",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 38,
+            "label": "瑜伽垫",
+            "fileName": "038_瑜伽垫.svg",
+            "relativePath": "clipart/13_体育器材/038_瑜伽垫.svg"
+        },
+        {
+            "id": "sports-equipment-039",
+            "categoryId": "sports-equipment",
+            "categoryLabel": "体育器材",
+            "folder": "13_体育器材",
+            "index": 39,
+            "label": "奖杯",
+            "fileName": "039_奖杯.svg",
+            "relativePath": "clipart/13_体育器材/039_奖杯.svg"
+        }
+    ]
+};
+
+},
+18: function(module, exports, __require, __externalRequire) {
+// /src/data/layout-catalog.local.json
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = {
+    "version": "1.0.0",
+    "type": "svg-layout-thumbnail-collection",
+    "assetRoot": "assets",
+    "collectionRoot": "layout-thumbnails",
+    "existingCatalog": "layout-thumbnails/layout-catalog.json",
+    "total": 28,
+    "theme": {
+        "rootNode": "YeMind green gradient",
+        "normalNode": "darker gray",
+        "connector": "darker gray"
+    },
+    "items": [
+        {
+            "id": "mindmap",
+            "groupId": "mindmap",
+            "groupLabel": "思维导图（逻辑图）",
+            "title": "思维导图",
+            "fileName": "01_mindmap.svg",
+            "relativePath": "layout-thumbnails/01_mindmap/01_mindmap.svg"
+        },
+        {
+            "id": "reverse-mindmap",
+            "groupId": "mindmap",
+            "groupLabel": "思维导图（逻辑图）",
+            "title": "逆向导图",
+            "fileName": "02_reverse-mindmap.svg",
+            "relativePath": "layout-thumbnails/01_mindmap/02_reverse-mindmap.svg"
+        },
+        {
+            "id": "balanced-down",
+            "groupId": "mindmap",
+            "groupLabel": "思维导图（逻辑图）",
+            "title": "双向平衡向下",
+            "fileName": "03_balanced-down.svg",
+            "relativePath": "layout-thumbnails/01_mindmap/03_balanced-down.svg"
+        },
+        {
+            "id": "right-mindmap",
+            "groupId": "mindmap",
+            "groupLabel": "思维导图（逻辑图）",
+            "title": "右向导图",
+            "fileName": "04_right-mindmap.svg",
+            "relativePath": "layout-thumbnails/01_mindmap/04_right-mindmap.svg"
+        },
+        {
+            "id": "left-mindmap",
+            "groupId": "mindmap",
+            "groupLabel": "思维导图（逻辑图）",
+            "title": "左向导图",
+            "fileName": "05_left-mindmap.svg",
+            "relativePath": "layout-thumbnails/01_mindmap/05_left-mindmap.svg"
+        },
+        {
+            "id": "tree-right-down",
+            "groupId": "tree",
+            "groupLabel": "树状图",
+            "title": "树状图（右下）",
+            "fileName": "01_tree-right-down.svg",
+            "relativePath": "layout-thumbnails/02_tree/01_tree-right-down.svg"
+        },
+        {
+            "id": "tree-left-down",
+            "groupId": "tree",
+            "groupLabel": "树状图",
+            "title": "树状图（左下）",
+            "fileName": "02_tree-left-down.svg",
+            "relativePath": "layout-thumbnails/02_tree/02_tree-left-down.svg"
+        },
+        {
+            "id": "tree-down-symmetric",
+            "groupId": "tree",
+            "groupLabel": "树状图",
+            "title": "树状图（向下对称）",
+            "fileName": "03_tree-down-symmetric.svg",
+            "relativePath": "layout-thumbnails/02_tree/03_tree-down-symmetric.svg"
+        },
+        {
+            "id": "tree-up-symmetric",
+            "groupId": "tree",
+            "groupLabel": "树状图",
+            "title": "树状图（向上对称）",
+            "fileName": "04_tree-up-symmetric.svg",
+            "relativePath": "layout-thumbnails/02_tree/04_tree-up-symmetric.svg"
+        },
+        {
+            "id": "tree-right-up",
+            "groupId": "tree",
+            "groupLabel": "树状图",
+            "title": "树状图（右上）",
+            "fileName": "05_tree-right-up.svg",
+            "relativePath": "layout-thumbnails/02_tree/05_tree-right-up.svg"
+        },
+        {
+            "id": "tree-left-up",
+            "groupId": "tree",
+            "groupLabel": "树状图",
+            "title": "树状图（左上）",
+            "fileName": "06_tree-left-up.svg",
+            "relativePath": "layout-thumbnails/02_tree/06_tree-left-up.svg"
+        },
+        {
+            "id": "timeline-right",
+            "groupId": "timeline",
+            "groupLabel": "时间轴",
+            "title": "时间轴（向右）",
+            "fileName": "01_timeline-right.svg",
+            "relativePath": "layout-thumbnails/03_timeline/01_timeline-right.svg"
+        },
+        {
+            "id": "timeline-left",
+            "groupId": "timeline",
+            "groupLabel": "时间轴",
+            "title": "时间轴（向左）",
+            "fileName": "02_timeline-left.svg",
+            "relativePath": "layout-thumbnails/03_timeline/02_timeline-left.svg"
+        },
+        {
+            "id": "timeline-down",
+            "groupId": "timeline",
+            "groupLabel": "时间轴",
+            "title": "时间轴（向下）",
+            "fileName": "03_timeline-down.svg",
+            "relativePath": "layout-thumbnails/03_timeline/03_timeline-down.svg"
+        },
+        {
+            "id": "timeline-up",
+            "groupId": "timeline",
+            "groupLabel": "时间轴",
+            "title": "时间轴（向上）",
+            "fileName": "04_timeline-up.svg",
+            "relativePath": "layout-thumbnails/03_timeline/04_timeline-up.svg"
+        },
+        {
+            "id": "timeline-s",
+            "groupId": "timeline",
+            "groupLabel": "时间轴",
+            "title": "时间轴（S型）",
+            "fileName": "05_timeline-s.svg",
+            "relativePath": "layout-thumbnails/03_timeline/05_timeline-s.svg"
+        },
+        {
+            "id": "organization-down",
+            "groupId": "organization",
+            "groupLabel": "组织结构图",
+            "title": "组织结构图（向下）",
+            "fileName": "01_organization-down.svg",
+            "relativePath": "layout-thumbnails/04_organization/01_organization-down.svg"
+        },
+        {
+            "id": "organization-bidirectional",
+            "groupId": "organization",
+            "groupLabel": "组织结构图",
+            "title": "组织结构图（上下双向）",
+            "fileName": "02_organization-bidirectional.svg",
+            "relativePath": "layout-thumbnails/04_organization/02_organization-bidirectional.svg"
+        },
+        {
+            "id": "organization-up",
+            "groupId": "organization",
+            "groupLabel": "组织结构图",
+            "title": "组织结构图（向上）",
+            "fileName": "03_organization-up.svg",
+            "relativePath": "layout-thumbnails/04_organization/03_organization-up.svg"
+        },
+        {
+            "id": "fishbone-left",
+            "groupId": "fishbone",
+            "groupLabel": "鱼骨图",
+            "title": "鱼骨图（左）",
+            "fileName": "01_fishbone-left.svg",
+            "relativePath": "layout-thumbnails/05_fishbone/01_fishbone-left.svg"
+        },
+        {
+            "id": "fishbone-right",
+            "groupId": "fishbone",
+            "groupLabel": "鱼骨图",
+            "title": "鱼骨图（右）",
+            "fileName": "02_fishbone-right.svg",
+            "relativePath": "layout-thumbnails/05_fishbone/02_fishbone-right.svg"
+        },
+        {
+            "id": "tree-table-top-title",
+            "groupId": "tree-table",
+            "groupLabel": "树形表格",
+            "title": "树形表格（顶部标题）",
+            "fileName": "01_tree-table-top-title.svg",
+            "relativePath": "layout-thumbnails/06_tree-table/01_tree-table-top-title.svg"
+        },
+        {
+            "id": "tree-table-left-title",
+            "groupId": "tree-table",
+            "groupLabel": "树形表格",
+            "title": "树形表格（左侧标题）",
+            "fileName": "02_tree-table-left-title.svg",
+            "relativePath": "layout-thumbnails/06_tree-table/02_tree-table-left-title.svg"
+        },
+        {
+            "id": "radial-sector",
+            "groupId": "other",
+            "groupLabel": "其他",
+            "title": "扇形放射图",
+            "fileName": "01_radial-sector.svg",
+            "relativePath": "layout-thumbnails/07_other/01_radial-sector.svg"
+        },
+        {
+            "id": "circle",
+            "groupId": "other",
+            "groupLabel": "其他",
+            "title": "圆形图",
+            "fileName": "02_circle.svg",
+            "relativePath": "layout-thumbnails/07_other/02_circle.svg"
+        },
+        {
+            "id": "bubble",
+            "groupId": "other",
+            "groupLabel": "其他",
+            "title": "气泡图",
+            "fileName": "03_bubble.svg",
+            "relativePath": "layout-thumbnails/07_other/03_bubble.svg"
+        },
+        {
+            "id": "bracket-right",
+            "groupId": "other",
+            "groupLabel": "其他",
+            "title": "括号图（右）",
+            "fileName": "04_bracket-right.svg",
+            "relativePath": "layout-thumbnails/07_other/04_bracket-right.svg"
+        },
+        {
+            "id": "bracket-left",
+            "groupId": "other",
+            "groupLabel": "其他",
+            "title": "括号图（左）",
+            "fileName": "05_bracket-left.svg",
+            "relativePath": "layout-thumbnails/07_other/05_bracket-left.svg"
+        }
+    ]
+};
+
+},
+19: function(module, exports, __require, __externalRequire) {
+// /src/config/yemind-local-assets.ts
+"use strict";
+/**
+ * YeMind fixed local assets / YeMind 固定本地资源
+ *
+ * Catalog paths are relative to the plugin's `assets` directory.
+ * 目录表中的路径均相对于插件 `assets` 目录。
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.YEMIND_OVERLAY_EXCLUDES = exports.YEMIND_FIXED_ASSETS = exports.YEMIND_ASSET_ROOT = void 0;
+exports.createYemindAssetResolver = createYemindAssetResolver;
+exports.getYemindMarkerStyle = getYemindMarkerStyle;
+exports.YEMIND_ASSET_ROOT = "assets";
+exports.YEMIND_FIXED_ASSETS = {
+    markerSprite: "icons/marker-sprite.png",
+    clipartRoot: "clipart",
+    layoutRoot: "layout-thumbnails",
+    layoutCatalog: "layout-thumbnails/layout-catalog.json",
+};
+function trimSlashes(value) {
+    return value.replace(/^\/+|\/+$/g, "");
+}
+function joinUrl(...parts) {
+    const first = parts.shift() ?? "";
+    const prefix = first.replace(/\/+$/g, "");
+    const rest = parts.map(trimSlashes).filter(Boolean).join("/");
+    return prefix ? `${prefix}/${rest}` : rest;
+}
+/**
+ * Pass the real YeMind plugin base URL from the SiYuan runtime.
+ * 必须传入思源运行时提供的真实插件基础 URL。
+ */
+function createYemindAssetResolver(pluginBaseUrl) {
+    const assetBaseUrl = joinUrl(pluginBaseUrl, exports.YEMIND_ASSET_ROOT);
+    return {
+        assetBaseUrl,
+        url(relativePath) {
+            return joinUrl(assetBaseUrl, relativePath);
+        },
+        markerSpriteUrl() {
+            return joinUrl(assetBaseUrl, exports.YEMIND_FIXED_ASSETS.markerSprite);
+        },
+        clipartUrl(relativePath) {
+            return joinUrl(assetBaseUrl, relativePath);
+        },
+        layoutUrl(relativePath) {
+            return joinUrl(assetBaseUrl, relativePath);
+        },
+    };
+}
+function getYemindMarkerStyle(spriteUrl, marker) {
+    return {
+        width: "28px",
+        height: "28px",
+        display: "inline-block",
+        flex: "0 0 28px",
+        backgroundImage: `url("${spriteUrl}")`,
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "380px 488px",
+        backgroundPosition: marker.backgroundPosition,
+    };
+}
+exports.YEMIND_OVERLAY_EXCLUDES = [
+    "assets/clipart/**",
+    "assets/icons/marker-sprite.png",
+    "assets/layout-thumbnails/**/*.svg",
+    "assets/layout-thumbnails/layout-thumbnails-contact-sheet.png",
+    "yemind-icon-32.png",
+    "yemind-icon-64.png",
+    "yemind-icon-128.png",
+];
+
+},
+20: function(module, exports, __require, __externalRequire) {
 // /src/editor/projectStyle.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -5730,7 +15465,7 @@ exports.DEFAULT_PROJECT_STYLE = void 0;
 exports.normalizeProjectStyle = normalizeProjectStyle;
 exports.densitySpacing = densitySpacing;
 exports.resolveProjectAppearance = resolveProjectAppearance;
-const colorSchemes_1 = __require(15);
+const colorSchemes_1 = __require(21);
 exports.DEFAULT_PROJECT_STYLE = {
     density: 'default',
     rainbowLines: null,
@@ -5816,7 +15551,7 @@ function resolveProjectAppearance(input) {
 }
 
 },
-15: function(module, exports, __require, __externalRequire) {
+21: function(module, exports, __require, __externalRequire) {
 // /src/core/colorSchemes.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -5851,15 +15586,16 @@ function rainbowSchemeOptionsHtml(selected) {
 }
 
 },
-16: function(module, exports, __require, __externalRequire) {
+22: function(module, exports, __require, __externalRequire) {
 // /src/model/MapRepository.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MapRepository = void 0;
-const defaultMap_1 = __require(17);
+const defaultMap_1 = __require(23);
 const themePresets_1 = __require(11);
 const layoutPresets_1 = __require(13);
-const projectStyle_1 = __require(14);
+const layoutAssetPresets_1 = __require(14);
+const projectStyle_1 = __require(20);
 const clone = (value) => JSON.parse(JSON.stringify(value));
 function normalizeMap(value) {
     if (!value || typeof value !== 'object')
@@ -5878,6 +15614,7 @@ function normalizeMap(value) {
         createdAt: Number(candidate.createdAt) || Date.now(),
         updatedAt: fallbackTime,
         layout: (0, layoutPresets_1.normalizeLayoutId)(candidate.layout),
+        layoutPresetId: (0, layoutAssetPresets_1.normalizeLayoutAssetId)(candidate.layoutPresetId, candidate.layout),
         theme: (0, themePresets_1.normalizeThemePresetId)(candidate.theme),
         lineStyle: (0, themePresets_1.normalizeLineStyle)(candidate.lineStyle),
         projectStyle: (0, projectStyle_1.normalizeProjectStyle)(candidate.projectStyle),
@@ -5887,6 +15624,7 @@ function normalizeMap(value) {
     const changed = normalizedTitle !== candidate.title
         || normalizedTree.changed
         || map.layout !== candidate.layout
+        || map.layoutPresetId !== candidate.layoutPresetId
         || map.theme !== candidate.theme
         || map.lineStyle !== candidate.lineStyle
         || JSON.stringify(map.projectStyle) !== JSON.stringify(candidate.projectStyle ?? {});
@@ -6015,6 +15753,8 @@ class MapRepository {
                 map.data = clone(patch.data);
             if (patch.layout !== undefined)
                 map.layout = (0, layoutPresets_1.normalizeLayoutId)(patch.layout);
+            if (patch.layoutPresetId !== undefined)
+                map.layoutPresetId = (0, layoutAssetPresets_1.normalizeLayoutAssetId)(patch.layoutPresetId, patch.layout ?? map.layout);
             if (patch.theme !== undefined)
                 map.theme = (0, themePresets_1.normalizeThemePresetId)(patch.theme);
             if (patch.lineStyle !== undefined)
@@ -6035,6 +15775,7 @@ class MapRepository {
                 return { changed: false, value: undefined };
             map.data = clone(snapshot.data);
             map.layout = (0, layoutPresets_1.normalizeLayoutId)(snapshot.layout);
+            map.layoutPresetId = (0, layoutAssetPresets_1.normalizeLayoutAssetId)(snapshot.layoutPresetId, snapshot.layout);
             map.theme = (0, themePresets_1.normalizeThemePresetId)(snapshot.theme);
             map.lineStyle = (0, themePresets_1.normalizeLineStyle)(snapshot.lineStyle);
             map.projectStyle = (0, projectStyle_1.normalizeProjectStyle)(snapshot.projectStyle);
@@ -6091,20 +15832,20 @@ class MapRepository {
 exports.MapRepository = MapRepository;
 
 },
-17: function(module, exports, __require, __externalRequire) {
+23: function(module, exports, __require, __externalRequire) {
 // /src/model/defaultMap.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createDefaultTree = createDefaultTree;
 exports.createDefaultMap = createDefaultMap;
-const projectStyle_1 = __require(14);
-const textEditingPolicy_1 = __require(18);
-function createDefaultTree(title) {
+const projectStyle_1 = __require(20);
+const textEditingPolicy_1 = __require(24);
+function createDefaultTree(_title = '未命名导图') {
     return {
-        data: (0, textEditingPolicy_1.pristineNodeData)({ text: title, expand: true }),
+        data: (0, textEditingPolicy_1.pristineNodeData)({ text: '中心主题', expand: true }),
         children: [
-            { data: (0, textEditingPolicy_1.pristineNodeData)({ text: '主要主题', expand: true }), children: [] },
-            { data: (0, textEditingPolicy_1.pristineNodeData)({ text: '另一个主题', expand: true }), children: [] },
+            { data: (0, textEditingPolicy_1.pristineNodeData)({ text: '新节点', expand: true }), children: [] },
+            { data: (0, textEditingPolicy_1.pristineNodeData)({ text: '新节点', expand: true }), children: [] },
         ],
     };
 }
@@ -6116,6 +15857,7 @@ function createDefaultMap(title = '未命名导图', id = globalThis.crypto?.ran
         createdAt: now,
         updatedAt: now,
         layout: 'logicalStructure',
+        layoutPresetId: 'right-mindmap',
         theme: 'yemind-default',
         lineStyle: 'curve',
         projectStyle: { ...projectStyle_1.DEFAULT_PROJECT_STYLE },
@@ -6124,7 +15866,7 @@ function createDefaultMap(title = '未命名导图', id = globalThis.crypto?.ran
 }
 
 },
-18: function(module, exports, __require, __externalRequire) {
+24: function(module, exports, __require, __externalRequire) {
 // /src/editor/textEditingPolicy.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -6134,6 +15876,7 @@ exports.pristineNodeData = pristineNodeData;
 exports.editableTextLength = editableTextLength;
 const LEGACY_DEFAULT_NODE_TEXTS = new Set([
     '新节点',
+    '中心主题',
     '主要主题',
     '另一个主题',
     '未命名导图',
@@ -6173,7 +15916,7 @@ function editableTextLength(quill) {
 }
 
 },
-19: function(module, exports, __require, __externalRequire) {
+25: function(module, exports, __require, __externalRequire) {
 // /src/ui/dialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -6237,7 +15980,7 @@ function confirmAction(title, message, confirmText = '确定') {
 }
 
 },
-20: function(module, exports, __require, __externalRequire) {
+26: function(module, exports, __require, __externalRequire) {
 // /src/ui/diagnosticsDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -6368,53 +16111,24 @@ function openDiagnosticsDialog(service) {
 }
 
 },
-21: function(module, exports, __require, __externalRequire) {
-// /src/settings/settings.ts
+27: function(module, exports, __require, __externalRequire) {
+// /src/ui/aboutDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.registerSettings = registerSettings;
-const settingsDialog_1 = __require(22);
-/**
- * Keep SiYuan's built-in plugin settings entry small and route it to the
- * complete YeMind dialog. This prevents the native list and the custom
- * dialog from exposing two different sets of options.
- */
-function registerSettings(plugin, store, diagnostics) {
-    const button = document.createElement('button');
-    button.className = 'b3-button b3-button--outline';
-    button.textContent = '打开完整设置';
-    button.addEventListener('click', () => (0, settingsDialog_1.openYeMindSettingsDialog)(store, { diagnostics }));
-    plugin.setting.addItem({
-        title: 'YeMind 设置',
-        description: '常规设置、节点入口、富文本、代码块和快捷键统一在完整设置窗口中管理。',
-        actionElement: button,
-    });
-}
-
-},
-22: function(module, exports, __require, __externalRequire) {
-// /src/settings/settingsDialog.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.openYeMindSettingsDialog = openYeMindSettingsDialog;
+exports.createAboutDialogTemplate = createAboutDialogTemplate;
+exports.openYeMindAboutDialog = openYeMindAboutDialog;
 const siyuan_1 = __externalRequire("siyuan");
 const DiagnosticsService_1 = __require(5);
-const diagnosticsDialog_1 = __require(20);
-const releaseInfo_1 = __require(23);
-const shortcuts_1 = __require(25);
-const SettingsStore_1 = __require(26);
-const settingsDialogTemplate_1 = __require(27);
-const saveSettingsDraft_1 = __require(29);
-function cloneSettings(settings) {
-    return { ...settings, shortcutMap: { ...settings.shortcutMap } };
-}
-function setControlValue(control, value) {
-    if (control instanceof HTMLInputElement && control.type === 'checkbox')
-        control.checked = Boolean(value);
-    else if (control instanceof HTMLInputElement && control.type === 'radio')
-        control.checked = control.value === String(value ?? '');
-    else
-        control.value = String(value ?? '');
+const constants_1 = __require(28);
+const releaseInfo_1 = __require(29);
+const diagnosticsDialog_1 = __require(26);
+function escapeHtml(value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
 }
 async function writeClipboard(text) {
     if (navigator.clipboard?.writeText) {
@@ -6430,23 +16144,48 @@ async function writeClipboard(text) {
     document.execCommand('copy');
     input.remove();
 }
-function openYeMindSettingsDialog(store, options = {}) {
-    let draft = cloneSettings(store.get());
-    let recordingCleanup = null;
+function createAboutDialogTemplate() {
+    return `<div class="ymz-about-dialog">
+    <div class="ymz-about-hero">
+      <img src="${constants_1.ROOT_ICON_URL}" alt="YeMind">
+      <div><h3>${escapeHtml(releaseInfo_1.RELEASE_INFO.productName)}</h3><p>${escapeHtml(releaseInfo_1.RELEASE_INFO.releaseSummary)}</p></div>
+    </div>
+    <div class="ymz-settings-group ymz-about-version-card">
+      <h3>版本信息</h3>
+      <dl class="ymz-about-version-grid">
+        <div><dt>当前版本</dt><dd>${escapeHtml(releaseInfo_1.RELEASE_INFO.version)}</dd></div>
+        <div><dt>插件声明版本</dt><dd data-about-version="manifest">正在读取…</dd></div>
+        <div><dt>运行时代码版本</dt><dd data-about-version="runtime">${escapeHtml(releaseInfo_1.RELEASE_INFO.version)}</dd></div>
+        <div><dt>构建版本</dt><dd data-about-version="build">${escapeHtml(releaseInfo_1.RELEASE_INFO.buildVersion)}</dd></div>
+        <div><dt>构建标识</dt><dd>${escapeHtml(releaseInfo_1.RELEASE_INFO.buildId)}</dd></div>
+        <div><dt>构建时间</dt><dd>${escapeHtml(releaseInfo_1.RELEASE_INFO.buildTime)}</dd></div>
+        <div><dt>思源版本</dt><dd data-about-version="siyuan">正在读取…</dd></div>
+        <div><dt>开发基线</dt><dd>${escapeHtml(releaseInfo_1.RELEASE_INFO.hostBaseline)}</dd></div>
+      </dl>
+      <div class="ymz-about-consistency" data-about-consistency="pending">正在检查版本一致性…</div>
+    </div>
+    <div class="ymz-settings-group ymz-about-highlights">
+      <h3>本版更新</h3>
+      <ul>${releaseInfo_1.RELEASE_INFO.highlights.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+    </div>
+    <div class="ymz-about-actions">
+      <button class="b3-button b3-button--outline" data-about-action="copy-version">复制版本信息</button>
+      <button class="b3-button b3-button--outline" data-about-action="open-diagnostics">诊断与回归</button>
+      <button class="b3-button b3-button--text" data-about-action="export-diagnostics">导出诊断包</button>
+    </div>
+  </div>`;
+}
+function openYeMindAboutDialog(options = {}) {
     const dialog = new siyuan_1.Dialog({
-        title: 'YeMind 设置',
-        content: (0, settingsDialogTemplate_1.createSettingsDialogTemplate)(draft),
-        width: '880px',
-        height: '78vh',
-        destroyCallback: () => recordingCleanup?.(),
+        title: `关于 ${releaseInfo_1.RELEASE_INFO.productName}`,
+        content: createAboutDialogTemplate(),
+        width: '680px',
+        height: '72vh',
     });
-    const shell = dialog.element.querySelector('.ymz-settings-shell');
+    const shell = dialog.element.querySelector('.ymz-about-dialog');
     if (!shell)
         return;
-    const saveButton = shell.querySelector('[data-settings-action="save"]');
-    let hasShortcutConflict = false;
-    let saving = false;
-    const updateAbout = async () => {
+    const updateVersionInfo = async () => {
         const consistency = options.diagnostics
             ? await options.diagnostics.getVersionConsistency()
             : (0, releaseInfo_1.resolveVersionConsistency)(null);
@@ -6468,7 +16207,178 @@ function openYeMindSettingsDialog(store, options = {}) {
                 : '版本不一致：可能仍在运行旧缓存代码，请重新安装并重启思源。';
         }
     };
-    void updateAbout();
+    void updateVersionInfo();
+    shell.querySelectorAll('[data-about-action]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const action = button.dataset.aboutAction;
+            void (async () => {
+                if (action === 'copy-version') {
+                    const consistency = options.diagnostics
+                        ? await options.diagnostics.getVersionConsistency()
+                        : (0, releaseInfo_1.resolveVersionConsistency)(null);
+                    const environment = options.diagnostics?.getEnvironmentSnapshot() ?? {};
+                    await writeClipboard([
+                        `${releaseInfo_1.RELEASE_INFO.productName} ${releaseInfo_1.RELEASE_INFO.version}`,
+                        `插件声明版本: ${consistency.manifest}`,
+                        `运行时代码版本: ${consistency.runtime}`,
+                        `构建版本: ${consistency.build}`,
+                        `构建标识: ${releaseInfo_1.RELEASE_INFO.buildId}`,
+                        `构建时间: ${releaseInfo_1.RELEASE_INFO.buildTime}`,
+                        `思源版本: ${String(environment.appVersion ?? 'unknown')}`,
+                        `开发基线: ${releaseInfo_1.RELEASE_INFO.hostBaseline}`,
+                    ].join('\n'));
+                    (0, siyuan_1.showMessage)('版本信息已复制');
+                }
+                else if (action === 'open-diagnostics') {
+                    if (!options.diagnostics)
+                        return (0, siyuan_1.showMessage)('诊断服务尚未就绪', 3500, 'error');
+                    (0, diagnosticsDialog_1.openDiagnosticsDialog)(options.diagnostics);
+                }
+                else if (action === 'export-diagnostics') {
+                    if (!options.diagnostics)
+                        return (0, siyuan_1.showMessage)('诊断服务尚未就绪', 3500, 'error');
+                    const archive = await options.diagnostics.buildArchive(false);
+                    (0, DiagnosticsService_1.downloadDiagnosticsArchive)(archive.blob, archive.filename);
+                    (0, siyuan_1.showMessage)('诊断包已导出');
+                }
+            })().catch((error) => {
+                options.diagnostics?.recordError('about', `${action}-failed`, error, undefined, true);
+                (0, siyuan_1.showMessage)('关于页面操作失败', 4000, 'error');
+            });
+        });
+    });
+}
+
+},
+28: function(module, exports, __require, __externalRequire) {
+// /src/plugin/constants.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ROOT_ICON_URL = exports.ICON_ID = exports.DOCK_TYPE = exports.TAB_TYPE = exports.PLUGIN_VERSION = exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = exports.DIAGNOSTIC_PROBE_STORAGE_NAME = exports.CHECKPOINT_STORAGE_NAME = exports.SETTINGS_STORAGE_NAME = exports.MAP_STORAGE_NAME = exports.LEGACY_PLUGIN_IDS = exports.PLUGIN_ID = exports.PROJECT_PACKAGE_NAME = exports.PRODUCT_NAME = void 0;
+exports.PRODUCT_NAME = 'YeMind';
+exports.PROJECT_PACKAGE_NAME = 'siyuan-yemind';
+/** Current SiYuan plugin identifier and installed directory name. */
+exports.PLUGIN_ID = 'siyuan-yemind';
+/** Historical identifiers accepted only for old protocol links and compatibility checks. */
+exports.LEGACY_PLUGIN_IDS = ['siyuan-yemind-zen'];
+exports.MAP_STORAGE_NAME = 'maps.json';
+exports.SETTINGS_STORAGE_NAME = 'settings.json';
+exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
+exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
+exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
+exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
+exports.PLUGIN_VERSION = '0.9.13';
+exports.TAB_TYPE = 'yemind-map';
+exports.DOCK_TYPE = 'yemind-dock';
+exports.ICON_ID = 'iconYeMind';
+exports.ROOT_ICON_URL = `/plugins/${exports.PLUGIN_ID}/icon.png`;
+
+},
+29: function(module, exports, __require, __externalRequire) {
+// /src/releaseInfo.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RELEASE_INFO = void 0;
+exports.resolveVersionConsistency = resolveVersionConsistency;
+const constants_1 = __require(28);
+exports.RELEASE_INFO = {
+    version: constants_1.PLUGIN_VERSION,
+    buildVersion: constants_1.PLUGIN_VERSION,
+    buildTime: '2026-07-23T08:36:48Z',
+    buildId: 'yemind-v0.9.13-20260723',
+    productName: constants_1.PRODUCT_NAME,
+    projectName: constants_1.PROJECT_PACKAGE_NAME,
+    tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
+    hostBaseline: 'SiYuan 3.7.3',
+    releaseSummary: '修复节点图标与文字越界、隐藏标签文字塌缩、多选右键丢失，并恢复图片悬停工具和更清晰的面板交互。',
+    highlights: [
+        '节点图标改用受限 SVG pattern 渲染，完整 sprite 不再参与节点边界计算，文字和图标保持在节点框内。',
+        '图片工具恢复为悬停显示，放大镜单击打开预览；预览背景降低遮罩不透明度并提高模糊程度。',
+        '关联线选中态使用清晰蓝色和轻微加粗，不再覆盖为粗黑曲线。',
+        '结构面板支持点击外部关闭；结构、样式按钮恢复 hover，整图与节点样式面板分别压缩并提高信息密度。',
+        '关于 YeMind 移到顶部菜单的设置与诊断之间，新建导图使用“中心主题”和两个“新节点”。',
+        '多选节点右键前捕获并恢复选择；富文本测量节点移出隐藏标签，防止文字节点塌缩成空椭圆。',
+    ]
+};
+function resolveVersionConsistency(manifestVersion) {
+    const manifest = manifestVersion || 'unknown';
+    const runtime = constants_1.PLUGIN_VERSION;
+    const build = exports.RELEASE_INFO.buildVersion;
+    return {
+        manifest,
+        runtime,
+        build,
+        consistent: manifest !== 'unknown' && manifest === runtime && runtime === build,
+    };
+}
+
+},
+30: function(module, exports, __require, __externalRequire) {
+// /src/settings/settings.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.registerSettings = registerSettings;
+const settingsDialog_1 = __require(31);
+/**
+ * Keep SiYuan's built-in plugin settings entry small and route it to the
+ * complete YeMind dialog. This prevents the native list and the custom
+ * dialog from exposing two different sets of options.
+ */
+function registerSettings(plugin, store, diagnostics) {
+    // Some SiYuan startup paths expose plugin.setting only after layout setup.
+    // Top-bar settings remain available, so skip this optional native entry instead
+    // of aborting the rest of plugin registration.
+    if (!plugin.setting?.addItem)
+        return;
+    const button = document.createElement('button');
+    button.className = 'b3-button b3-button--outline';
+    button.textContent = '打开完整设置';
+    button.addEventListener('click', () => (0, settingsDialog_1.openYeMindSettingsDialog)(store, { diagnostics }));
+    plugin.setting.addItem({
+        title: 'YeMind 设置',
+        description: '常规设置、节点入口、富文本、代码块和快捷键统一在完整设置窗口中管理。',
+        actionElement: button,
+    });
+}
+
+},
+31: function(module, exports, __require, __externalRequire) {
+// /src/settings/settingsDialog.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.openYeMindSettingsDialog = openYeMindSettingsDialog;
+const siyuan_1 = __externalRequire("siyuan");
+const shortcuts_1 = __require(32);
+const SettingsStore_1 = __require(33);
+const settingsDialogTemplate_1 = __require(34);
+const saveSettingsDraft_1 = __require(36);
+function cloneSettings(settings) {
+    return { ...settings, shortcutMap: { ...settings.shortcutMap } };
+}
+function setControlValue(control, value) {
+    if (control instanceof HTMLInputElement && control.type === 'checkbox')
+        control.checked = Boolean(value);
+    else if (control instanceof HTMLInputElement && control.type === 'radio')
+        control.checked = control.value === String(value ?? '');
+    else
+        control.value = String(value ?? '');
+}
+function openYeMindSettingsDialog(store, options = {}) {
+    let draft = cloneSettings(store.get());
+    let recordingCleanup = null;
+    const dialog = new siyuan_1.Dialog({
+        title: 'YeMind 设置',
+        content: (0, settingsDialogTemplate_1.createSettingsDialogTemplate)(draft),
+        width: '880px',
+        height: '78vh',
+        destroyCallback: () => recordingCleanup?.(),
+    });
+    const shell = dialog.element.querySelector('.ymz-settings-shell');
+    if (!shell)
+        return;
+    const saveButton = shell.querySelector('[data-settings-action="save"]');
+    let hasShortcutConflict = false;
+    let saving = false;
     const refreshConflicts = () => {
         const conflicts = (0, shortcuts_1.findShortcutConflicts)(draft.shortcutMap);
         let hasConflict = false;
@@ -6586,45 +16496,6 @@ function openYeMindSettingsDialog(store, options = {}) {
             }
         });
     });
-    shell.querySelectorAll('[data-about-action]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const action = button.dataset.aboutAction;
-            void (async () => {
-                if (action === 'copy-version') {
-                    const consistency = options.diagnostics
-                        ? await options.diagnostics.getVersionConsistency()
-                        : (0, releaseInfo_1.resolveVersionConsistency)(null);
-                    const environment = options.diagnostics?.getEnvironmentSnapshot() ?? {};
-                    await writeClipboard([
-                        `${releaseInfo_1.RELEASE_INFO.productName} ${releaseInfo_1.RELEASE_INFO.version}`,
-                        `插件声明版本: ${consistency.manifest}`,
-                        `运行时代码版本: ${consistency.runtime}`,
-                        `构建版本: ${consistency.build}`,
-                        `构建标识: ${releaseInfo_1.RELEASE_INFO.buildId}`,
-                        `构建时间: ${releaseInfo_1.RELEASE_INFO.buildTime}`,
-                        `思源版本: ${String(environment.appVersion ?? 'unknown')}`,
-                        `开发基线: ${releaseInfo_1.RELEASE_INFO.hostBaseline}`,
-                    ].join('\n'));
-                    (0, siyuan_1.showMessage)('版本信息已复制');
-                }
-                else if (action === 'open-diagnostics') {
-                    if (!options.diagnostics)
-                        return (0, siyuan_1.showMessage)('诊断服务尚未就绪', 3500, 'error');
-                    (0, diagnosticsDialog_1.openDiagnosticsDialog)(options.diagnostics);
-                }
-                else if (action === 'export-diagnostics') {
-                    if (!options.diagnostics)
-                        return (0, siyuan_1.showMessage)('诊断服务尚未就绪', 3500, 'error');
-                    const archive = await options.diagnostics.buildArchive(false);
-                    (0, DiagnosticsService_1.downloadDiagnosticsArchive)(archive.blob, archive.filename);
-                    (0, siyuan_1.showMessage)('诊断包已导出');
-                }
-            })().catch((error) => {
-                options.diagnostics?.recordError('settings', `about-${action}-failed`, error, undefined, true);
-                (0, siyuan_1.showMessage)('关于页面操作失败', 4000, 'error');
-            });
-        });
-    });
     shell.querySelector('[data-settings-action="cancel"]')?.addEventListener('click', () => {
         recordingCleanup?.();
         dialog.destroy();
@@ -6658,70 +16529,7 @@ function openYeMindSettingsDialog(store, options = {}) {
 }
 
 },
-23: function(module, exports, __require, __externalRequire) {
-// /src/releaseInfo.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.RELEASE_INFO = void 0;
-exports.resolveVersionConsistency = resolveVersionConsistency;
-const constants_1 = __require(24);
-exports.RELEASE_INFO = {
-    version: constants_1.PLUGIN_VERSION,
-    buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-23T03:15:00Z',
-    buildId: 'yemind-v0.9.11-20260723',
-    productName: constants_1.PRODUCT_NAME,
-    projectName: constants_1.PROJECT_PACKAGE_NAME,
-    tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
-    hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '统一画布与大纲文字选区工具栏、图片选择、节点右键菜单和样式面板，并将关联线升级为可持久化调整控制点和切线的贝塞尔曲线。',
-    highlights: [
-        '画布与大纲都在选区完成后显示同一套浮动工具栏；字体和字号会恢复原选区后再应用，不再因下拉控件抢焦点而失效。',
-        '单击节点图片即可固定图片工具，双击直接打开预览；图片工具与节点结构拖动完全隔离。',
-        '单节点、多节点和画布空白使用独立右键菜单；外框菜单按节点状态动态显示添加或删除，并区分节点链接与行内链接。',
-        '顶部样式和节点样式复用统一尺寸的锚定面板，分别贴近顶部按钮和右键位置显示。',
-        '关联线保留原生可拖动贝塞尔控制点、切线和自动箭头方向，修复创建完成后延迟命中检查导致的空引用错误。',
-        '节点加减快捷按钮贴合节点边框，并新增真实 Chromium 对选区、图片、菜单、面板、关联线控制点和按钮几何的回归。',
-    ]
-};
-function resolveVersionConsistency(manifestVersion) {
-    const manifest = manifestVersion || 'unknown';
-    const runtime = constants_1.PLUGIN_VERSION;
-    const build = exports.RELEASE_INFO.buildVersion;
-    return {
-        manifest,
-        runtime,
-        build,
-        consistent: manifest !== 'unknown' && manifest === runtime && runtime === build,
-    };
-}
-
-},
-24: function(module, exports, __require, __externalRequire) {
-// /src/plugin/constants.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ROOT_ICON_URL = exports.ICON_ID = exports.DOCK_TYPE = exports.TAB_TYPE = exports.PLUGIN_VERSION = exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = exports.DIAGNOSTIC_PROBE_STORAGE_NAME = exports.CHECKPOINT_STORAGE_NAME = exports.SETTINGS_STORAGE_NAME = exports.MAP_STORAGE_NAME = exports.LEGACY_PLUGIN_IDS = exports.PLUGIN_ID = exports.PROJECT_PACKAGE_NAME = exports.PRODUCT_NAME = void 0;
-exports.PRODUCT_NAME = 'YeMind';
-exports.PROJECT_PACKAGE_NAME = 'siyuan-yemind';
-/** Current SiYuan plugin identifier and installed directory name. */
-exports.PLUGIN_ID = 'siyuan-yemind';
-/** Historical identifiers accepted only for old protocol links and compatibility checks. */
-exports.LEGACY_PLUGIN_IDS = ['siyuan-yemind-zen'];
-exports.MAP_STORAGE_NAME = 'maps.json';
-exports.SETTINGS_STORAGE_NAME = 'settings.json';
-exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
-exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
-exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
-exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.11';
-exports.TAB_TYPE = 'yemind-map';
-exports.DOCK_TYPE = 'yemind-dock';
-exports.ICON_ID = 'iconYeMind';
-exports.ROOT_ICON_URL = `/plugins/${exports.PLUGIN_ID}/icon.png`;
-
-},
-25: function(module, exports, __require, __externalRequire) {
+32: function(module, exports, __require, __externalRequire) {
 // /src/editor/shortcuts.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -6830,7 +16638,7 @@ function isEditableTarget(target) {
 }
 
 },
-26: function(module, exports, __require, __externalRequire) {
+33: function(module, exports, __require, __externalRequire) {
 // /src/settings/SettingsStore.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -7019,15 +16827,13 @@ class SettingsStore {
 exports.SettingsStore = SettingsStore;
 
 },
-27: function(module, exports, __require, __externalRequire) {
+34: function(module, exports, __require, __externalRequire) {
 // /src/settings/settingsDialogTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SHORTCUT_ROWS = void 0;
 exports.createSettingsDialogTemplate = createSettingsDialogTemplate;
-const projectControls_1 = __require(28);
-const releaseInfo_1 = __require(23);
-const constants_1 = __require(24);
+const projectControls_1 = __require(35);
 exports.SHORTCUT_ROWS = [
     { key: 'search', label: '项目内搜索', group: '导图命令' },
     { key: 'toggleZen', label: '切换禅模式', group: '导图命令' },
@@ -7117,7 +16923,6 @@ function createSettingsDialogTemplate(settings) {
       <button data-settings-page="drag-layout">拖拽与布局</button>
       <button data-settings-page="content">节点与内容</button>
       <button data-settings-page="shortcuts">快捷键</button>
-      <button data-settings-page="about">关于</button>
     </aside>
     <main class="ymz-settings-main">
       <section class="ymz-settings-page" data-settings-panel="general">
@@ -7231,36 +17036,6 @@ function createSettingsDialogTemplate(settings) {
         <div class="ymz-settings-shortcuts">${shortcutsHtml(settings.shortcutMap)}</div>
       </section>
 
-      <section class="ymz-settings-page ymz-settings-about" data-settings-panel="about" hidden>
-        <header><h2>关于</h2><p>${escapeHtml(releaseInfo_1.RELEASE_INFO.tagline)}</p></header>
-        <div class="ymz-about-hero">
-          <img src="${constants_1.ROOT_ICON_URL}" alt="YeMind">
-          <div><h3>${escapeHtml(releaseInfo_1.RELEASE_INFO.productName)}</h3><p>${escapeHtml(releaseInfo_1.RELEASE_INFO.releaseSummary)}</p></div>
-        </div>
-        <div class="ymz-settings-group ymz-about-version-card">
-          <h3>版本信息</h3>
-          <dl class="ymz-about-version-grid">
-            <div><dt>当前版本</dt><dd>${escapeHtml(releaseInfo_1.RELEASE_INFO.version)}</dd></div>
-            <div><dt>插件声明版本</dt><dd data-about-version="manifest">正在读取…</dd></div>
-            <div><dt>运行时代码版本</dt><dd data-about-version="runtime">${escapeHtml(releaseInfo_1.RELEASE_INFO.version)}</dd></div>
-            <div><dt>构建版本</dt><dd data-about-version="build">${escapeHtml(releaseInfo_1.RELEASE_INFO.buildVersion)}</dd></div>
-            <div><dt>构建标识</dt><dd>${escapeHtml(releaseInfo_1.RELEASE_INFO.buildId)}</dd></div>
-            <div><dt>构建时间</dt><dd>${escapeHtml(releaseInfo_1.RELEASE_INFO.buildTime)}</dd></div>
-            <div><dt>思源版本</dt><dd data-about-version="siyuan">正在读取…</dd></div>
-            <div><dt>开发基线</dt><dd>${escapeHtml(releaseInfo_1.RELEASE_INFO.hostBaseline)}</dd></div>
-          </dl>
-          <div class="ymz-about-consistency" data-about-consistency="pending">正在检查版本一致性…</div>
-        </div>
-        <div class="ymz-settings-group ymz-about-highlights">
-          <h3>本版更新</h3>
-          <ul>${releaseInfo_1.RELEASE_INFO.highlights.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
-        </div>
-        <div class="ymz-about-actions">
-          <button class="b3-button b3-button--outline" data-about-action="copy-version">复制版本信息</button>
-          <button class="b3-button b3-button--outline" data-about-action="open-diagnostics">诊断与回归</button>
-          <button class="b3-button b3-button--text" data-about-action="export-diagnostics">导出诊断包</button>
-        </div>
-      </section>
       <footer class="ymz-settings-footer">
         <button class="b3-button b3-button--cancel" data-settings-action="reset">恢复全部默认值</button>
         <span class="fn__flex-1"></span>
@@ -7272,7 +17047,7 @@ function createSettingsDialogTemplate(settings) {
 }
 
 },
-28: function(module, exports, __require, __externalRequire) {
+35: function(module, exports, __require, __externalRequire) {
 // /src/editor/projectControls.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -7354,7 +17129,7 @@ function meditationIcon() {
 }
 
 },
-29: function(module, exports, __require, __externalRequire) {
+36: function(module, exports, __require, __externalRequire) {
 // /src/settings/saveSettingsDraft.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -7365,12 +17140,12 @@ async function saveSettingsDraft(store, draft) {
 }
 
 },
-30: function(module, exports, __require, __externalRequire) {
+37: function(module, exports, __require, __externalRequire) {
 // /src/plugin/dock.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindDock = registerYeMindDock;
-const constants_1 = __require(24);
+const constants_1 = __require(28);
 class YeMindDockView {
     constructor(host, element) {
         this.host = host;
@@ -7461,16 +17236,16 @@ function escapeHtml(value) {
 }
 
 },
-31: function(module, exports, __require, __externalRequire) {
+38: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
-const YeMindEditor_1 = __require(32);
-const deferredMount_1 = __require(241);
-const constants_1 = __require(24);
-const visibleElement_1 = __require(228);
-const tabNodeFocus_1 = __require(242);
+const YeMindEditor_1 = __require(39);
+const deferredMount_1 = __require(251);
+const constants_1 = __require(28);
+const visibleElement_1 = __require(236);
+const tabNodeFocus_1 = __require(252);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -7525,6 +17300,7 @@ function registerYeMindTab(plugin, host) {
                     checkpointRepository: host.checkpointRepository,
                     checkpointService: host.checkpointService,
                     diagnostics: host.diagnostics,
+                    pluginBaseUrl: `/plugins/${encodeURIComponent(plugin.name)}`,
                     onMissing: () => this.tab.close(),
                 });
                 host.diagnostics.record('global-search', 'map-editor-ready', resolvedMapId, { pendingTarget: true });
@@ -7557,56 +17333,60 @@ function registerYeMindTab(plugin, host) {
 }
 
 },
-32: function(module, exports, __require, __externalRequire) {
+39: function(module, exports, __require, __externalRequire) {
 // /src/editor/YeMindEditor.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.YeMindEditor = void 0;
 const siyuan_1 = __externalRequire("siyuan");
-const createMindMap_1 = __require(33);
-const dragBehavior_1 = __require(190);
+const createMindMap_1 = __require(40);
+const dragBehavior_1 = __require(197);
 const themePresets_1 = __require(11);
-const relationConfig_1 = __require(191);
-const outerFrameConfig_1 = __require(192);
-const relationData_1 = __require(195);
-const commands_1 = __require(196);
-const nodeDecorations_1 = __require(187);
-const registerPlugins_1 = __require(83);
-const checkpointDialog_1 = __require(200);
-const contextMenu_1 = __require(203);
-const dialogs_1 = __require(19);
-const nodeContentDialogs_1 = __require(204);
-const richTextDialogs_1 = __require(210);
-const editorStats_1 = __require(211);
-const editorTemplate_1 = __require(212);
-const outlineDrag_1 = __require(213);
-const StructuredOutlineEditorController_1 = __require(214);
-const splitPane_1 = __require(217);
-const RichTextToolbar_1 = __require(218);
-const shortcuts_1 = __require(25);
-const selectionPresentation_1 = __require(222);
-const saveRevision_1 = __require(223);
-const relationPresentation_1 = __require(224);
-const outerFramePresentation_1 = __require(225);
-const toolbarAvailability_1 = __require(226);
-const linkNavigation_1 = __require(227);
-const visibleElement_1 = __require(228);
-const imageFileLoading_1 = __require(205);
-const nodeImageInput_1 = __require(229);
-const nodeHoverPreview_1 = __require(230);
-const imageLightbox_1 = __require(231);
-const nodeStylePanel_1 = __require(232);
-const projectStylePanel_1 = __require(233);
-const canvasRichTextVisibility_1 = __require(234);
-const searchPanelState_1 = __require(235);
-const projectStyle_1 = __require(14);
-const appearanceTransaction_1 = __require(236);
-const nodeQuickActions_1 = __require(237);
-const projectControls_1 = __require(28);
-const nodeNoteState_1 = __require(188);
-const canvasRightDrag_1 = __require(238);
-const focusHighlight_1 = __require(239);
-const editingSurfaceCoordinator_1 = __require(240);
+const relationConfig_1 = __require(198);
+const outerFrameConfig_1 = __require(199);
+const relationData_1 = __require(203);
+const commands_1 = __require(204);
+const nodeDecorations_1 = __require(194);
+const registerPlugins_1 = __require(90);
+const checkpointDialog_1 = __require(208);
+const contextMenu_1 = __require(211);
+const dialogs_1 = __require(25);
+const nodeContentDialogs_1 = __require(212);
+const richTextDialogs_1 = __require(218);
+const editorStats_1 = __require(219);
+const editorTemplate_1 = __require(220);
+const outlineDrag_1 = __require(221);
+const StructuredOutlineEditorController_1 = __require(222);
+const splitPane_1 = __require(225);
+const RichTextToolbar_1 = __require(226);
+const shortcuts_1 = __require(32);
+const selectionPresentation_1 = __require(230);
+const saveRevision_1 = __require(231);
+const relationPresentation_1 = __require(232);
+const outerFramePresentation_1 = __require(233);
+const toolbarAvailability_1 = __require(234);
+const linkNavigation_1 = __require(235);
+const visibleElement_1 = __require(236);
+const imageFileLoading_1 = __require(213);
+const nodeImageInput_1 = __require(237);
+const nodeHoverPreview_1 = __require(238);
+const imageLightbox_1 = __require(239);
+const nodeStylePanel_1 = __require(240);
+const projectStylePanel_1 = __require(241);
+const layoutGalleryPanel_1 = __require(242);
+const localAssetDialogs_1 = __require(243);
+const layoutAssetPresets_1 = __require(14);
+const measurementHost_1 = __require(202);
+const canvasRichTextVisibility_1 = __require(244);
+const searchPanelState_1 = __require(245);
+const projectStyle_1 = __require(20);
+const appearanceTransaction_1 = __require(246);
+const nodeQuickActions_1 = __require(247);
+const projectControls_1 = __require(35);
+const nodeNoteState_1 = __require(195);
+const canvasRightDrag_1 = __require(248);
+const focusHighlight_1 = __require(249);
+const editingSurfaceCoordinator_1 = __require(250);
 class YeMindEditor {
     constructor(options) {
         this.options = options;
@@ -7622,8 +17402,10 @@ class YeMindEditor {
         this.imageLightbox = null;
         this.nodeStylePanel = null;
         this.projectStylePanel = null;
+        this.layoutGalleryPanel = null;
         this.nodeQuickActions = null;
         this.canvasRightDrag = null;
+        this.contextMenuSelectionSnapshot = null;
         this.cancelFocusedNodeHighlight = null;
         this.outlineRichText = null;
         this.settingsInitialized = false;
@@ -7647,12 +17429,18 @@ class YeMindEditor {
         this.onCanvasPointerDown = (event) => {
             if (event.button !== 0)
                 return;
-            const target = event.target;
-            const isImageInteraction = Boolean(target?.closest?.('.node-img-handle')
-                || target?.tagName?.toLowerCase() === 'image');
-            if (!isImageInteraction)
-                this.map?.nodeImgAdjust?.unpin?.();
             this.claimCanvasInteraction("canvas-pointerdown");
+        };
+        this.onCanvasContextMenuCapture = (event) => {
+            this.contextMenuSelectionSnapshot = null;
+            if (!this.map || !this.commands)
+                return;
+            const nodes = this.commands.getActiveNodes();
+            if (nodes.length < 2)
+                return;
+            const target = (0, nodeImageInput_1.findRenderedNodeAtClientPoint)(this.map, event.clientX, event.clientY);
+            if (target && nodes.includes(target))
+                this.contextMenuSelectionSnapshot = { nodes: [...nodes], target };
         };
         this.onOutlinePointerDown = (event) => {
             if (event.button !== 0 || !this.commands || this.commands.isReadonly())
@@ -7966,6 +17754,8 @@ class YeMindEditor {
         this.nodeStylePanel = null;
         this.projectStylePanel?.destroy();
         this.projectStylePanel = null;
+        this.layoutGalleryPanel?.destroy();
+        this.layoutGalleryPanel = null;
         this.nodeQuickActions?.destroy();
         this.nodeQuickActions = null;
         this.canvasRightDrag?.destroy();
@@ -7978,6 +17768,7 @@ class YeMindEditor {
         this.canvasEl?.removeEventListener("dragover", this.onImageDragOver);
         this.canvasEl?.removeEventListener("drop", this.onImageDrop);
         this.canvasEl?.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
+        this.canvasEl?.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
         this.outlineEl?.removeEventListener("pointerdown", this.onOutlinePointerDown, true);
         window.removeEventListener("pointermove", this.onOutlinePointerMove);
         window.removeEventListener("pointerup", this.onOutlinePointerUp);
@@ -8057,6 +17848,7 @@ class YeMindEditor {
             onHyperlink: (href) => this.openLink(href),
             onDeleteShortcut: () => this.commands?.remove(),
             onConfirmDeleteImage: () => this.confirmDeleteNodeImage(),
+            pluginBaseUrl: this.options.pluginBaseUrl,
         });
         this.commands = (0, commands_1.createCommandAdapter)(this.map);
         this.canvasRightDrag = new canvasRightDrag_1.CanvasRightDragController({
@@ -8070,6 +17862,8 @@ class YeMindEditor {
             this.applyMapAppearance();
             this.scheduleSave();
         });
+        this.current.layoutPresetId = (0, layoutAssetPresets_1.normalizeLayoutAssetId)(this.current.layoutPresetId, this.current.layout);
+        this.layoutGalleryPanel = new layoutGalleryPanel_1.LayoutGalleryPanel(this.rootEl, this.options.pluginBaseUrl, this.current.layoutPresetId, () => Boolean(this.commands?.isReadonly()), (presetId, layout) => this.setLayoutPreset(presetId, layout));
         this.nodeQuickActions = new nodeQuickActions_1.NodeQuickActionsController({
             root: this.rootEl,
             canvas: this.canvasEl,
@@ -8127,6 +17921,7 @@ class YeMindEditor {
         this.canvasEl.addEventListener("dragover", this.onImageDragOver);
         this.canvasEl.addEventListener("drop", this.onImageDrop);
         this.canvasEl.addEventListener("pointerdown", this.onCanvasPointerDown, true);
+        this.canvasEl.addEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
         this.bindToolbar();
         this.bindMapEvents();
         this.bindAppearanceObserver();
@@ -8261,7 +18056,13 @@ class YeMindEditor {
                     this.projectStylePanel?.hide();
                     this.nodeStylePanel?.toggle(button);
                     break;
+                case "layout-gallery":
+                    this.nodeStylePanel?.hide();
+                    this.projectStylePanel?.hide();
+                    this.layoutGalleryPanel?.toggle(button);
+                    break;
                 case "project-style":
+                    this.layoutGalleryPanel?.hide();
                     this.nodeStylePanel?.hide();
                     this.projectStylePanel?.toggle(button);
                     break;
@@ -8333,15 +18134,26 @@ class YeMindEditor {
             .querySelector('[data-action="line-style"]')
             ?.addEventListener("change", (event) => this.setLineStyle(event.target.value));
     }
-    setLayout(value) {
+    setLayoutPreset(presetId, value) {
+        if (!this.map || this.commands?.isReadonly())
+            return;
+        this.current.layoutPresetId = (0, layoutAssetPresets_1.normalizeLayoutAssetId)(presetId, value);
+        this.setLayout(value, false);
+        this.layoutGalleryPanel?.setSelected(this.current.layoutPresetId);
+        this.options.diagnostics.record("appearance", "layout-preset-changed", this.current.id, { presetId: this.current.layoutPresetId, layout: value });
+    }
+    setLayout(value, inferPreset = true) {
         if (!this.map || this.commands?.isReadonly())
             return;
         this.current.layout = value;
+        if (inferPreset)
+            this.current.layoutPresetId = (0, layoutAssetPresets_1.normalizeLayoutAssetId)(undefined, value);
         this.map.setLayout(value);
         const select = this.rootEl.querySelector('[data-action="layout"]');
         if (select)
             select.value = value;
-        this.options.diagnostics.record("appearance", "layout-changed", this.current.id, { layout: value });
+        this.layoutGalleryPanel?.setSelected(this.current.layoutPresetId);
+        this.options.diagnostics.record("appearance", "layout-changed", this.current.id, { layout: value, presetId: this.current.layoutPresetId });
         this.nodeQuickActions?.scheduleRefresh();
         this.scheduleSave();
     }
@@ -8421,14 +18233,25 @@ class YeMindEditor {
             }
             if (!this.commands)
                 return;
-            const activeNodes = this.commands.getActiveNodes();
-            if (!activeNodes.includes(node))
-                this.activateOnlyNode(node);
-            else
-                this.activateNode(node);
+            const renderer = this.map?.renderer;
+            const snapshot = this.contextMenuSelectionSnapshot;
+            this.contextMenuSelectionSnapshot = null;
+            if (snapshot !== null &&
+                snapshot.target === node &&
+                (0, selectionPresentation_1.restoreContextMenuSelection)(renderer, snapshot.nodes, node)) {
+                this.updateSelectionPresentation(snapshot.nodes.length);
+            }
+            else {
+                const activeNodes = this.commands.getActiveNodes();
+                if (!activeNodes.includes(node))
+                    this.activateOnlyNode(node);
+                else
+                    this.activateNode(node);
+            }
             this.openContextMenu(event);
         });
         this.map.on("contextmenu", (event) => {
+            this.contextMenuSelectionSnapshot = null;
             if (this.canvasRightDrag?.consumeContextMenu()) {
                 event.preventDefault();
                 event.stopPropagation();
@@ -8444,20 +18267,7 @@ class YeMindEditor {
             if (!node || !img)
                 return;
             this.activateOnlyNode(node);
-            this.map?.nodeImgAdjust?.pin?.(node, img);
             this.nodeQuickActions?.scheduleRefresh();
-        });
-        this.map.on("node_img_dblclick", (node, event, img) => {
-            event?.preventDefault?.();
-            event?.stopPropagation?.();
-            if (!node || !img)
-                return;
-            this.activateOnlyNode(node);
-            this.map?.nodeImgAdjust?.pin?.(node, img);
-            const source = String(node?.getData?.("image") ?? "");
-            const title = String(node?.getData?.("imageTitle") ?? "");
-            if (source)
-                this.imageLightbox?.show(source, title);
         });
         this.map.on("yemind_node_image_preview", (node) => {
             const source = String(node?.getData?.("image") ?? "");
@@ -8534,6 +18344,17 @@ class YeMindEditor {
         this.map.on("outer_frame_deactivate", () => this.hideOuterFramePresentation());
         this.map.on("outer_frame_delete", () => this.hideOuterFramePresentation());
         this.map.on("node_click", () => window.setTimeout(() => this.updateRelationPresentation(), 0));
+        this.map.on("node_icon_click", (node, iconValue, event) => {
+            event?.preventDefault?.();
+            event?.stopPropagation?.();
+            if (!this.commands || this.commands.isReadonly())
+                return;
+            this.activateOnlyNode(node);
+            const groupId = String(iconValue ?? '').startsWith('yemarker')
+                ? String(iconValue).slice('yemarker'.length).split('_')[0]
+                : null;
+            (0, localAssetDialogs_1.openMarkerPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, initialGroupId: groupId });
+        });
         this.map.on("draw_click", () => window.setTimeout(() => this.updateRelationPresentation(), 0));
         this.map.on("search_info_change", (info) => this.updateSearchInfo(info));
         this.map.on("scale", () => {
@@ -8553,6 +18374,8 @@ class YeMindEditor {
             onCodeBlock: () => (0, richTextDialogs_1.openCodeBlockDialog)(this.commands, this.settings),
             onNodeLink: () => (0, nodeContentDialogs_1.openLinkDialog)(this.commands, this.settings.inlineLinkAutoHttps),
             onRelation: () => this.beginRelation(),
+            onMarkers: () => (0, localAssetDialogs_1.openMarkerPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl }),
+            onClipart: () => (0, localAssetDialogs_1.openClipartPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl }),
             onNodeStyle: () => {
                 this.projectStylePanel?.hide();
                 this.nodeStylePanel?.show({ x: event.clientX, y: event.clientY });
@@ -8975,6 +18798,7 @@ class YeMindEditor {
                 return;
             }
             try {
+                (0, measurementHost_1.stabilizeMindMapMeasurementHost)(this.map);
                 this.map.resize();
                 this.updateDiagnosticState();
             }
@@ -9283,6 +19107,7 @@ class YeMindEditor {
             this.current.theme = (0, themePresets_1.normalizeThemePresetId)(restored.theme);
             this.current.lineStyle = (0, themePresets_1.normalizeLineStyle)(restored.lineStyle);
             this.current.projectStyle = (0, projectStyle_1.normalizeProjectStyle)(restored.projectStyle);
+            this.current.layoutPresetId = (0, layoutAssetPresets_1.normalizeLayoutAssetId)(restored.layoutPresetId, restored.layout);
             const viewData = (0, dragBehavior_1.normalizePersistedViewData)(restored.viewData);
             if (this.viewMode !== "outline" && (0, visibleElement_1.hasNonZeroSize)(this.canvasEl))
                 this.map.resize();
@@ -9295,6 +19120,7 @@ class YeMindEditor {
             const layoutSelect = this.rootEl.querySelector('[data-action="layout"]');
             if (layoutSelect)
                 layoutSelect.value = restored.layout;
+            this.layoutGalleryPanel?.setSelected(this.current.layoutPresetId);
             const themeSelect = this.rootEl.querySelector('[data-action="theme"]');
             if (themeSelect)
                 themeSelect.value = this.current.theme;
@@ -9444,6 +19270,7 @@ class YeMindEditor {
             const patch = {
                 data: sanitized.tree,
                 layout: this.map.getLayout(),
+                layoutPresetId: (0, layoutAssetPresets_1.normalizeLayoutAssetId)(this.current.layoutPresetId, this.map.getLayout()),
                 theme: (0, themePresets_1.normalizeThemePresetId)(this.current.theme),
                 lineStyle: (0, themePresets_1.normalizeLineStyle)(this.current.lineStyle),
                 projectStyle: (0, projectStyle_1.normalizeProjectStyle)(this.current.projectStyle),
@@ -9451,6 +19278,7 @@ class YeMindEditor {
             };
             this.current.data = sanitized.tree;
             this.current.layout = patch.layout;
+            this.current.layoutPresetId = patch.layoutPresetId;
             this.current.theme = patch.theme;
             this.current.lineStyle = patch.lineStyle;
             this.current.projectStyle = patch.projectStyle;
@@ -9573,7 +19401,7 @@ class YeMindEditor {
 exports.YeMindEditor = YeMindEditor;
 
 },
-33: function(module, exports, __require, __externalRequire) {
+40: function(module, exports, __require, __externalRequire) {
 // /src/core/createMindMap.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -9582,16 +19410,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createImageDeleteGuard = createImageDeleteGuard;
 exports.createMindMap = createMindMap;
-const simple_mind_map_1 = __importDefault(__require(34));
-const registerPlugins_1 = __require(83);
-const nodeDecorations_1 = __require(187);
-const dragBehavior_1 = __require(190);
-const relationConfig_1 = __require(191);
-const outerFrameConfig_1 = __require(192);
-const shortcutSafety_1 = __require(193);
+const simple_mind_map_1 = __importDefault(__require(41));
+const registerPlugins_1 = __require(90);
+const nodeDecorations_1 = __require(194);
+const dragBehavior_1 = __require(197);
+const relationConfig_1 = __require(198);
+const outerFrameConfig_1 = __require(199);
+const shortcutSafety_1 = __require(200);
 const themePresets_1 = __require(11);
-const YeMindNodeImgAdjust_1 = __require(181);
-const themeColorRuntime_1 = __require(194);
+const YeMindNodeImgAdjust_1 = __require(188);
+const themeColorRuntime_1 = __require(201);
+const measurementHost_1 = __require(202);
 function createImageDeleteGuard(confirmDelete) {
     return async (node) => {
         if (!confirmDelete)
@@ -9655,7 +19484,7 @@ function createMindMap(options) {
         addHistoryOnInit: true,
         defaultInsertSecondLevelNodeText: '新节点',
         defaultInsertBelowSecondLevelNodeText: '新节点',
-        iconList: nodeDecorations_1.YEMIND_ICON_LIST,
+        iconList: (0, nodeDecorations_1.createYemindIconList)(options.pluginBaseUrl),
         createNodePrefixContent: nodeDecorations_1.createNodePrefixContent,
         createNodePostfixContent: nodeDecorations_1.createNodePostfixContent,
         openRealtimeRenderOnNodeTextEdit: true,
@@ -9671,6 +19500,7 @@ function createMindMap(options) {
         },
         errorHandler: (_code, error) => console.error('[YeMind]', error),
     });
+    (0, measurementHost_1.stabilizeMindMapMeasurementHost)(mindMap);
     (0, themeColorRuntime_1.installThemeColorRuntime)(mindMap);
     (0, themeColorRuntime_1.configureThemeColorRuntime)(mindMap, {
         appearance: appearance.colorAppearance,
@@ -9681,7 +19511,7 @@ function createMindMap(options) {
 }
 
 },
-34: function(module, exports, __require, __externalRequire) {
+41: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/index.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -9721,20 +19551,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const View_1 = __importDefault(__require(35));
-const Event_1 = __importDefault(__require(37));
-const Render_1 = __importDefault(__require(39));
-const deepmerge_1 = __importDefault(__require(40));
-const theme_1 = __importDefault(__require(76));
-const Style_1 = __importDefault(__require(44));
-const KeyCommand_1 = __importDefault(__require(77));
-const Command_1 = __importDefault(__require(79));
-const BatchExecution_1 = __importDefault(__require(81));
-const constant_1 = __require(36);
-const svg_js_1 = __require(53);
-const utils_1 = __require(45);
-const default_1 = __importStar(__require(54));
-const defaultOptions_1 = __require(82);
+const View_1 = __importDefault(__require(42));
+const Event_1 = __importDefault(__require(44));
+const Render_1 = __importDefault(__require(46));
+const deepmerge_1 = __importDefault(__require(47));
+const theme_1 = __importDefault(__require(83));
+const Style_1 = __importDefault(__require(51));
+const KeyCommand_1 = __importDefault(__require(84));
+const Command_1 = __importDefault(__require(86));
+const BatchExecution_1 = __importDefault(__require(88));
+const constant_1 = __require(43);
+const svg_js_1 = __require(60);
+const utils_1 = __require(52);
+const default_1 = __importStar(__require(61));
+const defaultOptions_1 = __require(89);
 //  思维导图
 class MindMap {
     //  构造函数
@@ -10473,11 +20303,11 @@ MindMap.removeTheme = name => {
 exports.default = MindMap;
 
 },
-35: function(module, exports, __require, __externalRequire) {
+42: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/view/View.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const constant_1 = __require(36);
+const constant_1 = __require(43);
 //  视图操作类
 class View {
     //  构造函数
@@ -10895,7 +20725,7 @@ class View {
 exports.default = View;
 
 },
-36: function(module, exports, __require, __externalRequire) {
+43: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/constants/constant.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -11165,15 +20995,15 @@ exports.richTextSupportStyleList = [
 ];
 
 },
-37: function(module, exports, __require, __externalRequire) {
+44: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/event/Event.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const eventemitter3_1 = __importDefault(__require(38));
-const constant_1 = __require(36);
+const eventemitter3_1 = __importDefault(__require(45));
+const constant_1 = __require(43);
 //  事件类
 class Event extends eventemitter3_1.default {
     //  构造函数
@@ -11357,7 +21187,7 @@ class Event extends eventemitter3_1.default {
 exports.default = Event;
 
 },
-38: function(module, exports, __require, __externalRequire) {
+45: function(module, exports, __require, __externalRequire) {
 // /node_modules/eventemitter3/index.js
 'use strict';
 var has = Object.prototype.hasOwnProperty, prefix = '~';
@@ -11666,27 +21496,27 @@ if ('undefined' !== typeof module) {
 }
 
 },
-39: function(module, exports, __require, __externalRequire) {
+46: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/Render.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const deepmerge_1 = __importDefault(__require(40));
-const LogicalStructure_1 = __importDefault(__require(41));
-const MindMap_1 = __importDefault(__require(68));
-const CatalogOrganization_1 = __importDefault(__require(69));
-const OrganizationStructure_1 = __importDefault(__require(70));
-const Timeline_1 = __importDefault(__require(71));
-const VerticalTimeline_1 = __importDefault(__require(72));
-const Fishbone_1 = __importDefault(__require(73));
-const TextEdit_1 = __importDefault(__require(75));
-const utils_1 = __require(45);
-const Shape_1 = __require(55);
-const default_1 = __require(54);
-const constant_1 = __require(36);
-const svg_js_1 = __require(53);
+const deepmerge_1 = __importDefault(__require(47));
+const LogicalStructure_1 = __importDefault(__require(48));
+const MindMap_1 = __importDefault(__require(75));
+const CatalogOrganization_1 = __importDefault(__require(76));
+const OrganizationStructure_1 = __importDefault(__require(77));
+const Timeline_1 = __importDefault(__require(78));
+const VerticalTimeline_1 = __importDefault(__require(79));
+const Fishbone_1 = __importDefault(__require(80));
+const TextEdit_1 = __importDefault(__require(82));
+const utils_1 = __require(52);
+const Shape_1 = __require(62);
+const default_1 = __require(61);
+const constant_1 = __require(43);
+const svg_js_1 = __require(60);
 // 布局列表
 const layouts = {
     // 逻辑结构图
@@ -13667,7 +23497,7 @@ class Render {
 exports.default = Render;
 
 },
-40: function(module, exports, __require, __externalRequire) {
+47: function(module, exports, __require, __externalRequire) {
 // /node_modules/deepmerge/dist/es.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -13758,16 +23588,16 @@ var deepmerge_1 = deepmerge;
 exports.default = deepmerge_1;
 
 },
-41: function(module, exports, __require, __externalRequire) {
+48: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/LogicalStructure.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Base_1 = __importDefault(__require(42));
-const utils_1 = __require(45);
-const constant_1 = __require(36);
+const Base_1 = __importDefault(__require(49));
+const utils_1 = __require(52);
+const constant_1 = __require(43);
 //  逻辑结构图
 class LogicalStructure extends Base_1.default {
     //  构造函数
@@ -14092,17 +23922,17 @@ class LogicalStructure extends Base_1.default {
 exports.default = LogicalStructure;
 
 },
-42: function(module, exports, __require, __externalRequire) {
+49: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/Base.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const MindMapNode_1 = __importDefault(__require(43));
-const constant_1 = __require(36);
-const Lru_1 = __importDefault(__require(67));
-const index_1 = __require(45);
+const MindMapNode_1 = __importDefault(__require(50));
+const constant_1 = __require(43);
+const Lru_1 = __importDefault(__require(74));
+const index_1 = __require(52);
 //  布局基类
 class Base {
     //  构造函数
@@ -14717,27 +24547,27 @@ class Base {
 exports.default = Base;
 
 },
-43: function(module, exports, __require, __externalRequire) {
+50: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/MindMapNode.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Style_1 = __importDefault(__require(44));
-const Shape_1 = __importDefault(__require(55));
-const svg_js_1 = __require(53);
-const nodeGeneralization_1 = __importDefault(__require(56));
-const nodeExpandBtn_1 = __importDefault(__require(57));
-const nodeCommandWraps_1 = __importDefault(__require(59));
-const nodeCreateContents_1 = __importDefault(__require(60));
-const nodeExpandBtnPlaceholderRect_1 = __importDefault(__require(62));
-const nodeModifyWidth_1 = __importDefault(__require(63));
-const nodeCooperate_1 = __importDefault(__require(64));
-const quickCreateChildBtn_1 = __importDefault(__require(65));
-const nodeLayout_1 = __importDefault(__require(66));
-const constant_1 = __require(36);
-const index_1 = __require(45);
+const Style_1 = __importDefault(__require(51));
+const Shape_1 = __importDefault(__require(62));
+const svg_js_1 = __require(60);
+const nodeGeneralization_1 = __importDefault(__require(63));
+const nodeExpandBtn_1 = __importDefault(__require(64));
+const nodeCommandWraps_1 = __importDefault(__require(66));
+const nodeCreateContents_1 = __importDefault(__require(67));
+const nodeExpandBtnPlaceholderRect_1 = __importDefault(__require(69));
+const nodeModifyWidth_1 = __importDefault(__require(70));
+const nodeCooperate_1 = __importDefault(__require(71));
+const quickCreateChildBtn_1 = __importDefault(__require(72));
+const nodeLayout_1 = __importDefault(__require(73));
+const constant_1 = __require(43);
+const index_1 = __require(52);
 //  节点类
 class MindMapNode {
     //  构造函数
@@ -15770,12 +25600,12 @@ class MindMapNode {
 exports.default = MindMapNode;
 
 },
-44: function(module, exports, __require, __externalRequire) {
+51: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/Style.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.shapeStyleProps = void 0;
-const index_1 = __require(45);
+const index_1 = __require(52);
 const backgroundStyleProps = [
     'backgroundColor',
     'backgroundImage',
@@ -16128,7 +25958,7 @@ Style.cacheStyle = null;
 exports.default = Style;
 
 },
-45: function(module, exports, __require, __externalRequire) {
+52: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/utils/index.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -16137,12 +25967,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseAddGeneralizationNodeList = exports.checkHasSupSubRelation = exports.getTopAncestorsFomNodeList = exports.mergerIconList = exports.isNodeNotNeedRenderData = exports.checkIsNodeStyleDataKey = exports.getObjectChangedProps = exports.isMobile = exports.removeRichTextStyes = exports.textToNodeRichTextWithWrap = exports.nodeRichTextToTextWithWrap = exports.removeFormulaTags = exports.getVisibleColorFromTheme = exports.isTransparent = exports.isWhite = exports.removeHtmlNodeByClass = exports.replaceHtmlText = exports.checkIsRichText = exports.addHtmlStyle = exports.removeHtmlStyle = exports.isUndef = exports.getType = exports.removeHTMLEntities = exports.loadImage = exports.createUid = exports.getImageSize = exports.nodeToHTML = exports.readBlob = exports.getTextFromHtml = exports.checkNodeOuter = exports.nextTick = exports.joinFontStr = exports.measureText = exports.camelCaseToHyphen = exports.degToRad = exports.asyncRun = exports.debounce = exports.throttle = exports.downloadFile = exports.parseDataUrl = exports.imgToDataUrl = exports.copyNodeTree = exports.copyRenderTree = exports.simpleDeepClone = exports.getStrWithBrFromHtml = exports.resizeImg = exports.resizeImgSize = exports.resizeImgSizeByOriginRatio = exports.bfsWalk = exports.walk = void 0;
 exports.compareVersion = exports.getNodeRichTextStyles = exports.mergeTheme = exports.sortNodeList = exports.addXmlns = exports.defenseXSS = exports.formatGetNodeGeneralization = exports.createForeignObjectNode = exports.exitFullScreen = exports.fullScreen = exports.fullscrrenEvent = exports.getNodeListBoundingRect = exports.getNodeTreeBoundingRect = exports.handleGetSvgDataExtraContent = exports.getRectRelativePosition = exports.getTwoPointDistance = exports.transformObjectToTreeData = exports.transformTreeDataToObject = exports.handleInputPasteText = exports.checkSmmFormatData = exports.createSmmFormatData = exports.getChromeVersion = exports.checkNodeListIsEqual = exports.handleSelfCloseTags = exports.removeFromParentNodeData = exports.getDataFromClipboard = exports.setDataToClipboard = exports.checkClipboardReadEnable = exports.isSameObject = exports.htmlEscape = exports.generateColorByContent = exports.getNodeIndexInNodeList = exports.getNodeDataIndex = exports.formatDataToArray = exports.createUidForAppointNodes = exports.addDataToAppointNodes = exports.selectAllInput = exports.focusInput = exports.checkTwoRectIsOverlap = void 0;
-const uuid_1 = __require(46);
-const constant_1 = __require(36);
-const mersenneTwister_1 = __importDefault(__require(52));
-const svg_js_1 = __require(53);
-const deepmerge_1 = __importDefault(__require(40));
-const default_1 = __require(54);
+const uuid_1 = __require(53);
+const constant_1 = __require(43);
+const mersenneTwister_1 = __importDefault(__require(59));
+const svg_js_1 = __require(60);
+const deepmerge_1 = __importDefault(__require(47));
+const default_1 = __require(61);
 //  深度优先遍历树
 const walk = (root, parent, beforeCallback, afterCallback, isRoot, layerIndex = 0, index = 0, ancestors = []) => {
     let stop = false;
@@ -17804,7 +27634,7 @@ const compareVersion = (a, b) => {
 exports.compareVersion = compareVersion;
 
 },
-46: function(module, exports, __require, __externalRequire) {
+53: function(module, exports, __require, __externalRequire) {
 // /node_modules/uuid/index.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -17812,20 +27642,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.v4 = void 0;
-var v4_js_1 = __require(47);
+var v4_js_1 = __require(54);
 Object.defineProperty(exports, "v4", { enumerable: true, get: function () { return __importDefault(v4_js_1).default; } });
 
 },
-47: function(module, exports, __require, __externalRequire) {
+54: function(module, exports, __require, __externalRequire) {
 // /node_modules/uuid/dist/esm-browser/v4.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const native_js_1 = __importDefault(__require(48));
-const rng_js_1 = __importDefault(__require(49));
-const stringify_js_1 = __require(50);
+const native_js_1 = __importDefault(__require(55));
+const rng_js_1 = __importDefault(__require(56));
+const stringify_js_1 = __require(57);
 function v4(options, buf, offset) {
     if (native_js_1.default.randomUUID && !buf && !options) {
         return native_js_1.default.randomUUID();
@@ -17846,7 +27676,7 @@ function v4(options, buf, offset) {
 exports.default = v4;
 
 },
-48: function(module, exports, __require, __externalRequire) {
+55: function(module, exports, __require, __externalRequire) {
 // /node_modules/uuid/dist/esm-browser/native.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -17856,7 +27686,7 @@ exports.default = {
 };
 
 },
-49: function(module, exports, __require, __externalRequire) {
+56: function(module, exports, __require, __externalRequire) {
 // /node_modules/uuid/dist/esm-browser/rng.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -17879,7 +27709,7 @@ function rng() {
 }
 
 },
-50: function(module, exports, __require, __externalRequire) {
+57: function(module, exports, __require, __externalRequire) {
 // /node_modules/uuid/dist/esm-browser/stringify.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -17887,7 +27717,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.unsafeStringify = unsafeStringify;
-const validate_js_1 = __importDefault(__require(51));
+const validate_js_1 = __importDefault(__require(58));
 /**
  * Convert array of 16 byte values to UUID string format of the form:
  * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
@@ -17915,7 +27745,7 @@ function stringify(arr, offset = 0) {
 exports.default = stringify;
 
 },
-51: function(module, exports, __require, __externalRequire) {
+58: function(module, exports, __require, __externalRequire) {
 // /node_modules/uuid/dist/esm-browser/validate.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -17924,7 +27754,7 @@ const REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a
 function validate(value) { return typeof value === 'string' && REGEX.test(value); }
 
 },
-52: function(module, exports, __require, __externalRequire) {
+59: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/utils/mersenneTwister.js
 "use strict";
 /**
@@ -17983,7 +27813,7 @@ MersenneTwister.prototype.genrand_int32 = function () {
 };
 
 },
-53: function(module, exports, __require, __externalRequire) {
+60: function(module, exports, __require, __externalRequire) {
 // /node_modules/@svgdotjs/svg.js/dist/svg.esm.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -23838,7 +33668,7 @@ makeMorphable();
 //# sourceMappingURL=svg.esm.js.map
 
 },
-54: function(module, exports, __require, __externalRequire) {
+61: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/theme/default.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -24096,13 +33926,13 @@ exports.lineStyleProps = [
 ];
 
 },
-55: function(module, exports, __require, __externalRequire) {
+62: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/Shape.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.shapeList = void 0;
-const svg_js_1 = __require(53);
-const constant_1 = __require(36);
+const svg_js_1 = __require(60);
+const constant_1 = __require(43);
 //  节点形状类
 class Shape {
     constructor(node) {
@@ -24408,15 +34238,15 @@ exports.shapeList = [
 ];
 
 },
-56: function(module, exports, __require, __externalRequire) {
+63: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeGeneralization.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const MindMapNode_1 = __importDefault(__require(43));
-const index_1 = __require(45);
+const MindMapNode_1 = __importDefault(__require(50));
+const index_1 = __require(52);
 // 获取节点概要数据
 function formatGetGeneralization() {
     const data = this.getData('generalization');
@@ -24639,16 +34469,16 @@ exports.default = {
 };
 
 },
-57: function(module, exports, __require, __externalRequire) {
+64: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeExpandBtn.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const btns_1 = __importDefault(__require(58));
-const svg_js_1 = __require(53);
-const utils_1 = __require(45);
+const btns_1 = __importDefault(__require(65));
+const svg_js_1 = __require(60);
+const utils_1 = __require(52);
 // 创建展开收起按钮的内容节点
 function createExpandNodeContent() {
     if (this._openExpandNode) {
@@ -24816,7 +34646,7 @@ exports.default = {
 };
 
 },
-58: function(module, exports, __require, __externalRequire) {
+65: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/svg/btns.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -24839,7 +34669,7 @@ exports.default = {
 };
 
 },
-59: function(module, exports, __require, __externalRequire) {
+66: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeCommandWraps.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -24902,17 +34732,17 @@ exports.default = {
 };
 
 },
-60: function(module, exports, __require, __externalRequire) {
+67: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeCreateContents.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(45);
-const svg_js_1 = __require(53);
-const icons_1 = __importDefault(__require(61));
-const constant_1 = __require(36);
+const utils_1 = __require(52);
+const svg_js_1 = __require(60);
+const icons_1 = __importDefault(__require(68));
+const constant_1 = __require(43);
 // 测量svg文本宽高
 const measureText = (text, style) => {
     const g = new svg_js_1.G();
@@ -25459,12 +35289,12 @@ exports.default = {
 };
 
 },
-61: function(module, exports, __require, __externalRequire) {
+68: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/svg/icons.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.nodeIconList = void 0;
-const utils_1 = __require(45);
+const utils_1 = __require(52);
 // 超链接图标
 const hyperlink = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1024 1024" ><path d="M435.484444 251.733333v68.892445L295.822222 320.682667a168.504889 168.504889 0 0 0-2.844444 336.952889h142.506666v68.892444H295.822222a237.397333 237.397333 0 0 1 0-474.794667h139.662222z m248.945778 0a237.397333 237.397333 0 0 1 0 474.851556H544.654222v-69.006222l139.776 0.056889a168.504889 168.504889 0 0 0 2.844445-336.952889H544.597333V251.676444h139.776z m-25.827555 203.946667a34.474667 34.474667 0 0 1 0 68.892444H321.649778a34.474667 34.474667 0 0 1 0-68.892444h336.952889z" ></path></svg>';
 // 备注图标
@@ -25771,11 +35601,11 @@ exports.default = {
 };
 
 },
-62: function(module, exports, __require, __externalRequire) {
+69: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeExpandBtnPlaceholderRect.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const svg_js_1 = __require(53);
+const svg_js_1 = __require(60);
 // 渲染展开收起按钮的隐藏占位元素
 function renderExpandBtnPlaceholderRect() {
     // 根节点或没有子节点不需要渲染
@@ -25831,11 +35661,11 @@ exports.default = {
 };
 
 },
-63: function(module, exports, __require, __externalRequire) {
+70: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeModifyWidth.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const svg_js_1 = __require(53);
+const svg_js_1 = __require(60);
 // 初始化拖拽
 function initDragHandle() {
     if (!this.checkEnableDragModifyNodeWidth()) {
@@ -25978,12 +35808,12 @@ exports.default = {
 };
 
 },
-64: function(module, exports, __require, __externalRequire) {
+71: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeCooperate.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const svg_js_1 = __require(53);
-const index_1 = __require(45);
+const svg_js_1 = __require(60);
+const index_1 = __require(52);
 // 协同相关功能
 // 创建容器
 function createUserListNode() {
@@ -26098,15 +35928,15 @@ exports.default = {
 };
 
 },
-65: function(module, exports, __require, __externalRequire) {
+72: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/quickCreateChildBtn.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const btns_1 = __importDefault(__require(58));
-const svg_js_1 = __require(53);
+const btns_1 = __importDefault(__require(65));
+const svg_js_1 = __require(60);
 function initQuickCreateChildBtn() {
     if (this.isGeneralization)
         return;
@@ -26191,13 +36021,13 @@ exports.default = {
 };
 
 },
-66: function(module, exports, __require, __externalRequire) {
+73: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeLayout.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const constant_1 = __require(36);
-const svg_js_1 = __require(53);
-const index_1 = __require(45);
+const constant_1 = __require(43);
+const svg_js_1 = __require(60);
+const index_1 = __require(52);
 // 根据图片放置位置返回图片和文本的间距值
 function getImgTextMarin(dir, imgWidth, textWidth, imgHeight, textHeight) {
     // 图片和文字节点的间距
@@ -26700,7 +36530,7 @@ exports.default = {
 };
 
 },
-67: function(module, exports, __require, __externalRequire) {
+74: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/utils/Lru.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -26753,16 +36583,16 @@ class Lru {
 exports.default = Lru;
 
 },
-68: function(module, exports, __require, __externalRequire) {
+75: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/MindMap.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Base_1 = __importDefault(__require(42));
-const utils_1 = __require(45);
-const constant_1 = __require(36);
+const Base_1 = __importDefault(__require(49));
+const utils_1 = __require(52);
+const constant_1 = __require(43);
 //  思维导图
 class MindMap extends Base_1.default {
     //  构造函数
@@ -27126,15 +36956,15 @@ class MindMap extends Base_1.default {
 exports.default = MindMap;
 
 },
-69: function(module, exports, __require, __externalRequire) {
+76: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/CatalogOrganization.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Base_1 = __importDefault(__require(42));
-const utils_1 = __require(45);
+const Base_1 = __importDefault(__require(49));
+const utils_1 = __require(52);
 //  目录组织图
 class CatalogOrganization extends Base_1.default {
     //  构造函数
@@ -27459,15 +37289,15 @@ class CatalogOrganization extends Base_1.default {
 exports.default = CatalogOrganization;
 
 },
-70: function(module, exports, __require, __externalRequire) {
+77: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/OrganizationStructure.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Base_1 = __importDefault(__require(42));
-const utils_1 = __require(45);
+const Base_1 = __importDefault(__require(49));
+const utils_1 = __require(52);
 //  组织结构图
 // 和逻辑结构图基本一样，只是方向变成向下生长，所以先计算节点的top，后计算节点的left、最后调整节点的left即可
 class OrganizationStructure extends Base_1.default {
@@ -27735,16 +37565,16 @@ class OrganizationStructure extends Base_1.default {
 exports.default = OrganizationStructure;
 
 },
-71: function(module, exports, __require, __externalRequire) {
+78: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/Timeline.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Base_1 = __importDefault(__require(42));
-const utils_1 = __require(45);
-const constant_1 = __require(36);
+const Base_1 = __importDefault(__require(49));
+const utils_1 = __require(52);
+const constant_1 = __require(43);
 //  时间轴
 class Timeline extends Base_1.default {
     //  构造函数
@@ -28059,16 +37889,16 @@ class Timeline extends Base_1.default {
 exports.default = Timeline;
 
 },
-72: function(module, exports, __require, __externalRequire) {
+79: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/VerticalTimeline.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Base_1 = __importDefault(__require(42));
-const utils_1 = __require(45);
-const constant_1 = __require(36);
+const Base_1 = __importDefault(__require(49));
+const utils_1 = __require(52);
+const constant_1 = __require(43);
 //  竖向时间轴
 class VerticalTimeline extends Base_1.default {
     //  构造函数
@@ -28474,19 +38304,19 @@ class VerticalTimeline extends Base_1.default {
 exports.default = VerticalTimeline;
 
 },
-73: function(module, exports, __require, __externalRequire) {
+80: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/Fishbone.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Base_1 = __importDefault(__require(42));
-const utils_1 = __require(45);
-const constant_1 = __require(36);
-const fishboneUtils_1 = __importDefault(__require(74));
-const svg_js_1 = __require(53);
-const Style_1 = __require(44);
+const Base_1 = __importDefault(__require(49));
+const utils_1 = __require(52);
+const constant_1 = __require(43);
+const fishboneUtils_1 = __importDefault(__require(81));
+const svg_js_1 = __require(60);
+const Style_1 = __require(51);
 //  鱼骨图
 class Fishbone extends Base_1.default {
     //  构造函数
@@ -28990,11 +38820,11 @@ class Fishbone extends Base_1.default {
 exports.default = Fishbone;
 
 },
-74: function(module, exports, __require, __externalRequire) {
+81: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/fishboneUtils.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(45);
+const utils_1 = __require(52);
 exports.default = {
     top: {
         renderExpandBtn({ node, btn, expandBtnSize, translateX, translateY, width, height }) {
@@ -29185,12 +39015,12 @@ exports.default = {
 };
 
 },
-75: function(module, exports, __require, __externalRequire) {
+82: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/TextEdit.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(45);
-const constant_1 = __require(36);
+const utils_1 = __require(52);
+const constant_1 = __require(43);
 const SMM_NODE_EDIT_WRAP = 'smm-node-edit-wrap';
 //  节点文字编辑类
 class TextEdit {
@@ -29651,24 +39481,24 @@ class TextEdit {
 exports.default = TextEdit;
 
 },
-76: function(module, exports, __require, __externalRequire) {
+83: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/theme/index.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const default_1 = __importDefault(__require(54));
+const default_1 = __importDefault(__require(61));
 exports.default = {
     default: default_1.default
 };
 
 },
-77: function(module, exports, __require, __externalRequire) {
+84: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/command/KeyCommand.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const keyMap_1 = __require(78);
+const keyMap_1 = __require(85);
 //  快捷按键、命令处理类
 class KeyCommand {
     //  构造函数
@@ -29900,7 +39730,7 @@ class KeyCommand {
 exports.default = KeyCommand;
 
 },
-78: function(module, exports, __require, __externalRequire) {
+85: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/command/keyMap.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -29962,16 +39792,16 @@ const isKey = (e, key) => {
 exports.isKey = isKey;
 
 },
-79: function(module, exports, __require, __externalRequire) {
+86: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/command/Command.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(45);
-const constant_1 = __require(36);
-const package_json_1 = __importDefault(__require(80));
+const utils_1 = __require(52);
+const constant_1 = __require(43);
+const package_json_1 = __importDefault(__require(87));
 //  命令类
 class Command {
     //  构造函数
@@ -30190,18 +40020,18 @@ class Command {
 exports.default = Command;
 
 },
-80: function(module, exports, __require, __externalRequire) {
+87: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/package.json
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = { name: 'simple-mind-map', version: '0.14.0-fix.3' };
 
 },
-81: function(module, exports, __require, __externalRequire) {
+88: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/utils/BatchExecution.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const _1 = __require(45);
+const _1 = __require(52);
 //  批量执行
 class BatchExecution {
     //  构造函数
@@ -30248,12 +40078,12 @@ class BatchExecution {
 exports.default = BatchExecution;
 
 },
-82: function(module, exports, __require, __externalRequire) {
+89: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/constants/defaultOptions.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.defaultOpt = void 0;
-const constant_1 = __require(36);
+const constant_1 = __require(43);
 // 默认选项配置
 exports.defaultOpt = {
     // 【基本】
@@ -30761,7 +40591,7 @@ exports.defaultOpt = {
 };
 
 },
-83: function(module, exports, __require, __externalRequire) {
+90: function(module, exports, __require, __externalRequire) {
 // /src/core/registerPlugins.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -30771,18 +40601,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MIND_MAP_PLUGIN_NAMES = void 0;
 exports.configureMindMapPlugins = configureMindMapPlugins;
 exports.registerMindMapPlugins = registerMindMapPlugins;
-const simple_mind_map_1 = __importDefault(__require(34));
-const YeMindDrag_1 = __importDefault(__require(84));
-const Select_1 = __importDefault(__require(90));
-const MiniMap_1 = __importDefault(__require(91));
-const Search_1 = __importDefault(__require(92));
-const Export_1 = __importDefault(__require(93));
-const Formula_1 = __importDefault(__require(97));
-const YeMindAssociativeLine_1 = __importDefault(__require(173));
-const OuterFrame_1 = __importDefault(__require(178));
-const YeMindNodeImgAdjust_1 = __importDefault(__require(181));
-const RainbowLines_1 = __importDefault(__require(183));
-const YeMindRichText_1 = __importDefault(__require(184));
+const simple_mind_map_1 = __importDefault(__require(41));
+const YeMindDrag_1 = __importDefault(__require(91));
+const Select_1 = __importDefault(__require(97));
+const MiniMap_1 = __importDefault(__require(98));
+const Search_1 = __importDefault(__require(99));
+const Export_1 = __importDefault(__require(100));
+const Formula_1 = __importDefault(__require(104));
+const YeMindAssociativeLine_1 = __importDefault(__require(180));
+const OuterFrame_1 = __importDefault(__require(185));
+const YeMindNodeImgAdjust_1 = __importDefault(__require(188));
+const RainbowLines_1 = __importDefault(__require(190));
+const YeMindRichText_1 = __importDefault(__require(191));
 exports.MIND_MAP_PLUGIN_NAMES = [
     'Drag',
     'Select',
@@ -30830,7 +40660,7 @@ function registerMindMapPlugins(settings) {
 }
 
 },
-84: function(module, exports, __require, __externalRequire) {
+91: function(module, exports, __require, __externalRequire) {
 // /src/core/YeMindDrag.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -30844,10 +40674,10 @@ exports.createDragCandidateState = createDragCandidateState;
 exports.updateStableDragCandidate = updateStableDragCandidate;
 exports.calculateDragGuidePath = calculateDragGuidePath;
 exports.calculateOriginalParentGuideStyle = calculateOriginalParentGuideStyle;
-const Drag_1 = __importDefault(__require(85));
-const officialDragIntent_1 = __require(87);
-const treeDropIntent_1 = __require(88);
-const dragPreviewEdges_1 = __require(89);
+const Drag_1 = __importDefault(__require(92));
+const officialDragIntent_1 = __require(94);
+const treeDropIntent_1 = __require(95);
+const dragPreviewEdges_1 = __require(96);
 function captureIncomingDragLines(nodes) {
     const snapshots = [];
     const seen = new Set();
@@ -31506,17 +41336,17 @@ exports.default = YeMindDrag;
 YeMindDrag.instanceName = 'drag';
 
 },
-85: function(module, exports, __require, __externalRequire) {
+92: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/Drag.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(45);
-const Base_1 = __importDefault(__require(42));
-const constant_1 = __require(36);
-const AutoMove_1 = __importDefault(__require(86));
+const utils_1 = __require(52);
+const Base_1 = __importDefault(__require(49));
+const constant_1 = __require(43);
+const AutoMove_1 = __importDefault(__require(93));
 // 节点拖动插件
 class Drag extends Base_1.default {
     //  构造函数
@@ -32657,7 +42487,7 @@ Drag.instanceName = 'drag';
 exports.default = Drag;
 
 },
-86: function(module, exports, __require, __externalRequire) {
+93: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/utils/AutoMove.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -32716,7 +42546,7 @@ class AutoMove {
 exports.default = AutoMove;
 
 },
-87: function(module, exports, __require, __externalRequire) {
+94: function(module, exports, __require, __externalRequire) {
 // /src/core/officialDragIntent.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -32729,7 +42559,7 @@ exports.officialCandidateParent = officialCandidateParent;
 exports.isOfficialDragCandidateNoop = isOfficialDragCandidateNoop;
 exports.calculateOfficialInsertionGuide = calculateOfficialInsertionGuide;
 exports.clampOfficialIndex = clampOfficialIndex;
-const treeDropIntent_1 = __require(88);
+const treeDropIntent_1 = __require(95);
 const CHILD_TAIL_LENGTH = 54;
 const CHILD_CROSS_PADDING = 9;
 const CHILD_BODY_PADDING = 4;
@@ -33307,7 +43137,7 @@ function clampOfficialIndex(value, length) {
 }
 
 },
-88: function(module, exports, __require, __externalRequire) {
+95: function(module, exports, __require, __externalRequire) {
 // /src/core/treeDropIntent.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -33371,7 +43201,7 @@ function distanceToRange(value, start, end) {
 }
 
 },
-89: function(module, exports, __require, __externalRequire) {
+96: function(module, exports, __require, __externalRequire) {
 // /src/core/dragPreviewEdges.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -33467,15 +43297,15 @@ function restoreShiftedIncomingLineOverlays(snapshots) {
 }
 
 },
-90: function(module, exports, __require, __externalRequire) {
+97: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/Select.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(45);
-const AutoMove_1 = __importDefault(__require(86));
+const utils_1 = __require(52);
+const AutoMove_1 = __importDefault(__require(93));
 // 节点选择插件
 class Select {
     //  构造函数
@@ -33686,11 +43516,11 @@ Select.instanceName = 'select';
 exports.default = Select;
 
 },
-91: function(module, exports, __require, __externalRequire) {
+98: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/MiniMap.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const index_1 = __require(45);
+const index_1 = __require(52);
 // 小地图插件
 class MiniMap {
     //  构造函数
@@ -33885,16 +43715,16 @@ MiniMap.instanceName = 'miniMap';
 exports.default = MiniMap;
 
 },
-92: function(module, exports, __require, __externalRequire) {
+99: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/Search.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const index_1 = __require(45);
-const MindMapNode_1 = __importDefault(__require(43));
-const constant_1 = __require(36);
+const index_1 = __require(52);
+const MindMapNode_1 = __importDefault(__require(50));
+const constant_1 = __require(43);
 // 搜索插件
 class Search {
     //  构造函数
@@ -34193,19 +44023,19 @@ Search.instanceName = 'search';
 exports.default = Search;
 
 },
-93: function(module, exports, __require, __externalRequire) {
+100: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/Export.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(45);
-const svg_js_1 = __require(53);
-const simulateCSSBackgroundInCanvas_1 = __importDefault(__require(94));
-const toMarkdown_1 = __require(95);
-const constant_1 = __require(36);
-const toTxt_1 = __require(96);
+const utils_1 = __require(52);
+const svg_js_1 = __require(60);
+const simulateCSSBackgroundInCanvas_1 = __importDefault(__require(101));
+const toMarkdown_1 = __require(102);
+const constant_1 = __require(43);
+const toTxt_1 = __require(103);
 //  导出插件
 class Export {
     //  构造函数
@@ -34577,7 +44407,7 @@ Export.instanceName = 'doExport';
 exports.default = Export;
 
 },
-94: function(module, exports, __require, __externalRequire) {
+101: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/utils/simulateCSSBackgroundInCanvas.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -34887,12 +44717,12 @@ const drawBackgroundImageToCanvas = (ctx, width, height, img, { backgroundSize, 
 exports.default = drawBackgroundImageToCanvas;
 
 },
-95: function(module, exports, __require, __externalRequire) {
+102: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/parse/toMarkdown.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transformToMarkdown = void 0;
-const utils_1 = __require(45);
+const utils_1 = __require(52);
 const getNodeText = data => {
     return data.richText ? (0, utils_1.nodeRichTextToTextWithWrap)(data.text) : data.text;
 };
@@ -34936,12 +44766,12 @@ const transformToMarkdown = root => {
 exports.transformToMarkdown = transformToMarkdown;
 
 },
-96: function(module, exports, __require, __externalRequire) {
+103: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/parse/toTxt.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transformToTxt = void 0;
-const utils_1 = __require(45);
+const utils_1 = __require(52);
 const getNodeText = data => {
     return data.richText ? (0, utils_1.nodeRichTextToTextWithWrap)(data.text) : data.text;
 };
@@ -34971,17 +44801,17 @@ const transformToTxt = root => {
 exports.transformToTxt = transformToTxt;
 
 },
-97: function(module, exports, __require, __externalRequire) {
+104: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/Formula.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const katex_1 = __importDefault(__require(98));
-const quill_1 = __importDefault(__require(99));
-const index_1 = __require(45);
-const FormulaStyle_1 = __require(172);
+const katex_1 = __importDefault(__require(105));
+const quill_1 = __importDefault(__require(106));
+const index_1 = __require(52);
+const FormulaStyle_1 = __require(179);
 let extended = false;
 const QuillFormula = quill_1.default.import('formats/formula');
 // 数学公式支持插件
@@ -35169,7 +44999,7 @@ Formula.instanceName = 'formula';
 exports.default = Formula;
 
 },
-98: function(module, exports, __require, __externalRequire) {
+105: function(module, exports, __require, __externalRequire) {
 // /node_modules/katex/dist/katex.mjs
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -51902,7 +61732,7 @@ var katex = {
 exports.default = katex;
 
 },
-99: function(module, exports, __require, __externalRequire) {
+106: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/quill.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -51943,37 +61773,37 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Range = exports.Parchment = exports.OpIterator = exports.Op = exports.Module = exports.Delta = exports.AttributeMap = void 0;
-const core_js_1 = __importDefault(__require(100));
-const align_js_1 = __require(132);
-const direction_js_1 = __require(136);
-const indent_js_1 = __importDefault(__require(147));
-const blockquote_js_1 = __importDefault(__require(148));
-const header_js_1 = __importDefault(__require(149));
-const list_js_1 = __importDefault(__require(150));
-const background_js_1 = __require(133);
-const color_js_1 = __require(134);
-const font_js_1 = __require(137);
-const size_js_1 = __require(138);
-const bold_js_1 = __importDefault(__require(151));
-const italic_js_1 = __importDefault(__require(152));
-const link_js_1 = __importDefault(__require(153));
-const script_js_1 = __importDefault(__require(154));
-const strike_js_1 = __importDefault(__require(155));
-const underline_js_1 = __importDefault(__require(156));
-const formula_js_1 = __importDefault(__require(157));
-const image_js_1 = __importDefault(__require(158));
-const video_js_1 = __importDefault(__require(159));
-const code_js_1 = __importStar(__require(135));
-const syntax_js_1 = __importDefault(__require(160));
-const table_js_1 = __importDefault(__require(161));
-const toolbar_js_1 = __importDefault(__require(163));
-const icons_js_1 = __importDefault(__require(164));
-const picker_js_1 = __importDefault(__require(165));
-const color_picker_js_1 = __importDefault(__require(166));
-const icon_picker_js_1 = __importDefault(__require(167));
-const tooltip_js_1 = __importDefault(__require(168));
-const bubble_js_1 = __importDefault(__require(169));
-const snow_js_1 = __importDefault(__require(171));
+const core_js_1 = __importDefault(__require(107));
+const align_js_1 = __require(139);
+const direction_js_1 = __require(143);
+const indent_js_1 = __importDefault(__require(154));
+const blockquote_js_1 = __importDefault(__require(155));
+const header_js_1 = __importDefault(__require(156));
+const list_js_1 = __importDefault(__require(157));
+const background_js_1 = __require(140);
+const color_js_1 = __require(141);
+const font_js_1 = __require(144);
+const size_js_1 = __require(145);
+const bold_js_1 = __importDefault(__require(158));
+const italic_js_1 = __importDefault(__require(159));
+const link_js_1 = __importDefault(__require(160));
+const script_js_1 = __importDefault(__require(161));
+const strike_js_1 = __importDefault(__require(162));
+const underline_js_1 = __importDefault(__require(163));
+const formula_js_1 = __importDefault(__require(164));
+const image_js_1 = __importDefault(__require(165));
+const video_js_1 = __importDefault(__require(166));
+const code_js_1 = __importStar(__require(142));
+const syntax_js_1 = __importDefault(__require(167));
+const table_js_1 = __importDefault(__require(168));
+const toolbar_js_1 = __importDefault(__require(170));
+const icons_js_1 = __importDefault(__require(171));
+const picker_js_1 = __importDefault(__require(172));
+const color_picker_js_1 = __importDefault(__require(173));
+const icon_picker_js_1 = __importDefault(__require(174));
+const tooltip_js_1 = __importDefault(__require(175));
+const bubble_js_1 = __importDefault(__require(176));
+const snow_js_1 = __importDefault(__require(178));
 core_js_1.default.register({
     'attributors/attribute/direction': direction_js_1.DirectionAttribute,
     'attributors/class/align': align_js_1.AlignClass,
@@ -52022,7 +61852,7 @@ core_js_1.default.register({
     'ui/color-picker': color_picker_js_1.default,
     'ui/tooltip': tooltip_js_1.default
 }, true);
-var core_js_2 = __require(100);
+var core_js_2 = __require(107);
 Object.defineProperty(exports, "AttributeMap", { enumerable: true, get: function () { return core_js_2.AttributeMap; } });
 Object.defineProperty(exports, "Delta", { enumerable: true, get: function () { return core_js_2.Delta; } });
 Object.defineProperty(exports, "Module", { enumerable: true, get: function () { return core_js_2.Module; } });
@@ -52034,7 +61864,7 @@ exports.default = core_js_1.default;
 //# sourceMappingURL=quill.js.map
 
 },
-100: function(module, exports, __require, __externalRequire) {
+107: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -52075,29 +61905,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Range = exports.Parchment = exports.AttributeMap = exports.OpIterator = exports.Op = exports.Delta = exports.Module = void 0;
-const quill_js_1 = __importStar(__require(101));
+const quill_js_1 = __importStar(__require(108));
 Object.defineProperty(exports, "Parchment", { enumerable: true, get: function () { return quill_js_1.Parchment; } });
 Object.defineProperty(exports, "Range", { enumerable: true, get: function () { return quill_js_1.Range; } });
-const block_js_1 = __importStar(__require(113));
-const break_js_1 = __importDefault(__require(114));
-const container_js_1 = __importDefault(__require(129));
-const cursor_js_1 = __importDefault(__require(117));
-const embed_js_1 = __importDefault(__require(125));
-const inline_js_1 = __importDefault(__require(115));
-const scroll_js_1 = __importDefault(__require(130));
-const text_js_1 = __importDefault(__require(116));
-const clipboard_js_1 = __importDefault(__require(131));
-const history_js_1 = __importDefault(__require(143));
-const keyboard_js_1 = __importDefault(__require(139));
-const uploader_js_1 = __importDefault(__require(144));
-const quill_delta_1 = __importStar(__require(106));
+const block_js_1 = __importStar(__require(120));
+const break_js_1 = __importDefault(__require(121));
+const container_js_1 = __importDefault(__require(136));
+const cursor_js_1 = __importDefault(__require(124));
+const embed_js_1 = __importDefault(__require(132));
+const inline_js_1 = __importDefault(__require(122));
+const scroll_js_1 = __importDefault(__require(137));
+const text_js_1 = __importDefault(__require(123));
+const clipboard_js_1 = __importDefault(__require(138));
+const history_js_1 = __importDefault(__require(150));
+const keyboard_js_1 = __importDefault(__require(146));
+const uploader_js_1 = __importDefault(__require(151));
+const quill_delta_1 = __importStar(__require(113));
 exports.Delta = quill_delta_1.default;
 Object.defineProperty(exports, "Op", { enumerable: true, get: function () { return quill_delta_1.Op; } });
 Object.defineProperty(exports, "OpIterator", { enumerable: true, get: function () { return quill_delta_1.OpIterator; } });
 Object.defineProperty(exports, "AttributeMap", { enumerable: true, get: function () { return quill_delta_1.AttributeMap; } });
-const input_js_1 = __importDefault(__require(145));
-const uiNode_js_1 = __importDefault(__require(146));
-var module_js_1 = __require(123);
+const input_js_1 = __importDefault(__require(152));
+const uiNode_js_1 = __importDefault(__require(153));
+var module_js_1 = __require(130);
 Object.defineProperty(exports, "Module", { enumerable: true, get: function () { return __importDefault(module_js_1).default; } });
 quill_js_1.default.register({
     'blots/block': block_js_1.default,
@@ -52120,7 +61950,7 @@ exports.default = quill_js_1.default;
 //# sourceMappingURL=core.js.map
 
 },
-101: function(module, exports, __require, __externalRequire) {
+108: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/quill.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -52163,21 +61993,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.globalRegistry = exports.Range = exports.Parchment = void 0;
 exports.expandConfig = expandConfig;
 exports.overload = overload;
-const lodash_es_1 = __require(102);
-const Parchment = __importStar(__require(105));
+const lodash_es_1 = __require(109);
+const Parchment = __importStar(__require(112));
 exports.Parchment = Parchment;
-const quill_delta_1 = __importDefault(__require(106));
-const editor_js_1 = __importDefault(__require(112));
-const emitter_js_1 = __importDefault(__require(119));
-const instances_js_1 = __importDefault(__require(121));
-const logger_js_1 = __importDefault(__require(122));
-const module_js_1 = __importDefault(__require(123));
-const selection_js_1 = __importStar(__require(118));
+const quill_delta_1 = __importDefault(__require(113));
+const editor_js_1 = __importDefault(__require(119));
+const emitter_js_1 = __importDefault(__require(126));
+const instances_js_1 = __importDefault(__require(128));
+const logger_js_1 = __importDefault(__require(129));
+const module_js_1 = __importDefault(__require(130));
+const selection_js_1 = __importStar(__require(125));
 Object.defineProperty(exports, "Range", { enumerable: true, get: function () { return selection_js_1.Range; } });
-const composition_js_1 = __importDefault(__require(124));
-const theme_js_1 = __importDefault(__require(126));
-const scrollRectIntoView_js_1 = __importDefault(__require(127));
-const createRegistryWithFormats_js_1 = __importDefault(__require(128));
+const composition_js_1 = __importDefault(__require(131));
+const theme_js_1 = __importDefault(__require(133));
+const scrollRectIntoView_js_1 = __importDefault(__require(134));
+const createRegistryWithFormats_js_1 = __importDefault(__require(135));
 const debug = (0, logger_js_1.default)('quill');
 const globalRegistry = new Parchment.Registry();
 exports.globalRegistry = globalRegistry;
@@ -52802,7 +62632,7 @@ function shiftRange(range, index, lengthOrSource, source) {
 //# sourceMappingURL=quill.js.map
 
 },
-102: function(module, exports, __require, __externalRequire) {
+109: function(module, exports, __require, __externalRequire) {
 // /node_modules/lodash-es/index.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -52811,9 +62641,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isEqual = exports.cloneDeep = void 0;
 exports.merge = merge;
-const lodash_clonedeep_1 = __importDefault(__require(103));
+const lodash_clonedeep_1 = __importDefault(__require(110));
 exports.cloneDeep = lodash_clonedeep_1.default;
-const lodash_isequal_1 = __importDefault(__require(104));
+const lodash_isequal_1 = __importDefault(__require(111));
 exports.isEqual = lodash_isequal_1.default;
 const isObject = value => value !== null && typeof value === 'object';
 function merge(target, ...sources) {
@@ -52841,7 +62671,7 @@ function merge(target, ...sources) {
 }
 
 },
-103: function(module, exports, __require, __externalRequire) {
+110: function(module, exports, __require, __externalRequire) {
 // /node_modules/lodash.clonedeep/index.js
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -54390,7 +64220,7 @@ function stubFalse() {
 module.exports = cloneDeep;
 
 },
-104: function(module, exports, __require, __externalRequire) {
+111: function(module, exports, __require, __externalRequire) {
 // /node_modules/lodash.isequal/index.js
 /**
  * Lodash (Custom Build) <https://lodash.com/>
@@ -55994,7 +65824,7 @@ function stubFalse() {
 module.exports = isEqual;
 
 },
-105: function(module, exports, __require, __externalRequire) {
+112: function(module, exports, __require, __externalRequire) {
 // /node_modules/parchment/dist/parchment.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -56830,7 +66660,7 @@ exports.TextBlot = TextBlot$1;
 //# sourceMappingURL=parchment.js.map
 
 },
-106: function(module, exports, __require, __externalRequire) {
+113: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill-delta/index.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -56838,29 +66668,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OpIterator = exports.Op = exports.AttributeMap = exports.default = void 0;
-var Delta_js_1 = __require(107);
+var Delta_js_1 = __require(114);
 Object.defineProperty(exports, "default", { enumerable: true, get: function () { return __importDefault(Delta_js_1).default; } });
-var AttributeMap_js_1 = __require(109);
+var AttributeMap_js_1 = __require(116);
 Object.defineProperty(exports, "AttributeMap", { enumerable: true, get: function () { return __importDefault(AttributeMap_js_1).default; } });
-var Op_js_1 = __require(110);
+var Op_js_1 = __require(117);
 Object.defineProperty(exports, "Op", { enumerable: true, get: function () { return __importDefault(Op_js_1).default; } });
-var OpIterator_js_1 = __require(111);
+var OpIterator_js_1 = __require(118);
 Object.defineProperty(exports, "OpIterator", { enumerable: true, get: function () { return __importDefault(OpIterator_js_1).default; } });
 
 },
-107: function(module, exports, __require, __externalRequire) {
+114: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill-delta/dist/Delta.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AttributeMap = exports.OpIterator = exports.Op = void 0;
-const diff = __require(108);
-const cloneDeep = __require(103);
-const isEqual = __require(104);
-const AttributeMap_1 = __require(109);
+const diff = __require(115);
+const cloneDeep = __require(110);
+const isEqual = __require(111);
+const AttributeMap_1 = __require(116);
 exports.AttributeMap = AttributeMap_1.default;
-const Op_1 = __require(110);
+const Op_1 = __require(117);
 exports.Op = Op_1.default;
-const OpIterator_1 = __require(111);
+const OpIterator_1 = __require(118);
 exports.OpIterator = OpIterator_1.default;
 const NULL_CHARACTER = String.fromCharCode(0); // Placeholder char for embed in diff()
 const getEmbedTypeAndData = (a, b) => {
@@ -57329,7 +67159,7 @@ if (typeof module === 'object') {
 }
 
 },
-108: function(module, exports, __require, __externalRequire) {
+115: function(module, exports, __require, __externalRequire) {
 // /node_modules/fast-diff/diff.js
 /**
  * This library modifies the diff-patch-match library by Neil Fraser
@@ -58372,12 +68202,12 @@ diff.EQUAL = DIFF_EQUAL;
 module.exports = diff;
 
 },
-109: function(module, exports, __require, __externalRequire) {
+116: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill-delta/dist/AttributeMap.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const cloneDeep = __require(103);
-const isEqual = __require(104);
+const cloneDeep = __require(110);
+const isEqual = __require(111);
 var AttributeMap;
 (function (AttributeMap) {
     function compose(a = {}, b = {}, keepNull = false) {
@@ -58461,7 +68291,7 @@ var AttributeMap;
 exports.default = AttributeMap;
 
 },
-110: function(module, exports, __require, __externalRequire) {
+117: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill-delta/dist/Op.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -58486,11 +68316,11 @@ var Op;
 exports.default = Op;
 
 },
-111: function(module, exports, __require, __externalRequire) {
+118: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill-delta/dist/OpIterator.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Op_1 = __require(110);
+const Op_1 = __require(117);
 class Iterator {
     constructor(ops) {
         this.ops = ops;
@@ -58595,7 +68425,7 @@ class Iterator {
 exports.default = Iterator;
 
 },
-112: function(module, exports, __require, __externalRequire) {
+119: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/editor.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -58635,14 +68465,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const lodash_es_1 = __require(102);
-const parchment_1 = __require(105);
-const quill_delta_1 = __importStar(__require(106));
-const block_js_1 = __importStar(__require(113));
-const break_js_1 = __importDefault(__require(114));
-const cursor_js_1 = __importDefault(__require(117));
-const text_js_1 = __importStar(__require(116));
-const selection_js_1 = __require(118);
+const lodash_es_1 = __require(109);
+const parchment_1 = __require(112);
+const quill_delta_1 = __importStar(__require(113));
+const block_js_1 = __importStar(__require(120));
+const break_js_1 = __importDefault(__require(121));
+const cursor_js_1 = __importDefault(__require(124));
+const text_js_1 = __importStar(__require(123));
+const selection_js_1 = __require(125);
 const ASCII = /^[ -~]*$/;
 class Editor {
     constructor(scroll) {
@@ -59051,7 +68881,7 @@ exports.default = Editor;
 //# sourceMappingURL=editor.js.map
 
 },
-113: function(module, exports, __require, __externalRequire) {
+120: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/block.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -59061,11 +68891,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.BlockEmbed = void 0;
 exports.blockDelta = blockDelta;
 exports.bubbleFormats = bubbleFormats;
-const parchment_1 = __require(105);
-const quill_delta_1 = __importDefault(__require(106));
-const break_js_1 = __importDefault(__require(114));
-const inline_js_1 = __importDefault(__require(115));
-const text_js_1 = __importDefault(__require(116));
+const parchment_1 = __require(112);
+const quill_delta_1 = __importDefault(__require(113));
+const break_js_1 = __importDefault(__require(121));
+const inline_js_1 = __importDefault(__require(122));
+const text_js_1 = __importDefault(__require(123));
 const NEWLINE_LENGTH = 1;
 class Block extends parchment_1.BlockBlot {
     constructor() {
@@ -59251,11 +69081,11 @@ function bubbleFormats(blot) {
 //# sourceMappingURL=block.js.map
 
 },
-114: function(module, exports, __require, __externalRequire) {
+121: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/break.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(105);
+const parchment_1 = __require(112);
 class Break extends parchment_1.EmbedBlot {
     static value() {
         return undefined;
@@ -59278,16 +69108,16 @@ exports.default = Break;
 //# sourceMappingURL=break.js.map
 
 },
-115: function(module, exports, __require, __externalRequire) {
+122: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/inline.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(105);
-const break_js_1 = __importDefault(__require(114));
-const text_js_1 = __importDefault(__require(116));
+const parchment_1 = __require(112);
+const break_js_1 = __importDefault(__require(121));
+const text_js_1 = __importDefault(__require(123));
 class Inline extends parchment_1.InlineBlot {
     static { this.allowedChildren = [Inline, break_js_1.default, parchment_1.EmbedBlot, text_js_1.default]; }
     // Lower index means deeper in the DOM tree, since not found (-1) is for embeds
@@ -59336,13 +69166,13 @@ exports.default = Inline;
 //# sourceMappingURL=inline.js.map
 
 },
-116: function(module, exports, __require, __externalRequire) {
+123: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/text.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = void 0;
 exports.escapeText = escapeText;
-const parchment_1 = __require(105);
+const parchment_1 = __require(112);
 class Text extends parchment_1.TextBlot {
 }
 exports.default = Text;
@@ -59360,15 +69190,15 @@ function escapeText(text) {
 //# sourceMappingURL=text.js.map
 
 },
-117: function(module, exports, __require, __externalRequire) {
+124: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/cursor.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(105);
-const text_js_1 = __importDefault(__require(116));
+const parchment_1 = __require(112);
+const text_js_1 = __importDefault(__require(123));
 class Cursor extends parchment_1.EmbedBlot {
     static { this.blotName = 'cursor'; }
     static { this.className = 'ql-cursor'; }
@@ -59538,7 +69368,7 @@ exports.default = Cursor;
 //# sourceMappingURL=cursor.js.map
 
 },
-118: function(module, exports, __require, __externalRequire) {
+125: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/selection.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -59546,10 +69376,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Range = void 0;
-const parchment_1 = __require(105);
-const lodash_es_1 = __require(102);
-const emitter_js_1 = __importDefault(__require(119));
-const logger_js_1 = __importDefault(__require(122));
+const parchment_1 = __require(112);
+const lodash_es_1 = __require(109);
+const emitter_js_1 = __importDefault(__require(126));
+const logger_js_1 = __importDefault(__require(129));
 const debug = (0, logger_js_1.default)('quill:selection');
 class Range {
     constructor(index) {
@@ -59940,16 +69770,16 @@ exports.default = Selection;
 //# sourceMappingURL=selection.js.map
 
 },
-119: function(module, exports, __require, __externalRequire) {
+126: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/emitter.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const eventemitter3_1 = __require(120);
-const instances_js_1 = __importDefault(__require(121));
-const logger_js_1 = __importDefault(__require(122));
+const eventemitter3_1 = __require(127);
+const instances_js_1 = __importDefault(__require(128));
+const logger_js_1 = __importDefault(__require(129));
 const debug = (0, logger_js_1.default)('quill:events');
 const EVENTS = ['selectionchange', 'mousedown', 'mouseup', 'click'];
 EVENTS.forEach(eventName => {
@@ -60024,7 +69854,7 @@ exports.default = Emitter;
 //# sourceMappingURL=emitter.js.map
 
 },
-120: function(module, exports, __require, __externalRequire) {
+127: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/node_modules/eventemitter3/index.js
 'use strict';
 var has = Object.prototype.hasOwnProperty, prefix = '~';
@@ -60333,7 +70163,7 @@ if ('undefined' !== typeof module) {
 }
 
 },
-121: function(module, exports, __require, __externalRequire) {
+128: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/instances.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -60341,7 +70171,7 @@ exports.default = new WeakMap();
 //# sourceMappingURL=instances.js.map
 
 },
-122: function(module, exports, __require, __externalRequire) {
+129: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/logger.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -60371,7 +70201,7 @@ exports.default = namespace;
 //# sourceMappingURL=logger.js.map
 
 },
-123: function(module, exports, __require, __externalRequire) {
+130: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/module.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -60387,15 +70217,15 @@ exports.default = Module;
 //# sourceMappingURL=module.js.map
 
 },
-124: function(module, exports, __require, __externalRequire) {
+131: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/composition.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const embed_js_1 = __importDefault(__require(125));
-const emitter_js_1 = __importDefault(__require(119));
+const embed_js_1 = __importDefault(__require(132));
+const emitter_js_1 = __importDefault(__require(126));
 class Composition {
     constructor(scroll, emitter) {
         this.isComposing = false;
@@ -60440,15 +70270,15 @@ exports.default = Composition;
 //# sourceMappingURL=composition.js.map
 
 },
-125: function(module, exports, __require, __externalRequire) {
+132: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/embed.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(105);
-const text_js_1 = __importDefault(__require(116));
+const parchment_1 = __require(112);
+const text_js_1 = __importDefault(__require(123));
 const GUARD_TEXT = '\uFEFF';
 class Embed extends parchment_1.EmbedBlot {
     constructor(scroll, node) {
@@ -60527,7 +70357,7 @@ exports.default = Embed;
 //# sourceMappingURL=embed.js.map
 
 },
-126: function(module, exports, __require, __externalRequire) {
+133: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/theme.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -60561,7 +70391,7 @@ exports.default = Theme;
 //# sourceMappingURL=theme.js.map
 
 },
-127: function(module, exports, __require, __externalRequire) {
+134: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/utils/scrollRectIntoView.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -60639,11 +70469,11 @@ exports.default = scrollRectIntoView;
 //# sourceMappingURL=scrollRectIntoView.js.map
 
 },
-128: function(module, exports, __require, __externalRequire) {
+135: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/utils/createRegistryWithFormats.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(105);
+const parchment_1 = __require(112);
 const MAX_REGISTER_ITERATIONS = 100;
 const CORE_FORMATS = ['block', 'break', 'cursor', 'inline', 'scroll', 'text'];
 const createRegistryWithFormats = (formats, sourceRegistry, debug) => {
@@ -60675,18 +70505,18 @@ exports.default = createRegistryWithFormats;
 //# sourceMappingURL=createRegistryWithFormats.js.map
 
 },
-129: function(module, exports, __require, __externalRequire) {
+136: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/container.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(105);
+const parchment_1 = __require(112);
 class Container extends parchment_1.ContainerBlot {
 }
 exports.default = Container;
 //# sourceMappingURL=container.js.map
 
 },
-130: function(module, exports, __require, __externalRequire) {
+137: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/scroll.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -60726,12 +70556,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(105);
-const quill_delta_1 = __importStar(__require(106));
-const emitter_js_1 = __importDefault(__require(119));
-const block_js_1 = __importStar(__require(113));
-const break_js_1 = __importDefault(__require(114));
-const container_js_1 = __importDefault(__require(129));
+const parchment_1 = __require(112);
+const quill_delta_1 = __importStar(__require(113));
+const emitter_js_1 = __importDefault(__require(126));
+const block_js_1 = __importStar(__require(120));
+const break_js_1 = __importDefault(__require(121));
+const container_js_1 = __importDefault(__require(136));
 function isLine(blot) {
     return blot instanceof block_js_1.default || blot instanceof block_js_1.BlockEmbed;
 }
@@ -61089,7 +70919,7 @@ exports.default = Scroll;
 //# sourceMappingURL=scroll.js.map
 
 },
-131: function(module, exports, __require, __externalRequire) {
+138: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/clipboard.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -61102,21 +70932,21 @@ exports.matchBlot = matchBlot;
 exports.matchNewline = matchNewline;
 exports.matchText = matchText;
 exports.traverse = traverse;
-const parchment_1 = __require(105);
-const quill_delta_1 = __importDefault(__require(106));
-const block_js_1 = __require(113);
-const logger_js_1 = __importDefault(__require(122));
-const module_js_1 = __importDefault(__require(123));
-const quill_js_1 = __importDefault(__require(101));
-const align_js_1 = __require(132);
-const background_js_1 = __require(133);
-const code_js_1 = __importDefault(__require(135));
-const color_js_1 = __require(134);
-const direction_js_1 = __require(136);
-const font_js_1 = __require(137);
-const size_js_1 = __require(138);
-const keyboard_js_1 = __require(139);
-const index_js_1 = __importDefault(__require(140));
+const parchment_1 = __require(112);
+const quill_delta_1 = __importDefault(__require(113));
+const block_js_1 = __require(120);
+const logger_js_1 = __importDefault(__require(129));
+const module_js_1 = __importDefault(__require(130));
+const quill_js_1 = __importDefault(__require(108));
+const align_js_1 = __require(139);
+const background_js_1 = __require(140);
+const code_js_1 = __importDefault(__require(142));
+const color_js_1 = __require(141);
+const direction_js_1 = __require(143);
+const font_js_1 = __require(144);
+const size_js_1 = __require(145);
+const keyboard_js_1 = __require(146);
+const index_js_1 = __importDefault(__require(147));
 const debug = (0, logger_js_1.default)('quill:clipboard');
 const CLIPBOARD_CONFIG = [[Node.TEXT_NODE, matchText], [Node.TEXT_NODE, matchNewline], ['br', matchBreak], [Node.ELEMENT_NODE, matchNewline], [Node.ELEMENT_NODE, matchBlot], [Node.ELEMENT_NODE, matchAttributor], [Node.ELEMENT_NODE, matchStyles], ['li', matchIndent], ['ol, ul', matchList], ['pre', matchCodeBlock], ['tr', matchTable], ['b', createMatchAlias('bold')], ['i', createMatchAlias('italic')], ['strike', createMatchAlias('strike')], ['style', matchIgnore]];
 const ATTRIBUTE_ATTRIBUTORS = [align_js_1.AlignAttribute, direction_js_1.DirectionAttribute].reduce((memo, attr) => {
@@ -61588,12 +71418,12 @@ function matchText(node, delta, scroll) {
 //# sourceMappingURL=clipboard.js.map
 
 },
-132: function(module, exports, __require, __externalRequire) {
+139: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/align.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AlignStyle = exports.AlignClass = exports.AlignAttribute = void 0;
-const parchment_1 = __require(105);
+const parchment_1 = __require(112);
 const config = {
     scope: parchment_1.Scope.BLOCK,
     whitelist: ['right', 'center', 'justify']
@@ -61607,13 +71437,13 @@ exports.AlignStyle = AlignStyle;
 //# sourceMappingURL=align.js.map
 
 },
-133: function(module, exports, __require, __externalRequire) {
+140: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/background.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BackgroundStyle = exports.BackgroundClass = void 0;
-const parchment_1 = __require(105);
-const color_js_1 = __require(134);
+const parchment_1 = __require(112);
+const color_js_1 = __require(141);
 const BackgroundClass = new parchment_1.ClassAttributor('background', 'ql-bg', {
     scope: parchment_1.Scope.INLINE
 });
@@ -61625,12 +71455,12 @@ exports.BackgroundStyle = BackgroundStyle;
 //# sourceMappingURL=background.js.map
 
 },
-134: function(module, exports, __require, __externalRequire) {
+141: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/color.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ColorStyle = exports.ColorClass = exports.ColorAttributor = void 0;
-const parchment_1 = __require(105);
+const parchment_1 = __require(112);
 class ColorAttributor extends parchment_1.StyleAttributor {
     value(domNode) {
         let value = super.value(domNode);
@@ -61653,7 +71483,7 @@ exports.ColorStyle = ColorStyle;
 //# sourceMappingURL=color.js.map
 
 },
-135: function(module, exports, __require, __externalRequire) {
+142: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/code.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -61694,13 +71524,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.CodeBlockContainer = exports.Code = void 0;
-const block_js_1 = __importDefault(__require(113));
-const break_js_1 = __importDefault(__require(114));
-const cursor_js_1 = __importDefault(__require(117));
-const inline_js_1 = __importDefault(__require(115));
-const text_js_1 = __importStar(__require(116));
-const container_js_1 = __importDefault(__require(129));
-const quill_js_1 = __importDefault(__require(101));
+const block_js_1 = __importDefault(__require(120));
+const break_js_1 = __importDefault(__require(121));
+const cursor_js_1 = __importDefault(__require(124));
+const inline_js_1 = __importDefault(__require(122));
+const text_js_1 = __importStar(__require(123));
+const container_js_1 = __importDefault(__require(136));
+const quill_js_1 = __importDefault(__require(108));
 class CodeBlockContainer extends container_js_1.default {
     static create(value) {
         const domNode = super.create(value);
@@ -61743,12 +71573,12 @@ CodeBlock.requiredContainer = CodeBlockContainer;
 //# sourceMappingURL=code.js.map
 
 },
-136: function(module, exports, __require, __externalRequire) {
+143: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/direction.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DirectionStyle = exports.DirectionClass = exports.DirectionAttribute = void 0;
-const parchment_1 = __require(105);
+const parchment_1 = __require(112);
 const config = {
     scope: parchment_1.Scope.BLOCK,
     whitelist: ['rtl']
@@ -61762,12 +71592,12 @@ exports.DirectionStyle = DirectionStyle;
 //# sourceMappingURL=direction.js.map
 
 },
-137: function(module, exports, __require, __externalRequire) {
+144: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/font.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FontClass = exports.FontStyle = void 0;
-const parchment_1 = __require(105);
+const parchment_1 = __require(112);
 const config = {
     scope: parchment_1.Scope.INLINE,
     whitelist: ['serif', 'monospace']
@@ -61784,12 +71614,12 @@ exports.FontStyle = FontStyle;
 //# sourceMappingURL=font.js.map
 
 },
-138: function(module, exports, __require, __externalRequire) {
+145: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/size.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SizeStyle = exports.SizeClass = void 0;
-const parchment_1 = __require(105);
+const parchment_1 = __require(112);
 const SizeClass = new parchment_1.ClassAttributor('size', 'ql-size', {
     scope: parchment_1.Scope.INLINE,
     whitelist: ['small', 'large', 'huge']
@@ -61803,7 +71633,7 @@ exports.SizeStyle = SizeStyle;
 //# sourceMappingURL=size.js.map
 
 },
-139: function(module, exports, __require, __externalRequire) {
+146: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/keyboard.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -61846,12 +71676,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SHORTKEY = exports.default = void 0;
 exports.normalize = normalize;
 exports.deleteRange = deleteRange;
-const lodash_es_1 = __require(102);
-const quill_delta_1 = __importStar(__require(106));
-const parchment_1 = __require(105);
-const quill_js_1 = __importDefault(__require(101));
-const logger_js_1 = __importDefault(__require(122));
-const module_js_1 = __importDefault(__require(123));
+const lodash_es_1 = __require(109);
+const quill_delta_1 = __importStar(__require(113));
+const parchment_1 = __require(112);
+const quill_js_1 = __importDefault(__require(108));
+const logger_js_1 = __importDefault(__require(129));
+const module_js_1 = __importDefault(__require(130));
 const debug = (0, logger_js_1.default)('quill:keyboard');
 const SHORTKEY = /Mac/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
 exports.SHORTKEY = SHORTKEY;
@@ -62574,15 +72404,15 @@ function tableSide(_table, row, cell, offset) {
 //# sourceMappingURL=keyboard.js.map
 
 },
-140: function(module, exports, __require, __externalRequire) {
+147: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/normalizeExternalHTML/index.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const googleDocs_js_1 = __importDefault(__require(141));
-const msWord_js_1 = __importDefault(__require(142));
+const googleDocs_js_1 = __importDefault(__require(148));
+const msWord_js_1 = __importDefault(__require(149));
 const NORMALIZERS = [msWord_js_1.default, googleDocs_js_1.default];
 const normalizeExternalHTML = doc => {
     if (doc.documentElement) {
@@ -62595,7 +72425,7 @@ exports.default = normalizeExternalHTML;
 //# sourceMappingURL=index.js.map
 
 },
-141: function(module, exports, __require, __externalRequire) {
+148: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/normalizeExternalHTML/normalizers/googleDocs.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -62626,7 +72456,7 @@ function normalize(doc) {
 //# sourceMappingURL=googleDocs.js.map
 
 },
-142: function(module, exports, __require, __externalRequire) {
+149: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/normalizeExternalHTML/normalizers/msWord.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -62714,7 +72544,7 @@ function normalize(doc) {
 //# sourceMappingURL=msWord.js.map
 
 },
-143: function(module, exports, __require, __externalRequire) {
+150: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/history.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -62723,9 +72553,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = void 0;
 exports.getLastChangeIndex = getLastChangeIndex;
-const parchment_1 = __require(105);
-const module_js_1 = __importDefault(__require(123));
-const quill_js_1 = __importDefault(__require(101));
+const parchment_1 = __require(112);
+const module_js_1 = __importDefault(__require(130));
+const quill_js_1 = __importDefault(__require(108));
 class History extends module_js_1.default {
     static { this.DEFAULTS = {
         delay: 1000,
@@ -62914,16 +72744,16 @@ function transformRange(range, delta) {
 //# sourceMappingURL=history.js.map
 
 },
-144: function(module, exports, __require, __externalRequire) {
+151: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/uploader.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const quill_delta_1 = __importDefault(__require(106));
-const emitter_js_1 = __importDefault(__require(119));
-const module_js_1 = __importDefault(__require(123));
+const quill_delta_1 = __importDefault(__require(113));
+const emitter_js_1 = __importDefault(__require(126));
+const module_js_1 = __importDefault(__require(130));
 class Uploader extends module_js_1.default {
     constructor(quill, options) {
         super(quill, options);
@@ -62993,17 +72823,17 @@ exports.default = Uploader;
 //# sourceMappingURL=uploader.js.map
 
 },
-145: function(module, exports, __require, __externalRequire) {
+152: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/input.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const quill_delta_1 = __importDefault(__require(106));
-const module_js_1 = __importDefault(__require(123));
-const quill_js_1 = __importDefault(__require(101));
-const keyboard_js_1 = __require(139);
+const quill_delta_1 = __importDefault(__require(113));
+const module_js_1 = __importDefault(__require(130));
+const quill_js_1 = __importDefault(__require(108));
+const keyboard_js_1 = __require(146);
 const INSERT_TYPES = ['insertText', 'insertReplacementText'];
 class Input extends module_js_1.default {
     constructor(quill, options) {
@@ -63085,7 +72915,7 @@ exports.default = Input;
 //# sourceMappingURL=input.js.map
 
 },
-146: function(module, exports, __require, __externalRequire) {
+153: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/uiNode.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -63093,9 +72923,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TTL_FOR_VALID_SELECTION_CHANGE = void 0;
-const parchment_1 = __require(105);
-const module_js_1 = __importDefault(__require(123));
-const quill_js_1 = __importDefault(__require(101));
+const parchment_1 = __require(112);
+const module_js_1 = __importDefault(__require(130));
+const quill_js_1 = __importDefault(__require(108));
 const isMac = /Mac/i.test(navigator.platform);
 // Export for testing
 exports.TTL_FOR_VALID_SELECTION_CHANGE = 100;
@@ -63188,11 +73018,11 @@ exports.default = UINode;
 //# sourceMappingURL=uiNode.js.map
 
 },
-147: function(module, exports, __require, __externalRequire) {
+154: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/indent.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(105);
+const parchment_1 = __require(112);
 class IndentAttributor extends parchment_1.ClassAttributor {
     add(node, value) {
         let normalizedValue = 0;
@@ -63225,14 +73055,14 @@ exports.default = IndentClass;
 //# sourceMappingURL=indent.js.map
 
 },
-148: function(module, exports, __require, __externalRequire) {
+155: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/blockquote.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const block_js_1 = __importDefault(__require(113));
+const block_js_1 = __importDefault(__require(120));
 class Blockquote extends block_js_1.default {
     static { this.blotName = 'blockquote'; }
     static { this.tagName = 'blockquote'; }
@@ -63241,14 +73071,14 @@ exports.default = Blockquote;
 //# sourceMappingURL=blockquote.js.map
 
 },
-149: function(module, exports, __require, __externalRequire) {
+156: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/header.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const block_js_1 = __importDefault(__require(113));
+const block_js_1 = __importDefault(__require(120));
 class Header extends block_js_1.default {
     static { this.blotName = 'header'; }
     static { this.tagName = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6']; }
@@ -63260,7 +73090,7 @@ exports.default = Header;
 //# sourceMappingURL=header.js.map
 
 },
-150: function(module, exports, __require, __externalRequire) {
+157: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/list.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -63268,9 +73098,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.ListContainer = void 0;
-const block_js_1 = __importDefault(__require(113));
-const container_js_1 = __importDefault(__require(129));
-const quill_js_1 = __importDefault(__require(101));
+const block_js_1 = __importDefault(__require(120));
+const container_js_1 = __importDefault(__require(136));
+const quill_js_1 = __importDefault(__require(108));
 class ListContainer extends container_js_1.default {
 }
 exports.ListContainer = ListContainer;
@@ -63325,14 +73155,14 @@ ListItem.requiredContainer = ListContainer;
 //# sourceMappingURL=list.js.map
 
 },
-151: function(module, exports, __require, __externalRequire) {
+158: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/bold.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const inline_js_1 = __importDefault(__require(115));
+const inline_js_1 = __importDefault(__require(122));
 class Bold extends inline_js_1.default {
     static { this.blotName = 'bold'; }
     static { this.tagName = ['STRONG', 'B']; }
@@ -63353,14 +73183,14 @@ exports.default = Bold;
 //# sourceMappingURL=bold.js.map
 
 },
-152: function(module, exports, __require, __externalRequire) {
+159: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/italic.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const bold_js_1 = __importDefault(__require(151));
+const bold_js_1 = __importDefault(__require(158));
 class Italic extends bold_js_1.default {
     static { this.blotName = 'italic'; }
     static { this.tagName = ['EM', 'I']; }
@@ -63369,7 +73199,7 @@ exports.default = Italic;
 //# sourceMappingURL=italic.js.map
 
 },
-153: function(module, exports, __require, __externalRequire) {
+160: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/link.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -63378,7 +73208,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = void 0;
 exports.sanitize = sanitize;
-const inline_js_1 = __importDefault(__require(115));
+const inline_js_1 = __importDefault(__require(122));
 class Link extends inline_js_1.default {
     static { this.blotName = 'link'; }
     static { this.tagName = 'A'; }
@@ -63417,14 +73247,14 @@ function sanitize(url, protocols) {
 //# sourceMappingURL=link.js.map
 
 },
-154: function(module, exports, __require, __externalRequire) {
+161: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/script.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const inline_js_1 = __importDefault(__require(115));
+const inline_js_1 = __importDefault(__require(122));
 class Script extends inline_js_1.default {
     static { this.blotName = 'script'; }
     static { this.tagName = ['SUB', 'SUP']; }
@@ -63449,14 +73279,14 @@ exports.default = Script;
 //# sourceMappingURL=script.js.map
 
 },
-155: function(module, exports, __require, __externalRequire) {
+162: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/strike.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const bold_js_1 = __importDefault(__require(151));
+const bold_js_1 = __importDefault(__require(158));
 class Strike extends bold_js_1.default {
     static { this.blotName = 'strike'; }
     static { this.tagName = ['S', 'STRIKE']; }
@@ -63465,14 +73295,14 @@ exports.default = Strike;
 //# sourceMappingURL=strike.js.map
 
 },
-156: function(module, exports, __require, __externalRequire) {
+163: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/underline.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const inline_js_1 = __importDefault(__require(115));
+const inline_js_1 = __importDefault(__require(122));
 class Underline extends inline_js_1.default {
     static { this.blotName = 'underline'; }
     static { this.tagName = 'U'; }
@@ -63481,14 +73311,14 @@ exports.default = Underline;
 //# sourceMappingURL=underline.js.map
 
 },
-157: function(module, exports, __require, __externalRequire) {
+164: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/formula.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const embed_js_1 = __importDefault(__require(125));
+const embed_js_1 = __importDefault(__require(132));
 class Formula extends embed_js_1.default {
     static { this.blotName = 'formula'; }
     static { this.className = 'ql-formula'; }
@@ -63521,12 +73351,12 @@ exports.default = Formula;
 //# sourceMappingURL=formula.js.map
 
 },
-158: function(module, exports, __require, __externalRequire) {
+165: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/image.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(105);
-const link_js_1 = __require(153);
+const parchment_1 = __require(112);
+const link_js_1 = __require(160);
 const ATTRIBUTES = ['alt', 'height', 'width'];
 class Image extends parchment_1.EmbedBlot {
     static { this.blotName = 'image'; }
@@ -63573,15 +73403,15 @@ exports.default = Image;
 //# sourceMappingURL=image.js.map
 
 },
-159: function(module, exports, __require, __externalRequire) {
+166: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/video.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const block_js_1 = __require(113);
-const link_js_1 = __importDefault(__require(153));
+const block_js_1 = __require(120);
+const link_js_1 = __importDefault(__require(160));
 const ATTRIBUTES = ['height', 'width'];
 class Video extends block_js_1.BlockEmbed {
     static { this.blotName = 'video'; }
@@ -63630,7 +73460,7 @@ exports.default = Video;
 //# sourceMappingURL=video.js.map
 
 },
-160: function(module, exports, __require, __externalRequire) {
+167: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/syntax.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -63671,17 +73501,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.CodeToken = exports.CodeBlock = void 0;
-const quill_delta_1 = __importDefault(__require(106));
-const parchment_1 = __require(105);
-const inline_js_1 = __importDefault(__require(115));
-const quill_js_1 = __importDefault(__require(101));
-const module_js_1 = __importDefault(__require(123));
-const block_js_1 = __require(113);
-const break_js_1 = __importDefault(__require(114));
-const cursor_js_1 = __importDefault(__require(117));
-const text_js_1 = __importStar(__require(116));
-const code_js_1 = __importStar(__require(135));
-const clipboard_js_1 = __require(131);
+const quill_delta_1 = __importDefault(__require(113));
+const parchment_1 = __require(112);
+const inline_js_1 = __importDefault(__require(122));
+const quill_js_1 = __importDefault(__require(108));
+const module_js_1 = __importDefault(__require(130));
+const block_js_1 = __require(120);
+const break_js_1 = __importDefault(__require(121));
+const cursor_js_1 = __importDefault(__require(124));
+const text_js_1 = __importStar(__require(123));
+const code_js_1 = __importStar(__require(142));
+const clipboard_js_1 = __require(138);
 const TokenAttributor = new parchment_1.ClassAttributor('code-token', 'hljs', {
     scope: parchment_1.Scope.INLINE
 });
@@ -64006,17 +73836,17 @@ Syntax.DEFAULTS = {
 //# sourceMappingURL=syntax.js.map
 
 },
-161: function(module, exports, __require, __externalRequire) {
+168: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/table.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const quill_delta_1 = __importDefault(__require(106));
-const quill_js_1 = __importDefault(__require(101));
-const module_js_1 = __importDefault(__require(123));
-const table_js_1 = __require(162);
+const quill_delta_1 = __importDefault(__require(113));
+const quill_js_1 = __importDefault(__require(108));
+const module_js_1 = __importDefault(__require(130));
+const table_js_1 = __require(169);
 class Table extends module_js_1.default {
     static register() {
         quill_js_1.default.register(table_js_1.TableCell);
@@ -64151,7 +73981,7 @@ exports.default = Table;
 //# sourceMappingURL=table.js.map
 
 },
-162: function(module, exports, __require, __externalRequire) {
+169: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/table.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -64160,8 +73990,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TableContainer = exports.TableBody = exports.TableRow = exports.TableCell = void 0;
 exports.tableId = tableId;
-const block_js_1 = __importDefault(__require(113));
-const container_js_1 = __importDefault(__require(129));
+const block_js_1 = __importDefault(__require(120));
+const container_js_1 = __importDefault(__require(136));
 class TableCell extends block_js_1.default {
     static { this.blotName = 'table'; }
     static { this.tagName = 'TD'; }
@@ -64348,7 +74178,7 @@ function tableId() {
 //# sourceMappingURL=table.js.map
 
 },
-163: function(module, exports, __require, __externalRequire) {
+170: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/toolbar.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -64357,11 +74187,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = void 0;
 exports.addControls = addControls;
-const quill_delta_1 = __importDefault(__require(106));
-const parchment_1 = __require(105);
-const quill_js_1 = __importDefault(__require(101));
-const logger_js_1 = __importDefault(__require(122));
-const module_js_1 = __importDefault(__require(123));
+const quill_delta_1 = __importDefault(__require(113));
+const parchment_1 = __require(112);
+const quill_js_1 = __importDefault(__require(108));
+const logger_js_1 = __importDefault(__require(129));
+const module_js_1 = __importDefault(__require(130));
 const debug = (0, logger_js_1.default)('quill:toolbar');
 class Toolbar extends module_js_1.default {
     constructor(quill, options) {
@@ -64648,7 +74478,7 @@ Toolbar.DEFAULTS = {
 //# sourceMappingURL=toolbar.js.map
 
 },
-164: function(module, exports, __require, __externalRequire) {
+171: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/ui/icons.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -64736,7 +74566,7 @@ exports.default = {
 //# sourceMappingURL=icons.js.map
 
 },
-165: function(module, exports, __require, __externalRequire) {
+172: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/ui/picker.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -64915,14 +74745,14 @@ exports.default = Picker;
 //# sourceMappingURL=picker.js.map
 
 },
-166: function(module, exports, __require, __externalRequire) {
+173: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/ui/color-picker.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const picker_js_1 = __importDefault(__require(165));
+const picker_js_1 = __importDefault(__require(172));
 class ColorPicker extends picker_js_1.default {
     constructor(select, label) {
         super(select);
@@ -64955,14 +74785,14 @@ exports.default = ColorPicker;
 //# sourceMappingURL=color-picker.js.map
 
 },
-167: function(module, exports, __require, __externalRequire) {
+174: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/ui/icon-picker.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const picker_js_1 = __importDefault(__require(165));
+const picker_js_1 = __importDefault(__require(172));
 class IconPicker extends picker_js_1.default {
     constructor(select, icons) {
         super(select);
@@ -64987,7 +74817,7 @@ exports.default = IconPicker;
 //# sourceMappingURL=icon-picker.js.map
 
 },
-168: function(module, exports, __require, __externalRequire) {
+175: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/ui/tooltip.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -65047,7 +74877,7 @@ exports.default = Tooltip;
 //# sourceMappingURL=tooltip.js.map
 
 },
-169: function(module, exports, __require, __externalRequire) {
+176: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/themes/bubble.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -65088,12 +74918,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.BubbleTooltip = void 0;
-const lodash_es_1 = __require(102);
-const emitter_js_1 = __importDefault(__require(119));
-const base_js_1 = __importStar(__require(170));
-const selection_js_1 = __require(118);
-const icons_js_1 = __importDefault(__require(164));
-const quill_js_1 = __importDefault(__require(101));
+const lodash_es_1 = __require(109);
+const emitter_js_1 = __importDefault(__require(126));
+const base_js_1 = __importStar(__require(177));
+const selection_js_1 = __require(125);
+const icons_js_1 = __importDefault(__require(171));
+const quill_js_1 = __importDefault(__require(108));
 const TOOLBAR_CONFIG = [['bold', 'italic', 'link'], [{
             header: 1
         }, {
@@ -65210,7 +75040,7 @@ BubbleTheme.DEFAULTS = (0, lodash_es_1.merge)({}, base_js_1.default.DEFAULTS, {
 //# sourceMappingURL=bubble.js.map
 
 },
-170: function(module, exports, __require, __externalRequire) {
+177: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/themes/base.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -65218,13 +75048,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.BaseTooltip = void 0;
-const lodash_es_1 = __require(102);
-const emitter_js_1 = __importDefault(__require(119));
-const theme_js_1 = __importDefault(__require(126));
-const color_picker_js_1 = __importDefault(__require(166));
-const icon_picker_js_1 = __importDefault(__require(167));
-const picker_js_1 = __importDefault(__require(165));
-const tooltip_js_1 = __importDefault(__require(168));
+const lodash_es_1 = __require(109);
+const emitter_js_1 = __importDefault(__require(126));
+const theme_js_1 = __importDefault(__require(133));
+const color_picker_js_1 = __importDefault(__require(173));
+const icon_picker_js_1 = __importDefault(__require(174));
+const picker_js_1 = __importDefault(__require(172));
+const tooltip_js_1 = __importDefault(__require(175));
 const ALIGNS = [false, 'center', 'right', 'justify'];
 const COLORS = ['#000000', '#e60000', '#ff9900', '#ffff00', '#008a00', '#0066cc', '#9933ff', '#ffffff', '#facccc', '#ffebcc', '#ffffcc', '#cce8cc', '#cce0f5', '#ebd6ff', '#bbbbbb', '#f06666', '#ffc266', '#ffff66', '#66b966', '#66a3e0', '#c285ff', '#888888', '#a10000', '#b26b00', '#b2b200', '#006100', '#0047b2', '#6b24b2', '#444444', '#5c0000', '#663d00', '#666600', '#003700', '#002966', '#3d1466'];
 const FONTS = [false, 'serif', 'monospace'];
@@ -65486,7 +75316,7 @@ function fillSelect(select, values) {
 //# sourceMappingURL=base.js.map
 
 },
-171: function(module, exports, __require, __externalRequire) {
+178: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/themes/snow.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -65526,13 +75356,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const lodash_es_1 = __require(102);
-const emitter_js_1 = __importDefault(__require(119));
-const base_js_1 = __importStar(__require(170));
-const link_js_1 = __importDefault(__require(153));
-const selection_js_1 = __require(118);
-const icons_js_1 = __importDefault(__require(164));
-const quill_js_1 = __importDefault(__require(101));
+const lodash_es_1 = __require(109);
+const emitter_js_1 = __importDefault(__require(126));
+const base_js_1 = __importStar(__require(177));
+const link_js_1 = __importDefault(__require(160));
+const selection_js_1 = __require(125);
+const icons_js_1 = __importDefault(__require(171));
+const quill_js_1 = __importDefault(__require(108));
 const TOOLBAR_CONFIG = [[{
             header: ['1', '2', '3', false]
         }], ['bold', 'italic', 'underline', 'link'], [{
@@ -65656,7 +75486,7 @@ exports.default = SnowTheme;
 //# sourceMappingURL=snow.js.map
 
 },
-172: function(module, exports, __require, __externalRequire) {
+179: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/FormulaStyle.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -66755,14 +76585,14 @@ body {
 exports.getBaseStyleText = getBaseStyleText;
 
 },
-173: function(module, exports, __require, __externalRequire) {
+180: function(module, exports, __require, __externalRequire) {
 // /src/core/YeMindAssociativeLine.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const AssociativeLine_1 = __importDefault(__require(174));
+const AssociativeLine_1 = __importDefault(__require(181));
 const BaseAssociativeLine = AssociativeLine_1.default;
 /**
  * Keeps the upstream editable Bézier relation-line implementation while
@@ -66791,18 +76621,18 @@ class YeMindAssociativeLine extends BaseAssociativeLine {
 exports.default = YeMindAssociativeLine;
 
 },
-174: function(module, exports, __require, __externalRequire) {
+181: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/AssociativeLine.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(45);
-const uuid_1 = __require(46);
-const associativeLineUtils_1 = __require(175);
-const associativeLineControls_1 = __importDefault(__require(176));
-const associativeLineText_1 = __importDefault(__require(177));
+const utils_1 = __require(52);
+const uuid_1 = __require(53);
+const associativeLineUtils_1 = __require(182);
+const associativeLineControls_1 = __importDefault(__require(183));
+const associativeLineText_1 = __importDefault(__require(184));
 const styleProps = [
     'associativeLineWidth',
     'associativeLineColor',
@@ -67466,12 +77296,12 @@ AssociativeLine.instanceName = 'associativeLine';
 exports.default = AssociativeLine;
 
 },
-175: function(module, exports, __require, __externalRequire) {
+182: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/associativeLine/associativeLineUtils.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDefaultControlPointOffsets = exports.getNodeLinePath = exports.computeNodePoints = exports.getNodePoint = exports.calcPoint = exports.cubicBezierPath = exports.joinCubicBezierPath = exports.computeCubicBezierPathPoints = exports.getAssociativeLineTargetIndex = void 0;
-const index_1 = __require(45);
+const index_1 = __require(52);
 // 获取目标节点在起始节点的目标数组中的索引
 const getAssociativeLineTargetIndex = (node, toNode) => {
     return node.getData('associativeLineTargets').findIndex(item => {
@@ -67785,11 +77615,11 @@ const getDefaultControlPointOffsets = (startPoint, endPoint) => {
 exports.getDefaultControlPointOffsets = getDefaultControlPointOffsets;
 
 },
-176: function(module, exports, __require, __externalRequire) {
+183: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/associativeLine/associativeLineControls.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const associativeLineUtils_1 = __require(175);
+const associativeLineUtils_1 = __require(182);
 // 创建控制点、连线节点
 function createControlNodes(node, toNode) {
     let { associativeLineActiveColor } = this.getStyleConfig(node, toNode);
@@ -68053,12 +77883,12 @@ exports.default = {
 };
 
 },
-177: function(module, exports, __require, __externalRequire) {
+184: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/associativeLine/associativeLineText.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const svg_js_1 = __require(53);
-const index_1 = __require(45);
+const svg_js_1 = __require(60);
+const index_1 = __require(52);
 const ASSOCIATIVE_LINE_TEXT_EDIT_WRAP = 'associative-line-text-edit-warp';
 // 创建文字节点
 function createText(data) {
@@ -68247,16 +78077,16 @@ exports.default = {
 };
 
 },
-178: function(module, exports, __require, __externalRequire) {
+185: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/OuterFrame.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(45);
-const outerFrameUtils_1 = __require(179);
-const outerFrameText_1 = __importDefault(__require(180));
+const utils_1 = __require(52);
+const outerFrameUtils_1 = __require(186);
+const outerFrameText_1 = __importDefault(__require(187));
 // 默认外框样式
 const defaultStyle = {
     // 外框圆角大小
@@ -68612,12 +78442,12 @@ OuterFrame.defaultStyle = defaultStyle;
 exports.default = OuterFrame;
 
 },
-179: function(module, exports, __require, __externalRequire) {
+186: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/outerFrame/outerFrameUtils.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getNodeOuterFrameList = exports.parseAddNodeList = void 0;
-const utils_1 = __require(45);
+const utils_1 = __require(52);
 // 解析要添加外框的节点实例列表
 const parseAddNodeList = list => {
     // 找出顶层节点
@@ -68745,12 +78575,12 @@ const getNodeOuterFrameList = node => {
 exports.getNodeOuterFrameList = getNodeOuterFrameList;
 
 },
-180: function(module, exports, __require, __externalRequire) {
+187: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/outerFrame/outerFrameText.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const svg_js_1 = __require(53);
-const index_1 = __require(45);
+const svg_js_1 = __require(60);
+const index_1 = __require(52);
 const OUTER_FRAME_TEXT_EDIT_WRAP = 'outer-frame-text-edit-warp';
 // 创建文字节点
 function createText(el, cur, range) {
@@ -68972,7 +78802,7 @@ exports.default = {
 };
 
 },
-181: function(module, exports, __require, __externalRequire) {
+188: function(module, exports, __require, __externalRequire) {
 // /src/core/YeMindNodeImgAdjust.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -68981,7 +78811,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.imageDeleteIcon = imageDeleteIcon;
 exports.imagePreviewIcon = imagePreviewIcon;
-const NodeImgAdjust_1 = __importDefault(__require(182));
+const NodeImgAdjust_1 = __importDefault(__require(189));
 function imageDeleteIcon() {
     return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9 7V4.8h6V7M8 10v7M12 10v7M16 10v7M6.5 7l.8 13h9.4l.8-13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
@@ -68990,47 +78820,10 @@ function imagePreviewIcon() {
 }
 const BaseNodeImgAdjust = NodeImgAdjust_1.default;
 class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
-    constructor() {
-        super(...arguments);
-        this.pinnedUid = '';
-    }
-    pin(node, img) {
-        if (!node || !img || this.mindMap?.opt?.readonly)
-            return;
-        this.pinnedUid = String(node?.getData?.('uid') ?? node?.uid ?? '');
-        this.node = node;
-        this.img = img;
-        this.rect = img.rbox?.() ?? null;
-        if (this.rect) {
-            if (this.isShowHandleEl)
-                this.setHandleElRect();
-            else
-                this.showHandleEl();
-            this.handleEl?.setAttribute?.('data-yemind-image-pinned', 'true');
-        }
-    }
-    unpin() {
-        this.pinnedUid = '';
-        this.handleEl?.removeAttribute?.('data-yemind-image-pinned');
-        if (!this.isMousedown)
-            BaseNodeImgAdjust.prototype.hideHandleEl.call(this);
-    }
-    hideHandleEl() {
-        if (this.pinnedUid && !this.isMousedown)
-            return;
-        BaseNodeImgAdjust.prototype.hideHandleEl.call(this);
-    }
     onNodeImgMousemove(node, img) {
-        const uid = String(node?.getData?.('uid') ?? node?.uid ?? '');
-        const active = Array.isArray(this.mindMap?.renderer?.activeNodeList)
-            && this.mindMap.renderer.activeNodeList.includes(node);
-        if (!active && this.pinnedUid !== uid)
-            return;
         BaseNodeImgAdjust.prototype.onNodeImgMousemove.call(this, node, img);
     }
     onNodeImgMouseleave() {
-        if (this.pinnedUid)
-            return;
         BaseNodeImgAdjust.prototype.onNodeImgMouseleave.call(this);
     }
     createResizeBtnEl() {
@@ -69043,6 +78836,7 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
             remove.setAttribute('aria-label', '删除节点图片');
             remove.setAttribute('title', '删除图片');
             remove.setAttribute('tabindex', '0');
+            remove.addEventListener('mouseenter', () => this.showHandleEl());
             remove.addEventListener('keydown', (event) => {
                 if (event.key !== 'Enter' && event.key !== ' ')
                     return;
@@ -69050,6 +78844,8 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
                 remove.click();
             });
         }
+        const resize = this.handleEl.querySelector('.node-image-resize');
+        resize?.addEventListener('mouseenter', () => this.showHandleEl());
         const size = Number(this.mindMap?.opt?.imgResizeBtnSize) || 24;
         const preview = document.createElement('button');
         preview.type = 'button';
@@ -69074,7 +78870,7 @@ exports.default = YeMindNodeImgAdjust;
 YeMindNodeImgAdjust.instanceName = 'nodeImgAdjust';
 
 },
-182: function(module, exports, __require, __externalRequire) {
+189: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/NodeImgAdjust.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -69082,8 +78878,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 // 节点图片大小调整插件
-const index_1 = __require(45);
-const btns_1 = __importDefault(__require(58));
+const index_1 = __require(52);
+const btns_1 = __importDefault(__require(65));
 class NodeImgAdjust {
     //  构造函数
     constructor({ mindMap }) {
@@ -69415,11 +79211,11 @@ NodeImgAdjust.instanceName = 'nodeImgAdjust';
 exports.default = NodeImgAdjust;
 
 },
-183: function(module, exports, __require, __externalRequire) {
+190: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/RainbowLines.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const index_1 = __require(45);
+const index_1 = __require(52);
 const defaultColorsList = [
     'rgb(255, 213, 73)',
     'rgb(255, 136, 126)',
@@ -69503,7 +79299,7 @@ RainbowLines.instanceName = 'rainbowLines';
 exports.default = RainbowLines;
 
 },
-184: function(module, exports, __require, __externalRequire) {
+191: function(module, exports, __require, __externalRequire) {
 // /src/editor/YeMindRichText.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -69512,13 +79308,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.YEMIND_RICH_TEXT_FORMATS = exports.YEMIND_SIZE_VALUES = exports.YEMIND_FONT_VALUES = void 0;
 exports.registerYeMindFormats = registerYeMindFormats;
-const RichText_1 = __importDefault(__require(185));
-const utils_1 = __require(45);
-const quill_1 = __importDefault(__require(99));
-const quill_delta_1 = __importDefault(__require(106));
-const parchment_1 = __require(105);
-const textEditingPolicy_1 = __require(18);
-const richTextGeometry_1 = __require(186);
+const RichText_1 = __importDefault(__require(192));
+const utils_1 = __require(52);
+const quill_1 = __importDefault(__require(106));
+const quill_delta_1 = __importDefault(__require(113));
+const parchment_1 = __require(112);
+const textEditingPolicy_1 = __require(24);
+const richTextGeometry_1 = __require(193);
 exports.YEMIND_FONT_VALUES = [
     'sans-serif',
     'serif',
@@ -69964,20 +79760,20 @@ class YeMindRichText extends RichText_1.default {
 exports.default = YeMindRichText;
 
 },
-185: function(module, exports, __require, __externalRequire) {
+192: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/RichText.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const quill_1 = __importDefault(__require(99));
-const quill_delta_1 = __importDefault(__require(106));
+const quill_1 = __importDefault(__require(106));
+const quill_delta_1 = __importDefault(__require(113));
 __require(1);
-const utils_1 = __require(45);
-const constant_1 = __require(36);
-const MindMapNode_1 = __importDefault(__require(43));
-const parchment_1 = __require(105);
+const utils_1 = __require(52);
+const constant_1 = __require(43);
+const MindMapNode_1 = __importDefault(__require(50));
+const parchment_1 = __require(112);
 let extended = false;
 // 扩展quill的字体列表
 let fontFamilyList = [
@@ -70760,7 +80556,7 @@ RichText.instanceName = 'richText';
 exports.default = RichText;
 
 },
-186: function(module, exports, __require, __externalRequire) {
+193: function(module, exports, __require, __externalRequire) {
 // /src/editor/richTextGeometry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -70918,26 +80714,33 @@ function resolveRenderedTextRect(node) {
 }
 
 },
-187: function(module, exports, __require, __externalRequire) {
+194: function(module, exports, __require, __externalRequire) {
 // /src/core/nodeDecorations.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.YEMIND_ICON_LIST = void 0;
+exports.YEMIND_ICON_LIST = exports.YEMIND_LEGACY_ICON_LIST = void 0;
 exports.configureNodeDecorations = configureNodeDecorations;
+exports.createYemindIconList = createYemindIconList;
 exports.createNodePrefixContent = createNodePrefixContent;
 exports.createNodePostfixContent = createNodePostfixContent;
-const nodeNoteState_1 = __require(188);
+const nodeNoteState_1 = __require(195);
+const localAssetCatalogs_1 = __require(15);
 let decorationSettings = { showTodoBadge: true, showCommentBadge: true };
 function configureNodeDecorations(patch) {
     decorationSettings = { ...decorationSettings, ...patch };
 }
-exports.YEMIND_ICON_LIST = [{
+exports.YEMIND_LEGACY_ICON_LIST = [{
         name: 'YeMind', type: 'yemind', list: [
             { name: 'star', icon: svg('★') }, { name: 'flag', icon: svg('⚑') },
             { name: 'question', icon: svg('?') }, { name: 'idea', icon: svg('✦') },
             { name: 'check', icon: svg('✓') }, { name: 'warning', icon: svg('!') },
         ],
     }];
+function createYemindIconList(pluginBaseUrl) {
+    return [...exports.YEMIND_LEGACY_ICON_LIST, ...(0, localAssetCatalogs_1.createMarkerIconList)(pluginBaseUrl)];
+}
+/** Backward-compatible default used by tests and non-SiYuan previews. */
+exports.YEMIND_ICON_LIST = createYemindIconList();
 function svg(text) {
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#176b50"/><text x="16" y="21" text-anchor="middle" font-size="17" font-family="Arial,sans-serif" font-weight="700" fill="#fff">${text}</text></svg>`;
 }
@@ -71005,13 +80808,13 @@ function createNodePostfixContent(node) {
 }
 
 },
-188: function(module, exports, __require, __externalRequire) {
+195: function(module, exports, __require, __externalRequire) {
 // /src/content/nodeNoteState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.normalizeNodeNote = normalizeNodeNote;
 exports.updateNodeNote = updateNodeNote;
-const sanitizeRichHtml_1 = __require(189);
+const sanitizeRichHtml_1 = __require(196);
 function cleanDimension(value) {
     const number = Number(value);
     return Number.isFinite(number) && number > 0 ? Math.round(number) : undefined;
@@ -71056,7 +80859,7 @@ function updateNodeNote(previous, html, now = Date.now(), size = {}) {
 }
 
 },
-189: function(module, exports, __require, __externalRequire) {
+196: function(module, exports, __require, __externalRequire) {
 // /src/content/sanitizeRichHtml.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -71112,7 +80915,7 @@ function sanitizeRichHtml(value) {
 }
 
 },
-190: function(module, exports, __require, __externalRequire) {
+197: function(module, exports, __require, __externalRequire) {
 // /src/core/dragBehavior.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -71190,7 +80993,7 @@ function buildDragAndLayoutOptions(settings) {
 }
 
 },
-191: function(module, exports, __require, __externalRequire) {
+198: function(module, exports, __require, __externalRequire) {
 // /src/core/relationConfig.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -71205,7 +81008,7 @@ function buildRelationOptions(settings) {
 }
 
 },
-192: function(module, exports, __require, __externalRequire) {
+199: function(module, exports, __require, __externalRequire) {
 // /src/core/outerFrameConfig.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -71228,7 +81031,7 @@ function buildOuterFrameOptions(settings) {
 }
 
 },
-193: function(module, exports, __require, __externalRequire) {
+200: function(module, exports, __require, __externalRequire) {
 // /src/editor/shortcutSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -71267,7 +81070,7 @@ function shouldBlockUpstreamShortcut(shortcut, nodes, readonly) {
 }
 
 },
-194: function(module, exports, __require, __externalRequire) {
+201: function(module, exports, __require, __externalRequire) {
 // /src/core/themeColorRuntime.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -71420,7 +81223,64 @@ function configureThemeColorRuntime(mindMap, config) {
 }
 
 },
-195: function(module, exports, __require, __externalRequire) {
+202: function(module, exports, __require, __externalRequire) {
+// /src/core/measurementHost.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.stabilizeMindMapMeasurementHost = stabilizeMindMapMeasurementHost;
+const registeredMaps = new WeakSet();
+function measurementElements(map) {
+    const caches = map.commonCaches;
+    if (!caches)
+        return [];
+    return [
+        caches.measureRichtextNodeTextSizeEl,
+        caches.measureCustomNodeContentSizeEl,
+    ].filter((element) => element instanceof HTMLElement);
+}
+function moveMeasurementElements(map, target) {
+    let moved = false;
+    measurementElements(map).forEach((element) => {
+        if (element.parentElement === target)
+            return;
+        element.dataset.yemindMeasurementOwner = 'true';
+        element.setAttribute('aria-hidden', 'true');
+        target.appendChild(element);
+        moved = true;
+    });
+    return moved;
+}
+/**
+ * simple-mind-map creates rich-text measurement nodes inside its canvas.
+ * SiYuan can keep inactive tabs mounted with a hidden canvas, which makes
+ * getBoundingClientRect() return zero and collapses text nodes into pills.
+ */
+function stabilizeMindMapMeasurementHost(map, target = document.body) {
+    const relocate = () => {
+        const moved = moveMeasurementElements(map, target);
+        if (moved)
+            map.reRender?.(null, 'yemind-measurement-host');
+        return moved;
+    };
+    const moved = relocate();
+    if (!registeredMaps.has(map)) {
+        registeredMaps.add(map);
+        // The upstream cache elements can be created during the first render,
+        // after the MindMap constructor returns. Recheck at render completion.
+        map.on?.('node_tree_render_end', relocate);
+        map.on?.('beforeDestroy', () => {
+            measurementElements(map).forEach((element) => element.remove());
+        });
+        queueMicrotask(relocate);
+        if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+            window.requestAnimationFrame(relocate);
+        }
+    }
+    return moved;
+}
+
+},
+203: function(module, exports, __require, __externalRequire) {
 // /src/core/relationData.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -71502,14 +81362,14 @@ function sanitizeAssociativeLines(input) {
 }
 
 },
-196: function(module, exports, __require, __externalRequire) {
+204: function(module, exports, __require, __externalRequire) {
 // /src/core/commands.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createCommandAdapter = createCommandAdapter;
-const nodeContentState_1 = __require(197);
-const codeBlock_1 = __require(198);
-const nodeStyle_1 = __require(199);
+const nodeContentState_1 = __require(205);
+const codeBlock_1 = __require(206);
+const nodeStyle_1 = __require(207);
 function createCommandAdapter(mindMap) {
     const activeNodes = () => Array.isArray(mindMap.renderer?.activeNodeList)
         ? mindMap.renderer.activeNodeList
@@ -71755,6 +81615,14 @@ function createCommandAdapter(mindMap) {
             forEachActive((node) => mindMap.execCommand('SET_NODE_HYPERLINK', node, link, title)); },
         setImage: (image) => { if (canMutate())
             forEachActive((node) => mindMap.execCommand('SET_NODE_IMAGE', node, image)); },
+        setClipart: (image) => {
+            if (!canMutate())
+                return;
+            forEachActive((node) => {
+                mindMap.execCommand('SET_NODE_IMAGE', node, image);
+                mindMap.execCommand('SET_NODE_DATA', node, { yemindClipartId: image.id, imgPlacement: 'top' });
+            });
+        },
         insertFormula: (formula, mode = 'inline') => {
             if (!canMutate())
                 return;
@@ -72089,7 +81957,7 @@ function createCommandAdapter(mindMap) {
 }
 
 },
-197: function(module, exports, __require, __externalRequire) {
+205: function(module, exports, __require, __externalRequire) {
 // /src/content/nodeContentState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72140,7 +82008,7 @@ function normalizeStringList(values) {
 }
 
 },
-198: function(module, exports, __require, __externalRequire) {
+206: function(module, exports, __require, __externalRequire) {
 // /src/editor/codeBlock.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72203,7 +82071,7 @@ function deleteCodeBlock(quill, block) {
 }
 
 },
-199: function(module, exports, __require, __externalRequire) {
+207: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeStyle.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72310,15 +82178,15 @@ function resetNodeStylePatch() {
 }
 
 },
-200: function(module, exports, __require, __externalRequire) {
+208: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.openCheckpointManager = openCheckpointManager;
 const siyuan_1 = __externalRequire("siyuan");
-const checkpointPresentation_1 = __require(201);
-const dialogs_1 = __require(19);
-const checkpointDialogTemplate_1 = __require(202);
+const checkpointPresentation_1 = __require(209);
+const dialogs_1 = __require(25);
+const checkpointDialogTemplate_1 = __require(210);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -72385,7 +82253,7 @@ function openCheckpointManager(options) {
 }
 
 },
-201: function(module, exports, __require, __externalRequire) {
+209: function(module, exports, __require, __externalRequire) {
 // /src/checkpoints/checkpointPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72421,12 +82289,12 @@ function renderCheckpointListHtml(checkpoints, options) {
 }
 
 },
-202: function(module, exports, __require, __externalRequire) {
+210: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialogTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildCheckpointDialogContent = buildCheckpointDialogContent;
-const checkpointPresentation_1 = __require(201);
+const checkpointPresentation_1 = __require(209);
 function buildCheckpointDialogContent(checkpoints, readonly) {
     return `<div class="b3-dialog__content ymz-checkpoint-dialog">
     <div class="ymz-checkpoint-dialog__intro">检查点保存在独立历史文件中。恢复前会自动保存当前状态为保护检查点。</div>
@@ -72438,7 +82306,7 @@ function buildCheckpointDialogContent(checkpoints, readonly) {
 }
 
 },
-203: function(module, exports, __require, __externalRequire) {
+211: function(module, exports, __require, __externalRequire) {
 // /src/ui/contextMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72447,9 +82315,9 @@ exports.openNodeContextMenu = openNodeContextMenu;
 const siyuan_1 = __externalRequire("siyuan");
 const layoutPresets_1 = __require(13);
 const themePresets_1 = __require(11);
-const projectControls_1 = __require(28);
-const nodeContentDialogs_1 = __require(204);
-const nodeContentMenu_1 = __require(209);
+const projectControls_1 = __require(35);
+const nodeContentDialogs_1 = __require(212);
+const nodeContentMenu_1 = __require(217);
 function openCanvasContextMenu(event, commands, options) {
     event.preventDefault();
     event.stopPropagation();
@@ -72560,8 +82428,9 @@ function openNodeContextMenu(event, commands, options = {}) {
             { icon: 'iconYeMindNote', label: '备注', disabled: !availability.nodeContent, click: run('note', () => (0, nodeContentDialogs_1.openNoteDialog)(commands)) },
             { icon: 'iconYeMindComment', label: '批注', disabled: !availability.nodeContent, click: run('comments', () => (0, nodeContentDialogs_1.openCommentsDialog)(commands)) },
             { icon: 'iconTags', label: '标签', disabled: !availability.nodeContent, click: run('tags', () => (0, nodeContentDialogs_1.openTagsDialog)(commands)) },
-            { icon: 'iconEmoji', label: '图标', disabled: !availability.nodeContent, click: run('icons', () => (0, nodeContentDialogs_1.openIconsDialog)(commands)) },
+            { icon: 'iconEmoji', label: '图标', disabled: !availability.nodeContent, click: run('icons', () => options.onMarkers?.()) },
             { icon: 'iconLink', label: '链接', disabled: !availability.nodeContent, click: run('node-link', () => options.onNodeLink ? options.onNodeLink() : (0, nodeContentDialogs_1.openLinkDialog)(commands)) },
+            { icon: 'iconImage', label: '剪贴图', disabled: !availability.nodeContent, click: run('clipart', () => options.onClipart?.()) },
             { icon: 'iconImage', label: '图片', disabled: !availability.nodeContent, click: run('image', () => (0, nodeContentDialogs_1.openImageDialog)(commands)) },
             { icon: 'iconCode', label: '代码块', disabled: !availability.codeBlock, click: run('code-block', () => options.onCodeBlock?.()) },
             { icon: 'iconMath', label: '公式', disabled: !availability.nodeContent, click: run('formula', () => (0, nodeContentDialogs_1.openFormulaDialog)(commands)) },
@@ -72580,7 +82449,7 @@ function openNodeContextMenu(event, commands, options = {}) {
 }
 
 },
-204: function(module, exports, __require, __externalRequire) {
+212: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72593,13 +82462,13 @@ exports.openImageDialog = openImageDialog;
 exports.openNoteDialog = openNoteDialog;
 exports.openCommentsDialog = openCommentsDialog;
 exports.showNodeActionUnavailable = showNodeActionUnavailable;
-const imageFileLoading_1 = __require(205);
+const imageFileLoading_1 = __require(213);
 const siyuan_1 = __externalRequire("siyuan");
-const nodeContentState_1 = __require(197);
-const dialogResize_1 = __require(206);
-const commentsPresentation_1 = __require(207);
-const inlineLink_1 = __require(208);
-const nodeNoteState_1 = __require(188);
+const nodeContentState_1 = __require(205);
+const dialogResize_1 = __require(214);
+const commentsPresentation_1 = __require(215);
+const inlineLink_1 = __require(216);
+const nodeNoteState_1 = __require(195);
 function activeData(commands) {
     return commands.getPrimaryNodeData() ?? {};
 }
@@ -73003,7 +82872,7 @@ function escapeAttribute(value) {
 }
 
 },
-205: function(module, exports, __require, __externalRequire) {
+213: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageFileLoading.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73021,7 +82890,7 @@ async function loadImageFileSelection(file, dependencies) {
 }
 
 },
-206: function(module, exports, __require, __externalRequire) {
+214: function(module, exports, __require, __externalRequire) {
 // /src/ui/dialogResize.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73088,7 +82957,7 @@ function bindDialogResize(handle, container) {
 }
 
 },
-207: function(module, exports, __require, __externalRequire) {
+215: function(module, exports, __require, __externalRequire) {
 // /src/ui/commentsPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73138,7 +83007,7 @@ function escapeAttribute(value) {
 }
 
 },
-208: function(module, exports, __require, __externalRequire) {
+216: function(module, exports, __require, __externalRequire) {
 // /src/editor/inlineLink.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73166,7 +83035,7 @@ function isSiyuanInlineLink(value) {
 }
 
 },
-209: function(module, exports, __require, __externalRequire) {
+217: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73174,7 +83043,7 @@ exports.NODE_CONTENT_MENU_LABELS = void 0;
 exports.createTodoMenuDescriptor = createTodoMenuDescriptor;
 exports.createSummaryMenuDescriptor = createSummaryMenuDescriptor;
 exports.createNodeMenuAvailability = createNodeMenuAvailability;
-const nodeContentState_1 = __require(197);
+const nodeContentState_1 = __require(205);
 exports.NODE_CONTENT_MENU_LABELS = [
     '添加待办',
     '删除待办',
@@ -73235,7 +83104,7 @@ function createNodeMenuAvailability(input) {
 }
 
 },
-210: function(module, exports, __require, __externalRequire) {
+218: function(module, exports, __require, __externalRequire) {
 // /src/ui/richTextDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73243,7 +83112,7 @@ exports.CODE_LANGUAGES = void 0;
 exports.openInlineLinkDialog = openInlineLinkDialog;
 exports.openCodeBlockDialog = openCodeBlockDialog;
 const siyuan_1 = __externalRequire("siyuan");
-const inlineLink_1 = __require(208);
+const inlineLink_1 = __require(216);
 const CODE_LANGUAGES = [
     ['plain', '纯文本'],
     ['javascript', 'JavaScript'],
@@ -73383,7 +83252,7 @@ function openCodeBlockDialog(commands, settings) {
 }
 
 },
-211: function(module, exports, __require, __externalRequire) {
+219: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorStats.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73416,15 +83285,15 @@ function calculateEditorStats(tree) {
 }
 
 },
-212: function(module, exports, __require, __externalRequire) {
+220: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createEditorTemplate = createEditorTemplate;
 const themePresets_1 = __require(11);
 const layoutPresets_1 = __require(13);
-const colorSchemes_1 = __require(15);
-const projectControls_1 = __require(28);
+const colorSchemes_1 = __require(21);
+const projectControls_1 = __require(35);
 function createEditorTemplate(title, theme = 'yemind-default', lineStyle = 'curve') {
     return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
@@ -73437,12 +83306,12 @@ function createEditorTemplate(title, theme = 'yemind-default', lineStyle = 'curv
           <button data-action="view-outline">大纲</button>
           <button class="ymz-icon-button" data-action="open-search" title="项目内搜索" aria-label="项目内搜索">${(0, projectControls_1.searchIcon)()}</button>
           <span class="ymz-separator"></span>
-          <label class="ymz-project-control" data-project-control="layout" title="结构">
-            ${(0, projectControls_1.projectControlIcon)('layout')}<span>结构</span>
-            <select data-action="layout" aria-label="结构">
-              ${(0, layoutPresets_1.layoutOptionsHtml)('logicalStructure')}
-            </select>
-          </label>
+          <button class="ymz-project-control ymz-project-button" data-project-control="layout" data-action="layout-gallery" title="结构">
+            ${(0, projectControls_1.projectControlIcon)('layout')}<span data-role="layout-label">结构</span>
+          </button>
+          <select data-action="layout" aria-label="结构" hidden>
+            ${(0, layoutPresets_1.layoutOptionsHtml)('logicalStructure')}
+          </select>
           <label class="ymz-project-control" data-project-control="theme" title="主题">
             ${(0, projectControls_1.projectControlIcon)('theme')}<span>主题</span>
             <select data-action="theme" aria-label="主题">
@@ -73493,6 +83362,11 @@ function createEditorTemplate(title, theme = 'yemind-default', lineStyle = 'curv
         </div>
 
         <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式" aria-label="退出禅模式"><span class="ymz-zen-exit__idle"><span class="ymz-zen-exit__icon" aria-hidden="true">${(0, projectControls_1.meditationIcon)()}</span></span><span class="ymz-zen-exit__label"><span class="ymz-zen-exit__icon" aria-hidden="true">${(0, projectControls_1.meditationIcon)()}</span><span>退出禅模式</span></span></button>
+
+        <aside class="ymz-layout-gallery" data-role="layout-gallery-panel" aria-label="导图结构" hidden>
+          <header class="ymz-layout-gallery__header"><strong>导图结构</strong><button type="button" data-layout-gallery-action="close" aria-label="关闭结构面板">×</button></header>
+          <div class="ymz-layout-gallery__body" data-role="layout-gallery-body"></div>
+        </aside>
 
         <aside class="ymz-project-style-panel" data-role="project-style-panel" aria-label="整图样式" hidden>
           <header class="ymz-project-style-panel__header"><strong>样式</strong><button type="button" data-project-style-action="close" aria-label="关闭样式">×</button></header>
@@ -73560,7 +83434,7 @@ function escapeHtml(value) {
 }
 
 },
-213: function(module, exports, __require, __externalRequire) {
+221: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73569,7 +83443,7 @@ exports.resolveOutlineDropIntent = resolveOutlineDropIntent;
 exports.isOutlineTextSelectionTarget = isOutlineTextSelectionTarget;
 exports.shouldStartOutlinePointerDrag = shouldStartOutlinePointerDrag;
 exports.resolveOutlinePointerDropIntent = resolveOutlinePointerDropIntent;
-const treeDropIntent_1 = __require(88);
+const treeDropIntent_1 = __require(95);
 const OUTLINE_ROW_SPLIT_RATIO = 0.5;
 function isOutlinePointerInDragZone(input) {
     const tolerance = Math.max(0, input.tolerance ?? 0);
@@ -73655,14 +83529,14 @@ function resolveOutlinePointerDropIntent(input) {
 }
 
 },
-214: function(module, exports, __require, __externalRequire) {
+222: function(module, exports, __require, __externalRequire) {
 // /src/editor/StructuredOutlineEditorController.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StructuredOutlineEditorController = void 0;
-const sanitizeRichHtml_1 = __require(189);
-const outlineTextDocument_1 = __require(215);
-const structuredOutlineDocument_1 = __require(216);
+const sanitizeRichHtml_1 = __require(196);
+const outlineTextDocument_1 = __require(223);
+const structuredOutlineDocument_1 = __require(224);
 const INDENT_SIZE = 22;
 const PLAIN_INDENT = '    ';
 const BLOCK_TAGS = new Set(['DIV', 'P', 'LI', 'UL', 'OL', 'SECTION', 'ARTICLE']);
@@ -75374,7 +85248,7 @@ function closestElement(node) {
 }
 
 },
-215: function(module, exports, __require, __externalRequire) {
+223: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineTextDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75763,7 +85637,7 @@ function insertOutlineNewline(value, selectionStart, selectionEnd) {
 }
 
 },
-216: function(module, exports, __require, __externalRequire) {
+224: function(module, exports, __require, __externalRequire) {
 // /src/editor/structuredOutlineDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75775,8 +85649,8 @@ exports.buildTreeFromStructuredOutline = buildTreeFromStructuredOutline;
 exports.parseStructuredOutlinePaste = parseStructuredOutlinePaste;
 exports.serializeStructuredOutlineBlocks = serializeStructuredOutlineBlocks;
 exports.createStructuredOutlineUid = createStructuredOutlineUid;
-const sanitizeRichHtml_1 = __require(189);
-const outlineTextDocument_1 = __require(215);
+const sanitizeRichHtml_1 = __require(196);
+const outlineTextDocument_1 = __require(223);
 function cloneValue(value) {
     if (typeof structuredClone === 'function') {
         try {
@@ -76010,7 +85884,7 @@ function createStructuredOutlineUid() {
 }
 
 },
-217: function(module, exports, __require, __externalRequire) {
+225: function(module, exports, __require, __externalRequire) {
 // /src/editor/splitPane.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76033,15 +85907,15 @@ function ratioFromPointer(rect, clientX) {
 }
 
 },
-218: function(module, exports, __require, __externalRequire) {
+226: function(module, exports, __require, __externalRequire) {
 // /src/editor/RichTextToolbar.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RichTextToolbar = void 0;
-const YeMindRichText_1 = __require(184);
-const richTextActions_1 = __require(219);
-const colorPresentation_1 = __require(220);
-const colorPalette_1 = __require(221);
+const YeMindRichText_1 = __require(191);
+const richTextActions_1 = __require(227);
+const colorPresentation_1 = __require(228);
+const colorPalette_1 = __require(229);
 function option(value, label) {
     return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -76461,7 +86335,7 @@ class RichTextToolbar {
 exports.RichTextToolbar = RichTextToolbar;
 
 },
-219: function(module, exports, __require, __externalRequire) {
+227: function(module, exports, __require, __externalRequire) {
 // /src/editor/richTextActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76492,7 +86366,7 @@ function isClozeFormat(formatInfo) {
 }
 
 },
-220: function(module, exports, __require, __externalRequire) {
+228: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76559,7 +86433,7 @@ function presentColor(value) {
 }
 
 },
-221: function(module, exports, __require, __externalRequire) {
+229: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPalette.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76590,12 +86464,13 @@ function colorPaletteInnerHtml() {
 }
 
 },
-222: function(module, exports, __require, __externalRequire) {
+230: function(module, exports, __require, __externalRequire) {
 // /src/editor/selectionPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createSelectionPresentation = createSelectionPresentation;
 exports.promoteNodeToPrimary = promoteNodeToPrimary;
+exports.restoreContextMenuSelection = restoreContextMenuSelection;
 exports.shouldBlockRootDeleteShortcut = shouldBlockRootDeleteShortcut;
 function createSelectionPresentation(rawCount, mode) {
     const count = Number.isFinite(rawCount) && rawCount > 0 ? Math.floor(rawCount) : 0;
@@ -76615,7 +86490,7 @@ function createSelectionPresentation(rawCount, mode) {
  * Keep the existing multi-selection while making the node that opened the
  * context menu the command target (activeNodeList[0]).
  */
-function promoteNodeToPrimary(renderer, node) {
+function promoteNodeToPrimary(renderer, node, emit = true) {
     const list = Array.isArray(renderer?.activeNodeList) ? renderer.activeNodeList : null;
     if (!list || !node)
         return false;
@@ -76624,7 +86499,22 @@ function promoteNodeToPrimary(renderer, node) {
         return false;
     list.splice(index, 1);
     list.unshift(node);
-    renderer.emitNodeActiveEvent?.();
+    if (emit)
+        renderer.emitNodeActiveEvent?.();
+    return true;
+}
+/**
+ * Restore the selection snapshot taken before simple-mind-map handles a node
+ * context menu. Upstream clears the list before emitting node_contextmenu.
+ */
+function restoreContextMenuSelection(renderer, nodes, primary) {
+    if (!renderer || !primary || !Array.isArray(nodes) || nodes.length < 2 || !nodes.includes(primary))
+        return false;
+    renderer.clearActiveNodeList?.();
+    nodes.forEach((node) => renderer.addNodeToActiveList?.(node, true));
+    promoteNodeToPrimary(renderer, primary, false);
+    if (renderer.activeNodeList?.[0] === primary)
+        renderer.emitNodeActiveEvent?.();
     return true;
 }
 /** Prevent the upstream root-delete shortcut from clearing the complete map. */
@@ -76635,7 +86525,7 @@ function shouldBlockRootDeleteShortcut(key, nodes) {
 }
 
 },
-223: function(module, exports, __require, __externalRequire) {
+231: function(module, exports, __require, __externalRequire) {
 // /src/editor/saveRevision.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76666,7 +86556,7 @@ class SaveRevisionTracker {
 exports.SaveRevisionTracker = SaveRevisionTracker;
 
 },
-224: function(module, exports, __require, __externalRequire) {
+232: function(module, exports, __require, __externalRequire) {
 // /src/editor/relationPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76682,7 +86572,7 @@ function createRelationPresentation(input) {
 }
 
 },
-225: function(module, exports, __require, __externalRequire) {
+233: function(module, exports, __require, __externalRequire) {
 // /src/editor/outerFramePresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76741,7 +86631,7 @@ function createOuterFramePresentation(input) {
 }
 
 },
-226: function(module, exports, __require, __externalRequire) {
+234: function(module, exports, __require, __externalRequire) {
 // /src/editor/toolbarAvailability.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76763,12 +86653,12 @@ function createToolbarAvailability(input) {
 }
 
 },
-227: function(module, exports, __require, __externalRequire) {
+235: function(module, exports, __require, __externalRequire) {
 // /src/editor/linkNavigation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolveLinkNavigation = resolveLinkNavigation;
-const inlineLink_1 = __require(208);
+const inlineLink_1 = __require(216);
 function resolveLinkNavigation(value, externalMode) {
     const href = (0, inlineLink_1.normalizeInlineLink)(value, true);
     if (!href)
@@ -76780,7 +86670,7 @@ function resolveLinkNavigation(value, externalMode) {
 }
 
 },
-228: function(module, exports, __require, __externalRequire) {
+236: function(module, exports, __require, __externalRequire) {
 // /src/plugin/visibleElement.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76845,7 +86735,7 @@ function waitForNonZeroSize(element, options = {}) {
 }
 
 },
-229: function(module, exports, __require, __externalRequire) {
+237: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeImageInput.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76906,15 +86796,15 @@ function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
 }
 
 },
-230: function(module, exports, __require, __externalRequire) {
+238: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeHoverPreview.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeHoverPreview = void 0;
 exports.computeHoverPreviewPlacement = computeHoverPreviewPlacement;
 exports.buildHoverPreviewHtml = buildHoverPreviewHtml;
-const sanitizeRichHtml_1 = __require(189);
-const commentsPresentation_1 = __require(207);
+const sanitizeRichHtml_1 = __require(196);
+const commentsPresentation_1 = __require(215);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -77107,7 +86997,7 @@ class NodeHoverPreview {
 exports.NodeHoverPreview = NodeHoverPreview;
 
 },
-231: function(module, exports, __require, __externalRequire) {
+239: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageLightbox.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -77210,13 +87100,13 @@ class ImageLightbox {
 exports.ImageLightbox = ImageLightbox;
 
 },
-232: function(module, exports, __require, __externalRequire) {
+240: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeStylePanel = void 0;
-const colorPalette_1 = __require(221);
-const colorPresentation_1 = __require(220);
+const colorPalette_1 = __require(229);
+const colorPresentation_1 = __require(228);
 const INPUT_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 function toInputValue(value) {
     return value === null || value === undefined ? '' : String(value);
@@ -77527,15 +87417,15 @@ class NodeStylePanel {
 exports.NodeStylePanel = NodeStylePanel;
 
 },
-233: function(module, exports, __require, __externalRequire) {
+241: function(module, exports, __require, __externalRequire) {
 // /src/ui/projectStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectStylePanel = void 0;
-const projectStyle_1 = __require(14);
-const colorPalette_1 = __require(221);
-const colorPresentation_1 = __require(220);
-const colorSchemes_1 = __require(15);
+const projectStyle_1 = __require(20);
+const colorPalette_1 = __require(229);
+const colorPresentation_1 = __require(228);
+const colorSchemes_1 = __require(21);
 const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 class ProjectStylePanel {
     constructor(root, initial, readonly, onChange) {
@@ -77835,7 +87725,251 @@ class ProjectStylePanel {
 exports.ProjectStylePanel = ProjectStylePanel;
 
 },
-234: function(module, exports, __require, __externalRequire) {
+242: function(module, exports, __require, __externalRequire) {
+// /src/ui/layoutGalleryPanel.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LayoutGalleryPanel = void 0;
+const localAssetCatalogs_1 = __require(15);
+const layoutAssetPresets_1 = __require(14);
+class LayoutGalleryPanel {
+    constructor(root, pluginBaseUrl, initialId, readonly, onSelect) {
+        this.root = root;
+        this.readonly = readonly;
+        this.onSelect = onSelect;
+        this.onDocumentMouseDown = (event) => {
+            if (this.panel.hidden)
+                return;
+            const target = event.target;
+            if (!(target instanceof Node))
+                return;
+            if (!this.panel.contains(target))
+                this.hide();
+        };
+        this.panel = root.querySelector('[data-role="layout-gallery-panel"]');
+        this.resolver = (0, localAssetCatalogs_1.createRuntimeAssetResolver)(pluginBaseUrl);
+        this.selectedId = (0, layoutAssetPresets_1.normalizeLayoutAssetId)(initialId);
+        this.panel.querySelector('[data-layout-gallery-action="close"]')?.addEventListener('click', () => this.hide());
+        document.addEventListener('mousedown', this.onDocumentMouseDown);
+        this.render();
+    }
+    setSelected(id) {
+        this.selectedId = (0, layoutAssetPresets_1.normalizeLayoutAssetId)(id);
+        this.render();
+    }
+    toggle(anchor) {
+        if (!this.panel.hidden) {
+            this.hide();
+            return;
+        }
+        this.show(anchor);
+    }
+    show(anchor) {
+        const rootRect = this.root.getBoundingClientRect();
+        const anchorRect = anchor.getBoundingClientRect();
+        this.panel.hidden = false;
+        const width = Math.min(520, Math.max(360, rootRect.width - 24));
+        this.panel.style.width = `${width}px`;
+        const maxLeft = Math.max(8, rootRect.width - width - 8);
+        this.panel.style.left = `${Math.min(maxLeft, Math.max(8, anchorRect.left - rootRect.left))}px`;
+        this.panel.style.top = `${Math.max(8, anchorRect.bottom - rootRect.top + 6)}px`;
+    }
+    hide() { this.panel.hidden = true; }
+    destroy() {
+        document.removeEventListener('mousedown', this.onDocumentMouseDown);
+        this.panel.remove();
+    }
+    render() {
+        const body = this.panel.querySelector('[data-role="layout-gallery-body"]');
+        if (!body)
+            return;
+        body.innerHTML = '';
+        (0, localAssetCatalogs_1.groupLayouts)().forEach((group) => {
+            const section = document.createElement('section');
+            section.className = 'ymz-layout-gallery__group';
+            const title = document.createElement('h4');
+            title.textContent = group.label;
+            const grid = document.createElement('div');
+            grid.className = 'ymz-layout-gallery__grid';
+            group.items.forEach((item) => {
+                const preset = (0, layoutAssetPresets_1.getLayoutAssetPreset)(item.id);
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `ymz-layout-gallery__item${item.id === this.selectedId ? ' is-selected' : ''}`;
+                button.title = item.title;
+                button.disabled = this.readonly();
+                const image = document.createElement('img');
+                image.src = this.resolver.layoutUrl(item.relativePath);
+                image.alt = item.title;
+                image.draggable = false;
+                const label = document.createElement('span');
+                label.textContent = item.title;
+                button.append(image, label);
+                button.addEventListener('click', () => {
+                    if (this.readonly())
+                        return;
+                    this.selectedId = item.id;
+                    this.onSelect(item.id, preset.engineLayout);
+                    this.render();
+                    this.hide();
+                });
+                grid.appendChild(button);
+            });
+            section.append(title, grid);
+            body.appendChild(section);
+        });
+    }
+}
+exports.LayoutGalleryPanel = LayoutGalleryPanel;
+
+},
+243: function(module, exports, __require, __externalRequire) {
+// /src/ui/localAssetDialogs.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.openMarkerPicker = openMarkerPicker;
+exports.openClipartPicker = openClipartPicker;
+const siyuan_1 = __externalRequire("siyuan");
+const localAssetCatalogs_1 = __require(15);
+const nodeContentState_1 = __require(205);
+function applyStyle(element, style) {
+    Object.assign(element.style, style);
+}
+function selectedIcons(commands) {
+    return (0, nodeContentState_1.normalizeStringList)(commands.getPrimaryNodeData()?.icon);
+}
+function openMarkerPicker(commands, options = {}) {
+    let activeGroup = options.initialGroupId
+        ?? selectedIcons(commands).map(localAssetCatalogs_1.markerGroupForValue).find(Boolean)
+        ?? localAssetCatalogs_1.markerCatalog.groups[0]?.id
+        ?? 'priority';
+    const dialog = new siyuan_1.Dialog({
+        title: '图标',
+        content: `<div class="b3-dialog__content ymz-local-asset-dialog ymz-marker-dialog">
+      <div class="ymz-asset-tabs" data-role="marker-tabs"></div>
+      <div class="ymz-marker-grid" data-role="marker-grid"></div>
+      <footer class="ymz-local-asset-dialog__footer"><button type="button" class="b3-button b3-button--cancel" data-action="clear-markers">清除图标</button><span class="fn__space"></span><button type="button" class="b3-button b3-button--text" data-action="close">完成</button></footer>
+    </div>`,
+        width: '520px',
+    });
+    const tabs = dialog.element.querySelector('[data-role="marker-tabs"]');
+    const grid = dialog.element.querySelector('[data-role="marker-grid"]');
+    const render = () => {
+        const selected = new Set(selectedIcons(commands));
+        tabs.innerHTML = '';
+        localAssetCatalogs_1.markerCatalog.groups.forEach((group) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `ymz-asset-tab${group.id === activeGroup ? ' is-active' : ''}`;
+            button.textContent = group.label;
+            button.addEventListener('click', () => { activeGroup = group.id; render(); });
+            tabs.appendChild(button);
+        });
+        grid.innerHTML = '';
+        localAssetCatalogs_1.markerCatalog.items.filter((item) => item.groupId === activeGroup).forEach((item) => {
+            const value = (0, localAssetCatalogs_1.markerValue)(item);
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `ymz-marker-option${selected.has(value) ? ' is-selected' : ''}`;
+            button.title = `${item.groupLabel} ${item.orderInGroup}`;
+            button.setAttribute('aria-label', button.title);
+            const preview = document.createElement('span');
+            preview.className = 'ymz-marker-sprite';
+            applyStyle(preview, (0, localAssetCatalogs_1.markerButtonStyle)(options.pluginBaseUrl, item));
+            button.appendChild(preview);
+            button.addEventListener('click', () => {
+                const next = new Set(selectedIcons(commands));
+                if (next.has(value))
+                    next.delete(value);
+                else
+                    next.add(value);
+                commands.setIcons(Array.from(next));
+                render();
+            });
+            grid.appendChild(button);
+        });
+    };
+    dialog.element.querySelector('[data-action="clear-markers"]')?.addEventListener('click', () => {
+        commands.setIcons([]);
+        render();
+    });
+    dialog.element.querySelector('[data-action="close"]')?.addEventListener('click', () => dialog.destroy());
+    render();
+}
+function openClipartPicker(commands, options = {}) {
+    const resolver = (0, localAssetCatalogs_1.createRuntimeAssetResolver)(options.pluginBaseUrl);
+    let categoryId = '';
+    let query = '';
+    let limit = 120;
+    const dialog = new siyuan_1.Dialog({
+        title: '剪贴图',
+        content: `<div class="b3-dialog__content ymz-local-asset-dialog ymz-clipart-dialog">
+      <div class="ymz-clipart-search"><input class="b3-text-field" data-role="clipart-search" placeholder="搜索剪贴图"><span data-role="clipart-count"></span></div>
+      <div class="ymz-asset-tabs ymz-asset-tabs--scroll" data-role="clipart-tabs"></div>
+      <div class="ymz-clipart-grid" data-role="clipart-grid"></div>
+      <button type="button" class="b3-button b3-button--outline ymz-clipart-more" data-action="clipart-more" hidden>加载更多</button>
+    </div>`,
+        width: '760px',
+    });
+    const search = dialog.element.querySelector('[data-role="clipart-search"]');
+    const tabs = dialog.element.querySelector('[data-role="clipart-tabs"]');
+    const grid = dialog.element.querySelector('[data-role="clipart-grid"]');
+    const count = dialog.element.querySelector('[data-role="clipart-count"]');
+    const more = dialog.element.querySelector('[data-action="clipart-more"]');
+    const render = () => {
+        tabs.innerHTML = '';
+        const all = document.createElement('button');
+        all.type = 'button';
+        all.className = `ymz-asset-tab${categoryId ? '' : ' is-active'}`;
+        all.textContent = '全部';
+        all.addEventListener('click', () => { categoryId = ''; limit = 120; render(); });
+        tabs.appendChild(all);
+        localAssetCatalogs_1.clipartCatalog.categories.forEach((category) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `ymz-asset-tab${category.id === categoryId ? ' is-active' : ''}`;
+            button.textContent = category.label;
+            button.addEventListener('click', () => { categoryId = category.id; limit = 120; render(); });
+            tabs.appendChild(button);
+        });
+        const matches = (0, localAssetCatalogs_1.searchClipart)(query, categoryId || undefined);
+        count.textContent = `${matches.length} 个`;
+        grid.innerHTML = '';
+        matches.slice(0, limit).forEach((item) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'ymz-clipart-option';
+            button.title = item.label;
+            const img = document.createElement('img');
+            img.src = resolver.clipartUrl(item.relativePath);
+            img.alt = item.label;
+            img.draggable = false;
+            const label = document.createElement('span');
+            label.textContent = item.label;
+            button.append(img, label);
+            button.addEventListener('click', () => {
+                commands.setClipart({
+                    id: item.id,
+                    url: resolver.clipartUrl(item.relativePath),
+                    title: item.label,
+                    width: 72,
+                    height: 72,
+                    custom: true,
+                });
+                dialog.destroy();
+            });
+            grid.appendChild(button);
+        });
+        more.hidden = matches.length <= limit;
+    };
+    search.addEventListener('input', () => { query = search.value; limit = 120; render(); });
+    more.addEventListener('click', () => { limit += 120; render(); });
+    render();
+    search.focus();
+}
+
+},
+244: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRichTextVisibility.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -77872,7 +88006,7 @@ function synchronizeCanvasRichTextVisibility(map) {
 }
 
 },
-235: function(module, exports, __require, __externalRequire) {
+245: function(module, exports, __require, __externalRequire) {
 // /src/editor/searchPanelState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -77892,12 +88026,12 @@ function setSearchReplaceExpanded(panel, expanded) {
 }
 
 },
-236: function(module, exports, __require, __externalRequire) {
+246: function(module, exports, __require, __externalRequire) {
 // /src/core/appearanceTransaction.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.applyMapAppearanceTransaction = applyMapAppearanceTransaction;
-const themeColorRuntime_1 = __require(194);
+const themeColorRuntime_1 = __require(201);
 const APPEARANCE_RENDER_SOURCE = 'changeTheme';
 const REVISION_BY_MAP = new WeakMap();
 const ACTIVE_NODE_UIDS_BY_MAP = new WeakMap();
@@ -78005,7 +88139,7 @@ function applyMapAppearanceTransaction(options) {
 }
 
 },
-237: function(module, exports, __require, __externalRequire) {
+247: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeQuickActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78223,7 +88357,7 @@ class NodeQuickActionsController {
 exports.NodeQuickActionsController = NodeQuickActionsController;
 
 },
-238: function(module, exports, __require, __externalRequire) {
+248: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRightDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78356,7 +88490,7 @@ class CanvasRightDragController {
 exports.CanvasRightDragController = CanvasRightDragController;
 
 },
-239: function(module, exports, __require, __externalRequire) {
+249: function(module, exports, __require, __externalRequire) {
 // /src/editor/focusHighlight.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78421,7 +88555,7 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
 }
 
 },
-240: function(module, exports, __require, __externalRequire) {
+250: function(module, exports, __require, __externalRequire) {
 // /src/editor/editingSurfaceCoordinator.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78506,7 +88640,7 @@ class EditingSurfaceCoordinator {
 exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
 
 },
-241: function(module, exports, __require, __externalRequire) {
+251: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78528,7 +88662,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-242: function(module, exports, __require, __externalRequire) {
+252: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78552,7 +88686,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-243: function(module, exports, __require, __externalRequire) {
+253: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78608,7 +88742,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-244: function(module, exports, __require, __externalRequire) {
+254: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78634,7 +88768,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-245: function(module, exports, __require, __externalRequire) {
+255: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78650,7 +88784,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-246: function(module, exports, __require, __externalRequire) {
+256: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78677,7 +88811,7 @@ function initializePluginStartup(options) {
 }
 
 },
-247: function(module, exports, __require, __externalRequire) {
+257: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

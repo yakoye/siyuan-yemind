@@ -37,8 +37,8 @@ with sync_playwright() as p:
       window.__smoke={plugin,map,context};window.__tabOptions.init.call(context);
     }""", image_data)
     page.wait_for_selector('g.smm-node image', timeout=30000)
-    page.locator('g.smm-node image').click()
-    page.wait_for_function("""()=>{const handle=document.querySelector('.node-img-handle');return Boolean(handle)&&getComputedStyle(handle).display==='block'&&handle.dataset.yemindImagePinned==='true'}""", timeout=5000)
+    page.locator('g.smm-node image').hover()
+    page.wait_for_function("""()=>{const handle=document.querySelector('.node-img-handle');return Boolean(handle)&&getComputedStyle(handle).display==='block'&&Boolean(handle.querySelector('.node-image-remove'))&&Boolean(handle.querySelector('.node-image-resize'))&&Boolean(handle.querySelector('.ymz-node-image-preview'))}""", timeout=5000)
 
     metrics = page.evaluate("""()=>{
       const handle=document.querySelector('.node-img-handle');
@@ -59,6 +59,8 @@ with sync_playwright() as p:
 
     initial = page.evaluate("""()=>JSON.parse(JSON.stringify(window.__smoke.plugin.repository.get(window.__smoke.map.id).data))""")
     for selector in ['.node-image-remove', '.ymz-node-image-preview']:
+        page.locator('g.smm-node image').hover()
+        page.wait_for_timeout(50)
         box = page.locator(selector).bounding_box()
         page.dispatch_event(selector, 'mousedown', {'button': 0, 'clientX': box['x'] + box['width']/2, 'clientY': box['y'] + box['height']/2})
         page.mouse.move(box['x'] + 50, box['y'] + 50, steps=5)

@@ -1,5 +1,6 @@
 const LEGACY_DEFAULT_NODE_TEXTS = new Set([
   '新节点',
+  '中心主题',
   '主要主题',
   '另一个主题',
   '未命名导图',

@@ -1,8 +1,5 @@
 import { Dialog, showMessage } from 'siyuan';
 import type { DiagnosticsService } from '../diagnostics/DiagnosticsService';
-import { downloadDiagnosticsArchive } from '../diagnostics/DiagnosticsService';
-import { openDiagnosticsDialog } from '../ui/diagnosticsDialog';
-import { RELEASE_INFO, resolveVersionConsistency } from '../releaseInfo';
 import { findShortcutConflicts, keyboardEventToShortcut } from '../editor/shortcuts';
 import {
   DEFAULT_SETTINGS,
@@ -28,20 +25,6 @@ export interface SettingsDialogOptions {
   diagnostics?: DiagnosticsService;
 }
 
-async function writeClipboard(text: string): Promise<void> {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text);
-    return;
-  }
-  const input = document.createElement('textarea');
-  input.value = text;
-  input.style.position = 'fixed';
-  input.style.opacity = '0';
-  document.body.append(input);
-  input.select();
-  document.execCommand('copy');
-  input.remove();
-}
 
 export function openYeMindSettingsDialog(store: SettingsStore, options: SettingsDialogOptions = {}): void {
   let draft = cloneSettings(store.get());
@@ -59,29 +42,6 @@ export function openYeMindSettingsDialog(store: SettingsStore, options: Settings
   const saveButton = shell.querySelector<HTMLButtonElement>('[data-settings-action="save"]');
   let hasShortcutConflict = false;
   let saving = false;
-
-  const updateAbout = async (): Promise<void> => {
-    const consistency = options.diagnostics
-      ? await options.diagnostics.getVersionConsistency()
-      : resolveVersionConsistency(null);
-    const environment = options.diagnostics?.getEnvironmentSnapshot() ?? {};
-    const setText = (role: string, value: string): void => {
-      const target = shell.querySelector<HTMLElement>(`[data-about-version="${role}"]`);
-      if (target) target.textContent = value;
-    };
-    setText('manifest', consistency.manifest);
-    setText('runtime', consistency.runtime);
-    setText('build', consistency.build);
-    setText('siyuan', String(environment.appVersion ?? 'unknown'));
-    const status = shell.querySelector<HTMLElement>('[data-about-consistency]');
-    if (status) {
-      status.dataset.aboutConsistency = consistency.consistent ? 'pass' : 'fail';
-      status.textContent = consistency.consistent
-        ? '版本一致：插件声明、运行时代码与构建版本相同。'
-        : '版本不一致：可能仍在运行旧缓存代码，请重新安装并重启思源。';
-    }
-  };
-  void updateAbout();
 
   const refreshConflicts = (): void => {
     const conflicts = findShortcutConflicts(draft.shortcutMap);
@@ -196,42 +156,6 @@ export function openYeMindSettingsDialog(store: SettingsStore, options: Settings
       } else {
         beginRecording(key, input);
       }
-    });
-  });
-
-  shell.querySelectorAll<HTMLButtonElement>('[data-about-action]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const action = button.dataset.aboutAction;
-      void (async () => {
-        if (action === 'copy-version') {
-          const consistency = options.diagnostics
-            ? await options.diagnostics.getVersionConsistency()
-            : resolveVersionConsistency(null);
-          const environment = options.diagnostics?.getEnvironmentSnapshot() ?? {};
-          await writeClipboard([
-            `${RELEASE_INFO.productName} ${RELEASE_INFO.version}`,
-            `插件声明版本: ${consistency.manifest}`,
-            `运行时代码版本: ${consistency.runtime}`,
-            `构建版本: ${consistency.build}`,
-            `构建标识: ${RELEASE_INFO.buildId}`,
-            `构建时间: ${RELEASE_INFO.buildTime}`,
-            `思源版本: ${String(environment.appVersion ?? 'unknown')}`,
-            `开发基线: ${RELEASE_INFO.hostBaseline}`,
-          ].join('\n'));
-          showMessage('版本信息已复制');
-        } else if (action === 'open-diagnostics') {
-          if (!options.diagnostics) return showMessage('诊断服务尚未就绪', 3500, 'error');
-          openDiagnosticsDialog(options.diagnostics);
-        } else if (action === 'export-diagnostics') {
-          if (!options.diagnostics) return showMessage('诊断服务尚未就绪', 3500, 'error');
-          const archive = await options.diagnostics.buildArchive(false);
-          downloadDiagnosticsArchive(archive.blob, archive.filename);
-          showMessage('诊断包已导出');
-        }
-      })().catch((error) => {
-        options.diagnostics?.recordError('settings', `about-${action}-failed`, error, undefined, true);
-        showMessage('关于页面操作失败', 4000, 'error');
-      });
     });
   });
 

@@ -14,12 +14,12 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
           <button data-action="view-outline">大纲</button>
           <button class="ymz-icon-button" data-action="open-search" title="项目内搜索" aria-label="项目内搜索">${searchIcon()}</button>
           <span class="ymz-separator"></span>
-          <label class="ymz-project-control" data-project-control="layout" title="结构">
-            ${projectControlIcon('layout')}<span>结构</span>
-            <select data-action="layout" aria-label="结构">
-              ${layoutOptionsHtml('logicalStructure')}
-            </select>
-          </label>
+          <button class="ymz-project-control ymz-project-button" data-project-control="layout" data-action="layout-gallery" title="结构">
+            ${projectControlIcon('layout')}<span data-role="layout-label">结构</span>
+          </button>
+          <select data-action="layout" aria-label="结构" hidden>
+            ${layoutOptionsHtml('logicalStructure')}
+          </select>
           <label class="ymz-project-control" data-project-control="theme" title="主题">
             ${projectControlIcon('theme')}<span>主题</span>
             <select data-action="theme" aria-label="主题">
@@ -70,6 +70,11 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
         </div>
 
         <button class="ymz-zen-exit" data-action="zen-exit" title="退出禅模式" aria-label="退出禅模式"><span class="ymz-zen-exit__idle"><span class="ymz-zen-exit__icon" aria-hidden="true">${meditationIcon()}</span></span><span class="ymz-zen-exit__label"><span class="ymz-zen-exit__icon" aria-hidden="true">${meditationIcon()}</span><span>退出禅模式</span></span></button>
+
+        <aside class="ymz-layout-gallery" data-role="layout-gallery-panel" aria-label="导图结构" hidden>
+          <header class="ymz-layout-gallery__header"><strong>导图结构</strong><button type="button" data-layout-gallery-action="close" aria-label="关闭结构面板">×</button></header>
+          <div class="ymz-layout-gallery__body" data-role="layout-gallery-body"></div>
+        </aside>
 
         <aside class="ymz-project-style-panel" data-role="project-style-panel" aria-label="整图样式" hidden>
           <header class="ymz-project-style-panel__header"><strong>样式</strong><button type="button" data-project-style-action="close" aria-label="关闭样式">×</button></header>

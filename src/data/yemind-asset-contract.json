@@ -1,0 +1,124 @@
+{
+  "contractVersion": "1.0.0",
+  "project": "siyuan-yemind",
+  "projectRoot": ".",
+  "assetRoot": "assets",
+  "immutableByDefault": true,
+  "resources": {
+    "markerSprite": {
+      "path": "icons/marker-sprite.png",
+      "catalog": "src/data/marker-catalog.json",
+      "total": 126
+    },
+    "clipart": {
+      "root": "clipart",
+      "catalog": "src/data/clipart-catalog.json",
+      "total": 806,
+      "categories": [
+        {
+          "id": "animal",
+          "label": "动物",
+          "folder": "01_动物",
+          "count": 60
+        },
+        {
+          "id": "plant",
+          "label": "植物",
+          "folder": "02_植物",
+          "count": 71
+        },
+        {
+          "id": "environment",
+          "label": "环境保护",
+          "folder": "03_环境保护",
+          "count": 37
+        },
+        {
+          "id": "weather",
+          "label": "天气",
+          "folder": "04_天气",
+          "count": 26
+        },
+        {
+          "id": "travel",
+          "label": "旅行",
+          "folder": "05_旅行",
+          "count": 59
+        },
+        {
+          "id": "business-office",
+          "label": "商务办公",
+          "folder": "06_商务办公",
+          "count": 117
+        },
+        {
+          "id": "profession",
+          "label": "职业",
+          "folder": "07_职业",
+          "count": 34
+        },
+        {
+          "id": "technology",
+          "label": "科技",
+          "folder": "08_科技",
+          "count": 89
+        },
+        {
+          "id": "education",
+          "label": "教育",
+          "folder": "09_教育",
+          "count": 58
+        },
+        {
+          "id": "food",
+          "label": "食品",
+          "folder": "10_食品",
+          "count": 112
+        },
+        {
+          "id": "festival",
+          "label": "节日",
+          "folder": "11_节日",
+          "count": 71
+        },
+        {
+          "id": "emoji",
+          "label": "表情",
+          "folder": "12_表情",
+          "count": 33
+        },
+        {
+          "id": "sports-equipment",
+          "label": "体育器材",
+          "folder": "13_体育器材",
+          "count": 39
+        }
+      ]
+    },
+    "layoutThumbnails": {
+      "root": "layout-thumbnails",
+      "catalog": "src/data/layout-catalog.local.json",
+      "existingRuntimeCatalog": "layout-thumbnails/layout-catalog.json",
+      "total": 28
+    },
+    "branding": [
+      "yemind-icon-128.png",
+      "yemind-icon-32.png",
+      "yemind-icon-64.png"
+    ]
+  },
+  "packaging": {
+    "defaultMode": "overlay-patch",
+    "requiresExistingLocalAssets": true,
+    "standaloneReleaseMustIncludeAssets": true,
+    "excludeFromOverlayZip": [
+      "assets/clipart/**",
+      "assets/icons/marker-sprite.png",
+      "assets/layout-thumbnails/**/*.svg",
+      "assets/layout-thumbnails/layout-thumbnails-contact-sheet.png",
+      "yemind-icon-32.png",
+      "yemind-icon-64.png",
+      "yemind-icon-128.png"
+    ]
+  }
+}

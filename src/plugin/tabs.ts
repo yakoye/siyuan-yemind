@@ -69,6 +69,7 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
             checkpointRepository: host.checkpointRepository,
             checkpointService: host.checkpointService,
             diagnostics: host.diagnostics,
+            pluginBaseUrl: `/plugins/${encodeURIComponent(plugin.name)}`,
             onMissing: () => this.tab.close(),
           });
           host.diagnostics.record('global-search', 'map-editor-ready', resolvedMapId, { pendingTarget: true });

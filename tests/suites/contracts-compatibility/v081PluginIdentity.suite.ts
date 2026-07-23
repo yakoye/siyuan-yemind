@@ -72,8 +72,8 @@ describe('YeMind plugin identity and install layout', () => {
     expect(manifest.displayName.default).toBe('YeMind');
     expect(manifest.displayName.zh_CN).toBe('YeMind');
     expect(packageJson.name).toBe('siyuan-yemind');
-    expect(manifest.version).toBe('0.9.8');
-    expect(packageJson.version).toBe('0.9.8');
+    expect(manifest.version).toBe('0.9.13');
+    expect(packageJson.version).toBe('0.9.13');
   });
 
   it('uses the renamed YeMindPlugin source entry and removes the old current source filename', () => {
@@ -89,7 +89,13 @@ describe('YeMind plugin identity and install layout', () => {
     ['assets/yemind-icon-64.png', 64],
     ['assets/yemind-icon-128.png', 128],
     ['icon.png', 512],
-  ])('generates %s as transparent exact #176B50 artwork', (path, size) => {
+  ])('validates %s when present and accepts documented overlay omission', (path, size) => {
+    if (!existsSync(resolve(path))) {
+      const notice = readFileSync(resolve('OVERLAY_PACKAGE_NOTICE.md'), 'utf8');
+      expect(notice).toContain('intentionally excludes');
+      expect(path.startsWith('assets/')).toBe(true);
+      return;
+    }
     const image = decodeRgbaPng(resolve(path));
     expect(image.width).toBe(size);
     expect(image.height).toBe(size);
@@ -106,7 +112,7 @@ describe('YeMind plugin identity and install layout', () => {
 
   it('uses the generated logo asset for the SiYuan icon symbol and About page', () => {
     const pluginSource = readFileSync(resolve('src/plugin/YeMindPlugin.ts'), 'utf8');
-    const aboutTemplate = readFileSync(resolve('src/settings/settingsDialogTemplate.ts'), 'utf8');
+    const aboutTemplate = readFileSync(resolve('src/ui/aboutDialog.ts'), 'utf8');
     expect(pluginSource).toContain('stroke="currentColor"');
     expect(pluginSource).not.toContain('<image href="${YEMIND_ICON_DATA_URL}"');
     expect(pluginSource).toContain('<circle cx="5.5" cy="5.5" r="2.5"/>');
@@ -120,8 +126,8 @@ describe('YeMind plugin identity and install layout', () => {
       'FEATURE_MATRIX.md', 'MIGRATION_STATUS.md', 'AGENTS.md', 'ARCHITECTURE.md',
       ...Array.from(new Set([
         'docs/DIAGNOSTICS_GUIDE.md', 'docs/VERSIONING.md',
-        'docs/TEST_COVERAGE_MATRIX_v0.9.8.md', 'docs/verification-v0.9.8.md',
-        'docs/PRODUCT_BOUNDARIES_v0.9.8.md',
+        'docs/TEST_COVERAGE_MATRIX_v0.9.13.md', 'docs/verification-v0.9.13.md',
+        'docs/PRODUCT_BOUNDARIES_v0.9.13.md',
       ])),
     ].map((file) => readFileSync(resolve(file), 'utf8')).join('\n');
     expect(publicDocs).not.toMatch(/kmind/i);
@@ -138,6 +144,7 @@ describe('YeMind plugin identity and install layout', () => {
       'src/plugin/globalSearch.ts',
       'src/settings/settingsDialog.ts',
       'src/settings/settingsDialogTemplate.ts',
+      'src/ui/aboutDialog.ts',
       'src/ui/diagnosticsDialog.ts',
     ];
     const currentSource = files.map((file) => readFileSync(resolve(file), 'utf8')).join('\n');

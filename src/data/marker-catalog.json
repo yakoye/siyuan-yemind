@@ -1,0 +1,1085 @@
+{
+  "version": "1.0.0",
+  "type": "css-sprite",
+  "image": "icons/marker-sprite.png",
+  "sourceSize": {
+    "width": 760,
+    "height": 976
+  },
+  "displaySize": {
+    "width": 380,
+    "height": 488
+  },
+  "iconSize": {
+    "width": 28,
+    "height": 28
+  },
+  "grid": {
+    "startX": 14,
+    "startY": 14,
+    "stepX": 36,
+    "stepY": 36,
+    "columns": 10
+  },
+  "total": 126,
+  "groups": [
+    {
+      "id": "priority",
+      "label": "优先级",
+      "count": 30,
+      "startIndex": 0
+    },
+    {
+      "id": "progress",
+      "label": "进度",
+      "count": 9,
+      "startIndex": 30
+    },
+    {
+      "id": "emoji",
+      "label": "表情",
+      "count": 18,
+      "startIndex": 39
+    },
+    {
+      "id": "avatar",
+      "label": "人像",
+      "count": 7,
+      "startIndex": 57
+    },
+    {
+      "id": "star",
+      "label": "星",
+      "count": 7,
+      "startIndex": 64
+    },
+    {
+      "id": "flag",
+      "label": "旗帜",
+      "count": 7,
+      "startIndex": 71
+    },
+    {
+      "id": "arrow",
+      "label": "箭头",
+      "count": 10,
+      "startIndex": 78
+    },
+    {
+      "id": "symbol",
+      "label": "符号",
+      "count": 38,
+      "startIndex": 88
+    }
+  ],
+  "items": [
+    {
+      "id": "priority-01",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 1,
+      "globalIndex": 0,
+      "backgroundPosition": "-14px -14px"
+    },
+    {
+      "id": "priority-02",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 2,
+      "globalIndex": 1,
+      "backgroundPosition": "-50px -14px"
+    },
+    {
+      "id": "priority-03",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 3,
+      "globalIndex": 2,
+      "backgroundPosition": "-86px -14px"
+    },
+    {
+      "id": "priority-04",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 4,
+      "globalIndex": 3,
+      "backgroundPosition": "-122px -14px"
+    },
+    {
+      "id": "priority-05",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 5,
+      "globalIndex": 4,
+      "backgroundPosition": "-158px -14px"
+    },
+    {
+      "id": "priority-06",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 6,
+      "globalIndex": 5,
+      "backgroundPosition": "-194px -14px"
+    },
+    {
+      "id": "priority-07",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 7,
+      "globalIndex": 6,
+      "backgroundPosition": "-230px -14px"
+    },
+    {
+      "id": "priority-08",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 8,
+      "globalIndex": 7,
+      "backgroundPosition": "-266px -14px"
+    },
+    {
+      "id": "priority-09",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 9,
+      "globalIndex": 8,
+      "backgroundPosition": "-302px -14px"
+    },
+    {
+      "id": "priority-10",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 10,
+      "globalIndex": 9,
+      "backgroundPosition": "-338px -14px"
+    },
+    {
+      "id": "priority-11",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 11,
+      "globalIndex": 10,
+      "backgroundPosition": "-14px -50px"
+    },
+    {
+      "id": "priority-12",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 12,
+      "globalIndex": 11,
+      "backgroundPosition": "-50px -50px"
+    },
+    {
+      "id": "priority-13",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 13,
+      "globalIndex": 12,
+      "backgroundPosition": "-86px -50px"
+    },
+    {
+      "id": "priority-14",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 14,
+      "globalIndex": 13,
+      "backgroundPosition": "-122px -50px"
+    },
+    {
+      "id": "priority-15",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 15,
+      "globalIndex": 14,
+      "backgroundPosition": "-158px -50px"
+    },
+    {
+      "id": "priority-16",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 16,
+      "globalIndex": 15,
+      "backgroundPosition": "-194px -50px"
+    },
+    {
+      "id": "priority-17",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 17,
+      "globalIndex": 16,
+      "backgroundPosition": "-230px -50px"
+    },
+    {
+      "id": "priority-18",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 18,
+      "globalIndex": 17,
+      "backgroundPosition": "-266px -50px"
+    },
+    {
+      "id": "priority-19",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 19,
+      "globalIndex": 18,
+      "backgroundPosition": "-302px -50px"
+    },
+    {
+      "id": "priority-20",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 20,
+      "globalIndex": 19,
+      "backgroundPosition": "-338px -50px"
+    },
+    {
+      "id": "priority-21",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 21,
+      "globalIndex": 20,
+      "backgroundPosition": "-14px -86px"
+    },
+    {
+      "id": "priority-22",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 22,
+      "globalIndex": 21,
+      "backgroundPosition": "-50px -86px"
+    },
+    {
+      "id": "priority-23",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 23,
+      "globalIndex": 22,
+      "backgroundPosition": "-86px -86px"
+    },
+    {
+      "id": "priority-24",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 24,
+      "globalIndex": 23,
+      "backgroundPosition": "-122px -86px"
+    },
+    {
+      "id": "priority-25",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 25,
+      "globalIndex": 24,
+      "backgroundPosition": "-158px -86px"
+    },
+    {
+      "id": "priority-26",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 26,
+      "globalIndex": 25,
+      "backgroundPosition": "-194px -86px"
+    },
+    {
+      "id": "priority-27",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 27,
+      "globalIndex": 26,
+      "backgroundPosition": "-230px -86px"
+    },
+    {
+      "id": "priority-28",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 28,
+      "globalIndex": 27,
+      "backgroundPosition": "-266px -86px"
+    },
+    {
+      "id": "priority-29",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 29,
+      "globalIndex": 28,
+      "backgroundPosition": "-302px -86px"
+    },
+    {
+      "id": "priority-30",
+      "groupId": "priority",
+      "groupLabel": "优先级",
+      "orderInGroup": 30,
+      "globalIndex": 29,
+      "backgroundPosition": "-338px -86px"
+    },
+    {
+      "id": "progress-01",
+      "groupId": "progress",
+      "groupLabel": "进度",
+      "orderInGroup": 1,
+      "globalIndex": 30,
+      "backgroundPosition": "-14px -122px"
+    },
+    {
+      "id": "progress-02",
+      "groupId": "progress",
+      "groupLabel": "进度",
+      "orderInGroup": 2,
+      "globalIndex": 31,
+      "backgroundPosition": "-50px -122px"
+    },
+    {
+      "id": "progress-03",
+      "groupId": "progress",
+      "groupLabel": "进度",
+      "orderInGroup": 3,
+      "globalIndex": 32,
+      "backgroundPosition": "-86px -122px"
+    },
+    {
+      "id": "progress-04",
+      "groupId": "progress",
+      "groupLabel": "进度",
+      "orderInGroup": 4,
+      "globalIndex": 33,
+      "backgroundPosition": "-122px -122px"
+    },
+    {
+      "id": "progress-05",
+      "groupId": "progress",
+      "groupLabel": "进度",
+      "orderInGroup": 5,
+      "globalIndex": 34,
+      "backgroundPosition": "-158px -122px"
+    },
+    {
+      "id": "progress-06",
+      "groupId": "progress",
+      "groupLabel": "进度",
+      "orderInGroup": 6,
+      "globalIndex": 35,
+      "backgroundPosition": "-194px -122px"
+    },
+    {
+      "id": "progress-07",
+      "groupId": "progress",
+      "groupLabel": "进度",
+      "orderInGroup": 7,
+      "globalIndex": 36,
+      "backgroundPosition": "-230px -122px"
+    },
+    {
+      "id": "progress-08",
+      "groupId": "progress",
+      "groupLabel": "进度",
+      "orderInGroup": 8,
+      "globalIndex": 37,
+      "backgroundPosition": "-266px -122px"
+    },
+    {
+      "id": "progress-09",
+      "groupId": "progress",
+      "groupLabel": "进度",
+      "orderInGroup": 9,
+      "globalIndex": 38,
+      "backgroundPosition": "-302px -122px"
+    },
+    {
+      "id": "emoji-01",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 1,
+      "globalIndex": 39,
+      "backgroundPosition": "-338px -122px"
+    },
+    {
+      "id": "emoji-02",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 2,
+      "globalIndex": 40,
+      "backgroundPosition": "-14px -158px"
+    },
+    {
+      "id": "emoji-03",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 3,
+      "globalIndex": 41,
+      "backgroundPosition": "-50px -158px"
+    },
+    {
+      "id": "emoji-04",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 4,
+      "globalIndex": 42,
+      "backgroundPosition": "-86px -158px"
+    },
+    {
+      "id": "emoji-05",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 5,
+      "globalIndex": 43,
+      "backgroundPosition": "-122px -158px"
+    },
+    {
+      "id": "emoji-06",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 6,
+      "globalIndex": 44,
+      "backgroundPosition": "-158px -158px"
+    },
+    {
+      "id": "emoji-07",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 7,
+      "globalIndex": 45,
+      "backgroundPosition": "-194px -158px"
+    },
+    {
+      "id": "emoji-08",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 8,
+      "globalIndex": 46,
+      "backgroundPosition": "-230px -158px"
+    },
+    {
+      "id": "emoji-09",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 9,
+      "globalIndex": 47,
+      "backgroundPosition": "-266px -158px"
+    },
+    {
+      "id": "emoji-10",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 10,
+      "globalIndex": 48,
+      "backgroundPosition": "-302px -158px"
+    },
+    {
+      "id": "emoji-11",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 11,
+      "globalIndex": 49,
+      "backgroundPosition": "-338px -158px"
+    },
+    {
+      "id": "emoji-12",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 12,
+      "globalIndex": 50,
+      "backgroundPosition": "-14px -194px"
+    },
+    {
+      "id": "emoji-13",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 13,
+      "globalIndex": 51,
+      "backgroundPosition": "-50px -194px"
+    },
+    {
+      "id": "emoji-14",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 14,
+      "globalIndex": 52,
+      "backgroundPosition": "-86px -194px"
+    },
+    {
+      "id": "emoji-15",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 15,
+      "globalIndex": 53,
+      "backgroundPosition": "-122px -194px"
+    },
+    {
+      "id": "emoji-16",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 16,
+      "globalIndex": 54,
+      "backgroundPosition": "-158px -194px"
+    },
+    {
+      "id": "emoji-17",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 17,
+      "globalIndex": 55,
+      "backgroundPosition": "-194px -194px"
+    },
+    {
+      "id": "emoji-18",
+      "groupId": "emoji",
+      "groupLabel": "表情",
+      "orderInGroup": 18,
+      "globalIndex": 56,
+      "backgroundPosition": "-230px -194px"
+    },
+    {
+      "id": "avatar-01",
+      "groupId": "avatar",
+      "groupLabel": "人像",
+      "orderInGroup": 1,
+      "globalIndex": 57,
+      "backgroundPosition": "-266px -194px"
+    },
+    {
+      "id": "avatar-02",
+      "groupId": "avatar",
+      "groupLabel": "人像",
+      "orderInGroup": 2,
+      "globalIndex": 58,
+      "backgroundPosition": "-302px -194px"
+    },
+    {
+      "id": "avatar-03",
+      "groupId": "avatar",
+      "groupLabel": "人像",
+      "orderInGroup": 3,
+      "globalIndex": 59,
+      "backgroundPosition": "-338px -194px"
+    },
+    {
+      "id": "avatar-04",
+      "groupId": "avatar",
+      "groupLabel": "人像",
+      "orderInGroup": 4,
+      "globalIndex": 60,
+      "backgroundPosition": "-14px -230px"
+    },
+    {
+      "id": "avatar-05",
+      "groupId": "avatar",
+      "groupLabel": "人像",
+      "orderInGroup": 5,
+      "globalIndex": 61,
+      "backgroundPosition": "-50px -230px"
+    },
+    {
+      "id": "avatar-06",
+      "groupId": "avatar",
+      "groupLabel": "人像",
+      "orderInGroup": 6,
+      "globalIndex": 62,
+      "backgroundPosition": "-86px -230px"
+    },
+    {
+      "id": "avatar-07",
+      "groupId": "avatar",
+      "groupLabel": "人像",
+      "orderInGroup": 7,
+      "globalIndex": 63,
+      "backgroundPosition": "-122px -230px"
+    },
+    {
+      "id": "star-01",
+      "groupId": "star",
+      "groupLabel": "星",
+      "orderInGroup": 1,
+      "globalIndex": 64,
+      "backgroundPosition": "-158px -230px"
+    },
+    {
+      "id": "star-02",
+      "groupId": "star",
+      "groupLabel": "星",
+      "orderInGroup": 2,
+      "globalIndex": 65,
+      "backgroundPosition": "-194px -230px"
+    },
+    {
+      "id": "star-03",
+      "groupId": "star",
+      "groupLabel": "星",
+      "orderInGroup": 3,
+      "globalIndex": 66,
+      "backgroundPosition": "-230px -230px"
+    },
+    {
+      "id": "star-04",
+      "groupId": "star",
+      "groupLabel": "星",
+      "orderInGroup": 4,
+      "globalIndex": 67,
+      "backgroundPosition": "-266px -230px"
+    },
+    {
+      "id": "star-05",
+      "groupId": "star",
+      "groupLabel": "星",
+      "orderInGroup": 5,
+      "globalIndex": 68,
+      "backgroundPosition": "-302px -230px"
+    },
+    {
+      "id": "star-06",
+      "groupId": "star",
+      "groupLabel": "星",
+      "orderInGroup": 6,
+      "globalIndex": 69,
+      "backgroundPosition": "-338px -230px"
+    },
+    {
+      "id": "star-07",
+      "groupId": "star",
+      "groupLabel": "星",
+      "orderInGroup": 7,
+      "globalIndex": 70,
+      "backgroundPosition": "-14px -266px"
+    },
+    {
+      "id": "flag-01",
+      "groupId": "flag",
+      "groupLabel": "旗帜",
+      "orderInGroup": 1,
+      "globalIndex": 71,
+      "backgroundPosition": "-50px -266px"
+    },
+    {
+      "id": "flag-02",
+      "groupId": "flag",
+      "groupLabel": "旗帜",
+      "orderInGroup": 2,
+      "globalIndex": 72,
+      "backgroundPosition": "-86px -266px"
+    },
+    {
+      "id": "flag-03",
+      "groupId": "flag",
+      "groupLabel": "旗帜",
+      "orderInGroup": 3,
+      "globalIndex": 73,
+      "backgroundPosition": "-122px -266px"
+    },
+    {
+      "id": "flag-04",
+      "groupId": "flag",
+      "groupLabel": "旗帜",
+      "orderInGroup": 4,
+      "globalIndex": 74,
+      "backgroundPosition": "-158px -266px"
+    },
+    {
+      "id": "flag-05",
+      "groupId": "flag",
+      "groupLabel": "旗帜",
+      "orderInGroup": 5,
+      "globalIndex": 75,
+      "backgroundPosition": "-194px -266px"
+    },
+    {
+      "id": "flag-06",
+      "groupId": "flag",
+      "groupLabel": "旗帜",
+      "orderInGroup": 6,
+      "globalIndex": 76,
+      "backgroundPosition": "-230px -266px"
+    },
+    {
+      "id": "flag-07",
+      "groupId": "flag",
+      "groupLabel": "旗帜",
+      "orderInGroup": 7,
+      "globalIndex": 77,
+      "backgroundPosition": "-266px -266px"
+    },
+    {
+      "id": "arrow-01",
+      "groupId": "arrow",
+      "groupLabel": "箭头",
+      "orderInGroup": 1,
+      "globalIndex": 78,
+      "backgroundPosition": "-302px -266px"
+    },
+    {
+      "id": "arrow-02",
+      "groupId": "arrow",
+      "groupLabel": "箭头",
+      "orderInGroup": 2,
+      "globalIndex": 79,
+      "backgroundPosition": "-338px -266px"
+    },
+    {
+      "id": "arrow-03",
+      "groupId": "arrow",
+      "groupLabel": "箭头",
+      "orderInGroup": 3,
+      "globalIndex": 80,
+      "backgroundPosition": "-14px -302px"
+    },
+    {
+      "id": "arrow-04",
+      "groupId": "arrow",
+      "groupLabel": "箭头",
+      "orderInGroup": 4,
+      "globalIndex": 81,
+      "backgroundPosition": "-50px -302px"
+    },
+    {
+      "id": "arrow-05",
+      "groupId": "arrow",
+      "groupLabel": "箭头",
+      "orderInGroup": 5,
+      "globalIndex": 82,
+      "backgroundPosition": "-86px -302px"
+    },
+    {
+      "id": "arrow-06",
+      "groupId": "arrow",
+      "groupLabel": "箭头",
+      "orderInGroup": 6,
+      "globalIndex": 83,
+      "backgroundPosition": "-122px -302px"
+    },
+    {
+      "id": "arrow-07",
+      "groupId": "arrow",
+      "groupLabel": "箭头",
+      "orderInGroup": 7,
+      "globalIndex": 84,
+      "backgroundPosition": "-158px -302px"
+    },
+    {
+      "id": "arrow-08",
+      "groupId": "arrow",
+      "groupLabel": "箭头",
+      "orderInGroup": 8,
+      "globalIndex": 85,
+      "backgroundPosition": "-194px -302px"
+    },
+    {
+      "id": "arrow-09",
+      "groupId": "arrow",
+      "groupLabel": "箭头",
+      "orderInGroup": 9,
+      "globalIndex": 86,
+      "backgroundPosition": "-230px -302px"
+    },
+    {
+      "id": "arrow-10",
+      "groupId": "arrow",
+      "groupLabel": "箭头",
+      "orderInGroup": 10,
+      "globalIndex": 87,
+      "backgroundPosition": "-266px -302px"
+    },
+    {
+      "id": "symbol-01",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 1,
+      "globalIndex": 88,
+      "backgroundPosition": "-302px -302px"
+    },
+    {
+      "id": "symbol-02",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 2,
+      "globalIndex": 89,
+      "backgroundPosition": "-338px -302px"
+    },
+    {
+      "id": "symbol-03",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 3,
+      "globalIndex": 90,
+      "backgroundPosition": "-14px -338px"
+    },
+    {
+      "id": "symbol-04",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 4,
+      "globalIndex": 91,
+      "backgroundPosition": "-50px -338px"
+    },
+    {
+      "id": "symbol-05",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 5,
+      "globalIndex": 92,
+      "backgroundPosition": "-86px -338px"
+    },
+    {
+      "id": "symbol-06",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 6,
+      "globalIndex": 93,
+      "backgroundPosition": "-122px -338px"
+    },
+    {
+      "id": "symbol-07",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 7,
+      "globalIndex": 94,
+      "backgroundPosition": "-158px -338px"
+    },
+    {
+      "id": "symbol-08",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 8,
+      "globalIndex": 95,
+      "backgroundPosition": "-194px -338px"
+    },
+    {
+      "id": "symbol-09",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 9,
+      "globalIndex": 96,
+      "backgroundPosition": "-230px -338px"
+    },
+    {
+      "id": "symbol-10",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 10,
+      "globalIndex": 97,
+      "backgroundPosition": "-266px -338px"
+    },
+    {
+      "id": "symbol-11",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 11,
+      "globalIndex": 98,
+      "backgroundPosition": "-302px -338px"
+    },
+    {
+      "id": "symbol-12",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 12,
+      "globalIndex": 99,
+      "backgroundPosition": "-338px -338px"
+    },
+    {
+      "id": "symbol-13",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 13,
+      "globalIndex": 100,
+      "backgroundPosition": "-14px -374px"
+    },
+    {
+      "id": "symbol-14",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 14,
+      "globalIndex": 101,
+      "backgroundPosition": "-50px -374px"
+    },
+    {
+      "id": "symbol-15",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 15,
+      "globalIndex": 102,
+      "backgroundPosition": "-86px -374px"
+    },
+    {
+      "id": "symbol-16",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 16,
+      "globalIndex": 103,
+      "backgroundPosition": "-122px -374px"
+    },
+    {
+      "id": "symbol-17",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 17,
+      "globalIndex": 104,
+      "backgroundPosition": "-158px -374px"
+    },
+    {
+      "id": "symbol-18",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 18,
+      "globalIndex": 105,
+      "backgroundPosition": "-194px -374px"
+    },
+    {
+      "id": "symbol-19",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 19,
+      "globalIndex": 106,
+      "backgroundPosition": "-230px -374px"
+    },
+    {
+      "id": "symbol-20",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 20,
+      "globalIndex": 107,
+      "backgroundPosition": "-266px -374px"
+    },
+    {
+      "id": "symbol-21",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 21,
+      "globalIndex": 108,
+      "backgroundPosition": "-302px -374px"
+    },
+    {
+      "id": "symbol-22",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 22,
+      "globalIndex": 109,
+      "backgroundPosition": "-338px -374px"
+    },
+    {
+      "id": "symbol-23",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 23,
+      "globalIndex": 110,
+      "backgroundPosition": "-14px -410px"
+    },
+    {
+      "id": "symbol-24",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 24,
+      "globalIndex": 111,
+      "backgroundPosition": "-50px -410px"
+    },
+    {
+      "id": "symbol-25",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 25,
+      "globalIndex": 112,
+      "backgroundPosition": "-86px -410px"
+    },
+    {
+      "id": "symbol-26",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 26,
+      "globalIndex": 113,
+      "backgroundPosition": "-122px -410px"
+    },
+    {
+      "id": "symbol-27",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 27,
+      "globalIndex": 114,
+      "backgroundPosition": "-158px -410px"
+    },
+    {
+      "id": "symbol-28",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 28,
+      "globalIndex": 115,
+      "backgroundPosition": "-194px -410px"
+    },
+    {
+      "id": "symbol-29",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 29,
+      "globalIndex": 116,
+      "backgroundPosition": "-230px -410px"
+    },
+    {
+      "id": "symbol-30",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 30,
+      "globalIndex": 117,
+      "backgroundPosition": "-266px -410px"
+    },
+    {
+      "id": "symbol-31",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 31,
+      "globalIndex": 118,
+      "backgroundPosition": "-302px -410px"
+    },
+    {
+      "id": "symbol-32",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 32,
+      "globalIndex": 119,
+      "backgroundPosition": "-338px -410px"
+    },
+    {
+      "id": "symbol-33",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 33,
+      "globalIndex": 120,
+      "backgroundPosition": "-14px -446px"
+    },
+    {
+      "id": "symbol-34",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 34,
+      "globalIndex": 121,
+      "backgroundPosition": "-50px -446px"
+    },
+    {
+      "id": "symbol-35",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 35,
+      "globalIndex": 122,
+      "backgroundPosition": "-86px -446px"
+    },
+    {
+      "id": "symbol-36",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 36,
+      "globalIndex": 123,
+      "backgroundPosition": "-122px -446px"
+    },
+    {
+      "id": "symbol-37",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 37,
+      "globalIndex": 124,
+      "backgroundPosition": "-158px -446px"
+    },
+    {
+      "id": "symbol-38",
+      "groupId": "symbol",
+      "groupLabel": "符号",
+      "orderInGroup": 38,
+      "globalIndex": 125,
+      "backgroundPosition": "-194px -446px"
+    }
+  ]
+}

@@ -59,6 +59,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   setIcons(icons: string[]): void;
   setLink(link: string, title?: string): void;
   setImage(image: NodeImageInput): void;
+  setClipart(image: NodeImageInput & { id: string }): void;
   insertFormula(formula: string, mode?: 'inline' | 'block'): void;
   addSummary(): void;
   removeSummary(): void;
@@ -305,6 +306,13 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     setIcons: (icons) => { if (canMutate()) forEachActive((node) => mindMap.execCommand('SET_NODE_ICON', node, icons)); },
     setLink: (link, title = '') => { if (canMutate()) forEachActive((node) => mindMap.execCommand('SET_NODE_HYPERLINK', node, link, title)); },
     setImage: (image) => { if (canMutate()) forEachActive((node) => mindMap.execCommand('SET_NODE_IMAGE', node, image)); },
+    setClipart: (image) => {
+      if (!canMutate()) return;
+      forEachActive((node) => {
+        mindMap.execCommand('SET_NODE_IMAGE', node, image);
+        mindMap.execCommand('SET_NODE_DATA', node, { yemindClipartId: image.id, imgPlacement: 'top' });
+      });
+    },
     insertFormula: (formula, mode = 'inline') => {
       if (!canMutate()) return;
       const editor = richText();

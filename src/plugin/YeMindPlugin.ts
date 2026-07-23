@@ -9,6 +9,7 @@ import type { CheckpointStorageDocument } from '../model/checkpointTypes';
 import type { MapStorageDocument } from '../model/types';
 import { confirmAction, promptText } from '../ui/dialogs';
 import { openDiagnosticsDialog } from '../ui/diagnosticsDialog';
+import { openYeMindAboutDialog } from '../ui/aboutDialog';
 import { registerSettings } from '../settings/settings';
 import { openYeMindSettingsDialog } from '../settings/settingsDialog';
 import { SettingsStore } from '../settings/SettingsStore';
@@ -357,7 +358,8 @@ export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
     }
     menu.addSeparator();
     menu.addItem({ icon: 'iconSettings', label: '设置', click: () => openYeMindSettingsDialog(this.settingsStore, { diagnostics: this.diagnostics }) });
-    menu.addItem({ icon: 'iconInfo', label: '诊断与回归', click: () => openDiagnosticsDialog(this.diagnostics) });
+    menu.addItem({ icon: 'iconInfo', label: '关于 YeMind', click: () => openYeMindAboutDialog({ diagnostics: this.diagnostics }) });
+    menu.addItem({ icon: 'iconBug', label: '诊断与回归', click: () => openDiagnosticsDialog(this.diagnostics) });
     menu.open({ x: event.clientX, y: event.clientY });
   }
 
@@ -367,6 +369,11 @@ export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
       langText: '新建 YeMind 导图',
       hotkey: '⌥⇧M',
       callback: () => { void this.createMap(); },
+    });
+    this.addCommand({
+      langKey: 'openYeMindAbout',
+      langText: '关于 YeMind',
+      callback: () => openYeMindAboutDialog({ diagnostics: this.diagnostics }),
     });
     this.addCommand({
       langKey: 'openYeMindDiagnostics',

@@ -9,7 +9,7 @@ YeMind is a local-first SiYuan mind-map plugin built with TypeScript, Vite, Quil
 - `src/core/`: engine registration, commands, drag behavior, themes, palettes and decorations.
 - `src/editor/`: canvas, unified structured outline, selection/clipboard coordination, focus ownership and project controls.
 - `src/ui/`: dialogs, menus, color panels, image preview and diagnostics surfaces.
-- `src/settings/`: settings storage and About/shortcut/general pages.
+- `src/settings/`: settings storage plus shortcut and general configuration pages.
 - `src/diagnostics/`: structured event timeline, self-checks and exportable diagnostic archives.
 
 ## State ownership
@@ -43,4 +43,15 @@ Release packages contain code and documentation only.
 
 ## Compatibility
 
-Historical plugin links and theme identifiers are accepted through narrow internal aliases. Existing map/settings/checkpoint schemas do not require a v0.9.11 migration. v0.9.11 reuses native relation data fields and does not introduce a storage schema fork. Legacy outline controller source remains only for historical test compatibility and is not reachable from the current runtime bundle.
+Historical plugin links and theme identifiers are accepted through narrow internal aliases. Existing map/settings/checkpoint schemas do not require a v0.9.13 migration. v0.9.13 changes rendering hosts, interaction routing and default labels only; it does not introduce a storage schema fork. Legacy outline controller source remains only for historical test compatibility and is not reachable from the current runtime bundle.
+
+## Fixed local visual assets (v0.9.12)
+
+`src/data/*catalog*.json` is the only runtime inventory for markers, clipart and layout thumbnails. `src/config/yemind-local-assets.ts` resolves catalog-relative paths from the SiYuan plugin base URL. The UI never scans folders. Marker nodes store stable sprite IDs, clipart nodes store a stable `yemindClipartId` plus the plugin-local image URL, and maps persist `layoutPresetId` separately from the actual engine `layout`.
+
+## Interaction stabilization (v0.9.13)
+
+- Marker sprite images live inside SVG patterns so only the icon viewport contributes to node geometry.
+- Canvas context-menu capture preserves the multi-selection snapshot before upstream selection clearing.
+- Rich-text measurement nodes live under `document.body`, outside hidden SiYuan tabs, and are removed at map destruction.
+- Image tools are hover-owned and About is a standalone top-level dialog.

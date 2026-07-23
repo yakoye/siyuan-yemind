@@ -32,6 +32,7 @@ export interface MindMapTree {
 export interface MapCheckpointSnapshot {
   data: MindMapTree;
   layout: string;
+  layoutPresetId?: string;
   theme: string;
   lineStyle: 'curve' | 'straight' | 'direct';
   projectStyle?: ProjectStyle;
@@ -44,6 +45,7 @@ export interface YeMindMapDocument {
   createdAt: number;
   updatedAt: number;
   layout: string;
+  layoutPresetId?: string;
   theme: string;
   lineStyle: 'curve' | 'straight' | 'direct';
   projectStyle: ProjectStyle;

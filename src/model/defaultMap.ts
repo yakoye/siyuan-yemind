@@ -2,12 +2,12 @@ import type { MindMapTree, YeMindMapDocument } from './types';
 import { DEFAULT_PROJECT_STYLE } from '../editor/projectStyle';
 import { pristineNodeData } from '../editor/textEditingPolicy';
 
-export function createDefaultTree(title: string): MindMapTree {
+export function createDefaultTree(_title = '未命名导图'): MindMapTree {
   return {
-    data: pristineNodeData({ text: title, expand: true }),
+    data: pristineNodeData({ text: '中心主题', expand: true }),
     children: [
-      { data: pristineNodeData({ text: '主要主题', expand: true }), children: [] },
-      { data: pristineNodeData({ text: '另一个主题', expand: true }), children: [] },
+      { data: pristineNodeData({ text: '新节点', expand: true }), children: [] },
+      { data: pristineNodeData({ text: '新节点', expand: true }), children: [] },
     ],
   };
 }
@@ -24,6 +24,7 @@ export function createDefaultMap(
     createdAt: now,
     updatedAt: now,
     layout: 'logicalStructure',
+    layoutPresetId: 'right-mindmap',
     theme: 'yemind-default',
     lineStyle: 'curve',
     projectStyle: { ...DEFAULT_PROJECT_STYLE },

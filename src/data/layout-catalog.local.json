@@ -1,0 +1,239 @@
+{
+  "version": "1.0.0",
+  "type": "svg-layout-thumbnail-collection",
+  "assetRoot": "assets",
+  "collectionRoot": "layout-thumbnails",
+  "existingCatalog": "layout-thumbnails/layout-catalog.json",
+  "total": 28,
+  "theme": {
+    "rootNode": "YeMind green gradient",
+    "normalNode": "darker gray",
+    "connector": "darker gray"
+  },
+  "items": [
+    {
+      "id": "mindmap",
+      "groupId": "mindmap",
+      "groupLabel": "思维导图（逻辑图）",
+      "title": "思维导图",
+      "fileName": "01_mindmap.svg",
+      "relativePath": "layout-thumbnails/01_mindmap/01_mindmap.svg"
+    },
+    {
+      "id": "reverse-mindmap",
+      "groupId": "mindmap",
+      "groupLabel": "思维导图（逻辑图）",
+      "title": "逆向导图",
+      "fileName": "02_reverse-mindmap.svg",
+      "relativePath": "layout-thumbnails/01_mindmap/02_reverse-mindmap.svg"
+    },
+    {
+      "id": "balanced-down",
+      "groupId": "mindmap",
+      "groupLabel": "思维导图（逻辑图）",
+      "title": "双向平衡向下",
+      "fileName": "03_balanced-down.svg",
+      "relativePath": "layout-thumbnails/01_mindmap/03_balanced-down.svg"
+    },
+    {
+      "id": "right-mindmap",
+      "groupId": "mindmap",
+      "groupLabel": "思维导图（逻辑图）",
+      "title": "右向导图",
+      "fileName": "04_right-mindmap.svg",
+      "relativePath": "layout-thumbnails/01_mindmap/04_right-mindmap.svg"
+    },
+    {
+      "id": "left-mindmap",
+      "groupId": "mindmap",
+      "groupLabel": "思维导图（逻辑图）",
+      "title": "左向导图",
+      "fileName": "05_left-mindmap.svg",
+      "relativePath": "layout-thumbnails/01_mindmap/05_left-mindmap.svg"
+    },
+    {
+      "id": "tree-right-down",
+      "groupId": "tree",
+      "groupLabel": "树状图",
+      "title": "树状图（右下）",
+      "fileName": "01_tree-right-down.svg",
+      "relativePath": "layout-thumbnails/02_tree/01_tree-right-down.svg"
+    },
+    {
+      "id": "tree-left-down",
+      "groupId": "tree",
+      "groupLabel": "树状图",
+      "title": "树状图（左下）",
+      "fileName": "02_tree-left-down.svg",
+      "relativePath": "layout-thumbnails/02_tree/02_tree-left-down.svg"
+    },
+    {
+      "id": "tree-down-symmetric",
+      "groupId": "tree",
+      "groupLabel": "树状图",
+      "title": "树状图（向下对称）",
+      "fileName": "03_tree-down-symmetric.svg",
+      "relativePath": "layout-thumbnails/02_tree/03_tree-down-symmetric.svg"
+    },
+    {
+      "id": "tree-up-symmetric",
+      "groupId": "tree",
+      "groupLabel": "树状图",
+      "title": "树状图（向上对称）",
+      "fileName": "04_tree-up-symmetric.svg",
+      "relativePath": "layout-thumbnails/02_tree/04_tree-up-symmetric.svg"
+    },
+    {
+      "id": "tree-right-up",
+      "groupId": "tree",
+      "groupLabel": "树状图",
+      "title": "树状图（右上）",
+      "fileName": "05_tree-right-up.svg",
+      "relativePath": "layout-thumbnails/02_tree/05_tree-right-up.svg"
+    },
+    {
+      "id": "tree-left-up",
+      "groupId": "tree",
+      "groupLabel": "树状图",
+      "title": "树状图（左上）",
+      "fileName": "06_tree-left-up.svg",
+      "relativePath": "layout-thumbnails/02_tree/06_tree-left-up.svg"
+    },
+    {
+      "id": "timeline-right",
+      "groupId": "timeline",
+      "groupLabel": "时间轴",
+      "title": "时间轴（向右）",
+      "fileName": "01_timeline-right.svg",
+      "relativePath": "layout-thumbnails/03_timeline/01_timeline-right.svg"
+    },
+    {
+      "id": "timeline-left",
+      "groupId": "timeline",
+      "groupLabel": "时间轴",
+      "title": "时间轴（向左）",
+      "fileName": "02_timeline-left.svg",
+      "relativePath": "layout-thumbnails/03_timeline/02_timeline-left.svg"
+    },
+    {
+      "id": "timeline-down",
+      "groupId": "timeline",
+      "groupLabel": "时间轴",
+      "title": "时间轴（向下）",
+      "fileName": "03_timeline-down.svg",
+      "relativePath": "layout-thumbnails/03_timeline/03_timeline-down.svg"
+    },
+    {
+      "id": "timeline-up",
+      "groupId": "timeline",
+      "groupLabel": "时间轴",
+      "title": "时间轴（向上）",
+      "fileName": "04_timeline-up.svg",
+      "relativePath": "layout-thumbnails/03_timeline/04_timeline-up.svg"
+    },
+    {
+      "id": "timeline-s",
+      "groupId": "timeline",
+      "groupLabel": "时间轴",
+      "title": "时间轴（S型）",
+      "fileName": "05_timeline-s.svg",
+      "relativePath": "layout-thumbnails/03_timeline/05_timeline-s.svg"
+    },
+    {
+      "id": "organization-down",
+      "groupId": "organization",
+      "groupLabel": "组织结构图",
+      "title": "组织结构图（向下）",
+      "fileName": "01_organization-down.svg",
+      "relativePath": "layout-thumbnails/04_organization/01_organization-down.svg"
+    },
+    {
+      "id": "organization-bidirectional",
+      "groupId": "organization",
+      "groupLabel": "组织结构图",
+      "title": "组织结构图（上下双向）",
+      "fileName": "02_organization-bidirectional.svg",
+      "relativePath": "layout-thumbnails/04_organization/02_organization-bidirectional.svg"
+    },
+    {
+      "id": "organization-up",
+      "groupId": "organization",
+      "groupLabel": "组织结构图",
+      "title": "组织结构图（向上）",
+      "fileName": "03_organization-up.svg",
+      "relativePath": "layout-thumbnails/04_organization/03_organization-up.svg"
+    },
+    {
+      "id": "fishbone-left",
+      "groupId": "fishbone",
+      "groupLabel": "鱼骨图",
+      "title": "鱼骨图（左）",
+      "fileName": "01_fishbone-left.svg",
+      "relativePath": "layout-thumbnails/05_fishbone/01_fishbone-left.svg"
+    },
+    {
+      "id": "fishbone-right",
+      "groupId": "fishbone",
+      "groupLabel": "鱼骨图",
+      "title": "鱼骨图（右）",
+      "fileName": "02_fishbone-right.svg",
+      "relativePath": "layout-thumbnails/05_fishbone/02_fishbone-right.svg"
+    },
+    {
+      "id": "tree-table-top-title",
+      "groupId": "tree-table",
+      "groupLabel": "树形表格",
+      "title": "树形表格（顶部标题）",
+      "fileName": "01_tree-table-top-title.svg",
+      "relativePath": "layout-thumbnails/06_tree-table/01_tree-table-top-title.svg"
+    },
+    {
+      "id": "tree-table-left-title",
+      "groupId": "tree-table",
+      "groupLabel": "树形表格",
+      "title": "树形表格（左侧标题）",
+      "fileName": "02_tree-table-left-title.svg",
+      "relativePath": "layout-thumbnails/06_tree-table/02_tree-table-left-title.svg"
+    },
+    {
+      "id": "radial-sector",
+      "groupId": "other",
+      "groupLabel": "其他",
+      "title": "扇形放射图",
+      "fileName": "01_radial-sector.svg",
+      "relativePath": "layout-thumbnails/07_other/01_radial-sector.svg"
+    },
+    {
+      "id": "circle",
+      "groupId": "other",
+      "groupLabel": "其他",
+      "title": "圆形图",
+      "fileName": "02_circle.svg",
+      "relativePath": "layout-thumbnails/07_other/02_circle.svg"
+    },
+    {
+      "id": "bubble",
+      "groupId": "other",
+      "groupLabel": "其他",
+      "title": "气泡图",
+      "fileName": "03_bubble.svg",
+      "relativePath": "layout-thumbnails/07_other/03_bubble.svg"
+    },
+    {
+      "id": "bracket-right",
+      "groupId": "other",
+      "groupLabel": "其他",
+      "title": "括号图（右）",
+      "fileName": "04_bracket-right.svg",
+      "relativePath": "layout-thumbnails/07_other/04_bracket-right.svg"
+    },
+    {
+      "id": "bracket-left",
+      "groupId": "other",
+      "groupLabel": "其他",
+      "title": "括号图（左）",
+      "fileName": "05_bracket-left.svg",
+      "relativePath": "layout-thumbnails/07_other/05_bracket-left.svg"
+    }
+  ]
+}

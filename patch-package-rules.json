@@ -1,0 +1,25 @@
+{
+  "project": "siyuan-yemind",
+  "profile": "overlay-patch",
+  "requiresExistingLocalAssets": true,
+  "doNotDeleteExcludedPaths": true,
+  "exclude": [
+    "assets/clipart/**",
+    "assets/icons/marker-sprite.png",
+    "assets/layout-thumbnails/**/*.svg",
+    "assets/layout-thumbnails/layout-thumbnails-contact-sheet.png",
+    "yemind-icon-32.png",
+    "yemind-icon-64.png",
+    "yemind-icon-128.png"
+  ],
+  "includeExamples": [
+    "src/**",
+    "scripts/**",
+    "docs/**",
+    "AGENTS.md",
+    "package.json",
+    "README.md",
+    "tests/**"
+  ],
+  "packageNotice": "This ZIP is an overlay patch, not a clean standalone installation package."
+}

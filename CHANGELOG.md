@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.9.13 - 2026-07-23
+
+- Kept marker sprites out of node-content geometry by rendering each icon through a viewport-sized SVG pattern.
+- Restored hover-only image tools and magnifier-click preview with a lighter blurred backdrop.
+- Replaced thick black active association lines with a clear blue, lightly emphasized selected state.
+- Added toolbar hover feedback, outside-click closing for Structure, and separate compact project/node style panels.
+- Moved About out of Settings and placed it between Settings and Diagnostics in the top-bar menu.
+- Changed new-map node labels to `中心主题` and two `新节点` while preserving the file title `未命名导图`.
+- Preserved multi-selection when right-clicking any selected node.
+- Moved rich-text measurement nodes outside hidden SiYuan tab containers to prevent text nodes collapsing into empty pills.
+- Added permanent v0.9.13 regression suites for all reported defects.
+
+## 0.9.12 - 2026-07-23
+
+- Integrated 126 catalog-driven marker icons from the fixed local sprite; clicking a marker opens its category.
+- Added a searchable 806-item clipart picker in 13 categories and place clipart above node text.
+- Added a 28-item, seven-group visual layout gallery and persisted the selected `layoutPresetId`.
+- Added runtime plugin-base URL resolution and prohibited directory scanning or embedded large visual resources.
+- Added overlay-package rules, asset contract documentation, offline contract checks and Chromium interaction coverage.
+
 ## 0.9.11 - 2026-07-23
 
 - Unified canvas and outline selection-toolbar timing and restored saved ranges before applying font or size changes.

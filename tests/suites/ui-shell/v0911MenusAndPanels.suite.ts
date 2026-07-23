@@ -11,8 +11,8 @@ describe('v0.9.11 menus and anchored panels', () => {
     expect(editorSource).toContain('this.nodeStylePanel?.show(button)');
     expect(editorSource).toContain('this.projectStylePanel?.show(button)');
     expect(editorSource).toContain('this.nodeStylePanel?.show({ x: event.clientX, y: event.clientY })');
-    expect(css).toContain('height:min(440px,70vh)!important');
-    expect(css).toContain('width:min(400px,calc(100% - 16px))!important');
+    expect(css).toContain('.ymz-node-style-panel');
+    expect(css).toContain('.ymz-project-style-panel');
   });
 
   it('separates node-level and inline links in the add submenu', () => {

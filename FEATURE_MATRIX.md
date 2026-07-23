@@ -11,8 +11,8 @@
 | Local style priority | Node-local text, fill, border and line values override whole-map themes |
 | Selection toolbar | Canvas and outline share delayed-after-selection visibility; saved ranges survive font/size dropdown focus |
 | Context menus | Separate single-node, multi-node and blank-canvas menus with state-aware outer-frame and clipboard commands |
-| Style panels | Project and node styles use one anchored medium-size panel surface |
-| Relation editing | Editable persisted Bézier endpoints/control points, tangent-driven arrows and lifecycle guards |
+| Style panels | Project and node styles use separate compact anchored panels; node controls use a denser two-column layout |
+| Relation editing | Editable persisted Bézier endpoints/control points, tangent-driven arrows, lifecycle guards and a clear blue selected state |
 | Outline model | One structured contenteditable document; no user-facing text/node mode split |
 | Outline selection | Native cross-row ranges; first Ctrl/Cmd+A selects the current node, second selects the complete outline |
 | Clipboard | Selection replacement, rich/plain paste, indented tree import, hidden-descendant whole copy and safe external text/html output |
@@ -21,7 +21,21 @@
 | Outline presentation | Black 7px triangles, black 5px leaf squares, midpoint-aligned indent-rainbow guides with no Root-side guide, flat `#ececec` hover and `#deeae6` active state |
 | Canvas drag | Right-logical nearest-node local zones, continuous real-time candidate-parent green dashed link, live room preview and atomic subtree moves |
 | Drag safety | Self/descendant/root/no-op rejection, Escape cancellation, one-step undo and stable UID/metadata preservation |
-| Image actions | Single-click pinned controls, double-click lightbox, equal action boxes and event isolation from structural dragging |
+| Image actions | Hover-owned delete/preview/resize controls, magnifier-click lightbox and event isolation from structural dragging |
 | Persistence | Local maps, settings, checkpoints, autosave and restore protection |
 | Integration | SiYuan tabs, Dock, protocol links and global-search node navigation |
-| Reliability | Structured diagnostics and 15-domain manifest-controlled regression architecture |
+| Reliability | Structured diagnostics, hidden-tab measurement stabilization and 15-domain manifest-controlled regression architecture |
+
+## Fixed local assets (v0.9.12)
+
+| Capability | Status |
+|---|---|
+| 126 marker icons / 8 groups | Complete |
+| Click existing marker to open same category | Complete |
+| 806 clipart SVGs / 13 categories | Complete |
+| Clipart label search and paged grid | Complete |
+| Clipart above node text | Complete |
+| 28 layout thumbnails / 7 groups | Complete |
+| Persist visual layout preset identity | Complete |
+| Runtime catalog loading without directory scanning | Complete |
+| Overlay packaging without duplicate fixed assets | Complete |

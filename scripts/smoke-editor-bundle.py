@@ -74,7 +74,8 @@ with sync_playwright() as p:
     }""")
     page.wait_for_function("""() => {
       const root = window.__pluginSmoke?.container;
-      return root?.querySelector('[data-role="canvas"] svg') || root?.querySelector('.ymz-missing');
+      const svg = root?.querySelector('[data-role="canvas"] svg');
+      return (svg && svg.querySelectorAll('.smm-node-shape').length >= 3) || root?.querySelector('.ymz-missing');
     }""", timeout=30000)
     initial_visual = page.evaluate("""() => {
       const container = window.__pluginSmoke.container;

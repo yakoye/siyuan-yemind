@@ -12,6 +12,7 @@ const entries = [
   'outlineTextSmokeEntry',
   'structuredOutlineSmokeEntry',
   'dragIntentSmokeEntry',
+  'localAssetsSmokeEntry',
 ];
 
 rmSync(outDir, { recursive: true, force: true });
@@ -43,6 +44,7 @@ const args = [
   '--moduleResolution',
   'node',
   '--esModuleInterop',
+  '--resolveJsonModule',
   '--skipLibCheck',
   '--lib',
   'es2022,dom',

@@ -15,3 +15,4 @@ import '../suites/storage-lifecycle/saveRevision.suite';
 import '../suites/storage-lifecycle/tabHandleLiveness.suite';
 import '../suites/storage-lifecycle/tabStartup.suite';
 import '../suites/storage-lifecycle/v081StorageMigration.suite';
+import '../suites/storage-lifecycle/v0913DefaultMapNaming.suite';

@@ -4,3 +4,4 @@ import '../suites/settings/settingsDialog.suite';
 import '../suites/settings/settingsDialogLifecycle.suite';
 import '../suites/settings/settingsSaveLifecycle.suite';
 import '../suites/settings/settingsStore.suite';
+import '../suites/settings/v0913AboutEntry.suite';

@@ -20,3 +20,5 @@ import '../suites/ui-shell/v063ContextMenuOrganization.suite';
 import '../suites/ui-shell/v063ResponsiveToolbars.suite';
 import '../suites/ui-shell/visibleElement.suite';
 import '../suites/ui-shell/v0911MenusAndPanels.suite';
+import '../suites/ui-shell/v0912LocalAssets.suite';
+import '../suites/ui-shell/v0913PanelInteraction.suite';

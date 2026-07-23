@@ -15,3 +15,4 @@ import '../suites/node-content/v063HoverPreviewPlacement.suite';
 import '../suites/node-content/v063NodeContentDialogs.suite';
 import '../suites/node-content/v090ImageActionsPreview.suite';
 import '../suites/node-content/v0911ImageInteraction.suite';
+import '../suites/node-content/v0913MarkerImageRegression.suite';

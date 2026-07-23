@@ -38,11 +38,11 @@ with sync_playwright() as p:
     page.wait_for_selector('[data-role="canvas"] svg', timeout=30000)
     page.wait_for_timeout(350)
 
-    # Project style panel is anchored to its top button and has the shared size.
+    # Project style panel stays anchored and uses the compact v0.9.13 geometry.
     page.click('[data-action="project-style"]')
     project = page.evaluate("""()=>{const b=document.querySelector('[data-action=project-style]').getBoundingClientRect();const p=document.querySelector('[data-role=project-style-panel]').getBoundingClientRect();return{button:b.toJSON(),panel:p.toJSON(),hidden:document.querySelector('[data-role=project-style-panel]').hidden}}""")
-    if project['hidden'] or abs(project['panel']['y'] - project['button']['bottom'] - 6) > 2 or project['panel']['width'] < 360 or project['panel']['height'] < 380:
-        raise RuntimeError(f'Project style panel not anchored/shared-sized: {project}')
+    if project['hidden'] or abs(project['panel']['y'] - project['button']['bottom'] - 6) > 2 or abs(project['panel']['width'] - 340) > 2 or project['panel']['height'] > 421:
+        raise RuntimeError(f'Project style panel not anchored/compact: {project}')
     page.click('[data-action="project-style"]')
 
     # Single-node menu has exact command groups and inline link follows formula.
@@ -58,11 +58,11 @@ with sync_playwright() as p:
     if add_labels[-3:] != ['代码块','公式','行内链接']:
         raise RuntimeError(f'Inline link order wrong: {add_labels}')
 
-    # Invoke node style from the context menu and compare dimensions.
+    # Invoke node style from the context menu and verify its denser two-column geometry.
     page.evaluate("""()=>window.__lastMenu.items.find(item=>item.label==='节点样式').click()""")
     node_panel = page.evaluate("""()=>{const p=document.querySelector('[data-role=node-style-panel]').getBoundingClientRect();return{rect:p.toJSON(),hidden:document.querySelector('[data-role=node-style-panel]').hidden}}""")
-    if node_panel['hidden'] or abs(node_panel['rect']['width']-project['panel']['width']) > 2 or abs(node_panel['rect']['height']-project['panel']['height']) > 2:
-        raise RuntimeError(f'Style panels not same size: project={project}, node={node_panel}')
+    if node_panel['hidden'] or abs(node_panel['rect']['width'] - 380) > 2 or node_panel['rect']['height'] > 411:
+        raise RuntimeError(f'Node style panel is not compact: project={project}, node={node_panel}')
     page.mouse.click(1200,700)
 
     # Quick action first circle touches the selected node border.
@@ -92,22 +92,19 @@ with sync_playwright() as p:
     page.keyboard.press('Escape')
     page.wait_for_timeout(100)
 
-    # Single click pins image controls; double click opens preview; outside click unpins.
+    # Hovering an image shows delete, resize and preview controls; the magnifier opens preview.
     image = page.locator('[data-role="canvas"] svg image').first
-    image.click()
+    image.hover()
     page.wait_for_timeout(100)
-    pinned = page.locator('.node-img-handle[data-yemind-image-pinned="true"]')
-    if pinned.count() != 1 or pinned.is_hidden():
-        raise RuntimeError('Single image click did not pin image tools')
-    image.dispatch_event("dblclick")
+    image_tools = page.evaluate("""()=>{const handle=document.querySelector('.node-img-handle');return handle?{display:getComputedStyle(handle).display,remove:!!handle.querySelector('.node-image-remove'),resize:!!handle.querySelector('.node-image-resize'),preview:!!handle.querySelector('.ymz-node-image-preview')}:null}""")
+    if not image_tools or image_tools['display'] == 'none' or not all(image_tools[key] for key in ('remove','resize','preview')):
+        raise RuntimeError(f'Image hover tools are incomplete: {image_tools}')
+    page.click('.ymz-node-image-preview')
     page.wait_for_timeout(80)
-    if page.locator('.ymz-image-lightbox').is_hidden():
-        raise RuntimeError('Double image click did not open lightbox')
+    lightbox = page.evaluate("""()=>{const el=document.querySelector('.ymz-image-lightbox');const style=getComputedStyle(el);return{hidden:el.hidden,background:style.backgroundColor,backdrop:style.backdropFilter||style.webkitBackdropFilter||''}}""")
+    if lightbox['hidden'] or lightbox['background'] != 'rgba(7, 10, 13, 0.62)' or 'blur(8px)' not in lightbox['backdrop']:
+        raise RuntimeError(f'Image lightbox styling is wrong: {lightbox}')
     page.keyboard.press('Escape')
-    page.mouse.click(1000,700)
-    page.wait_for_timeout(80)
-    if page.locator('.node-img-handle[data-yemind-image-pinned="true"]').count() != 0:
-        raise RuntimeError('Image tools did not unpin after outside click')
 
     # Create an association line through the node menu and verify native tangent controls.
     a = node_box(page, 'Alpha rich text'); b = node_box(page, 'Beta target')
@@ -123,9 +120,10 @@ with sync_playwright() as p:
         # fallback: click the visible marker path
         relation_paths.first.click(force=True)
     page.wait_for_timeout(120)
-    relation_state = page.evaluate("""()=>{const svg=document.querySelector('[data-role=canvas] svg');const panel=document.querySelector('[data-role=relation-panel]');const circles=[...svg.querySelectorAll('circle')].filter(c=>{const r=Number(c.getAttribute('r')||0);return r>=4&&r<=6;});const marker=[...svg.querySelectorAll('marker')].find(m=>m.getAttribute('orient')==='auto-start-reverse');return{panelHidden:panel.hidden,panelMode:panel.dataset.mode,circles:circles.length,markerOrient:marker?.getAttribute('orient')||''};}""")
-    if relation_state['panelHidden'] or relation_state['panelMode'] != 'active' or relation_state['circles'] < 2 or relation_state['markerOrient'] != 'auto-start-reverse':
-        raise RuntimeError(f'Relation tangent controls/arrow orientation missing: {relation_state}')
+    relation_state = page.evaluate("""()=>{const svg=document.querySelector('[data-role=canvas] svg');const panel=document.querySelector('[data-role=relation-panel]');const circles=[...svg.querySelectorAll('circle')].filter(c=>{const r=Number(c.getAttribute('r')||0);return r>=4&&r<=6;});const marker=[...svg.querySelectorAll('marker')].find(m=>m.getAttribute('orient')==='auto-start-reverse');const paths=[...svg.querySelectorAll('path')].map(path=>({stroke:path.getAttribute('stroke'),width:path.getAttribute('stroke-width'),computedStroke:getComputedStyle(path).stroke,computedWidth:getComputedStyle(path).strokeWidth}));return{panelHidden:panel.hidden,panelMode:panel.dataset.mode,circles:circles.length,markerOrient:marker?.getAttribute('orient')||'',paths};}""")
+    selected_relation = any((item['stroke'] == '#2563eb' or item['computedStroke'] == 'rgb(37, 99, 235)') and (item['width'] == '3' or item['computedWidth'] == '3px') for item in relation_state['paths'])
+    if relation_state['panelHidden'] or relation_state['panelMode'] != 'active' or relation_state['circles'] < 2 or relation_state['markerOrient'] != 'auto-start-reverse' or not selected_relation:
+        raise RuntimeError(f'Relation tangent controls/selected styling missing: {relation_state}')
 
     if page_errors:
         raise RuntimeError('Page errors:\n'+'\n'.join(page_errors))
