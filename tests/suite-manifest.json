@@ -185,7 +185,8 @@
     "v094StructuredOutlineDocument.suite.ts",
     "v094StructuredOutlineEditor.suite.ts",
     "v094StructuredOutlineVisual.suite.ts",
-    "v099OutlineGuideGeometry.suite.ts"
+    "v099OutlineGuideGeometry.suite.ts",
+    "v0910OutlineGuidesAndReveal.suite.ts"
   ],
   "search-navigation": [
     "searchCommands.suite.ts",

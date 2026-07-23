@@ -481,7 +481,7 @@ export class YeMindEditor {
     this.options.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'target-node-found' });
     this.commands.goToNode(uid);
     this.options.diagnostics.record('global-search', 'target-ancestors-expanded', this.current.id, { requested: true });
-    this.activateOutlineUid(uid);
+    this.activateOutlineUid(uid, true);
     this.options.diagnostics.record('global-search', 'target-node-selected', this.current.id, { outlineActivated: true });
     this.options.diagnostics.record('global-search', 'target-node-centered', this.current.id, { command: 'GO_TARGET_NODE' });
     this.options.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'target-node-centered' });
@@ -744,7 +744,7 @@ export class YeMindEditor {
         if (!uid || !this.commands) return;
         this.claimOutlineInteraction("structured-outline");
         this.commands.goToNode(uid);
-        this.activateOutlineUid(uid);
+        this.activateOutlineUid(uid, true);
       },
       onToggle: (uid, expanded) => this.setOutlineExpanded(uid, expanded),
       onUndo: () => this.commands?.undo(),
@@ -1182,7 +1182,7 @@ export class YeMindEditor {
       this.nodeQuickActions?.scheduleRefresh();
       const active = node ?? list[0];
       const uid = active?.getData?.("uid");
-      this.activateOutlineUid(uid ? String(uid) : "");
+      this.activateOutlineUid(uid ? String(uid) : "", true);
     });
     this.map.on("associative_line_click", () =>
       this.updateRelationPresentation(),
@@ -1923,8 +1923,9 @@ export class YeMindEditor {
     }
   }
 
-  private activateOutlineUid(uid: string): void {
-    this.outlineRichText?.activateUid(uid, false);
+  private activateOutlineUid(uid: string, scroll = false): void {
+    const outlineVisible = this.viewMode === "split" || this.viewMode === "outline";
+    this.outlineRichText?.activateUid(uid, scroll && outlineVisible);
   }
 
   private openSearchPanel(): void {

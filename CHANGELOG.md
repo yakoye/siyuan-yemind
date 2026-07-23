@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.10 - 2026-07-23
+
+- Replaced repeated per-row gradient guides with one structured-outline guide overlay.
+- Drew exactly one 1px guide for each expanded parent, directly below its triangle tip and through its visible subtree.
+- Preserved the four-color indent-rainbow cycle without overlapping same-parent segments.
+- Added outline-local reveal when canvas selection changes.
+- Kept outline selection centred on canvas through `GO_TARGET_NODE` and completed bidirectional visible-node synchronization.
+- Added permanent source-contract and Chromium geometry/navigation coverage.
+
 ## 0.9.9 - 2026-07-23
 
 - Unified outline row indentation, drag gutter, marker columns and indent guides under one geometry model.

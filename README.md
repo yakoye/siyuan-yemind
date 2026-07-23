@@ -2,8 +2,17 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.9`  
+Current version: `0.9.10`  
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.10
+
+- Replaces per-row gradient guide fragments with one structured-outline guide overlay that paints each expanded parent segment exactly once.
+- Aligns every vertical guide directly below the expanded triangle tip and keeps all segments at a uniform `1px` width.
+- Extends each parent guide only through its visible subtree, preserving the four-color indent-rainbow cycle without duplicate overlap.
+- Reveals the matching outline row when a canvas node becomes active, using outline-local scrolling rather than page-level `scrollIntoView()`.
+- Keeps outline-to-canvas navigation centred through `GO_TARGET_NODE`, completing bidirectional visible-node synchronization.
+- Adds real Chromium geometry, duplicate-line and bidirectional reveal regression coverage.
 
 ## v0.9.9
 

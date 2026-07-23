@@ -2,7 +2,7 @@
 
 ## Current baseline
 
-- Product version: 0.9.9
+- Product version: 0.9.10
 - Host baseline: SiYuan 3.7.3
 - Plugin ID and folder: `siyuan-yemind`
 
@@ -20,11 +20,11 @@
 - Indentation-based hierarchy import, UID/metadata preservation and failure rollback.
 - Dedicated outline drag gutter with aligned insertion feedback.
 - Hover-owned canvas node quick actions with a pointer-safe bridge.
-- Shared outline geometry variables for row indentation, drag gutters, marker columns, rainbow guides and drop indicators.
+- Single-layer outline rainbow guides aligned below expanded triangle tips, plus bidirectional canvas/outline visible-node synchronization.
 
 ## Next priorities
 
-1. Validate v0.9.9 outline guide geometry and v0.9.7 nearest-node right-logical dragging in SiYuan 3.7.3 with dense, wide, tall and image nodes before generalizing drag adapters.
+1. Validate v0.9.10 single-layer outline guides, bidirectional reveal and v0.9.7 nearest-node right-logical dragging in SiYuan 3.7.3 before generalizing drag adapters.
 2. Profile 1,000+ node outline editing and drag-target resolution, reducing unnecessary DOM or geometry work without weakening transaction safety.
 3. Expand import/export formats in isolated releases.
 4. Continue accessibility, screen-reader and keyboard-navigation coverage.

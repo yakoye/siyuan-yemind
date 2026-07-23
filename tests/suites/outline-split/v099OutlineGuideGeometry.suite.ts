@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const css = fs.readFileSync(path.resolve('src/styles/index.css'), 'utf8');
+const controller = fs.readFileSync(path.resolve('src/editor/StructuredOutlineEditorController.ts'), 'utf8');
 
 function cssBlock(selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -10,33 +11,26 @@ function cssBlock(selector: string): string {
   return match?.[1] ?? '';
 }
 
-describe('v0.9.9 outline guide geometry', () => {
-  it('uses one shared geometry model for indentation, drag gutter, markers and guides', () => {
+describe('v0.9.9 outline guide geometry regression', () => {
+  it('keeps indentation, drag gutter and marker columns on shared variables', () => {
     const tree = cssBlock('.ymz-outline-tree,\n.ymz-structured-outline');
+    expect(tree).toContain('position:relative');
     expect(tree).toContain('--ymz-outline-indent:22px');
     expect(tree).toContain('--ymz-outline-row-start:6px');
     expect(tree).toContain('--ymz-outline-drag-width:22px');
     expect(tree).toContain('--ymz-outline-branch-width:16px');
-    expect(tree).toContain('--ymz-outline-branch-half:8px');
-    expect(tree).toContain('--ymz-outline-indent-half:11px');
-    expect(tree).toContain('--ymz-outline-guide-start:calc(');
   });
 
-  it('places each guide halfway between its parent and child marker columns', () => {
-    const row = cssBlock('.ymz-outline-row');
-    const guide = cssBlock('.ymz-outline-row::before');
-    expect(row).toContain('var(--ymz-outline-depth,0)*var(--ymz-outline-indent)');
-    expect(guide).toContain('left:var(--ymz-outline-guide-start)');
-    expect(guide).toContain('var(--ymz-outline-depth,0)*var(--ymz-outline-indent)');
-    expect(guide).toContain('var(--ymz-outline-indent) - 1px');
-    expect(guide).toContain('var(--ymz-outline-guide-1) 0 1px');
-    expect(guide).toContain('var(--ymz-outline-guide-2) 22px 23px');
-    expect(guide).toContain('var(--ymz-outline-guide-3) 44px 45px');
-    expect(guide).toContain('var(--ymz-outline-guide-4) 66px 67px');
-  });
-
-  it('never draws a guide to the left of the root marker', () => {
-    expect(css).toContain('.ymz-outline-row[data-outline-root="true"]::before{content:none}');
+  it('uses one 1px guide element instead of overlapping row gradients', () => {
+    const layer = cssBlock('.ymz-outline-guides');
+    const guide = cssBlock('.ymz-outline-guide');
+    expect(layer).toContain('position:absolute');
+    expect(layer).toContain('pointer-events:none');
+    expect(guide).toContain('width:1px');
+    expect(guide).toContain('min-width:1px');
+    expect(guide).toContain('max-width:1px');
+    expect(css).not.toContain('.ymz-outline-row::before');
+    expect(controller).toContain("line.dataset.outlineGuideParent = row.dataset.outlineUid ?? ''");
   });
 
   it('keeps drag and drop geometry tied to the same indentation variables', () => {

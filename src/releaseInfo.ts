@@ -3,19 +3,19 @@ import { PLUGIN_VERSION, PRODUCT_NAME, PROJECT_PACKAGE_NAME } from './plugin/con
 export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: '2026-07-23T00:30:00Z',
-  buildId: 'yemind-v0.9.9-20260723',
+  buildTime: '2026-07-23T08:30:00Z',
+  buildId: 'yemind-v0.9.10-20260723',
   productName: PRODUCT_NAME,
   projectName: PROJECT_PACKAGE_NAME,
   tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
   hostBaseline: 'SiYuan 3.7.3',
-  releaseSummary: '统一修正结构化大纲彩虹缩进线的层级几何，使每条引导线位于父子节点符号列之间且 Root 不再出现多余引导线。',
+  releaseSummary: '将大纲彩虹引导线改为单一覆盖层逐条绘制，使线条位于展开三角尖端正下方并保持统一 1px；同时补齐画布与大纲节点选择的双向可视定位。',
   highlights: [
-    '大纲行、拖动 gutter、三角/方点和彩虹缩进线改用同一组几何变量，避免后续尺寸调整再次造成错位。',
-    'Root 不绘制缩进引导线；一级线位于 Root 与一级节点符号之间，后续层级按 22px 等距递进。',
-    '彩虹线颜色循环从一级开始，深层节点继续使用 1/2/3/4 色周期，不改变文字、图标和拖动区域位置。',
-    '拖动插入指示线沿用相同缩进变量，展开、折叠、hover、选中和结构拖动不会推动彩虹线。',
-    '新增 CSS 契约与真实 Chromium 几何回归，直接比较父子符号中心和引导线坐标。',
+    '每个展开父节点只生成一条独立彩虹引导线，不再由每行渐变重复拼接，消除深浅和粗细不一致。',
+    '引导线横坐标直接取展开三角尖端中心，纵向从三角尖端下方延伸到最后一个可见后代标记。',
+    '画布点击节点后，大纲自动滚动并将对应行置于可视区域；仅调整大纲内部滚动，不推动宿主页面。',
+    '大纲点击节点继续通过 GO_TARGET_NODE 将画布目标居中显示，并与当前行高亮保持同步。',
+    '新增真实 Chromium 几何、单线去重、画布到大纲及大纲到画布双向定位回归。',
   ]
 } as const;
 

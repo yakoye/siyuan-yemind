@@ -292,6 +292,10 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
   private lastTree: MindMapTree;
   private lastAppliedSignature = '';
   private suppressSelectionChange = false;
+  private readonly guideLayer: HTMLElement;
+  private readonly guideResizeObserver: ResizeObserver | null;
+  private guideFrame: number | null = null;
+  private readonly onViewportResize = (): void => this.scheduleGuideRender();
 
   constructor(private readonly options: StructuredOutlineEditorOptions) {
     this.debounceMs = Math.max(120, options.debounceMs ?? 380);
@@ -301,6 +305,17 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     this.options.root.setAttribute('spellcheck', 'false');
     this.options.root.setAttribute('aria-label', '结构化大纲编辑器');
     this.options.root.tabIndex = 0;
+    this.guideLayer = document.createElement('div');
+    this.guideLayer.className = 'ymz-outline-guides';
+    this.guideLayer.dataset.outlineGuides = '';
+    this.guideLayer.contentEditable = 'false';
+    this.guideLayer.setAttribute('aria-hidden', 'true');
+    this.options.root.append(this.guideLayer);
+    this.guideResizeObserver = typeof ResizeObserver === 'function'
+      ? new ResizeObserver(() => this.scheduleGuideRender())
+      : null;
+    this.guideResizeObserver?.observe(this.options.root);
+    window.addEventListener('resize', this.onViewportResize);
     this.bind();
     this.setReadonly(options.isReadonly());
     this.syncFromTree(this.lastTree, true);
@@ -335,6 +350,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     const bookmark = this.captureSelectionBookmark();
     const blocks = flattenStructuredOutline(tree);
     this.patchBlocks(blocks, bookmark);
+    this.scheduleGuideRender();
     this.lastAppliedSignature = this.domSignature();
     this.dirty = false;
   }
@@ -367,7 +383,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     });
     const row = this.rowByUid(uid);
     this.activeEditor = row?.querySelector<HTMLElement>('[data-outline-editor]') ?? null;
-    if (scroll) row?.scrollIntoView?.({ block: 'nearest' });
+    if (scroll && row) this.revealRow(row);
   }
 
   getSelectionState(host = this.activeEditor): StructuredOutlineSelectionState {
@@ -454,6 +470,11 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
   destroy(): void {
     this.flush('destroy');
     this.cancelTimer();
+    if (this.guideFrame !== null) window.cancelAnimationFrame(this.guideFrame);
+    this.guideFrame = null;
+    this.guideResizeObserver?.disconnect();
+    window.removeEventListener('resize', this.onViewportResize);
+    this.guideLayer.remove();
     this.unbind();
     this.options.onSelectionChange(false, null, null, this);
   }
@@ -653,6 +674,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
   private readonly onInput = (): void => {
     if (this.applying) return;
     this.clearWholeSelection();
+    this.scheduleGuideRender();
     this.markDirty(this.composing ? 'composition-input' : 'input');
   };
 
@@ -933,7 +955,79 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       }
       root.insertBefore(row, cursor);
     });
+    root.append(this.guideLayer);
+    this.guideResizeObserver?.disconnect();
+    this.guideResizeObserver?.observe(root);
+    desired.forEach((row) => this.guideResizeObserver?.observe(row));
+    this.scheduleGuideRender();
     if (bookmark) this.restoreSelectionBookmark(bookmark);
+  }
+
+  private scheduleGuideRender(): void {
+    if (this.guideFrame !== null) return;
+    this.guideFrame = window.requestAnimationFrame(() => {
+      this.guideFrame = null;
+      this.renderGuides();
+    });
+  }
+
+  private renderGuides(): void {
+    const root = this.options.root;
+    if (!root.isConnected || root.clientWidth <= 0 || root.clientHeight <= 0) {
+      this.guideLayer.replaceChildren();
+      return;
+    }
+    const rows = Array.from(root.querySelectorAll<HTMLElement>(':scope > [data-outline-uid]'))
+      .filter((row) => row.dataset.outlineHidden !== 'true' && getComputedStyle(row).display !== 'none');
+    const rootRect = root.getBoundingClientRect();
+    const fragment = document.createDocumentFragment();
+    const depthOf = (row: HTMLElement): number => Math.max(0, Number.parseInt(row.style.getPropertyValue('--ymz-outline-depth') || '0', 10) || 0);
+    const markerOf = (row: HTMLElement): HTMLElement | null =>
+      row.querySelector<HTMLElement>('.ymz-outline-row__triangle,.ymz-outline-row__leaf-square')
+      ?? row.querySelector<HTMLElement>('.ymz-outline-row__branch');
+
+    rows.forEach((row, index) => {
+      if (row.dataset.outlineHasChildren !== 'true' || row.dataset.outlineExpanded !== 'true') return;
+      const depth = depthOf(row);
+      let lastDescendant: HTMLElement | null = null;
+      for (let cursor = index + 1; cursor < rows.length; cursor += 1) {
+        const candidate = rows[cursor];
+        if (depthOf(candidate) <= depth) break;
+        lastDescendant = candidate;
+      }
+      if (!lastDescendant) return;
+      const marker = markerOf(row);
+      const lastMarker = markerOf(lastDescendant);
+      if (!marker || !lastMarker) return;
+      const markerRect = marker.getBoundingClientRect();
+      const lastRect = lastMarker.getBoundingClientRect();
+      const x = Math.round(markerRect.left + markerRect.width / 2 - rootRect.left + root.scrollLeft);
+      const top = Math.round(markerRect.bottom - rootRect.top + root.scrollTop);
+      const end = Math.round(lastRect.top + lastRect.height / 2 - rootRect.top + root.scrollTop);
+      const height = Math.max(0, end - top);
+      if (height <= 0) return;
+      const line = document.createElement('span');
+      line.className = 'ymz-outline-guide';
+      line.dataset.outlineGuideParent = row.dataset.outlineUid ?? '';
+      line.style.left = `${x}px`;
+      line.style.top = `${top}px`;
+      line.style.height = `${height}px`;
+      line.style.setProperty('--ymz-outline-guide-color', `var(--ymz-outline-guide-${(depth % 4) + 1})`);
+      fragment.append(line);
+    });
+    this.guideLayer.replaceChildren(fragment);
+  }
+
+  private revealRow(row: HTMLElement): void {
+    const root = this.options.root;
+    const rootRect = root.getBoundingClientRect();
+    const rowRect = row.getBoundingClientRect();
+    const margin = Math.min(32, Math.max(12, root.clientHeight * 0.08));
+    const visibleTop = rootRect.top + margin;
+    const visibleBottom = rootRect.bottom - margin;
+    if (rowRect.top >= visibleTop && rowRect.bottom <= visibleBottom) return;
+    const target = row.offsetTop - Math.max(0, (root.clientHeight - row.offsetHeight) / 2);
+    root.scrollTop = Math.max(0, target);
   }
 
   private createRow(block: StructuredOutlineBlock): HTMLElement {
