@@ -11,6 +11,10 @@ export interface EditingSurfaceTransition {
   cancelledPending: boolean;
 }
 
+export function shouldPassivelySyncOutline(owner: EditingSurfaceOwner): boolean {
+  return owner !== 'outline';
+}
+
 /**
  * Coordinates the two text-editing surfaces used by split mode.
  *

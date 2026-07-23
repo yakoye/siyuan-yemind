@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.16 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.17 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -39,11 +39,11 @@ const releaseInfo_1 = __require(29);
 const constants_1 = __require(28);
 const dock_1 = __require(37);
 const tabs_1 = __require(38);
-const OpenMapTabRegistry_1 = __require(255);
-const pluginUrl_1 = __require(256);
-const operationSafety_1 = __require(257);
-const pluginStartup_1 = __require(258);
-const globalSearch_1 = __require(259);
+const OpenMapTabRegistry_1 = __require(256);
+const pluginUrl_1 = __require(257);
+const operationSafety_1 = __require(258);
+const pluginStartup_1 = __require(259);
+const globalSearch_1 = __require(260);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -5853,7 +5853,7 @@ function markerSvg(spriteUrl, item) {
     const width = exports.markerCatalog.iconSize.width;
     const height = exports.markerCatalog.iconSize.height;
     const patternId = `ymz-marker-${item.groupId}-${item.id}`.replace(/[^a-zA-Z0-9_-]/g, '-');
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}"><defs><pattern id="${patternId}" patternUnits="userSpaceOnUse" width="${width}" height="${height}"><image href="${xmlAttribute(spriteUrl)}" x="${x}" y="${y}" width="${exports.markerCatalog.displaySize.width}" height="${exports.markerCatalog.displaySize.height}" preserveAspectRatio="none"/></pattern></defs><rect width="${width}" height="${height}" fill="url(#${patternId})"/></svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" overflow="hidden" style="overflow:hidden"><defs><pattern id="${patternId}" patternUnits="userSpaceOnUse" width="${width}" height="${height}"><image href="${xmlAttribute(spriteUrl)}" x="${x}" y="${y}" width="${exports.markerCatalog.displaySize.width}" height="${exports.markerCatalog.displaySize.height}" preserveAspectRatio="none" pointer-events="none"/></pattern></defs><rect width="${width}" height="${height}" fill="url(#${patternId})"/></svg>`;
 }
 function createMarkerIconList(pluginBaseUrl) {
     const resolver = createRuntimeAssetResolver(pluginBaseUrl);
@@ -15847,7 +15847,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.16';
+exports.PLUGIN_VERSION = '0.9.17';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -15864,19 +15864,20 @@ const constants_1 = __require(28);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-23T15:30:00Z',
-    buildId: 'yemind-v0.9.16-20260723',
+    buildTime: '2026-07-23T16:35:00Z',
+    buildId: 'yemind-v0.9.17-20260724',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '重构节点图片交互：悬停描边、单击选图、八点缩放、图片级删除与替换，以及双击预览。',
+    releaseSummary: '节点宽度拖动实时重排，重组节点右键菜单，并修复画布点击后被旧大纲选区重新选回其他节点的问题。',
     highlights: [
-        '鼠标悬停图片只显示蓝色边框，单击后显示八个缩放点、删除按钮和替换/删除工具栏，同时保持节点选中。',
-        '四边控制点默认自由拉伸，按住 Shift 时等比；四角控制点始终等比，并使用对应方向的缩放光标。',
-        '图片选中时 Delete 或 Backspace 只删除图片，节点保留；双击图片打开大图预览。',
-        '双击节点文字进入编辑并全选文字，移除旧版悬停删除、缩放和放大镜图标。',
-        '新插入剪贴图保持原始比例并缩放到最长边 48px，同时继续识别旧版 72×72 错误几何。',
+        '拖动节点文字宽度时，每一帧都重新布局整棵导图，子节点和连线实时跟随。',
+        '编辑节点会直接进入文字编辑并全选文字；插入节点菜单统一使用“插入”并配套新的结构关系图标。',
+        '外框和待办并入“添加”子菜单，并根据当前状态显示“外框/删除外框”和“添加待办/删除待办”。',
+        '复制、剪切、粘贴和纯文本粘贴移动到节点上移/下移之前，节点样式图标与文字重新对齐。',
+        '画布选中节点时会清除大纲中残留的 DOM 选区，避免点击任意节点后又跳回旧节点。',
+        '节点标记 sprite 增加裁剪与命中隔离，避免超大透明图片区域截获其他节点点击。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -16634,6 +16635,7 @@ exports.CANVAS_PROJECT_MENU_LABELS = void 0;
 exports.fitViewIcon = fitViewIcon;
 exports.canvasModeIcon = canvasModeIcon;
 exports.clipboardIcon = clipboardIcon;
+exports.nodeInsertIcon = nodeInsertIcon;
 exports.projectControlIcon = projectControlIcon;
 exports.lineStyleIcon = lineStyleIcon;
 exports.summaryIcon = summaryIcon;
@@ -16663,6 +16665,16 @@ function clipboardIcon(kind) {
     }
     return '<svg class="ymz-menu-icon ymz-icon-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="7" width="11" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 }
+/** Compact relationship icons modelled after common mind-map insert controls. */
+function nodeInsertIcon(kind) {
+    if (kind === 'child') {
+        return '<svg class="ymz-menu-icon ymz-icon-insert-child" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="8" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 12h4.2c1.3 0 2.3 1 2.3 2.3V16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="15" y="15" width="6.5" height="5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+    }
+    if (kind === 'parent') {
+        return '<svg class="ymz-menu-icon ymz-icon-insert-parent" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="9.5" width="6.5" height="5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 12h4.2c1.3 0 2.3 1 2.3 2.3V16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="13.5" y="7" width="8" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+    }
+    return '<svg class="ymz-menu-icon ymz-icon-insert-sibling" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="9.5" width="6" height="5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 12h3M11.5 6.5v11M11.5 6.5h2M11.5 17.5h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="13.5" y="3.5" width="8" height="6" rx="1.7" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="14.5" width="8" height="6" rx="1.7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+}
 exports.CANVAS_PROJECT_MENU_LABELS = ['结构', '主题', '线型', '样式'];
 function projectControlIcon(kind) {
     if (kind === 'layout') {
@@ -16686,7 +16698,7 @@ function projectStyleIcon() {
     return '<svg class="ymz-project-icon ymz-icon-project-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v13H4z" fill="none" stroke="currentColor" stroke-width="1.6" rx="2"/><path d="M7 9h10M7 12h7M7 15h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="18" cy="16.5" r="2.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><path d="M18 14.9v3.2M16.4 16.5h3.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
 }
 function nodeStyleIcon() {
-    return '<svg class="ymz-project-icon ymz-icon-node-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="6.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="15" cy="12" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="17.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/></svg>';
+    return '<svg class="ymz-menu-icon ymz-icon-node-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="6.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="15" cy="12" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="17.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/></svg>';
 }
 function historyIcon() {
     return '<svg class="ymz-toolbar-icon ymz-icon-history" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 9.2A8 8 0 1 1 5 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4.5 4.8v4.6h4.6M12 7.5v5l3.2 1.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -16821,10 +16833,10 @@ function escapeHtml(value) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
 const YeMindEditor_1 = __require(39);
-const deferredMount_1 = __require(253);
+const deferredMount_1 = __require(254);
 const constants_1 = __require(28);
 const visibleElement_1 = __require(238);
-const tabNodeFocus_1 = __require(254);
+const tabNodeFocus_1 = __require(255);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -16964,8 +16976,9 @@ const nodeQuickActions_1 = __require(249);
 const projectControls_1 = __require(35);
 const nodeNoteState_1 = __require(195);
 const canvasRightDrag_1 = __require(250);
-const focusHighlight_1 = __require(251);
-const editingSurfaceCoordinator_1 = __require(252);
+const liveNodeWidthLayout_1 = __require(251);
+const focusHighlight_1 = __require(252);
+const editingSurfaceCoordinator_1 = __require(253);
 const clipartGeometry_1 = __require(209);
 class YeMindEditor {
     constructor(options) {
@@ -16985,6 +16998,7 @@ class YeMindEditor {
         this.layoutGalleryPanel = null;
         this.nodeQuickActions = null;
         this.canvasRightDrag = null;
+        this.liveNodeWidthLayout = null;
         this.contextMenuSelectionSnapshot = null;
         this.cancelFocusedNodeHighlight = null;
         this.outlineRichText = null;
@@ -17340,6 +17354,8 @@ class YeMindEditor {
         this.nodeQuickActions = null;
         this.canvasRightDrag?.destroy();
         this.canvasRightDrag = null;
+        this.liveNodeWidthLayout?.destroy();
+        this.liveNodeWidthLayout = null;
         this.cancelFocusedNodeHighlight?.();
         this.cancelFocusedNodeHighlight = null;
         this.rootEl?.removeEventListener("keydown", this.onRootKeydown, true);
@@ -17480,6 +17496,7 @@ class YeMindEditor {
             pluginBaseUrl: this.options.pluginBaseUrl,
         });
         this.commands = (0, commands_1.createCommandAdapter)(this.map);
+        this.liveNodeWidthLayout = new liveNodeWidthLayout_1.LiveNodeWidthLayoutController(this.map);
         this.canvasRightDrag = new canvasRightDrag_1.CanvasRightDragController({
             root: this.rootEl,
             map: this.map,
@@ -18611,7 +18628,13 @@ class YeMindEditor {
     }
     activateOutlineUid(uid, scroll = false) {
         const outlineVisible = this.viewMode === "split" || this.viewMode === "outline";
-        this.outlineRichText?.activateUid(uid, scroll && outlineVisible);
+        const reveal = scroll && outlineVisible;
+        if ((0, editingSurfaceCoordinator_1.shouldPassivelySyncOutline)(this.editingSurface.owner)) {
+            this.outlineRichText?.syncActiveUid(uid, reveal);
+        }
+        else {
+            this.outlineRichText?.activateUid(uid, reveal);
+        }
     }
     openSearchPanel() {
         this.searchPanelEl.hidden = false;
@@ -81631,8 +81654,23 @@ function createCommandAdapter(mindMap) {
             mindMap.execCommand('RESET_LAYOUT'); },
         zoomIn: () => mindMap.view.enlarge(undefined, undefined, false),
         zoomOut: () => mindMap.view.narrow(undefined, undefined, false),
-        edit: () => { if (canMutate())
-            mindMap.renderer.startTextEdit(); },
+        edit: () => {
+            if (!canMutate())
+                return;
+            const node = primaryNode();
+            if (!node)
+                return;
+            const renderer = mindMap.renderer;
+            if (typeof renderer?.textEdit?.show === 'function') {
+                void renderer.textEdit.show({ node, isInserting: false, isFromKeyDown: false });
+                return;
+            }
+            if (typeof renderer?.startTextEdit === 'function') {
+                renderer.startTextEdit(node);
+                return;
+            }
+            mindMap.emit?.('node_dblclick', node, null, false);
+        },
         copy: () => mindMap.renderer.copy?.(),
         cut: () => { if (canMutate())
             mindMap.renderer.cut?.(); },
@@ -82823,28 +82861,16 @@ function openNodeContextMenu(event, commands, options = {}) {
         return;
     }
     const hasOuterFrame = commands.hasOuterFrameForSelection();
-    menu.addItem({ icon: 'iconEdit', label: '编辑节点', accelerator: 'F2', disabled: !availability.edit, click: run('edit', () => commands.edit()) });
-    menu.addItem({ icon: 'iconAdd', label: '+ 插入同级节点', accelerator: 'Enter', disabled: !availability.addSibling, click: run('add-sibling', () => commands.addSibling()) });
-    menu.addItem({ icon: 'iconAdd', label: '+ 添加子节点', accelerator: 'Tab', disabled: !availability.addChild, click: run('add-child', () => commands.addChild()) });
-    menu.addItem({ icon: 'iconAdd', label: '+ 添加父节点', accelerator: 'Shift+Tab', disabled: !availability.addParent, click: run('add-parent', () => commands.addParent()) });
-    menu.addItem({
-        icon: 'iconSelect',
-        label: hasOuterFrame ? '删除外框' : '添加外框',
-        disabled: hasOuterFrame ? commands.isReadonly() : !availability.outerFrame,
-        click: run(hasOuterFrame ? 'outer-frame-remove' : 'outer-frame-add', () => hasOuterFrame ? commands.removeOuterFrameForSelection() : commands.addOuterFrame()),
-    });
-    menu.addItem({ icon: 'iconRight', label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
-    menu.addItem({ iconHTML: (0, projectControls_1.nodeStyleIcon)(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
-    menu.addSeparator();
-    menu.addItem({ icon: 'iconUp', label: '上移节点', accelerator: 'Ctrl+↑', disabled: !availability.move, click: run('move-up', () => commands.moveUp()) });
-    menu.addItem({ icon: 'iconDown', label: '下移节点', accelerator: 'Ctrl+↓', disabled: !availability.move, click: run('move-down', () => commands.moveDown()) });
-    menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
-    menu.addSeparator();
     const todoAction = (0, nodeContentMenu_1.createTodoMenuDescriptor)(commands.getTodo());
+    menu.addItem({ icon: 'iconEdit', label: '编辑节点', accelerator: 'F2', disabled: !availability.edit, click: run('edit', () => commands.edit()) });
+    menu.addItem({ iconHTML: (0, projectControls_1.nodeInsertIcon)('sibling'), label: '插入同级节点', accelerator: 'Enter', disabled: !availability.addSibling, click: run('add-sibling', () => commands.addSibling()) });
+    menu.addItem({ iconHTML: (0, projectControls_1.nodeInsertIcon)('child'), label: '插入子节点', accelerator: 'Tab', disabled: !availability.addChild, click: run('add-child', () => commands.addChild()) });
+    menu.addItem({ iconHTML: (0, projectControls_1.nodeInsertIcon)('parent'), label: '插入父节点', accelerator: 'Shift+Tab', disabled: !availability.addParent, click: run('add-parent', () => commands.addParent()) });
     menu.addItem({
         type: 'submenu', icon: 'iconAdd', label: '添加',
         submenu: [
-            { icon: 'iconCheck', label: '待办', warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? 'todo-remove' : 'todo-add', () => commands.setTodo(todoAction.next)) },
+            { icon: 'iconCheck', label: todoAction.label, warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? 'todo-remove' : 'todo-add', () => commands.setTodo(todoAction.next)) },
+            { icon: 'iconSelect', label: hasOuterFrame ? '删除外框' : '外框', disabled: hasOuterFrame ? commands.isReadonly() : !availability.outerFrame, click: run(hasOuterFrame ? 'outer-frame-remove' : 'outer-frame-add', () => hasOuterFrame ? commands.removeOuterFrameForSelection() : commands.addOuterFrame()) },
             { icon: 'iconYeMindNote', label: '备注', disabled: !availability.nodeContent, click: run('note', () => (0, nodeContentDialogs_1.openNoteDialog)(commands)) },
             { icon: 'iconYeMindComment', label: '批注', disabled: !availability.nodeContent, click: run('comments', () => (0, nodeContentDialogs_1.openCommentsDialog)(commands)) },
             { icon: 'iconTags', label: '标签', disabled: !availability.nodeContent, click: run('tags', () => (0, nodeContentDialogs_1.openTagsDialog)(commands)) },
@@ -82857,11 +82883,17 @@ function openNodeContextMenu(event, commands, options = {}) {
             { icon: 'iconLink', label: '行内链接', disabled: !availability.inlineLink, click: run('inline-link', () => options.onInlineLink?.()) },
         ],
     });
+    menu.addItem({ icon: 'iconRight', label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
+    menu.addItem({ iconHTML: (0, projectControls_1.nodeStyleIcon)(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
     menu.addSeparator();
     menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('copy'), label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });
     menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('cut'), label: '剪切', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) });
     menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('paste'), label: '粘贴', accelerator: 'Ctrl+V', disabled: !availability.paste, click: run('paste', () => paste(commands)) });
     menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('paste'), label: '粘贴（纯文本）', accelerator: 'Ctrl+Shift+V', disabled: !availability.paste, click: run('paste-plain', () => paste(commands, true)) });
+    menu.addSeparator();
+    menu.addItem({ icon: 'iconUp', label: '上移节点', accelerator: 'Ctrl+↑', disabled: !availability.move, click: run('move-up', () => commands.moveUp()) });
+    menu.addItem({ icon: 'iconDown', label: '下移节点', accelerator: 'Ctrl+↓', disabled: !availability.move, click: run('move-down', () => commands.moveDown()) });
+    menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
     menu.addSeparator();
     menu.addItem({ icon: 'iconTrashcan', label: '删除当前和子节点', accelerator: 'Delete', warning: true, disabled: !availability.remove, click: run('remove-subtree', () => commands.remove()) });
     menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前', accelerator: 'Shift+Backspace', disabled: !availability.removeOnlyCurrent, click: run('remove-only-current', () => commands.removeOnlyCurrent()) });
@@ -84504,15 +84536,36 @@ class StructuredOutlineEditorController {
         this.selectEditorRange(host, start, end);
         host.scrollIntoView?.({ block: 'nearest' });
     }
-    activateUid(uid, scroll = false) {
+    activateUid(uid, scroll = false, adoptEditor = true) {
         this.activeUid = uid;
         this.options.root.querySelectorAll('[data-outline-uid]').forEach((row) => {
             row.classList.toggle('is-active', Boolean(uid) && row.dataset.outlineUid === uid);
         });
         const row = this.rowByUid(uid);
-        this.activeEditor = row?.querySelector('[data-outline-editor]') ?? null;
+        if (adoptEditor) {
+            this.activeEditor = row?.querySelector('[data-outline-editor]') ?? null;
+        }
         if (scroll && row)
             this.revealRow(row);
+    }
+    /**
+     * Mirrors a canvas selection into the outline without retaining a stale DOM
+     * selection. Otherwise a later document selectionchange can reactivate the
+     * previously edited outline row and override the node the user just clicked.
+     */
+    syncActiveUid(uid, scroll = false) {
+        this.suppressSelectionChange = true;
+        try {
+            const selection = window.getSelection();
+            if (selection?.anchorNode && this.options.root.contains(selection.anchorNode)) {
+                selection.removeAllRanges();
+            }
+        }
+        finally {
+            this.suppressSelectionChange = false;
+        }
+        this.activeEditor = null;
+        this.activateUid(uid, scroll, false);
     }
     getSelectionState(host = this.activeEditor) {
         if (!host)
@@ -88963,6 +89016,63 @@ exports.CanvasRightDragController = CanvasRightDragController;
 
 },
 251: function(module, exports, __require, __externalRequire) {
+// /src/editor/liveNodeWidthLayout.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LiveNodeWidthLayoutController = void 0;
+exports.hasActiveNodeWidthDrag = hasActiveNodeWidthDrag;
+function hasActiveNodeWidthDrag(root) {
+    if (!root)
+        return false;
+    if (root.isDragHandleMousedown === true)
+        return true;
+    const children = Array.isArray(root.children) ? root.children : [];
+    return children.some(hasActiveNodeWidthDrag);
+}
+/**
+ * simple-mind-map redraws only the resized node during a width-handle drag and
+ * waits until mouseup before laying out the complete tree. This controller
+ * schedules a full, history-free layout on the next animation frame so child
+ * nodes and their lines follow the changing parent width in real time.
+ */
+class LiveNodeWidthLayoutController {
+    constructor(map, target = window, animation) {
+        this.map = map;
+        this.target = target;
+        this.frame = null;
+        this.destroyed = false;
+        this.onMousemove = () => {
+            if (this.destroyed || this.frame !== null)
+                return;
+            if (!hasActiveNodeWidthDrag(this.map?.renderer?.root))
+                return;
+            this.frame = this.animation.request(() => {
+                this.frame = null;
+                if (this.destroyed || !hasActiveNodeWidthDrag(this.map?.renderer?.root))
+                    return;
+                this.map?.render?.();
+            });
+        };
+        this.animation = animation ?? {
+            request: (callback) => window.requestAnimationFrame(callback),
+            cancel: (handle) => window.cancelAnimationFrame(handle),
+        };
+        this.target.addEventListener('mousemove', this.onMousemove);
+    }
+    destroy() {
+        if (this.destroyed)
+            return;
+        this.destroyed = true;
+        this.target.removeEventListener('mousemove', this.onMousemove);
+        if (this.frame !== null)
+            this.animation.cancel(this.frame);
+        this.frame = null;
+    }
+}
+exports.LiveNodeWidthLayoutController = LiveNodeWidthLayoutController;
+
+},
+252: function(module, exports, __require, __externalRequire) {
 // /src/editor/focusHighlight.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89027,11 +89137,15 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
 }
 
 },
-252: function(module, exports, __require, __externalRequire) {
+253: function(module, exports, __require, __externalRequire) {
 // /src/editor/editingSurfaceCoordinator.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EditingSurfaceCoordinator = void 0;
+exports.shouldPassivelySyncOutline = shouldPassivelySyncOutline;
+function shouldPassivelySyncOutline(owner) {
+    return owner !== 'outline';
+}
 /**
  * Coordinates the two text-editing surfaces used by split mode.
  *
@@ -89112,7 +89226,7 @@ class EditingSurfaceCoordinator {
 exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
 
 },
-253: function(module, exports, __require, __externalRequire) {
+254: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89134,7 +89248,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-254: function(module, exports, __require, __externalRequire) {
+255: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89158,7 +89272,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-255: function(module, exports, __require, __externalRequire) {
+256: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89214,7 +89328,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-256: function(module, exports, __require, __externalRequire) {
+257: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89240,7 +89354,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-257: function(module, exports, __require, __externalRequire) {
+258: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89256,7 +89370,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-258: function(module, exports, __require, __externalRequire) {
+259: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89283,7 +89397,7 @@ function initializePluginStartup(options) {
 }
 
 },
-259: function(module, exports, __require, __externalRequire) {
+260: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

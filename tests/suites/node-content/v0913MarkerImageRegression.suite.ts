@@ -16,6 +16,8 @@ describe('v0.9.13 marker and image regressions', () => {
     expect(svg).toContain('<rect width="28" height="28"');
     expect(svg).toContain('fill="url(#');
     expect(svg.indexOf('<defs>')).toBeLessThan(svg.indexOf('<image'));
+    expect(svg).toContain('overflow="hidden"');
+    expect(svg).toContain('pointer-events="none"');
   });
 
   it('shows only a border on hover and pins eight handles plus the toolbar after image click', () => {

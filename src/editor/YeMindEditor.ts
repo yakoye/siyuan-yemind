@@ -98,8 +98,9 @@ import { NodeQuickActionsController } from "./nodeQuickActions";
 import { canvasModeIcon, lineStyleIcon } from "./projectControls";
 import { normalizeNodeNote } from "../content/nodeNoteState";
 import { CanvasRightDragController } from "./canvasRightDrag";
+import { LiveNodeWidthLayoutController } from "./liveNodeWidthLayout";
 import { scheduleFocusedNodeHighlight } from "./focusHighlight";
-import { EditingSurfaceCoordinator } from "./editingSurfaceCoordinator";
+import { EditingSurfaceCoordinator, shouldPassivelySyncOutline } from "./editingSurfaceCoordinator";
 import {
   CLIPART_GEOMETRY_VERSION,
   isLegacyDefaultClipartGeometry,
@@ -179,6 +180,7 @@ export class YeMindEditor {
   private layoutGalleryPanel: LayoutGalleryPanel | null = null;
   private nodeQuickActions: NodeQuickActionsController | null = null;
   private canvasRightDrag: CanvasRightDragController | null = null;
+  private liveNodeWidthLayout: LiveNodeWidthLayoutController | null = null;
   private contextMenuSelectionSnapshot: { nodes: any[]; target: any } | null = null;
   private cancelFocusedNodeHighlight: (() => void) | null = null;
   private outlineRichText: StructuredOutlineEditorController | null = null;
@@ -565,6 +567,8 @@ export class YeMindEditor {
     this.nodeQuickActions = null;
     this.canvasRightDrag?.destroy();
     this.canvasRightDrag = null;
+    this.liveNodeWidthLayout?.destroy();
+    this.liveNodeWidthLayout = null;
     this.cancelFocusedNodeHighlight?.();
     this.cancelFocusedNodeHighlight = null;
     this.rootEl?.removeEventListener("keydown", this.onRootKeydown, true);
@@ -765,6 +769,7 @@ export class YeMindEditor {
       pluginBaseUrl: this.options.pluginBaseUrl,
     });
     this.commands = createCommandAdapter(this.map);
+    this.liveNodeWidthLayout = new LiveNodeWidthLayoutController(this.map);
     this.canvasRightDrag = new CanvasRightDragController({
       root: this.rootEl,
       map: this.map,
@@ -2075,7 +2080,12 @@ export class YeMindEditor {
 
   private activateOutlineUid(uid: string, scroll = false): void {
     const outlineVisible = this.viewMode === "split" || this.viewMode === "outline";
-    this.outlineRichText?.activateUid(uid, scroll && outlineVisible);
+    const reveal = scroll && outlineVisible;
+    if (shouldPassivelySyncOutline(this.editingSurface.owner)) {
+      this.outlineRichText?.syncActiveUid(uid, reveal);
+    } else {
+      this.outlineRichText?.activateUid(uid, reveal);
+    }
   }
 
   private openSearchPanel(): void {

@@ -1279,3 +1279,18 @@
 
 /* Keep the visual node hover/active outline from covering the image hit target. */
 .ymz-editor .smm-hover-node{pointer-events:none}
+
+/* v0.9.17 context-menu icon alignment */
+.ymz-context-menu .b3-menu__icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+}
+.ymz-context-menu .b3-menu__icon .ymz-menu-icon{
+  display:block;
+  width:18px;
+  height:18px;
+  flex:0 0 18px;
+  vertical-align:middle;
+}

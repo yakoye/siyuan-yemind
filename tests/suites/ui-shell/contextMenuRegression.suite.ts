@@ -3,7 +3,6 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const source = readFileSync(resolve(process.cwd(), 'src/ui/contextMenu.ts'), 'utf8');
-
 const singleSource = source.slice(source.indexOf('const hasOuterFrame'));
 
 function position(label: string): number {
@@ -11,18 +10,19 @@ function position(label: string): number {
 }
 
 describe('node context menu regression surface', () => {
-  it('keeps the requested single-node command order and dynamic outer-frame action', () => {
+  it('keeps the requested single-node command order and dynamic content actions', () => {
     const labels = [
-      '编辑节点', '+ 插入同级节点', '+ 添加子节点', '+ 添加父节点',
-      '关联线', '节点样式', '上移节点', '下移节点',
-      '展开/折叠（下级节点）', '添加', '复制', '剪切', '粘贴',
-      '粘贴（纯文本）', '删除当前和子节点', '仅删除当前',
+      '编辑节点', '插入同级节点', '插入子节点', '插入父节点',
+      '添加', '关联线', '节点样式', '复制', '剪切', '粘贴',
+      '粘贴（纯文本）', '上移节点', '下移节点',
+      '展开/折叠（下级节点）', '删除当前和子节点', '仅删除当前',
     ];
     labels.forEach((label) => expect(position(label)).toBeGreaterThanOrEqual(0));
     for (let index = 1; index < labels.length; index += 1) {
       expect(position(labels[index])).toBeGreaterThan(position(labels[index - 1]));
     }
-    expect(source).toContain("label: hasOuterFrame ? '删除外框' : '添加外框'");
+    expect(source).toContain("label: hasOuterFrame ? '删除外框' : '外框'");
+    expect(source).toContain('label: todoAction.label');
     expect(source).toContain("accelerator: 'Ctrl+Alt+L'");
   });
 

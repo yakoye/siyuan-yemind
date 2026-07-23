@@ -217,6 +217,7 @@
     "v071GlobalSearchCloseNavigation.suite.ts"
   ],
   "user-regressions": [
-    "v0523UserReportedRegressionMatrix.suite.ts"
+    "v0523UserReportedRegressionMatrix.suite.ts",
+    "v0917UserReportedInteractionRegression.suite.ts"
   ]
 }

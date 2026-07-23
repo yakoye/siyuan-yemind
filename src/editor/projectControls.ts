@@ -25,6 +25,20 @@ export function clipboardIcon(kind: 'copy' | 'cut' | 'paste'): string {
   return '<svg class="ymz-menu-icon ymz-icon-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="7" width="11" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 }
 
+
+export type NodeInsertKind = 'sibling' | 'child' | 'parent';
+
+/** Compact relationship icons modelled after common mind-map insert controls. */
+export function nodeInsertIcon(kind: NodeInsertKind): string {
+  if (kind === 'child') {
+    return '<svg class="ymz-menu-icon ymz-icon-insert-child" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="8" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 12h4.2c1.3 0 2.3 1 2.3 2.3V16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="15" y="15" width="6.5" height="5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+  }
+  if (kind === 'parent') {
+    return '<svg class="ymz-menu-icon ymz-icon-insert-parent" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="9.5" width="6.5" height="5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 12h4.2c1.3 0 2.3 1 2.3 2.3V16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="13.5" y="7" width="8" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+  }
+  return '<svg class="ymz-menu-icon ymz-icon-insert-sibling" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="9.5" width="6" height="5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 12h3M11.5 6.5v11M11.5 6.5h2M11.5 17.5h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="13.5" y="3.5" width="8" height="6" rx="1.7" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="14.5" width="8" height="6" rx="1.7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+}
+
 export const CANVAS_PROJECT_MENU_LABELS = ['结构', '主题', '线型', '样式'] as const;
 
 export type ProjectControlKind = 'layout' | 'theme';
@@ -57,7 +71,7 @@ export function projectStyleIcon(): string {
 }
 
 export function nodeStyleIcon(): string {
-  return '<svg class="ymz-project-icon ymz-icon-node-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="6.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="15" cy="12" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="17.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/></svg>';
+  return '<svg class="ymz-menu-icon ymz-icon-node-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="6.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="15" cy="12" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="17.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/></svg>';
 }
 
 

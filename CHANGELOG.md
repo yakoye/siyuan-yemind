@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.17 - 2026-07-24
+
+- Reflow the complete map on animation frames during node-width dragging so descendants and edges follow in real time.
+- Make “编辑节点” enter text editing with a full text selection; rename node creation actions to 插入同级/子/父节点 and add relationship SVG icons.
+- Move outer-frame and todo state actions into 添加, reorder clipboard commands before movement commands, and align custom menu icons with labels.
+- Prevent stale structured-outline DOM selections from reactivating an old row after a canvas node is clicked.
+- Clip marker sprite SVG overflow and disable pointer events on the source sprite image to eliminate oversized transparent click interception.
+- Add permanent offline, source-contract and Chromium regression coverage for the reported interactions.
+
 ## 0.9.16 - 2026-07-23
 
 - Rebuilt node-image interaction around direct manipulation: hover border, click selection, eight resize handles and a compact Replace/Delete toolbar.

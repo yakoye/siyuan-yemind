@@ -201,7 +201,21 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     resetLayout: () => { if (canMutate()) mindMap.execCommand('RESET_LAYOUT'); },
     zoomIn: () => mindMap.view.enlarge(undefined, undefined, false),
     zoomOut: () => mindMap.view.narrow(undefined, undefined, false),
-    edit: () => { if (canMutate()) mindMap.renderer.startTextEdit(); },
+    edit: () => {
+      if (!canMutate()) return;
+      const node = primaryNode();
+      if (!node) return;
+      const renderer = mindMap.renderer as any;
+      if (typeof renderer?.textEdit?.show === 'function') {
+        void renderer.textEdit.show({ node, isInserting: false, isFromKeyDown: false });
+        return;
+      }
+      if (typeof renderer?.startTextEdit === 'function') {
+        renderer.startTextEdit(node);
+        return;
+      }
+      (mindMap as any).emit?.('node_dblclick', node, null, false);
+    },
     copy: () => (mindMap.renderer as any).copy?.(),
     cut: () => { if (canMutate()) (mindMap.renderer as any).cut?.(); },
     paste: async () => { if (canMutate()) await (mindMap.renderer as any).paste?.(); },

@@ -119,7 +119,7 @@ export function markerSvg(spriteUrl: string, item: MarkerItem): string {
   const width = markerCatalog.iconSize.width;
   const height = markerCatalog.iconSize.height;
   const patternId = `ymz-marker-${item.groupId}-${item.id}`.replace(/[^a-zA-Z0-9_-]/g, '-');
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}"><defs><pattern id="${patternId}" patternUnits="userSpaceOnUse" width="${width}" height="${height}"><image href="${xmlAttribute(spriteUrl)}" x="${x}" y="${y}" width="${markerCatalog.displaySize.width}" height="${markerCatalog.displaySize.height}" preserveAspectRatio="none"/></pattern></defs><rect width="${width}" height="${height}" fill="url(#${patternId})"/></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" overflow="hidden" style="overflow:hidden"><defs><pattern id="${patternId}" patternUnits="userSpaceOnUse" width="${width}" height="${height}"><image href="${xmlAttribute(spriteUrl)}" x="${x}" y="${y}" width="${markerCatalog.displaySize.width}" height="${markerCatalog.displaySize.height}" preserveAspectRatio="none" pointer-events="none"/></pattern></defs><rect width="${width}" height="${height}" fill="url(#${patternId})"/></svg>`;
 }
 
 export function createMarkerIconList(pluginBaseUrl?: string): Array<Record<string, unknown>> {

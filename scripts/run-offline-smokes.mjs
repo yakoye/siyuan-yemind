@@ -13,6 +13,7 @@ const entries = [
   'structuredOutlineSmokeEntry',
   'dragIntentSmokeEntry',
   'localAssetsSmokeEntry',
+  'interactionRegressionSmokeEntry',
 ];
 
 rmSync(outDir, { recursive: true, force: true });

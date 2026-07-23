@@ -4,20 +4,21 @@ import { readFileSync } from 'node:fs';
 const source = readFileSync('src/ui/contextMenu.ts', 'utf8');
 const css = readFileSync('src/styles/index.css', 'utf8');
 
-describe('v0.6.3 node context menu organization', () => {
-  it('uses the same node-style svg as the top toolbar', () => {
+describe('node context menu organization', () => {
+  it('uses a menu-sized node-style svg aligned with its text', () => {
     expect(source).toMatch(/import \{[^}]*nodeStyleIcon[^}]*\} from '\.\.\/editor\/projectControls';/);
     expect(source).toContain("iconHTML: nodeStyleIcon()");
     expect(source).not.toContain("icon: 'iconTheme', label: '节点样式'");
+    expect(css).toMatch(/\.ymz-context-menu \.b3-menu__icon\{[^}]*align-items:center/s);
   });
 
-  it('groups secondary actions into clear submenus while keeping edit, add and delete direct', () => {
-    ['剪贴板', '节点内容', '样式与关系', '排列与折叠'].forEach((label) => {
-      expect(source).toContain(`label: '${label}'`);
-    });
+  it('keeps edit and insertion direct while grouping optional node content under 添加', () => {
     expect(source).toContain("label: '编辑节点'");
-    expect(source).toContain("label: '添加子节点'");
-    expect(source).toContain("label: '删除节点和子树'");
+    expect(source).toContain("label: '插入同级节点'");
+    expect(source).toContain("label: '插入子节点'");
+    expect(source).toContain("label: '插入父节点'");
+    expect(source).toContain("type: 'submenu', icon: 'iconAdd', label: '添加'");
+    expect(source).toContain("label: hasOuterFrame ? '删除外框' : '外框'");
   });
 
   it('assigns scrolling only to the menu items container', () => {

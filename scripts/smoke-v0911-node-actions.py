@@ -51,7 +51,7 @@ with sync_playwright() as p:
     if not opened:
         raise RuntimeError('Single-node context menu did not open')
     labels = page.evaluate("""()=>{const items=window.__lastMenu.items;return items.map(item=>item.separator?'---':item.label)}""")
-    expected = ['编辑节点','+ 插入同级节点','+ 添加子节点','+ 添加父节点','添加外框','关联线','节点样式','---','上移节点','下移节点','展开/折叠（下级节点）','---','添加','---','复制','剪切','粘贴','粘贴（纯文本）','---','删除当前和子节点','仅删除当前']
+    expected = ['编辑节点','插入同级节点','插入子节点','插入父节点','添加','关联线','节点样式','---','复制','剪切','粘贴','粘贴（纯文本）','---','上移节点','下移节点','展开/折叠（下级节点）','---','删除当前和子节点','仅删除当前']
     if labels != expected:
         raise RuntimeError(f'Unexpected single-node menu order: {labels}')
     add_labels = page.evaluate("""()=>window.__lastMenu.items.find(item=>item.label==='添加').submenu.map(item=>item.label)""")

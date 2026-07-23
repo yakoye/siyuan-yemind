@@ -376,14 +376,35 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     host.scrollIntoView?.({ block: 'nearest' });
   }
 
-  activateUid(uid: string, scroll = false): void {
+  activateUid(uid: string, scroll = false, adoptEditor = true): void {
     this.activeUid = uid;
     this.options.root.querySelectorAll<HTMLElement>('[data-outline-uid]').forEach((row) => {
       row.classList.toggle('is-active', Boolean(uid) && row.dataset.outlineUid === uid);
     });
     const row = this.rowByUid(uid);
-    this.activeEditor = row?.querySelector<HTMLElement>('[data-outline-editor]') ?? null;
+    if (adoptEditor) {
+      this.activeEditor = row?.querySelector<HTMLElement>('[data-outline-editor]') ?? null;
+    }
     if (scroll && row) this.revealRow(row);
+  }
+
+  /**
+   * Mirrors a canvas selection into the outline without retaining a stale DOM
+   * selection. Otherwise a later document selectionchange can reactivate the
+   * previously edited outline row and override the node the user just clicked.
+   */
+  syncActiveUid(uid: string, scroll = false): void {
+    this.suppressSelectionChange = true;
+    try {
+      const selection = window.getSelection();
+      if (selection?.anchorNode && this.options.root.contains(selection.anchorNode)) {
+        selection.removeAllRanges();
+      }
+    } finally {
+      this.suppressSelectionChange = false;
+    }
+    this.activeEditor = null;
+    this.activateUid(uid, scroll, false);
   }
 
   getSelectionState(host = this.activeEditor): StructuredOutlineSelectionState {

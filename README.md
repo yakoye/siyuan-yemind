@@ -2,13 +2,22 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.16`  
+Current version: `0.9.17`  
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.17 live width layout, context menu and selection ownership
+
+- Resizing a node's text width now schedules one full tree layout per animation frame, so descendants and connecting lines follow while the pointer is still down.
+- “Edit node” enters text editing and selects the node text. Sibling, child and parent operations now use “Insert” wording and matching relationship icons.
+- Outer-frame and todo actions live in the Add submenu and switch between add/remove labels according to the selected node state.
+- Copy, cut and both paste actions are grouped before node movement; custom SVG menu icons share one aligned 18px box.
+- Canvas selection now passively synchronizes the outline and clears stale outline DOM ranges, preventing another outline row from reclaiming selection.
+- Marker sprite SVGs clip overflow and disable pointer events on the oversized source image so transparent sprite regions cannot intercept unrelated node clicks.
 
 ## v0.9.16 proportional clipart geometry
 
 - Clipart insertion now reads authored SVG `width`/`height`, falling back to `viewBox`, instead of forcing every item to `72 × 72`.
-- Landscape, portrait and square assets are fitted proportionally inside a 72px box, and node frames use the resulting display size.
+- Landscape, portrait and square assets are fitted proportionally inside a 48px box, and node frames use the resulting display size.
 - Legacy default clipart nodes with `yemindClipartId` and the old square geometry are repaired automatically when a map opens.
 - The local asset contract now matches the corrected set of 764 SVGs in 13 categories.
 
