@@ -6988,11 +6988,11 @@ exports.default = {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "type": "svg-directory-collection",
     "assetRoot": "assets",
     "collectionRoot": "clipart",
-    "total": 806,
+    "total": 764,
     "categories": [
         {
             "id": "animal",
@@ -7004,7 +7004,7 @@ exports.default = {
             "id": "plant",
             "label": "植物",
             "folder": "02_植物",
-            "count": 71
+            "count": 29
         },
         {
             "id": "environment",
@@ -7200,9 +7200,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 13,
-            "label": "虎皮兰",
-            "fileName": "013_虎皮兰.svg",
-            "relativePath": "clipart/01_动物/013_虎皮兰.svg"
+            "label": "熊猫",
+            "fileName": "013_熊猫.svg",
+            "relativePath": "clipart/01_动物/013_熊猫.svg"
         },
         {
             "id": "animal-014",
@@ -7210,9 +7210,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 14,
-            "label": "长春藤",
-            "fileName": "014_长春藤.svg",
-            "relativePath": "clipart/01_动物/014_长春藤.svg"
+            "label": "熊",
+            "fileName": "014_熊.svg",
+            "relativePath": "clipart/01_动物/014_熊.svg"
         },
         {
             "id": "animal-015",
@@ -7220,9 +7220,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 15,
-            "label": "蕨类植物",
-            "fileName": "015_蕨类植物.svg",
-            "relativePath": "clipart/01_动物/015_蕨类植物.svg"
+            "label": "狗",
+            "fileName": "015_狗.svg",
+            "relativePath": "clipart/01_动物/015_狗.svg"
         },
         {
             "id": "animal-016",
@@ -7230,9 +7230,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 16,
-            "label": "铁树",
-            "fileName": "016_铁树.svg",
-            "relativePath": "clipart/01_动物/016_铁树.svg"
+            "label": "羊",
+            "fileName": "016_羊.svg",
+            "relativePath": "clipart/01_动物/016_羊.svg"
         },
         {
             "id": "animal-017",
@@ -7240,9 +7240,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 17,
-            "label": "天堂鸟",
-            "fileName": "017_天堂鸟.svg",
-            "relativePath": "clipart/01_动物/017_天堂鸟.svg"
+            "label": "猫头鹰",
+            "fileName": "017_猫头鹰.svg",
+            "relativePath": "clipart/01_动物/017_猫头鹰.svg"
         },
         {
             "id": "animal-018",
@@ -7250,9 +7250,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 18,
-            "label": "仙人掌",
-            "fileName": "018_仙人掌.svg",
-            "relativePath": "clipart/01_动物/018_仙人掌.svg"
+            "label": "刺猬",
+            "fileName": "018_刺猬.svg",
+            "relativePath": "clipart/01_动物/018_刺猬.svg"
         },
         {
             "id": "animal-019",
@@ -7260,9 +7260,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 19,
-            "label": "梅花",
-            "fileName": "019_梅花.svg",
-            "relativePath": "clipart/01_动物/019_梅花.svg"
+            "label": "猪",
+            "fileName": "019_猪.svg",
+            "relativePath": "clipart/01_动物/019_猪.svg"
         },
         {
             "id": "animal-020",
@@ -7270,9 +7270,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 20,
-            "label": "五行草",
-            "fileName": "020_五行草.svg",
-            "relativePath": "clipart/01_动物/020_五行草.svg"
+            "label": "长颈鹿",
+            "fileName": "020_长颈鹿.svg",
+            "relativePath": "clipart/01_动物/020_长颈鹿.svg"
         },
         {
             "id": "animal-021",
@@ -7280,9 +7280,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 21,
-            "label": "竹子",
-            "fileName": "021_竹子.svg",
-            "relativePath": "clipart/01_动物/021_竹子.svg"
+            "label": "考拉",
+            "fileName": "021_考拉.svg",
+            "relativePath": "clipart/01_动物/021_考拉.svg"
         },
         {
             "id": "animal-022",
@@ -7290,9 +7290,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 22,
-            "label": "春羽",
-            "fileName": "022_春羽.svg",
-            "relativePath": "clipart/01_动物/022_春羽.svg"
+            "label": "猫",
+            "fileName": "022_猫.svg",
+            "relativePath": "clipart/01_动物/022_猫.svg"
         },
         {
             "id": "animal-023",
@@ -7300,9 +7300,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 23,
-            "label": "四叶草",
-            "fileName": "023_四叶草.svg",
-            "relativePath": "clipart/01_动物/023_四叶草.svg"
+            "label": "狐狸",
+            "fileName": "023_狐狸.svg",
+            "relativePath": "clipart/01_动物/023_狐狸.svg"
         },
         {
             "id": "animal-024",
@@ -7310,9 +7310,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 24,
-            "label": "云",
-            "fileName": "024_云.svg",
-            "relativePath": "clipart/01_动物/024_云.svg"
+            "label": "猴子",
+            "fileName": "024_猴子.svg",
+            "relativePath": "clipart/01_动物/024_猴子.svg"
         },
         {
             "id": "animal-025",
@@ -7320,9 +7320,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 25,
-            "label": "环境保护",
-            "fileName": "025_环境保护.svg",
-            "relativePath": "clipart/01_动物/025_环境保护.svg"
+            "label": "青蛙",
+            "fileName": "025_青蛙.svg",
+            "relativePath": "clipart/01_动物/025_青蛙.svg"
         },
         {
             "id": "animal-026",
@@ -7330,9 +7330,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 26,
-            "label": "工厂",
-            "fileName": "026_工厂.svg",
-            "relativePath": "clipart/01_动物/026_工厂.svg"
+            "label": "蟹",
+            "fileName": "026_蟹.svg",
+            "relativePath": "clipart/01_动物/026_蟹.svg"
         },
         {
             "id": "animal-027",
@@ -7340,9 +7340,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 27,
-            "label": "烟",
-            "fileName": "027_烟.svg",
-            "relativePath": "clipart/01_动物/027_烟.svg"
+            "label": "虾",
+            "fileName": "027_虾.svg",
+            "relativePath": "clipart/01_动物/027_虾.svg"
         },
         {
             "id": "animal-028",
@@ -7350,9 +7350,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 28,
-            "label": "浓烟",
-            "fileName": "028_浓烟.svg",
-            "relativePath": "clipart/01_动物/028_浓烟.svg"
+            "label": "章鱼",
+            "fileName": "028_章鱼.svg",
+            "relativePath": "clipart/01_动物/028_章鱼.svg"
         },
         {
             "id": "animal-029",
@@ -7360,9 +7360,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 29,
-            "label": "污水处理厂",
-            "fileName": "029_污水处理厂.svg",
-            "relativePath": "clipart/01_动物/029_污水处理厂.svg"
+            "label": "海藻",
+            "fileName": "029_海藻.svg",
+            "relativePath": "clipart/01_动物/029_海藻.svg"
         },
         {
             "id": "animal-030",
@@ -7450,9 +7450,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 38,
-            "label": "章鱼",
-            "fileName": "038_章鱼.svg",
-            "relativePath": "clipart/01_动物/038_章鱼.svg"
+            "label": "章鱼_2",
+            "fileName": "038_章鱼_2.svg",
+            "relativePath": "clipart/01_动物/038_章鱼_2.svg"
         },
         {
             "id": "animal-039",
@@ -7560,9 +7560,9 @@ exports.default = {
             "categoryLabel": "动物",
             "folder": "01_动物",
             "index": 49,
-            "label": "海藻",
-            "fileName": "049_海藻.svg",
-            "relativePath": "clipart/01_动物/049_海藻.svg"
+            "label": "海藻_2",
+            "fileName": "049_海藻_2.svg",
+            "relativePath": "clipart/01_动物/049_海藻_2.svg"
         },
         {
             "id": "animal-050",
@@ -7680,9 +7680,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 1,
-            "label": "圣诞花环",
-            "fileName": "001_圣诞花环.svg",
-            "relativePath": "clipart/02_植物/001_圣诞花环.svg"
+            "label": "多肉植物",
+            "fileName": "001_多肉植物.svg",
+            "relativePath": "clipart/02_植物/001_多肉植物.svg"
         },
         {
             "id": "plant-002",
@@ -7690,9 +7690,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 2,
-            "label": "房子",
-            "fileName": "002_房子.svg",
-            "relativePath": "clipart/02_植物/002_房子.svg"
+            "label": "仙人掌",
+            "fileName": "002_仙人掌.svg",
+            "relativePath": "clipart/02_植物/002_仙人掌.svg"
         },
         {
             "id": "plant-003",
@@ -7700,9 +7700,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 3,
-            "label": "圣诞球",
-            "fileName": "003_圣诞球.svg",
-            "relativePath": "clipart/02_植物/003_圣诞球.svg"
+            "label": "蝴蝶兰",
+            "fileName": "003_蝴蝶兰.svg",
+            "relativePath": "clipart/02_植物/003_蝴蝶兰.svg"
         },
         {
             "id": "plant-004",
@@ -7710,9 +7710,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 4,
-            "label": "圣诞树",
-            "fileName": "004_圣诞树.svg",
-            "relativePath": "clipart/02_植物/004_圣诞树.svg"
+            "label": "龟背竹",
+            "fileName": "004_龟背竹.svg",
+            "relativePath": "clipart/02_植物/004_龟背竹.svg"
         },
         {
             "id": "plant-005",
@@ -7720,9 +7720,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 5,
-            "label": "圣诞帽",
-            "fileName": "005_圣诞帽.svg",
-            "relativePath": "clipart/02_植物/005_圣诞帽.svg"
+            "label": "芦苇",
+            "fileName": "005_芦苇.svg",
+            "relativePath": "clipart/02_植物/005_芦苇.svg"
         },
         {
             "id": "plant-006",
@@ -7730,9 +7730,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 6,
-            "label": "圣诞帽_2",
-            "fileName": "006_圣诞帽_2.svg",
-            "relativePath": "clipart/02_植物/006_圣诞帽_2.svg"
+            "label": "荷花",
+            "fileName": "006_荷花.svg",
+            "relativePath": "clipart/02_植物/006_荷花.svg"
         },
         {
             "id": "plant-007",
@@ -7740,9 +7740,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 7,
-            "label": "雪花",
-            "fileName": "007_雪花.svg",
-            "relativePath": "clipart/02_植物/007_雪花.svg"
+            "label": "滴水莲",
+            "fileName": "007_滴水莲.svg",
+            "relativePath": "clipart/02_植物/007_滴水莲.svg"
         },
         {
             "id": "plant-008",
@@ -7750,9 +7750,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 8,
-            "label": "雪人",
-            "fileName": "008_雪人.svg",
-            "relativePath": "clipart/02_植物/008_雪人.svg"
+            "label": "望鹤兰",
+            "fileName": "008_望鹤兰.svg",
+            "relativePath": "clipart/02_植物/008_望鹤兰.svg"
         },
         {
             "id": "plant-009",
@@ -7760,9 +7760,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 9,
-            "label": "鹿角",
-            "fileName": "009_鹿角.svg",
-            "relativePath": "clipart/02_植物/009_鹿角.svg"
+            "label": "盆栽",
+            "fileName": "009_盆栽.svg",
+            "relativePath": "clipart/02_植物/009_盆栽.svg"
         },
         {
             "id": "plant-010",
@@ -7770,9 +7770,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 10,
-            "label": "礼物",
-            "fileName": "010_礼物.svg",
-            "relativePath": "clipart/02_植物/010_礼物.svg"
+            "label": "玫瑰花",
+            "fileName": "010_玫瑰花.svg",
+            "relativePath": "clipart/02_植物/010_玫瑰花.svg"
         },
         {
             "id": "plant-011",
@@ -7780,9 +7780,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 11,
-            "label": "微笑",
-            "fileName": "011_微笑.svg",
-            "relativePath": "clipart/02_植物/011_微笑.svg"
+            "label": "凤梨花",
+            "fileName": "011_凤梨花.svg",
+            "relativePath": "clipart/02_植物/011_凤梨花.svg"
         },
         {
             "id": "plant-012",
@@ -7790,9 +7790,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 12,
-            "label": "邪魅一笑",
-            "fileName": "012_邪魅一笑.svg",
-            "relativePath": "clipart/02_植物/012_邪魅一笑.svg"
+            "label": "芦荟",
+            "fileName": "012_芦荟.svg",
+            "relativePath": "clipart/02_植物/012_芦荟.svg"
         },
         {
             "id": "plant-013",
@@ -7800,9 +7800,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 13,
-            "label": "睡觉",
-            "fileName": "013_睡觉.svg",
-            "relativePath": "clipart/02_植物/013_睡觉.svg"
+            "label": "虎皮兰",
+            "fileName": "013_虎皮兰.svg",
+            "relativePath": "clipart/02_植物/013_虎皮兰.svg"
         },
         {
             "id": "plant-014",
@@ -7810,9 +7810,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 14,
-            "label": "淘气的",
-            "fileName": "014_淘气的.svg",
-            "relativePath": "clipart/02_植物/014_淘气的.svg"
+            "label": "长春藤",
+            "fileName": "014_长春藤.svg",
+            "relativePath": "clipart/02_植物/014_长春藤.svg"
         },
         {
             "id": "plant-015",
@@ -7820,9 +7820,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 15,
-            "label": "尴尬",
-            "fileName": "015_尴尬.svg",
-            "relativePath": "clipart/02_植物/015_尴尬.svg"
+            "label": "蕨类植物",
+            "fileName": "015_蕨类植物.svg",
+            "relativePath": "clipart/02_植物/015_蕨类植物.svg"
         },
         {
             "id": "plant-016",
@@ -7830,9 +7830,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 16,
-            "label": "微笑_2",
-            "fileName": "016_微笑_2.svg",
-            "relativePath": "clipart/02_植物/016_微笑_2.svg"
+            "label": "铁树",
+            "fileName": "016_铁树.svg",
+            "relativePath": "clipart/02_植物/016_铁树.svg"
         },
         {
             "id": "plant-017",
@@ -7840,9 +7840,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 17,
-            "label": "哭",
-            "fileName": "017_哭.svg",
-            "relativePath": "clipart/02_植物/017_哭.svg"
+            "label": "天堂鸟",
+            "fileName": "017_天堂鸟.svg",
+            "relativePath": "clipart/02_植物/017_天堂鸟.svg"
         },
         {
             "id": "plant-018",
@@ -7850,9 +7850,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 18,
-            "label": "溜冰鞋",
-            "fileName": "018_溜冰鞋.svg",
-            "relativePath": "clipart/02_植物/018_溜冰鞋.svg"
+            "label": "仙人掌_2",
+            "fileName": "018_仙人掌_2.svg",
+            "relativePath": "clipart/02_植物/018_仙人掌_2.svg"
         },
         {
             "id": "plant-019",
@@ -7860,9 +7860,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 19,
-            "label": "举重",
-            "fileName": "019_举重.svg",
-            "relativePath": "clipart/02_植物/019_举重.svg"
+            "label": "梅花",
+            "fileName": "019_梅花.svg",
+            "relativePath": "clipart/02_植物/019_梅花.svg"
         },
         {
             "id": "plant-020",
@@ -7870,9 +7870,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 20,
-            "label": "拳击",
-            "fileName": "020_拳击.svg",
-            "relativePath": "clipart/02_植物/020_拳击.svg"
+            "label": "五行草",
+            "fileName": "020_五行草.svg",
+            "relativePath": "clipart/02_植物/020_五行草.svg"
         },
         {
             "id": "plant-021",
@@ -7880,9 +7880,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 21,
-            "label": "保龄球",
-            "fileName": "021_保龄球.svg",
-            "relativePath": "clipart/02_植物/021_保龄球.svg"
+            "label": "竹子",
+            "fileName": "021_竹子.svg",
+            "relativePath": "clipart/02_植物/021_竹子.svg"
         },
         {
             "id": "plant-022",
@@ -7890,9 +7890,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 22,
-            "label": "圣诞球_2",
-            "fileName": "022_圣诞球_2.svg",
-            "relativePath": "clipart/02_植物/022_圣诞球_2.svg"
+            "label": "春羽",
+            "fileName": "022_春羽.svg",
+            "relativePath": "clipart/02_植物/022_春羽.svg"
         },
         {
             "id": "plant-023",
@@ -7900,9 +7900,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 23,
-            "label": "雪橇",
-            "fileName": "023_雪橇.svg",
-            "relativePath": "clipart/02_植物/023_雪橇.svg"
+            "label": "四叶草",
+            "fileName": "023_四叶草.svg",
+            "relativePath": "clipart/02_植物/023_四叶草.svg"
         },
         {
             "id": "plant-024",
@@ -7910,9 +7910,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 24,
-            "label": "姜饼人",
-            "fileName": "024_姜饼人.svg",
-            "relativePath": "clipart/02_植物/024_姜饼人.svg"
+            "label": "琴叶榕",
+            "fileName": "024_琴叶榕.svg",
+            "relativePath": "clipart/02_植物/024_琴叶榕.svg"
         },
         {
             "id": "plant-025",
@@ -7920,9 +7920,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 25,
-            "label": "爆竹",
-            "fileName": "025_爆竹.svg",
-            "relativePath": "clipart/02_植物/025_爆竹.svg"
+            "label": "兰花",
+            "fileName": "025_兰花.svg",
+            "relativePath": "clipart/02_植物/025_兰花.svg"
         },
         {
             "id": "plant-026",
@@ -7930,9 +7930,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 26,
-            "label": "锣鼓",
-            "fileName": "026_锣鼓.svg",
-            "relativePath": "clipart/02_植物/026_锣鼓.svg"
+            "label": "松鼠",
+            "fileName": "026_松鼠.svg",
+            "relativePath": "clipart/02_植物/026_松鼠.svg"
         },
         {
             "id": "plant-027",
@@ -7940,9 +7940,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 27,
-            "label": "幸运袋",
-            "fileName": "027_幸运袋.svg",
-            "relativePath": "clipart/02_植物/027_幸运袋.svg"
+            "label": "吊兰",
+            "fileName": "027_吊兰.svg",
+            "relativePath": "clipart/02_植物/027_吊兰.svg"
         },
         {
             "id": "plant-028",
@@ -7950,9 +7950,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 28,
-            "label": "红包",
-            "fileName": "028_红包.svg",
-            "relativePath": "clipart/02_植物/028_红包.svg"
+            "label": "向日葵",
+            "fileName": "028_向日葵.svg",
+            "relativePath": "clipart/02_植物/028_向日葵.svg"
         },
         {
             "id": "plant-029",
@@ -7960,429 +7960,9 @@ exports.default = {
             "categoryLabel": "植物",
             "folder": "02_植物",
             "index": 29,
-            "label": "饺子",
-            "fileName": "029_饺子.svg",
-            "relativePath": "clipart/02_植物/029_饺子.svg"
-        },
-        {
-            "id": "plant-030",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 30,
-            "label": "灯笼",
-            "fileName": "030_灯笼.svg",
-            "relativePath": "clipart/02_植物/030_灯笼.svg"
-        },
-        {
-            "id": "plant-031",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 31,
-            "label": "见钱眼开",
-            "fileName": "031_见钱眼开.svg",
-            "relativePath": "clipart/02_植物/031_见钱眼开.svg"
-        },
-        {
-            "id": "plant-032",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 32,
-            "label": "可爱的",
-            "fileName": "032_可爱的.svg",
-            "relativePath": "clipart/02_植物/032_可爱的.svg"
-        },
-        {
-            "id": "plant-033",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 33,
-            "label": "刺激",
-            "fileName": "033_刺激.svg",
-            "relativePath": "clipart/02_植物/033_刺激.svg"
-        },
-        {
-            "id": "plant-034",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 34,
-            "label": "烟花",
-            "fileName": "034_烟花.svg",
-            "relativePath": "clipart/02_植物/034_烟花.svg"
-        },
-        {
-            "id": "plant-035",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 35,
-            "label": "驴打滚",
-            "fileName": "035_驴打滚.svg",
-            "relativePath": "clipart/02_植物/035_驴打滚.svg"
-        },
-        {
-            "id": "plant-036",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 36,
-            "label": "烟花_2",
-            "fileName": "036_烟花_2.svg",
-            "relativePath": "clipart/02_植物/036_烟花_2.svg"
-        },
-        {
-            "id": "plant-037",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 37,
-            "label": "中国结",
-            "fileName": "037_中国结.svg",
-            "relativePath": "clipart/02_植物/037_中国结.svg"
-        },
-        {
-            "id": "plant-038",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 38,
-            "label": "冰糖葫芦",
-            "fileName": "038_冰糖葫芦.svg",
-            "relativePath": "clipart/02_植物/038_冰糖葫芦.svg"
-        },
-        {
-            "id": "plant-039",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 39,
-            "label": "棉花",
-            "fileName": "039_棉花.svg",
-            "relativePath": "clipart/02_植物/039_棉花.svg"
-        },
-        {
-            "id": "plant-040",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 40,
-            "label": "礼物_2",
-            "fileName": "040_礼物_2.svg",
-            "relativePath": "clipart/02_植物/040_礼物_2.svg"
-        },
-        {
-            "id": "plant-041",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 41,
-            "label": "玫瑰花",
-            "fileName": "041_玫瑰花.svg",
-            "relativePath": "clipart/02_植物/041_玫瑰花.svg"
-        },
-        {
-            "id": "plant-042",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 42,
-            "label": "一箭穿心",
-            "fileName": "042_一箭穿心.svg",
-            "relativePath": "clipart/02_植物/042_一箭穿心.svg"
-        },
-        {
-            "id": "plant-043",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 43,
-            "label": "同心锁",
-            "fileName": "043_同心锁.svg",
-            "relativePath": "clipart/02_植物/043_同心锁.svg"
-        },
-        {
-            "id": "plant-044",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 44,
-            "label": "巧克力",
-            "fileName": "044_巧克力.svg",
-            "relativePath": "clipart/02_植物/044_巧克力.svg"
-        },
-        {
-            "id": "plant-045",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 45,
-            "label": "鸳鸯",
-            "fileName": "045_鸳鸯.svg",
-            "relativePath": "clipart/02_植物/045_鸳鸯.svg"
-        },
-        {
-            "id": "plant-046",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 46,
-            "label": "爱",
-            "fileName": "046_爱.svg",
-            "relativePath": "clipart/02_植物/046_爱.svg"
-        },
-        {
-            "id": "plant-047",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 47,
-            "label": "婚纱",
-            "fileName": "047_婚纱.svg",
-            "relativePath": "clipart/02_植物/047_婚纱.svg"
-        },
-        {
-            "id": "plant-048",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 48,
-            "label": "截止",
-            "fileName": "048_截止.svg",
-            "relativePath": "clipart/02_植物/048_截止.svg"
-        },
-        {
-            "id": "plant-049",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 49,
-            "label": "项链",
-            "fileName": "049_项链.svg",
-            "relativePath": "clipart/02_植物/049_项链.svg"
-        },
-        {
-            "id": "plant-050",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 50,
-            "label": "情书",
-            "fileName": "050_情书.svg",
-            "relativePath": "clipart/02_植物/050_情书.svg"
-        },
-        {
-            "id": "plant-051",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 51,
-            "label": "皇冠",
-            "fileName": "051_皇冠.svg",
-            "relativePath": "clipart/02_植物/051_皇冠.svg"
-        },
-        {
-            "id": "plant-052",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 52,
-            "label": "情侣照",
-            "fileName": "052_情侣照.svg",
-            "relativePath": "clipart/02_植物/052_情侣照.svg"
-        },
-        {
-            "id": "plant-053",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 53,
-            "label": "头骨",
-            "fileName": "053_头骨.svg",
-            "relativePath": "clipart/02_植物/053_头骨.svg"
-        },
-        {
-            "id": "plant-054",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 54,
-            "label": "墓地",
-            "fileName": "054_墓地.svg",
-            "relativePath": "clipart/02_植物/054_墓地.svg"
-        },
-        {
-            "id": "plant-055",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 55,
-            "label": "巫师帽",
-            "fileName": "055_巫师帽.svg",
-            "relativePath": "clipart/02_植物/055_巫师帽.svg"
-        },
-        {
-            "id": "plant-056",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 56,
-            "label": "枫叶",
-            "fileName": "056_枫叶.svg",
-            "relativePath": "clipart/02_植物/056_枫叶.svg"
-        },
-        {
-            "id": "plant-057",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 57,
-            "label": "复活节彩蛋",
-            "fileName": "057_复活节彩蛋.svg",
-            "relativePath": "clipart/02_植物/057_复活节彩蛋.svg"
-        },
-        {
-            "id": "plant-058",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 58,
-            "label": "南瓜灯笼",
-            "fileName": "058_南瓜灯笼.svg",
-            "relativePath": "clipart/02_植物/058_南瓜灯笼.svg"
-        },
-        {
-            "id": "plant-059",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 59,
-            "label": "鬼",
-            "fileName": "059_鬼.svg",
-            "relativePath": "clipart/02_植物/059_鬼.svg"
-        },
-        {
-            "id": "plant-060",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 60,
-            "label": "蝙蝠",
-            "fileName": "060_蝙蝠.svg",
-            "relativePath": "clipart/02_植物/060_蝙蝠.svg"
-        },
-        {
-            "id": "plant-061",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 61,
-            "label": "面具",
-            "fileName": "061_面具.svg",
-            "relativePath": "clipart/02_植物/061_面具.svg"
-        },
-        {
-            "id": "plant-062",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 62,
-            "label": "龙舟",
-            "fileName": "062_龙舟.svg",
-            "relativePath": "clipart/02_植物/062_龙舟.svg"
-        },
-        {
-            "id": "plant-063",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 63,
-            "label": "咸鸭蛋",
-            "fileName": "063_咸鸭蛋.svg",
-            "relativePath": "clipart/02_植物/063_咸鸭蛋.svg"
-        },
-        {
-            "id": "plant-064",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 64,
-            "label": "粽叶",
-            "fileName": "064_粽叶.svg",
-            "relativePath": "clipart/02_植物/064_粽叶.svg"
-        },
-        {
-            "id": "plant-065",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 65,
-            "label": "粽子",
-            "fileName": "065_粽子.svg",
-            "relativePath": "clipart/02_植物/065_粽子.svg"
-        },
-        {
-            "id": "plant-066",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 66,
-            "label": "帽子",
-            "fileName": "066_帽子.svg",
-            "relativePath": "clipart/02_植物/066_帽子.svg"
-        },
-        {
-            "id": "plant-067",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 67,
-            "label": "小蛋糕",
-            "fileName": "067_小蛋糕.svg",
-            "relativePath": "clipart/02_植物/067_小蛋糕.svg"
-        },
-        {
-            "id": "plant-068",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 68,
-            "label": "蜡烛",
-            "fileName": "068_蜡烛.svg",
-            "relativePath": "clipart/02_植物/068_蜡烛.svg"
-        },
-        {
-            "id": "plant-069",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 69,
-            "label": "气球",
-            "fileName": "069_气球.svg",
-            "relativePath": "clipart/02_植物/069_气球.svg"
-        },
-        {
-            "id": "plant-070",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 70,
-            "label": "酒杯",
-            "fileName": "070_酒杯.svg",
-            "relativePath": "clipart/02_植物/070_酒杯.svg"
-        },
-        {
-            "id": "plant-071",
-            "categoryId": "plant",
-            "categoryLabel": "植物",
-            "folder": "02_植物",
-            "index": 71,
-            "label": "蛋糕",
-            "fileName": "071_蛋糕.svg",
-            "relativePath": "clipart/02_植物/071_蛋糕.svg"
+            "label": "玫瑰花_2",
+            "fileName": "029_玫瑰花_2.svg",
+            "relativePath": "clipart/02_植物/029_玫瑰花_2.svg"
         },
         {
             "id": "environment-001",
@@ -8780,9 +8360,9 @@ exports.default = {
             "categoryLabel": "天气",
             "folder": "04_天气",
             "index": 3,
-            "label": "节能灯泡",
-            "fileName": "003_节能灯泡.svg",
-            "relativePath": "clipart/04_天气/003_节能灯泡.svg"
+            "label": "晴天",
+            "fileName": "003_晴天.svg",
+            "relativePath": "clipart/04_天气/003_晴天.svg"
         },
         {
             "id": "weather-004",
@@ -8790,9 +8370,9 @@ exports.default = {
             "categoryLabel": "天气",
             "folder": "04_天气",
             "index": 4,
-            "label": "电动汽车",
-            "fileName": "004_电动汽车.svg",
-            "relativePath": "clipart/04_天气/004_电动汽车.svg"
+            "label": "雨",
+            "fileName": "004_雨.svg",
+            "relativePath": "clipart/04_天气/004_雨.svg"
         },
         {
             "id": "weather-005",
@@ -8800,9 +8380,9 @@ exports.default = {
             "categoryLabel": "天气",
             "folder": "04_天气",
             "index": 5,
-            "label": "太阳能",
-            "fileName": "005_太阳能.svg",
-            "relativePath": "clipart/04_天气/005_太阳能.svg"
+            "label": "大雨",
+            "fileName": "005_大雨.svg",
+            "relativePath": "clipart/04_天气/005_大雨.svg"
         },
         {
             "id": "weather-006",
@@ -8810,9 +8390,9 @@ exports.default = {
             "categoryLabel": "天气",
             "folder": "04_天气",
             "index": 6,
-            "label": "垃圾桶",
-            "fileName": "006_垃圾桶.svg",
-            "relativePath": "clipart/04_天气/006_垃圾桶.svg"
+            "label": "晴转多云",
+            "fileName": "006_晴转多云.svg",
+            "relativePath": "clipart/04_天气/006_晴转多云.svg"
         },
         {
             "id": "weather-007",
@@ -8820,9 +8400,9 @@ exports.default = {
             "categoryLabel": "天气",
             "folder": "04_天气",
             "index": 7,
-            "label": "自行车",
-            "fileName": "007_自行车.svg",
-            "relativePath": "clipart/04_天气/007_自行车.svg"
+            "label": "晴转阵雨",
+            "fileName": "007_晴转阵雨.svg",
+            "relativePath": "clipart/04_天气/007_晴转阵雨.svg"
         },
         {
             "id": "weather-008",
@@ -8830,9 +8410,9 @@ exports.default = {
             "categoryLabel": "天气",
             "folder": "04_天气",
             "index": 8,
-            "label": "太阳",
-            "fileName": "008_太阳.svg",
-            "relativePath": "clipart/04_天气/008_太阳.svg"
+            "label": "雨夹雪",
+            "fileName": "008_雨夹雪.svg",
+            "relativePath": "clipart/04_天气/008_雨夹雪.svg"
         },
         {
             "id": "weather-009",
@@ -8840,9 +8420,9 @@ exports.default = {
             "categoryLabel": "天气",
             "folder": "04_天气",
             "index": 9,
-            "label": "废物处理中心",
-            "fileName": "009_废物处理中心.svg",
-            "relativePath": "clipart/04_天气/009_废物处理中心.svg"
+            "label": "雨夹雪_2",
+            "fileName": "009_雨夹雪_2.svg",
+            "relativePath": "clipart/04_天气/009_雨夹雪_2.svg"
         },
         {
             "id": "weather-010",
@@ -8850,9 +8430,9 @@ exports.default = {
             "categoryLabel": "天气",
             "folder": "04_天气",
             "index": 10,
-            "label": "风车",
-            "fileName": "010_风车.svg",
-            "relativePath": "clipart/04_天气/010_风车.svg"
+            "label": "雪",
+            "fileName": "010_雪.svg",
+            "relativePath": "clipart/04_天气/010_雪.svg"
         },
         {
             "id": "weather-011",
@@ -8860,9 +8440,9 @@ exports.default = {
             "categoryLabel": "天气",
             "folder": "04_天气",
             "index": 11,
-            "label": "风车_2",
-            "fileName": "011_风车_2.svg",
-            "relativePath": "clipart/04_天气/011_风车_2.svg"
+            "label": "大雪",
+            "fileName": "011_大雪.svg",
+            "relativePath": "clipart/04_天气/011_大雪.svg"
         },
         {
             "id": "weather-012",
@@ -9140,9 +8720,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 13,
-            "label": "夹子",
-            "fileName": "013_夹子.svg",
-            "relativePath": "clipart/05_旅行/013_夹子.svg"
+            "label": "行李箱",
+            "fileName": "013_行李箱.svg",
+            "relativePath": "clipart/05_旅行/013_行李箱.svg"
         },
         {
             "id": "travel-014",
@@ -9150,9 +8730,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 14,
-            "label": "出租车_2",
-            "fileName": "014_出租车_2.svg",
-            "relativePath": "clipart/05_旅行/014_出租车_2.svg"
+            "label": "建筑",
+            "fileName": "014_建筑.svg",
+            "relativePath": "clipart/05_旅行/014_建筑.svg"
         },
         {
             "id": "travel-015",
@@ -9160,9 +8740,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 15,
-            "label": "飞机",
-            "fileName": "015_飞机.svg",
-            "relativePath": "clipart/05_旅行/015_飞机.svg"
+            "label": "果汁",
+            "fileName": "015_果汁.svg",
+            "relativePath": "clipart/05_旅行/015_果汁.svg"
         },
         {
             "id": "travel-016",
@@ -9170,9 +8750,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 16,
-            "label": "地球仪",
-            "fileName": "016_地球仪.svg",
-            "relativePath": "clipart/05_旅行/016_地球仪.svg"
+            "label": "椰子树",
+            "fileName": "016_椰子树.svg",
+            "relativePath": "clipart/05_旅行/016_椰子树.svg"
         },
         {
             "id": "travel-017",
@@ -9180,9 +8760,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 17,
-            "label": "点赞",
-            "fileName": "017_点赞.svg",
-            "relativePath": "clipart/05_旅行/017_点赞.svg"
+            "label": "冰淇淋",
+            "fileName": "017_冰淇淋.svg",
+            "relativePath": "clipart/05_旅行/017_冰淇淋.svg"
         },
         {
             "id": "travel-018",
@@ -9190,9 +8770,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 18,
-            "label": "点踩",
-            "fileName": "018_点踩.svg",
-            "relativePath": "clipart/05_旅行/018_点踩.svg"
+            "label": "交换",
+            "fileName": "018_交换.svg",
+            "relativePath": "clipart/05_旅行/018_交换.svg"
         },
         {
             "id": "travel-019",
@@ -9200,9 +8780,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 19,
-            "label": "地球",
-            "fileName": "019_地球.svg",
-            "relativePath": "clipart/05_旅行/019_地球.svg"
+            "label": "冰淇淋_2",
+            "fileName": "019_冰淇淋_2.svg",
+            "relativePath": "clipart/05_旅行/019_冰淇淋_2.svg"
         },
         {
             "id": "travel-020",
@@ -9210,9 +8790,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 20,
-            "label": "鼠标",
-            "fileName": "020_鼠标.svg",
-            "relativePath": "clipart/05_旅行/020_鼠标.svg"
+            "label": "路牌",
+            "fileName": "020_路牌.svg",
+            "relativePath": "clipart/05_旅行/020_路牌.svg"
         },
         {
             "id": "travel-021",
@@ -9220,9 +8800,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 21,
-            "label": "贵宾",
-            "fileName": "021_贵宾.svg",
-            "relativePath": "clipart/05_旅行/021_贵宾.svg"
+            "label": "路线",
+            "fileName": "021_路线.svg",
+            "relativePath": "clipart/05_旅行/021_路线.svg"
         },
         {
             "id": "travel-022",
@@ -9230,9 +8810,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 22,
-            "label": "文件",
-            "fileName": "022_文件.svg",
-            "relativePath": "clipart/05_旅行/022_文件.svg"
+            "label": "早餐",
+            "fileName": "022_早餐.svg",
+            "relativePath": "clipart/05_旅行/022_早餐.svg"
         },
         {
             "id": "travel-023",
@@ -9240,9 +8820,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 23,
-            "label": "日历",
-            "fileName": "023_日历.svg",
-            "relativePath": "clipart/05_旅行/023_日历.svg"
+            "label": "人字拖",
+            "fileName": "023_人字拖.svg",
+            "relativePath": "clipart/05_旅行/023_人字拖.svg"
         },
         {
             "id": "travel-024",
@@ -9250,9 +8830,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 24,
-            "label": "打开邮件",
-            "fileName": "024_打开邮件.svg",
-            "relativePath": "clipart/05_旅行/024_打开邮件.svg"
+            "label": "热气球",
+            "fileName": "024_热气球.svg",
+            "relativePath": "clipart/05_旅行/024_热气球.svg"
         },
         {
             "id": "travel-025",
@@ -9260,9 +8840,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 25,
-            "label": "邮件",
-            "fileName": "025_邮件.svg",
-            "relativePath": "clipart/05_旅行/025_邮件.svg"
+            "label": "火车",
+            "fileName": "025_火车.svg",
+            "relativePath": "clipart/05_旅行/025_火车.svg"
         },
         {
             "id": "travel-026",
@@ -9270,9 +8850,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 26,
-            "label": "公文包",
-            "fileName": "026_公文包.svg",
-            "relativePath": "clipart/05_旅行/026_公文包.svg"
+            "label": "伞",
+            "fileName": "026_伞.svg",
+            "relativePath": "clipart/05_旅行/026_伞.svg"
         },
         {
             "id": "travel-027",
@@ -9280,9 +8860,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 27,
-            "label": "商店",
-            "fileName": "027_商店.svg",
-            "relativePath": "clipart/05_旅行/027_商店.svg"
+            "label": "公共汽车",
+            "fileName": "027_公共汽车.svg",
+            "relativePath": "clipart/05_旅行/027_公共汽车.svg"
         },
         {
             "id": "travel-028",
@@ -9290,9 +8870,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 28,
-            "label": "闹钟",
-            "fileName": "028_闹钟.svg",
-            "relativePath": "clipart/05_旅行/028_闹钟.svg"
+            "label": "墨镜",
+            "fileName": "028_墨镜.svg",
+            "relativePath": "clipart/05_旅行/028_墨镜.svg"
         },
         {
             "id": "travel-029",
@@ -9300,9 +8880,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 29,
-            "label": "触摸屏",
-            "fileName": "029_触摸屏.svg",
-            "relativePath": "clipart/05_旅行/029_触摸屏.svg"
+            "label": "吹风机",
+            "fileName": "029_吹风机.svg",
+            "relativePath": "clipart/05_旅行/029_吹风机.svg"
         },
         {
             "id": "travel-030",
@@ -9310,9 +8890,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 30,
-            "label": "沟通",
-            "fileName": "030_沟通.svg",
-            "relativePath": "clipart/05_旅行/030_沟通.svg"
+            "label": "帽子",
+            "fileName": "030_帽子.svg",
+            "relativePath": "clipart/05_旅行/030_帽子.svg"
         },
         {
             "id": "travel-031",
@@ -9320,9 +8900,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 31,
-            "label": "智能手机",
-            "fileName": "031_智能手机.svg",
-            "relativePath": "clipart/05_旅行/031_智能手机.svg"
+            "label": "书包",
+            "fileName": "031_书包.svg",
+            "relativePath": "clipart/05_旅行/031_书包.svg"
         },
         {
             "id": "travel-032",
@@ -9330,9 +8910,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 32,
-            "label": "剪刀",
-            "fileName": "032_剪刀.svg",
-            "relativePath": "clipart/05_旅行/032_剪刀.svg"
+            "label": "行李车",
+            "fileName": "032_行李车.svg",
+            "relativePath": "clipart/05_旅行/032_行李车.svg"
         },
         {
             "id": "travel-033",
@@ -9340,9 +8920,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 33,
-            "label": "同理心",
-            "fileName": "033_同理心.svg",
-            "relativePath": "clipart/05_旅行/033_同理心.svg"
+            "label": "地址",
+            "fileName": "033_地址.svg",
+            "relativePath": "clipart/05_旅行/033_地址.svg"
         },
         {
             "id": "travel-034",
@@ -9350,9 +8930,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 34,
-            "label": "制服",
-            "fileName": "034_制服.svg",
-            "relativePath": "clipart/05_旅行/034_制服.svg"
+            "label": "飞机",
+            "fileName": "034_飞机.svg",
+            "relativePath": "clipart/05_旅行/034_飞机.svg"
         },
         {
             "id": "travel-035",
@@ -9420,9 +9000,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 41,
-            "label": "公共汽车",
-            "fileName": "041_公共汽车.svg",
-            "relativePath": "clipart/05_旅行/041_公共汽车.svg"
+            "label": "公共汽车_2",
+            "fileName": "041_公共汽车_2.svg",
+            "relativePath": "clipart/05_旅行/041_公共汽车_2.svg"
         },
         {
             "id": "travel-042",
@@ -9520,9 +9100,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 51,
-            "label": "路线",
-            "fileName": "051_路线.svg",
-            "relativePath": "clipart/05_旅行/051_路线.svg"
+            "label": "电瓶车",
+            "fileName": "051_电瓶车.svg",
+            "relativePath": "clipart/05_旅行/051_电瓶车.svg"
         },
         {
             "id": "travel-052",
@@ -9530,9 +9110,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 52,
-            "label": "标签",
-            "fileName": "052_标签.svg",
-            "relativePath": "clipart/05_旅行/052_标签.svg"
+            "label": "望远镜",
+            "fileName": "052_望远镜.svg",
+            "relativePath": "clipart/05_旅行/052_望远镜.svg"
         },
         {
             "id": "travel-053",
@@ -9540,9 +9120,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 53,
-            "label": "购物袋",
-            "fileName": "053_购物袋.svg",
-            "relativePath": "clipart/05_旅行/053_购物袋.svg"
+            "label": "红旗",
+            "fileName": "053_红旗.svg",
+            "relativePath": "clipart/05_旅行/053_红旗.svg"
         },
         {
             "id": "travel-054",
@@ -9550,9 +9130,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 54,
-            "label": "合作",
-            "fileName": "054_合作.svg",
-            "relativePath": "clipart/05_旅行/054_合作.svg"
+            "label": "洗澡",
+            "fileName": "054_洗澡.svg",
+            "relativePath": "clipart/05_旅行/054_洗澡.svg"
         },
         {
             "id": "travel-055",
@@ -9560,9 +9140,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 55,
-            "label": "时间_2",
-            "fileName": "055_时间_2.svg",
-            "relativePath": "clipart/05_旅行/055_时间_2.svg"
+            "label": "太阳浴",
+            "fileName": "055_太阳浴.svg",
+            "relativePath": "clipart/05_旅行/055_太阳浴.svg"
         },
         {
             "id": "travel-056",
@@ -9570,9 +9150,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 56,
-            "label": "目标",
-            "fileName": "056_目标.svg",
-            "relativePath": "clipart/05_旅行/056_目标.svg"
+            "label": "帐篷",
+            "fileName": "056_帐篷.svg",
+            "relativePath": "clipart/05_旅行/056_帐篷.svg"
         },
         {
             "id": "travel-057",
@@ -9580,9 +9160,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 57,
-            "label": "增加",
-            "fileName": "057_增加.svg",
-            "relativePath": "clipart/05_旅行/057_增加.svg"
+            "label": "缆车",
+            "fileName": "057_缆车.svg",
+            "relativePath": "clipart/05_旅行/057_缆车.svg"
         },
         {
             "id": "travel-058",
@@ -9590,9 +9170,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 58,
-            "label": "下降",
-            "fileName": "058_下降.svg",
-            "relativePath": "clipart/05_旅行/058_下降.svg"
+            "label": "直升机",
+            "fileName": "058_直升机.svg",
+            "relativePath": "clipart/05_旅行/058_直升机.svg"
         },
         {
             "id": "travel-059",
@@ -9600,9 +9180,9 @@ exports.default = {
             "categoryLabel": "旅行",
             "folder": "05_旅行",
             "index": 59,
-            "label": "团结",
-            "fileName": "059_团结.svg",
-            "relativePath": "clipart/05_旅行/059_团结.svg"
+            "label": "手电筒",
+            "fileName": "059_手电筒.svg",
+            "relativePath": "clipart/05_旅行/059_手电筒.svg"
         },
         {
             "id": "business-office-001",
@@ -9830,9 +9410,9 @@ exports.default = {
             "categoryLabel": "商务办公",
             "folder": "06_商务办公",
             "index": 23,
-            "label": "空乘",
-            "fileName": "023_空乘.svg",
-            "relativePath": "clipart/06_商务办公/023_空乘.svg"
+            "label": "日历",
+            "fileName": "023_日历.svg",
+            "relativePath": "clipart/06_商务办公/023_日历.svg"
         },
         {
             "id": "business-office-024",
@@ -9840,9 +9420,9 @@ exports.default = {
             "categoryLabel": "商务办公",
             "folder": "06_商务办公",
             "index": 24,
-            "label": "军人",
-            "fileName": "024_军人.svg",
-            "relativePath": "clipart/06_商务办公/024_军人.svg"
+            "label": "打开邮件",
+            "fileName": "024_打开邮件.svg",
+            "relativePath": "clipart/06_商务办公/024_打开邮件.svg"
         },
         {
             "id": "business-office-025",
@@ -9850,9 +9430,9 @@ exports.default = {
             "categoryLabel": "商务办公",
             "folder": "06_商务办公",
             "index": 25,
-            "label": "服务员",
-            "fileName": "025_服务员.svg",
-            "relativePath": "clipart/06_商务办公/025_服务员.svg"
+            "label": "邮件",
+            "fileName": "025_邮件.svg",
+            "relativePath": "clipart/06_商务办公/025_邮件.svg"
         },
         {
             "id": "business-office-026",
@@ -9860,9 +9440,9 @@ exports.default = {
             "categoryLabel": "商务办公",
             "folder": "06_商务办公",
             "index": 26,
-            "label": "牧师",
-            "fileName": "026_牧师.svg",
-            "relativePath": "clipart/06_商务办公/026_牧师.svg"
+            "label": "公文包",
+            "fileName": "026_公文包.svg",
+            "relativePath": "clipart/06_商务办公/026_公文包.svg"
         },
         {
             "id": "business-office-027",
@@ -9870,9 +9450,9 @@ exports.default = {
             "categoryLabel": "商务办公",
             "folder": "06_商务办公",
             "index": 27,
-            "label": "法官",
-            "fileName": "027_法官.svg",
-            "relativePath": "clipart/06_商务办公/027_法官.svg"
+            "label": "商店",
+            "fileName": "027_商店.svg",
+            "relativePath": "clipart/06_商务办公/027_商店.svg"
         },
         {
             "id": "business-office-028",
@@ -9880,9 +9460,9 @@ exports.default = {
             "categoryLabel": "商务办公",
             "folder": "06_商务办公",
             "index": 28,
-            "label": "男人",
-            "fileName": "028_男人.svg",
-            "relativePath": "clipart/06_商务办公/028_男人.svg"
+            "label": "闹钟",
+            "fileName": "028_闹钟.svg",
+            "relativePath": "clipart/06_商务办公/028_闹钟.svg"
         },
         {
             "id": "business-office-029",
@@ -9890,9 +9470,9 @@ exports.default = {
             "categoryLabel": "商务办公",
             "folder": "06_商务办公",
             "index": 29,
-            "label": "家庭主妇",
-            "fileName": "029_家庭主妇.svg",
-            "relativePath": "clipart/06_商务办公/029_家庭主妇.svg"
+            "label": "触摸屏",
+            "fileName": "029_触摸屏.svg",
+            "relativePath": "clipart/06_商务办公/029_触摸屏.svg"
         },
         {
             "id": "business-office-030",
@@ -9900,9 +9480,9 @@ exports.default = {
             "categoryLabel": "商务办公",
             "folder": "06_商务办公",
             "index": 30,
-            "label": "急救箱",
-            "fileName": "030_急救箱.svg",
-            "relativePath": "clipart/06_商务办公/030_急救箱.svg"
+            "label": "沟通",
+            "fileName": "030_沟通.svg",
+            "relativePath": "clipart/06_商务办公/030_沟通.svg"
         },
         {
             "id": "business-office-031",
@@ -9910,9 +9490,9 @@ exports.default = {
             "categoryLabel": "商务办公",
             "folder": "06_商务办公",
             "index": 31,
-            "label": "呼吸器",
-            "fileName": "031_呼吸器.svg",
-            "relativePath": "clipart/06_商务办公/031_呼吸器.svg"
+            "label": "智能手机",
+            "fileName": "031_智能手机.svg",
+            "relativePath": "clipart/06_商务办公/031_智能手机.svg"
         },
         {
             "id": "business-office-032",
@@ -9920,9 +9500,9 @@ exports.default = {
             "categoryLabel": "商务办公",
             "folder": "06_商务办公",
             "index": 32,
-            "label": "药丸",
-            "fileName": "032_药丸.svg",
-            "relativePath": "clipart/06_商务办公/032_药丸.svg"
+            "label": "剪刀",
+            "fileName": "032_剪刀.svg",
+            "relativePath": "clipart/06_商务办公/032_剪刀.svg"
         },
         {
             "id": "business-office-033",
@@ -9930,9 +9510,9 @@ exports.default = {
             "categoryLabel": "商务办公",
             "folder": "06_商务办公",
             "index": 33,
-            "label": "胶囊",
-            "fileName": "033_胶囊.svg",
-            "relativePath": "clipart/06_商务办公/033_胶囊.svg"
+            "label": "同理心",
+            "fileName": "033_同理心.svg",
+            "relativePath": "clipart/06_商务办公/033_同理心.svg"
         },
         {
             "id": "business-office-034",
@@ -9940,9 +9520,9 @@ exports.default = {
             "categoryLabel": "商务办公",
             "folder": "06_商务办公",
             "index": 34,
-            "label": "医院",
-            "fileName": "034_医院.svg",
-            "relativePath": "clipart/06_商务办公/034_医院.svg"
+            "label": "制服",
+            "fileName": "034_制服.svg",
+            "relativePath": "clipart/06_商务办公/034_制服.svg"
         },
         {
             "id": "business-office-035",
@@ -10590,9 +10170,9 @@ exports.default = {
             "categoryLabel": "商务办公",
             "folder": "06_商务办公",
             "index": 99,
-            "label": "男人_2",
-            "fileName": "099_男人_2.svg",
-            "relativePath": "clipart/06_商务办公/099_男人_2.svg"
+            "label": "男人",
+            "fileName": "099_男人.svg",
+            "relativePath": "clipart/06_商务办公/099_男人.svg"
         },
         {
             "id": "business-office-100",
@@ -11510,9 +11090,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 40,
-            "label": "举手",
-            "fileName": "040_举手.svg",
-            "relativePath": "clipart/08_科技/040_举手.svg"
+            "label": "轮椅",
+            "fileName": "040_轮椅.svg",
+            "relativePath": "clipart/08_科技/040_轮椅.svg"
         },
         {
             "id": "technology-041",
@@ -11520,9 +11100,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 41,
-            "label": "足迹",
-            "fileName": "041_足迹.svg",
-            "relativePath": "clipart/08_科技/041_足迹.svg"
+            "label": "输液",
+            "fileName": "041_输液.svg",
+            "relativePath": "clipart/08_科技/041_输液.svg"
         },
         {
             "id": "technology-042",
@@ -11530,9 +11110,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 42,
-            "label": "日程",
-            "fileName": "042_日程.svg",
-            "relativePath": "clipart/08_科技/042_日程.svg"
+            "label": "担架",
+            "fileName": "042_担架.svg",
+            "relativePath": "clipart/08_科技/042_担架.svg"
         },
         {
             "id": "technology-043",
@@ -11540,9 +11120,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 43,
-            "label": "同心锁",
-            "fileName": "043_同心锁.svg",
-            "relativePath": "clipart/08_科技/043_同心锁.svg"
+            "label": "体重",
+            "fileName": "043_体重.svg",
+            "relativePath": "clipart/08_科技/043_体重.svg"
         },
         {
             "id": "technology-044",
@@ -11550,9 +11130,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 44,
-            "label": "巧克力",
-            "fileName": "044_巧克力.svg",
-            "relativePath": "clipart/08_科技/044_巧克力.svg"
+            "label": "病床",
+            "fileName": "044_病床.svg",
+            "relativePath": "clipart/08_科技/044_病床.svg"
         },
         {
             "id": "technology-045",
@@ -11560,9 +11140,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 45,
-            "label": "鸳鸯",
-            "fileName": "045_鸳鸯.svg",
-            "relativePath": "clipart/08_科技/045_鸳鸯.svg"
+            "label": "担架_2",
+            "fileName": "045_担架_2.svg",
+            "relativePath": "clipart/08_科技/045_担架_2.svg"
         },
         {
             "id": "technology-046",
@@ -11570,9 +11150,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 46,
-            "label": "爱",
-            "fileName": "046_爱.svg",
-            "relativePath": "clipart/08_科技/046_爱.svg"
+            "label": "病毒",
+            "fileName": "046_病毒.svg",
+            "relativePath": "clipart/08_科技/046_病毒.svg"
         },
         {
             "id": "technology-047",
@@ -11580,9 +11160,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 47,
-            "label": "婚纱",
-            "fileName": "047_婚纱.svg",
-            "relativePath": "clipart/08_科技/047_婚纱.svg"
+            "label": "轮椅_2",
+            "fileName": "047_轮椅_2.svg",
+            "relativePath": "clipart/08_科技/047_轮椅_2.svg"
         },
         {
             "id": "technology-048",
@@ -11590,9 +11170,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 48,
-            "label": "截止",
-            "fileName": "048_截止.svg",
-            "relativePath": "clipart/08_科技/048_截止.svg"
+            "label": "牙",
+            "fileName": "048_牙.svg",
+            "relativePath": "clipart/08_科技/048_牙.svg"
         },
         {
             "id": "technology-049",
@@ -11600,9 +11180,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 49,
-            "label": "项链",
-            "fileName": "049_项链.svg",
-            "relativePath": "clipart/08_科技/049_项链.svg"
+            "label": "听诊器",
+            "fileName": "049_听诊器.svg",
+            "relativePath": "clipart/08_科技/049_听诊器.svg"
         },
         {
             "id": "technology-050",
@@ -11610,9 +11190,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 50,
-            "label": "情书",
-            "fileName": "050_情书.svg",
-            "relativePath": "clipart/08_科技/050_情书.svg"
+            "label": "护士帽",
+            "fileName": "050_护士帽.svg",
+            "relativePath": "clipart/08_科技/050_护士帽.svg"
         },
         {
             "id": "technology-051",
@@ -11620,9 +11200,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 51,
-            "label": "皇冠",
-            "fileName": "051_皇冠.svg",
-            "relativePath": "clipart/08_科技/051_皇冠.svg"
+            "label": "心",
+            "fileName": "051_心.svg",
+            "relativePath": "clipart/08_科技/051_心.svg"
         },
         {
             "id": "technology-052",
@@ -11630,9 +11210,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 52,
-            "label": "情侣照",
-            "fileName": "052_情侣照.svg",
-            "relativePath": "clipart/08_科技/052_情侣照.svg"
+            "label": "肝",
+            "fileName": "052_肝.svg",
+            "relativePath": "clipart/08_科技/052_肝.svg"
         },
         {
             "id": "technology-053",
@@ -11640,9 +11220,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 53,
-            "label": "头骨",
-            "fileName": "053_头骨.svg",
-            "relativePath": "clipart/08_科技/053_头骨.svg"
+            "label": "肺",
+            "fileName": "053_肺.svg",
+            "relativePath": "clipart/08_科技/053_肺.svg"
         },
         {
             "id": "technology-054",
@@ -11650,9 +11230,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 54,
-            "label": "墓地",
-            "fileName": "054_墓地.svg",
-            "relativePath": "clipart/08_科技/054_墓地.svg"
+            "label": "胃",
+            "fileName": "054_胃.svg",
+            "relativePath": "clipart/08_科技/054_胃.svg"
         },
         {
             "id": "technology-055",
@@ -11660,9 +11240,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 55,
-            "label": "巫师帽",
-            "fileName": "055_巫师帽.svg",
-            "relativePath": "clipart/08_科技/055_巫师帽.svg"
+            "label": "肾脏",
+            "fileName": "055_肾脏.svg",
+            "relativePath": "clipart/08_科技/055_肾脏.svg"
         },
         {
             "id": "technology-056",
@@ -11670,9 +11250,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 56,
-            "label": "枫叶",
-            "fileName": "056_枫叶.svg",
-            "relativePath": "clipart/08_科技/056_枫叶.svg"
+            "label": "耳朵",
+            "fileName": "056_耳朵.svg",
+            "relativePath": "clipart/08_科技/056_耳朵.svg"
         },
         {
             "id": "technology-057",
@@ -11680,9 +11260,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 57,
-            "label": "复活节彩蛋",
-            "fileName": "057_复活节彩蛋.svg",
-            "relativePath": "clipart/08_科技/057_复活节彩蛋.svg"
+            "label": "大肠",
+            "fileName": "057_大肠.svg",
+            "relativePath": "clipart/08_科技/057_大肠.svg"
         },
         {
             "id": "technology-058",
@@ -11690,9 +11270,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 58,
-            "label": "南瓜灯笼",
-            "fileName": "058_南瓜灯笼.svg",
-            "relativePath": "clipart/08_科技/058_南瓜灯笼.svg"
+            "label": "注射器",
+            "fileName": "058_注射器.svg",
+            "relativePath": "clipart/08_科技/058_注射器.svg"
         },
         {
             "id": "technology-059",
@@ -11720,9 +11300,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 61,
-            "label": "病毒",
-            "fileName": "061_病毒.svg",
-            "relativePath": "clipart/08_科技/061_病毒.svg"
+            "label": "病毒_2",
+            "fileName": "061_病毒_2.svg",
+            "relativePath": "clipart/08_科技/061_病毒_2.svg"
         },
         {
             "id": "technology-062",
@@ -11730,9 +11310,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 62,
-            "label": "病毒_2",
-            "fileName": "062_病毒_2.svg",
-            "relativePath": "clipart/08_科技/062_病毒_2.svg"
+            "label": "病毒_3",
+            "fileName": "062_病毒_3.svg",
+            "relativePath": "clipart/08_科技/062_病毒_3.svg"
         },
         {
             "id": "technology-063",
@@ -11740,9 +11320,9 @@ exports.default = {
             "categoryLabel": "科技",
             "folder": "08_科技",
             "index": 63,
-            "label": "心",
-            "fileName": "063_心.svg",
-            "relativePath": "clipart/08_科技/063_心.svg"
+            "label": "心_2",
+            "fileName": "063_心_2.svg",
+            "relativePath": "clipart/08_科技/063_心_2.svg"
         },
         {
             "id": "technology-064",
