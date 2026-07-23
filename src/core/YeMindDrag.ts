@@ -372,7 +372,7 @@ export default class YeMindDrag extends Drag {
     const target = event.target as Element | null;
     if (
       target?.closest?.(
-        '.node-image-remove,.ymz-node-image-preview,.node-image-resize,.node-img-adjust,.node-img-handle button',
+        '.node-img-handle,.node-img-handle button',
       )
     ) return;
     super.onNodeMousedown(node, event);

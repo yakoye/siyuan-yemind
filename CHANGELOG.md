@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.16 - 2026-07-23
+
+- Rebuilt node-image interaction around direct manipulation: hover border, click selection, eight resize handles and a compact Replace/Delete toolbar.
+- Made side handles resize freely by default and proportionally with Shift, while corner handles always preserve the current aspect ratio with directional cursors.
+- Scoped Delete and Backspace to the selected image so the image is removed without deleting its node.
+- Routed image double-click to the lightbox and text double-click to edit mode with the complete node text selected.
+- Removed the old hover Delete, resize and magnifier controls, and kept image actions outside structural drag sessions.
+- Reduced new clipart geometry to a 48px longest edge while retaining migration of legacy 72 × 72 defaults.
+- Added permanent unit, source-contract, offline and Chromium regressions for the new image workflow.
+
 ## 0.9.15 - 2026-07-23
 
 - Replaced the fixed `72 × 72` clipart insertion size with intrinsic SVG geometry fitted proportionally inside a 72px box.

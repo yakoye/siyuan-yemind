@@ -1,4 +1,4 @@
-"""v0.9.15 proportional clipart insertion and legacy repair browser smoke."""
+"""v0.9.16 proportional clipart insertion and legacy repair browser smoke."""
 from pathlib import Path
 from urllib.parse import unquote
 from playwright.sync_api import sync_playwright
@@ -77,7 +77,7 @@ with sync_playwright() as p:
     page.wait_for_selector('[data-role="canvas"] svg', timeout=30000)
     page.wait_for_function("""()=>{
       const data=window.__smoke.plugin.repository.get(window.__smoke.fresh.id).data.data;
-      return data.imageSize?.width===72 && data.imageSize?.height===36 && data.yemindClipartGeometryVersion===2;
+      return data.imageSize?.width===48 && data.imageSize?.height===24 && data.yemindClipartGeometryVersion===3;
     }""", timeout=30000)
     page.wait_for_timeout(250)
 
@@ -90,13 +90,13 @@ with sync_playwright() as p:
       const image=node?.querySelector('image');
       return {root:{size:root.imageSize,version:root.yemindClipartGeometryVersion},ordinary:ordinary.imageSize,manual:manual.imageSize,rendered:image?{width:Number(image.getAttribute('width')),height:Number(image.getAttribute('height'))}:null};
     }""")
-    if legacy['root']['size'] != {'width': 72, 'height': 36, 'custom': True} or legacy['root']['version'] != 2:
+    if legacy['root']['size'] != {'width': 48, 'height': 24, 'custom': True} or legacy['root']['version'] != 3:
         raise RuntimeError(f'Legacy clipart was not repaired proportionally: {legacy}')
     if legacy['ordinary'] != {'width': 72, 'height': 72, 'custom': True}:
         raise RuntimeError(f'Ordinary image was unexpectedly migrated: {legacy}')
     if legacy['manual'] != {'width': 90, 'height': 40, 'custom': True}:
         raise RuntimeError(f'Manually resized clipart was unexpectedly migrated: {legacy}')
-    if legacy['rendered'] != {'width': 72, 'height': 36}:
+    if legacy['rendered'] != {'width': 48, 'height': 24}:
         raise RuntimeError(f'Rendered legacy clipart size is wrong: {legacy}')
 
     # Select the child node and insert a portrait clipart through the real picker.
@@ -118,7 +118,7 @@ with sync_playwright() as p:
     page.locator('.ymz-clipart-option[title="猫"]').click()
     page.wait_for_function("""()=>{
       const node=window.__smoke.plugin.repository.get(window.__smoke.fresh.id).data.children.find(n=>n.data.uid==='new-cat')?.data;
-      return node?.imageSize?.width===36 && node?.imageSize?.height===72 && node?.yemindClipartGeometryVersion===2;
+      return node?.imageSize?.width===24 && node?.imageSize?.height===48 && node?.yemindClipartGeometryVersion===3;
     }""", timeout=30000)
     page.wait_for_timeout(250)
     inserted = page.evaluate("""()=>{
@@ -127,9 +127,9 @@ with sync_playwright() as p:
       const image=node?.querySelector('image');
       return {id:data.yemindClipartId,size:data.imageSize,version:data.yemindClipartGeometryVersion,rendered:image?{width:Number(image.getAttribute('width')),height:Number(image.getAttribute('height'))}:null};
     }""")
-    if inserted['id'] != 'animal-022' or inserted['size'] != {'width': 36, 'height': 72, 'custom': True} or inserted['version'] != 2:
+    if inserted['id'] != 'animal-022' or inserted['size'] != {'width': 24, 'height': 48, 'custom': True} or inserted['version'] != 3:
         raise RuntimeError(f'Portrait clipart insertion lost its aspect ratio: {inserted}')
-    if inserted['rendered'] != {'width': 36, 'height': 72}:
+    if inserted['rendered'] != {'width': 24, 'height': 48}:
         raise RuntimeError(f'Rendered portrait clipart size is wrong: {inserted}')
 
     if page_errors:

@@ -92,14 +92,19 @@ with sync_playwright() as p:
     page.keyboard.press('Escape')
     page.wait_for_timeout(100)
 
-    # Hovering an image shows delete, resize and preview controls; the magnifier opens preview.
+    # Hover shows only a border; click shows direct controls; double-click opens preview.
     image = page.locator('[data-role="canvas"] svg image').first
     image.hover()
     page.wait_for_timeout(100)
-    image_tools = page.evaluate("""()=>{const handle=document.querySelector('.node-img-handle');return handle?{display:getComputedStyle(handle).display,remove:!!handle.querySelector('.node-image-remove'),resize:!!handle.querySelector('.node-image-resize'),preview:!!handle.querySelector('.ymz-node-image-preview')}:null}""")
-    if not image_tools or image_tools['display'] == 'none' or not all(image_tools[key] for key in ('remove','resize','preview')):
-        raise RuntimeError(f'Image hover tools are incomplete: {image_tools}')
-    page.click('.ymz-node-image-preview')
+    image_hover = page.evaluate("""()=>{const handle=document.querySelector('.ymz-node-image-frame');return handle?{display:getComputedStyle(handle).display,mode:handle.dataset.mode,handles:[...handle.querySelectorAll('.ymz-node-image-resize-handle')].map(el=>getComputedStyle(el).display),toolbar:getComputedStyle(handle.querySelector('.ymz-node-image-toolbar')).display}:null}""")
+    if not image_hover or image_hover['display'] == 'none' or image_hover['mode'] != 'hover' or any(value != 'none' for value in image_hover['handles']) or image_hover['toolbar'] != 'none':
+        raise RuntimeError(f'Image hover frame is wrong: {image_hover}')
+    image.click()
+    page.wait_for_timeout(80)
+    image_tools = page.evaluate("""()=>{const handle=document.querySelector('.ymz-node-image-frame');return handle?{mode:handle.dataset.mode,handles:handle.querySelectorAll('.ymz-node-image-resize-handle').length,replace:!!handle.querySelector('[data-image-action=replace]'),remove:!!handle.querySelector('[data-image-action=delete]')}:null}""")
+    if not image_tools or image_tools['mode'] != 'selected' or image_tools['handles'] != 8 or not image_tools['replace'] or not image_tools['remove']:
+        raise RuntimeError(f'Image selected tools are incomplete: {image_tools}')
+    image.dblclick()
     page.wait_for_timeout(80)
     lightbox = page.evaluate("""()=>{const el=document.querySelector('.ymz-image-lightbox');const style=getComputedStyle(el);return{hidden:el.hidden,background:style.backgroundColor,backdrop:style.backdropFilter||style.webkitBackdropFilter||''}}""")
     if lightbox['hidden'] or lightbox['background'] != 'rgba(7, 10, 13, 0.62)' or 'blur(8px)' not in lightbox['backdrop']:
@@ -107,6 +112,9 @@ with sync_playwright() as p:
     page.keyboard.press('Escape')
 
     # Create an association line through the node menu and verify native tangent controls.
+    page.keyboard.press('Escape')
+    page.mouse.click(80, 820)
+    page.wait_for_timeout(100)
     a = node_box(page, 'Alpha rich text'); b = node_box(page, 'Beta target')
     page.evaluate("""()=>{const node=[...document.querySelectorAll('g.smm-node')].find(item=>item.querySelector('.smm-richtext-node-wrap')?.innerText.trim()==='Alpha rich text');const r=node.getBoundingClientRect();node.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2,button:2}));window.__lastMenu.items.find(item=>item.label==='关联线').click();}""")
     page.mouse.click(b['x']+b['width']/2,b['y']+b['height']/2)
@@ -115,10 +123,18 @@ with sync_playwright() as p:
     if relation_paths.count() < 1:
         raise RuntimeError('Association line was not created')
     # Click the transparent, wider hit path if present.
-    activated = page.evaluate("""()=>{const paths=[...document.querySelectorAll('[data-role=canvas] svg path')];const target=paths.find(p=>{const s=getComputedStyle(p);return s.stroke==='rgba(0, 0, 0, 0)'||p.getAttribute('stroke')==='transparent';});if(!target)return false;target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));return true;}""")
+    activated = page.evaluate("""()=>{
+      const paths=[...document.querySelectorAll('[data-role=canvas] svg path')];
+      const visible=paths.find(p=>p.getAttribute('stroke')==='#f59e0b')||paths.find(p=>p.hasAttribute('marker-end'));
+      if(!visible)return false;
+      const d=visible.getAttribute('d');
+      const hit=paths.find(p=>p!==visible&&p.getAttribute('d')===d&&(p.getAttribute('stroke')==='transparent'||getComputedStyle(p).stroke==='rgba(0, 0, 0, 0)'));
+      const target=hit||visible;
+      target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
+      return {usedHit:Boolean(hit),samePath:Boolean(d)};
+    }""")
     if not activated:
-        # fallback: click the visible marker path
-        relation_paths.first.click(force=True)
+        raise RuntimeError('Association line click target was not found')
     page.wait_for_timeout(120)
     relation_state = page.evaluate("""()=>{const svg=document.querySelector('[data-role=canvas] svg');const panel=document.querySelector('[data-role=relation-panel]');const circles=[...svg.querySelectorAll('circle')].filter(c=>{const r=Number(c.getAttribute('r')||0);return r>=4&&r<=6;});const marker=[...svg.querySelectorAll('marker')].find(m=>m.getAttribute('orient')==='auto-start-reverse');const paths=[...svg.querySelectorAll('path')].map(path=>({stroke:path.getAttribute('stroke'),width:path.getAttribute('stroke-width'),computedStroke:getComputedStyle(path).stroke,computedWidth:getComputedStyle(path).strokeWidth}));return{panelHidden:panel.hidden,panelMode:panel.dataset.mode,circles:circles.length,markerOrient:marker?.getAttribute('orient')||'',paths};}""")
     selected_relation = any((item['stroke'] == '#2563eb' or item['computedStroke'] == 'rgb(37, 99, 235)') and (item['width'] == '3' or item['computedWidth'] == '3px') for item in relation_state['paths'])

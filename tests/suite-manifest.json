@@ -83,7 +83,8 @@
     "v090ImageActionsPreview.suite.ts",
     "v0911ImageInteraction.suite.ts",
     "v0913MarkerImageRegression.suite.ts",
-    "v0915ClipartGeometry.suite.ts"
+    "v0915ClipartGeometry.suite.ts",
+    "v0916DirectImageEditing.suite.ts"
   ],
   "ui-shell": [
     "contextMenuAvailability.suite.ts",

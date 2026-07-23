@@ -62,7 +62,7 @@ describe('v0.9.5 unified tree drag contract', () => {
 
   it('keeps image actions out of the canvas structural drag session', () => {
     const source = readFileSync('src/core/YeMindDrag.ts', 'utf8');
-    expect(source).toContain('.node-image-remove,.ymz-node-image-preview,.node-image-resize');
+    expect(source).toContain("'.node-img-handle,.node-img-handle button'");
     expect(source).toContain('excludedNodes: collectDragExcludedNodes');
     expect(source).toContain("event.key !== 'Escape'");
   });

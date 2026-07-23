@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { imageDeleteIcon, imagePreviewIcon } from '../../../src/core/YeMindNodeImgAdjust';
-import YeMindNodeImgAdjust from '../../../src/core/YeMindNodeImgAdjust';
+import YeMindNodeImgAdjust, { calculateImageResizeRect } from '../../../src/core/YeMindNodeImgAdjust';
 import { createImageDeleteGuard } from '../../../src/core/createMindMap';
 import { ImageLightbox, nextImagePreviewScale } from '../../../src/ui/imageLightbox';
 import { readFileSync } from 'node:fs';
@@ -9,56 +8,64 @@ function fakeMindMap(host: HTMLElement) {
   return {
     opt: {
       imgResizeBtnSize: 24,
-      customDeleteBtnInnerHTML: imageDeleteIcon(),
       customInnerElsAppendTo: host,
-      beforeDeleteNodeImg: vi.fn(async () => true),
+      beforeDeleteNodeImg: vi.fn(async () => false),
+      minImgResizeWidth: 12,
+      minImgResizeHeight: 12,
+      maxImgResizeWidth: 1200,
+      maxImgResizeHeight: 1200,
+      maxImgResizeWidthInheritTheme: false,
+      readonly: false,
     },
+    draw: { transform: vi.fn(() => ({ scaleX: 1, scaleY: 1 })) },
     on: vi.fn(),
     off: vi.fn(),
     emit: vi.fn(),
     execCommand: vi.fn(),
+    getThemeConfig: vi.fn(() => 1200),
   } as any;
 }
 
 describe('v0.9.0 node image actions and preview', () => {
-  it('uses a trash-can delete symbol and a magnifier preview symbol', () => {
-    expect(imageDeleteIcon()).toContain('<svg');
-    expect(imageDeleteIcon()).toContain('M5 7h14');
-    expect(imageDeleteIcon()).not.toContain('×');
-    expect(imagePreviewIcon()).toContain('<circle');
-    expect(imagePreviewIcon()).toContain('m14.4 14.4 4.7 4.7');
-  });
-
-  it('keeps the image action boxes unchanged while matching trash and magnifier visual weight', () => {
-    const css = readFileSync('src/styles/index.css', 'utf8');
-    expect(css).toContain('.node-img-handle .node-image-remove svg{\n  width:12px!important;\n  height:12px!important;');
-    expect(css).toContain('.node-img-handle .ymz-node-image-preview svg{\n  width:12px!important;\n  height:12px!important;');
-    expect(css).not.toContain('.node-img-handle .node-image-remove{width:18px');
-  });
-
-  it('places preview at the top-left and deletion at the top-right', () => {
+  it('uses a direct selection frame with eight resize handles, a close button and replace/delete toolbar', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const mindMap = fakeMindMap(host);
     const adjust = new (YeMindNodeImgAdjust as any)({ mindMap });
-    const node = { uid: 'image-node' };
-    adjust.node = node;
     adjust.createResizeBtnEl();
 
-    const preview = host.querySelector<HTMLButtonElement>('.ymz-node-image-preview')!;
-    const remove = host.querySelector<HTMLElement>('.node-image-remove')!;
-    expect(preview.style.left).toBe('0px');
-    expect(preview.style.top).toBe('0px');
-    expect(remove.style.right).toBe('0px');
-    expect(remove.style.top).toBe('0px');
-    expect(remove.getAttribute('aria-label')).toBe('删除节点图片');
-
-    preview.click();
-    expect(mindMap.emit).toHaveBeenCalledWith('yemind_node_image_preview', node);
+    expect(host.querySelectorAll('.ymz-node-image-resize-handle')).toHaveLength(8);
+    expect(host.querySelector('[data-image-action="replace"]')).not.toBeNull();
+    expect(host.querySelector('[data-image-action="delete"]')).not.toBeNull();
+    expect(host.querySelector('.ymz-node-image-delete')?.textContent).toBe('×');
+    expect(host.querySelector('.ymz-node-image-preview')).toBeNull();
+    expect(host.querySelector('.node-image-resize')).toBeNull();
     host.remove();
   });
 
-  it('requires confirmation before the upstream image-delete command may continue', async () => {
+  it('keeps side handles free by default and proportional with Shift while corners are always proportional', () => {
+    const start = { left: 100, top: 100, width: 80, height: 40 };
+    expect(calculateImageResizeRect(start, 'e', 20, 30, false)).toEqual({
+      left: 100,
+      top: 100,
+      width: 100,
+      height: 40,
+    });
+    expect(calculateImageResizeRect(start, 'e', 20, 30, true)).toEqual({
+      left: 100,
+      top: 95,
+      width: 100,
+      height: 50,
+    });
+    expect(calculateImageResizeRect(start, 'se', 20, 1, false)).toEqual({
+      left: 100,
+      top: 100,
+      width: 100,
+      height: 50,
+    });
+  });
+
+  it('requires confirmation before image deletion may continue', async () => {
     const confirmDelete = vi.fn()
       .mockResolvedValueOnce(false)
       .mockResolvedValueOnce(true);
@@ -94,6 +101,6 @@ describe('v0.9.0 node image actions and preview', () => {
   it('also confirms removal from the image dialog', () => {
     const source = readFileSync('src/ui/nodeContentDialogs.ts', 'utf8');
     expect(source).toContain("confirm(\n      '删除节点图片'");
-    expect(source).toContain("commands.setImage({ url: null });");
+    expect(source).toContain('commands.setImage({ url: null });');
   });
 });

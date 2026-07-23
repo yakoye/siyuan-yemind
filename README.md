@@ -2,10 +2,10 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.15`  
+Current version: `0.9.16`  
 Host baseline: SiYuan `3.7.3`
 
-## v0.9.15 proportional clipart geometry
+## v0.9.16 proportional clipart geometry
 
 - Clipart insertion now reads authored SVG `width`/`height`, falling back to `viewBox`, instead of forcing every item to `72 × 72`.
 - Landscape, portrait and square assets are fitted proportionally inside a 72px box, and node frames use the resulting display size.

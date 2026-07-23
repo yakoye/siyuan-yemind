@@ -36,6 +36,7 @@ import { promptText } from "../ui/dialogs";
 import {
   openCommentsDialog,
   openFormulaDialog,
+  openImageDialog,
   openLinkDialog,
   openNoteDialog,
 } from "../ui/nodeContentDialogs";
@@ -1237,6 +1238,11 @@ export class YeMindEditor {
       const source = String(node?.getData?.("image") ?? "");
       const title = String(node?.getData?.("imageTitle") ?? "");
       if (source) this.imageLightbox?.show(source, title);
+    });
+    this.map.on("yemind_node_image_replace", (node: any) => {
+      if (!this.commands || this.commands.isReadonly() || !node) return;
+      this.activateOnlyNode(node);
+      openImageDialog(this.commands);
     });
     this.map.on("yemind_todo_toggle", (node: any) => {
       if (!this.commands) return;

@@ -8,7 +8,6 @@ import { buildRelationOptions } from './relationConfig';
 import { buildOuterFrameOptions } from './outerFrameConfig';
 import { resolveUpstreamShortcutAction } from '../editor/shortcutSafety';
 import { buildThemeConfig, detectAppearance, type YeMindLineStyle } from './themePresets';
-import { imageDeleteIcon } from './YeMindNodeImgAdjust';
 import { configureThemeColorRuntime, installThemeColorRuntime } from './themeColorRuntime';
 import { stabilizeMindMapMeasurementHost } from './measurementHost';
 
@@ -86,7 +85,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     mousewheelAction: settings?.wheelMode === 'zoom' ? 'zoom' : 'move',
     disableMouseWheelZoom: settings?.wheelMode === 'none',
     mousewheelMoveStep: 60,
-    selectTextOnEnterEditText: false,
+    selectTextOnEnterEditText: true,
     isEndNodeTextEditOnClickOuter: true,
     enableDragModifyNodeWidth: true,
     isShowCreateChildBtnIcon: false,
@@ -101,7 +100,6 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     openRealtimeRenderOnNodeTextEdit: true,
     enableEditFormulaInRichTextEdit: true,
     customHyperlinkJump: (href: string) => options.onHyperlink?.(href),
-    customDeleteBtnInnerHTML: imageDeleteIcon(),
     beforeDeleteNodeImg: createImageDeleteGuard(options.onConfirmDeleteImage),
     beforeShortcutRun: (shortcut: string, nodes: any[]) => {
       const action = resolveUpstreamShortcutAction(

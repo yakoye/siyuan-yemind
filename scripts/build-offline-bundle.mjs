@@ -164,7 +164,7 @@ function addModule(modulePath) {
 }
 
 const entryId = addModule(entry);
-const banner = `"use strict";\n// YeMind v0.9.15 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.\n`;
+const banner = `"use strict";\n// YeMind v0.9.16 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.\n`;
 const moduleTable = modules.map((module, id) => `${JSON.stringify(id)}: function(module, exports, __require, __externalRequire) {\n// ${module.path}\n${module.code}\n}`).join(',\n');
 const bundle = `${banner}const __modules = {\n${moduleTable}\n};\nconst __cache = Object.create(null);\nfunction __require(id) {\n  if (__cache[id]) return __cache[id].exports;\n  const factory = __modules[id];\n  if (!factory) throw new Error('Unknown bundled module: ' + id);\n  const module = __cache[id] = { exports: {} };\n  factory(module, module.exports, __require, __externalRequire);\n  return module.exports;\n}\nfunction __externalRequire(name) { return require(name); }\nconst __entry = __require(${entryId});\nmodule.exports = __entry && Object.prototype.hasOwnProperty.call(__entry, 'default') ? __entry.default : __entry;\n`;
 
@@ -177,7 +177,7 @@ const manifest = {
   sourceMapBase: path.basename(mapPath),
   modules: modules.map((module, id) => ({ id, path: module.path })),
 };
-const manifestPath = path.resolve(root, process.env.YEMIND_BUNDLE_MANIFEST ?? 'docs/offline-bundle-manifest-v0.9.15.json');
+const manifestPath = path.resolve(root, process.env.YEMIND_BUNDLE_MANIFEST ?? 'docs/offline-bundle-manifest-v0.9.16.json');
 fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
 fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 console.log(`Built ${path.relative(process.cwd(), outputPath)} with ${modules.length} modules.`);

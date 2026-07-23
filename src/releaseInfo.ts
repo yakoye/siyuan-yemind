@@ -3,18 +3,19 @@ import { PLUGIN_VERSION, PRODUCT_NAME, PROJECT_PACKAGE_NAME } from './plugin/con
 export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: '2026-07-23T12:30:00Z',
-  buildId: 'yemind-v0.9.15-20260723',
+  buildTime: '2026-07-23T15:30:00Z',
+  buildId: 'yemind-v0.9.16-20260723',
   productName: PRODUCT_NAME,
   projectName: PROJECT_PACKAGE_NAME,
   tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
   hostBaseline: 'SiYuan 3.7.3',
-  releaseSummary: '根据 SVG 的真实固有宽高或 viewBox 计算剪贴图尺寸，保持原始纵横比，并自动修复旧版 72×72 默认插入节点。',
+  releaseSummary: '重构节点图片交互：悬停描边、单击选图、八点缩放、图片级删除与替换，以及双击预览。',
   highlights: [
-    '剪贴图插入不再强制写入 72×72，而是将原始宽高等比缩放到 72px 边界框内。',
-    '同时支持带 width/height、仅带 viewBox 以及浏览器已加载尺寸的 SVG。',
-    '打开旧导图时自动识别带 yemindClipartId 的旧 72×72 默认节点并恢复真实比例。',
-    '修正本地资源契约和测试中的剪贴图总数与分类计数，当前为 13 类 764 个。',
+    '鼠标悬停图片只显示蓝色边框，单击后显示八个缩放点、删除按钮和替换/删除工具栏，同时保持节点选中。',
+    '四边控制点默认自由拉伸，按住 Shift 时等比；四角控制点始终等比，并使用对应方向的缩放光标。',
+    '图片选中时 Delete 或 Backspace 只删除图片，节点保留；双击图片打开大图预览。',
+    '双击节点文字进入编辑并全选文字，移除旧版悬停删除、缩放和放大镜图标。',
+    '新插入剪贴图保持原始比例并缩放到最长边 48px，同时继续识别旧版 72×72 错误几何。',
   ]
 } as const;
 

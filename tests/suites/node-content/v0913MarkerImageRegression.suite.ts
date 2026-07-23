@@ -18,18 +18,17 @@ describe('v0.9.13 marker and image regressions', () => {
     expect(svg.indexOf('<defs>')).toBeLessThan(svg.indexOf('<image'));
   });
 
-  it('shows image controls from hover and opens preview from the magnifier without pinning or double click', () => {
-    expect(adjustSource).toContain('onNodeImgMousemove(node: any, img: any)');
-    expect(adjustSource).toContain('BaseNodeImgAdjust.prototype as any).onNodeImgMousemove.call(this, node, img)');
-    expect(adjustSource).not.toContain('pinnedUid');
-    expect(adjustSource).not.toContain('data-yemind-image-pinned');
-    expect(adjustSource).toContain("preview.addEventListener('mouseleave'");
-    expect(editorSource).toContain('this.map.on("yemind_node_image_preview"');
-    expect(editorSource).not.toContain('this.map.on("node_img_dblclick"');
+  it('shows only a border on hover and pins eight handles plus the toolbar after image click', () => {
+    expect(adjustSource).toContain("this.setMode('hover')");
+    expect(adjustSource).toContain("this.setMode('selected')");
+    expect(adjustSource).toContain("const RESIZE_HANDLES: ImageResizeHandle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']");
+    expect(adjustSource).not.toContain('ymz-node-image-preview');
+    expect(editorSource).toContain('this.map.on("node_img_click"');
+    expect(css).toContain('.ymz-node-image-frame[data-mode="hover"] .ymz-node-image-resize-handle');
+    expect(css).toContain('.ymz-node-image-frame[data-mode="selected"] .ymz-node-image-toolbar{display:flex}');
   });
 
   it('keeps the enlarged-image backdrop blurred but translucent enough to see the map', () => {
-    expect(css).toMatch(/\.ymz-image-lightbox\{[^}]*rgba\(7,10,13,\.62\)/s);
-    expect(css).toMatch(/\.ymz-image-lightbox\{[^}]*backdrop-filter:blur\(8px\)/s);
+    expect(css).toMatch(/\.ymz-image-lightbox\{background:rgba\(7,10,13,\.62\);backdrop-filter:blur\(8px\)\}/s);
   });
 });

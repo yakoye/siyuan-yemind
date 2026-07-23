@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.15 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.16 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -15847,7 +15847,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.15';
+exports.PLUGIN_VERSION = '0.9.16';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -15864,18 +15864,19 @@ const constants_1 = __require(28);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-23T12:30:00Z',
-    buildId: 'yemind-v0.9.15-20260723',
+    buildTime: '2026-07-23T15:30:00Z',
+    buildId: 'yemind-v0.9.16-20260723',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '根据 SVG 的真实固有宽高或 viewBox 计算剪贴图尺寸，保持原始纵横比，并自动修复旧版 72×72 默认插入节点。',
+    releaseSummary: '重构节点图片交互：悬停描边、单击选图、八点缩放、图片级删除与替换，以及双击预览。',
     highlights: [
-        '剪贴图插入不再强制写入 72×72，而是将原始宽高等比缩放到 72px 边界框内。',
-        '同时支持带 width/height、仅带 viewBox 以及浏览器已加载尺寸的 SVG。',
-        '打开旧导图时自动识别带 yemindClipartId 的旧 72×72 默认节点并恢复真实比例。',
-        '修正本地资源契约和测试中的剪贴图总数与分类计数，当前为 13 类 764 个。',
+        '鼠标悬停图片只显示蓝色边框，单击后显示八个缩放点、删除按钮和替换/删除工具栏，同时保持节点选中。',
+        '四边控制点默认自由拉伸，按住 Shift 时等比；四角控制点始终等比，并使用对应方向的缩放光标。',
+        '图片选中时 Delete 或 Backspace 只删除图片，节点保留；双击图片打开大图预览。',
+        '双击节点文字进入编辑并全选文字，移除旧版悬停删除、缩放和放大镜图标。',
+        '新插入剪贴图保持原始比例并缩放到最长边 48px，同时继续识别旧版 72×72 错误几何。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -17906,6 +17907,12 @@ class YeMindEditor {
             if (source)
                 this.imageLightbox?.show(source, title);
         });
+        this.map.on("yemind_node_image_replace", (node) => {
+            if (!this.commands || this.commands.isReadonly() || !node)
+                return;
+            this.activateOnlyNode(node);
+            (0, nodeContentDialogs_1.openImageDialog)(this.commands);
+        });
         this.map.on("yemind_todo_toggle", (node) => {
             if (!this.commands)
                 return;
@@ -19049,7 +19056,6 @@ const relationConfig_1 = __require(198);
 const outerFrameConfig_1 = __require(199);
 const shortcutSafety_1 = __require(200);
 const themePresets_1 = __require(11);
-const YeMindNodeImgAdjust_1 = __require(188);
 const themeColorRuntime_1 = __require(201);
 const measurementHost_1 = __require(202);
 function createImageDeleteGuard(confirmDelete) {
@@ -19106,7 +19112,7 @@ function createMindMap(options) {
         mousewheelAction: settings?.wheelMode === 'zoom' ? 'zoom' : 'move',
         disableMouseWheelZoom: settings?.wheelMode === 'none',
         mousewheelMoveStep: 60,
-        selectTextOnEnterEditText: false,
+        selectTextOnEnterEditText: true,
         isEndNodeTextEditOnClickOuter: true,
         enableDragModifyNodeWidth: true,
         isShowCreateChildBtnIcon: false,
@@ -19121,7 +19127,6 @@ function createMindMap(options) {
         openRealtimeRenderOnNodeTextEdit: true,
         enableEditFormulaInRichTextEdit: true,
         customHyperlinkJump: (href) => options.onHyperlink?.(href),
-        customDeleteBtnInnerHTML: (0, YeMindNodeImgAdjust_1.imageDeleteIcon)(),
         beforeDeleteNodeImg: createImageDeleteGuard(options.onConfirmDeleteImage),
         beforeShortcutRun: (shortcut, nodes) => {
             const action = (0, shortcutSafety_1.resolveUpstreamShortcutAction)(shortcut, nodes, options.el.closest('.ymz-editor')?.dataset.readonly === 'true');
@@ -40589,7 +40594,7 @@ class YeMindDrag extends Drag_1.default {
     }
     onNodeMousedown(node, event) {
         const target = event.target;
-        if (target?.closest?.('.node-image-remove,.ymz-node-image-preview,.node-image-resize,.node-img-adjust,.node-img-handle button'))
+        if (target?.closest?.('.node-img-handle,.node-img-handle button'))
             return;
         super.onNodeMousedown(node, event);
     }
@@ -78440,61 +78445,514 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.imageDeleteIcon = imageDeleteIcon;
-exports.imagePreviewIcon = imagePreviewIcon;
+exports.calculateImageResizeRect = calculateImageResizeRect;
 const NodeImgAdjust_1 = __importDefault(__require(189));
-function imageDeleteIcon() {
+const RESIZE_HANDLES = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+const BaseNodeImgAdjust = NodeImgAdjust_1.default;
+function finitePositive(value, fallback) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+}
+function rounded(value) {
+    return Math.round(value * 100) / 100;
+}
+/**
+ * Calculates the live image rectangle in viewport coordinates.
+ * Corner handles always preserve the current aspect ratio. Edge handles resize
+ * one axis freely, unless Shift is held, in which case the opposite edge centre
+ * remains anchored while the aspect ratio is preserved.
+ */
+function calculateImageResizeRect(start, handle, deltaX, deltaY, shiftKey = false, limits = {}) {
+    const startWidth = finitePositive(start.width, 1);
+    const startHeight = finitePositive(start.height, 1);
+    const minWidth = finitePositive(limits.minWidth, 1);
+    const minHeight = finitePositive(limits.minHeight, 1);
+    const maxWidth = finitePositive(limits.maxWidth, Number.MAX_SAFE_INTEGER);
+    const maxHeight = finitePositive(limits.maxHeight, Number.MAX_SAFE_INTEGER);
+    const hasWest = handle.includes('w');
+    const hasEast = handle.includes('e');
+    const hasNorth = handle.includes('n');
+    const hasSouth = handle.includes('s');
+    const isCorner = (hasWest || hasEast) && (hasNorth || hasSouth);
+    const preserveAspect = isCorner || shiftKey;
+    const right = start.left + startWidth;
+    const bottom = start.top + startHeight;
+    const centerX = start.left + startWidth / 2;
+    const centerY = start.top + startHeight / 2;
+    if (!preserveAspect) {
+        let width = startWidth;
+        let height = startHeight;
+        if (hasEast)
+            width = clamp(startWidth + deltaX, minWidth, maxWidth);
+        if (hasWest)
+            width = clamp(startWidth - deltaX, minWidth, maxWidth);
+        if (hasSouth)
+            height = clamp(startHeight + deltaY, minHeight, maxHeight);
+        if (hasNorth)
+            height = clamp(startHeight - deltaY, minHeight, maxHeight);
+        return {
+            left: rounded(hasWest ? right - width : start.left),
+            top: rounded(hasNorth ? bottom - height : start.top),
+            width: rounded(width),
+            height: rounded(height),
+        };
+    }
+    const horizontalScale = hasWest
+        ? (startWidth - deltaX) / startWidth
+        : hasEast
+            ? (startWidth + deltaX) / startWidth
+            : 1;
+    const verticalScale = hasNorth
+        ? (startHeight - deltaY) / startHeight
+        : hasSouth
+            ? (startHeight + deltaY) / startHeight
+            : 1;
+    let scale = isCorner
+        ? (Math.abs(horizontalScale - 1) >= Math.abs(verticalScale - 1) ? horizontalScale : verticalScale)
+        : (hasWest || hasEast ? horizontalScale : verticalScale);
+    const minScale = Math.max(minWidth / startWidth, minHeight / startHeight);
+    const maxScale = Math.min(maxWidth / startWidth, maxHeight / startHeight);
+    scale = clamp(Number.isFinite(scale) ? scale : 1, minScale, maxScale);
+    const width = startWidth * scale;
+    const height = startHeight * scale;
+    let left = start.left;
+    let top = start.top;
+    if (isCorner) {
+        if (hasWest)
+            left = right - width;
+        if (hasNorth)
+            top = bottom - height;
+    }
+    else if (hasWest || hasEast) {
+        if (hasWest)
+            left = right - width;
+        top = centerY - height / 2;
+    }
+    else {
+        if (hasNorth)
+            top = bottom - height;
+        left = centerX - width / 2;
+    }
+    return {
+        left: rounded(left),
+        top: rounded(top),
+        width: rounded(width),
+        height: rounded(height),
+    };
+}
+function toolbarIcon(name) {
+    if (name === 'replace') {
+        return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7zM4 10V4h6M20 14v6h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    }
     return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9 7V4.8h6V7M8 10v7M12 10v7M16 10v7M6.5 7l.8 13h9.4l.8-13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
-function imagePreviewIcon() {
-    return '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m14.4 14.4 4.7 4.7M10.5 7.8v5.4M7.8 10.5h5.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-}
-const BaseNodeImgAdjust = NodeImgAdjust_1.default;
 class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
+    constructor(options) {
+        super(options);
+        this.imageSelected = false;
+        this.hoverVisible = false;
+        this.resizeHandle = null;
+        this.resizeStartPoint = { x: 0, y: 0 };
+        this.resizeStartRect = null;
+        this.resizeCurrentRect = null;
+        this.onImageClickBound = this.onImageClick.bind(this);
+        this.onImageDoubleClickBound = this.onImageDoubleClick.bind(this);
+        this.onNodeClickBound = this.onNodeClick.bind(this);
+        this.onNodeActiveBound = this.onNodeActive.bind(this);
+        this.onCanvasInteractionBound = this.onCanvasInteraction.bind(this);
+        this.onTranslateBound = this.onTranslate.bind(this);
+        this.onKeydownCaptureBound = this.onKeydownCapture.bind(this);
+        this.bindYeMindEvents();
+    }
+    bindYeMindEvents() {
+        this.mindMap.on('node_img_click', this.onImageClickBound);
+        this.mindMap.on('node_img_dblclick', this.onImageDoubleClickBound);
+        this.mindMap.on('node_click', this.onNodeClickBound);
+        this.mindMap.on('node_active', this.onNodeActiveBound);
+        this.mindMap.on('draw_click', this.onCanvasInteractionBound);
+        this.mindMap.on('svg_mousedown', this.onCanvasInteractionBound);
+        this.mindMap.on('translate', this.onTranslateBound);
+        window.addEventListener('keydown', this.onKeydownCaptureBound, true);
+    }
+    unbindYeMindEvents() {
+        this.mindMap.off('node_img_click', this.onImageClickBound);
+        this.mindMap.off('node_img_dblclick', this.onImageDoubleClickBound);
+        this.mindMap.off('node_click', this.onNodeClickBound);
+        this.mindMap.off('node_active', this.onNodeActiveBound);
+        this.mindMap.off('draw_click', this.onCanvasInteractionBound);
+        this.mindMap.off('svg_mousedown', this.onCanvasInteractionBound);
+        this.mindMap.off('translate', this.onTranslateBound);
+        window.removeEventListener('keydown', this.onKeydownCaptureBound, true);
+        window.removeEventListener('mousemove', this.onMousemove, true);
+        window.removeEventListener('mouseup', this.onMouseup, true);
+    }
     onNodeImgMousemove(node, img) {
-        BaseNodeImgAdjust.prototype.onNodeImgMousemove.call(this, node, img);
+        if (this.isMousedown || this.isAdjusted)
+            return;
+        if (this.imageSelected && this.node?.uid === node?.uid) {
+            this.node = node;
+            this.img = img;
+            this.refreshRect();
+            return;
+        }
+        if (this.imageSelected)
+            return;
+        this.node = node;
+        this.img = img;
+        this.rect = img?.rbox?.() ?? null;
+        if (!this.rect)
+            return;
+        this.hoverVisible = true;
+        this.showHandleEl();
+        this.setMode('hover');
     }
     onNodeImgMouseleave() {
-        BaseNodeImgAdjust.prototype.onNodeImgMouseleave.call(this);
+        if (this.isMousedown || this.imageSelected)
+            return;
+        this.hoverVisible = false;
+        this.hideHandleEl();
+    }
+    onScale() {
+        this.refreshRect();
+    }
+    onRenderEnd() {
+        if (this.isMousedown)
+            return;
+        if (this.node?.getData?.('image')) {
+            const nextImage = this.node?._imgData?.node;
+            if (nextImage)
+                this.img = nextImage;
+        }
+        else if (this.imageSelected) {
+            this.closeImageSelection();
+            return;
+        }
+        this.isAdjusted = false;
+        this.refreshRect();
+    }
+    showHandleEl() {
+        if (!this.handleEl)
+            this.createResizeBtnEl();
+        if (!this.handleEl || !this.rect)
+            return;
+        this.setHandleElRect();
+        this.handleEl.style.display = 'block';
+        this.isShowHandleEl = true;
+    }
+    hideHandleEl(force = false) {
+        if (this.imageSelected && !force)
+            return;
+        if (!this.handleEl)
+            return;
+        this.isShowHandleEl = false;
+        this.handleEl.style.display = 'none';
+        this.handleEl.style.backgroundImage = '';
+        this.handleEl.classList.remove('is-resizing');
+        this.setMode('hidden');
+    }
+    setHandleElRect() {
+        if (!this.handleEl || !this.rect)
+            return;
+        const { width, height, x, y } = this.rect;
+        this.currentImgWidth = width;
+        this.currentImgHeight = height;
+        this.applyHandleRect({ left: x, top: y, width, height });
+    }
+    updateHandleElSize() {
+        if (!this.handleEl)
+            return;
+        const rect = this.resizeCurrentRect ?? {
+            left: Number.parseFloat(this.handleEl.style.left) || 0,
+            top: Number.parseFloat(this.handleEl.style.top) || 0,
+            width: this.currentImgWidth,
+            height: this.currentImgHeight,
+        };
+        this.applyHandleRect(rect);
     }
     createResizeBtnEl() {
-        super.createResizeBtnEl();
-        if (!this.handleEl || this.handleEl.querySelector('.ymz-node-image-preview'))
+        if (this.handleEl)
             return;
-        const remove = this.handleEl.querySelector('.node-image-remove');
-        if (remove) {
-            remove.setAttribute('role', 'button');
-            remove.setAttribute('aria-label', '删除节点图片');
-            remove.setAttribute('title', '删除图片');
-            remove.setAttribute('tabindex', '0');
-            remove.addEventListener('mouseenter', () => this.showHandleEl());
-            remove.addEventListener('keydown', (event) => {
-                if (event.key !== 'Enter' && event.key !== ' ')
-                    return;
+        const handle = document.createElement('div');
+        handle.className = 'node-img-handle ymz-node-image-frame';
+        handle.dataset.mode = 'hidden';
+        handle.style.display = 'none';
+        RESIZE_HANDLES.forEach((direction) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'ymz-node-image-resize-handle';
+            button.dataset.handle = direction;
+            button.setAttribute('aria-label', `调整图片大小 ${direction}`);
+            button.addEventListener('mousedown', (event) => {
                 event.preventDefault();
-                remove.click();
+                event.stopPropagation();
+                this.startResize(direction, event);
             });
-        }
-        const resize = this.handleEl.querySelector('.node-image-resize');
-        resize?.addEventListener('mouseenter', () => this.showHandleEl());
-        const size = Number(this.mindMap?.opt?.imgResizeBtnSize) || 24;
-        const preview = document.createElement('button');
-        preview.type = 'button';
-        preview.className = 'ymz-node-image-preview';
-        preview.setAttribute('aria-label', '放大预览图片');
-        preview.title = '放大预览';
-        preview.innerHTML = imagePreviewIcon();
-        preview.style.cssText = `position:absolute;left:0;top:0;pointer-events:auto;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;border:0;padding:3px;background:rgba(0,0,0,.52);color:#fff;cursor:zoom-in;`;
-        preview.addEventListener('mouseenter', () => this.showHandleEl());
-        preview.addEventListener('mouseleave', () => { if (!this.isMousedown)
-            this.hideHandleEl(); });
-        preview.addEventListener('mousedown', (event) => { event.preventDefault(); event.stopPropagation(); });
-        preview.addEventListener('click', (event) => {
+            button.addEventListener('click', (event) => event.stopPropagation());
+            handle.appendChild(button);
+        });
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'ymz-node-image-delete';
+        remove.setAttribute('aria-label', '删除节点图片');
+        remove.title = '删除图片';
+        remove.textContent = '×';
+        remove.addEventListener('mousedown', (event) => {
             event.preventDefault();
             event.stopPropagation();
-            this.mindMap.emit('yemind_node_image_preview', this.node);
         });
-        this.handleEl.appendChild(preview);
+        remove.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            void this.deleteSelectedImage();
+        });
+        handle.appendChild(remove);
+        const toolbar = document.createElement('div');
+        toolbar.className = 'ymz-node-image-toolbar';
+        toolbar.setAttribute('role', 'toolbar');
+        toolbar.setAttribute('aria-label', '图片工具');
+        toolbar.innerHTML = `
+      <button type="button" data-image-action="replace">${toolbarIcon('replace')}<span>替换</span></button>
+      <button type="button" data-image-action="delete">${toolbarIcon('delete')}<span>删除</span></button>
+    `;
+        toolbar.addEventListener('mousedown', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        });
+        toolbar.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const action = event.target?.closest('[data-image-action]')?.dataset.imageAction;
+            if (action === 'replace')
+                this.replaceSelectedImage();
+            if (action === 'delete')
+                void this.deleteSelectedImage();
+        });
+        handle.appendChild(toolbar);
+        this.handleEl = handle;
+        const target = this.mindMap.opt.customInnerElsAppendTo || document.body;
+        target.appendChild(handle);
+    }
+    onMousemove(event) {
+        if (!this.isMousedown || !this.resizeStartRect || !this.resizeHandle)
+            return;
+        event.preventDefault();
+        const limits = this.resizeLimits();
+        const rect = calculateImageResizeRect(this.resizeStartRect, this.resizeHandle, event.clientX - this.resizeStartPoint.x, event.clientY - this.resizeStartPoint.y, event.shiftKey, limits);
+        this.resizeCurrentRect = rect;
+        this.currentImgWidth = rect.width;
+        this.currentImgHeight = rect.height;
+        this.applyHandleRect(rect);
+    }
+    onMouseup(event) {
+        if (!this.isMousedown)
+            return;
+        event?.preventDefault?.();
+        window.removeEventListener('mousemove', this.onMousemove, true);
+        window.removeEventListener('mouseup', this.onMouseup, true);
+        this.showNodeImage();
+        this.handleEl?.classList.remove('is-resizing');
+        const current = this.resizeCurrentRect ?? this.resizeStartRect;
+        const transform = this.mousedownDrawTransform ?? { scaleX: 1, scaleY: 1 };
+        const scaleX = finitePositive(transform.scaleX, 1);
+        const scaleY = finitePositive(transform.scaleY, 1);
+        if (current && this.node) {
+            const newWidth = current.width / scaleX;
+            const newHeight = current.height / scaleY;
+            const startWidth = finitePositive(this.resizeStartRect?.width, current.width) / scaleX;
+            const startHeight = finitePositive(this.resizeStartRect?.height, current.height) / scaleY;
+            if (Math.abs(newWidth - startWidth) > 0.5 || Math.abs(newHeight - startHeight) > 0.5) {
+                const { image, imageTitle } = this.node.getData();
+                this.mindMap.execCommand('SET_NODE_IMAGE', this.node, {
+                    url: image,
+                    title: imageTitle,
+                    width: rounded(newWidth),
+                    height: rounded(newHeight),
+                    custom: true,
+                });
+                this.isAdjusted = true;
+            }
+        }
+        this.isMousedown = false;
+        this.resizeHandle = null;
+        this.resizeStartRect = null;
+        this.resizeCurrentRect = null;
+        this.mousedownDrawTransform = null;
+        this.setMode('selected');
+        requestAnimationFrame(() => this.refreshRect());
+    }
+    beforePluginRemove() {
+        this.unbindYeMindEvents();
+        super.beforePluginRemove();
+        this.handleEl?.remove?.();
+        this.handleEl = null;
+    }
+    beforePluginDestroy() {
+        this.unbindYeMindEvents();
+        super.beforePluginDestroy();
+        this.handleEl?.remove?.();
+        this.handleEl = null;
+    }
+    onImageClick(node, img, event) {
+        event?.preventDefault?.();
+        event?.stopPropagation?.();
+        if (!node || !img)
+            return;
+        this.node = node;
+        this.img = img;
+        this.rect = img.rbox?.() ?? null;
+        if (!this.rect)
+            return;
+        this.imageSelected = true;
+        this.hoverVisible = false;
+        this.showHandleEl();
+        this.setMode('selected');
+        this.mindMap.emit('yemind_node_image_selected', node);
+    }
+    onImageDoubleClick(node, event, img) {
+        event?.preventDefault?.();
+        event?.stopPropagation?.();
+        if (!node)
+            return;
+        if (img)
+            this.onImageClick(node, img, event);
+        this.mindMap.emit('yemind_node_image_preview', node);
+    }
+    onNodeClick() {
+        this.closeImageSelection();
+    }
+    onNodeActive(node) {
+        if (this.imageSelected && node !== this.node)
+            this.closeImageSelection();
+    }
+    onCanvasInteraction() {
+        this.closeImageSelection();
+    }
+    onTranslate() {
+        this.refreshRect();
+    }
+    onKeydownCapture(event) {
+        if (!this.imageSelected || this.mindMap.opt.readonly)
+            return;
+        if (event.key !== 'Delete' && event.key !== 'Backspace')
+            return;
+        if (event.ctrlKey || event.metaKey || event.altKey)
+            return;
+        const target = event.target;
+        if (target?.closest?.('input,textarea,select,[contenteditable="true"],.ql-editor'))
+            return;
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        void this.deleteSelectedImage();
+    }
+    startResize(direction, event) {
+        if (!this.imageSelected || this.mindMap.opt.readonly || !this.img || !this.node)
+            return;
+        this.rect = this.img.rbox?.() ?? this.rect;
+        if (!this.rect)
+            return;
+        this.resizeHandle = direction;
+        this.resizeStartPoint = { x: event.clientX, y: event.clientY };
+        this.resizeStartRect = {
+            left: this.rect.x,
+            top: this.rect.y,
+            width: this.rect.width,
+            height: this.rect.height,
+        };
+        this.resizeCurrentRect = { ...this.resizeStartRect };
+        this.isMousedown = true;
+        this.mousedownDrawTransform = this.mindMap.draw.transform();
+        this.hideNodeImage();
+        this.handleEl.style.backgroundImage = `url(${this.node.getData('image')})`;
+        this.handleEl.classList.add('is-resizing');
+        this.mindMap.emit('node_img_adjust_btn_mousedown', this.node);
+        window.addEventListener('mousemove', this.onMousemove, true);
+        window.addEventListener('mouseup', this.onMouseup, true);
+    }
+    resizeLimits() {
+        const transform = this.mousedownDrawTransform ?? this.mindMap.draw.transform();
+        const scaleX = finitePositive(transform?.scaleX, 1);
+        const scaleY = finitePositive(transform?.scaleY, 1);
+        const options = this.mindMap.opt ?? {};
+        let maxWidth = finitePositive(options.maxImgResizeWidth, Number.MAX_SAFE_INTEGER);
+        let maxHeight = finitePositive(options.maxImgResizeHeight, Number.MAX_SAFE_INTEGER);
+        if (options.maxImgResizeWidthInheritTheme) {
+            maxWidth = finitePositive(this.mindMap.getThemeConfig?.('imgMaxWidth'), maxWidth);
+            maxHeight = finitePositive(this.mindMap.getThemeConfig?.('imgMaxHeight'), maxHeight);
+        }
+        const directMinWidth = Math.min(finitePositive(options.minImgResizeWidth, 12), 12);
+        const directMinHeight = Math.min(finitePositive(options.minImgResizeHeight, 12), 12);
+        return {
+            minWidth: directMinWidth * scaleX,
+            minHeight: directMinHeight * scaleY,
+            maxWidth: maxWidth * scaleX,
+            maxHeight: maxHeight * scaleY,
+        };
+    }
+    applyHandleRect(rect) {
+        if (!this.handleEl)
+            return;
+        this.handleEl.style.left = `${rect.left}px`;
+        this.handleEl.style.top = `${rect.top}px`;
+        this.handleEl.style.width = `${rect.width}px`;
+        this.handleEl.style.height = `${rect.height}px`;
+    }
+    setMode(mode) {
+        if (!this.handleEl)
+            return;
+        this.handleEl.dataset.mode = mode;
+    }
+    refreshRect() {
+        if (!this.img || (!this.imageSelected && !this.hoverVisible) || this.isMousedown)
+            return;
+        try {
+            this.rect = this.img.rbox();
+        }
+        catch {
+            const nextImage = this.node?._imgData?.node;
+            if (!nextImage)
+                return;
+            this.img = nextImage;
+            this.rect = nextImage.rbox();
+        }
+        if (!this.rect)
+            return;
+        this.showHandleEl();
+        this.setMode(this.imageSelected ? 'selected' : 'hover');
+    }
+    closeImageSelection() {
+        if (this.isMousedown)
+            return;
+        this.imageSelected = false;
+        this.hoverVisible = false;
+        this.hideHandleEl(true);
+        this.node = null;
+        this.img = null;
+        this.rect = null;
+    }
+    replaceSelectedImage() {
+        if (!this.node || this.mindMap.opt.readonly)
+            return;
+        const node = this.node;
+        this.closeImageSelection();
+        this.mindMap.emit('yemind_node_image_replace', node);
+    }
+    async deleteSelectedImage() {
+        if (!this.node || this.mindMap.opt.readonly)
+            return;
+        const node = this.node;
+        let stop = false;
+        if (typeof this.mindMap.opt.beforeDeleteNodeImg === 'function') {
+            stop = await this.mindMap.opt.beforeDeleteNodeImg(node);
+        }
+        if (stop)
+            return;
+        this.closeImageSelection();
+        this.mindMap.execCommand('SET_NODE_IMAGE', node, { url: null });
+        this.mindMap.emit('delete_node_img_from_delete_btn', node);
     }
 }
 exports.default = YeMindNodeImgAdjust;
@@ -82018,13 +82476,14 @@ function addCombinedSummary(mindMap, selectedNodes) {
 // /src/core/clipartGeometry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CLIPART_GEOMETRY_VERSION = exports.DEFAULT_CLIPART_BOX_SIZE = void 0;
+exports.CLIPART_GEOMETRY_VERSION = exports.LEGACY_DEFAULT_CLIPART_BOX_SIZE = exports.DEFAULT_CLIPART_BOX_SIZE = void 0;
 exports.parseSvgIntrinsicSize = parseSvgIntrinsicSize;
 exports.fitClipartSize = fitClipartSize;
 exports.resolveClipartDisplaySize = resolveClipartDisplaySize;
 exports.isLegacyDefaultClipartGeometry = isLegacyDefaultClipartGeometry;
-exports.DEFAULT_CLIPART_BOX_SIZE = 72;
-exports.CLIPART_GEOMETRY_VERSION = 2;
+exports.DEFAULT_CLIPART_BOX_SIZE = 48;
+exports.LEGACY_DEFAULT_CLIPART_BOX_SIZE = 72;
+exports.CLIPART_GEOMETRY_VERSION = 3;
 const geometryCache = new Map();
 function positiveNumber(value) {
     const number = Number(value);
@@ -82134,8 +82593,8 @@ function isLegacyDefaultClipartGeometry(data) {
     const height = Number(data.imageSize?.height);
     return Boolean(data.image)
         && data.imageSize?.custom === true
-        && Math.abs(width - exports.DEFAULT_CLIPART_BOX_SIZE) < 0.01
-        && Math.abs(height - exports.DEFAULT_CLIPART_BOX_SIZE) < 0.01;
+        && Math.abs(width - exports.LEGACY_DEFAULT_CLIPART_BOX_SIZE) < 0.01
+        && Math.abs(height - exports.LEGACY_DEFAULT_CLIPART_BOX_SIZE) < 0.01;
 }
 
 },

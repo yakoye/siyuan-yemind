@@ -8,8 +8,9 @@ export interface ClipartDisplaySize extends ClipartIntrinsicSize {
   source: 'svg' | 'image' | 'fallback';
 }
 
-export const DEFAULT_CLIPART_BOX_SIZE = 72;
-export const CLIPART_GEOMETRY_VERSION = 2;
+export const DEFAULT_CLIPART_BOX_SIZE = 48;
+export const LEGACY_DEFAULT_CLIPART_BOX_SIZE = 72;
+export const CLIPART_GEOMETRY_VERSION = 3;
 
 const geometryCache = new Map<string, Promise<ClipartDisplaySize>>();
 
@@ -129,6 +130,6 @@ export function isLegacyDefaultClipartGeometry(data: Record<string, any> | null 
   const height = Number(data.imageSize?.height);
   return Boolean(data.image)
     && data.imageSize?.custom === true
-    && Math.abs(width - DEFAULT_CLIPART_BOX_SIZE) < 0.01
-    && Math.abs(height - DEFAULT_CLIPART_BOX_SIZE) < 0.01;
+    && Math.abs(width - LEGACY_DEFAULT_CLIPART_BOX_SIZE) < 0.01
+    && Math.abs(height - LEGACY_DEFAULT_CLIPART_BOX_SIZE) < 0.01;
 }

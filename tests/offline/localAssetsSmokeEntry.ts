@@ -28,8 +28,8 @@ assert(landscape?.width === 160 && landscape.height === 80, 'explicit SVG geomet
 assert(portrait?.width === 80 && portrait.height === 160, 'viewBox SVG geometry');
 const landscapeFit = fitClipartSize(landscape!);
 const portraitFit = fitClipartSize(portrait!);
-assert(landscapeFit.width === 72 && landscapeFit.height === 36, 'landscape ratio');
-assert(portraitFit.width === 36 && portraitFit.height === 72, 'portrait ratio');
+assert(landscapeFit.width === 48 && landscapeFit.height === 24, 'landscape ratio');
+assert(portraitFit.width === 24 && portraitFit.height === 48, 'portrait ratio');
 
 export default {
   markers: markerCatalog.total,
