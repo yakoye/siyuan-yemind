@@ -19,3 +19,4 @@ import '../suites/ui-shell/v063CanvasModeIcons.suite';
 import '../suites/ui-shell/v063ContextMenuOrganization.suite';
 import '../suites/ui-shell/v063ResponsiveToolbars.suite';
 import '../suites/ui-shell/visibleElement.suite';
+import '../suites/ui-shell/v0911MenusAndPanels.suite';

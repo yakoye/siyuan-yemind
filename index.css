@@ -1100,3 +1100,42 @@
 }
 .ymz-editor .smm-richtext-node-edit-wrap .ql-container,
 .ymz-editor .smm-richtext-node-edit-wrap .ql-editor{background:transparent!important}
+
+/* v0.9.11 unified anchored style panels and flush node quick actions */
+.ymz-node-style-panel,.ymz-project-style-panel{
+  width:min(400px,calc(100% - 16px))!important;
+  height:min(440px,70vh)!important;
+  max-height:calc(100% - 24px)!important;
+  padding:12px!important;
+  box-sizing:border-box;
+  overflow:auto!important;
+}
+.ymz-node-quick-actions{transform:translateY(-50%);gap:3px!important}
+.ymz-node-quick-action{margin-left:0!important}
+
+/* v0.9.11 unified selection, image and relation interaction */
+.node-img-handle[data-yemind-image-pinned="true"]{
+  display:block!important;
+  opacity:1!important;
+  visibility:visible!important;
+}
+.node-img-handle .node-image-remove,
+.node-img-handle .ymz-node-image-preview{
+  width:25px!important;
+  height:25px!important;
+  box-sizing:border-box;
+}
+.node-img-handle .node-image-remove svg{
+  width:12px!important;
+  height:12px!important;
+  flex:0 0 12px!important;
+}
+.node-img-handle .ymz-node-image-preview svg{
+  width:12px!important;
+  height:12px!important;
+}
+.ymz-relation-panel[data-mode="active"] [data-role="relation-hint"]{
+  max-width:min(460px,58vw);
+  white-space:normal;
+  line-height:1.35;
+}

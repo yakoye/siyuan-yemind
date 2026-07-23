@@ -131,7 +131,7 @@ export class NodeQuickActionsController {
       container.className = 'ymz-node-quick-actions';
       container.dataset.nodeUid = uid;
       container.dataset.quickHovered = String(hovered);
-      container.style.left = `${rect.right - rootRect.left + 5}px`;
+      container.style.left = `${rect.right - rootRect.left}px`;
       container.style.top = `${rect.top - rootRect.top + rect.height / 2}px`;
       descriptors.forEach((descriptor) => {
         const button = document.createElement('button');

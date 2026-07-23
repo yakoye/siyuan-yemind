@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.10 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.11 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -38,11 +38,11 @@ const releaseInfo_1 = __require(23);
 const constants_1 = __require(24);
 const dock_1 = __require(30);
 const tabs_1 = __require(31);
-const OpenMapTabRegistry_1 = __require(242);
-const pluginUrl_1 = __require(243);
-const operationSafety_1 = __require(244);
-const pluginStartup_1 = __require(245);
-const globalSearch_1 = __require(246);
+const OpenMapTabRegistry_1 = __require(243);
+const pluginUrl_1 = __require(244);
+const operationSafety_1 = __require(245);
+const pluginStartup_1 = __require(246);
+const globalSearch_1 = __require(247);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -6668,19 +6668,20 @@ const constants_1 = __require(24);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-23T08:30:00Z',
-    buildId: 'yemind-v0.9.10-20260723',
+    buildTime: '2026-07-23T03:15:00Z',
+    buildId: 'yemind-v0.9.11-20260723',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '将大纲彩虹引导线改为单一覆盖层逐条绘制，使线条位于展开三角尖端正下方并保持统一 1px；同时补齐画布与大纲节点选择的双向可视定位。',
+    releaseSummary: '统一画布与大纲文字选区工具栏、图片选择、节点右键菜单和样式面板，并将关联线升级为可持久化调整控制点和切线的贝塞尔曲线。',
     highlights: [
-        '每个展开父节点只生成一条独立彩虹引导线，不再由每行渐变重复拼接，消除深浅和粗细不一致。',
-        '引导线横坐标直接取展开三角尖端中心，纵向从三角尖端下方延伸到最后一个可见后代标记。',
-        '画布点击节点后，大纲自动滚动并将对应行置于可视区域；仅调整大纲内部滚动，不推动宿主页面。',
-        '大纲点击节点继续通过 GO_TARGET_NODE 将画布目标居中显示，并与当前行高亮保持同步。',
-        '新增真实 Chromium 几何、单线去重、画布到大纲及大纲到画布双向定位回归。',
+        '画布与大纲都在选区完成后显示同一套浮动工具栏；字体和字号会恢复原选区后再应用，不再因下拉控件抢焦点而失效。',
+        '单击节点图片即可固定图片工具，双击直接打开预览；图片工具与节点结构拖动完全隔离。',
+        '单节点、多节点和画布空白使用独立右键菜单；外框菜单按节点状态动态显示添加或删除，并区分节点链接与行内链接。',
+        '顶部样式和节点样式复用统一尺寸的锚定面板，分别贴近顶部按钮和右键位置显示。',
+        '关联线保留原生可拖动贝塞尔控制点、切线和自动箭头方向，修复创建完成后延迟命中检查导致的空引用错误。',
+        '节点加减快捷按钮贴合节点边框，并新增真实 Chromium 对选区、图片、菜单、面板、关联线控制点和按钮几何的回归。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -6713,7 +6714,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.10';
+exports.PLUGIN_VERSION = '0.9.11';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -7466,10 +7467,10 @@ function escapeHtml(value) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
 const YeMindEditor_1 = __require(32);
-const deferredMount_1 = __require(240);
+const deferredMount_1 = __require(241);
 const constants_1 = __require(24);
-const visibleElement_1 = __require(227);
-const tabNodeFocus_1 = __require(241);
+const visibleElement_1 = __require(228);
+const tabNodeFocus_1 = __require(242);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -7563,49 +7564,49 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.YeMindEditor = void 0;
 const siyuan_1 = __externalRequire("siyuan");
 const createMindMap_1 = __require(33);
-const dragBehavior_1 = __require(189);
+const dragBehavior_1 = __require(190);
 const themePresets_1 = __require(11);
-const relationConfig_1 = __require(190);
-const outerFrameConfig_1 = __require(191);
-const relationData_1 = __require(194);
-const commands_1 = __require(195);
-const nodeDecorations_1 = __require(186);
+const relationConfig_1 = __require(191);
+const outerFrameConfig_1 = __require(192);
+const relationData_1 = __require(195);
+const commands_1 = __require(196);
+const nodeDecorations_1 = __require(187);
 const registerPlugins_1 = __require(83);
-const checkpointDialog_1 = __require(199);
-const contextMenu_1 = __require(202);
+const checkpointDialog_1 = __require(200);
+const contextMenu_1 = __require(203);
 const dialogs_1 = __require(19);
-const nodeContentDialogs_1 = __require(203);
-const richTextDialogs_1 = __require(209);
-const editorStats_1 = __require(210);
-const editorTemplate_1 = __require(211);
-const outlineDrag_1 = __require(212);
-const StructuredOutlineEditorController_1 = __require(213);
-const splitPane_1 = __require(216);
-const RichTextToolbar_1 = __require(217);
+const nodeContentDialogs_1 = __require(204);
+const richTextDialogs_1 = __require(210);
+const editorStats_1 = __require(211);
+const editorTemplate_1 = __require(212);
+const outlineDrag_1 = __require(213);
+const StructuredOutlineEditorController_1 = __require(214);
+const splitPane_1 = __require(217);
+const RichTextToolbar_1 = __require(218);
 const shortcuts_1 = __require(25);
-const selectionPresentation_1 = __require(221);
-const saveRevision_1 = __require(222);
-const relationPresentation_1 = __require(223);
-const outerFramePresentation_1 = __require(224);
-const toolbarAvailability_1 = __require(225);
-const linkNavigation_1 = __require(226);
-const visibleElement_1 = __require(227);
-const imageFileLoading_1 = __require(204);
-const nodeImageInput_1 = __require(228);
-const nodeHoverPreview_1 = __require(229);
-const imageLightbox_1 = __require(230);
-const nodeStylePanel_1 = __require(231);
-const projectStylePanel_1 = __require(232);
-const canvasRichTextVisibility_1 = __require(233);
-const searchPanelState_1 = __require(234);
+const selectionPresentation_1 = __require(222);
+const saveRevision_1 = __require(223);
+const relationPresentation_1 = __require(224);
+const outerFramePresentation_1 = __require(225);
+const toolbarAvailability_1 = __require(226);
+const linkNavigation_1 = __require(227);
+const visibleElement_1 = __require(228);
+const imageFileLoading_1 = __require(205);
+const nodeImageInput_1 = __require(229);
+const nodeHoverPreview_1 = __require(230);
+const imageLightbox_1 = __require(231);
+const nodeStylePanel_1 = __require(232);
+const projectStylePanel_1 = __require(233);
+const canvasRichTextVisibility_1 = __require(234);
+const searchPanelState_1 = __require(235);
 const projectStyle_1 = __require(14);
-const appearanceTransaction_1 = __require(235);
-const nodeQuickActions_1 = __require(236);
+const appearanceTransaction_1 = __require(236);
+const nodeQuickActions_1 = __require(237);
 const projectControls_1 = __require(28);
-const nodeNoteState_1 = __require(187);
-const canvasRightDrag_1 = __require(237);
-const focusHighlight_1 = __require(238);
-const editingSurfaceCoordinator_1 = __require(239);
+const nodeNoteState_1 = __require(188);
+const canvasRightDrag_1 = __require(238);
+const focusHighlight_1 = __require(239);
+const editingSurfaceCoordinator_1 = __require(240);
 class YeMindEditor {
     constructor(options) {
         this.options = options;
@@ -7646,6 +7647,11 @@ class YeMindEditor {
         this.onCanvasPointerDown = (event) => {
             if (event.button !== 0)
                 return;
+            const target = event.target;
+            const isImageInteraction = Boolean(target?.closest?.('.node-img-handle')
+                || target?.tagName?.toLowerCase() === 'image');
+            if (!isImageInteraction)
+                this.map?.nodeImgAdjust?.unpin?.();
             this.claimCanvasInteraction("canvas-pointerdown");
         };
         this.onOutlinePointerDown = (event) => {
@@ -8252,10 +8258,12 @@ class YeMindEditor {
                     this.openCheckpointMenu(button);
                     break;
                 case "node-style":
-                    this.nodeStylePanel?.show();
+                    this.projectStylePanel?.hide();
+                    this.nodeStylePanel?.toggle(button);
                     break;
                 case "project-style":
-                    this.projectStylePanel?.show();
+                    this.nodeStylePanel?.hide();
+                    this.projectStylePanel?.toggle(button);
                     break;
                 case "readonly":
                     this.setReadonly(this.rootEl.dataset.readonly !== "true");
@@ -8413,7 +8421,11 @@ class YeMindEditor {
             }
             if (!this.commands)
                 return;
-            this.activateNode(node);
+            const activeNodes = this.commands.getActiveNodes();
+            if (!activeNodes.includes(node))
+                this.activateOnlyNode(node);
+            else
+                this.activateNode(node);
             this.openContextMenu(event);
         });
         this.map.on("contextmenu", (event) => {
@@ -8426,6 +8438,26 @@ class YeMindEditor {
         });
         this.map.on("rich_text_selection_change", (hasRange, rectInfo, formatInfo) => {
             this.richTextToolbar?.update(hasRange, rectInfo, formatInfo, this.commands);
+        });
+        this.map.on("node_img_click", (node, img, event) => {
+            event?.stopPropagation?.();
+            if (!node || !img)
+                return;
+            this.activateOnlyNode(node);
+            this.map?.nodeImgAdjust?.pin?.(node, img);
+            this.nodeQuickActions?.scheduleRefresh();
+        });
+        this.map.on("node_img_dblclick", (node, event, img) => {
+            event?.preventDefault?.();
+            event?.stopPropagation?.();
+            if (!node || !img)
+                return;
+            this.activateOnlyNode(node);
+            this.map?.nodeImgAdjust?.pin?.(node, img);
+            const source = String(node?.getData?.("image") ?? "");
+            const title = String(node?.getData?.("imageTitle") ?? "");
+            if (source)
+                this.imageLightbox?.show(source, title);
         });
         this.map.on("yemind_node_image_preview", (node) => {
             const source = String(node?.getData?.("image") ?? "");
@@ -8521,7 +8553,10 @@ class YeMindEditor {
             onCodeBlock: () => (0, richTextDialogs_1.openCodeBlockDialog)(this.commands, this.settings),
             onNodeLink: () => (0, nodeContentDialogs_1.openLinkDialog)(this.commands, this.settings.inlineLinkAutoHttps),
             onRelation: () => this.beginRelation(),
-            onNodeStyle: () => this.nodeStylePanel?.show(),
+            onNodeStyle: () => {
+                this.projectStylePanel?.hide();
+                this.nodeStylePanel?.show({ x: event.clientX, y: event.clientY });
+            },
             onAction: (action) => this.options.diagnostics.record("context-menu", action, this.current.id),
         });
     }
@@ -8540,7 +8575,10 @@ class YeMindEditor {
             onLayoutChange: (layout) => this.setLayout(layout),
             onThemeChange: (theme) => this.setTheme(theme),
             onLineStyleChange: (lineStyle) => this.setLineStyle(lineStyle),
-            onProjectStyle: () => this.projectStylePanel?.show(),
+            onProjectStyle: () => {
+                this.nodeStylePanel?.hide();
+                this.projectStylePanel?.show({ x: event.clientX, y: event.clientY });
+            },
             onAction: (action) => this.options.diagnostics.record("context-menu", `canvas-${action}`, this.current.id),
         });
     }
@@ -9546,14 +9584,14 @@ exports.createImageDeleteGuard = createImageDeleteGuard;
 exports.createMindMap = createMindMap;
 const simple_mind_map_1 = __importDefault(__require(34));
 const registerPlugins_1 = __require(83);
-const nodeDecorations_1 = __require(186);
-const dragBehavior_1 = __require(189);
-const relationConfig_1 = __require(190);
-const outerFrameConfig_1 = __require(191);
-const shortcutSafety_1 = __require(192);
+const nodeDecorations_1 = __require(187);
+const dragBehavior_1 = __require(190);
+const relationConfig_1 = __require(191);
+const outerFrameConfig_1 = __require(192);
+const shortcutSafety_1 = __require(193);
 const themePresets_1 = __require(11);
-const YeMindNodeImgAdjust_1 = __require(180);
-const themeColorRuntime_1 = __require(193);
+const YeMindNodeImgAdjust_1 = __require(181);
+const themeColorRuntime_1 = __require(194);
 function createImageDeleteGuard(confirmDelete) {
     return async (node) => {
         if (!confirmDelete)
@@ -30740,11 +30778,11 @@ const MiniMap_1 = __importDefault(__require(91));
 const Search_1 = __importDefault(__require(92));
 const Export_1 = __importDefault(__require(93));
 const Formula_1 = __importDefault(__require(97));
-const AssociativeLine_1 = __importDefault(__require(173));
-const OuterFrame_1 = __importDefault(__require(177));
-const YeMindNodeImgAdjust_1 = __importDefault(__require(180));
-const RainbowLines_1 = __importDefault(__require(182));
-const YeMindRichText_1 = __importDefault(__require(183));
+const YeMindAssociativeLine_1 = __importDefault(__require(173));
+const OuterFrame_1 = __importDefault(__require(178));
+const YeMindNodeImgAdjust_1 = __importDefault(__require(181));
+const RainbowLines_1 = __importDefault(__require(183));
+const YeMindRichText_1 = __importDefault(__require(184));
 exports.MIND_MAP_PLUGIN_NAMES = [
     'Drag',
     'Select',
@@ -30758,7 +30796,7 @@ exports.MIND_MAP_PLUGIN_NAMES = [
     'NodeImgAdjust',
     'RainbowLines',
 ];
-const plugins = [YeMindDrag_1.default, Select_1.default, MiniMap_1.default, Search_1.default, Export_1.default, YeMindRichText_1.default, Formula_1.default, AssociativeLine_1.default, OuterFrame_1.default, YeMindNodeImgAdjust_1.default, RainbowLines_1.default];
+const plugins = [YeMindDrag_1.default, Select_1.default, MiniMap_1.default, Search_1.default, Export_1.default, YeMindRichText_1.default, Formula_1.default, YeMindAssociativeLine_1.default, OuterFrame_1.default, YeMindNodeImgAdjust_1.default, RainbowLines_1.default];
 let registered = false;
 function configureMindMapPlugins(settings) {
     const target = YeMindRichText_1.default;
@@ -66718,6 +66756,42 @@ exports.getBaseStyleText = getBaseStyleText;
 
 },
 173: function(module, exports, __require, __externalRequire) {
+// /src/core/YeMindAssociativeLine.ts
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const AssociativeLine_1 = __importDefault(__require(174));
+const BaseAssociativeLine = AssociativeLine_1.default;
+/**
+ * Keeps the upstream editable Bézier relation-line implementation while
+ * hardening its delayed target-probe lifecycle. The upstream probe is
+ * throttled, so one final invocation can arrive after a line has already been
+ * completed or cancelled; guarding that stale invocation prevents it from
+ * dereferencing a cleared creatingStartNode.
+ */
+class YeMindAssociativeLine extends BaseAssociativeLine {
+    checkOverlapNode(x, y) {
+        if (!this.isCreatingLine || !this.creatingStartNode || !this.mindMap?.renderer?.root)
+            return;
+        super.checkOverlapNode(x, y);
+    }
+    completeCreateLine(node) {
+        if (!this.isCreatingLine || !this.creatingStartNode || !node)
+            return;
+        super.completeCreateLine(node);
+    }
+    cancelCreateLine() {
+        if (!this.isCreatingLine && !this.creatingLine)
+            return;
+        super.cancelCreateLine();
+    }
+}
+exports.default = YeMindAssociativeLine;
+
+},
+174: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/AssociativeLine.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -66726,9 +66800,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = __require(45);
 const uuid_1 = __require(46);
-const associativeLineUtils_1 = __require(174);
-const associativeLineControls_1 = __importDefault(__require(175));
-const associativeLineText_1 = __importDefault(__require(176));
+const associativeLineUtils_1 = __require(175);
+const associativeLineControls_1 = __importDefault(__require(176));
+const associativeLineText_1 = __importDefault(__require(177));
 const styleProps = [
     'associativeLineWidth',
     'associativeLineColor',
@@ -67392,7 +67466,7 @@ AssociativeLine.instanceName = 'associativeLine';
 exports.default = AssociativeLine;
 
 },
-174: function(module, exports, __require, __externalRequire) {
+175: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/associativeLine/associativeLineUtils.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -67711,11 +67785,11 @@ const getDefaultControlPointOffsets = (startPoint, endPoint) => {
 exports.getDefaultControlPointOffsets = getDefaultControlPointOffsets;
 
 },
-175: function(module, exports, __require, __externalRequire) {
+176: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/associativeLine/associativeLineControls.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const associativeLineUtils_1 = __require(174);
+const associativeLineUtils_1 = __require(175);
 // 创建控制点、连线节点
 function createControlNodes(node, toNode) {
     let { associativeLineActiveColor } = this.getStyleConfig(node, toNode);
@@ -67979,7 +68053,7 @@ exports.default = {
 };
 
 },
-176: function(module, exports, __require, __externalRequire) {
+177: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/associativeLine/associativeLineText.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -68173,7 +68247,7 @@ exports.default = {
 };
 
 },
-177: function(module, exports, __require, __externalRequire) {
+178: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/OuterFrame.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -68181,8 +68255,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = __require(45);
-const outerFrameUtils_1 = __require(178);
-const outerFrameText_1 = __importDefault(__require(179));
+const outerFrameUtils_1 = __require(179);
+const outerFrameText_1 = __importDefault(__require(180));
 // 默认外框样式
 const defaultStyle = {
     // 外框圆角大小
@@ -68538,7 +68612,7 @@ OuterFrame.defaultStyle = defaultStyle;
 exports.default = OuterFrame;
 
 },
-178: function(module, exports, __require, __externalRequire) {
+179: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/outerFrame/outerFrameUtils.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -68671,7 +68745,7 @@ const getNodeOuterFrameList = node => {
 exports.getNodeOuterFrameList = getNodeOuterFrameList;
 
 },
-179: function(module, exports, __require, __externalRequire) {
+180: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/outerFrame/outerFrameText.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -68898,7 +68972,7 @@ exports.default = {
 };
 
 },
-180: function(module, exports, __require, __externalRequire) {
+181: function(module, exports, __require, __externalRequire) {
 // /src/core/YeMindNodeImgAdjust.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -68907,7 +68981,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.imageDeleteIcon = imageDeleteIcon;
 exports.imagePreviewIcon = imagePreviewIcon;
-const NodeImgAdjust_1 = __importDefault(__require(181));
+const NodeImgAdjust_1 = __importDefault(__require(182));
 function imageDeleteIcon() {
     return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9 7V4.8h6V7M8 10v7M12 10v7M16 10v7M6.5 7l.8 13h9.4l.8-13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
@@ -68916,6 +68990,49 @@ function imagePreviewIcon() {
 }
 const BaseNodeImgAdjust = NodeImgAdjust_1.default;
 class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
+    constructor() {
+        super(...arguments);
+        this.pinnedUid = '';
+    }
+    pin(node, img) {
+        if (!node || !img || this.mindMap?.opt?.readonly)
+            return;
+        this.pinnedUid = String(node?.getData?.('uid') ?? node?.uid ?? '');
+        this.node = node;
+        this.img = img;
+        this.rect = img.rbox?.() ?? null;
+        if (this.rect) {
+            if (this.isShowHandleEl)
+                this.setHandleElRect();
+            else
+                this.showHandleEl();
+            this.handleEl?.setAttribute?.('data-yemind-image-pinned', 'true');
+        }
+    }
+    unpin() {
+        this.pinnedUid = '';
+        this.handleEl?.removeAttribute?.('data-yemind-image-pinned');
+        if (!this.isMousedown)
+            BaseNodeImgAdjust.prototype.hideHandleEl.call(this);
+    }
+    hideHandleEl() {
+        if (this.pinnedUid && !this.isMousedown)
+            return;
+        BaseNodeImgAdjust.prototype.hideHandleEl.call(this);
+    }
+    onNodeImgMousemove(node, img) {
+        const uid = String(node?.getData?.('uid') ?? node?.uid ?? '');
+        const active = Array.isArray(this.mindMap?.renderer?.activeNodeList)
+            && this.mindMap.renderer.activeNodeList.includes(node);
+        if (!active && this.pinnedUid !== uid)
+            return;
+        BaseNodeImgAdjust.prototype.onNodeImgMousemove.call(this, node, img);
+    }
+    onNodeImgMouseleave() {
+        if (this.pinnedUid)
+            return;
+        BaseNodeImgAdjust.prototype.onNodeImgMouseleave.call(this);
+    }
     createResizeBtnEl() {
         super.createResizeBtnEl();
         if (!this.handleEl || this.handleEl.querySelector('.ymz-node-image-preview'))
@@ -68957,7 +69074,7 @@ exports.default = YeMindNodeImgAdjust;
 YeMindNodeImgAdjust.instanceName = 'nodeImgAdjust';
 
 },
-181: function(module, exports, __require, __externalRequire) {
+182: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/NodeImgAdjust.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -69298,7 +69415,7 @@ NodeImgAdjust.instanceName = 'nodeImgAdjust';
 exports.default = NodeImgAdjust;
 
 },
-182: function(module, exports, __require, __externalRequire) {
+183: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/RainbowLines.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -69386,7 +69503,7 @@ RainbowLines.instanceName = 'rainbowLines';
 exports.default = RainbowLines;
 
 },
-183: function(module, exports, __require, __externalRequire) {
+184: function(module, exports, __require, __externalRequire) {
 // /src/editor/YeMindRichText.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -69395,13 +69512,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.YEMIND_RICH_TEXT_FORMATS = exports.YEMIND_SIZE_VALUES = exports.YEMIND_FONT_VALUES = void 0;
 exports.registerYeMindFormats = registerYeMindFormats;
-const RichText_1 = __importDefault(__require(184));
+const RichText_1 = __importDefault(__require(185));
 const utils_1 = __require(45);
 const quill_1 = __importDefault(__require(99));
 const quill_delta_1 = __importDefault(__require(106));
 const parchment_1 = __require(105);
 const textEditingPolicy_1 = __require(18);
-const richTextGeometry_1 = __require(185);
+const richTextGeometry_1 = __require(186);
 exports.YEMIND_FONT_VALUES = [
     'sans-serif',
     'serif',
@@ -69847,7 +69964,7 @@ class YeMindRichText extends RichText_1.default {
 exports.default = YeMindRichText;
 
 },
-184: function(module, exports, __require, __externalRequire) {
+185: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/RichText.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -70643,7 +70760,7 @@ RichText.instanceName = 'richText';
 exports.default = RichText;
 
 },
-185: function(module, exports, __require, __externalRequire) {
+186: function(module, exports, __require, __externalRequire) {
 // /src/editor/richTextGeometry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -70801,7 +70918,7 @@ function resolveRenderedTextRect(node) {
 }
 
 },
-186: function(module, exports, __require, __externalRequire) {
+187: function(module, exports, __require, __externalRequire) {
 // /src/core/nodeDecorations.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -70809,7 +70926,7 @@ exports.YEMIND_ICON_LIST = void 0;
 exports.configureNodeDecorations = configureNodeDecorations;
 exports.createNodePrefixContent = createNodePrefixContent;
 exports.createNodePostfixContent = createNodePostfixContent;
-const nodeNoteState_1 = __require(187);
+const nodeNoteState_1 = __require(188);
 let decorationSettings = { showTodoBadge: true, showCommentBadge: true };
 function configureNodeDecorations(patch) {
     decorationSettings = { ...decorationSettings, ...patch };
@@ -70888,13 +71005,13 @@ function createNodePostfixContent(node) {
 }
 
 },
-187: function(module, exports, __require, __externalRequire) {
+188: function(module, exports, __require, __externalRequire) {
 // /src/content/nodeNoteState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.normalizeNodeNote = normalizeNodeNote;
 exports.updateNodeNote = updateNodeNote;
-const sanitizeRichHtml_1 = __require(188);
+const sanitizeRichHtml_1 = __require(189);
 function cleanDimension(value) {
     const number = Number(value);
     return Number.isFinite(number) && number > 0 ? Math.round(number) : undefined;
@@ -70939,7 +71056,7 @@ function updateNodeNote(previous, html, now = Date.now(), size = {}) {
 }
 
 },
-188: function(module, exports, __require, __externalRequire) {
+189: function(module, exports, __require, __externalRequire) {
 // /src/content/sanitizeRichHtml.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -70995,7 +71112,7 @@ function sanitizeRichHtml(value) {
 }
 
 },
-189: function(module, exports, __require, __externalRequire) {
+190: function(module, exports, __require, __externalRequire) {
 // /src/core/dragBehavior.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -71073,7 +71190,7 @@ function buildDragAndLayoutOptions(settings) {
 }
 
 },
-190: function(module, exports, __require, __externalRequire) {
+191: function(module, exports, __require, __externalRequire) {
 // /src/core/relationConfig.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -71088,7 +71205,7 @@ function buildRelationOptions(settings) {
 }
 
 },
-191: function(module, exports, __require, __externalRequire) {
+192: function(module, exports, __require, __externalRequire) {
 // /src/core/outerFrameConfig.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -71111,7 +71228,7 @@ function buildOuterFrameOptions(settings) {
 }
 
 },
-192: function(module, exports, __require, __externalRequire) {
+193: function(module, exports, __require, __externalRequire) {
 // /src/editor/shortcutSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -71150,7 +71267,7 @@ function shouldBlockUpstreamShortcut(shortcut, nodes, readonly) {
 }
 
 },
-193: function(module, exports, __require, __externalRequire) {
+194: function(module, exports, __require, __externalRequire) {
 // /src/core/themeColorRuntime.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -71303,7 +71420,7 @@ function configureThemeColorRuntime(mindMap, config) {
 }
 
 },
-194: function(module, exports, __require, __externalRequire) {
+195: function(module, exports, __require, __externalRequire) {
 // /src/core/relationData.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -71385,14 +71502,14 @@ function sanitizeAssociativeLines(input) {
 }
 
 },
-195: function(module, exports, __require, __externalRequire) {
+196: function(module, exports, __require, __externalRequire) {
 // /src/core/commands.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createCommandAdapter = createCommandAdapter;
-const nodeContentState_1 = __require(196);
-const codeBlock_1 = __require(197);
-const nodeStyle_1 = __require(198);
+const nodeContentState_1 = __require(197);
+const codeBlock_1 = __require(198);
+const nodeStyle_1 = __require(199);
 function createCommandAdapter(mindMap) {
     const activeNodes = () => Array.isArray(mindMap.renderer?.activeNodeList)
         ? mindMap.renderer.activeNodeList
@@ -71414,6 +71531,27 @@ function createCommandAdapter(mindMap) {
     const outerFramePlugin = () => mindMap.outerFrame;
     const activeOuterFrame = () => outerFramePlugin()?.getActiveOuterFrame?.() ?? outerFramePlugin()?.activeOuterFrame ?? null;
     const canAddOuterFrame = () => Boolean(outerFramePlugin()) && canMutate() && activeNodes().some((node) => !node?.isRoot && !node?.isGeneralization);
+    const rendererRoot = () => mindMap.renderer?.root ?? null;
+    const walkRenderedTree = (callback) => {
+        const visit = (node) => {
+            if (!node)
+                return;
+            callback(node);
+            const children = Array.isArray(node.children) ? node.children : [];
+            children.forEach(visit);
+        };
+        visit(rendererRoot());
+    };
+    const selectedOuterFrameGroupIds = () => {
+        const ids = new Set();
+        activeNodes().forEach((node) => {
+            const value = node?.getData?.('outerFrame');
+            const id = value && typeof value === 'object' ? String(value.groupId ?? '') : '';
+            if (id)
+                ids.add(id);
+        });
+        return ids;
+    };
     const markNodeTextEdited = (node) => {
         const data = node?.nodeData?.data ?? node?.getData?.();
         if (!data || typeof data !== 'object')
@@ -71424,6 +71562,15 @@ function createCommandAdapter(mindMap) {
     return {
         isReadonly,
         hasRichTextSelection,
+        restoreSelection: () => {
+            const editor = richText();
+            const range = richRange();
+            if (!range || !editor?.quill?.setSelection)
+                return;
+            editor.range = { index: range.index, length: range.length };
+            editor.pasteUseRange = editor.range;
+            editor.quill.setSelection(range.index, range.length, 'silent');
+        },
         addChild: () => { if (canMutate() && primaryIsRegular())
             mindMap.execCommand('INSERT_CHILD_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }); },
         addSibling: () => { if (canMutate() && primaryIsMovable())
@@ -71457,6 +71604,14 @@ function createCommandAdapter(mindMap) {
         centerRoot: () => mindMap.renderer.setRootNodeCenter?.(),
         expandAll: () => mindMap.execCommand('EXPAND_ALL'),
         collapseAll: () => mindMap.execCommand('UNEXPAND_ALL'),
+        toggleAllExpand: () => {
+            let hasCollapsed = false;
+            walkRenderedTree((node) => {
+                if (!node?.isRoot && Array.isArray(node.children) && node.children.length > 0 && node.getData?.('expand') === false)
+                    hasCollapsed = true;
+            });
+            mindMap.execCommand(hasCollapsed ? 'EXPAND_ALL' : 'UNEXPAND_ALL');
+        },
         resetZoom: () => mindMap.view.reset(),
         resetLayout: () => { if (canMutate())
             mindMap.execCommand('RESET_LAYOUT'); },
@@ -71469,6 +71624,20 @@ function createCommandAdapter(mindMap) {
             mindMap.renderer.cut?.(); },
         paste: async () => { if (canMutate())
             await mindMap.renderer.paste?.(); },
+        pastePlainText: async () => {
+            if (!canMutate())
+                return;
+            const text = String(await navigator.clipboard?.readText?.() ?? '').replace(/\r\n?/g, '\n');
+            if (!text.trim())
+                return;
+            const lines = text.split('\n').map((line) => line.trimEnd()).filter((line) => line.trim().length > 0);
+            if (lines.length > 1) {
+                mindMap.execCommand('INSERT_MULTI_CHILD_NODE', [], lines.map((line) => ({ data: { text: line, richText: false }, children: [] })));
+            }
+            else {
+                mindMap.execCommand('INSERT_CHILD_NODE', false, [], { text: lines[0] ?? text, richText: false });
+            }
+        },
         getActiveNodes: activeNodes,
         getPrimaryNode: primaryNode,
         getPrimaryNodeData: () => primaryNode()?.getData?.() ?? null,
@@ -71627,6 +71796,16 @@ function createCommandAdapter(mindMap) {
             if (!canMutate())
                 return false;
             const relation = mindMap.associativeLine;
+            const nodes = activeNodes().filter((node) => node && !node.isGeneralization);
+            if (nodes.length > 1 && relation?.addLine) {
+                const [source, ...targets] = nodes;
+                targets.forEach((target) => {
+                    if (target !== source)
+                        relation.addLine(source, target);
+                });
+                relation.renderAllLines?.();
+                return false;
+            }
             relation?.createLineFromActiveNode?.();
             return Boolean(relation?.isCreatingLine);
         },
@@ -71648,10 +71827,25 @@ function createCommandAdapter(mindMap) {
         removeActiveRelation: () => { if (canMutate())
             mindMap.associativeLine?.removeLine?.(); },
         canAddOuterFrame,
+        hasOuterFrameForSelection: () => selectedOuterFrameGroupIds().size > 0,
         addOuterFrame: () => {
             if (!canAddOuterFrame())
                 return;
             mindMap.execCommand('ADD_OUTER_FRAME');
+        },
+        removeOuterFrameForSelection: () => {
+            if (!canMutate())
+                return;
+            const groupIds = selectedOuterFrameGroupIds();
+            if (groupIds.size === 0)
+                return;
+            walkRenderedTree((node) => {
+                const value = node?.getData?.('outerFrame');
+                const id = value && typeof value === 'object' ? String(value.groupId ?? '') : '';
+                if (id && groupIds.has(id))
+                    mindMap.execCommand('SET_NODE_DATA', node, { outerFrame: null });
+            });
+            mindMap.outerFrame?.renderOuterFrames?.();
         },
         hasActiveOuterFrame: () => Boolean(activeOuterFrame()),
         editActiveOuterFrameText: () => {
@@ -71895,7 +72089,7 @@ function createCommandAdapter(mindMap) {
 }
 
 },
-196: function(module, exports, __require, __externalRequire) {
+197: function(module, exports, __require, __externalRequire) {
 // /src/content/nodeContentState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -71946,7 +72140,7 @@ function normalizeStringList(values) {
 }
 
 },
-197: function(module, exports, __require, __externalRequire) {
+198: function(module, exports, __require, __externalRequire) {
 // /src/editor/codeBlock.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72009,7 +72203,7 @@ function deleteCodeBlock(quill, block) {
 }
 
 },
-198: function(module, exports, __require, __externalRequire) {
+199: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeStyle.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72116,15 +72310,15 @@ function resetNodeStylePatch() {
 }
 
 },
-199: function(module, exports, __require, __externalRequire) {
+200: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.openCheckpointManager = openCheckpointManager;
 const siyuan_1 = __externalRequire("siyuan");
-const checkpointPresentation_1 = __require(200);
+const checkpointPresentation_1 = __require(201);
 const dialogs_1 = __require(19);
-const checkpointDialogTemplate_1 = __require(201);
+const checkpointDialogTemplate_1 = __require(202);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -72191,7 +72385,7 @@ function openCheckpointManager(options) {
 }
 
 },
-200: function(module, exports, __require, __externalRequire) {
+201: function(module, exports, __require, __externalRequire) {
 // /src/checkpoints/checkpointPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72227,12 +72421,12 @@ function renderCheckpointListHtml(checkpoints, options) {
 }
 
 },
-201: function(module, exports, __require, __externalRequire) {
+202: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialogTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildCheckpointDialogContent = buildCheckpointDialogContent;
-const checkpointPresentation_1 = __require(200);
+const checkpointPresentation_1 = __require(201);
 function buildCheckpointDialogContent(checkpoints, readonly) {
     return `<div class="b3-dialog__content ymz-checkpoint-dialog">
     <div class="ymz-checkpoint-dialog__intro">检查点保存在独立历史文件中。恢复前会自动保存当前状态为保护检查点。</div>
@@ -72244,7 +72438,7 @@ function buildCheckpointDialogContent(checkpoints, readonly) {
 }
 
 },
-202: function(module, exports, __require, __externalRequire) {
+203: function(module, exports, __require, __externalRequire) {
 // /src/ui/contextMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72254,8 +72448,8 @@ const siyuan_1 = __externalRequire("siyuan");
 const layoutPresets_1 = __require(13);
 const themePresets_1 = __require(11);
 const projectControls_1 = __require(28);
-const nodeContentDialogs_1 = __require(203);
-const nodeContentMenu_1 = __require(208);
+const nodeContentDialogs_1 = __require(204);
+const nodeContentMenu_1 = __require(209);
 function openCanvasContextMenu(event, commands, options) {
     event.preventDefault();
     event.stopPropagation();
@@ -72271,60 +72465,45 @@ function openCanvasContextMenu(event, commands, options) {
     menu.addItem({ icon: 'iconAlignCenter', label: '整理布局', disabled: commands.isReadonly(), click: run('reset-layout', () => commands.resetLayout()) });
     menu.addSeparator();
     menu.addItem({
-        type: 'submenu',
-        iconHTML: (0, projectControls_1.projectControlIcon)('layout'),
-        label: '结构',
+        type: 'submenu', iconHTML: (0, projectControls_1.projectControlIcon)('layout'), label: '结构',
         submenu: layoutPresets_1.YEMIND_LAYOUT_PRESETS.map((item) => ({
-            label: item.label,
-            current: item.id === options.currentLayout,
-            disabled: commands.isReadonly(),
+            label: item.label, current: item.id === options.currentLayout, disabled: commands.isReadonly(),
             click: run(`layout-${item.id}`, () => options.onLayoutChange?.(item.id)),
         })),
     });
     menu.addItem({
-        type: 'submenu',
-        iconHTML: (0, projectControls_1.projectControlIcon)('theme'),
-        label: '主题',
+        type: 'submenu', iconHTML: (0, projectControls_1.projectControlIcon)('theme'), label: '主题',
         submenu: themePresets_1.YEMIND_THEME_PRESETS.map((item) => ({
-            label: item.label,
-            current: item.id === options.currentTheme,
-            disabled: commands.isReadonly(),
+            label: item.label, current: item.id === options.currentTheme, disabled: commands.isReadonly(),
             click: run(`theme-${item.id}`, () => options.onThemeChange?.(item.id)),
         })),
     });
     menu.addItem({
-        type: 'submenu',
-        iconHTML: (0, projectControls_1.lineStyleIcon)(options.currentLineStyle ?? 'curve'),
-        label: '线型',
-        submenu: [
-            ['curve', '弧线'],
-            ['straight', '圆角折线'],
-            ['direct', '直线'],
-        ].map(([id, label]) => ({
-            iconHTML: (0, projectControls_1.lineStyleIcon)(id),
-            label,
-            current: id === options.currentLineStyle,
-            disabled: commands.isReadonly(),
+        type: 'submenu', iconHTML: (0, projectControls_1.lineStyleIcon)(options.currentLineStyle ?? 'curve'), label: '线型',
+        submenu: [['curve', '弧线'], ['straight', '圆角折线'], ['direct', '直线']].map(([id, label]) => ({
+            iconHTML: (0, projectControls_1.lineStyleIcon)(id), label, current: id === options.currentLineStyle, disabled: commands.isReadonly(),
             click: run(`line-style-${id}`, () => options.onLineStyleChange?.(id)),
         })),
     });
-    menu.addItem({
-        iconHTML: (0, projectControls_1.projectStyleIcon)(),
-        label: '样式',
-        disabled: commands.isReadonly(),
-        click: run('project-style', () => options.onProjectStyle?.()),
-    });
+    menu.addItem({ iconHTML: (0, projectControls_1.projectStyleIcon)(), label: '样式', disabled: commands.isReadonly(), click: run('project-style', () => options.onProjectStyle?.()) });
     menu.addSeparator();
-    menu.addItem({ icon: 'iconDown', label: '展开全部节点', click: run('expand-all', () => commands.expandAll()) });
-    menu.addItem({ icon: 'iconUp', label: '折叠全部节点', click: run('collapse-all', () => commands.collapseAll()) });
+    menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（所有节点）', click: run('toggle-all-expand', () => commands.toggleAllExpand()) });
     menu.addSeparator();
     menu.addItem({ icon: 'iconEye', label: options.zen ? '退出禅模式' : '进入禅模式', click: run('toggle-zen', () => options.onZenChange(!options.zen)) });
     menu.addItem({ icon: 'iconLock', label: options.readonly ? '退出只读模式' : '进入只读模式', click: run('toggle-readonly', () => options.onReadonlyChange(!options.readonly)) });
     menu.open({ x: event.clientX, y: event.clientY });
 }
+function paste(commands, plain = false) {
+    const operation = plain ? commands.pastePlainText() : commands.paste();
+    void operation.catch((error) => {
+        console.error('[YeMind] node paste failed', error);
+        (0, siyuan_1.showMessage)('节点粘贴失败，请重试', 4000, 'error');
+    });
+}
 function openNodeContextMenu(event, commands, options = {}) {
     event.preventDefault();
     event.stopPropagation();
+    const activeNodes = commands.getActiveNodes();
     const primary = commands.getPrimaryNode();
     const availability = (0, nodeContentMenu_1.createNodeMenuAvailability)({
         readonly: commands.isReadonly(),
@@ -72340,83 +72519,68 @@ function openNodeContextMenu(event, commands, options = {}) {
         options.onAction?.(action);
         callback();
     };
+    if (activeNodes.length > 1) {
+        menu.addItem({ iconHTML: (0, projectControls_1.nodeStyleIcon)(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
+        menu.addItem({ iconHTML: (0, projectControls_1.summaryIcon)(), label: '{} 添加概要', accelerator: 'Ctrl+Alt+G', disabled: !availability.summary, click: run('summary-add', () => commands.addSummary()) });
+        menu.addItem({ icon: 'iconRight', label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
+        menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
+        menu.addSeparator();
+        menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('copy'), label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });
+        menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('cut'), label: '剪切', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) });
+        menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('paste'), label: '粘贴', accelerator: 'Ctrl+V', disabled: !availability.paste, click: run('paste', () => paste(commands)) });
+        menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('paste'), label: '粘贴（纯文本）', accelerator: 'Ctrl+Shift+V', disabled: !availability.paste, click: run('paste-plain', () => paste(commands, true)) });
+        menu.addSeparator();
+        menu.addItem({ icon: 'iconTrashcan', label: '删除选中节点', accelerator: 'Shift+Backspace', warning: true, disabled: !availability.remove, click: run('remove-selected', () => commands.remove()) });
+        menu.open({ x: event.clientX, y: event.clientY });
+        return;
+    }
+    const hasOuterFrame = commands.hasOuterFrameForSelection();
     menu.addItem({ icon: 'iconEdit', label: '编辑节点', accelerator: 'F2', disabled: !availability.edit, click: run('edit', () => commands.edit()) });
-    menu.addSeparator();
-    menu.addItem({ icon: 'iconAdd', label: '添加子节点', accelerator: 'Tab', disabled: !availability.addChild, click: run('add-child', () => commands.addChild()) });
-    menu.addItem({ icon: 'iconAdd', label: '添加同级节点', accelerator: 'Enter', disabled: !availability.addSibling, click: run('add-sibling', () => commands.addSibling()) });
-    menu.addItem({ icon: 'iconAdd', label: '添加父节点', accelerator: 'Alt+Enter', disabled: !availability.addParent, click: run('add-parent', () => commands.addParent()) });
-    menu.addSeparator();
+    menu.addItem({ icon: 'iconAdd', label: '+ 插入同级节点', accelerator: 'Enter', disabled: !availability.addSibling, click: run('add-sibling', () => commands.addSibling()) });
+    menu.addItem({ icon: 'iconAdd', label: '+ 添加子节点', accelerator: 'Tab', disabled: !availability.addChild, click: run('add-child', () => commands.addChild()) });
+    menu.addItem({ icon: 'iconAdd', label: '+ 添加父节点', accelerator: 'Shift+Tab', disabled: !availability.addParent, click: run('add-parent', () => commands.addParent()) });
     menu.addItem({
-        type: 'submenu',
-        iconHTML: (0, projectControls_1.clipboardIcon)('copy'),
-        label: '剪贴板',
-        submenu: [
-            { iconHTML: (0, projectControls_1.clipboardIcon)('copy'), label: '复制节点子树', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) },
-            { iconHTML: (0, projectControls_1.clipboardIcon)('cut'), label: '剪切节点子树', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) },
-            { iconHTML: (0, projectControls_1.clipboardIcon)('paste'), label: '粘贴节点子树', accelerator: 'Ctrl+V', disabled: !availability.paste, click: run('paste', () => {
-                    void commands.paste().catch((error) => {
-                        console.error('[YeMind] node paste failed', error);
-                        (0, siyuan_1.showMessage)('节点粘贴失败，请重试', 4000, 'error');
-                    });
-                }) },
-        ],
+        icon: 'iconSelect',
+        label: hasOuterFrame ? '删除外框' : '添加外框',
+        disabled: hasOuterFrame ? commands.isReadonly() : !availability.outerFrame,
+        click: run(hasOuterFrame ? 'outer-frame-remove' : 'outer-frame-add', () => hasOuterFrame ? commands.removeOuterFrameForSelection() : commands.addOuterFrame()),
     });
+    menu.addItem({ icon: 'iconRight', label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
+    menu.addItem({ iconHTML: (0, projectControls_1.nodeStyleIcon)(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
+    menu.addSeparator();
+    menu.addItem({ icon: 'iconUp', label: '上移节点', accelerator: 'Ctrl+↑', disabled: !availability.move, click: run('move-up', () => commands.moveUp()) });
+    menu.addItem({ icon: 'iconDown', label: '下移节点', accelerator: 'Ctrl+↓', disabled: !availability.move, click: run('move-down', () => commands.moveDown()) });
+    menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
+    menu.addSeparator();
     const todoAction = (0, nodeContentMenu_1.createTodoMenuDescriptor)(commands.getTodo());
     menu.addItem({
-        type: 'submenu',
-        icon: 'iconMenu',
-        label: '节点内容',
+        type: 'submenu', icon: 'iconAdd', label: '添加',
         submenu: [
-            { icon: 'iconCheck', label: todoAction.label, warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? 'todo-remove' : 'todo-add', () => commands.setTodo(todoAction.next)) },
+            { icon: 'iconCheck', label: '待办', warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? 'todo-remove' : 'todo-add', () => commands.setTodo(todoAction.next)) },
             { icon: 'iconYeMindNote', label: '备注', disabled: !availability.nodeContent, click: run('note', () => (0, nodeContentDialogs_1.openNoteDialog)(commands)) },
             { icon: 'iconYeMindComment', label: '批注', disabled: !availability.nodeContent, click: run('comments', () => (0, nodeContentDialogs_1.openCommentsDialog)(commands)) },
             { icon: 'iconTags', label: '标签', disabled: !availability.nodeContent, click: run('tags', () => (0, nodeContentDialogs_1.openTagsDialog)(commands)) },
             { icon: 'iconEmoji', label: '图标', disabled: !availability.nodeContent, click: run('icons', () => (0, nodeContentDialogs_1.openIconsDialog)(commands)) },
             { icon: 'iconLink', label: '链接', disabled: !availability.nodeContent, click: run('node-link', () => options.onNodeLink ? options.onNodeLink() : (0, nodeContentDialogs_1.openLinkDialog)(commands)) },
             { icon: 'iconImage', label: '图片', disabled: !availability.nodeContent, click: run('image', () => (0, nodeContentDialogs_1.openImageDialog)(commands)) },
+            { icon: 'iconCode', label: '代码块', disabled: !availability.codeBlock, click: run('code-block', () => options.onCodeBlock?.()) },
             { icon: 'iconMath', label: '公式', disabled: !availability.nodeContent, click: run('formula', () => (0, nodeContentDialogs_1.openFormulaDialog)(commands)) },
             { icon: 'iconLink', label: '行内链接', disabled: !availability.inlineLink, click: run('inline-link', () => options.onInlineLink?.()) },
-            { icon: 'iconCode', label: '代码块', disabled: !availability.codeBlock, click: run('code-block', () => options.onCodeBlock?.()) },
-        ],
-    });
-    const summaryAction = (0, nodeContentMenu_1.createSummaryMenuDescriptor)(commands.getActiveNodes());
-    menu.addItem({
-        type: 'submenu',
-        iconHTML: (0, projectControls_1.nodeStyleIcon)(),
-        label: '样式与关系',
-        submenu: [
-            { iconHTML: (0, projectControls_1.nodeStyleIcon)(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) },
-            {
-                iconHTML: (0, projectControls_1.summaryIcon)(),
-                label: summaryAction.label,
-                accelerator: summaryAction.action === 'add' ? 'Ctrl+Alt+G' : undefined,
-                warning: summaryAction.warning,
-                disabled: !availability.summary,
-                click: run(`summary-${summaryAction.action}`, () => summaryAction.action === 'add' ? commands.addSummary() : commands.removeSummary()),
-            },
-            { icon: 'iconSelect', label: '添加外框', disabled: !availability.outerFrame, click: run('outer-frame', () => commands.addOuterFrame()) },
-            { icon: 'iconRight', label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) },
-        ],
-    });
-    menu.addItem({
-        type: 'submenu',
-        icon: 'iconAlignCenter',
-        label: '排列与折叠',
-        submenu: [
-            { icon: 'iconUp', label: '上移节点', disabled: !availability.move, click: run('move-up', () => commands.moveUp()) },
-            { icon: 'iconDown', label: '下移节点', disabled: !availability.move, click: run('move-down', () => commands.moveDown()) },
-            { icon: 'iconRefresh', label: '展开/折叠', accelerator: '/', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) },
-            { icon: 'iconAlignCenter', label: '整理布局', disabled: !availability.resetLayout, click: run('reset-layout', () => commands.resetLayout()) },
         ],
     });
     menu.addSeparator();
-    menu.addItem({ icon: 'iconTrashcan', label: '仅删除节点，保留子节点', accelerator: 'Shift+Backspace', disabled: !availability.removeOnlyCurrent, click: run('remove-only-current', () => commands.removeOnlyCurrent()) });
-    menu.addItem({ icon: 'iconTrashcan', label: '删除节点和子树', accelerator: 'Backspace', warning: true, disabled: !availability.remove, click: run('remove-subtree', () => commands.remove()) });
+    menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('copy'), label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });
+    menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('cut'), label: '剪切', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) });
+    menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('paste'), label: '粘贴', accelerator: 'Ctrl+V', disabled: !availability.paste, click: run('paste', () => paste(commands)) });
+    menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('paste'), label: '粘贴（纯文本）', accelerator: 'Ctrl+Shift+V', disabled: !availability.paste, click: run('paste-plain', () => paste(commands, true)) });
+    menu.addSeparator();
+    menu.addItem({ icon: 'iconTrashcan', label: '删除当前和子节点', accelerator: 'Delete', warning: true, disabled: !availability.remove, click: run('remove-subtree', () => commands.remove()) });
+    menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前', accelerator: 'Shift+Backspace', disabled: !availability.removeOnlyCurrent, click: run('remove-only-current', () => commands.removeOnlyCurrent()) });
     menu.open({ x: event.clientX, y: event.clientY });
 }
 
 },
-203: function(module, exports, __require, __externalRequire) {
+204: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72429,13 +72593,13 @@ exports.openImageDialog = openImageDialog;
 exports.openNoteDialog = openNoteDialog;
 exports.openCommentsDialog = openCommentsDialog;
 exports.showNodeActionUnavailable = showNodeActionUnavailable;
-const imageFileLoading_1 = __require(204);
+const imageFileLoading_1 = __require(205);
 const siyuan_1 = __externalRequire("siyuan");
-const nodeContentState_1 = __require(196);
-const dialogResize_1 = __require(205);
-const commentsPresentation_1 = __require(206);
-const inlineLink_1 = __require(207);
-const nodeNoteState_1 = __require(187);
+const nodeContentState_1 = __require(197);
+const dialogResize_1 = __require(206);
+const commentsPresentation_1 = __require(207);
+const inlineLink_1 = __require(208);
+const nodeNoteState_1 = __require(188);
 function activeData(commands) {
     return commands.getPrimaryNodeData() ?? {};
 }
@@ -72839,7 +73003,7 @@ function escapeAttribute(value) {
 }
 
 },
-204: function(module, exports, __require, __externalRequire) {
+205: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageFileLoading.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72857,7 +73021,7 @@ async function loadImageFileSelection(file, dependencies) {
 }
 
 },
-205: function(module, exports, __require, __externalRequire) {
+206: function(module, exports, __require, __externalRequire) {
 // /src/ui/dialogResize.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72924,7 +73088,7 @@ function bindDialogResize(handle, container) {
 }
 
 },
-206: function(module, exports, __require, __externalRequire) {
+207: function(module, exports, __require, __externalRequire) {
 // /src/ui/commentsPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72974,7 +73138,7 @@ function escapeAttribute(value) {
 }
 
 },
-207: function(module, exports, __require, __externalRequire) {
+208: function(module, exports, __require, __externalRequire) {
 // /src/editor/inlineLink.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73002,7 +73166,7 @@ function isSiyuanInlineLink(value) {
 }
 
 },
-208: function(module, exports, __require, __externalRequire) {
+209: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73010,7 +73174,7 @@ exports.NODE_CONTENT_MENU_LABELS = void 0;
 exports.createTodoMenuDescriptor = createTodoMenuDescriptor;
 exports.createSummaryMenuDescriptor = createSummaryMenuDescriptor;
 exports.createNodeMenuAvailability = createNodeMenuAvailability;
-const nodeContentState_1 = __require(196);
+const nodeContentState_1 = __require(197);
 exports.NODE_CONTENT_MENU_LABELS = [
     '添加待办',
     '删除待办',
@@ -73020,9 +73184,9 @@ exports.NODE_CONTENT_MENU_LABELS = [
     '图标',
     '链接',
     '图片',
+    '代码块',
     '公式',
     '行内链接',
-    '代码块',
     '概要',
     '添加外框',
     '关联线',
@@ -73071,7 +73235,7 @@ function createNodeMenuAvailability(input) {
 }
 
 },
-209: function(module, exports, __require, __externalRequire) {
+210: function(module, exports, __require, __externalRequire) {
 // /src/ui/richTextDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73079,7 +73243,7 @@ exports.CODE_LANGUAGES = void 0;
 exports.openInlineLinkDialog = openInlineLinkDialog;
 exports.openCodeBlockDialog = openCodeBlockDialog;
 const siyuan_1 = __externalRequire("siyuan");
-const inlineLink_1 = __require(207);
+const inlineLink_1 = __require(208);
 const CODE_LANGUAGES = [
     ['plain', '纯文本'],
     ['javascript', 'JavaScript'],
@@ -73219,7 +73383,7 @@ function openCodeBlockDialog(commands, settings) {
 }
 
 },
-210: function(module, exports, __require, __externalRequire) {
+211: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorStats.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73252,7 +73416,7 @@ function calculateEditorStats(tree) {
 }
 
 },
-211: function(module, exports, __require, __externalRequire) {
+212: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73396,7 +73560,7 @@ function escapeHtml(value) {
 }
 
 },
-212: function(module, exports, __require, __externalRequire) {
+213: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73491,14 +73655,14 @@ function resolveOutlinePointerDropIntent(input) {
 }
 
 },
-213: function(module, exports, __require, __externalRequire) {
+214: function(module, exports, __require, __externalRequire) {
 // /src/editor/StructuredOutlineEditorController.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StructuredOutlineEditorController = void 0;
-const sanitizeRichHtml_1 = __require(188);
-const outlineTextDocument_1 = __require(214);
-const structuredOutlineDocument_1 = __require(215);
+const sanitizeRichHtml_1 = __require(189);
+const outlineTextDocument_1 = __require(215);
+const structuredOutlineDocument_1 = __require(216);
 const INDENT_SIZE = 22;
 const PLAIN_INDENT = '    ';
 const BLOCK_TAGS = new Set(['DIV', 'P', 'LI', 'UL', 'OL', 'SECTION', 'ARTICLE']);
@@ -74290,12 +74454,12 @@ class StructuredOutlineEditorController {
                 return;
             }
             if (key === 'font') {
-                if (value)
-                    document.execCommand('fontName', false, String(value));
+                this.applyInlineStyle({ fontFamily: value === false ? 'inherit' : String(value) });
                 return;
             }
-            if (key === 'size' && value)
-                this.applyInlineStyle({ fontSize: String(value) });
+            if (key === 'size') {
+                this.applyInlineStyle({ fontSize: value === false ? 'inherit' : String(value) });
+            }
         });
         this.afterFormatting('format');
     }
@@ -75210,7 +75374,7 @@ function closestElement(node) {
 }
 
 },
-214: function(module, exports, __require, __externalRequire) {
+215: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineTextDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75599,7 +75763,7 @@ function insertOutlineNewline(value, selectionStart, selectionEnd) {
 }
 
 },
-215: function(module, exports, __require, __externalRequire) {
+216: function(module, exports, __require, __externalRequire) {
 // /src/editor/structuredOutlineDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75611,8 +75775,8 @@ exports.buildTreeFromStructuredOutline = buildTreeFromStructuredOutline;
 exports.parseStructuredOutlinePaste = parseStructuredOutlinePaste;
 exports.serializeStructuredOutlineBlocks = serializeStructuredOutlineBlocks;
 exports.createStructuredOutlineUid = createStructuredOutlineUid;
-const sanitizeRichHtml_1 = __require(188);
-const outlineTextDocument_1 = __require(214);
+const sanitizeRichHtml_1 = __require(189);
+const outlineTextDocument_1 = __require(215);
 function cloneValue(value) {
     if (typeof structuredClone === 'function') {
         try {
@@ -75846,7 +76010,7 @@ function createStructuredOutlineUid() {
 }
 
 },
-216: function(module, exports, __require, __externalRequire) {
+217: function(module, exports, __require, __externalRequire) {
 // /src/editor/splitPane.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75869,15 +76033,15 @@ function ratioFromPointer(rect, clientX) {
 }
 
 },
-217: function(module, exports, __require, __externalRequire) {
+218: function(module, exports, __require, __externalRequire) {
 // /src/editor/RichTextToolbar.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RichTextToolbar = void 0;
-const YeMindRichText_1 = __require(183);
-const richTextActions_1 = __require(218);
-const colorPresentation_1 = __require(219);
-const colorPalette_1 = __require(220);
+const YeMindRichText_1 = __require(184);
+const richTextActions_1 = __require(219);
+const colorPresentation_1 = __require(220);
+const colorPalette_1 = __require(221);
 function option(value, label) {
     return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -75895,17 +76059,27 @@ class RichTextToolbar {
         this.formatInfo = {};
         this.enabled = true;
         this.interacting = false;
+        this.selecting = false;
+        this.pendingSelection = null;
         this.target = null;
         this.activeColorKind = "color";
         this.colorSessionOriginal = false;
         this.onDocumentMouseDown = (event) => {
             const node = event.target;
-            if (!this.element.contains(node) && !this.colorPopover.contains(node))
-                this.hide();
+            if (this.element.contains(node) || this.colorPopover.contains(node))
+                return;
+            this.selecting = this.root.contains(node);
+            this.hide();
         };
         this.onWindowMouseUp = () => {
             window.setTimeout(() => {
                 this.interacting = false;
+                const pending = this.pendingSelection;
+                this.selecting = false;
+                this.pendingSelection = null;
+                if (pending) {
+                    this.applyUpdate(pending.hasRange, pending.rectInfo, pending.formatInfo, pending.target);
+                }
             }, 0);
         };
         this.target = initialTarget;
@@ -75958,6 +76132,20 @@ class RichTextToolbar {
     update(hasRange, rectInfo, formatInfo, target) {
         if (target)
             this.target = target;
+        if (this.selecting && !this.interacting) {
+            this.pendingSelection = {
+                hasRange,
+                rectInfo: rectInfo ?? null,
+                formatInfo: formatInfo ?? null,
+                target: target ?? this.target,
+            };
+            return;
+        }
+        this.applyUpdate(hasRange, rectInfo ?? null, formatInfo ?? null, target ?? null);
+    }
+    applyUpdate(hasRange, rectInfo, formatInfo, target) {
+        if (target)
+            this.target = target;
         if (!this.enabled) {
             this.hide();
             return;
@@ -75987,8 +76175,9 @@ class RichTextToolbar {
         const markInteracting = (event) => {
             this.interacting = true;
             const target = event.target;
-            const isTextInput = target instanceof HTMLInputElement && target.type !== "color";
-            if (!isTextInput)
+            const isNativeControl = target instanceof HTMLSelectElement ||
+                (target instanceof HTMLInputElement && target.type !== "color");
+            if (!isNativeControl)
                 event.preventDefault();
             event.stopPropagation();
         };
@@ -76084,17 +76273,21 @@ class RichTextToolbar {
             .querySelector('[data-rich-field="size"]')
             ?.addEventListener("change", (event) => {
             this.callbacks.onAction?.("size");
-            this.target?.formatText({
-                size: event.target.value || false,
-            });
+            const value = event.target.value || false;
+            this.target?.restoreSelection?.();
+            this.target?.formatText({ size: value });
+            this.formatInfo.size = value || undefined;
+            this.syncState(false);
         });
         this.element
             .querySelector('[data-rich-field="font"]')
             ?.addEventListener("change", (event) => {
             this.callbacks.onAction?.("font");
-            this.target?.formatText({
-                font: event.target.value || false,
-            });
+            const value = event.target.value || false;
+            this.target?.restoreSelection?.();
+            this.target?.formatText({ font: value });
+            this.formatInfo.font = value || undefined;
+            this.syncState(false);
         });
     }
     openColorPopover(kind, anchor) {
@@ -76209,9 +76402,14 @@ class RichTextToolbar {
         if (cloze)
             cloze.textContent = clozeActive ? "取消模糊" : "模糊";
         const size = this.element.querySelector('[data-rich-field="size"]');
-        if (size)
-            size.value =
-                typeof this.formatInfo.size === "string" ? this.formatInfo.size : "";
+        if (size) {
+            const currentSize = typeof this.formatInfo.size === "string"
+                ? this.formatInfo.size.trim()
+                : "";
+            size.value = YeMindRichText_1.YEMIND_SIZE_VALUES.includes(currentSize)
+                ? currentSize
+                : "";
+        }
         const font = this.element.querySelector('[data-rich-field="font"]');
         if (font) {
             const currentFont = typeof this.formatInfo.font === "string"
@@ -76263,7 +76461,7 @@ class RichTextToolbar {
 exports.RichTextToolbar = RichTextToolbar;
 
 },
-218: function(module, exports, __require, __externalRequire) {
+219: function(module, exports, __require, __externalRequire) {
 // /src/editor/richTextActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76294,7 +76492,7 @@ function isClozeFormat(formatInfo) {
 }
 
 },
-219: function(module, exports, __require, __externalRequire) {
+220: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76361,7 +76559,7 @@ function presentColor(value) {
 }
 
 },
-220: function(module, exports, __require, __externalRequire) {
+221: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPalette.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76392,7 +76590,7 @@ function colorPaletteInnerHtml() {
 }
 
 },
-221: function(module, exports, __require, __externalRequire) {
+222: function(module, exports, __require, __externalRequire) {
 // /src/editor/selectionPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76437,7 +76635,7 @@ function shouldBlockRootDeleteShortcut(key, nodes) {
 }
 
 },
-222: function(module, exports, __require, __externalRequire) {
+223: function(module, exports, __require, __externalRequire) {
 // /src/editor/saveRevision.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76468,7 +76666,7 @@ class SaveRevisionTracker {
 exports.SaveRevisionTracker = SaveRevisionTracker;
 
 },
-223: function(module, exports, __require, __externalRequire) {
+224: function(module, exports, __require, __externalRequire) {
 // /src/editor/relationPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76478,13 +76676,13 @@ function createRelationPresentation(input) {
         return { mode: 'creating', hidden: false, hint: '点击目标节点完成关联，Esc 取消' };
     }
     if (input.isActive) {
-        return { mode: 'active', hidden: false, hint: '关联线已选中，可拖动端点和控制点' };
+        return { mode: 'active', hidden: false, hint: '拖动两个控制点调整曲线弧度；箭头方向随终点切线变化' };
     }
     return { mode: 'idle', hidden: true, hint: '' };
 }
 
 },
-224: function(module, exports, __require, __externalRequire) {
+225: function(module, exports, __require, __externalRequire) {
 // /src/editor/outerFramePresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76543,7 +76741,7 @@ function createOuterFramePresentation(input) {
 }
 
 },
-225: function(module, exports, __require, __externalRequire) {
+226: function(module, exports, __require, __externalRequire) {
 // /src/editor/toolbarAvailability.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76565,12 +76763,12 @@ function createToolbarAvailability(input) {
 }
 
 },
-226: function(module, exports, __require, __externalRequire) {
+227: function(module, exports, __require, __externalRequire) {
 // /src/editor/linkNavigation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolveLinkNavigation = resolveLinkNavigation;
-const inlineLink_1 = __require(207);
+const inlineLink_1 = __require(208);
 function resolveLinkNavigation(value, externalMode) {
     const href = (0, inlineLink_1.normalizeInlineLink)(value, true);
     if (!href)
@@ -76582,7 +76780,7 @@ function resolveLinkNavigation(value, externalMode) {
 }
 
 },
-227: function(module, exports, __require, __externalRequire) {
+228: function(module, exports, __require, __externalRequire) {
 // /src/plugin/visibleElement.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76647,7 +76845,7 @@ function waitForNonZeroSize(element, options = {}) {
 }
 
 },
-228: function(module, exports, __require, __externalRequire) {
+229: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeImageInput.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -76708,15 +76906,15 @@ function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
 }
 
 },
-229: function(module, exports, __require, __externalRequire) {
+230: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeHoverPreview.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeHoverPreview = void 0;
 exports.computeHoverPreviewPlacement = computeHoverPreviewPlacement;
 exports.buildHoverPreviewHtml = buildHoverPreviewHtml;
-const sanitizeRichHtml_1 = __require(188);
-const commentsPresentation_1 = __require(206);
+const sanitizeRichHtml_1 = __require(189);
+const commentsPresentation_1 = __require(207);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -76909,7 +77107,7 @@ class NodeHoverPreview {
 exports.NodeHoverPreview = NodeHoverPreview;
 
 },
-230: function(module, exports, __require, __externalRequire) {
+231: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageLightbox.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -77012,13 +77210,13 @@ class ImageLightbox {
 exports.ImageLightbox = ImageLightbox;
 
 },
-231: function(module, exports, __require, __externalRequire) {
+232: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeStylePanel = void 0;
-const colorPalette_1 = __require(220);
-const colorPresentation_1 = __require(219);
+const colorPalette_1 = __require(221);
+const colorPresentation_1 = __require(220);
 const INPUT_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 function toInputValue(value) {
     return value === null || value === undefined ? '' : String(value);
@@ -77034,11 +77232,18 @@ class NodeStylePanel {
         this.activeColorKey = 'fillColor';
         this.stopEditorEvent = (event) => event.stopPropagation();
         this.onDocumentMouseDown = (event) => {
+            if (!this.panel || this.panel.hidden)
+                return;
             const target = event.target;
             if (!target)
                 return;
-            if (!this.colorPopover.hidden && !this.colorPopover.contains(target))
+            if (this.colorPopover.contains(target))
+                return;
+            if (this.panel.contains(target)) {
                 this.colorPopover.hidden = true;
+                return;
+            }
+            this.hide();
         };
         this.onColorPopoverMouseDown = (event) => {
             const target = event.target;
@@ -77164,11 +77369,44 @@ class NodeStylePanel {
         document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
         this.colorPopover.remove();
     }
-    show() {
+    isVisible() {
+        return Boolean(this.panel && !this.panel.hidden);
+    }
+    toggle(anchor) {
+        if (this.isVisible())
+            this.hide();
+        else
+            this.show(anchor);
+    }
+    show(anchor) {
         if (!this.panel)
             return;
         this.refresh();
         this.panel.hidden = false;
+        this.position(anchor);
+    }
+    position(anchor) {
+        if (!this.panel)
+            return;
+        const rootRect = this.root.getBoundingClientRect();
+        const width = this.panel.offsetWidth || 400;
+        const height = this.panel.offsetHeight || 480;
+        let x = rootRect.right - width - 12;
+        let y = rootRect.top + 58;
+        if (anchor instanceof HTMLElement) {
+            const rect = anchor.getBoundingClientRect();
+            x = rect.left;
+            y = rect.bottom + 6;
+        }
+        else if (anchor) {
+            x = anchor.x;
+            y = anchor.y + 6;
+        }
+        const localX = Math.max(8, Math.min(x - rootRect.left, rootRect.width - width - 8));
+        const localY = Math.max(8, Math.min(y - rootRect.top, rootRect.height - Math.min(height, rootRect.height - 16) - 8));
+        this.panel.style.left = `${Math.round(localX)}px`;
+        this.panel.style.top = `${Math.round(localY)}px`;
+        this.panel.style.right = 'auto';
     }
     hide() {
         if (this.panel)
@@ -77289,14 +77527,14 @@ class NodeStylePanel {
 exports.NodeStylePanel = NodeStylePanel;
 
 },
-232: function(module, exports, __require, __externalRequire) {
+233: function(module, exports, __require, __externalRequire) {
 // /src/ui/projectStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectStylePanel = void 0;
 const projectStyle_1 = __require(14);
-const colorPalette_1 = __require(220);
-const colorPresentation_1 = __require(219);
+const colorPalette_1 = __require(221);
+const colorPresentation_1 = __require(220);
 const colorSchemes_1 = __require(15);
 const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 class ProjectStylePanel {
@@ -77427,11 +77665,44 @@ class ProjectStylePanel {
         document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
         this.colorPopover.remove();
     }
-    show() {
+    isVisible() {
+        return Boolean(this.panel && !this.panel.hidden);
+    }
+    toggle(anchor) {
+        if (this.isVisible())
+            this.hide();
+        else
+            this.show(anchor);
+    }
+    show(anchor) {
         if (!this.panel)
             return;
         this.refresh();
         this.panel.hidden = false;
+        this.position(anchor);
+    }
+    position(anchor) {
+        if (!this.panel)
+            return;
+        const rootRect = this.root.getBoundingClientRect();
+        const width = this.panel.offsetWidth || 400;
+        const height = this.panel.offsetHeight || 480;
+        let x = rootRect.right - width - 12;
+        let y = rootRect.top + 58;
+        if (anchor instanceof HTMLElement) {
+            const rect = anchor.getBoundingClientRect();
+            x = rect.left;
+            y = rect.bottom + 6;
+        }
+        else if (anchor) {
+            x = anchor.x;
+            y = anchor.y + 6;
+        }
+        const localX = Math.max(8, Math.min(x - rootRect.left, rootRect.width - width - 8));
+        const localY = Math.max(8, Math.min(y - rootRect.top, rootRect.height - Math.min(height, rootRect.height - 16) - 8));
+        this.panel.style.left = `${Math.round(localX)}px`;
+        this.panel.style.top = `${Math.round(localY)}px`;
+        this.panel.style.right = 'auto';
     }
     hide() {
         if (this.panel)
@@ -77564,7 +77835,7 @@ class ProjectStylePanel {
 exports.ProjectStylePanel = ProjectStylePanel;
 
 },
-233: function(module, exports, __require, __externalRequire) {
+234: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRichTextVisibility.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -77601,7 +77872,7 @@ function synchronizeCanvasRichTextVisibility(map) {
 }
 
 },
-234: function(module, exports, __require, __externalRequire) {
+235: function(module, exports, __require, __externalRequire) {
 // /src/editor/searchPanelState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -77621,12 +77892,12 @@ function setSearchReplaceExpanded(panel, expanded) {
 }
 
 },
-235: function(module, exports, __require, __externalRequire) {
+236: function(module, exports, __require, __externalRequire) {
 // /src/core/appearanceTransaction.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.applyMapAppearanceTransaction = applyMapAppearanceTransaction;
-const themeColorRuntime_1 = __require(193);
+const themeColorRuntime_1 = __require(194);
 const APPEARANCE_RENDER_SOURCE = 'changeTheme';
 const REVISION_BY_MAP = new WeakMap();
 const ACTIVE_NODE_UIDS_BY_MAP = new WeakMap();
@@ -77734,7 +78005,7 @@ function applyMapAppearanceTransaction(options) {
 }
 
 },
-236: function(module, exports, __require, __externalRequire) {
+237: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeQuickActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -77903,7 +78174,7 @@ class NodeQuickActionsController {
             container.className = 'ymz-node-quick-actions';
             container.dataset.nodeUid = uid;
             container.dataset.quickHovered = String(hovered);
-            container.style.left = `${rect.right - rootRect.left + 5}px`;
+            container.style.left = `${rect.right - rootRect.left}px`;
             container.style.top = `${rect.top - rootRect.top + rect.height / 2}px`;
             descriptors.forEach((descriptor) => {
                 const button = document.createElement('button');
@@ -77952,7 +78223,7 @@ class NodeQuickActionsController {
 exports.NodeQuickActionsController = NodeQuickActionsController;
 
 },
-237: function(module, exports, __require, __externalRequire) {
+238: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRightDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78085,7 +78356,7 @@ class CanvasRightDragController {
 exports.CanvasRightDragController = CanvasRightDragController;
 
 },
-238: function(module, exports, __require, __externalRequire) {
+239: function(module, exports, __require, __externalRequire) {
 // /src/editor/focusHighlight.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78150,7 +78421,7 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
 }
 
 },
-239: function(module, exports, __require, __externalRequire) {
+240: function(module, exports, __require, __externalRequire) {
 // /src/editor/editingSurfaceCoordinator.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78235,7 +78506,7 @@ class EditingSurfaceCoordinator {
 exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
 
 },
-240: function(module, exports, __require, __externalRequire) {
+241: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78257,7 +78528,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-241: function(module, exports, __require, __externalRequire) {
+242: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78281,7 +78552,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-242: function(module, exports, __require, __externalRequire) {
+243: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78337,7 +78608,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-243: function(module, exports, __require, __externalRequire) {
+244: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78363,7 +78634,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-244: function(module, exports, __require, __externalRequire) {
+245: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78379,7 +78650,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-245: function(module, exports, __require, __externalRequire) {
+246: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -78406,7 +78677,7 @@ function initializePluginStartup(options) {
 }
 
 },
-246: function(module, exports, __require, __externalRequire) {
+247: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

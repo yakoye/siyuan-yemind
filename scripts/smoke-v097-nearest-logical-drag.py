@@ -127,7 +127,7 @@ with sync_playwright() as p:
     # Empty-node deletion is two-stage and must not transplant <p><br></p> into
     # the previous node.
     editor_c = page.locator('[data-outline-uid="c"] [data-outline-editor]')
-    editor_c.click(); page.keyboard.press('Control+A'); page.keyboard.press('Backspace'); page.wait_for_timeout(80)
+    editor_c.click(); page.keyboard.press('Control+A'); page.keyboard.press('Backspace'); page.wait_for_timeout(220)
     if page.locator('[data-outline-uid="c"]').count() != 1:
         raise RuntimeError('Deleting the last text removed the node too early')
     page.keyboard.press('Backspace')

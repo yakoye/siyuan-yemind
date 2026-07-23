@@ -189,6 +189,12 @@ export class YeMindEditor {
 
   private readonly onCanvasPointerDown = (event: PointerEvent): void => {
     if (event.button !== 0) return;
+    const target = event.target as Element | null;
+    const isImageInteraction = Boolean(
+      target?.closest?.('.node-img-handle')
+      || target?.tagName?.toLowerCase() === 'image',
+    );
+    if (!isImageInteraction) (this.map as any)?.nodeImgAdjust?.unpin?.();
     this.claimCanvasInteraction("canvas-pointerdown");
   };
 
@@ -907,10 +913,12 @@ export class YeMindEditor {
           this.openCheckpointMenu(button);
           break;
         case "node-style":
-          this.nodeStylePanel?.show();
+          this.projectStylePanel?.hide();
+          this.nodeStylePanel?.toggle(button);
           break;
         case "project-style":
-          this.projectStylePanel?.show();
+          this.nodeStylePanel?.hide();
+          this.projectStylePanel?.toggle(button);
           break;
         case "readonly":
           this.setReadonly(this.rootEl.dataset.readonly !== "true");
@@ -1082,7 +1090,9 @@ export class YeMindEditor {
         return;
       }
       if (!this.commands) return;
-      this.activateNode(node);
+      const activeNodes = this.commands.getActiveNodes();
+      if (!activeNodes.includes(node)) this.activateOnlyNode(node);
+      else this.activateNode(node);
       this.openContextMenu(event);
     });
     this.map.on("contextmenu", (event: MouseEvent) => {
@@ -1108,6 +1118,23 @@ export class YeMindEditor {
         );
       },
     );
+    this.map.on("node_img_click", (node: any, img: any, event: MouseEvent) => {
+      event?.stopPropagation?.();
+      if (!node || !img) return;
+      this.activateOnlyNode(node);
+      (this.map as any)?.nodeImgAdjust?.pin?.(node, img);
+      this.nodeQuickActions?.scheduleRefresh();
+    });
+    this.map.on("node_img_dblclick", (node: any, event: MouseEvent, img: any) => {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      if (!node || !img) return;
+      this.activateOnlyNode(node);
+      (this.map as any)?.nodeImgAdjust?.pin?.(node, img);
+      const source = String(node?.getData?.("image") ?? "");
+      const title = String(node?.getData?.("imageTitle") ?? "");
+      if (source) this.imageLightbox?.show(source, title);
+    });
     this.map.on("yemind_node_image_preview", (node: any) => {
       const source = String(node?.getData?.("image") ?? "");
       const title = String(node?.getData?.("imageTitle") ?? "");
@@ -1226,7 +1253,10 @@ export class YeMindEditor {
       onNodeLink: () =>
         openLinkDialog(this.commands!, this.settings.inlineLinkAutoHttps),
       onRelation: () => this.beginRelation(),
-      onNodeStyle: () => this.nodeStylePanel?.show(),
+      onNodeStyle: () => {
+        this.projectStylePanel?.hide();
+        this.nodeStylePanel?.show({ x: event.clientX, y: event.clientY });
+      },
       onAction: (action) =>
         this.options.diagnostics.record(
           "context-menu",
@@ -1254,7 +1284,10 @@ export class YeMindEditor {
       onLayoutChange: (layout) => this.setLayout(layout),
       onThemeChange: (theme) => this.setTheme(theme),
       onLineStyleChange: (lineStyle) => this.setLineStyle(lineStyle),
-      onProjectStyle: () => this.projectStylePanel?.show(),
+      onProjectStyle: () => {
+        this.nodeStylePanel?.hide();
+        this.projectStylePanel?.show({ x: event.clientX, y: event.clientY });
+      },
       onAction: (action) =>
         this.options.diagnostics.record(
           "context-menu",

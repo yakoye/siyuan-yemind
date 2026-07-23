@@ -37,8 +37,8 @@ with sync_playwright() as p:
       window.__smoke={plugin,map,context};window.__tabOptions.init.call(context);
     }""", image_data)
     page.wait_for_selector('g.smm-node image', timeout=30000)
-    page.locator('g.smm-node image').dispatch_event('mousemove')
-    page.wait_for_function("""()=>getComputedStyle(document.querySelector('.node-img-handle')).display==='block'""", timeout=5000)
+    page.locator('g.smm-node image').click()
+    page.wait_for_function("""()=>{const handle=document.querySelector('.node-img-handle');return Boolean(handle)&&getComputedStyle(handle).display==='block'&&handle.dataset.yemindImagePinned==='true'}""", timeout=5000)
 
     metrics = page.evaluate("""()=>{
       const handle=document.querySelector('.node-img-handle');
@@ -52,7 +52,7 @@ with sync_playwright() as p:
     }""")
     if metrics['removeBox'] != metrics['previewBox'] or metrics['removeBox'] != metrics['resizeBox']:
         raise RuntimeError(f'Image action boxes changed size: {metrics}')
-    if metrics['removeSvg'] != [18, 18]:
+    if metrics['removeSvg'] != [12, 12]:
         raise RuntimeError(f'Trash SVG was not reduced independently: {metrics}')
     if abs(metrics['removeVisual'][0] - metrics['previewVisual'][0]) > 1.2 or abs(metrics['removeVisual'][1] - metrics['previewVisual'][1]) > 1.2:
         raise RuntimeError(f'Trash and magnifier visual weights do not match: {metrics}')

@@ -49,17 +49,36 @@ export class RichTextToolbar {
   private formatInfo: Record<string, unknown> = {};
   private enabled = true;
   private interacting = false;
+  private selecting = false;
+  private pendingSelection: {
+    hasRange: boolean;
+    rectInfo: RichTextSelectionRect | null;
+    formatInfo: Record<string, unknown> | null;
+    target: RichTextFormattingTarget | null;
+  } | null = null;
   private target: RichTextFormattingTarget | null = null;
   private activeColorKind: ColorKind = "color";
   private colorSessionOriginal: string | false = false;
   private readonly onDocumentMouseDown = (event: MouseEvent): void => {
     const node = event.target as Node;
-    if (!this.element.contains(node) && !this.colorPopover.contains(node))
-      this.hide();
+    if (this.element.contains(node) || this.colorPopover.contains(node)) return;
+    this.selecting = this.root.contains(node);
+    this.hide();
   };
   private readonly onWindowMouseUp = (): void => {
     window.setTimeout(() => {
       this.interacting = false;
+      const pending = this.pendingSelection;
+      this.selecting = false;
+      this.pendingSelection = null;
+      if (pending) {
+        this.applyUpdate(
+          pending.hasRange,
+          pending.rectInfo,
+          pending.formatInfo,
+          pending.target,
+        );
+      }
     }, 0);
   };
 
@@ -125,6 +144,25 @@ export class RichTextToolbar {
     target?: RichTextFormattingTarget | null,
   ): void {
     if (target) this.target = target;
+    if (this.selecting && !this.interacting) {
+      this.pendingSelection = {
+        hasRange,
+        rectInfo: rectInfo ?? null,
+        formatInfo: formatInfo ?? null,
+        target: target ?? this.target,
+      };
+      return;
+    }
+    this.applyUpdate(hasRange, rectInfo ?? null, formatInfo ?? null, target ?? null);
+  }
+
+  private applyUpdate(
+    hasRange: boolean,
+    rectInfo: RichTextSelectionRect | null,
+    formatInfo: Record<string, unknown> | null,
+    target: RichTextFormattingTarget | null,
+  ): void {
+    if (target) this.target = target;
     if (!this.enabled) {
       this.hide();
       return;
@@ -156,9 +194,10 @@ export class RichTextToolbar {
     const markInteracting = (event: Event): void => {
       this.interacting = true;
       const target = event.target as HTMLElement | null;
-      const isTextInput =
-        target instanceof HTMLInputElement && target.type !== "color";
-      if (!isTextInput) event.preventDefault();
+      const isNativeControl =
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLInputElement && target.type !== "color");
+      if (!isNativeControl) event.preventDefault();
       event.stopPropagation();
     };
     this.element.addEventListener("mousedown", markInteracting);
@@ -268,17 +307,21 @@ export class RichTextToolbar {
       .querySelector<HTMLSelectElement>('[data-rich-field="size"]')
       ?.addEventListener("change", (event) => {
         this.callbacks.onAction?.("size");
-        this.target?.formatText({
-          size: (event.target as HTMLSelectElement).value || false,
-        });
+        const value = (event.target as HTMLSelectElement).value || false;
+        this.target?.restoreSelection?.();
+        this.target?.formatText({ size: value });
+        this.formatInfo.size = value || undefined;
+        this.syncState(false);
       });
     this.element
       .querySelector<HTMLSelectElement>('[data-rich-field="font"]')
       ?.addEventListener("change", (event) => {
         this.callbacks.onAction?.("font");
-        this.target?.formatText({
-          font: (event.target as HTMLSelectElement).value || false,
-        });
+        const value = (event.target as HTMLSelectElement).value || false;
+        this.target?.restoreSelection?.();
+        this.target?.formatText({ font: value });
+        this.formatInfo.font = value || undefined;
+        this.syncState(false);
       });
   }
 
@@ -417,21 +460,30 @@ export class RichTextToolbar {
     const size = this.element.querySelector<HTMLSelectElement>(
       '[data-rich-field="size"]',
     );
-    if (size)
-      size.value =
-        typeof this.formatInfo.size === "string" ? this.formatInfo.size : "";
+    if (size) {
+      const currentSize =
+        typeof this.formatInfo.size === "string"
+          ? this.formatInfo.size.trim()
+          : "";
+      size.value = (YEMIND_SIZE_VALUES as readonly string[]).includes(currentSize)
+        ? currentSize
+        : "";
+    }
     const font = this.element.querySelector<HTMLSelectElement>(
       '[data-rich-field="font"]',
     );
     if (font) {
-      const currentFont = typeof this.formatInfo.font === "string"
-        ? this.formatInfo.font.trim()
-        : "";
+      const currentFont =
+        typeof this.formatInfo.font === "string"
+          ? this.formatInfo.font.trim()
+          : "";
       // Computed CSS commonly returns a full fallback stack which is not one
       // of the explicit editor choices. Assigning that unknown value to a
       // native select makes the control render as an empty box, so normalize
       // inherited/unknown/mixed fonts to the visible default option.
-      font.value = (YEMIND_FONT_VALUES as readonly string[]).includes(currentFont)
+      font.value = (YEMIND_FONT_VALUES as readonly string[]).includes(
+        currentFont,
+      )
         ? currentFont
         : "";
     }

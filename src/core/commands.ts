@@ -31,6 +31,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   centerRoot(): void;
   expandAll(): void;
   collapseAll(): void;
+  toggleAllExpand(): void;
   resetZoom(): void;
   resetLayout(): void;
   zoomIn(): void;
@@ -39,6 +40,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   copy(): void;
   cut(): void;
   paste(): Promise<void>;
+  pastePlainText(): Promise<void>;
   getActiveNodes(): any[];
   getPrimaryNode(): any | null;
   getPrimaryNodeData(): Record<string, any> | null;
@@ -67,7 +69,9 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   editActiveRelationText(): void;
   removeActiveRelation(): void;
   canAddOuterFrame(): boolean;
+  hasOuterFrameForSelection(): boolean;
   addOuterFrame(): void;
+  removeOuterFrameForSelection(): void;
   hasActiveOuterFrame(): boolean;
   editActiveOuterFrameText(): void;
   updateActiveOuterFrame(config: Record<string, unknown>): void;
@@ -124,6 +128,25 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
   const outerFramePlugin = (): any => (mindMap as any).outerFrame;
   const activeOuterFrame = (): any | null => outerFramePlugin()?.getActiveOuterFrame?.() ?? outerFramePlugin()?.activeOuterFrame ?? null;
   const canAddOuterFrame = (): boolean => Boolean(outerFramePlugin()) && canMutate() && activeNodes().some((node) => !node?.isRoot && !node?.isGeneralization);
+  const rendererRoot = (): any | null => (mindMap.renderer as any)?.root ?? null;
+  const walkRenderedTree = (callback: (node: any) => void): void => {
+    const visit = (node: any): void => {
+      if (!node) return;
+      callback(node);
+      const children = Array.isArray(node.children) ? node.children : [];
+      children.forEach(visit);
+    };
+    visit(rendererRoot());
+  };
+  const selectedOuterFrameGroupIds = (): Set<string> => {
+    const ids = new Set<string>();
+    activeNodes().forEach((node) => {
+      const value = node?.getData?.('outerFrame');
+      const id = value && typeof value === 'object' ? String(value.groupId ?? '') : '';
+      if (id) ids.add(id);
+    });
+    return ids;
+  };
   const markNodeTextEdited = (node: any): void => {
     const data = node?.nodeData?.data ?? node?.getData?.();
     if (!data || typeof data !== 'object') return;
@@ -134,6 +157,14 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
   return {
     isReadonly,
     hasRichTextSelection,
+    restoreSelection: () => {
+      const editor = richText();
+      const range = richRange();
+      if (!range || !editor?.quill?.setSelection) return;
+      editor.range = { index: range.index, length: range.length };
+      editor.pasteUseRange = editor.range;
+      editor.quill.setSelection(range.index, range.length, 'silent');
+    },
     addChild: () => { if (canMutate() && primaryIsRegular()) mindMap.execCommand('INSERT_CHILD_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }); },
     addSibling: () => { if (canMutate() && primaryIsMovable()) mindMap.execCommand('INSERT_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }); },
     addParent: () => { if (canMutate() && primaryIsMovable()) mindMap.execCommand('INSERT_PARENT_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }); },
@@ -156,6 +187,13 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     centerRoot: () => (mindMap.renderer as any).setRootNodeCenter?.(),
     expandAll: () => mindMap.execCommand('EXPAND_ALL'),
     collapseAll: () => mindMap.execCommand('UNEXPAND_ALL'),
+    toggleAllExpand: () => {
+      let hasCollapsed = false;
+      walkRenderedTree((node) => {
+        if (!node?.isRoot && Array.isArray(node.children) && node.children.length > 0 && node.getData?.('expand') === false) hasCollapsed = true;
+      });
+      mindMap.execCommand(hasCollapsed ? 'EXPAND_ALL' : 'UNEXPAND_ALL');
+    },
     resetZoom: () => mindMap.view.reset(),
     resetLayout: () => { if (canMutate()) mindMap.execCommand('RESET_LAYOUT'); },
     zoomIn: () => mindMap.view.enlarge(undefined, undefined, false),
@@ -164,6 +202,17 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     copy: () => (mindMap.renderer as any).copy?.(),
     cut: () => { if (canMutate()) (mindMap.renderer as any).cut?.(); },
     paste: async () => { if (canMutate()) await (mindMap.renderer as any).paste?.(); },
+    pastePlainText: async () => {
+      if (!canMutate()) return;
+      const text = String(await navigator.clipboard?.readText?.() ?? '').replace(/\r\n?/g, '\n');
+      if (!text.trim()) return;
+      const lines = text.split('\n').map((line) => line.trimEnd()).filter((line) => line.trim().length > 0);
+      if (lines.length > 1) {
+        mindMap.execCommand('INSERT_MULTI_CHILD_NODE', [], lines.map((line) => ({ data: { text: line, richText: false }, children: [] })));
+      } else {
+        mindMap.execCommand('INSERT_CHILD_NODE', false, [], { text: lines[0] ?? text, richText: false });
+      }
+    },
     getActiveNodes: activeNodes,
     getPrimaryNode: primaryNode,
     getPrimaryNodeData: () => primaryNode()?.getData?.() ?? null,
@@ -288,6 +337,15 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     startRelation: () => {
       if (!canMutate()) return false;
       const relation = (mindMap as any).associativeLine;
+      const nodes = activeNodes().filter((node) => node && !node.isGeneralization);
+      if (nodes.length > 1 && relation?.addLine) {
+        const [source, ...targets] = nodes;
+        targets.forEach((target) => {
+          if (target !== source) relation.addLine(source, target);
+        });
+        relation.renderAllLines?.();
+        return false;
+      }
       relation?.createLineFromActiveNode?.();
       return Boolean(relation?.isCreatingLine);
     },
@@ -305,9 +363,21 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     },
     removeActiveRelation: () => { if (canMutate()) (mindMap as any).associativeLine?.removeLine?.(); },
     canAddOuterFrame,
+    hasOuterFrameForSelection: () => selectedOuterFrameGroupIds().size > 0,
     addOuterFrame: () => {
       if (!canAddOuterFrame()) return;
       mindMap.execCommand('ADD_OUTER_FRAME');
+    },
+    removeOuterFrameForSelection: () => {
+      if (!canMutate()) return;
+      const groupIds = selectedOuterFrameGroupIds();
+      if (groupIds.size === 0) return;
+      walkRenderedTree((node) => {
+        const value = node?.getData?.('outerFrame');
+        const id = value && typeof value === 'object' ? String(value.groupId ?? '') : '';
+        if (id && groupIds.has(id)) mindMap.execCommand('SET_NODE_DATA', node, { outerFrame: null });
+      });
+      (mindMap as any).outerFrame?.renderOuterFrames?.();
     },
     hasActiveOuterFrame: () => Boolean(activeOuterFrame()),
     editActiveOuterFrameText: () => {

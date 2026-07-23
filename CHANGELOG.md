@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.11 - 2026-07-23
+
+- Unified canvas and outline selection-toolbar timing and restored saved ranges before applying font or size changes.
+- Added single-click image-tool pinning, double-click preview and outside-click unpinning without structural-drag leakage.
+- Anchored project and node style panels to their triggers with one shared medium-size surface.
+- Rebuilt single-node, multi-node and blank-canvas context menus with state-aware outer frames and separate node/inline links.
+- Enabled editable cubic Bézier association-line control points, tangent-driven arrow orientation and persisted control data.
+- Hardened delayed association-line probes after completion or cancellation.
+- Moved node quick actions flush against node borders and added permanent browser regression coverage.
+
 ## 0.9.10 - 2026-07-23
 
 - Replaced repeated per-row gradient guides with one structured-outline guide overlay.

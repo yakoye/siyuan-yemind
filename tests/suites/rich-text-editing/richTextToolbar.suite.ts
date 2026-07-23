@@ -3,6 +3,7 @@ import { RichTextToolbar } from '../../../src/editor/RichTextToolbar';
 
 function commands() {
   return {
+    restoreSelection: vi.fn(),
     formatText: vi.fn(),
     clearTextFormat: vi.fn(),
     setCloze: vi.fn(),
@@ -130,6 +131,7 @@ describe('RichTextToolbar', () => {
     toolbar.update(true, { left: 20, top: 20, right: 80, bottom: 40, width: 60 }, {});
     root.querySelector<HTMLButtonElement>('[data-rich-action="formula"]')!.click();
 
+    expect(actions.restoreSelection).toHaveBeenCalledTimes(2);
     expect(actions.formatText).toHaveBeenCalledWith({ size: '18px' });
     expect(actions.formatText).toHaveBeenCalledWith({ font: 'serif' });
     expect(actions.setCloze).toHaveBeenCalledWith(true);
@@ -139,4 +141,37 @@ describe('RichTextToolbar', () => {
     toolbar.destroy();
     root.remove();
   });
+  it('waits until pointer selection finishes before showing the shared toolbar', async () => {
+    const root = setup();
+    const toolbar = new RichTextToolbar(root, commands());
+    root.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    toolbar.update(
+      true,
+      { left: 30, top: 30, right: 90, bottom: 50, width: 60 },
+      { font: 'serif', size: '18px' },
+    );
+    expect(root.querySelector('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(true);
+    window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    await new Promise((resolve) => window.setTimeout(resolve, 1));
+    expect(root.querySelector('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(false);
+    toolbar.destroy();
+    root.remove();
+  });
+
+  it('shows visible default choices for inherited or unknown font and size values', () => {
+    const root = setup();
+    const toolbar = new RichTextToolbar(root, commands());
+    toolbar.update(
+      true,
+      { left: 20, top: 20, right: 80, bottom: 40, width: 60 },
+      { font: 'Unknown UI Font, sans-serif', size: '15px' },
+    );
+    expect(root.querySelector<HTMLSelectElement>('[data-rich-field="font"]')?.value).toBe('');
+    expect(root.querySelector<HTMLSelectElement>('[data-rich-field="size"]')?.value).toBe('');
+    expect(root.querySelector<HTMLSelectElement>('[data-rich-field="font"]')?.selectedOptions[0]?.textContent).toBe('默认字体');
+    expect(root.querySelector<HTMLSelectElement>('[data-rich-field="size"]')?.selectedOptions[0]?.textContent).toBe('自动');
+    toolbar.destroy();
+    root.remove();
+  });
+
 });

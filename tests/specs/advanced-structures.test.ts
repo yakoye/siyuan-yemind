@@ -10,3 +10,5 @@ import '../suites/advanced-structures/relationPresentation.suite';
 import '../suites/advanced-structures/upstreamGeneralizationBehavior.suite';
 import '../suites/advanced-structures/upstreamMultiSelectionBehavior.suite';
 import '../suites/advanced-structures/upstreamOuterFrameBehavior.suite';
+import '../suites/advanced-structures/v0911RelationHandles.suite';
+import '../suites/advanced-structures/v0911RelationLifecycle.suite';

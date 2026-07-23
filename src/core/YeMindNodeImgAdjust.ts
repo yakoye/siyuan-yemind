@@ -11,6 +11,45 @@ export function imagePreviewIcon(): string {
 const BaseNodeImgAdjust = NodeImgAdjust as any;
 
 export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
+  private pinnedUid = '';
+
+  pin(node: any, img: any): void {
+    if (!node || !img || this.mindMap?.opt?.readonly) return;
+    this.pinnedUid = String(node?.getData?.('uid') ?? node?.uid ?? '');
+    this.node = node;
+    this.img = img;
+    this.rect = img.rbox?.() ?? null;
+    if (this.rect) {
+      if (this.isShowHandleEl) this.setHandleElRect();
+      else this.showHandleEl();
+      this.handleEl?.setAttribute?.('data-yemind-image-pinned', 'true');
+    }
+  }
+
+  unpin(): void {
+    this.pinnedUid = '';
+    this.handleEl?.removeAttribute?.('data-yemind-image-pinned');
+    if (!this.isMousedown) (BaseNodeImgAdjust.prototype as any).hideHandleEl.call(this);
+  }
+
+  hideHandleEl(): void {
+    if (this.pinnedUid && !this.isMousedown) return;
+    (BaseNodeImgAdjust.prototype as any).hideHandleEl.call(this);
+  }
+
+  onNodeImgMousemove(node: any, img: any): void {
+    const uid = String(node?.getData?.('uid') ?? node?.uid ?? '');
+    const active = Array.isArray(this.mindMap?.renderer?.activeNodeList)
+      && this.mindMap.renderer.activeNodeList.includes(node);
+    if (!active && this.pinnedUid !== uid) return;
+    (BaseNodeImgAdjust.prototype as any).onNodeImgMousemove.call(this, node, img);
+  }
+
+  onNodeImgMouseleave(): void {
+    if (this.pinnedUid) return;
+    (BaseNodeImgAdjust.prototype as any).onNodeImgMouseleave.call(this);
+  }
+
   createResizeBtnEl(): void {
     super.createResizeBtnEl();
     if (!this.handleEl || this.handleEl.querySelector('.ymz-node-image-preview')) return;

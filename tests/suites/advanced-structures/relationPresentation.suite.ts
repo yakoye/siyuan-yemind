@@ -63,7 +63,7 @@ describe('native associative-line presentation', () => {
     expect(createRelationPresentation({ isCreating: false, isActive: true })).toEqual({
       mode: 'active',
       hidden: false,
-      hint: '关联线已选中，可拖动端点和控制点',
+      hint: '拖动两个控制点调整曲线弧度；箭头方向随终点切线变化',
     });
   });
 });

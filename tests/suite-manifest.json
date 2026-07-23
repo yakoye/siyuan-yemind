@@ -76,7 +76,8 @@
     "v061NodeDialogs.suite.ts",
     "v063HoverPreviewPlacement.suite.ts",
     "v063NodeContentDialogs.suite.ts",
-    "v090ImageActionsPreview.suite.ts"
+    "v090ImageActionsPreview.suite.ts",
+    "v0911ImageInteraction.suite.ts"
   ],
   "ui-shell": [
     "contextMenuAvailability.suite.ts",
@@ -98,7 +99,8 @@
     "v063CanvasModeIcons.suite.ts",
     "v063ContextMenuOrganization.suite.ts",
     "v063ResponsiveToolbars.suite.ts",
-    "visibleElement.suite.ts"
+    "visibleElement.suite.ts",
+    "v0911MenusAndPanels.suite.ts"
   ],
   "storage-lifecycle": [
     "createMapLifecycle.suite.ts",
@@ -150,7 +152,9 @@
     "relationPresentation.suite.ts",
     "upstreamGeneralizationBehavior.suite.ts",
     "upstreamMultiSelectionBehavior.suite.ts",
-    "upstreamOuterFrameBehavior.suite.ts"
+    "upstreamOuterFrameBehavior.suite.ts",
+    "v0911RelationHandles.suite.ts",
+    "v0911RelationLifecycle.suite.ts"
   ],
   "settings": [
     "nodeDecorationsSettings.suite.ts",

@@ -65,10 +65,42 @@ export class NodeStylePanel {
     this.colorPopover.remove();
   }
 
-  show(): void {
+  isVisible(): boolean {
+    return Boolean(this.panel && !this.panel.hidden);
+  }
+
+  toggle(anchor?: HTMLElement | { x: number; y: number }): void {
+    if (this.isVisible()) this.hide();
+    else this.show(anchor);
+  }
+
+  show(anchor?: HTMLElement | { x: number; y: number }): void {
     if (!this.panel) return;
     this.refresh();
     this.panel.hidden = false;
+    this.position(anchor);
+  }
+
+  private position(anchor?: HTMLElement | { x: number; y: number }): void {
+    if (!this.panel) return;
+    const rootRect = this.root.getBoundingClientRect();
+    const width = this.panel.offsetWidth || 400;
+    const height = this.panel.offsetHeight || 480;
+    let x = rootRect.right - width - 12;
+    let y = rootRect.top + 58;
+    if (anchor instanceof HTMLElement) {
+      const rect = anchor.getBoundingClientRect();
+      x = rect.left;
+      y = rect.bottom + 6;
+    } else if (anchor) {
+      x = anchor.x;
+      y = anchor.y + 6;
+    }
+    const localX = Math.max(8, Math.min(x - rootRect.left, rootRect.width - width - 8));
+    const localY = Math.max(8, Math.min(y - rootRect.top, rootRect.height - Math.min(height, rootRect.height - 16) - 8));
+    this.panel.style.left = `${Math.round(localX)}px`;
+    this.panel.style.top = `${Math.round(localY)}px`;
+    this.panel.style.right = 'auto';
   }
 
   hide(): void {
@@ -101,9 +133,15 @@ export class NodeStylePanel {
   private readonly stopEditorEvent = (event: Event): void => event.stopPropagation();
 
   private readonly onDocumentMouseDown = (event: MouseEvent): void => {
+    if (!this.panel || this.panel.hidden) return;
     const target = event.target as Node | null;
     if (!target) return;
-    if (!this.colorPopover.hidden && !this.colorPopover.contains(target)) this.colorPopover.hidden = true;
+    if (this.colorPopover.contains(target)) return;
+    if (this.panel.contains(target)) {
+      this.colorPopover.hidden = true;
+      return;
+    }
+    this.hide();
   };
 
   private readonly onColorPopoverMouseDown = (event: MouseEvent): void => {

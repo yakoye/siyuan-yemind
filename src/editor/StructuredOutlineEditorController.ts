@@ -613,10 +613,12 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
         return;
       }
       if (key === 'font') {
-        if (value) document.execCommand('fontName', false, String(value));
+        this.applyInlineStyle({ fontFamily: value === false ? 'inherit' : String(value) });
         return;
       }
-      if (key === 'size' && value) this.applyInlineStyle({ fontSize: String(value) });
+      if (key === 'size') {
+        this.applyInlineStyle({ fontSize: value === false ? 'inherit' : String(value) });
+      }
     });
     this.afterFormatting('format');
   }

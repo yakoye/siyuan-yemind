@@ -31,8 +31,8 @@ describe('v0.9.0 node image actions and preview', () => {
 
   it('keeps the image action boxes unchanged while matching trash and magnifier visual weight', () => {
     const css = readFileSync('src/styles/index.css', 'utf8');
-    expect(css).toContain('.node-img-handle .node-image-remove svg{width:18px!important;height:18px!important');
-    expect(css).toContain('.node-img-handle .ymz-node-image-preview svg{width:100%;height:100%');
+    expect(css).toContain('.node-img-handle .node-image-remove svg{\n  width:12px!important;\n  height:12px!important;');
+    expect(css).toContain('.node-img-handle .ymz-node-image-preview svg{\n  width:12px!important;\n  height:12px!important;');
     expect(css).not.toContain('.node-img-handle .node-image-remove{width:18px');
   });
 
