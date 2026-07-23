@@ -40,7 +40,7 @@ export function createSummaryMenuDescriptor(nodes: any[]): SummaryMenuDescriptor
   }
   return {
     action: 'add',
-    label: nodes.length > 1 ? '为所选节点添加概要' : '添加概要',
+    label: nodes.length > 1 ? '为所选节点添加综合概要' : '添加概要',
     warning: false,
   };
 }

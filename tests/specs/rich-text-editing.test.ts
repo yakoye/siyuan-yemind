@@ -12,3 +12,4 @@ import '../suites/rich-text-editing/v083TextEditingTransactions.suite';
 import '../suites/rich-text-editing/v084DragRichTextRecovery.suite';
 import '../suites/rich-text-editing/yeMindRichText.suite';
 import '../suites/rich-text-editing/v0913MeasurementHost.suite';
+import '../suites/rich-text-editing/v0914MeasurementGeometry.suite';

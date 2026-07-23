@@ -4,6 +4,7 @@ import { isEditableTarget } from '../../../src/editor/shortcuts';
 import {
   CanvasRightDragController,
   CanvasRightDragGesture,
+  cancelNativeSelectionGesture,
   shouldSuppressCanvasContextMenu,
 } from '../../../src/editor/canvasRightDrag';
 
@@ -84,6 +85,25 @@ describe('v0.5.22 canvas right-drag gesture', () => {
   });
 
 
+
+  it('cancels the upstream right-button selection rectangle before pan starts', () => {
+    const remove = vi.fn();
+    const clearAutoMoveTimer = vi.fn();
+    const activeNodeList = [{ uid: 'kept-selected' }];
+    const map = {
+      select: { isMousedown: true, isSelecting: true, cacheActiveList: [...activeNodeList], rect: { remove }, autoMove: { clearAutoMoveTimer } },
+      renderer: { activeNodeList },
+    };
+    expect(cancelNativeSelectionGesture(map)).toBe(true);
+    expect(map.select.isMousedown).toBe(false);
+    expect(map.select.isSelecting).toBe(false);
+    expect(map.select.cacheActiveList).toEqual([]);
+    expect(map.select.rect).toBeNull();
+    expect(remove).toHaveBeenCalledOnce();
+    expect(clearAutoMoveTimer).toHaveBeenCalledOnce();
+    expect(map.renderer.activeNodeList).toBe(activeNodeList);
+  });
+
   it('pans manually in pan mode, shows the grabbing state, and suppresses the release menu', () => {
     const listeners = new Map<string, (...args: any[]) => void>();
     const root = document.createElement('div');
@@ -103,6 +123,33 @@ describe('v0.5.22 canvas right-drag gesture', () => {
     listeners.get('mouseup')?.({ button: 2 });
     expect(root.classList.contains('is-canvas-right-dragging')).toBe(false);
     expect(controller.consumeContextMenu()).toBe(true);
+    controller.destroy();
+  });
+
+  it('restores the existing active selection after drag-first right panning', () => {
+    const listeners = new Map<string, (...args: any[]) => void>();
+    const selected = { uid: 'selected' };
+    const renderer = {
+      activeNodeList: [selected] as any[],
+      clearActiveNodeList: vi.fn(function (this: any) { this.activeNodeList = []; }),
+      activeMultiNode: vi.fn(function (this: any, nodes: any[]) { this.activeNodeList = [...nodes]; }),
+      emitNodeActiveEvent: vi.fn(),
+    };
+    const map = {
+      on: vi.fn((name: string, callback: (...args: any[]) => void) => listeners.set(name, callback)),
+      off: vi.fn(),
+      renderer,
+      select: { isMousedown: true, isSelecting: false, cacheActiveList: [], rect: null, autoMove: { clearAutoMoveTimer: vi.fn() } },
+      view: { translateXY: vi.fn() },
+    };
+    const root = document.createElement('div');
+    const controller = new CanvasRightDragController({ root, map, mode: () => 'pan' });
+    listeners.get('mousedown')?.({ button: 2, clientX: 10, clientY: 10 });
+    renderer.activeNodeList = [];
+    listeners.get('mousemove')?.({ clientX: 30, clientY: 20, preventDefault: vi.fn() });
+    expect(renderer.activeNodeList).toEqual([selected]);
+    listeners.get('mouseup')?.({ button: 2 });
+    expect(renderer.activeNodeList).toEqual([selected]);
     controller.destroy();
   });
 

@@ -1783,7 +1783,7 @@ export class YeMindEditor {
         return;
       }
       try {
-        stabilizeMindMapMeasurementHost(this.map as any);
+        stabilizeMindMapMeasurementHost(this.map as any, this.rootEl);
         this.map.resize();
         this.updateDiagnosticState();
       } catch (error) {

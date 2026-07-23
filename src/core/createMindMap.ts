@@ -114,7 +114,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     },
     errorHandler: (_code: unknown, error: unknown) => console.error('[YeMind]', error),
   } as any);
-  stabilizeMindMapMeasurementHost(mindMap as any);
+  stabilizeMindMapMeasurementHost(mindMap as any, editorRoot);
   installThemeColorRuntime(mindMap);
   configureThemeColorRuntime(mindMap, {
     appearance: appearance.colorAppearance,

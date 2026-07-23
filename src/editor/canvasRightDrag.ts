@@ -87,6 +87,19 @@ export function shouldSuppressCanvasContextMenu(gesture: CanvasRightDragGesture)
   return gesture.consumeContextMenu();
 }
 
+
+export function cancelNativeSelectionGesture(map: any): boolean {
+  const select = map?.select;
+  if (!select) return false;
+  select.autoMove?.clearAutoMoveTimer?.();
+  select.isMousedown = false;
+  select.isSelecting = false;
+  select.cacheActiveList = [];
+  if (select.rect) select.rect.remove?.();
+  select.rect = null;
+  return true;
+}
+
 export interface CanvasRightDragControllerOptions {
   root: HTMLElement;
   map: any;
@@ -95,6 +108,7 @@ export interface CanvasRightDragControllerOptions {
 
 export class CanvasRightDragController {
   private readonly gesture = new CanvasRightDragGesture(5);
+  private panSelectionSnapshot: any[] | null = null;
 
   constructor(private readonly options: CanvasRightDragControllerOptions) {
     options.map.on?.("mousedown", this.onMouseDown);
@@ -119,16 +133,38 @@ export class CanvasRightDragController {
 
   cancel(): void {
     this.gesture.cancel();
+    this.panSelectionSnapshot = null;
     this.options.root.classList.remove("is-canvas-right-dragging");
   }
 
+  private restorePanSelection(): void {
+    const snapshot = this.panSelectionSnapshot;
+    const renderer = this.options.map?.renderer;
+    if (!snapshot || !renderer) return;
+    const current = Array.isArray(renderer.activeNodeList) ? renderer.activeNodeList : [];
+    if (current.length === snapshot.length && snapshot.every((node) => current.includes(node))) return;
+    renderer.clearActiveNodeList?.();
+    if (typeof renderer.activeMultiNode === "function") renderer.activeMultiNode(snapshot);
+    else renderer.activeNodeList = [...snapshot];
+    renderer.emitNodeActiveEvent?.(snapshot[0] ?? null, [...snapshot]);
+  }
+
   private readonly onMouseDown = (event: MouseEvent): void => {
-    this.gesture.pointerDown(event);
+    if (!this.gesture.pointerDown(event)) return;
+    if (this.options.mode() === "pan") {
+      const active = this.options.map?.renderer?.activeNodeList;
+      this.panSelectionSnapshot = Array.isArray(active) ? [...active] : [];
+      cancelNativeSelectionGesture(this.options.map);
+    } else {
+      this.panSelectionSnapshot = null;
+    }
   };
 
   private readonly onMouseMove = (event: MouseEvent): void => {
     const result = this.gesture.pointerMove(event);
+    if (this.options.mode() === "pan") cancelNativeSelectionGesture(this.options.map);
     if (!result.dragging) return;
+    this.restorePanSelection();
     event.preventDefault();
     this.options.root.classList.add("is-canvas-right-dragging");
     if (this.options.mode() === "pan" && (result.dx || result.dy)) {
@@ -137,7 +173,9 @@ export class CanvasRightDragController {
   };
 
   private readonly finishGesture = (): void => {
-    this.gesture.pointerUp();
+    const dragged = this.gesture.pointerUp();
+    if (dragged) this.restorePanSelection();
+    this.panSelectionSnapshot = null;
     this.options.root.classList.remove("is-canvas-right-dragging");
   };
 

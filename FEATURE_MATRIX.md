@@ -3,7 +3,7 @@
 | Area | Current capability |
 |---|---|
 | Views | Canvas, split outline and full outline backed by the same map tree |
-| Structure | Add, delete, move, reorder, fold, summary, outer frame, relation line and indentation-based bulk tree import |
+| Structure | Add, delete, move, reorder, fold, one combined multi-selection summary, outer frame, relation line and indentation-based bulk tree import |
 | Content | Rich text, node links, selection-scoped inline links, formulas, code, images, notes, comments, tags, icons and todo |
 | Appearance | 22 themes, 25 light/dark appearances, density, background and named rainbow lines |
 | Theme colors | Per-level text, fill, border and parent-child line colors with 1/3/4/6 branch cycles |
@@ -19,12 +19,12 @@
 | Outline structure editing | Enter, Shift+Enter, Tab/Shift+Tab, atomic multiline replacement and stable UID/metadata preservation |
 | Outline drag | Full indent-cell move gutter, 5px threshold and stable YeMind-green depth-aligned BEFORE/AFTER/CHILD guides |
 | Outline presentation | Black 7px triangles, black 5px leaf squares, midpoint-aligned indent-rainbow guides with no Root-side guide, flat `#ececec` hover and `#deeae6` active state |
-| Canvas drag | Right-logical nearest-node local zones, continuous real-time candidate-parent green dashed link, live room preview and atomic subtree moves |
+| Canvas drag | Right-logical nearest-node local zones, continuous candidate-parent preview and atomic subtree moves; drag-first right-button panning is isolated from selection |
 | Drag safety | Self/descendant/root/no-op rejection, Escape cancellation, one-step undo and stable UID/metadata preservation |
 | Image actions | Hover-owned delete/preview/resize controls, magnifier-click lightbox and event isolation from structural dragging |
 | Persistence | Local maps, settings, checkpoints, autosave and restore protection |
 | Integration | SiYuan tabs, Dock, protocol links and global-search node navigation |
-| Reliability | Structured diagnostics, hidden-tab measurement stabilization and 15-domain manifest-controlled regression architecture |
+| Reliability | Structured diagnostics, same-generation hidden-tab text/frame measurement and 15-domain manifest-controlled regression architecture |
 
 ## Fixed local assets (v0.9.12)
 

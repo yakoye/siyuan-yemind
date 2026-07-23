@@ -114,7 +114,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
 
   if (activeNodes.length > 1) {
     menu.addItem({ iconHTML: nodeStyleIcon(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
-    menu.addItem({ iconHTML: summaryIcon(), label: '{} 添加概要', accelerator: 'Ctrl+Alt+G', disabled: !availability.summary, click: run('summary-add', () => commands.addSummary()) });
+    menu.addItem({ iconHTML: summaryIcon(), label: '{} 添加综合概要', accelerator: 'Ctrl+Alt+G', disabled: !availability.summary, click: run('summary-add', () => commands.addSummary()) });
     menu.addItem({ icon: 'iconRight', label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
     menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
     menu.addSeparator();

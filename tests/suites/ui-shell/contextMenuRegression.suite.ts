@@ -28,7 +28,7 @@ describe('node context menu regression surface', () => {
 
   it('keeps the requested multi-selection and blank-canvas actions', () => {
     expect(source).toContain('if (activeNodes.length > 1)');
-    expect(source).toContain("label: '{} 添加概要'");
+    expect(source).toContain("label: '{} 添加综合概要'");
     expect(source).toContain("label: '删除选中节点'");
     expect(source).toContain("label: '展开/折叠（所有节点）'");
   });

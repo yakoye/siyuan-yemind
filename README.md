@@ -2,8 +2,14 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.13`  
+Current version: `0.9.14`  
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.14 combined summaries, stable geometry and right-drag isolation
+
+- Multi-selection summary now creates one combined range summary instead of one summary per selected node.
+- Rich-text measurement uses an off-screen editor-context host and one full geometry repair render, keeping long text, custom widths and image nodes aligned with their frames.
+- In drag-first mode, right-button drag pans only; it no longer draws a selection rectangle or changes the active node selection, while stationary right-click still opens the menu.
 
 ## v0.9.13 interaction polish
 

@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.13 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.14 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -39,11 +39,11 @@ const releaseInfo_1 = __require(29);
 const constants_1 = __require(28);
 const dock_1 = __require(37);
 const tabs_1 = __require(38);
-const OpenMapTabRegistry_1 = __require(253);
-const pluginUrl_1 = __require(254);
-const operationSafety_1 = __require(255);
-const pluginStartup_1 = __require(256);
-const globalSearch_1 = __require(257);
+const OpenMapTabRegistry_1 = __require(254);
+const pluginUrl_1 = __require(255);
+const operationSafety_1 = __require(256);
+const pluginStartup_1 = __require(257);
+const globalSearch_1 = __require(258);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -16267,7 +16267,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.13';
+exports.PLUGIN_VERSION = '0.9.14';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -16284,20 +16284,19 @@ const constants_1 = __require(28);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-23T08:36:48Z',
-    buildId: 'yemind-v0.9.13-20260723',
+    buildTime: '2026-07-23T10:30:00Z',
+    buildId: 'yemind-v0.9.14-20260723',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '修复节点图标与文字越界、隐藏标签文字塌缩、多选右键丢失，并恢复图片悬停工具和更清晰的面板交互。',
+    releaseSummary: '将多选概要合并为一个范围概要，统一节点文字与外框的测量世代，并隔离拖动优先模式下的右键框选。',
     highlights: [
-        '节点图标改用受限 SVG pattern 渲染，完整 sprite 不再参与节点边界计算，文字和图标保持在节点框内。',
-        '图片工具恢复为悬停显示，放大镜单击打开预览；预览背景降低遮罩不透明度并提高模糊程度。',
-        '关联线选中态使用清晰蓝色和轻微加粗，不再覆盖为粗黑曲线。',
-        '结构面板支持点击外部关闭；结构、样式按钮恢复 hover，整图与节点样式面板分别压缩并提高信息密度。',
-        '关于 YeMind 移到顶部菜单的设置与诊断之间，新建导图使用“中心主题”和两个“新节点”。',
-        '多选节点右键前捕获并恢复选择；富文本测量节点移出隐藏标签，防止文字节点塌缩成空椭圆。',
+        '多选节点添加概要时，按最低公共祖先投影为一个连续范围，只创建一个综合概要。',
+        '富文本测量缓存迁移到保留编辑器样式的离屏宿主，迁移后只进行一次完整重排，避免文字和节点框来自不同渲染世代。',
+        '隐藏标签页恢复、缩放和重新布局后，长文本、自定义宽度、图片节点继续保持正确边界。',
+        '拖动优先模式中，右键拖动只平移画布，不再显示框选矩形，也不会改变当前节点选择。',
+        '普通右键单击仍可打开原有上下文菜单。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -17242,10 +17241,10 @@ function escapeHtml(value) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
 const YeMindEditor_1 = __require(39);
-const deferredMount_1 = __require(251);
+const deferredMount_1 = __require(252);
 const constants_1 = __require(28);
-const visibleElement_1 = __require(236);
-const tabNodeFocus_1 = __require(252);
+const visibleElement_1 = __require(237);
+const tabNodeFocus_1 = __require(253);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -17348,45 +17347,45 @@ const relationData_1 = __require(203);
 const commands_1 = __require(204);
 const nodeDecorations_1 = __require(194);
 const registerPlugins_1 = __require(90);
-const checkpointDialog_1 = __require(208);
-const contextMenu_1 = __require(211);
+const checkpointDialog_1 = __require(209);
+const contextMenu_1 = __require(212);
 const dialogs_1 = __require(25);
-const nodeContentDialogs_1 = __require(212);
-const richTextDialogs_1 = __require(218);
-const editorStats_1 = __require(219);
-const editorTemplate_1 = __require(220);
-const outlineDrag_1 = __require(221);
-const StructuredOutlineEditorController_1 = __require(222);
-const splitPane_1 = __require(225);
-const RichTextToolbar_1 = __require(226);
+const nodeContentDialogs_1 = __require(213);
+const richTextDialogs_1 = __require(219);
+const editorStats_1 = __require(220);
+const editorTemplate_1 = __require(221);
+const outlineDrag_1 = __require(222);
+const StructuredOutlineEditorController_1 = __require(223);
+const splitPane_1 = __require(226);
+const RichTextToolbar_1 = __require(227);
 const shortcuts_1 = __require(32);
-const selectionPresentation_1 = __require(230);
-const saveRevision_1 = __require(231);
-const relationPresentation_1 = __require(232);
-const outerFramePresentation_1 = __require(233);
-const toolbarAvailability_1 = __require(234);
-const linkNavigation_1 = __require(235);
-const visibleElement_1 = __require(236);
-const imageFileLoading_1 = __require(213);
-const nodeImageInput_1 = __require(237);
-const nodeHoverPreview_1 = __require(238);
-const imageLightbox_1 = __require(239);
-const nodeStylePanel_1 = __require(240);
-const projectStylePanel_1 = __require(241);
-const layoutGalleryPanel_1 = __require(242);
-const localAssetDialogs_1 = __require(243);
+const selectionPresentation_1 = __require(231);
+const saveRevision_1 = __require(232);
+const relationPresentation_1 = __require(233);
+const outerFramePresentation_1 = __require(234);
+const toolbarAvailability_1 = __require(235);
+const linkNavigation_1 = __require(236);
+const visibleElement_1 = __require(237);
+const imageFileLoading_1 = __require(214);
+const nodeImageInput_1 = __require(238);
+const nodeHoverPreview_1 = __require(239);
+const imageLightbox_1 = __require(240);
+const nodeStylePanel_1 = __require(241);
+const projectStylePanel_1 = __require(242);
+const layoutGalleryPanel_1 = __require(243);
+const localAssetDialogs_1 = __require(244);
 const layoutAssetPresets_1 = __require(14);
 const measurementHost_1 = __require(202);
-const canvasRichTextVisibility_1 = __require(244);
-const searchPanelState_1 = __require(245);
+const canvasRichTextVisibility_1 = __require(245);
+const searchPanelState_1 = __require(246);
 const projectStyle_1 = __require(20);
-const appearanceTransaction_1 = __require(246);
-const nodeQuickActions_1 = __require(247);
+const appearanceTransaction_1 = __require(247);
+const nodeQuickActions_1 = __require(248);
 const projectControls_1 = __require(35);
 const nodeNoteState_1 = __require(195);
-const canvasRightDrag_1 = __require(248);
-const focusHighlight_1 = __require(249);
-const editingSurfaceCoordinator_1 = __require(250);
+const canvasRightDrag_1 = __require(249);
+const focusHighlight_1 = __require(250);
+const editingSurfaceCoordinator_1 = __require(251);
 class YeMindEditor {
     constructor(options) {
         this.options = options;
@@ -18798,7 +18797,7 @@ class YeMindEditor {
                 return;
             }
             try {
-                (0, measurementHost_1.stabilizeMindMapMeasurementHost)(this.map);
+                (0, measurementHost_1.stabilizeMindMapMeasurementHost)(this.map, this.rootEl);
                 this.map.resize();
                 this.updateDiagnosticState();
             }
@@ -19500,7 +19499,7 @@ function createMindMap(options) {
         },
         errorHandler: (_code, error) => console.error('[YeMind]', error),
     });
-    (0, measurementHost_1.stabilizeMindMapMeasurementHost)(mindMap);
+    (0, measurementHost_1.stabilizeMindMapMeasurementHost)(mindMap, editorRoot);
     (0, themeColorRuntime_1.installThemeColorRuntime)(mindMap);
     (0, themeColorRuntime_1.configureThemeColorRuntime)(mindMap, {
         appearance: appearance.colorAppearance,
@@ -81229,47 +81228,110 @@ function configureThemeColorRuntime(mindMap, config) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.stabilizeMindMapMeasurementHost = stabilizeMindMapMeasurementHost;
 const registeredMaps = new WeakSet();
+const hosts = new WeakMap();
+const repairScheduled = new WeakSet();
 function measurementElements(map) {
     const caches = map.commonCaches;
     if (!caches)
         return [];
-    return [
-        caches.measureRichtextNodeTextSizeEl,
-        caches.measureCustomNodeContentSizeEl,
-    ].filter((element) => element instanceof HTMLElement);
+    return [caches.measureRichtextNodeTextSizeEl, caches.measureCustomNodeContentSizeEl]
+        .filter((element) => element instanceof HTMLElement);
 }
-function moveMeasurementElements(map, target) {
+function copyMeasurementContext(host, editorRoot) {
+    host.className = `${editorRoot.className} ymz-measurement-host`.trim();
+    for (const attribute of Array.from(editorRoot.attributes)) {
+        if (attribute.name.startsWith('data-'))
+            host.setAttribute(attribute.name, attribute.value);
+    }
+    const computed = getComputedStyle(editorRoot);
+    host.style.fontFamily = computed.fontFamily;
+    host.style.fontSize = computed.fontSize;
+    host.style.fontWeight = computed.fontWeight;
+    host.style.lineHeight = computed.lineHeight;
+    for (let index = 0; index < computed.length; index += 1) {
+        const property = computed[index];
+        if (property.startsWith('--'))
+            host.style.setProperty(property, computed.getPropertyValue(property));
+    }
+}
+function getHost(map, editorRoot) {
+    const key = map;
+    const existing = hosts.get(key);
+    if (existing?.isConnected) {
+        copyMeasurementContext(existing, editorRoot);
+        return existing;
+    }
+    const host = document.createElement('div');
+    host.dataset.yemindMeasurementHost = 'true';
+    host.setAttribute('aria-hidden', 'true');
+    Object.assign(host.style, {
+        position: 'fixed',
+        left: '-100000px',
+        top: '0',
+        display: 'block',
+        width: '10000px',
+        height: 'auto',
+        minWidth: '0',
+        minHeight: '0',
+        overflow: 'visible',
+        visibility: 'hidden',
+        pointerEvents: 'none',
+        zIndex: '-1',
+    });
+    copyMeasurementContext(host, editorRoot);
+    document.body.appendChild(host);
+    hosts.set(key, host);
+    return host;
+}
+function moveMeasurementElements(map, host) {
     let moved = false;
     measurementElements(map).forEach((element) => {
-        if (element.parentElement === target)
-            return;
         element.dataset.yemindMeasurementOwner = 'true';
         element.setAttribute('aria-hidden', 'true');
-        target.appendChild(element);
-        moved = true;
+        if (element.parentElement !== host) {
+            host.appendChild(element);
+            moved = true;
+        }
     });
     return moved;
 }
+function scheduleFullGeometryRepair(map) {
+    const key = map;
+    if (repairScheduled.has(key))
+        return;
+    repairScheduled.add(key);
+    const run = () => {
+        repairScheduled.delete(key);
+        map.render?.(null, 'yemind-measurement-host');
+    };
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(run);
+    }
+    else {
+        queueMicrotask(run);
+    }
+}
 /**
- * simple-mind-map creates rich-text measurement nodes inside its canvas.
- * SiYuan can keep inactive tabs mounted with a hidden canvas, which makes
- * getBoundingClientRect() return zero and collapses text nodes into pills.
+ * Keep simple-mind-map's DOM measurement caches in a visible, off-screen host.
+ * The host preserves the editor's scoped CSS and variables even when a SiYuan
+ * tab is display:none. A relocation is repaired with one full render so node
+ * shape, text and layout are recalculated in the same render generation.
  */
-function stabilizeMindMapMeasurementHost(map, target = document.body) {
+function stabilizeMindMapMeasurementHost(map, editorRoot = document.body) {
+    const context = editorRoot.closest('.ymz-editor') ?? editorRoot;
     const relocate = () => {
-        const moved = moveMeasurementElements(map, target);
+        const moved = moveMeasurementElements(map, getHost(map, context));
         if (moved)
-            map.reRender?.(null, 'yemind-measurement-host');
+            scheduleFullGeometryRepair(map);
         return moved;
     };
     const moved = relocate();
     if (!registeredMaps.has(map)) {
         registeredMaps.add(map);
-        // The upstream cache elements can be created during the first render,
-        // after the MindMap constructor returns. Recheck at render completion.
         map.on?.('node_tree_render_end', relocate);
         map.on?.('beforeDestroy', () => {
-            measurementElements(map).forEach((element) => element.remove());
+            hosts.get(map)?.remove();
+            hosts.delete(map);
         });
         queueMicrotask(relocate);
         if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
@@ -81370,6 +81432,7 @@ exports.createCommandAdapter = createCommandAdapter;
 const nodeContentState_1 = __require(205);
 const codeBlock_1 = __require(206);
 const nodeStyle_1 = __require(207);
+const combinedSummary_1 = __require(208);
 function createCommandAdapter(mindMap) {
     const activeNodes = () => Array.isArray(mindMap.renderer?.activeNodeList)
         ? mindMap.renderer.activeNodeList
@@ -81648,7 +81711,7 @@ function createCommandAdapter(mindMap) {
             mindMap.execCommand('INSERT_FORMULA', value);
         },
         addSummary: () => { if (canMutate())
-            mindMap.execCommand('ADD_GENERALIZATION'); },
+            (0, combinedSummary_1.addCombinedSummary)(mindMap, activeNodes()); },
         removeSummary: () => {
             if (!canMutate())
                 return;
@@ -82179,14 +82242,150 @@ function resetNodeStylePatch() {
 
 },
 208: function(module, exports, __require, __externalRequire) {
+// /src/core/combinedSummary.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createCombinedSummaryPlan = createCombinedSummaryPlan;
+exports.hasCombinedSummary = hasCombinedSummary;
+exports.addCombinedSummary = addCombinedSummary;
+function uniqueNodes(nodes) {
+    return nodes.filter((node, index) => node && nodes.indexOf(node) === index);
+}
+function ancestors(node) {
+    const list = [];
+    let current = node;
+    while (current) {
+        list.push(current);
+        current = current.parent ?? null;
+    }
+    return list;
+}
+function isAncestor(ancestor, node) {
+    let current = node?.parent ?? null;
+    while (current) {
+        if (current === ancestor)
+            return true;
+        current = current.parent ?? null;
+    }
+    return false;
+}
+function lowestCommonAncestor(nodes) {
+    if (!nodes.length)
+        return null;
+    const [first, ...rest] = nodes;
+    return ancestors(first).find((candidate) => rest.every((node) => ancestors(node).includes(candidate))) ?? null;
+}
+function directChildOf(ancestor, node) {
+    if (node === ancestor)
+        return ancestor;
+    let current = node;
+    while (current?.parent && current.parent !== ancestor)
+        current = current.parent;
+    return current?.parent === ancestor ? current : null;
+}
+function childIndex(parent, node) {
+    const children = Array.isArray(parent?.children) ? parent.children : [];
+    const index = children.indexOf(node);
+    if (index >= 0)
+        return index;
+    const value = Number(node?.getIndexInBrothers?.());
+    return Number.isFinite(value) ? value : -1;
+}
+/**
+ * Convert an arbitrary multi-selection into one native simple-mind-map
+ * generalization target. Descendants of another selected node are folded into
+ * that ancestor; otherwise the selection is projected to one contiguous child
+ * range under its lowest common ancestor.
+ */
+function createCombinedSummaryPlan(input) {
+    const eligible = uniqueNodes(input).filter((node) => !node?.isRoot && !node?.isGeneralization);
+    if (!eligible.length)
+        return null;
+    const topLevel = eligible.filter((node) => !eligible.some((candidate) => candidate !== node && isAncestor(candidate, node)));
+    if (topLevel.length === 1) {
+        return { owner: topLevel[0], range: null, commandNodes: [topLevel[0]] };
+    }
+    const owner = lowestCommonAncestor(topLevel);
+    if (!owner)
+        return null;
+    const projected = uniqueNodes(topLevel.map((node) => directChildOf(owner, node)).filter(Boolean));
+    if (projected.length <= 1) {
+        const node = projected[0] ?? topLevel[0];
+        return node ? { owner: node, range: null, commandNodes: [node] } : null;
+    }
+    const indexed = projected
+        .map((node) => ({ node, index: childIndex(owner, node) }))
+        .filter((item) => item.index >= 0)
+        .sort((a, b) => a.index - b.index);
+    if (indexed.length <= 1) {
+        const node = indexed[0]?.node ?? topLevel[0];
+        return node ? { owner: node, range: null, commandNodes: [node] } : null;
+    }
+    return {
+        owner,
+        range: [indexed[0].index, indexed[indexed.length - 1].index],
+        commandNodes: [indexed[0].node, indexed[indexed.length - 1].node],
+    };
+}
+function hasCombinedSummary(plan) {
+    const raw = plan.owner?.getData?.('generalization');
+    const list = raw ? (Array.isArray(raw) ? raw : [raw]) : [];
+    if (!plan.range)
+        return list.some((item) => !Array.isArray(item?.range) || item.range.length === 0);
+    return list.some((item) => Array.isArray(item?.range)
+        && item.range[0] === plan.range?.[0]
+        && item.range[1] === plan.range?.[1]);
+}
+/** Execute one combined summary through the upstream command so history,
+ * rendering and rich-text editing remain native. */
+function addCombinedSummary(mindMap, selectedNodes) {
+    const plan = createCombinedSummaryPlan(selectedNodes);
+    if (!plan || hasCombinedSummary(plan))
+        return false;
+    const renderer = mindMap?.renderer;
+    if (!renderer || typeof mindMap?.execCommand !== 'function')
+        return false;
+    const originalList = Array.isArray(renderer.activeNodeList) ? [...renderer.activeNodeList] : [];
+    const temporaryList = [...plan.commandNodes];
+    renderer.clearActiveNodeList?.();
+    const restoreChecks = temporaryList.map((node) => {
+        const original = node.checkHasSelfGeneralization;
+        if (typeof original === 'function')
+            node.checkHasSelfGeneralization = () => false;
+        return () => { if (typeof original === 'function')
+            node.checkHasSelfGeneralization = original; };
+    });
+    renderer.activeNodeList = temporaryList;
+    try {
+        mindMap.execCommand('ADD_GENERALIZATION');
+    }
+    finally {
+        restoreChecks.forEach((restore) => restore());
+        // The upstream command clears or replaces the list when it focuses the new
+        // summary. Only restore the user's selection when the temporary list was
+        // left untouched.
+        if (renderer.activeNodeList === temporaryList) {
+            renderer.clearActiveNodeList?.();
+            if (typeof renderer.activeMultiNode === 'function')
+                renderer.activeMultiNode(originalList);
+            else
+                renderer.activeNodeList = originalList;
+            renderer.emitNodeActiveEvent?.(originalList[0] ?? null, [...originalList]);
+        }
+    }
+    return true;
+}
+
+},
+209: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.openCheckpointManager = openCheckpointManager;
 const siyuan_1 = __externalRequire("siyuan");
-const checkpointPresentation_1 = __require(209);
+const checkpointPresentation_1 = __require(210);
 const dialogs_1 = __require(25);
-const checkpointDialogTemplate_1 = __require(210);
+const checkpointDialogTemplate_1 = __require(211);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -82253,7 +82452,7 @@ function openCheckpointManager(options) {
 }
 
 },
-209: function(module, exports, __require, __externalRequire) {
+210: function(module, exports, __require, __externalRequire) {
 // /src/checkpoints/checkpointPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82289,12 +82488,12 @@ function renderCheckpointListHtml(checkpoints, options) {
 }
 
 },
-210: function(module, exports, __require, __externalRequire) {
+211: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialogTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildCheckpointDialogContent = buildCheckpointDialogContent;
-const checkpointPresentation_1 = __require(209);
+const checkpointPresentation_1 = __require(210);
 function buildCheckpointDialogContent(checkpoints, readonly) {
     return `<div class="b3-dialog__content ymz-checkpoint-dialog">
     <div class="ymz-checkpoint-dialog__intro">检查点保存在独立历史文件中。恢复前会自动保存当前状态为保护检查点。</div>
@@ -82306,7 +82505,7 @@ function buildCheckpointDialogContent(checkpoints, readonly) {
 }
 
 },
-211: function(module, exports, __require, __externalRequire) {
+212: function(module, exports, __require, __externalRequire) {
 // /src/ui/contextMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82316,8 +82515,8 @@ const siyuan_1 = __externalRequire("siyuan");
 const layoutPresets_1 = __require(13);
 const themePresets_1 = __require(11);
 const projectControls_1 = __require(35);
-const nodeContentDialogs_1 = __require(212);
-const nodeContentMenu_1 = __require(217);
+const nodeContentDialogs_1 = __require(213);
+const nodeContentMenu_1 = __require(218);
 function openCanvasContextMenu(event, commands, options) {
     event.preventDefault();
     event.stopPropagation();
@@ -82389,7 +82588,7 @@ function openNodeContextMenu(event, commands, options = {}) {
     };
     if (activeNodes.length > 1) {
         menu.addItem({ iconHTML: (0, projectControls_1.nodeStyleIcon)(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
-        menu.addItem({ iconHTML: (0, projectControls_1.summaryIcon)(), label: '{} 添加概要', accelerator: 'Ctrl+Alt+G', disabled: !availability.summary, click: run('summary-add', () => commands.addSummary()) });
+        menu.addItem({ iconHTML: (0, projectControls_1.summaryIcon)(), label: '{} 添加综合概要', accelerator: 'Ctrl+Alt+G', disabled: !availability.summary, click: run('summary-add', () => commands.addSummary()) });
         menu.addItem({ icon: 'iconRight', label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
         menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
         menu.addSeparator();
@@ -82449,7 +82648,7 @@ function openNodeContextMenu(event, commands, options = {}) {
 }
 
 },
-212: function(module, exports, __require, __externalRequire) {
+213: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82462,12 +82661,12 @@ exports.openImageDialog = openImageDialog;
 exports.openNoteDialog = openNoteDialog;
 exports.openCommentsDialog = openCommentsDialog;
 exports.showNodeActionUnavailable = showNodeActionUnavailable;
-const imageFileLoading_1 = __require(213);
+const imageFileLoading_1 = __require(214);
 const siyuan_1 = __externalRequire("siyuan");
 const nodeContentState_1 = __require(205);
-const dialogResize_1 = __require(214);
-const commentsPresentation_1 = __require(215);
-const inlineLink_1 = __require(216);
+const dialogResize_1 = __require(215);
+const commentsPresentation_1 = __require(216);
+const inlineLink_1 = __require(217);
 const nodeNoteState_1 = __require(195);
 function activeData(commands) {
     return commands.getPrimaryNodeData() ?? {};
@@ -82872,7 +83071,7 @@ function escapeAttribute(value) {
 }
 
 },
-213: function(module, exports, __require, __externalRequire) {
+214: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageFileLoading.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82890,7 +83089,7 @@ async function loadImageFileSelection(file, dependencies) {
 }
 
 },
-214: function(module, exports, __require, __externalRequire) {
+215: function(module, exports, __require, __externalRequire) {
 // /src/ui/dialogResize.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82957,7 +83156,7 @@ function bindDialogResize(handle, container) {
 }
 
 },
-215: function(module, exports, __require, __externalRequire) {
+216: function(module, exports, __require, __externalRequire) {
 // /src/ui/commentsPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83007,7 +83206,7 @@ function escapeAttribute(value) {
 }
 
 },
-216: function(module, exports, __require, __externalRequire) {
+217: function(module, exports, __require, __externalRequire) {
 // /src/editor/inlineLink.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83035,7 +83234,7 @@ function isSiyuanInlineLink(value) {
 }
 
 },
-217: function(module, exports, __require, __externalRequire) {
+218: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83073,7 +83272,7 @@ function createSummaryMenuDescriptor(nodes) {
     }
     return {
         action: 'add',
-        label: nodes.length > 1 ? '为所选节点添加概要' : '添加概要',
+        label: nodes.length > 1 ? '为所选节点添加综合概要' : '添加概要',
         warning: false,
     };
 }
@@ -83104,7 +83303,7 @@ function createNodeMenuAvailability(input) {
 }
 
 },
-218: function(module, exports, __require, __externalRequire) {
+219: function(module, exports, __require, __externalRequire) {
 // /src/ui/richTextDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83112,7 +83311,7 @@ exports.CODE_LANGUAGES = void 0;
 exports.openInlineLinkDialog = openInlineLinkDialog;
 exports.openCodeBlockDialog = openCodeBlockDialog;
 const siyuan_1 = __externalRequire("siyuan");
-const inlineLink_1 = __require(216);
+const inlineLink_1 = __require(217);
 const CODE_LANGUAGES = [
     ['plain', '纯文本'],
     ['javascript', 'JavaScript'],
@@ -83252,7 +83451,7 @@ function openCodeBlockDialog(commands, settings) {
 }
 
 },
-219: function(module, exports, __require, __externalRequire) {
+220: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorStats.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83285,7 +83484,7 @@ function calculateEditorStats(tree) {
 }
 
 },
-220: function(module, exports, __require, __externalRequire) {
+221: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83434,7 +83633,7 @@ function escapeHtml(value) {
 }
 
 },
-221: function(module, exports, __require, __externalRequire) {
+222: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83529,14 +83728,14 @@ function resolveOutlinePointerDropIntent(input) {
 }
 
 },
-222: function(module, exports, __require, __externalRequire) {
+223: function(module, exports, __require, __externalRequire) {
 // /src/editor/StructuredOutlineEditorController.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StructuredOutlineEditorController = void 0;
 const sanitizeRichHtml_1 = __require(196);
-const outlineTextDocument_1 = __require(223);
-const structuredOutlineDocument_1 = __require(224);
+const outlineTextDocument_1 = __require(224);
+const structuredOutlineDocument_1 = __require(225);
 const INDENT_SIZE = 22;
 const PLAIN_INDENT = '    ';
 const BLOCK_TAGS = new Set(['DIV', 'P', 'LI', 'UL', 'OL', 'SECTION', 'ARTICLE']);
@@ -85248,7 +85447,7 @@ function closestElement(node) {
 }
 
 },
-223: function(module, exports, __require, __externalRequire) {
+224: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineTextDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85637,7 +85836,7 @@ function insertOutlineNewline(value, selectionStart, selectionEnd) {
 }
 
 },
-224: function(module, exports, __require, __externalRequire) {
+225: function(module, exports, __require, __externalRequire) {
 // /src/editor/structuredOutlineDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85650,7 +85849,7 @@ exports.parseStructuredOutlinePaste = parseStructuredOutlinePaste;
 exports.serializeStructuredOutlineBlocks = serializeStructuredOutlineBlocks;
 exports.createStructuredOutlineUid = createStructuredOutlineUid;
 const sanitizeRichHtml_1 = __require(196);
-const outlineTextDocument_1 = __require(223);
+const outlineTextDocument_1 = __require(224);
 function cloneValue(value) {
     if (typeof structuredClone === 'function') {
         try {
@@ -85884,7 +86083,7 @@ function createStructuredOutlineUid() {
 }
 
 },
-225: function(module, exports, __require, __externalRequire) {
+226: function(module, exports, __require, __externalRequire) {
 // /src/editor/splitPane.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85907,15 +86106,15 @@ function ratioFromPointer(rect, clientX) {
 }
 
 },
-226: function(module, exports, __require, __externalRequire) {
+227: function(module, exports, __require, __externalRequire) {
 // /src/editor/RichTextToolbar.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RichTextToolbar = void 0;
 const YeMindRichText_1 = __require(191);
-const richTextActions_1 = __require(227);
-const colorPresentation_1 = __require(228);
-const colorPalette_1 = __require(229);
+const richTextActions_1 = __require(228);
+const colorPresentation_1 = __require(229);
+const colorPalette_1 = __require(230);
 function option(value, label) {
     return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -86335,7 +86534,7 @@ class RichTextToolbar {
 exports.RichTextToolbar = RichTextToolbar;
 
 },
-227: function(module, exports, __require, __externalRequire) {
+228: function(module, exports, __require, __externalRequire) {
 // /src/editor/richTextActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86366,7 +86565,7 @@ function isClozeFormat(formatInfo) {
 }
 
 },
-228: function(module, exports, __require, __externalRequire) {
+229: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86433,7 +86632,7 @@ function presentColor(value) {
 }
 
 },
-229: function(module, exports, __require, __externalRequire) {
+230: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPalette.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86464,7 +86663,7 @@ function colorPaletteInnerHtml() {
 }
 
 },
-230: function(module, exports, __require, __externalRequire) {
+231: function(module, exports, __require, __externalRequire) {
 // /src/editor/selectionPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86525,7 +86724,7 @@ function shouldBlockRootDeleteShortcut(key, nodes) {
 }
 
 },
-231: function(module, exports, __require, __externalRequire) {
+232: function(module, exports, __require, __externalRequire) {
 // /src/editor/saveRevision.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86556,7 +86755,7 @@ class SaveRevisionTracker {
 exports.SaveRevisionTracker = SaveRevisionTracker;
 
 },
-232: function(module, exports, __require, __externalRequire) {
+233: function(module, exports, __require, __externalRequire) {
 // /src/editor/relationPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86572,7 +86771,7 @@ function createRelationPresentation(input) {
 }
 
 },
-233: function(module, exports, __require, __externalRequire) {
+234: function(module, exports, __require, __externalRequire) {
 // /src/editor/outerFramePresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86631,7 +86830,7 @@ function createOuterFramePresentation(input) {
 }
 
 },
-234: function(module, exports, __require, __externalRequire) {
+235: function(module, exports, __require, __externalRequire) {
 // /src/editor/toolbarAvailability.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86653,12 +86852,12 @@ function createToolbarAvailability(input) {
 }
 
 },
-235: function(module, exports, __require, __externalRequire) {
+236: function(module, exports, __require, __externalRequire) {
 // /src/editor/linkNavigation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolveLinkNavigation = resolveLinkNavigation;
-const inlineLink_1 = __require(216);
+const inlineLink_1 = __require(217);
 function resolveLinkNavigation(value, externalMode) {
     const href = (0, inlineLink_1.normalizeInlineLink)(value, true);
     if (!href)
@@ -86670,7 +86869,7 @@ function resolveLinkNavigation(value, externalMode) {
 }
 
 },
-236: function(module, exports, __require, __externalRequire) {
+237: function(module, exports, __require, __externalRequire) {
 // /src/plugin/visibleElement.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86735,7 +86934,7 @@ function waitForNonZeroSize(element, options = {}) {
 }
 
 },
-237: function(module, exports, __require, __externalRequire) {
+238: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeImageInput.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86796,7 +86995,7 @@ function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
 }
 
 },
-238: function(module, exports, __require, __externalRequire) {
+239: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeHoverPreview.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86804,7 +87003,7 @@ exports.NodeHoverPreview = void 0;
 exports.computeHoverPreviewPlacement = computeHoverPreviewPlacement;
 exports.buildHoverPreviewHtml = buildHoverPreviewHtml;
 const sanitizeRichHtml_1 = __require(196);
-const commentsPresentation_1 = __require(215);
+const commentsPresentation_1 = __require(216);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -86997,7 +87196,7 @@ class NodeHoverPreview {
 exports.NodeHoverPreview = NodeHoverPreview;
 
 },
-239: function(module, exports, __require, __externalRequire) {
+240: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageLightbox.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87100,13 +87299,13 @@ class ImageLightbox {
 exports.ImageLightbox = ImageLightbox;
 
 },
-240: function(module, exports, __require, __externalRequire) {
+241: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeStylePanel = void 0;
-const colorPalette_1 = __require(229);
-const colorPresentation_1 = __require(228);
+const colorPalette_1 = __require(230);
+const colorPresentation_1 = __require(229);
 const INPUT_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 function toInputValue(value) {
     return value === null || value === undefined ? '' : String(value);
@@ -87417,14 +87616,14 @@ class NodeStylePanel {
 exports.NodeStylePanel = NodeStylePanel;
 
 },
-241: function(module, exports, __require, __externalRequire) {
+242: function(module, exports, __require, __externalRequire) {
 // /src/ui/projectStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectStylePanel = void 0;
 const projectStyle_1 = __require(20);
-const colorPalette_1 = __require(229);
-const colorPresentation_1 = __require(228);
+const colorPalette_1 = __require(230);
+const colorPresentation_1 = __require(229);
 const colorSchemes_1 = __require(21);
 const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 class ProjectStylePanel {
@@ -87725,7 +87924,7 @@ class ProjectStylePanel {
 exports.ProjectStylePanel = ProjectStylePanel;
 
 },
-242: function(module, exports, __require, __externalRequire) {
+243: function(module, exports, __require, __externalRequire) {
 // /src/ui/layoutGalleryPanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87823,7 +88022,7 @@ class LayoutGalleryPanel {
 exports.LayoutGalleryPanel = LayoutGalleryPanel;
 
 },
-243: function(module, exports, __require, __externalRequire) {
+244: function(module, exports, __require, __externalRequire) {
 // /src/ui/localAssetDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87969,7 +88168,7 @@ function openClipartPicker(commands, options = {}) {
 }
 
 },
-244: function(module, exports, __require, __externalRequire) {
+245: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRichTextVisibility.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88006,7 +88205,7 @@ function synchronizeCanvasRichTextVisibility(map) {
 }
 
 },
-245: function(module, exports, __require, __externalRequire) {
+246: function(module, exports, __require, __externalRequire) {
 // /src/editor/searchPanelState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88026,7 +88225,7 @@ function setSearchReplaceExpanded(panel, expanded) {
 }
 
 },
-246: function(module, exports, __require, __externalRequire) {
+247: function(module, exports, __require, __externalRequire) {
 // /src/core/appearanceTransaction.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88139,7 +88338,7 @@ function applyMapAppearanceTransaction(options) {
 }
 
 },
-247: function(module, exports, __require, __externalRequire) {
+248: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeQuickActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88357,12 +88556,13 @@ class NodeQuickActionsController {
 exports.NodeQuickActionsController = NodeQuickActionsController;
 
 },
-248: function(module, exports, __require, __externalRequire) {
+249: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRightDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CanvasRightDragController = exports.CanvasRightDragGesture = void 0;
 exports.shouldSuppressCanvasContextMenu = shouldSuppressCanvasContextMenu;
+exports.cancelNativeSelectionGesture = cancelNativeSelectionGesture;
 class CanvasRightDragGesture {
     constructor(threshold = 5) {
         this.threshold = threshold;
@@ -88433,17 +88633,43 @@ exports.CanvasRightDragGesture = CanvasRightDragGesture;
 function shouldSuppressCanvasContextMenu(gesture) {
     return gesture.consumeContextMenu();
 }
+function cancelNativeSelectionGesture(map) {
+    const select = map?.select;
+    if (!select)
+        return false;
+    select.autoMove?.clearAutoMoveTimer?.();
+    select.isMousedown = false;
+    select.isSelecting = false;
+    select.cacheActiveList = [];
+    if (select.rect)
+        select.rect.remove?.();
+    select.rect = null;
+    return true;
+}
 class CanvasRightDragController {
     constructor(options) {
         this.options = options;
         this.gesture = new CanvasRightDragGesture(5);
+        this.panSelectionSnapshot = null;
         this.onMouseDown = (event) => {
-            this.gesture.pointerDown(event);
+            if (!this.gesture.pointerDown(event))
+                return;
+            if (this.options.mode() === "pan") {
+                const active = this.options.map?.renderer?.activeNodeList;
+                this.panSelectionSnapshot = Array.isArray(active) ? [...active] : [];
+                cancelNativeSelectionGesture(this.options.map);
+            }
+            else {
+                this.panSelectionSnapshot = null;
+            }
         };
         this.onMouseMove = (event) => {
             const result = this.gesture.pointerMove(event);
+            if (this.options.mode() === "pan")
+                cancelNativeSelectionGesture(this.options.map);
             if (!result.dragging)
                 return;
+            this.restorePanSelection();
             event.preventDefault();
             this.options.root.classList.add("is-canvas-right-dragging");
             if (this.options.mode() === "pan" && (result.dx || result.dy)) {
@@ -88451,7 +88677,10 @@ class CanvasRightDragController {
             }
         };
         this.finishGesture = () => {
-            this.gesture.pointerUp();
+            const dragged = this.gesture.pointerUp();
+            if (dragged)
+                this.restorePanSelection();
+            this.panSelectionSnapshot = null;
             this.options.root.classList.remove("is-canvas-right-dragging");
         };
         this.onMouseUp = () => {
@@ -88484,13 +88713,29 @@ class CanvasRightDragController {
     }
     cancel() {
         this.gesture.cancel();
+        this.panSelectionSnapshot = null;
         this.options.root.classList.remove("is-canvas-right-dragging");
+    }
+    restorePanSelection() {
+        const snapshot = this.panSelectionSnapshot;
+        const renderer = this.options.map?.renderer;
+        if (!snapshot || !renderer)
+            return;
+        const current = Array.isArray(renderer.activeNodeList) ? renderer.activeNodeList : [];
+        if (current.length === snapshot.length && snapshot.every((node) => current.includes(node)))
+            return;
+        renderer.clearActiveNodeList?.();
+        if (typeof renderer.activeMultiNode === "function")
+            renderer.activeMultiNode(snapshot);
+        else
+            renderer.activeNodeList = [...snapshot];
+        renderer.emitNodeActiveEvent?.(snapshot[0] ?? null, [...snapshot]);
     }
 }
 exports.CanvasRightDragController = CanvasRightDragController;
 
 },
-249: function(module, exports, __require, __externalRequire) {
+250: function(module, exports, __require, __externalRequire) {
 // /src/editor/focusHighlight.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88555,7 +88800,7 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
 }
 
 },
-250: function(module, exports, __require, __externalRequire) {
+251: function(module, exports, __require, __externalRequire) {
 // /src/editor/editingSurfaceCoordinator.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88640,7 +88885,7 @@ class EditingSurfaceCoordinator {
 exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
 
 },
-251: function(module, exports, __require, __externalRequire) {
+252: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88662,7 +88907,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-252: function(module, exports, __require, __externalRequire) {
+253: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88686,7 +88931,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-253: function(module, exports, __require, __externalRequire) {
+254: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88742,7 +88987,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-254: function(module, exports, __require, __externalRequire) {
+255: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88768,7 +89013,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-255: function(module, exports, __require, __externalRequire) {
+256: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88784,7 +89029,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-256: function(module, exports, __require, __externalRequire) {
+257: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88811,7 +89056,7 @@ function initializePluginStartup(options) {
 }
 
 },
-257: function(module, exports, __require, __externalRequire) {
+258: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

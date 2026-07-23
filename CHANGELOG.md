@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.14 - 2026-07-23
+
+- Replaced per-node multi-selection summaries with one combined summary projected to a contiguous range under the lowest common ancestor.
+- Preserved native summary history, rich-text editing and duplicate-range protection while keeping selected descendants folded into their selected ancestor.
+- Rebuilt hidden-tab measurement around a stable off-screen editor context and one full repair render, keeping text and node frames in the same geometry generation.
+- Isolated drag-first right-button panning from the upstream selection plugin, removing the selection rectangle and selection mutation without breaking stationary context menus.
+- Added permanent v0.9.14 unit, source-contract and Chromium regressions for all three reported defects.
+
 ## 0.9.13 - 2026-07-23
 
 - Kept marker sprites out of node-content geometry by rendering each icon through a viewport-sized SVG pattern.

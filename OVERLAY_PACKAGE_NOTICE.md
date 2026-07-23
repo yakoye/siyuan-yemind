@@ -1,4 +1,4 @@
-# YeMind v0.9.13 overlay package
+# YeMind v0.9.14 overlay package
 
 This ZIP is an overlay patch for an existing `siyuan-yemind` project that already contains the fixed local resources:
 

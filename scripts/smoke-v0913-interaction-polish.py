@@ -1,4 +1,4 @@
-"""v0.9.13 marker bounds, stable measurement, compact panels, top menu and multi-selection smoke."""
+"""v0.9.14 marker bounds, stable measurement, compact panels, top menu and multi-selection smoke."""
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -69,16 +69,16 @@ with sync_playwright() as p:
         if rect['left'] < marker['node']['left'] - 1 or rect['right'] > marker['node']['right'] + 1:
             raise RuntimeError(f'Marker escaped node bounds: {marker}')
 
-    measurement = page.evaluate("""()=>{const els=[...document.querySelectorAll('[data-yemind-measurement-owner=true]')];return{count:els.length,allOnBody:els.every(el=>el.parentElement===document.body),nodes:[...document.querySelectorAll('g.smm-node')].map(node=>({text:node.querySelector('.smm-richtext-node-wrap')?.innerText.trim()||'',r:node.getBoundingClientRect().toJSON()}))}}""")
-    if measurement['count'] < 1 or not measurement['allOnBody']:
-        raise RuntimeError(f'Measurement elements were not stabilized on document.body: {measurement}')
+    measurement = page.evaluate("""()=>{const els=[...document.querySelectorAll('[data-yemind-measurement-owner=true]')];return{count:els.length,allStable:els.every(el=>el.parentElement?.dataset.yemindMeasurementHost==='true'),nodes:[...document.querySelectorAll('g.smm-node')].map(node=>({text:node.querySelector('.smm-richtext-node-wrap')?.innerText.trim()||'',r:node.getBoundingClientRect().toJSON()}))}}""")
+    if measurement['count'] < 1 or not measurement['allStable']:
+        raise RuntimeError(f'Measurement elements were not stabilized in the off-screen host: {measurement}')
     if any(not item['text'] or item['r']['width'] < 20 or item['r']['height'] < 15 for item in measurement['nodes']):
         raise RuntimeError(f'Blank/tiny node detected: {measurement}')
 
     # A hidden/visible tab resize cycle must not move measurement elements back into the canvas.
     page.evaluate("""()=>{const canvas=document.querySelector('.ymz-canvas');canvas.style.display='none';window.__tabOptions.resize.call(window.__smoke.context);canvas.style.display='';window.__tabOptions.resize.call(window.__smoke.context)}""")
     page.wait_for_timeout(180)
-    post_resize = page.evaluate("""()=>({measurements:[...document.querySelectorAll('[data-yemind-measurement-owner=true]')].every(el=>el.parentElement===document.body),nodes:[...document.querySelectorAll('g.smm-node')].map(node=>({text:node.querySelector('.smm-richtext-node-wrap')?.innerText.trim()||'',r:node.getBoundingClientRect().toJSON()}))})""")
+    post_resize = page.evaluate("""()=>({measurements:[...document.querySelectorAll('[data-yemind-measurement-owner=true]')].every(el=>el.parentElement?.dataset.yemindMeasurementHost==='true'),nodes:[...document.querySelectorAll('g.smm-node')].map(node=>({text:node.querySelector('.smm-richtext-node-wrap')?.innerText.trim()||'',r:node.getBoundingClientRect().toJSON()}))})""")
     if not post_resize['measurements'] or any(not item['text'] or item['r']['width'] < 20 for item in post_resize['nodes']):
         raise RuntimeError(f'Hidden tab resize collapsed nodes: {post_resize}')
 
@@ -106,7 +106,7 @@ with sync_playwright() as p:
     if settings_index < 0 or menu_labels[settings_index:settings_index + 3] != ['设置', '关于 YeMind', '诊断与回归']:
         raise RuntimeError(f'About menu order is wrong: {menu_labels}')
     page.evaluate("""()=>window.__lastMenu.items.find(item=>item.label==='关于 YeMind').click()""")
-    about = page.evaluate("""()=>({exists:!!document.querySelector('.ymz-about-dialog'),version:document.querySelector('.ymz-about-dialog')?.textContent.includes('0.9.13'),title:window.__lastDialog?.options?.title||''})""")
+    about = page.evaluate("""()=>({exists:!!document.querySelector('.ymz-about-dialog'),version:document.querySelector('.ymz-about-dialog')?.textContent.includes('0.9.14'),title:window.__lastDialog?.options?.title||''})""")
     if not about['exists'] or not about['version'] or about['title'] != '关于 YeMind':
         raise RuntimeError(f'Standalone About dialog is wrong: {about}')
 

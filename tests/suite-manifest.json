@@ -28,7 +28,8 @@
     "v083TextEditingTransactions.suite.ts",
     "v084DragRichTextRecovery.suite.ts",
     "yeMindRichText.suite.ts",
-    "v0913MeasurementHost.suite.ts"
+    "v0913MeasurementHost.suite.ts",
+    "v0914MeasurementGeometry.suite.ts"
   ],
   "styles-themes": [
     "colorPresentation.suite.ts",

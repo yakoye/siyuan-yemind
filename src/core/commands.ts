@@ -5,6 +5,7 @@ import type { NodeNote } from '../content/nodeNoteState';
 import { deleteCodeBlock, findCurrentCodeBlock, removeCodeBlockFormat, replaceCodeBlock, type CodeBlockSnapshot } from '../editor/codeBlock';
 import type { RichTextFormattingTarget } from '../editor/richTextTarget';
 import { normalizeNodeStylePatch, nodeStyleSnapshot, type NodeStylePatch } from '../editor/nodeStyle';
+import { addCombinedSummary } from './combinedSummary';
 
 export interface NodeImageInput {
   url: string | null;
@@ -334,7 +335,7 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       }
       mindMap.execCommand('INSERT_FORMULA', value);
     },
-    addSummary: () => { if (canMutate()) mindMap.execCommand('ADD_GENERALIZATION'); },
+    addSummary: () => { if (canMutate()) addCombinedSummary(mindMap as any, activeNodes()); },
     removeSummary: () => {
       if (!canMutate()) return;
       const node = primaryNode();

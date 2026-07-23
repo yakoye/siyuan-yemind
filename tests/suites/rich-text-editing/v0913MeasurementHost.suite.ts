@@ -5,33 +5,34 @@ import { stabilizeMindMapMeasurementHost } from '../../../src/core/measurementHo
 
 describe('v0.9.13 hidden-tab rich-text measurement', () => {
   afterEach(() => {
-    document.querySelectorAll('[data-yemind-measurement-owner]').forEach((node) => node.remove());
+    document.querySelectorAll('[data-yemind-measurement-host]').forEach((node) => node.remove());
   });
 
-  it('moves measurement nodes out of a hidden canvas, rerenders, and removes them before destroy', () => {
+  it('moves measurement nodes out of a hidden canvas and removes the stable host before destroy', () => {
     const canvas = document.createElement('div');
     canvas.style.display = 'none';
     const rich = document.createElement('div');
     const custom = document.createElement('div');
     canvas.append(rich, custom);
     document.body.append(canvas);
-    const reRender = vi.fn();
+    const render = vi.fn();
     let beforeDestroy: (() => void) | null = null;
     const map = {
       commonCaches: {
         measureRichtextNodeTextSizeEl: rich,
         measureCustomNodeContentSizeEl: custom,
       },
-      reRender,
+      render,
       on: vi.fn((name: string, callback: () => void) => {
         if (name === 'beforeDestroy') beforeDestroy = callback;
       }),
     };
 
-    expect(stabilizeMindMapMeasurementHost(map)).toBe(true);
-    expect(rich.parentElement).toBe(document.body);
-    expect(custom.parentElement).toBe(document.body);
-    expect(reRender).toHaveBeenCalledOnce();
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => { callback(0); return 1; });
+    expect(stabilizeMindMapMeasurementHost(map, canvas)).toBe(true);
+    expect(rich.parentElement?.dataset.yemindMeasurementHost).toBe('true');
+    expect(custom.parentElement).toBe(rich.parentElement);
+    expect(render).toHaveBeenCalledOnce();
     beforeDestroy?.();
     expect(rich.isConnected).toBe(false);
     expect(custom.isConnected).toBe(false);
@@ -44,19 +45,20 @@ describe('v0.9.13 hidden-tab rich-text measurement', () => {
     const callbacks = new Map<string, () => void>();
     const map = {
       commonCaches: {},
-      reRender: vi.fn(),
+      render: vi.fn(),
       on: vi.fn((name: string, callback: () => void) => callbacks.set(name, callback)),
     };
 
-    expect(stabilizeMindMapMeasurementHost(map)).toBe(false);
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => { callback(0); return 1; });
+    expect(stabilizeMindMapMeasurementHost(map, canvas)).toBe(false);
     const rich = document.createElement('div');
     canvas.append(rich);
     map.commonCaches.measureRichtextNodeTextSizeEl = rich;
     callbacks.get('node_tree_render_end')?.();
 
-    expect(rich.parentElement).toBe(document.body);
+    expect(rich.parentElement?.dataset.yemindMeasurementHost).toBe('true');
     expect(rich.dataset.yemindMeasurementOwner).toBe('true');
-    expect(map.reRender).toHaveBeenCalledOnce();
+    expect(map.render).toHaveBeenCalledOnce();
     callbacks.get('beforeDestroy')?.();
     expect(rich.isConnected).toBe(false);
     canvas.remove();
@@ -65,10 +67,10 @@ describe('v0.9.13 hidden-tab rich-text measurement', () => {
   it('stabilizes the measurement host after map creation and before visible-canvas resize', () => {
     const factorySource = readFileSync(resolve(process.cwd(), 'src/core/createMindMap.ts'), 'utf8');
     const editorSource = readFileSync(resolve(process.cwd(), 'src/editor/YeMindEditor.ts'), 'utf8');
-    expect(factorySource).toContain('stabilizeMindMapMeasurementHost(mindMap as any)');
-    expect(editorSource).toContain('stabilizeMindMapMeasurementHost(this.map as any)');
-    expect(editorSource.indexOf('stabilizeMindMapMeasurementHost(this.map as any)'))
-      .toBeLessThan(editorSource.indexOf('this.map.resize()', editorSource.indexOf('stabilizeMindMapMeasurementHost(this.map as any)')));
+    expect(factorySource).toContain('stabilizeMindMapMeasurementHost(mindMap as any, editorRoot)');
+    expect(editorSource).toContain('stabilizeMindMapMeasurementHost(this.map as any, this.rootEl)');
+    expect(editorSource.indexOf('stabilizeMindMapMeasurementHost(this.map as any, this.rootEl)'))
+      .toBeLessThan(editorSource.indexOf('this.map.resize()', editorSource.indexOf('stabilizeMindMapMeasurementHost(this.map as any, this.rootEl)')));
   });
 
 });
