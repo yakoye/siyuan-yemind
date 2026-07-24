@@ -236,6 +236,10 @@ describe('node style command bridge', () => {
       customTextWidth: 200,
       borderWidth: 2,
     }]);
+    expect(map.execCommand.mock.calls).toContainEqual(['SET_NODE_DATA', node, {
+      width: 200,
+      yemindImportedAutoWidth: false,
+    }]);
     expect(map.execCommand.mock.calls).toContainEqual(['REMOVE_CUSTOM_STYLES', node]);
   });
 

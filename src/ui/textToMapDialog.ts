@@ -34,20 +34,14 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#039;');
 }
 
-function previewText(result: OutlineTreeImportResult): string {
-  if (!result.lines.length) return '等待粘贴文本…';
-  const lastAtDepth = new Map<number, number>();
-  result.lines.forEach((line, index) => lastAtDepth.set(line.depth, index));
-  return result.lines.map((line, index) => {
-    if (line.depth === 0) return line.text;
-    let prefix = '';
-    for (let depth = 1; depth < line.depth; depth += 1) {
-      const hasLater = result.lines.slice(index + 1).some((candidate) => candidate.depth >= depth);
-      prefix += hasLater ? '│  ' : '   ';
-    }
-    const isLast = lastAtDepth.get(line.depth) === index;
-    return `${prefix}${isLast ? '└─ ' : '├─ '}${line.text}`;
-  }).join('\n');
+export function previewRowsHtml(result: OutlineTreeImportResult): string {
+  if (!result.lines.length) {
+    return '<div class="ymz-text-map-dialog__empty">等待粘贴文本…<small>解析后将在此显示移除树形符号后的节点层级。</small></div>';
+  }
+  return result.lines.map((line) => {
+    const text = escapeHtml(line.text).replaceAll('\n', '<br>');
+    return `<div class="ymz-text-map-dialog__preview-row" style="--ymz-import-depth:${Math.max(0, line.depth)}" data-import-depth="${Math.max(0, line.depth)}"><span>${text}</span></div>`;
+  }).join('');
 }
 
 function resultStatus(result: OutlineTreeImportResult): string {
@@ -65,7 +59,8 @@ function resultStatus(result: OutlineTreeImportResult): string {
 export function openTextToMapDialog(options: TextToMapDialogOptions): void {
   const dialog = new Dialog({
     title: '文本转导图',
-    width: 'min(980px, calc(100vw - 32px))',
+    width: 'min(980px, calc(100vw - 48px))',
+    height: 'min(700px, calc(100vh - 64px))',
     content: `<div class="b3-dialog__content ymz-text-map-dialog">
       <div class="ymz-text-map-dialog__toolbar">
         <label>识别方式
@@ -87,7 +82,7 @@ export function openTextToMapDialog(options: TextToMapDialogOptions): void {
         </section>
         <section class="ymz-text-map-dialog__pane">
           <div class="ymz-text-map-dialog__heading">解析预览</div>
-          <pre class="ymz-text-map-dialog__preview" data-role="preview">等待粘贴文本…</pre>
+          <div class="ymz-text-map-dialog__preview" data-role="preview"><div class="ymz-text-map-dialog__empty">等待粘贴文本…<small>解析后将在此显示移除树形符号后的节点层级。</small></div></div>
         </section>
       </div>
       <div class="ymz-text-map-dialog__status" data-role="status">粘贴文本后将自动预览。</div>
@@ -112,7 +107,7 @@ export function openTextToMapDialog(options: TextToMapDialogOptions): void {
     const selectedMode = mode.value as OutlineTreeImportMode;
     source.placeholder = OUTLINE_TREE_IMPORT_PLACEHOLDERS[selectedMode];
     current = parseOutlineTreeText(source.value, selectedMode);
-    preview.textContent = previewText(current);
+    preview.innerHTML = previewRowsHtml(current);
     status.textContent = source.value.trim() ? resultStatus(current) : '粘贴文本后将自动预览。';
     messages.innerHTML = [
       ...current.errors.map((text) => `<div class="ymz-text-map-dialog__error">${escapeHtml(text)}</div>`),

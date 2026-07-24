@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.24 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.25 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -39,11 +39,11 @@ const releaseInfo_1 = __require(29);
 const constants_1 = __require(28);
 const dock_1 = __require(38);
 const tabs_1 = __require(39);
-const OpenMapTabRegistry_1 = __require(261);
-const pluginUrl_1 = __require(262);
-const operationSafety_1 = __require(263);
-const pluginStartup_1 = __require(264);
-const globalSearch_1 = __require(265);
+const OpenMapTabRegistry_1 = __require(263);
+const pluginUrl_1 = __require(264);
+const operationSafety_1 = __require(265);
+const pluginStartup_1 = __require(266);
+const globalSearch_1 = __require(267);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -15844,7 +15844,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.24';
+exports.PLUGIN_VERSION = '0.9.25';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -15861,21 +15861,20 @@ const constants_1 = __require(28);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-24T10:45:39Z',
-    buildId: 'yemind-v0.9.24-20260724',
+    buildTime: '2026-07-24T13:53:45Z',
+    buildId: 'yemind-v0.9.25-20260724',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '增加大纲文本转导图、节点级右键操作与连续回车退层级，并修复宿主暗黑切换的画布漂移和主题/线型控件可见性。',
+    releaseSummary: '优化文本转导图的大文本预览与导入节点宽度，统一暗黑主题项目控件，并让大纲同步显示和添加图片、图标与剪贴图。',
     highlights: [
-        '大纲右键菜单按节点编辑、插入、文本转换、行级剪贴、排序、折叠和两种删除语义重新组织。',
-        '文本转导图支持 Unicode 树、Windows Tree、空格或 Tab 缩进、Markdown、编号大纲和普通多行文本，并提供动态示例与实时预览。',
-        '新建导图只保留中心主题；空白大纲行连续按 Enter 会逐级提升，在一级边界删除空行并回到中心主题。',
-        '剪切当前行只复制并清空节点文字，节点、全部子级、层级与顺序保持不变。',
-        '宿主明暗模式切换时完整保存并二次恢复画布 transform，隐藏或零尺寸画布延迟重绘，避免节点整体向右漂移。',
-        '主题和线型的文字、图标、悬停/打开状态及原生下拉选项完整适配暗黑主题。',
-        '富文本选区工具栏使用思源 iconMath 公式图标，不再显示 π 字符。',
+        '文本转导图对话框限制在视口内，原始文本和处理后结构分别滚动，右侧预览展示去除树形符号后的真实层级结果。',
+        '超过约二十个汉字显示宽度的导入节点默认使用 280px 自动换行，不修改原始文字；用户手动调整宽度后以自定义值持久保存。',
+        '主题与线型改为自定义选择面板，结构、主题、线型、样式和保存状态在暗黑主题下使用统一可读前景、悬停和选中配色。',
+        '大纲以紧凑附件槽同步显示节点图标、图片和剪贴图，并复用导图的图标、剪贴图和图片添加入口。',
+        '大纲只同步节点内容，不复制节点边框、背景、形状和连线等画布装饰样式。',
+        '保留 v0.9.24 的文本导入、连续 Enter 退层级、公式图标和主题切换视图稳定性修复。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -16988,10 +16987,10 @@ function escapeHtml(value) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
 const YeMindEditor_1 = __require(40);
-const deferredMount_1 = __require(259);
+const deferredMount_1 = __require(261);
 const constants_1 = __require(28);
-const visibleElement_1 = __require(243);
-const tabNodeFocus_1 = __require(260);
+const visibleElement_1 = __require(244);
+const tabNodeFocus_1 = __require(262);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -17099,42 +17098,43 @@ const contextMenu_1 = __require(216);
 const dialogs_1 = __require(25);
 const textToMapDialog_1 = __require(223);
 const nodeContentDialogs_1 = __require(217);
-const richTextDialogs_1 = __require(227);
-const editorStats_1 = __require(228);
-const editorTemplate_1 = __require(229);
-const outlineDrag_1 = __require(230);
-const StructuredOutlineEditorController_1 = __require(231);
-const splitPane_1 = __require(232);
-const RichTextToolbar_1 = __require(233);
+const richTextDialogs_1 = __require(228);
+const editorStats_1 = __require(229);
+const editorTemplate_1 = __require(230);
+const outlineDrag_1 = __require(231);
+const StructuredOutlineEditorController_1 = __require(232);
+const splitPane_1 = __require(233);
+const RichTextToolbar_1 = __require(234);
 const shortcuts_1 = __require(32);
-const selectionPresentation_1 = __require(237);
-const saveRevision_1 = __require(238);
-const relationPresentation_1 = __require(239);
-const outerFramePresentation_1 = __require(240);
-const toolbarAvailability_1 = __require(241);
-const linkNavigation_1 = __require(242);
-const visibleElement_1 = __require(243);
+const selectionPresentation_1 = __require(238);
+const saveRevision_1 = __require(239);
+const relationPresentation_1 = __require(240);
+const outerFramePresentation_1 = __require(241);
+const toolbarAvailability_1 = __require(242);
+const linkNavigation_1 = __require(243);
+const visibleElement_1 = __require(244);
 const imageFileLoading_1 = __require(218);
-const nodeImageInput_1 = __require(244);
-const nodeHoverPreview_1 = __require(245);
-const imageLightbox_1 = __require(246);
-const nodeStylePanel_1 = __require(247);
-const projectStylePanel_1 = __require(248);
-const layoutGalleryPanel_1 = __require(249);
-const localAssetDialogs_1 = __require(250);
+const nodeImageInput_1 = __require(245);
+const nodeHoverPreview_1 = __require(246);
+const imageLightbox_1 = __require(247);
+const nodeStylePanel_1 = __require(248);
+const projectStylePanel_1 = __require(249);
+const layoutGalleryPanel_1 = __require(250);
+const projectChoicePanel_1 = __require(251);
+const localAssetDialogs_1 = __require(252);
 const layoutAssetPresets_1 = __require(14);
 const measurementHost_1 = __require(205);
-const canvasRichTextVisibility_1 = __require(251);
-const searchPanelState_1 = __require(252);
+const canvasRichTextVisibility_1 = __require(253);
+const searchPanelState_1 = __require(254);
 const projectStyle_1 = __require(20);
-const appearanceTransaction_1 = __require(253);
-const nodeQuickActions_1 = __require(254);
+const appearanceTransaction_1 = __require(255);
+const nodeQuickActions_1 = __require(256);
 const projectControls_1 = __require(35);
 const nodeNoteState_1 = __require(198);
-const canvasRightDrag_1 = __require(255);
-const liveNodeWidthLayout_1 = __require(256);
-const focusHighlight_1 = __require(257);
-const editingSurfaceCoordinator_1 = __require(258);
+const canvasRightDrag_1 = __require(257);
+const liveNodeWidthLayout_1 = __require(258);
+const focusHighlight_1 = __require(259);
+const editingSurfaceCoordinator_1 = __require(260);
 const clipartGeometry_1 = __require(212);
 class YeMindEditor {
     constructor(options) {
@@ -17152,6 +17152,8 @@ class YeMindEditor {
         this.nodeStylePanel = null;
         this.projectStylePanel = null;
         this.layoutGalleryPanel = null;
+        this.themeChoicePanel = null;
+        this.lineStyleChoicePanel = null;
         this.nodeQuickActions = null;
         this.canvasRightDrag = null;
         this.liveNodeWidthLayout = null;
@@ -17508,6 +17510,10 @@ class YeMindEditor {
         this.projectStylePanel = null;
         this.layoutGalleryPanel?.destroy();
         this.layoutGalleryPanel = null;
+        this.themeChoicePanel?.destroy();
+        this.themeChoicePanel = null;
+        this.lineStyleChoicePanel?.destroy();
+        this.lineStyleChoicePanel = null;
         this.nodeQuickActions?.destroy();
         this.nodeQuickActions = null;
         this.canvasRightDrag?.destroy();
@@ -17668,6 +17674,32 @@ class YeMindEditor {
         });
         this.current.layoutPresetId = (0, layoutAssetPresets_1.normalizeLayoutAssetId)(this.current.layoutPresetId, this.current.layout);
         this.layoutGalleryPanel = new layoutGalleryPanel_1.LayoutGalleryPanel(this.rootEl, this.options.pluginBaseUrl, this.current.layoutPresetId, () => Boolean(this.commands?.isReadonly()), (presetId, layout) => this.setLayoutPreset(presetId, layout));
+        this.themeChoicePanel = new projectChoicePanel_1.ProjectChoicePanel(this.rootEl, {
+            role: "theme-choice-panel",
+            title: "主题",
+            options: themePresets_1.YEMIND_THEME_PRESETS.map((preset) => ({
+                value: preset.id,
+                label: preset.label,
+                group: preset.group,
+                description: preset.description,
+                previewColor: preset.light.colorAppearance.centerBackground,
+            })),
+            selected: this.current.theme,
+            readonly: () => Boolean(this.commands?.isReadonly()),
+            onSelect: (value) => this.setTheme(value),
+        });
+        this.lineStyleChoicePanel = new projectChoicePanel_1.ProjectChoicePanel(this.rootEl, {
+            role: "line-style-choice-panel",
+            title: "线型",
+            options: [
+                { value: "curve", label: "弧线", description: "平滑曲线", iconHtml: (0, projectControls_1.lineStyleIcon)("curve") },
+                { value: "straight", label: "圆角折线", description: "水平与垂直折线", iconHtml: (0, projectControls_1.lineStyleIcon)("straight") },
+                { value: "direct", label: "直线", description: "节点之间直接连接", iconHtml: (0, projectControls_1.lineStyleIcon)("direct") },
+            ],
+            selected: this.current.lineStyle,
+            readonly: () => Boolean(this.commands?.isReadonly()),
+            onSelect: (value) => this.setLineStyle(value),
+        });
         this.nodeQuickActions = new nodeQuickActions_1.NodeQuickActionsController({
             root: this.rootEl,
             canvas: this.canvasEl,
@@ -17693,6 +17725,7 @@ class YeMindEditor {
         });
         this.outlineRichText = new StructuredOutlineEditorController_1.StructuredOutlineEditorController({
             root: this.outlineEl,
+            pluginBaseUrl: this.options.pluginBaseUrl,
             getTree: () => this.current.data,
             isReadonly: () => Boolean(this.commands?.isReadonly()),
             onApply: (tree, details) => {
@@ -17862,15 +17895,36 @@ class YeMindEditor {
                     break;
                 case "node-style":
                     this.projectStylePanel?.hide();
+                    this.layoutGalleryPanel?.hide();
+                    this.themeChoicePanel?.hide();
+                    this.lineStyleChoicePanel?.hide();
                     this.nodeStylePanel?.toggle(button);
                     break;
                 case "layout-gallery":
                     this.nodeStylePanel?.hide();
                     this.projectStylePanel?.hide();
+                    this.themeChoicePanel?.hide();
+                    this.lineStyleChoicePanel?.hide();
                     this.layoutGalleryPanel?.toggle(button);
+                    break;
+                case "theme-gallery":
+                    this.layoutGalleryPanel?.hide();
+                    this.nodeStylePanel?.hide();
+                    this.projectStylePanel?.hide();
+                    this.lineStyleChoicePanel?.hide();
+                    this.themeChoicePanel?.toggle(button);
+                    break;
+                case "line-style-gallery":
+                    this.layoutGalleryPanel?.hide();
+                    this.nodeStylePanel?.hide();
+                    this.projectStylePanel?.hide();
+                    this.themeChoicePanel?.hide();
+                    this.lineStyleChoicePanel?.toggle(button);
                     break;
                 case "project-style":
                     this.layoutGalleryPanel?.hide();
+                    this.themeChoicePanel?.hide();
+                    this.lineStyleChoicePanel?.hide();
                     this.nodeStylePanel?.hide();
                     this.projectStylePanel?.toggle(button);
                     break;
@@ -17972,6 +18026,7 @@ class YeMindEditor {
         const select = this.rootEl.querySelector('[data-action="theme"]');
         if (select)
             select.value = this.current.theme;
+        this.themeChoicePanel?.setSelected(this.current.theme);
         this.applyMapAppearance();
         this.options.diagnostics.record("appearance", "theme-changed", this.current.id, { theme: this.current.theme });
         this.nodeQuickActions?.scheduleRefresh();
@@ -17984,6 +18039,7 @@ class YeMindEditor {
         const select = this.rootEl.querySelector('[data-action="line-style"]');
         if (select)
             select.value = this.current.lineStyle;
+        this.lineStyleChoicePanel?.setSelected(this.current.lineStyle);
         const icon = this.rootEl.querySelector('[data-role="line-style-icon"]');
         if (icon)
             icon.innerHTML = (0, projectControls_1.lineStyleIcon)(this.current.lineStyle);
@@ -18536,6 +18592,8 @@ class YeMindEditor {
             "reset-layout": state.resetLayout,
             "node-style": !this.commands.isReadonly() && nodes.length > 0,
             "project-style": !this.commands.isReadonly(),
+            "theme-gallery": !this.commands.isReadonly(),
+            "line-style-gallery": !this.commands.isReadonly(),
         };
         this.rootEl
             .querySelectorAll("button[data-action]")
@@ -18553,6 +18611,8 @@ class YeMindEditor {
         const lineStyle = this.rootEl.querySelector('[data-action="line-style"]');
         if (lineStyle)
             lineStyle.disabled = this.commands.isReadonly();
+        this.themeChoicePanel?.refreshReadonly();
+        this.lineStyleChoicePanel?.refreshReadonly();
     }
     updateSelectionPresentation(count) {
         const activeList = Array.isArray(this.map?.renderer?.activeNodeList)
@@ -18841,6 +18901,21 @@ class YeMindEditor {
                     return applied;
                 },
             }),
+            onMarkers: () => {
+                activate();
+                if (this.commands)
+                    (0, localAssetDialogs_1.openMarkerPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl });
+            },
+            onClipart: () => {
+                activate();
+                if (this.commands)
+                    (0, localAssetDialogs_1.openClipartPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl });
+            },
+            onImage: () => {
+                activate();
+                if (this.commands)
+                    (0, nodeContentDialogs_1.openImageDialog)(this.commands);
+            },
             onCopyLine: () => this.outlineRichText.copyCurrentLine(uid),
             onCutLine: () => this.outlineRichText.cutCurrentLine(uid),
             onPasteAtCaret: () => this.outlineRichText.pasteCurrentLine(uid, false),
@@ -19014,9 +19089,11 @@ class YeMindEditor {
             const themeSelect = this.rootEl.querySelector('[data-action="theme"]');
             if (themeSelect)
                 themeSelect.value = this.current.theme;
+            this.themeChoicePanel?.setSelected(this.current.theme);
             const lineStyleSelect = this.rootEl.querySelector('[data-action="line-style"]');
             if (lineStyleSelect)
                 lineStyleSelect.value = this.current.lineStyle;
+            this.lineStyleChoicePanel?.setSelected(this.current.lineStyle);
             this.projectStylePanel?.setStyle(this.current.projectStyle);
             this.applyMapAppearance();
             if (!viewData) {
@@ -82477,7 +82554,15 @@ function createCommandAdapter(mindMap) {
                 else
                     nativePatch[key] = nativeValue;
             });
-            forEachActive((node) => mindMap.execCommand('SET_NODE_STYLES', node, nativePatch));
+            forEachActive((node) => {
+                mindMap.execCommand('SET_NODE_STYLES', node, nativePatch);
+                if (Object.prototype.hasOwnProperty.call(patch, 'width')) {
+                    mindMap.execCommand('SET_NODE_DATA', node, {
+                        width: patch.width === null ? undefined : patch.width,
+                        yemindImportedAutoWidth: false,
+                    });
+                }
+            });
         },
         resetActiveNodeStyle: () => {
             if (!canMutate())
@@ -83700,6 +83785,14 @@ function openOutlineContextMenu(event, options) {
     menu.addItem({ iconHTML: (0, projectControls_1.nodeInsertIcon)('sibling'), label: '插入同级节点', disabled: disabled || options.isRoot, click: run('add-sibling', options.onAddSibling) });
     menu.addItem({ iconHTML: (0, projectControls_1.nodeInsertIcon)('child'), label: '插入下级节点', disabled, click: run('add-child', options.onAddChild) });
     menu.addItem({ icon: 'iconGraph', label: '文本转导图…', disabled, click: run('text-to-map', options.onTextToMap) });
+    menu.addItem({
+        type: 'submenu', icon: 'iconAdd', label: '添加', disabled,
+        submenu: [
+            { iconHTML: (0, projectControls_1.markerIcon)(), label: '图标', disabled, click: run('icons', () => options.onMarkers?.()) },
+            { iconHTML: (0, projectControls_1.clipartIcon)(), label: '剪贴图', disabled, click: run('clipart', () => options.onClipart?.()) },
+            { icon: 'iconImage', label: '图片', disabled, click: run('image', () => options.onImage?.()) },
+        ],
+    });
     menu.addSeparator();
     menu.addItem({ icon: 'iconCopy', label: '复制（当前行）', click: run('copy-line', options.onCopyLine) });
     menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('cut'), label: '剪切（当前行）', disabled, click: run('cut-line', options.onCutLine) });
@@ -84375,6 +84468,7 @@ function createNodeMenuAvailability(input) {
 // /src/ui/textToMapDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.previewRowsHtml = previewRowsHtml;
 exports.openTextToMapDialog = openTextToMapDialog;
 const siyuan_1 = __externalRequire("siyuan");
 const outlineTreeImport_1 = __require(224);
@@ -84395,22 +84489,14 @@ function escapeHtml(value) {
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#039;');
 }
-function previewText(result) {
-    if (!result.lines.length)
-        return '等待粘贴文本…';
-    const lastAtDepth = new Map();
-    result.lines.forEach((line, index) => lastAtDepth.set(line.depth, index));
-    return result.lines.map((line, index) => {
-        if (line.depth === 0)
-            return line.text;
-        let prefix = '';
-        for (let depth = 1; depth < line.depth; depth += 1) {
-            const hasLater = result.lines.slice(index + 1).some((candidate) => candidate.depth >= depth);
-            prefix += hasLater ? '│  ' : '   ';
-        }
-        const isLast = lastAtDepth.get(line.depth) === index;
-        return `${prefix}${isLast ? '└─ ' : '├─ '}${line.text}`;
-    }).join('\n');
+function previewRowsHtml(result) {
+    if (!result.lines.length) {
+        return '<div class="ymz-text-map-dialog__empty">等待粘贴文本…<small>解析后将在此显示移除树形符号后的节点层级。</small></div>';
+    }
+    return result.lines.map((line) => {
+        const text = escapeHtml(line.text).replaceAll('\n', '<br>');
+        return `<div class="ymz-text-map-dialog__preview-row" style="--ymz-import-depth:${Math.max(0, line.depth)}" data-import-depth="${Math.max(0, line.depth)}"><span>${text}</span></div>`;
+    }).join('');
 }
 function resultStatus(result) {
     const detected = MODES.find(([id]) => id === result.detectedMode)?.[1] ?? result.detectedMode;
@@ -84428,7 +84514,8 @@ function resultStatus(result) {
 function openTextToMapDialog(options) {
     const dialog = new siyuan_1.Dialog({
         title: '文本转导图',
-        width: 'min(980px, calc(100vw - 32px))',
+        width: 'min(980px, calc(100vw - 48px))',
+        height: 'min(700px, calc(100vh - 64px))',
         content: `<div class="b3-dialog__content ymz-text-map-dialog">
       <div class="ymz-text-map-dialog__toolbar">
         <label>识别方式
@@ -84450,7 +84537,7 @@ function openTextToMapDialog(options) {
         </section>
         <section class="ymz-text-map-dialog__pane">
           <div class="ymz-text-map-dialog__heading">解析预览</div>
-          <pre class="ymz-text-map-dialog__preview" data-role="preview">等待粘贴文本…</pre>
+          <div class="ymz-text-map-dialog__preview" data-role="preview"><div class="ymz-text-map-dialog__empty">等待粘贴文本…<small>解析后将在此显示移除树形符号后的节点层级。</small></div></div>
         </section>
       </div>
       <div class="ymz-text-map-dialog__status" data-role="status">粘贴文本后将自动预览。</div>
@@ -84474,7 +84561,7 @@ function openTextToMapDialog(options) {
         const selectedMode = mode.value;
         source.placeholder = outlineTreeImport_1.OUTLINE_TREE_IMPORT_PLACEHOLDERS[selectedMode];
         current = (0, outlineTreeImport_1.parseOutlineTreeText)(source.value, selectedMode);
-        preview.textContent = previewText(current);
+        preview.innerHTML = previewRowsHtml(current);
         status.textContent = source.value.trim() ? resultStatus(current) : '粘贴文本后将自动预览。';
         messages.innerHTML = [
             ...current.errors.map((text) => `<div class="ymz-text-map-dialog__error">${escapeHtml(text)}</div>`),
@@ -84506,11 +84593,41 @@ function openTextToMapDialog(options) {
 // /src/editor/outlineTreeImport.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OUTLINE_TREE_IMPORT_PLACEHOLDERS = void 0;
+exports.OUTLINE_TREE_IMPORT_PLACEHOLDERS = exports.OUTLINE_IMPORT_AUTO_WIDTH = exports.OUTLINE_IMPORT_WRAP_UNITS = void 0;
+exports.outlineImportDisplayUnits = outlineImportDisplayUnits;
 exports.parseOutlineTreeText = parseOutlineTreeText;
 exports.applyOutlineImport = applyOutlineImport;
 const textEditingPolicy_1 = __require(24);
 const structuredOutlineDocument_1 = __require(225);
+exports.OUTLINE_IMPORT_WRAP_UNITS = 20;
+exports.OUTLINE_IMPORT_AUTO_WIDTH = 280;
+function outlineImportDisplayUnits(value) {
+    let units = 0;
+    for (const char of String(value ?? '').replace(/\s+/g, ' ').trim()) {
+        if (/\s/.test(char))
+            units += 0.25;
+        else if (/[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︐-﹯！-｠￠-￦]/u.test(char))
+            units += 1;
+        else
+            units += 0.5;
+    }
+    return Math.round(units * 100) / 100;
+}
+function importedNodeData(text) {
+    const data = {
+        uid: (0, structuredOutlineDocument_1.createStructuredOutlineUid)(),
+        text,
+        expand: true,
+        yemindTextPristine: false,
+        yemindTextEdited: true,
+    };
+    if (outlineImportDisplayUnits(text) > exports.OUTLINE_IMPORT_WRAP_UNITS) {
+        data.width = exports.OUTLINE_IMPORT_AUTO_WIDTH;
+        data.customTextWidth = exports.OUTLINE_IMPORT_AUTO_WIDTH;
+        data.yemindImportedAutoWidth = true;
+    }
+    return (0, textEditingPolicy_1.pristineNodeData)(data);
+}
 exports.OUTLINE_TREE_IMPORT_PLACEHOLDERS = {
     auto: '粘贴树形文本、Windows Tree、空格/Tab 缩进、Markdown 列表或编号大纲，系统将自动识别。',
     'unicode-tree': '根节点\n├─ 节点A\n│  └─ 节点A1\n└─ 节点B',
@@ -84760,7 +84877,7 @@ function forestFromLines(lines) {
     const stack = [];
     lines.forEach((line, index) => {
         const node = {
-            data: (0, textEditingPolicy_1.pristineNodeData)({ uid: (0, structuredOutlineDocument_1.createStructuredOutlineUid)(), text: line.text, expand: true, yemindTextPristine: false, yemindTextEdited: true }),
+            data: importedNodeData(line.text),
             children: [],
         };
         const depth = index === 0 ? 0 : Math.max(0, Math.min(line.depth, stack.length));
@@ -84795,7 +84912,17 @@ function applyOutlineImport(baseTree, targetUid, result, insertMode = 'append-un
         const first = forest.shift();
         if (!first)
             return next;
-        target.data = { ...target.data, text: first.data.text, richText: false, yemindTextPristine: false, yemindTextEdited: true, expand: true };
+        target.data = {
+            ...target.data,
+            text: first.data.text,
+            richText: false,
+            yemindTextPristine: false,
+            yemindTextEdited: true,
+            expand: true,
+            ...(target.data.width === undefined && first.data.width !== undefined
+                ? { width: first.data.width, customTextWidth: first.data.width, yemindImportedAutoWidth: true }
+                : {}),
+        };
         target.children = [...first.children, ...forest, ...(target.children ?? [])];
     }
     else {
@@ -84820,6 +84947,7 @@ exports.serializeStructuredOutlineBlocks = serializeStructuredOutlineBlocks;
 exports.createStructuredOutlineUid = createStructuredOutlineUid;
 const sanitizeRichHtml_1 = __require(199);
 const outlineTextDocument_1 = __require(226);
+const outlineAccessories_1 = __require(227);
 function cloneValue(value) {
     if (typeof structuredClone === 'function') {
         try {
@@ -84894,6 +85022,7 @@ function flattenStructuredOutline(tree) {
             hasChildren: children.length > 0,
             isRoot: depth === 0,
             pristine: node.data.yemindTextPristine === true && node.data.yemindTextEdited !== true,
+            accessories: (0, outlineAccessories_1.outlineAccessoriesFromData)(node.data),
         });
         const descendantsHidden = hiddenByAncestor || !expanded;
         children.forEach((child, index) => visit(child, depth + 1, uid, descendantsHidden, `${path}.${index}`));
@@ -84911,6 +85040,7 @@ function flattenStructuredOutline(tree) {
                 hasChildren: false,
                 isRoot: false,
                 pristine: summary.yemindTextPristine === true && summary.yemindTextEdited !== true,
+                accessories: (0, outlineAccessories_1.outlineAccessoriesFromData)(summary),
             });
         });
     };
@@ -84981,6 +85111,7 @@ function buildTreeFromStructuredOutline(baseTree, inputBlocks) {
             hasChildren: false,
             isRoot: true,
             pristine: false,
+            accessories: { icons: [], image: null },
         });
     }
     const existing = indexExistingData(baseTree);
@@ -85443,6 +85574,68 @@ function insertOutlineNewline(value, selectionStart, selectionEnd) {
 
 },
 227: function(module, exports, __require, __externalRequire) {
+// /src/editor/outlineAccessories.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.outlineAccessoriesFromData = outlineAccessoriesFromData;
+exports.outlineAccessoriesHtml = outlineAccessoriesHtml;
+const localAssetCatalogs_1 = __require(15);
+const LEGACY_ICON_LABELS = {
+    yemind_star: '★',
+    yemind_flag: '⚑',
+    yemind_question: '?',
+    yemind_idea: '✦',
+    yemind_check: '✓',
+    yemind_warning: '!',
+    priority_1: '1',
+    priority_2: '2',
+    priority_3: '3',
+};
+function escapeAttribute(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('"', '&quot;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
+}
+function normalizeIcons(value) {
+    return Array.isArray(value)
+        ? value.map((item) => String(item ?? '').trim()).filter(Boolean)
+        : [];
+}
+function outlineAccessoriesFromData(data) {
+    const image = typeof data.image === 'string' && data.image.trim()
+        ? {
+            url: data.image,
+            title: typeof data.imageTitle === 'string' ? data.imageTitle : '',
+            ...(typeof data.yemindClipartId === 'string' && data.yemindClipartId
+                ? { clipartId: data.yemindClipartId }
+                : {}),
+        }
+        : null;
+    return { icons: normalizeIcons(data.icon), image };
+}
+function iconHtml(value, pluginBaseUrl) {
+    const marker = (0, localAssetCatalogs_1.markerItemFromValue)(value);
+    if (marker) {
+        const resolver = (0, localAssetCatalogs_1.createRuntimeAssetResolver)(pluginBaseUrl);
+        return `<span class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon="${escapeAttribute(value)}" title="${escapeAttribute(marker.id)}">${(0, localAssetCatalogs_1.markerSvg)(resolver.markerSpriteUrl(), marker)}</span>`;
+    }
+    const label = LEGACY_ICON_LABELS[value] ?? '•';
+    return `<span class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon="${escapeAttribute(value)}" title="${escapeAttribute(value)}">${escapeAttribute(label)}</span>`;
+}
+function outlineAccessoriesHtml(accessories, pluginBaseUrl) {
+    if (!accessories.icons.length && !accessories.image)
+        return '';
+    const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join('');
+    const image = accessories.image
+        ? `<button type="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? ' is-clipart' : ''}" data-outline-image-preview tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? '剪贴图' : '图片'))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false"></button>`
+        : '';
+    return `<span class="ymz-outline-accessories" contenteditable="false" aria-label="节点附加内容">${icons}${image}</span>`;
+}
+
+},
+228: function(module, exports, __require, __externalRequire) {
 // /src/ui/richTextDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85590,7 +85783,7 @@ function openCodeBlockDialog(commands, settings) {
 }
 
 },
-228: function(module, exports, __require, __externalRequire) {
+229: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorStats.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85623,7 +85816,7 @@ function calculateEditorStats(tree) {
 }
 
 },
-229: function(module, exports, __require, __externalRequire) {
+230: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85650,20 +85843,20 @@ function createEditorTemplate(title, theme = 'yemind-default', lineStyle = 'curv
           <select data-action="layout" aria-label="结构" hidden>
             ${(0, layoutPresets_1.layoutOptionsHtml)('logicalStructure')}
           </select>
-          <label class="ymz-project-control" data-project-control="theme" title="主题">
+          <button class="ymz-project-control ymz-project-button" data-project-control="theme" data-action="theme-gallery" title="主题" aria-haspopup="listbox" aria-expanded="false">
             ${(0, projectControls_1.projectControlIcon)('theme')}<span>主题</span>
-            <select data-action="theme" aria-label="主题">
-              ${(0, themePresets_1.themeOptionsHtml)(theme)}
-            </select>
-          </label>
-          <label class="ymz-project-control ymz-project-control--line" data-project-control="line-style" title="线型">
+          </button>
+          <select data-action="theme" aria-label="主题" hidden>
+            ${(0, themePresets_1.themeOptionsHtml)(theme)}
+          </select>
+          <button class="ymz-project-control ymz-project-button ymz-project-control--line" data-project-control="line-style" data-action="line-style-gallery" title="线型" aria-haspopup="listbox" aria-expanded="false">
             <span data-role="line-style-icon">${(0, projectControls_1.lineStyleIcon)(lineStyle)}</span><span>线型</span>
-            <select data-action="line-style" aria-label="线型">
-              <option value="curve"${(0, themePresets_1.normalizeLineStyle)(lineStyle) === 'curve' ? ' selected' : ''}>弧线</option>
-              <option value="straight"${(0, themePresets_1.normalizeLineStyle)(lineStyle) === 'straight' ? ' selected' : ''}>圆角折线</option>
-              <option value="direct"${(0, themePresets_1.normalizeLineStyle)(lineStyle) === 'direct' ? ' selected' : ''}>直线</option>
-            </select>
-          </label>
+          </button>
+          <select data-action="line-style" aria-label="线型" hidden>
+            <option value="curve"${(0, themePresets_1.normalizeLineStyle)(lineStyle) === 'curve' ? ' selected' : ''}>弧线</option>
+            <option value="straight"${(0, themePresets_1.normalizeLineStyle)(lineStyle) === 'straight' ? ' selected' : ''}>圆角折线</option>
+            <option value="direct"${(0, themePresets_1.normalizeLineStyle)(lineStyle) === 'direct' ? ' selected' : ''}>直线</option>
+          </select>
           <button class="ymz-project-control ymz-project-button" data-action="project-style" title="整图样式">${(0, projectControls_1.projectStyleIcon)()}<span>样式</span></button>
           <span class="ymz-save-state" data-role="save-state">已保存</span>
         </div>
@@ -85704,6 +85897,16 @@ function createEditorTemplate(title, theme = 'yemind-default', lineStyle = 'curv
         <aside class="ymz-layout-gallery" data-role="layout-gallery-panel" aria-label="导图结构" hidden>
           <header class="ymz-layout-gallery__header"><strong>导图结构</strong><button type="button" data-layout-gallery-action="close" aria-label="关闭结构面板">×</button></header>
           <div class="ymz-layout-gallery__body" data-role="layout-gallery-body"></div>
+        </aside>
+
+        <aside class="ymz-project-choice-panel" data-role="theme-choice-panel" aria-label="主题" role="listbox" hidden>
+          <header class="ymz-project-choice-panel__header"><strong>主题</strong><button type="button" data-project-choice-action="close" aria-label="关闭主题面板">×</button></header>
+          <div class="ymz-project-choice-panel__body" data-project-choice-body></div>
+        </aside>
+
+        <aside class="ymz-project-choice-panel" data-role="line-style-choice-panel" aria-label="线型" role="listbox" hidden>
+          <header class="ymz-project-choice-panel__header"><strong>线型</strong><button type="button" data-project-choice-action="close" aria-label="关闭线型面板">×</button></header>
+          <div class="ymz-project-choice-panel__body" data-project-choice-body></div>
         </aside>
 
         <aside class="ymz-project-style-panel" data-role="project-style-panel" aria-label="整图样式" hidden>
@@ -85772,7 +85975,7 @@ function escapeHtml(value) {
 }
 
 },
-230: function(module, exports, __require, __externalRequire) {
+231: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85867,13 +86070,14 @@ function resolveOutlinePointerDropIntent(input) {
 }
 
 },
-231: function(module, exports, __require, __externalRequire) {
+232: function(module, exports, __require, __externalRequire) {
 // /src/editor/StructuredOutlineEditorController.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StructuredOutlineEditorController = void 0;
 const sanitizeRichHtml_1 = __require(199);
 const outlineTextDocument_1 = __require(226);
+const outlineAccessories_1 = __require(227);
 const structuredOutlineDocument_1 = __require(225);
 const INDENT_SIZE = 22;
 const PLAIN_INDENT = '    ';
@@ -86993,7 +87197,7 @@ class StructuredOutlineEditorController {
         const marker = block.hasChildren
             ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle contenteditable="false" tabindex="-1" aria-label="${block.expanded ? '折叠' : '展开'}"><span class="ymz-outline-row__triangle" data-direction="${block.expanded ? 'down' : 'right'}"></span></button>`
             : `<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" contenteditable="false" aria-hidden="true"><span class="ymz-outline-row__leaf-square"></span></span>`;
-        return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : 'false'}" data-outline-uid="${escapeHtml(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml(block.parentUid ?? '')}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${!block.isRoot && block.kind === 'node'}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" aria-hidden="true"></span><span class="ymz-outline-row__drop-indicator" contenteditable="false" aria-hidden="true"></span>${marker}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${(0, structuredOutlineDocument_1.structuredOutlineIsRichHtml)(block.html)}">${block.html}</div></div>`;
+        return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : 'false'}" data-outline-uid="${escapeHtml(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml(block.parentUid ?? '')}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${!block.isRoot && block.kind === 'node'}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" aria-hidden="true"></span><span class="ymz-outline-row__drop-indicator" contenteditable="false" aria-hidden="true"></span>${marker}${(0, outlineAccessories_1.outlineAccessoriesHtml)(block.accessories, this.options.pluginBaseUrl)}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${(0, structuredOutlineDocument_1.structuredOutlineIsRichHtml)(block.html)}">${block.html}</div></div>`;
     }
     patchRow(row, block, selectionProtected) {
         row.setAttribute('aria-level', String(block.depth + 1));
@@ -87029,6 +87233,25 @@ class StructuredOutlineEditorController {
             placeholder.innerHTML = '<span class="ymz-outline-row__leaf-square"></span>';
             marker.replaceWith(placeholder);
         }
+        const accessoryHtml = (0, outlineAccessories_1.outlineAccessoriesHtml)(block.accessories, this.options.pluginBaseUrl);
+        const existingAccessories = row.querySelector('.ymz-outline-accessories');
+        if (accessoryHtml) {
+            if (existingAccessories) {
+                const wrapper = document.createElement('span');
+                wrapper.innerHTML = accessoryHtml;
+                existingAccessories.replaceWith(wrapper.firstElementChild);
+            }
+            else {
+                const wrapper = document.createElement('span');
+                wrapper.innerHTML = accessoryHtml;
+                const editorHost = row.querySelector('[data-outline-editor]');
+                if (editorHost && wrapper.firstElementChild)
+                    row.insertBefore(wrapper.firstElementChild, editorHost);
+            }
+        }
+        else {
+            existingAccessories?.remove();
+        }
         const editor = row.querySelector('[data-outline-editor]');
         if (editor) {
             editor.dataset.outlinePristine = String(block.pristine);
@@ -87062,6 +87285,7 @@ class StructuredOutlineEditorController {
                 hasChildren: row.dataset.outlineHasChildren === 'true',
                 isRoot: index === 0,
                 pristine: row.dataset.outlinePristine === 'true',
+                accessories: previous?.accessories ?? { icons: [], image: null },
             };
         });
     }
@@ -87259,6 +87483,7 @@ class StructuredOutlineEditorController {
             hasChildren: false,
             isRoot: false,
             pristine: false,
+            accessories: { icons: [], image: null },
         };
         const updatedCurrent = {
             ...current,
@@ -87769,7 +87994,7 @@ function closestElement(node) {
 }
 
 },
-232: function(module, exports, __require, __externalRequire) {
+233: function(module, exports, __require, __externalRequire) {
 // /src/editor/splitPane.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87792,15 +88017,15 @@ function ratioFromPointer(rect, clientX) {
 }
 
 },
-233: function(module, exports, __require, __externalRequire) {
+234: function(module, exports, __require, __externalRequire) {
 // /src/editor/RichTextToolbar.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RichTextToolbar = void 0;
 const YeMindRichText_1 = __require(192);
-const richTextActions_1 = __require(234);
-const colorPresentation_1 = __require(235);
-const colorPalette_1 = __require(236);
+const richTextActions_1 = __require(235);
+const colorPresentation_1 = __require(236);
+const colorPalette_1 = __require(237);
 function option(value, label) {
     return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -88220,7 +88445,7 @@ class RichTextToolbar {
 exports.RichTextToolbar = RichTextToolbar;
 
 },
-234: function(module, exports, __require, __externalRequire) {
+235: function(module, exports, __require, __externalRequire) {
 // /src/editor/richTextActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88251,7 +88476,7 @@ function isClozeFormat(formatInfo) {
 }
 
 },
-235: function(module, exports, __require, __externalRequire) {
+236: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88318,7 +88543,7 @@ function presentColor(value) {
 }
 
 },
-236: function(module, exports, __require, __externalRequire) {
+237: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPalette.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88349,7 +88574,7 @@ function colorPaletteInnerHtml() {
 }
 
 },
-237: function(module, exports, __require, __externalRequire) {
+238: function(module, exports, __require, __externalRequire) {
 // /src/editor/selectionPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88410,7 +88635,7 @@ function shouldBlockRootDeleteShortcut(key, nodes) {
 }
 
 },
-238: function(module, exports, __require, __externalRequire) {
+239: function(module, exports, __require, __externalRequire) {
 // /src/editor/saveRevision.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88441,7 +88666,7 @@ class SaveRevisionTracker {
 exports.SaveRevisionTracker = SaveRevisionTracker;
 
 },
-239: function(module, exports, __require, __externalRequire) {
+240: function(module, exports, __require, __externalRequire) {
 // /src/editor/relationPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88457,7 +88682,7 @@ function createRelationPresentation(input) {
 }
 
 },
-240: function(module, exports, __require, __externalRequire) {
+241: function(module, exports, __require, __externalRequire) {
 // /src/editor/outerFramePresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88516,7 +88741,7 @@ function createOuterFramePresentation(input) {
 }
 
 },
-241: function(module, exports, __require, __externalRequire) {
+242: function(module, exports, __require, __externalRequire) {
 // /src/editor/toolbarAvailability.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88538,7 +88763,7 @@ function createToolbarAvailability(input) {
 }
 
 },
-242: function(module, exports, __require, __externalRequire) {
+243: function(module, exports, __require, __externalRequire) {
 // /src/editor/linkNavigation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88555,7 +88780,7 @@ function resolveLinkNavigation(value, externalMode) {
 }
 
 },
-243: function(module, exports, __require, __externalRequire) {
+244: function(module, exports, __require, __externalRequire) {
 // /src/plugin/visibleElement.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88620,7 +88845,7 @@ function waitForNonZeroSize(element, options = {}) {
 }
 
 },
-244: function(module, exports, __require, __externalRequire) {
+245: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeImageInput.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88681,7 +88906,7 @@ function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
 }
 
 },
-245: function(module, exports, __require, __externalRequire) {
+246: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeHoverPreview.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88882,7 +89107,7 @@ class NodeHoverPreview {
 exports.NodeHoverPreview = NodeHoverPreview;
 
 },
-246: function(module, exports, __require, __externalRequire) {
+247: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageLightbox.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88985,13 +89210,13 @@ class ImageLightbox {
 exports.ImageLightbox = ImageLightbox;
 
 },
-247: function(module, exports, __require, __externalRequire) {
+248: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeStylePanel = void 0;
-const colorPalette_1 = __require(236);
-const colorPresentation_1 = __require(235);
+const colorPalette_1 = __require(237);
+const colorPresentation_1 = __require(236);
 const INPUT_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 function toInputValue(value) {
     return value === null || value === undefined ? '' : String(value);
@@ -89302,14 +89527,14 @@ class NodeStylePanel {
 exports.NodeStylePanel = NodeStylePanel;
 
 },
-248: function(module, exports, __require, __externalRequire) {
+249: function(module, exports, __require, __externalRequire) {
 // /src/ui/projectStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectStylePanel = void 0;
 const projectStyle_1 = __require(20);
-const colorPalette_1 = __require(236);
-const colorPresentation_1 = __require(235);
+const colorPalette_1 = __require(237);
+const colorPresentation_1 = __require(236);
 const colorSchemes_1 = __require(21);
 const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 class ProjectStylePanel {
@@ -89610,7 +89835,7 @@ class ProjectStylePanel {
 exports.ProjectStylePanel = ProjectStylePanel;
 
 },
-249: function(module, exports, __require, __externalRequire) {
+250: function(module, exports, __require, __externalRequire) {
 // /src/ui/layoutGalleryPanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89708,7 +89933,145 @@ class LayoutGalleryPanel {
 exports.LayoutGalleryPanel = LayoutGalleryPanel;
 
 },
-250: function(module, exports, __require, __externalRequire) {
+251: function(module, exports, __require, __externalRequire) {
+// /src/ui/projectChoicePanel.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ProjectChoicePanel = void 0;
+class ProjectChoicePanel {
+    constructor(root, config) {
+        this.root = root;
+        this.config = config;
+        this.anchor = null;
+        this.onDocumentMouseDown = (event) => {
+            if (this.panel.hidden)
+                return;
+            const target = event.target;
+            if (target && (this.panel.contains(target) || this.anchor?.contains(target)))
+                return;
+            this.hide();
+        };
+        this.onPanelClick = (event) => {
+            event.stopPropagation();
+            const button = event.target.closest('[data-project-choice-value]');
+            if (!button || button.disabled || this.config.readonly())
+                return;
+            const value = button.dataset.projectChoiceValue ?? '';
+            if (!value)
+                return;
+            this.selected = value;
+            this.config.onSelect(value);
+            this.render();
+            this.hide();
+        };
+        this.panel = root.querySelector(`[data-role="${config.role}"]`);
+        this.body = this.panel.querySelector('[data-project-choice-body]');
+        this.selected = config.selected;
+        this.panel.querySelector('[data-project-choice-action="close"]')?.addEventListener('click', () => this.hide());
+        this.panel.addEventListener('click', this.onPanelClick);
+        document.addEventListener('mousedown', this.onDocumentMouseDown, true);
+        this.render();
+    }
+    isVisible() { return !this.panel.hidden; }
+    setSelected(value) {
+        this.selected = value;
+        this.render();
+    }
+    refreshReadonly() { this.render(); }
+    toggle(anchor) {
+        if (this.isVisible())
+            this.hide();
+        else
+            this.show(anchor);
+    }
+    show(anchor) {
+        this.anchor = anchor;
+        this.render();
+        this.panel.hidden = false;
+        anchor.classList.add('is-active');
+        anchor.setAttribute('aria-expanded', 'true');
+        const rootRect = this.root.getBoundingClientRect();
+        const anchorRect = anchor.getBoundingClientRect();
+        const width = this.panel.offsetWidth || 260;
+        const height = this.panel.offsetHeight || 360;
+        const left = Math.max(8, Math.min(anchorRect.left - rootRect.left, rootRect.width - width - 8));
+        const below = anchorRect.bottom - rootRect.top + 6;
+        const above = anchorRect.top - rootRect.top - height - 6;
+        const top = below + height <= rootRect.height - 8 ? below : Math.max(8, above);
+        this.panel.style.left = `${Math.round(left)}px`;
+        this.panel.style.top = `${Math.round(top)}px`;
+    }
+    hide() {
+        this.panel.hidden = true;
+        this.anchor?.classList.remove('is-active');
+        this.anchor?.setAttribute('aria-expanded', 'false');
+        this.anchor = null;
+    }
+    destroy() {
+        document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
+        this.panel.removeEventListener('click', this.onPanelClick);
+        this.panel.remove();
+    }
+    render() {
+        const groups = new Map();
+        this.config.options.forEach((option) => {
+            const key = option.group ?? '';
+            const items = groups.get(key) ?? [];
+            items.push(option);
+            groups.set(key, items);
+        });
+        this.body.innerHTML = '';
+        groups.forEach((items, group) => {
+            const section = document.createElement('section');
+            section.className = 'ymz-project-choice-panel__group';
+            if (group) {
+                const heading = document.createElement('h4');
+                heading.textContent = group;
+                section.appendChild(heading);
+            }
+            const list = document.createElement('div');
+            list.className = 'ymz-project-choice-panel__list';
+            items.forEach((option) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `ymz-project-choice-panel__item${option.value === this.selected ? ' is-selected' : ''}`;
+                button.dataset.projectChoiceValue = option.value;
+                button.setAttribute('role', 'option');
+                button.setAttribute('aria-selected', String(option.value === this.selected));
+                button.disabled = this.config.readonly();
+                const visual = document.createElement('span');
+                visual.className = 'ymz-project-choice-panel__visual';
+                if (option.iconHtml)
+                    visual.innerHTML = option.iconHtml;
+                else {
+                    visual.classList.add('ymz-project-choice-panel__swatch');
+                    visual.style.setProperty('--ymz-choice-color', option.previewColor || 'var(--b3-theme-primary)');
+                }
+                const copy = document.createElement('span');
+                copy.className = 'ymz-project-choice-panel__copy';
+                const label = document.createElement('strong');
+                label.textContent = option.label;
+                copy.appendChild(label);
+                if (option.description) {
+                    const description = document.createElement('small');
+                    description.textContent = option.description;
+                    copy.appendChild(description);
+                }
+                const check = document.createElement('span');
+                check.className = 'ymz-project-choice-panel__check';
+                check.textContent = option.value === this.selected ? '✓' : '';
+                button.append(visual, copy, check);
+                list.appendChild(button);
+            });
+            section.appendChild(list);
+            this.body.appendChild(section);
+        });
+    }
+}
+exports.ProjectChoicePanel = ProjectChoicePanel;
+
+},
+252: function(module, exports, __require, __externalRequire) {
 // /src/ui/localAssetDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89904,7 +90267,7 @@ function openClipartPicker(commands, options = {}) {
 }
 
 },
-251: function(module, exports, __require, __externalRequire) {
+253: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRichTextVisibility.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89941,7 +90304,7 @@ function synchronizeCanvasRichTextVisibility(map) {
 }
 
 },
-252: function(module, exports, __require, __externalRequire) {
+254: function(module, exports, __require, __externalRequire) {
 // /src/editor/searchPanelState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89961,7 +90324,7 @@ function setSearchReplaceExpanded(panel, expanded) {
 }
 
 },
-253: function(module, exports, __require, __externalRequire) {
+255: function(module, exports, __require, __externalRequire) {
 // /src/core/appearanceTransaction.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90110,7 +90473,7 @@ function applyMapAppearanceTransaction(options) {
 }
 
 },
-254: function(module, exports, __require, __externalRequire) {
+256: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeQuickActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90328,7 +90691,7 @@ class NodeQuickActionsController {
 exports.NodeQuickActionsController = NodeQuickActionsController;
 
 },
-255: function(module, exports, __require, __externalRequire) {
+257: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRightDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90507,7 +90870,7 @@ class CanvasRightDragController {
 exports.CanvasRightDragController = CanvasRightDragController;
 
 },
-256: function(module, exports, __require, __externalRequire) {
+258: function(module, exports, __require, __externalRequire) {
 // /src/editor/liveNodeWidthLayout.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90564,7 +90927,7 @@ class LiveNodeWidthLayoutController {
 exports.LiveNodeWidthLayoutController = LiveNodeWidthLayoutController;
 
 },
-257: function(module, exports, __require, __externalRequire) {
+259: function(module, exports, __require, __externalRequire) {
 // /src/editor/focusHighlight.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90629,7 +90992,7 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
 }
 
 },
-258: function(module, exports, __require, __externalRequire) {
+260: function(module, exports, __require, __externalRequire) {
 // /src/editor/editingSurfaceCoordinator.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90718,7 +91081,7 @@ class EditingSurfaceCoordinator {
 exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
 
 },
-259: function(module, exports, __require, __externalRequire) {
+261: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90740,7 +91103,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-260: function(module, exports, __require, __externalRequire) {
+262: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90764,7 +91127,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-261: function(module, exports, __require, __externalRequire) {
+263: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90820,7 +91183,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-262: function(module, exports, __require, __externalRequire) {
+264: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90846,7 +91209,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-263: function(module, exports, __require, __externalRequire) {
+265: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90862,7 +91225,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-264: function(module, exports, __require, __externalRequire) {
+266: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90889,7 +91252,7 @@ function initializePluginStartup(options) {
 }
 
 },
-265: function(module, exports, __require, __externalRequire) {
+267: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

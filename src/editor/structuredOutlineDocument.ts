@@ -1,6 +1,7 @@
 import type { MindMapNodeData, MindMapTree } from '../model/types';
 import { sanitizeRichHtml } from '../content/sanitizeRichHtml';
 import { OUTLINE_TEXT_INDENT, parseOutlineText, outlineNodePlainText } from './outlineTextDocument';
+import { outlineAccessoriesFromData, type OutlineAccessories } from './outlineAccessories';
 
 export type StructuredOutlineBlockKind = 'node' | 'summary';
 
@@ -16,6 +17,7 @@ export interface StructuredOutlineBlock {
   hasChildren: boolean;
   isRoot: boolean;
   pristine: boolean;
+  accessories: OutlineAccessories;
 }
 
 export interface StructuredOutlineBuildResult {
@@ -114,6 +116,7 @@ export function flattenStructuredOutline(tree: MindMapTree): StructuredOutlineBl
       hasChildren: children.length > 0,
       isRoot: depth === 0,
       pristine: node.data.yemindTextPristine === true && node.data.yemindTextEdited !== true,
+      accessories: outlineAccessoriesFromData(node.data),
     });
     const descendantsHidden = hiddenByAncestor || !expanded;
     children.forEach((child, index) =>
@@ -133,6 +136,7 @@ export function flattenStructuredOutline(tree: MindMapTree): StructuredOutlineBl
         hasChildren: false,
         isRoot: false,
         pristine: summary.yemindTextPristine === true && summary.yemindTextEdited !== true,
+        accessories: outlineAccessoriesFromData(summary),
       });
     });
   };
@@ -222,6 +226,7 @@ export function buildTreeFromStructuredOutline(
       hasChildren: false,
       isRoot: true,
       pristine: false,
+      accessories: { icons: [], image: null },
     });
   }
   const existing = indexExistingData(baseTree);

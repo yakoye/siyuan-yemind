@@ -1,4 +1,4 @@
-import type { MindMapTree } from '../model/types';
+import type { MindMapNodeData, MindMapTree } from '../model/types';
 import { pristineNodeData } from './textEditingPolicy';
 import { createStructuredOutlineUid } from './structuredOutlineDocument';
 
@@ -29,6 +29,36 @@ export interface OutlineTreeImportResult {
   maxDepth: number;
   ignoredBlankLines: number;
   continuationLines: number;
+}
+
+
+export const OUTLINE_IMPORT_WRAP_UNITS = 20;
+export const OUTLINE_IMPORT_AUTO_WIDTH = 280;
+
+export function outlineImportDisplayUnits(value: string): number {
+  let units = 0;
+  for (const char of String(value ?? '').replace(/\s+/g, ' ').trim()) {
+    if (/\s/.test(char)) units += 0.25;
+    else if (/[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︐-﹯！-｠￠-￦]/u.test(char)) units += 1;
+    else units += 0.5;
+  }
+  return Math.round(units * 100) / 100;
+}
+
+function importedNodeData(text: string): MindMapNodeData {
+  const data: MindMapNodeData = {
+    uid: createStructuredOutlineUid(),
+    text,
+    expand: true,
+    yemindTextPristine: false,
+    yemindTextEdited: true,
+  };
+  if (outlineImportDisplayUnits(text) > OUTLINE_IMPORT_WRAP_UNITS) {
+    data.width = OUTLINE_IMPORT_AUTO_WIDTH;
+    data.customTextWidth = OUTLINE_IMPORT_AUTO_WIDTH;
+    data.yemindImportedAutoWidth = true;
+  }
+  return pristineNodeData(data);
 }
 
 export const OUTLINE_TREE_IMPORT_PLACEHOLDERS: Record<OutlineTreeImportMode, string> = {
@@ -253,7 +283,7 @@ function forestFromLines(lines: readonly OutlineTreeImportLine[]): MindMapTree[]
   const stack: MindMapTree[] = [];
   lines.forEach((line, index) => {
     const node: MindMapTree = {
-      data: pristineNodeData({ uid: createStructuredOutlineUid(), text: line.text, expand: true, yemindTextPristine: false, yemindTextEdited: true }),
+      data: importedNodeData(line.text),
       children: [],
     };
     const depth = index === 0 ? 0 : Math.max(0, Math.min(line.depth, stack.length));
@@ -288,7 +318,17 @@ export function applyOutlineImport(
   if (insertMode === 'replace-current') {
     const first = forest.shift();
     if (!first) return next;
-    target.data = { ...target.data, text: first.data.text, richText: false, yemindTextPristine: false, yemindTextEdited: true, expand: true };
+    target.data = {
+      ...target.data,
+      text: first.data.text,
+      richText: false,
+      yemindTextPristine: false,
+      yemindTextEdited: true,
+      expand: true,
+      ...(target.data.width === undefined && first.data.width !== undefined
+        ? { width: first.data.width, customTextWidth: first.data.width, yemindImportedAutoWidth: true }
+        : {}),
+    };
     target.children = [...first.children, ...forest, ...(target.children ?? [])];
   } else {
     target.data.expand = true;

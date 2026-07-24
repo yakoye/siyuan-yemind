@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.25 - 2026-07-24
+
+- Fixed the Text to Mind Map dialog at a viewport-safe size with independently scrollable source and processed-preview panes.
+- Replaced source-text echoing with parsed hierarchy preview rows that omit Unicode and Windows Tree guide glyphs.
+- Added a display-unit import-width policy: long imported labels receive 280px automatic wrapping without inserted newlines, while later user width edits clear the automatic marker and persist.
+- Replaced visible Theme and Line native selects with custom anchored choice panels and unified dark toolbar, panel, hover, focus, selected and disabled colors.
+- Added compact outline projection for marker icons, images and clipart without mirroring node background, border, shape or line decoration.
+- Added an outline Add submenu that reuses the existing marker, clipart and image dialogs against the selected node.
+- Added v0.9.25 unit, dependency-free runtime and Chromium regressions for dialog geometry, processed preview, width persistence, dark project panels and outline accessories.
+
 ## 0.9.24 - 2026-07-24
 
 - Add the exact requested outline node context menu, including current-line clipboard semantics, sibling ordering, disclosure, subtree deletion and delete-current-only promotion.

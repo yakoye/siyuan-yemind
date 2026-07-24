@@ -107,7 +107,7 @@ with sync_playwright() as p:
     if settings_index < 0 or menu_labels[settings_index:settings_index + 3] != ['设置', '关于 YeMind', '诊断与回归']:
         raise RuntimeError(f'About menu order is wrong: {menu_labels}')
     page.evaluate("""()=>window.__lastMenu.items.find(item=>item.label==='关于 YeMind').click()""")
-    about = page.evaluate("""()=>({exists:!!document.querySelector('.ymz-about-dialog'),version:document.querySelector('.ymz-about-dialog')?.textContent.includes('0.9.24'),title:window.__lastDialog?.options?.title||''})""")
+    about = page.evaluate("""()=>({exists:!!document.querySelector('.ymz-about-dialog'),version:document.querySelector('.ymz-about-dialog')?.textContent.includes('0.9.25'),title:window.__lastDialog?.options?.title||''})""")
     if not about['exists'] or not about['version'] or about['title'] != '关于 YeMind':
         raise RuntimeError(f'Standalone About dialog is wrong: {about}')
 

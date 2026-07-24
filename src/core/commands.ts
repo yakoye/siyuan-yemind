@@ -260,7 +260,15 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
           nativePatch.borderRadius = undefined;
         } else nativePatch[key] = nativeValue;
       });
-      forEachActive((node) => mindMap.execCommand('SET_NODE_STYLES', node, nativePatch));
+      forEachActive((node) => {
+        mindMap.execCommand('SET_NODE_STYLES', node, nativePatch);
+        if (Object.prototype.hasOwnProperty.call(patch, 'width')) {
+          mindMap.execCommand('SET_NODE_DATA', node, {
+            width: patch.width === null ? undefined : patch.width,
+            yemindImportedAutoWidth: false,
+          });
+        }
+      });
     },
     resetActiveNodeStyle: () => {
       if (!canMutate()) return;

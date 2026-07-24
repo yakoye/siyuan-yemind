@@ -108,14 +108,15 @@
     "v063CanvasModeIcons.suite.ts",
     "v063ContextMenuOrganization.suite.ts",
     "v063ResponsiveToolbars.suite.ts",
-    "visibleElement.suite.ts",
     "v0911MenusAndPanels.suite.ts",
     "v0912LocalAssets.suite.ts",
     "v0913PanelInteraction.suite.ts",
     "v0919IconDialogsHistory.suite.ts",
     "v0922ExactSourceIconIsolation.suite.ts",
     "v0923IconGridDarkTheme.suite.ts",
-    "v0924OutlineMenuAndDarkControls.suite.ts"
+    "v0924OutlineMenuAndDarkControls.suite.ts",
+    "v0925ImportDialogAndDarkPanels.suite.ts",
+    "visibleElement.suite.ts"
   ],
   "storage-lifecycle": [
     "createMapLifecycle.suite.ts",
@@ -203,15 +204,17 @@
     "v064OutlineLeafDrag.suite.ts",
     "v085SplitFocusIntegration.suite.ts",
     "v085SplitFocusOwnership.suite.ts",
+    "v0910OutlineGuidesAndReveal.suite.ts",
+    "v0918SplitRevealCurrentSelection.suite.ts",
+    "v0924OutlineImportAndEnter.suite.ts",
+    "v0925ImportWidthPolicy.suite.ts",
+    "v0925OutlineAccessories.suite.ts",
     "v093OutlineTextDocument.suite.ts",
     "v093OutlineTextEditor.suite.ts",
     "v094StructuredOutlineDocument.suite.ts",
     "v094StructuredOutlineEditor.suite.ts",
     "v094StructuredOutlineVisual.suite.ts",
-    "v099OutlineGuideGeometry.suite.ts",
-    "v0910OutlineGuidesAndReveal.suite.ts",
-    "v0918SplitRevealCurrentSelection.suite.ts",
-    "v0924OutlineImportAndEnter.suite.ts"
+    "v099OutlineGuideGeometry.suite.ts"
   ],
   "search-navigation": [
     "searchCommands.suite.ts",

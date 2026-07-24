@@ -11,6 +11,7 @@ import {
   detectAppearance,
   normalizeLineStyle,
   normalizeThemePresetId,
+  YEMIND_THEME_PRESETS,
   type YeMindAppearance,
 } from "../core/themePresets";
 import { buildRelationOptions } from "../core/relationConfig";
@@ -88,6 +89,7 @@ import { ImageLightbox } from "../ui/imageLightbox";
 import { NodeStylePanel } from "../ui/nodeStylePanel";
 import { ProjectStylePanel } from "../ui/projectStylePanel";
 import { LayoutGalleryPanel } from "../ui/layoutGalleryPanel";
+import { ProjectChoicePanel } from "../ui/projectChoicePanel";
 import { openClipartPicker, openMarkerPicker } from "../ui/localAssetDialogs";
 import { normalizeLayoutAssetId } from "../core/layoutAssetPresets";
 import { stabilizeMindMapMeasurementHost } from "../core/measurementHost";
@@ -179,6 +181,8 @@ export class YeMindEditor {
   private nodeStylePanel: NodeStylePanel | null = null;
   private projectStylePanel: ProjectStylePanel | null = null;
   private layoutGalleryPanel: LayoutGalleryPanel | null = null;
+  private themeChoicePanel: ProjectChoicePanel | null = null;
+  private lineStyleChoicePanel: ProjectChoicePanel | null = null;
   private nodeQuickActions: NodeQuickActionsController | null = null;
   private canvasRightDrag: CanvasRightDragController | null = null;
   private liveNodeWidthLayout: LiveNodeWidthLayoutController | null = null;
@@ -566,6 +570,10 @@ export class YeMindEditor {
     this.projectStylePanel = null;
     this.layoutGalleryPanel?.destroy();
     this.layoutGalleryPanel = null;
+    this.themeChoicePanel?.destroy();
+    this.themeChoicePanel = null;
+    this.lineStyleChoicePanel?.destroy();
+    this.lineStyleChoicePanel = null;
     this.nodeQuickActions?.destroy();
     this.nodeQuickActions = null;
     this.canvasRightDrag?.destroy();
@@ -797,6 +805,32 @@ export class YeMindEditor {
       () => Boolean(this.commands?.isReadonly()),
       (presetId, layout) => this.setLayoutPreset(presetId, layout),
     );
+    this.themeChoicePanel = new ProjectChoicePanel(this.rootEl, {
+      role: "theme-choice-panel",
+      title: "主题",
+      options: YEMIND_THEME_PRESETS.map((preset) => ({
+        value: preset.id,
+        label: preset.label,
+        group: preset.group,
+        description: preset.description,
+        previewColor: preset.light.colorAppearance.centerBackground,
+      })),
+      selected: this.current.theme,
+      readonly: () => Boolean(this.commands?.isReadonly()),
+      onSelect: (value) => this.setTheme(value),
+    });
+    this.lineStyleChoicePanel = new ProjectChoicePanel(this.rootEl, {
+      role: "line-style-choice-panel",
+      title: "线型",
+      options: [
+        { value: "curve", label: "弧线", description: "平滑曲线", iconHtml: lineStyleIcon("curve") },
+        { value: "straight", label: "圆角折线", description: "水平与垂直折线", iconHtml: lineStyleIcon("straight") },
+        { value: "direct", label: "直线", description: "节点之间直接连接", iconHtml: lineStyleIcon("direct") },
+      ],
+      selected: this.current.lineStyle,
+      readonly: () => Boolean(this.commands?.isReadonly()),
+      onSelect: (value) => this.setLineStyle(value),
+    });
     this.nodeQuickActions = new NodeQuickActionsController({
       root: this.rootEl,
       canvas: this.canvasEl,
@@ -821,6 +855,7 @@ export class YeMindEditor {
     });
     this.outlineRichText = new StructuredOutlineEditorController({
       root: this.outlineEl,
+      pluginBaseUrl: this.options.pluginBaseUrl,
       getTree: () => this.current.data,
       isReadonly: () => Boolean(this.commands?.isReadonly()),
       onApply: (tree, details) => {
@@ -1005,15 +1040,36 @@ export class YeMindEditor {
           break;
         case "node-style":
           this.projectStylePanel?.hide();
+          this.layoutGalleryPanel?.hide();
+          this.themeChoicePanel?.hide();
+          this.lineStyleChoicePanel?.hide();
           this.nodeStylePanel?.toggle(button);
           break;
         case "layout-gallery":
           this.nodeStylePanel?.hide();
           this.projectStylePanel?.hide();
+          this.themeChoicePanel?.hide();
+          this.lineStyleChoicePanel?.hide();
           this.layoutGalleryPanel?.toggle(button);
+          break;
+        case "theme-gallery":
+          this.layoutGalleryPanel?.hide();
+          this.nodeStylePanel?.hide();
+          this.projectStylePanel?.hide();
+          this.lineStyleChoicePanel?.hide();
+          this.themeChoicePanel?.toggle(button);
+          break;
+        case "line-style-gallery":
+          this.layoutGalleryPanel?.hide();
+          this.nodeStylePanel?.hide();
+          this.projectStylePanel?.hide();
+          this.themeChoicePanel?.hide();
+          this.lineStyleChoicePanel?.toggle(button);
           break;
         case "project-style":
           this.layoutGalleryPanel?.hide();
+          this.themeChoicePanel?.hide();
+          this.lineStyleChoicePanel?.hide();
           this.nodeStylePanel?.hide();
           this.projectStylePanel?.toggle(button);
           break;
@@ -1113,6 +1169,7 @@ export class YeMindEditor {
     this.current.theme = normalizeThemePresetId(value);
     const select = this.rootEl.querySelector<HTMLSelectElement>('[data-action="theme"]');
     if (select) select.value = this.current.theme;
+    this.themeChoicePanel?.setSelected(this.current.theme);
     this.applyMapAppearance();
     this.options.diagnostics.record("appearance", "theme-changed", this.current.id, { theme: this.current.theme });
     this.nodeQuickActions?.scheduleRefresh();
@@ -1124,6 +1181,7 @@ export class YeMindEditor {
     this.current.lineStyle = normalizeLineStyle(value);
     const select = this.rootEl.querySelector<HTMLSelectElement>('[data-action="line-style"]');
     if (select) select.value = this.current.lineStyle;
+    this.lineStyleChoicePanel?.setSelected(this.current.lineStyle);
     const icon = this.rootEl.querySelector<HTMLElement>('[data-role="line-style-icon"]');
     if (icon) icon.innerHTML = lineStyleIcon(this.current.lineStyle);
     this.applyMapAppearance();
@@ -1757,6 +1815,8 @@ export class YeMindEditor {
       "reset-layout": state.resetLayout,
       "node-style": !this.commands.isReadonly() && nodes.length > 0,
       "project-style": !this.commands.isReadonly(),
+      "theme-gallery": !this.commands.isReadonly(),
+      "line-style-gallery": !this.commands.isReadonly(),
     };
     this.rootEl
       .querySelectorAll<HTMLButtonElement>("button[data-action]")
@@ -1777,6 +1837,8 @@ export class YeMindEditor {
       '[data-action="line-style"]',
     );
     if (lineStyle) lineStyle.disabled = this.commands.isReadonly();
+    this.themeChoicePanel?.refreshReadonly();
+    this.lineStyleChoicePanel?.refreshReadonly();
   }
 
   private updateSelectionPresentation(count?: number): void {
@@ -2130,6 +2192,18 @@ export class YeMindEditor {
           return applied;
         },
       }),
+      onMarkers: () => {
+        activate();
+        if (this.commands) openMarkerPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl });
+      },
+      onClipart: () => {
+        activate();
+        if (this.commands) openClipartPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl });
+      },
+      onImage: () => {
+        activate();
+        if (this.commands) openImageDialog(this.commands);
+      },
       onCopyLine: () => this.outlineRichText!.copyCurrentLine(uid),
       onCutLine: () => this.outlineRichText!.cutCurrentLine(uid),
       onPasteAtCaret: () => this.outlineRichText!.pasteCurrentLine(uid, false),
@@ -2306,10 +2380,12 @@ export class YeMindEditor {
         '[data-action="theme"]',
       );
       if (themeSelect) themeSelect.value = this.current.theme;
+      this.themeChoicePanel?.setSelected(this.current.theme);
       const lineStyleSelect = this.rootEl.querySelector<HTMLSelectElement>(
         '[data-action="line-style"]',
       );
       if (lineStyleSelect) lineStyleSelect.value = this.current.lineStyle;
+      this.lineStyleChoicePanel?.setSelected(this.current.lineStyle);
       this.projectStylePanel?.setStyle(this.current.projectStyle);
       this.applyMapAppearance();
       if (!viewData) {

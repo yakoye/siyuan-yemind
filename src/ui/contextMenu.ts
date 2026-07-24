@@ -181,6 +181,9 @@ export interface OutlineContextMenuOptions {
   onAddSibling(): void;
   onAddChild(): void;
   onTextToMap(): void;
+  onMarkers?(): void;
+  onClipart?(): void;
+  onImage?(): void;
   onCopyLine(): void | Promise<void>;
   onCutLine(): void | Promise<void>;
   onPasteAtCaret(): void | Promise<void>;
@@ -225,6 +228,14 @@ export function openOutlineContextMenu(event: MouseEvent, options: OutlineContex
   menu.addItem({ iconHTML: nodeInsertIcon('sibling'), label: '插入同级节点', disabled: disabled || options.isRoot, click: run('add-sibling', options.onAddSibling) });
   menu.addItem({ iconHTML: nodeInsertIcon('child'), label: '插入下级节点', disabled, click: run('add-child', options.onAddChild) });
   menu.addItem({ icon: 'iconGraph', label: '文本转导图…', disabled, click: run('text-to-map', options.onTextToMap) });
+  menu.addItem({
+    type: 'submenu', icon: 'iconAdd', label: '添加', disabled,
+    submenu: [
+      { iconHTML: markerIcon(), label: '图标', disabled, click: run('icons', () => options.onMarkers?.()) },
+      { iconHTML: clipartIcon(), label: '剪贴图', disabled, click: run('clipart', () => options.onClipart?.()) },
+      { icon: 'iconImage', label: '图片', disabled, click: run('image', () => options.onImage?.()) },
+    ],
+  });
   menu.addSeparator();
   menu.addItem({ icon: 'iconCopy', label: '复制（当前行）', click: run('copy-line', options.onCopyLine) });
   menu.addItem({ iconHTML: clipboardIcon('cut'), label: '剪切（当前行）', disabled, click: run('cut-line', options.onCutLine) });

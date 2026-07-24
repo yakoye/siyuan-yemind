@@ -49,9 +49,9 @@ with sync_playwright() as p:
     page.wait_for_selector('.ymz-context-menu--outline')
     labels=page.locator('.ymz-context-menu--outline > .b3-menu__item .b3-menu__label').all_text_contents()
     sequence=page.locator('.ymz-context-menu--outline').evaluate("e=>[...e.children].map(x=>x.classList.contains('b3-menu__separator')?'---':x.querySelector('.b3-menu__label')?.textContent||'')")
-    expected=['编辑节点','插入上级节点','插入同级节点','插入下级节点','文本转导图…','复制（当前行）','剪切（当前行）','粘贴（当前光标处）','粘贴（纯文本）','上移节点','下移节点','展开/折叠（下级节点）','删除当前行和子级','仅删除当前行']
+    expected=['编辑节点','插入上级节点','插入同级节点','插入下级节点','文本转导图…','添加','复制（当前行）','剪切（当前行）','粘贴（当前光标处）','粘贴（纯文本）','上移节点','下移节点','展开/折叠（下级节点）','删除当前行和子级','仅删除当前行']
     if labels != expected: raise RuntimeError(f'outline menu order mismatch: {labels}')
-    expected_sequence=expected[:5]+['---']+expected[5:9]+['---']+expected[9:12]+['---']+expected[12:]
+    expected_sequence=expected[:6]+['---']+expected[6:10]+['---']+expected[10:13]+['---']+expected[13:]
     if sequence != expected_sequence: raise RuntimeError(f'outline menu separators mismatch: {sequence}')
     page.get_by_text('文本转导图…', exact=True).click()
     page.wait_for_selector('.ymz-text-map-dialog')
@@ -108,11 +108,14 @@ with sync_playwright() as p:
     page.wait_for_timeout(250)
     after=page.locator('g.smm-node').filter(has_text='中心主题').first.bounding_box()
     if before and after and abs(before['x']-after['x'])>1.1: raise RuntimeError(f'root drifted after dark switch: {before} -> {after}')
-    control=page.locator('[data-project-control="theme"]')
-    color_scheme=control.locator('select').evaluate("e=>getComputedStyle(e).colorScheme")
-    if color_scheme!='dark': raise RuntimeError(f'theme select is not dark: {color_scheme}')
-    line_scheme=page.locator('[data-project-control="line-style"] select').evaluate("e=>getComputedStyle(e).colorScheme")
-    if line_scheme!='dark': raise RuntimeError(f'line select is not dark: {line_scheme}')
+    page.locator('[data-action="theme-gallery"]').click()
+    page.wait_for_selector('[data-role="theme-choice-panel"]:not([hidden])')
+    theme_panel=page.locator('[data-role="theme-choice-panel"]').evaluate("e=>getComputedStyle(e).backgroundColor")
+    page.locator('[data-action="line-style-gallery"]').click()
+    page.wait_for_selector('[data-role="line-style-choice-panel"]:not([hidden])')
+    line_count=page.locator('[data-role="line-style-choice-panel"] .ymz-project-choice-panel__item').count()
+    if line_count!=3: raise RuntimeError(f'line choices missing: {line_count}')
+    if page.locator('.ymz-topbar select:not([hidden])').count()!=0: raise RuntimeError('native theme or line control is still visible')
     if errors: raise RuntimeError('Page errors: '+'\n'.join(errors))
-    print({'menu':labels,'separators':sequence.count('---'),'placeholder':placeholder,'preview':preview,'enterDepths':[original_depth,*promotion_depths],'rootBoundaryRemoved':True,'cutPreservedSubtree':True,'rootDelta':0 if not before or not after else after['x']-before['x'],'themeSelect':color_scheme,'lineSelect':line_scheme})
+    print({'menu':labels,'separators':sequence.count('---'),'placeholder':placeholder,'preview':preview,'enterDepths':[original_depth,*promotion_depths],'rootBoundaryRemoved':True,'cutPreservedSubtree':True,'rootDelta':0 if not before or not after else after['x']-before['x'],'themePanel':theme_panel,'lineChoices':line_count})
     browser.close()

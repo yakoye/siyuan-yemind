@@ -15,6 +15,8 @@ export interface MindMapNodeData {
   image?: string;
   imageTitle?: string;
   imageSize?: { width: number; height: number; custom?: boolean };
+  width?: number;
+  yemindImportedAutoWidth?: boolean;
   yemindTodo?: NodeTodo | null;
   yemindNote?: NodeNote | null;
   yemindComments?: NodeComment[];

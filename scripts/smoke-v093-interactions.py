@@ -33,8 +33,9 @@ with sync_playwright() as p:
     page.evaluate("""async()=>{const P=window.__YeMindExport;const plugin=new P();plugin.onload();await plugin.whenReady();const map=await plugin.repository.create('v0.9.4 Historical Interaction Smoke','logicalStructure');map.data.children=[{data:{uid:'child',text:'悬停节点',expand:true},children:[]}];await plugin.repository.update(map.id,{data:map.data});const container=document.createElement('div');container.style.cssText='width:1100px;height:720px;display:block';host.append(container);const context={element:container,data:{mapId:map.id},tab:{headElement:document.createElement('button'),updateTitle(){},close(){}}};window.__smoke={plugin,map,container,context};window.__tabOptions.init.call(context);}""")
     page.wait_for_selector('[data-role="canvas"] svg', timeout=30000)
 
-    page.select_option('select[data-action="theme"]', 'scheme-dawn')
-    page.dispatch_event('select[data-action="theme"]', 'change')
+    page.locator('[data-action="theme-gallery"]').click()
+    page.wait_for_selector('[data-role="theme-choice-panel"]:not([hidden])')
+    page.locator('[data-role="theme-choice-panel"] [data-project-choice-value="scheme-dawn"]').click()
     page.wait_for_function("""()=>{const c=window.__smoke.container;const root=c.querySelector('.smm-node-shape');return root?.getAttribute('fill')==='#ffffff'&&getComputedStyle(c.querySelector('[data-role="canvas"]')).backgroundColor==='rgb(255, 255, 255)' }""", timeout=5000)
     root_fill = page.eval_on_selector('.smm-node-shape', "el=>el.getAttribute('fill')")
 

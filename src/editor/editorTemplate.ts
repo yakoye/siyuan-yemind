@@ -20,20 +20,20 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
           <select data-action="layout" aria-label="结构" hidden>
             ${layoutOptionsHtml('logicalStructure')}
           </select>
-          <label class="ymz-project-control" data-project-control="theme" title="主题">
+          <button class="ymz-project-control ymz-project-button" data-project-control="theme" data-action="theme-gallery" title="主题" aria-haspopup="listbox" aria-expanded="false">
             ${projectControlIcon('theme')}<span>主题</span>
-            <select data-action="theme" aria-label="主题">
-              ${themeOptionsHtml(theme)}
-            </select>
-          </label>
-          <label class="ymz-project-control ymz-project-control--line" data-project-control="line-style" title="线型">
+          </button>
+          <select data-action="theme" aria-label="主题" hidden>
+            ${themeOptionsHtml(theme)}
+          </select>
+          <button class="ymz-project-control ymz-project-button ymz-project-control--line" data-project-control="line-style" data-action="line-style-gallery" title="线型" aria-haspopup="listbox" aria-expanded="false">
             <span data-role="line-style-icon">${lineStyleIcon(lineStyle)}</span><span>线型</span>
-            <select data-action="line-style" aria-label="线型">
-              <option value="curve"${normalizeLineStyle(lineStyle) === 'curve' ? ' selected' : ''}>弧线</option>
-              <option value="straight"${normalizeLineStyle(lineStyle) === 'straight' ? ' selected' : ''}>圆角折线</option>
-              <option value="direct"${normalizeLineStyle(lineStyle) === 'direct' ? ' selected' : ''}>直线</option>
-            </select>
-          </label>
+          </button>
+          <select data-action="line-style" aria-label="线型" hidden>
+            <option value="curve"${normalizeLineStyle(lineStyle) === 'curve' ? ' selected' : ''}>弧线</option>
+            <option value="straight"${normalizeLineStyle(lineStyle) === 'straight' ? ' selected' : ''}>圆角折线</option>
+            <option value="direct"${normalizeLineStyle(lineStyle) === 'direct' ? ' selected' : ''}>直线</option>
+          </select>
           <button class="ymz-project-control ymz-project-button" data-action="project-style" title="整图样式">${projectStyleIcon()}<span>样式</span></button>
           <span class="ymz-save-state" data-role="save-state">已保存</span>
         </div>
@@ -74,6 +74,16 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
         <aside class="ymz-layout-gallery" data-role="layout-gallery-panel" aria-label="导图结构" hidden>
           <header class="ymz-layout-gallery__header"><strong>导图结构</strong><button type="button" data-layout-gallery-action="close" aria-label="关闭结构面板">×</button></header>
           <div class="ymz-layout-gallery__body" data-role="layout-gallery-body"></div>
+        </aside>
+
+        <aside class="ymz-project-choice-panel" data-role="theme-choice-panel" aria-label="主题" role="listbox" hidden>
+          <header class="ymz-project-choice-panel__header"><strong>主题</strong><button type="button" data-project-choice-action="close" aria-label="关闭主题面板">×</button></header>
+          <div class="ymz-project-choice-panel__body" data-project-choice-body></div>
+        </aside>
+
+        <aside class="ymz-project-choice-panel" data-role="line-style-choice-panel" aria-label="线型" role="listbox" hidden>
+          <header class="ymz-project-choice-panel__header"><strong>线型</strong><button type="button" data-project-choice-action="close" aria-label="关闭线型面板">×</button></header>
+          <div class="ymz-project-choice-panel__body" data-project-choice-body></div>
         </aside>
 
         <aside class="ymz-project-style-panel" data-role="project-style-panel" aria-label="整图样式" hidden>
