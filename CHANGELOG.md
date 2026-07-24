@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.18 - 2026-07-24
+
+- Reveal the currently selected canvas node immediately when split or outline view opens, using outline-local scrolling without transferring editing ownership.
+- Preserve the proven right-logical drag path and mirror its local zones, sticky targeting, parent guide and room preview for left logical structure.
+- Normalize branch directions so mind-map, reverse, balanced-down, tree, timeline, organization and gallery-mapped layouts share immediate drag geometry.
+- Generalize live room making to horizontal and vertical sibling axes while retaining one candidate-parent guide and removing legacy insertion/origin lines.
+- Add a dedicated right-fishbone renderer that mirrors left fishbone node geometry, paths, summaries and tail without mirroring readable content.
+- Add permanent source, offline and Chromium regressions for split reveal, cross-layout repository mutation and right-fishbone geometry.
+
 ## 0.9.17 - 2026-07-24
 
 - Reflow the complete map on animation frames during node-width dragging so descendants and edges follow in real time.

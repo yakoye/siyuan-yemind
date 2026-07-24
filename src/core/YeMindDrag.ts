@@ -4,8 +4,11 @@ import {
   emptyOfficialDragCandidate,
   isOfficialDragCandidateNoop,
   officialCandidateParent,
+  orderOfficialDragSiblings,
   resolveOfficialDragCandidate,
+  resolveOfficialDragGrowthDirection,
   resolveOfficialDragGuideOrientation,
+  resolveOfficialDragSiblingAxis,
   supportsOfficialDragGeometry,
   type OfficialDragCandidate,
 } from './officialDragIntent';
@@ -106,19 +109,24 @@ export function calculateDragGuidePath(
   parent: DragGuideRect,
   ghost: DragGuideRect,
   orientation: DragGuideOrientation,
+  direction: 'left' | 'right' | 'top' | 'bottom' = orientation === 'vertical' ? 'bottom' : 'right',
 ): string {
   if (orientation === 'vertical') {
+    const topward = direction === 'top';
     const startX = parent.x + parent.width / 2;
-    const startY = parent.y + parent.height;
+    const startY = topward ? parent.y : parent.y + parent.height;
     const endX = ghost.x + ghost.width / 2;
-    const endY = ghost.y;
-    return `M ${startX} ${startY} C ${startX} ${startY + 40}, ${endX} ${endY - 40}, ${endX} ${endY}`;
+    const endY = topward ? ghost.y + ghost.height : ghost.y;
+    const bend = topward ? -40 : 40;
+    return `M ${startX} ${startY} C ${startX} ${startY + bend}, ${endX} ${endY - bend}, ${endX} ${endY}`;
   }
-  const startX = parent.x + parent.width;
+  const leftward = direction === 'left';
+  const startX = leftward ? parent.x : parent.x + parent.width;
   const startY = parent.y + parent.height / 2;
-  const endX = ghost.x;
+  const endX = leftward ? ghost.x + ghost.width : ghost.x;
   const endY = ghost.y + ghost.height / 2;
-  return `M ${startX} ${startY} C ${startX + 40} ${startY}, ${endX - 40} ${endY}, ${endX} ${endY}`;
+  const bend = leftward ? -40 : 40;
+  return `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`;
 }
 
 export function calculateOriginalParentGuideStyle(distance: number): { width: number; opacity: number } {
@@ -274,7 +282,7 @@ interface PreviewTransformSnapshot {
   transition: string;
 }
 
-interface LogicalRoomPreview {
+interface LayoutRoomPreview {
   key: string;
   transforms: PreviewTransformSnapshot[];
   incomingLines: PreviewIncomingLineSnapshot[];
@@ -309,7 +317,7 @@ function collectSubtreeNodes(root: any): any[] {
   return result;
 }
 
-function previewGap(plugin: any): number {
+function previewGap(plugin: any, axis: 'x' | 'y'): number {
   const rects: DragGuideRect[] = [];
   (plugin.beingDragNodeList ?? []).forEach((root: any) => {
     collectSubtreeNodes(root).forEach((node) => {
@@ -318,9 +326,9 @@ function previewGap(plugin: any): number {
     });
   });
   if (!rects.length) return 44;
-  const top = Math.min(...rects.map((rect) => rect.y));
-  const bottom = Math.max(...rects.map((rect) => rect.y + rect.height));
-  return Math.max(44, Math.min(360, bottom - top + 18));
+  const start = Math.min(...rects.map((rect) => axis === 'x' ? rect.x : rect.y));
+  const end = Math.max(...rects.map((rect) => axis === 'x' ? rect.x + rect.width : rect.y + rect.height));
+  return Math.max(44, Math.min(360, end - start + 18));
 }
 
 function endpointDistance(parent: DragGuideRect, ghost: DragGuideRect, orientation: DragGuideOrientation): number {
@@ -352,7 +360,7 @@ export default class YeMindDrag extends Drag {
     plugin.__ymzRawCandidate = emptyOfficialDragCandidate();
     plugin.__ymzOverlapFrame = null;
     plugin.__ymzIncomingLines = [];
-    plugin.__ymzLogicalRoomPreview = null;
+    plugin.__ymzLayoutRoomPreview = null;
     plugin.__ymzOnKeydown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || (!plugin.isMousedown && !plugin.isDragging)) return;
       event.preventDefault();
@@ -394,13 +402,9 @@ export default class YeMindDrag extends Drag {
 
   onMove(x: number, y: number, event: MouseEvent): void {
     super.onMove(x, y, event);
-    // The right logical reference layout resolves its local target on every
-    // pointer move so the parent preview never lags behind the dragged node.
-    if (String((this as any).mindMap.opt.layout ?? 'logicalStructure') === 'logicalStructure') {
-      this.flushOfficialCandidateCheck();
-    } else {
-      this.updateOfficialGuideLines();
-    }
+    const layout = String((this as any).mindMap.opt.layout ?? 'logicalStructure');
+    if (supportsOfficialDragGeometry(layout)) this.flushOfficialCandidateCheck();
+    else this.updateOfficialGuideLines();
   }
 
   async onMouseup(event: MouseEvent): Promise<void> {
@@ -409,10 +413,10 @@ export default class YeMindDrag extends Drag {
       this.flushOfficialCandidateCheck();
       const raw: DragCandidate = plugin.__ymzRawCandidate ?? emptyOfficialDragCandidate();
       const stable: DragCandidate = plugin.__ymzCandidateState?.stable ?? emptyOfficialDragCandidate();
-      // Sibling ordering is explicit from the upper/lower half of a target row
-      // and should commit on release immediately. Becoming a child changes
-      // hierarchy and therefore still requires the deliberate dwell candidate.
-      const resolved = String(plugin.mindMap.opt.layout ?? 'logicalStructure') === 'logicalStructure'
+      const layout = String(plugin.mindMap.opt.layout ?? 'logicalStructure');
+      // Adapted layouts share the immediate right-logical intent model. Legacy
+      // layouts keep their existing dwell protection for hierarchy changes.
+      const resolved = supportsOfficialDragGeometry(layout)
         ? raw
         : raw.kind === 'child'
           ? (raw.key === stable.key ? stable : emptyOfficialDragCandidate())
@@ -432,7 +436,7 @@ export default class YeMindDrag extends Drag {
 
   removeCloneNode(): void {
     this.cancelCandidateFrame();
-    this.clearLogicalRoomPreview();
+    this.clearLayoutRoomPreview();
     this.removeGuideLines();
     super.removeCloneNode();
   }
@@ -441,7 +445,7 @@ export default class YeMindDrag extends Drag {
     const plugin = this as any;
     document.removeEventListener('keydown', plugin.__ymzOnKeydown, true);
     this.cancelCandidateFrame();
-    this.clearLogicalRoomPreview();
+    this.clearLayoutRoomPreview();
     this.removeGuideLines();
     this.restoreIncomingLines();
     super.beforePluginRemove();
@@ -451,7 +455,7 @@ export default class YeMindDrag extends Drag {
     const plugin = this as any;
     document.removeEventListener('keydown', plugin.__ymzOnKeydown, true);
     this.cancelCandidateFrame();
-    this.clearLogicalRoomPreview();
+    this.clearLayoutRoomPreview();
     this.removeGuideLines();
     this.restoreIncomingLines();
     super.beforePluginDestroy();
@@ -500,7 +504,7 @@ export default class YeMindDrag extends Drag {
     plugin.__ymzRawCandidate = candidate;
     const currentState = plugin.__ymzCandidateState
       ?? createDragCandidateState(emptyOfficialDragCandidate());
-    plugin.__ymzCandidateState = layout === 'logicalStructure'
+    plugin.__ymzCandidateState = supportsOfficialDragGeometry(layout)
       ? { stable: candidate, pending: null }
       : updateStableDragCandidate(currentState, candidate, now);
 
@@ -511,8 +515,8 @@ export default class YeMindDrag extends Drag {
       ? emptyOfficialDragCandidate()
       : plugin.__ymzCandidateState.stable;
     applyCandidate(plugin, stable);
-    if (layout === 'logicalStructure') this.updateLogicalRoomPreview(stable);
-    else this.clearLogicalRoomPreview();
+    if (supportsOfficialDragGeometry(layout)) this.updateLayoutRoomPreview(stable);
+    else this.clearLayoutRoomPreview();
     this.updateOfficialGuideLines();
 
     if (plugin.clone && plugin.__ymzCandidateState.pending) {
@@ -580,14 +584,20 @@ export default class YeMindDrag extends Drag {
     // a local target is acquired it stays connected to the original parent;
     // as soon as the nearest-node local zone changes, it switches in the same
     // pointer frame to the parent encoded by that single candidate object.
-    const previewParent = layout === 'logicalStructure'
+    const adapted = supportsOfficialDragGeometry(layout);
+    const previewParent = adapted
       ? stableTarget ?? plugin.mousedownNode?.parent ?? null
       : stableTarget;
     const target = nodeSceneRect(plugin, previewParent);
     if (target) {
       const orientation: DragGuideOrientation = resolveOfficialDragGuideOrientation(layout, previewParent);
       plugin.__ymzTargetGuideLine
-        .plot(calculateDragGuidePath(target, ghost, orientation))
+        .plot(calculateDragGuidePath(
+          target,
+          ghost,
+          orientation,
+          resolveOfficialDragGrowthDirection(layout, previewParent),
+        ))
         .stroke({ color: 'rgba(23, 107, 80, 0.96)', width: 2.3, linecap: 'round' })
         .attr({ 'stroke-dasharray': '6 6', opacity: 1, 'pointer-events': 'none' })
         .show()
@@ -600,7 +610,7 @@ export default class YeMindDrag extends Drag {
     // green dashed line points at the parent that will own the dragged node.
     // There is no root fallback and no canvas insertion line; sibling order is
     // communicated by the live room-making preview.
-    if (layout === 'logicalStructure') {
+    if (adapted) {
       plugin.__ymzOriginGuideLine?.hide?.();
       plugin.__ymzInsertionGuideLine?.hide?.();
       plugin.__ymzInsertionGuideSquare?.hide?.();
@@ -646,34 +656,55 @@ export default class YeMindDrag extends Drag {
     }
   }
 
-  private updateLogicalRoomPreview(candidate: DragCandidate): void {
+  private updateLayoutRoomPreview(candidate: DragCandidate): void {
     const plugin = this as any;
-    const current: LogicalRoomPreview | null = plugin.__ymzLogicalRoomPreview ?? null;
+    const current: LayoutRoomPreview | null = plugin.__ymzLayoutRoomPreview ?? null;
     if (candidate.kind === 'none' || !candidate.parentNode) {
-      this.clearLogicalRoomPreview();
+      this.clearLayoutRoomPreview();
       return;
     }
     if (current?.key === candidate.key) return;
-    this.clearLogicalRoomPreview();
+    this.clearLayoutRoomPreview();
 
+    const layout = String(plugin.mindMap.opt.layout ?? 'logicalStructure');
     const sourceRoots = plugin.beingDragNodeList ?? [];
     const sourceSet = new Set<any>();
     sourceRoots.forEach((root: any) => collectSubtreeNodes(root).forEach((node) => sourceSet.add(node)));
-    const siblings = Array.isArray(candidate.parentNode.children)
+    const available = Array.isArray(candidate.parentNode.children)
       ? candidate.parentNode.children.filter((node: any) => !sourceSet.has(node))
       : [];
-    const index = Math.max(0, Math.min(siblings.length, Number(candidate.index) || 0));
-    const rootsToShift = siblings.slice(index);
+    const pointer = { x: Number(plugin.mouseMoveX) || 0, y: Number(plugin.mouseMoveY) || 0 };
+    const siblings = orderOfficialDragSiblings(
+      layout,
+      candidate.parentNode,
+      available,
+      pointer,
+      (node) => nodeHitRect(plugin, node),
+    );
+
+    let visualIndex = Math.max(0, Math.min(siblings.length, Number(candidate.index) || 0));
+    if (candidate.targetNode && siblings.includes(candidate.targetNode)) {
+      const targetIndex = siblings.indexOf(candidate.targetNode);
+      visualIndex = candidate.kind === 'after' ? targetIndex + 1 : targetIndex;
+    } else if (candidate.nextNode && siblings.includes(candidate.nextNode)) {
+      visualIndex = siblings.indexOf(candidate.nextNode);
+    } else if (candidate.prevNode && siblings.includes(candidate.prevNode)) {
+      visualIndex = siblings.indexOf(candidate.prevNode) + 1;
+    }
+    const rootsToShift = siblings.slice(Math.max(0, visualIndex));
     if (!rootsToShift.length) {
-      plugin.__ymzLogicalRoomPreview = {
+      plugin.__ymzLayoutRoomPreview = {
         key: candidate.key,
         transforms: [],
         incomingLines: [],
-      } satisfies LogicalRoomPreview;
+      } satisfies LayoutRoomPreview;
       return;
     }
 
-    const deltaY = previewGap(plugin);
+    const axis = resolveOfficialDragSiblingAxis(layout, candidate.parentNode);
+    const gap = previewGap(plugin, axis);
+    const deltaX = axis === 'x' ? gap : 0;
+    const deltaY = axis === 'y' ? gap : 0;
     const elements = new Set<any>();
     rootsToShift.forEach((root: any) => {
       collectSubtreeNodes(root).forEach((node) => {
@@ -681,31 +712,30 @@ export default class YeMindDrag extends Drag {
         (node?._lines ?? []).forEach((line: any) => elements.add(line));
       });
     });
-    const incomingLines = createShiftedIncomingLineOverlays(plugin, rootsToShift, deltaY);
+    const incomingLines = createShiftedIncomingLineOverlays(
+      plugin,
+      rootsToShift,
+      { deltaX, deltaY },
+    );
 
     const transforms: PreviewTransformSnapshot[] = [];
     elements.forEach((element) => {
       const before = svgTransform(element);
       const transition = elementTransition(element);
-      transforms.push({
-        element,
-        translateX: before.translateX,
-        translateY: before.translateY,
-        transition,
-      });
+      transforms.push({ element, translateX: before.translateX, translateY: before.translateY, transition });
       setElementTransition(element, 'transform 130ms ease');
-      element.translate?.(0, deltaY);
+      element.translate?.(deltaX, deltaY);
     });
-    plugin.__ymzLogicalRoomPreview = {
+    plugin.__ymzLayoutRoomPreview = {
       key: candidate.key,
       transforms,
       incomingLines,
-    } satisfies LogicalRoomPreview;
+    } satisfies LayoutRoomPreview;
   }
 
-  private clearLogicalRoomPreview(): void {
+  private clearLayoutRoomPreview(): void {
     const plugin = this as any;
-    const preview: LogicalRoomPreview | null = plugin.__ymzLogicalRoomPreview ?? null;
+    const preview: LayoutRoomPreview | null = plugin.__ymzLayoutRoomPreview ?? null;
     if (!preview) return;
     preview.transforms.forEach((snapshot) => {
       const current = svgTransform(snapshot.element);
@@ -719,7 +749,7 @@ export default class YeMindDrag extends Drag {
       setTimeout(() => setElementTransition(element, transition), 120);
     });
     restoreShiftedIncomingLineOverlays(preview.incomingLines);
-    plugin.__ymzLogicalRoomPreview = null;
+    plugin.__ymzLayoutRoomPreview = null;
   }
 
   private clearUpstreamPlaceholder(): void {

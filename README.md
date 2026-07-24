@@ -2,8 +2,16 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.17`  
+Current version: `0.9.18`  
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.18 split reveal and layout drag parity
+
+- Opening split or outline view immediately reveals the row for the currently selected canvas node inside the outline scroller.
+- The proven right-logical local drag zones, sticky target, one green parent preview and live room making remain unchanged as the reference behavior.
+- Left logical mirrors the same geometry; mind map, reverse mind map, balanced-down, tree, timeline and organization layouts normalize their branch direction into that interaction frame.
+- Right fishbone now uses a dedicated mirror renderer so its nodes, edges, summaries and tail are the horizontal mirror of left fishbone while text remains readable.
+- Tree-table and other gallery presets inherit the same drag behavior through their mapped engine layouts.
 
 ## v0.9.17 live width layout, context menu and selection ownership
 

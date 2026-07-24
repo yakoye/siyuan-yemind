@@ -1,6 +1,7 @@
 import MindMap from 'simple-mind-map';
 import type { MindMapTree } from '../model/types';
 import { registerMindMapPlugins } from './registerPlugins';
+import { registerMindMapLayouts } from './registerLayouts';
 import type { YeMindSettings } from '../settings/SettingsStore';
 import { createNodePrefixContent, createNodePostfixContent, createYemindIconList } from './nodeDecorations';
 import { buildDragAndLayoutOptions, normalizePersistedViewData } from './dragBehavior';
@@ -38,6 +39,7 @@ export function createImageDeleteGuard(
 }
 
 export function createMindMap(options: CreateMindMapOptions): MindMap {
+  registerMindMapLayouts();
   registerMindMapPlugins(options.settings);
   const settings = options.settings;
   const behavior = settings ? buildDragAndLayoutOptions(settings) : null;

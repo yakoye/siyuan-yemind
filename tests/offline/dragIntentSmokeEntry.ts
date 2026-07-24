@@ -2,6 +2,9 @@ import {
   emptyOfficialDragCandidate,
   isOfficialDragCandidateNoop,
   resolveOfficialDragCandidate,
+  resolveOfficialDragGrowthDirection,
+  resolveOfficialDragSiblingAxis,
+  supportsOfficialDragGeometry,
 } from '../../src/core/officialDragIntent';
 import { resolveOutlinePointerDropIntent } from '../../src/editor/outlineDrag';
 import { createStableTreeDropState, updateStableTreeDropIntent } from '../../src/core/treeDropIntent';
@@ -53,6 +56,47 @@ const noopBeforeFirst = resolveOfficialDragCandidate({
 });
 assert(isOfficialDragCandidateNoop(noopBeforeFirst, [source]), 'same canvas slot must be a no-op');
 
+
+const leftRoot = node('left-root', { x: 360, y: 100, width: 80, height: 32 });
+const leftTarget = node('left-target', { x: 220, y: 100, width: 80, height: 32 }, leftRoot);
+leftRoot.children = [leftTarget];
+const leftOptions = {
+  layout: 'logicalStructureLeft',
+  nodes: [leftRoot, leftTarget],
+  current: emptyOfficialDragCandidate(),
+  getRect: (value: any) => value.rect,
+};
+const leftChild = resolveOfficialDragCandidate({ ...leftOptions, pointer: { x: 206, y: 116 } });
+assert(leftChild.kind === 'child' && leftChild.parentNode === leftTarget, 'left logical child zone must mirror the right layout');
+const leftBefore = resolveOfficialDragCandidate({ ...leftOptions, pointer: { x: 292, y: 102 } });
+assert(leftBefore.kind === 'before' && leftBefore.targetNode === leftTarget, 'left logical sibling zone must mirror the right layout');
+const timelineRoot = node('timeline-root', { x: 160, y: 160, width: 90, height: 36 });
+const timelineParent = node('timeline-parent', { x: 300, y: 160, width: 90, height: 36 }, timelineRoot);
+timelineRoot.children = [timelineParent];
+timelineParent.layerIndex = 1;
+timelineParent.dir = 'top';
+const timelineNativeFirst = node('timeline-native-first', { x: 340, y: 230, width: 80, height: 32 }, timelineParent);
+timelineNativeFirst.dir = 'top';
+const timelineNativeSecond = node('timeline-native-second', { x: 340, y: 100, width: 80, height: 32 }, timelineParent);
+timelineNativeSecond.dir = 'top';
+timelineParent.children = [timelineNativeFirst, timelineNativeSecond];
+const timelineOptions = {
+  layout: 'timeline2',
+  nodes: [timelineRoot, timelineParent, timelineNativeFirst, timelineNativeSecond],
+  current: emptyOfficialDragCandidate(),
+  getRect: (value: any) => value.rect,
+};
+const timelineBefore = resolveOfficialDragCandidate({ ...timelineOptions, pointer: { x: 380, y: 104 } });
+assert(timelineBefore.kind === 'before' && timelineBefore.index === 2, 'top timeline visual/native sibling order mismatch');
+const timelineChild = resolveOfficialDragCandidate({ ...timelineOptions, pointer: { x: 380, y: 70 } });
+assert(timelineChild.kind === 'child' && timelineChild.parentNode === timelineNativeSecond, 'top timeline child tail mismatch');
+
+assert(resolveOfficialDragSiblingAxis('organizationStructure', leftRoot) === 'x', 'organization siblings must open room horizontally');
+assert(resolveOfficialDragGrowthDirection('rightFishbone2', { layerIndex: 0 }) === 'left', 'right fishbone must grow left from the root');
+['fishbone', 'fishbone2', 'rightFishbone', 'rightFishbone2'].forEach((layout) => {
+  assert(supportsOfficialDragGeometry(layout), `${layout} must use official drag geometry`);
+});
+
 const outlineBase = {
   sourceUid: 'source',
   targetUid: 'target',
@@ -94,9 +138,9 @@ const line = () => ({
   show() { this.shown = true; return this; },
   remove() { this.removed = true; return this; },
 });
-const firstPreview = { top: 10 } as any;
-const secondPreview = { top: 40 } as any;
-const thirdPreview = { top: 70 } as any;
+const firstPreview = { left: 10, top: 10 } as any;
+const secondPreview = { left: 40, top: 40 } as any;
+const thirdPreview = { left: 70, top: 70 } as any;
 const originalLines = [line(), line(), line()];
 const previewParent: any = {
   children: [firstPreview, secondPreview, thirdPreview],
@@ -115,11 +159,12 @@ const previewParent: any = {
   styleLine() {},
 };
 [firstPreview, secondPreview, thirdPreview].forEach((item) => { item.parent = previewParent; });
-const previewLines = createShiftedIncomingLineOverlays({ mindMap: {} }, [secondPreview, thirdPreview], 50);
+const previewLines = createShiftedIncomingLineOverlays({ mindMap: {} }, [secondPreview, thirdPreview], { deltaX: 30, deltaY: 50 });
 assert(originalLines[0].shown, 'unaffected incoming edge must stay visible');
 assert(!originalLines[1].shown && !originalLines[2].shown, 'shifted original edges must be replaced temporarily');
 assert(createdLines[1].renderedTop === 90 && createdLines[2].renderedTop === 120, 'preview edges must use shifted endpoints');
-assert(secondPreview.top === 40 && thirdPreview.top === 70, 'preview edge rendering must restore node geometry');
+assert(secondPreview.left === 40 && thirdPreview.left === 70, 'horizontal preview must restore node geometry');
+assert(secondPreview.top === 40 && thirdPreview.top === 70, 'vertical preview must restore node geometry');
 restoreShiftedIncomingLineOverlays(previewLines);
 assert(originalLines.every((item) => item.shown), 'original edges must restore after preview cleanup');
 assert(previewLines.every((item) => item.overlay.removed), 'temporary preview edges must be removed');
@@ -134,4 +179,8 @@ export default {
   hierarchyDwell: true,
   staleTargetCleared: true,
   incomingEdgesPreserved: true,
+  leftLogicalMirror: true,
+  multiLayoutParity: true,
+  sameAxisLayoutParity: true,
+  vectorRoomPreview: true,
 };

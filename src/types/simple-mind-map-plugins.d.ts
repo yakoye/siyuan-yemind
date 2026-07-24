@@ -51,3 +51,14 @@ declare module 'simple-mind-map/src/plugins/outerFrame/outerFrameUtils.js' {
   export const parseAddNodeList: (nodes: any[]) => Array<{ node: any; range: [number, number] }>;
   export const getNodeOuterFrameList: (node: any) => Array<{ nodeList: any[]; range: [number, number] }> | undefined;
 }
+
+declare module 'simple-mind-map/src/layouts/Fishbone' {
+  export default class Fishbone {
+    [key: string]: any;
+    constructor(renderer?: any, layout?: string);
+    doLayout(callback: (root: any) => void): void;
+    renderLine(node: any, lines: any[], style?: (...args: any[]) => void): any;
+    renderGeneralization(list: any[]): void;
+    transformPath(path: string): string;
+  }
+}

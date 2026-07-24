@@ -24,11 +24,18 @@ export function dragLineIsVisible(line: any): boolean {
  * shifted endpoint. Re-render that edge on a temporary overlay instead of
  * hiding every affected parent branch during the drag preview.
  */
+export interface PreviewShiftVector {
+  deltaX?: number;
+  deltaY?: number;
+}
+
 export function createShiftedIncomingLineOverlays(
   plugin: any,
   roots: any[],
-  deltaY: number,
+  shift: number | PreviewShiftVector,
 ): PreviewIncomingLineSnapshot[] {
+  const deltaX = typeof shift === 'number' ? 0 : Number(shift.deltaX ?? 0);
+  const deltaY = typeof shift === 'number' ? shift : Number(shift.deltaY ?? 0);
   const byParent = new Map<any, Set<any>>();
   (roots ?? []).forEach((root) => {
     const parent = root?.parent;
@@ -49,9 +56,13 @@ export function createShiftedIncomingLineOverlays(
       .fill({ color: 'none' })
       .attr({ 'pointer-events': 'none' })
       .hide());
-    const originalTops = new Map<any, number>();
+    const originalPositions = new Map<any, { left: number; top: number }>();
     shiftedChildren.forEach((child) => {
-      originalTops.set(child, Number(child.top) || 0);
+      originalPositions.set(child, {
+        left: Number(child.left) || 0,
+        top: Number(child.top) || 0,
+      });
+      child.left = (Number(child.left) || 0) + deltaX;
       child.top = (Number(child.top) || 0) + deltaY;
     });
 
@@ -63,8 +74,9 @@ export function createShiftedIncomingLineOverlays(
         parent.style?.getStyle?.('lineStyle', true),
       );
     } finally {
-      originalTops.forEach((top, child) => {
-        child.top = top;
+      originalPositions.forEach((position, child) => {
+        child.left = position.left;
+        child.top = position.top;
       });
     }
 

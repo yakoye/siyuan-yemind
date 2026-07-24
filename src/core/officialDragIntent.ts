@@ -34,10 +34,12 @@ export interface ResolveOfficialDragCandidateOptions {
   excludedNodes?: any[];
   current: OfficialDragCandidate;
   getRect: (node: any) => OfficialDragRect | null;
+  /** Optional visual/native order adapter used after directional normalization. */
+  reverseVisualSiblingOrder?: (parent: any) => boolean;
 }
 
 export type OfficialDragGrowthDirection = 'left' | 'right' | 'top' | 'bottom';
-type SiblingAxis = 'x' | 'y';
+export type OfficialDragSiblingAxis = 'x' | 'y';
 
 interface SlotIntent {
   parent: any;
@@ -75,6 +77,10 @@ const OFFICIAL_GEOMETRY_LAYOUTS = new Set([
   'verticalTimeline',
   'verticalTimeline2',
   'verticalTimeline3',
+  'fishbone',
+  'fishbone2',
+  'rightFishbone',
+  'rightFishbone2',
 ]);
 
 export function supportsOfficialDragGeometry(layout: string): boolean {
@@ -171,6 +177,20 @@ export function resolveOfficialDragGrowthDirection(layout: string, node: any): O
       return Number(node?.layerIndex ?? 0) === 0
         ? 'bottom'
         : normalizedDirection(node?.dir) ?? 'right';
+    case 'fishbone':
+    case 'fishbone2': {
+      const layer = Number(node?.layerIndex ?? 0);
+      if (layer === 0) return 'right';
+      if (layer === 1) return normalizedDirection(node?.dir) === 'top' ? 'top' : 'bottom';
+      return 'right';
+    }
+    case 'rightFishbone':
+    case 'rightFishbone2': {
+      const layer = Number(node?.layerIndex ?? 0);
+      if (layer === 0) return 'left';
+      if (layer === 1) return normalizedDirection(node?.dir) === 'top' ? 'top' : 'bottom';
+      return 'left';
+    }
     case 'logicalStructure':
     default:
       return 'right';
@@ -185,13 +205,18 @@ export function resolveOfficialDragGuideOrientation(
   return direction === 'top' || direction === 'bottom' ? 'vertical' : 'horizontal';
 }
 
-function siblingAxis(layout: string, parent: any): SiblingAxis {
+export function resolveOfficialDragSiblingAxis(layout: string, parent: any): OfficialDragSiblingAxis {
   switch (layout) {
     case 'organizationStructure':
       return 'x';
     case 'catalogOrganization':
     case 'timeline':
     case 'timeline2':
+      return Number(parent?.layerIndex ?? 0) === 0 ? 'x' : 'y';
+    case 'fishbone':
+    case 'fishbone2':
+    case 'rightFishbone':
+    case 'rightFishbone2':
       return Number(parent?.layerIndex ?? 0) === 0 ? 'x' : 'y';
     default:
       return 'y';
@@ -204,6 +229,10 @@ function reversesVisualSiblingOrder(layout: string, parent: any): boolean {
     Number(parent?.layerIndex ?? 0) === 1 &&
     normalizedDirection(parent?.dir) === 'top'
   );
+}
+
+export function resolveOfficialDragPreviewDirection(layout: string, parent: any): 1 | -1 {
+  return reversesVisualSiblingOrder(layout, parent) ? -1 : 1;
 }
 
 function tailRect(
@@ -276,7 +305,7 @@ function orderedSiblings(
     ? parent.children.filter((child: any) => available.has(child) && finiteRect(getRect(child)))
     : [];
   siblings = branchFilteredSiblings(layout, parent, siblings, pointer, getRect);
-  const axis = siblingAxis(layout, parent);
+  const axis = resolveOfficialDragSiblingAxis(layout, parent);
   return [...siblings].sort((a, b) => {
     const aRect = getRect(a)!;
     const bRect = getRect(b)!;
@@ -306,7 +335,7 @@ function resolveSiblingSlot(
     const nativeSiblings = Array.isArray(parent.children)
       ? parent.children.filter((child: any) => siblings.includes(child))
       : [];
-    const axis = siblingAxis(options.layout, parent);
+    const axis = resolveOfficialDragSiblingAxis(options.layout, parent);
     const rects = siblings.map(options.getRect).filter(finiteRect);
     const minCross = Math.min(...rects.map((rect) => axis === 'y' ? rect.x : rect.y));
     const maxCross = Math.max(...rects.map((rect) => axis === 'y' ? rect.x + rect.width : rect.y + rect.height));
@@ -435,7 +464,7 @@ function childCandidate(
     };
   }
 
-  const axis = siblingAxis(options.layout, child.node);
+  const axis = resolveOfficialDragSiblingAxis(options.layout, child.node);
   const value = axis === 'y' ? pointer.y : pointer.x;
   let visualIndex = 0;
   for (const item of children) {
@@ -445,7 +474,8 @@ function childCandidate(
     if (value < center) break;
     visualIndex += 1;
   }
-  const reverse = reversesVisualSiblingOrder(options.layout, child.node);
+  const reverse = options.reverseVisualSiblingOrder?.(child.node)
+    ?? reversesVisualSiblingOrder(options.layout, child.node);
   const nativeIndex = reverse ? children.length - visualIndex : visualIndex;
   const nativeChildren = Array.isArray(child.node.children)
     ? child.node.children.filter((item: any) => children.includes(item))
@@ -548,9 +578,12 @@ function logicalCandidateForNode(
   const siblings = Array.isArray(node.parent.children)
     ? node.parent.children.filter((item: any) => available.has(item))
     : [];
-  const nativeIndex = Math.max(0, siblings.indexOf(node));
+  const targetNativeIndex = Math.max(0, siblings.indexOf(node));
   const kind: 'before' | 'after' = pointer.y < center.y ? 'before' : 'after';
-  const slotIndex = kind === 'before' ? nativeIndex : nativeIndex + 1;
+  const reverse = options.reverseVisualSiblingOrder?.(node.parent) ?? false;
+  const slotIndex = reverse
+    ? (kind === 'before' ? targetNativeIndex + 1 : targetNativeIndex)
+    : (kind === 'before' ? targetNativeIndex : targetNativeIndex + 1);
   const slot: SlotIntent = {
     parent: node.parent,
     siblings,
@@ -586,11 +619,12 @@ function currentLogicalTarget(
 function resolveRightLogicalCandidate(
   options: ResolveOfficialDragCandidateOptions,
   pointer: OfficialDragPoint,
+  candidateNodes: any[] = options.nodes,
 ): OfficialDragCandidate {
   const excluded = new Set(options.excludedNodes ?? []);
   const intents: LogicalLocalIntent[] = [];
 
-  options.nodes.forEach((node) => {
+  candidateNodes.forEach((node) => {
     if (excluded.has(node) || node?.isGeneralization) return;
     const rect = options.getRect(node);
     if (!finiteRect(rect)) return;
@@ -618,6 +652,242 @@ function resolveRightLogicalCandidate(
   return best.candidate;
 }
 
+function transformPointForDirection(
+  point: OfficialDragPoint,
+  direction: OfficialDragGrowthDirection,
+): OfficialDragPoint {
+  switch (direction) {
+    case 'left': return { x: -point.x, y: point.y };
+    case 'bottom': return { x: point.y, y: point.x };
+    case 'top': return { x: -point.y, y: point.x };
+    case 'right':
+    default: return point;
+  }
+}
+
+function transformRectForDirection(
+  rect: OfficialDragRect,
+  direction: OfficialDragGrowthDirection,
+): OfficialDragRect {
+  switch (direction) {
+    case 'left':
+      return { x: -(rect.x + rect.width), y: rect.y, width: rect.width, height: rect.height };
+    case 'bottom':
+      return { x: rect.y, y: rect.x, width: rect.height, height: rect.width };
+    case 'top':
+      return { x: -(rect.y + rect.height), y: rect.x, width: rect.height, height: rect.width };
+    case 'right':
+    default:
+      return rect;
+  }
+}
+
+
+function growthUsesSiblingAxis(
+  direction: OfficialDragGrowthDirection,
+  axis: OfficialDragSiblingAxis,
+): boolean {
+  return (axis === 'x' && (direction === 'left' || direction === 'right'))
+    || (axis === 'y' && (direction === 'top' || direction === 'bottom'));
+}
+
+function sameAxisExpandedRect(
+  rect: OfficialDragRect,
+  axis: OfficialDragSiblingAxis,
+  retention = false,
+): OfficialDragRect {
+  const along = retention ? 32 : 22;
+  const cross = retention ? 54 : 42;
+  return axis === 'y'
+    ? expandRect(rect, cross, along)
+    : expandRect(rect, along, cross);
+}
+
+function sameAxisCandidateForNode(
+  options: ResolveOfficialDragCandidateOptions,
+  pointer: OfficialDragPoint,
+  node: any,
+  rect: OfficialDragRect,
+): LogicalLocalIntent | null {
+  const axis = node?.parent
+    ? resolveOfficialDragSiblingAxis(options.layout, node.parent)
+    : 'y';
+  const direction = resolveOfficialDragGrowthDirection(options.layout, node);
+  const actualTail = tailRect(rect, direction);
+  const insideTail = containsPoint(actualTail, pointer);
+  const insideBody = containsPoint(rect, pointer);
+  const expanded = sameAxisExpandedRect(rect, axis);
+  if (!insideTail && !containsPoint(expanded, pointer)) return null;
+
+  const center = rectCenter(rect);
+  const distance = Math.min(
+    pointDistanceToRect(pointer, rect),
+    pointDistanceToRect(pointer, actualTail),
+  );
+  if (!node?.parent || insideTail) {
+    const child: ChildIntent = {
+      node,
+      score: distance - (insideBody ? 30 : insideTail ? 12 : 0),
+      fromTail: insideTail,
+      insideBody,
+    };
+    return {
+      node,
+      rect,
+      candidate: childCandidate(options, pointer, child),
+      score: child.score,
+      distance,
+      strong: insideTail || insideBody,
+    };
+  }
+
+  const available = new Set(options.nodes.filter((item) => !(options.excludedNodes ?? []).includes(item)));
+  const siblings = Array.isArray(node.parent.children)
+    ? node.parent.children.filter((item: any) => available.has(item))
+    : [];
+  const targetNativeIndex = Math.max(0, siblings.indexOf(node));
+  const axisValue = axis === 'y' ? pointer.y : pointer.x;
+  const centerValue = axis === 'y' ? center.y : center.x;
+  const kind: 'before' | 'after' = axisValue < centerValue ? 'before' : 'after';
+  const reverse = options.reverseVisualSiblingOrder?.(node.parent)
+    ?? reversesVisualSiblingOrder(options.layout, node.parent);
+  const nativeIndex = reverse
+    ? (kind === 'before' ? targetNativeIndex + 1 : targetNativeIndex)
+    : (kind === 'before' ? targetNativeIndex : targetNativeIndex + 1);
+  const slot: SlotIntent = {
+    parent: node.parent,
+    siblings,
+    nativeSiblings: siblings,
+    visualIndex: nativeIndex,
+    nativeIndex,
+    score: distance + Math.abs(axisValue - centerValue) * 0.08 - (insideBody ? 30 : 0),
+    axisDistance: Math.abs(axisValue - centerValue),
+    targetNode: node,
+    kind,
+  };
+  return {
+    node,
+    rect,
+    candidate: slotCandidate(slot, kind),
+    score: slot.score,
+    distance,
+    strong: insideBody,
+  };
+}
+
+function currentSameAxisTarget(
+  options: ResolveOfficialDragCandidateOptions,
+  pointer: OfficialDragPoint,
+): LogicalLocalIntent | null {
+  const node = options.current?.targetNode ?? options.current?.target ?? null;
+  if (!node || !node.parent || (options.excludedNodes ?? []).includes(node)) return null;
+  const direction = resolveOfficialDragGrowthDirection(options.layout, node);
+  const axis = resolveOfficialDragSiblingAxis(options.layout, node.parent);
+  if (!growthUsesSiblingAxis(direction, axis)) return null;
+  const rect = options.getRect(node);
+  if (!finiteRect(rect)) return null;
+  const retained = sameAxisExpandedRect(rect, axis, true);
+  if (!containsPoint(retained, pointer) && !containsPoint(tailRect(rect, direction), pointer)) return null;
+  return sameAxisCandidateForNode(options, pointer, node, rect);
+}
+
+function resolveSameAxisLocalCandidate(
+  options: ResolveOfficialDragCandidateOptions,
+  pointer: OfficialDragPoint,
+  candidateNodes: any[],
+): OfficialDragCandidate {
+  const excluded = new Set(options.excludedNodes ?? []);
+  const intents: LogicalLocalIntent[] = [];
+  candidateNodes.forEach((node) => {
+    if (excluded.has(node) || node?.isGeneralization || !node?.parent) return;
+    const rect = options.getRect(node);
+    if (!finiteRect(rect)) return;
+    const intent = sameAxisCandidateForNode(options, pointer, node, rect);
+    if (intent) intents.push(intent);
+  });
+  if (intents.length === 0) return emptyOfficialDragCandidate();
+  intents.sort((a, b) => {
+    if (a.strong !== b.strong) return a.strong ? -1 : 1;
+    if (Math.abs(a.score - b.score) > 0.5) return a.score - b.score;
+    return nodeUid(a.node).localeCompare(nodeUid(b.node));
+  });
+  const best = intents[0];
+  const current = currentSameAxisTarget(options, pointer);
+  if (
+    current
+    && current.node !== best.node
+    && !best.strong
+    && current.score <= best.score + LOGICAL_TARGET_HYSTERESIS
+  ) {
+    return current.candidate;
+  }
+  return best.candidate;
+}
+
+/**
+ * Mirrors or rotates every supported layout into the proven right-logical
+ * interaction frame. Candidate nodes are grouped by their own growth
+ * direction, while child/sibling lookup still sees the complete tree.
+ */
+function resolveDirectionalLocalCandidate(
+  options: ResolveOfficialDragCandidateOptions,
+  pointer: OfficialDragPoint,
+): OfficialDragCandidate {
+  const excluded = new Set(options.excludedNodes ?? []);
+  const groups = new Map<OfficialDragGrowthDirection, any[]>();
+  const sameAxisNodes: any[] = [];
+  options.nodes.forEach((node) => {
+    if (excluded.has(node) || node?.isGeneralization) return;
+    const direction = resolveOfficialDragGrowthDirection(options.layout, node);
+    const siblingAxis = node?.parent
+      ? resolveOfficialDragSiblingAxis(options.layout, node.parent)
+      : null;
+    if (node?.parent && siblingAxis && growthUsesSiblingAxis(direction, siblingAxis)) {
+      sameAxisNodes.push(node);
+      return;
+    }
+    const list = groups.get(direction) ?? [];
+    list.push(node);
+    groups.set(direction, list);
+  });
+
+  let best = resolveSameAxisLocalCandidate(options, pointer, sameAxisNodes);
+  const currentTarget = options.current?.targetNode ?? options.current?.target ?? null;
+  groups.forEach((candidateNodes, direction) => {
+    const currentDirection = currentTarget
+      ? resolveOfficialDragGrowthDirection(options.layout, currentTarget)
+      : null;
+    const transformed: ResolveOfficialDragCandidateOptions = {
+      ...options,
+      layout: 'logicalStructure',
+      current: currentDirection === direction ? options.current : emptyOfficialDragCandidate(),
+      pointer: transformPointForDirection(pointer, direction),
+      reverseVisualSiblingOrder: (parent) => reversesVisualSiblingOrder(options.layout, parent),
+      getRect: (node) => {
+        const rect = options.getRect(node);
+        return finiteRect(rect) ? transformRectForDirection(rect, direction) : null;
+      },
+    };
+    const candidate = resolveRightLogicalCandidate(
+      transformed,
+      transformed.pointer!,
+      candidateNodes,
+    );
+    if (candidate.kind !== 'none' && candidate.score < best.score) best = candidate;
+  });
+  return best;
+}
+
+export function orderOfficialDragSiblings(
+  layout: string,
+  parent: any,
+  nodes: any[],
+  pointer: OfficialDragPoint,
+  getRect: (node: any) => OfficialDragRect | null,
+): any[] {
+  return orderedSiblings(layout, parent, new Set(nodes), pointer, getRect);
+}
+
 /**
  * Pointer-based tree intent. The dragged clone never participates in hit
  * testing, so a large image node cannot trigger a target while the pointer is
@@ -632,12 +902,12 @@ export function resolveOfficialDragCandidate(
   if (options.layout === 'logicalStructure') {
     return resolveRightLogicalCandidate(options, pointer);
   }
+  if (supportsOfficialDragGeometry(options.layout)) {
+    return resolveDirectionalLocalCandidate(options, pointer);
+  }
 
   const sibling = resolveSiblingSlot(options, pointer);
   const child = resolveChildTarget(options, pointer);
-
-  // Other layouts retain the geometry adapter while the right-growing logical
-  // layout acts as the reference implementation for the new drag model.
   if (child?.fromTail) return childCandidate(options, pointer, child);
   if (sibling && sibling.axisDistance <= SIBLING_SLOT_RADIUS) return slotCandidate(sibling);
   if (child) return childCandidate(options, pointer, child);
@@ -676,7 +946,7 @@ export interface OfficialInsertionGuide {
 
 function lineFromSlot(
   rect: OfficialDragRect,
-  axis: SiblingAxis,
+  axis: OfficialDragSiblingAxis,
   before: boolean,
 ): OfficialInsertionGuide {
   if (axis === 'y') {
@@ -697,7 +967,7 @@ export function calculateOfficialInsertionGuide(
   getRect: (node: any) => OfficialDragRect | null,
 ): OfficialInsertionGuide | null {
   if (candidate.kind === 'none' || !candidate.parentNode) return null;
-  const axis = siblingAxis(layout, candidate.parentNode);
+  const axis = resolveOfficialDragSiblingAxis(layout, candidate.parentNode);
   if (candidate.nextNode) {
     const rect = getRect(candidate.nextNode);
     return finiteRect(rect) ? lineFromSlot(rect, axis, true) : null;

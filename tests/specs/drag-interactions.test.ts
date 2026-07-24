@@ -8,3 +8,4 @@ import '../suites/drag-interactions/v095UnifiedTreeDrag.suite';
 import '../suites/drag-interactions/v096LogicalDragAndOutlineEditing.suite';
 import '../suites/drag-interactions/v097NearestNodeCanvasDrag.suite';
 import '../suites/drag-interactions/v098DragEdgeContinuity.suite';
+import '../suites/drag-interactions/v0918LayoutDragParity.suite';

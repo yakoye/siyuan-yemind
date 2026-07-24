@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.17 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.18 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -39,11 +39,11 @@ const releaseInfo_1 = __require(29);
 const constants_1 = __require(28);
 const dock_1 = __require(37);
 const tabs_1 = __require(38);
-const OpenMapTabRegistry_1 = __require(256);
-const pluginUrl_1 = __require(257);
-const operationSafety_1 = __require(258);
-const pluginStartup_1 = __require(259);
-const globalSearch_1 = __require(260);
+const OpenMapTabRegistry_1 = __require(258);
+const pluginUrl_1 = __require(259);
+const operationSafety_1 = __require(260);
+const pluginStartup_1 = __require(261);
+const globalSearch_1 = __require(262);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -15847,7 +15847,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.17';
+exports.PLUGIN_VERSION = '0.9.18';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -15864,20 +15864,20 @@ const constants_1 = __require(28);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-23T16:35:00Z',
-    buildId: 'yemind-v0.9.17-20260724',
+    buildTime: '2026-07-24T00:20:00Z',
+    buildId: 'yemind-v0.9.18-20260724',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '节点宽度拖动实时重排，重组节点右键菜单，并修复画布点击后被旧大纲选区重新选回其他节点的问题。',
+    releaseSummary: '打开分屏时立即定位当前节点，并将右向导图的丝滑拖动语义镜像和扩展到全部结构布局。',
     highlights: [
-        '拖动节点文字宽度时，每一帧都重新布局整棵导图，子节点和连线实时跟随。',
-        '编辑节点会直接进入文字编辑并全选文字；插入节点菜单统一使用“插入”并配套新的结构关系图标。',
-        '外框和待办并入“添加”子菜单，并根据当前状态显示“外框/删除外框”和“添加待办/删除待办”。',
-        '复制、剪切、粘贴和纯文本粘贴移动到节点上移/下移之前，节点样式图标与文字重新对齐。',
-        '画布选中节点时会清除大纲中残留的 DOM 选区，避免点击任意节点后又跳回旧节点。',
-        '节点标记 sprite 增加裁剪与命中隔离，避免超大透明图片区域截获其他节点点击。',
+        '打开分屏或纯大纲视图时，立即在大纲自身滚动区域内显示当前画布选中节点，不改变画布选中所有权。',
+        '保留右向导图已经稳定的局部命中、绿色虚线父级预览和实时让位逻辑，左向导图使用严格镜像坐标复用同一算法。',
+        '思维导图、逆向导图、双向平衡向下、树状图、时间轴和组织结构图统一使用方向归一化后的即时拖动候选。',
+        '鱼骨图右使用独立的镜像渲染器，节点、连线、概要和鱼尾结构与鱼骨图左左右对称，文字保持正常方向。',
+        '树形表格和其他结构缩略图通过各自映射的正式引擎布局继承相同拖动规则。',
+        '所有已适配结构在拖动时只显示一个候选父节点绿色虚线，并在横向或纵向兄弟轴上实时腾出空间。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -16833,10 +16833,10 @@ function escapeHtml(value) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
 const YeMindEditor_1 = __require(39);
-const deferredMount_1 = __require(254);
+const deferredMount_1 = __require(256);
 const constants_1 = __require(28);
-const visibleElement_1 = __require(238);
-const tabNodeFocus_1 = __require(255);
+const visibleElement_1 = __require(240);
+const tabNodeFocus_1 = __require(257);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -16931,55 +16931,55 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.YeMindEditor = void 0;
 const siyuan_1 = __externalRequire("siyuan");
 const createMindMap_1 = __require(40);
-const dragBehavior_1 = __require(197);
+const dragBehavior_1 = __require(199);
 const themePresets_1 = __require(11);
-const relationConfig_1 = __require(198);
-const outerFrameConfig_1 = __require(199);
-const relationData_1 = __require(203);
-const commands_1 = __require(204);
-const nodeDecorations_1 = __require(194);
+const relationConfig_1 = __require(200);
+const outerFrameConfig_1 = __require(201);
+const relationData_1 = __require(205);
+const commands_1 = __require(206);
+const nodeDecorations_1 = __require(196);
 const registerPlugins_1 = __require(90);
-const checkpointDialog_1 = __require(210);
-const contextMenu_1 = __require(213);
+const checkpointDialog_1 = __require(212);
+const contextMenu_1 = __require(215);
 const dialogs_1 = __require(25);
-const nodeContentDialogs_1 = __require(214);
-const richTextDialogs_1 = __require(220);
-const editorStats_1 = __require(221);
-const editorTemplate_1 = __require(222);
-const outlineDrag_1 = __require(223);
-const StructuredOutlineEditorController_1 = __require(224);
-const splitPane_1 = __require(227);
-const RichTextToolbar_1 = __require(228);
+const nodeContentDialogs_1 = __require(216);
+const richTextDialogs_1 = __require(222);
+const editorStats_1 = __require(223);
+const editorTemplate_1 = __require(224);
+const outlineDrag_1 = __require(225);
+const StructuredOutlineEditorController_1 = __require(226);
+const splitPane_1 = __require(229);
+const RichTextToolbar_1 = __require(230);
 const shortcuts_1 = __require(32);
-const selectionPresentation_1 = __require(232);
-const saveRevision_1 = __require(233);
-const relationPresentation_1 = __require(234);
-const outerFramePresentation_1 = __require(235);
-const toolbarAvailability_1 = __require(236);
-const linkNavigation_1 = __require(237);
-const visibleElement_1 = __require(238);
-const imageFileLoading_1 = __require(215);
-const nodeImageInput_1 = __require(239);
-const nodeHoverPreview_1 = __require(240);
-const imageLightbox_1 = __require(241);
-const nodeStylePanel_1 = __require(242);
-const projectStylePanel_1 = __require(243);
-const layoutGalleryPanel_1 = __require(244);
-const localAssetDialogs_1 = __require(245);
+const selectionPresentation_1 = __require(234);
+const saveRevision_1 = __require(235);
+const relationPresentation_1 = __require(236);
+const outerFramePresentation_1 = __require(237);
+const toolbarAvailability_1 = __require(238);
+const linkNavigation_1 = __require(239);
+const visibleElement_1 = __require(240);
+const imageFileLoading_1 = __require(217);
+const nodeImageInput_1 = __require(241);
+const nodeHoverPreview_1 = __require(242);
+const imageLightbox_1 = __require(243);
+const nodeStylePanel_1 = __require(244);
+const projectStylePanel_1 = __require(245);
+const layoutGalleryPanel_1 = __require(246);
+const localAssetDialogs_1 = __require(247);
 const layoutAssetPresets_1 = __require(14);
-const measurementHost_1 = __require(202);
-const canvasRichTextVisibility_1 = __require(246);
-const searchPanelState_1 = __require(247);
+const measurementHost_1 = __require(204);
+const canvasRichTextVisibility_1 = __require(248);
+const searchPanelState_1 = __require(249);
 const projectStyle_1 = __require(20);
-const appearanceTransaction_1 = __require(248);
-const nodeQuickActions_1 = __require(249);
+const appearanceTransaction_1 = __require(250);
+const nodeQuickActions_1 = __require(251);
 const projectControls_1 = __require(35);
-const nodeNoteState_1 = __require(195);
-const canvasRightDrag_1 = __require(250);
-const liveNodeWidthLayout_1 = __require(251);
-const focusHighlight_1 = __require(252);
-const editingSurfaceCoordinator_1 = __require(253);
-const clipartGeometry_1 = __require(209);
+const nodeNoteState_1 = __require(197);
+const canvasRightDrag_1 = __require(252);
+const liveNodeWidthLayout_1 = __require(253);
+const focusHighlight_1 = __require(254);
+const editingSurfaceCoordinator_1 = __require(255);
+const clipartGeometry_1 = __require(211);
 class YeMindEditor {
     constructor(options) {
         this.options = options;
@@ -18430,7 +18430,22 @@ class YeMindEditor {
             window.cancelAnimationFrame(this.resizeFrame);
             this.resizeFrame = null;
         }
+        if (mode === "split" || mode === "outline") {
+            window.requestAnimationFrame(() => this.revealCurrentOutlineSelection());
+        }
         this.nodeQuickActions?.scheduleRefresh();
+    }
+    revealCurrentOutlineSelection() {
+        if (this.destroyed || (this.viewMode !== "split" && this.viewMode !== "outline"))
+            return;
+        const renderer = this.map?.renderer;
+        if (!Array.isArray(renderer?.activeNodeList) || renderer.activeNodeList.length === 0)
+            return;
+        const active = renderer.activeNodeList[0];
+        const uid = active?.getData?.("uid");
+        if (!uid)
+            return;
+        this.activateOutlineUid(String(uid), true);
     }
     scheduleSafeResize(attempt = 0) {
         if (this.destroyed || !this.map || this.viewMode === "outline")
@@ -19073,14 +19088,15 @@ exports.createImageDeleteGuard = createImageDeleteGuard;
 exports.createMindMap = createMindMap;
 const simple_mind_map_1 = __importDefault(__require(41));
 const registerPlugins_1 = __require(90);
-const nodeDecorations_1 = __require(194);
-const dragBehavior_1 = __require(197);
-const relationConfig_1 = __require(198);
-const outerFrameConfig_1 = __require(199);
-const shortcutSafety_1 = __require(200);
+const registerLayouts_1 = __require(194);
+const nodeDecorations_1 = __require(196);
+const dragBehavior_1 = __require(199);
+const relationConfig_1 = __require(200);
+const outerFrameConfig_1 = __require(201);
+const shortcutSafety_1 = __require(202);
 const themePresets_1 = __require(11);
-const themeColorRuntime_1 = __require(201);
-const measurementHost_1 = __require(202);
+const themeColorRuntime_1 = __require(203);
+const measurementHost_1 = __require(204);
 function createImageDeleteGuard(confirmDelete) {
     return async (node) => {
         if (!confirmDelete)
@@ -19090,6 +19106,7 @@ function createImageDeleteGuard(confirmDelete) {
     };
 }
 function createMindMap(options) {
+    (0, registerLayouts_1.registerMindMapLayouts)();
     (0, registerPlugins_1.registerMindMapPlugins)(options.settings);
     const settings = options.settings;
     const behavior = settings ? (0, dragBehavior_1.buildDragAndLayoutOptions)(settings) : null;
@@ -40384,19 +40401,23 @@ function updateStableDragCandidate(state, candidate, now, minimumDurationMs, min
         };
     return (0, treeDropIntent_1.updateStableTreeDropIntent)(state, candidate, now, options);
 }
-function calculateDragGuidePath(parent, ghost, orientation) {
+function calculateDragGuidePath(parent, ghost, orientation, direction = orientation === 'vertical' ? 'bottom' : 'right') {
     if (orientation === 'vertical') {
+        const topward = direction === 'top';
         const startX = parent.x + parent.width / 2;
-        const startY = parent.y + parent.height;
+        const startY = topward ? parent.y : parent.y + parent.height;
         const endX = ghost.x + ghost.width / 2;
-        const endY = ghost.y;
-        return `M ${startX} ${startY} C ${startX} ${startY + 40}, ${endX} ${endY - 40}, ${endX} ${endY}`;
+        const endY = topward ? ghost.y + ghost.height : ghost.y;
+        const bend = topward ? -40 : 40;
+        return `M ${startX} ${startY} C ${startX} ${startY + bend}, ${endX} ${endY - bend}, ${endX} ${endY}`;
     }
-    const startX = parent.x + parent.width;
+    const leftward = direction === 'left';
+    const startX = leftward ? parent.x : parent.x + parent.width;
     const startY = parent.y + parent.height / 2;
-    const endX = ghost.x;
+    const endX = leftward ? ghost.x + ghost.width : ghost.x;
     const endY = ghost.y + ghost.height / 2;
-    return `M ${startX} ${startY} C ${startX + 40} ${startY}, ${endX - 40} ${endY}, ${endX} ${endY}`;
+    const bend = leftward ? -40 : 40;
+    return `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`;
 }
 function calculateOriginalParentGuideStyle(distance) {
     const normalized = Math.max(0, Math.min(1, Number(distance) / 140));
@@ -40563,7 +40584,7 @@ function collectSubtreeNodes(root) {
     visit(root);
     return result;
 }
-function previewGap(plugin) {
+function previewGap(plugin, axis) {
     const rects = [];
     (plugin.beingDragNodeList ?? []).forEach((root) => {
         collectSubtreeNodes(root).forEach((node) => {
@@ -40574,9 +40595,9 @@ function previewGap(plugin) {
     });
     if (!rects.length)
         return 44;
-    const top = Math.min(...rects.map((rect) => rect.y));
-    const bottom = Math.max(...rects.map((rect) => rect.y + rect.height));
-    return Math.max(44, Math.min(360, bottom - top + 18));
+    const start = Math.min(...rects.map((rect) => axis === 'x' ? rect.x : rect.y));
+    const end = Math.max(...rects.map((rect) => axis === 'x' ? rect.x + rect.width : rect.y + rect.height));
+    return Math.max(44, Math.min(360, end - start + 18));
 }
 function endpointDistance(parent, ghost, orientation) {
     if (orientation === 'vertical') {
@@ -40600,7 +40621,7 @@ class YeMindDrag extends Drag_1.default {
         plugin.__ymzRawCandidate = (0, officialDragIntent_1.emptyOfficialDragCandidate)();
         plugin.__ymzOverlapFrame = null;
         plugin.__ymzIncomingLines = [];
-        plugin.__ymzLogicalRoomPreview = null;
+        plugin.__ymzLayoutRoomPreview = null;
         plugin.__ymzOnKeydown = (event) => {
             if (event.key !== 'Escape' || (!plugin.isMousedown && !plugin.isDragging))
                 return;
@@ -40637,14 +40658,11 @@ class YeMindDrag extends Drag_1.default {
     }
     onMove(x, y, event) {
         super.onMove(x, y, event);
-        // The right logical reference layout resolves its local target on every
-        // pointer move so the parent preview never lags behind the dragged node.
-        if (String(this.mindMap.opt.layout ?? 'logicalStructure') === 'logicalStructure') {
+        const layout = String(this.mindMap.opt.layout ?? 'logicalStructure');
+        if ((0, officialDragIntent_1.supportsOfficialDragGeometry)(layout))
             this.flushOfficialCandidateCheck();
-        }
-        else {
+        else
             this.updateOfficialGuideLines();
-        }
     }
     async onMouseup(event) {
         const plugin = this;
@@ -40652,10 +40670,10 @@ class YeMindDrag extends Drag_1.default {
             this.flushOfficialCandidateCheck();
             const raw = plugin.__ymzRawCandidate ?? (0, officialDragIntent_1.emptyOfficialDragCandidate)();
             const stable = plugin.__ymzCandidateState?.stable ?? (0, officialDragIntent_1.emptyOfficialDragCandidate)();
-            // Sibling ordering is explicit from the upper/lower half of a target row
-            // and should commit on release immediately. Becoming a child changes
-            // hierarchy and therefore still requires the deliberate dwell candidate.
-            const resolved = String(plugin.mindMap.opt.layout ?? 'logicalStructure') === 'logicalStructure'
+            const layout = String(plugin.mindMap.opt.layout ?? 'logicalStructure');
+            // Adapted layouts share the immediate right-logical intent model. Legacy
+            // layouts keep their existing dwell protection for hierarchy changes.
+            const resolved = (0, officialDragIntent_1.supportsOfficialDragGeometry)(layout)
                 ? raw
                 : raw.kind === 'child'
                     ? (raw.key === stable.key ? stable : (0, officialDragIntent_1.emptyOfficialDragCandidate)())
@@ -40672,7 +40690,7 @@ class YeMindDrag extends Drag_1.default {
     }
     removeCloneNode() {
         this.cancelCandidateFrame();
-        this.clearLogicalRoomPreview();
+        this.clearLayoutRoomPreview();
         this.removeGuideLines();
         super.removeCloneNode();
     }
@@ -40680,7 +40698,7 @@ class YeMindDrag extends Drag_1.default {
         const plugin = this;
         document.removeEventListener('keydown', plugin.__ymzOnKeydown, true);
         this.cancelCandidateFrame();
-        this.clearLogicalRoomPreview();
+        this.clearLayoutRoomPreview();
         this.removeGuideLines();
         this.restoreIncomingLines();
         super.beforePluginRemove();
@@ -40689,7 +40707,7 @@ class YeMindDrag extends Drag_1.default {
         const plugin = this;
         document.removeEventListener('keydown', plugin.__ymzOnKeydown, true);
         this.cancelCandidateFrame();
-        this.clearLogicalRoomPreview();
+        this.clearLayoutRoomPreview();
         this.removeGuideLines();
         this.restoreIncomingLines();
         super.beforePluginDestroy();
@@ -40736,17 +40754,17 @@ class YeMindDrag extends Drag_1.default {
         plugin.__ymzRawCandidate = candidate;
         const currentState = plugin.__ymzCandidateState
             ?? createDragCandidateState((0, officialDragIntent_1.emptyOfficialDragCandidate)());
-        plugin.__ymzCandidateState = layout === 'logicalStructure'
+        plugin.__ymzCandidateState = (0, officialDragIntent_1.supportsOfficialDragGeometry)(layout)
             ? { stable: candidate, pending: null }
             : updateStableDragCandidate(currentState, candidate, now);
         const stable = (0, officialDragIntent_1.isOfficialDragCandidateNoop)(plugin.__ymzCandidateState.stable, plugin.beingDragNodeList ?? [])
             ? (0, officialDragIntent_1.emptyOfficialDragCandidate)()
             : plugin.__ymzCandidateState.stable;
         applyCandidate(plugin, stable);
-        if (layout === 'logicalStructure')
-            this.updateLogicalRoomPreview(stable);
+        if ((0, officialDragIntent_1.supportsOfficialDragGeometry)(layout))
+            this.updateLayoutRoomPreview(stable);
         else
-            this.clearLogicalRoomPreview();
+            this.clearLayoutRoomPreview();
         this.updateOfficialGuideLines();
         if (plugin.clone && plugin.__ymzCandidateState.pending) {
             this.scheduleOfficialCandidateCheck();
@@ -40808,14 +40826,15 @@ class YeMindDrag extends Drag_1.default {
         // a local target is acquired it stays connected to the original parent;
         // as soon as the nearest-node local zone changes, it switches in the same
         // pointer frame to the parent encoded by that single candidate object.
-        const previewParent = layout === 'logicalStructure'
+        const adapted = (0, officialDragIntent_1.supportsOfficialDragGeometry)(layout);
+        const previewParent = adapted
             ? stableTarget ?? plugin.mousedownNode?.parent ?? null
             : stableTarget;
         const target = nodeSceneRect(plugin, previewParent);
         if (target) {
             const orientation = (0, officialDragIntent_1.resolveOfficialDragGuideOrientation)(layout, previewParent);
             plugin.__ymzTargetGuideLine
-                .plot(calculateDragGuidePath(target, ghost, orientation))
+                .plot(calculateDragGuidePath(target, ghost, orientation, (0, officialDragIntent_1.resolveOfficialDragGrowthDirection)(layout, previewParent)))
                 .stroke({ color: 'rgba(23, 107, 80, 0.96)', width: 2.3, linecap: 'round' })
                 .attr({ 'stroke-dasharray': '6 6', opacity: 1, 'pointer-events': 'none' })
                 .show()
@@ -40828,7 +40847,7 @@ class YeMindDrag extends Drag_1.default {
         // green dashed line points at the parent that will own the dragged node.
         // There is no root fallback and no canvas insertion line; sibling order is
         // communicated by the live room-making preview.
-        if (layout === 'logicalStructure') {
+        if (adapted) {
             plugin.__ymzOriginGuideLine?.hide?.();
             plugin.__ymzInsertionGuideLine?.hide?.();
             plugin.__ymzInsertionGuideSquare?.hide?.();
@@ -40869,33 +40888,49 @@ class YeMindDrag extends Drag_1.default {
             plugin.__ymzInsertionGuideSquare?.hide?.();
         }
     }
-    updateLogicalRoomPreview(candidate) {
+    updateLayoutRoomPreview(candidate) {
         const plugin = this;
-        const current = plugin.__ymzLogicalRoomPreview ?? null;
+        const current = plugin.__ymzLayoutRoomPreview ?? null;
         if (candidate.kind === 'none' || !candidate.parentNode) {
-            this.clearLogicalRoomPreview();
+            this.clearLayoutRoomPreview();
             return;
         }
         if (current?.key === candidate.key)
             return;
-        this.clearLogicalRoomPreview();
+        this.clearLayoutRoomPreview();
+        const layout = String(plugin.mindMap.opt.layout ?? 'logicalStructure');
         const sourceRoots = plugin.beingDragNodeList ?? [];
         const sourceSet = new Set();
         sourceRoots.forEach((root) => collectSubtreeNodes(root).forEach((node) => sourceSet.add(node)));
-        const siblings = Array.isArray(candidate.parentNode.children)
+        const available = Array.isArray(candidate.parentNode.children)
             ? candidate.parentNode.children.filter((node) => !sourceSet.has(node))
             : [];
-        const index = Math.max(0, Math.min(siblings.length, Number(candidate.index) || 0));
-        const rootsToShift = siblings.slice(index);
+        const pointer = { x: Number(plugin.mouseMoveX) || 0, y: Number(plugin.mouseMoveY) || 0 };
+        const siblings = (0, officialDragIntent_1.orderOfficialDragSiblings)(layout, candidate.parentNode, available, pointer, (node) => nodeHitRect(plugin, node));
+        let visualIndex = Math.max(0, Math.min(siblings.length, Number(candidate.index) || 0));
+        if (candidate.targetNode && siblings.includes(candidate.targetNode)) {
+            const targetIndex = siblings.indexOf(candidate.targetNode);
+            visualIndex = candidate.kind === 'after' ? targetIndex + 1 : targetIndex;
+        }
+        else if (candidate.nextNode && siblings.includes(candidate.nextNode)) {
+            visualIndex = siblings.indexOf(candidate.nextNode);
+        }
+        else if (candidate.prevNode && siblings.includes(candidate.prevNode)) {
+            visualIndex = siblings.indexOf(candidate.prevNode) + 1;
+        }
+        const rootsToShift = siblings.slice(Math.max(0, visualIndex));
         if (!rootsToShift.length) {
-            plugin.__ymzLogicalRoomPreview = {
+            plugin.__ymzLayoutRoomPreview = {
                 key: candidate.key,
                 transforms: [],
                 incomingLines: [],
             };
             return;
         }
-        const deltaY = previewGap(plugin);
+        const axis = (0, officialDragIntent_1.resolveOfficialDragSiblingAxis)(layout, candidate.parentNode);
+        const gap = previewGap(plugin, axis);
+        const deltaX = axis === 'x' ? gap : 0;
+        const deltaY = axis === 'y' ? gap : 0;
         const elements = new Set();
         rootsToShift.forEach((root) => {
             collectSubtreeNodes(root).forEach((node) => {
@@ -40904,29 +40939,24 @@ class YeMindDrag extends Drag_1.default {
                 (node?._lines ?? []).forEach((line) => elements.add(line));
             });
         });
-        const incomingLines = (0, dragPreviewEdges_1.createShiftedIncomingLineOverlays)(plugin, rootsToShift, deltaY);
+        const incomingLines = (0, dragPreviewEdges_1.createShiftedIncomingLineOverlays)(plugin, rootsToShift, { deltaX, deltaY });
         const transforms = [];
         elements.forEach((element) => {
             const before = svgTransform(element);
             const transition = elementTransition(element);
-            transforms.push({
-                element,
-                translateX: before.translateX,
-                translateY: before.translateY,
-                transition,
-            });
+            transforms.push({ element, translateX: before.translateX, translateY: before.translateY, transition });
             setElementTransition(element, 'transform 130ms ease');
-            element.translate?.(0, deltaY);
+            element.translate?.(deltaX, deltaY);
         });
-        plugin.__ymzLogicalRoomPreview = {
+        plugin.__ymzLayoutRoomPreview = {
             key: candidate.key,
             transforms,
             incomingLines,
         };
     }
-    clearLogicalRoomPreview() {
+    clearLayoutRoomPreview() {
         const plugin = this;
-        const preview = plugin.__ymzLogicalRoomPreview ?? null;
+        const preview = plugin.__ymzLayoutRoomPreview ?? null;
         if (!preview)
             return;
         preview.transforms.forEach((snapshot) => {
@@ -40938,7 +40968,7 @@ class YeMindDrag extends Drag_1.default {
             setTimeout(() => setElementTransition(element, transition), 120);
         });
         (0, dragPreviewEdges_1.restoreShiftedIncomingLineOverlays)(preview.incomingLines);
-        plugin.__ymzLogicalRoomPreview = null;
+        plugin.__ymzLayoutRoomPreview = null;
     }
     clearUpstreamPlaceholder() {
         const plugin = this;
@@ -42213,6 +42243,9 @@ exports.supportsOfficialDragGeometry = supportsOfficialDragGeometry;
 exports.emptyOfficialDragCandidate = emptyOfficialDragCandidate;
 exports.resolveOfficialDragGrowthDirection = resolveOfficialDragGrowthDirection;
 exports.resolveOfficialDragGuideOrientation = resolveOfficialDragGuideOrientation;
+exports.resolveOfficialDragSiblingAxis = resolveOfficialDragSiblingAxis;
+exports.resolveOfficialDragPreviewDirection = resolveOfficialDragPreviewDirection;
+exports.orderOfficialDragSiblings = orderOfficialDragSiblings;
 exports.resolveOfficialDragCandidate = resolveOfficialDragCandidate;
 exports.officialCandidateParent = officialCandidateParent;
 exports.isOfficialDragCandidateNoop = isOfficialDragCandidateNoop;
@@ -42235,6 +42268,10 @@ const OFFICIAL_GEOMETRY_LAYOUTS = new Set([
     'verticalTimeline',
     'verticalTimeline2',
     'verticalTimeline3',
+    'fishbone',
+    'fishbone2',
+    'rightFishbone',
+    'rightFishbone2',
 ]);
 function supportsOfficialDragGeometry(layout) {
     return OFFICIAL_GEOMETRY_LAYOUTS.has(String(layout));
@@ -42319,6 +42356,24 @@ function resolveOfficialDragGrowthDirection(layout, node) {
             return Number(node?.layerIndex ?? 0) === 0
                 ? 'bottom'
                 : normalizedDirection(node?.dir) ?? 'right';
+        case 'fishbone':
+        case 'fishbone2': {
+            const layer = Number(node?.layerIndex ?? 0);
+            if (layer === 0)
+                return 'right';
+            if (layer === 1)
+                return normalizedDirection(node?.dir) === 'top' ? 'top' : 'bottom';
+            return 'right';
+        }
+        case 'rightFishbone':
+        case 'rightFishbone2': {
+            const layer = Number(node?.layerIndex ?? 0);
+            if (layer === 0)
+                return 'left';
+            if (layer === 1)
+                return normalizedDirection(node?.dir) === 'top' ? 'top' : 'bottom';
+            return 'left';
+        }
         case 'logicalStructure':
         default:
             return 'right';
@@ -42328,13 +42383,18 @@ function resolveOfficialDragGuideOrientation(layout, node) {
     const direction = resolveOfficialDragGrowthDirection(layout, node);
     return direction === 'top' || direction === 'bottom' ? 'vertical' : 'horizontal';
 }
-function siblingAxis(layout, parent) {
+function resolveOfficialDragSiblingAxis(layout, parent) {
     switch (layout) {
         case 'organizationStructure':
             return 'x';
         case 'catalogOrganization':
         case 'timeline':
         case 'timeline2':
+            return Number(parent?.layerIndex ?? 0) === 0 ? 'x' : 'y';
+        case 'fishbone':
+        case 'fishbone2':
+        case 'rightFishbone':
+        case 'rightFishbone2':
             return Number(parent?.layerIndex ?? 0) === 0 ? 'x' : 'y';
         default:
             return 'y';
@@ -42344,6 +42404,9 @@ function reversesVisualSiblingOrder(layout, parent) {
     return (layout === 'timeline2' &&
         Number(parent?.layerIndex ?? 0) === 1 &&
         normalizedDirection(parent?.dir) === 'top');
+}
+function resolveOfficialDragPreviewDirection(layout, parent) {
+    return reversesVisualSiblingOrder(layout, parent) ? -1 : 1;
 }
 function tailRect(rect, direction) {
     switch (direction) {
@@ -42401,7 +42464,7 @@ function orderedSiblings(layout, parent, available, pointer, getRect) {
         ? parent.children.filter((child) => available.has(child) && finiteRect(getRect(child)))
         : [];
     siblings = branchFilteredSiblings(layout, parent, siblings, pointer, getRect);
-    const axis = siblingAxis(layout, parent);
+    const axis = resolveOfficialDragSiblingAxis(layout, parent);
     return [...siblings].sort((a, b) => {
         const aRect = getRect(a);
         const bRect = getRect(b);
@@ -42429,7 +42492,7 @@ function resolveSiblingSlot(options, pointer) {
         const nativeSiblings = Array.isArray(parent.children)
             ? parent.children.filter((child) => siblings.includes(child))
             : [];
-        const axis = siblingAxis(options.layout, parent);
+        const axis = resolveOfficialDragSiblingAxis(options.layout, parent);
         const rects = siblings.map(options.getRect).filter(finiteRect);
         const minCross = Math.min(...rects.map((rect) => axis === 'y' ? rect.x : rect.y));
         const maxCross = Math.max(...rects.map((rect) => axis === 'y' ? rect.x + rect.width : rect.y + rect.height));
@@ -42543,7 +42606,7 @@ function childCandidate(options, pointer, child) {
             score: child.score,
         };
     }
-    const axis = siblingAxis(options.layout, child.node);
+    const axis = resolveOfficialDragSiblingAxis(options.layout, child.node);
     const value = axis === 'y' ? pointer.y : pointer.x;
     let visualIndex = 0;
     for (const item of children) {
@@ -42555,7 +42618,8 @@ function childCandidate(options, pointer, child) {
             break;
         visualIndex += 1;
     }
-    const reverse = reversesVisualSiblingOrder(options.layout, child.node);
+    const reverse = options.reverseVisualSiblingOrder?.(child.node)
+        ?? reversesVisualSiblingOrder(options.layout, child.node);
     const nativeIndex = reverse ? children.length - visualIndex : visualIndex;
     const nativeChildren = Array.isArray(child.node.children)
         ? child.node.children.filter((item) => children.includes(item))
@@ -42631,9 +42695,12 @@ function logicalCandidateForNode(options, pointer, node, rect) {
     const siblings = Array.isArray(node.parent.children)
         ? node.parent.children.filter((item) => available.has(item))
         : [];
-    const nativeIndex = Math.max(0, siblings.indexOf(node));
+    const targetNativeIndex = Math.max(0, siblings.indexOf(node));
     const kind = pointer.y < center.y ? 'before' : 'after';
-    const slotIndex = kind === 'before' ? nativeIndex : nativeIndex + 1;
+    const reverse = options.reverseVisualSiblingOrder?.(node.parent) ?? false;
+    const slotIndex = reverse
+        ? (kind === 'before' ? targetNativeIndex + 1 : targetNativeIndex)
+        : (kind === 'before' ? targetNativeIndex : targetNativeIndex + 1);
     const slot = {
         parent: node.parent,
         siblings,
@@ -42663,10 +42730,10 @@ function currentLogicalTarget(options, pointer) {
         return null;
     return logicalCandidateForNode(options, pointer, node, rect);
 }
-function resolveRightLogicalCandidate(options, pointer) {
+function resolveRightLogicalCandidate(options, pointer, candidateNodes = options.nodes) {
     const excluded = new Set(options.excludedNodes ?? []);
     const intents = [];
-    options.nodes.forEach((node) => {
+    candidateNodes.forEach((node) => {
         if (excluded.has(node) || node?.isGeneralization)
             return;
         const rect = options.getRect(node);
@@ -42695,6 +42762,199 @@ function resolveRightLogicalCandidate(options, pointer) {
     }
     return best.candidate;
 }
+function transformPointForDirection(point, direction) {
+    switch (direction) {
+        case 'left': return { x: -point.x, y: point.y };
+        case 'bottom': return { x: point.y, y: point.x };
+        case 'top': return { x: -point.y, y: point.x };
+        case 'right':
+        default: return point;
+    }
+}
+function transformRectForDirection(rect, direction) {
+    switch (direction) {
+        case 'left':
+            return { x: -(rect.x + rect.width), y: rect.y, width: rect.width, height: rect.height };
+        case 'bottom':
+            return { x: rect.y, y: rect.x, width: rect.height, height: rect.width };
+        case 'top':
+            return { x: -(rect.y + rect.height), y: rect.x, width: rect.height, height: rect.width };
+        case 'right':
+        default:
+            return rect;
+    }
+}
+function growthUsesSiblingAxis(direction, axis) {
+    return (axis === 'x' && (direction === 'left' || direction === 'right'))
+        || (axis === 'y' && (direction === 'top' || direction === 'bottom'));
+}
+function sameAxisExpandedRect(rect, axis, retention = false) {
+    const along = retention ? 32 : 22;
+    const cross = retention ? 54 : 42;
+    return axis === 'y'
+        ? expandRect(rect, cross, along)
+        : expandRect(rect, along, cross);
+}
+function sameAxisCandidateForNode(options, pointer, node, rect) {
+    const axis = node?.parent
+        ? resolveOfficialDragSiblingAxis(options.layout, node.parent)
+        : 'y';
+    const direction = resolveOfficialDragGrowthDirection(options.layout, node);
+    const actualTail = tailRect(rect, direction);
+    const insideTail = containsPoint(actualTail, pointer);
+    const insideBody = containsPoint(rect, pointer);
+    const expanded = sameAxisExpandedRect(rect, axis);
+    if (!insideTail && !containsPoint(expanded, pointer))
+        return null;
+    const center = rectCenter(rect);
+    const distance = Math.min(pointDistanceToRect(pointer, rect), pointDistanceToRect(pointer, actualTail));
+    if (!node?.parent || insideTail) {
+        const child = {
+            node,
+            score: distance - (insideBody ? 30 : insideTail ? 12 : 0),
+            fromTail: insideTail,
+            insideBody,
+        };
+        return {
+            node,
+            rect,
+            candidate: childCandidate(options, pointer, child),
+            score: child.score,
+            distance,
+            strong: insideTail || insideBody,
+        };
+    }
+    const available = new Set(options.nodes.filter((item) => !(options.excludedNodes ?? []).includes(item)));
+    const siblings = Array.isArray(node.parent.children)
+        ? node.parent.children.filter((item) => available.has(item))
+        : [];
+    const targetNativeIndex = Math.max(0, siblings.indexOf(node));
+    const axisValue = axis === 'y' ? pointer.y : pointer.x;
+    const centerValue = axis === 'y' ? center.y : center.x;
+    const kind = axisValue < centerValue ? 'before' : 'after';
+    const reverse = options.reverseVisualSiblingOrder?.(node.parent)
+        ?? reversesVisualSiblingOrder(options.layout, node.parent);
+    const nativeIndex = reverse
+        ? (kind === 'before' ? targetNativeIndex + 1 : targetNativeIndex)
+        : (kind === 'before' ? targetNativeIndex : targetNativeIndex + 1);
+    const slot = {
+        parent: node.parent,
+        siblings,
+        nativeSiblings: siblings,
+        visualIndex: nativeIndex,
+        nativeIndex,
+        score: distance + Math.abs(axisValue - centerValue) * 0.08 - (insideBody ? 30 : 0),
+        axisDistance: Math.abs(axisValue - centerValue),
+        targetNode: node,
+        kind,
+    };
+    return {
+        node,
+        rect,
+        candidate: slotCandidate(slot, kind),
+        score: slot.score,
+        distance,
+        strong: insideBody,
+    };
+}
+function currentSameAxisTarget(options, pointer) {
+    const node = options.current?.targetNode ?? options.current?.target ?? null;
+    if (!node || !node.parent || (options.excludedNodes ?? []).includes(node))
+        return null;
+    const direction = resolveOfficialDragGrowthDirection(options.layout, node);
+    const axis = resolveOfficialDragSiblingAxis(options.layout, node.parent);
+    if (!growthUsesSiblingAxis(direction, axis))
+        return null;
+    const rect = options.getRect(node);
+    if (!finiteRect(rect))
+        return null;
+    const retained = sameAxisExpandedRect(rect, axis, true);
+    if (!containsPoint(retained, pointer) && !containsPoint(tailRect(rect, direction), pointer))
+        return null;
+    return sameAxisCandidateForNode(options, pointer, node, rect);
+}
+function resolveSameAxisLocalCandidate(options, pointer, candidateNodes) {
+    const excluded = new Set(options.excludedNodes ?? []);
+    const intents = [];
+    candidateNodes.forEach((node) => {
+        if (excluded.has(node) || node?.isGeneralization || !node?.parent)
+            return;
+        const rect = options.getRect(node);
+        if (!finiteRect(rect))
+            return;
+        const intent = sameAxisCandidateForNode(options, pointer, node, rect);
+        if (intent)
+            intents.push(intent);
+    });
+    if (intents.length === 0)
+        return emptyOfficialDragCandidate();
+    intents.sort((a, b) => {
+        if (a.strong !== b.strong)
+            return a.strong ? -1 : 1;
+        if (Math.abs(a.score - b.score) > 0.5)
+            return a.score - b.score;
+        return nodeUid(a.node).localeCompare(nodeUid(b.node));
+    });
+    const best = intents[0];
+    const current = currentSameAxisTarget(options, pointer);
+    if (current
+        && current.node !== best.node
+        && !best.strong
+        && current.score <= best.score + LOGICAL_TARGET_HYSTERESIS) {
+        return current.candidate;
+    }
+    return best.candidate;
+}
+/**
+ * Mirrors or rotates every supported layout into the proven right-logical
+ * interaction frame. Candidate nodes are grouped by their own growth
+ * direction, while child/sibling lookup still sees the complete tree.
+ */
+function resolveDirectionalLocalCandidate(options, pointer) {
+    const excluded = new Set(options.excludedNodes ?? []);
+    const groups = new Map();
+    const sameAxisNodes = [];
+    options.nodes.forEach((node) => {
+        if (excluded.has(node) || node?.isGeneralization)
+            return;
+        const direction = resolveOfficialDragGrowthDirection(options.layout, node);
+        const siblingAxis = node?.parent
+            ? resolveOfficialDragSiblingAxis(options.layout, node.parent)
+            : null;
+        if (node?.parent && siblingAxis && growthUsesSiblingAxis(direction, siblingAxis)) {
+            sameAxisNodes.push(node);
+            return;
+        }
+        const list = groups.get(direction) ?? [];
+        list.push(node);
+        groups.set(direction, list);
+    });
+    let best = resolveSameAxisLocalCandidate(options, pointer, sameAxisNodes);
+    const currentTarget = options.current?.targetNode ?? options.current?.target ?? null;
+    groups.forEach((candidateNodes, direction) => {
+        const currentDirection = currentTarget
+            ? resolveOfficialDragGrowthDirection(options.layout, currentTarget)
+            : null;
+        const transformed = {
+            ...options,
+            layout: 'logicalStructure',
+            current: currentDirection === direction ? options.current : emptyOfficialDragCandidate(),
+            pointer: transformPointForDirection(pointer, direction),
+            reverseVisualSiblingOrder: (parent) => reversesVisualSiblingOrder(options.layout, parent),
+            getRect: (node) => {
+                const rect = options.getRect(node);
+                return finiteRect(rect) ? transformRectForDirection(rect, direction) : null;
+            },
+        };
+        const candidate = resolveRightLogicalCandidate(transformed, transformed.pointer, candidateNodes);
+        if (candidate.kind !== 'none' && candidate.score < best.score)
+            best = candidate;
+    });
+    return best;
+}
+function orderOfficialDragSiblings(layout, parent, nodes, pointer, getRect) {
+    return orderedSiblings(layout, parent, new Set(nodes), pointer, getRect);
+}
 /**
  * Pointer-based tree intent. The dragged clone never participates in hit
  * testing, so a large image node cannot trigger a target while the pointer is
@@ -42707,10 +42967,11 @@ function resolveOfficialDragCandidate(options) {
     if (options.layout === 'logicalStructure') {
         return resolveRightLogicalCandidate(options, pointer);
     }
+    if (supportsOfficialDragGeometry(options.layout)) {
+        return resolveDirectionalLocalCandidate(options, pointer);
+    }
     const sibling = resolveSiblingSlot(options, pointer);
     const child = resolveChildTarget(options, pointer);
-    // Other layouts retain the geometry adapter while the right-growing logical
-    // layout acts as the reference implementation for the new drag model.
     if (child?.fromTail)
         return childCandidate(options, pointer, child);
     if (sibling && sibling.axisDistance <= SIBLING_SLOT_RADIUS)
@@ -42755,7 +43016,7 @@ function lineFromSlot(rect, axis, before) {
 function calculateOfficialInsertionGuide(candidate, layout, getRect) {
     if (candidate.kind === 'none' || !candidate.parentNode)
         return null;
-    const axis = siblingAxis(layout, candidate.parentNode);
+    const axis = resolveOfficialDragSiblingAxis(layout, candidate.parentNode);
     if (candidate.nextNode) {
         const rect = getRect(candidate.nextNode);
         return finiteRect(rect) ? lineFromSlot(rect, axis, true) : null;
@@ -42881,14 +43142,9 @@ function dragLineIsVisible(line) {
     const display = line.node?.style?.display ?? line.attr?.('display');
     return display !== 'none';
 }
-/**
- * Room-making translates whole sibling subtrees. Their internal lines can use
- * the same SVG transform because both endpoints move together, but the line
- * from the stationary parent to a shifted subtree root needs one fixed and one
- * shifted endpoint. Re-render that edge on a temporary overlay instead of
- * hiding every affected parent branch during the drag preview.
- */
-function createShiftedIncomingLineOverlays(plugin, roots, deltaY) {
+function createShiftedIncomingLineOverlays(plugin, roots, shift) {
+    const deltaX = typeof shift === 'number' ? 0 : Number(shift.deltaX ?? 0);
+    const deltaY = typeof shift === 'number' ? shift : Number(shift.deltaY ?? 0);
     const byParent = new Map();
     (roots ?? []).forEach((root) => {
         const parent = root?.parent;
@@ -42909,17 +43165,22 @@ function createShiftedIncomingLineOverlays(plugin, roots, deltaY) {
             .fill({ color: 'none' })
             .attr({ 'pointer-events': 'none' })
             .hide());
-        const originalTops = new Map();
+        const originalPositions = new Map();
         shiftedChildren.forEach((child) => {
-            originalTops.set(child, Number(child.top) || 0);
+            originalPositions.set(child, {
+                left: Number(child.left) || 0,
+                top: Number(child.top) || 0,
+            });
+            child.left = (Number(child.left) || 0) + deltaX;
             child.top = (Number(child.top) || 0) + deltaY;
         });
         try {
             layout.renderLine(parent, overlays, (...args) => parent.styleLine?.(...args), parent.style?.getStyle?.('lineStyle', true));
         }
         finally {
-            originalTops.forEach((top, child) => {
-                child.top = top;
+            originalPositions.forEach((position, child) => {
+                child.left = position.left;
+                child.top = position.top;
             });
         }
         parent.children.forEach((child, index) => {
@@ -80827,6 +81088,200 @@ function resolveRenderedTextRect(node) {
 
 },
 194: function(module, exports, __require, __externalRequire) {
+// /src/core/registerLayouts.ts
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.registerMindMapLayouts = registerMindMapLayouts;
+const simple_mind_map_1 = __importDefault(__require(41));
+const RightFishbone_1 = __importDefault(__require(195));
+let registered = false;
+/** Register layouts that upstream exposes as constants but does not install. */
+function registerMindMapLayouts() {
+    if (registered)
+        return;
+    const prototype = simple_mind_map_1.default.prototype;
+    prototype.rightFishbone = RightFishbone_1.default;
+    prototype.rightFishbone2 = RightFishbone_1.default;
+    registered = true;
+}
+
+},
+195: function(module, exports, __require, __externalRequire) {
+// /src/core/RightFishbone.ts
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.mirrorPathHorizontally = mirrorPathHorizontally;
+const Fishbone_1 = __importDefault(__require(80));
+const svg_js_1 = __require(60);
+const RIGHT_FISH_HEAD_PATH = 'M284.2857142857143,181 C284.2857142857143,181, 288.2857142857143,177, 284.2857142857143,173 Q 192.1904761904762,0, 0,0 L 0,354 Q 240.23809523809524,354, 280.2857142857143,218.18367346938777 C280.2857142857143,218.18367346938777, 282.2857142857143,214.18367346938777, 280.2857142857143,214.18367346938777 L 247.10204081632654,214.18367346938777 Z';
+const RIGHT_FISH_TAIL_PATH = 'M 819.3342905223708 0 Q 713.1342905223709 -177 606.9342905223708 -177 L 660.0342905223708 0 L 606.9342905223708 177 Q 713.1342905223709 177 819.3342905223708 0 z';
+const PARAM_COUNTS = {
+    M: 2, L: 2, H: 1, V: 1, C: 6, S: 4, Q: 4, T: 2, A: 7, Z: 0,
+};
+function xParameterIndexes(command) {
+    switch (command.toUpperCase()) {
+        case 'M':
+        case 'L':
+        case 'T': return new Set([0]);
+        case 'H': return new Set([0]);
+        case 'C': return new Set([0, 2, 4]);
+        case 'S':
+        case 'Q': return new Set([0, 2]);
+        case 'A': return new Set([5]);
+        default: return new Set();
+    }
+}
+/** Mirrors absolute SVG path coordinates while leaving text/image content alone. */
+function mirrorPathHorizontally(path, axisX) {
+    const tokens = String(path ?? '').match(/[a-zA-Z]|[-+]?(?:\d*\.?\d+(?:e[-+]?\d+)?)/gi) ?? [];
+    const output = [];
+    let command = '';
+    let parameterIndex = 0;
+    let parameterCount = 0;
+    let xIndexes = new Set();
+    tokens.forEach((token) => {
+        if (/^[a-zA-Z]$/.test(token)) {
+            command = token;
+            parameterIndex = 0;
+            parameterCount = PARAM_COUNTS[command.toUpperCase()] ?? 0;
+            xIndexes = xParameterIndexes(command);
+            output.push(command);
+            return;
+        }
+        const value = Number(token);
+        const isAbsolute = command === command.toUpperCase();
+        const shouldMirror = isAbsolute && xIndexes.has(parameterIndex);
+        output.push(String(shouldMirror ? axisX * 2 - value : value));
+        if (parameterCount > 0)
+            parameterIndex = (parameterIndex + 1) % parameterCount;
+    });
+    return output.join(' ');
+}
+/** Right fishbone is the true horizontal mirror of the proven left fishbone. */
+class RightFishbone extends Fishbone_1.default {
+    constructor() {
+        super(...arguments);
+        this.mirrorAxisX = 0;
+        this.originalPositions = new Map();
+        this.pathMirrorEnabled = false;
+        this.mirroredReady = false;
+    }
+    isFishbone2() {
+        return this.layout === 'rightFishbone2';
+    }
+    extendShape() {
+        if (!this.isFishbone2())
+            return;
+        this.mindMap.addShape({
+            name: 'fishHead',
+            createShape: (node) => {
+                const rect = (0, svg_js_1.SVG)(`<path d="${RIGHT_FISH_HEAD_PATH}"></path>`);
+                const { width, height } = node.shapeInstance.getNodeSize();
+                rect.size(width, height);
+                return rect;
+            },
+            getPadding: ({ width, height, paddingX, paddingY }) => {
+                width += paddingX * 2;
+                height += paddingY * 2;
+                const shapePaddingX = this.paddingXRatio * width;
+                width += shapePaddingX * 2;
+                const newHeight = width / this.headRatio;
+                return { paddingX: shapePaddingX, paddingY: (newHeight - height) / 2 };
+            },
+        });
+    }
+    addFishTail() {
+        if (!this.isFishbone2())
+            return;
+        const exist = this.mindMap.lineDraw.findOne('.smm-layout-fishbone-tail');
+        this.fishTail = exist ?? (0, svg_js_1.SVG)(`<path d="${RIGHT_FISH_TAIL_PATH}"></path>`);
+        this.fishTail.addClass('smm-layout-fishbone-tail');
+        const tailHeight = this.root.height;
+        this.fishTail.size(tailHeight * this.tailRatio, tailHeight);
+        this.styleFishTail();
+        this.mindMap.lineDraw.add(this.fishTail);
+    }
+    doLayout(callback) {
+        this.mirroredReady = false;
+        super.doLayout((root) => {
+            this.mirrorTreeGeometry(root);
+            this.mirroredReady = true;
+            this.updateFishTailPosition();
+            callback(root);
+        });
+    }
+    mirrorTreeGeometry(root) {
+        this.mirrorAxisX = Number(root.left) + Number(root.width) / 2;
+        this.originalPositions.clear();
+        const visit = (node) => {
+            const left = Number(node.left) || 0;
+            this.originalPositions.set(node, { left, customLeft: node.customLeft });
+            const mirrored = this.mirrorAxisX * 2 - (left + Number(node.width || 0));
+            node._left = mirrored;
+            if (node.customLeft !== undefined)
+                node.customLeft = mirrored;
+            (node.children ?? []).forEach(visit);
+        };
+        visit(root);
+    }
+    withOriginalGeometry(callback) {
+        const mirrored = new Map();
+        this.originalPositions.forEach((original, node) => {
+            mirrored.set(node, { left: Number(node.left) || 0, customLeft: node.customLeft });
+            node._left = original.left;
+            if (original.customLeft !== undefined)
+                node.customLeft = original.customLeft;
+        });
+        this.pathMirrorEnabled = true;
+        try {
+            return callback();
+        }
+        finally {
+            this.pathMirrorEnabled = false;
+            mirrored.forEach((position, node) => {
+                node._left = position.left;
+                if (position.customLeft !== undefined)
+                    node.customLeft = position.customLeft;
+            });
+        }
+    }
+    transformPath(path) {
+        const transformed = super.transformPath(path);
+        return this.pathMirrorEnabled
+            ? mirrorPathHorizontally(transformed, this.mirrorAxisX)
+            : transformed;
+    }
+    renderLine(node, lines, style) {
+        return this.withOriginalGeometry(() => super.renderLine(node, lines, style));
+    }
+    renderGeneralization(list) {
+        this.withOriginalGeometry(() => super.renderGeneralization(list));
+        list.forEach((item) => {
+            const generalization = item?.generalizationNode;
+            if (!generalization)
+                return;
+            generalization.left = this.mirrorAxisX * 2
+                - (Number(generalization.left) + Number(generalization.width || 0));
+        });
+    }
+    updateFishTailPosition() {
+        if (!this.isFishbone2() || !this.fishTail || !this.mirroredReady)
+            return;
+        const tailWidth = Number(this.fishTail.bbox?.().width) || Number(this.root.height) * this.tailRatio;
+        const mirroredAnchor = this.mirrorAxisX * 2 - Number(this.maxx || 0);
+        this.fishTail.x(mirroredAnchor - tailWidth).cy(this.root.top + this.root.height / 2);
+    }
+}
+exports.default = RightFishbone;
+
+},
+196: function(module, exports, __require, __externalRequire) {
 // /src/core/nodeDecorations.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -80835,7 +81290,7 @@ exports.configureNodeDecorations = configureNodeDecorations;
 exports.createYemindIconList = createYemindIconList;
 exports.createNodePrefixContent = createNodePrefixContent;
 exports.createNodePostfixContent = createNodePostfixContent;
-const nodeNoteState_1 = __require(195);
+const nodeNoteState_1 = __require(197);
 const localAssetCatalogs_1 = __require(15);
 let decorationSettings = { showTodoBadge: true, showCommentBadge: true };
 function configureNodeDecorations(patch) {
@@ -80920,13 +81375,13 @@ function createNodePostfixContent(node) {
 }
 
 },
-195: function(module, exports, __require, __externalRequire) {
+197: function(module, exports, __require, __externalRequire) {
 // /src/content/nodeNoteState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.normalizeNodeNote = normalizeNodeNote;
 exports.updateNodeNote = updateNodeNote;
-const sanitizeRichHtml_1 = __require(196);
+const sanitizeRichHtml_1 = __require(198);
 function cleanDimension(value) {
     const number = Number(value);
     return Number.isFinite(number) && number > 0 ? Math.round(number) : undefined;
@@ -80971,7 +81426,7 @@ function updateNodeNote(previous, html, now = Date.now(), size = {}) {
 }
 
 },
-196: function(module, exports, __require, __externalRequire) {
+198: function(module, exports, __require, __externalRequire) {
 // /src/content/sanitizeRichHtml.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -81027,7 +81482,7 @@ function sanitizeRichHtml(value) {
 }
 
 },
-197: function(module, exports, __require, __externalRequire) {
+199: function(module, exports, __require, __externalRequire) {
 // /src/core/dragBehavior.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -81105,7 +81560,7 @@ function buildDragAndLayoutOptions(settings) {
 }
 
 },
-198: function(module, exports, __require, __externalRequire) {
+200: function(module, exports, __require, __externalRequire) {
 // /src/core/relationConfig.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -81120,7 +81575,7 @@ function buildRelationOptions(settings) {
 }
 
 },
-199: function(module, exports, __require, __externalRequire) {
+201: function(module, exports, __require, __externalRequire) {
 // /src/core/outerFrameConfig.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -81143,7 +81598,7 @@ function buildOuterFrameOptions(settings) {
 }
 
 },
-200: function(module, exports, __require, __externalRequire) {
+202: function(module, exports, __require, __externalRequire) {
 // /src/editor/shortcutSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -81182,7 +81637,7 @@ function shouldBlockUpstreamShortcut(shortcut, nodes, readonly) {
 }
 
 },
-201: function(module, exports, __require, __externalRequire) {
+203: function(module, exports, __require, __externalRequire) {
 // /src/core/themeColorRuntime.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -81335,7 +81790,7 @@ function configureThemeColorRuntime(mindMap, config) {
 }
 
 },
-202: function(module, exports, __require, __externalRequire) {
+204: function(module, exports, __require, __externalRequire) {
 // /src/core/measurementHost.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -81455,7 +81910,7 @@ function stabilizeMindMapMeasurementHost(map, editorRoot = document.body) {
 }
 
 },
-203: function(module, exports, __require, __externalRequire) {
+205: function(module, exports, __require, __externalRequire) {
 // /src/core/relationData.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -81537,16 +81992,16 @@ function sanitizeAssociativeLines(input) {
 }
 
 },
-204: function(module, exports, __require, __externalRequire) {
+206: function(module, exports, __require, __externalRequire) {
 // /src/core/commands.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createCommandAdapter = createCommandAdapter;
-const nodeContentState_1 = __require(205);
-const codeBlock_1 = __require(206);
-const nodeStyle_1 = __require(207);
-const combinedSummary_1 = __require(208);
-const clipartGeometry_1 = __require(209);
+const nodeContentState_1 = __require(207);
+const codeBlock_1 = __require(208);
+const nodeStyle_1 = __require(209);
+const combinedSummary_1 = __require(210);
+const clipartGeometry_1 = __require(211);
 function createCommandAdapter(mindMap) {
     const activeNodes = () => Array.isArray(mindMap.renderer?.activeNodeList)
         ? mindMap.renderer.activeNodeList
@@ -82153,7 +82608,7 @@ function createCommandAdapter(mindMap) {
 }
 
 },
-205: function(module, exports, __require, __externalRequire) {
+207: function(module, exports, __require, __externalRequire) {
 // /src/content/nodeContentState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82204,7 +82659,7 @@ function normalizeStringList(values) {
 }
 
 },
-206: function(module, exports, __require, __externalRequire) {
+208: function(module, exports, __require, __externalRequire) {
 // /src/editor/codeBlock.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82267,7 +82722,7 @@ function deleteCodeBlock(quill, block) {
 }
 
 },
-207: function(module, exports, __require, __externalRequire) {
+209: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeStyle.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82374,7 +82829,7 @@ function resetNodeStylePatch() {
 }
 
 },
-208: function(module, exports, __require, __externalRequire) {
+210: function(module, exports, __require, __externalRequire) {
 // /src/core/combinedSummary.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82510,7 +82965,7 @@ function addCombinedSummary(mindMap, selectedNodes) {
 }
 
 },
-209: function(module, exports, __require, __externalRequire) {
+211: function(module, exports, __require, __externalRequire) {
 // /src/core/clipartGeometry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82636,15 +83091,15 @@ function isLegacyDefaultClipartGeometry(data) {
 }
 
 },
-210: function(module, exports, __require, __externalRequire) {
+212: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.openCheckpointManager = openCheckpointManager;
 const siyuan_1 = __externalRequire("siyuan");
-const checkpointPresentation_1 = __require(211);
+const checkpointPresentation_1 = __require(213);
 const dialogs_1 = __require(25);
-const checkpointDialogTemplate_1 = __require(212);
+const checkpointDialogTemplate_1 = __require(214);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -82711,7 +83166,7 @@ function openCheckpointManager(options) {
 }
 
 },
-211: function(module, exports, __require, __externalRequire) {
+213: function(module, exports, __require, __externalRequire) {
 // /src/checkpoints/checkpointPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82747,12 +83202,12 @@ function renderCheckpointListHtml(checkpoints, options) {
 }
 
 },
-212: function(module, exports, __require, __externalRequire) {
+214: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialogTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildCheckpointDialogContent = buildCheckpointDialogContent;
-const checkpointPresentation_1 = __require(211);
+const checkpointPresentation_1 = __require(213);
 function buildCheckpointDialogContent(checkpoints, readonly) {
     return `<div class="b3-dialog__content ymz-checkpoint-dialog">
     <div class="ymz-checkpoint-dialog__intro">检查点保存在独立历史文件中。恢复前会自动保存当前状态为保护检查点。</div>
@@ -82764,7 +83219,7 @@ function buildCheckpointDialogContent(checkpoints, readonly) {
 }
 
 },
-213: function(module, exports, __require, __externalRequire) {
+215: function(module, exports, __require, __externalRequire) {
 // /src/ui/contextMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82774,8 +83229,8 @@ const siyuan_1 = __externalRequire("siyuan");
 const layoutPresets_1 = __require(13);
 const themePresets_1 = __require(11);
 const projectControls_1 = __require(35);
-const nodeContentDialogs_1 = __require(214);
-const nodeContentMenu_1 = __require(219);
+const nodeContentDialogs_1 = __require(216);
+const nodeContentMenu_1 = __require(221);
 function openCanvasContextMenu(event, commands, options) {
     event.preventDefault();
     event.stopPropagation();
@@ -82901,7 +83356,7 @@ function openNodeContextMenu(event, commands, options = {}) {
 }
 
 },
-214: function(module, exports, __require, __externalRequire) {
+216: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82914,13 +83369,13 @@ exports.openImageDialog = openImageDialog;
 exports.openNoteDialog = openNoteDialog;
 exports.openCommentsDialog = openCommentsDialog;
 exports.showNodeActionUnavailable = showNodeActionUnavailable;
-const imageFileLoading_1 = __require(215);
+const imageFileLoading_1 = __require(217);
 const siyuan_1 = __externalRequire("siyuan");
-const nodeContentState_1 = __require(205);
-const dialogResize_1 = __require(216);
-const commentsPresentation_1 = __require(217);
-const inlineLink_1 = __require(218);
-const nodeNoteState_1 = __require(195);
+const nodeContentState_1 = __require(207);
+const dialogResize_1 = __require(218);
+const commentsPresentation_1 = __require(219);
+const inlineLink_1 = __require(220);
+const nodeNoteState_1 = __require(197);
 function activeData(commands) {
     return commands.getPrimaryNodeData() ?? {};
 }
@@ -83324,7 +83779,7 @@ function escapeAttribute(value) {
 }
 
 },
-215: function(module, exports, __require, __externalRequire) {
+217: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageFileLoading.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83342,7 +83797,7 @@ async function loadImageFileSelection(file, dependencies) {
 }
 
 },
-216: function(module, exports, __require, __externalRequire) {
+218: function(module, exports, __require, __externalRequire) {
 // /src/ui/dialogResize.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83409,7 +83864,7 @@ function bindDialogResize(handle, container) {
 }
 
 },
-217: function(module, exports, __require, __externalRequire) {
+219: function(module, exports, __require, __externalRequire) {
 // /src/ui/commentsPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83459,7 +83914,7 @@ function escapeAttribute(value) {
 }
 
 },
-218: function(module, exports, __require, __externalRequire) {
+220: function(module, exports, __require, __externalRequire) {
 // /src/editor/inlineLink.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83487,7 +83942,7 @@ function isSiyuanInlineLink(value) {
 }
 
 },
-219: function(module, exports, __require, __externalRequire) {
+221: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83495,7 +83950,7 @@ exports.NODE_CONTENT_MENU_LABELS = void 0;
 exports.createTodoMenuDescriptor = createTodoMenuDescriptor;
 exports.createSummaryMenuDescriptor = createSummaryMenuDescriptor;
 exports.createNodeMenuAvailability = createNodeMenuAvailability;
-const nodeContentState_1 = __require(205);
+const nodeContentState_1 = __require(207);
 exports.NODE_CONTENT_MENU_LABELS = [
     '添加待办',
     '删除待办',
@@ -83556,7 +84011,7 @@ function createNodeMenuAvailability(input) {
 }
 
 },
-220: function(module, exports, __require, __externalRequire) {
+222: function(module, exports, __require, __externalRequire) {
 // /src/ui/richTextDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83564,7 +84019,7 @@ exports.CODE_LANGUAGES = void 0;
 exports.openInlineLinkDialog = openInlineLinkDialog;
 exports.openCodeBlockDialog = openCodeBlockDialog;
 const siyuan_1 = __externalRequire("siyuan");
-const inlineLink_1 = __require(218);
+const inlineLink_1 = __require(220);
 const CODE_LANGUAGES = [
     ['plain', '纯文本'],
     ['javascript', 'JavaScript'],
@@ -83704,7 +84159,7 @@ function openCodeBlockDialog(commands, settings) {
 }
 
 },
-221: function(module, exports, __require, __externalRequire) {
+223: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorStats.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83737,7 +84192,7 @@ function calculateEditorStats(tree) {
 }
 
 },
-222: function(module, exports, __require, __externalRequire) {
+224: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83886,7 +84341,7 @@ function escapeHtml(value) {
 }
 
 },
-223: function(module, exports, __require, __externalRequire) {
+225: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83981,14 +84436,14 @@ function resolveOutlinePointerDropIntent(input) {
 }
 
 },
-224: function(module, exports, __require, __externalRequire) {
+226: function(module, exports, __require, __externalRequire) {
 // /src/editor/StructuredOutlineEditorController.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StructuredOutlineEditorController = void 0;
-const sanitizeRichHtml_1 = __require(196);
-const outlineTextDocument_1 = __require(225);
-const structuredOutlineDocument_1 = __require(226);
+const sanitizeRichHtml_1 = __require(198);
+const outlineTextDocument_1 = __require(227);
+const structuredOutlineDocument_1 = __require(228);
 const INDENT_SIZE = 22;
 const PLAIN_INDENT = '    ';
 const BLOCK_TAGS = new Set(['DIV', 'P', 'LI', 'UL', 'OL', 'SECTION', 'ARTICLE']);
@@ -85721,7 +86176,7 @@ function closestElement(node) {
 }
 
 },
-225: function(module, exports, __require, __externalRequire) {
+227: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineTextDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86110,7 +86565,7 @@ function insertOutlineNewline(value, selectionStart, selectionEnd) {
 }
 
 },
-226: function(module, exports, __require, __externalRequire) {
+228: function(module, exports, __require, __externalRequire) {
 // /src/editor/structuredOutlineDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86122,8 +86577,8 @@ exports.buildTreeFromStructuredOutline = buildTreeFromStructuredOutline;
 exports.parseStructuredOutlinePaste = parseStructuredOutlinePaste;
 exports.serializeStructuredOutlineBlocks = serializeStructuredOutlineBlocks;
 exports.createStructuredOutlineUid = createStructuredOutlineUid;
-const sanitizeRichHtml_1 = __require(196);
-const outlineTextDocument_1 = __require(225);
+const sanitizeRichHtml_1 = __require(198);
+const outlineTextDocument_1 = __require(227);
 function cloneValue(value) {
     if (typeof structuredClone === 'function') {
         try {
@@ -86357,7 +86812,7 @@ function createStructuredOutlineUid() {
 }
 
 },
-227: function(module, exports, __require, __externalRequire) {
+229: function(module, exports, __require, __externalRequire) {
 // /src/editor/splitPane.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86380,15 +86835,15 @@ function ratioFromPointer(rect, clientX) {
 }
 
 },
-228: function(module, exports, __require, __externalRequire) {
+230: function(module, exports, __require, __externalRequire) {
 // /src/editor/RichTextToolbar.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RichTextToolbar = void 0;
 const YeMindRichText_1 = __require(191);
-const richTextActions_1 = __require(229);
-const colorPresentation_1 = __require(230);
-const colorPalette_1 = __require(231);
+const richTextActions_1 = __require(231);
+const colorPresentation_1 = __require(232);
+const colorPalette_1 = __require(233);
 function option(value, label) {
     return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -86808,7 +87263,7 @@ class RichTextToolbar {
 exports.RichTextToolbar = RichTextToolbar;
 
 },
-229: function(module, exports, __require, __externalRequire) {
+231: function(module, exports, __require, __externalRequire) {
 // /src/editor/richTextActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86839,7 +87294,7 @@ function isClozeFormat(formatInfo) {
 }
 
 },
-230: function(module, exports, __require, __externalRequire) {
+232: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86906,7 +87361,7 @@ function presentColor(value) {
 }
 
 },
-231: function(module, exports, __require, __externalRequire) {
+233: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPalette.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86937,7 +87392,7 @@ function colorPaletteInnerHtml() {
 }
 
 },
-232: function(module, exports, __require, __externalRequire) {
+234: function(module, exports, __require, __externalRequire) {
 // /src/editor/selectionPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86998,7 +87453,7 @@ function shouldBlockRootDeleteShortcut(key, nodes) {
 }
 
 },
-233: function(module, exports, __require, __externalRequire) {
+235: function(module, exports, __require, __externalRequire) {
 // /src/editor/saveRevision.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87029,7 +87484,7 @@ class SaveRevisionTracker {
 exports.SaveRevisionTracker = SaveRevisionTracker;
 
 },
-234: function(module, exports, __require, __externalRequire) {
+236: function(module, exports, __require, __externalRequire) {
 // /src/editor/relationPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87045,7 +87500,7 @@ function createRelationPresentation(input) {
 }
 
 },
-235: function(module, exports, __require, __externalRequire) {
+237: function(module, exports, __require, __externalRequire) {
 // /src/editor/outerFramePresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87104,7 +87559,7 @@ function createOuterFramePresentation(input) {
 }
 
 },
-236: function(module, exports, __require, __externalRequire) {
+238: function(module, exports, __require, __externalRequire) {
 // /src/editor/toolbarAvailability.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87126,12 +87581,12 @@ function createToolbarAvailability(input) {
 }
 
 },
-237: function(module, exports, __require, __externalRequire) {
+239: function(module, exports, __require, __externalRequire) {
 // /src/editor/linkNavigation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolveLinkNavigation = resolveLinkNavigation;
-const inlineLink_1 = __require(218);
+const inlineLink_1 = __require(220);
 function resolveLinkNavigation(value, externalMode) {
     const href = (0, inlineLink_1.normalizeInlineLink)(value, true);
     if (!href)
@@ -87143,7 +87598,7 @@ function resolveLinkNavigation(value, externalMode) {
 }
 
 },
-238: function(module, exports, __require, __externalRequire) {
+240: function(module, exports, __require, __externalRequire) {
 // /src/plugin/visibleElement.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87208,7 +87663,7 @@ function waitForNonZeroSize(element, options = {}) {
 }
 
 },
-239: function(module, exports, __require, __externalRequire) {
+241: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeImageInput.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87269,15 +87724,15 @@ function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
 }
 
 },
-240: function(module, exports, __require, __externalRequire) {
+242: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeHoverPreview.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeHoverPreview = void 0;
 exports.computeHoverPreviewPlacement = computeHoverPreviewPlacement;
 exports.buildHoverPreviewHtml = buildHoverPreviewHtml;
-const sanitizeRichHtml_1 = __require(196);
-const commentsPresentation_1 = __require(217);
+const sanitizeRichHtml_1 = __require(198);
+const commentsPresentation_1 = __require(219);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -87470,7 +87925,7 @@ class NodeHoverPreview {
 exports.NodeHoverPreview = NodeHoverPreview;
 
 },
-241: function(module, exports, __require, __externalRequire) {
+243: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageLightbox.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87573,13 +88028,13 @@ class ImageLightbox {
 exports.ImageLightbox = ImageLightbox;
 
 },
-242: function(module, exports, __require, __externalRequire) {
+244: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeStylePanel = void 0;
-const colorPalette_1 = __require(231);
-const colorPresentation_1 = __require(230);
+const colorPalette_1 = __require(233);
+const colorPresentation_1 = __require(232);
 const INPUT_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 function toInputValue(value) {
     return value === null || value === undefined ? '' : String(value);
@@ -87890,14 +88345,14 @@ class NodeStylePanel {
 exports.NodeStylePanel = NodeStylePanel;
 
 },
-243: function(module, exports, __require, __externalRequire) {
+245: function(module, exports, __require, __externalRequire) {
 // /src/ui/projectStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectStylePanel = void 0;
 const projectStyle_1 = __require(20);
-const colorPalette_1 = __require(231);
-const colorPresentation_1 = __require(230);
+const colorPalette_1 = __require(233);
+const colorPresentation_1 = __require(232);
 const colorSchemes_1 = __require(21);
 const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 class ProjectStylePanel {
@@ -88198,7 +88653,7 @@ class ProjectStylePanel {
 exports.ProjectStylePanel = ProjectStylePanel;
 
 },
-244: function(module, exports, __require, __externalRequire) {
+246: function(module, exports, __require, __externalRequire) {
 // /src/ui/layoutGalleryPanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88296,7 +88751,7 @@ class LayoutGalleryPanel {
 exports.LayoutGalleryPanel = LayoutGalleryPanel;
 
 },
-245: function(module, exports, __require, __externalRequire) {
+247: function(module, exports, __require, __externalRequire) {
 // /src/ui/localAssetDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88304,8 +88759,8 @@ exports.openMarkerPicker = openMarkerPicker;
 exports.openClipartPicker = openClipartPicker;
 const siyuan_1 = __externalRequire("siyuan");
 const localAssetCatalogs_1 = __require(15);
-const nodeContentState_1 = __require(205);
-const clipartGeometry_1 = __require(209);
+const nodeContentState_1 = __require(207);
+const clipartGeometry_1 = __require(211);
 function applyStyle(element, style) {
     Object.assign(element.style, style);
 }
@@ -88448,7 +88903,7 @@ function openClipartPicker(commands, options = {}) {
 }
 
 },
-246: function(module, exports, __require, __externalRequire) {
+248: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRichTextVisibility.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88485,7 +88940,7 @@ function synchronizeCanvasRichTextVisibility(map) {
 }
 
 },
-247: function(module, exports, __require, __externalRequire) {
+249: function(module, exports, __require, __externalRequire) {
 // /src/editor/searchPanelState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88505,12 +88960,12 @@ function setSearchReplaceExpanded(panel, expanded) {
 }
 
 },
-248: function(module, exports, __require, __externalRequire) {
+250: function(module, exports, __require, __externalRequire) {
 // /src/core/appearanceTransaction.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.applyMapAppearanceTransaction = applyMapAppearanceTransaction;
-const themeColorRuntime_1 = __require(201);
+const themeColorRuntime_1 = __require(203);
 const APPEARANCE_RENDER_SOURCE = 'changeTheme';
 const REVISION_BY_MAP = new WeakMap();
 const ACTIVE_NODE_UIDS_BY_MAP = new WeakMap();
@@ -88618,7 +89073,7 @@ function applyMapAppearanceTransaction(options) {
 }
 
 },
-249: function(module, exports, __require, __externalRequire) {
+251: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeQuickActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88836,7 +89291,7 @@ class NodeQuickActionsController {
 exports.NodeQuickActionsController = NodeQuickActionsController;
 
 },
-250: function(module, exports, __require, __externalRequire) {
+252: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRightDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89015,7 +89470,7 @@ class CanvasRightDragController {
 exports.CanvasRightDragController = CanvasRightDragController;
 
 },
-251: function(module, exports, __require, __externalRequire) {
+253: function(module, exports, __require, __externalRequire) {
 // /src/editor/liveNodeWidthLayout.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89072,7 +89527,7 @@ class LiveNodeWidthLayoutController {
 exports.LiveNodeWidthLayoutController = LiveNodeWidthLayoutController;
 
 },
-252: function(module, exports, __require, __externalRequire) {
+254: function(module, exports, __require, __externalRequire) {
 // /src/editor/focusHighlight.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89137,7 +89592,7 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
 }
 
 },
-253: function(module, exports, __require, __externalRequire) {
+255: function(module, exports, __require, __externalRequire) {
 // /src/editor/editingSurfaceCoordinator.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89226,7 +89681,7 @@ class EditingSurfaceCoordinator {
 exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
 
 },
-254: function(module, exports, __require, __externalRequire) {
+256: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89248,7 +89703,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-255: function(module, exports, __require, __externalRequire) {
+257: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89272,7 +89727,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-256: function(module, exports, __require, __externalRequire) {
+258: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89328,7 +89783,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-257: function(module, exports, __require, __externalRequire) {
+259: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89354,7 +89809,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-258: function(module, exports, __require, __externalRequire) {
+260: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89370,7 +89825,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-259: function(module, exports, __require, __externalRequire) {
+261: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89397,7 +89852,7 @@ function initializePluginStartup(options) {
 }
 
 },
-260: function(module, exports, __require, __externalRequire) {
+262: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

@@ -53,3 +53,12 @@ declare module 'parchment' {
 declare module 'vite' {
   export function defineConfig<T>(config: T): T;
 }
+
+declare module '@svgdotjs/svg.js' {
+  export const SVG: any;
+  export class Rect { [key: string]: any; constructor(...args: any[]); }
+  export class G { [key: string]: any; constructor(...args: any[]); }
+  export class Text { [key: string]: any; constructor(...args: any[]); }
+  export class Image { [key: string]: any; constructor(...args: any[]); }
+  export class A { [key: string]: any; constructor(...args: any[]); }
+}

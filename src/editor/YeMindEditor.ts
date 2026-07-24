@@ -1823,7 +1823,20 @@ export class YeMindEditor {
       window.cancelAnimationFrame(this.resizeFrame);
       this.resizeFrame = null;
     }
+    if (mode === "split" || mode === "outline") {
+      window.requestAnimationFrame(() => this.revealCurrentOutlineSelection());
+    }
     this.nodeQuickActions?.scheduleRefresh();
+  }
+
+  private revealCurrentOutlineSelection(): void {
+    if (this.destroyed || (this.viewMode !== "split" && this.viewMode !== "outline")) return;
+    const renderer = (this.map as any)?.renderer;
+    if (!Array.isArray(renderer?.activeNodeList) || renderer.activeNodeList.length === 0) return;
+    const active = renderer.activeNodeList[0];
+    const uid = active?.getData?.("uid");
+    if (!uid) return;
+    this.activateOutlineUid(String(uid), true);
   }
 
   private scheduleSafeResize(attempt = 0): void {

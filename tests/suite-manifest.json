@@ -149,7 +149,8 @@
     "yeMindDrag.suite.ts",
     "v096LogicalDragAndOutlineEditing.suite.ts",
     "v097NearestNodeCanvasDrag.suite.ts",
-    "v098DragEdgeContinuity.suite.ts"
+    "v098DragEdgeContinuity.suite.ts",
+    "v0918LayoutDragParity.suite.ts"
   ],
   "advanced-structures": [
     "editorMultiSelectionIntegration.suite.ts",
@@ -201,7 +202,8 @@
     "v094StructuredOutlineEditor.suite.ts",
     "v094StructuredOutlineVisual.suite.ts",
     "v099OutlineGuideGeometry.suite.ts",
-    "v0910OutlineGuidesAndReveal.suite.ts"
+    "v0910OutlineGuidesAndReveal.suite.ts",
+    "v0918SplitRevealCurrentSelection.suite.ts"
   ],
   "search-navigation": [
     "searchCommands.suite.ts",
