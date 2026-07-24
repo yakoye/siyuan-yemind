@@ -5,10 +5,7 @@ import { pristineNodeData } from '../editor/textEditingPolicy';
 export function createDefaultTree(_title = '未命名导图'): MindMapTree {
   return {
     data: pristineNodeData({ text: '中心主题', expand: true }),
-    children: [
-      { data: pristineNodeData({ text: '新节点', expand: true }), children: [] },
-      { data: pristineNodeData({ text: '新节点', expand: true }), children: [] },
-    ],
+    children: [],
   };
 }
 

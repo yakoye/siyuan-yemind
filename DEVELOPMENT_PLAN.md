@@ -2,7 +2,7 @@
 
 ## Current baseline
 
-- Product version: 0.9.23
+- Product version: 0.9.24
 - Host baseline: SiYuan 3.7.3
 - Plugin ID and folder: `siyuan-yemind`
 
@@ -23,11 +23,14 @@
 - Single-layer outline rainbow guides aligned below expanded triangle tips, plus bidirectional canvas/outline visible-node synchronization.
 - Exact `图标-svg.txt` Base64 SVG rendering through a host-CSS-isolated image boundary, with source-byte hashes and Chromium coverage.
 - Unified 22px icon columns, 15px proportional artwork, deterministic dark variants and theme-aware toolbar/outline states.
+- Outline text-to-map import for six structured formats with preview, atomic replacement and explicit insertion policy.
+- Outline node context commands with line-only cut semantics and repeated empty-row Enter promotion.
+- Host appearance redraw stabilization with exact transform preservation, zero-size deferral and dark-aware Theme/Line controls.
 
 ## Next priorities
 
-1. Validate v0.9.23 icon geometry and dark-theme contrast inside SiYuan 3.7.3 with representative built-in and third-party themes.
-2. Profile 1,000+ node outline editing and drag-target resolution, reducing unnecessary DOM or geometry work without weakening transaction safety.
-3. Expand import/export formats in isolated releases.
+1. Validate v0.9.24 text import, outline keyboard behavior and light/dark switching inside SiYuan 3.7.3 with built-in and representative third-party themes.
+2. Profile 1,000+ node import, outline editing and drag-target resolution without weakening transaction safety.
+3. Add optional compact outline indicators for node images, markers, clipart, notes and links while keeping row height stable.
 4. Continue accessibility, screen-reader and keyboard-navigation coverage.
 5. Prepare a stable 1.0 compatibility and migration policy.

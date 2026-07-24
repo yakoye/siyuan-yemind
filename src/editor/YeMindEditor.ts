@@ -31,8 +31,9 @@ import type {
   YeMindSettings,
 } from "../settings/SettingsStore";
 import { openCheckpointManager } from "../ui/checkpointDialog";
-import { openCanvasContextMenu, openNodeContextMenu } from "../ui/contextMenu";
+import { openCanvasContextMenu, openNodeContextMenu, openOutlineContextMenu } from "../ui/contextMenu";
 import { promptText } from "../ui/dialogs";
+import { openTextToMapDialog } from "../ui/textToMapDialog";
 import {
   openCommentsDialog,
   openFormulaDialog,
@@ -188,6 +189,8 @@ export class YeMindEditor {
   private viewMode: ViewMode = "map";
   private searchText = "";
   private applyingCheckpoint = false;
+  private applyingAppearance = false;
+  private pendingAppearanceRefresh = false;
   private resizeFrame: number | null = null;
   private splitResizeFrame: number | null = null;
   private splitDragPointerId: number | null = null;
@@ -836,6 +839,7 @@ export class YeMindEditor {
         this.activateOutlineUid(uid, true);
       },
       onToggle: (uid, expanded) => this.setOutlineExpanded(uid, expanded),
+      onContextMenu: (event, uid) => this.openOutlineContextMenu(event, uid),
       onUndo: () => this.commands?.undo(),
       onRedo: () => this.commands?.redo(),
       onDiagnostic: (action, details) =>
@@ -1171,7 +1175,7 @@ export class YeMindEditor {
       this.scheduleSave();
     });
     this.map.on("view_data_change", (viewData: Record<string, unknown>) => {
-      if (this.applyingCheckpoint) return;
+      if (this.applyingCheckpoint || this.applyingAppearance) return;
       this.updateZoom();
       const normalized = normalizePersistedViewData(viewData);
       if (!normalized) return;
@@ -1561,6 +1565,9 @@ export class YeMindEditor {
       projectAppearance.themeConfig.backgroundColor ?? "",
     );
     const normalizedProjectStyle = normalizeProjectStyle(this.current.projectStyle);
+    const canRender = render && this.viewMode !== "outline" && hasNonZeroSize(this.canvasEl);
+    this.pendingAppearanceRefresh = render && !canRender;
+    this.applyingAppearance = canRender;
     applyMapAppearanceTransaction({
       map: this.map,
       themeConfig: projectAppearance.themeConfig,
@@ -1568,14 +1575,17 @@ export class YeMindEditor {
       colorAppearance: appearance.colorAppearance,
       useThemeLineColors: normalizedProjectStyle.rainbowLines === null,
       rootBackground: String(projectAppearance.themeConfig.backgroundColor ?? appearance.colorAppearance.background),
-      render,
+      render: canRender,
       afterRender: () => {
+        this.applyingAppearance = false;
+        this.pendingAppearanceRefresh = false;
         (this.map as any)?.associativeLine?.renderAllLines?.();
         (this.map as any)?.outerFrame?.renderOuterFrames?.();
         this.nodeQuickActions?.scheduleRefresh();
         this.updateSelectionPresentation();
       },
     });
+    if (!canRender) this.applyingAppearance = false;
   }
 
   private bindAppearanceObserver(): void {
@@ -1869,6 +1879,7 @@ export class YeMindEditor {
       try {
         stabilizeMindMapMeasurementHost(this.map as any, this.rootEl);
         this.map.resize();
+        if (this.pendingAppearanceRefresh) this.applyMapAppearance(true);
         this.updateDiagnosticState();
       } catch (error) {
         this.options.diagnostics.recordError(
@@ -2073,6 +2084,63 @@ export class YeMindEditor {
         },
       );
     }
+  }
+
+  private openOutlineContextMenu(event: MouseEvent, uid: string): void {
+    if (!uid || !this.commands || !this.outlineRichText) return;
+    this.outlineRichText.flush('before-context-menu');
+    this.claimOutlineInteraction('outline-context-menu');
+    this.commands.goToNode(uid);
+    this.activateOutlineUid(uid, false);
+    const state = this.outlineRichText.getLineState(uid);
+    const readonly = this.commands.isReadonly();
+    const activate = (): void => {
+      this.commands?.goToNode(uid);
+      this.activateOutlineUid(uid, false);
+    };
+    openOutlineContextMenu(event, {
+      readonly,
+      isRoot: state.isRoot,
+      hasChildren: state.hasChildren,
+      canMoveUp: state.canMoveUp,
+      canMoveDown: state.canMoveDown,
+      onEdit: () => this.outlineRichText?.editLine(uid),
+      onAddParent: () => { activate(); this.commands?.addParent(); },
+      onAddSibling: () => { activate(); this.commands?.addSibling(); },
+      onAddChild: () => { activate(); this.commands?.addChild(); },
+      onTextToMap: () => openTextToMapDialog({
+        targetUid: uid,
+        getTree: () => this.current.data,
+        onApply: (tree, result, insertMode) => {
+          const applied = Boolean(this.commands?.replaceTree(tree));
+          if (applied) {
+            this.current.data = tree;
+            this.renderOutline(tree);
+            this.activateOutlineUid(uid, true);
+          }
+          this.options.diagnostics.record('outline', 'text-to-map', this.current.id, {
+            applied,
+            requestedMode: result.requestedMode,
+            detectedMode: result.detectedMode,
+            insertMode,
+            nodeCount: result.nodeCount,
+            maxDepth: result.maxDepth,
+            warnings: result.warnings.length,
+          });
+          return applied;
+        },
+      }),
+      onCopyLine: () => this.outlineRichText!.copyCurrentLine(uid),
+      onCutLine: () => this.outlineRichText!.cutCurrentLine(uid),
+      onPasteAtCaret: () => this.outlineRichText!.pasteCurrentLine(uid, false),
+      onPastePlain: () => this.outlineRichText!.pasteCurrentLine(uid, true),
+      onMoveUp: () => { activate(); this.commands?.moveUp(); },
+      onMoveDown: () => { activate(); this.commands?.moveDown(); },
+      onToggleExpand: () => this.setOutlineExpanded(uid, !state.expanded),
+      onRemoveSubtree: () => { activate(); this.commands?.remove(); },
+      onRemoveOnlyCurrent: () => { activate(); this.commands?.removeOnlyCurrent(); },
+      onAction: (action) => this.options.diagnostics.record('outline-menu', action, this.current.id, { uid }),
+    });
   }
 
   private renderOutline(data: MindMapTree): void {

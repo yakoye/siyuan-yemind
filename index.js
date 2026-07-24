@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.23 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.24 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -39,11 +39,11 @@ const releaseInfo_1 = __require(29);
 const constants_1 = __require(28);
 const dock_1 = __require(38);
 const tabs_1 = __require(39);
-const OpenMapTabRegistry_1 = __require(259);
-const pluginUrl_1 = __require(260);
-const operationSafety_1 = __require(261);
-const pluginStartup_1 = __require(262);
-const globalSearch_1 = __require(263);
+const OpenMapTabRegistry_1 = __require(261);
+const pluginUrl_1 = __require(262);
+const operationSafety_1 = __require(263);
+const pluginStartup_1 = __require(264);
+const globalSearch_1 = __require(265);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -15423,10 +15423,7 @@ const textEditingPolicy_1 = __require(24);
 function createDefaultTree(_title = '未命名导图') {
     return {
         data: (0, textEditingPolicy_1.pristineNodeData)({ text: '中心主题', expand: true }),
-        children: [
-            { data: (0, textEditingPolicy_1.pristineNodeData)({ text: '新节点', expand: true }), children: [] },
-            { data: (0, textEditingPolicy_1.pristineNodeData)({ text: '新节点', expand: true }), children: [] },
-        ],
+        children: [],
     };
 }
 function createDefaultMap(title = '未命名导图', id = globalThis.crypto?.randomUUID?.() ?? `map-${Date.now()}`, now = Date.now()) {
@@ -15847,7 +15844,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.23';
+exports.PLUGIN_VERSION = '0.9.24';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -15864,20 +15861,21 @@ const constants_1 = __require(28);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-24T06:57:39Z',
-    buildId: 'yemind-v0.9.23-20260724',
+    buildTime: '2026-07-24T10:45:39Z',
+    buildId: 'yemind-v0.9.24-20260724',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '统一工具栏与菜单图标为 22px 槽位和 15px 图形，并补齐暗黑主题图标、悬停与选中状态。',
+    releaseSummary: '增加大纲文本转导图、节点级右键操作与连续回车退层级，并修复宿主暗黑切换的画布漂移和主题/线型控件可见性。',
     highlights: [
-        '所有自定义菜单和工具栏图标统一进入 22×22 固定槽位，图形在 15×15 区域内等比例居中。',
-        '思源原生菜单 SVG 同样使用 22px 外框和 3.5px 内边距，原生与 YeMind 图标及文字起点保持一致。',
-        '14 个用户提供的 Base64 SVG 增加独立暗黑版本，继续使用图片文档边界避免宿主 CSS 污染。',
-        '大纲普通、悬停、选中、拖入状态改用主题变量，移除固定浅灰背景和固定黑色三角/方点。',
-        '顶部工具栏暗黑模式的悬停与选中状态提高背景、边框、文字和图标对比度。',
-        '补充失败测试、离线契约、14 图标像素可见性和真实 Chromium 暗黑主题回归。',
+        '大纲右键菜单按节点编辑、插入、文本转换、行级剪贴、排序、折叠和两种删除语义重新组织。',
+        '文本转导图支持 Unicode 树、Windows Tree、空格或 Tab 缩进、Markdown、编号大纲和普通多行文本，并提供动态示例与实时预览。',
+        '新建导图只保留中心主题；空白大纲行连续按 Enter 会逐级提升，在一级边界删除空行并回到中心主题。',
+        '剪切当前行只复制并清空节点文字，节点、全部子级、层级与顺序保持不变。',
+        '宿主明暗模式切换时完整保存并二次恢复画布 transform，隐藏或零尺寸画布延迟重绘，避免节点整体向右漂移。',
+        '主题和线型的文字、图标、悬停/打开状态及原生下拉选项完整适配暗黑主题。',
+        '富文本选区工具栏使用思源 iconMath 公式图标，不再显示 π 字符。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -16990,10 +16988,10 @@ function escapeHtml(value) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
 const YeMindEditor_1 = __require(40);
-const deferredMount_1 = __require(257);
+const deferredMount_1 = __require(259);
 const constants_1 = __require(28);
-const visibleElement_1 = __require(241);
-const tabNodeFocus_1 = __require(258);
+const visibleElement_1 = __require(243);
+const tabNodeFocus_1 = __require(260);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -17099,43 +17097,44 @@ const registerPlugins_1 = __require(91);
 const checkpointDialog_1 = __require(213);
 const contextMenu_1 = __require(216);
 const dialogs_1 = __require(25);
+const textToMapDialog_1 = __require(223);
 const nodeContentDialogs_1 = __require(217);
-const richTextDialogs_1 = __require(223);
-const editorStats_1 = __require(224);
-const editorTemplate_1 = __require(225);
-const outlineDrag_1 = __require(226);
-const StructuredOutlineEditorController_1 = __require(227);
-const splitPane_1 = __require(230);
-const RichTextToolbar_1 = __require(231);
+const richTextDialogs_1 = __require(227);
+const editorStats_1 = __require(228);
+const editorTemplate_1 = __require(229);
+const outlineDrag_1 = __require(230);
+const StructuredOutlineEditorController_1 = __require(231);
+const splitPane_1 = __require(232);
+const RichTextToolbar_1 = __require(233);
 const shortcuts_1 = __require(32);
-const selectionPresentation_1 = __require(235);
-const saveRevision_1 = __require(236);
-const relationPresentation_1 = __require(237);
-const outerFramePresentation_1 = __require(238);
-const toolbarAvailability_1 = __require(239);
-const linkNavigation_1 = __require(240);
-const visibleElement_1 = __require(241);
+const selectionPresentation_1 = __require(237);
+const saveRevision_1 = __require(238);
+const relationPresentation_1 = __require(239);
+const outerFramePresentation_1 = __require(240);
+const toolbarAvailability_1 = __require(241);
+const linkNavigation_1 = __require(242);
+const visibleElement_1 = __require(243);
 const imageFileLoading_1 = __require(218);
-const nodeImageInput_1 = __require(242);
-const nodeHoverPreview_1 = __require(243);
-const imageLightbox_1 = __require(244);
-const nodeStylePanel_1 = __require(245);
-const projectStylePanel_1 = __require(246);
-const layoutGalleryPanel_1 = __require(247);
-const localAssetDialogs_1 = __require(248);
+const nodeImageInput_1 = __require(244);
+const nodeHoverPreview_1 = __require(245);
+const imageLightbox_1 = __require(246);
+const nodeStylePanel_1 = __require(247);
+const projectStylePanel_1 = __require(248);
+const layoutGalleryPanel_1 = __require(249);
+const localAssetDialogs_1 = __require(250);
 const layoutAssetPresets_1 = __require(14);
 const measurementHost_1 = __require(205);
-const canvasRichTextVisibility_1 = __require(249);
-const searchPanelState_1 = __require(250);
+const canvasRichTextVisibility_1 = __require(251);
+const searchPanelState_1 = __require(252);
 const projectStyle_1 = __require(20);
-const appearanceTransaction_1 = __require(251);
-const nodeQuickActions_1 = __require(252);
+const appearanceTransaction_1 = __require(253);
+const nodeQuickActions_1 = __require(254);
 const projectControls_1 = __require(35);
 const nodeNoteState_1 = __require(198);
-const canvasRightDrag_1 = __require(253);
-const liveNodeWidthLayout_1 = __require(254);
-const focusHighlight_1 = __require(255);
-const editingSurfaceCoordinator_1 = __require(256);
+const canvasRightDrag_1 = __require(255);
+const liveNodeWidthLayout_1 = __require(256);
+const focusHighlight_1 = __require(257);
+const editingSurfaceCoordinator_1 = __require(258);
 const clipartGeometry_1 = __require(212);
 class YeMindEditor {
     constructor(options) {
@@ -17163,6 +17162,8 @@ class YeMindEditor {
         this.viewMode = "map";
         this.searchText = "";
         this.applyingCheckpoint = false;
+        this.applyingAppearance = false;
+        this.pendingAppearanceRefresh = false;
         this.resizeFrame = null;
         this.splitResizeFrame = null;
         this.splitDragPointerId = null;
@@ -17712,6 +17713,7 @@ class YeMindEditor {
                 this.activateOutlineUid(uid, true);
             },
             onToggle: (uid, expanded) => this.setOutlineExpanded(uid, expanded),
+            onContextMenu: (event, uid) => this.openOutlineContextMenu(event, uid),
             onUndo: () => this.commands?.undo(),
             onRedo: () => this.commands?.redo(),
             onDiagnostic: (action, details) => this.options.diagnostics.record("outline", action, this.current.id, details),
@@ -18019,7 +18021,7 @@ class YeMindEditor {
             this.scheduleSave();
         });
         this.map.on("view_data_change", (viewData) => {
-            if (this.applyingCheckpoint)
+            if (this.applyingCheckpoint || this.applyingAppearance)
                 return;
             this.updateZoom();
             const normalized = (0, dragBehavior_1.normalizePersistedViewData)(viewData);
@@ -18347,6 +18349,9 @@ class YeMindEditor {
         });
         this.canvasEl.style.backgroundColor = String(projectAppearance.themeConfig.backgroundColor ?? "");
         const normalizedProjectStyle = (0, projectStyle_1.normalizeProjectStyle)(this.current.projectStyle);
+        const canRender = render && this.viewMode !== "outline" && (0, visibleElement_1.hasNonZeroSize)(this.canvasEl);
+        this.pendingAppearanceRefresh = render && !canRender;
+        this.applyingAppearance = canRender;
         (0, appearanceTransaction_1.applyMapAppearanceTransaction)({
             map: this.map,
             themeConfig: projectAppearance.themeConfig,
@@ -18354,14 +18359,18 @@ class YeMindEditor {
             colorAppearance: appearance.colorAppearance,
             useThemeLineColors: normalizedProjectStyle.rainbowLines === null,
             rootBackground: String(projectAppearance.themeConfig.backgroundColor ?? appearance.colorAppearance.background),
-            render,
+            render: canRender,
             afterRender: () => {
+                this.applyingAppearance = false;
+                this.pendingAppearanceRefresh = false;
                 this.map?.associativeLine?.renderAllLines?.();
                 this.map?.outerFrame?.renderOuterFrames?.();
                 this.nodeQuickActions?.scheduleRefresh();
                 this.updateSelectionPresentation();
             },
         });
+        if (!canRender)
+            this.applyingAppearance = false;
     }
     bindAppearanceObserver() {
         this.appearanceMode = (0, themePresets_1.detectAppearance)();
@@ -18630,6 +18639,8 @@ class YeMindEditor {
             try {
                 (0, measurementHost_1.stabilizeMindMapMeasurementHost)(this.map, this.rootEl);
                 this.map.resize();
+                if (this.pendingAppearanceRefresh)
+                    this.applyMapAppearance(true);
                 this.updateDiagnosticState();
             }
             catch (error) {
@@ -18784,6 +18795,63 @@ class YeMindEditor {
                 outlineApplied,
             });
         }
+    }
+    openOutlineContextMenu(event, uid) {
+        if (!uid || !this.commands || !this.outlineRichText)
+            return;
+        this.outlineRichText.flush('before-context-menu');
+        this.claimOutlineInteraction('outline-context-menu');
+        this.commands.goToNode(uid);
+        this.activateOutlineUid(uid, false);
+        const state = this.outlineRichText.getLineState(uid);
+        const readonly = this.commands.isReadonly();
+        const activate = () => {
+            this.commands?.goToNode(uid);
+            this.activateOutlineUid(uid, false);
+        };
+        (0, contextMenu_1.openOutlineContextMenu)(event, {
+            readonly,
+            isRoot: state.isRoot,
+            hasChildren: state.hasChildren,
+            canMoveUp: state.canMoveUp,
+            canMoveDown: state.canMoveDown,
+            onEdit: () => this.outlineRichText?.editLine(uid),
+            onAddParent: () => { activate(); this.commands?.addParent(); },
+            onAddSibling: () => { activate(); this.commands?.addSibling(); },
+            onAddChild: () => { activate(); this.commands?.addChild(); },
+            onTextToMap: () => (0, textToMapDialog_1.openTextToMapDialog)({
+                targetUid: uid,
+                getTree: () => this.current.data,
+                onApply: (tree, result, insertMode) => {
+                    const applied = Boolean(this.commands?.replaceTree(tree));
+                    if (applied) {
+                        this.current.data = tree;
+                        this.renderOutline(tree);
+                        this.activateOutlineUid(uid, true);
+                    }
+                    this.options.diagnostics.record('outline', 'text-to-map', this.current.id, {
+                        applied,
+                        requestedMode: result.requestedMode,
+                        detectedMode: result.detectedMode,
+                        insertMode,
+                        nodeCount: result.nodeCount,
+                        maxDepth: result.maxDepth,
+                        warnings: result.warnings.length,
+                    });
+                    return applied;
+                },
+            }),
+            onCopyLine: () => this.outlineRichText.copyCurrentLine(uid),
+            onCutLine: () => this.outlineRichText.cutCurrentLine(uid),
+            onPasteAtCaret: () => this.outlineRichText.pasteCurrentLine(uid, false),
+            onPastePlain: () => this.outlineRichText.pasteCurrentLine(uid, true),
+            onMoveUp: () => { activate(); this.commands?.moveUp(); },
+            onMoveDown: () => { activate(); this.commands?.moveDown(); },
+            onToggleExpand: () => this.setOutlineExpanded(uid, !state.expanded),
+            onRemoveSubtree: () => { activate(); this.commands?.remove(); },
+            onRemoveOnlyCurrent: () => { activate(); this.commands?.removeOnlyCurrent(); },
+            onAction: (action) => this.options.diagnostics.record('outline-menu', action, this.current.id, { uid }),
+        });
     }
     renderOutline(data) {
         const readonly = this.rootEl.dataset.readonly === "true";
@@ -83469,6 +83537,7 @@ function buildCheckpointDialogContent(checkpoints, readonly) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.openCanvasContextMenu = openCanvasContextMenu;
 exports.openNodeContextMenu = openNodeContextMenu;
+exports.openOutlineContextMenu = openOutlineContextMenu;
 const siyuan_1 = __externalRequire("siyuan");
 const layoutPresets_1 = __require(13);
 const themePresets_1 = __require(11);
@@ -83598,6 +83667,51 @@ function openNodeContextMenu(event, commands, options = {}) {
     menu.addSeparator();
     menu.addItem({ icon: 'iconTrashcan', label: '删除当前和子节点', accelerator: 'Delete', warning: true, disabled: !availability.remove, click: run('remove-subtree', () => commands.remove()) });
     menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前', accelerator: 'Shift+Backspace', disabled: !availability.removeOnlyCurrent, click: run('remove-only-current', () => commands.removeOnlyCurrent()) });
+    menu.open({ x: event.clientX, y: event.clientY });
+}
+function runOutlineAction(options, action, callback) {
+    return () => {
+        options.onAction?.(action);
+        try {
+            const result = callback();
+            if (result && typeof result.catch === 'function') {
+                void result.catch((error) => {
+                    console.error(`[YeMind] outline ${action} failed`, error);
+                    (0, siyuan_1.showMessage)('大纲操作失败，请重试', 4000, 'error');
+                });
+            }
+        }
+        catch (error) {
+            console.error(`[YeMind] outline ${action} failed`, error);
+            (0, siyuan_1.showMessage)('大纲操作失败，请重试', 4000, 'error');
+        }
+    };
+}
+function openOutlineContextMenu(event, options) {
+    event.preventDefault();
+    event.stopPropagation();
+    const menu = new siyuan_1.Menu('siyuan-yemind-outline-menu');
+    menu.element.classList.add('ymz-context-menu', 'ymz-context-menu--outline');
+    menu.element.dataset.appearance = (0, themePresets_1.detectAppearance)();
+    const disabled = options.readonly;
+    const run = (action, callback) => runOutlineAction(options, action, callback);
+    menu.addItem({ icon: 'iconEdit', label: '编辑节点', disabled, click: run('edit', options.onEdit) });
+    menu.addItem({ iconHTML: (0, projectControls_1.nodeInsertIcon)('parent'), label: '插入上级节点', disabled: disabled || options.isRoot, click: run('add-parent', options.onAddParent) });
+    menu.addItem({ iconHTML: (0, projectControls_1.nodeInsertIcon)('sibling'), label: '插入同级节点', disabled: disabled || options.isRoot, click: run('add-sibling', options.onAddSibling) });
+    menu.addItem({ iconHTML: (0, projectControls_1.nodeInsertIcon)('child'), label: '插入下级节点', disabled, click: run('add-child', options.onAddChild) });
+    menu.addItem({ icon: 'iconGraph', label: '文本转导图…', disabled, click: run('text-to-map', options.onTextToMap) });
+    menu.addSeparator();
+    menu.addItem({ icon: 'iconCopy', label: '复制（当前行）', click: run('copy-line', options.onCopyLine) });
+    menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('cut'), label: '剪切（当前行）', disabled, click: run('cut-line', options.onCutLine) });
+    menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('paste'), label: '粘贴（当前光标处）', disabled, click: run('paste-caret', options.onPasteAtCaret) });
+    menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('paste'), label: '粘贴（纯文本）', disabled, click: run('paste-plain', options.onPastePlain) });
+    menu.addSeparator();
+    menu.addItem({ icon: 'iconUp', label: '上移节点', disabled: disabled || !options.canMoveUp, click: run('move-up', options.onMoveUp) });
+    menu.addItem({ icon: 'iconDown', label: '下移节点', disabled: disabled || !options.canMoveDown, click: run('move-down', options.onMoveDown) });
+    menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !options.hasChildren, click: run('toggle-expand', options.onToggleExpand) });
+    menu.addSeparator();
+    menu.addItem({ icon: 'iconTrashcan', label: '删除当前行和子级', warning: true, disabled: disabled || options.isRoot, click: run('remove-subtree', options.onRemoveSubtree) });
+    menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前行', disabled: disabled || options.isRoot, click: run('remove-only-current', options.onRemoveOnlyCurrent) });
     menu.open({ x: event.clientX, y: event.clientY });
 }
 
@@ -84258,6 +84372,1077 @@ function createNodeMenuAvailability(input) {
 
 },
 223: function(module, exports, __require, __externalRequire) {
+// /src/ui/textToMapDialog.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.openTextToMapDialog = openTextToMapDialog;
+const siyuan_1 = __externalRequire("siyuan");
+const outlineTreeImport_1 = __require(224);
+const MODES = [
+    ['auto', '自动识别'],
+    ['unicode-tree', 'Unicode 树形符号'],
+    ['windows-tree', 'Windows Tree'],
+    ['indent', '空格/Tab 缩进'],
+    ['markdown', 'Markdown 列表'],
+    ['numbered', '编号大纲'],
+    ['plain', '普通多行文本'],
+];
+function escapeHtml(value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+function previewText(result) {
+    if (!result.lines.length)
+        return '等待粘贴文本…';
+    const lastAtDepth = new Map();
+    result.lines.forEach((line, index) => lastAtDepth.set(line.depth, index));
+    return result.lines.map((line, index) => {
+        if (line.depth === 0)
+            return line.text;
+        let prefix = '';
+        for (let depth = 1; depth < line.depth; depth += 1) {
+            const hasLater = result.lines.slice(index + 1).some((candidate) => candidate.depth >= depth);
+            prefix += hasLater ? '│  ' : '   ';
+        }
+        const isLast = lastAtDepth.get(line.depth) === index;
+        return `${prefix}${isLast ? '└─ ' : '├─ '}${line.text}`;
+    }).join('\n');
+}
+function resultStatus(result) {
+    const detected = MODES.find(([id]) => id === result.detectedMode)?.[1] ?? result.detectedMode;
+    const parts = [
+        `已识别：${detected}`,
+        `节点：${result.nodeCount}`,
+        `最大层级：${result.maxDepth}`,
+    ];
+    if (result.ignoredBlankLines)
+        parts.push(`忽略空行：${result.ignoredBlankLines}`);
+    if (result.continuationLines)
+        parts.push(`续行合并：${result.continuationLines}`);
+    return parts.join('　');
+}
+function openTextToMapDialog(options) {
+    const dialog = new siyuan_1.Dialog({
+        title: '文本转导图',
+        width: 'min(980px, calc(100vw - 32px))',
+        content: `<div class="b3-dialog__content ymz-text-map-dialog">
+      <div class="ymz-text-map-dialog__toolbar">
+        <label>识别方式
+          <select class="b3-select" data-field="mode">
+            ${MODES.map(([id, label]) => `<option value="${id}">${label}</option>`).join('')}
+          </select>
+        </label>
+        <label>插入方式
+          <select class="b3-select" data-field="insert-mode">
+            <option value="append-under-current">当前节点作为根</option>
+            <option value="replace-current">首个节点替换当前节点</option>
+          </select>
+        </label>
+      </div>
+      <div class="ymz-text-map-dialog__body">
+        <section class="ymz-text-map-dialog__pane">
+          <div class="ymz-text-map-dialog__heading">原始文本</div>
+          <textarea class="b3-text-field ymz-text-map-dialog__input" data-field="source" spellcheck="false"></textarea>
+        </section>
+        <section class="ymz-text-map-dialog__pane">
+          <div class="ymz-text-map-dialog__heading">解析预览</div>
+          <pre class="ymz-text-map-dialog__preview" data-role="preview">等待粘贴文本…</pre>
+        </section>
+      </div>
+      <div class="ymz-text-map-dialog__status" data-role="status">粘贴文本后将自动预览。</div>
+      <div class="ymz-text-map-dialog__messages" data-role="messages"></div>
+    </div>
+    <div class="b3-dialog__action">
+      <button class="b3-button b3-button--cancel" data-action="cancel">取消</button>
+      <div class="fn__space"></div>
+      <button class="b3-button b3-button--text" data-action="apply" disabled>转换为导图</button>
+    </div>`,
+    });
+    const source = dialog.element.querySelector('[data-field="source"]');
+    const mode = dialog.element.querySelector('[data-field="mode"]');
+    const insertMode = dialog.element.querySelector('[data-field="insert-mode"]');
+    const preview = dialog.element.querySelector('[data-role="preview"]');
+    const status = dialog.element.querySelector('[data-role="status"]');
+    const messages = dialog.element.querySelector('[data-role="messages"]');
+    const apply = dialog.element.querySelector('[data-action="apply"]');
+    let current = (0, outlineTreeImport_1.parseOutlineTreeText)('', 'auto');
+    const refresh = () => {
+        const selectedMode = mode.value;
+        source.placeholder = outlineTreeImport_1.OUTLINE_TREE_IMPORT_PLACEHOLDERS[selectedMode];
+        current = (0, outlineTreeImport_1.parseOutlineTreeText)(source.value, selectedMode);
+        preview.textContent = previewText(current);
+        status.textContent = source.value.trim() ? resultStatus(current) : '粘贴文本后将自动预览。';
+        messages.innerHTML = [
+            ...current.errors.map((text) => `<div class="ymz-text-map-dialog__error">${escapeHtml(text)}</div>`),
+            ...current.warnings.map((text) => `<div class="ymz-text-map-dialog__warning">${escapeHtml(text)}</div>`),
+        ].join('');
+        apply.disabled = !source.value.trim() || current.lines.length === 0 || current.errors.length > 0;
+    };
+    source.addEventListener('input', refresh);
+    mode.addEventListener('change', refresh);
+    dialog.element.querySelector('[data-action="cancel"]')?.addEventListener('click', () => dialog.destroy());
+    apply.addEventListener('click', () => {
+        if (apply.disabled)
+            return;
+        const selectedInsertMode = insertMode.value;
+        const next = (0, outlineTreeImport_1.applyOutlineImport)(options.getTree(), options.targetUid, current, selectedInsertMode);
+        if (!options.onApply(next, current, selectedInsertMode)) {
+            (0, siyuan_1.showMessage)('文本转换未能应用到导图，请重试', 4000, 'error');
+            return;
+        }
+        dialog.destroy();
+        (0, siyuan_1.showMessage)(`已转换 ${current.nodeCount} 个节点`);
+    });
+    refresh();
+    source.focus();
+}
+
+},
+224: function(module, exports, __require, __externalRequire) {
+// /src/editor/outlineTreeImport.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OUTLINE_TREE_IMPORT_PLACEHOLDERS = void 0;
+exports.parseOutlineTreeText = parseOutlineTreeText;
+exports.applyOutlineImport = applyOutlineImport;
+const textEditingPolicy_1 = __require(24);
+const structuredOutlineDocument_1 = __require(225);
+exports.OUTLINE_TREE_IMPORT_PLACEHOLDERS = {
+    auto: '粘贴树形文本、Windows Tree、空格/Tab 缩进、Markdown 列表或编号大纲，系统将自动识别。',
+    'unicode-tree': '根节点\n├─ 节点A\n│  └─ 节点A1\n└─ 节点B',
+    'windows-tree': '\\---root\n    +---src\n    |   \\---core\n    \\---tests',
+    indent: '根节点\n    节点A\n        节点A1\n    节点B',
+    markdown: '- 根节点\n  - 节点A\n    - 节点A1\n  - 节点B',
+    numbered: '1. 根节点\n1.1 节点A\n1.1.1 节点A1\n2. 节点B',
+    plain: '节点A\n节点B\n节点C',
+};
+function cloneTree(value) {
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(value);
+        }
+        catch { /* JSON fallback */ }
+    }
+    return JSON.parse(JSON.stringify(value));
+}
+function stripCodeFence(value) {
+    const normalized = String(value ?? '').replace(/\r\n?/g, '\n');
+    const match = normalized.match(/^\s*```[^\n]*\n([\s\S]*?)\n```\s*$/);
+    return (match?.[1] ?? normalized).replace(/^\n+|\n+$/g, '');
+}
+function lineIndentWidth(prefix) {
+    let width = 0;
+    for (const char of prefix)
+        width += char === '\t' ? 4 : char === '\u3000' ? 2 : 1;
+    return width;
+}
+function gcd(a, b) {
+    let x = Math.abs(a);
+    let y = Math.abs(b);
+    while (y)
+        [x, y] = [y, x % y];
+    return x || 1;
+}
+function normalizeDepths(lines, warnings) {
+    if (!lines.length)
+        return lines;
+    const minimum = Math.min(...lines.map((line) => line.depth));
+    let previous = 0;
+    return lines.map((line, index) => {
+        let depth = Math.max(0, line.depth - minimum);
+        if (index === 0)
+            depth = 0;
+        if (depth > previous + 1) {
+            warnings.push(`第 ${line.sourceLine} 行层级跳跃，已从 ${depth} 调整为 ${previous + 1}。`);
+            depth = previous + 1;
+        }
+        previous = depth;
+        return { ...line, depth };
+    });
+}
+function detectMode(lines) {
+    const nonBlank = lines.filter((line) => line.trim());
+    if (nonBlank.some((line) => /^[\s│┃]*[├└┝┗][─━-]+\s*/u.test(line)))
+        return 'unicode-tree';
+    if (nonBlank.some((line) => /^(?:(?:\|\s{0,3}|\s{4}))*[+\\]---\s*/.test(line)))
+        return 'windows-tree';
+    const hierarchicalNumbers = nonBlank.filter((line) => /^\s*\d+(?:\.\d+)+[.)]?\s+/.test(line)).length;
+    if (hierarchicalNumbers > 0)
+        return 'numbered';
+    const markdownLines = nonBlank.filter((line) => /^\s*(?:[-+*]|\[[ xX]\]|\d+[.)])\s+/.test(line)).length;
+    if (markdownLines >= Math.max(1, Math.ceil(nonBlank.length * 0.6)))
+        return 'markdown';
+    const indents = nonBlank.map((line) => line.match(/^[\t \u3000]*/)?.[0] ?? '').map(lineIndentWidth);
+    if (indents.some((indent) => indent > 0))
+        return 'indent';
+    return 'plain';
+}
+function parseUnicode(rawLines, warnings) {
+    const result = [];
+    let ignored = 0;
+    let continuations = 0;
+    for (let index = 0; index < rawLines.length; index += 1) {
+        const raw = rawLines[index];
+        if (!raw.trim()) {
+            ignored += 1;
+            continue;
+        }
+        if (/^[\s│┃┆┊]+$/u.test(raw)) {
+            ignored += 1;
+            continue;
+        }
+        const branch = raw.match(/^((?:(?:│|┃|┆|┊)[ \t]{0,4}|[ \t]{2,4})*)(?:├|└|┝|┗)[─━-]+[ \t]*(.*)$/u);
+        if (branch) {
+            const prefix = branch[1] ?? '';
+            const segments = prefix.match(/(?:│|┃|┆|┊)[ \t]{0,4}|[ \t]{2,4}/gu) ?? [];
+            result.push({ depth: segments.length + 1, text: (branch[2] ?? '').trimEnd(), sourceLine: index + 1 });
+            continue;
+        }
+        const continuation = raw.match(/^((?:(?:│|┃|┆|┊)[ \t]{0,4}|[ \t]{2,4})+)(\S.*)$/u);
+        if (continuation && result.length) {
+            result[result.length - 1].text += `\n${continuation[2].trimEnd()}`;
+            continuations += 1;
+            continue;
+        }
+        const text = raw.trimEnd().replace(/^\s+/, '');
+        if (!result.length)
+            result.push({ depth: 0, text, sourceLine: index + 1 });
+        else if (!raw.match(/^[ \t]/) && !result.some((line) => line.depth > 0)) {
+            result[0].text += `\n${text}`;
+            continuations += 1;
+        }
+        else if (!result.some((line) => line.depth > 0)) {
+            result[0].text += `\n${text}`;
+            continuations += 1;
+        }
+        else {
+            result[result.length - 1].text += `\n${text}`;
+            continuations += 1;
+        }
+    }
+    if (!result.length)
+        warnings.push('未识别到 Unicode 树形节点。');
+    return { lines: result, ignored, continuations };
+}
+function parseWindows(rawLines, warnings) {
+    const result = [];
+    let ignored = 0;
+    for (let index = 0; index < rawLines.length; index += 1) {
+        const raw = rawLines[index];
+        if (!raw.trim()) {
+            ignored += 1;
+            continue;
+        }
+        const match = raw.match(/^((?:(?:\|\s{0,3})|(?:\s{4}))*)([+\\]---)\s*(.*)$/);
+        if (!match) {
+            if (result.length && raw.trim())
+                result[result.length - 1].text += `\n${raw.trim()}`;
+            else
+                ignored += 1;
+            continue;
+        }
+        const prefix = match[1] ?? '';
+        const segments = prefix.match(/\|\s{0,3}|\s{4}/g) ?? [];
+        result.push({ depth: segments.length, text: (match[3] ?? '').trimEnd(), sourceLine: index + 1 });
+    }
+    if (!result.length)
+        warnings.push('未识别到 Windows Tree 节点。');
+    return { lines: result, ignored, continuations: 0 };
+}
+function inferIndentUnit(widths) {
+    const positive = [...new Set(widths.filter((width) => width > 0))].sort((a, b) => a - b);
+    if (!positive.length)
+        return 4;
+    return positive.reduce((value, width) => gcd(value, width), positive[0]) || positive[0] || 4;
+}
+function parseIndent(rawLines) {
+    const entries = rawLines.map((raw, index) => ({ raw, index, prefix: raw.match(/^[\t \u3000]*/)?.[0] ?? '' }))
+        .filter((entry) => entry.raw.trim());
+    const unit = inferIndentUnit(entries.map((entry) => lineIndentWidth(entry.prefix)));
+    return {
+        lines: entries.map((entry) => ({
+            depth: Math.round(lineIndentWidth(entry.prefix) / unit),
+            text: entry.raw.slice(entry.prefix.length).trimEnd(),
+            sourceLine: entry.index + 1,
+        })),
+        ignored: rawLines.length - entries.length,
+        continuations: 0,
+    };
+}
+function parseMarkdown(rawLines, warnings) {
+    const entries = [];
+    let ignored = 0;
+    for (let index = 0; index < rawLines.length; index += 1) {
+        const raw = rawLines[index];
+        if (!raw.trim()) {
+            ignored += 1;
+            continue;
+        }
+        const match = raw.match(/^([\t \u3000]*)(?:[-+*]|\[[ xX]\]|\d+[.)])\s+(.*)$/);
+        if (!match) {
+            if (entries.length)
+                entries[entries.length - 1].text += `\n${raw.trim()}`;
+            else
+                warnings.push(`第 ${index + 1} 行不是 Markdown 列表项，已忽略。`);
+            continue;
+        }
+        entries.push({ indent: lineIndentWidth(match[1] ?? ''), text: (match[2] ?? '').trimEnd(), sourceLine: index + 1 });
+    }
+    const unit = inferIndentUnit(entries.map((entry) => entry.indent));
+    return { lines: entries.map((entry) => ({ depth: Math.round(entry.indent / unit), text: entry.text, sourceLine: entry.sourceLine })), ignored, continuations: 0 };
+}
+function parseNumbered(rawLines, warnings) {
+    const result = [];
+    let ignored = 0;
+    for (let index = 0; index < rawLines.length; index += 1) {
+        const raw = rawLines[index];
+        if (!raw.trim()) {
+            ignored += 1;
+            continue;
+        }
+        const match = raw.match(/^\s*(\d+(?:\.\d+)*)(?:[.)、])?\s+(.*)$/);
+        if (!match) {
+            if (result.length)
+                result[result.length - 1].text += `\n${raw.trim()}`;
+            else
+                warnings.push(`第 ${index + 1} 行不是编号大纲，已忽略。`);
+            continue;
+        }
+        const sequence = match[1];
+        result.push({ depth: sequence.split('.').length - 1, text: (match[2] ?? '').trimEnd(), sourceLine: index + 1 });
+    }
+    return { lines: result, ignored, continuations: 0 };
+}
+function parsePlain(rawLines) {
+    const lines = rawLines
+        .map((raw, index) => ({ raw, index }))
+        .filter(({ raw }) => raw.trim())
+        .map(({ raw, index }) => ({ depth: 0, text: raw.trim(), sourceLine: index + 1 }));
+    return { lines, ignored: rawLines.length - lines.length, continuations: 0 };
+}
+function parseOutlineTreeText(value, mode = 'auto') {
+    const source = stripCodeFence(value);
+    const rawLines = source.split('\n');
+    const detectedMode = mode === 'auto' ? detectMode(rawLines) : mode;
+    const warnings = [];
+    const errors = [];
+    const parsed = detectedMode === 'unicode-tree' ? parseUnicode(rawLines, warnings)
+        : detectedMode === 'windows-tree' ? parseWindows(rawLines, warnings)
+            : detectedMode === 'indent' ? parseIndent(rawLines)
+                : detectedMode === 'markdown' ? parseMarkdown(rawLines, warnings)
+                    : detectedMode === 'numbered' ? parseNumbered(rawLines, warnings)
+                        : parsePlain(rawLines);
+    const lines = normalizeDepths(parsed.lines.filter((line) => line.text.trim()), warnings);
+    if (lines.length > 5000)
+        errors.push('一次最多转换 5000 个节点。');
+    else if (lines.length > 1000)
+        warnings.push(`将导入 ${lines.length} 个节点，可能需要较长时间。`);
+    if (!lines.length && source.trim())
+        errors.push('没有识别到可转换的节点。');
+    return {
+        requestedMode: mode,
+        detectedMode,
+        lines: lines.slice(0, 5000),
+        warnings,
+        errors,
+        nodeCount: Math.min(lines.length, 5000),
+        maxDepth: lines.reduce((maximum, line) => Math.max(maximum, line.depth), 0),
+        ignoredBlankLines: parsed.ignored,
+        continuationLines: parsed.continuations,
+    };
+}
+function forestFromLines(lines) {
+    const roots = [];
+    const stack = [];
+    lines.forEach((line, index) => {
+        const node = {
+            data: (0, textEditingPolicy_1.pristineNodeData)({ uid: (0, structuredOutlineDocument_1.createStructuredOutlineUid)(), text: line.text, expand: true, yemindTextPristine: false, yemindTextEdited: true }),
+            children: [],
+        };
+        const depth = index === 0 ? 0 : Math.max(0, Math.min(line.depth, stack.length));
+        if (depth === 0)
+            roots.push(node);
+        else
+            (stack[depth - 1] ?? roots[roots.length - 1]).children.push(node);
+        stack[depth] = node;
+        stack.length = depth + 1;
+    });
+    return roots;
+}
+function findNode(tree, uid) {
+    if (String(tree.data.uid ?? '') === uid)
+        return tree;
+    for (const child of tree.children ?? []) {
+        const found = findNode(child, uid);
+        if (found)
+            return found;
+    }
+    return null;
+}
+function applyOutlineImport(baseTree, targetUid, result, insertMode = 'append-under-current') {
+    if (result.errors.length || !result.lines.length)
+        return cloneTree(baseTree);
+    const next = cloneTree(baseTree);
+    const target = findNode(next, targetUid);
+    if (!target)
+        return next;
+    const forest = forestFromLines(result.lines);
+    if (insertMode === 'replace-current') {
+        const first = forest.shift();
+        if (!first)
+            return next;
+        target.data = { ...target.data, text: first.data.text, richText: false, yemindTextPristine: false, yemindTextEdited: true, expand: true };
+        target.children = [...first.children, ...forest, ...(target.children ?? [])];
+    }
+    else {
+        target.data.expand = true;
+        target.children = [...(target.children ?? []), ...forest];
+    }
+    return next;
+}
+
+},
+225: function(module, exports, __require, __externalRequire) {
+// /src/editor/structuredOutlineDocument.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.structuredOutlineHtmlToText = structuredOutlineHtmlToText;
+exports.structuredOutlineIsRichHtml = structuredOutlineIsRichHtml;
+exports.flattenStructuredOutline = flattenStructuredOutline;
+exports.normalizeStructuredOutlineDepths = normalizeStructuredOutlineDepths;
+exports.buildTreeFromStructuredOutline = buildTreeFromStructuredOutline;
+exports.parseStructuredOutlinePaste = parseStructuredOutlinePaste;
+exports.serializeStructuredOutlineBlocks = serializeStructuredOutlineBlocks;
+exports.createStructuredOutlineUid = createStructuredOutlineUid;
+const sanitizeRichHtml_1 = __require(199);
+const outlineTextDocument_1 = __require(226);
+function cloneValue(value) {
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(value);
+        }
+        catch {
+            // Map data is JSON-compatible; fall through to the deterministic clone.
+        }
+    }
+    return JSON.parse(JSON.stringify(value));
+}
+function escapeHtml(value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;')
+        .replaceAll('\n', '<br>');
+}
+function structuredOutlineHtmlToText(value) {
+    const source = String(value ?? '');
+    if (typeof document === 'undefined') {
+        return source
+            .replace(/<br\s*\/?\s*>/gi, '\n')
+            .replace(/<\/p\s*>/gi, '\n')
+            .replace(/<\/div\s*>/gi, '\n')
+            .replace(/<[^>]*>/g, '')
+            .replace(/&nbsp;/gi, ' ')
+            .trimEnd();
+    }
+    const element = document.createElement('div');
+    element.innerHTML = (0, sanitizeRichHtml_1.sanitizeRichHtml)(source);
+    return (element.innerText || element.textContent || '')
+        .replace(/\u00a0/g, ' ')
+        .replace(/\r\n?/g, '\n')
+        .trimEnd();
+}
+function structuredOutlineIsRichHtml(value) {
+    const normalized = String(value ?? '').trim();
+    if (!normalized)
+        return false;
+    return /<(?:strong|b|em|i|u|s|strike|code|pre|a|span|mark|sub|sup|img|svg|mjx-container|ql-formula)\b/i.test(normalized);
+}
+function displayHtml(data) {
+    const value = String(data.text ?? '');
+    return data.richText ? (0, sanitizeRichHtml_1.sanitizeRichHtml)(value) : escapeHtml(value);
+}
+function summaries(data) {
+    const value = data.generalization;
+    if (Array.isArray(value)) {
+        return value.filter((item) => Boolean(item && typeof item === 'object'));
+    }
+    return value && typeof value === 'object' ? [value] : [];
+}
+function flattenStructuredOutline(tree) {
+    const blocks = [];
+    const visit = (node, depth, parentUid, hiddenByAncestor, path) => {
+        const uid = String(node.data.uid ?? path);
+        const children = Array.isArray(node.children) ? node.children : [];
+        const expanded = node.data.expand !== false;
+        const html = displayHtml(node.data);
+        blocks.push({
+            uid,
+            depth,
+            html,
+            text: (0, outlineTextDocument_1.outlineNodePlainText)(node.data),
+            kind: 'node',
+            parentUid,
+            hidden: hiddenByAncestor,
+            expanded,
+            hasChildren: children.length > 0,
+            isRoot: depth === 0,
+            pristine: node.data.yemindTextPristine === true && node.data.yemindTextEdited !== true,
+        });
+        const descendantsHidden = hiddenByAncestor || !expanded;
+        children.forEach((child, index) => visit(child, depth + 1, uid, descendantsHidden, `${path}.${index}`));
+        summaries(node.data).forEach((summary, index) => {
+            const summaryUid = String(summary.uid ?? `${uid}.summary.${index}`);
+            blocks.push({
+                uid: summaryUid,
+                depth: depth + 1,
+                html: displayHtml(summary),
+                text: (0, outlineTextDocument_1.outlineNodePlainText)(summary),
+                kind: 'summary',
+                parentUid: uid,
+                hidden: descendantsHidden,
+                expanded: true,
+                hasChildren: false,
+                isRoot: false,
+                pristine: summary.yemindTextPristine === true && summary.yemindTextEdited !== true,
+            });
+        });
+    };
+    visit(tree, 0, null, false, 'root');
+    return blocks;
+}
+function indexExistingData(tree) {
+    const nodes = new Map();
+    const summaryData = new Map();
+    const visit = (node, path) => {
+        const uid = String(node.data.uid ?? path);
+        nodes.set(uid, cloneValue({ ...node.data, uid }));
+        summaries(node.data).forEach((summary, index) => {
+            const summaryUid = String(summary.uid ?? `${uid}.summary.${index}`);
+            summaryData.set(summaryUid, cloneValue({ ...summary, uid: summaryUid }));
+        });
+        (node.children ?? []).forEach((child, index) => visit(child, `${path}.${index}`));
+    };
+    visit(tree, 'root');
+    return { nodes, summaries: summaryData };
+}
+function normalizedBlockHtml(block) {
+    const sanitized = (0, sanitizeRichHtml_1.sanitizeRichHtml)(String(block.html ?? ''));
+    const text = structuredOutlineHtmlToText(sanitized || escapeHtml(String(block.text ?? '')));
+    const richText = structuredOutlineIsRichHtml(sanitized);
+    return {
+        html: richText ? sanitized : escapeHtml(text),
+        text,
+        richText,
+    };
+}
+function updatedData(base, block) {
+    const value = normalizedBlockHtml(block);
+    const data = cloneValue(base ?? { text: '' });
+    data.uid = block.uid;
+    data.text = value.richText ? value.html : value.text;
+    data.richText = value.richText;
+    data.yemindTextPristine = false;
+    data.yemindTextEdited = true;
+    if (block.kind === 'node')
+        data.expand = block.expanded;
+    return data;
+}
+function normalizeStructuredOutlineDepths(blocks) {
+    let previousDepth = 0;
+    return blocks.map((block, index) => {
+        let depth = Math.max(0, Math.trunc(block.depth));
+        if (index === 0)
+            depth = 0;
+        else
+            depth = Math.max(1, Math.min(depth, previousDepth + 1));
+        previousDepth = depth;
+        return { ...block, depth, isRoot: index === 0, parentUid: index === 0 ? null : block.parentUid };
+    });
+}
+function buildTreeFromStructuredOutline(baseTree, inputBlocks) {
+    const normalBlocks = normalizeStructuredOutlineDepths(inputBlocks.filter((block) => block.kind === 'node'));
+    if (normalBlocks.length === 0) {
+        normalBlocks.push({
+            uid: String(baseTree.data.uid ?? 'root'),
+            depth: 0,
+            html: '',
+            text: '',
+            kind: 'node',
+            parentUid: null,
+            hidden: false,
+            expanded: true,
+            hasChildren: false,
+            isRoot: true,
+            pristine: false,
+        });
+    }
+    const existing = indexExistingData(baseTree);
+    let reusedNodeCount = 0;
+    let createdNodeCount = 0;
+    const treeByUid = new Map();
+    const stack = [];
+    let root = null;
+    normalBlocks.forEach((block, index) => {
+        const normalizedDepth = index === 0 ? 0 : Math.max(1, Math.min(block.depth, stack.length));
+        const base = existing.nodes.get(block.uid);
+        if (base)
+            reusedNodeCount += 1;
+        else
+            createdNodeCount += 1;
+        const node = {
+            data: updatedData(base, { ...block, depth: normalizedDepth }),
+            children: [],
+        };
+        treeByUid.set(block.uid, node);
+        if (index === 0) {
+            root = node;
+            stack.length = 0;
+            stack.push(node);
+            return;
+        }
+        const parentDepth = Math.max(0, normalizedDepth - 1);
+        const parent = stack[parentDepth] ?? root;
+        parent.children.push(node);
+        stack[normalizedDepth] = node;
+        stack.length = normalizedDepth + 1;
+    });
+    const groupedSummaries = new Map();
+    inputBlocks
+        .filter((block) => block.kind === 'summary' && block.parentUid)
+        .forEach((block) => {
+        const base = existing.summaries.get(block.uid);
+        const data = updatedData(base, block);
+        const list = groupedSummaries.get(block.parentUid) ?? [];
+        list.push(data);
+        groupedSummaries.set(block.parentUid, list);
+    });
+    groupedSummaries.forEach((value, parentUid) => {
+        const parent = treeByUid.get(parentUid);
+        if (parent)
+            parent.data.generalization = value.length === 1 ? value[0] : value;
+    });
+    return {
+        tree: root,
+        nodeCount: normalBlocks.length,
+        reusedNodeCount,
+        createdNodeCount,
+    };
+}
+function parseStructuredOutlinePaste(value) {
+    const parsed = (0, outlineTextDocument_1.parseOutlineText)(value);
+    return parsed.lines.map((line) => ({ text: line.text, depth: line.depth }));
+}
+function serializeStructuredOutlineBlocks(blocks, includeHidden = true) {
+    return blocks
+        .filter((block) => block.kind === 'node' && (includeHidden || !block.hidden))
+        .map((block) => `${outlineTextDocument_1.OUTLINE_TEXT_INDENT.repeat(block.depth)}${block.text}`)
+        .join('\n');
+}
+function createStructuredOutlineUid() {
+    const random = globalThis.crypto?.randomUUID?.();
+    if (random)
+        return `ym-${random}`;
+    return `ym-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+},
+226: function(module, exports, __require, __externalRequire) {
+// /src/editor/outlineTextDocument.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OUTLINE_TEXT_INDENT = void 0;
+exports.outlineNodePlainText = outlineNodePlainText;
+exports.serializeOutlineText = serializeOutlineText;
+exports.unescapeImportedOutlineText = unescapeImportedOutlineText;
+exports.parseOutlineText = parseOutlineText;
+exports.outlineTextSimilarity = outlineTextSimilarity;
+exports.reconcileOutlineText = reconcileOutlineText;
+exports.editOutlineSelectionIndent = editOutlineSelectionIndent;
+exports.insertOutlineNewline = insertOutlineNewline;
+exports.OUTLINE_TEXT_INDENT = '    ';
+const TAB_WIDTH = 4;
+function cloneData(value) {
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(value);
+        }
+        catch {
+            // Fall through to the JSON-compatible map-data clone below.
+        }
+    }
+    return JSON.parse(JSON.stringify(value));
+}
+function htmlToPlainText(value) {
+    if (typeof document !== 'undefined') {
+        const element = document.createElement('div');
+        element.innerHTML = value;
+        return element.textContent ?? '';
+    }
+    return value
+        .replace(/<br\s*\/?\s*>/gi, '\n')
+        .replace(/<\/p\s*>/gi, '\n')
+        .replace(/<[^>]*>/g, '');
+}
+function outlineNodePlainText(data) {
+    const source = String(data.text ?? '');
+    const value = data.richText ? htmlToPlainText(source) : source;
+    return value
+        .replace(/\u00a0/g, ' ')
+        .replace(/\r\n?/g, '\n')
+        .replace(/[\t ]*\n[\t ]*/g, ' ')
+        .trim();
+}
+function flattenTree(tree) {
+    const lines = [];
+    const visit = (node, depth, path) => {
+        const uid = String(node.data.uid ?? path);
+        lines.push({
+            uid,
+            depth,
+            path,
+            text: outlineNodePlainText(node.data),
+            data: cloneData({ ...node.data, uid }),
+        });
+        const children = Array.isArray(node.children) ? node.children : [];
+        children.forEach((child, index) => visit(child, depth + 1, `${path}.${index}`));
+    };
+    visit(tree, 0, 'root');
+    return lines;
+}
+function serializeOutlineText(tree, indent = exports.OUTLINE_TEXT_INDENT) {
+    return flattenTree(tree)
+        .map((line) => `${indent.repeat(line.depth)}${line.text}`)
+        .join('\n');
+}
+function indentColumns(value) {
+    let columns = 0;
+    for (const char of value) {
+        if (char === '\t')
+            columns += TAB_WIDTH;
+        else if (char === ' ' || char === '\u00a0')
+            columns += 1;
+        else
+            break;
+    }
+    return columns;
+}
+function greatestCommonDivisor(a, b) {
+    let left = Math.abs(Math.trunc(a));
+    let right = Math.abs(Math.trunc(b));
+    while (right)
+        [left, right] = [right, left % right];
+    return left;
+}
+function inferIndentWidth(values) {
+    const positive = [...new Set(values.filter((value) => value > 0))].sort((a, b) => a - b);
+    if (positive.length === 0)
+        return exports.OUTLINE_TEXT_INDENT.length;
+    const exactCandidate = [4, 2, 3, 8].find((candidate) => positive.every((value) => value % candidate === 0));
+    if (exactCandidate)
+        return exactCandidate;
+    const gcd = positive.reduce((result, value) => greatestCommonDivisor(result, value));
+    if (gcd > 1)
+        return gcd;
+    return Math.max(1, positive[0]);
+}
+function unescapeImportedOutlineText(value) {
+    return value.replace(/\\([:;])/g, '$1');
+}
+function parseOutlineText(value) {
+    const source = String(value ?? '').replace(/\r\n?/g, '\n');
+    const rawLines = source.split('\n');
+    while (rawLines.length > 0 && rawLines[0].trim() === '')
+        rawLines.shift();
+    while (rawLines.length > 0 && rawLines[rawLines.length - 1].trim() === '')
+        rawLines.pop();
+    if (rawLines.length === 0) {
+        return { lines: [], indentWidth: exports.OUTLINE_TEXT_INDENT.length, topLevelCount: 0, implicitRoot: false };
+    }
+    const measured = rawLines.map((raw, index) => {
+        const match = raw.match(/^[\t \u00a0]*/)?.[0] ?? '';
+        return {
+            raw,
+            sourceLine: index + 1,
+            rawIndent: match,
+            columns: indentColumns(match),
+            text: unescapeImportedOutlineText(raw.slice(match.length)),
+        };
+    });
+    const nonBlank = measured.filter((line) => line.text.trim().length > 0);
+    const baseIndent = nonBlank.length > 0 ? Math.min(...nonBlank.map((line) => line.columns)) : 0;
+    const normalizedIndents = nonBlank.map((line) => Math.max(0, line.columns - baseIndent));
+    const indentWidth = inferIndentWidth(normalizedIndents);
+    const lines = [];
+    let previousDepth = 0;
+    measured.forEach((line) => {
+        const relative = Math.max(0, line.columns - baseIndent);
+        let depth = line.text.trim().length === 0 && line.rawIndent.length === 0
+            ? previousDepth
+            : Math.max(0, Math.round(relative / indentWidth));
+        depth = Math.min(depth, previousDepth + 1);
+        lines.push({
+            text: line.text,
+            depth,
+            rawIndent: line.rawIndent,
+            sourceLine: line.sourceLine,
+        });
+        previousDepth = depth;
+    });
+    const topLevelCount = lines.filter((line) => line.depth === 0).length;
+    return {
+        lines,
+        indentWidth,
+        topLevelCount,
+        implicitRoot: topLevelCount > 1,
+    };
+}
+function lineKey(line) {
+    return `${line.depth}\u0000${line.text}`;
+}
+function outlinePaths(lines) {
+    if (lines.length === 0)
+        return [];
+    const paths = ['root'];
+    const pathAtDepth = ['root'];
+    const nextChildIndex = [0];
+    lines.slice(1).forEach((line) => {
+        const depth = Math.max(1, Math.min(Math.trunc(line.depth), pathAtDepth.length));
+        const parentPath = pathAtDepth[depth - 1] ?? 'root';
+        const childIndex = nextChildIndex[depth - 1] ?? 0;
+        nextChildIndex[depth - 1] = childIndex + 1;
+        const path = `${parentPath}.${childIndex}`;
+        paths.push(path);
+        pathAtDepth[depth] = path;
+        pathAtDepth.length = depth + 1;
+        nextChildIndex[depth] = 0;
+        nextChildIndex.length = depth + 1;
+    });
+    return paths;
+}
+function bigrams(value) {
+    const normalized = value.trim().toLocaleLowerCase();
+    if (normalized.length < 2)
+        return normalized ? [normalized] : [];
+    const result = [];
+    for (let index = 0; index < normalized.length - 1; index += 1) {
+        result.push(normalized.slice(index, index + 2));
+    }
+    return result;
+}
+function outlineTextSimilarity(left, right) {
+    if (left === right)
+        return 1;
+    if (!left || !right)
+        return 0;
+    const leftParts = bigrams(left);
+    const rightParts = bigrams(right);
+    if (leftParts.length === 0 || rightParts.length === 0)
+        return 0;
+    const rightCounts = new Map();
+    rightParts.forEach((part) => rightCounts.set(part, (rightCounts.get(part) ?? 0) + 1));
+    let overlap = 0;
+    leftParts.forEach((part) => {
+        const count = rightCounts.get(part) ?? 0;
+        if (count <= 0)
+            return;
+        overlap += 1;
+        rightCounts.set(part, count - 1);
+    });
+    return (2 * overlap) / (leftParts.length + rightParts.length);
+}
+function updateMatchedData(existing, text) {
+    const data = cloneData(existing.data);
+    data.uid = existing.uid;
+    if (existing.text !== text) {
+        data.text = text;
+        data.richText = false;
+        data.yemindTextPristine = false;
+        data.yemindTextEdited = true;
+    }
+    if (data.expand === undefined)
+        data.expand = true;
+    return data;
+}
+function newNodeData(text, uid) {
+    return {
+        uid,
+        text,
+        richText: false,
+        expand: true,
+        yemindTextPristine: false,
+        yemindTextEdited: true,
+    };
+}
+function defaultUidFactory() {
+    return globalThis.crypto?.randomUUID?.() ?? `outline-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+function reconcileOutlineText(currentTree, parsed, uidFactory = defaultUidFactory) {
+    const existing = flattenTree(currentTree);
+    const existingRoot = existing[0];
+    const incoming = parsed.lines;
+    if (incoming.length === 0) {
+        const rootData = updateMatchedData(existingRoot, '');
+        return {
+            tree: { data: rootData, children: [] },
+            nodeCount: 1,
+            reusedNodeCount: 1,
+            createdNodeCount: 0,
+            topLevelCount: 0,
+            implicitRoot: false,
+            indentWidth: parsed.indentWidth,
+        };
+    }
+    const desired = parsed.implicitRoot
+        ? [
+            { text: existingRoot.text, depth: 0, sourceLine: 0, rawIndent: '' },
+            ...incoming.map((line) => ({ ...line, depth: line.depth + 1 })),
+        ]
+        : incoming.map((line, index) => ({ ...line, depth: index === 0 ? 0 : Math.max(1, line.depth) }));
+    const matched = new Map();
+    const used = new Set();
+    matched.set(0, existingRoot);
+    used.add(existingRoot.uid);
+    const byExact = new Map();
+    const byText = new Map();
+    const byPath = new Map();
+    existing.slice(1).forEach((line) => {
+        const exact = lineKey(line);
+        byExact.set(exact, [...(byExact.get(exact) ?? []), line]);
+        byText.set(line.text, [...(byText.get(line.text) ?? []), line]);
+        byPath.set(line.path, line);
+    });
+    const take = (list) => {
+        const value = list?.find((candidate) => !used.has(candidate.uid)) ?? null;
+        if (value)
+            used.add(value.uid);
+        return value;
+    };
+    desired.slice(1).forEach((line, offset) => {
+        const index = offset + 1;
+        const exact = take(byExact.get(lineKey(line)));
+        if (exact)
+            matched.set(index, exact);
+    });
+    desired.slice(1).forEach((line, offset) => {
+        const index = offset + 1;
+        if (matched.has(index))
+            return;
+        const sameText = take(byText.get(line.text));
+        if (sameText)
+            matched.set(index, sameText);
+    });
+    const desiredPaths = outlinePaths(desired);
+    desired.slice(1).forEach((_line, offset) => {
+        const index = offset + 1;
+        if (matched.has(index))
+            return;
+        const samePath = byPath.get(desiredPaths[index]);
+        if (!samePath || used.has(samePath.uid))
+            return;
+        used.add(samePath.uid);
+        matched.set(index, samePath);
+    });
+    desired.slice(1).forEach((line, offset) => {
+        const index = offset + 1;
+        if (matched.has(index))
+            return;
+        const positional = existing[index];
+        if (!positional || used.has(positional.uid))
+            return;
+        if (outlineTextSimilarity(positional.text, line.text) < 0.45)
+            return;
+        used.add(positional.uid);
+        matched.set(index, positional);
+    });
+    const rootMatch = matched.get(0) ?? existingRoot;
+    const rootText = parsed.implicitRoot ? existingRoot.text : desired[0].text;
+    const root = {
+        data: updateMatchedData(rootMatch, rootText),
+        children: [],
+    };
+    const stack = [root];
+    let reusedNodeCount = 1;
+    let createdNodeCount = 0;
+    desired.slice(1).forEach((line, offset) => {
+        const index = offset + 1;
+        const depth = Math.max(1, Math.min(line.depth, stack.length));
+        const existingLine = matched.get(index);
+        const data = existingLine
+            ? updateMatchedData(existingLine, line.text)
+            : newNodeData(line.text, uidFactory());
+        if (existingLine)
+            reusedNodeCount += 1;
+        else
+            createdNodeCount += 1;
+        const node = { data, children: [] };
+        const parent = stack[depth - 1] ?? root;
+        parent.children.push(node);
+        stack[depth] = node;
+        stack.length = depth + 1;
+    });
+    return {
+        tree: root,
+        nodeCount: desired.length,
+        reusedNodeCount,
+        createdNodeCount,
+        topLevelCount: parsed.topLevelCount,
+        implicitRoot: parsed.implicitRoot,
+        indentWidth: parsed.indentWidth,
+    };
+}
+function selectedLineRange(value, selectionStart, selectionEnd) {
+    const start = value.lastIndexOf('\n', Math.max(0, selectionStart - 1)) + 1;
+    let end = value.indexOf('\n', selectionEnd);
+    if (end < 0)
+        end = value.length;
+    return { start, end };
+}
+function editOutlineSelectionIndent(value, selectionStart, selectionEnd, outdent, indent = exports.OUTLINE_TEXT_INDENT) {
+    const range = selectedLineRange(value, selectionStart, selectionEnd);
+    const selected = value.slice(range.start, range.end);
+    const lines = selected.split('\n');
+    let startAdjustment = 0;
+    let endAdjustment = 0;
+    const nextLines = lines.map((line, index) => {
+        if (!outdent) {
+            if (index === 0)
+                startAdjustment = indent.length;
+            endAdjustment += indent.length;
+            return indent + line;
+        }
+        const removable = line.startsWith('\t') ? 1 : Math.min(indent.length, line.match(/^ */)?.[0].length ?? 0);
+        if (index === 0)
+            startAdjustment = -Math.min(removable, Math.max(0, selectionStart - range.start));
+        endAdjustment -= removable;
+        return line.slice(removable);
+    });
+    const replacement = nextLines.join('\n');
+    return {
+        value: value.slice(0, range.start) + replacement + value.slice(range.end),
+        selectionStart: Math.max(range.start, selectionStart + startAdjustment),
+        selectionEnd: Math.max(range.start, selectionEnd + endAdjustment),
+    };
+}
+function insertOutlineNewline(value, selectionStart, selectionEnd) {
+    const lineStart = value.lastIndexOf('\n', Math.max(0, selectionStart - 1)) + 1;
+    const indent = value.slice(lineStart, selectionStart).match(/^[\t ]*/)?.[0] ?? '';
+    const insertion = `\n${indent}`;
+    return {
+        value: value.slice(0, selectionStart) + insertion + value.slice(selectionEnd),
+        selectionStart: selectionStart + insertion.length,
+        selectionEnd: selectionStart + insertion.length,
+    };
+}
+
+},
+227: function(module, exports, __require, __externalRequire) {
 // /src/ui/richTextDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84405,7 +85590,7 @@ function openCodeBlockDialog(commands, settings) {
 }
 
 },
-224: function(module, exports, __require, __externalRequire) {
+228: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorStats.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84438,7 +85623,7 @@ function calculateEditorStats(tree) {
 }
 
 },
-225: function(module, exports, __require, __externalRequire) {
+229: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84587,7 +85772,7 @@ function escapeHtml(value) {
 }
 
 },
-226: function(module, exports, __require, __externalRequire) {
+230: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84682,14 +85867,14 @@ function resolveOutlinePointerDropIntent(input) {
 }
 
 },
-227: function(module, exports, __require, __externalRequire) {
+231: function(module, exports, __require, __externalRequire) {
 // /src/editor/StructuredOutlineEditorController.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StructuredOutlineEditorController = void 0;
 const sanitizeRichHtml_1 = __require(199);
-const outlineTextDocument_1 = __require(228);
-const structuredOutlineDocument_1 = __require(229);
+const outlineTextDocument_1 = __require(226);
+const structuredOutlineDocument_1 = __require(225);
 const INDENT_SIZE = 22;
 const PLAIN_INDENT = '    ';
 const BLOCK_TAGS = new Set(['DIV', 'P', 'LI', 'UL', 'OL', 'SECTION', 'ARTICLE']);
@@ -84939,6 +86124,27 @@ class StructuredOutlineEditorController {
             if (!this.options.isReadonly())
                 this.options.onActivate(uid);
         };
+        this.onContextMenu = (event) => {
+            const target = event.target;
+            const row = target.closest('[data-outline-uid]');
+            if (!row || !this.options.root.contains(row))
+                return;
+            const uid = row.dataset.outlineUid ?? '';
+            if (!uid)
+                return;
+            const editor = row.querySelector('[data-outline-editor]');
+            this.activeEditor = editor;
+            this.activateUid(uid, false);
+            if (!this.options.isReadonly())
+                this.options.onActivate(uid);
+            if (editor) {
+                const selection = window.getSelection();
+                if (!selection?.anchorNode || !editor.contains(selection.anchorNode)) {
+                    this.selectEditorRange(editor, textLength(editor), textLength(editor));
+                }
+            }
+            this.options.onContextMenu?.(event, uid);
+        };
         this.onFocusIn = (event) => {
             const editor = closestEditor(event.target);
             const row = editor?.closest('[data-outline-uid]');
@@ -85058,7 +86264,13 @@ class StructuredOutlineEditorController {
                     this.flush('hard-break');
                 }
                 else {
-                    this.splitSelectionToSibling();
+                    const context = this.selectionContext();
+                    if (context && !context.spansRows && editorIsSemanticallyEmpty(context.startEditor) && context.startRow.dataset.outlineRoot !== 'true') {
+                        this.promoteEmptyRowOnEnter(context.startRow);
+                    }
+                    else {
+                        this.splitSelectionToSibling();
+                    }
                 }
                 return;
             }
@@ -85336,6 +86548,96 @@ class StructuredOutlineEditorController {
         });
         return true;
     }
+    editLine(uid) {
+        const editor = this.editorByUid(uid);
+        if (!editor)
+            return;
+        this.activate(editor, uid, { placement: 'select-all' });
+    }
+    getLineState(uid) {
+        const blocks = this.collectBlocks().filter((block) => block.kind === 'node');
+        const index = blocks.findIndex((block) => block.uid === uid);
+        const current = blocks[index];
+        if (!current)
+            return { isRoot: false, hasChildren: false, expanded: true, canMoveUp: false, canMoveDown: false };
+        const siblings = blocks.filter((block) => block.depth === current.depth && block.parentUid === current.parentUid);
+        const siblingIndex = siblings.findIndex((block) => block.uid === uid);
+        return {
+            isRoot: current.isRoot,
+            hasChildren: current.hasChildren,
+            expanded: current.expanded,
+            canMoveUp: !current.isRoot && siblingIndex > 0,
+            canMoveDown: !current.isRoot && siblingIndex >= 0 && siblingIndex < siblings.length - 1,
+        };
+    }
+    async copyCurrentLine(uid) {
+        const editor = this.editorByUid(uid);
+        if (!editor)
+            return;
+        const plain = (editor.innerText || editor.textContent || '').replace(/\u00a0/g, ' ');
+        const html = (0, sanitizeRichHtml_1.sanitizeRichHtml)(editor.innerHTML);
+        const clipboard = navigator.clipboard;
+        if (clipboard?.write && typeof ClipboardItem === 'function') {
+            await clipboard.write([new ClipboardItem({
+                    'text/plain': new Blob([plain], { type: 'text/plain' }),
+                    'text/html': new Blob([html], { type: 'text/html' }),
+                })]);
+        }
+        else if (clipboard?.writeText) {
+            await clipboard.writeText(plain);
+        }
+        this.options.onDiagnostic?.('copy-current-line', { uid, textLength: plain.length });
+    }
+    async cutCurrentLine(uid) {
+        if (this.options.isReadonly())
+            return;
+        await this.copyCurrentLine(uid);
+        const editor = this.editorByUid(uid);
+        if (!editor)
+            return;
+        editor.replaceChildren();
+        this.activate(editor, uid, { placement: 'start' });
+        this.markDirty('cut-current-line');
+        this.flush('cut-current-line');
+    }
+    async pasteCurrentLine(uid, plainOnly = false) {
+        if (this.options.isReadonly())
+            return;
+        const editor = this.editorByUid(uid);
+        if (!editor)
+            return;
+        this.activeEditor = editor;
+        this.activateUid(uid, false);
+        let text = '';
+        let html = '';
+        const clipboard = navigator.clipboard;
+        if (!plainOnly && clipboard?.read) {
+            try {
+                const items = await clipboard.read();
+                for (const item of items) {
+                    if (!html && item.types.includes('text/html'))
+                        html = await (await item.getType('text/html')).text();
+                    if (!text && item.types.includes('text/plain'))
+                        text = await (await item.getType('text/plain')).text();
+                }
+            }
+            catch {
+                text = await clipboard.readText?.() ?? '';
+            }
+        }
+        else {
+            text = await clipboard?.readText?.() ?? '';
+        }
+        if (!text && !html)
+            return;
+        const selection = window.getSelection();
+        if (!selection?.anchorNode || !editor.contains(selection.anchorNode)) {
+            this.selectEditorRange(editor, textLength(editor), textLength(editor));
+        }
+        this.insertInlineHtml(!plainOnly && html ? inlineHtmlFromClipboard(html) : escapeHtml(text));
+        this.markDirty(plainOnly ? 'paste-current-line-plain' : 'paste-current-line');
+        this.flush(plainOnly ? 'paste-current-line-plain' : 'paste-current-line');
+    }
     commitAndDetach(reason = 'surface-change') {
         this.flush(reason);
     }
@@ -85536,6 +86838,7 @@ class StructuredOutlineEditorController {
         root.addEventListener('pointerup', this.onPointerUp);
         root.addEventListener('focusin', this.onFocusIn);
         root.addEventListener('click', this.onClick);
+        root.addEventListener('contextmenu', this.onContextMenu);
         root.addEventListener('blur', this.onBlur, true);
         root.addEventListener('compositionstart', this.onCompositionStart);
         root.addEventListener('compositionend', this.onCompositionEnd);
@@ -85553,6 +86856,7 @@ class StructuredOutlineEditorController {
         root.removeEventListener('pointerup', this.onPointerUp);
         root.removeEventListener('focusin', this.onFocusIn);
         root.removeEventListener('click', this.onClick);
+        root.removeEventListener('contextmenu', this.onContextMenu);
         root.removeEventListener('blur', this.onBlur, true);
         root.removeEventListener('compositionstart', this.onCompositionStart);
         root.removeEventListener('compositionend', this.onCompositionEnd);
@@ -85989,6 +87293,49 @@ class StructuredOutlineEditorController {
             this.options.onActivate(nextUid);
         });
     }
+    promoteEmptyRowOnEnter(row) {
+        if (row.dataset.outlineRoot === 'true')
+            return;
+        const blocks = this.collectBlocks();
+        const rows = Array.from(this.options.root.querySelectorAll(':scope > [data-outline-uid]'));
+        const index = rows.indexOf(row);
+        const current = blocks[index];
+        if (index < 0 || !current || current.kind !== 'node')
+            return;
+        const rootUid = blocks.find((block) => block.isRoot)?.uid ?? '';
+        if (current.depth <= 1) {
+            let end = index + 1;
+            while (end < blocks.length && blocks[end].depth > current.depth)
+                end += 1;
+            const promotedChildren = blocks.slice(index + 1, end).map((block) => ({ ...block, depth: Math.max(1, block.depth - 1) }));
+            const next = [...blocks.slice(0, index), ...promotedChildren, ...blocks.slice(end)];
+            this.replaceDomBlocks((0, structuredOutlineDocument_1.normalizeStructuredOutlineDepths)(next), 'enter-empty-root-boundary');
+            window.requestAnimationFrame(() => {
+                const editor = this.editorByUid(rootUid);
+                if (!editor)
+                    return;
+                this.selectEditorRange(editor, textLength(editor), textLength(editor));
+                this.activateUid(rootUid, true);
+                this.options.onActivate(rootUid);
+            });
+            return;
+        }
+        let end = index + 1;
+        while (end < blocks.length && blocks[end].depth > current.depth)
+            end += 1;
+        const next = blocks.map((block, blockIndex) => blockIndex >= index && blockIndex < end
+            ? { ...block, depth: Math.max(1, block.depth - 1) }
+            : block);
+        this.replaceDomBlocks((0, structuredOutlineDocument_1.normalizeStructuredOutlineDepths)(next), 'enter-empty-outdent');
+        window.requestAnimationFrame(() => {
+            const editor = this.editorByUid(current.uid);
+            if (!editor)
+                return;
+            this.selectEditorRange(editor, 0, 0);
+            this.activateUid(current.uid, true);
+            this.options.onActivate(current.uid);
+        });
+    }
     removeEmptyRow(row, backward) {
         if (row.dataset.outlineRoot === 'true')
             return;
@@ -86422,643 +87769,7 @@ function closestElement(node) {
 }
 
 },
-228: function(module, exports, __require, __externalRequire) {
-// /src/editor/outlineTextDocument.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.OUTLINE_TEXT_INDENT = void 0;
-exports.outlineNodePlainText = outlineNodePlainText;
-exports.serializeOutlineText = serializeOutlineText;
-exports.unescapeImportedOutlineText = unescapeImportedOutlineText;
-exports.parseOutlineText = parseOutlineText;
-exports.outlineTextSimilarity = outlineTextSimilarity;
-exports.reconcileOutlineText = reconcileOutlineText;
-exports.editOutlineSelectionIndent = editOutlineSelectionIndent;
-exports.insertOutlineNewline = insertOutlineNewline;
-exports.OUTLINE_TEXT_INDENT = '    ';
-const TAB_WIDTH = 4;
-function cloneData(value) {
-    if (typeof structuredClone === 'function') {
-        try {
-            return structuredClone(value);
-        }
-        catch {
-            // Fall through to the JSON-compatible map-data clone below.
-        }
-    }
-    return JSON.parse(JSON.stringify(value));
-}
-function htmlToPlainText(value) {
-    if (typeof document !== 'undefined') {
-        const element = document.createElement('div');
-        element.innerHTML = value;
-        return element.textContent ?? '';
-    }
-    return value
-        .replace(/<br\s*\/?\s*>/gi, '\n')
-        .replace(/<\/p\s*>/gi, '\n')
-        .replace(/<[^>]*>/g, '');
-}
-function outlineNodePlainText(data) {
-    const source = String(data.text ?? '');
-    const value = data.richText ? htmlToPlainText(source) : source;
-    return value
-        .replace(/\u00a0/g, ' ')
-        .replace(/\r\n?/g, '\n')
-        .replace(/[\t ]*\n[\t ]*/g, ' ')
-        .trim();
-}
-function flattenTree(tree) {
-    const lines = [];
-    const visit = (node, depth, path) => {
-        const uid = String(node.data.uid ?? path);
-        lines.push({
-            uid,
-            depth,
-            path,
-            text: outlineNodePlainText(node.data),
-            data: cloneData({ ...node.data, uid }),
-        });
-        const children = Array.isArray(node.children) ? node.children : [];
-        children.forEach((child, index) => visit(child, depth + 1, `${path}.${index}`));
-    };
-    visit(tree, 0, 'root');
-    return lines;
-}
-function serializeOutlineText(tree, indent = exports.OUTLINE_TEXT_INDENT) {
-    return flattenTree(tree)
-        .map((line) => `${indent.repeat(line.depth)}${line.text}`)
-        .join('\n');
-}
-function indentColumns(value) {
-    let columns = 0;
-    for (const char of value) {
-        if (char === '\t')
-            columns += TAB_WIDTH;
-        else if (char === ' ' || char === '\u00a0')
-            columns += 1;
-        else
-            break;
-    }
-    return columns;
-}
-function greatestCommonDivisor(a, b) {
-    let left = Math.abs(Math.trunc(a));
-    let right = Math.abs(Math.trunc(b));
-    while (right)
-        [left, right] = [right, left % right];
-    return left;
-}
-function inferIndentWidth(values) {
-    const positive = [...new Set(values.filter((value) => value > 0))].sort((a, b) => a - b);
-    if (positive.length === 0)
-        return exports.OUTLINE_TEXT_INDENT.length;
-    const exactCandidate = [4, 2, 3, 8].find((candidate) => positive.every((value) => value % candidate === 0));
-    if (exactCandidate)
-        return exactCandidate;
-    const gcd = positive.reduce((result, value) => greatestCommonDivisor(result, value));
-    if (gcd > 1)
-        return gcd;
-    return Math.max(1, positive[0]);
-}
-function unescapeImportedOutlineText(value) {
-    return value.replace(/\\([:;])/g, '$1');
-}
-function parseOutlineText(value) {
-    const source = String(value ?? '').replace(/\r\n?/g, '\n');
-    const rawLines = source.split('\n');
-    while (rawLines.length > 0 && rawLines[0].trim() === '')
-        rawLines.shift();
-    while (rawLines.length > 0 && rawLines[rawLines.length - 1].trim() === '')
-        rawLines.pop();
-    if (rawLines.length === 0) {
-        return { lines: [], indentWidth: exports.OUTLINE_TEXT_INDENT.length, topLevelCount: 0, implicitRoot: false };
-    }
-    const measured = rawLines.map((raw, index) => {
-        const match = raw.match(/^[\t \u00a0]*/)?.[0] ?? '';
-        return {
-            raw,
-            sourceLine: index + 1,
-            rawIndent: match,
-            columns: indentColumns(match),
-            text: unescapeImportedOutlineText(raw.slice(match.length)),
-        };
-    });
-    const nonBlank = measured.filter((line) => line.text.trim().length > 0);
-    const baseIndent = nonBlank.length > 0 ? Math.min(...nonBlank.map((line) => line.columns)) : 0;
-    const normalizedIndents = nonBlank.map((line) => Math.max(0, line.columns - baseIndent));
-    const indentWidth = inferIndentWidth(normalizedIndents);
-    const lines = [];
-    let previousDepth = 0;
-    measured.forEach((line) => {
-        const relative = Math.max(0, line.columns - baseIndent);
-        let depth = line.text.trim().length === 0 && line.rawIndent.length === 0
-            ? previousDepth
-            : Math.max(0, Math.round(relative / indentWidth));
-        depth = Math.min(depth, previousDepth + 1);
-        lines.push({
-            text: line.text,
-            depth,
-            rawIndent: line.rawIndent,
-            sourceLine: line.sourceLine,
-        });
-        previousDepth = depth;
-    });
-    const topLevelCount = lines.filter((line) => line.depth === 0).length;
-    return {
-        lines,
-        indentWidth,
-        topLevelCount,
-        implicitRoot: topLevelCount > 1,
-    };
-}
-function lineKey(line) {
-    return `${line.depth}\u0000${line.text}`;
-}
-function outlinePaths(lines) {
-    if (lines.length === 0)
-        return [];
-    const paths = ['root'];
-    const pathAtDepth = ['root'];
-    const nextChildIndex = [0];
-    lines.slice(1).forEach((line) => {
-        const depth = Math.max(1, Math.min(Math.trunc(line.depth), pathAtDepth.length));
-        const parentPath = pathAtDepth[depth - 1] ?? 'root';
-        const childIndex = nextChildIndex[depth - 1] ?? 0;
-        nextChildIndex[depth - 1] = childIndex + 1;
-        const path = `${parentPath}.${childIndex}`;
-        paths.push(path);
-        pathAtDepth[depth] = path;
-        pathAtDepth.length = depth + 1;
-        nextChildIndex[depth] = 0;
-        nextChildIndex.length = depth + 1;
-    });
-    return paths;
-}
-function bigrams(value) {
-    const normalized = value.trim().toLocaleLowerCase();
-    if (normalized.length < 2)
-        return normalized ? [normalized] : [];
-    const result = [];
-    for (let index = 0; index < normalized.length - 1; index += 1) {
-        result.push(normalized.slice(index, index + 2));
-    }
-    return result;
-}
-function outlineTextSimilarity(left, right) {
-    if (left === right)
-        return 1;
-    if (!left || !right)
-        return 0;
-    const leftParts = bigrams(left);
-    const rightParts = bigrams(right);
-    if (leftParts.length === 0 || rightParts.length === 0)
-        return 0;
-    const rightCounts = new Map();
-    rightParts.forEach((part) => rightCounts.set(part, (rightCounts.get(part) ?? 0) + 1));
-    let overlap = 0;
-    leftParts.forEach((part) => {
-        const count = rightCounts.get(part) ?? 0;
-        if (count <= 0)
-            return;
-        overlap += 1;
-        rightCounts.set(part, count - 1);
-    });
-    return (2 * overlap) / (leftParts.length + rightParts.length);
-}
-function updateMatchedData(existing, text) {
-    const data = cloneData(existing.data);
-    data.uid = existing.uid;
-    if (existing.text !== text) {
-        data.text = text;
-        data.richText = false;
-        data.yemindTextPristine = false;
-        data.yemindTextEdited = true;
-    }
-    if (data.expand === undefined)
-        data.expand = true;
-    return data;
-}
-function newNodeData(text, uid) {
-    return {
-        uid,
-        text,
-        richText: false,
-        expand: true,
-        yemindTextPristine: false,
-        yemindTextEdited: true,
-    };
-}
-function defaultUidFactory() {
-    return globalThis.crypto?.randomUUID?.() ?? `outline-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-function reconcileOutlineText(currentTree, parsed, uidFactory = defaultUidFactory) {
-    const existing = flattenTree(currentTree);
-    const existingRoot = existing[0];
-    const incoming = parsed.lines;
-    if (incoming.length === 0) {
-        const rootData = updateMatchedData(existingRoot, '');
-        return {
-            tree: { data: rootData, children: [] },
-            nodeCount: 1,
-            reusedNodeCount: 1,
-            createdNodeCount: 0,
-            topLevelCount: 0,
-            implicitRoot: false,
-            indentWidth: parsed.indentWidth,
-        };
-    }
-    const desired = parsed.implicitRoot
-        ? [
-            { text: existingRoot.text, depth: 0, sourceLine: 0, rawIndent: '' },
-            ...incoming.map((line) => ({ ...line, depth: line.depth + 1 })),
-        ]
-        : incoming.map((line, index) => ({ ...line, depth: index === 0 ? 0 : Math.max(1, line.depth) }));
-    const matched = new Map();
-    const used = new Set();
-    matched.set(0, existingRoot);
-    used.add(existingRoot.uid);
-    const byExact = new Map();
-    const byText = new Map();
-    const byPath = new Map();
-    existing.slice(1).forEach((line) => {
-        const exact = lineKey(line);
-        byExact.set(exact, [...(byExact.get(exact) ?? []), line]);
-        byText.set(line.text, [...(byText.get(line.text) ?? []), line]);
-        byPath.set(line.path, line);
-    });
-    const take = (list) => {
-        const value = list?.find((candidate) => !used.has(candidate.uid)) ?? null;
-        if (value)
-            used.add(value.uid);
-        return value;
-    };
-    desired.slice(1).forEach((line, offset) => {
-        const index = offset + 1;
-        const exact = take(byExact.get(lineKey(line)));
-        if (exact)
-            matched.set(index, exact);
-    });
-    desired.slice(1).forEach((line, offset) => {
-        const index = offset + 1;
-        if (matched.has(index))
-            return;
-        const sameText = take(byText.get(line.text));
-        if (sameText)
-            matched.set(index, sameText);
-    });
-    const desiredPaths = outlinePaths(desired);
-    desired.slice(1).forEach((_line, offset) => {
-        const index = offset + 1;
-        if (matched.has(index))
-            return;
-        const samePath = byPath.get(desiredPaths[index]);
-        if (!samePath || used.has(samePath.uid))
-            return;
-        used.add(samePath.uid);
-        matched.set(index, samePath);
-    });
-    desired.slice(1).forEach((line, offset) => {
-        const index = offset + 1;
-        if (matched.has(index))
-            return;
-        const positional = existing[index];
-        if (!positional || used.has(positional.uid))
-            return;
-        if (outlineTextSimilarity(positional.text, line.text) < 0.45)
-            return;
-        used.add(positional.uid);
-        matched.set(index, positional);
-    });
-    const rootMatch = matched.get(0) ?? existingRoot;
-    const rootText = parsed.implicitRoot ? existingRoot.text : desired[0].text;
-    const root = {
-        data: updateMatchedData(rootMatch, rootText),
-        children: [],
-    };
-    const stack = [root];
-    let reusedNodeCount = 1;
-    let createdNodeCount = 0;
-    desired.slice(1).forEach((line, offset) => {
-        const index = offset + 1;
-        const depth = Math.max(1, Math.min(line.depth, stack.length));
-        const existingLine = matched.get(index);
-        const data = existingLine
-            ? updateMatchedData(existingLine, line.text)
-            : newNodeData(line.text, uidFactory());
-        if (existingLine)
-            reusedNodeCount += 1;
-        else
-            createdNodeCount += 1;
-        const node = { data, children: [] };
-        const parent = stack[depth - 1] ?? root;
-        parent.children.push(node);
-        stack[depth] = node;
-        stack.length = depth + 1;
-    });
-    return {
-        tree: root,
-        nodeCount: desired.length,
-        reusedNodeCount,
-        createdNodeCount,
-        topLevelCount: parsed.topLevelCount,
-        implicitRoot: parsed.implicitRoot,
-        indentWidth: parsed.indentWidth,
-    };
-}
-function selectedLineRange(value, selectionStart, selectionEnd) {
-    const start = value.lastIndexOf('\n', Math.max(0, selectionStart - 1)) + 1;
-    let end = value.indexOf('\n', selectionEnd);
-    if (end < 0)
-        end = value.length;
-    return { start, end };
-}
-function editOutlineSelectionIndent(value, selectionStart, selectionEnd, outdent, indent = exports.OUTLINE_TEXT_INDENT) {
-    const range = selectedLineRange(value, selectionStart, selectionEnd);
-    const selected = value.slice(range.start, range.end);
-    const lines = selected.split('\n');
-    let startAdjustment = 0;
-    let endAdjustment = 0;
-    const nextLines = lines.map((line, index) => {
-        if (!outdent) {
-            if (index === 0)
-                startAdjustment = indent.length;
-            endAdjustment += indent.length;
-            return indent + line;
-        }
-        const removable = line.startsWith('\t') ? 1 : Math.min(indent.length, line.match(/^ */)?.[0].length ?? 0);
-        if (index === 0)
-            startAdjustment = -Math.min(removable, Math.max(0, selectionStart - range.start));
-        endAdjustment -= removable;
-        return line.slice(removable);
-    });
-    const replacement = nextLines.join('\n');
-    return {
-        value: value.slice(0, range.start) + replacement + value.slice(range.end),
-        selectionStart: Math.max(range.start, selectionStart + startAdjustment),
-        selectionEnd: Math.max(range.start, selectionEnd + endAdjustment),
-    };
-}
-function insertOutlineNewline(value, selectionStart, selectionEnd) {
-    const lineStart = value.lastIndexOf('\n', Math.max(0, selectionStart - 1)) + 1;
-    const indent = value.slice(lineStart, selectionStart).match(/^[\t ]*/)?.[0] ?? '';
-    const insertion = `\n${indent}`;
-    return {
-        value: value.slice(0, selectionStart) + insertion + value.slice(selectionEnd),
-        selectionStart: selectionStart + insertion.length,
-        selectionEnd: selectionStart + insertion.length,
-    };
-}
-
-},
-229: function(module, exports, __require, __externalRequire) {
-// /src/editor/structuredOutlineDocument.ts
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.structuredOutlineHtmlToText = structuredOutlineHtmlToText;
-exports.structuredOutlineIsRichHtml = structuredOutlineIsRichHtml;
-exports.flattenStructuredOutline = flattenStructuredOutline;
-exports.normalizeStructuredOutlineDepths = normalizeStructuredOutlineDepths;
-exports.buildTreeFromStructuredOutline = buildTreeFromStructuredOutline;
-exports.parseStructuredOutlinePaste = parseStructuredOutlinePaste;
-exports.serializeStructuredOutlineBlocks = serializeStructuredOutlineBlocks;
-exports.createStructuredOutlineUid = createStructuredOutlineUid;
-const sanitizeRichHtml_1 = __require(199);
-const outlineTextDocument_1 = __require(228);
-function cloneValue(value) {
-    if (typeof structuredClone === 'function') {
-        try {
-            return structuredClone(value);
-        }
-        catch {
-            // Map data is JSON-compatible; fall through to the deterministic clone.
-        }
-    }
-    return JSON.parse(JSON.stringify(value));
-}
-function escapeHtml(value) {
-    return value
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;')
-        .replaceAll('\n', '<br>');
-}
-function structuredOutlineHtmlToText(value) {
-    const source = String(value ?? '');
-    if (typeof document === 'undefined') {
-        return source
-            .replace(/<br\s*\/?\s*>/gi, '\n')
-            .replace(/<\/p\s*>/gi, '\n')
-            .replace(/<\/div\s*>/gi, '\n')
-            .replace(/<[^>]*>/g, '')
-            .replace(/&nbsp;/gi, ' ')
-            .trimEnd();
-    }
-    const element = document.createElement('div');
-    element.innerHTML = (0, sanitizeRichHtml_1.sanitizeRichHtml)(source);
-    return (element.innerText || element.textContent || '')
-        .replace(/\u00a0/g, ' ')
-        .replace(/\r\n?/g, '\n')
-        .trimEnd();
-}
-function structuredOutlineIsRichHtml(value) {
-    const normalized = String(value ?? '').trim();
-    if (!normalized)
-        return false;
-    return /<(?:strong|b|em|i|u|s|strike|code|pre|a|span|mark|sub|sup|img|svg|mjx-container|ql-formula)\b/i.test(normalized);
-}
-function displayHtml(data) {
-    const value = String(data.text ?? '');
-    return data.richText ? (0, sanitizeRichHtml_1.sanitizeRichHtml)(value) : escapeHtml(value);
-}
-function summaries(data) {
-    const value = data.generalization;
-    if (Array.isArray(value)) {
-        return value.filter((item) => Boolean(item && typeof item === 'object'));
-    }
-    return value && typeof value === 'object' ? [value] : [];
-}
-function flattenStructuredOutline(tree) {
-    const blocks = [];
-    const visit = (node, depth, parentUid, hiddenByAncestor, path) => {
-        const uid = String(node.data.uid ?? path);
-        const children = Array.isArray(node.children) ? node.children : [];
-        const expanded = node.data.expand !== false;
-        const html = displayHtml(node.data);
-        blocks.push({
-            uid,
-            depth,
-            html,
-            text: (0, outlineTextDocument_1.outlineNodePlainText)(node.data),
-            kind: 'node',
-            parentUid,
-            hidden: hiddenByAncestor,
-            expanded,
-            hasChildren: children.length > 0,
-            isRoot: depth === 0,
-            pristine: node.data.yemindTextPristine === true && node.data.yemindTextEdited !== true,
-        });
-        const descendantsHidden = hiddenByAncestor || !expanded;
-        children.forEach((child, index) => visit(child, depth + 1, uid, descendantsHidden, `${path}.${index}`));
-        summaries(node.data).forEach((summary, index) => {
-            const summaryUid = String(summary.uid ?? `${uid}.summary.${index}`);
-            blocks.push({
-                uid: summaryUid,
-                depth: depth + 1,
-                html: displayHtml(summary),
-                text: (0, outlineTextDocument_1.outlineNodePlainText)(summary),
-                kind: 'summary',
-                parentUid: uid,
-                hidden: descendantsHidden,
-                expanded: true,
-                hasChildren: false,
-                isRoot: false,
-                pristine: summary.yemindTextPristine === true && summary.yemindTextEdited !== true,
-            });
-        });
-    };
-    visit(tree, 0, null, false, 'root');
-    return blocks;
-}
-function indexExistingData(tree) {
-    const nodes = new Map();
-    const summaryData = new Map();
-    const visit = (node, path) => {
-        const uid = String(node.data.uid ?? path);
-        nodes.set(uid, cloneValue({ ...node.data, uid }));
-        summaries(node.data).forEach((summary, index) => {
-            const summaryUid = String(summary.uid ?? `${uid}.summary.${index}`);
-            summaryData.set(summaryUid, cloneValue({ ...summary, uid: summaryUid }));
-        });
-        (node.children ?? []).forEach((child, index) => visit(child, `${path}.${index}`));
-    };
-    visit(tree, 'root');
-    return { nodes, summaries: summaryData };
-}
-function normalizedBlockHtml(block) {
-    const sanitized = (0, sanitizeRichHtml_1.sanitizeRichHtml)(String(block.html ?? ''));
-    const text = structuredOutlineHtmlToText(sanitized || escapeHtml(String(block.text ?? '')));
-    const richText = structuredOutlineIsRichHtml(sanitized);
-    return {
-        html: richText ? sanitized : escapeHtml(text),
-        text,
-        richText,
-    };
-}
-function updatedData(base, block) {
-    const value = normalizedBlockHtml(block);
-    const data = cloneValue(base ?? { text: '' });
-    data.uid = block.uid;
-    data.text = value.richText ? value.html : value.text;
-    data.richText = value.richText;
-    data.yemindTextPristine = false;
-    data.yemindTextEdited = true;
-    if (block.kind === 'node')
-        data.expand = block.expanded;
-    return data;
-}
-function normalizeStructuredOutlineDepths(blocks) {
-    let previousDepth = 0;
-    return blocks.map((block, index) => {
-        let depth = Math.max(0, Math.trunc(block.depth));
-        if (index === 0)
-            depth = 0;
-        else
-            depth = Math.max(1, Math.min(depth, previousDepth + 1));
-        previousDepth = depth;
-        return { ...block, depth, isRoot: index === 0, parentUid: index === 0 ? null : block.parentUid };
-    });
-}
-function buildTreeFromStructuredOutline(baseTree, inputBlocks) {
-    const normalBlocks = normalizeStructuredOutlineDepths(inputBlocks.filter((block) => block.kind === 'node'));
-    if (normalBlocks.length === 0) {
-        normalBlocks.push({
-            uid: String(baseTree.data.uid ?? 'root'),
-            depth: 0,
-            html: '',
-            text: '',
-            kind: 'node',
-            parentUid: null,
-            hidden: false,
-            expanded: true,
-            hasChildren: false,
-            isRoot: true,
-            pristine: false,
-        });
-    }
-    const existing = indexExistingData(baseTree);
-    let reusedNodeCount = 0;
-    let createdNodeCount = 0;
-    const treeByUid = new Map();
-    const stack = [];
-    let root = null;
-    normalBlocks.forEach((block, index) => {
-        const normalizedDepth = index === 0 ? 0 : Math.max(1, Math.min(block.depth, stack.length));
-        const base = existing.nodes.get(block.uid);
-        if (base)
-            reusedNodeCount += 1;
-        else
-            createdNodeCount += 1;
-        const node = {
-            data: updatedData(base, { ...block, depth: normalizedDepth }),
-            children: [],
-        };
-        treeByUid.set(block.uid, node);
-        if (index === 0) {
-            root = node;
-            stack.length = 0;
-            stack.push(node);
-            return;
-        }
-        const parentDepth = Math.max(0, normalizedDepth - 1);
-        const parent = stack[parentDepth] ?? root;
-        parent.children.push(node);
-        stack[normalizedDepth] = node;
-        stack.length = normalizedDepth + 1;
-    });
-    const groupedSummaries = new Map();
-    inputBlocks
-        .filter((block) => block.kind === 'summary' && block.parentUid)
-        .forEach((block) => {
-        const base = existing.summaries.get(block.uid);
-        const data = updatedData(base, block);
-        const list = groupedSummaries.get(block.parentUid) ?? [];
-        list.push(data);
-        groupedSummaries.set(block.parentUid, list);
-    });
-    groupedSummaries.forEach((value, parentUid) => {
-        const parent = treeByUid.get(parentUid);
-        if (parent)
-            parent.data.generalization = value.length === 1 ? value[0] : value;
-    });
-    return {
-        tree: root,
-        nodeCount: normalBlocks.length,
-        reusedNodeCount,
-        createdNodeCount,
-    };
-}
-function parseStructuredOutlinePaste(value) {
-    const parsed = (0, outlineTextDocument_1.parseOutlineText)(value);
-    return parsed.lines.map((line) => ({ text: line.text, depth: line.depth }));
-}
-function serializeStructuredOutlineBlocks(blocks, includeHidden = true) {
-    return blocks
-        .filter((block) => block.kind === 'node' && (includeHidden || !block.hidden))
-        .map((block) => `${outlineTextDocument_1.OUTLINE_TEXT_INDENT.repeat(block.depth)}${block.text}`)
-        .join('\n');
-}
-function createStructuredOutlineUid() {
-    const random = globalThis.crypto?.randomUUID?.();
-    if (random)
-        return `ym-${random}`;
-    return `ym-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-},
-230: function(module, exports, __require, __externalRequire) {
+232: function(module, exports, __require, __externalRequire) {
 // /src/editor/splitPane.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87081,15 +87792,15 @@ function ratioFromPointer(rect, clientX) {
 }
 
 },
-231: function(module, exports, __require, __externalRequire) {
+233: function(module, exports, __require, __externalRequire) {
 // /src/editor/RichTextToolbar.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RichTextToolbar = void 0;
 const YeMindRichText_1 = __require(192);
-const richTextActions_1 = __require(232);
-const colorPresentation_1 = __require(233);
-const colorPalette_1 = __require(234);
+const richTextActions_1 = __require(234);
+const colorPresentation_1 = __require(235);
+const colorPalette_1 = __require(236);
 function option(value, label) {
     return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -87153,7 +87864,7 @@ class RichTextToolbar {
       <span class="ymz-rich-toolbar__separator"></span>
       <button type="button" data-rich-action="link" title="行内链接">链接</button>
       <button type="button" data-rich-action="cloze" title="模糊/取消模糊">模糊</button>
-      <button type="button" data-rich-action="formula" title="插入公式" aria-label="插入公式"><span class="ymz-formula-symbol" aria-hidden="true">π</span></button>
+      <button type="button" data-rich-action="formula" title="插入公式" aria-label="插入公式"><svg class="ymz-rich-toolbar__icon" aria-hidden="true"><use xlink:href="#iconMath"></use></svg></button>
       <button type="button" data-rich-action="clear" title="清除全部格式">清除</button>`;
         this.colorPopover = document.createElement("div");
         this.colorPopover.className = "ymz-color-popover";
@@ -87509,7 +88220,7 @@ class RichTextToolbar {
 exports.RichTextToolbar = RichTextToolbar;
 
 },
-232: function(module, exports, __require, __externalRequire) {
+234: function(module, exports, __require, __externalRequire) {
 // /src/editor/richTextActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87540,7 +88251,7 @@ function isClozeFormat(formatInfo) {
 }
 
 },
-233: function(module, exports, __require, __externalRequire) {
+235: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87607,7 +88318,7 @@ function presentColor(value) {
 }
 
 },
-234: function(module, exports, __require, __externalRequire) {
+236: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPalette.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87638,7 +88349,7 @@ function colorPaletteInnerHtml() {
 }
 
 },
-235: function(module, exports, __require, __externalRequire) {
+237: function(module, exports, __require, __externalRequire) {
 // /src/editor/selectionPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87699,7 +88410,7 @@ function shouldBlockRootDeleteShortcut(key, nodes) {
 }
 
 },
-236: function(module, exports, __require, __externalRequire) {
+238: function(module, exports, __require, __externalRequire) {
 // /src/editor/saveRevision.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87730,7 +88441,7 @@ class SaveRevisionTracker {
 exports.SaveRevisionTracker = SaveRevisionTracker;
 
 },
-237: function(module, exports, __require, __externalRequire) {
+239: function(module, exports, __require, __externalRequire) {
 // /src/editor/relationPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87746,7 +88457,7 @@ function createRelationPresentation(input) {
 }
 
 },
-238: function(module, exports, __require, __externalRequire) {
+240: function(module, exports, __require, __externalRequire) {
 // /src/editor/outerFramePresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87805,7 +88516,7 @@ function createOuterFramePresentation(input) {
 }
 
 },
-239: function(module, exports, __require, __externalRequire) {
+241: function(module, exports, __require, __externalRequire) {
 // /src/editor/toolbarAvailability.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87827,7 +88538,7 @@ function createToolbarAvailability(input) {
 }
 
 },
-240: function(module, exports, __require, __externalRequire) {
+242: function(module, exports, __require, __externalRequire) {
 // /src/editor/linkNavigation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87844,7 +88555,7 @@ function resolveLinkNavigation(value, externalMode) {
 }
 
 },
-241: function(module, exports, __require, __externalRequire) {
+243: function(module, exports, __require, __externalRequire) {
 // /src/plugin/visibleElement.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87909,7 +88620,7 @@ function waitForNonZeroSize(element, options = {}) {
 }
 
 },
-242: function(module, exports, __require, __externalRequire) {
+244: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeImageInput.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -87970,7 +88681,7 @@ function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
 }
 
 },
-243: function(module, exports, __require, __externalRequire) {
+245: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeHoverPreview.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88171,7 +88882,7 @@ class NodeHoverPreview {
 exports.NodeHoverPreview = NodeHoverPreview;
 
 },
-244: function(module, exports, __require, __externalRequire) {
+246: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageLightbox.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88274,13 +88985,13 @@ class ImageLightbox {
 exports.ImageLightbox = ImageLightbox;
 
 },
-245: function(module, exports, __require, __externalRequire) {
+247: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeStylePanel = void 0;
-const colorPalette_1 = __require(234);
-const colorPresentation_1 = __require(233);
+const colorPalette_1 = __require(236);
+const colorPresentation_1 = __require(235);
 const INPUT_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 function toInputValue(value) {
     return value === null || value === undefined ? '' : String(value);
@@ -88591,14 +89302,14 @@ class NodeStylePanel {
 exports.NodeStylePanel = NodeStylePanel;
 
 },
-246: function(module, exports, __require, __externalRequire) {
+248: function(module, exports, __require, __externalRequire) {
 // /src/ui/projectStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectStylePanel = void 0;
 const projectStyle_1 = __require(20);
-const colorPalette_1 = __require(234);
-const colorPresentation_1 = __require(233);
+const colorPalette_1 = __require(236);
+const colorPresentation_1 = __require(235);
 const colorSchemes_1 = __require(21);
 const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 class ProjectStylePanel {
@@ -88899,7 +89610,7 @@ class ProjectStylePanel {
 exports.ProjectStylePanel = ProjectStylePanel;
 
 },
-247: function(module, exports, __require, __externalRequire) {
+249: function(module, exports, __require, __externalRequire) {
 // /src/ui/layoutGalleryPanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88997,7 +89708,7 @@ class LayoutGalleryPanel {
 exports.LayoutGalleryPanel = LayoutGalleryPanel;
 
 },
-248: function(module, exports, __require, __externalRequire) {
+250: function(module, exports, __require, __externalRequire) {
 // /src/ui/localAssetDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89193,7 +89904,7 @@ function openClipartPicker(commands, options = {}) {
 }
 
 },
-249: function(module, exports, __require, __externalRequire) {
+251: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRichTextVisibility.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89230,7 +89941,7 @@ function synchronizeCanvasRichTextVisibility(map) {
 }
 
 },
-250: function(module, exports, __require, __externalRequire) {
+252: function(module, exports, __require, __externalRequire) {
 // /src/editor/searchPanelState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89250,7 +89961,7 @@ function setSearchReplaceExpanded(panel, expanded) {
 }
 
 },
-251: function(module, exports, __require, __externalRequire) {
+253: function(module, exports, __require, __externalRequire) {
 // /src/core/appearanceTransaction.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89259,6 +89970,21 @@ const themeColorRuntime_1 = __require(204);
 const APPEARANCE_RENDER_SOURCE = 'changeTheme';
 const REVISION_BY_MAP = new WeakMap();
 const ACTIVE_NODE_UIDS_BY_MAP = new WeakMap();
+const VIEW_TRANSFORM_BY_MAP = new WeakMap();
+function cloneTransform(value) {
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(value);
+        }
+        catch { /* deterministic JSON fallback */ }
+    }
+    return JSON.parse(JSON.stringify(value));
+}
+function restoreViewTransform(map, value) {
+    if (!value || typeof map.view?.setTransformData !== 'function')
+        return;
+    map.view.setTransformData(cloneTransform(value));
+}
 function readNodeUid(node) {
     const direct = node?.getData?.('uid');
     if (typeof direct === 'string' && direct)
@@ -89341,6 +90067,11 @@ function applyMapAppearanceTransaction(options) {
     // A full redraw temporarily clears renderer.activeNodeList. When several
     // appearance changes are requested before the first redraw completes, keep
     // the last non-empty snapshot so the newest transaction can restore it.
+    const currentTransform = map.view?.getTransformData?.();
+    if (currentTransform && typeof currentTransform === 'object' && !VIEW_TRANSFORM_BY_MAP.has(mapKey)) {
+        VIEW_TRANSFORM_BY_MAP.set(mapKey, cloneTransform(currentTransform));
+    }
+    const viewTransform = VIEW_TRANSFORM_BY_MAP.get(mapKey);
     const currentActiveNodeUids = captureActiveNodeUids(map);
     if (currentActiveNodeUids.length > 0) {
         ACTIVE_NODE_UIDS_BY_MAP.set(mapKey, currentActiveNodeUids);
@@ -89349,9 +90080,25 @@ function applyMapAppearanceTransaction(options) {
     const complete = () => {
         if (REVISION_BY_MAP.get(mapKey) !== revision)
             return;
-        ACTIVE_NODE_UIDS_BY_MAP.delete(mapKey);
+        // The renderer may emit a late fit/translate pass in the animation frame
+        // after reRender() completes. Restore immediately to avoid a visible jump,
+        // then repeat once on the next frame before ending the appearance guard.
+        restoreViewTransform(map, viewTransform);
         restoreActiveNodes(map, activeNodeUids);
-        afterRender?.();
+        const finish = () => {
+            if (REVISION_BY_MAP.get(mapKey) !== revision)
+                return;
+            restoreViewTransform(map, viewTransform);
+            ACTIVE_NODE_UIDS_BY_MAP.delete(mapKey);
+            VIEW_TRANSFORM_BY_MAP.delete(mapKey);
+            afterRender?.();
+        };
+        if (typeof globalThis.requestAnimationFrame === 'function') {
+            globalThis.requestAnimationFrame(() => finish());
+        }
+        else {
+            finish();
+        }
     };
     if (typeof map.reRender === 'function') {
         map.reRender(complete, APPEARANCE_RENDER_SOURCE);
@@ -89363,7 +90110,7 @@ function applyMapAppearanceTransaction(options) {
 }
 
 },
-252: function(module, exports, __require, __externalRequire) {
+254: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeQuickActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89581,7 +90328,7 @@ class NodeQuickActionsController {
 exports.NodeQuickActionsController = NodeQuickActionsController;
 
 },
-253: function(module, exports, __require, __externalRequire) {
+255: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRightDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89760,7 +90507,7 @@ class CanvasRightDragController {
 exports.CanvasRightDragController = CanvasRightDragController;
 
 },
-254: function(module, exports, __require, __externalRequire) {
+256: function(module, exports, __require, __externalRequire) {
 // /src/editor/liveNodeWidthLayout.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89817,7 +90564,7 @@ class LiveNodeWidthLayoutController {
 exports.LiveNodeWidthLayoutController = LiveNodeWidthLayoutController;
 
 },
-255: function(module, exports, __require, __externalRequire) {
+257: function(module, exports, __require, __externalRequire) {
 // /src/editor/focusHighlight.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89882,7 +90629,7 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
 }
 
 },
-256: function(module, exports, __require, __externalRequire) {
+258: function(module, exports, __require, __externalRequire) {
 // /src/editor/editingSurfaceCoordinator.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89971,7 +90718,7 @@ class EditingSurfaceCoordinator {
 exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
 
 },
-257: function(module, exports, __require, __externalRequire) {
+259: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89993,7 +90740,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-258: function(module, exports, __require, __externalRequire) {
+260: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90017,7 +90764,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-259: function(module, exports, __require, __externalRequire) {
+261: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90073,7 +90820,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-260: function(module, exports, __require, __externalRequire) {
+262: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90099,7 +90846,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-261: function(module, exports, __require, __externalRequire) {
+263: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90115,7 +90862,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-262: function(module, exports, __require, __externalRequire) {
+264: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90142,7 +90889,7 @@ function initializePluginStartup(options) {
 }
 
 },
-263: function(module, exports, __require, __externalRequire) {
+265: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

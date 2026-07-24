@@ -110,7 +110,7 @@ export class RichTextToolbar {
       <span class="ymz-rich-toolbar__separator"></span>
       <button type="button" data-rich-action="link" title="行内链接">链接</button>
       <button type="button" data-rich-action="cloze" title="模糊/取消模糊">模糊</button>
-      <button type="button" data-rich-action="formula" title="插入公式" aria-label="插入公式"><span class="ymz-formula-symbol" aria-hidden="true">π</span></button>
+      <button type="button" data-rich-action="formula" title="插入公式" aria-label="插入公式"><svg class="ymz-rich-toolbar__icon" aria-hidden="true"><use xlink:href="#iconMath"></use></svg></button>
       <button type="button" data-rich-action="clear" title="清除全部格式">清除</button>`;
 
     this.colorPopover = document.createElement("div");

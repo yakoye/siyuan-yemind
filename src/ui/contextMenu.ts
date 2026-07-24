@@ -169,3 +169,73 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前', accelerator: 'Shift+Backspace', disabled: !availability.removeOnlyCurrent, click: run('remove-only-current', () => commands.removeOnlyCurrent()) });
   menu.open({ x: event.clientX, y: event.clientY });
 }
+
+export interface OutlineContextMenuOptions {
+  readonly: boolean;
+  isRoot: boolean;
+  hasChildren: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onEdit(): void;
+  onAddParent(): void;
+  onAddSibling(): void;
+  onAddChild(): void;
+  onTextToMap(): void;
+  onCopyLine(): void | Promise<void>;
+  onCutLine(): void | Promise<void>;
+  onPasteAtCaret(): void | Promise<void>;
+  onPastePlain(): void | Promise<void>;
+  onMoveUp(): void;
+  onMoveDown(): void;
+  onToggleExpand(): void;
+  onRemoveSubtree(): void;
+  onRemoveOnlyCurrent(): void;
+  onAction?: (action: string) => void;
+}
+
+function runOutlineAction(options: OutlineContextMenuOptions, action: string, callback: () => void | Promise<void>): () => void {
+  return () => {
+    options.onAction?.(action);
+    try {
+      const result = callback();
+      if (result && typeof (result as Promise<void>).catch === 'function') {
+        void (result as Promise<void>).catch((error) => {
+          console.error(`[YeMind] outline ${action} failed`, error);
+          showMessage('大纲操作失败，请重试', 4000, 'error');
+        });
+      }
+    } catch (error) {
+      console.error(`[YeMind] outline ${action} failed`, error);
+      showMessage('大纲操作失败，请重试', 4000, 'error');
+    }
+  };
+}
+
+export function openOutlineContextMenu(event: MouseEvent, options: OutlineContextMenuOptions): void {
+  event.preventDefault();
+  event.stopPropagation();
+  const menu = new Menu('siyuan-yemind-outline-menu');
+  menu.element.classList.add('ymz-context-menu', 'ymz-context-menu--outline');
+  menu.element.dataset.appearance = detectAppearance();
+  const disabled = options.readonly;
+  const run = (action: string, callback: () => void | Promise<void>) => runOutlineAction(options, action, callback);
+
+  menu.addItem({ icon: 'iconEdit', label: '编辑节点', disabled, click: run('edit', options.onEdit) });
+  menu.addItem({ iconHTML: nodeInsertIcon('parent'), label: '插入上级节点', disabled: disabled || options.isRoot, click: run('add-parent', options.onAddParent) });
+  menu.addItem({ iconHTML: nodeInsertIcon('sibling'), label: '插入同级节点', disabled: disabled || options.isRoot, click: run('add-sibling', options.onAddSibling) });
+  menu.addItem({ iconHTML: nodeInsertIcon('child'), label: '插入下级节点', disabled, click: run('add-child', options.onAddChild) });
+  menu.addItem({ icon: 'iconGraph', label: '文本转导图…', disabled, click: run('text-to-map', options.onTextToMap) });
+  menu.addSeparator();
+  menu.addItem({ icon: 'iconCopy', label: '复制（当前行）', click: run('copy-line', options.onCopyLine) });
+  menu.addItem({ iconHTML: clipboardIcon('cut'), label: '剪切（当前行）', disabled, click: run('cut-line', options.onCutLine) });
+  menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴（当前光标处）', disabled, click: run('paste-caret', options.onPasteAtCaret) });
+  menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴（纯文本）', disabled, click: run('paste-plain', options.onPastePlain) });
+  menu.addSeparator();
+  menu.addItem({ icon: 'iconUp', label: '上移节点', disabled: disabled || !options.canMoveUp, click: run('move-up', options.onMoveUp) });
+  menu.addItem({ icon: 'iconDown', label: '下移节点', disabled: disabled || !options.canMoveDown, click: run('move-down', options.onMoveDown) });
+  menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !options.hasChildren, click: run('toggle-expand', options.onToggleExpand) });
+  menu.addSeparator();
+  menu.addItem({ icon: 'iconTrashcan', label: '删除当前行和子级', warning: true, disabled: disabled || options.isRoot, click: run('remove-subtree', options.onRemoveSubtree) });
+  menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前行', disabled: disabled || options.isRoot, click: run('remove-only-current', options.onRemoveOnlyCurrent) });
+  menu.open({ x: event.clientX, y: event.clientY });
+}

@@ -19,3 +19,4 @@ import '../suites/styles-themes/v091ThemeColorDefinitions.suite';
 import '../suites/styles-themes/v092AppearanceRefresh.suite';
 import '../suites/styles-themes/v093RootBackground.suite';
 import '../suites/styles-themes/v0913RelationSelection.suite';
+import '../suites/styles-themes/v0924AppearanceViewStability.suite';

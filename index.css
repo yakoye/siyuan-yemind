@@ -1575,3 +1575,67 @@ body.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
 html.layout--dark .ymz-context-menu .ymz-operation-icon--light{display:none!important}
 .ymz-context-menu[data-appearance="dark"] .ymz-operation-icon--dark,
 html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!important}
+
+/* v0.9.24 outline import and complete dark-mode project controls */
+.ymz-editor[data-appearance="light"]{color-scheme:light}
+.ymz-editor[data-appearance="dark"]{color-scheme:dark}
+.ymz-project-control{border:1px solid transparent;color:var(--b3-theme-on-surface);transition:background .14s ease,border-color .14s ease,color .14s ease}
+.ymz-project-control:hover{background:var(--b3-list-hover,rgba(148,163,184,.14))!important}
+.ymz-project-control>span{color:inherit}
+.ymz-project-control :is(.ymz-project-icon,.ymz-line-icon){color:inherit;fill:none;stroke:currentColor}
+.ymz-project-control:focus-within{
+  color:var(--b3-theme-primary);
+  border-color:color-mix(in srgb,var(--b3-theme-primary) 55%,transparent);
+  background:color-mix(in srgb,var(--b3-theme-primary) 14%,var(--b3-theme-background))!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--b3-theme-primary) 18%,transparent);
+}
+.ymz-project-control select{
+  color-scheme:light;
+  color:var(--b3-theme-on-background);
+  background:var(--b3-theme-background);
+}
+.ymz-project-control select option{
+  color:var(--b3-theme-on-background);
+  background:var(--b3-theme-background);
+}
+.ymz-editor[data-appearance="dark"] .ymz-project-control{
+  color:var(--b3-theme-on-surface);
+}
+.ymz-editor[data-appearance="dark"] .ymz-project-control:hover{
+  color:var(--b3-theme-on-background);
+  background:color-mix(in srgb,var(--b3-theme-on-surface) 12%,transparent)!important;
+}
+.ymz-editor[data-appearance="dark"] .ymz-project-control:focus-within{
+  color:var(--b3-theme-primary);
+  background:color-mix(in srgb,var(--b3-theme-primary) 18%,var(--b3-theme-background))!important;
+  border-color:color-mix(in srgb,var(--b3-theme-primary) 68%,transparent);
+}
+.ymz-editor[data-appearance="dark"] .ymz-project-control select{
+  color-scheme:dark;
+  color:var(--b3-theme-on-background,#e5e7eb);
+  background:var(--b3-theme-background,#1f2329);
+}
+.ymz-editor[data-appearance="dark"] .ymz-project-control select option{
+  color:var(--b3-theme-on-background,#e5e7eb);
+  background:var(--b3-theme-background,#1f2329);
+}
+.ymz-editor[data-appearance="dark"] .ymz-project-control select option:checked{
+  color:var(--b3-theme-primary);
+  background:color-mix(in srgb,var(--b3-theme-primary) 20%,var(--b3-theme-background));
+}
+.ymz-rich-toolbar__icon{width:18px;height:18px;display:block;fill:currentColor}
+
+.ymz-text-map-dialog{display:flex;flex-direction:column;gap:12px;min-height:440px;color:var(--b3-theme-on-background)}
+.ymz-text-map-dialog__toolbar{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.ymz-text-map-dialog__toolbar label{display:flex;align-items:center;gap:8px;color:var(--b3-theme-on-surface)}
+.ymz-text-map-dialog__body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;min-height:330px}
+.ymz-text-map-dialog__pane{display:flex;min-width:0;flex-direction:column;gap:6px}
+.ymz-text-map-dialog__heading{font-weight:600;color:var(--b3-theme-on-background)}
+.ymz-text-map-dialog__input,.ymz-text-map-dialog__preview{flex:1;min-height:300px;margin:0;padding:12px;border:1px solid var(--b3-border-color,var(--b3-theme-surface-lighter));border-radius:8px;background:var(--b3-theme-background);color:var(--b3-theme-on-background);font:13px/1.65 var(--b3-font-family-code,monospace);white-space:pre;overflow:auto;box-sizing:border-box}
+.ymz-text-map-dialog__input::placeholder{color:var(--b3-theme-on-surface-light);opacity:.72;white-space:pre-wrap}
+.ymz-text-map-dialog__preview{background:color-mix(in srgb,var(--b3-theme-surface) 72%,var(--b3-theme-background))}
+.ymz-text-map-dialog__status{font-size:12px;color:var(--b3-theme-on-surface-light)}
+.ymz-text-map-dialog__messages{display:flex;flex-direction:column;gap:3px;font-size:12px}
+.ymz-text-map-dialog__error{color:var(--b3-card-error-color,#d23f31)}
+.ymz-text-map-dialog__warning{color:var(--b3-card-warning-color,#b7791f)}
+@media (max-width:760px){.ymz-text-map-dialog__body{grid-template-columns:1fr}.ymz-text-map-dialog__input,.ymz-text-map-dialog__preview{min-height:210px}.ymz-text-map-dialog{min-height:0}}

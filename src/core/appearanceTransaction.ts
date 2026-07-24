@@ -4,6 +4,10 @@ import { configureThemeColorRuntime } from './themeColorRuntime';
 interface AppearanceMindMap {
   opt?: Record<string, unknown>;
   emit?(event: string, ...args: unknown[]): void;
+  view?: {
+    getTransformData?(): Record<string, unknown>;
+    setTransformData?(data: Record<string, unknown>): void;
+  };
   renderer?: {
     activeNodeList?: unknown[];
     findNodeByUid?(uid: string): unknown;
@@ -31,6 +35,19 @@ export interface ApplyMapAppearanceOptions {
 const APPEARANCE_RENDER_SOURCE = 'changeTheme';
 const REVISION_BY_MAP = new WeakMap<object, number>();
 const ACTIVE_NODE_UIDS_BY_MAP = new WeakMap<object, string[]>();
+const VIEW_TRANSFORM_BY_MAP = new WeakMap<object, Record<string, unknown>>();
+
+function cloneTransform(value: Record<string, unknown>): Record<string, unknown> {
+  if (typeof structuredClone === 'function') {
+    try { return structuredClone(value); } catch { /* deterministic JSON fallback */ }
+  }
+  return JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
+}
+
+function restoreViewTransform(map: AppearanceMindMap, value: Record<string, unknown> | undefined): void {
+  if (!value || typeof map.view?.setTransformData !== 'function') return;
+  map.view.setTransformData(cloneTransform(value));
+}
 
 function readNodeUid(node: any): string | null {
   const direct = node?.getData?.('uid');
@@ -129,6 +146,12 @@ export function applyMapAppearanceTransaction(options: ApplyMapAppearanceOptions
   // A full redraw temporarily clears renderer.activeNodeList. When several
   // appearance changes are requested before the first redraw completes, keep
   // the last non-empty snapshot so the newest transaction can restore it.
+  const currentTransform = map.view?.getTransformData?.();
+  if (currentTransform && typeof currentTransform === 'object' && !VIEW_TRANSFORM_BY_MAP.has(mapKey)) {
+    VIEW_TRANSFORM_BY_MAP.set(mapKey, cloneTransform(currentTransform));
+  }
+  const viewTransform = VIEW_TRANSFORM_BY_MAP.get(mapKey);
+
   const currentActiveNodeUids = captureActiveNodeUids(map);
   if (currentActiveNodeUids.length > 0) {
     ACTIVE_NODE_UIDS_BY_MAP.set(mapKey, currentActiveNodeUids);
@@ -137,9 +160,26 @@ export function applyMapAppearanceTransaction(options: ApplyMapAppearanceOptions
 
   const complete = (): void => {
     if (REVISION_BY_MAP.get(mapKey) !== revision) return;
-    ACTIVE_NODE_UIDS_BY_MAP.delete(mapKey);
+
+    // The renderer may emit a late fit/translate pass in the animation frame
+    // after reRender() completes. Restore immediately to avoid a visible jump,
+    // then repeat once on the next frame before ending the appearance guard.
+    restoreViewTransform(map, viewTransform);
     restoreActiveNodes(map, activeNodeUids);
-    afterRender?.();
+
+    const finish = (): void => {
+      if (REVISION_BY_MAP.get(mapKey) !== revision) return;
+      restoreViewTransform(map, viewTransform);
+      ACTIVE_NODE_UIDS_BY_MAP.delete(mapKey);
+      VIEW_TRANSFORM_BY_MAP.delete(mapKey);
+      afterRender?.();
+    };
+
+    if (typeof globalThis.requestAnimationFrame === 'function') {
+      globalThis.requestAnimationFrame(() => finish());
+    } else {
+      finish();
+    }
   };
 
   if (typeof map.reRender === 'function') {

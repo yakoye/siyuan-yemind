@@ -29,7 +29,8 @@
     "v084DragRichTextRecovery.suite.ts",
     "yeMindRichText.suite.ts",
     "v0913MeasurementHost.suite.ts",
-    "v0914MeasurementGeometry.suite.ts"
+    "v0914MeasurementGeometry.suite.ts",
+    "v0924FormulaIcon.suite.ts"
   ],
   "styles-themes": [
     "colorPresentation.suite.ts",
@@ -51,7 +52,8 @@
     "v091ThemeColorDefinitions.suite.ts",
     "v092AppearanceRefresh.suite.ts",
     "v093RootBackground.suite.ts",
-    "v0913RelationSelection.suite.ts"
+    "v0913RelationSelection.suite.ts",
+    "v0924AppearanceViewStability.suite.ts"
   ],
   "commands-selection": [
     "commands.suite.ts",
@@ -112,7 +114,8 @@
     "v0913PanelInteraction.suite.ts",
     "v0919IconDialogsHistory.suite.ts",
     "v0922ExactSourceIconIsolation.suite.ts",
-    "v0923IconGridDarkTheme.suite.ts"
+    "v0923IconGridDarkTheme.suite.ts",
+    "v0924OutlineMenuAndDarkControls.suite.ts"
   ],
   "storage-lifecycle": [
     "createMapLifecycle.suite.ts",
@@ -131,7 +134,8 @@
     "tabHandleLiveness.suite.ts",
     "tabStartup.suite.ts",
     "v081StorageMigration.suite.ts",
-    "v0913DefaultMapNaming.suite.ts"
+    "v0913DefaultMapNaming.suite.ts",
+    "v0924DefaultMap.suite.ts"
   ],
   "diagnostics-release": [
     "diagnosticsIntegration.suite.ts",
@@ -206,7 +210,8 @@
     "v094StructuredOutlineVisual.suite.ts",
     "v099OutlineGuideGeometry.suite.ts",
     "v0910OutlineGuidesAndReveal.suite.ts",
-    "v0918SplitRevealCurrentSelection.suite.ts"
+    "v0918SplitRevealCurrentSelection.suite.ts",
+    "v0924OutlineImportAndEnter.suite.ts"
   ],
   "search-navigation": [
     "searchCommands.suite.ts",

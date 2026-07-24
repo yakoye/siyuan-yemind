@@ -56,8 +56,8 @@ with sync_playwright() as p:
     page.set_content('''<!doctype html><html><body style="margin:0;--b3-list-hover:#e5e7eb;--b3-theme-background:#fff;--b3-theme-on-background:#1f2937;--b3-border-color:#d1d5db"><div id="host" style="width:1460px;height:890px"></div></body></html>''')
     page.add_style_tag(content=stylesheet + '\n#host,.ymz-editor,.ymz-workspace,.ymz-canvas-wrap,.ymz-canvas{min-width:1px;min-height:1px;}')
     page.add_script_tag(content=wrapped)
-    defaults = page.evaluate("""async()=>{const P=window.__YeMindExport;const plugin=new P();plugin.onload();await plugin.whenReady();const fresh=await plugin.repository.create('未命名导图','logicalStructure');const result={title:fresh.title,root:fresh.data.data.text,children:fresh.data.children.map(item=>item.data.text)};fresh.data.children[0].data.text='<p><span>Marker text</span></p>';fresh.data.children[0].data.richText=true;fresh.data.children[0].data.icon=['yemarkerpriority_priority-05'];fresh.data.children[1].data.text='Second node';fresh.data.children.push({data:{uid:'third',text:'Third node'},children:[]});await plugin.repository.update(fresh.id,{data:fresh.data});const container=document.createElement('div');container.style.cssText='width:1420px;height:850px;display:block';host.append(container);const context={element:container,data:{mapId:fresh.id},tab:{headElement:document.createElement('button'),updateTitle(){},close(){}}};window.__smoke={plugin,fresh,container,context};window.__tabOptions.init.call(context);return result}""")
-    if defaults != {'title': '未命名导图', 'root': '中心主题', 'children': ['新节点', '新节点']}:
+    defaults = page.evaluate("""async()=>{const P=window.__YeMindExport;const plugin=new P();plugin.onload();await plugin.whenReady();const fresh=await plugin.repository.create('未命名导图','logicalStructure');const result={title:fresh.title,root:fresh.data.data.text,children:fresh.data.children.map(item=>item.data.text)};fresh.data.children=[{data:{uid:'marker',text:'<p><span>Marker text</span></p>',richText:true,icon:['yemarkerpriority_priority-05'],expand:true},children:[]},{data:{uid:'second',text:'Second node',expand:true},children:[]},{data:{uid:'third',text:'Third node',expand:true},children:[]}];await plugin.repository.update(fresh.id,{data:fresh.data});const container=document.createElement('div');container.style.cssText='width:1420px;height:850px;display:block';host.append(container);const context={element:container,data:{mapId:fresh.id},tab:{headElement:document.createElement('button'),updateTitle(){},close(){}}};window.__smoke={plugin,fresh,container,context};window.__tabOptions.init.call(context);return result}""")
+    if defaults != {'title': '未命名导图', 'root': '中心主题', 'children': []}:
         raise RuntimeError(f'Unexpected new map defaults: {defaults}')
     page.wait_for_selector('[data-role="canvas"] svg', timeout=30000)
     page.wait_for_timeout(450)
@@ -87,6 +87,7 @@ with sync_playwright() as p:
     for name, selector in [('structure', '[data-action="layout-gallery"]'), ('style', '[data-action="project-style"]')]:
         before = page.eval_on_selector(selector, "el=>getComputedStyle(el).backgroundColor")
         page.hover(selector)
+        page.wait_for_timeout(180)
         after = page.eval_on_selector(selector, "el=>getComputedStyle(el).backgroundColor")
         hover_states[name] = {'before': before, 'after': after}
         if before == after or after != 'rgb(229, 231, 235)':
@@ -106,7 +107,7 @@ with sync_playwright() as p:
     if settings_index < 0 or menu_labels[settings_index:settings_index + 3] != ['设置', '关于 YeMind', '诊断与回归']:
         raise RuntimeError(f'About menu order is wrong: {menu_labels}')
     page.evaluate("""()=>window.__lastMenu.items.find(item=>item.label==='关于 YeMind').click()""")
-    about = page.evaluate("""()=>({exists:!!document.querySelector('.ymz-about-dialog'),version:document.querySelector('.ymz-about-dialog')?.textContent.includes('0.9.23'),title:window.__lastDialog?.options?.title||''})""")
+    about = page.evaluate("""()=>({exists:!!document.querySelector('.ymz-about-dialog'),version:document.querySelector('.ymz-about-dialog')?.textContent.includes('0.9.24'),title:window.__lastDialog?.options?.title||''})""")
     if not about['exists'] or not about['version'] or about['title'] != '关于 YeMind':
         raise RuntimeError(f'Standalone About dialog is wrong: {about}')
 

@@ -16,3 +16,4 @@ import '../suites/storage-lifecycle/tabHandleLiveness.suite';
 import '../suites/storage-lifecycle/tabStartup.suite';
 import '../suites/storage-lifecycle/v081StorageMigration.suite';
 import '../suites/storage-lifecycle/v0913DefaultMapNaming.suite';
+import '../suites/storage-lifecycle/v0924DefaultMap.suite';

@@ -27,3 +27,4 @@ import '../suites/outline-split/v094StructuredOutlineVisual.suite';
 import '../suites/outline-split/v099OutlineGuideGeometry.suite';
 import '../suites/outline-split/v0910OutlineGuidesAndReveal.suite';
 import '../suites/outline-split/v0918SplitRevealCurrentSelection.suite';
+import '../suites/outline-split/v0924OutlineImportAndEnter.suite';

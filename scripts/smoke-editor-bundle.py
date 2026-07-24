@@ -52,6 +52,11 @@ with sync_playwright() as p:
       plugin.onload();
       await plugin.whenReady();
       const map = await plugin.repository.create('Theme Runtime Smoke', 'logicalStructure');
+      map.data = {data:{uid:'root',text:'中心主题',expand:true},children:[
+        {data:{uid:'branch-a',text:'分支 A',expand:true},children:[]},
+        {data:{uid:'branch-b',text:'分支 B',expand:true},children:[]},
+      ]};
+      await plugin.repository.update(map.id, { data: map.data });
       const container = document.createElement('div');
       container.style.width = '1100px';
       container.style.height = '720px';

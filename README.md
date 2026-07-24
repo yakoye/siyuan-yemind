@@ -2,8 +2,17 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.23`  
+Current version: `0.9.24`
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.24 outline import and dark-theme stability
+
+- Reorganizes the outline node context menu around edit/insert, text import, current-line clipboard actions, sibling ordering, disclosure and two distinct delete semantics; cutting a line clears text only and preserves the node and subtree.
+- Adds Text to Mind Map import for Unicode trees, Windows Tree output, spaces or tabs, Markdown lists, numbered outlines and plain lines, with mode-specific gray examples and live preview.
+- Creates new maps with the center topic only; Enter creates a sibling, while repeated Enter on an empty row promotes it one level until the root-child boundary removes it and focuses the center topic.
+- Captures and restores the exact canvas transform twice around host appearance redraws, deferring zero-size hidden canvases to prevent dark-mode horizontal drift.
+- Makes Theme and Line controls, labels, icons, hover/open states and native option lists fully dark-aware.
+- Replaces the selected-text π control with SiYuan's shared `iconMath` formula icon.
 
 ## v0.9.23 icon grid and dark-theme polish
 

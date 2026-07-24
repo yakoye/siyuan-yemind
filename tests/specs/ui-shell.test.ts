@@ -26,3 +26,4 @@ import '../suites/ui-shell/v0913PanelInteraction.suite';
 import '../suites/ui-shell/v0919IconDialogsHistory.suite';
 import '../suites/ui-shell/v0922ExactSourceIconIsolation.suite';
 import '../suites/ui-shell/v0923IconGridDarkTheme.suite';
+import '../suites/ui-shell/v0924OutlineMenuAndDarkControls.suite';

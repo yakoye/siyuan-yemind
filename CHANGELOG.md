@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.24 - 2026-07-24
+
+- Add the exact requested outline node context menu, including current-line clipboard semantics, sibling ordering, disclosure, subtree deletion and delete-current-only promotion.
+- Add Text to Mind Map import with auto/manual recognition for Unicode trees, Windows Tree output, spaces or tabs, Markdown lists, numbered outlines and plain lines, plus mode-specific placeholders and live preview.
+- Create new maps with only the center topic and make repeated Enter on an empty outline row promote one level until the root-child boundary removes it and focuses the root.
+- Make cutting the current outline line copy and clear only its text while preserving the node, descendants, hierarchy and order.
+- Preserve the exact canvas transform across host appearance redraws, repeat restoration on the next frame, suppress internal view persistence and defer full redraw for hidden zero-size canvases.
+- Add complete dark styling for Theme and Line labels, icons, hover/open states and native option lists.
+- Replace the rich-text π glyph with the shared SiYuan `iconMath` formula icon.
+- Add red-first parser, menu, Enter-boundary, cut-preservation, transform-stability, dark-control and real Chromium regressions.
+
 ## 0.9.23 - 2026-07-24
 
 - Standardize YeMind and native SiYuan menu icons on a 22px slot with 15px proportional artwork and a fixed 4px label gap.

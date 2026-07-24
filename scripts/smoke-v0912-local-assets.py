@@ -38,7 +38,7 @@ with sync_playwright() as p:
     page.evaluate("""async()=>{
       const Plugin=window.__YeMindExport; const plugin=new Plugin(); plugin.onload(); await plugin.whenReady();
       const map=await plugin.repository.create('Local Assets','logicalStructure');
-      map.data.children[0].data.icon=['yemarkerpriority_priority-05'];
+      map.data.children=[{data:{uid:'asset-node',text:'本地资源节点',expand:true,icon:['yemarkerpriority_priority-05']},children:[]}];
       await plugin.repository.update(map.id,{data:map.data,layoutPresetId:'right-mindmap'});
       const container=document.createElement('div'); container.style.cssText='width:1200px;height:760px'; document.querySelector('#host').appendChild(container);
       const head=document.createElement('button');document.body.appendChild(head);

@@ -36,6 +36,7 @@ export interface StructuredOutlineEditorOptions {
   onApply(tree: MindMapTree, details: Record<string, unknown>): boolean;
   onActivate(uid: string): void;
   onToggle(uid: string, expanded: boolean): void;
+  onContextMenu?(event: MouseEvent, uid: string): void;
   onUndo(): void;
   onRedo(): void;
   onSelectionChange(
@@ -472,6 +473,88 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     return true;
   }
 
+  editLine(uid: string): void {
+    const editor = this.editorByUid(uid);
+    if (!editor) return;
+    this.activate(editor, uid, { placement: 'select-all' });
+  }
+
+  getLineState(uid: string): { isRoot: boolean; hasChildren: boolean; expanded: boolean; canMoveUp: boolean; canMoveDown: boolean } {
+    const blocks = this.collectBlocks().filter((block) => block.kind === 'node');
+    const index = blocks.findIndex((block) => block.uid === uid);
+    const current = blocks[index];
+    if (!current) return { isRoot: false, hasChildren: false, expanded: true, canMoveUp: false, canMoveDown: false };
+    const siblings = blocks.filter((block) => block.depth === current.depth && block.parentUid === current.parentUid);
+    const siblingIndex = siblings.findIndex((block) => block.uid === uid);
+    return {
+      isRoot: current.isRoot,
+      hasChildren: current.hasChildren,
+      expanded: current.expanded,
+      canMoveUp: !current.isRoot && siblingIndex > 0,
+      canMoveDown: !current.isRoot && siblingIndex >= 0 && siblingIndex < siblings.length - 1,
+    };
+  }
+
+  async copyCurrentLine(uid: string): Promise<void> {
+    const editor = this.editorByUid(uid);
+    if (!editor) return;
+    const plain = (editor.innerText || editor.textContent || '').replace(/\u00a0/g, ' ');
+    const html = sanitizeRichHtml(editor.innerHTML);
+    const clipboard = navigator.clipboard as Clipboard & { write?: (items: ClipboardItem[]) => Promise<void> };
+    if (clipboard?.write && typeof ClipboardItem === 'function') {
+      await clipboard.write([new ClipboardItem({
+        'text/plain': new Blob([plain], { type: 'text/plain' }),
+        'text/html': new Blob([html], { type: 'text/html' }),
+      })]);
+    } else if (clipboard?.writeText) {
+      await clipboard.writeText(plain);
+    }
+    this.options.onDiagnostic?.('copy-current-line', { uid, textLength: plain.length });
+  }
+
+  async cutCurrentLine(uid: string): Promise<void> {
+    if (this.options.isReadonly()) return;
+    await this.copyCurrentLine(uid);
+    const editor = this.editorByUid(uid);
+    if (!editor) return;
+    editor.replaceChildren();
+    this.activate(editor, uid, { placement: 'start' });
+    this.markDirty('cut-current-line');
+    this.flush('cut-current-line');
+  }
+
+  async pasteCurrentLine(uid: string, plainOnly = false): Promise<void> {
+    if (this.options.isReadonly()) return;
+    const editor = this.editorByUid(uid);
+    if (!editor) return;
+    this.activeEditor = editor;
+    this.activateUid(uid, false);
+    let text = '';
+    let html = '';
+    const clipboard = navigator.clipboard as Clipboard & { read?: () => Promise<ClipboardItems> };
+    if (!plainOnly && clipboard?.read) {
+      try {
+        const items = await clipboard.read();
+        for (const item of items) {
+          if (!html && item.types.includes('text/html')) html = await (await item.getType('text/html')).text();
+          if (!text && item.types.includes('text/plain')) text = await (await item.getType('text/plain')).text();
+        }
+      } catch {
+        text = await clipboard.readText?.() ?? '';
+      }
+    } else {
+      text = await clipboard?.readText?.() ?? '';
+    }
+    if (!text && !html) return;
+    const selection = window.getSelection();
+    if (!selection?.anchorNode || !editor.contains(selection.anchorNode)) {
+      this.selectEditorRange(editor, textLength(editor), textLength(editor));
+    }
+    this.insertInlineHtml(!plainOnly && html ? inlineHtmlFromClipboard(html) : escapeHtml(text));
+    this.markDirty(plainOnly ? 'paste-current-line-plain' : 'paste-current-line');
+    this.flush(plainOnly ? 'paste-current-line-plain' : 'paste-current-line');
+  }
+
   commitAndDetach(reason = 'surface-change'): void {
     this.flush(reason);
   }
@@ -670,6 +753,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     root.addEventListener('pointerup', this.onPointerUp);
     root.addEventListener('focusin', this.onFocusIn);
     root.addEventListener('click', this.onClick);
+    root.addEventListener('contextmenu', this.onContextMenu);
     root.addEventListener('blur', this.onBlur, true);
     root.addEventListener('compositionstart', this.onCompositionStart);
     root.addEventListener('compositionend', this.onCompositionEnd);
@@ -688,6 +772,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     root.removeEventListener('pointerup', this.onPointerUp);
     root.removeEventListener('focusin', this.onFocusIn);
     root.removeEventListener('click', this.onClick);
+    root.removeEventListener('contextmenu', this.onContextMenu);
     root.removeEventListener('blur', this.onBlur, true);
     root.removeEventListener('compositionstart', this.onCompositionStart);
     root.removeEventListener('compositionend', this.onCompositionEnd);
@@ -726,6 +811,25 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     if (target.closest('[data-outline-drag-handle]')) return;
     this.activateUid(uid, false);
     if (!this.options.isReadonly()) this.options.onActivate(uid);
+  };
+
+  private readonly onContextMenu = (event: MouseEvent): void => {
+    const target = event.target as HTMLElement;
+    const row = target.closest<HTMLElement>('[data-outline-uid]');
+    if (!row || !this.options.root.contains(row)) return;
+    const uid = row.dataset.outlineUid ?? '';
+    if (!uid) return;
+    const editor = row.querySelector<HTMLElement>('[data-outline-editor]');
+    this.activeEditor = editor;
+    this.activateUid(uid, false);
+    if (!this.options.isReadonly()) this.options.onActivate(uid);
+    if (editor) {
+      const selection = window.getSelection();
+      if (!selection?.anchorNode || !editor.contains(selection.anchorNode)) {
+        this.selectEditorRange(editor, textLength(editor), textLength(editor));
+      }
+    }
+    this.options.onContextMenu?.(event, uid);
   };
 
   private readonly onFocusIn = (event: FocusEvent): void => {
@@ -841,7 +945,12 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
         this.markDirty('hard-break');
         this.flush('hard-break');
       } else {
-        this.splitSelectionToSibling();
+        const context = this.selectionContext();
+        if (context && !context.spansRows && editorIsSemanticallyEmpty(context.startEditor) && context.startRow.dataset.outlineRoot !== 'true') {
+          this.promoteEmptyRowOnEnter(context.startRow);
+        } else {
+          this.splitSelectionToSibling();
+        }
       }
       return;
     }
@@ -1355,6 +1464,44 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       this.selectEditorRange(editor, 0, 0);
       this.activateUid(nextUid, true);
       this.options.onActivate(nextUid);
+    });
+  }
+
+  private promoteEmptyRowOnEnter(row: HTMLElement): void {
+    if (row.dataset.outlineRoot === 'true') return;
+    const blocks = this.collectBlocks();
+    const rows = Array.from(this.options.root.querySelectorAll<HTMLElement>(':scope > [data-outline-uid]'));
+    const index = rows.indexOf(row);
+    const current = blocks[index];
+    if (index < 0 || !current || current.kind !== 'node') return;
+    const rootUid = blocks.find((block) => block.isRoot)?.uid ?? '';
+    if (current.depth <= 1) {
+      let end = index + 1;
+      while (end < blocks.length && blocks[end].depth > current.depth) end += 1;
+      const promotedChildren = blocks.slice(index + 1, end).map((block) => ({ ...block, depth: Math.max(1, block.depth - 1) }));
+      const next = [...blocks.slice(0, index), ...promotedChildren, ...blocks.slice(end)];
+      this.replaceDomBlocks(normalizeStructuredOutlineDepths(next), 'enter-empty-root-boundary');
+      window.requestAnimationFrame(() => {
+        const editor = this.editorByUid(rootUid);
+        if (!editor) return;
+        this.selectEditorRange(editor, textLength(editor), textLength(editor));
+        this.activateUid(rootUid, true);
+        this.options.onActivate(rootUid);
+      });
+      return;
+    }
+    let end = index + 1;
+    while (end < blocks.length && blocks[end].depth > current.depth) end += 1;
+    const next = blocks.map((block, blockIndex) => blockIndex >= index && blockIndex < end
+      ? { ...block, depth: Math.max(1, block.depth - 1) }
+      : block);
+    this.replaceDomBlocks(normalizeStructuredOutlineDepths(next), 'enter-empty-outdent');
+    window.requestAnimationFrame(() => {
+      const editor = this.editorByUid(current.uid);
+      if (!editor) return;
+      this.selectEditorRange(editor, 0, 0);
+      this.activateUid(current.uid, true);
+      this.options.onActivate(current.uid);
     });
   }
 
