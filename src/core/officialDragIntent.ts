@@ -23,6 +23,8 @@ export interface OfficialDragCandidate extends TreeDropIntent<any> {
   targetNode: any | null;
   parentNode: any | null;
   score: number;
+  /** Mind-map side resolved from the pointer/target, including root-crossing drops. */
+  branchDirection?: 'left' | 'right';
 }
 
 export interface ResolveOfficialDragCandidateOptions {
@@ -36,6 +38,8 @@ export interface ResolveOfficialDragCandidateOptions {
   getRect: (node: any) => OfficialDragRect | null;
   /** Optional visual/native order adapter used after directional normalization. */
   reverseVisualSiblingOrder?: (parent: any) => boolean;
+  /** Explicit branch used after mirroring a bidirectional mind map. */
+  branchDirection?: 'left' | 'right';
 }
 
 export type OfficialDragGrowthDirection = 'left' | 'right' | 'top' | 'bottom';
@@ -100,6 +104,7 @@ export function emptyOfficialDragCandidate(): OfficialDragCandidate {
     targetNode: null,
     parentNode: null,
     score: Number.POSITIVE_INFINITY,
+    branchDirection: undefined,
   };
 }
 
@@ -278,11 +283,13 @@ function branchFilteredSiblings(
   siblings: any[],
   pointer: OfficialDragPoint,
   getRect: (node: any) => OfficialDragRect | null,
+  branchDirection?: 'left' | 'right',
 ): any[] {
-  if (layout !== 'mindMap') return siblings;
+  if (layout !== 'mindMap' && !branchDirection) return siblings;
   const parentRect = getRect(parent);
-  if (!finiteRect(parentRect)) return siblings;
-  const branch = pointer.x < rectCenter(parentRect).x ? 'left' : 'right';
+  if (!finiteRect(parentRect) && !branchDirection) return siblings;
+  const branch = branchDirection
+    ?? (pointer.x < rectCenter(parentRect!).x ? 'left' : 'right');
   const filtered = siblings.filter((node) => {
     const direction = normalizedDirection(node?.dir);
     if (direction === 'left' || direction === 'right') return direction === branch;
@@ -300,11 +307,12 @@ function orderedSiblings(
   available: Set<any>,
   pointer: OfficialDragPoint,
   getRect: (node: any) => OfficialDragRect | null,
+  branchDirection?: 'left' | 'right',
 ): any[] {
   let siblings = Array.isArray(parent?.children)
     ? parent.children.filter((child: any) => available.has(child) && finiteRect(getRect(child)))
     : [];
-  siblings = branchFilteredSiblings(layout, parent, siblings, pointer, getRect);
+  siblings = branchFilteredSiblings(layout, parent, siblings, pointer, getRect, branchDirection);
   const axis = resolveOfficialDragSiblingAxis(layout, parent);
   return [...siblings].sort((a, b) => {
     const aRect = getRect(a)!;
@@ -330,7 +338,7 @@ function resolveSiblingSlot(
     const parent = node?.parent;
     if (!parent || seenParents.has(parent)) return;
     seenParents.add(parent);
-    const siblings = orderedSiblings(options.layout, parent, available, pointer, options.getRect);
+    const siblings = orderedSiblings(options.layout, parent, available, pointer, options.getRect, options.branchDirection);
     if (siblings.length === 0) return;
     const nativeSiblings = Array.isArray(parent.children)
       ? parent.children.filter((child: any) => siblings.includes(child))
@@ -418,6 +426,7 @@ function resolveChildTarget(
 function slotCandidate(
   slot: SlotIntent,
   kind: 'before' | 'after' = slot.kind,
+  branchDirection?: 'left' | 'right',
 ): OfficialDragCandidate {
   const nextNode = slot.nativeIndex < slot.nativeSiblings.length
     ? slot.nativeSiblings[slot.nativeIndex] ?? null
@@ -426,7 +435,7 @@ function slotCandidate(
     ? slot.nativeSiblings[slot.nativeIndex - 1] ?? null
     : null;
   return {
-    key: `${kind}:${nodeUid(slot.parent)}:${slot.nativeIndex}`,
+    key: `${branchDirection ?? 'auto'}:${kind}:${nodeUid(slot.parent)}:${slot.nativeIndex}`,
     kind,
     target: slot.targetNode,
     parent: slot.parent,
@@ -437,6 +446,7 @@ function slotCandidate(
     targetNode: slot.targetNode,
     parentNode: slot.parent,
     score: slot.score,
+    branchDirection,
   };
 }
 
@@ -447,10 +457,10 @@ function childCandidate(
 ): OfficialDragCandidate {
   const excluded = new Set(options.excludedNodes ?? []);
   const available = new Set(options.nodes.filter((node) => !excluded.has(node)));
-  const children = orderedSiblings(options.layout, child.node, available, pointer, options.getRect);
+  const children = orderedSiblings(options.layout, child.node, available, pointer, options.getRect, options.branchDirection);
   if (children.length === 0) {
     return {
-      key: `child:${nodeUid(child.node)}:0`,
+      key: `${options.branchDirection ?? 'auto'}:child:${nodeUid(child.node)}:0`,
       kind: 'child',
       target: child.node,
       parent: child.node,
@@ -461,6 +471,7 @@ function childCandidate(
       targetNode: child.node,
       parentNode: child.node,
       score: child.score,
+      branchDirection: options.branchDirection,
     };
   }
 
@@ -483,7 +494,7 @@ function childCandidate(
   const nextNode = nativeIndex < nativeChildren.length ? nativeChildren[nativeIndex] ?? null : null;
   const prevNode = nativeIndex > 0 ? nativeChildren[nativeIndex - 1] ?? null : null;
   return {
-    key: `child:${nodeUid(child.node)}:${nativeIndex}`,
+    key: `${options.branchDirection ?? 'auto'}:child:${nodeUid(child.node)}:${nativeIndex}`,
     kind: 'child',
     target: child.node,
     parent: child.node,
@@ -494,6 +505,7 @@ function childCandidate(
     targetNode: child.node,
     parentNode: child.node,
     score: child.score,
+    branchDirection: options.branchDirection,
   };
 }
 
@@ -575,9 +587,14 @@ function logicalCandidateForNode(
   }
 
   const available = new Set(options.nodes.filter((item) => !(options.excludedNodes ?? []).includes(item)));
-  const siblings = Array.isArray(node.parent.children)
-    ? node.parent.children.filter((item: any) => available.has(item))
-    : [];
+  const siblings = orderedSiblings(
+    options.layout,
+    node.parent,
+    available,
+    pointer,
+    options.getRect,
+    options.branchDirection,
+  );
   const targetNativeIndex = Math.max(0, siblings.indexOf(node));
   const kind: 'before' | 'after' = pointer.y < center.y ? 'before' : 'after';
   const reverse = options.reverseVisualSiblingOrder?.(node.parent) ?? false;
@@ -598,7 +615,7 @@ function logicalCandidateForNode(
   return {
     node,
     rect,
-    candidate: slotCandidate(slot, kind),
+    candidate: slotCandidate(slot, kind, options.branchDirection),
     score: slot.score,
     distance,
     strong: insideActual,
@@ -768,7 +785,7 @@ function sameAxisCandidateForNode(
   return {
     node,
     rect,
-    candidate: slotCandidate(slot, kind),
+    candidate: slotCandidate(slot, kind, options.branchDirection),
     score: slot.score,
     distance,
     strong: insideBody,
@@ -838,6 +855,14 @@ function resolveDirectionalLocalCandidate(
   const sameAxisNodes: any[] = [];
   options.nodes.forEach((node) => {
     if (excluded.has(node) || node?.isGeneralization) return;
+    if (options.layout === 'mindMap' && (node?.isRoot || !node?.parent)) {
+      (['left', 'right'] as const).forEach((direction) => {
+        const list = groups.get(direction) ?? [];
+        list.push(node);
+        groups.set(direction, list);
+      });
+      return;
+    }
     const direction = resolveOfficialDragGrowthDirection(options.layout, node);
     const siblingAxis = node?.parent
       ? resolveOfficialDragSiblingAxis(options.layout, node.parent)
@@ -854,14 +879,16 @@ function resolveDirectionalLocalCandidate(
   let best = resolveSameAxisLocalCandidate(options, pointer, sameAxisNodes);
   const currentTarget = options.current?.targetNode ?? options.current?.target ?? null;
   groups.forEach((candidateNodes, direction) => {
-    const currentDirection = currentTarget
-      ? resolveOfficialDragGrowthDirection(options.layout, currentTarget)
-      : null;
+    const currentDirection = options.current?.branchDirection
+      ?? (currentTarget ? resolveOfficialDragGrowthDirection(options.layout, currentTarget) : null);
     const transformed: ResolveOfficialDragCandidateOptions = {
       ...options,
       layout: 'logicalStructure',
       current: currentDirection === direction ? options.current : emptyOfficialDragCandidate(),
       pointer: transformPointForDirection(pointer, direction),
+      branchDirection: options.layout === 'mindMap' && (direction === 'left' || direction === 'right')
+        ? direction
+        : undefined,
       reverseVisualSiblingOrder: (parent) => reversesVisualSiblingOrder(options.layout, parent),
       getRect: (node) => {
         const rect = options.getRect(node);
@@ -909,7 +936,7 @@ export function resolveOfficialDragCandidate(
   const sibling = resolveSiblingSlot(options, pointer);
   const child = resolveChildTarget(options, pointer);
   if (child?.fromTail) return childCandidate(options, pointer, child);
-  if (sibling && sibling.axisDistance <= SIBLING_SLOT_RADIUS) return slotCandidate(sibling);
+  if (sibling && sibling.axisDistance <= SIBLING_SLOT_RADIUS) return slotCandidate(sibling, sibling.kind, options.branchDirection);
   if (child) return childCandidate(options, pointer, child);
   return emptyOfficialDragCandidate();
 }
@@ -930,11 +957,24 @@ export function isOfficialDragCandidateNoop(
     : [];
   const firstSourceIndex = original.findIndex((node: any) => sourceSet.has(node));
   if (firstSourceIndex < 0) return false;
-  const insertionIndex = original
+  if (candidate.branchDirection) {
+    const alreadyOnBranch = sources.every((node) => normalizedDirection(node?.dir) === candidate.branchDirection);
+    if (!alreadyOnBranch) return false;
+  }
+  const currentIndex = original
     .slice(0, firstSourceIndex)
     .filter((node: any) => !sourceSet.has(node)).length;
+  const remaining = original.filter((node: any) => !sourceSet.has(node));
+  let desiredIndex = candidate.index;
+  if (candidate.nextNode) {
+    const index = remaining.indexOf(candidate.nextNode);
+    if (index >= 0) desiredIndex = index;
+  } else if (candidate.prevNode) {
+    const index = remaining.indexOf(candidate.prevNode);
+    if (index >= 0) desiredIndex = index + 1;
+  }
   const sourceOrder = original.filter((node: any) => sourceSet.has(node));
-  return insertionIndex === candidate.index && sourceOrder.every((node: any, index: number) => node === sources[index]);
+  return currentIndex === desiredIndex && sourceOrder.every((node: any, index: number) => node === sources[index]);
 }
 
 export interface OfficialInsertionGuide {
@@ -978,7 +1018,7 @@ export function calculateOfficialInsertionGuide(
   }
   const parentRect = getRect(candidate.parentNode);
   if (!finiteRect(parentRect)) return null;
-  const direction = resolveOfficialDragGrowthDirection(layout, candidate.parentNode);
+  const direction = candidate.branchDirection ?? resolveOfficialDragGrowthDirection(layout, candidate.parentNode);
   if (direction === 'left') {
     const x = parentRect.x - 34;
     const y1 = parentRect.y - 7;

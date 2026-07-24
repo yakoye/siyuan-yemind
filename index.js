@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.19 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.20 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -15847,7 +15847,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.19';
+exports.PLUGIN_VERSION = '0.9.20';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -15864,21 +15864,19 @@ const constants_1 = __require(28);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-24T03:30:00Z',
-    buildId: 'yemind-v0.9.19-20260724',
+    buildTime: '2026-07-24T06:30:00Z',
+    buildId: 'yemind-v0.9.20-20260724',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '统一替换导图操作图标，重构固定尺寸图标与剪贴图对话框，并恢复检查点历史入口和大纲插入标记对齐。',
+    releaseSummary: '统一轻量线性图标与平面资源对话框，并补齐思维导图跨中心镜像拖动。',
     highlights: [
-        '使用提供的 SVG 更新样式、节点样式、撤销、重做、关联线、插入层级、剪贴图、外框、搜索和全屏图标。',
-        '插入命令统一命名为插入上级节点、插入同级节点和插入下级节点，并按层级顺序排列。',
-        '底部画布模式按钮显示点击后将切换到的操作模式，选择优先时展示手型拖动图标。',
-        '图标对话框固定尺寸，一次展示全部分类和图标；分类导航固定，支持全部、关闭、外部点击关闭以及右对齐操作按钮。',
-        '剪贴图对话框固定尺寸并移除加载更多，搜索和分类直接筛选完整目录。',
-        '检查点按钮直接打开管理器，管理器内可创建、恢复、重命名和删除检查点。',
-        '大纲拖动插入线的小方块按照目标层级对齐到对应三角或叶子方块中心。',
+        '重新绘制插入层级、关联线、节点样式、复制、图标和剪贴图等操作图标，统一为 20×20 坐标、圆角线条和 currentColor。',
+        '图标对话框取消分类标题和图标外层白底，仅保留固定分类栏与连续滚动图标区。',
+        '剪贴图对话框使用透明内容表面和独立白色资源卡片，关闭按钮固定在右上角。',
+        '思维导图节点可跨越中心主题切换左右分支，目标侧自动采用镜像的同级前后和下级插入规则。',
+        '跨中心拖动会持久化根级分支方向，并为左右同名槽位生成独立稳定键，避免目标抖动或回跳。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -16665,13 +16663,15 @@ function canvasModeIcon(mode) {
     return '<svg class="ymz-toolbar-icon ymz-icon-canvas-select" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 12.7 9.1-5.6 1.1 3.2 5.4-2.6 1.5-3.1-5.3L6 19.1 5 3Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 function clipboardIcon(kind) {
+    const base = 'class="ymz-menu-icon ymz-operation-icon';
+    const stroke = 'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"';
     if (kind === 'cut') {
-        return '<svg class="ymz-menu-icon ymz-icon-cut" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6.5" cy="17.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="17.5" cy="17.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8.4 15.8 7.9-10.3M15.6 15.8 7.7 5.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+        return `<svg ${base} ymz-icon-cut" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="5" cy="15" r="2" ${stroke}/><circle cx="15" cy="15" r="2" ${stroke}/><path d="m6.5 13.7 7-9.2M13.5 13.7l-7-9.2" ${stroke}/></svg>`;
     }
     if (kind === 'paste') {
-        return '<svg class="ymz-menu-icon ymz-icon-paste" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5.5" width="12" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 5.5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1.5M9 10h6M9 14h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+        return `<svg ${base} ymz-icon-paste" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="4.5" y="4.5" width="11" height="13" rx="2" ${stroke}/><path d="M7.3 4.5V3.7c0-.7.6-1.2 1.2-1.2h3c.7 0 1.2.5 1.2 1.2v.8M7.5 9h5M7.5 12.5h5" ${stroke}/></svg>`;
     }
-    return '<svg class="ymz-menu-icon ymz-icon-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="7" width="11" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+    return `<svg ${base} ymz-icon-copy" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="7" y="6" width="9.5" height="11.5" rx="1.8" ${stroke}/><path d="M13.5 6V4.5c0-1.1-.9-2-2-2h-6c-1.1 0-2 .9-2 2V14c0 1.1.9 2 2 2H7" ${stroke}/></svg>`;
 }
 /** Compact relationship icons modelled after common mind-map insert controls. */
 function nodeInsertIcon(kind) {
@@ -16747,22 +16747,32 @@ function meditationIcon() {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.suppliedIcons = void 0;
 exports.suppliedIcon = suppliedIcon;
-/** SVG artwork supplied for YeMind v0.9.19. Colors are normalized to currentColor for themes. */
+/**
+ * YeMind operation icons.
+ *
+ * All icons share a 20×20 coordinate system, 1.5 px rounded strokes and
+ * currentColor. This keeps toolbar and context-menu artwork visually aligned
+ * in both light and dark themes and avoids the solid-black fills of v0.9.19.
+ */
+const menu = (name, body) => `<svg class="ymz-menu-icon ymz-operation-icon ymz-icon-${name}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
+const toolbar = (name, body) => `<svg class="ymz-toolbar-icon ymz-operation-icon ymz-icon-${name}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
+const project = (name, body) => `<svg class="ymz-project-icon ymz-operation-icon ymz-icon-${name}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
+const stroke = 'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"';
 exports.suppliedIcons = {
-    insertParent: `<svg class="ymz-menu-icon ymz-supplied-icon ymz-icon-insert-parent" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none"><rect rx="4"/><path d="M11.833 20.75v-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path fill-rule="evenodd" clip-rule="evenodd" d="M16.416 14.083H7.25c-.691 0-1.25-.559-1.25-1.25V9.5c0-.69.559-1.25 1.25-1.25h9.166c.691 0 1.25.56 1.25 1.25v3.333c0 .691-.559 1.25-1.25 1.25z" stroke="currentColor" opacity=".55" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4"/><path fill-rule="evenodd" clip-rule="evenodd" d="M13.083 20.834h.833-2.083 1.25zM24.75 23.75h-9.167c-.69 0-1.25-.559-1.25-1.25v-3.333c0-.69.56-1.25 1.25-1.25h9.167c.69 0 1.25.56 1.25 1.25V22.5c0 .691-.56 1.25-1.25 1.25z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    insertSibling: `<svg class="ymz-menu-icon ymz-supplied-icon ymz-icon-insert-sibling" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect rx="4"/><path fill-rule="evenodd" clip-rule="evenodd" d="M20.868 24h-9.733a1.327 1.327 0 01-1.328-1.327v-3.54c0-.733.594-1.326 1.327-1.326h9.734c.733 0 1.327.593 1.327 1.327v3.54c0 .733-.594 1.326-1.327 1.326zM16 15.786v1.947-3.54 1.593z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path fill-rule="evenodd" clip-rule="evenodd" d="M20.867 14.194h-9.733a1.327 1.327 0 01-1.327-1.327v-3.54c0-.733.594-1.327 1.327-1.327h9.733c.734 0 1.328.594 1.328 1.327v3.54c0 .733-.594 1.327-1.328 1.327z" stroke="currentColor" opacity=".55" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4"/></svg>`,
-    insertChild: `<svg class="ymz-menu-icon ymz-supplied-icon ymz-icon-insert-child" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none"><rect rx="4"/><path d="M11.833 20.75v-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path fill-rule="evenodd" clip-rule="evenodd" d="M16.416 14.083H7.25c-.691 0-1.25-.559-1.25-1.25V9.5c0-.69.559-1.25 1.25-1.25h9.166c.691 0 1.25.56 1.25 1.25v3.333c0 .691-.559 1.25-1.25 1.25z" stroke="currentColor" opacity=".55" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4"/><path fill-rule="evenodd" clip-rule="evenodd" d="M13.083 20.834h.833-2.083 1.25zM24.75 23.75h-9.167c-.69 0-1.25-.559-1.25-1.25v-3.333c0-.69.56-1.25 1.25-1.25h9.167c.69 0 1.25.56 1.25 1.25V22.5c0 .691-.56 1.25-1.25 1.25z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    outerFrame: `<svg class="ymz-menu-icon ymz-supplied-icon ymz-icon-outer-frame" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect rx="4" fill="none"/><path d="M22.25 8.5H9.75c-.69 0-1.25.56-1.25 1.25v12.5c0 .69.56 1.25 1.25 1.25h12.5c.69 0 1.25-.56 1.25-1.25V9.75c0-.69-.56-1.25-1.25-1.25z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 3"/><path fill-rule="evenodd" clip-rule="evenodd" d="M19.117 18.5h-6.233c-.35 0-.634-.383-.634-.853v-3.294c0-.471.283-.853.634-.853h6.233c.35 0 .633.382.633.853v3.294c0 .47-.283.853-.633.853z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    summary: `<svg class="ymz-menu-icon ymz-supplied-icon ymz-icon-summary" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect rx="4"/><path fill-rule="evenodd" clip-rule="evenodd" d="M15.376 13.51H9.172c-.35 0-.632-.38-.632-.849V9.383c0-.47.283-.85.632-.85h6.204c.349 0 .63.38.63.85v3.278c0 .469-.281.85-.63.85zM15.376 23.466H9.172c-.35 0-.632-.38-.632-.85v-3.278c0-.469.282-.85.632-.85h6.204c.349 0 .63.381.63.85v3.278c0 .47-.281.85-.63.85z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.723 10.778a6.054 6.054 0 012.892 5.156 6.058 6.058 0 01-3.114 5.287M23.54 16h-1.637" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    relation: `<svg class="ymz-menu-icon ymz-supplied-icon ymz-icon-relation" id="map-insert-relationship" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.80049 9.66988H5.17422L3.95361 9.67431C4.68936 8.73504 5.38804 7.87819 6.38882 7.19344C7.68323 6.30778 9.61006 5.47975 12.0827 5.75448C14.622 6.03663 16.2903 7.59116 17.2976 9.00149C17.8031 9.70917 18.1551 10.3969 18.381 10.9073C18.4943 11.1633 18.5769 11.3769 18.6319 11.529C18.6594 11.6051 18.6801 11.666 18.6944 11.7093C18.7015 11.731 18.707 11.7483 18.711 11.7609L18.7157 11.7763L18.7173 11.7813L18.7178 11.7831C18.7178 11.7831 18.7182 11.7844 17.9998 11.9999L18.7182 11.7844C18.8372 12.1812 18.6121 12.5993 18.2154 12.7183C17.819 12.8372 17.4014 12.6127 17.2818 12.2167L17.2815 12.2154M17.2815 12.2154L17.2798 12.2103L17.2694 12.178C17.2595 12.1478 17.2436 12.1008 17.2213 12.0392C17.1767 11.9159 17.107 11.735 17.0093 11.5144C16.8134 11.0717 16.5091 10.4782 16.077 9.87334C15.2094 8.65865 13.8777 7.46317 11.917 7.24531C9.88962 7.02004 8.31645 7.69203 7.23586 8.4314C6.69408 8.80209 6.28051 9.18729 6.0042 9.47777C5.86641 9.62264 5.80049 9.66988 5.80049 9.66988" fill="currentColor"></path><rect x="3" y="11" rx="1" fill="currentColor" fill-opacity="0.6"></rect><path d="M15.2002 13L20.9065 11.1459L19.7854 16.0161C19.7007 16.384 19.2546 16.5289 18.9699 16.2811L15.2002 13Z" fill="currentColor"></path></svg>`,
-    projectStyle: `<svg class="ymz-project-icon ymz-supplied-icon ymz-icon-project-style" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><mask style="mask-type:luminance" maskUnits="userSpaceOnUse" x="3" y="3"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.5 3.5h17v17h-17v-17z" fill="none"/></mask><g mask="url(#a)" fill="currentColor"><path d="M17.621 3.81c.085-.413.675-.413.759 0 .186.912.9 1.625 1.811 1.811.413.084.413.675 0 .759-.912.186-1.625.9-1.811 1.811-.084.413-.674.413-.759 0A2.324 2.324 0 0015.81 6.38c-.413-.084-.413-.675 0-.759A2.324 2.324 0 0017.62 3.81zM9.659 16.279c.076-.372.606-.372.682 0 .168.82.81 1.462 1.63 1.63.372.076.372.607 0 .682-.82.168-1.462.81-1.63 1.63-.075.372-.606.372-.682 0a2.091 2.091 0 00-1.63-1.63c-.372-.076-.372-.607 0-.682a2.091 2.091 0 001.63-1.63zM4.772 11.686c.051-.248.405-.248.456 0 .111.547.54.975 1.086 1.086.248.051.248.405 0 .456-.547.111-.975.539-1.086 1.086-.051.248-.405.248-.456 0a1.394 1.394 0 00-1.086-1.086c-.248-.051-.248-.405 0-.456.547-.111.975-.539 1.086-1.086z"/></g><path d="M9.136 10.536l7.636 7.636a1.2 1.2 0 001.697 0l1.134-1.134a1.2 1.2 0 000-1.697l-7.636-7.637m-2.831 2.832L6.449 7.849a1.2 1.2 0 010-1.698l1.134-1.134a1.2 1.2 0 011.697 0l2.687 2.687m-2.831 2.832l2.83-2.832" stroke="currentColor" stroke-width="1.5"/></svg>`,
-    nodeStyle: `<svg class="ymz-menu-icon ymz-icon-node-style ymz-supplied-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.74071 10.2339C2.5252 10.1524 2.5252 9.84757 2.74071 9.76614L4.91553 8.94435C6.72811 8.25944 8.15894 6.82861 8.84385 5.01603L9.66563 2.84121C9.74707 2.62571 10.0519 2.6257 10.1334 2.84122L10.9551 5.01604C11.6401 6.82861 13.0709 8.25944 14.8835 8.94435L17.0583 9.76614C17.2738 9.84757 17.2738 10.1524 17.0583 10.2339L14.8835 11.0556C13.0709 11.7406 11.6401 13.1714 10.9551 14.984L10.1334 17.1588C10.0519 17.3743 9.74707 17.3743 9.66563 17.1588L8.84384 14.984C8.15893 13.1714 6.7281 11.7406 4.91553 11.0556L2.74071 10.2339Z" stroke="currentColor" stroke-width="1.5"></path><path d="M14.1716 17L16.293 16.2929L17.0001 14.1716L17.7072 16.2929L19.8285 17L17.7072 17.7071L17.0001 19.8284L16.293 17.7071L14.1716 17Z" fill="currentColor"></path><path d="M0 2.82837L2.12132 2.12126L2.82843 -5.79357e-05L3.53553 2.12126L5.65685 2.82837L3.53553 3.53548L2.82843 5.6568L2.12132 3.53548L0 2.82837Z" fill="currentColor"></path></svg>`,
-    clipart: `<svg class="ymz-menu-icon ymz-supplied-icon ymz-icon-clipart" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip0_3665_24045)"><mask fill="white"><path d="M14.8453 17.3395C15.4931 16.8841 16.6604 15.4346 16.1044 13.6055C15.8979 12.9262 16.19 12.0805 16.7399 11.6314C17.8358 10.7362 18.265 9.22118 17.8361 7.85808C17.6087 7.1465 16.6931 5.54636 14.8387 5.48079C14.1206 5.4554 13.3897 4.90917 13.1396 4.23557C12.6462 2.90652 11.3792 2 9.99759 2C8.65576 2 7.40481 2.87467 6.88318 4.13564C6.59783 4.82545 5.78686 5.42105 5.04358 5.49021C3.71032 5.61425 2.5793 6.55226 2.16423 7.86447C1.73558 9.22133 2.16248 10.7044 3.25263 11.6086C3.80269 12.0648 4.08369 12.9401 3.89978 13.6306C3.5313 15.0143 4.03492 16.5034 5.16148 17.3436C6.58449 18.407 8.01753 17.8238 9.18138 16.8165C9.64255 16.4174 10.3475 16.4265 10.8056 16.8291C11.9613 17.8448 13.3876 18.3703 14.8453 17.3395Z"></path></mask><path d="M14.8453 17.3395L13.9827 16.1123L13.9792 16.1148L14.8453 17.3395ZM17.8361 7.85808L19.267 7.40795L19.2649 7.40142L17.8361 7.85808ZM2.16423 7.86447L0.734074 7.41208L0.733907 7.41261L2.16423 7.86447ZM5.16148 17.3436L6.0594 16.142L6.05828 16.1412L5.16148 17.3436ZM3.25263 11.6086L2.29502 12.7632L3.25263 11.6086ZM3.89978 13.6306L2.4503 13.2446L3.89978 13.6306ZM6.88318 4.13564L5.49709 3.56226L6.88318 4.13564ZM14.8387 5.48079L14.7857 6.97985L14.8387 5.48079ZM13.1396 4.23557L11.7334 4.7577L13.1396 4.23557ZM16.1044 13.6055L14.6692 14.0418L16.1044 13.6055ZM16.7399 11.6314L15.791 10.4696L16.7399 11.6314ZM15.7079 18.5666C16.245 18.189 16.8702 17.5093 17.2848 16.6236C17.7153 15.7039 17.9442 14.5005 17.5395 13.1692L14.6692 14.0418C14.8205 14.5395 14.7438 14.9755 14.5677 15.3517C14.3758 15.7618 14.0933 16.0345 13.9827 16.1123L15.7079 18.5666ZM17.6888 12.7931C19.278 11.4951 19.8728 9.33374 19.267 7.40795L16.4053 8.3082C16.6571 9.10861 16.3936 9.97743 15.791 10.4696L17.6888 12.7931ZM19.2649 7.40142C19.0889 6.85057 18.6908 6.06022 18.0168 5.37521C17.3192 4.66614 16.2809 4.03085 14.8917 3.98173L14.7857 6.97985C15.251 6.99631 15.5976 7.19387 15.8783 7.47915C16.1826 7.78849 16.356 8.154 16.4073 8.31474L19.2649 7.40142ZM14.5458 3.71344C13.8439 1.82311 12.0341 0.5 9.99759 0.5V3.5C10.7243 3.5 11.4484 3.98992 11.7334 4.7577L14.5458 3.71344ZM9.99759 0.5C8.01449 0.5 6.23732 1.77285 5.49709 3.56226L8.26926 4.70903C8.57229 3.97649 9.29704 3.5 9.99759 3.5V0.5ZM4.90462 3.99666C2.94295 4.17917 1.32248 5.5519 0.734074 7.41208L3.59439 8.31685C3.83613 7.55263 4.4777 7.04933 5.18254 6.98376L4.90462 3.99666ZM0.733907 7.41261C0.124409 9.34194 0.727796 11.4633 2.29502 12.7632L4.21024 10.4541C3.59717 9.94558 3.34675 9.10072 3.59455 8.31632L0.733907 7.41261ZM2.4503 13.2446C1.9288 15.2029 2.63168 17.328 4.26469 18.546L6.05828 16.1412C5.43816 15.6787 5.13381 14.8257 5.34926 14.0167L2.4503 13.2446ZM9.81541 17.9558C10.51 18.5662 11.3934 19.1285 12.4329 19.3255C13.5286 19.5332 14.661 19.3069 15.7114 18.5641L13.9792 16.1148C13.5718 16.4029 13.2622 16.4293 12.9915 16.378C12.6645 16.316 12.257 16.1077 11.7959 15.7024L9.81541 17.9558ZM4.26357 18.5452C5.31716 19.3325 6.46663 19.5506 7.5679 19.3264C8.60046 19.1161 9.47974 18.542 10.163 17.9507L8.19976 15.6823C7.71916 16.0982 7.3 16.3194 6.96933 16.3867C6.70737 16.4401 6.42882 16.4181 6.0594 16.142L4.26357 18.5452ZM11.7959 15.7024C10.7857 14.8146 9.23876 14.7831 8.19976 15.6823L10.163 17.9507C10.0995 18.0057 10.0306 18.0225 9.98068 18.0221C9.93162 18.0216 9.87074 18.0044 9.81541 17.9558L11.7959 15.7024ZM2.29502 12.7632C2.39642 12.8473 2.48301 13.1218 2.4503 13.2446L5.34926 14.0167C5.68437 12.7583 5.20895 11.2824 4.21024 10.4541L2.29502 12.7632ZM5.49709 3.56226C5.48052 3.60232 5.40696 3.71915 5.24615 3.83746C5.08548 3.95567 4.95042 3.9924 4.90462 3.99666L5.18254 6.98376C5.88002 6.91886 6.52209 6.6232 7.02405 6.25388C7.52589 5.88465 8.00048 5.35877 8.26926 4.70903L5.49709 3.56226ZM14.8917 3.98173C14.892 3.98174 14.8721 3.9808 14.8341 3.96648C14.7962 3.95221 14.7506 3.92839 14.7038 3.8939C14.6001 3.81743 14.5551 3.73831 14.5458 3.71344L11.7334 4.7577C12.1867 5.97832 13.4365 6.93215 14.7857 6.97985L14.8917 3.98173ZM17.5395 13.1692C17.5418 13.1766 17.5256 13.1156 17.5634 13.0009C17.6009 12.8868 17.661 12.8158 17.6888 12.7931L15.791 10.4696C14.8126 11.2688 14.2703 12.7297 14.6692 14.0418L17.5395 13.1692Z" fill="currentColor" mask="url(#path-1-inside-1_3665_24045)"></path><mask fill="white"><path d="M7 9.99754C7 8.3479 8.34085 7 9.99797 7C11.654 7 13 8.3479 13 9.99754C13 11.6525 11.654 13 9.99797 13C8.34085 13 7 11.6525 7 9.99754Z"></path></mask><path d="M8.5 9.99754C8.5 9.17417 9.17143 8.5 9.99797 8.5V5.5C7.51027 5.5 5.5 7.52162 5.5 9.99754H8.5ZM9.99797 8.5C10.8264 8.5 11.5 9.17717 11.5 9.99754H14.5C14.5 7.51863 12.4816 5.5 9.99797 5.5V8.5ZM11.5 9.99754C11.5 10.8247 10.825 11.5 9.99797 11.5V14.5C12.4831 14.5 14.5 12.4803 14.5 9.99754H11.5ZM9.99797 11.5C9.17289 11.5 8.5 10.8277 8.5 9.99754H5.5C5.5 12.4773 7.50881 14.5 9.99797 14.5V11.5Z" fill="currentColor" mask="url(#path-3-inside-2_3665_24045)"></path></g><defs><clipPath><rect fill="white" transform="translate(2 2)"></rect></clipPath></defs></svg>`,
-    marker: `<svg class="ymz-supplied-icon ymz-icon-marker" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.5422 13.256L15.4084 13.4463C15.3304 13.5475 15.2222 13.6843 15.0867 13.8477C14.7766 14.2214 14.3256 14.7315 13.7648 15.2729C13.0174 15.9945 12.12 16.7719 11.3419 17.3642C10.9516 17.6612 10.6045 17.9017 10.3294 18.064C10.1913 18.1455 10.0847 18.1994 10.0089 18.2307C10.0058 18.232 10.0028 18.2332 9.99997 18.2344C9.9971 18.2332 9.99411 18.232 9.991 18.2307C9.91518 18.1993 9.80854 18.1455 9.67039 18.064C9.39513 17.9016 9.04792 17.6612 8.6576 17.3641C7.87941 16.7719 6.9821 15.9946 6.23543 15.2731C5.67526 14.7319 5.22542 14.2221 4.91642 13.8485C4.76217 13.662 4.64366 13.5103 4.56472 13.4065C4.55958 13.3998 4.55461 13.3932 4.54981 13.3869L4.45776 13.256C3.69611 12.1732 3.25 10.8579 3.25 9.4375C3.25 5.75 6.26615 2.75 10 2.75C13.7339 2.75 16.75 5.75 16.75 9.4375C16.75 10.8579 16.3039 12.1732 15.5422 13.256Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><rect x="7" y="6" rx="0.75" fill="currentColor"></rect><rect x="11.5" y="6" rx="0.75" fill="currentColor"></rect><path d="M8 10C9.22882 11.2288 10.7712 11.2288 12 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>`,
-    search: `<svg class="ymz-toolbar-icon ymz-supplied-icon ymz-icon-search" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.038 2.714a6.552 6.552 0 00-9.354 0c-2.578 2.621-2.578 6.855 0 9.478a6.554 6.554 0 009.147.199l.584-.618c2.201-2.64 2.068-6.583-.377-9.06z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.2 12.143l3.05 3.108" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    redo: `<svg class="ymz-toolbar-icon ymz-supplied-icon ymz-icon-redo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14.6 15.5"><path d="M13.8 3.6H6.3C3.2 3.6.7 6.1.7 9.2h0c0 3.1 2.5 5.6 5.6 5.6h3.3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10.9 6.6l2.9-3L10.9.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-    undo: `<svg class="ymz-toolbar-icon ymz-supplied-icon ymz-icon-undo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14.6 15.5"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M.8 3.6h7.5c3.1 0 5.6 2.5 5.6 5.6h0c0 3.1-2.5 5.6-5.6 5.6H4.9"/><path d="M3.7 6.6l-2.9-3L3.7.7" stroke-linejoin="round"/></g></svg>`,
-    fullscreen: `<svg class="ymz-toolbar-icon ymz-supplied-icon ymz-icon-fullscreen" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18.6 5.398v4.2M18.6 5.4h-4.2M14.8 9.6l3.8-3.8M5.4 5.398v4.2M5.4 5.4h4.2M9.2 9.6L5.4 5.8M18.6 18.602v-4.2M18.6 18.6h-4.2M14.8 14.4l3.8 3.8M5.4 18.602v-4.2M5.4 18.6h4.2M9.2 14.4l-3.8 3.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    insertParent: menu('insert-parent', `<rect x="10.5" y="11.5" width="7" height="4.5" rx="1.2" ${stroke}/><rect x="2.5" y="4" width="7" height="4.5" rx="1.2" ${stroke} stroke-dasharray="2 2" opacity=".58"/><path d="M7 11.5V9.8h7V11.5M5.8 11.5h2.4M7 9.8V8.5" ${stroke}/>`),
+    insertSibling: menu('insert-sibling', `<rect x="5" y="3" width="10" height="5" rx="1.3" ${stroke} stroke-dasharray="2 2" opacity=".58"/><rect x="5" y="12" width="10" height="5" rx="1.3" ${stroke}/><path d="M10 8v4" ${stroke}/>`),
+    insertChild: menu('insert-child', `<rect x="2.5" y="4" width="7" height="4.5" rx="1.2" ${stroke}/><rect x="10.5" y="11.5" width="7" height="4.5" rx="1.2" ${stroke} stroke-dasharray="2 2" opacity=".58"/><path d="M7 8.5v1.3h7v1.7M5.8 9.8h2.4" ${stroke}/>`),
+    outerFrame: menu('outer-frame', `<rect x="2.5" y="2.5" width="15" height="15" rx="2.4" ${stroke} stroke-dasharray="2.6 2.6"/><rect x="6.2" y="7" width="7.6" height="6" rx="1.4" ${stroke}/>`),
+    summary: menu('summary', `<rect x="2.8" y="3.2" width="6.2" height="4.3" rx="1.2" ${stroke}/><rect x="2.8" y="12.5" width="6.2" height="4.3" rx="1.2" ${stroke}/><path d="M12 4.5c2.4 1.3 3.6 3.1 3.6 5.5S14.4 14.2 12 15.5M14.3 10h3" ${stroke}/>`),
+    relation: menu('relation', `<rect x="2.3" y="12.4" width="3.6" height="3.6" rx=".8" ${stroke}/><path d="M5.8 12.7C7.7 6 12 4 16.4 7.2M14.8 4.9l2 2.4-2.9 1.2" ${stroke}/>`),
+    projectStyle: project('project-style', `<path d="m5.2 13.8 7.9-7.9 2.8 2.8-7.9 7.9a1.5 1.5 0 0 1-2.1 0l-.7-.7a1.5 1.5 0 0 1 0-2.1Z" ${stroke}/><path d="m11.8 7.2 2.8 2.8M4 3.2v3.1M2.45 4.75h3.1M15.7 13.7v3.1M14.15 15.25h3.1" ${stroke}/>`),
+    nodeStyle: menu('node-style', `<path d="M3.2 5.2h13.6M3.2 10h13.6M3.2 14.8h13.6" ${stroke}/><circle cx="7" cy="5.2" r="1.7" fill="none" ${stroke}/><circle cx="13" cy="10" r="1.7" fill="none" ${stroke}/><circle cx="8.5" cy="14.8" r="1.7" fill="none" ${stroke}/>`),
+    clipart: menu('clipart', `<rect x="2.5" y="3" width="15" height="14" rx="2" ${stroke}/><circle cx="7" cy="7.2" r="1.35" ${stroke}/><path d="m4.5 14 3.6-3.7 2.5 2.3 2.2-2.1 2.7 3.5" ${stroke}/>`),
+    marker: menu('marker', `<circle cx="10" cy="10" r="7" ${stroke}/><circle cx="7.5" cy="8" r=".75" fill="currentColor"/><circle cx="12.5" cy="8" r=".75" fill="currentColor"/><path d="M7.2 11.6c1.8 1.7 3.8 1.7 5.6 0" ${stroke}/>`),
+    search: toolbar('search', `<circle cx="8.8" cy="8.8" r="5.4" ${stroke}/><path d="m12.8 12.8 4 4" ${stroke}/>`),
+    redo: toolbar('redo', `<path d="M16.5 6.3H9.2a5.3 5.3 0 1 0 0 10.6h3" ${stroke}/><path d="m13.4 3.2 3.1 3.1-3.1 3.1" ${stroke}/>`),
+    undo: toolbar('undo', `<path d="M3.5 6.3h7.3a5.3 5.3 0 1 1 0 10.6h-3" ${stroke}/><path d="m6.6 3.2-3.1 3.1 3.1 3.1" ${stroke}/>`),
+    fullscreen: toolbar('fullscreen', `<path d="M7.5 3.5h-4v4M12.5 3.5h4v4M3.5 12.5v4h4M16.5 12.5v4h-4" ${stroke}/>`),
 };
 function suppliedIcon(name) { return exports.suppliedIcons[name]; }
 
@@ -40717,12 +40727,28 @@ class YeMindDrag extends Drag_1.default {
             const finalCandidate = (0, officialDragIntent_1.isOfficialDragCandidateNoop)(resolved, plugin.beingDragNodeList ?? [])
                 ? (0, officialDragIntent_1.emptyOfficialDragCandidate)()
                 : resolved;
+            this.applyMindMapBranchDirection(finalCandidate);
             applyCandidate(plugin, finalCandidate);
             await super.onMouseup(event);
         }
         finally {
             this.restoreIncomingLines();
         }
+    }
+    applyMindMapBranchDirection(candidate) {
+        const plugin = this;
+        if (String(plugin.mindMap.opt.layout ?? '') !== 'mindMap')
+            return;
+        const branch = candidate.branchDirection;
+        if (branch !== 'left' && branch !== 'right')
+            return;
+        (plugin.beingDragNodeList ?? []).forEach((node) => {
+            node.dir = branch;
+            if (node?.nodeData?.data)
+                node.nodeData.data.dir = branch;
+            if (typeof node?.setData === 'function')
+                node.setData({ dir: branch });
+        });
     }
     removeCloneNode() {
         this.cancelCandidateFrame();
@@ -40870,7 +40896,7 @@ class YeMindDrag extends Drag_1.default {
         if (target) {
             const orientation = (0, officialDragIntent_1.resolveOfficialDragGuideOrientation)(layout, previewParent);
             plugin.__ymzTargetGuideLine
-                .plot(calculateDragGuidePath(target, ghost, orientation, (0, officialDragIntent_1.resolveOfficialDragGrowthDirection)(layout, previewParent)))
+                .plot(calculateDragGuidePath(target, ghost, orientation, stable.branchDirection ?? (0, officialDragIntent_1.resolveOfficialDragGrowthDirection)(layout, previewParent)))
                 .stroke({ color: 'rgba(23, 107, 80, 0.96)', width: 2.3, linecap: 'round' })
                 .attr({ 'stroke-dasharray': '6 6', opacity: 1, 'pointer-events': 'none' })
                 .show()
@@ -42325,6 +42351,7 @@ function emptyOfficialDragCandidate() {
         targetNode: null,
         parentNode: null,
         score: Number.POSITIVE_INFINITY,
+        branchDirection: undefined,
     };
 }
 function finiteRect(rect) {
@@ -42477,13 +42504,14 @@ function tailRect(rect, direction) {
             };
     }
 }
-function branchFilteredSiblings(layout, parent, siblings, pointer, getRect) {
-    if (layout !== 'mindMap')
+function branchFilteredSiblings(layout, parent, siblings, pointer, getRect, branchDirection) {
+    if (layout !== 'mindMap' && !branchDirection)
         return siblings;
     const parentRect = getRect(parent);
-    if (!finiteRect(parentRect))
+    if (!finiteRect(parentRect) && !branchDirection)
         return siblings;
-    const branch = pointer.x < rectCenter(parentRect).x ? 'left' : 'right';
+    const branch = branchDirection
+        ?? (pointer.x < rectCenter(parentRect).x ? 'left' : 'right');
     const filtered = siblings.filter((node) => {
         const direction = normalizedDirection(node?.dir);
         if (direction === 'left' || direction === 'right')
@@ -42495,11 +42523,11 @@ function branchFilteredSiblings(layout, parent, siblings, pointer, getRect) {
     });
     return filtered.length > 0 ? filtered : siblings;
 }
-function orderedSiblings(layout, parent, available, pointer, getRect) {
+function orderedSiblings(layout, parent, available, pointer, getRect, branchDirection) {
     let siblings = Array.isArray(parent?.children)
         ? parent.children.filter((child) => available.has(child) && finiteRect(getRect(child)))
         : [];
-    siblings = branchFilteredSiblings(layout, parent, siblings, pointer, getRect);
+    siblings = branchFilteredSiblings(layout, parent, siblings, pointer, getRect, branchDirection);
     const axis = resolveOfficialDragSiblingAxis(layout, parent);
     return [...siblings].sort((a, b) => {
         const aRect = getRect(a);
@@ -42522,7 +42550,7 @@ function resolveSiblingSlot(options, pointer) {
         if (!parent || seenParents.has(parent))
             return;
         seenParents.add(parent);
-        const siblings = orderedSiblings(options.layout, parent, available, pointer, options.getRect);
+        const siblings = orderedSiblings(options.layout, parent, available, pointer, options.getRect, options.branchDirection);
         if (siblings.length === 0)
             return;
         const nativeSiblings = Array.isArray(parent.children)
@@ -42602,7 +42630,7 @@ function resolveChildTarget(options, pointer) {
     });
     return best;
 }
-function slotCandidate(slot, kind = slot.kind) {
+function slotCandidate(slot, kind = slot.kind, branchDirection) {
     const nextNode = slot.nativeIndex < slot.nativeSiblings.length
         ? slot.nativeSiblings[slot.nativeIndex] ?? null
         : null;
@@ -42610,7 +42638,7 @@ function slotCandidate(slot, kind = slot.kind) {
         ? slot.nativeSiblings[slot.nativeIndex - 1] ?? null
         : null;
     return {
-        key: `${kind}:${nodeUid(slot.parent)}:${slot.nativeIndex}`,
+        key: `${branchDirection ?? 'auto'}:${kind}:${nodeUid(slot.parent)}:${slot.nativeIndex}`,
         kind,
         target: slot.targetNode,
         parent: slot.parent,
@@ -42621,15 +42649,16 @@ function slotCandidate(slot, kind = slot.kind) {
         targetNode: slot.targetNode,
         parentNode: slot.parent,
         score: slot.score,
+        branchDirection,
     };
 }
 function childCandidate(options, pointer, child) {
     const excluded = new Set(options.excludedNodes ?? []);
     const available = new Set(options.nodes.filter((node) => !excluded.has(node)));
-    const children = orderedSiblings(options.layout, child.node, available, pointer, options.getRect);
+    const children = orderedSiblings(options.layout, child.node, available, pointer, options.getRect, options.branchDirection);
     if (children.length === 0) {
         return {
-            key: `child:${nodeUid(child.node)}:0`,
+            key: `${options.branchDirection ?? 'auto'}:child:${nodeUid(child.node)}:0`,
             kind: 'child',
             target: child.node,
             parent: child.node,
@@ -42640,6 +42669,7 @@ function childCandidate(options, pointer, child) {
             targetNode: child.node,
             parentNode: child.node,
             score: child.score,
+            branchDirection: options.branchDirection,
         };
     }
     const axis = resolveOfficialDragSiblingAxis(options.layout, child.node);
@@ -42663,7 +42693,7 @@ function childCandidate(options, pointer, child) {
     const nextNode = nativeIndex < nativeChildren.length ? nativeChildren[nativeIndex] ?? null : null;
     const prevNode = nativeIndex > 0 ? nativeChildren[nativeIndex - 1] ?? null : null;
     return {
-        key: `child:${nodeUid(child.node)}:${nativeIndex}`,
+        key: `${options.branchDirection ?? 'auto'}:child:${nodeUid(child.node)}:${nativeIndex}`,
         kind: 'child',
         target: child.node,
         parent: child.node,
@@ -42674,6 +42704,7 @@ function childCandidate(options, pointer, child) {
         targetNode: child.node,
         parentNode: child.node,
         score: child.score,
+        branchDirection: options.branchDirection,
     };
 }
 const LOGICAL_LOCAL_LEFT_PADDING = 46;
@@ -42728,9 +42759,7 @@ function logicalCandidateForNode(options, pointer, node, rect) {
         };
     }
     const available = new Set(options.nodes.filter((item) => !(options.excludedNodes ?? []).includes(item)));
-    const siblings = Array.isArray(node.parent.children)
-        ? node.parent.children.filter((item) => available.has(item))
-        : [];
+    const siblings = orderedSiblings(options.layout, node.parent, available, pointer, options.getRect, options.branchDirection);
     const targetNativeIndex = Math.max(0, siblings.indexOf(node));
     const kind = pointer.y < center.y ? 'before' : 'after';
     const reverse = options.reverseVisualSiblingOrder?.(node.parent) ?? false;
@@ -42751,7 +42780,7 @@ function logicalCandidateForNode(options, pointer, node, rect) {
     return {
         node,
         rect,
-        candidate: slotCandidate(slot, kind),
+        candidate: slotCandidate(slot, kind, options.branchDirection),
         score: slot.score,
         distance,
         strong: insideActual,
@@ -42887,7 +42916,7 @@ function sameAxisCandidateForNode(options, pointer, node, rect) {
     return {
         node,
         rect,
-        candidate: slotCandidate(slot, kind),
+        candidate: slotCandidate(slot, kind, options.branchDirection),
         score: slot.score,
         distance,
         strong: insideBody,
@@ -42953,6 +42982,14 @@ function resolveDirectionalLocalCandidate(options, pointer) {
     options.nodes.forEach((node) => {
         if (excluded.has(node) || node?.isGeneralization)
             return;
+        if (options.layout === 'mindMap' && (node?.isRoot || !node?.parent)) {
+            ['left', 'right'].forEach((direction) => {
+                const list = groups.get(direction) ?? [];
+                list.push(node);
+                groups.set(direction, list);
+            });
+            return;
+        }
         const direction = resolveOfficialDragGrowthDirection(options.layout, node);
         const siblingAxis = node?.parent
             ? resolveOfficialDragSiblingAxis(options.layout, node.parent)
@@ -42968,14 +43005,16 @@ function resolveDirectionalLocalCandidate(options, pointer) {
     let best = resolveSameAxisLocalCandidate(options, pointer, sameAxisNodes);
     const currentTarget = options.current?.targetNode ?? options.current?.target ?? null;
     groups.forEach((candidateNodes, direction) => {
-        const currentDirection = currentTarget
-            ? resolveOfficialDragGrowthDirection(options.layout, currentTarget)
-            : null;
+        const currentDirection = options.current?.branchDirection
+            ?? (currentTarget ? resolveOfficialDragGrowthDirection(options.layout, currentTarget) : null);
         const transformed = {
             ...options,
             layout: 'logicalStructure',
             current: currentDirection === direction ? options.current : emptyOfficialDragCandidate(),
             pointer: transformPointForDirection(pointer, direction),
+            branchDirection: options.layout === 'mindMap' && (direction === 'left' || direction === 'right')
+                ? direction
+                : undefined,
             reverseVisualSiblingOrder: (parent) => reversesVisualSiblingOrder(options.layout, parent),
             getRect: (node) => {
                 const rect = options.getRect(node);
@@ -43011,7 +43050,7 @@ function resolveOfficialDragCandidate(options) {
     if (child?.fromTail)
         return childCandidate(options, pointer, child);
     if (sibling && sibling.axisDistance <= SIBLING_SLOT_RADIUS)
-        return slotCandidate(sibling);
+        return slotCandidate(sibling, sibling.kind, options.branchDirection);
     if (child)
         return childCandidate(options, pointer, child);
     return emptyOfficialDragCandidate();
@@ -43031,11 +43070,28 @@ function isOfficialDragCandidateNoop(candidate, sources) {
     const firstSourceIndex = original.findIndex((node) => sourceSet.has(node));
     if (firstSourceIndex < 0)
         return false;
-    const insertionIndex = original
+    if (candidate.branchDirection) {
+        const alreadyOnBranch = sources.every((node) => normalizedDirection(node?.dir) === candidate.branchDirection);
+        if (!alreadyOnBranch)
+            return false;
+    }
+    const currentIndex = original
         .slice(0, firstSourceIndex)
         .filter((node) => !sourceSet.has(node)).length;
+    const remaining = original.filter((node) => !sourceSet.has(node));
+    let desiredIndex = candidate.index;
+    if (candidate.nextNode) {
+        const index = remaining.indexOf(candidate.nextNode);
+        if (index >= 0)
+            desiredIndex = index;
+    }
+    else if (candidate.prevNode) {
+        const index = remaining.indexOf(candidate.prevNode);
+        if (index >= 0)
+            desiredIndex = index + 1;
+    }
     const sourceOrder = original.filter((node) => sourceSet.has(node));
-    return insertionIndex === candidate.index && sourceOrder.every((node, index) => node === sources[index]);
+    return currentIndex === desiredIndex && sourceOrder.every((node, index) => node === sources[index]);
 }
 function lineFromSlot(rect, axis, before) {
     if (axis === 'y') {
@@ -43064,7 +43120,7 @@ function calculateOfficialInsertionGuide(candidate, layout, getRect) {
     const parentRect = getRect(candidate.parentNode);
     if (!finiteRect(parentRect))
         return null;
-    const direction = resolveOfficialDragGrowthDirection(layout, candidate.parentNode);
+    const direction = candidate.branchDirection ?? resolveOfficialDragGrowthDirection(layout, candidate.parentNode);
     if (direction === 'left') {
         const x = parentRect.x - 34;
         const y1 = parentRect.y - 7;
@@ -88822,26 +88878,24 @@ function applyStyle(element, style) {
 function selectedIcons(commands) {
     return (0, nodeContentState_1.normalizeStringList)(commands.getPrimaryNodeData()?.icon);
 }
-function bindOutsideClose(dialog) {
+function prepareAssetDialog(dialog) {
+    dialog.element.classList.add('ymz-asset-dialog-shell');
     dialog.element.addEventListener('mousedown', (event) => {
         const target = event.target;
         if (target === dialog.element || target.classList.contains('b3-dialog__scrim')) {
             dialog.destroy();
         }
     });
-    dialog.element.querySelector('[data-action="asset-dialog-close"]')
-        ?.addEventListener('click', () => dialog.destroy());
-}
-function assetDialogCloseButton(label) {
-    return `<button type="button" class="ymz-local-asset-dialog__close" data-action="asset-dialog-close" title="${label}" aria-label="${label}">×</button>`;
 }
 function openMarkerPicker(commands, options = {}) {
+    let activeGroupId = options.initialGroupId && localAssetCatalogs_1.markerCatalog.groups.some((group) => group.id === options.initialGroupId)
+        ? options.initialGroupId
+        : '';
     const dialog = new siyuan_1.Dialog({
         title: '图标',
         content: `<div class="b3-dialog__content ymz-local-asset-dialog ymz-marker-dialog">
-      ${assetDialogCloseButton('关闭图标')}
       <nav class="ymz-asset-tabs ymz-asset-tabs--sticky" data-role="marker-tabs" aria-label="图标分类"></nav>
-      <div class="ymz-marker-scroll" data-role="marker-scroll"></div>
+      <div class="ymz-marker-scroll" data-role="marker-scroll"><div class="ymz-marker-groups" data-role="marker-groups"></div></div>
       <footer class="ymz-local-asset-dialog__footer">
         <button type="button" class="b3-button b3-button--cancel" data-action="clear-markers">清除图标</button>
         <button type="button" class="b3-button b3-button--text" data-action="close">完成</button>
@@ -88849,104 +88903,87 @@ function openMarkerPicker(commands, options = {}) {
     </div>`,
         width: '640px',
         height: '620px',
-        hideCloseIcon: true,
+        hideCloseIcon: false,
     });
-    bindOutsideClose(dialog);
+    prepareAssetDialog(dialog);
     const tabs = dialog.element.querySelector('[data-role="marker-tabs"]');
     const scroll = dialog.element.querySelector('[data-role="marker-scroll"]');
-    const sectionMap = new Map();
+    const groups = dialog.element.querySelector('[data-role="marker-groups"]');
     const refreshSelection = () => {
         const selected = new Set(selectedIcons(commands));
-        scroll.querySelectorAll('[data-marker-value]').forEach((button) => {
+        groups.querySelectorAll('[data-marker-value]').forEach((button) => {
             button.classList.toggle('is-selected', selected.has(button.dataset.markerValue ?? ''));
         });
     };
-    const selectTab = (groupId) => {
-        tabs.querySelectorAll('[data-marker-group]').forEach((button) => {
-            button.classList.toggle('is-active', button.dataset.markerGroup === groupId);
+    const createOption = (item) => {
+        const value = (0, localAssetCatalogs_1.markerValue)(item);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'ymz-marker-option';
+        button.dataset.markerValue = value;
+        button.title = `${item.groupLabel} ${item.orderInGroup}`;
+        button.setAttribute('aria-label', button.title);
+        const preview = document.createElement('span');
+        preview.className = 'ymz-marker-sprite';
+        applyStyle(preview, (0, localAssetCatalogs_1.markerButtonStyle)(options.pluginBaseUrl, item));
+        button.appendChild(preview);
+        button.addEventListener('click', () => {
+            const next = new Set(selectedIcons(commands));
+            if (next.has(value))
+                next.delete(value);
+            else
+                next.add(value);
+            commands.setIcons(Array.from(next));
+            refreshSelection();
         });
+        return button;
     };
-    const all = document.createElement('button');
-    all.type = 'button';
-    all.className = 'ymz-asset-tab is-active';
-    all.dataset.markerGroup = 'all';
-    all.textContent = '全部';
-    all.addEventListener('click', () => {
-        scroll.scrollTo({ top: 0, behavior: 'smooth' });
-        selectTab('all');
-    });
-    tabs.appendChild(all);
     localAssetCatalogs_1.markerCatalog.groups.forEach((group) => {
-        const tab = document.createElement('button');
-        tab.type = 'button';
-        tab.className = 'ymz-asset-tab';
-        tab.dataset.markerGroup = group.id;
-        tab.textContent = group.label;
-        tab.addEventListener('click', () => {
-            const section = sectionMap.get(group.id);
-            if (section)
-                scroll.scrollTo({ top: section.offsetTop - 8, behavior: 'smooth' });
-            selectTab(group.id);
-        });
-        tabs.appendChild(tab);
         const section = document.createElement('section');
-        section.className = 'ymz-marker-section';
-        section.dataset.markerSection = group.id;
-        const heading = document.createElement('h3');
-        heading.textContent = group.label;
+        section.className = 'ymz-marker-group';
+        section.dataset.markerGroupSection = group.id;
+        section.setAttribute('aria-label', group.label);
         const grid = document.createElement('div');
         grid.className = 'ymz-marker-grid';
-        localAssetCatalogs_1.markerCatalog.items.filter((item) => item.groupId === group.id).forEach((item) => {
-            const value = (0, localAssetCatalogs_1.markerValue)(item);
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'ymz-marker-option';
-            button.dataset.markerValue = value;
-            button.title = `${item.groupLabel} ${item.orderInGroup}`;
-            button.setAttribute('aria-label', button.title);
-            const preview = document.createElement('span');
-            preview.className = 'ymz-marker-sprite';
-            applyStyle(preview, (0, localAssetCatalogs_1.markerButtonStyle)(options.pluginBaseUrl, item));
-            button.appendChild(preview);
-            button.addEventListener('click', () => {
-                const next = new Set(selectedIcons(commands));
-                if (next.has(value))
-                    next.delete(value);
-                else
-                    next.add(value);
-                commands.setIcons(Array.from(next));
-                refreshSelection();
-            });
-            grid.appendChild(button);
-        });
-        section.append(heading, grid);
-        scroll.appendChild(section);
-        sectionMap.set(group.id, section);
+        localAssetCatalogs_1.markerCatalog.items
+            .filter((item) => item.groupId === group.id)
+            .forEach((item) => grid.appendChild(createOption(item)));
+        section.appendChild(grid);
+        groups.appendChild(section);
     });
-    scroll.addEventListener('scroll', () => {
-        const scrollTop = scroll.scrollTop + 16;
-        let current = 'all';
-        sectionMap.forEach((section, id) => {
-            if (section.offsetTop <= scrollTop)
-                current = id;
+    const selectTab = (id, scrollToGroup = true) => {
+        activeGroupId = id;
+        tabs.querySelectorAll('[data-marker-group]').forEach((button) => {
+            button.classList.toggle('is-active', (button.dataset.markerGroup ?? '') === activeGroupId);
         });
-        selectTab(current);
-    }, { passive: true });
+        if (!scrollToGroup)
+            return;
+        if (!id) {
+            scroll.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+        groups.querySelector(`[data-marker-group-section="${id}"]`)
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    const addTab = (id, label) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `ymz-asset-tab${id === activeGroupId ? ' is-active' : ''}`;
+        button.dataset.markerGroup = id;
+        button.textContent = label;
+        button.addEventListener('click', () => selectTab(id));
+        tabs.appendChild(button);
+    };
+    addTab('', '全部');
+    localAssetCatalogs_1.markerCatalog.groups.forEach((group) => addTab(group.id, group.label));
     dialog.element.querySelector('[data-action="clear-markers"]')?.addEventListener('click', () => {
         commands.setIcons([]);
         refreshSelection();
     });
     dialog.element.querySelector('[data-action="close"]')?.addEventListener('click', () => dialog.destroy());
     refreshSelection();
-    const initial = options.initialGroupId;
-    if (initial && sectionMap.has(initial)) {
-        requestAnimationFrame(() => {
-            const section = sectionMap.get(initial);
-            if (section)
-                scroll.scrollTop = Math.max(0, section.offsetTop - 8);
-            selectTab(initial);
-        });
-    }
+    if (activeGroupId)
+        requestAnimationFrame(() => selectTab(activeGroupId));
 }
 function openClipartPicker(commands, options = {}) {
     const resolver = (0, localAssetCatalogs_1.createRuntimeAssetResolver)(options.pluginBaseUrl);
@@ -88955,36 +88992,31 @@ function openClipartPicker(commands, options = {}) {
     const dialog = new siyuan_1.Dialog({
         title: '剪贴图',
         content: `<div class="b3-dialog__content ymz-local-asset-dialog ymz-clipart-dialog">
-      ${assetDialogCloseButton('关闭剪贴图')}
       <div class="ymz-clipart-search"><input class="b3-text-field" data-role="clipart-search" placeholder="搜索剪贴图"><span data-role="clipart-count"></span></div>
       <div class="ymz-asset-tabs ymz-asset-tabs--scroll ymz-asset-tabs--sticky" data-role="clipart-tabs"></div>
       <div class="ymz-clipart-grid" data-role="clipart-grid"></div>
     </div>`,
         width: '760px',
         height: '620px',
-        hideCloseIcon: true,
+        hideCloseIcon: false,
     });
-    bindOutsideClose(dialog);
+    prepareAssetDialog(dialog);
     const search = dialog.element.querySelector('[data-role="clipart-search"]');
     const tabs = dialog.element.querySelector('[data-role="clipart-tabs"]');
     const grid = dialog.element.querySelector('[data-role="clipart-grid"]');
     const count = dialog.element.querySelector('[data-role="clipart-count"]');
     const render = () => {
         tabs.innerHTML = '';
-        const all = document.createElement('button');
-        all.type = 'button';
-        all.className = `ymz-asset-tab${categoryId ? '' : ' is-active'}`;
-        all.textContent = '全部';
-        all.addEventListener('click', () => { categoryId = ''; render(); });
-        tabs.appendChild(all);
-        localAssetCatalogs_1.clipartCatalog.categories.forEach((category) => {
+        const addTab = (id, label) => {
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = `ymz-asset-tab${category.id === categoryId ? ' is-active' : ''}`;
-            button.textContent = category.label;
-            button.addEventListener('click', () => { categoryId = category.id; render(); });
+            button.className = `ymz-asset-tab${id === categoryId ? ' is-active' : ''}`;
+            button.textContent = label;
+            button.addEventListener('click', () => { categoryId = id; render(); });
             tabs.appendChild(button);
-        });
+        };
+        addTab('', '全部');
+        localAssetCatalogs_1.clipartCatalog.categories.forEach((category) => addTab(category.id, category.label));
         const matches = (0, localAssetCatalogs_1.searchClipart)(query, categoryId || undefined);
         count.textContent = `${matches.length} 个`;
         grid.innerHTML = '';

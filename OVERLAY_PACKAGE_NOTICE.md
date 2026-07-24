@@ -1,4 +1,4 @@
-# YeMind v0.9.19 resource-excluded update package
+# YeMind v0.9.20 resource-excluded update package
 
 This ZIP is a resource-excluded update package for an existing `siyuan-yemind` project that already contains the fixed local resources:
 

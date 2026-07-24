@@ -97,6 +97,37 @@ assert(resolveOfficialDragGrowthDirection('rightFishbone2', { layerIndex: 0 }) =
   assert(supportsOfficialDragGeometry(layout), `${layout} must use official drag geometry`);
 });
 
+
+const mindRoot = node('mind-root', { x: 400, y: 250, width: 100, height: 50 });
+(mindRoot as any).isRoot = true;
+const rightOne = node('right-one', { x: 600, y: 160, width: 90, height: 36 }, mindRoot);
+const rightTwo = node('right-two', { x: 600, y: 330, width: 90, height: 36 }, mindRoot);
+const leftOne = node('left-one', { x: 210, y: 160, width: 90, height: 36 }, mindRoot);
+const leftTwo = node('left-two', { x: 210, y: 330, width: 90, height: 36 }, mindRoot);
+leftOne.dir = 'left';
+leftTwo.dir = 'left';
+mindRoot.children = [rightOne, rightTwo, leftOne, leftTwo];
+const mindOptions = {
+  layout: 'mindMap',
+  nodes: [mindRoot, rightOne, rightTwo, leftOne, leftTwo],
+  excludedNodes: [rightTwo],
+  current: emptyOfficialDragCandidate(),
+  getRect: (value: any) => value.rect,
+};
+const crossBefore = resolveOfficialDragCandidate({ ...mindOptions, pointer: { x: 250, y: 150 } });
+assert(crossBefore.kind === 'before' && crossBefore.nextNode === leftOne && crossBefore.branchDirection === 'left', 'right-to-left BEFORE must use the mirrored left branch');
+const crossAfter = resolveOfficialDragCandidate({ ...mindOptions, pointer: { x: 250, y: 205 } });
+assert(crossAfter.kind === 'after' && crossAfter.nextNode === leftTwo && crossAfter.branchDirection === 'left', 'right-to-left AFTER must preserve left visual order');
+const crossChild = resolveOfficialDragCandidate({ ...mindOptions, pointer: { x: 190, y: 178 } });
+assert(crossChild.kind === 'child' && crossChild.parentNode === leftOne && crossChild.branchDirection === 'left', 'right-to-left CHILD must inherit the target branch');
+const rootLeft = resolveOfficialDragCandidate({ ...mindOptions, pointer: { x: 370, y: 275 } });
+assert(rootLeft.kind === 'child' && rootLeft.parentNode === mindRoot && rootLeft.branchDirection === 'left', 'root left tail must create a left root child');
+const rootRight = resolveOfficialDragCandidate({ ...mindOptions, excludedNodes: [leftTwo], pointer: { x: 530, y: 275 } });
+assert(rootRight.kind === 'child' && rootRight.parentNode === mindRoot && rootRight.branchDirection === 'right', 'root right tail must create a right root child');
+assert(crossBefore.key !== resolveOfficialDragCandidate({ ...mindOptions, pointer: { x: 640, y: 150 } }).key, 'left and right root slots must have distinct candidate keys');
+assert(!isOfficialDragCandidateNoop(crossBefore, [rightTwo]), 'cross-root branch change must never be discarded as a no-op');
+assert(!isOfficialDragCandidateNoop(crossAfter, [rightTwo]), 'branch-local AFTER index must be compared through target references, not the global source index');
+
 const outlineBase = {
   sourceUid: 'source',
   targetUid: 'target',
@@ -183,4 +214,5 @@ export default {
   multiLayoutParity: true,
   sameAxisLayoutParity: true,
   vectorRoomPreview: true,
+  mindMapCrossRootMirror: true,
 };

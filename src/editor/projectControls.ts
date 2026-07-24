@@ -18,14 +18,17 @@ export function canvasModeIcon(mode: CanvasMode): string {
 
 
 export function clipboardIcon(kind: 'copy' | 'cut' | 'paste'): string {
+  const base = 'class="ymz-menu-icon ymz-operation-icon';
+  const stroke = 'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"';
   if (kind === 'cut') {
-    return '<svg class="ymz-menu-icon ymz-icon-cut" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6.5" cy="17.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="17.5" cy="17.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8.4 15.8 7.9-10.3M15.6 15.8 7.7 5.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+    return `<svg ${base} ymz-icon-cut" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="5" cy="15" r="2" ${stroke}/><circle cx="15" cy="15" r="2" ${stroke}/><path d="m6.5 13.7 7-9.2M13.5 13.7l-7-9.2" ${stroke}/></svg>`;
   }
   if (kind === 'paste') {
-    return '<svg class="ymz-menu-icon ymz-icon-paste" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5.5" width="12" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 5.5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1.5M9 10h6M9 14h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+    return `<svg ${base} ymz-icon-paste" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="4.5" y="4.5" width="11" height="13" rx="2" ${stroke}/><path d="M7.3 4.5V3.7c0-.7.6-1.2 1.2-1.2h3c.7 0 1.2.5 1.2 1.2v.8M7.5 9h5M7.5 12.5h5" ${stroke}/></svg>`;
   }
-  return '<svg class="ymz-menu-icon ymz-icon-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="7" width="11" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  return `<svg ${base} ymz-icon-copy" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="7" y="6" width="9.5" height="11.5" rx="1.8" ${stroke}/><path d="M13.5 6V4.5c0-1.1-.9-2-2-2h-6c-1.1 0-2 .9-2 2V14c0 1.1.9 2 2 2H7" ${stroke}/></svg>`;
 }
+
 
 
 export type NodeInsertKind = 'sibling' | 'child' | 'parent';

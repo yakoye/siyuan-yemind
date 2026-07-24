@@ -1,5 +1,14 @@
 # Changelog
 
+
+## 0.9.20 - 2026-07-24
+
+- Redraw supplied and clipboard operation icons with one 20×20 current-color visual system.
+- Flatten marker and clipart dialog surfaces, remove marker group headings, and keep native close controls in the top-right corner.
+- Add bidirectional root-crossing drag intent for mind maps, including branch-local before, after and child slots.
+- Persist the destination branch direction before applying cross-root moves and retain independent left/right candidate stability.
+- Add offline and suite-level regressions for icon geometry, dialog structure, and mirrored root crossing.
+
 ## 0.9.19 - 2026-07-24
 
 - Replace the requested project, node, history, relationship, insertion, asset, search and fullscreen icons with normalized theme-aware SVG artwork.

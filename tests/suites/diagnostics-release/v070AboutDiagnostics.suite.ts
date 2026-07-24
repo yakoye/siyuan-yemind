@@ -41,8 +41,8 @@ describe('v0.7.x about and diagnostics release contract', () => {
   });
 
   it('uses the current semantic version consistently', () => {
-    expect(RELEASE_INFO.version).toBe('0.9.19');
-    expect(resolveVersionConsistency('0.9.19')).toEqual({ manifest: '0.9.19', runtime: '0.9.19', build: '0.9.19', consistent: true });
+    expect(RELEASE_INFO.version).toBe('0.9.20');
+    expect(resolveVersionConsistency('0.9.20')).toEqual({ manifest: '0.9.20', runtime: '0.9.20', build: '0.9.20', consistent: true });
   });
 
   it('keeps package, lockfile, manifest, runtime metadata and release docs on one identity', () => {
@@ -52,10 +52,10 @@ describe('v0.7.x about and diagnostics release contract', () => {
     const readme = readFileSync(resolve(process.cwd(), 'README_zh_CN.md'), 'utf8');
     const changelog = readFileSync(resolve(process.cwd(), 'CHANGELOG.md'), 'utf8');
     for (const version of [packageJson.version, packageLock.version, packageLock.packages[''].version, manifest.version, RELEASE_INFO.version, RELEASE_INFO.buildVersion]) {
-      expect(version).toBe('0.9.19');
+      expect(version).toBe('0.9.20');
     }
-    expect(readme).toContain('当前版本：`0.9.19`');
-    expect(changelog).toContain('## 0.9.19');
+    expect(readme).toContain('当前版本：`0.9.20`');
+    expect(changelog).toContain('## 0.9.20');
   });
 
   it('exports structured diagnostics files for direct analysis', async () => {

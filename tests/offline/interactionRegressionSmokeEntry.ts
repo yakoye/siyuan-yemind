@@ -43,7 +43,7 @@ assert(svg.includes('pointer-events="none"'), 'sprite image must not create an o
 assert(nodeInsertIcon('sibling').includes('ymz-icon-insert-sibling'), 'sibling insertion icon');
 assert(nodeInsertIcon('child').includes('ymz-icon-insert-child'), 'child insertion icon');
 assert(nodeInsertIcon('parent').includes('ymz-icon-insert-parent'), 'parent insertion icon');
-assert(nodeStyleIcon().includes('ymz-menu-icon ymz-icon-node-style'), 'node style icon must use menu geometry');
+assert(nodeStyleIcon().includes('ymz-menu-icon') && nodeStyleIcon().includes('ymz-icon-node-style'), 'node style icon must use menu geometry');
 
 export default {
   liveWidthDragDetected: true,

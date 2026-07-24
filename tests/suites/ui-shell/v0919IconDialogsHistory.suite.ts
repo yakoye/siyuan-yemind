@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   canvasModeIcon,
+  clipboardIcon,
   clipartIcon,
   fullscreenIcon,
   nodeInsertIcon,
@@ -19,11 +20,18 @@ function source(file: string): string {
   return fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
 }
 
-describe('v0.9.19 icon, asset dialog, checkpoint, and outline polish', () => {
-  it('uses the supplied insert icons and upper/same/lower terminology', () => {
-    expect(nodeInsertIcon('parent')).toContain('M11.833 20.75v-6');
-    expect(nodeInsertIcon('sibling')).toContain('M20.868 24h-9.733');
-    expect(nodeInsertIcon('child')).toContain('M24.75 23.75h-9.167');
+function expectUnifiedIcon(svg: string, className: string): void {
+  expect(svg).toContain('viewBox="0 0 20 20"');
+  expect(svg).toContain(className);
+  expect(svg).toContain('currentColor');
+  expect(svg).not.toMatch(/fill="#(?:000|1E2024|333)"/i);
+}
+
+describe('v0.9.20 icon, flat asset dialog and checkpoint polish', () => {
+  it('uses lightweight upper, same and lower insertion icons in the requested order', () => {
+    expectUnifiedIcon(nodeInsertIcon('parent'), 'ymz-icon-insert-parent');
+    expectUnifiedIcon(nodeInsertIcon('sibling'), 'ymz-icon-insert-sibling');
+    expectUnifiedIcon(nodeInsertIcon('child'), 'ymz-icon-insert-child');
     const menu = source('src/ui/contextMenu.ts');
     const upper = menu.indexOf("label: '插入上级节点'");
     const same = menu.indexOf("label: '插入同级节点'");
@@ -33,16 +41,17 @@ describe('v0.9.19 icon, asset dialog, checkpoint, and outline polish', () => {
     expect(lower).toBeGreaterThan(same);
   });
 
-  it('uses supplied style and command icons', () => {
-    expect(projectStyleIcon()).toContain('M9.136 10.536');
-    expect(nodeStyleIcon()).toContain('M2.74071 10.2339');
-    expect(relationIcon()).toContain('map-insert-relationship');
-    expect(clipartIcon()).toContain('ymz-icon-clipart');
-    expect(outerFrameIcon()).toContain('ymz-icon-outer-frame');
-    expect(searchIcon()).toContain('M12.038 2.714');
-    expect(undoIcon()).toContain('M.8 3.6h7.5');
-    expect(redoIcon()).toContain('M13.8 3.6H6.3');
-    expect(fullscreenIcon()).toContain('M18.6 5.398v4.2');
+  it('normalizes supplied and clipboard icons without solid black artwork', () => {
+    expectUnifiedIcon(projectStyleIcon(), 'ymz-icon-project-style');
+    expectUnifiedIcon(nodeStyleIcon(), 'ymz-icon-node-style');
+    expectUnifiedIcon(relationIcon(), 'ymz-icon-relation');
+    expectUnifiedIcon(clipartIcon(), 'ymz-icon-clipart');
+    expectUnifiedIcon(outerFrameIcon(), 'ymz-icon-outer-frame');
+    expectUnifiedIcon(searchIcon(), 'ymz-icon-search');
+    expectUnifiedIcon(undoIcon(), 'ymz-icon-undo');
+    expectUnifiedIcon(redoIcon(), 'ymz-icon-redo');
+    expectUnifiedIcon(fullscreenIcon(), 'ymz-icon-fullscreen');
+    expectUnifiedIcon(clipboardIcon('copy'), 'ymz-icon-copy');
   });
 
   it('shows the mode reached after clicking the footer mode button', () => {
@@ -50,21 +59,30 @@ describe('v0.9.19 icon, asset dialog, checkpoint, and outline polish', () => {
     expect(canvasModeIcon('pan')).toContain('ymz-icon-canvas-select');
   });
 
-  it('renders every marker group in one fixed dialog with sticky categories', () => {
+  it('renders marker icons continuously in one fixed dialog without group headings or item cards', () => {
     const dialog = source('src/ui/localAssetDialogs.ts');
-    expect(dialog).toContain("all.textContent = '全部'");
-    expect(dialog).toContain("section.className = 'ymz-marker-section'");
+    const css = source('src/styles/index.css');
+    expect(dialog).toContain("addTab('', '全部')");
+    expect(dialog).not.toContain('ymz-marker-section');
+    expect(dialog).toContain('ymz-marker-groups');
+    expect(dialog).toContain('scrollIntoView');
     expect(dialog).toContain("height: '620px'");
-    expect(dialog).toContain('bindOutsideClose(dialog)');
-    expect(dialog).toContain('data-action="asset-dialog-close"');
+    expect(dialog).toContain('hideCloseIcon: false');
+    expect(dialog).toContain('prepareAssetDialog(dialog)');
+    expect(css).toContain('.ymz-marker-option{');
+    expect(css).toContain('background:transparent!important');
   });
 
-  it('renders clipart without pagination in a fixed closeable dialog', () => {
+  it('renders clipart without pagination on a transparent dialog surface with individual cards', () => {
     const dialog = source('src/ui/localAssetDialogs.ts');
+    const css = source('src/styles/index.css');
     expect(dialog).not.toContain('clipart-more');
     expect(dialog).not.toContain('加载更多');
     expect(dialog).toContain('matches.forEach((item)');
     expect(dialog).toContain("width: '760px'");
+    expect(dialog).toContain('hideCloseIcon: false');
+    expect(css).toContain('.ymz-clipart-grid{');
+    expect(css).toContain('.ymz-clipart-option{');
   });
 
   it('opens the usable checkpoint manager directly and offers creation there', () => {

@@ -427,11 +427,24 @@ export default class YeMindDrag extends Drag {
       )
         ? emptyOfficialDragCandidate()
         : resolved;
+      this.applyMindMapBranchDirection(finalCandidate);
       applyCandidate(plugin, finalCandidate);
       await super.onMouseup(event);
     } finally {
       this.restoreIncomingLines();
     }
+  }
+
+  private applyMindMapBranchDirection(candidate: DragCandidate): void {
+    const plugin = this as any;
+    if (String(plugin.mindMap.opt.layout ?? '') !== 'mindMap') return;
+    const branch = candidate.branchDirection;
+    if (branch !== 'left' && branch !== 'right') return;
+    (plugin.beingDragNodeList ?? []).forEach((node: any) => {
+      node.dir = branch;
+      if (node?.nodeData?.data) node.nodeData.data.dir = branch;
+      if (typeof node?.setData === 'function') node.setData({ dir: branch });
+    });
   }
 
   removeCloneNode(): void {
@@ -596,7 +609,7 @@ export default class YeMindDrag extends Drag {
           target,
           ghost,
           orientation,
-          resolveOfficialDragGrowthDirection(layout, previewParent),
+          stable.branchDirection ?? resolveOfficialDragGrowthDirection(layout, previewParent),
         ))
         .stroke({ color: 'rgba(23, 107, 80, 0.96)', width: 2.3, linecap: 'round' })
         .attr({ 'stroke-dasharray': '6 6', opacity: 1, 'pointer-events': 'none' })

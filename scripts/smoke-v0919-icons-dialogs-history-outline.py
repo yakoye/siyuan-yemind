@@ -1,4 +1,4 @@
-"""v0.9.19 supplied icons, fixed asset dialogs, checkpoints and outline alignment smoke."""
+"""v0.9.20 unified icons, flat asset dialogs, checkpoints and outline alignment smoke."""
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -52,8 +52,10 @@ with sync_playwright() as p:
       redo:document.querySelector('[data-action=redo]')?.innerHTML||'',
       mode:document.querySelector('[data-role=canvas-mode-icon]')?.innerHTML||''
     })""")
-    if 'M12.038 2.714' not in toolbar['search'] or 'M18.6 5.398v4.2' not in toolbar['fullscreen']:
-        raise RuntimeError(f'supplied toolbar icons missing: {toolbar}')
+    if 'ymz-icon-search' not in toolbar['search'] or 'ymz-icon-fullscreen' not in toolbar['fullscreen']:
+        raise RuntimeError(f'unified toolbar icons missing: {toolbar}')
+    if any('#000' in value.lower() or '#1e2024' in value.lower() for value in toolbar.values()):
+        raise RuntimeError(f'fixed black fill leaked into toolbar artwork: {toolbar}')
     if 'ymz-icon-canvas-pan' not in toolbar['mode']:
         raise RuntimeError('select-first mode must advertise hand/pan action')
     page.locator('[data-action="toggle-selection-mode"]').click(); page.wait_for_timeout(120)
@@ -70,8 +72,8 @@ with sync_playwright() as p:
     positions=[menu['labels'].index(x) for x in expected]
     if not (positions[0]>=0 and positions[0]<positions[1]<positions[2]):
         raise RuntimeError(f'insert order wrong: {menu}')
-    if not any('map-insert-relationship' in icon for icon in menu['icons']):
-        raise RuntimeError('relationship supplied icon missing')
+    if not any('ymz-icon-relation' in icon for icon in menu['icons']):
+        raise RuntimeError('relationship unified icon missing')
     if not any(x['label']=='剪贴图' and 'ymz-icon-clipart' in x['icon'] for x in menu['add']):
         raise RuntimeError('clipart supplied icon missing')
     if not any(x['label']=='外框' and 'ymz-icon-outer-frame' in x['icon'] for x in menu['add']):
@@ -80,9 +82,16 @@ with sync_playwright() as p:
     # Open marker dialog from Add > 图标.
     opened=page.evaluate("""()=>{const add=window.__lastMenu.items.find(x=>x.label==='添加');const item=add.submenu.find(x=>x.label==='图标');item.click();return true;}""")
     page.wait_for_function("()=>document.querySelectorAll('.ymz-marker-option').length===126")
-    marker=page.evaluate("""()=>({tabs:document.querySelectorAll('.ymz-marker-dialog .ymz-asset-tab').length,sections:document.querySelectorAll('.ymz-marker-section').length,options:document.querySelectorAll('.ymz-marker-option').length,width:window.__lastDialog.options.width,height:window.__lastDialog.options.height,close:!!document.querySelector('.ymz-marker-dialog [data-action=asset-dialog-close]'),footer:getComputedStyle(document.querySelector('.ymz-marker-dialog .ymz-local-asset-dialog__footer')).justifyContent})""")
-    if marker!={'tabs':9,'sections':8,'options':126,'width':'640px','height':'620px','close':True,'footer':'flex-end'}:
+    marker=page.evaluate("""()=>{const option=document.querySelector('.ymz-marker-option');const grid=document.querySelector('.ymz-marker-grid');return{tabs:document.querySelectorAll('.ymz-marker-dialog .ymz-asset-tab').length,sections:document.querySelectorAll('.ymz-marker-section').length,options:document.querySelectorAll('.ymz-marker-option').length,width:window.__lastDialog.options.width,height:window.__lastDialog.options.height,nativeClose:window.__lastDialog.options.hideCloseIcon===false,footer:getComputedStyle(document.querySelector('.ymz-marker-dialog .ymz-local-asset-dialog__footer')).justifyContent,optionBackground:getComputedStyle(option).backgroundColor,gridBackground:getComputedStyle(grid).backgroundColor}}""")
+    if marker['tabs']!=9 or marker['sections']!=0 or marker['options']!=126 or marker['width']!='640px' or marker['height']!='620px' or not marker['nativeClose'] or marker['footer']!='flex-end':
         raise RuntimeError(f'marker dialog contract failed: {marker}')
+    if marker['optionBackground']!='rgba(0, 0, 0, 0)' or marker['gridBackground']!='rgba(0, 0, 0, 0)':
+        raise RuntimeError(f'marker surface is not flat/transparent: {marker}')
+    page.locator('.ymz-marker-dialog .ymz-asset-tab').filter(has_text='进度').click()
+    page.wait_for_timeout(350)
+    marker_nav=page.evaluate("""()=>({options:document.querySelectorAll('.ymz-marker-option').length,scrollTop:document.querySelector('[data-role=marker-scroll]').scrollTop,active:document.querySelector('.ymz-marker-dialog .ymz-asset-tab.is-active')?.textContent})""")
+    if marker_nav['options']!=126 or marker_nav['active']!='进度':
+        raise RuntimeError(f'marker category navigation must scroll without filtering: {marker_nav}')
     page.evaluate("()=>window.__lastDialog.element.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}))")
     page.wait_for_function("()=>!document.querySelector('.ymz-marker-dialog')")
 
@@ -90,10 +99,15 @@ with sync_playwright() as p:
     page.locator('g.smm-node').filter(has_text='节点A').first.click(button='right',force=True)
     page.evaluate("""()=>{const add=window.__lastMenu.items.find(x=>x.label==='添加');add.submenu.find(x=>x.label==='剪贴图').click()}""")
     page.wait_for_function("()=>document.querySelectorAll('.ymz-clipart-option').length===764")
-    clipart=page.evaluate("""()=>({items:document.querySelectorAll('.ymz-clipart-option').length,more:!!document.querySelector('[data-action=clipart-more]'),width:window.__lastDialog.options.width,height:window.__lastDialog.options.height,close:!!document.querySelector('.ymz-clipart-dialog [data-action=asset-dialog-close]')})""")
-    if clipart!={'items':764,'more':False,'width':'760px','height':'620px','close':True}:
+    clipart=page.evaluate("""()=>{const grid=document.querySelector('.ymz-clipart-grid');const option=document.querySelector('.ymz-clipart-option');return{items:document.querySelectorAll('.ymz-clipart-option').length,more:!!document.querySelector('[data-action=clipart-more]'),width:window.__lastDialog.options.width,height:window.__lastDialog.options.height,nativeClose:window.__lastDialog.options.hideCloseIcon===false,gridBackground:getComputedStyle(grid).backgroundColor,optionBackground:getComputedStyle(option).backgroundColor}}""")
+    if clipart['items']!=764 or clipart['more'] or clipart['width']!='760px' or clipart['height']!='620px' or not clipart['nativeClose']:
         raise RuntimeError(f'clipart dialog contract failed: {clipart}')
-    page.locator('.ymz-clipart-dialog [data-action="asset-dialog-close"]').click()
+    if clipart['gridBackground']!='rgba(0, 0, 0, 0)':
+        raise RuntimeError(f'clipart grid surface is not transparent: {clipart}')
+    if '.ymz-clipart-option{' not in stylesheet or 'background:var(--b3-theme-background)!important' not in stylesheet:
+        raise RuntimeError('clipart cards are not assigned the theme background')
+    page.evaluate("()=>window.__lastDialog.element.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}))")
+    page.wait_for_function("()=>!document.querySelector('.ymz-clipart-dialog')")
 
     # Checkpoint manager opens directly and creation completes in the manager flow.
     page.locator('[data-action="checkpoints"]').click()
@@ -127,5 +141,5 @@ with sync_playwright() as p:
 
     if page_errors: raise RuntimeError('Page errors:\n'+'\n'.join(page_errors))
     if console_errors: raise RuntimeError('Console errors:\n'+'\n'.join(console_errors))
-    print({'toolbarIcons':True,'menu':expected,'marker':marker,'clipart':clipart,'checkpoints':checkpoint_count,'outline':outline,'pageErrors':0,'consoleErrors':0})
+    print({'toolbarIcons':True,'menu':expected,'marker':marker,'markerNavigation':marker_nav,'clipart':clipart,'checkpoints':checkpoint_count,'outline':outline,'pageErrors':0,'consoleErrors':0})
     browser.close()

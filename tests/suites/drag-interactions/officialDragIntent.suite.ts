@@ -121,6 +121,48 @@ describe('pointer-based structural drag intent', () => {
     }).kind).toBe('child');
   });
 
+  it('mirrors sibling and child intent when a root child crosses the mind-map centre', () => {
+    const root = node('root', { x: 400, y: 250, width: 100, height: 50 });
+    (root as any).isRoot = true;
+    const right1 = node('right-1', { x: 600, y: 160, width: 90, height: 36 }, root);
+    const right2 = node('right-2', { x: 600, y: 330, width: 90, height: 36 }, root);
+    const left1 = node('left-1', { x: 210, y: 160, width: 90, height: 36 }, root);
+    const left2 = node('left-2', { x: 210, y: 330, width: 90, height: 36 }, root);
+    left1.dir = 'left';
+    left2.dir = 'left';
+    root.children = [right1, right2, left1, left2];
+    const base = {
+      layout: 'mindMap',
+      nodes: [root, right1, right2, left1, left2],
+      excludedNodes: [right2],
+      current: current(),
+      getRect: (value: any) => value.rect,
+    };
+
+    const aboveLeft = resolveOfficialDragCandidate({ ...base, pointer: { x: 250, y: 150 } });
+    expect(aboveLeft.kind).toBe('before');
+    expect(aboveLeft.nextNode).toBe(left1);
+    expect(aboveLeft.branchDirection).toBe('left');
+
+    const belowLeft = resolveOfficialDragCandidate({ ...base, pointer: { x: 250, y: 205 } });
+    expect(belowLeft.kind).toBe('after');
+    expect(belowLeft.nextNode).toBe(left2);
+    expect(belowLeft.branchDirection).toBe('left');
+
+    const asLeftChild = resolveOfficialDragCandidate({ ...base, pointer: { x: 190, y: 178 } });
+    expect(asLeftChild.kind).toBe('child');
+    expect(asLeftChild.parentNode).toBe(left1);
+    expect(asLeftChild.branchDirection).toBe('left');
+
+    const rootLeft = resolveOfficialDragCandidate({ ...base, pointer: { x: 370, y: 275 } });
+    const rootRight = resolveOfficialDragCandidate({ ...base, pointer: { x: 530, y: 275 } });
+    expect(rootLeft.branchDirection).toBe('left');
+    expect(rootRight.branchDirection).toBe('right');
+    expect(rootLeft.key).not.toBe(rootRight.key);
+    expect(isOfficialDragCandidateNoop(aboveLeft, [right2])).toBe(false);
+    expect(isOfficialDragCandidateNoop(belowLeft, [right2])).toBe(false);
+  });
+
   it('detects an unchanged source slot as a no-op', () => {
     const parent = node('parent', { x: 0, y: 0, width: 80, height: 40 });
     const source = node('source', { x: 140, y: 10, width: 80, height: 32 }, parent);
