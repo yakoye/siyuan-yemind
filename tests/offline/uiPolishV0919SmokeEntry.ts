@@ -40,18 +40,18 @@ const supplied = [
   searchIcon(),
   fullscreenIcon(),
 ];
-assert(supplied.every((icon) => icon.includes('viewBox="0 0 20 20"')), 'all supplied operation icons must use one 20px outer viewBox');
-assert(supplied.every((icon) => icon.includes('x="1" y="1" width="18" height="18"')), 'all supplied icons must share the centered 18px artwork viewport');
-assert(supplied.every((icon) => icon.includes('currentColor')), 'all supplied icons must inherit the active SiYuan theme color');
-assert(supplied.every((icon) => !/#(?:1e2024|333333|333|636774|888888|888)/i.test(icon)), 'supplied icon output must not retain fixed dark palette colors');
+assert(supplied.every((icon) => icon.startsWith('<img ')), 'all supplied operation icons must use an isolated image boundary');
+assert(supplied.every((icon) => icon.includes('src="data:image/svg+xml;base64,')), 'all supplied icons must retain the exact Base64 SVG document');
+assert(supplied.every((icon) => icon.includes('draggable="false"')), 'supplied icons must not start native image dragging');
+assert(supplied.every((icon) => !icon.includes('<svg') && !icon.includes('<path')), 'host CSS must not reach supplied SVG geometry');
 assert(nodeInsertIcon('parent').includes('ymz-icon-insert-parent'), 'upper-node icon must use the supplied parent source artwork');
 assert(nodeInsertIcon('sibling').includes('ymz-icon-insert-sibling'), 'same-level icon must use the supplied sibling source artwork');
 assert(nodeInsertIcon('child').includes('ymz-icon-insert-child'), 'lower-node icon must use the supplied child source artwork');
-assert(projectStyleIcon().includes('ymz-icon-project-style') && projectStyleIcon().includes('<mask'), 'project style must preserve the supplied magic-wand geometry');
-assert(nodeStyleIcon().includes('ymz-icon-node-style') && nodeStyleIcon().includes('map-toggle-style') === false, 'node style must inline the normalized supplied settings artwork');
-assert(undoIcon().includes('ymz-icon-undo') && undoIcon().includes('vector-effect="non-scaling-stroke"'), 'undo must preserve the supplied source stroke weight');
-assert(redoIcon().includes('ymz-icon-redo') && redoIcon().includes('vector-effect="non-scaling-stroke"'), 'redo must preserve the supplied source stroke weight');
-assert(searchIcon().includes('ymz-icon-search') && searchIcon().includes('preserveAspectRatio="xMidYMid meet"'), 'search must use the normalized supplied source SVG');
+assert(projectStyleIcon().includes('ymz-icon-project-style') && projectStyleIcon().includes('data:image/svg+xml;base64,'), 'project style must preserve the supplied magic-wand document');
+assert(nodeStyleIcon().includes('ymz-icon-node-style') && !nodeStyleIcon().includes('<svg'), 'node style must isolate the supplied settings artwork');
+assert(undoIcon().includes('ymz-icon-undo') && undoIcon().includes('data:image/svg+xml;base64,'), 'undo must preserve the exact supplied source document');
+assert(redoIcon().includes('ymz-icon-redo') && redoIcon().includes('data:image/svg+xml;base64,'), 'redo must preserve the exact supplied source document');
+assert(searchIcon().includes('ymz-icon-search') && searchIcon().startsWith('<img '), 'search must use the isolated supplied source SVG');
 assert(suppliedIconSourceNames.insertParent.includes('插入父节点图标'), 'supplied icons must retain source traceability');
 assert(canvasModeIcon('select').includes('ymz-icon-canvas-pan'), 'canvas mode button must show the action after click');
 assert(canvasModeIcon('pan').includes('ymz-icon-canvas-select'), 'canvas mode button must reverse the current mode icon');

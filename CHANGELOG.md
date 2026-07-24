@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.22 - 2026-07-24
+
+- Replace inline rewritten supplied SVG geometry with the exact Base64 SVG documents from `图标-svg.txt`.
+- Render all 14 supplied operation icons through an image document boundary so SiYuan/theme `fill` and `stroke` selectors cannot turn outline paths into solid black blobs.
+- Preserve original dimensions, fixed colors, masks, dashes, opacity and path data while retaining one consistent 18px toolbar/menu layout box.
+- Add permanent SHA-256 source-byte, dependency-free offline and hostile-host-CSS Chromium regressions.
+- Preserve the v0.9.21 double-click full-selection formatting-toolbar behavior.
+
 ## 0.9.21 - 2026-07-24
 
 - Preserve the exact path geometry from the supplied SVG catalog while normalizing every operation icon into one centered 20×20 current-color presentation shell.

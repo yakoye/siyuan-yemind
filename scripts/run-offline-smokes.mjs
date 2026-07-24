@@ -15,6 +15,7 @@ const entries = [
   'localAssetsSmokeEntry',
   'interactionRegressionSmokeEntry',
   'uiPolishV0919SmokeEntry',
+  'sourceIconIsolationV0922SmokeEntry',
 ];
 
 rmSync(outDir, { recursive: true, force: true });

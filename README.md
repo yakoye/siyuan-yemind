@@ -2,8 +2,15 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.21`  
+Current version: `0.9.22`  
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.22 exact supplied SVG isolation
+
+- Uses the Base64 SVG documents from `图标-svg.txt` byte-for-byte for search, project style, undo/redo, upper/same/lower insertion, node style, relation, outer frame, marker, clipart and fullscreen actions.
+- Renders supplied artwork through an `<img>` document boundary, preventing SiYuan themes or custom CSS rules such as `svg path { fill: ... }` from turning stroke-only paths into solid black shapes.
+- Keeps a consistent 18 × 18 outer layout box without rewriting source paths, colors, masks, dashes or opacity, so the result matches direct browser preview.
+- Adds SHA-256 source-contract, dependency-free offline and hostile-host-CSS Chromium regressions.
 
 ## v0.9.21 supplied SVG adaptation and double-click formatting toolbar
 

@@ -10,7 +10,8 @@
 | Appearance refresh | One atomic full redraw; immediate theme/rainbow updates; viewport and selection preserved; transparent root resolves to canvas background |
 | Local style priority | Node-local text, fill, border and line values override whole-map themes |
 | Selection toolbar | Canvas and outline share selection formatting; double-click full selection opens the toolbar immediately and saved ranges survive control focus |
-| Context menus | Separate single-node, multi-node and blank-canvas menus with supplied theme-aware SVG actions, state-aware outer-frame and clipboard commands |
+| Context menus | Separate single-node, multi-node and blank-canvas menus with exact supplied SVG image-isolated actions, state-aware outer-frame and clipboard commands |
+| Supplied icon isolation | 14 exact Base64 SVG documents, fixed 18px outer boxes, no inline path exposure to host CSS, SHA-256 source-byte regression |
 | Style panels | Project and node styles use separate compact anchored panels; node controls use a denser two-column layout |
 | Relation editing | Editable persisted Bézier endpoints/control points, tangent-driven arrows, lifecycle guards and a clear blue selected state |
 | Outline model | One structured contenteditable document; no user-facing text/node mode split |

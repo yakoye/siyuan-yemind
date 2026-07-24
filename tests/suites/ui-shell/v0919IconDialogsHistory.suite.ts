@@ -20,19 +20,21 @@ function source(file: string): string {
   return fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
 }
 
-function expectUnifiedIcon(svg: string, className: string): void {
-  expect(svg).toContain('viewBox="0 0 20 20"');
-  expect(svg).toContain(className);
-  expect(svg).toContain('currentColor');
-  expect(svg).toContain('x="1" y="1" width="18" height="18"');
-  expect(svg).not.toMatch(/#(?:000|1e2024|333333|333|636774|888888|888)/i);
+function expectSuppliedIcon(html: string, className: string): void {
+  expect(html).toMatch(/^<img\b/);
+  expect(html).toContain(className);
+  expect(html).toContain('ymz-operation-icon');
+  expect(html).toContain('src="data:image/svg+xml;base64,');
+  expect(html).toContain('draggable="false"');
+  expect(html).not.toContain('<svg');
+  expect(html).not.toContain('<path');
 }
 
 describe('v0.9.21 source SVG, flat asset dialog and checkpoint polish', () => {
   it('uses lightweight upper, same and lower insertion icons in the requested order', () => {
-    expectUnifiedIcon(nodeInsertIcon('parent'), 'ymz-icon-insert-parent');
-    expectUnifiedIcon(nodeInsertIcon('sibling'), 'ymz-icon-insert-sibling');
-    expectUnifiedIcon(nodeInsertIcon('child'), 'ymz-icon-insert-child');
+    expectSuppliedIcon(nodeInsertIcon('parent'), 'ymz-icon-insert-parent');
+    expectSuppliedIcon(nodeInsertIcon('sibling'), 'ymz-icon-insert-sibling');
+    expectSuppliedIcon(nodeInsertIcon('child'), 'ymz-icon-insert-child');
     const menu = source('src/ui/contextMenu.ts');
     const upper = menu.indexOf("label: '插入上级节点'");
     const same = menu.indexOf("label: '插入同级节点'");
@@ -42,17 +44,18 @@ describe('v0.9.21 source SVG, flat asset dialog and checkpoint polish', () => {
     expect(lower).toBeGreaterThan(same);
   });
 
-  it('normalizes supplied and clipboard icons without solid black artwork', () => {
-    expectUnifiedIcon(projectStyleIcon(), 'ymz-icon-project-style');
-    expectUnifiedIcon(nodeStyleIcon(), 'ymz-icon-node-style');
-    expectUnifiedIcon(relationIcon(), 'ymz-icon-relation');
-    expectUnifiedIcon(clipartIcon(), 'ymz-icon-clipart');
-    expectUnifiedIcon(outerFrameIcon(), 'ymz-icon-outer-frame');
-    expectUnifiedIcon(searchIcon(), 'ymz-icon-search');
-    expectUnifiedIcon(undoIcon(), 'ymz-icon-undo');
-    expectUnifiedIcon(redoIcon(), 'ymz-icon-redo');
-    expectUnifiedIcon(fullscreenIcon(), 'ymz-icon-fullscreen');
-    expectUnifiedIcon(clipboardIcon('copy'), 'ymz-icon-copy');
+  it('isolates supplied artwork and keeps the native clipboard icon theme-aware', () => {
+    expectSuppliedIcon(projectStyleIcon(), 'ymz-icon-project-style');
+    expectSuppliedIcon(nodeStyleIcon(), 'ymz-icon-node-style');
+    expectSuppliedIcon(relationIcon(), 'ymz-icon-relation');
+    expectSuppliedIcon(clipartIcon(), 'ymz-icon-clipart');
+    expectSuppliedIcon(outerFrameIcon(), 'ymz-icon-outer-frame');
+    expectSuppliedIcon(searchIcon(), 'ymz-icon-search');
+    expectSuppliedIcon(undoIcon(), 'ymz-icon-undo');
+    expectSuppliedIcon(redoIcon(), 'ymz-icon-redo');
+    expectSuppliedIcon(fullscreenIcon(), 'ymz-icon-fullscreen');
+    expect(clipboardIcon('copy')).toContain('ymz-icon-copy');
+    expect(clipboardIcon('copy')).toContain('currentColor');
   });
 
   it('shows the mode reached after clicking the footer mode button', () => {

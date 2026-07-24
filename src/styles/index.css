@@ -1295,16 +1295,18 @@
   vertical-align:middle;
 }
 
-/* v0.9.20 unified operation artwork and flat asset-dialog surfaces */
+/* v0.9.22 exact supplied SVG image isolation and flat asset-dialog surfaces */
 .ymz-operation-icon{
   display:block!important;
   width:18px!important;
   height:18px!important;
   min-width:18px;
   flex:0 0 18px;
-  overflow:visible;
-  color:currentColor;
-  shape-rendering:geometricPrecision;
+  object-fit:contain;
+  object-position:center;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
 }
 .ymz-context-menu .b3-menu__icon{
   width:22px;
@@ -1313,6 +1315,7 @@
   margin-right:4px;
 }
 .ymz-context-menu .b3-menu__icon>svg,
+.ymz-context-menu .b3-menu__icon>img,
 .ymz-context-menu .b3-menu__icon .ymz-menu-icon{
   width:18px!important;
   height:18px!important;

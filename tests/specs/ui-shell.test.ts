@@ -24,3 +24,4 @@ import '../suites/ui-shell/v0912LocalAssets.suite';
 import '../suites/ui-shell/v0913PanelInteraction.suite';
 
 import '../suites/ui-shell/v0919IconDialogsHistory.suite';
+import '../suites/ui-shell/v0922ExactSourceIconIsolation.suite';

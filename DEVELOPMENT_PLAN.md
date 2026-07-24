@@ -2,7 +2,7 @@
 
 ## Current baseline
 
-- Product version: 0.9.21
+- Product version: 0.9.22
 - Host baseline: SiYuan 3.7.3
 - Plugin ID and folder: `siyuan-yemind`
 
@@ -21,10 +21,11 @@
 - Dedicated outline drag gutter with aligned insertion feedback.
 - Hover-owned canvas node quick actions with a pointer-safe bridge.
 - Single-layer outline rainbow guides aligned below expanded triangle tips, plus bidirectional canvas/outline visible-node synchronization.
+- Exact `图标-svg.txt` Base64 SVG rendering through a host-CSS-isolated image boundary, with source-byte hashes and Chromium coverage.
 
 ## Next priorities
 
-1. Validate v0.9.21 supplied SVG rendering and the double-click formatting toolbar inside SiYuan 3.7.3 light, dark and custom themes.
+1. Validate v0.9.22 exact supplied SVG image isolation and menu/toolbar alignment inside SiYuan 3.7.3 with representative themes and custom snippets.
 2. Profile 1,000+ node outline editing and drag-target resolution, reducing unnecessary DOM or geometry work without weakening transaction safety.
 3. Expand import/export formats in isolated releases.
 4. Continue accessibility, screen-reader and keyboard-navigation coverage.

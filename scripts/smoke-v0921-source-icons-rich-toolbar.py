@@ -1,4 +1,4 @@
-"""v0.9.21 supplied SVG geometry and double-click rich-toolbar smoke."""
+"""v0.9.22 exact supplied SVG image-boundary and double-click rich-toolbar smoke."""
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -44,6 +44,20 @@ window.__siyuanMock=(()=>{
 '''
 wrapped = mock + "\nwindow.__outerModule={exports:{}};{const module=window.__outerModule;const exports=module.exports;const require=(name)=>{if(name==='siyuan')return window.__siyuanMock;throw new Error('Unexpected '+name)};\n" + bundle + "\nwindow.__YeMindExport=module.exports;}"
 
+
+def assert_exact_image(info, label):
+    if not info['exists'] or info['tag'] != 'IMG':
+        raise RuntimeError(f'{label} is not an isolated IMG: {info}')
+    if not info['src'].startswith('data:image/svg+xml;base64,'):
+        raise RuntimeError(f'{label} does not retain a Base64 SVG source')
+    if info['width'] != 18 or info['height'] != 18:
+        raise RuntimeError(f'{label} outer box is not 18x18: {info}')
+    if not info['complete'] or info['naturalWidth'] <= 0 or info['naturalHeight'] <= 0:
+        raise RuntimeError(f'{label} SVG image did not load: {info}')
+    if info['children'] != 0:
+        raise RuntimeError(f'{label} exposes child SVG geometry to host CSS: {info}')
+
+
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True, executable_path='/usr/bin/chromium', args=['--no-sandbox'])
     page = browser.new_page(viewport={'width': 1440, 'height': 900})
@@ -55,7 +69,7 @@ with sync_playwright() as p:
     page.add_script_tag(content=wrapped)
     page.evaluate("""async()=>{
       const P=window.__YeMindExport;const plugin=new P();plugin.onload();await plugin.whenReady();
-      const map=await plugin.repository.create('v0921 icons and toolbar','logicalStructure');
+      const map=await plugin.repository.create('v0922 icons and toolbar','logicalStructure');
       map.data={data:{uid:'root',text:'中心主题',expand:true},children:[{data:{uid:'a',text:'双击选择文字'},children:[]}]};
       await plugin.repository.update(map.id,{data:map.data});
       const container=document.createElement('div');container.style.cssText='width:1360px;height:820px';host.append(container);
@@ -63,63 +77,40 @@ with sync_playwright() as p:
       window.__smoke={plugin,map,container,context};window.__tabOptions.init.call(context);
     }""")
     page.wait_for_selector('[data-role="canvas"] svg', timeout=30000)
-    page.wait_for_timeout(800)
+    page.wait_for_selector('[data-action="open-search"] img.ymz-operation-icon', timeout=10000)
+    page.wait_for_timeout(500)
 
-    # Toolbar supplied icons use one outer viewBox and centered source viewport.
     toolbar = page.evaluate("""()=>{
-      const selectors={search:'[data-action=open-search] svg',style:'[data-action=project-style] svg',undo:'[data-action=undo] svg',redo:'[data-action=redo] svg'};
+      const selectors={search:'[data-action=open-search] img',style:'[data-action=project-style] img',undo:'[data-action=undo] img',redo:'[data-action=redo] img'};
       const out={};
       for(const [name,selector] of Object.entries(selectors)){
-        const svg=document.querySelector(selector);const nested=svg?.querySelector(':scope > svg');
-        out[name]={exists:!!svg,viewBox:svg?.getAttribute('viewBox'),nested:nested?{x:nested.getAttribute('x'),y:nested.getAttribute('y'),width:nested.getAttribute('width'),height:nested.getAttribute('height'),viewBox:nested.getAttribute('viewBox')}:null,html:svg?.outerHTML||'',color:svg?getComputedStyle(svg).color:''};
+        const image=document.querySelector(selector);const rect=image?.getBoundingClientRect();
+        out[name]={exists:!!image,tag:image?.tagName||'',src:image?.getAttribute('src')||'',width:Math.round(rect?.width||0),height:Math.round(rect?.height||0),complete:image?.complete||false,naturalWidth:image?.naturalWidth||0,naturalHeight:image?.naturalHeight||0,children:image?.childElementCount||0,draggable:image?.getAttribute('draggable')};
       }
       return out;
     }""")
     for name, info in toolbar.items():
-        if not info['exists'] or info['viewBox'] != '0 0 20 20':
-            raise RuntimeError(f'{name} is not normalized to 20x20: {info}')
-        if info['nested'] != {'x':'1','y':'1','width':'18','height':'18','viewBox':info['nested']['viewBox']}:
-            raise RuntimeError(f'{name} source viewport is not centered: {info}')
-        low=info['html'].lower()
-        if '#1e2024' in low or '#333' in low or '#636774' in low or '#888' in low:
-            raise RuntimeError(f'{name} still contains fixed dark artwork colors')
-        if 'currentcolor' not in low:
-            raise RuntimeError(f'{name} does not inherit theme color')
+        assert_exact_image(info, name)
+        if info['draggable'] != 'false':
+            raise RuntimeError(f'{name} can start native image dragging: {info}')
 
-    # Open node menu and inspect supplied relationship/asset icons in real DOM slots.
     node = page.locator('g.smm-node').filter(has_text='双击选择文字').first
     node.click(button='right', force=True)
     page.wait_for_selector('.ymz-context-menu--node')
+    page.wait_for_timeout(200)
     menu = page.evaluate("""()=>{
       const labels=['插入上级节点','插入同级节点','插入下级节点','节点样式','外框','图标','剪贴图'];
       const result={};
       for(const label of labels){
         const row=[...document.querySelectorAll('.b3-menu__item')].find(el=>el.querySelector(':scope > .b3-menu__label')?.textContent===label);
-        const svg=row?.querySelector(':scope > .b3-menu__icon-wrap svg');const nested=svg?.querySelector(':scope > svg');
-        result[label]={exists:!!svg,viewBox:svg?.getAttribute('viewBox'),nested:nested?{x:nested.getAttribute('x'),y:nested.getAttribute('y'),width:nested.getAttribute('width'),height:nested.getAttribute('height')}:null,html:svg?.outerHTML||'',slot:row?.querySelector(':scope > .b3-menu__icon-wrap')?.getBoundingClientRect().toJSON()||null};
+        const image=row?.querySelector(':scope > .b3-menu__icon-wrap img.ymz-operation-icon');const rect=image?.getBoundingClientRect();
+        result[label]={exists:!!image,tag:image?.tagName||'',src:image?.getAttribute('src')||'',width:Math.round(rect?.width||0),height:Math.round(rect?.height||0),complete:image?.complete||false,naturalWidth:image?.naturalWidth||0,naturalHeight:image?.naturalHeight||0,children:image?.childElementCount||0,draggable:image?.getAttribute('draggable')};
       }
       return result;
     }""")
     for label, info in menu.items():
-        if not info['exists'] or info['viewBox'] != '0 0 20 20':
-            raise RuntimeError(f'{label} supplied icon missing or wrong outer viewBox: {info}')
-        if info['nested'] != {'x':'1','y':'1','width':'18','height':'18'}:
-            raise RuntimeError(f'{label} artwork is not centered in the common viewport: {info}')
-        if 'currentcolor' not in info['html'].lower():
-            raise RuntimeError(f'{label} does not use currentColor')
+        assert_exact_image(info, label)
 
-    # Verify inherited color changes rather than fixed black in a dark host surface.
-    dark = page.evaluate("""()=>{
-      const editor=document.querySelector('.ymz-editor');editor.style.color='rgb(230, 235, 242)';
-      const menu=document.querySelector('.ymz-context-menu--node');menu.style.color='rgb(230, 235, 242)';menu.style.setProperty('--b3-theme-on-background','rgb(230, 235, 242)');menu.querySelectorAll('.b3-menu__item,.b3-menu__icon-wrap,svg').forEach(el=>el.style.color='rgb(230, 235, 242)');
-      const toolbarSvg=document.querySelector('[data-action=open-search] svg');
-      const menuSvg=[...document.querySelectorAll('.b3-menu__item')].find(el=>el.querySelector(':scope > .b3-menu__label')?.textContent==='插入上级节点')?.querySelector('svg');
-      return {toolbar:getComputedStyle(toolbarSvg).color,menu:getComputedStyle(menuSvg).color};
-    }""")
-    if dark['toolbar'] != 'rgb(230, 235, 242)' or dark['menu'] != 'rgb(230, 235, 242)':
-        raise RuntimeError(f'supplied icons did not inherit dark-theme color: {dark}')
-
-    # Close menu, double-click node text, and require immediate selected text + toolbar.
     page.evaluate("()=>window.__lastMenu?.close()")
     text_node = page.locator('g.smm-node').filter(has_text='双击选择文字').locator('.smm-richtext-node-wrap').first
     text_node.dblclick(force=True)
@@ -138,5 +129,5 @@ with sync_playwright() as p:
         raise RuntimeError('Page errors:\n'+'\n'.join(page_errors))
     if console_errors:
         raise RuntimeError('Console errors:\n'+'\n'.join(console_errors))
-    print({'toolbarIcons':list(toolbar.keys()),'menuIcons':list(menu.keys()),'darkTheme':dark,'richToolbar':rich,'pageErrors':0,'consoleErrors':0})
+    print({'toolbarIcons':list(toolbar.keys()),'menuIcons':list(menu.keys()),'exactImageBoundary':True,'richToolbar':rich,'pageErrors':0,'consoleErrors':0})
     browser.close()
