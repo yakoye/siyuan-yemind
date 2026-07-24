@@ -12,7 +12,7 @@ function position(label: string): number {
 describe('node context menu regression surface', () => {
   it('keeps the requested single-node command order and dynamic content actions', () => {
     const labels = [
-      '编辑节点', '插入同级节点', '插入子节点', '插入父节点',
+      '编辑节点', '插入上级节点', '插入同级节点', '插入下级节点',
       '添加', '关联线', '节点样式', '复制', '剪切', '粘贴',
       '粘贴（纯文本）', '上移节点', '下移节点',
       '展开/折叠（下级节点）', '删除当前和子节点', '仅删除当前',

@@ -79,7 +79,7 @@ describe('v0.9.17 user-reported interaction regressions', () => {
 
   it('organizes single-node context commands in the requested order and labels', () => {
     const labels = [
-      '编辑节点', '插入同级节点', '插入子节点', '插入父节点',
+      '编辑节点', '插入上级节点', '插入同级节点', '插入下级节点',
       '添加', '关联线', '节点样式', '复制', '剪切', '粘贴',
       '粘贴（纯文本）', '上移节点', '下移节点', '展开/折叠（下级节点）',
     ];
@@ -98,7 +98,7 @@ describe('v0.9.17 user-reported interaction regressions', () => {
     expect(nodeInsertIcon('sibling')).toContain('ymz-icon-insert-sibling');
     expect(nodeInsertIcon('child')).toContain('ymz-icon-insert-child');
     expect(nodeInsertIcon('parent')).toContain('ymz-icon-insert-parent');
-    expect(nodeStyleIcon()).toContain('class="ymz-menu-icon ymz-icon-node-style"');
+    expect(nodeStyleIcon()).toContain('class="ymz-menu-icon ymz-operation-icon ymz-icon-node-style"');
     expect(css).toMatch(/\.ymz-context-menu \.b3-menu__icon\{[^}]*align-items:center/s);
     expect(css).toMatch(/\.ymz-context-menu \.b3-menu__icon \.ymz-menu-icon\{[^}]*width:18px[^}]*height:18px/s);
   });

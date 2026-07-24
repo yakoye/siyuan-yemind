@@ -15,8 +15,8 @@ describe('node context menu organization', () => {
   it('keeps edit and insertion direct while grouping optional node content under 添加', () => {
     expect(source).toContain("label: '编辑节点'");
     expect(source).toContain("label: '插入同级节点'");
-    expect(source).toContain("label: '插入子节点'");
-    expect(source).toContain("label: '插入父节点'");
+    expect(source).toContain("label: '插入下级节点'");
+    expect(source).toContain("label: '插入上级节点'");
     expect(source).toContain("type: 'submenu', icon: 'iconAdd', label: '添加'");
     expect(source).toContain("label: hasOuterFrame ? '删除外框' : '外框'");
   });

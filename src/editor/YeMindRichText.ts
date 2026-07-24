@@ -231,6 +231,39 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.range = selectAll ? { index: 0, length } : { index: length, length: 0 };
     this.pasteUseRange = this.range;
     this.emitEditingDiagnostic(selectAll ? 'initial-select-all' : 'initial-caret-end', { length });
+
+    // Quill's SILENT source deliberately suppresses `selection-change`. That is
+    // useful while mounting the editor, but it also meant a node double-click
+    // selected all text without opening YeMind's shared formatting toolbar.
+    // Emit the same normalized selection payload after the edit surface has
+    // settled. Newly inserted nodes keep the old behavior and do not show the
+    // toolbar immediately.
+    if (selectAll && length > 0 && !this.isInserting) {
+      window.requestAnimationFrame(() => this.emitCurrentSelectionChange());
+    }
+  }
+
+  private emitCurrentSelectionChange(): void {
+    if (!this.showTextEdit || !this.quill || !this.textEditNode) return;
+    const range = this.quill.getSelection() ?? this.range;
+    if (!range || range.length <= 0) return;
+    const bounds = this.quill.getBounds(range.index, range.length);
+    const rect = this.textEditNode.getBoundingClientRect();
+    const rectInfo = {
+      left: bounds.left + rect.left,
+      top: bounds.top + rect.top,
+      right: bounds.right + rect.left,
+      bottom: bounds.bottom + rect.top,
+      width: bounds.width,
+    };
+    const formatInfo = this.quill.getFormat(range.index, range.length);
+    this.range = range;
+    this.pasteUseRange = range;
+    this.mindMap.emit('rich_text_selection_change', true, rectInfo, formatInfo);
+    this.emitEditingDiagnostic('initial-selection-toolbar', {
+      index: range.index,
+      length: range.length,
+    });
   }
 
   private applyEditorGeometry(node: any, rect: DOMRect): void {

@@ -1,37 +1,153 @@
 /**
- * YeMind operation icons.
+ * YeMind operation icons sourced from the user-provided `图标-svg.txt`.
  *
- * All icons share a 20×20 coordinate system, 1.5 px rounded strokes and
- * currentColor. This keeps toolbar and context-menu artwork visually aligned
- * in both light and dark themes and avoids the solid-black fills of v0.9.19.
+ * The source artwork is kept intact. Only presentation details are normalized:
+ * - one 20 × 20 outer viewBox and a centered 18 × 18 artwork viewport;
+ * - hard-coded dark strokes/fills become `currentColor`;
+ * - full-canvas white/empty placeholder rectangles are removed;
+ * - source IDs are namespaced so repeated inline SVGs do not collide;
+ * - non-scaling strokes keep the original 1.5 px visual weight.
+ *
+ * This lets the same source SVGs work in toolbar and menu surfaces across
+ * SiYuan light, dark and custom themes without redrawing their geometry.
  */
-const menu = (name: string, body: string): string =>
-  `<svg class="ymz-menu-icon ymz-operation-icon ymz-icon-${name}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
 
-const toolbar = (name: string, body: string): string =>
-  `<svg class="ymz-toolbar-icon ymz-operation-icon ymz-icon-${name}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
+type SuppliedIconName =
+  | "insertParent"
+  | "insertSibling"
+  | "insertChild"
+  | "outerFrame"
+  | "summary"
+  | "relation"
+  | "projectStyle"
+  | "nodeStyle"
+  | "clipart"
+  | "marker"
+  | "search"
+  | "redo"
+  | "undo"
+  | "fullscreen";
 
-const project = (name: string, body: string): string =>
-  `<svg class="ymz-project-icon ymz-operation-icon ymz-icon-${name}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
+type SourceIcon = { readonly viewBox: string; readonly body: string; readonly className: string; readonly slug: string };
 
-const stroke = 'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"';
+const sourceIcons: Record<SuppliedIconName, SourceIcon> = {
+  insertParent: {
+    slug: "insert-parent",
+    viewBox: "0 0 32 32",
+    className: "ymz-menu-icon",
+    body: `<path d="M11.833 20.75v-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" /><path fill-rule="evenodd" clip-rule="evenodd" d="M16.416 14.083H7.25c-.691 0-1.25-.559-1.25-1.25V9.5c0-.69.559-1.25 1.25-1.25h9.166c.691 0 1.25.56 1.25 1.25v3.333c0 .691-.559 1.25-1.25 1.25z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4" opacity=".58" vector-effect="non-scaling-stroke" /><path fill-rule="evenodd" clip-rule="evenodd" d="M13.083 20.834h.833-2.083 1.25zM24.75 23.75h-9.167c-.69 0-1.25-.559-1.25-1.25v-3.333c0-.69.56-1.25 1.25-1.25h9.167c.69 0 1.25.56 1.25 1.25V22.5c0 .691-.56 1.25-1.25 1.25z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />`,
+  },
+  insertSibling: {
+    slug: "insert-sibling",
+    viewBox: "0 0 32 32",
+    className: "ymz-menu-icon",
+    body: `<path fill-rule="evenodd" clip-rule="evenodd" d="M20.868 24h-9.733a1.327 1.327 0 01-1.328-1.327v-3.54c0-.733.594-1.326 1.327-1.326h9.734c.733 0 1.327.593 1.327 1.327v3.54c0 .733-.594 1.326-1.327 1.326zM16 15.786v1.947-3.54 1.593z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" /><path fill-rule="evenodd" clip-rule="evenodd" d="M20.867 14.194h-9.733a1.327 1.327 0 01-1.327-1.327v-3.54c0-.733.594-1.327 1.327-1.327h9.733c.734 0 1.328.594 1.328 1.327v3.54c0 .733-.594 1.327-1.328 1.327z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4" opacity=".58" vector-effect="non-scaling-stroke" />`,
+  },
+  insertChild: {
+    slug: "insert-child",
+    viewBox: "0 0 32 32",
+    className: "ymz-menu-icon",
+    body: `<path d="M11.833 20.75v-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" /><path fill-rule="evenodd" clip-rule="evenodd" d="M16.416 14.083H7.25c-.691 0-1.25-.559-1.25-1.25V9.5c0-.69.559-1.25 1.25-1.25h9.166c.691 0 1.25.56 1.25 1.25v3.333c0 .691-.559 1.25-1.25 1.25z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4" opacity=".58" vector-effect="non-scaling-stroke" /><path fill-rule="evenodd" clip-rule="evenodd" d="M13.083 20.834h.833-2.083 1.25zM24.75 23.75h-9.167c-.69 0-1.25-.559-1.25-1.25v-3.333c0-.69.56-1.25 1.25-1.25h9.167c.69 0 1.25.56 1.25 1.25V22.5c0 .691-.56 1.25-1.25 1.25z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />`,
+  },
+  outerFrame: {
+    slug: "outer-frame",
+    viewBox: "0 0 32 32",
+    className: "ymz-menu-icon",
+    body: `<path d="M22.25 8.5H9.75c-.69 0-1.25.56-1.25 1.25v12.5c0 .69.56 1.25 1.25 1.25h12.5c.69 0 1.25-.56 1.25-1.25V9.75c0-.69-.56-1.25-1.25-1.25z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 3" opacity=".58" vector-effect="non-scaling-stroke" /><path fill-rule="evenodd" clip-rule="evenodd" d="M19.117 18.5h-6.233c-.35 0-.634-.383-.634-.853v-3.294c0-.471.283-.853.634-.853h6.233c.35 0 .633.382.633.853v3.294c0 .47-.283.853-.633.853z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />`,
+  },
+  summary: {
+    slug: "summary",
+    viewBox: "0 0 32 32",
+    className: "ymz-menu-icon",
+    body: `<path fill-rule="evenodd" clip-rule="evenodd" d="M15.376 13.51H9.172c-.35 0-.632-.38-.632-.849V9.383c0-.47.283-.85.632-.85h6.204c.349 0 .63.38.63.85v3.278c0 .469-.281.85-.63.85zM15.376 23.466H9.172c-.35 0-.632-.38-.632-.85v-3.278c0-.469.282-.85.632-.85h6.204c.349 0 .63.381.63.85v3.278c0 .47-.281.85-.63.85z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" /><path d="M18.723 10.778a6.054 6.054 0 012.892 5.156 6.058 6.058 0 01-3.114 5.287M23.54 16h-1.637" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />`,
+  },
+  relation: {
+    slug: "relation",
+    viewBox: "0 0 24 24",
+    className: "ymz-menu-icon",
+    body: `<path fill-rule="evenodd" clip-rule="evenodd" d="M5.80049 9.66988H5.17422L3.95361 9.67431C4.68936 8.73504 5.38804 7.87819 6.38882 7.19344C7.68323 6.30778 9.61006 5.47975 12.0827 5.75448C14.622 6.03663 16.2903 7.59116 17.2976 9.00149C17.8031 9.70917 18.1551 10.3969 18.381 10.9073C18.4943 11.1633 18.5769 11.3769 18.6319 11.529C18.6594 11.6051 18.6801 11.666 18.6944 11.7093C18.7015 11.731 18.707 11.7483 18.711 11.7609L18.7157 11.7763L18.7173 11.7813L18.7178 11.7831C18.7178 11.7831 18.7182 11.7844 17.9998 11.9999L18.7182 11.7844C18.8372 12.1812 18.6121 12.5993 18.2154 12.7183C17.819 12.8372 17.4014 12.6127 17.2818 12.2167L17.2815 12.2154M17.2815 12.2154L17.2798 12.2103L17.2694 12.178C17.2595 12.1478 17.2436 12.1008 17.2213 12.0392C17.1767 11.9159 17.107 11.735 17.0093 11.5144C16.8134 11.0717 16.5091 10.4782 16.077 9.87334C15.2094 8.65865 13.8777 7.46317 11.917 7.24531C9.88962 7.02004 8.31645 7.69203 7.23586 8.4314C6.69408 8.80209 6.28051 9.18729 6.0042 9.47777C5.86641 9.62264 5.80049 9.66988 5.80049 9.66988" fill="currentColor" /><rect x="3" y="11" width="4" height="4" rx="1" fill="currentColor" fill-opacity="0.6" /><path d="M15.2002 13L20.9065 11.1459L19.7854 16.0161C19.7007 16.384 19.2546 16.5289 18.9699 16.2811L15.2002 13Z" fill="currentColor" />`,
+  },
+  projectStyle: {
+    slug: "project-style",
+    viewBox: "0 0 24 24",
+    className: "ymz-project-icon",
+    body: `<mask id="ymz-projectStyle-a" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="3" y="3" width="18" height="18"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.5 3.5h17v17h-17v-17z" fill="#fff" /></mask><g mask="url(#ymz-projectStyle-a)" fill="currentColor"><path d="M17.621 3.81c.085-.413.675-.413.759 0 .186.912.9 1.625 1.811 1.811.413.084.413.675 0 .759-.912.186-1.625.9-1.811 1.811-.084.413-.674.413-.759 0A2.324 2.324 0 0015.81 6.38c-.413-.084-.413-.675 0-.759A2.324 2.324 0 0017.62 3.81zM9.659 16.279c.076-.372.606-.372.682 0 .168.82.81 1.462 1.63 1.63.372.076.372.607 0 .682-.82.168-1.462.81-1.63 1.63-.075.372-.606.372-.682 0a2.091 2.091 0 00-1.63-1.63c-.372-.076-.372-.607 0-.682a2.091 2.091 0 001.63-1.63zM4.772 11.686c.051-.248.405-.248.456 0 .111.547.54.975 1.086 1.086.248.051.248.405 0 .456-.547.111-.975.539-1.086 1.086-.051.248-.405.248-.456 0a1.394 1.394 0 00-1.086-1.086c-.248-.051-.248-.405 0-.456.547-.111.975-.539 1.086-1.086z" /></g><path d="M9.136 10.536l7.636 7.636a1.2 1.2 0 001.697 0l1.134-1.134a1.2 1.2 0 000-1.697l-7.636-7.637m-2.831 2.832L6.449 7.849a1.2 1.2 0 010-1.698l1.134-1.134a1.2 1.2 0 011.697 0l2.687 2.687m-2.831 2.832l2.83-2.832" stroke="currentColor" stroke-width="1.5" vector-effect="non-scaling-stroke" />`,
+  },
+  nodeStyle: {
+    slug: "node-style",
+    viewBox: "0 0 20 20",
+    className: "ymz-menu-icon",
+    body: `<path d="M2.74071 10.2339C2.5252 10.1524 2.5252 9.84757 2.74071 9.76614L4.91553 8.94435C6.72811 8.25944 8.15894 6.82861 8.84385 5.01603L9.66563 2.84121C9.74707 2.62571 10.0519 2.6257 10.1334 2.84122L10.9551 5.01604C11.6401 6.82861 13.0709 8.25944 14.8835 8.94435L17.0583 9.76614C17.2738 9.84757 17.2738 10.1524 17.0583 10.2339L14.8835 11.0556C13.0709 11.7406 11.6401 13.1714 10.9551 14.984L10.1334 17.1588C10.0519 17.3743 9.74707 17.3743 9.66563 17.1588L8.84384 14.984C8.15893 13.1714 6.7281 11.7406 4.91553 11.0556L2.74071 10.2339Z" stroke="currentColor" stroke-width="1.5" vector-effect="non-scaling-stroke" /><path d="M14.1716 17L16.293 16.2929L17.0001 14.1716L17.7072 16.2929L19.8285 17L17.7072 17.7071L17.0001 19.8284L16.293 17.7071L14.1716 17Z" fill="currentColor" /><path d="M0 2.82837L2.12132 2.12126L2.82843 -5.79357e-05L3.53553 2.12126L5.65685 2.82837L3.53553 3.53548L2.82843 5.6568L2.12132 3.53548L0 2.82837Z" fill="currentColor" />`,
+  },
+  clipart: {
+    slug: "clipart",
+    viewBox: "0 0 20 20",
+    className: "ymz-menu-icon",
+    body: `<g clip-path="url(#ymz-clipart-clip0_3665_24045)"><mask id="ymz-clipart-path-1-inside-1_3665_24045" fill="white"><path d="M14.8453 17.3395C15.4931 16.8841 16.6604 15.4346 16.1044 13.6055C15.8979 12.9262 16.19 12.0805 16.7399 11.6314C17.8358 10.7362 18.265 9.22118 17.8361 7.85808C17.6087 7.1465 16.6931 5.54636 14.8387 5.48079C14.1206 5.4554 13.3897 4.90917 13.1396 4.23557C12.6462 2.90652 11.3792 2 9.99759 2C8.65576 2 7.40481 2.87467 6.88318 4.13564C6.59783 4.82545 5.78686 5.42105 5.04358 5.49021C3.71032 5.61425 2.5793 6.55226 2.16423 7.86447C1.73558 9.22133 2.16248 10.7044 3.25263 11.6086C3.80269 12.0648 4.08369 12.9401 3.89978 13.6306C3.5313 15.0143 4.03492 16.5034 5.16148 17.3436C6.58449 18.407 8.01753 17.8238 9.18138 16.8165C9.64255 16.4174 10.3475 16.4265 10.8056 16.8291C11.9613 17.8448 13.3876 18.3703 14.8453 17.3395Z" /></mask><path d="M14.8453 17.3395L13.9827 16.1123L13.9792 16.1148L14.8453 17.3395ZM17.8361 7.85808L19.267 7.40795L19.2649 7.40142L17.8361 7.85808ZM2.16423 7.86447L0.734074 7.41208L0.733907 7.41261L2.16423 7.86447ZM5.16148 17.3436L6.0594 16.142L6.05828 16.1412L5.16148 17.3436ZM3.25263 11.6086L2.29502 12.7632L3.25263 11.6086ZM3.89978 13.6306L2.4503 13.2446L3.89978 13.6306ZM6.88318 4.13564L5.49709 3.56226L6.88318 4.13564ZM14.8387 5.48079L14.7857 6.97985L14.8387 5.48079ZM13.1396 4.23557L11.7334 4.7577L13.1396 4.23557ZM16.1044 13.6055L14.6692 14.0418L16.1044 13.6055ZM16.7399 11.6314L15.791 10.4696L16.7399 11.6314ZM15.7079 18.5666C16.245 18.189 16.8702 17.5093 17.2848 16.6236C17.7153 15.7039 17.9442 14.5005 17.5395 13.1692L14.6692 14.0418C14.8205 14.5395 14.7438 14.9755 14.5677 15.3517C14.3758 15.7618 14.0933 16.0345 13.9827 16.1123L15.7079 18.5666ZM17.6888 12.7931C19.278 11.4951 19.8728 9.33374 19.267 7.40795L16.4053 8.3082C16.6571 9.10861 16.3936 9.97743 15.791 10.4696L17.6888 12.7931ZM19.2649 7.40142C19.0889 6.85057 18.6908 6.06022 18.0168 5.37521C17.3192 4.66614 16.2809 4.03085 14.8917 3.98173L14.7857 6.97985C15.251 6.99631 15.5976 7.19387 15.8783 7.47915C16.1826 7.78849 16.356 8.154 16.4073 8.31474L19.2649 7.40142ZM14.5458 3.71344C13.8439 1.82311 12.0341 0.5 9.99759 0.5V3.5C10.7243 3.5 11.4484 3.98992 11.7334 4.7577L14.5458 3.71344ZM9.99759 0.5C8.01449 0.5 6.23732 1.77285 5.49709 3.56226L8.26926 4.70903C8.57229 3.97649 9.29704 3.5 9.99759 3.5V0.5ZM4.90462 3.99666C2.94295 4.17917 1.32248 5.5519 0.734074 7.41208L3.59439 8.31685C3.83613 7.55263 4.4777 7.04933 5.18254 6.98376L4.90462 3.99666ZM0.733907 7.41261C0.124409 9.34194 0.727796 11.4633 2.29502 12.7632L4.21024 10.4541C3.59717 9.94558 3.34675 9.10072 3.59455 8.31632L0.733907 7.41261ZM2.4503 13.2446C1.9288 15.2029 2.63168 17.328 4.26469 18.546L6.05828 16.1412C5.43816 15.6787 5.13381 14.8257 5.34926 14.0167L2.4503 13.2446ZM9.81541 17.9558C10.51 18.5662 11.3934 19.1285 12.4329 19.3255C13.5286 19.5332 14.661 19.3069 15.7114 18.5641L13.9792 16.1148C13.5718 16.4029 13.2622 16.4293 12.9915 16.378C12.6645 16.316 12.257 16.1077 11.7959 15.7024L9.81541 17.9558ZM4.26357 18.5452C5.31716 19.3325 6.46663 19.5506 7.5679 19.3264C8.60046 19.1161 9.47974 18.542 10.163 17.9507L8.19976 15.6823C7.71916 16.0982 7.3 16.3194 6.96933 16.3867C6.70737 16.4401 6.42882 16.4181 6.0594 16.142L4.26357 18.5452ZM11.7959 15.7024C10.7857 14.8146 9.23876 14.7831 8.19976 15.6823L10.163 17.9507C10.0995 18.0057 10.0306 18.0225 9.98068 18.0221C9.93162 18.0216 9.87074 18.0044 9.81541 17.9558L11.7959 15.7024ZM2.29502 12.7632C2.39642 12.8473 2.48301 13.1218 2.4503 13.2446L5.34926 14.0167C5.68437 12.7583 5.20895 11.2824 4.21024 10.4541L2.29502 12.7632ZM5.49709 3.56226C5.48052 3.60232 5.40696 3.71915 5.24615 3.83746C5.08548 3.95567 4.95042 3.9924 4.90462 3.99666L5.18254 6.98376C5.88002 6.91886 6.52209 6.6232 7.02405 6.25388C7.52589 5.88465 8.00048 5.35877 8.26926 4.70903L5.49709 3.56226ZM14.8917 3.98173C14.892 3.98174 14.8721 3.9808 14.8341 3.96648C14.7962 3.95221 14.7506 3.92839 14.7038 3.8939C14.6001 3.81743 14.5551 3.73831 14.5458 3.71344L11.7334 4.7577C12.1867 5.97832 13.4365 6.93215 14.7857 6.97985L14.8917 3.98173ZM17.5395 13.1692C17.5418 13.1766 17.5256 13.1156 17.5634 13.0009C17.6009 12.8868 17.661 12.8158 17.6888 12.7931L15.791 10.4696C14.8126 11.2688 14.2703 12.7297 14.6692 14.0418L17.5395 13.1692Z" fill="currentColor" mask="url(#ymz-clipart-path-1-inside-1_3665_24045)" /><mask id="ymz-clipart-path-3-inside-2_3665_24045" fill="white"><path d="M7 9.99754C7 8.3479 8.34085 7 9.99797 7C11.654 7 13 8.3479 13 9.99754C13 11.6525 11.654 13 9.99797 13C8.34085 13 7 11.6525 7 9.99754Z" /></mask><path d="M8.5 9.99754C8.5 9.17417 9.17143 8.5 9.99797 8.5V5.5C7.51027 5.5 5.5 7.52162 5.5 9.99754H8.5ZM9.99797 8.5C10.8264 8.5 11.5 9.17717 11.5 9.99754H14.5C14.5 7.51863 12.4816 5.5 9.99797 5.5V8.5ZM11.5 9.99754C11.5 10.8247 10.825 11.5 9.99797 11.5V14.5C12.4831 14.5 14.5 12.4803 14.5 9.99754H11.5ZM9.99797 11.5C9.17289 11.5 8.5 10.8277 8.5 9.99754H5.5C5.5 12.4773 7.50881 14.5 9.99797 14.5V11.5Z" fill="currentColor" mask="url(#ymz-clipart-path-3-inside-2_3665_24045)" /></g><defs><clipPath id="ymz-clipart-clip0_3665_24045"><rect width="16" height="16" fill="white" transform="translate(2 2)" /></clipPath></defs>`,
+  },
+  marker: {
+    slug: "marker",
+    viewBox: "0 0 20 20",
+    className: "ymz-menu-icon",
+    body: `<path d="M15.5422 13.256L15.4084 13.4463C15.3304 13.5475 15.2222 13.6843 15.0867 13.8477C14.7766 14.2214 14.3256 14.7315 13.7648 15.2729C13.0174 15.9945 12.12 16.7719 11.3419 17.3642C10.9516 17.6612 10.6045 17.9017 10.3294 18.064C10.1913 18.1455 10.0847 18.1994 10.0089 18.2307C10.0058 18.232 10.0028 18.2332 9.99997 18.2344C9.9971 18.2332 9.99411 18.232 9.991 18.2307C9.91518 18.1993 9.80854 18.1455 9.67039 18.064C9.39513 17.9016 9.04792 17.6612 8.6576 17.3641C7.87941 16.7719 6.9821 15.9946 6.23543 15.2731C5.67526 14.7319 5.22542 14.2221 4.91642 13.8485C4.76217 13.662 4.64366 13.5103 4.56472 13.4065C4.55958 13.3998 4.55461 13.3932 4.54981 13.3869L4.45776 13.256C3.69611 12.1732 3.25 10.8579 3.25 9.4375C3.25 5.75 6.26615 2.75 10 2.75C13.7339 2.75 16.75 5.75 16.75 9.4375C16.75 10.8579 16.3039 12.1732 15.5422 13.256Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" vector-effect="non-scaling-stroke" /><rect x="7" y="6" width="1.5" height="2" rx="0.75" fill="currentColor" /><rect x="11.5" y="6" width="1.5" height="2" rx="0.75" fill="currentColor" /><path d="M8 10C9.22882 11.2288 10.7712 11.2288 12 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" vector-effect="non-scaling-stroke" />`,
+  },
+  search: {
+    slug: "search",
+    viewBox: "0 0 16 16",
+    className: "ymz-toolbar-icon",
+    body: `<path fill-rule="evenodd" clip-rule="evenodd" d="M12.038 2.714a6.552 6.552 0 00-9.354 0c-2.578 2.621-2.578 6.855 0 9.478a6.554 6.554 0 009.147.199l.584-.618c2.201-2.64 2.068-6.583-.377-9.06z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" /><path d="M12.2 12.143l3.05 3.108" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />`,
+  },
+  redo: {
+    slug: "redo",
+    viewBox: "0 0 14.6 15.5",
+    className: "ymz-toolbar-icon",
+    body: `<path d="M13.8 3.6H6.3C3.2 3.6.7 6.1.7 9.2h0c0 3.1 2.5 5.6 5.6 5.6h3.3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" vector-effect="non-scaling-stroke" /><path d="M10.9 6.6l2.9-3L10.9.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />`,
+  },
+  undo: {
+    slug: "undo",
+    viewBox: "0 0 14.6 15.5",
+    className: "ymz-toolbar-icon",
+    body: `<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" vector-effect="non-scaling-stroke"><path d="M.8 3.6h7.5c3.1 0 5.6 2.5 5.6 5.6h0c0 3.1-2.5 5.6-5.6 5.6H4.9" /><path d="M3.7 6.6l-2.9-3L3.7.7" stroke-linejoin="round" /></g>`,
+  },
+  fullscreen: {
+    slug: "fullscreen",
+    viewBox: "0 0 24 24",
+    className: "ymz-toolbar-icon",
+    body: `<path d="M18.6 5.398v4.2M18.6 5.4h-4.2M14.8 9.6l3.8-3.8M5.4 5.398v4.2M5.4 5.4h4.2M9.2 9.6L5.4 5.8M18.6 18.602v-4.2M18.6 18.6h-4.2M14.8 14.4l3.8 3.8M5.4 18.602v-4.2M5.4 18.6h4.2M9.2 14.4l-3.8 3.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />`,
+  },
+};
 
-export const suppliedIcons = {
-  insertParent: menu('insert-parent', `<rect x="10.5" y="11.5" width="7" height="4.5" rx="1.2" ${stroke}/><rect x="2.5" y="4" width="7" height="4.5" rx="1.2" ${stroke} stroke-dasharray="2 2" opacity=".58"/><path d="M7 11.5V9.8h7V11.5M5.8 11.5h2.4M7 9.8V8.5" ${stroke}/>`),
-  insertSibling: menu('insert-sibling', `<rect x="5" y="3" width="10" height="5" rx="1.3" ${stroke} stroke-dasharray="2 2" opacity=".58"/><rect x="5" y="12" width="10" height="5" rx="1.3" ${stroke}/><path d="M10 8v4" ${stroke}/>`),
-  insertChild: menu('insert-child', `<rect x="2.5" y="4" width="7" height="4.5" rx="1.2" ${stroke}/><rect x="10.5" y="11.5" width="7" height="4.5" rx="1.2" ${stroke} stroke-dasharray="2 2" opacity=".58"/><path d="M7 8.5v1.3h7v1.7M5.8 9.8h2.4" ${stroke}/>`),
-  outerFrame: menu('outer-frame', `<rect x="2.5" y="2.5" width="15" height="15" rx="2.4" ${stroke} stroke-dasharray="2.6 2.6"/><rect x="6.2" y="7" width="7.6" height="6" rx="1.4" ${stroke}/>`),
-  summary: menu('summary', `<rect x="2.8" y="3.2" width="6.2" height="4.3" rx="1.2" ${stroke}/><rect x="2.8" y="12.5" width="6.2" height="4.3" rx="1.2" ${stroke}/><path d="M12 4.5c2.4 1.3 3.6 3.1 3.6 5.5S14.4 14.2 12 15.5M14.3 10h3" ${stroke}/>`),
-  relation: menu('relation', `<rect x="2.3" y="12.4" width="3.6" height="3.6" rx=".8" ${stroke}/><path d="M5.8 12.7C7.7 6 12 4 16.4 7.2M14.8 4.9l2 2.4-2.9 1.2" ${stroke}/>`),
-  projectStyle: project('project-style', `<path d="m5.2 13.8 7.9-7.9 2.8 2.8-7.9 7.9a1.5 1.5 0 0 1-2.1 0l-.7-.7a1.5 1.5 0 0 1 0-2.1Z" ${stroke}/><path d="m11.8 7.2 2.8 2.8M4 3.2v3.1M2.45 4.75h3.1M15.7 13.7v3.1M14.15 15.25h3.1" ${stroke}/>`),
-  nodeStyle: menu('node-style', `<path d="M3.2 5.2h13.6M3.2 10h13.6M3.2 14.8h13.6" ${stroke}/><circle cx="7" cy="5.2" r="1.7" fill="none" ${stroke}/><circle cx="13" cy="10" r="1.7" fill="none" ${stroke}/><circle cx="8.5" cy="14.8" r="1.7" fill="none" ${stroke}/>`),
-  clipart: menu('clipart', `<rect x="2.5" y="3" width="15" height="14" rx="2" ${stroke}/><circle cx="7" cy="7.2" r="1.35" ${stroke}/><path d="m4.5 14 3.6-3.7 2.5 2.3 2.2-2.1 2.7 3.5" ${stroke}/>`),
-  marker: menu('marker', `<circle cx="10" cy="10" r="7" ${stroke}/><circle cx="7.5" cy="8" r=".75" fill="currentColor"/><circle cx="12.5" cy="8" r=".75" fill="currentColor"/><path d="M7.2 11.6c1.8 1.7 3.8 1.7 5.6 0" ${stroke}/>`),
-  search: toolbar('search', `<circle cx="8.8" cy="8.8" r="5.4" ${stroke}/><path d="m12.8 12.8 4 4" ${stroke}/>`),
-  redo: toolbar('redo', `<path d="M16.5 6.3H9.2a5.3 5.3 0 1 0 0 10.6h3" ${stroke}/><path d="m13.4 3.2 3.1 3.1-3.1 3.1" ${stroke}/>`),
-  undo: toolbar('undo', `<path d="M3.5 6.3h7.3a5.3 5.3 0 1 1 0 10.6h-3" ${stroke}/><path d="m6.6 3.2-3.1 3.1 3.1 3.1" ${stroke}/>`),
-  fullscreen: toolbar('fullscreen', `<path d="M7.5 3.5h-4v4M12.5 3.5h4v4M3.5 12.5v4h4M16.5 12.5v4h-4" ${stroke}/>`),
-} as const;
+function renderSourceIcon(name: SuppliedIconName): string {
+  const icon = sourceIcons[name];
+  return `<svg class="${icon.className} ymz-operation-icon ymz-icon-${icon.slug}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><svg x="1" y="1" width="18" height="18" viewBox="${icon.viewBox}" preserveAspectRatio="xMidYMid meet" overflow="visible">${icon.body}</svg></svg>`;
+}
 
-export type SuppliedIconName = keyof typeof suppliedIcons;
-export function suppliedIcon(name: SuppliedIconName): string { return suppliedIcons[name]; }
+export const suppliedIcons = Object.freeze(
+  Object.fromEntries(
+    (Object.keys(sourceIcons) as SuppliedIconName[]).map((name) => [name, renderSourceIcon(name)]),
+  ),
+) as Readonly<Record<SuppliedIconName, string>>;
+
+export { type SuppliedIconName };
+
+export function suppliedIcon(name: SuppliedIconName): string {
+  return suppliedIcons[name];
+}
+
+export const suppliedIconSourceNames = Object.freeze({
+
+  insertParent: "插入父节点图标，也是插入上级节点图标",
+  insertSibling: "插入同级节点图标，也是插入同级节点图标",
+  insertChild: "插入子节点图标，也是插入下级节点图标",
+  outerFrame: "外框图标",
+  summary: "概括图标",
+  relation: "关联线",
+  projectStyle: "样式-魔方棒图标",
+  nodeStyle: "样式-设置图标",
+  clipart: "剪贴画图标",
+  marker: "图标的图标",
+  search: "搜索图标",
+  redo: "重做图标",
+  undo: "撤销图标",
+  fullscreen: "全屏放大图标",
+} as const);

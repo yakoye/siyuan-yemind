@@ -28,8 +28,10 @@ describe('v0.5.23 canvas rich-text integration', () => {
     map.on('rich_text_selection_change', (hasRange:any, bounds:any, format:any) => toolbar.update(hasRange,bounds,format,commands));
     const node = map.renderer.root;
     node.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles:true, clientX:20, clientY:20 }));
-    await new Promise(r => setTimeout(r, 0));
+    await new Promise(r => setTimeout(r, 20));
     expect(map.richText.showTextEdit).toBe(true);
+    expect(map.richText.quill.getSelection()).toMatchObject({ index: 0, length: 9 });
+    expect(wrapper.querySelector<HTMLElement>('.ymz-rich-toolbar')?.hidden).toBe(false);
     map.richText.quill.setSelection(0, 4, 'user');
     await new Promise(r => setTimeout(r, 0));
     expect(wrapper.querySelector<HTMLElement>('.ymz-rich-toolbar')?.hidden).toBe(false);

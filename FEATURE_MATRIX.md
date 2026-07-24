@@ -9,8 +9,8 @@
 | Theme colors | Per-level text, fill, border and parent-child line colors with 1/3/4/6 branch cycles |
 | Appearance refresh | One atomic full redraw; immediate theme/rainbow updates; viewport and selection preserved; transparent root resolves to canvas background |
 | Local style priority | Node-local text, fill, border and line values override whole-map themes |
-| Selection toolbar | Canvas and outline share delayed-after-selection visibility; saved ranges survive font/size dropdown focus |
-| Context menus | Separate single-node, multi-node and blank-canvas menus with state-aware outer-frame and clipboard commands |
+| Selection toolbar | Canvas and outline share selection formatting; double-click full selection opens the toolbar immediately and saved ranges survive control focus |
+| Context menus | Separate single-node, multi-node and blank-canvas menus with supplied theme-aware SVG actions, state-aware outer-frame and clipboard commands |
 | Style panels | Project and node styles use separate compact anchored panels; node controls use a denser two-column layout |
 | Relation editing | Editable persisted Bézier endpoints/control points, tangent-driven arrows, lifecycle guards and a clear blue selected state |
 | Outline model | One structured contenteditable document; no user-facing text/node mode split |
@@ -21,7 +21,7 @@
 | Outline presentation | Black 7px triangles, black 5px leaf squares, midpoint-aligned indent-rainbow guides with no Root-side guide, flat `#ececec` hover and `#deeae6` active state |
 | Canvas drag | Right-logical nearest-node local zones, continuous candidate-parent preview and atomic subtree moves; drag-first right-button panning is isolated from selection |
 | Drag safety | Self/descendant/root/no-op rejection, Escape cancellation, one-step undo and stable UID/metadata preservation |
-| Image actions | Hover-owned delete/preview/resize controls, magnifier-click lightbox and event isolation from structural dragging |
+| Image actions | Hover border, direct image selection, eight resize handles, replace/delete toolbar, double-click lightbox and structural-drag isolation |
 | Persistence | Local maps, settings, checkpoints, autosave and restore protection |
 | Integration | SiYuan tabs, Dock, protocol links and global-search node navigation |
 | Reliability | Structured diagnostics, same-generation hidden-tab text/frame measurement and 15-domain manifest-controlled regression architecture |

@@ -24,10 +24,11 @@ function expectUnifiedIcon(svg: string, className: string): void {
   expect(svg).toContain('viewBox="0 0 20 20"');
   expect(svg).toContain(className);
   expect(svg).toContain('currentColor');
-  expect(svg).not.toMatch(/fill="#(?:000|1E2024|333)"/i);
+  expect(svg).toContain('x="1" y="1" width="18" height="18"');
+  expect(svg).not.toMatch(/#(?:000|1e2024|333333|333|636774|888888|888)/i);
 }
 
-describe('v0.9.20 icon, flat asset dialog and checkpoint polish', () => {
+describe('v0.9.21 source SVG, flat asset dialog and checkpoint polish', () => {
   it('uses lightweight upper, same and lower insertion icons in the requested order', () => {
     expectUnifiedIcon(nodeInsertIcon('parent'), 'ymz-icon-insert-parent');
     expectUnifiedIcon(nodeInsertIcon('sibling'), 'ymz-icon-insert-sibling');

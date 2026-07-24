@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.21 - 2026-07-24
+
+- Preserve the exact path geometry from the supplied SVG catalog while normalizing every operation icon into one centered 20×20 current-color presentation shell.
+- Replace fixed dark strokes and fills with theme-inherited color without redrawing masks, dashed guides, opacity or relationship semantics.
+- Apply the supplied artwork to search, project style, undo, redo, upper/same/lower insertion, node style, relationship, outer frame, marker and clipart actions.
+- Emit the rich-text selection payload after double-click enters edit mode and selects the complete node text, so the shared formatting toolbar opens immediately.
+- Add source-contract, offline and real Chromium regressions for source geometry, dark-theme inheritance, menu slots and the initial full-selection toolbar.
+
 
 ## 0.9.20 - 2026-07-24
 

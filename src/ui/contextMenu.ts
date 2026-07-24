@@ -118,7 +118,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
     menu.addItem({ iconHTML: relationIcon(), label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
     menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
     menu.addSeparator();
-    menu.addItem({ iconHTML: clipboardIcon('copy'), label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });
+    menu.addItem({ icon: 'iconCopy', label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });
     menu.addItem({ iconHTML: clipboardIcon('cut'), label: '剪切', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) });
     menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴', accelerator: 'Ctrl+V', disabled: !availability.paste, click: run('paste', () => paste(commands)) });
     menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴（纯文本）', accelerator: 'Ctrl+Shift+V', disabled: !availability.paste, click: run('paste-plain', () => paste(commands, true)) });
@@ -154,7 +154,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   menu.addItem({ iconHTML: relationIcon(), label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
   menu.addItem({ iconHTML: nodeStyleIcon(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
   menu.addSeparator();
-  menu.addItem({ iconHTML: clipboardIcon('copy'), label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });
+  menu.addItem({ icon: 'iconCopy', label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });
   menu.addItem({ iconHTML: clipboardIcon('cut'), label: '剪切', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) });
   menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴', accelerator: 'Ctrl+V', disabled: !availability.paste, click: run('paste', () => paste(commands)) });
   menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴（纯文本）', accelerator: 'Ctrl+Shift+V', disabled: !availability.paste, click: run('paste-plain', () => paste(commands, true)) });

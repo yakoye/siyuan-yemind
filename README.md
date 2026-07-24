@@ -2,8 +2,14 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.20`  
+Current version: `0.9.21`  
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.21 supplied SVG adaptation and double-click formatting toolbar
+
+- Keeps the exact path geometry supplied in `图标-svg.txt`, while normalizing the outer `20 × 20` viewport, centered `18 × 18` artwork area and menu slot.
+- Converts fixed dark strokes and fills to `currentColor` without redrawing masks, dashed guides or opacity, so toolbar and context-menu artwork follows light, dark and custom themes.
+- Double-clicking node text still selects the complete text and now opens the shared rich-text formatting toolbar immediately.
 
 ## v0.9.20 icon consistency, flat asset dialogs and cross-root dragging
 

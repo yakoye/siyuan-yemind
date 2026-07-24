@@ -7,7 +7,13 @@ import {
   undoIcon,
   redoIcon,
   searchIcon,
+  markerIcon,
+  clipartIcon,
+  outerFrameIcon,
+  relationIcon,
+  fullscreenIcon,
 } from '../../src/editor/projectControls';
+import { suppliedIconSourceNames } from '../../src/editor/suppliedIcons';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -19,14 +25,34 @@ const editorSource = readFileSync('src/editor/YeMindEditor.ts', 'utf8');
 const templateSource = readFileSync('src/editor/editorTemplate.ts', 'utf8');
 const cssSource = readFileSync('src/styles/index.css', 'utf8');
 
-assert(nodeInsertIcon('parent').includes('viewBox="0 0 20 20"') && nodeInsertIcon('parent').includes('ymz-icon-insert-parent'), 'upper-node icon must use the unified 20px artwork');
-assert(nodeInsertIcon('sibling').includes('ymz-icon-insert-sibling'), 'same-level icon must use the unified artwork');
-assert(nodeInsertIcon('child').includes('ymz-icon-insert-child'), 'lower-node icon must use the unified artwork');
-assert(projectStyleIcon().includes('ymz-icon-project-style') && !projectStyleIcon().includes('fill="currentColor"'), 'project style must use the lightweight stroke artwork');
-assert(nodeStyleIcon().includes('ymz-icon-node-style') && nodeStyleIcon().includes('circle'), 'node style must use the aligned sliders artwork');
-assert(undoIcon().includes('ymz-icon-undo') && undoIcon().includes('viewBox="0 0 20 20"'), 'undo must use the unified SVG');
-assert(redoIcon().includes('ymz-icon-redo') && redoIcon().includes('viewBox="0 0 20 20"'), 'redo must use the unified SVG');
-assert(searchIcon().includes('ymz-icon-search') && searchIcon().includes('<circle'), 'search must use the unified SVG');
+const supplied = [
+  nodeInsertIcon('parent'),
+  nodeInsertIcon('sibling'),
+  nodeInsertIcon('child'),
+  projectStyleIcon(),
+  nodeStyleIcon(),
+  markerIcon(),
+  clipartIcon(),
+  outerFrameIcon(),
+  relationIcon(),
+  undoIcon(),
+  redoIcon(),
+  searchIcon(),
+  fullscreenIcon(),
+];
+assert(supplied.every((icon) => icon.includes('viewBox="0 0 20 20"')), 'all supplied operation icons must use one 20px outer viewBox');
+assert(supplied.every((icon) => icon.includes('x="1" y="1" width="18" height="18"')), 'all supplied icons must share the centered 18px artwork viewport');
+assert(supplied.every((icon) => icon.includes('currentColor')), 'all supplied icons must inherit the active SiYuan theme color');
+assert(supplied.every((icon) => !/#(?:1e2024|333333|333|636774|888888|888)/i.test(icon)), 'supplied icon output must not retain fixed dark palette colors');
+assert(nodeInsertIcon('parent').includes('ymz-icon-insert-parent'), 'upper-node icon must use the supplied parent source artwork');
+assert(nodeInsertIcon('sibling').includes('ymz-icon-insert-sibling'), 'same-level icon must use the supplied sibling source artwork');
+assert(nodeInsertIcon('child').includes('ymz-icon-insert-child'), 'lower-node icon must use the supplied child source artwork');
+assert(projectStyleIcon().includes('ymz-icon-project-style') && projectStyleIcon().includes('<mask'), 'project style must preserve the supplied magic-wand geometry');
+assert(nodeStyleIcon().includes('ymz-icon-node-style') && nodeStyleIcon().includes('map-toggle-style') === false, 'node style must inline the normalized supplied settings artwork');
+assert(undoIcon().includes('ymz-icon-undo') && undoIcon().includes('vector-effect="non-scaling-stroke"'), 'undo must preserve the supplied source stroke weight');
+assert(redoIcon().includes('ymz-icon-redo') && redoIcon().includes('vector-effect="non-scaling-stroke"'), 'redo must preserve the supplied source stroke weight');
+assert(searchIcon().includes('ymz-icon-search') && searchIcon().includes('preserveAspectRatio="xMidYMid meet"'), 'search must use the normalized supplied source SVG');
+assert(suppliedIconSourceNames.insertParent.includes('插入父节点图标'), 'supplied icons must retain source traceability');
 assert(canvasModeIcon('select').includes('ymz-icon-canvas-pan'), 'canvas mode button must show the action after click');
 assert(canvasModeIcon('pan').includes('ymz-icon-canvas-select'), 'canvas mode button must reverse the current mode icon');
 
@@ -51,7 +77,7 @@ assert(templateSource.includes('fullscreenIcon()'), 'fullscreen toolbar must use
 assert(cssSource.includes('var(--ymz-outline-branch-half)'), 'outline insertion square must align to the target branch marker center');
 
 export default {
-  icons: 10,
+  icons: 15,
   menus: 4,
   dialogs: 6,
   checkpoints: 2,

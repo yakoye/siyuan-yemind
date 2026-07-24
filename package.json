@@ -1,6 +1,6 @@
 {
   "name": "siyuan-yemind",
-  "version": "0.9.20",
+  "version": "0.9.21",
   "private": true,
   "description": "A SiYuan mind-map plugin built around simple-mind-map.",
   "license": "MIT",
