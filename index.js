@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.22 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.23 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -15847,7 +15847,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.22';
+exports.PLUGIN_VERSION = '0.9.23';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -15864,19 +15864,20 @@ const constants_1 = __require(28);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-24T05:57:37Z',
-    buildId: 'yemind-v0.9.22-20260724',
+    buildTime: '2026-07-24T06:57:39Z',
+    buildId: 'yemind-v0.9.23-20260724',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '将用户提供的 Base64 SVG 原样隔离为图片文档，避免宿主样式把线框图标填充成黑块。',
+    releaseSummary: '统一工具栏与菜单图标为 22px 槽位和 15px 图形，并补齐暗黑主题图标、悬停与选中状态。',
     highlights: [
-        '搜索、样式、上级/同级/下级节点、节点样式、外框、图标、剪贴图等 14 个图标直接使用图标-svg.txt 中的原始 Base64 SVG。',
-        '使用 img 文档边界隔离 SVG 内部 path，阻止思源主题或自定义 CSS 的 fill/stroke 规则把线框图标渲染成黑色实心块。',
-        '保留原始宽高、路径、描边、填充、虚线、遮罩、透明度和固定颜色，显示结果与浏览器直接预览一致。',
-        '继续使用统一 18×18 外层占位、禁用原生图片拖动，并保持工具栏与右键菜单对齐。',
-        '补充精确 SHA-256、离线、恶意宿主 CSS 和真实 Chromium 回归。',
+        '所有自定义菜单和工具栏图标统一进入 22×22 固定槽位，图形在 15×15 区域内等比例居中。',
+        '思源原生菜单 SVG 同样使用 22px 外框和 3.5px 内边距，原生与 YeMind 图标及文字起点保持一致。',
+        '14 个用户提供的 Base64 SVG 增加独立暗黑版本，继续使用图片文档边界避免宿主 CSS 污染。',
+        '大纲普通、悬停、选中、拖入状态改用主题变量，移除固定浅灰背景和固定黑色三角/方点。',
+        '顶部工具栏暗黑模式的悬停与选中状态提高背景、边框、文字和图标对比度。',
+        '补充失败测试、离线契约、14 图标像素可见性和真实 Chromium 暗黑主题回归。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -16652,6 +16653,10 @@ exports.fullscreenIcon = fullscreenIcon;
 exports.lockIcon = lockIcon;
 exports.meditationIcon = meditationIcon;
 const suppliedIcons_1 = __require(36);
+function iconSlot(content, modifier = '') {
+    const suffix = modifier ? ` ${modifier}` : '';
+    return `<span class="ymz-icon-slot${suffix}" aria-hidden="true">${content}</span>`;
+}
 function fitViewIcon() {
     return '<svg class="ymz-toolbar-icon ymz-icon-fit-view" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M4 16v4h4M20 16v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
 }
@@ -16663,15 +16668,15 @@ function canvasModeIcon(mode) {
     return '<svg class="ymz-toolbar-icon ymz-icon-canvas-select" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 12.7 9.1-5.6 1.1 3.2 5.4-2.6 1.5-3.1-5.3L6 19.1 5 3Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 function clipboardIcon(kind) {
-    const base = 'class="ymz-menu-icon ymz-operation-icon';
+    const base = 'class="ymz-menu-icon';
     const stroke = 'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"';
     if (kind === 'cut') {
-        return `<svg ${base} ymz-icon-cut" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="5" cy="15" r="2" ${stroke}/><circle cx="15" cy="15" r="2" ${stroke}/><path d="m6.5 13.7 7-9.2M13.5 13.7l-7-9.2" ${stroke}/></svg>`;
+        return iconSlot(`<svg ${base} ymz-icon-cut" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="15" r="2" ${stroke}/><circle cx="15" cy="15" r="2" ${stroke}/><path d="m6.5 13.7 7-9.2M13.5 13.7l-7-9.2" ${stroke}/></svg>`, 'ymz-icon-slot--menu');
     }
     if (kind === 'paste') {
-        return `<svg ${base} ymz-icon-paste" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="4.5" y="4.5" width="11" height="13" rx="2" ${stroke}/><path d="M7.3 4.5V3.7c0-.7.6-1.2 1.2-1.2h3c.7 0 1.2.5 1.2 1.2v.8M7.5 9h5M7.5 12.5h5" ${stroke}/></svg>`;
+        return iconSlot(`<svg ${base} ymz-icon-paste" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><rect x="4.5" y="4.5" width="11" height="13" rx="2" ${stroke}/><path d="M7.3 4.5V3.7c0-.7.6-1.2 1.2-1.2h3c.7 0 1.2.5 1.2 1.2v.8M7.5 9h5M7.5 12.5h5" ${stroke}/></svg>`, 'ymz-icon-slot--menu');
     }
-    return `<svg ${base} ymz-icon-copy" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="7" y="6" width="9.5" height="11.5" rx="1.8" ${stroke}/><path d="M13.5 6V4.5c0-1.1-.9-2-2-2h-6c-1.1 0-2 .9-2 2V14c0 1.1.9 2 2 2H7" ${stroke}/></svg>`;
+    return iconSlot(`<svg ${base} ymz-icon-copy" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><rect x="7" y="6" width="9.5" height="11.5" rx="1.8" ${stroke}/><path d="M13.5 6V4.5c0-1.1-.9-2-2-2h-6c-1.1 0-2 .9-2 2V14c0 1.1.9 2 2 2H7" ${stroke}/></svg>`, 'ymz-icon-slot--menu');
 }
 /** Compact relationship icons modelled after common mind-map insert controls. */
 function nodeInsertIcon(kind) {
@@ -16684,9 +16689,9 @@ function nodeInsertIcon(kind) {
 exports.CANVAS_PROJECT_MENU_LABELS = ['结构', '主题', '线型', '样式'];
 function projectControlIcon(kind) {
     if (kind === 'layout') {
-        return '<svg class="ymz-project-icon ymz-icon-structure" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M5 10h14M5 10v4M12 10v4M19 10v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="2.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="9.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="16.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="9.5" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+        return iconSlot('<svg class="ymz-project-icon ymz-icon-structure" viewBox="0 0 24 24"><path d="M12 3v4M5 10h14M5 10v4M12 10v4M19 10v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="2.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="9.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="16.5" y="14" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="9.5" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>', 'ymz-icon-slot--project');
     }
-    return '<svg class="ymz-project-icon ymz-icon-theme" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 4.2 10 2.8h4l1.8 1.4 3.2 1.2-1.5 4.1V21H6.5V9.5L5 5.4l3.2-1.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.2 4.2c.8 1.7 2 2.6 3.8 2.6s3-.9 3.8-2.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+    return iconSlot('<svg class="ymz-project-icon ymz-icon-theme" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 4.2 10 2.8h4l1.8 1.4 3.2 1.2-1.5 4.1V21H6.5V9.5L5 5.4l3.2-1.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.2 4.2c.8 1.7 2 2.6 3.8 2.6s3-.9 3.8-2.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>', 'ymz-icon-slot--project');
 }
 function lineStyleIcon(style) {
     const normalized = style === 'straight' || style === 'direct' ? style : 'curve';
@@ -16695,7 +16700,7 @@ function lineStyleIcon(style) {
         : normalized === 'straight'
             ? 'M3 18h8V6h10'
             : 'M3 18 14 6h7';
-    return `<svg class="ymz-line-icon ymz-line-icon--${normalized}" viewBox="0 0 24 24" aria-hidden="true"><path d="${path}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    return iconSlot(`<svg class="ymz-line-icon ymz-line-icon--${normalized}" viewBox="0 0 24 24"><path d="${path}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`, 'ymz-icon-slot--project');
 }
 function summaryIcon() {
     return (0, suppliedIcons_1.suppliedIcon)('summary');
@@ -16755,7 +16760,7 @@ function meditationIcon() {
  * outer YeMind classes continue to control only size and alignment.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.suppliedIconSourceNames = exports.suppliedIcons = void 0;
+exports.suppliedIconSourceNames = exports.suppliedIcons = exports.suppliedIconNames = void 0;
 exports.suppliedIcon = suppliedIcon;
 const sourceIcons = {
     insertParent: {
@@ -16829,11 +16834,28 @@ const sourceIcons = {
         dataUri: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE4LjYgNS4zOTh2NC4yTTE4LjYgNS40aC00LjJNMTQuOCA5LjZsMy44LTMuOE01LjQgNS4zOTh2NC4yTTUuNCA1LjRoNC4yTTkuMiA5LjZMNS40IDUuOE0xOC42IDE4LjYwMnYtNC4yTTE4LjYgMTguNmgtNC4yTTE0LjggMTQuNGwzLjggMy44TTUuNCAxOC42MDJ2LTQuMk01LjQgMTguNmg0LjJNOS4yIDE0LjRsLTMuOCAzLjgiIHN0cm9rZT0iIzFFMjAyNCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==",
     },
 };
+const SVG_DATA_URI_PREFIX = "data:image/svg+xml;base64,";
+const DARK_ICON_PRIMARY = "#E8ECF2";
+const DARK_ICON_SECONDARY = "#AEB6C2";
+function darkSourceDataUri(dataUri) {
+    const encoded = dataUri.slice(SVG_DATA_URI_PREFIX.length);
+    const source = atob(encoded);
+    const dark = source
+        .replaceAll("currentColor", DARK_ICON_PRIMARY)
+        .replace(/#1e2024/gi, DARK_ICON_PRIMARY)
+        .replace(/#333(?![0-9a-f])/gi, DARK_ICON_PRIMARY)
+        .replace(/#636774/gi, DARK_ICON_SECONDARY)
+        .replace(/#888(?![0-9a-f])/gi, DARK_ICON_SECONDARY)
+        .replace('<rect width="32" height="32" rx="4" fill="#fff"/>', '<rect width="32" height="32" rx="4" fill="none"/>');
+    return `${SVG_DATA_URI_PREFIX}${btoa(dark)}`;
+}
 function renderSourceIcon(name) {
     const icon = sourceIcons[name];
-    return `<img class="${icon.className} ymz-operation-icon ymz-icon-${icon.slug}" src="${icon.dataUri}" alt="" aria-hidden="true" draggable="false">`;
+    const shared = `${icon.className} ymz-operation-icon`;
+    return `<span class="ymz-icon-slot ymz-icon-slot--source ymz-icon-${icon.slug}" aria-hidden="true"><img class="${shared} ymz-operation-icon--light" src="${icon.dataUri}" alt="" draggable="false"><img class="${shared} ymz-operation-icon--dark" src="${darkSourceDataUri(icon.dataUri)}" alt="" draggable="false"></span>`;
 }
-exports.suppliedIcons = Object.freeze(Object.fromEntries(Object.keys(sourceIcons).map((name) => [name, renderSourceIcon(name)])));
+exports.suppliedIconNames = Object.freeze(Object.keys(sourceIcons));
+exports.suppliedIcons = Object.freeze(Object.fromEntries(exports.suppliedIconNames.map((name) => [name, renderSourceIcon(name)])));
 function suppliedIcon(name) {
     return exports.suppliedIcons[name];
 }
@@ -83458,6 +83480,7 @@ function openCanvasContextMenu(event, commands, options) {
     event.stopPropagation();
     const menu = new siyuan_1.Menu('siyuan-yemind-canvas-menu');
     menu.element.classList.add('ymz-context-menu', 'ymz-context-menu--canvas');
+    menu.element.dataset.appearance = (0, themePresets_1.detectAppearance)();
     const run = (action, callback) => () => {
         options.onAction?.(action);
         callback();
@@ -83518,6 +83541,7 @@ function openNodeContextMenu(event, commands, options = {}) {
     });
     const menu = new siyuan_1.Menu('siyuan-yemind-node-menu');
     menu.element.classList.add('ymz-context-menu', 'ymz-context-menu--node');
+    menu.element.dataset.appearance = (0, themePresets_1.detectAppearance)();
     const run = (action, callback) => () => {
         options.onAction?.(action);
         callback();

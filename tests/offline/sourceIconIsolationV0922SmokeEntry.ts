@@ -26,21 +26,26 @@ type IconName = keyof typeof expectedSourceHashes;
 
 for (const name of Object.keys(expectedSourceHashes) as IconName[]) {
   const html = suppliedIcon(name);
-  const source = html.match(/\ssrc="([^"]+)"/)?.[1] ?? '';
-  assert(html.startsWith('<img '), `${name} must render as an isolated image element`);
-  assert(html.includes('ymz-operation-icon'), `${name} must retain the shared operation class`);
+  const lightSource = html.match(/ymz-operation-icon--light" src="([^"]+)"/)?.[1] ?? '';
+  const darkSource = html.match(/ymz-operation-icon--dark" src="([^"]+)"/)?.[1] ?? '';
+  assert(html.startsWith('<span '), `${name} must render through a fixed icon slot`);
+  assert(html.includes('ymz-icon-slot'), `${name} must retain the shared slot class`);
+  assert((html.match(/<img /g) ?? []).length === 2, `${name} must render light and dark isolated images`);
   assert(html.includes('alt=""'), `${name} must remain decorative for accessibility`);
-  assert(html.includes('aria-hidden="true"'), `${name} must be hidden from assistive technology`);
+  assert(html.includes('aria-hidden="true"'), `${name} slot must be hidden from assistive technology`);
   assert(html.includes('draggable="false"'), `${name} must not start native image dragging`);
-  assert(!html.includes('<svg') && !html.includes('<path'), `${name} must not expose inline SVG geometry to host CSS`);
-  assert(!html.includes('currentColor'), `${name} must not rewrite the supplied fixed source palette`);
-  assert(source.startsWith('data:image/svg+xml;base64,'), `${name} must use a Base64 SVG data URI`);
-  assert(createHash('sha256').update(source).digest('hex') === expectedSourceHashes[name], `${name} source bytes differ from 图标-svg.txt`);
+  assert(!html.includes('<path'), `${name} must not expose inline SVG geometry to host CSS`);
+  assert(lightSource.startsWith('data:image/svg+xml;base64,'), `${name} light source must use a Base64 SVG data URI`);
+  assert(darkSource.startsWith('data:image/svg+xml;base64,'), `${name} dark source must use a Base64 SVG data URI`);
+  assert(createHash('sha256').update(lightSource).digest('hex') === expectedSourceHashes[name], `${name} light source bytes differ from 图标-svg.txt`);
+  assert(darkSource !== lightSource, `${name} dark source must be separately adapted`);
 }
+
 
 export default {
   icons: Object.keys(expectedSourceHashes).length,
   exactSourceHashes: true,
   isolatedImageBoundary: true,
+  darkImageVariants: true,
   hostileHostCssProtected: true,
 };

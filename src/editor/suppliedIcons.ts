@@ -104,14 +104,36 @@ const sourceIcons: Record<SuppliedIconName, SourceIcon> = {
   },
 };
 
+const SVG_DATA_URI_PREFIX = "data:image/svg+xml;base64,";
+const DARK_ICON_PRIMARY = "#E8ECF2";
+const DARK_ICON_SECONDARY = "#AEB6C2";
+
+function darkSourceDataUri(dataUri: string): string {
+  const encoded = dataUri.slice(SVG_DATA_URI_PREFIX.length);
+  const source = atob(encoded);
+  const dark = source
+    .replaceAll("currentColor", DARK_ICON_PRIMARY)
+    .replace(/#1e2024/gi, DARK_ICON_PRIMARY)
+    .replace(/#333(?![0-9a-f])/gi, DARK_ICON_PRIMARY)
+    .replace(/#636774/gi, DARK_ICON_SECONDARY)
+    .replace(/#888(?![0-9a-f])/gi, DARK_ICON_SECONDARY)
+    .replace('<rect width="32" height="32" rx="4" fill="#fff"/>', '<rect width="32" height="32" rx="4" fill="none"/>');
+  return `${SVG_DATA_URI_PREFIX}${btoa(dark)}`;
+}
+
 function renderSourceIcon(name: SuppliedIconName): string {
   const icon = sourceIcons[name];
-  return `<img class="${icon.className} ymz-operation-icon ymz-icon-${icon.slug}" src="${icon.dataUri}" alt="" aria-hidden="true" draggable="false">`;
+  const shared = `${icon.className} ymz-operation-icon`;
+  return `<span class="ymz-icon-slot ymz-icon-slot--source ymz-icon-${icon.slug}" aria-hidden="true"><img class="${shared} ymz-operation-icon--light" src="${icon.dataUri}" alt="" draggable="false"><img class="${shared} ymz-operation-icon--dark" src="${darkSourceDataUri(icon.dataUri)}" alt="" draggable="false"></span>`;
 }
+
+export const suppliedIconNames: readonly SuppliedIconName[] = Object.freeze(
+  Object.keys(sourceIcons) as SuppliedIconName[],
+);
 
 export const suppliedIcons: Readonly<Record<SuppliedIconName, string>> = Object.freeze(
   Object.fromEntries(
-    (Object.keys(sourceIcons) as SuppliedIconName[]).map((name) => [name, renderSourceIcon(name)]),
+    suppliedIconNames.map((name) => [name, renderSourceIcon(name)]),
   ) as Record<SuppliedIconName, string>,
 );
 

@@ -2,8 +2,16 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.22`  
+Current version: `0.9.23`  
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.23 icon grid and dark-theme polish
+
+- Places every YeMind custom icon in a fixed `22 × 22` slot with proportional artwork constrained to `15 × 15` and a consistent `4px` label gap.
+- Applies the same `22/15` geometry to native SiYuan context-menu SVGs, keeping first-level and nested menu labels aligned.
+- Preserves the exact light Base64 source for all 14 supplied icons while adding isolated dark variants that are pixel-audited in Chromium.
+- Makes outline hover, active, branch-marker and drag states theme-aware instead of showing bright or invisible states in dark themes.
+- Improves dark-mode contrast for selected and hovered top-toolbar controls and floating panels.
 
 ## v0.9.22 exact supplied SVG isolation
 

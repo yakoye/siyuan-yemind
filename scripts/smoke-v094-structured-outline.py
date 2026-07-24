@@ -92,8 +92,8 @@ with sync_playwright() as p:
         raise RuntimeError(f'Unified surface contract failed: {surface}')
 
     marker = page.evaluate("""()=>{const tri=document.querySelector('[data-outline-uid=root] .ymz-outline-row__triangle');const square=document.querySelector('[data-outline-uid=c1] .ymz-outline-row__leaf-square');return{triangle:[getComputedStyle(tri).width,getComputedStyle(tri).height,getComputedStyle(tri).backgroundColor],square:[getComputedStyle(square).width,getComputedStyle(square).height,getComputedStyle(square).backgroundColor]}}""")
-    if marker['triangle'] != ['7px', '7px', 'rgb(0, 0, 0)'] or marker['square'] != ['5px', '5px', 'rgb(0, 0, 0)']:
-        raise RuntimeError(f'Marker sizing failed: {marker}')
+    if marker['triangle'][:2] != ['7px', '7px'] or marker['square'][:2] != ['5px', '5px'] or marker['triangle'][2] == 'rgba(0, 0, 0, 0)' or marker['square'][2] == 'rgba(0, 0, 0, 0)':
+        raise RuntimeError(f'Marker sizing/visibility failed: {marker}')
 
     # Two-stage Ctrl+A, then live selection must replace only the new range.
     select_range(page, 'a', 2)

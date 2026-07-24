@@ -111,7 +111,8 @@
     "v0912LocalAssets.suite.ts",
     "v0913PanelInteraction.suite.ts",
     "v0919IconDialogsHistory.suite.ts",
-    "v0922ExactSourceIconIsolation.suite.ts"
+    "v0922ExactSourceIconIsolation.suite.ts",
+    "v0923IconGridDarkTheme.suite.ts"
   ],
   "storage-lifecycle": [
     "createMapLifecycle.suite.ts",

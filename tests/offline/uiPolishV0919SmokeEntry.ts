@@ -40,8 +40,8 @@ const supplied = [
   searchIcon(),
   fullscreenIcon(),
 ];
-assert(supplied.every((icon) => icon.startsWith('<img ')), 'all supplied operation icons must use an isolated image boundary');
-assert(supplied.every((icon) => icon.includes('src="data:image/svg+xml;base64,')), 'all supplied icons must retain the exact Base64 SVG document');
+assert(supplied.every((icon) => icon.startsWith('<span ') && icon.includes('ymz-icon-slot')), 'all supplied operation icons must use a fixed isolated icon slot');
+assert(supplied.every((icon) => (icon.match(/src="data:image\/svg\+xml;base64,/g) ?? []).length === 2), 'all supplied icons must retain isolated light and dark Base64 SVG documents');
 assert(supplied.every((icon) => icon.includes('draggable="false"')), 'supplied icons must not start native image dragging');
 assert(supplied.every((icon) => !icon.includes('<svg') && !icon.includes('<path')), 'host CSS must not reach supplied SVG geometry');
 assert(nodeInsertIcon('parent').includes('ymz-icon-insert-parent'), 'upper-node icon must use the supplied parent source artwork');
@@ -51,7 +51,7 @@ assert(projectStyleIcon().includes('ymz-icon-project-style') && projectStyleIcon
 assert(nodeStyleIcon().includes('ymz-icon-node-style') && !nodeStyleIcon().includes('<svg'), 'node style must isolate the supplied settings artwork');
 assert(undoIcon().includes('ymz-icon-undo') && undoIcon().includes('data:image/svg+xml;base64,'), 'undo must preserve the exact supplied source document');
 assert(redoIcon().includes('ymz-icon-redo') && redoIcon().includes('data:image/svg+xml;base64,'), 'redo must preserve the exact supplied source document');
-assert(searchIcon().includes('ymz-icon-search') && searchIcon().startsWith('<img '), 'search must use the isolated supplied source SVG');
+assert(searchIcon().includes('ymz-icon-search') && searchIcon().startsWith('<span '), 'search must use the fixed isolated supplied source SVG slot');
 assert(suppliedIconSourceNames.insertParent.includes('插入父节点图标'), 'supplied icons must retain source traceability');
 assert(canvasModeIcon('select').includes('ymz-icon-canvas-pan'), 'canvas mode button must show the action after click');
 assert(canvasModeIcon('pan').includes('ymz-icon-canvas-select'), 'canvas mode button must reverse the current mode icon');

@@ -1,4 +1,4 @@
-"""v0.9.22 exact supplied SVG image-boundary and double-click rich-toolbar smoke."""
+"""v0.9.23 supplied SVG slot/image-boundary and double-click rich-toolbar smoke."""
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -50,8 +50,8 @@ def assert_exact_image(info, label):
         raise RuntimeError(f'{label} is not an isolated IMG: {info}')
     if not info['src'].startswith('data:image/svg+xml;base64,'):
         raise RuntimeError(f'{label} does not retain a Base64 SVG source')
-    if info['width'] != 18 or info['height'] != 18:
-        raise RuntimeError(f'{label} outer box is not 18x18: {info}')
+    if info['width'] != 15 or info['height'] != 15:
+        raise RuntimeError(f'{label} artwork box is not 15x15: {info}')
     if not info['complete'] or info['naturalWidth'] <= 0 or info['naturalHeight'] <= 0:
         raise RuntimeError(f'{label} SVG image did not load: {info}')
     if info['children'] != 0:

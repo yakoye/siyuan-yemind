@@ -38,28 +38,33 @@ const expectedClasses = {
 
 type IconName = keyof typeof expectedSourceHashes;
 
-function extractSource(html: string): string {
-  const match = html.match(/\ssrc="([^"]+)"/);
-  expect(match, html).not.toBeNull();
-  return match![1];
+function extractSources(html: string): { light: string; dark: string } {
+  const light = html.match(/ymz-operation-icon--light" src="([^"]+)"/)?.[1] ?? '';
+  const dark = html.match(/ymz-operation-icon--dark" src="([^"]+)"/)?.[1] ?? '';
+  expect(light, html).not.toBe('');
+  expect(dark, html).not.toBe('');
+  return { light, dark };
 }
+
 
 describe('v0.9.22 exact supplied SVG isolation', () => {
   it.each(Object.keys(expectedSourceHashes) as IconName[])('%s renders the exact supplied Base64 SVG through an image boundary', (name) => {
     const html = suppliedIcon(name);
-    const source = extractSource(html);
+    const source = extractSources(html);
 
-    expect(html).toMatch(/^<img\b/);
-    expect(html).toContain('ymz-operation-icon');
+    expect(html).toMatch(/^<span\b/);
+    expect(html).toContain('ymz-icon-slot');
+    expect(html).toContain('ymz-operation-icon--light');
+    expect(html).toContain('ymz-operation-icon--dark');
     expect(html).toContain(expectedClasses[name]);
     expect(html).toContain('alt=""');
     expect(html).toContain('aria-hidden="true"');
     expect(html).toContain('draggable="false"');
-    expect(html).not.toContain('<svg');
     expect(html).not.toContain('<path');
-    expect(html).not.toContain('currentColor');
-    expect(source).toMatch(/^data:image\/svg\+xml;base64,/);
-    expect(createHash('sha256').update(source).digest('hex')).toBe(expectedSourceHashes[name]);
+    expect(source.light).toMatch(/^data:image\/svg\+xml;base64,/);
+    expect(source.dark).toMatch(/^data:image\/svg\+xml;base64,/);
+    expect(createHash('sha256').update(source.light).digest('hex')).toBe(expectedSourceHashes[name]);
+    expect(source.dark).not.toBe(source.light);
   });
 
   it('keeps the user-facing source labels for traceability', () => {

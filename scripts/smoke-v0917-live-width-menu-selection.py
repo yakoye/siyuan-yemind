@@ -126,8 +126,15 @@ with sync_playwright() as p:
     expected = ['编辑节点','插入上级节点','插入同级节点','插入下级节点','添加','关联线','节点样式','---','复制','剪切','粘贴','粘贴（纯文本）','---','上移节点','下移节点','展开/折叠（下级节点）','---','删除当前和子节点','仅删除当前']
     if menu_state['id'] != 'siyuan-yemind-node-menu' or menu_state['labels'] != expected:
         raise RuntimeError(f'Node menu order/labels are wrong: {menu_state}')
-    if len(menu_state['insertIcons']) != 3 or not all(value.startswith('<img ') and 'data:image/svg+xml;base64,' in value and 'ymz-icon-insert-' in value for value in menu_state['insertIcons']):
-        raise RuntimeError(f'Insertion source images missing: {menu_state["insertIcons"]}')
+    if len(menu_state['insertIcons']) != 3 or not all(
+        value.startswith('<span class="ymz-icon-slot ')
+        and value.count('data:image/svg+xml;base64,') == 2
+        and 'ymz-operation-icon--light' in value
+        and 'ymz-operation-icon--dark' in value
+        and 'ymz-icon-insert-' in value
+        for value in menu_state['insertIcons']
+    ):
+        raise RuntimeError(f'Insertion source image slots missing: {menu_state["insertIcons"]}')
     if menu_state['add'][:2] != ['添加待办', '外框']:
         raise RuntimeError(f'Add submenu state is wrong: {menu_state["add"]}')
 

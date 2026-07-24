@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.23 - 2026-07-24
+
+- Standardize YeMind and native SiYuan menu icons on a 22px slot with 15px proportional artwork and a fixed 4px label gap.
+- Add isolated light/dark Base64 SVG variants for all 14 supplied operation icons while preserving the original light-source bytes.
+- Remove hard-coded light outline hover/selection fills and black disclosure symbols in favor of appearance-aware variables.
+- Increase dark-mode contrast for top-toolbar hover and active controls, panels, outline rows and disclosure markers.
+- Mark canvas and node context menus with the detected host appearance so detached menus select the correct icon variant.
+- Add red-first offline contracts and Chromium coverage for menu alignment, all-icon dark pixel visibility, outline states and active toolbar contrast.
+
 ## 0.9.22 - 2026-07-24
 
 - Replace inline rewritten supplied SVG geometry with the exact Base64 SVG documents from `图标-svg.txt`.

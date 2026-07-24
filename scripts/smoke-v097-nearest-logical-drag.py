@@ -109,8 +109,8 @@ with sync_playwright() as p:
     }""")
     if visual['gutter']['width'] != '22px' or visual['gutter']['cursor'] != 'move':
         raise RuntimeError(f'Outline gutter contract failed: {visual}')
-    if visual['square'] != ['5px', '5px', 'rgb(0, 0, 0)'] or visual['triangle'] != ['7px', '7px', 'rgb(0, 0, 0)']:
-        raise RuntimeError(f'Outline marker contract failed: {visual}')
+    if visual['square'][:2] != ['5px', '5px'] or visual['triangle'][:2] != ['7px', '7px'] or visual['square'][2] == 'rgba(0, 0, 0, 0)' or visual['triangle'][2] == 'rgba(0, 0, 0, 0)':
+        raise RuntimeError(f'Outline marker sizing/visibility contract failed: {visual}')
 
     # Enter creates a sibling, focus follows it, and normal typing edits it.
     editor_a = page.locator('[data-outline-uid="a"] [data-outline-editor]')

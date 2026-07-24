@@ -1,6 +1,6 @@
 import { Menu, showMessage } from 'siyuan';
 import { YEMIND_LAYOUT_PRESETS } from '../core/layoutPresets';
-import { YEMIND_THEME_PRESETS, type YeMindLineStyle } from '../core/themePresets';
+import { detectAppearance, YEMIND_THEME_PRESETS, type YeMindLineStyle } from '../core/themePresets';
 import { clipartIcon, clipboardIcon, lineStyleIcon, markerIcon, nodeInsertIcon, nodeStyleIcon, outerFrameIcon, projectControlIcon, projectStyleIcon, relationIcon, summaryIcon } from '../editor/projectControls';
 import type { YeMindCommands } from '../core/commands';
 import {
@@ -33,6 +33,7 @@ export function openCanvasContextMenu(event: MouseEvent, commands: YeMindCommand
   event.stopPropagation();
   const menu = new Menu('siyuan-yemind-canvas-menu');
   menu.element.classList.add('ymz-context-menu', 'ymz-context-menu--canvas');
+  menu.element.dataset.appearance = detectAppearance();
   const run = (action: string, callback: () => void): (() => void) => () => {
     options.onAction?.(action);
     callback();
@@ -107,6 +108,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   });
   const menu = new Menu('siyuan-yemind-node-menu');
   menu.element.classList.add('ymz-context-menu', 'ymz-context-menu--node');
+  menu.element.dataset.appearance = detectAppearance();
   const run = (action: string, callback: () => void): (() => void) => () => {
     options.onAction?.(action);
     callback();
