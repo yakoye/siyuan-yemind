@@ -4,7 +4,7 @@
 
 - Product: YeMind
 - Package and plugin ID: `siyuan-yemind`
-- Current version: `0.9.18`
+- Current version: `0.9.19`
 - Host baseline: SiYuan `3.7.3`
 - Release archive: `siyuan-yemind-vX.Y.Z.zip`
 

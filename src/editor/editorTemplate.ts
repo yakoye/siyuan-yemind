@@ -1,7 +1,7 @@
 import { normalizeLineStyle, themeOptionsHtml } from '../core/themePresets';
 import { layoutOptionsHtml } from '../core/layoutPresets';
 import { rainbowSchemeOptionsHtml } from '../core/colorSchemes';
-import { canvasModeIcon, fitViewIcon, historyIcon, lineStyleIcon, lockIcon, meditationIcon, nodeStyleIcon, projectControlIcon, projectStyleIcon, redoIcon, searchIcon, undoIcon } from './projectControls';
+import { canvasModeIcon, fitViewIcon, fullscreenIcon, historyIcon, lineStyleIcon, lockIcon, meditationIcon, projectControlIcon, projectStyleIcon, redoIcon, searchIcon, undoIcon } from './projectControls';
 export function createEditorTemplate(title: string, theme: unknown = 'yemind-default', lineStyle: unknown = 'curve'): string {
   return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
@@ -120,13 +120,13 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
           <span class="ymz-selection-count" data-role="selection-count" hidden></span>
           <button class="ymz-icon-button" data-action="fit" title="适配视图" aria-label="适配视图">${fitViewIcon()}</button>
-          <button class="ymz-canvas-mode ymz-icon-button" data-action="toggle-selection-mode" title="选（选择优先）：左键框选，右键拖动画布" aria-label="选（选择优先）：左键框选，右键拖动画布" aria-pressed="false"><span data-role="canvas-mode-icon">${canvasModeIcon('select')}</span></button>
+          <button class="ymz-canvas-mode ymz-icon-button" data-action="toggle-selection-mode" title="切换为拖动优先：左键拖动画布，Ctrl/Cmd + 左键框选" aria-label="切换为拖动优先：左键拖动画布，Ctrl/Cmd + 左键框选" aria-pressed="false"><span data-role="canvas-mode-icon">${canvasModeIcon('select')}</span></button>
           <button class="ymz-icon-button" data-action="readonly" title="只读模式" aria-label="只读模式">${lockIcon()}</button>
           <button class="ymz-icon-button" data-action="zen" title="禅模式" aria-label="禅模式">${meditationIcon()}</button>
           <button data-action="zoom-out" title="缩小">−</button>
           <span class="ymz-zoom" data-role="zoom">100%</span>
           <button data-action="zoom-in" title="放大">＋</button>
-          <button data-action="fullscreen" title="全屏">⛶</button>
+          <button class="ymz-icon-button" data-action="fullscreen" title="全屏" aria-label="全屏">${fullscreenIcon()}</button>
           <button data-action="help" title="帮助">?</button>
         </div>
       </div>

@@ -2,10 +2,20 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.18`  
+Current version: `0.9.19`  
 Host baseline: SiYuan `3.7.3`
 
-## v0.9.18 split reveal and layout drag parity
+## v0.9.19 icons, asset dialogs, checkpoints and outline alignment
+
+- Replaces style, node-style, undo, redo, relationship, hierarchy insert, clipart, outer-frame, search and fullscreen artwork with a consistent supplied SVG set.
+- Renames and orders hierarchy commands as Insert upper-level, same-level and lower-level node.
+- The footer mode button now shows the mode reached after clicking; select-first displays the hand action for switching to pan-first.
+- Marker and clipart dialogs use fixed dimensions. All marker groups remain in one scroll view, while clipart no longer uses pagination.
+- Both asset dialogs provide an explicit close button and outside-click dismissal.
+- Checkpoints open directly in the manager, which now supports creation as well as restore, rename and delete.
+- The outline insertion square aligns with the branch marker center at the intended target depth.
+
+## v0.9.19 split reveal and layout drag parity
 
 - Opening split or outline view immediately reveals the row for the currently selected canvas node inside the outline scroller.
 - The proven right-logical local drag zones, sticky target, one green parent preview and live room making remain unchanged as the reference behavior.

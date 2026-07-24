@@ -1,7 +1,7 @@
 import { Menu, showMessage } from 'siyuan';
 import { YEMIND_LAYOUT_PRESETS } from '../core/layoutPresets';
 import { YEMIND_THEME_PRESETS, type YeMindLineStyle } from '../core/themePresets';
-import { clipboardIcon, lineStyleIcon, nodeInsertIcon, nodeStyleIcon, projectControlIcon, projectStyleIcon, summaryIcon } from '../editor/projectControls';
+import { clipartIcon, clipboardIcon, lineStyleIcon, markerIcon, nodeInsertIcon, nodeStyleIcon, outerFrameIcon, projectControlIcon, projectStyleIcon, relationIcon, summaryIcon } from '../editor/projectControls';
 import type { YeMindCommands } from '../core/commands';
 import {
   openCommentsDialog,
@@ -115,7 +115,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   if (activeNodes.length > 1) {
     menu.addItem({ iconHTML: nodeStyleIcon(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
     menu.addItem({ iconHTML: summaryIcon(), label: '{} 添加综合概要', accelerator: 'Ctrl+Alt+G', disabled: !availability.summary, click: run('summary-add', () => commands.addSummary()) });
-    menu.addItem({ icon: 'iconRight', label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
+    menu.addItem({ iconHTML: relationIcon(), label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
     menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
     menu.addSeparator();
     menu.addItem({ iconHTML: clipboardIcon('copy'), label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });
@@ -131,27 +131,27 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   const hasOuterFrame = commands.hasOuterFrameForSelection();
   const todoAction = createTodoMenuDescriptor(commands.getTodo());
   menu.addItem({ icon: 'iconEdit', label: '编辑节点', accelerator: 'F2', disabled: !availability.edit, click: run('edit', () => commands.edit()) });
+  menu.addItem({ iconHTML: nodeInsertIcon('parent'), label: '插入上级节点', accelerator: 'Shift+Tab', disabled: !availability.addParent, click: run('add-parent', () => commands.addParent()) });
   menu.addItem({ iconHTML: nodeInsertIcon('sibling'), label: '插入同级节点', accelerator: 'Enter', disabled: !availability.addSibling, click: run('add-sibling', () => commands.addSibling()) });
-  menu.addItem({ iconHTML: nodeInsertIcon('child'), label: '插入子节点', accelerator: 'Tab', disabled: !availability.addChild, click: run('add-child', () => commands.addChild()) });
-  menu.addItem({ iconHTML: nodeInsertIcon('parent'), label: '插入父节点', accelerator: 'Shift+Tab', disabled: !availability.addParent, click: run('add-parent', () => commands.addParent()) });
+  menu.addItem({ iconHTML: nodeInsertIcon('child'), label: '插入下级节点', accelerator: 'Tab', disabled: !availability.addChild, click: run('add-child', () => commands.addChild()) });
   menu.addItem({
     type: 'submenu', icon: 'iconAdd', label: '添加',
     submenu: [
       { icon: 'iconCheck', label: todoAction.label, warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? 'todo-remove' : 'todo-add', () => commands.setTodo(todoAction.next)) },
-      { icon: 'iconSelect', label: hasOuterFrame ? '删除外框' : '外框', disabled: hasOuterFrame ? commands.isReadonly() : !availability.outerFrame, click: run(hasOuterFrame ? 'outer-frame-remove' : 'outer-frame-add', () => hasOuterFrame ? commands.removeOuterFrameForSelection() : commands.addOuterFrame()) },
+      { iconHTML: outerFrameIcon(), label: hasOuterFrame ? '删除外框' : '外框', disabled: hasOuterFrame ? commands.isReadonly() : !availability.outerFrame, click: run(hasOuterFrame ? 'outer-frame-remove' : 'outer-frame-add', () => hasOuterFrame ? commands.removeOuterFrameForSelection() : commands.addOuterFrame()) },
       { icon: 'iconYeMindNote', label: '备注', disabled: !availability.nodeContent, click: run('note', () => openNoteDialog(commands)) },
       { icon: 'iconYeMindComment', label: '批注', disabled: !availability.nodeContent, click: run('comments', () => openCommentsDialog(commands)) },
       { icon: 'iconTags', label: '标签', disabled: !availability.nodeContent, click: run('tags', () => openTagsDialog(commands)) },
-      { icon: 'iconEmoji', label: '图标', disabled: !availability.nodeContent, click: run('icons', () => options.onMarkers?.()) },
+      { iconHTML: markerIcon(), label: '图标', disabled: !availability.nodeContent, click: run('icons', () => options.onMarkers?.()) },
       { icon: 'iconLink', label: '链接', disabled: !availability.nodeContent, click: run('node-link', () => options.onNodeLink ? options.onNodeLink() : openLinkDialog(commands)) },
-      { icon: 'iconImage', label: '剪贴图', disabled: !availability.nodeContent, click: run('clipart', () => options.onClipart?.()) },
+      { iconHTML: clipartIcon(), label: '剪贴图', disabled: !availability.nodeContent, click: run('clipart', () => options.onClipart?.()) },
       { icon: 'iconImage', label: '图片', disabled: !availability.nodeContent, click: run('image', () => openImageDialog(commands)) },
       { icon: 'iconCode', label: '代码块', disabled: !availability.codeBlock, click: run('code-block', () => options.onCodeBlock?.()) },
       { icon: 'iconMath', label: '公式', disabled: !availability.nodeContent, click: run('formula', () => openFormulaDialog(commands)) },
       { icon: 'iconLink', label: '行内链接', disabled: !availability.inlineLink, click: run('inline-link', () => options.onInlineLink?.()) },
     ],
   });
-  menu.addItem({ icon: 'iconRight', label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
+  menu.addItem({ iconHTML: relationIcon(), label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
   menu.addItem({ iconHTML: nodeStyleIcon(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
   menu.addSeparator();
   menu.addItem({ iconHTML: clipboardIcon('copy'), label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });

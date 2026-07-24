@@ -12,6 +12,7 @@ export interface CheckpointDialogOptions {
   readonly: boolean;
   repository: CheckpointRepository;
   service: CheckpointService;
+  onCreate(): Promise<void>;
   onBeforeRestore(): Promise<void>;
   onRestored(map: YeMindMapDocument): Promise<void> | void;
 }
@@ -34,6 +35,21 @@ export function openCheckpointManager(options: CheckpointDialogOptions): void {
   };
 
   dialog.element.querySelector('[data-checkpoint-dialog-action="close"]')?.addEventListener('click', () => dialog.destroy());
+  dialog.element.querySelector('[data-checkpoint-dialog-action="create"]')?.addEventListener('click', () => {
+    if (busy) return;
+    void (async () => {
+      busy = true;
+      try {
+        await options.onCreate();
+        render();
+      } catch (error) {
+        console.error('[YeMind] checkpoint create failed', error);
+        showMessage('检查点创建失败，请稍后重试', 5000, 'error');
+      } finally {
+        busy = false;
+      }
+    })();
+  });
   dialog.element.addEventListener('click', (event) => {
     const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-checkpoint-action]');
     if (!button || busy || button.disabled) return;

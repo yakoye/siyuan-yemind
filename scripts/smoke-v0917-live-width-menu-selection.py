@@ -123,7 +123,7 @@ with sync_playwright() as p:
       insertIcons:window.__lastMenu?.items.filter(i=>String(i.label||'').startsWith('插入')).map(i=>i.iconHTML||''),
       add:window.__lastMenu?.items.find(i=>i.label==='添加')?.submenu?.map(i=>i.label)||[]
     })""")
-    expected = ['编辑节点','插入同级节点','插入子节点','插入父节点','添加','关联线','节点样式','---','复制','剪切','粘贴','粘贴（纯文本）','---','上移节点','下移节点','展开/折叠（下级节点）','---','删除当前和子节点','仅删除当前']
+    expected = ['编辑节点','插入上级节点','插入同级节点','插入下级节点','添加','关联线','节点样式','---','复制','剪切','粘贴','粘贴（纯文本）','---','上移节点','下移节点','展开/折叠（下级节点）','---','删除当前和子节点','仅删除当前']
     if menu_state['id'] != 'siyuan-yemind-node-menu' or menu_state['labels'] != expected:
         raise RuntimeError(f'Node menu order/labels are wrong: {menu_state}')
     if len(menu_state['insertIcons']) != 3 or not all('<svg' in value and 'ymz-icon-insert-' in value for value in menu_state['insertIcons']):

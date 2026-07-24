@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.19 - 2026-07-24
+
+- Replace the requested project, node, history, relationship, insertion, asset, search and fullscreen icons with normalized theme-aware SVG artwork.
+- Rename and reorder node insertion actions as upper-level, same-level and lower-level.
+- Reverse the footer mode glyph so it communicates the action after clicking.
+- Rebuild the marker picker as one fixed-size categorized scroll view with sticky navigation, explicit close, outside-click dismissal and aligned footer actions.
+- Rebuild the clipart picker as a fixed-size complete catalog without the Load More control.
+- Open the checkpoint manager directly from the toolbar and add checkpoint creation inside the manager.
+- Align the outline insertion marker to the branch marker center for the resolved target depth.
+- Add permanent source, offline and UI-shell regressions for the complete v0.9.19 interaction contract.
+
 ## 0.9.18 - 2026-07-24
 
 - Reveal the currently selected canvas node immediately when split or outline view opens, using outline-local scrolling without transferring editing ownership.

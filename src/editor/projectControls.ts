@@ -1,5 +1,6 @@
 import type { YeMindLineStyle } from '../core/themePresets';
 import type { CanvasMode } from '../settings/SettingsStore';
+import { suppliedIcon } from './suppliedIcons';
 
 
 
@@ -8,7 +9,8 @@ export function fitViewIcon(): string {
 }
 
 export function canvasModeIcon(mode: CanvasMode): string {
-  if (mode === 'pan') {
+  // The footer button describes the action that will happen after clicking it.
+  if (mode === 'select') {
     return '<svg class="ymz-toolbar-icon ymz-icon-canvas-pan" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.4 11.2V7.8a1.5 1.5 0 0 1 3 0v2.6-4.1a1.5 1.5 0 0 1 3 0v4.1-3.1a1.5 1.5 0 0 1 3 0v4.1-1.9a1.5 1.5 0 0 1 3 0v5.1c0 4.1-2.8 6.4-6.6 6.4h-1.1c-2.5 0-4.1-1.1-5.4-3l-2.2-3.2a1.6 1.6 0 0 1 .4-2.2 1.7 1.7 0 0 1 2.2.3l.7.9v-2.6Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   }
   return '<svg class="ymz-toolbar-icon ymz-icon-canvas-select" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 12.7 9.1-5.6 1.1 3.2 5.4-2.6 1.5-3.1-5.3L6 19.1 5 3Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -30,13 +32,9 @@ export type NodeInsertKind = 'sibling' | 'child' | 'parent';
 
 /** Compact relationship icons modelled after common mind-map insert controls. */
 export function nodeInsertIcon(kind: NodeInsertKind): string {
-  if (kind === 'child') {
-    return '<svg class="ymz-menu-icon ymz-icon-insert-child" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="8" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 12h4.2c1.3 0 2.3 1 2.3 2.3V16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="15" y="15" width="6.5" height="5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
-  }
-  if (kind === 'parent') {
-    return '<svg class="ymz-menu-icon ymz-icon-insert-parent" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="9.5" width="6.5" height="5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 12h4.2c1.3 0 2.3 1 2.3 2.3V16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="13.5" y="7" width="8" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
-  }
-  return '<svg class="ymz-menu-icon ymz-icon-insert-sibling" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="9.5" width="6" height="5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 12h3M11.5 6.5v11M11.5 6.5h2M11.5 17.5h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="13.5" y="3.5" width="8" height="6" rx="1.7" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="14.5" width="8" height="6" rx="1.7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+  if (kind === 'parent') return suppliedIcon('insertParent');
+  if (kind === 'child') return suppliedIcon('insertChild');
+  return suppliedIcon('insertSibling');
 }
 
 export const CANVAS_PROJECT_MENU_LABELS = ['结构', '主题', '线型', '样式'] as const;
@@ -62,17 +60,19 @@ export function lineStyleIcon(style: unknown): string {
 
 
 export function summaryIcon(): string {
-  return '<svg class="ymz-menu-icon ymz-icon-summary" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c-2 0-3 2-3 4v2c0 1.5-.7 2.5-2 3 1.3.5 2 1.5 2 3v1c0 2 1 3 3 3M17 4c2 0 3 2 3 4v2c0 1.5.7 2.5 2 3-1.3.5-2 1.5-2 3v1c0 2-1 3-3 3M8 12h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+  return suppliedIcon('summary');
 }
 
 
 export function projectStyleIcon(): string {
-  return '<svg class="ymz-project-icon ymz-icon-project-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v13H4z" fill="none" stroke="currentColor" stroke-width="1.6" rx="2"/><path d="M7 9h10M7 12h7M7 15h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="18" cy="16.5" r="2.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><path d="M18 14.9v3.2M16.4 16.5h3.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
+  return suppliedIcon('projectStyle');
 }
 
+
 export function nodeStyleIcon(): string {
-  return '<svg class="ymz-menu-icon ymz-icon-node-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 12h14M5 17.5h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="6.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="15" cy="12" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="17.5" r="1.8" fill="var(--b3-theme-background,currentColor)" stroke="currentColor" stroke-width="1.5"/></svg>';
+  return suppliedIcon('nodeStyle');
 }
+
 
 
 export function historyIcon(): string {
@@ -80,16 +80,40 @@ export function historyIcon(): string {
 }
 
 export function undoIcon(): string {
-  return '<svg class="ymz-toolbar-icon ymz-icon-undo" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4.5 11.5 9 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11.5h8.2c4 0 6.3 2.1 6.3 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  return suppliedIcon('undo');
 }
+
 
 export function redoIcon(): string {
-  return '<svg class="ymz-toolbar-icon ymz-icon-redo" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 4.5 4.5L15 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 11.5h-8.2c-4 0-6.3 2.1-6.3 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  return suppliedIcon('redo');
 }
 
+
 export function searchIcon(): string {
-  return '<svg class="ymz-toolbar-icon ymz-icon-search" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="m14.7 14.7 4.8 4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+  return suppliedIcon('search');
 }
+
+
+export function relationIcon(): string {
+  return suppliedIcon('relation');
+}
+
+export function clipartIcon(): string {
+  return suppliedIcon('clipart');
+}
+
+export function markerIcon(): string {
+  return suppliedIcon('marker');
+}
+
+export function outerFrameIcon(): string {
+  return suppliedIcon('outerFrame');
+}
+
+export function fullscreenIcon(): string {
+  return suppliedIcon('fullscreen');
+}
+
 
 export function lockIcon(): string {
   return '<svg class="ymz-toolbar-icon ymz-icon-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="15" r="1.2" fill="currentColor"/></svg>';

@@ -109,7 +109,8 @@
     "visibleElement.suite.ts",
     "v0911MenusAndPanels.suite.ts",
     "v0912LocalAssets.suite.ts",
-    "v0913PanelInteraction.suite.ts"
+    "v0913PanelInteraction.suite.ts",
+    "v0919IconDialogsHistory.suite.ts"
   ],
   "storage-lifecycle": [
     "createMapLifecycle.suite.ts",

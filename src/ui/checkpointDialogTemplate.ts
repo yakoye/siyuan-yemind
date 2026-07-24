@@ -7,6 +7,7 @@ export function buildCheckpointDialogContent(checkpoints: MapCheckpoint[], reado
     <div class="ymz-checkpoint-list" data-role="checkpoint-list">${renderCheckpointListHtml(checkpoints, { readonly })}</div>
   </div>
   <div class="b3-dialog__action">
+    <button class="b3-button b3-button--text" data-checkpoint-dialog-action="create">创建检查点</button>
     <button class="b3-button b3-button--cancel" data-checkpoint-dialog-action="close">关闭</button>
   </div>`;
 }

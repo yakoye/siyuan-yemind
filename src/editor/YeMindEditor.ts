@@ -1,5 +1,5 @@
 import type MindMap from "simple-mind-map";
-import { Dialog, Menu, confirm, showMessage } from "siyuan";
+import { Dialog, confirm, showMessage } from "siyuan";
 import { createMindMap } from "../core/createMindMap";
 import {
   buildDragAndLayoutOptions,
@@ -997,7 +997,7 @@ export class YeMindEditor {
           this.openSearchPanel();
           break;
         case "checkpoints":
-          this.openCheckpointMenu(button);
+          this.openCheckpointManager();
           break;
         case "node-style":
           this.projectStylePanel?.hide();
@@ -1788,8 +1788,11 @@ export class YeMindEditor {
       .forEach((button) => {
         const isDragMode = this.settings.canvasMode === "pan";
         button.classList.toggle("is-active", isDragMode);
-        button.title = presentation.modeTitle;
-        button.setAttribute("aria-label", presentation.modeTitle);
+        const actionTitle = this.settings.canvasMode === "select"
+          ? "切换为拖动优先：左键拖动画布，Ctrl/Cmd + 左键框选"
+          : "切换为选择优先：左键框选，右键拖动画布";
+        button.title = actionTitle;
+        button.setAttribute("aria-label", actionTitle);
         button.setAttribute("aria-pressed", String(isDragMode));
         const icon = button.querySelector<HTMLElement>('[data-role="canvas-mode-icon"]');
         if (icon) icon.innerHTML = canvasModeIcon(this.settings.canvasMode);
@@ -2170,23 +2173,6 @@ export class YeMindEditor {
       : "无结果";
   }
 
-  private openCheckpointMenu(anchor: HTMLElement): void {
-    const menu = new Menu("siyuan-yemind-checkpoint-menu");
-    menu.addItem({
-      icon: "iconAdd",
-      label: "创建检查点",
-      click: () => {
-        void this.createCheckpoint();
-      },
-    });
-    menu.addItem({
-      icon: "iconHistory",
-      label: "管理检查点",
-      click: () => this.openCheckpointManager(),
-    });
-    const rect = anchor.getBoundingClientRect();
-    menu.open({ x: rect.left, y: rect.bottom + 4 });
-  }
 
   private async createCheckpoint(): Promise<void> {
     try {
@@ -2211,6 +2197,9 @@ export class YeMindEditor {
       readonly: this.rootEl.dataset.readonly === "true",
       repository: this.options.checkpointRepository,
       service: this.options.checkpointService,
+      onCreate: async () => {
+        await this.createCheckpoint();
+      },
       onBeforeRestore: async () => {
         await this.saveNow();
       },

@@ -17,7 +17,7 @@ window.__siyuanMock = (() => {
     open(){ window.__lastMenu=this; } close(){}
   }
   class Dialog {
-    constructor(options={}){ this.element=document.createElement('div'); this.element.className='b3-dialog'; this.element.innerHTML=options.content||''; document.body.appendChild(this.element); window.__lastDialog=this; }
+    constructor(options={}){ this.options=options; this.element=document.createElement('div'); this.element.className='b3-dialog'; this.element.innerHTML=options.content||''; document.body.appendChild(this.element); window.__lastDialog=this; }
     destroy(){ this.element.remove(); if(window.__lastDialog===this) window.__lastDialog=null; }
   }
   class Setting { addItem(){} }
@@ -53,7 +53,7 @@ with sync_playwright() as p:
     page.locator('.ymz-layout-gallery__item[title="右向导图"]').click()
     # marker icon click opens same group picker
     page.evaluate("""()=>{const img=document.querySelector('image[href*=\"marker-sprite.png\"]'); img?.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,clientX:100,clientY:100}));}""")
-    page.wait_for_function("()=>document.querySelectorAll('.ymz-marker-option').length===30")
+    page.wait_for_function("()=>document.querySelectorAll('.ymz-marker-option').length===126")
     marker=page.evaluate("""()=>({tabs:document.querySelectorAll('.ymz-marker-dialog .ymz-asset-tab').length,options:document.querySelectorAll('.ymz-marker-option').length,selected:document.querySelectorAll('.ymz-marker-option.is-selected').length,sprite:[...document.querySelectorAll('.ymz-marker-sprite')][0]?.style.backgroundImage||''})""")
     page.locator('.ymz-marker-option').nth(5).click()
     page.locator('.ymz-marker-dialog [data-action="close"]').click()
@@ -63,7 +63,7 @@ with sync_playwright() as p:
       const add=window.__lastMenu?.items?.find(x=>x.label==='添加'); const item=add?.submenu?.find(x=>x.label==='剪贴图'); if(!item) return false; item.click(); return true;
     }""")
     if not clipart_menu: raise RuntimeError('Clipart menu item missing')
-    page.wait_for_function("()=>document.querySelectorAll('.ymz-clipart-option').length===120")
+    page.wait_for_function("()=>document.querySelectorAll('.ymz-clipart-option').length===764")
     page.locator('[data-role="clipart-search"]').fill('河马')
     page.wait_for_function("()=>document.querySelectorAll('.ymz-clipart-option').length===1")
     clipart=page.evaluate("""()=>({tabs:document.querySelectorAll('.ymz-clipart-dialog .ymz-asset-tab').length,count:document.querySelector('[data-role=clipart-count]')?.textContent,url:document.querySelector('.ymz-clipart-option img')?.getAttribute('src'),label:document.querySelector('.ymz-clipart-option span')?.textContent})""")
@@ -73,7 +73,7 @@ with sync_playwright() as p:
     if errors: raise RuntimeError('Page errors:\n'+'\n'.join(errors))
     if console_errors: raise RuntimeError('Console errors:\n'+'\n'.join(console_errors))
     if gallery['count']!=28 or gallery['groups']!=7: raise RuntimeError(f'gallery failed {gallery}')
-    if marker['tabs']!=8 or marker['options']!=30 or 'marker-sprite.png' not in marker['sprite']: raise RuntimeError(f'marker failed {marker}')
+    if marker['tabs']!=9 or marker['options']!=126 or 'marker-sprite.png' not in marker['sprite']: raise RuntimeError(f'marker failed {marker}')
     if clipart['label']!='河马' or '001_河马.svg' not in clipart['url']: raise RuntimeError(f'clipart failed {clipart}')
     if persisted['layoutPresetId']!='right-mindmap': raise RuntimeError(f'layout persistence failed {persisted}')
     if not persisted['images']: raise RuntimeError(f'clipart persistence failed {persisted}')

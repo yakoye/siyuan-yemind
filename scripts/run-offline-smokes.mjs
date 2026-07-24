@@ -14,6 +14,7 @@ const entries = [
   'dragIntentSmokeEntry',
   'localAssetsSmokeEntry',
   'interactionRegressionSmokeEntry',
+  'uiPolishV0919SmokeEntry',
 ];
 
 rmSync(outDir, { recursive: true, force: true });
