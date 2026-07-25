@@ -1,10 +1,10 @@
 import { normalizeLineStyle, themeOptionsHtml } from '../core/themePresets';
 import { layoutOptionsHtml } from '../core/layoutPresets';
 import { rainbowSchemeOptionsHtml } from '../core/colorSchemes';
-import { canvasModeIcon, fitViewIcon, fullscreenIcon, historyIcon, lineStyleIcon, lockIcon, meditationIcon, projectControlIcon, projectStyleIcon, redoIcon, searchIcon, undoIcon } from './projectControls';
+import { canvasModeIcon, fitViewIcon, fullscreenIcon, historyIcon, lineStyleIcon, lockIcon, meditationIcon, pinIcon, projectControlIcon, projectStyleIcon, redoIcon, searchIcon, undoIcon } from './projectControls';
 export function createEditorTemplate(title: string, theme: unknown = 'yemind-default', lineStyle: unknown = 'curve'): string {
   return `
-    <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
+    <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map" data-toolbars-pinned="false" data-topbar-visible="true" data-statusbar-visible="true">
       <div class="ymz-canvas-wrap">
         <div class="ymz-floating ymz-topbar" role="toolbar" aria-label="YeMind 工具栏">
           <button class="ymz-brand" data-action="fit" title="适配视图">YeMind</button>
@@ -126,7 +126,7 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
         </div>
 
         <div class="ymz-floating ymz-statusbar">
-          <button class="ymz-status-title" data-role="title" title="${escapeHtml(title)}">${escapeHtml(title)}</button>
+          <button class="ymz-status-title" data-role="title" title="点击重命名">${escapeHtml(title)}</button><input class="ymz-status-title-input" data-role="title-input" value="${escapeHtml(title)}" aria-label="导图标题" hidden>
           <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
           <span class="ymz-selection-count" data-role="selection-count" hidden></span>
           <button class="ymz-icon-button" data-action="fit" title="适配视图" aria-label="适配视图">${fitViewIcon()}</button>
@@ -134,8 +134,9 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
           <button class="ymz-icon-button" data-action="readonly" title="只读模式" aria-label="只读模式">${lockIcon()}</button>
           <button class="ymz-icon-button" data-action="zen" title="禅模式" aria-label="禅模式">${meditationIcon()}</button>
           <button data-action="zoom-out" title="缩小">−</button>
-          <span class="ymz-zoom" data-role="zoom">100%</span>
+          <input class="ymz-zoom" data-role="zoom" value="100%" inputmode="decimal" aria-label="缩放百分比" title="点击输入缩放百分比">
           <button data-action="zoom-in" title="放大">＋</button>
+          <button class="ymz-icon-button ymz-toolbar-pin" data-action="toggle-toolbar-pin" title="固定工具栏" aria-label="固定工具栏" aria-pressed="false">${pinIcon()}</button>
           <button class="ymz-icon-button" data-action="fullscreen" title="全屏" aria-label="全屏">${fullscreenIcon()}</button>
           <button data-action="help" title="帮助">?</button>
         </div>

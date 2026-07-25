@@ -22,6 +22,7 @@ const entries = [
   'importCollapseOutlineV0926SmokeEntry',
   'outlineAssetDialogV0927SmokeEntry',
   'outlineDialogConsistencyV0928SmokeEntry',
+  'floatingRelationQuickActionsV0929SmokeEntry',
 ];
 
 rmSync(outDir, { recursive: true, force: true });

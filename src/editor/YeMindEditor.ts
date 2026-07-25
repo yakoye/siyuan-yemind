@@ -113,6 +113,9 @@ import {
   resolveClipartDisplaySize,
 } from "../core/clipartGeometry";
 import { createYeMindDialog } from '../ui/dialogChrome';
+import { ToolbarVisibilityController } from './ToolbarVisibilityController';
+import { parseZoomPercent } from './zoomPercent';
+import { normalizeMapTitle } from './mapTitle';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -123,6 +126,7 @@ export interface YeMindEditorOptions {
   checkpointService: CheckpointService;
   diagnostics: DiagnosticsService;
   onMissing?: () => void;
+  onTitleChange?: (title: string) => void;
   pluginBaseUrl?: string;
 }
 
@@ -167,9 +171,10 @@ export class YeMindEditor {
   private outlinePaneEl!: HTMLElement;
   private outlineEl!: HTMLElement;
   private statsEl!: HTMLElement;
-  private zoomEl!: HTMLElement;
+  private zoomEl!: HTMLInputElement;
   private saveStateEl!: HTMLElement;
-  private titleEl!: HTMLElement;
+  private titleEl!: HTMLButtonElement;
+  private titleInputEl!: HTMLInputElement;
   private searchPanelEl!: HTMLElement;
   private searchInputEl!: HTMLInputElement;
   private replaceInputEl!: HTMLInputElement;
@@ -188,6 +193,7 @@ export class YeMindEditor {
   private themeChoicePanel: ProjectChoicePanel | null = null;
   private lineStyleChoicePanel: ProjectChoicePanel | null = null;
   private nodeQuickActions: NodeQuickActionsController | null = null;
+  private toolbarVisibility: ToolbarVisibilityController | null = null;
   private canvasRightDrag: CanvasRightDragController | null = null;
   private liveNodeWidthLayout: LiveNodeWidthLayoutController | null = null;
   private contextMenuSelectionSnapshot: { nodes: any[]; target: any } | null = null;
@@ -581,6 +587,8 @@ export class YeMindEditor {
     this.themeChoicePanel = null;
     this.lineStyleChoicePanel?.destroy();
     this.lineStyleChoicePanel = null;
+    this.toolbarVisibility?.destroy();
+    this.toolbarVisibility = null;
     this.nodeQuickActions?.destroy();
     this.nodeQuickActions = null;
     this.canvasRightDrag?.destroy();
@@ -701,13 +709,16 @@ export class YeMindEditor {
     ) as HTMLElement;
     this.zoomEl = this.options.container.querySelector(
       '[data-role="zoom"]',
-    ) as HTMLElement;
+) as HTMLInputElement;
     this.saveStateEl = this.options.container.querySelector(
       '[data-role="save-state"]',
     ) as HTMLElement;
     this.titleEl = this.options.container.querySelector(
       '[data-role="title"]',
-    ) as HTMLElement;
+) as HTMLButtonElement;
+    this.titleInputEl = this.options.container.querySelector(
+      '[data-role="title-input"]',
+    ) as HTMLInputElement;
     this.searchPanelEl = this.options.container.querySelector(
       '[data-role="search-panel"]',
     ) as HTMLElement;
@@ -844,6 +855,7 @@ export class YeMindEditor {
       canvas: this.canvasEl,
       getRendererRoot: () => (this.map as any)?.renderer?.root,
       getActiveNodes: () => this.commands?.getActiveNodes() ?? [],
+      getLayout: () => this.current.layout,
       readonly: () => Boolean(this.commands?.isReadonly()),
       onAddChild: (uid) => {
         if (this.commands?.addChildByUid(uid)) this.nodeQuickActions?.scheduleRefresh();
@@ -852,6 +864,11 @@ export class YeMindEditor {
         if (this.commands?.setNodeExpandedByUid(uid, expanded)) this.nodeQuickActions?.scheduleRefresh();
       },
     });
+    this.toolbarVisibility = new ToolbarVisibilityController({
+      root: this.rootEl,
+      pinned: this.settings.toolbarsPinned,
+    });
+    this.updateToolbarPinPresentation();
     this.nodeHoverPreview = new NodeHoverPreview(this.rootEl);
     this.imageLightbox = new ImageLightbox(this.rootEl);
     this.richTextToolbar = new RichTextToolbar(this.rootEl, this.commands, {
@@ -960,7 +977,8 @@ export class YeMindEditor {
       if (next.title !== this.current.title) {
         this.current.title = next.title;
         this.titleEl.textContent = next.title;
-        this.titleEl.title = next.title;
+        this.titleEl.title = '点击重命名';
+        this.titleInputEl.value = next.title;
       }
     });
     this.settingsUnsubscribe = this.options.settingsStore.subscribe(
@@ -1137,6 +1155,9 @@ export class YeMindEditor {
         case "zen-exit":
           this.toggleZen(false);
           break;
+        case "toggle-toolbar-pin":
+          void this.toggleToolbarsPinned();
+          break;
         case "fullscreen":
           void this.toggleFullscreen();
           break;
@@ -1196,6 +1217,105 @@ export class YeMindEditor {
     this.rootEl
       .querySelector<HTMLSelectElement>('[data-action="line-style"]')
       ?.addEventListener("change", (event) => this.setLineStyle((event.target as HTMLSelectElement).value));
+
+    this.titleEl.addEventListener('click', () => this.beginTitleRename());
+    this.titleInputEl.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        void this.commitTitleRename();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        this.cancelTitleRename();
+      }
+    });
+    this.titleInputEl.addEventListener('blur', () => {
+      if (!this.titleInputEl.hidden) void this.commitTitleRename();
+    });
+    this.zoomEl.addEventListener('focus', () => this.zoomEl.select());
+    this.zoomEl.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        this.commitZoomInput();
+        this.zoomEl.blur();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        this.updateZoom();
+        this.zoomEl.blur();
+      }
+    });
+    this.zoomEl.addEventListener('blur', () => this.commitZoomInput());
+  }
+
+  private updateToolbarPinPresentation(): void {
+    const pinned = Boolean(this.settings?.toolbarsPinned);
+    this.rootEl?.querySelectorAll<HTMLButtonElement>('[data-action="toggle-toolbar-pin"]').forEach((button) => {
+      button.setAttribute('aria-pressed', String(pinned));
+      button.title = pinned ? '取消固定工具栏' : '固定工具栏';
+      button.setAttribute('aria-label', button.title);
+    });
+  }
+
+  private async toggleToolbarsPinned(): Promise<void> {
+    const next = !Boolean(this.settings.toolbarsPinned);
+    this.toolbarVisibility?.setPinned(next);
+    try {
+      await this.options.settingsStore.update({ toolbarsPinned: next });
+    } catch (error) {
+      this.toolbarVisibility?.setPinned(Boolean(this.settings.toolbarsPinned));
+      showMessage('工具栏固定状态保存失败', 3000, 'error');
+    }
+  }
+
+  private beginTitleRename(): void {
+    this.toolbarVisibility?.revealBottom();
+    this.titleInputEl.value = this.current.title;
+    this.titleEl.hidden = true;
+    this.titleInputEl.hidden = false;
+    window.requestAnimationFrame(() => {
+      this.titleInputEl.focus();
+      this.titleInputEl.select();
+    });
+  }
+
+  private cancelTitleRename(): void {
+    this.titleInputEl.value = this.current.title;
+    this.titleInputEl.hidden = true;
+    this.titleEl.hidden = false;
+  }
+
+  private async commitTitleRename(): Promise<void> {
+    if (this.titleInputEl.hidden) return;
+    const previous = this.current.title;
+    const title = normalizeMapTitle(this.titleInputEl.value);
+    this.titleInputEl.hidden = true;
+    this.titleEl.hidden = false;
+    this.titleEl.textContent = title;
+    this.titleInputEl.value = title;
+    if (title === previous) return;
+    try {
+      await this.options.repository.rename(this.current.id, title);
+      this.current.title = title;
+      this.options.onTitleChange?.(title);
+      this.options.diagnostics.record('editor', 'title-renamed', this.current.id, { title });
+    } catch (error) {
+      this.current.title = previous;
+      this.titleEl.textContent = previous;
+      this.titleInputEl.value = previous;
+      showMessage('导图重命名失败', 3000, 'error');
+    }
+  }
+
+  private commitZoomInput(): void {
+    const percent = parseZoomPercent(this.zoomEl.value, this.settings.minZoomRatio, this.settings.maxZoomRatio);
+    if (percent === null || !this.map) {
+      this.updateZoom();
+      return;
+    }
+    const view = this.map.view as any;
+    const rect = this.canvasEl.getBoundingClientRect();
+    view.setScale?.(percent / 100, rect.width / 2, rect.height / 2);
+    this.zoomEl.value = `${Math.round(percent)}%`;
+    this.updateZoom();
   }
 
   private setLayoutPreset(presetId: string, value: string): void {
@@ -1616,6 +1736,8 @@ export class YeMindEditor {
   private applySettings(settings: YeMindSettings): void {
     const firstApply = !this.settingsInitialized;
     this.settings = settings;
+    this.toolbarVisibility?.setPinned(settings.toolbarsPinned);
+    this.updateToolbarPinPresentation();
     this.richTextToolbar?.setEnabled(
       settings.showRichTextToolbar && this.rootEl.dataset.readonly !== "true",
     );
@@ -1940,6 +2062,9 @@ export class YeMindEditor {
   }
 
   private setViewMode(mode: ViewMode): void {
+    if (mode !== 'map' || this.viewMode !== 'map') {
+      (this.map as any)?.nodeImgAdjust?.clearSelectionForViewChange?.();
+    }
     if (mode === "map" && this.viewMode !== "map") {
       this.claimCanvasInteraction("view-map");
     }
@@ -2793,7 +2918,7 @@ export class YeMindEditor {
 
   private updateZoom(): void {
     const scale = Number((this.map?.view as any)?.scale ?? 1);
-    this.zoomEl.textContent = `${Math.round(scale * 100)}%`;
+    if (document.activeElement !== this.zoomEl) this.zoomEl.value = `${Math.round(scale * 100)}%`;
     this.updateDiagnosticState({ zoom: scale });
   }
 

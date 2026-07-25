@@ -7,7 +7,7 @@ import type { RichTextFormattingTarget } from '../editor/richTextTarget';
 import { normalizeNodeStylePatch, nodeStyleSnapshot, type NodeStylePatch } from '../editor/nodeStyle';
 import { addCombinedSummary } from './combinedSummary';
 import { CLIPART_GEOMETRY_VERSION } from './clipartGeometry';
-import { collapseAllBranches, expandRootOneLevel, toggleAllExpansion, toggleBranchExpansion } from './expandState';
+import { collapseAllBranches, collapseBranchDeep, expandBranchOneLevel, expandRootOneLevel, toggleAllExpansion, toggleBranchExpansion } from './expandState';
 
 export interface NodeImageInput {
   url: string | null;
@@ -588,6 +588,10 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
             ? node.children
             : [];
       if (!node || node.isGeneralization || persistedChildren.length === 0) return false;
+      if (applyExpansionTransform((tree) => expanded
+        ? expandBranchOneLevel(tree, uid)
+        : collapseBranchDeep(tree, uid))) return true;
+      // Compatibility fallback for minimal hosts/tests without updateData().
       mindMap.execCommand('SET_NODE_EXPAND', node, expanded);
       return true;
     },

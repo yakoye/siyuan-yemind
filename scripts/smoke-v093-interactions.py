@@ -32,6 +32,8 @@ with sync_playwright() as p:
     page.add_script_tag(content=wrapped)
     page.evaluate("""async()=>{const P=window.__YeMindExport;const plugin=new P();plugin.onload();await plugin.whenReady();const map=await plugin.repository.create('v0.9.4 Historical Interaction Smoke','logicalStructure');map.data.children=[{data:{uid:'child',text:'悬停节点',expand:true},children:[]}];await plugin.repository.update(map.id,{data:map.data});const container=document.createElement('div');container.style.cssText='width:1100px;height:720px;display:block';host.append(container);const context={element:container,data:{mapId:map.id},tab:{headElement:document.createElement('button'),updateTitle(){},close(){}}};window.__smoke={plugin,map,container,context};window.__tabOptions.init.call(context);}""")
     page.wait_for_selector('[data-role="canvas"] svg', timeout=30000)
+    page.add_style_tag(content='.ymz-topbar{opacity:1!important;transform:none!important;pointer-events:auto!important}.ymz-statusbar{opacity:1!important;transform:translateX(-50%)!important;pointer-events:auto!important}')  # v0929 legacy smoke toolbar visibility
+    page.evaluate("()=>document.querySelectorAll('.ymz-editor:not(.ymz-measurement-host)').forEach(e=>{e.dataset.toolbarsPinned='true';e.dataset.topbarVisible='true';e.dataset.statusbarVisible='true'})")
 
     page.locator('[data-action="theme-gallery"]').click()
     page.wait_for_selector('[data-role="theme-choice-panel"]:not([hidden])')

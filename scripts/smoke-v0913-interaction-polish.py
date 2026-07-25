@@ -60,6 +60,8 @@ with sync_playwright() as p:
     if defaults != {'title': '未命名导图', 'root': '中心主题', 'children': []}:
         raise RuntimeError(f'Unexpected new map defaults: {defaults}')
     page.wait_for_selector('[data-role="canvas"] svg', timeout=30000)
+    page.add_style_tag(content='.ymz-topbar{opacity:1!important;transform:none!important;pointer-events:auto!important}.ymz-statusbar{opacity:1!important;transform:translateX(-50%)!important;pointer-events:auto!important}')  # v0929 legacy smoke toolbar visibility
+    page.evaluate("()=>document.querySelectorAll('.ymz-editor:not(.ymz-measurement-host)').forEach(e=>{e.dataset.toolbarsPinned='true';e.dataset.topbarVisible='true';e.dataset.statusbarVisible='true'})")
     page.wait_for_timeout(450)
 
     marker = page.evaluate("""()=>{const node=[...document.querySelectorAll('g.smm-node')].find(item=>item.querySelector('.smm-richtext-node-wrap')?.innerText.trim()==='Marker text');if(!node)return null;const nr=node.getBoundingClientRect();const visible=[...node.querySelectorAll('rect')].map(el=>({el,r:el.getBoundingClientRect()})).filter(item=>item.r.width>=14&&item.r.width<=32&&item.r.height>=14&&item.r.height<=32);const sprite=[...node.querySelectorAll('image')].map(el=>el.getBoundingClientRect().toJSON());return{node:nr.toJSON(),text:node.querySelector('.smm-richtext-node-wrap')?.innerText.trim(),visible:visible.map(item=>item.r.toJSON()),sprite}}""")
@@ -83,6 +85,9 @@ with sync_playwright() as p:
         raise RuntimeError(f'Hidden tab resize collapsed nodes: {post_resize}')
 
     # Structure and Style buttons have visible hover feedback.
+    # Reveal the auto-hidden top toolbar before testing its hover states.
+    page.mouse.move(700, 4)
+    page.wait_for_timeout(120)
     hover_states = {}
     for name, selector in [('structure', '[data-action="layout-gallery"]'), ('style', '[data-action="project-style"]')]:
         before = page.eval_on_selector(selector, "el=>getComputedStyle(el).backgroundColor")
@@ -107,7 +112,7 @@ with sync_playwright() as p:
     if settings_index < 0 or menu_labels[settings_index:settings_index + 3] != ['设置', '关于 YeMind', '诊断与回归']:
         raise RuntimeError(f'About menu order is wrong: {menu_labels}')
     page.evaluate("""()=>window.__lastMenu.items.find(item=>item.label==='关于 YeMind').click()""")
-    about = page.evaluate("""()=>({exists:!!document.querySelector('.ymz-about-dialog'),version:document.querySelector('.ymz-about-dialog')?.textContent.includes('0.9.28'),title:window.__lastDialog?.options?.title||''})""")
+    about = page.evaluate("""()=>({exists:!!document.querySelector('.ymz-about-dialog'),version:document.querySelector('.ymz-about-dialog')?.textContent.includes('0.9.29'),title:window.__lastDialog?.options?.title||''})""")
     if not about['exists'] or not about['version'] or about['title'] != '关于 YeMind':
         raise RuntimeError(f'Standalone About dialog is wrong: {about}')
 

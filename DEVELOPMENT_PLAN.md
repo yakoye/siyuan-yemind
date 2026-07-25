@@ -2,7 +2,7 @@
 
 ## Current baseline
 
-- Product version: 0.9.28
+- Product version: 0.9.29
 - Host baseline: SiYuan 3.7.3
 - Plugin ID and folder: `siyuan-yemind`
 
@@ -34,10 +34,11 @@
 - Outline image single-click editing, double-click lightbox preview and full node-content action parity.
 - Sprite-backed outline icon editing, anchored compact asset dialogs, semantic hover previews and dirty-outline accessory synchronization.
 - Direct compact outline marker geometry, semantic note/comment symbols, stabilized first-hover previews, restored clipart resize controls and shared dialog chrome.
+- Persisted floating toolbar visibility, inline zoom/title editing, wide relation hit targets and layout-aware direct-child quick actions.
 
 ## Next priorities
 
-1. Validate v0.9.28 compact marker geometry, semantic status icons, shared lightbox arbitration, clipart resize controls, edge-aware dialogs and unified dialog chrome inside SiYuan 3.7.3 with built-in and representative third-party themes.
+1. Validate v0.9.29 floating toolbar reveal/pin behavior, editable zoom/title, relation selection and layout-aware quick actions inside SiYuan 3.7.3 with built-in and representative third-party themes.
 2. Profile 1,000+ node import, outline editing and recursive disclosure without weakening transaction safety.
 3. Improve keyboard access and screen-reader labels for outline content status controls and image actions.
 4. Continue accessibility and mobile-layout coverage for content-rich outline rows.

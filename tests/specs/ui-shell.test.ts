@@ -28,3 +28,5 @@ import '../suites/ui-shell/v0922ExactSourceIconIsolation.suite';
 import '../suites/ui-shell/v0923IconGridDarkTheme.suite';
 import '../suites/ui-shell/v0924OutlineMenuAndDarkControls.suite';
 import '../suites/ui-shell/v0925ImportDialogAndDarkPanels.suite';
+
+import '../suites/ui-shell/v0929FloatingToolbarFields.suite';

@@ -540,6 +540,11 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     this.setMode(this.imageSelected ? 'selected' : 'hover');
   }
 
+  clearSelectionForViewChange(): void {
+    this.isMousedown = false;
+    this.closeImageSelection();
+  }
+
   private closeImageSelection(): void {
     if (this.isMousedown) return;
     this.imageSelected = false;

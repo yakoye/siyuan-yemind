@@ -14,7 +14,7 @@ describe('node quick actions', () => {
 
   it('shows collapse and add-child for a selected expanded branch', () => {
     expect(describeNodeQuickActions({ isRoot: false, childCount: 3, expanded: true, selected: true })).toEqual([
-      { action: 'collapse', label: '折叠 3 个子孙节点', text: '−' },
+      { action: 'collapse', label: '折叠 3 个下级节点', text: '−' },
       { action: 'add-child', label: '添加子节点', text: '+' },
     ]);
   });
@@ -26,22 +26,22 @@ describe('node quick actions', () => {
   it('shows expand and add-child for a hovered or selected collapsed branch', () => {
     expect(describeNodeQuickActions({ isRoot: false, childCount: 5, expanded: false, selected: false })).toEqual([]);
     expect(describeNodeQuickActions({ isRoot: false, childCount: 5, expanded: false, selected: false, hovered: true })).toEqual([
-      { action: 'expand', label: '展开 5 个子孙节点', text: '5' },
+      { action: 'expand', label: '展开 5 个下级节点', text: '5' },
       { action: 'add-child', label: '添加子节点', text: '+' },
     ]);
     expect(describeNodeQuickActions({ isRoot: false, childCount: 5, expanded: false, selected: true })).toEqual([
-      { action: 'expand', label: '展开 5 个子孙节点', text: '5' },
+      { action: 'expand', label: '展开 5 个下级节点', text: '5' },
       { action: 'add-child', label: '添加子节点', text: '+' },
     ]);
   });
 
   it('gives Root the same collapse and expand behavior as other branches', () => {
     expect(describeNodeQuickActions({ isRoot: true, childCount: 4, expanded: true, selected: true })).toEqual([
-      { action: 'collapse', label: '折叠 4 个子孙节点', text: '−' },
+      { action: 'collapse', label: '折叠 4 个下级节点', text: '−' },
       { action: 'add-child', label: '添加子节点', text: '+' },
     ]);
     expect(describeNodeQuickActions({ isRoot: true, childCount: 4, expanded: false, selected: true })).toEqual([
-      { action: 'expand', label: '展开 4 个子孙节点', text: '4' },
+      { action: 'expand', label: '展开 4 个下级节点', text: '4' },
       { action: 'add-child', label: '添加子节点', text: '+' },
     ]);
   });

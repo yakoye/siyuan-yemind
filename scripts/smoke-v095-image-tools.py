@@ -31,6 +31,8 @@ with sync_playwright() as p:
       window.__smoke={plugin,map,context};window.__tabOptions.init.call(context);
     }""", image_data)
     page.wait_for_selector('g.smm-node image', timeout=30000)
+    page.add_style_tag(content='.ymz-topbar{opacity:1!important;transform:none!important;pointer-events:auto!important}.ymz-statusbar{opacity:1!important;transform:translateX(-50%)!important;pointer-events:auto!important}')  # v0929 legacy smoke toolbar visibility
+    page.evaluate("()=>document.querySelectorAll('.ymz-editor:not(.ymz-measurement-host)').forEach(e=>{e.dataset.toolbarsPinned='true';e.dataset.topbarVisible='true';e.dataset.statusbarVisible='true'})")
     image = page.locator('g.smm-node image')
     image.hover()
     page.wait_for_function("()=>document.querySelector('.ymz-node-image-frame')?.dataset.mode==='hover'")

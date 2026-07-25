@@ -124,6 +124,7 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
             option('organizationStructure', '组织结构图', settings.defaultLayout),
             option('catalogOrganization', '目录组织图', settings.defaultLayout),
           ].join(''))}
+          ${switchRow('固定顶部和底部工具栏', '关闭时工具栏默认自动隐藏，鼠标移到上下边缘即可显示。', 'toolbarsPinned', settings.toolbarsPinned)}
           ${switchRow('默认禅模式', '隐藏上、左、下三组工具栏。', 'defaultZenMode', settings.defaultZenMode)}
           ${switchRow('默认只读模式', '禁止编辑，保留平移、缩放和展开折叠。', 'defaultReadonlyMode', settings.defaultReadonlyMode)}
         </div>

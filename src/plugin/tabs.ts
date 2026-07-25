@@ -71,6 +71,7 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
             diagnostics: host.diagnostics,
             pluginBaseUrl: `/plugins/${encodeURIComponent(plugin.name)}`,
             onMissing: () => this.tab.close(),
+            onTitleChange: (title) => this.tab.updateTitle(title),
           });
           host.diagnostics.record('global-search', 'map-editor-ready', resolvedMapId, { pendingTarget: true });
           host.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'map-editor-ready' });

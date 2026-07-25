@@ -122,6 +122,11 @@ export function fullscreenIcon(): string {
 }
 
 
+
+export function pinIcon(): string {
+  return '<svg class="ymz-toolbar-icon ymz-icon-pin" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3 8 0-.8 5 2.8 2.8v1.7H13v7l-1 1.5-1-1.5v-7H6v-1.7L8.8 8 8 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+
 export function lockIcon(): string {
   return '<svg class="ymz-toolbar-icon ymz-icon-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="15" r="1.2" fill="currentColor"/></svg>';
 }

@@ -66,7 +66,8 @@
     "upstreamClipboardBehavior.suite.ts",
     "v093NodeQuickHover.suite.ts",
     "v0913ContextMenuSelection.suite.ts",
-    "v0926ExpandSemantics.suite.ts"
+    "v0926ExpandSemantics.suite.ts",
+    "v0929QuickActionGeometry.suite.ts"
   ],
   "node-content": [
     "commentsDialogPresentation.suite.ts",
@@ -87,7 +88,8 @@
     "v0911ImageInteraction.suite.ts",
     "v0913MarkerImageRegression.suite.ts",
     "v0915ClipartGeometry.suite.ts",
-    "v0916DirectImageEditing.suite.ts"
+    "v0916DirectImageEditing.suite.ts",
+    "v0929ViewImagePreviewState.suite.ts"
   ],
   "ui-shell": [
     "contextMenuAvailability.suite.ts",
@@ -117,7 +119,8 @@
     "v0923IconGridDarkTheme.suite.ts",
     "v0924OutlineMenuAndDarkControls.suite.ts",
     "v0925ImportDialogAndDarkPanels.suite.ts",
-    "visibleElement.suite.ts"
+    "visibleElement.suite.ts",
+    "v0929FloatingToolbarFields.suite.ts"
   ],
   "storage-lifecycle": [
     "createMapLifecycle.suite.ts",
@@ -174,7 +177,8 @@
     "upstreamMultiSelectionBehavior.suite.ts",
     "upstreamOuterFrameBehavior.suite.ts",
     "v0911RelationHandles.suite.ts",
-    "v0911RelationLifecycle.suite.ts"
+    "v0911RelationLifecycle.suite.ts",
+    "v0929RelationHitArea.suite.ts"
   ],
   "settings": [
     "nodeDecorationsSettings.suite.ts",

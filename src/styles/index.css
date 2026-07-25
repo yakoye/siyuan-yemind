@@ -406,6 +406,13 @@
   transform: translateY(-50%);
   pointer-events: auto;
 }
+.ymz-node-quick-actions[data-quick-side="left"] { transform: translate(-100%, -50%); }
+.ymz-node-quick-actions[data-quick-side="right"] { transform: translate(0, -50%); }
+.ymz-node-quick-actions[data-quick-side="top"] { transform: translate(-50%, -100%); }
+.ymz-node-quick-actions[data-quick-side="bottom"] { transform: translate(-50%, 0); }
+.ymz-node-quick-actions {
+  pointer-events: auto;
+}
 .ymz-node-quick-action {
   display: inline-grid;
   place-items: center;
@@ -1096,7 +1103,7 @@
 .ymz-editor .smm-richtext-node-edit-wrap .ql-editor{background:transparent!important}
 
 /* v0.9.11 anchored style panels and flush node quick actions */
-.ymz-node-quick-actions{transform:translateY(-50%);gap:3px!important}
+.ymz-node-quick-actions{gap:3px!important}
 .ymz-node-quick-action{margin-left:0!important}
 
 /* v0.9.11 unified relation interaction */
@@ -1909,3 +1916,72 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
   gap:8px;
 }
 .ymz-dialog-shell :is(.ymz-local-asset-dialog__footer,.ymz-note-dialog__footer,.ymz-comments-dialog__footer) .fn__space{display:none}
+
+/* v0.9.29: relation hit targets stay SVG-only and never affect node layout. */
+.ymz-associative-line-hit {
+  fill: none !important;
+  pointer-events: stroke;
+  vector-effect: non-scaling-stroke;
+}
+
+/* v0.9.29 floating toolbars, editable title and zoom */
+.ymz-topbar,.ymz-statusbar {
+  transition: opacity .18s ease, transform .18s ease;
+  will-change: opacity, transform;
+}
+.ymz-editor[data-toolbars-pinned="false"][data-topbar-visible="false"] .ymz-topbar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(calc(-100% - 20px));
+}
+.ymz-editor[data-toolbars-pinned="false"][data-statusbar-visible="false"] .ymz-statusbar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, calc(100% + 20px));
+}
+.ymz-editor[data-toolbars-pinned="true"] .ymz-topbar,
+.ymz-editor[data-toolbars-pinned="true"] .ymz-statusbar,
+.ymz-editor[data-topbar-visible="true"] .ymz-topbar,
+.ymz-editor[data-statusbar-visible="true"] .ymz-statusbar { opacity: 1; pointer-events: auto; }
+.ymz-toolbar-pin[aria-pressed="true"] {
+  color: var(--b3-theme-primary);
+  background: var(--b3-theme-primary-lightest, color-mix(in srgb, var(--b3-theme-primary) 14%, transparent));
+}
+.ymz-status-title-input {
+  width: min(210px, 26vw);
+  height: 32px;
+  box-sizing: border-box;
+  border: 1px solid var(--b3-theme-primary);
+  border-radius: 9px;
+  padding: 0 10px;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font: inherit;
+  outline: none;
+}
+.ymz-zoom {
+  width: 54px;
+  min-width: 54px;
+  height: 28px;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 0 3px;
+  background: transparent;
+  text-align: center;
+  color: var(--b3-theme-on-surface-light);
+  font: inherit;
+}
+.ymz-zoom:hover,.ymz-zoom:focus {
+  border-color: var(--ymz-border);
+  background: var(--b3-list-hover, color-mix(in srgb, currentColor 8%, transparent));
+  color: var(--b3-theme-on-background);
+  outline: none;
+}
+.ymz-editor[data-view="outline"] .ymz-node-image-frame,
+.ymz-editor[data-view="split"] .ymz-node-image-frame { display: none !important; }
+@media(max-width:720px){
+  .ymz-editor[data-toolbars-pinned="false"][data-statusbar-visible="false"] .ymz-statusbar {
+    transform: translateY(calc(100% + 20px));
+  }
+}

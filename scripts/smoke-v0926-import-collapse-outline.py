@@ -55,6 +55,8 @@ with sync_playwright() as p:
       window.__tabOptions.init.call({element:container,data:{mapId:map.id},tab:{headElement:document.createElement('button'),updateTitle(){},close(){}}});
     }""")
     page.wait_for_selector('[data-action="view-outline"]',timeout=30000)
+    page.add_style_tag(content='.ymz-topbar{opacity:1!important;transform:none!important;pointer-events:auto!important}.ymz-statusbar{opacity:1!important;transform:translateX(-50%)!important;pointer-events:auto!important}')  # v0929 legacy smoke toolbar visibility
+    page.evaluate("()=>document.querySelectorAll('.ymz-editor:not(.ymz-measurement-host)').forEach(e=>{e.dataset.toolbarsPinned='true';e.dataset.topbarVisible='true';e.dataset.statusbarVisible='true'})")
     page.locator('[data-action="view-outline"]').click()
     page.wait_for_selector('.ymz-outline-row[data-outline-uid="target"]')
 

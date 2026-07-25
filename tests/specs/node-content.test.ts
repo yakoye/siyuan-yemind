@@ -18,3 +18,5 @@ import '../suites/node-content/v0911ImageInteraction.suite';
 import '../suites/node-content/v0913MarkerImageRegression.suite';
 import '../suites/node-content/v0915ClipartGeometry.suite';
 import '../suites/node-content/v0916DirectImageEditing.suite';
+
+import '../suites/node-content/v0929ViewImagePreviewState.suite';

@@ -20,20 +20,83 @@ export function describeNodeQuickActions(state: NodeQuickActionState): NodeQuick
   const actions: NodeQuickActionDescriptor[] = [];
   if (childCount > 0) {
     actions.push(state.expanded
-      ? { action: 'collapse', label: `折叠 ${childCount} 个子孙节点`, text: '−' }
-      : { action: 'expand', label: `展开 ${childCount} 个子孙节点`, text: String(childCount) });
+      ? { action: 'collapse', label: `折叠 ${childCount} 个下级节点`, text: '−' }
+      : { action: 'expand', label: `展开 ${childCount} 个下级节点`, text: String(childCount) });
   }
   actions.push({ action: 'add-child', label: '添加子节点', text: '+' });
   return actions;
 }
 
-function descendantCount(node: any): number {
+export function directChildCount(node: any): number {
   const children = Array.isArray(node?.nodeData?.children)
     ? node.nodeData.children
     : Array.isArray(node?.children)
       ? node.children
       : [];
-  return children.reduce((total: number, child: any) => total + 1 + descendantCount(child), 0);
+  return children.length;
+}
+
+export type QuickActionSide = 'left' | 'right' | 'top' | 'bottom';
+export interface QuickActionRect { left: number; top: number; width: number; height: number; }
+export interface QuickActionAnchor { side: QuickActionSide; x: number; y: number; }
+
+export function resolveQuickActionAnchor(nodeRect: QuickActionRect, childRects: QuickActionRect[], fallback: QuickActionSide = 'right'): QuickActionAnchor {
+  const centerX = nodeRect.left + nodeRect.width / 2;
+  const centerY = nodeRect.top + nodeRect.height / 2;
+  let side = fallback;
+  if (childRects.length > 0) {
+    const scores: Record<QuickActionSide, { count: number; distance: number }> = {
+      left: { count: 0, distance: 0 }, right: { count: 0, distance: 0 },
+      top: { count: 0, distance: 0 }, bottom: { count: 0, distance: 0 },
+    };
+    childRects.forEach((rect) => {
+      const dx = rect.left + rect.width / 2 - centerX;
+      const dy = rect.top + rect.height / 2 - centerY;
+      const candidate: QuickActionSide = Math.abs(dx) >= Math.abs(dy)
+        ? (dx < 0 ? 'left' : 'right')
+        : (dy < 0 ? 'top' : 'bottom');
+      scores[candidate].count += 1;
+      scores[candidate].distance += Math.hypot(dx, dy);
+    });
+    side = (Object.keys(scores) as QuickActionSide[]).sort((a, b) => {
+      const countDelta = scores[b].count - scores[a].count;
+      if (countDelta) return countDelta;
+      const distanceDelta = scores[b].distance - scores[a].distance;
+      if (distanceDelta) return distanceDelta;
+      if (a === fallback) return -1;
+      if (b === fallback) return 1;
+      return 0;
+    })[0];
+  }
+  if (side === 'left') return { side, x: nodeRect.left, y: centerY };
+  if (side === 'top') return { side, x: centerX, y: nodeRect.top };
+  if (side === 'bottom') return { side, x: centerX, y: nodeRect.top + nodeRect.height };
+  return { side, x: nodeRect.left + nodeRect.width, y: centerY };
+}
+
+
+export function quickActionSideForLayout(layout: unknown): QuickActionSide {
+  const value = String(layout ?? '');
+  if (value === 'logicalStructureLeft') return 'left';
+  if (value === 'organizationStructure' || value === 'catalogOrganization') return 'bottom';
+  return 'right';
+}
+
+function fallbackSideForNode(node: any, rect: QuickActionRect): QuickActionSide {
+  const direction = String(node?.direction ?? node?.getData?.('direction') ?? node?.getData?.('dir') ?? '').toLowerCase();
+  if (direction.includes('left')) return 'left';
+  if (direction.includes('right')) return 'right';
+  if (direction.includes('top') || direction.includes('up')) return 'top';
+  if (direction.includes('bottom') || direction.includes('down')) return 'bottom';
+  const parentElement = node?.parent?.group?.node as SVGGraphicsElement | undefined;
+  if (parentElement?.getBoundingClientRect) {
+    const parent = parentElement.getBoundingClientRect();
+    const dx = rect.left + rect.width / 2 - (parent.left + parent.width / 2);
+    const dy = rect.top + rect.height / 2 - (parent.top + parent.height / 2);
+    if (Math.abs(dx) >= Math.abs(dy)) return dx < 0 ? 'left' : 'right';
+    return dy < 0 ? 'top' : 'bottom';
+  }
+  return 'right';
 }
 
 function visibleNodeList(root: any): any[] {
@@ -55,6 +118,7 @@ export interface NodeQuickActionsControllerOptions {
   canvas: HTMLElement;
   getRendererRoot(): any;
   getActiveNodes(): any[];
+  getLayout?(): unknown;
   readonly(): boolean;
   onAddChild(uid: string): void;
   onSetExpanded(uid: string, expanded: boolean): void;
@@ -121,7 +185,7 @@ export class NodeQuickActionsController {
       const hovered = this.hoveredUid === uid;
       const descriptors = describeNodeQuickActions({
         isRoot: Boolean(node.isRoot),
-        childCount: descendantCount(node),
+        childCount: directChildCount(node),
         expanded: node.getData?.('expand') !== false,
         selected,
         hovered,
@@ -131,8 +195,14 @@ export class NodeQuickActionsController {
       container.className = 'ymz-node-quick-actions';
       container.dataset.nodeUid = uid;
       container.dataset.quickHovered = String(hovered);
-      container.style.left = `${rect.right - rootRect.left}px`;
-      container.style.top = `${rect.top - rootRect.top + rect.height / 2}px`;
+      const childRects = (Array.isArray(node.children) ? node.children : [])
+        .map((child: any) => child?.group?.node?.getBoundingClientRect?.())
+        .filter((value: DOMRect | undefined): value is DOMRect => Boolean(value && (value.width || value.height)));
+      const fallback = node.isRoot ? quickActionSideForLayout(this.options.getLayout?.()) : fallbackSideForNode(node, rect);
+      const anchor = resolveQuickActionAnchor(rect, childRects, fallback);
+      container.dataset.quickSide = anchor.side;
+      container.style.left = `${anchor.x - rootRect.left}px`;
+      container.style.top = `${anchor.y - rootRect.top}px`;
       descriptors.forEach((descriptor) => {
         const button = document.createElement('button');
         button.type = 'button';

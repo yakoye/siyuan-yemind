@@ -61,6 +61,7 @@ export interface YeMindSettings {
   defaultOuterFrameText: string;
   outerFramePaddingX: number;
   outerFramePaddingY: number;
+  toolbarsPinned: boolean;
   shortcutMap: ShortcutMap;
 }
 
@@ -111,6 +112,7 @@ export const DEFAULT_SETTINGS: YeMindSettings = {
   defaultOuterFrameText: '外框',
   outerFramePaddingX: 10,
   outerFramePaddingY: 10,
+  toolbarsPinned: false,
   shortcutMap: { ...DEFAULT_SHORTCUTS },
 };
 
@@ -203,6 +205,7 @@ function normalizeSettings(value: Partial<YeMindSettings>): YeMindSettings {
     defaultOuterFrameText: stringOrDefault(value.defaultOuterFrameText, DEFAULT_SETTINGS.defaultOuterFrameText),
     outerFramePaddingX: integerClamped(value.outerFramePaddingX, DEFAULT_SETTINGS.outerFramePaddingX, 0, 80),
     outerFramePaddingY: integerClamped(value.outerFramePaddingY, DEFAULT_SETTINGS.outerFramePaddingY, 0, 80),
+    toolbarsPinned: booleanOrDefault(value.toolbarsPinned, DEFAULT_SETTINGS.toolbarsPinned),
     shortcutMap: normalizeShortcutMap(value.shortcutMap),
   };
 }

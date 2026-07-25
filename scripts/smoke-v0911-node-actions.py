@@ -36,6 +36,8 @@ with sync_playwright() as p:
     page.add_script_tag(content=wrapped)
     page.evaluate("""async image=>{const P=window.__YeMindExport;const plugin=new P();plugin.onload();await plugin.whenReady();const map=await plugin.repository.create('v0.9.11 Node Actions','logicalStructure');await plugin.repository.update(map.id,{data:{data:{uid:'root',text:'Root',expand:true},children:[{data:{uid:'a',text:'Alpha rich text'},children:[]},{data:{uid:'b',text:'Beta target'},children:[]},{data:{uid:'img',text:'Image node',image:image,imageTitle:'Preview',imageSize:{width:180,height:90}},children:[]}]}});const container=document.createElement('div');container.style.cssText='width:1420px;height:850px;display:block';host.append(container);const context={element:container,data:{mapId:map.id},tab:{headElement:document.createElement('button'),updateTitle(){},close(){}}};window.__smoke={plugin,map,container,context};window.__tabOptions.init.call(context);} """, image_data)
     page.wait_for_selector('[data-role="canvas"] svg', timeout=30000)
+    page.add_style_tag(content='.ymz-topbar{opacity:1!important;transform:none!important;pointer-events:auto!important}.ymz-statusbar{opacity:1!important;transform:translateX(-50%)!important;pointer-events:auto!important}')  # v0929 legacy smoke toolbar visibility
+    page.evaluate("()=>document.querySelectorAll('.ymz-editor:not(.ymz-measurement-host)').forEach(e=>{e.dataset.toolbarsPinned='true';e.dataset.topbarVisible='true';e.dataset.statusbarVisible='true'})")
     page.wait_for_timeout(350)
 
     # Project style panel stays anchored and uses the compact v0.9.13 geometry.

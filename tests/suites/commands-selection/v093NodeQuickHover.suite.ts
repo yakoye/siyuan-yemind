@@ -10,7 +10,7 @@ describe('v0.9.3 node hover quick actions', () => {
       selected: false,
       hovered: true,
     })).toEqual([
-      { action: 'collapse', label: '折叠 2 个子孙节点', text: '−' },
+      { action: 'collapse', label: '折叠 2 个下级节点', text: '−' },
       { action: 'add-child', label: '添加子节点', text: '+' },
     ]);
   });

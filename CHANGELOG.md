@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.29 - 2026-07-25
+
+- Added default auto-hide behavior for the top and bottom toolbars, edge reveal, one persisted pin control, and hover/focus retention.
+- Made the status zoom percentage directly editable with percent parsing and configured min/max clamping.
+- Made the status title inline-editable and synchronized successful renames to repository data and the open SiYuan tab.
+- Added a 12px invisible non-scaling association-line hit path while preserving the normal 3px selected visual stroke and keeping relation overlays out of node layout.
+- Changed quick-action numbers to direct-child counts, recursively collapse descendants, expand only one level, and follow the rendered child branch across all supported layouts.
+- Cleared image and clipart resize overlays when changing views and kept outline double-click preview on the shared image lightbox.
+- Added v0.9.29 unit, offline and Chromium regressions for toolbar visibility, pin persistence, zoom/title input, relation selection, five-layout quick-action placement, expansion semantics and resource-state cleanup.
+
 ## 0.9.28 - 2026-07-25
 
 - Replaced transformed outline marker children with a directly scaled compact sprite background, fixing marker artwork and border alignment.

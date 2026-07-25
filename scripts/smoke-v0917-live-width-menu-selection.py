@@ -93,6 +93,8 @@ with sync_playwright() as p:
       window.__smoke={plugin,fresh,container,context};window.__tabOptions.init.call(context);
     }""")
     page.wait_for_selector('[data-role="canvas"] svg', timeout=30000)
+    page.add_style_tag(content='.ymz-topbar{opacity:1!important;transform:none!important;pointer-events:auto!important}.ymz-statusbar{opacity:1!important;transform:translateX(-50%)!important;pointer-events:auto!important}')  # v0929 legacy smoke toolbar visibility
+    page.evaluate("()=>document.querySelectorAll('.ymz-editor:not(.ymz-measurement-host)').forEach(e=>{e.dataset.toolbarsPinned='true';e.dataset.topbarVisible='true';e.dataset.statusbarVisible='true'})")
     page.wait_for_timeout(700)
 
     # 1. Native width-handle drag: child must move before mouseup.
