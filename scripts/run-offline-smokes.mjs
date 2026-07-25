@@ -23,6 +23,7 @@ const entries = [
   'outlineAssetDialogV0927SmokeEntry',
   'outlineDialogConsistencyV0928SmokeEntry',
   'floatingRelationQuickActionsV0929SmokeEntry',
+  'branchControlsToolbarResourcesV0930SmokeEntry',
 ];
 
 rmSync(outDir, { recursive: true, force: true });

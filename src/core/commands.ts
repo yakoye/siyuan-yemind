@@ -7,7 +7,7 @@ import type { RichTextFormattingTarget } from '../editor/richTextTarget';
 import { normalizeNodeStylePatch, nodeStyleSnapshot, type NodeStylePatch } from '../editor/nodeStyle';
 import { addCombinedSummary } from './combinedSummary';
 import { CLIPART_GEOMETRY_VERSION } from './clipartGeometry';
-import { collapseAllBranches, collapseBranchDeep, expandBranchOneLevel, expandRootOneLevel, toggleAllExpansion, toggleBranchExpansion } from './expandState';
+import { collapseAllBranches, collapseBranchDeep, expandAllBranches, expandBranchDeep, expandBranchOneLevel, toggleAllExpansion, toggleBranchDeep, toggleBranchExpansion } from './expandState';
 
 export interface NodeImageInput {
   url: string | null;
@@ -27,6 +27,8 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   moveDown(): void;
   toggleExpand(): void;
   toggleBranchExpandByUid(uid: string): boolean;
+  expandBranchDeepByUid(uid: string): boolean;
+  collapseBranchDeepByUid(uid: string): boolean;
   remove(): void;
   removeOnlyCurrent(): void;
   undo(): void;
@@ -61,9 +63,12 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   deleteCodeBlock(): void;
   setTags(tags: string[]): void;
   setIcons(icons: string[]): void;
+  setIconsByUid(uid: string, icons: string[]): void;
   setLink(link: string, title?: string): void;
   setImage(image: NodeImageInput): void;
   setClipart(image: NodeImageInput & { id: string }): void;
+  clearClipart(): void;
+  clearClipartByUid(uid: string): void;
   insertFormula(formula: string, mode?: 'inline' | 'block'): void;
   addSummary(): void;
   removeSummary(): void;
@@ -192,11 +197,13 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     moveDown: () => { if (canMutate() && primaryIsMovable()) mindMap.execCommand('DOWN_NODE'); },
     toggleExpand: () => {
       const uid = String(primaryNode()?.getData?.('uid') ?? '');
-      if (!uid || !applyExpansionTransform((tree) => toggleBranchExpansion(tree, uid))) {
+      if (!uid || !applyExpansionTransform((tree) => toggleBranchDeep(tree, uid))) {
         mindMap.renderer.toggleActiveExpand?.();
       }
     },
-    toggleBranchExpandByUid: (uid) => applyExpansionTransform((tree) => toggleBranchExpansion(tree, uid)),
+    toggleBranchExpandByUid: (uid) => applyExpansionTransform((tree) => toggleBranchDeep(tree, uid)),
+    expandBranchDeepByUid: (uid) => applyExpansionTransform((tree) => expandBranchDeep(tree, uid)),
+    collapseBranchDeepByUid: (uid) => applyExpansionTransform((tree) => collapseBranchDeep(tree, uid)),
     remove: () => {
       if (!canMutate()) return;
       const nodes = removableNodes();
@@ -211,7 +218,7 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     redo: () => { if (canMutate()) mindMap.execCommand('FORWARD'); },
     fit: () => (mindMap.view as any).fit(),
     centerRoot: () => (mindMap.renderer as any).setRootNodeCenter?.(),
-    expandAll: () => { if (!applyExpansionTransform(expandRootOneLevel)) mindMap.execCommand('EXPAND_ALL'); },
+    expandAll: () => { if (!applyExpansionTransform(expandAllBranches)) mindMap.execCommand('EXPAND_ALL'); },
     collapseAll: () => { if (!applyExpansionTransform(collapseAllBranches)) mindMap.execCommand('UNEXPAND_ALL'); },
     toggleAllExpand: () => {
       if (applyExpansionTransform(toggleAllExpansion)) return;
@@ -352,6 +359,11 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     },
     setTags: (tags) => { if (canMutate()) forEachActive((node) => mindMap.execCommand('SET_NODE_TAG', node, tags)); },
     setIcons: (icons) => { if (canMutate()) forEachActive((node) => mindMap.execCommand('SET_NODE_ICON', node, icons)); },
+    setIconsByUid: (uid, icons) => {
+      if (!canMutate()) return;
+      const node = findNodeByUid(uid);
+      if (node) mindMap.execCommand('SET_NODE_ICON', node, icons);
+    },
     setLink: (link, title = '') => { if (canMutate()) forEachActive((node) => mindMap.execCommand('SET_NODE_HYPERLINK', node, link, title)); },
     setImage: (image) => { if (canMutate()) forEachActive((node) => mindMap.execCommand('SET_NODE_IMAGE', node, image)); },
     setClipart: (image) => {
@@ -363,6 +375,26 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
           yemindClipartGeometryVersion: CLIPART_GEOMETRY_VERSION,
           imgPlacement: 'top',
         });
+      });
+    },
+    clearClipart: () => {
+      if (!canMutate()) return;
+      forEachActive((node) => {
+        mindMap.execCommand('SET_NODE_IMAGE', node, { url: null });
+        mindMap.execCommand('SET_NODE_DATA', node, {
+          yemindClipartId: null,
+          yemindClipartGeometryVersion: null,
+        });
+      });
+    },
+    clearClipartByUid: (uid) => {
+      if (!canMutate()) return;
+      const node = findNodeByUid(uid);
+      if (!node) return;
+      mindMap.execCommand('SET_NODE_IMAGE', node, { url: null });
+      mindMap.execCommand('SET_NODE_DATA', node, {
+        yemindClipartId: null,
+        yemindClipartGeometryVersion: null,
       });
     },
     insertFormula: (formula, mode = 'inline') => {

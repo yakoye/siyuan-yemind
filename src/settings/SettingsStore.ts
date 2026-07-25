@@ -112,7 +112,7 @@ export const DEFAULT_SETTINGS: YeMindSettings = {
   defaultOuterFrameText: '外框',
   outerFramePaddingX: 10,
   outerFramePaddingY: 10,
-  toolbarsPinned: false,
+  toolbarsPinned: true,
   shortcutMap: { ...DEFAULT_SHORTCUTS },
 };
 

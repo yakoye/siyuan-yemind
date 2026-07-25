@@ -12,3 +12,5 @@ import '../suites/commands-selection/v0913ContextMenuSelection.suite';
 import '../suites/commands-selection/v0926ExpandSemantics.suite';
 
 import '../suites/commands-selection/v0929QuickActionGeometry.suite';
+import '../suites/commands-selection/v0930BranchControlPlacement.suite';
+import '../suites/commands-selection/v0930ExpansionScopes.suite';

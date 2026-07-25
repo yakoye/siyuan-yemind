@@ -2,8 +2,16 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.29`
+Current version: `0.9.30`
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.30 branch controls, full expansion and three-edge toolbars
+
+- Anchors `+ / - / count` at the real outgoing child connector: right/left logical layouts remain side-consistent, bilateral maps follow each branch side, and tree, timeline, organization and fishbone layouts follow their growth direction.
+- Node menus fully expand or collapse the selected subtree, blank-canvas menus fully expand or collapse the entire map, while the compact count control still expands one level and reports direct children only.
+- Pins the top, bottom and left toolbars by default; a vertical pin means fixed, a diagonal pin means auto-hide, and one persisted control governs all three edges.
+- Shows distinct unlocked/locked icons for read-only state and adds Text to Mind Map immediately above Add in the canvas node menu.
+- Routes canvas and outline marker/clipart clicks through a shared Replace/Delete popover before opening the relevant asset picker.
 
 ## v0.9.29 floating toolbars, relation selection and node quick actions
 

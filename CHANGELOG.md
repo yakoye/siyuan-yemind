@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.30 - 2026-07-25
+
+- Positioned node quick controls from the actual outgoing child connector across logical, bilateral, tree, timeline, organization and fishbone layouts.
+- Separated quick one-level expansion from full subtree and full-map context-menu expansion/collapse semantics.
+- Made top, bottom and left toolbars pinned by default with vertical/diagonal pin states, shared persistence and left-edge reveal; added distinct unlocked/locked icons.
+- Added Text to Mind Map above Add in the canvas node context menu.
+- Added one shared viewport-aware Replace/Delete popover for canvas and outline markers/clipart, with UID-targeted deletion and existing picker reuse.
+- Added v0.9.30 unit, offline and Chromium regressions for branch direction, expansion scopes, toolbar states, menu contracts and resource actions.
+
 ## 0.9.29 - 2026-07-25
 
 - Added default auto-hide behavior for the top and bottom toolbars, edge reveal, one persisted pin control, and hover/focus retention.

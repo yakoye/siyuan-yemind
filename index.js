@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.29 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.30 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -39,11 +39,11 @@ const releaseInfo_1 = __require(30);
 const constants_1 = __require(29);
 const dock_1 = __require(39);
 const tabs_1 = __require(40);
-const OpenMapTabRegistry_1 = __require(270);
-const pluginUrl_1 = __require(271);
-const operationSafety_1 = __require(272);
-const pluginStartup_1 = __require(273);
-const globalSearch_1 = __require(274);
+const OpenMapTabRegistry_1 = __require(271);
+const pluginUrl_1 = __require(272);
+const operationSafety_1 = __require(273);
+const pluginStartup_1 = __require(274);
+const globalSearch_1 = __require(275);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -15880,7 +15880,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.29';
+exports.PLUGIN_VERSION = '0.9.30';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -15897,19 +15897,19 @@ const constants_1 = __require(29);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-25T09:05:00Z',
-    buildId: 'yemind-v0.9.29-20260725',
+    buildTime: '2026-07-25T15:36:30Z',
+    buildId: 'yemind-v0.9.30-20260725',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '增加可固定的浮动工具栏、可编辑缩放与标题，扩大关联线命中区，并统一各布局的节点展开控件。',
+    releaseSummary: '统一分支控件方向、完整展开范围、三边工具栏状态，以及图标和剪贴图的两步资源操作。',
     highlights: [
-        '顶部和底部工具栏默认自动隐藏，鼠标靠近边缘或进入工具栏时显示；一个持久化图钉可同时固定两条工具栏。',
-        '底部缩放百分比可直接输入，支持带或不带百分号并限制在有效范围；底部导图标题可内联重命名并同步思源标签页。',
-        '关联线增加 12px 透明命中描边，视觉线宽保持不变，选中后仍使用原有高亮宽度，并与节点文字布局完全隔离。',
-        '节点快捷展开控件按真实子分支方向定位，数字只统计直接子节点；折叠会递归关闭后代，再次展开只打开一层。',
-        '离开导图视图时清理图片和剪贴图的缩放框、删除按钮与资源工具条，大纲双击图片继续使用共享大图浏览器。',
+        '节点快捷控件跟随真实子分支出口定位，右向、左向、双侧以及树状、时间线、组织图和鱼骨图采用一致的连接方向规则。',
+        '节点右键菜单完整展开或折叠当前子树，空白菜单完整展开或折叠全图；节点数字仍只展开一级并只显示直接子节点数量。',
+        '顶部、底部和左侧工具栏默认固定显示，竖图钉表示固定、斜图钉表示自动隐藏，一个图钉统一控制三边工具栏。',
+        '底部只读按钮使用明确的开锁和闭锁图标，并同步标题与无障碍状态。',
+        '导图节点右键菜单增加文本转导图入口；导图和大纲中的图标、剪贴图单击先显示替换/删除，再按需打开资源选择器。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -16309,7 +16309,7 @@ exports.DEFAULT_SETTINGS = {
     defaultOuterFrameText: '外框',
     outerFramePaddingX: 10,
     outerFramePaddingY: 10,
-    toolbarsPinned: false,
+    toolbarsPinned: true,
     shortcutMap: { ...exports.DEFAULT_SHORTCUTS },
 };
 const LAYOUTS = new Set(['logicalStructure', 'logicalStructureLeft', 'mindMap', 'organizationStructure', 'catalogOrganization']);
@@ -16556,7 +16556,7 @@ function createSettingsDialogTemplate(settings) {
         option('organizationStructure', '组织结构图', settings.defaultLayout),
         option('catalogOrganization', '目录组织图', settings.defaultLayout),
     ].join(''))}
-          ${switchRow('固定顶部和底部工具栏', '关闭时工具栏默认自动隐藏，鼠标移到上下边缘即可显示。', 'toolbarsPinned', settings.toolbarsPinned)}
+          ${switchRow('固定顶部、底部和左侧工具栏', '关闭后启用自动隐藏，鼠标移到上、下、左侧边缘即可显示。', 'toolbarsPinned', settings.toolbarsPinned)}
           ${switchRow('默认禅模式', '隐藏上、左、下三组工具栏。', 'defaultZenMode', settings.defaultZenMode)}
           ${switchRow('默认只读模式', '禁止编辑，保留平移、缩放和展开折叠。', 'defaultReadonlyMode', settings.defaultReadonlyMode)}
         </div>
@@ -16775,11 +16775,17 @@ function outerFrameIcon() {
 function fullscreenIcon() {
     return (0, suppliedIcons_1.suppliedIcon)('fullscreen');
 }
-function pinIcon() {
-    return '<svg class="ymz-toolbar-icon ymz-icon-pin" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3 8 0-.8 5 2.8 2.8v1.7H13v7l-1 1.5-1-1.5v-7H6v-1.7L8.8 8 8 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function pinIcon(pinned = false) {
+    if (pinned) {
+        return '<svg class="ymz-toolbar-icon ymz-icon-pin ymz-icon-pin--fixed" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l-.8 5 2.8 2.8v1.7H13v7L12 21l-1-1.5v-7H6v-1.7L8.8 8 8 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    }
+    return '<svg class="ymz-toolbar-icon ymz-icon-pin ymz-icon-pin--auto" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(-38 12 12)"><path d="M8 3h8l-.8 5 2.8 2.8v1.7H13v7L12 21l-1-1.5v-7H6v-1.7L8.8 8 8 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></g></svg>';
 }
-function lockIcon() {
-    return '<svg class="ymz-toolbar-icon ymz-icon-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="15" r="1.2" fill="currentColor"/></svg>';
+function lockIcon(locked = false) {
+    if (locked) {
+        return '<svg class="ymz-toolbar-icon ymz-icon-lock ymz-icon-lock--closed" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="15" r="1.2" fill="currentColor"/></svg>';
+    }
+    return '<svg class="ymz-toolbar-icon ymz-icon-lock ymz-icon-lock--open" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9 10V7.5a4 4 0 0 1 7.2-2.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="15" r="1.2" fill="currentColor"/></svg>';
 }
 function meditationIcon() {
     return '<svg class="ymz-toolbar-icon ymz-icon-meditation" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4.3" r="2.1" fill="none" stroke="currentColor" stroke-width="1.65"/><path d="M9.4 7.2c-1.9 1-2.8 2.7-3 5.1-.2 2.1-1.2 3.5-3.2 4.3M14.6 7.2c1.9 1 2.8 2.7 3 5.1.2 2.1 1.2 3.5 3.2 4.3M8.4 11.2 12 16l3.6-4.8M3.4 17c2.7-.3 4.9.2 6.6 1.5L12 20l2-1.5c1.7-1.3 3.9-1.8 6.6-1.5M6 20h12" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -17030,10 +17036,10 @@ function escapeHtml(value) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
 const YeMindEditor_1 = __require(41);
-const deferredMount_1 = __require(268);
+const deferredMount_1 = __require(269);
 const constants_1 = __require(29);
 const visibleElement_1 = __require(247);
-const tabNodeFocus_1 = __require(269);
+const tabNodeFocus_1 = __require(270);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -17186,6 +17192,7 @@ const dialogChrome_1 = __require(26);
 const ToolbarVisibilityController_1 = __require(265);
 const zoomPercent_1 = __require(266);
 const mapTitle_1 = __require(267);
+const resourceActionPopover_1 = __require(268);
 class YeMindEditor {
     constructor(options) {
         this.options = options;
@@ -17206,6 +17213,7 @@ class YeMindEditor {
         this.lineStyleChoicePanel = null;
         this.nodeQuickActions = null;
         this.toolbarVisibility = null;
+        this.resourceActionPopover = null;
         this.canvasRightDrag = null;
         this.liveNodeWidthLayout = null;
         this.contextMenuSelectionSnapshot = null;
@@ -17570,6 +17578,8 @@ class YeMindEditor {
         this.lineStyleChoicePanel = null;
         this.toolbarVisibility?.destroy();
         this.toolbarVisibility = null;
+        this.resourceActionPopover?.destroy();
+        this.resourceActionPopover = null;
         this.nodeQuickActions?.destroy();
         this.nodeQuickActions = null;
         this.canvasRightDrag?.destroy();
@@ -17658,6 +17668,7 @@ class YeMindEditor {
         this.current.lineStyle = (0, themePresets_1.normalizeLineStyle)(this.current.lineStyle);
         this.options.container.innerHTML = (0, editorTemplate_1.createEditorTemplate)(this.current.title, this.current.theme, this.current.lineStyle);
         this.rootEl = this.options.container.querySelector(".ymz-editor");
+        this.resourceActionPopover = new resourceActionPopover_1.ResourceActionPopover(this.rootEl);
         this.canvasEl = this.options.container.querySelector('[data-role="canvas"]');
         this.splitDividerEl = this.options.container.querySelector('[data-role="split-divider"]');
         this.outlinePaneEl = this.options.container.querySelector('[data-role="outline"]');
@@ -17812,27 +17823,17 @@ class YeMindEditor {
             onToggle: (uid, expanded) => this.setOutlineExpanded(uid, expanded),
             onContextMenu: (event, uid) => this.openOutlineContextMenu(event, uid),
             onIconEdit: (uid, iconValue, anchor) => {
-                if (!this.commands || this.commands.isReadonly())
-                    return;
-                this.activateNodeByUid(uid);
-                const groupId = String(iconValue ?? '').startsWith('yemarker')
-                    ? String(iconValue).slice('yemarker'.length).split('_')[0]
-                    : null;
-                (0, localAssetDialogs_1.openMarkerPicker)(this.commands, {
-                    pluginBaseUrl: this.options.pluginBaseUrl,
-                    initialGroupId: groupId,
-                    anchorRect: anchor.getBoundingClientRect(),
-                    onChange: () => this.refreshOutlineFromMap(),
-                });
+                this.showMarkerResourceActions(uid, iconValue, anchor.getBoundingClientRect());
             },
             onImageEdit: (uid, kind, anchor) => {
                 if (!this.commands || this.commands.isReadonly())
                     return;
-                this.activateNodeByUid(uid);
                 if (kind === 'clipart')
-                    (0, localAssetDialogs_1.openClipartPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, anchorRect: anchor.getBoundingClientRect(), onChange: () => this.refreshOutlineFromMap() });
-                else
+                    this.showClipartResourceActions(uid, anchor.getBoundingClientRect());
+                else {
+                    this.activateNodeByUid(uid);
                     (0, nodeContentDialogs_1.openImageDialog)(this.commands);
+                }
             },
             onImagePreview: (uid) => {
                 const data = this.findTreeNodeData(uid);
@@ -18057,6 +18058,7 @@ class YeMindEditor {
                     this.toggleZen(false);
                     break;
                 case "toggle-toolbar-pin":
+                    button.blur();
                     void this.toggleToolbarsPinned();
                     break;
                 case "fullscreen":
@@ -18150,9 +18152,11 @@ class YeMindEditor {
     updateToolbarPinPresentation() {
         const pinned = Boolean(this.settings?.toolbarsPinned);
         this.rootEl?.querySelectorAll('[data-action="toggle-toolbar-pin"]').forEach((button) => {
-            button.setAttribute('aria-pressed', String(pinned));
-            button.title = pinned ? '取消固定工具栏' : '固定工具栏';
+            const autoHide = !pinned;
+            button.setAttribute('aria-pressed', String(autoHide));
+            button.title = pinned ? '工具栏已固定，点击开启自动隐藏' : '工具栏自动隐藏，点击固定';
             button.setAttribute('aria-label', button.title);
+            button.innerHTML = (0, projectControls_1.pinIcon)(pinned);
         });
     }
     async toggleToolbarsPinned() {
@@ -18369,13 +18373,13 @@ class YeMindEditor {
         this.map.on("yemind_node_clipart_edit", (node, event, image) => {
             if (!this.commands || this.commands.isReadonly() || !node)
                 return;
-            this.activateOnlyNode(node);
+            const uid = String(node?.getData?.('uid') ?? '');
             const imageElement = image?.node;
             const targetElement = event?.target instanceof Element ? event.target : undefined;
             const anchorRect = imageElement?.getBoundingClientRect?.()
                 ?? targetElement?.getBoundingClientRect?.()
-                ?? (event ? new DOMRect(event.clientX, event.clientY, 1, 1) : undefined);
-            (0, localAssetDialogs_1.openClipartPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, anchorRect, onChange: () => this.refreshOutlineFromMap() });
+                ?? (event ? new DOMRect(event.clientX, event.clientY, 1, 1) : new DOMRect());
+            this.showClipartResourceActions(uid, anchorRect);
         });
         this.map.on("yemind_todo_toggle", (node) => {
             if (!this.commands)
@@ -18451,14 +18455,11 @@ class YeMindEditor {
             event?.stopPropagation?.();
             if (!this.commands || this.commands.isReadonly())
                 return;
-            this.activateOnlyNode(node);
-            const groupId = String(iconValue ?? '').startsWith('yemarker')
-                ? String(iconValue).slice('yemarker'.length).split('_')[0]
-                : null;
+            const uid = String(node?.getData?.('uid') ?? '');
             const targetElement = event?.target instanceof Element ? event.target : undefined;
             const anchorRect = targetElement?.getBoundingClientRect?.()
-                ?? (event ? new DOMRect(event.clientX, event.clientY, 1, 1) : undefined);
-            (0, localAssetDialogs_1.openMarkerPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, initialGroupId: groupId, anchorRect, onChange: () => this.refreshOutlineFromMap() });
+                ?? (event ? new DOMRect(event.clientX, event.clientY, 1, 1) : new DOMRect());
+            this.showMarkerResourceActions(uid, iconValue, anchorRect);
         });
         this.map.on("draw_click", () => window.setTimeout(() => this.updateRelationPresentation(), 0));
         this.map.on("search_info_change", (info) => this.updateSearchInfo(info));
@@ -18467,6 +18468,64 @@ class YeMindEditor {
             this.nodeQuickActions?.scheduleRefresh();
         });
         this.map.on("node_tree_render_end", () => this.nodeQuickActions?.scheduleRefresh());
+    }
+    showMarkerResourceActions(uid, iconValue, anchorRect) {
+        if (!uid || !this.commands || this.commands.isReadonly() || !this.resourceActionPopover)
+            return;
+        this.activateNodeByUid(uid);
+        const groupId = String(iconValue ?? '').startsWith('yemarker')
+            ? String(iconValue).slice('yemarker'.length).split('_')[0]
+            : null;
+        this.resourceActionPopover.show({
+            kind: 'marker',
+            anchorRect,
+            onReplace: () => {
+                if (!this.commands)
+                    return;
+                this.activateNodeByUid(uid);
+                (0, localAssetDialogs_1.openMarkerPicker)(this.commands, {
+                    pluginBaseUrl: this.options.pluginBaseUrl,
+                    initialGroupId: groupId,
+                    anchorRect,
+                    onChange: () => this.refreshOutlineFromMap(),
+                });
+            },
+            onDelete: () => {
+                if (!this.commands)
+                    return;
+                this.activateNodeByUid(uid);
+                const raw = this.commands.getPrimaryNodeData()?.icon;
+                const icons = Array.isArray(raw) ? raw.map(String) : typeof raw === 'string' && raw ? [raw] : [];
+                this.commands.setIconsByUid(uid, icons.filter((value) => value !== String(iconValue)));
+                this.refreshOutlineFromMap();
+            },
+        });
+    }
+    showClipartResourceActions(uid, anchorRect) {
+        if (!uid || !this.commands || this.commands.isReadonly() || !this.resourceActionPopover)
+            return;
+        this.activateNodeByUid(uid);
+        this.resourceActionPopover.show({
+            kind: 'clipart',
+            anchorRect,
+            onReplace: () => {
+                if (!this.commands)
+                    return;
+                this.activateNodeByUid(uid);
+                (0, localAssetDialogs_1.openClipartPicker)(this.commands, {
+                    pluginBaseUrl: this.options.pluginBaseUrl,
+                    anchorRect,
+                    onChange: () => this.refreshOutlineFromMap(),
+                });
+            },
+            onDelete: () => {
+                if (!this.commands)
+                    return;
+                this.activateNodeByUid(uid);
+                this.commands.clearClipartByUid(uid);
+                this.refreshOutlineFromMap();
+            },
+        });
     }
     openContextMenu(event) {
         if (!this.commands)
@@ -18481,6 +18540,11 @@ class YeMindEditor {
             onRelation: () => this.beginRelation(),
             onMarkers: () => (0, localAssetDialogs_1.openMarkerPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
             onClipart: () => (0, localAssetDialogs_1.openClipartPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
+            onTextToMap: () => {
+                const uid = String(this.commands?.getPrimaryNode()?.getData?.('uid') ?? '');
+                if (uid)
+                    this.openTextToMapForUid(uid);
+            },
             onNodeStyle: () => {
                 this.projectStylePanel?.hide();
                 this.nodeStylePanel?.show({ x: event.clientX, y: event.clientY });
@@ -18877,6 +18941,7 @@ class YeMindEditor {
         });
     }
     setViewMode(mode) {
+        this.resourceActionPopover?.hide();
         if (mode !== 'map' || this.viewMode !== 'map') {
             this.map?.nodeImgAdjust?.clearSelectionForViewChange?.();
         }
@@ -19101,6 +19166,39 @@ class YeMindEditor {
             });
         }
     }
+    openTextToMapForUid(uid) {
+        if (!uid || !this.commands)
+            return;
+        (0, textToMapDialog_1.openTextToMapDialog)({
+            targetUid: uid,
+            getTree: () => this.current.data,
+            onApply: (tree, result, insertMode) => {
+                const repaired = (0, outlineTreeImport_1.repairImportedAutoWidthTree)(tree).tree;
+                const importTransform = this.map?.view?.getTransformData?.();
+                this.applyingImportLayout = true;
+                const applied = Boolean(this.commands?.replaceTree(repaired));
+                if (applied) {
+                    this.current.data = repaired;
+                    this.renderOutline(repaired);
+                    this.activateOutlineUid(uid, true);
+                    this.stabilizeImportedTreeLayout(uid, importTransform);
+                }
+                else {
+                    this.applyingImportLayout = false;
+                }
+                this.options.diagnostics.record('outline', 'text-to-map', this.current.id, {
+                    applied,
+                    requestedMode: result.requestedMode,
+                    detectedMode: result.detectedMode,
+                    insertMode,
+                    nodeCount: result.nodeCount,
+                    maxDepth: result.maxDepth,
+                    warnings: result.warnings.length,
+                });
+                return applied;
+            },
+        });
+    }
     openOutlineContextMenu(event, uid) {
         if (!uid || !this.commands || !this.outlineRichText)
             return;
@@ -19128,35 +19226,7 @@ class YeMindEditor {
             onAddParent: () => { activate(); this.commands?.addParent(); },
             onAddSibling: () => { activate(); this.commands?.addSibling(); },
             onAddChild: () => { activate(); this.commands?.addChild(); },
-            onTextToMap: () => (0, textToMapDialog_1.openTextToMapDialog)({
-                targetUid: uid,
-                getTree: () => this.current.data,
-                onApply: (tree, result, insertMode) => {
-                    const repaired = (0, outlineTreeImport_1.repairImportedAutoWidthTree)(tree).tree;
-                    const importTransform = this.map?.view?.getTransformData?.();
-                    this.applyingImportLayout = true;
-                    const applied = Boolean(this.commands?.replaceTree(repaired));
-                    if (applied) {
-                        this.current.data = repaired;
-                        this.renderOutline(repaired);
-                        this.activateOutlineUid(uid, true);
-                        this.stabilizeImportedTreeLayout(uid, importTransform);
-                    }
-                    else {
-                        this.applyingImportLayout = false;
-                    }
-                    this.options.diagnostics.record('outline', 'text-to-map', this.current.id, {
-                        applied,
-                        requestedMode: result.requestedMode,
-                        detectedMode: result.detectedMode,
-                        insertMode,
-                        nodeCount: result.nodeCount,
-                        maxDepth: result.maxDepth,
-                        warnings: result.warnings.length,
-                    });
-                    return applied;
-                },
-            }),
+            onTextToMap: () => this.openTextToMapForUid(uid),
             onTodo: () => {
                 activate();
                 const action = (0, nodeContentMenu_1.createTodoMenuDescriptor)(this.commands?.getTodo());
@@ -19723,6 +19793,9 @@ class YeMindEditor {
             .forEach((button) => {
             button.classList.toggle("is-active", enabled);
             button.setAttribute("aria-pressed", String(enabled));
+            button.innerHTML = (0, projectControls_1.lockIcon)(enabled);
+            button.title = enabled ? '退出只读模式' : '进入只读模式';
+            button.setAttribute('aria-label', button.title);
         });
         this.replaceInputEl.disabled = enabled;
         this.rootEl
@@ -82979,11 +83052,13 @@ function createCommandAdapter(mindMap) {
             mindMap.execCommand('DOWN_NODE'); },
         toggleExpand: () => {
             const uid = String(primaryNode()?.getData?.('uid') ?? '');
-            if (!uid || !applyExpansionTransform((tree) => (0, expandState_1.toggleBranchExpansion)(tree, uid))) {
+            if (!uid || !applyExpansionTransform((tree) => (0, expandState_1.toggleBranchDeep)(tree, uid))) {
                 mindMap.renderer.toggleActiveExpand?.();
             }
         },
-        toggleBranchExpandByUid: (uid) => applyExpansionTransform((tree) => (0, expandState_1.toggleBranchExpansion)(tree, uid)),
+        toggleBranchExpandByUid: (uid) => applyExpansionTransform((tree) => (0, expandState_1.toggleBranchDeep)(tree, uid)),
+        expandBranchDeepByUid: (uid) => applyExpansionTransform((tree) => (0, expandState_1.expandBranchDeep)(tree, uid)),
+        collapseBranchDeepByUid: (uid) => applyExpansionTransform((tree) => (0, expandState_1.collapseBranchDeep)(tree, uid)),
         remove: () => {
             if (!canMutate())
                 return;
@@ -83004,7 +83079,7 @@ function createCommandAdapter(mindMap) {
             mindMap.execCommand('FORWARD'); },
         fit: () => mindMap.view.fit(),
         centerRoot: () => mindMap.renderer.setRootNodeCenter?.(),
-        expandAll: () => { if (!applyExpansionTransform(expandState_1.expandRootOneLevel))
+        expandAll: () => { if (!applyExpansionTransform(expandState_1.expandAllBranches))
             mindMap.execCommand('EXPAND_ALL'); },
         collapseAll: () => { if (!applyExpansionTransform(expandState_1.collapseAllBranches))
             mindMap.execCommand('UNEXPAND_ALL'); },
@@ -83180,6 +83255,13 @@ function createCommandAdapter(mindMap) {
             forEachActive((node) => mindMap.execCommand('SET_NODE_TAG', node, tags)); },
         setIcons: (icons) => { if (canMutate())
             forEachActive((node) => mindMap.execCommand('SET_NODE_ICON', node, icons)); },
+        setIconsByUid: (uid, icons) => {
+            if (!canMutate())
+                return;
+            const node = findNodeByUid(uid);
+            if (node)
+                mindMap.execCommand('SET_NODE_ICON', node, icons);
+        },
         setLink: (link, title = '') => { if (canMutate())
             forEachActive((node) => mindMap.execCommand('SET_NODE_HYPERLINK', node, link, title)); },
         setImage: (image) => { if (canMutate())
@@ -83194,6 +83276,29 @@ function createCommandAdapter(mindMap) {
                     yemindClipartGeometryVersion: clipartGeometry_1.CLIPART_GEOMETRY_VERSION,
                     imgPlacement: 'top',
                 });
+            });
+        },
+        clearClipart: () => {
+            if (!canMutate())
+                return;
+            forEachActive((node) => {
+                mindMap.execCommand('SET_NODE_IMAGE', node, { url: null });
+                mindMap.execCommand('SET_NODE_DATA', node, {
+                    yemindClipartId: null,
+                    yemindClipartGeometryVersion: null,
+                });
+            });
+        },
+        clearClipartByUid: (uid) => {
+            if (!canMutate())
+                return;
+            const node = findNodeByUid(uid);
+            if (!node)
+                return;
+            mindMap.execCommand('SET_NODE_IMAGE', node, { url: null });
+            mindMap.execCommand('SET_NODE_DATA', node, {
+                yemindClipartId: null,
+                yemindClipartGeometryVersion: null,
             });
         },
         insertFormula: (formula, mode = 'inline') => {
@@ -84022,11 +84127,14 @@ function isLegacyDefaultClipartGeometry(data) {
 // /src/core/expandState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.expandBranchDeep = expandBranchDeep;
 exports.collapseBranchDeep = collapseBranchDeep;
 exports.expandBranchOneLevel = expandBranchOneLevel;
 exports.toggleBranchExpansion = toggleBranchExpansion;
+exports.expandAllBranches = expandAllBranches;
 exports.collapseAllBranches = collapseAllBranches;
 exports.expandRootOneLevel = expandRootOneLevel;
+exports.toggleBranchDeep = toggleBranchDeep;
 exports.toggleAllExpansion = toggleAllExpansion;
 function cloneTree(value) {
     if (typeof structuredClone === 'function') {
@@ -84061,6 +84169,13 @@ function setBranchState(node, expanded, includeSelf = true) {
     }
     return changed;
 }
+function expandBranchDeep(tree, uid) {
+    const next = cloneTree(tree);
+    const target = findNode(next, uid);
+    if (!target || !branch(target))
+        return { tree: next, changed: false };
+    return { tree: next, changed: setBranchState(target, true, true) > 0 };
+}
 function collapseBranchDeep(tree, uid) {
     const next = cloneTree(tree);
     const target = findNode(next, uid);
@@ -84091,6 +84206,10 @@ function toggleBranchExpansion(tree, uid) {
         ? expandBranchOneLevel(tree, uid)
         : collapseBranchDeep(tree, uid);
 }
+function expandAllBranches(tree) {
+    const next = cloneTree(tree);
+    return { tree: next, changed: setBranchState(next, true, true) > 0 };
+}
 function collapseAllBranches(tree) {
     const next = cloneTree(tree);
     return { tree: next, changed: setBranchState(next, false, true) > 0 };
@@ -84109,9 +84228,22 @@ function expandRootOneLevel(tree) {
     }
     return { tree: next, changed: changed > 0 };
 }
+function hasCollapsedBranch(node) {
+    if (branch(node) && node.data.expand === false)
+        return true;
+    return (node.children ?? []).some(hasCollapsedBranch);
+}
+function toggleBranchDeep(tree, uid) {
+    const target = findNode(tree, uid);
+    if (!target || !branch(target))
+        return { tree: cloneTree(tree), changed: false };
+    return hasCollapsedBranch(target)
+        ? expandBranchDeep(tree, uid)
+        : collapseBranchDeep(tree, uid);
+}
 function toggleAllExpansion(tree) {
-    return tree.data.expand === false
-        ? expandRootOneLevel(tree)
+    return hasCollapsedBranch(tree)
+        ? expandAllBranches(tree)
         : collapseAllBranches(tree);
 }
 
@@ -84315,7 +84447,8 @@ function openCanvasContextMenu(event, commands, options) {
     });
     menu.addItem({ iconHTML: (0, projectControls_1.projectStyleIcon)(), label: '样式', disabled: commands.isReadonly(), click: run('project-style', () => options.onProjectStyle?.()) });
     menu.addSeparator();
-    menu.addItem({ icon: 'iconRefresh', label: '折叠所有节点 / 展开一级节点', click: run('toggle-all-expand', () => commands.toggleAllExpand()) });
+    menu.addItem({ icon: 'iconRefresh', label: '展开全部节点', click: run('expand-all', () => commands.expandAll()) });
+    menu.addItem({ icon: 'iconRefresh', label: '折叠全部节点', click: run('collapse-all', () => commands.collapseAll()) });
     menu.addSeparator();
     menu.addItem({ icon: 'iconEye', label: options.zen ? '退出禅模式' : '进入禅模式', click: run('toggle-zen', () => options.onZenChange(!options.zen)) });
     menu.addItem({ icon: 'iconLock', label: options.readonly ? '退出只读模式' : '进入只读模式', click: run('toggle-readonly', () => options.onReadonlyChange(!options.readonly)) });
@@ -84352,7 +84485,10 @@ function openNodeContextMenu(event, commands, options = {}) {
         menu.addItem({ iconHTML: (0, projectControls_1.nodeStyleIcon)(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
         menu.addItem({ iconHTML: (0, projectControls_1.summaryIcon)(), label: '{} 添加综合概要', accelerator: 'Ctrl+Alt+G', disabled: !availability.summary, click: run('summary-add', () => commands.addSummary()) });
         menu.addItem({ iconHTML: (0, projectControls_1.relationIcon)(), label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
-        menu.addItem({ icon: 'iconRefresh', label: primary?.getData?.('expand') === false ? '展开一级下级节点' : '折叠全部下级节点', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
+        menu.addItem({ icon: 'iconRefresh', label: '展开全部下级节点', disabled: !availability.toggleExpand, click: run('expand-subtree', () => { const uid = String(primary?.getData?.('uid') ?? ''); if (uid)
+                commands.expandBranchDeepByUid(uid); }) });
+        menu.addItem({ icon: 'iconRefresh', label: '折叠全部下级节点', disabled: !availability.toggleExpand, click: run('collapse-subtree', () => { const uid = String(primary?.getData?.('uid') ?? ''); if (uid)
+                commands.collapseBranchDeepByUid(uid); }) });
         menu.addSeparator();
         menu.addItem({ icon: 'iconCopy', label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });
         menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('cut'), label: '剪切', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) });
@@ -84369,6 +84505,7 @@ function openNodeContextMenu(event, commands, options = {}) {
     menu.addItem({ iconHTML: (0, projectControls_1.nodeInsertIcon)('parent'), label: '插入上级节点', accelerator: 'Shift+Tab', disabled: !availability.addParent, click: run('add-parent', () => commands.addParent()) });
     menu.addItem({ iconHTML: (0, projectControls_1.nodeInsertIcon)('sibling'), label: '插入同级节点', accelerator: 'Enter', disabled: !availability.addSibling, click: run('add-sibling', () => commands.addSibling()) });
     menu.addItem({ iconHTML: (0, projectControls_1.nodeInsertIcon)('child'), label: '插入下级节点', accelerator: 'Tab', disabled: !availability.addChild, click: run('add-child', () => commands.addChild()) });
+    menu.addItem({ icon: 'iconGraph', label: '文本转导图…', disabled: !availability.nodeContent, click: run('text-to-map', () => options.onTextToMap?.()) });
     menu.addItem({
         type: 'submenu', icon: 'iconAdd', label: '添加',
         submenu: [
@@ -84396,7 +84533,10 @@ function openNodeContextMenu(event, commands, options = {}) {
     menu.addSeparator();
     menu.addItem({ icon: 'iconUp', label: '上移节点', accelerator: 'Ctrl+↑', disabled: !availability.move, click: run('move-up', () => commands.moveUp()) });
     menu.addItem({ icon: 'iconDown', label: '下移节点', accelerator: 'Ctrl+↓', disabled: !availability.move, click: run('move-down', () => commands.moveDown()) });
-    menu.addItem({ icon: 'iconRefresh', label: primary?.getData?.('expand') === false ? '展开一级下级节点' : '折叠全部下级节点', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
+    menu.addItem({ icon: 'iconRefresh', label: '展开全部下级节点', disabled: !availability.toggleExpand, click: run('expand-subtree', () => { const uid = String(primary?.getData?.('uid') ?? ''); if (uid)
+            commands.expandBranchDeepByUid(uid); }) });
+    menu.addItem({ icon: 'iconRefresh', label: '折叠全部下级节点', disabled: !availability.toggleExpand, click: run('collapse-subtree', () => { const uid = String(primary?.getData?.('uid') ?? ''); if (uid)
+            commands.collapseBranchDeepByUid(uid); }) });
     menu.addSeparator();
     menu.addItem({ icon: 'iconTrashcan', label: '删除当前和子节点', accelerator: 'Delete', warning: true, disabled: !availability.remove, click: run('remove-subtree', () => commands.remove()) });
     menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前', accelerator: 'Shift+Backspace', disabled: !availability.removeOnlyCurrent, click: run('remove-only-current', () => commands.removeOnlyCurrent()) });
@@ -84458,7 +84598,7 @@ function openOutlineContextMenu(event, options) {
     menu.addSeparator();
     menu.addItem({ icon: 'iconUp', label: '上移节点', disabled: disabled || !options.canMoveUp, click: run('move-up', options.onMoveUp) });
     menu.addItem({ icon: 'iconDown', label: '下移节点', disabled: disabled || !options.canMoveDown, click: run('move-down', options.onMoveDown) });
-    menu.addItem({ icon: 'iconRefresh', label: options.expanded ? '折叠全部下级节点' : '展开一级下级节点', disabled: !options.hasChildren, click: run('toggle-expand', options.onToggleExpand) });
+    menu.addItem({ icon: 'iconRefresh', label: options.expanded ? '折叠全部下级节点' : '展开全部下级节点', disabled: !options.hasChildren, click: run('toggle-expand', options.onToggleExpand) });
     menu.addSeparator();
     menu.addItem({ icon: 'iconTrashcan', label: '删除当前行和子级', warning: true, disabled: disabled || options.isRoot, click: run('remove-subtree', options.onRemoveSubtree) });
     menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前行', disabled: disabled || options.isRoot, click: run('remove-only-current', options.onRemoveOnlyCurrent) });
@@ -86585,7 +86725,7 @@ const colorSchemes_1 = __require(21);
 const projectControls_1 = __require(36);
 function createEditorTemplate(title, theme = 'yemind-default', lineStyle = 'curve') {
     return `
-    <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map" data-toolbars-pinned="false" data-topbar-visible="true" data-statusbar-visible="true">
+    <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map" data-toolbars-pinned="true" data-topbar-visible="true" data-statusbar-visible="true" data-leftbar-visible="true">
       <div class="ymz-canvas-wrap">
         <div class="ymz-floating ymz-topbar" role="toolbar" aria-label="YeMind 工具栏">
           <button class="ymz-brand" data-action="fit" title="适配视图">YeMind</button>
@@ -86712,12 +86852,12 @@ function createEditorTemplate(title, theme = 'yemind-default', lineStyle = 'curv
           <span class="ymz-selection-count" data-role="selection-count" hidden></span>
           <button class="ymz-icon-button" data-action="fit" title="适配视图" aria-label="适配视图">${(0, projectControls_1.fitViewIcon)()}</button>
           <button class="ymz-canvas-mode ymz-icon-button" data-action="toggle-selection-mode" title="切换为拖动优先：左键拖动画布，Ctrl/Cmd + 左键框选" aria-label="切换为拖动优先：左键拖动画布，Ctrl/Cmd + 左键框选" aria-pressed="false"><span data-role="canvas-mode-icon">${(0, projectControls_1.canvasModeIcon)('select')}</span></button>
-          <button class="ymz-icon-button" data-action="readonly" title="只读模式" aria-label="只读模式">${(0, projectControls_1.lockIcon)()}</button>
+          <button class="ymz-icon-button" data-action="readonly" title="进入只读模式" aria-label="进入只读模式" aria-pressed="false">${(0, projectControls_1.lockIcon)(false)}</button>
           <button class="ymz-icon-button" data-action="zen" title="禅模式" aria-label="禅模式">${(0, projectControls_1.meditationIcon)()}</button>
+          <button class="ymz-icon-button ymz-toolbar-pin" data-action="toggle-toolbar-pin" title="工具栏已固定" aria-label="工具栏已固定" aria-pressed="true">${(0, projectControls_1.pinIcon)(true)}</button>
           <button data-action="zoom-out" title="缩小">−</button>
           <input class="ymz-zoom" data-role="zoom" value="100%" inputmode="decimal" aria-label="缩放百分比" title="点击输入缩放百分比">
           <button data-action="zoom-in" title="放大">＋</button>
-          <button class="ymz-icon-button ymz-toolbar-pin" data-action="toggle-toolbar-pin" title="固定工具栏" aria-label="固定工具栏" aria-pressed="false">${(0, projectControls_1.pinIcon)()}</button>
           <button class="ymz-icon-button" data-action="fullscreen" title="全屏" aria-label="全屏">${(0, projectControls_1.fullscreenIcon)()}</button>
           <button data-action="help" title="帮助">?</button>
         </div>
@@ -91534,7 +91674,9 @@ exports.NodeQuickActionsController = void 0;
 exports.describeNodeQuickActions = describeNodeQuickActions;
 exports.directChildCount = directChildCount;
 exports.resolveQuickActionAnchor = resolveQuickActionAnchor;
+exports.resolveNodeQuickActionSide = resolveNodeQuickActionSide;
 exports.quickActionSideForLayout = quickActionSideForLayout;
+const officialDragIntent_1 = __require(96);
 function describeNodeQuickActions(state) {
     const childCount = Math.max(0, Math.trunc(Number(state.childCount) || 0));
     if (!state.selected && !state.hovered)
@@ -91596,6 +91738,17 @@ function resolveQuickActionAnchor(nodeRect, childRects, fallback = 'right') {
         return { side, x: centerX, y: nodeRect.top + nodeRect.height };
     return { side, x: nodeRect.left + nodeRect.width, y: centerY };
 }
+function resolveNodeQuickActionSide(layout, node, nodeRect, childRects = []) {
+    const value = String(layout ?? 'logicalStructure');
+    const dir = node?.dir
+        ?? node?.direction
+        ?? node?.getData?.('dir')
+        ?? node?.getData?.('direction');
+    const fallback = (0, officialDragIntent_1.resolveOfficialDragGrowthDirection)(value, { ...node, dir });
+    return nodeRect && childRects.length > 0
+        ? resolveQuickActionAnchor(nodeRect, childRects, fallback).side
+        : fallback;
+}
 function quickActionSideForLayout(layout) {
     const value = String(layout ?? '');
     if (value === 'logicalStructureLeft')
@@ -91654,6 +91807,7 @@ class NodeQuickActionsController {
         this.hideTimer = null;
         this.hoveredUid = null;
         this.nodeElementToUid = new Map();
+        this.lastKnownSideByUid = new Map();
         this.onCanvasPointerOver = (event) => {
             const uid = this.eventNodeUid(event);
             if (uid)
@@ -91728,6 +91882,7 @@ class NodeQuickActionsController {
         this.options.canvas.removeEventListener('pointerout', this.onCanvasPointerOut);
         this.layer.remove();
         this.nodeElementToUid.clear();
+        this.lastKnownSideByUid.clear();
     }
     scheduleRefresh() {
         cancelAnimationFrame(this.frame);
@@ -91769,9 +91924,14 @@ class NodeQuickActionsController {
             container.dataset.quickHovered = String(hovered);
             const childRects = (Array.isArray(node.children) ? node.children : [])
                 .map((child) => child?.group?.node?.getBoundingClientRect?.())
-                .filter((value) => Boolean(value && (value.width || value.height)));
-            const fallback = node.isRoot ? quickActionSideForLayout(this.options.getLayout?.()) : fallbackSideForNode(node, rect);
-            const anchor = resolveQuickActionAnchor(rect, childRects, fallback);
+                .filter((childRect) => Boolean(childRect && (childRect.width > 0 || childRect.height > 0)));
+            const resolvedSide = resolveNodeQuickActionSide(this.options.getLayout?.(), node, rect, childRects);
+            const side = childRects.length > 0
+                ? resolvedSide
+                : (this.lastKnownSideByUid.get(uid) ?? resolvedSide);
+            if (childRects.length > 0)
+                this.lastKnownSideByUid.set(uid, side);
+            const anchor = resolveQuickActionAnchor(rect, childRects, side);
             container.dataset.quickSide = anchor.side;
             container.style.left = `${anchor.x - rootRect.left}px`;
             container.style.top = `${anchor.y - rootRect.top}px`;
@@ -92225,12 +92385,15 @@ class ToolbarVisibilityController {
             if (this.pinned)
                 return;
             const rect = this.options.root.getBoundingClientRect();
+            const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
             const target = event.target;
             if (y <= this.hotZonePx || target.closest('.ymz-topbar, .ymz-layout-gallery, .ymz-project-choice-panel, .ymz-project-style-panel, .ymz-node-style-panel'))
                 this.revealTop();
             if (rect.height - y <= this.hotZonePx || target.closest('.ymz-statusbar'))
                 this.revealBottom();
+            if (x <= this.hotZonePx || target.closest('.ymz-leftbar'))
+                this.revealLeft();
         };
         this.onPointerLeave = () => this.scheduleHide();
         this.onFocusIn = (event) => {
@@ -92239,6 +92402,8 @@ class ToolbarVisibilityController {
                 this.revealTop();
             if (target.closest('.ymz-statusbar'))
                 this.revealBottom();
+            if (target.closest('.ymz-leftbar'))
+                this.revealLeft();
         };
         this.onFocusOut = () => this.scheduleHide();
         this.pinned = Boolean(options.pinned);
@@ -92263,15 +92428,17 @@ class ToolbarVisibilityController {
         this.pinned = Boolean(value);
         this.applyPinnedState();
         if (this.pinned)
-            this.revealBoth();
+            this.revealAll();
         else
             this.scheduleHide();
     }
-    revealBoth() {
+    revealAll() {
         this.options.root.dataset.topbarVisible = 'true';
         this.options.root.dataset.statusbarVisible = 'true';
+        this.options.root.dataset.leftbarVisible = 'true';
         this.clearTimer();
     }
+    revealBoth() { this.revealAll(); }
     revealTop() {
         this.options.root.dataset.topbarVisible = 'true';
         this.clearTimer();
@@ -92284,10 +92451,16 @@ class ToolbarVisibilityController {
         if (!this.pinned)
             this.scheduleHide();
     }
+    revealLeft() {
+        this.options.root.dataset.leftbarVisible = 'true';
+        this.clearTimer();
+        if (!this.pinned)
+            this.scheduleHide();
+    }
     applyPinnedState() {
         this.options.root.dataset.toolbarsPinned = String(this.pinned);
         if (this.pinned)
-            this.revealBoth();
+            this.revealAll();
     }
     scheduleHide() {
         if (this.pinned)
@@ -92295,12 +92468,13 @@ class ToolbarVisibilityController {
         this.clearTimer();
         this.hideTimer = window.setTimeout(() => {
             this.hideTimer = null;
-            if (this.options.root.querySelector('.ymz-topbar:hover, .ymz-statusbar:hover, .ymz-layout-gallery:hover, .ymz-project-choice-panel:hover, .ymz-project-style-panel:hover, .ymz-node-style-panel:hover, .ymz-topbar :focus, .ymz-statusbar :focus')) {
+            if (this.options.root.querySelector('.ymz-topbar:hover, .ymz-statusbar:hover, .ymz-leftbar:hover, .ymz-layout-gallery:hover, .ymz-project-choice-panel:hover, .ymz-project-style-panel:hover, .ymz-node-style-panel:hover, .ymz-topbar :focus, .ymz-statusbar :focus, .ymz-leftbar :focus')) {
                 this.scheduleHide();
                 return;
             }
             this.options.root.dataset.topbarVisible = 'false';
             this.options.root.dataset.statusbarVisible = 'false';
+            this.options.root.dataset.leftbarVisible = 'false';
         }, this.hideDelayMs);
     }
     clearTimer() {
@@ -92344,6 +92518,94 @@ function normalizeMapTitle(value) {
 
 },
 268: function(module, exports, __require, __externalRequire) {
+// /src/editor/resourceActionPopover.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ResourceActionPopover = void 0;
+function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+}
+class ResourceActionPopover {
+    constructor(root) {
+        this.root = root;
+        this.replace = null;
+        this.remove = null;
+        this.onClick = (event) => {
+            const button = event.target.closest('[data-resource-action]');
+            if (!button)
+                return;
+            event.preventDefault();
+            event.stopPropagation();
+            const action = button.dataset.resourceAction;
+            const callback = action === 'replace' ? this.replace : this.remove;
+            this.hide();
+            callback?.();
+        };
+        this.onDocumentPointerDown = (event) => {
+            if (this.element.hidden)
+                return;
+            const target = event.target;
+            if (target instanceof Node && this.element.contains(target))
+                return;
+            this.hide();
+        };
+        this.onKeyDown = (event) => {
+            if (event.key === 'Escape')
+                this.hide();
+        };
+        this.element = document.createElement('div');
+        this.element.className = 'ymz-resource-action-popover';
+        this.element.hidden = true;
+        this.element.innerHTML = `
+      <button type="button" data-resource-action="replace" title="替换">↻ <span>替换</span></button>
+      <button type="button" data-resource-action="delete" title="删除">⌫ <span>删除</span></button>`;
+        this.root.appendChild(this.element);
+        this.element.addEventListener('click', this.onClick);
+        document.addEventListener('pointerdown', this.onDocumentPointerDown, true);
+        document.addEventListener('keydown', this.onKeyDown, true);
+    }
+    show(options) {
+        this.replace = options.onReplace;
+        this.remove = options.onDelete;
+        this.element.dataset.resourceKind = options.kind;
+        this.element.hidden = false;
+        this.element.style.visibility = 'hidden';
+        requestAnimationFrame(() => {
+            if (this.element.hidden)
+                return;
+            const rect = this.element.getBoundingClientRect();
+            const gap = 8;
+            const margin = 10;
+            const candidates = [
+                { left: options.anchorRect.left + options.anchorRect.width / 2 - rect.width / 2, top: options.anchorRect.top - rect.height - gap },
+                { left: options.anchorRect.left + options.anchorRect.width / 2 - rect.width / 2, top: options.anchorRect.bottom + gap },
+                { left: options.anchorRect.right + gap, top: options.anchorRect.top + options.anchorRect.height / 2 - rect.height / 2 },
+                { left: options.anchorRect.left - rect.width - gap, top: options.anchorRect.top + options.anchorRect.height / 2 - rect.height / 2 },
+            ];
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const fitting = candidates.find((item) => item.left >= margin && item.top >= margin && item.left + rect.width <= viewportWidth - margin && item.top + rect.height <= viewportHeight - margin) ?? candidates[0];
+            this.element.style.left = `${Math.round(clamp(fitting.left, margin, Math.max(margin, viewportWidth - rect.width - margin)))}px`;
+            this.element.style.top = `${Math.round(clamp(fitting.top, margin, Math.max(margin, viewportHeight - rect.height - margin)))}px`;
+            this.element.style.visibility = 'visible';
+        });
+    }
+    hide() {
+        this.element.hidden = true;
+        this.replace = null;
+        this.remove = null;
+    }
+    destroy() {
+        this.element.removeEventListener('click', this.onClick);
+        document.removeEventListener('pointerdown', this.onDocumentPointerDown, true);
+        document.removeEventListener('keydown', this.onKeyDown, true);
+        this.element.remove();
+    }
+}
+exports.ResourceActionPopover = ResourceActionPopover;
+
+},
+269: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92365,7 +92627,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-269: function(module, exports, __require, __externalRequire) {
+270: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92389,7 +92651,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-270: function(module, exports, __require, __externalRequire) {
+271: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92445,7 +92707,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-271: function(module, exports, __require, __externalRequire) {
+272: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92471,7 +92733,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-272: function(module, exports, __require, __externalRequire) {
+273: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92487,7 +92749,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-273: function(module, exports, __require, __externalRequire) {
+274: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92514,7 +92776,7 @@ function initializePluginStartup(options) {
 }
 
 },
-274: function(module, exports, __require, __externalRequire) {
+275: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

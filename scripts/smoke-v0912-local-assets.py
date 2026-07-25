@@ -53,6 +53,8 @@ with sync_playwright() as p:
     page.locator('.ymz-layout-gallery__item[title="右向导图"]').click()
     # marker icon click opens same group picker
     page.evaluate("""()=>{const img=document.querySelector('image[href*=\"marker-sprite.png\"]'); img?.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,clientX:100,clientY:100}));}""")
+    page.wait_for_selector('.ymz-resource-action-popover:not([hidden])')
+    page.locator('.ymz-resource-action-popover [data-resource-action="replace"]').click()
     page.wait_for_function("()=>document.querySelectorAll('.ymz-marker-option').length===126")
     marker=page.evaluate("""()=>({tabs:document.querySelectorAll('.ymz-marker-dialog .ymz-asset-tab').length,options:document.querySelectorAll('.ymz-marker-option').length,selected:document.querySelectorAll('.ymz-marker-option.is-selected').length,sprite:[...document.querySelectorAll('.ymz-marker-sprite')][0]?.style.backgroundImage||''})""")
     page.locator('.ymz-marker-option').nth(5).click()

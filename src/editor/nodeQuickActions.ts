@@ -1,3 +1,4 @@
+import { resolveOfficialDragGrowthDirection } from '../core/officialDragIntent';
 export type NodeQuickActionName = 'collapse' | 'expand' | 'add-child';
 
 export interface NodeQuickActionDescriptor {
@@ -75,6 +76,24 @@ export function resolveQuickActionAnchor(nodeRect: QuickActionRect, childRects: 
 }
 
 
+
+export function resolveNodeQuickActionSide(
+  layout: unknown,
+  node: any,
+  nodeRect?: QuickActionRect,
+  childRects: QuickActionRect[] = [],
+): QuickActionSide {
+  const value = String(layout ?? 'logicalStructure');
+  const dir = node?.dir
+    ?? node?.direction
+    ?? node?.getData?.('dir')
+    ?? node?.getData?.('direction');
+  const fallback = resolveOfficialDragGrowthDirection(value, { ...node, dir });
+  return nodeRect && childRects.length > 0
+    ? resolveQuickActionAnchor(nodeRect, childRects, fallback).side
+    : fallback;
+}
+
 export function quickActionSideForLayout(layout: unknown): QuickActionSide {
   const value = String(layout ?? '');
   if (value === 'logicalStructureLeft') return 'left';
@@ -136,6 +155,7 @@ export class NodeQuickActionsController {
   private hideTimer: number | null = null;
   private hoveredUid: string | null = null;
   private readonly nodeElementToUid = new Map<Element, string>();
+  private readonly lastKnownSideByUid = new Map<string, QuickActionSide>();
 
   constructor(private readonly options: NodeQuickActionsControllerOptions) {
     this.layer = document.createElement('div');
@@ -159,6 +179,7 @@ export class NodeQuickActionsController {
     this.options.canvas.removeEventListener('pointerout', this.onCanvasPointerOut);
     this.layer.remove();
     this.nodeElementToUid.clear();
+    this.lastKnownSideByUid.clear();
   }
 
   scheduleRefresh(): void {
@@ -197,9 +218,13 @@ export class NodeQuickActionsController {
       container.dataset.quickHovered = String(hovered);
       const childRects = (Array.isArray(node.children) ? node.children : [])
         .map((child: any) => child?.group?.node?.getBoundingClientRect?.())
-        .filter((value: DOMRect | undefined): value is DOMRect => Boolean(value && (value.width || value.height)));
-      const fallback = node.isRoot ? quickActionSideForLayout(this.options.getLayout?.()) : fallbackSideForNode(node, rect);
-      const anchor = resolveQuickActionAnchor(rect, childRects, fallback);
+        .filter((childRect: DOMRect | undefined): childRect is DOMRect => Boolean(childRect && (childRect.width > 0 || childRect.height > 0)));
+      const resolvedSide = resolveNodeQuickActionSide(this.options.getLayout?.(), node, rect, childRects);
+      const side = childRects.length > 0
+        ? resolvedSide
+        : (this.lastKnownSideByUid.get(uid) ?? resolvedSide);
+      if (childRects.length > 0) this.lastKnownSideByUid.set(uid, side);
+      const anchor = resolveQuickActionAnchor(rect, childRects, side);
       container.dataset.quickSide = anchor.side;
       container.style.left = `${anchor.x - rootRect.left}px`;
       container.style.top = `${anchor.y - rootRect.top}px`;

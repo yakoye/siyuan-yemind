@@ -4,7 +4,7 @@ import { rainbowSchemeOptionsHtml } from '../core/colorSchemes';
 import { canvasModeIcon, fitViewIcon, fullscreenIcon, historyIcon, lineStyleIcon, lockIcon, meditationIcon, pinIcon, projectControlIcon, projectStyleIcon, redoIcon, searchIcon, undoIcon } from './projectControls';
 export function createEditorTemplate(title: string, theme: unknown = 'yemind-default', lineStyle: unknown = 'curve'): string {
   return `
-    <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map" data-toolbars-pinned="false" data-topbar-visible="true" data-statusbar-visible="true">
+    <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map" data-toolbars-pinned="true" data-topbar-visible="true" data-statusbar-visible="true" data-leftbar-visible="true">
       <div class="ymz-canvas-wrap">
         <div class="ymz-floating ymz-topbar" role="toolbar" aria-label="YeMind 工具栏">
           <button class="ymz-brand" data-action="fit" title="适配视图">YeMind</button>
@@ -131,12 +131,12 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
           <span class="ymz-selection-count" data-role="selection-count" hidden></span>
           <button class="ymz-icon-button" data-action="fit" title="适配视图" aria-label="适配视图">${fitViewIcon()}</button>
           <button class="ymz-canvas-mode ymz-icon-button" data-action="toggle-selection-mode" title="切换为拖动优先：左键拖动画布，Ctrl/Cmd + 左键框选" aria-label="切换为拖动优先：左键拖动画布，Ctrl/Cmd + 左键框选" aria-pressed="false"><span data-role="canvas-mode-icon">${canvasModeIcon('select')}</span></button>
-          <button class="ymz-icon-button" data-action="readonly" title="只读模式" aria-label="只读模式">${lockIcon()}</button>
+          <button class="ymz-icon-button" data-action="readonly" title="进入只读模式" aria-label="进入只读模式" aria-pressed="false">${lockIcon(false)}</button>
           <button class="ymz-icon-button" data-action="zen" title="禅模式" aria-label="禅模式">${meditationIcon()}</button>
+          <button class="ymz-icon-button ymz-toolbar-pin" data-action="toggle-toolbar-pin" title="工具栏已固定" aria-label="工具栏已固定" aria-pressed="true">${pinIcon(true)}</button>
           <button data-action="zoom-out" title="缩小">−</button>
           <input class="ymz-zoom" data-role="zoom" value="100%" inputmode="decimal" aria-label="缩放百分比" title="点击输入缩放百分比">
           <button data-action="zoom-in" title="放大">＋</button>
-          <button class="ymz-icon-button ymz-toolbar-pin" data-action="toggle-toolbar-pin" title="固定工具栏" aria-label="固定工具栏" aria-pressed="false">${pinIcon()}</button>
           <button class="ymz-icon-button" data-action="fullscreen" title="全屏" aria-label="全屏">${fullscreenIcon()}</button>
           <button data-action="help" title="帮助">?</button>
         </div>

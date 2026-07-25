@@ -20,3 +20,4 @@ import '../suites/node-content/v0915ClipartGeometry.suite';
 import '../suites/node-content/v0916DirectImageEditing.suite';
 
 import '../suites/node-content/v0929ViewImagePreviewState.suite';
+import '../suites/node-content/v0930ResourceActionPopover.suite';

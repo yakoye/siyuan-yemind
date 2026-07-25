@@ -98,6 +98,8 @@ with sync_playwright() as p:
         raise RuntimeError('clipart resize/delete controls missing')
     if frame.locator('.ymz-node-image-toolbar').is_visible():
         raise RuntimeError('clipart ordinary text toolbar should stay hidden')
+    page.wait_for_selector('.ymz-resource-action-popover:not([hidden])')
+    page.locator('.ymz-resource-action-popover [data-resource-action="replace"]').click()
     page.wait_for_selector('.ymz-clipart-dialog',timeout=30000)
     picker=page.locator('.b3-dialog:has(.ymz-clipart-dialog)')
     placement=picker.locator('.b3-dialog__container').get_attribute('data-asset-dialog-placement')

@@ -37,6 +37,13 @@ function setBranchState(node: MindMapTree, expanded: boolean, includeSelf = true
   return changed;
 }
 
+export function expandBranchDeep(tree: MindMapTree, uid: string): ExpandTreeResult {
+  const next = cloneTree(tree);
+  const target = findNode(next, uid);
+  if (!target || !branch(target)) return { tree: next, changed: false };
+  return { tree: next, changed: setBranchState(target, true, true) > 0 };
+}
+
 export function collapseBranchDeep(tree: MindMapTree, uid: string): ExpandTreeResult {
   const next = cloneTree(tree);
   const target = findNode(next, uid);
@@ -67,6 +74,11 @@ export function toggleBranchExpansion(tree: MindMapTree, uid: string): ExpandTre
     : collapseBranchDeep(tree, uid);
 }
 
+export function expandAllBranches(tree: MindMapTree): ExpandTreeResult {
+  const next = cloneTree(tree);
+  return { tree: next, changed: setBranchState(next, true, true) > 0 };
+}
+
 export function collapseAllBranches(tree: MindMapTree): ExpandTreeResult {
   const next = cloneTree(tree);
   return { tree: next, changed: setBranchState(next, false, true) > 0 };
@@ -86,8 +98,21 @@ export function expandRootOneLevel(tree: MindMapTree): ExpandTreeResult {
   return { tree: next, changed: changed > 0 };
 }
 
+function hasCollapsedBranch(node: MindMapTree): boolean {
+  if (branch(node) && node.data.expand === false) return true;
+  return (node.children ?? []).some(hasCollapsedBranch);
+}
+
+export function toggleBranchDeep(tree: MindMapTree, uid: string): ExpandTreeResult {
+  const target = findNode(tree, uid);
+  if (!target || !branch(target)) return { tree: cloneTree(tree), changed: false };
+  return hasCollapsedBranch(target)
+    ? expandBranchDeep(tree, uid)
+    : collapseBranchDeep(tree, uid);
+}
+
 export function toggleAllExpansion(tree: MindMapTree): ExpandTreeResult {
-  return tree.data.expand === false
-    ? expandRootOneLevel(tree)
+  return hasCollapsedBranch(tree)
+    ? expandAllBranches(tree)
     : collapseAllBranches(tree);
 }

@@ -10,7 +10,7 @@
 | Appearance refresh | One atomic full redraw; immediate theme/rainbow updates; viewport and selection preserved; transparent root resolves to canvas background |
 | Local style priority | Node-local text, fill, border and line values override whole-map themes |
 | Selection toolbar | Canvas and outline share selection formatting; double-click full selection opens the toolbar immediately and saved ranges survive control focus |
-| Context menus | Separate single-node, multi-node and blank-canvas menus with exact supplied SVG image-isolated actions, state-aware outer-frame and clipboard commands |
+| Context menus | Separate single-node, multi-node and blank-canvas menus with text-to-map import, full subtree/global disclosure, exact supplied SVG image-isolated actions and state-aware content commands |
 | Supplied icon isolation | 14 exact Base64 SVG documents, fixed 18px outer boxes, no inline path exposure to host CSS, SHA-256 source-byte regression |
 | Style panels | Structure, Theme, Line and Style use dark-aware anchored panels with shared hover/selected states; node controls use a denser two-column layout |
 | Relation editing | Editable persisted Bézier endpoints/control points, tangent-driven arrows, lifecycle guards and a clear blue selected state |
@@ -23,9 +23,10 @@
 | Outline presentation | Theme-aware triangles/squares, midpoint-aligned indent-rainbow guides and compact content-only icon/image/clipart accessory slots without node background or border styling |
 | Canvas drag | Right-logical nearest-node local zones, continuous candidate-parent preview and atomic subtree moves; drag-first right-button panning is isolated from selection |
 | Drag safety | Self/descendant/root/no-op rejection, Escape cancellation, one-step undo and stable UID/metadata preservation |
-| Image actions | Hover border, direct image selection, eight resize handles, replace/delete toolbar, double-click lightbox and structural-drag isolation |
+| Resource actions | Images retain resize/lightbox editing; canvas and outline marker/clipart clicks use one viewport-aware Replace/Delete popover before the shared asset pickers |
 | Persistence | Local maps, settings, checkpoints, autosave and restore protection |
 | Integration | SiYuan tabs, Dock, protocol links and global-search node navigation |
+| Floating UI | Top, bottom and left toolbars default pinned, share one persisted pin state, reveal from three edge hot zones in auto-hide mode and expose explicit pin/lock icons |
 | Reliability | Structured diagnostics, same-generation hidden-tab text/frame measurement and 15-domain manifest-controlled regression architecture |
 
 ## Fixed local assets (v0.9.12)

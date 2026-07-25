@@ -30,3 +30,5 @@ import '../suites/ui-shell/v0924OutlineMenuAndDarkControls.suite';
 import '../suites/ui-shell/v0925ImportDialogAndDarkPanels.suite';
 
 import '../suites/ui-shell/v0929FloatingToolbarFields.suite';
+import '../suites/ui-shell/v0930ContextMenuContracts.suite';
+import '../suites/ui-shell/v0930ToolbarStateIcons.suite';

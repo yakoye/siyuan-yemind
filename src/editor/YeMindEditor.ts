@@ -100,7 +100,7 @@ import { setSearchReplaceExpanded } from "./searchPanelState";
 import { normalizeProjectStyle, resolveProjectAppearance } from "./projectStyle";
 import { applyMapAppearanceTransaction } from "../core/appearanceTransaction";
 import { NodeQuickActionsController } from "./nodeQuickActions";
-import { canvasModeIcon, lineStyleIcon } from "./projectControls";
+import { canvasModeIcon, lineStyleIcon, lockIcon, pinIcon } from "./projectControls";
 import { normalizeNodeNote } from "../content/nodeNoteState";
 import { createTodoMenuDescriptor } from "../ui/nodeContentMenu";
 import { CanvasRightDragController } from "./canvasRightDrag";
@@ -116,6 +116,7 @@ import { createYeMindDialog } from '../ui/dialogChrome';
 import { ToolbarVisibilityController } from './ToolbarVisibilityController';
 import { parseZoomPercent } from './zoomPercent';
 import { normalizeMapTitle } from './mapTitle';
+import { ResourceActionPopover } from './resourceActionPopover';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -194,6 +195,7 @@ export class YeMindEditor {
   private lineStyleChoicePanel: ProjectChoicePanel | null = null;
   private nodeQuickActions: NodeQuickActionsController | null = null;
   private toolbarVisibility: ToolbarVisibilityController | null = null;
+  private resourceActionPopover: ResourceActionPopover | null = null;
   private canvasRightDrag: CanvasRightDragController | null = null;
   private liveNodeWidthLayout: LiveNodeWidthLayoutController | null = null;
   private contextMenuSelectionSnapshot: { nodes: any[]; target: any } | null = null;
@@ -589,6 +591,8 @@ export class YeMindEditor {
     this.lineStyleChoicePanel = null;
     this.toolbarVisibility?.destroy();
     this.toolbarVisibility = null;
+    this.resourceActionPopover?.destroy();
+    this.resourceActionPopover = null;
     this.nodeQuickActions?.destroy();
     this.nodeQuickActions = null;
     this.canvasRightDrag?.destroy();
@@ -692,6 +696,7 @@ export class YeMindEditor {
     this.rootEl = this.options.container.querySelector(
       ".ymz-editor",
     ) as HTMLElement;
+    this.resourceActionPopover = new ResourceActionPopover(this.rootEl);
     this.canvasEl = this.options.container.querySelector(
       '[data-role="canvas"]',
     ) as HTMLElement;
@@ -901,23 +906,15 @@ export class YeMindEditor {
       onToggle: (uid, expanded) => this.setOutlineExpanded(uid, expanded),
       onContextMenu: (event, uid) => this.openOutlineContextMenu(event, uid),
       onIconEdit: (uid, iconValue, anchor) => {
-        if (!this.commands || this.commands.isReadonly()) return;
-        this.activateNodeByUid(uid);
-        const groupId = String(iconValue ?? '').startsWith('yemarker')
-          ? String(iconValue).slice('yemarker'.length).split('_')[0]
-          : null;
-        openMarkerPicker(this.commands, {
-          pluginBaseUrl: this.options.pluginBaseUrl,
-          initialGroupId: groupId,
-          anchorRect: anchor.getBoundingClientRect(),
-          onChange: () => this.refreshOutlineFromMap(),
-        });
+        this.showMarkerResourceActions(uid, iconValue, anchor.getBoundingClientRect());
       },
       onImageEdit: (uid, kind, anchor) => {
         if (!this.commands || this.commands.isReadonly()) return;
-        this.activateNodeByUid(uid);
-        if (kind === 'clipart') openClipartPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, anchorRect: anchor.getBoundingClientRect(), onChange: () => this.refreshOutlineFromMap() });
-        else openImageDialog(this.commands);
+        if (kind === 'clipart') this.showClipartResourceActions(uid, anchor.getBoundingClientRect());
+        else {
+          this.activateNodeByUid(uid);
+          openImageDialog(this.commands);
+        }
       },
       onImagePreview: (uid) => {
         const data = this.findTreeNodeData(uid);
@@ -1156,6 +1153,7 @@ export class YeMindEditor {
           this.toggleZen(false);
           break;
         case "toggle-toolbar-pin":
+          button.blur();
           void this.toggleToolbarsPinned();
           break;
         case "fullscreen":
@@ -1249,9 +1247,11 @@ export class YeMindEditor {
   private updateToolbarPinPresentation(): void {
     const pinned = Boolean(this.settings?.toolbarsPinned);
     this.rootEl?.querySelectorAll<HTMLButtonElement>('[data-action="toggle-toolbar-pin"]').forEach((button) => {
-      button.setAttribute('aria-pressed', String(pinned));
-      button.title = pinned ? '取消固定工具栏' : '固定工具栏';
+      const autoHide = !pinned;
+      button.setAttribute('aria-pressed', String(autoHide));
+      button.title = pinned ? '工具栏已固定，点击开启自动隐藏' : '工具栏自动隐藏，点击固定';
       button.setAttribute('aria-label', button.title);
+      button.innerHTML = pinIcon(pinned);
     });
   }
 
@@ -1488,13 +1488,13 @@ export class YeMindEditor {
     });
     this.map.on("yemind_node_clipart_edit", (node: any, event?: MouseEvent, image?: any) => {
       if (!this.commands || this.commands.isReadonly() || !node) return;
-      this.activateOnlyNode(node);
+      const uid = String(node?.getData?.('uid') ?? '');
       const imageElement = image?.node as Element | undefined;
       const targetElement = event?.target instanceof Element ? event.target : undefined;
       const anchorRect = imageElement?.getBoundingClientRect?.()
         ?? targetElement?.getBoundingClientRect?.()
-        ?? (event ? new DOMRect(event.clientX, event.clientY, 1, 1) : undefined);
-      openClipartPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, anchorRect, onChange: () => this.refreshOutlineFromMap() });
+        ?? (event ? new DOMRect(event.clientX, event.clientY, 1, 1) : new DOMRect());
+      this.showClipartResourceActions(uid, anchorRect);
     });
     this.map.on("yemind_todo_toggle", (node: any) => {
       if (!this.commands) return;
@@ -1587,14 +1587,11 @@ export class YeMindEditor {
       event?.preventDefault?.();
       event?.stopPropagation?.();
       if (!this.commands || this.commands.isReadonly()) return;
-      this.activateOnlyNode(node);
-      const groupId = String(iconValue ?? '').startsWith('yemarker')
-        ? String(iconValue).slice('yemarker'.length).split('_')[0]
-        : null;
+      const uid = String(node?.getData?.('uid') ?? '');
       const targetElement = event?.target instanceof Element ? event.target : undefined;
       const anchorRect = targetElement?.getBoundingClientRect?.()
-        ?? (event ? new DOMRect(event.clientX, event.clientY, 1, 1) : undefined);
-      openMarkerPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, initialGroupId: groupId, anchorRect, onChange: () => this.refreshOutlineFromMap() });
+        ?? (event ? new DOMRect(event.clientX, event.clientY, 1, 1) : new DOMRect());
+      this.showMarkerResourceActions(uid, iconValue, anchorRect);
     });
     this.map.on("draw_click", () =>
       window.setTimeout(() => this.updateRelationPresentation(), 0),
@@ -1611,6 +1608,60 @@ export class YeMindEditor {
     this.map.on("node_tree_render_end", () => this.nodeQuickActions?.scheduleRefresh());
   }
 
+  private showMarkerResourceActions(uid: string, iconValue: string, anchorRect: DOMRect): void {
+    if (!uid || !this.commands || this.commands.isReadonly() || !this.resourceActionPopover) return;
+    this.activateNodeByUid(uid);
+    const groupId = String(iconValue ?? '').startsWith('yemarker')
+      ? String(iconValue).slice('yemarker'.length).split('_')[0]
+      : null;
+    this.resourceActionPopover.show({
+      kind: 'marker',
+      anchorRect,
+      onReplace: () => {
+        if (!this.commands) return;
+        this.activateNodeByUid(uid);
+        openMarkerPicker(this.commands, {
+          pluginBaseUrl: this.options.pluginBaseUrl,
+          initialGroupId: groupId,
+          anchorRect,
+          onChange: () => this.refreshOutlineFromMap(),
+        });
+      },
+      onDelete: () => {
+        if (!this.commands) return;
+        this.activateNodeByUid(uid);
+        const raw = this.commands.getPrimaryNodeData()?.icon;
+        const icons = Array.isArray(raw) ? raw.map(String) : typeof raw === 'string' && raw ? [raw] : [];
+        this.commands.setIconsByUid(uid, icons.filter((value) => value !== String(iconValue)));
+        this.refreshOutlineFromMap();
+      },
+    });
+  }
+
+  private showClipartResourceActions(uid: string, anchorRect: DOMRect): void {
+    if (!uid || !this.commands || this.commands.isReadonly() || !this.resourceActionPopover) return;
+    this.activateNodeByUid(uid);
+    this.resourceActionPopover.show({
+      kind: 'clipart',
+      anchorRect,
+      onReplace: () => {
+        if (!this.commands) return;
+        this.activateNodeByUid(uid);
+        openClipartPicker(this.commands, {
+          pluginBaseUrl: this.options.pluginBaseUrl,
+          anchorRect,
+          onChange: () => this.refreshOutlineFromMap(),
+        });
+      },
+      onDelete: () => {
+        if (!this.commands) return;
+        this.activateNodeByUid(uid);
+        this.commands.clearClipartByUid(uid);
+        this.refreshOutlineFromMap();
+      },
+    });
+  }
+
   private openContextMenu(event: MouseEvent): void {
     if (!this.commands) return;
     this.options.diagnostics.record("context-menu", "opened", this.current.id, {
@@ -1624,6 +1675,10 @@ export class YeMindEditor {
       onRelation: () => this.beginRelation(),
       onMarkers: () => openMarkerPicker(this.commands!, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
       onClipart: () => openClipartPicker(this.commands!, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
+      onTextToMap: () => {
+        const uid = String(this.commands?.getPrimaryNode()?.getData?.('uid') ?? '');
+        if (uid) this.openTextToMapForUid(uid);
+      },
       onNodeStyle: () => {
         this.projectStylePanel?.hide();
         this.nodeStylePanel?.show({ x: event.clientX, y: event.clientY });
@@ -2062,6 +2117,7 @@ export class YeMindEditor {
   }
 
   private setViewMode(mode: ViewMode): void {
+    this.resourceActionPopover?.hide();
     if (mode !== 'map' || this.viewMode !== 'map') {
       (this.map as any)?.nodeImgAdjust?.clearSelectionForViewChange?.();
     }
@@ -2346,6 +2402,38 @@ export class YeMindEditor {
     }
   }
 
+  private openTextToMapForUid(uid: string): void {
+    if (!uid || !this.commands) return;
+    openTextToMapDialog({
+      targetUid: uid,
+      getTree: () => this.current.data,
+      onApply: (tree, result, insertMode) => {
+        const repaired = repairImportedAutoWidthTree(tree).tree;
+        const importTransform = (this.map as any)?.view?.getTransformData?.();
+        this.applyingImportLayout = true;
+        const applied = Boolean(this.commands?.replaceTree(repaired));
+        if (applied) {
+          this.current.data = repaired;
+          this.renderOutline(repaired);
+          this.activateOutlineUid(uid, true);
+          this.stabilizeImportedTreeLayout(uid, importTransform);
+        } else {
+          this.applyingImportLayout = false;
+        }
+        this.options.diagnostics.record('outline', 'text-to-map', this.current.id, {
+          applied,
+          requestedMode: result.requestedMode,
+          detectedMode: result.detectedMode,
+          insertMode,
+          nodeCount: result.nodeCount,
+          maxDepth: result.maxDepth,
+          warnings: result.warnings.length,
+        });
+        return applied;
+      },
+    });
+  }
+
   private openOutlineContextMenu(event: MouseEvent, uid: string): void {
     if (!uid || !this.commands || !this.outlineRichText) return;
     this.outlineRichText.flush('before-context-menu');
@@ -2372,34 +2460,7 @@ export class YeMindEditor {
       onAddParent: () => { activate(); this.commands?.addParent(); },
       onAddSibling: () => { activate(); this.commands?.addSibling(); },
       onAddChild: () => { activate(); this.commands?.addChild(); },
-      onTextToMap: () => openTextToMapDialog({
-        targetUid: uid,
-        getTree: () => this.current.data,
-        onApply: (tree, result, insertMode) => {
-          const repaired = repairImportedAutoWidthTree(tree).tree;
-          const importTransform = (this.map as any)?.view?.getTransformData?.();
-          this.applyingImportLayout = true;
-          const applied = Boolean(this.commands?.replaceTree(repaired));
-          if (applied) {
-            this.current.data = repaired;
-            this.renderOutline(repaired);
-            this.activateOutlineUid(uid, true);
-            this.stabilizeImportedTreeLayout(uid, importTransform);
-          } else {
-            this.applyingImportLayout = false;
-          }
-          this.options.diagnostics.record('outline', 'text-to-map', this.current.id, {
-            applied,
-            requestedMode: result.requestedMode,
-            detectedMode: result.detectedMode,
-            insertMode,
-            nodeCount: result.nodeCount,
-            maxDepth: result.maxDepth,
-            warnings: result.warnings.length,
-          });
-          return applied;
-        },
-      }),
+      onTextToMap: () => this.openTextToMapForUid(uid),
       onTodo: () => {
         activate();
         const action = createTodoMenuDescriptor(this.commands?.getTodo());
@@ -2963,6 +3024,9 @@ export class YeMindEditor {
       .forEach((button) => {
         button.classList.toggle("is-active", enabled);
         button.setAttribute("aria-pressed", String(enabled));
+        button.innerHTML = lockIcon(enabled);
+        button.title = enabled ? '退出只读模式' : '进入只读模式';
+        button.setAttribute('aria-label', button.title);
       });
     this.replaceInputEl.disabled = enabled;
     this.rootEl

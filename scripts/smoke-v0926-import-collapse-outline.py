@@ -126,7 +126,7 @@ with sync_playwright() as p:
     page.wait_for_selector('.ymz-outline-row[data-outline-uid="target"]')
     page.evaluate("document.querySelectorAll('.ymz-context-menu--outline,.b3-menu--submenu').forEach(e=>e.remove())")
 
-    # Deep collapse, then one-level expand.
+    # Deep collapse, then full subtree expansion from the outline context menu.
     target=page.locator('.ymz-outline-row[data-outline-uid="target"]')
     target.click(button='right')
     page.wait_for_selector('.ymz-context-menu--outline')
@@ -137,13 +137,13 @@ with sync_playwright() as p:
         raise RuntimeError(f'deep collapse did not hide all descendants: {child} {grand} {great}')
     target.click(button='right')
     page.wait_for_selector('.ymz-context-menu--outline')
-    page.locator('.ymz-context-menu--outline').last.get_by_text('展开一级下级节点', exact=True).click()
+    page.locator('.ymz-context-menu--outline').last.get_by_text('展开全部下级节点', exact=True).click()
     page.wait_for_timeout(500)
     child=hidden_state(page,'child-a'); grand=hidden_state(page,'grand-a'); great=hidden_state(page,'great-a')
-    if child['display'] == 'none' or grand['display'] != 'none' or great['display'] != 'none':
-        raise RuntimeError(f'one-level expand semantics failed: {child} {grand} {great}')
+    if child['display'] == 'none' or grand['display'] == 'none' or great['display'] == 'none':
+        raise RuntimeError(f'full subtree expansion failed: {child} {grand} {great}')
     states=page.evaluate("""()=>{const find=(n,u)=>n.data.uid===u?n:(n.children||[]).map(c=>find(c,u)).find(Boolean);const t=window.__plugin.repository.get(window.__mapId).data;return ['target','child-a','grand-a'].map(u=>[u,find(t,u).data.expand])}""")
-    if states != [['target', True], ['child-a', False], ['grand-a', False]]:
+    if states != [['target', True], ['child-a', True], ['grand-a', True]]:
         raise RuntimeError(f'persisted expand states mismatch: {states}')
 
     if errors: raise RuntimeError('Page errors: '+'\n'.join(errors))

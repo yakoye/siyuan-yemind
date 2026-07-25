@@ -34,15 +34,18 @@ export class ToolbarVisibilityController {
   setPinned(value: boolean): void {
     this.pinned = Boolean(value);
     this.applyPinnedState();
-    if (this.pinned) this.revealBoth();
+    if (this.pinned) this.revealAll();
     else this.scheduleHide();
   }
 
-  revealBoth(): void {
+  revealAll(): void {
     this.options.root.dataset.topbarVisible = 'true';
     this.options.root.dataset.statusbarVisible = 'true';
+    this.options.root.dataset.leftbarVisible = 'true';
     this.clearTimer();
   }
+
+  revealBoth(): void { this.revealAll(); }
 
   revealTop(): void {
     this.options.root.dataset.topbarVisible = 'true';
@@ -56,9 +59,15 @@ export class ToolbarVisibilityController {
     if (!this.pinned) this.scheduleHide();
   }
 
+  revealLeft(): void {
+    this.options.root.dataset.leftbarVisible = 'true';
+    this.clearTimer();
+    if (!this.pinned) this.scheduleHide();
+  }
+
   private applyPinnedState(): void {
     this.options.root.dataset.toolbarsPinned = String(this.pinned);
-    if (this.pinned) this.revealBoth();
+    if (this.pinned) this.revealAll();
   }
 
   private scheduleHide(): void {
@@ -66,12 +75,13 @@ export class ToolbarVisibilityController {
     this.clearTimer();
     this.hideTimer = window.setTimeout(() => {
       this.hideTimer = null;
-      if (this.options.root.querySelector('.ymz-topbar:hover, .ymz-statusbar:hover, .ymz-layout-gallery:hover, .ymz-project-choice-panel:hover, .ymz-project-style-panel:hover, .ymz-node-style-panel:hover, .ymz-topbar :focus, .ymz-statusbar :focus')) {
+      if (this.options.root.querySelector('.ymz-topbar:hover, .ymz-statusbar:hover, .ymz-leftbar:hover, .ymz-layout-gallery:hover, .ymz-project-choice-panel:hover, .ymz-project-style-panel:hover, .ymz-node-style-panel:hover, .ymz-topbar :focus, .ymz-statusbar :focus, .ymz-leftbar :focus')) {
         this.scheduleHide();
         return;
       }
       this.options.root.dataset.topbarVisible = 'false';
       this.options.root.dataset.statusbarVisible = 'false';
+      this.options.root.dataset.leftbarVisible = 'false';
     }, this.hideDelayMs);
   }
 
@@ -83,10 +93,12 @@ export class ToolbarVisibilityController {
   private readonly onPointerMove = (event: PointerEvent): void => {
     if (this.pinned) return;
     const rect = this.options.root.getBoundingClientRect();
+    const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     const target = event.target as HTMLElement;
     if (y <= this.hotZonePx || target.closest('.ymz-topbar, .ymz-layout-gallery, .ymz-project-choice-panel, .ymz-project-style-panel, .ymz-node-style-panel')) this.revealTop();
     if (rect.height - y <= this.hotZonePx || target.closest('.ymz-statusbar')) this.revealBottom();
+    if (x <= this.hotZonePx || target.closest('.ymz-leftbar')) this.revealLeft();
   };
 
   private readonly onPointerLeave = (): void => this.scheduleHide();
@@ -94,6 +106,7 @@ export class ToolbarVisibilityController {
     const target = event.target as HTMLElement;
     if (target.closest('.ymz-topbar')) this.revealTop();
     if (target.closest('.ymz-statusbar')) this.revealBottom();
+    if (target.closest('.ymz-leftbar')) this.revealLeft();
   };
   private readonly onFocusOut = (): void => this.scheduleHide();
 }

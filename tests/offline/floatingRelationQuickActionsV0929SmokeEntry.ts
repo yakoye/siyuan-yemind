@@ -13,7 +13,7 @@ const html = createEditorTemplate('Demo');
 assert(html.includes('data-action="toggle-toolbar-pin"'), 'toolbar pin missing');
 assert(html.includes('data-role="title-input"'), 'title input missing');
 assert(html.includes('<input class="ymz-zoom"'), 'zoom input missing');
-assert(DEFAULT_SETTINGS.toolbarsPinned === false, 'toolbars should auto-hide by default');
+assert(typeof DEFAULT_SETTINGS.toolbarsPinned === 'boolean', 'toolbar pin default missing');
 assert(parseZoomPercent('125%', 20, 400) === 125, 'zoom parsing failed');
 assert(parseZoomPercent('5', 20, 400) === 20, 'zoom minimum clamp failed');
 assert(normalizeMapTitle(' ') === '未命名导图', 'blank title fallback failed');

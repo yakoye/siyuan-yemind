@@ -66,3 +66,8 @@ Rich-text and custom-content measurement caches live in one off-screen host that
 ## Proportional clipart geometry (v0.9.15)
 
 Clipart insertion is coordinated by `src/core/clipartGeometry.ts`. The picker resolves the authored SVG viewport from numeric `width`/`height` or `viewBox`, fits that ratio inside the 72px default box and persists the resulting width and height through the native `SET_NODE_IMAGE` command. A geometry-version marker distinguishes new proportional nodes from the old hard-coded `72 × 72` default. When an existing map opens, legacy clipart nodes carrying `yemindClipartId` are repaired once from the original local SVG URL without changing ordinary user images or manually resized clipart.
+
+
+## Branch controls and floating resource actions (v0.9.30)
+
+Node quick controls resolve their side from the same official layout-growth contract used by structural drag intent. The compact control remains a one-level disclosure action, while context-menu commands use explicit recursive subtree or whole-map transforms. Top, bottom and left toolbars share one persisted pin state and one visibility controller. Marker and clipart interactions in canvas and outline pass through one UID-targeted resource action popover before invoking the existing asset pickers; this keeps presentation state transient and canonical node data authoritative.

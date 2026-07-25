@@ -54,15 +54,21 @@ with sync_playwright() as p:
     page.wait_for_selector('[data-action="view-outline"]',timeout=30000)
     page.wait_for_timeout(900)
     editor=page.locator('.ymz-editor:not(.ymz-measurement-host)')
-    hidden=editor.evaluate("e=>({top:e.dataset.topbarVisible,bottom:e.dataset.statusbarVisible,pinned:e.dataset.toolbarsPinned})")
-    if hidden != {'top':'false','bottom':'false','pinned':'false'}:
-        raise RuntimeError(f'auto-hide defaults invalid: {hidden}')
+    hidden=editor.evaluate("e=>({top:e.dataset.topbarVisible,bottom:e.dataset.statusbarVisible,left:e.dataset.leftbarVisible,pinned:e.dataset.toolbarsPinned})")
+    if hidden != {'top':'true','bottom':'true','left':'true','pinned':'true'}:
+        raise RuntimeError(f'pinned defaults invalid: {hidden}')
 
-    # Reveal bottom and pin both bars.
+    # Toggle automatic hiding, verify all three edges, then pin them again.
+    editor.locator('[data-action="toggle-toolbar-pin"]').click()
+    page.mouse.move(640,360)
+    page.wait_for_timeout(900)
+    auto_hidden=editor.evaluate("e=>({top:e.dataset.topbarVisible,bottom:e.dataset.statusbarVisible,left:e.dataset.leftbarVisible,pinned:e.dataset.toolbarsPinned})")
+    if auto_hidden != {'top':'false','bottom':'false','left':'false','pinned':'false'}:
+        raise RuntimeError(f'three-edge auto-hide invalid: {auto_hidden}')
     page.mouse.move(640,735)
     page.wait_for_timeout(80)
     if editor.get_attribute('data-statusbar-visible')!='true': raise RuntimeError('bottom hot zone did not reveal statusbar')
-    editor.locator('[data-action="toggle-toolbar-pin"]').click()
+    editor.locator('[data-action="toggle-toolbar-pin"]').click(force=True)
     page.wait_for_timeout(80)
     if editor.get_attribute('data-toolbars-pinned')!='true': raise RuntimeError('toolbar pin did not persist in editor state')
 
@@ -150,5 +156,5 @@ with sync_playwright() as p:
         raise RuntimeError('outline image preview opened edit dialog instead of shared lightbox')
 
     if errors: raise RuntimeError('Page errors: '+'\n'.join(errors))
-    print({'autoHide':hidden,'zoomApplied':zoom_applied,'title':title_state,'relation':relation_style,'activeWidth':active_width,'layoutSides':layout_sides,'lightbox':True})
+    print({'pinnedDefault':hidden,'autoHidden':auto_hidden,'zoomApplied':zoom_applied,'title':title_state,'relation':relation_style,'activeWidth':active_width,'layoutSides':layout_sides,'lightbox':True})
     browser.close()
