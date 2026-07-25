@@ -267,13 +267,11 @@ export function openNoteDialog(commands: YeMindCommands, options: { readonly?: b
     title: readonly ? '备注（只读）' : '备注',
     hideCloseIcon: true,
     content: `<div class="b3-dialog__content ymz-node-dialog ymz-note-dialog">
-      <header class="ymz-node-dialog__header"><strong>${readonly ? '备注（只读）' : '备注'}</strong><button type="button" class="ymz-node-dialog__close" data-node-dialog-action="close-note" aria-label="关闭备注">×</button></header>
+      <header class="ymz-node-dialog__header"><strong>${readonly ? '备注（只读）' : '备注'}</strong><button type="button" class="ymz-node-dialog__close" data-node-dialog-action="close-note-auto-save" aria-label="关闭备注">×</button></header>
       <div class="ymz-note-dialog__body">
         <div class="ymz-note-editor" data-field="note" contenteditable="${readonly ? 'false' : 'true'}" role="textbox" aria-multiline="true" data-placeholder="输入长篇备注；可粘贴文字和图片…"></div>
       </div>
       <footer class="ymz-note-dialog__footer">
-        ${readonly ? '' : '<span>支持多段文字和图片粘贴</span>'}
-        <div class="fn__space"></div>
         <button class="b3-button b3-button--cancel" data-dialog-action="cancel-note">${readonly ? '关闭' : '取消'}</button>
         ${readonly ? '' : '<button class="b3-button b3-button--text" data-dialog-action="save-note">保存</button>'}
       </footer>
@@ -282,8 +280,6 @@ export function openNoteDialog(commands: YeMindCommands, options: { readonly?: b
     height: `${height}px`,
   });
   dialog.element.classList.add('ymz-note-dialog-host');
-  dialog.element.querySelector('[data-node-dialog-action="close-note"]')?.addEventListener('click', () => dialog.destroy());
-  dialog.element.querySelector('[data-dialog-action="cancel-note"]')?.addEventListener('click', () => dialog.destroy());
   const editor = dialog.element.querySelector<HTMLElement>('[data-field="note"]')!;
   editor.innerHTML = current?.html ?? '';
   const container = dialog.element.querySelector<HTMLElement>('.b3-dialog__container') ?? dialog.element;
@@ -295,6 +291,30 @@ export function openNoteDialog(commands: YeMindCommands, options: { readonly?: b
   resizeHandle.setAttribute('aria-label', resizeHandle.title);
   container.appendChild(resizeHandle);
   bindDialogResize(resizeHandle, container);
+
+  let cancelled = false;
+  let persisted = false;
+  const persistNoteAndClose = (): void => {
+    if (persisted) return;
+    persisted = true;
+    if (!readonly && !cancelled) {
+      const rect = container.getBoundingClientRect();
+      commands.setNote(updateNodeNote(current, editor.innerHTML, Date.now(), { width: rect.width, height: rect.height }));
+    }
+    dialog.destroy();
+  };
+
+  dialog.element.querySelector('[data-node-dialog-action="close-note-auto-save"]')?.addEventListener('click', persistNoteAndClose);
+  dialog.element.querySelector('[data-dialog-action="cancel-note"]')?.addEventListener('click', () => {
+    cancelled = true;
+    dialog.destroy();
+  });
+  dialog.element.querySelector('[data-dialog-action="save-note"]')?.addEventListener('click', persistNoteAndClose);
+  dialog.element.addEventListener('mousedown', (event) => {
+    const target = event.target as HTMLElement;
+    if (target === dialog.element || target.classList.contains('b3-dialog__scrim')) persistNoteAndClose();
+  });
+
   editor.addEventListener('paste', (event) => {
     if (readonly) return;
     const image = Array.from(event.clipboardData?.items ?? []).find((item) => item.type.startsWith('image/'))?.getAsFile();
@@ -308,15 +328,7 @@ export function openNoteDialog(commands: YeMindCommands, options: { readonly?: b
     });
     reader.readAsDataURL(image);
   });
-  if (!readonly) {
-    dialog.element.querySelector('[data-dialog-action="save-note"]')?.addEventListener('click', () => {
-      const rect = dialog.element.querySelector<HTMLElement>('.b3-dialog__container')?.getBoundingClientRect()
-        ?? dialog.element.getBoundingClientRect();
-      commands.setNote(updateNodeNote(current, editor.innerHTML, Date.now(), { width: rect.width, height: rect.height }));
-      dialog.destroy();
-    });
-    editor.focus();
-  }
+  if (!readonly) editor.focus();
 }
 
 export function openCommentsDialog(commands: YeMindCommands, options: { readonly?: boolean } = {}): void {

@@ -32,3 +32,4 @@ import '../suites/outline-split/v0925ImportWidthPolicy.suite';
 import '../suites/outline-split/v0925OutlineAccessories.suite';
 import '../suites/outline-split/v0926ImportGeometry.suite';
 import '../suites/outline-split/v0926OutlineContentParity.suite';
+import '../suites/outline-split/v0927OutlineAssetParity.suite';

@@ -56,7 +56,7 @@ with sync_playwright() as p:
     page.wait_for_function("()=>document.querySelectorAll('.ymz-marker-option').length===126")
     marker=page.evaluate("""()=>({tabs:document.querySelectorAll('.ymz-marker-dialog .ymz-asset-tab').length,options:document.querySelectorAll('.ymz-marker-option').length,selected:document.querySelectorAll('.ymz-marker-option.is-selected').length,sprite:[...document.querySelectorAll('.ymz-marker-sprite')][0]?.style.backgroundImage||''})""")
     page.locator('.ymz-marker-option').nth(5).click()
-    page.locator('.ymz-marker-dialog [data-action="close"]').click()
+    page.locator('.ymz-marker-dialog .ymz-local-asset-dialog__close').click()
     # open node context menu then clipart submenu
     page.locator('.smm-node').first.click(button='right',force=True)
     clipart_menu=page.evaluate("""()=>{

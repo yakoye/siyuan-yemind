@@ -65,7 +65,7 @@ assert(contextMenuSource.includes("iconHTML: clipartIcon()"), 'clipart menu must
 assert(contextMenuSource.includes("iconHTML: outerFrameIcon()"), 'outer-frame menu must use the supplied SVG');
 
 assert(!localAssetSource.includes('data-action="clipart-more"'), 'clipart dialog must not have a load-more button');
-assert(localAssetSource.includes('hideCloseIcon: false'), 'asset dialogs must use the native top-right close button');
+assert(localAssetSource.includes('hideCloseIcon: true') && localAssetSource.includes('data-asset-dialog-action=\"close\"'), 'asset dialogs must use the compact custom top-right close button');
 assert(localAssetSource.includes('prepareAssetDialog'), 'asset dialogs must close on outside click');
 assert(!localAssetSource.includes('ymz-marker-section'), 'marker dialog must not render category headings');
 assert(localAssetSource.includes('ymz-marker-groups') && localAssetSource.includes('scrollIntoView'), 'all marker groups must remain in one continuous scroll surface');

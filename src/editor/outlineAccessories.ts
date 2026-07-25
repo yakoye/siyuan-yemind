@@ -1,5 +1,5 @@
 import type { MindMapNodeData } from '../model/types';
-import { createRuntimeAssetResolver, markerItemFromValue, markerSvg } from '../core/localAssetCatalogs';
+import { markerButtonStyle, markerItemFromValue } from '../core/localAssetCatalogs';
 
 export interface OutlineAccessoryImage {
   url: string;
@@ -41,6 +41,17 @@ function escapeAttribute(value: string): string {
     .replaceAll('"', '&quot;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;');
+}
+
+
+function cssPropertyName(value: string): string {
+  return value.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+}
+
+function styleAttribute(style: Record<string, string>): string {
+  return Object.entries(style)
+    .map(([key, value]) => `${cssPropertyName(key)}:${value}`)
+    .join(';');
 }
 
 function normalizeIcons(value: unknown): string[] {
@@ -100,15 +111,15 @@ export function outlineAccessoriesFromData(data: MindMapNodeData | Record<string
 function iconHtml(value: string, pluginBaseUrl?: string): string {
   const marker = markerItemFromValue(value);
   if (marker) {
-    const resolver = createRuntimeAssetResolver(pluginBaseUrl);
-    return `<span class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon="${escapeAttribute(value)}" title="${escapeAttribute(marker.id)}">${markerSvg(resolver.markerSpriteUrl(), marker)}</span>`;
+    const style = styleAttribute(markerButtonStyle(pluginBaseUrl, marker));
+    return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon-action data-outline-icon="${escapeAttribute(value)}" tabindex="-1" title="${escapeAttribute(marker.groupLabel)} ${marker.orderInGroup}" aria-label="修改图标"><span class="ymz-marker-sprite" style="${escapeAttribute(style)}"></span></button>`;
   }
   const label = LEGACY_ICON_LABELS[value] ?? '•';
-  return `<span class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon="${escapeAttribute(value)}" title="${escapeAttribute(value)}">${escapeAttribute(label)}</span>`;
+  return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon-action data-outline-icon="${escapeAttribute(value)}" tabindex="-1" title="${escapeAttribute(value)}" aria-label="修改图标">${escapeAttribute(label)}</button>`;
 }
 
 function statusButton(type: string, title: string, label: string): string {
-  return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute(type)}" data-outline-content="${escapeAttribute(type)}" tabindex="-1" title="${escapeAttribute(title)}" aria-label="${escapeAttribute(title)}">${label}</button>`;
+  return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute(type)}" data-outline-content="${escapeAttribute(type)}" tabindex="-1" aria-label="${escapeAttribute(title)}">${label}</button>`;
 }
 
 export function outlineAccessoriesHtml(accessories: OutlineAccessories, pluginBaseUrl?: string): string {
@@ -116,14 +127,14 @@ export function outlineAccessoriesHtml(accessories: OutlineAccessories, pluginBa
     || accessories.link || accessories.hasNote || accessories.commentCount || accessories.hasOuterFrame;
   if (!hasAny) return '';
   const todo = accessories.todo
-    ? statusButton('todo', accessories.todo.text || (accessories.todo.checked ? '已完成待办' : '待办'), accessories.todo.checked ? '☑' : '☐')
+    ? `<button type="button" class="ymz-outline-accessories__todo${accessories.todo.checked ? ' is-checked' : ''}" data-outline-content="todo" tabindex="-1" aria-label="${accessories.todo.checked ? '待办已完成' : '待办未完成'}">${accessories.todo.checked ? '✓' : ''}</button>`
     : '';
   const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join('');
   const image = accessories.image
     ? `<button type="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? ' is-clipart' : ''}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? 'clipart' : 'image'}" tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? '剪贴图：单击编辑，双击查看' : '图片：单击编辑，双击查看'))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false"></button>`
     : '';
   const tags = accessories.tags.length
-    ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" title="标签：${escapeAttribute(accessories.tags.join('、'))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute(tag)}</span>`).join('')}</span>`
+    ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute(accessories.tags.join('、'))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute(tag)}</span>`).join('')}</span>`
     : '';
   const note = accessories.hasNote ? statusButton('note', '备注', 'N') : '';
   const comments = accessories.commentCount ? statusButton('comments', `批注 ${accessories.commentCount}`, String(accessories.commentCount)) : '';

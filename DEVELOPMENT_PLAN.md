@@ -2,7 +2,7 @@
 
 ## Current baseline
 
-- Product version: 0.9.26
+- Product version: 0.9.27
 - Host baseline: SiYuan 3.7.3
 - Plugin ID and folder: `siyuan-yemind`
 
@@ -32,10 +32,11 @@
 - Conservative import-width repair and post-measure relayout with exact viewport restoration.
 - Recursive branch collapse with one-level expansion for node and global disclosure.
 - Outline image single-click editing, double-click lightbox preview and full node-content action parity.
+- Sprite-backed outline icon editing, anchored compact asset dialogs, semantic hover previews and dirty-outline accessory synchronization.
 
 ## Next priorities
 
-1. Validate v0.9.26 import geometry, recursive disclosure and outline image/content actions inside SiYuan 3.7.3 with built-in and representative third-party themes.
+1. Validate v0.9.27 outline asset editing, compact dialogs, hover previews and cross-view accessory synchronization inside SiYuan 3.7.3 with built-in and representative third-party themes.
 2. Profile 1,000+ node import, outline editing and recursive disclosure without weakening transaction safety.
 3. Improve keyboard access and screen-reader labels for outline content status controls and image actions.
 4. Continue accessibility and mobile-layout coverage for content-rich outline rows.

@@ -20,19 +20,73 @@ function selectedIcons(commands: YeMindCommands): string[] {
   return normalizeStringList(commands.getPrimaryNodeData()?.icon);
 }
 
-function prepareAssetDialog(dialog: Dialog): void {
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(value, max));
+}
+
+export function positionAssetDialog(dialog: Dialog, anchorRect?: DOMRect): void {
+  if (!anchorRect) return;
+  window.requestAnimationFrame(() => {
+    const container = dialog.element.querySelector<HTMLElement>('.b3-dialog__container');
+    if (!container?.isConnected) return;
+    const rect = container.getBoundingClientRect();
+    const margin = 12;
+    const gap = 14;
+    const maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
+    const maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
+    const roomRight = window.innerWidth - anchorRect.right - gap;
+    const roomLeft = anchorRect.left - gap;
+    let left = roomRight >= rect.width
+      ? anchorRect.right + gap
+      : roomLeft >= rect.width
+        ? anchorRect.left - gap - rect.width
+        : clamp(anchorRect.left + anchorRect.width / 2 - rect.width / 2, margin, maxLeft);
+    let top = clamp(anchorRect.top + anchorRect.height / 2 - rect.height / 2, margin, maxTop);
+    const overlaps = left < anchorRect.right && left + rect.width > anchorRect.left
+      && top < anchorRect.bottom && top + rect.height > anchorRect.top;
+    if (overlaps) {
+      const below = anchorRect.bottom + gap;
+      const above = anchorRect.top - gap - rect.height;
+      if (below + rect.height <= window.innerHeight - margin) top = below;
+      else if (above >= margin) top = above;
+    }
+    left = clamp(left, margin, maxLeft);
+    top = clamp(top, margin, maxTop);
+    Object.assign(container.style, {
+      position: 'fixed',
+      left: `${Math.round(left)}px`,
+      top: `${Math.round(top)}px`,
+      margin: '0',
+      transform: 'none',
+    });
+    container.dataset.assetDialogAnchored = 'true';
+  });
+}
+
+function prepareAssetDialog(dialog: Dialog, anchorRect?: DOMRect): void {
   dialog.element.classList.add('ymz-asset-dialog-shell');
+  dialog.element.querySelectorAll<HTMLElement>('[data-asset-dialog-action="close"]').forEach((button) => {
+    button.addEventListener('click', () => dialog.destroy());
+  });
   dialog.element.addEventListener('mousedown', (event) => {
     const target = event.target as HTMLElement;
     if (target === dialog.element || target.classList.contains('b3-dialog__scrim')) {
       dialog.destroy();
     }
   });
+  positionAssetDialog(dialog, anchorRect);
+}
+
+function assetHeader(title: string): string {
+  return `<header class="ymz-local-asset-dialog__header">
+    <strong>${title}</strong>
+    <button type="button" class="ymz-local-asset-dialog__close" data-asset-dialog-action="close" aria-label="关闭${title}">×</button>
+  </header>`;
 }
 
 export function openMarkerPicker(
   commands: YeMindCommands,
-  options: { pluginBaseUrl?: string; initialGroupId?: string | null } = {},
+  options: { pluginBaseUrl?: string; initialGroupId?: string | null; anchorRect?: DOMRect; onChange?: () => void } = {},
 ): void {
   let activeGroupId = options.initialGroupId && markerCatalog.groups.some((group) => group.id === options.initialGroupId)
     ? options.initialGroupId
@@ -40,18 +94,19 @@ export function openMarkerPicker(
   const dialog = new Dialog({
     title: '图标',
     content: `<div class="b3-dialog__content ymz-local-asset-dialog ymz-marker-dialog">
+      ${assetHeader('图标')}
       <nav class="ymz-asset-tabs ymz-asset-tabs--sticky" data-role="marker-tabs" aria-label="图标分类"></nav>
       <div class="ymz-marker-scroll" data-role="marker-scroll"><div class="ymz-marker-groups" data-role="marker-groups"></div></div>
       <footer class="ymz-local-asset-dialog__footer">
         <button type="button" class="b3-button b3-button--cancel" data-action="clear-markers">清除图标</button>
-        <button type="button" class="b3-button b3-button--text" data-action="close">完成</button>
+        <button type="button" class="b3-button b3-button--text" data-asset-dialog-action="close">完成</button>
       </footer>
     </div>`,
-    width: '640px',
+    width: '600px',
     height: '620px',
-    hideCloseIcon: false,
+    hideCloseIcon: true,
   });
-  prepareAssetDialog(dialog);
+  prepareAssetDialog(dialog, options.anchorRect);
   const tabs = dialog.element.querySelector<HTMLElement>('[data-role="marker-tabs"]')!;
   const scroll = dialog.element.querySelector<HTMLElement>('[data-role="marker-scroll"]')!;
   const groups = dialog.element.querySelector<HTMLElement>('[data-role="marker-groups"]')!;
@@ -79,6 +134,7 @@ export function openMarkerPicker(
       const next = new Set(selectedIcons(commands));
       if (next.has(value)) next.delete(value); else next.add(value);
       commands.setIcons(Array.from(next));
+      options.onChange?.();
       refreshSelection();
     });
     return button;
@@ -126,16 +182,16 @@ export function openMarkerPicker(
 
   dialog.element.querySelector('[data-action="clear-markers"]')?.addEventListener('click', () => {
     commands.setIcons([]);
+    options.onChange?.();
     refreshSelection();
   });
-  dialog.element.querySelector('[data-action="close"]')?.addEventListener('click', () => dialog.destroy());
   refreshSelection();
   if (activeGroupId) requestAnimationFrame(() => selectTab(activeGroupId));
 }
 
 export function openClipartPicker(
   commands: YeMindCommands,
-  options: { pluginBaseUrl?: string } = {},
+  options: { pluginBaseUrl?: string; anchorRect?: DOMRect; onChange?: () => void } = {},
 ): void {
   const resolver = createRuntimeAssetResolver(options.pluginBaseUrl);
   let categoryId = '';
@@ -143,15 +199,16 @@ export function openClipartPicker(
   const dialog = new Dialog({
     title: '剪贴图',
     content: `<div class="b3-dialog__content ymz-local-asset-dialog ymz-clipart-dialog">
+      ${assetHeader('剪贴图')}
       <div class="ymz-clipart-search"><input class="b3-text-field" data-role="clipart-search" placeholder="搜索剪贴图"><span data-role="clipart-count"></span></div>
       <div class="ymz-asset-tabs ymz-asset-tabs--scroll ymz-asset-tabs--sticky" data-role="clipart-tabs"></div>
       <div class="ymz-clipart-grid" data-role="clipart-grid"></div>
     </div>`,
-    width: '760px',
+    width: '660px',
     height: '620px',
-    hideCloseIcon: false,
+    hideCloseIcon: true,
   });
-  prepareAssetDialog(dialog);
+  prepareAssetDialog(dialog, options.anchorRect);
   const search = dialog.element.querySelector<HTMLInputElement>('[data-role="clipart-search"]')!;
   const tabs = dialog.element.querySelector<HTMLElement>('[data-role="clipart-tabs"]')!;
   const grid = dialog.element.querySelector<HTMLElement>('[data-role="clipart-grid"]')!;
@@ -199,6 +256,7 @@ export function openClipartPicker(
           height: size.height,
           custom: true,
         });
+        options.onChange?.();
         dialog.destroy();
       });
       grid.appendChild(button);

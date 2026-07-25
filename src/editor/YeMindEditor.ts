@@ -882,11 +882,23 @@ export class YeMindEditor {
       },
       onToggle: (uid, expanded) => this.setOutlineExpanded(uid, expanded),
       onContextMenu: (event, uid) => this.openOutlineContextMenu(event, uid),
-      onImageEdit: (uid, kind) => {
+      onIconEdit: (uid, iconValue, anchor) => {
         if (!this.commands || this.commands.isReadonly()) return;
-        this.commands.goToNode(uid);
-        this.activateOutlineUid(uid, false);
-        if (kind === 'clipart') openClipartPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl });
+        this.activateNodeByUid(uid);
+        const groupId = String(iconValue ?? '').startsWith('yemarker')
+          ? String(iconValue).slice('yemarker'.length).split('_')[0]
+          : null;
+        openMarkerPicker(this.commands, {
+          pluginBaseUrl: this.options.pluginBaseUrl,
+          initialGroupId: groupId,
+          anchorRect: anchor.getBoundingClientRect(),
+          onChange: () => this.refreshOutlineFromMap(),
+        });
+      },
+      onImageEdit: (uid, kind, anchor) => {
+        if (!this.commands || this.commands.isReadonly()) return;
+        this.activateNodeByUid(uid);
+        if (kind === 'clipart') openClipartPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, anchorRect: anchor.getBoundingClientRect(), onChange: () => this.refreshOutlineFromMap() });
         else openImageDialog(this.commands);
       },
       onImagePreview: (uid) => {
@@ -896,6 +908,27 @@ export class YeMindEditor {
         if (source) this.imageLightbox?.show(source, title);
       },
       onContentAction: (uid, type) => this.runOutlineContentAction(uid, type),
+      onContentHover: (uid, type, anchor, entering) => {
+        if (!this.nodeHoverPreview) return;
+        if (!entering) {
+          this.nodeHoverPreview.scheduleHide();
+          return;
+        }
+        const data = this.findTreeNodeData(uid);
+        if (!data) return;
+        const value = type === 'note'
+          ? normalizeNodeNote(data.yemindNote ?? data.note)
+          : type === 'comments'
+            ? (Array.isArray(data.yemindComments) ? data.yemindComments : [])
+            : type === 'todo'
+              ? data.yemindTodo
+              : type === 'tags'
+                ? (Array.isArray(data.tag) ? data.tag : [])
+                : type === 'link'
+                  ? String(data.hyperlink ?? '')
+                  : Boolean(data.outerFrame);
+        this.nodeHoverPreview.show(type as any, value as any, anchor);
+      },
       onUndo: () => this.commands?.undo(),
       onRedo: () => this.commands?.redo(),
       onDiagnostic: (action, details) =>
@@ -1332,6 +1365,16 @@ export class YeMindEditor {
       this.activateOnlyNode(node);
       openImageDialog(this.commands);
     });
+    this.map.on("yemind_node_clipart_edit", (node: any, event?: MouseEvent, image?: any) => {
+      if (!this.commands || this.commands.isReadonly() || !node) return;
+      this.activateOnlyNode(node);
+      const imageElement = image?.node as Element | undefined;
+      const targetElement = event?.target instanceof Element ? event.target : undefined;
+      const anchorRect = imageElement?.getBoundingClientRect?.()
+        ?? targetElement?.getBoundingClientRect?.()
+        ?? (event ? new DOMRect(event.clientX, event.clientY, 1, 1) : undefined);
+      openClipartPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, anchorRect, onChange: () => this.refreshOutlineFromMap() });
+    });
     this.map.on("yemind_todo_toggle", (node: any) => {
       if (!this.commands) return;
       this.activateNode(node);
@@ -1427,7 +1470,10 @@ export class YeMindEditor {
       const groupId = String(iconValue ?? '').startsWith('yemarker')
         ? String(iconValue).slice('yemarker'.length).split('_')[0]
         : null;
-      openMarkerPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, initialGroupId: groupId });
+      const targetElement = event?.target instanceof Element ? event.target : undefined;
+      const anchorRect = targetElement?.getBoundingClientRect?.()
+        ?? (event ? new DOMRect(event.clientX, event.clientY, 1, 1) : undefined);
+      openMarkerPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, initialGroupId: groupId, anchorRect, onChange: () => this.refreshOutlineFromMap() });
     });
     this.map.on("draw_click", () =>
       window.setTimeout(() => this.updateRelationPresentation(), 0),
@@ -1455,8 +1501,8 @@ export class YeMindEditor {
       onNodeLink: () =>
         openLinkDialog(this.commands!, this.settings.inlineLinkAutoHttps),
       onRelation: () => this.beginRelation(),
-      onMarkers: () => openMarkerPicker(this.commands!, { pluginBaseUrl: this.options.pluginBaseUrl }),
-      onClipart: () => openClipartPicker(this.commands!, { pluginBaseUrl: this.options.pluginBaseUrl }),
+      onMarkers: () => openMarkerPicker(this.commands!, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
+      onClipart: () => openClipartPicker(this.commands!, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
       onNodeStyle: () => {
         this.projectStylePanel?.hide();
         this.nodeStylePanel?.show({ x: event.clientX, y: event.clientY });
@@ -2178,14 +2224,10 @@ export class YeMindEditor {
     if (!uid || !this.commands || !this.outlineRichText) return;
     this.outlineRichText.flush('before-context-menu');
     this.claimOutlineInteraction('outline-context-menu');
-    this.commands.goToNode(uid);
-    this.activateOutlineUid(uid, false);
+    this.activateNodeByUid(uid);
     const state = this.outlineRichText.getLineState(uid);
     const readonly = this.commands.isReadonly();
-    const activate = (): void => {
-      this.commands?.goToNode(uid);
-      this.activateOutlineUid(uid, false);
-    };
+    const activate = (): void => this.activateNodeByUid(uid);
     openOutlineContextMenu(event, {
       readonly,
       isRoot: state.isRoot,
@@ -2251,11 +2293,11 @@ export class YeMindEditor {
       onInlineLink: () => { if (this.outlineRichText) openInlineLinkDialog(this.outlineRichText, this.settings); },
       onMarkers: () => {
         activate();
-        if (this.commands) openMarkerPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl });
+        if (this.commands) openMarkerPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() });
       },
       onClipart: () => {
         activate();
-        if (this.commands) openClipartPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl });
+        if (this.commands) openClipartPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() });
       },
       onImage: () => {
         activate();
@@ -2274,6 +2316,21 @@ export class YeMindEditor {
     });
   }
 
+  private refreshOutlineFromMap(): void {
+    if (!this.map || this.destroyed) return;
+    const tree = this.map.getData(false) as MindMapTree;
+    this.current.data = tree;
+    this.renderOutline(tree);
+  }
+
+  private activateNodeByUid(uid: string): void {
+    if (!uid || !this.commands) return;
+    const node = (this.map as any)?.renderer?.findNodeByUid?.(uid);
+    if (node) this.activateOnlyNode(node);
+    else this.commands.goToNode(uid);
+    this.activateOutlineUid(uid, false);
+  }
+
   private findTreeNodeData(uid: string, tree: MindMapTree = this.current.data): Record<string, any> | null {
     if (String(tree.data?.uid ?? '') === uid) return tree.data as Record<string, any>;
     for (const child of tree.children ?? []) {
@@ -2285,8 +2342,7 @@ export class YeMindEditor {
 
   private runOutlineContentAction(uid: string, type: string): void {
     if (!this.commands) return;
-    this.commands.goToNode(uid);
-    this.activateOutlineUid(uid, false);
+    this.activateNodeByUid(uid);
     const readonly = this.commands.isReadonly();
     if (type === 'note') { openNoteDialog(this.commands, { readonly }); return; }
     if (type === 'link') {

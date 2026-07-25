@@ -1,9 +1,10 @@
-import type { NodeComment } from '../content/nodeContentState';
+import type { NodeComment, NodeTodo } from '../content/nodeContentState';
 import type { NodeNote } from '../content/nodeNoteState';
 import { sanitizeRichHtml } from '../content/sanitizeRichHtml';
 import { formatCommentTimestamp } from './commentsPresentation';
 
-export type NodeHoverPreviewType = 'note' | 'comments';
+export type NodeHoverPreviewType = 'note' | 'comments' | 'todo' | 'tags' | 'link' | 'outer-frame';
+export type NodeHoverPreviewValue = NodeNote | NodeComment[] | NodeTodo | string[] | string | boolean | null | undefined;
 
 interface RectLike {
   left: number;
@@ -136,14 +137,33 @@ export function computeHoverPreviewPlacement(input: HoverPreviewPlacementInput):
   };
 }
 
-export function buildHoverPreviewHtml(type: NodeHoverPreviewType, value: NodeNote | NodeComment[] | null | undefined): string {
+export function buildHoverPreviewHtml(type: NodeHoverPreviewType, value: NodeHoverPreviewValue): string {
   if (type === 'note') {
     const note = value as NodeNote | null | undefined;
     return note?.html ? `<div class="ymz-node-hover-preview__note">${sanitizeRichHtml(note.html)}</div>` : '<div class="ymz-empty-hint">暂无备注</div>';
   }
-  const comments = Array.isArray(value) ? value as NodeComment[] : [];
-  if (!comments.length) return '<div class="ymz-empty-hint">暂无批注</div>';
-  return `<div class="ymz-node-hover-preview__comments">${comments.map((comment) => `<div class="ymz-node-hover-preview__comment"><div class="ymz-node-hover-preview__comment-text">${escapeHtml(comment.text).replaceAll('\n', '<br>')}</div><time class="ymz-node-hover-preview__comment-time" datetime="${new Date(comment.createdAt).toISOString()}">${formatCommentTimestamp(comment.createdAt)}</time></div>`).join('')}</div>`;
+  if (type === 'comments') {
+    const comments = Array.isArray(value) ? value as NodeComment[] : [];
+    if (!comments.length) return '<div class="ymz-empty-hint">暂无批注</div>';
+    return `<div class="ymz-node-hover-preview__comments">${comments.map((comment) => `<div class="ymz-node-hover-preview__comment"><div class="ymz-node-hover-preview__comment-text">${escapeHtml(comment.text).replaceAll('\n', '<br>')}</div><time class="ymz-node-hover-preview__comment-time" datetime="${new Date(comment.createdAt).toISOString()}">${formatCommentTimestamp(comment.createdAt)}</time></div>`).join('')}</div>`;
+  }
+  if (type === 'todo') {
+    const todo = value && typeof value === 'object' && !Array.isArray(value) ? value as NodeTodo : null;
+    const label = todo?.checked ? '已完成' : '未完成';
+    const text = String(todo?.text ?? '').trim();
+    return `<div class="ymz-node-hover-preview__summary"><strong>${label}</strong>${text ? `<span>${escapeHtml(text)}</span>` : ''}</div>`;
+  }
+  if (type === 'tags') {
+    const tags = Array.isArray(value) ? value.map((item) => String(item ?? '').trim()).filter(Boolean) : [];
+    return tags.length
+      ? `<div class="ymz-node-hover-preview__tags">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join('')}</div>`
+      : '<div class="ymz-empty-hint">暂无标签</div>';
+  }
+  if (type === 'link') {
+    const link = typeof value === 'string' ? value.trim() : '';
+    return link ? `<div class="ymz-node-hover-preview__link">${escapeHtml(link)}</div>` : '<div class="ymz-empty-hint">暂无链接</div>';
+  }
+  return value ? '<div class="ymz-node-hover-preview__summary"><strong>已有外框</strong><span>单击可编辑或移除</span></div>' : '<div class="ymz-empty-hint">暂无外框</div>';
 }
 
 export class NodeHoverPreview {
@@ -161,7 +181,7 @@ export class NodeHoverPreview {
     root.appendChild(this.element);
   }
 
-  show(type: NodeHoverPreviewType, value: NodeNote | NodeComment[], anchor: HTMLElement, delay = 220): void {
+  show(type: NodeHoverPreviewType, value: NodeHoverPreviewValue, anchor: HTMLElement, delay = 220): void {
     this.cancelTimers();
     this.anchor = anchor;
     this.showTimer = window.setTimeout(() => {

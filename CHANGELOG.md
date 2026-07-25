@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.27 - 2026-07-25
+
+- Replaced outline marker SVG reconstruction with the same sprite-backed rendering used by the canvas and made every outline marker directly editable through the marker picker.
+- Preserved outline image and clipart single-click editing plus shared double-click lightbox preview, and added hover previews for todo, tags, links, notes, comments and outer-frame status.
+- Added compact anchor-aware marker and clipart dialogs with bold custom title bars, explicit close controls and placement that avoids the clicked canvas or outline asset.
+- Right-aligned note actions and made title-bar or scrim close autosave the current note while explicit Cancel continues to discard the edit.
+- Changed canvas clipart clicks to open the clipart picker directly without the previous image replace/delete overlay, while ordinary images keep their existing resize behavior.
+- Normalized todo prefix geometry and added accessory-only outline refresh so icon, image and semantic content changes remain consistent across map, outline and split views without overwriting active outline text.
+- Added v0.9.27 unit, dependency-free runtime and Chromium regressions for marker rendering, asset interaction, dialog geometry, hover previews, note autosave, todo alignment and dirty-outline synchronization.
+
 ## 0.9.26 - 2026-07-24
 
 - Removed redundant `width` from newly imported wrapped nodes and added a conservative upgrade repair for v0.9.25 nodes marked with `yemindImportedAutoWidth` when `width` equals `customTextWidth`.

@@ -132,6 +132,7 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   private resizeStartPoint = { x: 0, y: 0 };
   private resizeStartRect: ImageResizeRect | null = null;
   private resizeCurrentRect: ImageResizeRect | null = null;
+  private clipartClickTimer: number | null = null;
   private onImageClickBound: (node: any, img: any, event: MouseEvent) => void;
   private onImageDoubleClickBound: (node: any, event: MouseEvent, img: any) => void;
   private onNodeClickBound: (node: any, event: MouseEvent) => void;
@@ -377,6 +378,8 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   }
 
   beforePluginRemove(): void {
+    if (this.clipartClickTimer !== null) window.clearTimeout(this.clipartClickTimer);
+    this.clipartClickTimer = null;
     this.unbindYeMindEvents();
     super.beforePluginRemove();
     this.handleEl?.remove?.();
@@ -384,6 +387,8 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   }
 
   beforePluginDestroy(): void {
+    if (this.clipartClickTimer !== null) window.clearTimeout(this.clipartClickTimer);
+    this.clipartClickTimer = null;
     this.unbindYeMindEvents();
     super.beforePluginDestroy();
     this.handleEl?.remove?.();
@@ -394,6 +399,15 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     event?.preventDefault?.();
     event?.stopPropagation?.();
     if (!node || !img) return;
+    if (node.getData?.('yemindClipartId')) {
+      this.closeImageSelection();
+      if (this.clipartClickTimer !== null) window.clearTimeout(this.clipartClickTimer);
+      this.clipartClickTimer = window.setTimeout(() => {
+        this.clipartClickTimer = null;
+        this.mindMap.emit('yemind_node_clipart_edit', node, event, img);
+      }, 220);
+      return;
+    }
     this.node = node;
     this.img = img;
     this.rect = img.rbox?.() ?? null;
@@ -409,7 +423,12 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     event?.preventDefault?.();
     event?.stopPropagation?.();
     if (!node) return;
-    if (img) this.onImageClick(node, img, event);
+    if (node.getData?.('yemindClipartId')) {
+      if (this.clipartClickTimer !== null) window.clearTimeout(this.clipartClickTimer);
+      this.clipartClickTimer = null;
+    } else if (img) {
+      this.onImageClick(node, img, event);
+    }
     this.mindMap.emit('yemind_node_image_preview', node);
   }
 

@@ -48,7 +48,7 @@ export function createNodePrefixContent(node: any): { el: HTMLElement; width: nu
     node.mindMap?.emit?.('yemind_todo_toggle', node);
   });
   el.appendChild(checkbox);
-  return { el, width: 20, height: 20 };
+  return { el, width: 18, height: 18 };
 }
 
 function noteSvg(): string {

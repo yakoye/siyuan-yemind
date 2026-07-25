@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.26 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.27 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -15844,7 +15844,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.26';
+exports.PLUGIN_VERSION = '0.9.27';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -15861,20 +15861,20 @@ const constants_1 = __require(28);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-24T15:57:06Z',
-    buildId: 'yemind-v0.9.26-20260724',
+    buildTime: '2026-07-25T02:21:07Z',
+    buildId: 'yemind-v0.9.27-20260725',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '修复文本导入长节点布局，统一深度折叠与单层展开语义，并补齐大纲图片浏览和节点内容操作。',
+    releaseSummary: '统一大纲与导图的图标、图片和剪贴图交互，优化资源与备注对话框，并修复待办及跨视图内容同步。',
     highlights: [
-        '文本导入节点只使用 customTextWidth 控制自动换行，升级时安全清理 v0.9.25 自动宽度节点中重复的 width 字段。',
-        '导入完成后等待文本尺寸稳定再执行一次整体重排，并恢复原画布缩放、平移和活动节点，避免长节点文字、边框和连线错位。',
-        '节点折叠会递归折叠全部后代分支；重新展开时只展开当前一层。全局折叠后再次展开也只显示中心主题的一级节点。',
-        '大纲图片和剪贴图支持单击编辑、双击进入共享大图浏览器，单击与双击通过可取消延迟避免冲突。',
-        '大纲添加菜单补齐待办、外框、备注、批注、标签、图标、链接、剪贴图、图片、代码块、公式和行内链接，并复用导图同一份节点数据。',
-        '大纲同步待办、标签、备注、批注、链接和外框状态，但继续不复制节点背景、边框、形状和分支线等画布装饰。',
+        '大纲图标改用与导图一致的 marker sprite 渲染，单击可直接打开对应分类的图标选择器并即时同步修改结果。',
+        '大纲图片和剪贴图继续区分单击编辑与双击共享大图浏览，备注、批注、待办、标签、链接和外框支持悬停预览。',
+        '图标与剪贴图对话框改为紧凑宽度、自定义加粗标题栏和明确关闭按钮，并根据点击位置避开当前节点。',
+        '备注对话框操作按钮右对齐；标题栏关闭或点击遮罩会自动保存，显式取消仍放弃本次修改。',
+        '导图剪贴图单击直接打开选择器，不再显示图片替换/删除浮动工具栏；图标选择器同样锚定在点击节点旁。',
+        '待办前缀统一为 18px 方形布局，并在大纲文字编辑期间仅刷新附件投影，保持图标、图片和状态在导图、大纲及分屏一致。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -17753,13 +17753,26 @@ class YeMindEditor {
             },
             onToggle: (uid, expanded) => this.setOutlineExpanded(uid, expanded),
             onContextMenu: (event, uid) => this.openOutlineContextMenu(event, uid),
-            onImageEdit: (uid, kind) => {
+            onIconEdit: (uid, iconValue, anchor) => {
                 if (!this.commands || this.commands.isReadonly())
                     return;
-                this.commands.goToNode(uid);
-                this.activateOutlineUid(uid, false);
+                this.activateNodeByUid(uid);
+                const groupId = String(iconValue ?? '').startsWith('yemarker')
+                    ? String(iconValue).slice('yemarker'.length).split('_')[0]
+                    : null;
+                (0, localAssetDialogs_1.openMarkerPicker)(this.commands, {
+                    pluginBaseUrl: this.options.pluginBaseUrl,
+                    initialGroupId: groupId,
+                    anchorRect: anchor.getBoundingClientRect(),
+                    onChange: () => this.refreshOutlineFromMap(),
+                });
+            },
+            onImageEdit: (uid, kind, anchor) => {
+                if (!this.commands || this.commands.isReadonly())
+                    return;
+                this.activateNodeByUid(uid);
                 if (kind === 'clipart')
-                    (0, localAssetDialogs_1.openClipartPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl });
+                    (0, localAssetDialogs_1.openClipartPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, anchorRect: anchor.getBoundingClientRect(), onChange: () => this.refreshOutlineFromMap() });
                 else
                     (0, nodeContentDialogs_1.openImageDialog)(this.commands);
             },
@@ -17771,6 +17784,29 @@ class YeMindEditor {
                     this.imageLightbox?.show(source, title);
             },
             onContentAction: (uid, type) => this.runOutlineContentAction(uid, type),
+            onContentHover: (uid, type, anchor, entering) => {
+                if (!this.nodeHoverPreview)
+                    return;
+                if (!entering) {
+                    this.nodeHoverPreview.scheduleHide();
+                    return;
+                }
+                const data = this.findTreeNodeData(uid);
+                if (!data)
+                    return;
+                const value = type === 'note'
+                    ? (0, nodeNoteState_1.normalizeNodeNote)(data.yemindNote ?? data.note)
+                    : type === 'comments'
+                        ? (Array.isArray(data.yemindComments) ? data.yemindComments : [])
+                        : type === 'todo'
+                            ? data.yemindTodo
+                            : type === 'tags'
+                                ? (Array.isArray(data.tag) ? data.tag : [])
+                                : type === 'link'
+                                    ? String(data.hyperlink ?? '')
+                                    : Boolean(data.outerFrame);
+                this.nodeHoverPreview.show(type, value, anchor);
+            },
             onUndo: () => this.commands?.undo(),
             onRedo: () => this.commands?.redo(),
             onDiagnostic: (action, details) => this.options.diagnostics.record("outline", action, this.current.id, details),
@@ -18169,6 +18205,17 @@ class YeMindEditor {
             this.activateOnlyNode(node);
             (0, nodeContentDialogs_1.openImageDialog)(this.commands);
         });
+        this.map.on("yemind_node_clipart_edit", (node, event, image) => {
+            if (!this.commands || this.commands.isReadonly() || !node)
+                return;
+            this.activateOnlyNode(node);
+            const imageElement = image?.node;
+            const targetElement = event?.target instanceof Element ? event.target : undefined;
+            const anchorRect = imageElement?.getBoundingClientRect?.()
+                ?? targetElement?.getBoundingClientRect?.()
+                ?? (event ? new DOMRect(event.clientX, event.clientY, 1, 1) : undefined);
+            (0, localAssetDialogs_1.openClipartPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, anchorRect, onChange: () => this.refreshOutlineFromMap() });
+        });
         this.map.on("yemind_todo_toggle", (node) => {
             if (!this.commands)
                 return;
@@ -18247,7 +18294,10 @@ class YeMindEditor {
             const groupId = String(iconValue ?? '').startsWith('yemarker')
                 ? String(iconValue).slice('yemarker'.length).split('_')[0]
                 : null;
-            (0, localAssetDialogs_1.openMarkerPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, initialGroupId: groupId });
+            const targetElement = event?.target instanceof Element ? event.target : undefined;
+            const anchorRect = targetElement?.getBoundingClientRect?.()
+                ?? (event ? new DOMRect(event.clientX, event.clientY, 1, 1) : undefined);
+            (0, localAssetDialogs_1.openMarkerPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, initialGroupId: groupId, anchorRect, onChange: () => this.refreshOutlineFromMap() });
         });
         this.map.on("draw_click", () => window.setTimeout(() => this.updateRelationPresentation(), 0));
         this.map.on("search_info_change", (info) => this.updateSearchInfo(info));
@@ -18268,8 +18318,8 @@ class YeMindEditor {
             onCodeBlock: () => (0, richTextDialogs_1.openCodeBlockDialog)(this.commands, this.settings),
             onNodeLink: () => (0, nodeContentDialogs_1.openLinkDialog)(this.commands, this.settings.inlineLinkAutoHttps),
             onRelation: () => this.beginRelation(),
-            onMarkers: () => (0, localAssetDialogs_1.openMarkerPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl }),
-            onClipart: () => (0, localAssetDialogs_1.openClipartPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl }),
+            onMarkers: () => (0, localAssetDialogs_1.openMarkerPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
+            onClipart: () => (0, localAssetDialogs_1.openClipartPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
             onNodeStyle: () => {
                 this.projectStylePanel?.hide();
                 this.nodeStylePanel?.show({ x: event.clientX, y: event.clientY });
@@ -18890,14 +18940,10 @@ class YeMindEditor {
             return;
         this.outlineRichText.flush('before-context-menu');
         this.claimOutlineInteraction('outline-context-menu');
-        this.commands.goToNode(uid);
-        this.activateOutlineUid(uid, false);
+        this.activateNodeByUid(uid);
         const state = this.outlineRichText.getLineState(uid);
         const readonly = this.commands.isReadonly();
-        const activate = () => {
-            this.commands?.goToNode(uid);
-            this.activateOutlineUid(uid, false);
-        };
+        const activate = () => this.activateNodeByUid(uid);
         (0, contextMenu_1.openOutlineContextMenu)(event, {
             readonly,
             isRoot: state.isRoot,
@@ -18974,12 +19020,12 @@ class YeMindEditor {
             onMarkers: () => {
                 activate();
                 if (this.commands)
-                    (0, localAssetDialogs_1.openMarkerPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl });
+                    (0, localAssetDialogs_1.openMarkerPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() });
             },
             onClipart: () => {
                 activate();
                 if (this.commands)
-                    (0, localAssetDialogs_1.openClipartPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl });
+                    (0, localAssetDialogs_1.openClipartPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() });
             },
             onImage: () => {
                 activate();
@@ -18998,6 +19044,23 @@ class YeMindEditor {
             onAction: (action) => this.options.diagnostics.record('outline-menu', action, this.current.id, { uid }),
         });
     }
+    refreshOutlineFromMap() {
+        if (!this.map || this.destroyed)
+            return;
+        const tree = this.map.getData(false);
+        this.current.data = tree;
+        this.renderOutline(tree);
+    }
+    activateNodeByUid(uid) {
+        if (!uid || !this.commands)
+            return;
+        const node = this.map?.renderer?.findNodeByUid?.(uid);
+        if (node)
+            this.activateOnlyNode(node);
+        else
+            this.commands.goToNode(uid);
+        this.activateOutlineUid(uid, false);
+    }
     findTreeNodeData(uid, tree = this.current.data) {
         if (String(tree.data?.uid ?? '') === uid)
             return tree.data;
@@ -19011,8 +19074,7 @@ class YeMindEditor {
     runOutlineContentAction(uid, type) {
         if (!this.commands)
             return;
-        this.commands.goToNode(uid);
-        this.activateOutlineUid(uid, false);
+        this.activateNodeByUid(uid);
         const readonly = this.commands.isReadonly();
         if (type === 'note') {
             (0, nodeContentDialogs_1.openNoteDialog)(this.commands, { readonly });
@@ -79369,6 +79431,7 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
         this.resizeStartPoint = { x: 0, y: 0 };
         this.resizeStartRect = null;
         this.resizeCurrentRect = null;
+        this.clipartClickTimer = null;
         this.onImageClickBound = this.onImageClick.bind(this);
         this.onImageDoubleClickBound = this.onImageDoubleClick.bind(this);
         this.onNodeClickBound = this.onNodeClick.bind(this);
@@ -79595,12 +79658,18 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
         requestAnimationFrame(() => this.refreshRect());
     }
     beforePluginRemove() {
+        if (this.clipartClickTimer !== null)
+            window.clearTimeout(this.clipartClickTimer);
+        this.clipartClickTimer = null;
         this.unbindYeMindEvents();
         super.beforePluginRemove();
         this.handleEl?.remove?.();
         this.handleEl = null;
     }
     beforePluginDestroy() {
+        if (this.clipartClickTimer !== null)
+            window.clearTimeout(this.clipartClickTimer);
+        this.clipartClickTimer = null;
         this.unbindYeMindEvents();
         super.beforePluginDestroy();
         this.handleEl?.remove?.();
@@ -79611,6 +79680,16 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
         event?.stopPropagation?.();
         if (!node || !img)
             return;
+        if (node.getData?.('yemindClipartId')) {
+            this.closeImageSelection();
+            if (this.clipartClickTimer !== null)
+                window.clearTimeout(this.clipartClickTimer);
+            this.clipartClickTimer = window.setTimeout(() => {
+                this.clipartClickTimer = null;
+                this.mindMap.emit('yemind_node_clipart_edit', node, event, img);
+            }, 220);
+            return;
+        }
         this.node = node;
         this.img = img;
         this.rect = img.rbox?.() ?? null;
@@ -79627,8 +79706,14 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
         event?.stopPropagation?.();
         if (!node)
             return;
-        if (img)
+        if (node.getData?.('yemindClipartId')) {
+            if (this.clipartClickTimer !== null)
+                window.clearTimeout(this.clipartClickTimer);
+            this.clipartClickTimer = null;
+        }
+        else if (img) {
             this.onImageClick(node, img, event);
+        }
         this.mindMap.emit('yemind_node_image_preview', node);
     }
     onNodeClick() {
@@ -81889,7 +81974,7 @@ function createNodePrefixContent(node) {
         node.mindMap?.emit?.('yemind_todo_toggle', node);
     });
     el.appendChild(checkbox);
-    return { el, width: 20, height: 20 };
+    return { el, width: 18, height: 18 };
 }
 function noteSvg() {
     return `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M6.5 3.75h8.8l3.2 3.2v13.3H6.5a2 2 0 0 1-2-2V5.75a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7"/><path d="M15.2 3.9v3.4h3.2M8 11h7.5M8 14.5h7.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
@@ -84394,13 +84479,11 @@ function openNoteDialog(commands, options = {}) {
         title: readonly ? '备注（只读）' : '备注',
         hideCloseIcon: true,
         content: `<div class="b3-dialog__content ymz-node-dialog ymz-note-dialog">
-      <header class="ymz-node-dialog__header"><strong>${readonly ? '备注（只读）' : '备注'}</strong><button type="button" class="ymz-node-dialog__close" data-node-dialog-action="close-note" aria-label="关闭备注">×</button></header>
+      <header class="ymz-node-dialog__header"><strong>${readonly ? '备注（只读）' : '备注'}</strong><button type="button" class="ymz-node-dialog__close" data-node-dialog-action="close-note-auto-save" aria-label="关闭备注">×</button></header>
       <div class="ymz-note-dialog__body">
         <div class="ymz-note-editor" data-field="note" contenteditable="${readonly ? 'false' : 'true'}" role="textbox" aria-multiline="true" data-placeholder="输入长篇备注；可粘贴文字和图片…"></div>
       </div>
       <footer class="ymz-note-dialog__footer">
-        ${readonly ? '' : '<span>支持多段文字和图片粘贴</span>'}
-        <div class="fn__space"></div>
         <button class="b3-button b3-button--cancel" data-dialog-action="cancel-note">${readonly ? '关闭' : '取消'}</button>
         ${readonly ? '' : '<button class="b3-button b3-button--text" data-dialog-action="save-note">保存</button>'}
       </footer>
@@ -84409,8 +84492,6 @@ function openNoteDialog(commands, options = {}) {
         height: `${height}px`,
     });
     dialog.element.classList.add('ymz-note-dialog-host');
-    dialog.element.querySelector('[data-node-dialog-action="close-note"]')?.addEventListener('click', () => dialog.destroy());
-    dialog.element.querySelector('[data-dialog-action="cancel-note"]')?.addEventListener('click', () => dialog.destroy());
     const editor = dialog.element.querySelector('[data-field="note"]');
     editor.innerHTML = current?.html ?? '';
     const container = dialog.element.querySelector('.b3-dialog__container') ?? dialog.element;
@@ -84423,6 +84504,29 @@ function openNoteDialog(commands, options = {}) {
     resizeHandle.setAttribute('aria-label', resizeHandle.title);
     container.appendChild(resizeHandle);
     (0, dialogResize_1.bindDialogResize)(resizeHandle, container);
+    let cancelled = false;
+    let persisted = false;
+    const persistNoteAndClose = () => {
+        if (persisted)
+            return;
+        persisted = true;
+        if (!readonly && !cancelled) {
+            const rect = container.getBoundingClientRect();
+            commands.setNote((0, nodeNoteState_1.updateNodeNote)(current, editor.innerHTML, Date.now(), { width: rect.width, height: rect.height }));
+        }
+        dialog.destroy();
+    };
+    dialog.element.querySelector('[data-node-dialog-action="close-note-auto-save"]')?.addEventListener('click', persistNoteAndClose);
+    dialog.element.querySelector('[data-dialog-action="cancel-note"]')?.addEventListener('click', () => {
+        cancelled = true;
+        dialog.destroy();
+    });
+    dialog.element.querySelector('[data-dialog-action="save-note"]')?.addEventListener('click', persistNoteAndClose);
+    dialog.element.addEventListener('mousedown', (event) => {
+        const target = event.target;
+        if (target === dialog.element || target.classList.contains('b3-dialog__scrim'))
+            persistNoteAndClose();
+    });
     editor.addEventListener('paste', (event) => {
         if (readonly)
             return;
@@ -84439,15 +84543,8 @@ function openNoteDialog(commands, options = {}) {
         });
         reader.readAsDataURL(image);
     });
-    if (!readonly) {
-        dialog.element.querySelector('[data-dialog-action="save-note"]')?.addEventListener('click', () => {
-            const rect = dialog.element.querySelector('.b3-dialog__container')?.getBoundingClientRect()
-                ?? dialog.element.getBoundingClientRect();
-            commands.setNote((0, nodeNoteState_1.updateNodeNote)(current, editor.innerHTML, Date.now(), { width: rect.width, height: rect.height }));
-            dialog.destroy();
-        });
+    if (!readonly)
         editor.focus();
-    }
 }
 function openCommentsDialog(commands, options = {}) {
     const readonly = Boolean(options.readonly);
@@ -85949,6 +86046,14 @@ function escapeAttribute(value) {
         .replaceAll('<', '&lt;')
         .replaceAll('>', '&gt;');
 }
+function cssPropertyName(value) {
+    return value.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+}
+function styleAttribute(style) {
+    return Object.entries(style)
+        .map(([key, value]) => `${cssPropertyName(key)}:${value}`)
+        .join(';');
+}
 function normalizeIcons(value) {
     return Array.isArray(value)
         ? value.map((item) => String(item ?? '').trim()).filter(Boolean)
@@ -86004,14 +86109,14 @@ function outlineAccessoriesFromData(data) {
 function iconHtml(value, pluginBaseUrl) {
     const marker = (0, localAssetCatalogs_1.markerItemFromValue)(value);
     if (marker) {
-        const resolver = (0, localAssetCatalogs_1.createRuntimeAssetResolver)(pluginBaseUrl);
-        return `<span class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon="${escapeAttribute(value)}" title="${escapeAttribute(marker.id)}">${(0, localAssetCatalogs_1.markerSvg)(resolver.markerSpriteUrl(), marker)}</span>`;
+        const style = styleAttribute((0, localAssetCatalogs_1.markerButtonStyle)(pluginBaseUrl, marker));
+        return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon-action data-outline-icon="${escapeAttribute(value)}" tabindex="-1" title="${escapeAttribute(marker.groupLabel)} ${marker.orderInGroup}" aria-label="修改图标"><span class="ymz-marker-sprite" style="${escapeAttribute(style)}"></span></button>`;
     }
     const label = LEGACY_ICON_LABELS[value] ?? '•';
-    return `<span class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon="${escapeAttribute(value)}" title="${escapeAttribute(value)}">${escapeAttribute(label)}</span>`;
+    return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon-action data-outline-icon="${escapeAttribute(value)}" tabindex="-1" title="${escapeAttribute(value)}" aria-label="修改图标">${escapeAttribute(label)}</button>`;
 }
 function statusButton(type, title, label) {
-    return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute(type)}" data-outline-content="${escapeAttribute(type)}" tabindex="-1" title="${escapeAttribute(title)}" aria-label="${escapeAttribute(title)}">${label}</button>`;
+    return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute(type)}" data-outline-content="${escapeAttribute(type)}" tabindex="-1" aria-label="${escapeAttribute(title)}">${label}</button>`;
 }
 function outlineAccessoriesHtml(accessories, pluginBaseUrl) {
     const hasAny = accessories.icons.length || accessories.image || accessories.todo || accessories.tags.length
@@ -86019,14 +86124,14 @@ function outlineAccessoriesHtml(accessories, pluginBaseUrl) {
     if (!hasAny)
         return '';
     const todo = accessories.todo
-        ? statusButton('todo', accessories.todo.text || (accessories.todo.checked ? '已完成待办' : '待办'), accessories.todo.checked ? '☑' : '☐')
+        ? `<button type="button" class="ymz-outline-accessories__todo${accessories.todo.checked ? ' is-checked' : ''}" data-outline-content="todo" tabindex="-1" aria-label="${accessories.todo.checked ? '待办已完成' : '待办未完成'}">${accessories.todo.checked ? '✓' : ''}</button>`
         : '';
     const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join('');
     const image = accessories.image
         ? `<button type="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? ' is-clipart' : ''}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? 'clipart' : 'image'}" tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? '剪贴图：单击编辑，双击查看' : '图片：单击编辑，双击查看'))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false"></button>`
         : '';
     const tags = accessories.tags.length
-        ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" title="标签：${escapeAttribute(accessories.tags.join('、'))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute(tag)}</span>`).join('')}</span>`
+        ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute(accessories.tags.join('、'))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute(tag)}</span>`).join('')}</span>`
         : '';
     const note = accessories.hasNote ? statusButton('note', '备注', 'N') : '';
     const comments = accessories.commentCount ? statusButton('comments', `批注 ${accessories.commentCount}`, String(accessories.commentCount)) : '';
@@ -86717,6 +86822,17 @@ class StructuredOutlineEditorController {
             if (!row)
                 return;
             const uid = row.dataset.outlineUid ?? '';
+            const iconAction = target.closest('[data-outline-icon-action]');
+            if (iconAction) {
+                event.preventDefault();
+                event.stopPropagation();
+                this.activateUid(uid, false);
+                if (!this.options.isReadonly()) {
+                    this.options.onActivate(uid);
+                    this.options.onIconEdit?.(uid, iconAction.dataset.outlineIcon ?? '', iconAction);
+                }
+                return;
+            }
             const imageAction = target.closest('[data-outline-image-action]');
             if (imageAction) {
                 event.preventDefault();
@@ -86730,7 +86846,7 @@ class StructuredOutlineEditorController {
                 this.outlineImageClickTimer = window.setTimeout(() => {
                     this.outlineImageClickTimer = null;
                     if (!this.options.isReadonly())
-                        this.options.onImageEdit?.(uid, kind);
+                        this.options.onImageEdit?.(uid, kind, imageAction);
                 }, 220);
                 return;
             }
@@ -86756,6 +86872,28 @@ class StructuredOutlineEditorController {
             this.activateUid(uid, false);
             if (!this.options.isReadonly())
                 this.options.onActivate(uid);
+        };
+        this.onPointerOver = (event) => {
+            const target = event.target;
+            const action = target.closest('[data-outline-content]');
+            const row = action?.closest('[data-outline-uid]');
+            if (!action || !row || !this.options.root.contains(row))
+                return;
+            const related = event.relatedTarget;
+            if (related && action.contains(related))
+                return;
+            this.options.onContentHover?.(row.dataset.outlineUid ?? '', action.dataset.outlineContent ?? '', action, true);
+        };
+        this.onPointerOut = (event) => {
+            const target = event.target;
+            const action = target.closest('[data-outline-content]');
+            const row = action?.closest('[data-outline-uid]');
+            if (!action || !row || !this.options.root.contains(row))
+                return;
+            const related = event.relatedTarget;
+            if (related && action.contains(related))
+                return;
+            this.options.onContentHover?.(row.dataset.outlineUid ?? '', action.dataset.outlineContent ?? '', action, false);
         };
         this.onDoubleClick = (event) => {
             const target = event.target;
@@ -87066,10 +87204,13 @@ class StructuredOutlineEditorController {
         this.lastTree = tree;
         if (this.applying)
             return;
-        if (!force && this.dirty && this.options.root.contains(document.activeElement))
-            return;
-        const bookmark = this.captureSelectionBookmark();
         const blocks = (0, structuredOutlineDocument_1.flattenStructuredOutline)(tree);
+        if (!force && this.dirty && this.options.root.contains(document.activeElement)) {
+            this.patchAccessoryProjection(blocks);
+            this.scheduleGuideRender();
+            return;
+        }
+        const bookmark = this.captureSelectionBookmark();
         this.patchBlocks(blocks, bookmark);
         this.scheduleGuideRender();
         this.lastAppliedSignature = this.domSignature();
@@ -87487,6 +87628,8 @@ class StructuredOutlineEditorController {
         root.addEventListener('pointerup', this.onPointerUp);
         root.addEventListener('focusin', this.onFocusIn);
         root.addEventListener('click', this.onClick);
+        root.addEventListener('pointerover', this.onPointerOver);
+        root.addEventListener('pointerout', this.onPointerOut);
         root.addEventListener('dblclick', this.onDoubleClick);
         root.addEventListener('contextmenu', this.onContextMenu);
         root.addEventListener('blur', this.onBlur, true);
@@ -87506,6 +87649,8 @@ class StructuredOutlineEditorController {
         root.removeEventListener('pointerup', this.onPointerUp);
         root.removeEventListener('focusin', this.onFocusIn);
         root.removeEventListener('click', this.onClick);
+        root.removeEventListener('pointerover', this.onPointerOver);
+        root.removeEventListener('pointerout', this.onPointerOut);
         root.removeEventListener('dblclick', this.onDoubleClick);
         root.removeEventListener('contextmenu', this.onContextMenu);
         if (this.outlineImageClickTimer !== null)
@@ -87532,6 +87677,33 @@ class StructuredOutlineEditorController {
         if (this.timer !== null)
             window.clearTimeout(this.timer);
         this.timer = null;
+    }
+    patchAccessoryProjection(blocks) {
+        const byKey = new Map(blocks.map((block) => [blockKey(block), block]));
+        this.options.root.querySelectorAll(':scope > [data-outline-uid]').forEach((row) => {
+            const key = `${row.dataset.outlineKind ?? 'node'}:${row.dataset.outlineUid ?? ''}`;
+            const block = byKey.get(key);
+            if (!block)
+                return;
+            const accessoryHtml = (0, outlineAccessories_1.outlineAccessoriesHtml)(block.accessories, this.options.pluginBaseUrl);
+            const existingAccessories = row.querySelector('.ymz-outline-accessories');
+            if (!accessoryHtml) {
+                existingAccessories?.remove();
+                return;
+            }
+            const wrapper = document.createElement('span');
+            wrapper.innerHTML = accessoryHtml;
+            const next = wrapper.firstElementChild;
+            if (!next)
+                return;
+            if (existingAccessories)
+                existingAccessories.replaceWith(next);
+            else {
+                const editorHost = row.querySelector('[data-outline-editor]');
+                if (editorHost)
+                    row.insertBefore(next, editorHost);
+            }
+        });
     }
     patchBlocks(blocks, bookmark) {
         const root = this.options.root;
@@ -89467,10 +89639,29 @@ function buildHoverPreviewHtml(type, value) {
         const note = value;
         return note?.html ? `<div class="ymz-node-hover-preview__note">${(0, sanitizeRichHtml_1.sanitizeRichHtml)(note.html)}</div>` : '<div class="ymz-empty-hint">暂无备注</div>';
     }
-    const comments = Array.isArray(value) ? value : [];
-    if (!comments.length)
-        return '<div class="ymz-empty-hint">暂无批注</div>';
-    return `<div class="ymz-node-hover-preview__comments">${comments.map((comment) => `<div class="ymz-node-hover-preview__comment"><div class="ymz-node-hover-preview__comment-text">${escapeHtml(comment.text).replaceAll('\n', '<br>')}</div><time class="ymz-node-hover-preview__comment-time" datetime="${new Date(comment.createdAt).toISOString()}">${(0, commentsPresentation_1.formatCommentTimestamp)(comment.createdAt)}</time></div>`).join('')}</div>`;
+    if (type === 'comments') {
+        const comments = Array.isArray(value) ? value : [];
+        if (!comments.length)
+            return '<div class="ymz-empty-hint">暂无批注</div>';
+        return `<div class="ymz-node-hover-preview__comments">${comments.map((comment) => `<div class="ymz-node-hover-preview__comment"><div class="ymz-node-hover-preview__comment-text">${escapeHtml(comment.text).replaceAll('\n', '<br>')}</div><time class="ymz-node-hover-preview__comment-time" datetime="${new Date(comment.createdAt).toISOString()}">${(0, commentsPresentation_1.formatCommentTimestamp)(comment.createdAt)}</time></div>`).join('')}</div>`;
+    }
+    if (type === 'todo') {
+        const todo = value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+        const label = todo?.checked ? '已完成' : '未完成';
+        const text = String(todo?.text ?? '').trim();
+        return `<div class="ymz-node-hover-preview__summary"><strong>${label}</strong>${text ? `<span>${escapeHtml(text)}</span>` : ''}</div>`;
+    }
+    if (type === 'tags') {
+        const tags = Array.isArray(value) ? value.map((item) => String(item ?? '').trim()).filter(Boolean) : [];
+        return tags.length
+            ? `<div class="ymz-node-hover-preview__tags">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join('')}</div>`
+            : '<div class="ymz-empty-hint">暂无标签</div>';
+    }
+    if (type === 'link') {
+        const link = typeof value === 'string' ? value.trim() : '';
+        return link ? `<div class="ymz-node-hover-preview__link">${escapeHtml(link)}</div>` : '<div class="ymz-empty-hint">暂无链接</div>';
+    }
+    return value ? '<div class="ymz-node-hover-preview__summary"><strong>已有外框</strong><span>单击可编辑或移除</span></div>' : '<div class="ymz-empty-hint">暂无外框</div>';
 }
 class NodeHoverPreview {
     constructor(root) {
@@ -90525,6 +90716,7 @@ exports.ProjectChoicePanel = ProjectChoicePanel;
 // /src/ui/localAssetDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.positionAssetDialog = positionAssetDialog;
 exports.openMarkerPicker = openMarkerPicker;
 exports.openClipartPicker = openClipartPicker;
 const siyuan_1 = __externalRequire("siyuan");
@@ -90537,14 +90729,69 @@ function applyStyle(element, style) {
 function selectedIcons(commands) {
     return (0, nodeContentState_1.normalizeStringList)(commands.getPrimaryNodeData()?.icon);
 }
-function prepareAssetDialog(dialog) {
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(value, max));
+}
+function positionAssetDialog(dialog, anchorRect) {
+    if (!anchorRect)
+        return;
+    window.requestAnimationFrame(() => {
+        const container = dialog.element.querySelector('.b3-dialog__container');
+        if (!container?.isConnected)
+            return;
+        const rect = container.getBoundingClientRect();
+        const margin = 12;
+        const gap = 14;
+        const maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
+        const maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
+        const roomRight = window.innerWidth - anchorRect.right - gap;
+        const roomLeft = anchorRect.left - gap;
+        let left = roomRight >= rect.width
+            ? anchorRect.right + gap
+            : roomLeft >= rect.width
+                ? anchorRect.left - gap - rect.width
+                : clamp(anchorRect.left + anchorRect.width / 2 - rect.width / 2, margin, maxLeft);
+        let top = clamp(anchorRect.top + anchorRect.height / 2 - rect.height / 2, margin, maxTop);
+        const overlaps = left < anchorRect.right && left + rect.width > anchorRect.left
+            && top < anchorRect.bottom && top + rect.height > anchorRect.top;
+        if (overlaps) {
+            const below = anchorRect.bottom + gap;
+            const above = anchorRect.top - gap - rect.height;
+            if (below + rect.height <= window.innerHeight - margin)
+                top = below;
+            else if (above >= margin)
+                top = above;
+        }
+        left = clamp(left, margin, maxLeft);
+        top = clamp(top, margin, maxTop);
+        Object.assign(container.style, {
+            position: 'fixed',
+            left: `${Math.round(left)}px`,
+            top: `${Math.round(top)}px`,
+            margin: '0',
+            transform: 'none',
+        });
+        container.dataset.assetDialogAnchored = 'true';
+    });
+}
+function prepareAssetDialog(dialog, anchorRect) {
     dialog.element.classList.add('ymz-asset-dialog-shell');
+    dialog.element.querySelectorAll('[data-asset-dialog-action="close"]').forEach((button) => {
+        button.addEventListener('click', () => dialog.destroy());
+    });
     dialog.element.addEventListener('mousedown', (event) => {
         const target = event.target;
         if (target === dialog.element || target.classList.contains('b3-dialog__scrim')) {
             dialog.destroy();
         }
     });
+    positionAssetDialog(dialog, anchorRect);
+}
+function assetHeader(title) {
+    return `<header class="ymz-local-asset-dialog__header">
+    <strong>${title}</strong>
+    <button type="button" class="ymz-local-asset-dialog__close" data-asset-dialog-action="close" aria-label="关闭${title}">×</button>
+  </header>`;
 }
 function openMarkerPicker(commands, options = {}) {
     let activeGroupId = options.initialGroupId && localAssetCatalogs_1.markerCatalog.groups.some((group) => group.id === options.initialGroupId)
@@ -90553,18 +90800,19 @@ function openMarkerPicker(commands, options = {}) {
     const dialog = new siyuan_1.Dialog({
         title: '图标',
         content: `<div class="b3-dialog__content ymz-local-asset-dialog ymz-marker-dialog">
+      ${assetHeader('图标')}
       <nav class="ymz-asset-tabs ymz-asset-tabs--sticky" data-role="marker-tabs" aria-label="图标分类"></nav>
       <div class="ymz-marker-scroll" data-role="marker-scroll"><div class="ymz-marker-groups" data-role="marker-groups"></div></div>
       <footer class="ymz-local-asset-dialog__footer">
         <button type="button" class="b3-button b3-button--cancel" data-action="clear-markers">清除图标</button>
-        <button type="button" class="b3-button b3-button--text" data-action="close">完成</button>
+        <button type="button" class="b3-button b3-button--text" data-asset-dialog-action="close">完成</button>
       </footer>
     </div>`,
-        width: '640px',
+        width: '600px',
         height: '620px',
-        hideCloseIcon: false,
+        hideCloseIcon: true,
     });
-    prepareAssetDialog(dialog);
+    prepareAssetDialog(dialog, options.anchorRect);
     const tabs = dialog.element.querySelector('[data-role="marker-tabs"]');
     const scroll = dialog.element.querySelector('[data-role="marker-scroll"]');
     const groups = dialog.element.querySelector('[data-role="marker-groups"]');
@@ -90593,6 +90841,7 @@ function openMarkerPicker(commands, options = {}) {
             else
                 next.add(value);
             commands.setIcons(Array.from(next));
+            options.onChange?.();
             refreshSelection();
         });
         return button;
@@ -90637,9 +90886,9 @@ function openMarkerPicker(commands, options = {}) {
     localAssetCatalogs_1.markerCatalog.groups.forEach((group) => addTab(group.id, group.label));
     dialog.element.querySelector('[data-action="clear-markers"]')?.addEventListener('click', () => {
         commands.setIcons([]);
+        options.onChange?.();
         refreshSelection();
     });
-    dialog.element.querySelector('[data-action="close"]')?.addEventListener('click', () => dialog.destroy());
     refreshSelection();
     if (activeGroupId)
         requestAnimationFrame(() => selectTab(activeGroupId));
@@ -90651,15 +90900,16 @@ function openClipartPicker(commands, options = {}) {
     const dialog = new siyuan_1.Dialog({
         title: '剪贴图',
         content: `<div class="b3-dialog__content ymz-local-asset-dialog ymz-clipart-dialog">
+      ${assetHeader('剪贴图')}
       <div class="ymz-clipart-search"><input class="b3-text-field" data-role="clipart-search" placeholder="搜索剪贴图"><span data-role="clipart-count"></span></div>
       <div class="ymz-asset-tabs ymz-asset-tabs--scroll ymz-asset-tabs--sticky" data-role="clipart-tabs"></div>
       <div class="ymz-clipart-grid" data-role="clipart-grid"></div>
     </div>`,
-        width: '760px',
+        width: '660px',
         height: '620px',
-        hideCloseIcon: false,
+        hideCloseIcon: true,
     });
-    prepareAssetDialog(dialog);
+    prepareAssetDialog(dialog, options.anchorRect);
     const search = dialog.element.querySelector('[data-role="clipart-search"]');
     const tabs = dialog.element.querySelector('[data-role="clipart-tabs"]');
     const grid = dialog.element.querySelector('[data-role="clipart-grid"]');
@@ -90706,6 +90956,7 @@ function openClipartPicker(commands, options = {}) {
                     height: size.height,
                     custom: true,
                 });
+                options.onChange?.();
                 dialog.destroy();
             });
             grid.appendChild(button);

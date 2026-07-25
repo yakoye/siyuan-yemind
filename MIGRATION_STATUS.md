@@ -5,7 +5,7 @@
 - Plugin ID: `siyuan-yemind`
 - Install folder: `data/plugins/siyuan-yemind/`
 - Storage folder: `data/storage/petal/siyuan-yemind/`
-- Current version: `0.9.26`
+- Current version: `0.9.27`
 
 ## Compatibility retained internally
 
@@ -19,9 +19,10 @@
 - v0.9.23 adds no map-schema migration. Icon-slot geometry, dark icon variants and theme-state styling are presentation-only changes.
 - v0.9.24 adds no persistent map-schema migration. Outline text import creates ordinary UID-backed nodes, while context-menu, Enter, formula-icon and appearance-stability changes operate through existing transactions and presentation state.
 - v0.9.25 adds no upgrade-time migration. New long imported nodes may carry optional `width`, `customTextWidth` and `yemindImportedAutoWidth` fields; manual width editing clears the automatic marker. Outline accessories are derived from existing `icon`, `image` and `yemindClipartId` content and do not duplicate visual style data.
+- v0.9.27 adds no persistent map-schema migration. Marker rendering, accessory hover previews, anchored asset dialogs, note close behavior, clipart direct editing and todo geometry are runtime presentation/interaction changes; accessory-only outline synchronization continues to read and write the existing canonical node fields.
 - v0.9.26 performs one conservative runtime repair: nodes marked `yemindImportedAutoWidth: true` lose the redundant `width` field only when it exactly equals `customTextWidth`. User-adjusted widths, node text, hierarchy, UIDs, images and unrelated metadata are preserved. Collapse states and outline content continue to use existing node fields.
 - Fixed visual resources remain outside map data and are referenced through stable catalog IDs and plugin-local URLs.
 
 ## Release safety
 
-The release archive does not include user data files and can be extracted over the existing plugin folder while SiYuan is closed. v0.9.26 preserves existing node UIDs, text, hierarchy, image data, relation data and unrelated metadata. Its only upgrade repair removes the redundant `width` field from specifically marked v0.9.25 automatic-width nodes when it duplicates `customTextWidth`; user-edited widths are not touched. Text-to-map changes data only after explicit confirmation and commits the result as one tree transaction. Checkpoints continue using the existing independent history store.
+The release archive does not include user data files and can be extracted over the existing plugin folder while SiYuan is closed. v0.9.27 preserves existing node UIDs, text, hierarchy, image data, relation data and unrelated metadata. It introduces no additional migration; the existing v0.9.26 upgrade repair still removes the redundant `width` field from specifically marked v0.9.25 automatic-width nodes when it duplicates `customTextWidth`; user-edited widths are not touched. Text-to-map changes data only after explicit confirmation and commits the result as one tree transaction. Checkpoints continue using the existing independent history store.

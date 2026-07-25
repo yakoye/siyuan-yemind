@@ -71,8 +71,8 @@ describe('v0.9.21 source SVG, flat asset dialog and checkpoint polish', () => {
     expect(dialog).toContain('ymz-marker-groups');
     expect(dialog).toContain('scrollIntoView');
     expect(dialog).toContain("height: '620px'");
-    expect(dialog).toContain('hideCloseIcon: false');
-    expect(dialog).toContain('prepareAssetDialog(dialog)');
+    expect(dialog).toContain('hideCloseIcon: true');
+    expect(dialog).toContain('prepareAssetDialog(dialog, options.anchorRect)');
     expect(css).toContain('.ymz-marker-option{');
     expect(css).toContain('background:transparent!important');
   });
@@ -83,8 +83,8 @@ describe('v0.9.21 source SVG, flat asset dialog and checkpoint polish', () => {
     expect(dialog).not.toContain('clipart-more');
     expect(dialog).not.toContain('加载更多');
     expect(dialog).toContain('matches.forEach((item)');
-    expect(dialog).toContain("width: '760px'");
-    expect(dialog).toContain('hideCloseIcon: false');
+    expect(dialog).toContain("width: '660px'");
+    expect(dialog).toContain('hideCloseIcon: true');
     expect(css).toContain('.ymz-clipart-grid{');
     expect(css).toContain('.ymz-clipart-option{');
   });
