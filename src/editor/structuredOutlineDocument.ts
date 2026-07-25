@@ -226,7 +226,7 @@ export function buildTreeFromStructuredOutline(
       hasChildren: false,
       isRoot: true,
       pristine: false,
-      accessories: { icons: [], image: null },
+      accessories: { icons: [], image: null, todo: null, tags: [], link: '', hasNote: false, commentCount: 0, hasOuterFrame: false },
     });
   }
   const existing = indexExistingData(baseTree);

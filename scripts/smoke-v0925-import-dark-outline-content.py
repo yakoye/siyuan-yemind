@@ -61,7 +61,8 @@ with sync_playwright() as p:
     add.hover()
     page.wait_for_selector('.b3-menu--submenu')
     child_labels=page.locator('.b3-menu--submenu .b3-menu__label').all_text_contents()
-    if child_labels != ['图标','剪贴图','图片']: raise RuntimeError(f'outline add submenu mismatch: {child_labels}')
+    expected_add=['添加待办','外框','备注','批注','标签','图标','链接','剪贴图','图片','代码块','公式','行内链接']
+    if child_labels != expected_add: raise RuntimeError(f'outline add submenu mismatch: {child_labels}')
     page.locator('.ymz-context-menu--outline').get_by_text('文本转导图…', exact=True).click()
     page.wait_for_selector('.ymz-text-map-dialog')
     box=page.locator('.b3-dialog__container').bounding_box()
@@ -79,7 +80,7 @@ with sync_playwright() as p:
     page.wait_for_function("[...document.querySelectorAll('.ymz-outline-row__editor')].some(e=>e.textContent.includes('超过二十个汉字'))")
     page.wait_for_timeout(900)
     stored=page.evaluate("""async()=>{const map=window.__plugin.repository.get(window.__mapId);const target=map.data.children[0];const long=target.children[0].children[0].children[0];return {text:long.data.text,width:long.data.width,customTextWidth:long.data.customTextWidth}}""")
-    if stored['width']!=280 or stored['customTextWidth']!=280: raise RuntimeError(f'import width policy not persisted: {stored}')
+    if stored['width'] is not None or stored['customTextWidth']!=280: raise RuntimeError(f'import width policy not persisted: {stored}')
     if '\n' in stored['text']: raise RuntimeError('width policy inserted source newline')
 
     page.evaluate("document.documentElement.setAttribute('data-theme-mode','dark')")
@@ -100,5 +101,5 @@ with sync_playwright() as p:
     if page.locator('[data-role="line-style-choice-panel"] .ymz-project-choice-panel__item').count()!=3: raise RuntimeError('line style custom choices missing')
     if page.locator('.ymz-topbar select:not([hidden])').count()!=0: raise RuntimeError('native theme/line select remained visible')
     if errors: raise RuntimeError('Page errors: '+'\n'.join(errors))
-    print({'dialog':box,'previewRows':4,'outlineAccessories':True,'addSubmenu':child_labels,'storedWidth':stored['width'],'darkPanel':panel_bg,'toolbarColors':[normal_color,theme_color,save_color]})
+    print({'dialog':box,'previewRows':4,'outlineAccessories':True,'addSubmenu':child_labels,'storedWidth':stored['customTextWidth'],'darkPanel':panel_bg,'toolbarColors':[normal_color,theme_color,save_color]})
     browser.close()

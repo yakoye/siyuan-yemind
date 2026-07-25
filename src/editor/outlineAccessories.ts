@@ -7,9 +7,20 @@ export interface OutlineAccessoryImage {
   clipartId?: string;
 }
 
+export interface OutlineAccessoryTodo {
+  checked: boolean;
+  text: string;
+}
+
 export interface OutlineAccessories {
   icons: string[];
   image: OutlineAccessoryImage | null;
+  todo: OutlineAccessoryTodo | null;
+  tags: string[];
+  link: string;
+  hasNote: boolean;
+  commentCount: number;
+  hasOuterFrame: boolean;
 }
 
 const LEGACY_ICON_LABELS: Record<string, string> = {
@@ -38,6 +49,22 @@ function normalizeIcons(value: unknown): string[] {
     : [];
 }
 
+function normalizeTags(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.map((item) => String(item ?? '').trim()).filter(Boolean)
+    : [];
+}
+
+function hasMeaningfulNote(value: unknown): boolean {
+  if (!value) return false;
+  if (typeof value === 'string') return value.replace(/<[^>]*>/g, '').trim().length > 0;
+  if (typeof value === 'object') {
+    const html = String((value as Record<string, unknown>).html ?? '');
+    return html.replace(/<[^>]*>/g, '').trim().length > 0 || /<img\b/i.test(html);
+  }
+  return false;
+}
+
 export function outlineAccessoriesFromData(data: MindMapNodeData | Record<string, unknown>): OutlineAccessories {
   const image = typeof data.image === 'string' && data.image.trim()
     ? {
@@ -48,7 +75,26 @@ export function outlineAccessoriesFromData(data: MindMapNodeData | Record<string
           : {}),
       }
     : null;
-  return { icons: normalizeIcons(data.icon), image };
+  const todoValue = data.yemindTodo && typeof data.yemindTodo === 'object'
+    ? data.yemindTodo as Record<string, unknown>
+    : null;
+  const todo = todoValue
+    ? { checked: Boolean(todoValue.checked), text: String(todoValue.text ?? '') }
+    : null;
+  const comments = Array.isArray(data.yemindComments) ? data.yemindComments : [];
+  const outerFrame = data.outerFrame && typeof data.outerFrame === 'object'
+    ? String((data.outerFrame as Record<string, unknown>).groupId ?? '')
+    : '';
+  return {
+    icons: normalizeIcons(data.icon),
+    image,
+    todo,
+    tags: normalizeTags(data.tag),
+    link: typeof data.hyperlink === 'string' ? data.hyperlink : '',
+    hasNote: hasMeaningfulNote(data.yemindNote ?? data.note),
+    commentCount: comments.length,
+    hasOuterFrame: Boolean(outerFrame),
+  };
 }
 
 function iconHtml(value: string, pluginBaseUrl?: string): string {
@@ -61,11 +107,27 @@ function iconHtml(value: string, pluginBaseUrl?: string): string {
   return `<span class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon="${escapeAttribute(value)}" title="${escapeAttribute(value)}">${escapeAttribute(label)}</span>`;
 }
 
+function statusButton(type: string, title: string, label: string): string {
+  return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute(type)}" data-outline-content="${escapeAttribute(type)}" tabindex="-1" title="${escapeAttribute(title)}" aria-label="${escapeAttribute(title)}">${label}</button>`;
+}
+
 export function outlineAccessoriesHtml(accessories: OutlineAccessories, pluginBaseUrl?: string): string {
-  if (!accessories.icons.length && !accessories.image) return '';
+  const hasAny = accessories.icons.length || accessories.image || accessories.todo || accessories.tags.length
+    || accessories.link || accessories.hasNote || accessories.commentCount || accessories.hasOuterFrame;
+  if (!hasAny) return '';
+  const todo = accessories.todo
+    ? statusButton('todo', accessories.todo.text || (accessories.todo.checked ? '已完成待办' : '待办'), accessories.todo.checked ? '☑' : '☐')
+    : '';
   const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join('');
   const image = accessories.image
-    ? `<button type="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? ' is-clipart' : ''}" data-outline-image-preview tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? '剪贴图' : '图片'))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false"></button>`
+    ? `<button type="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? ' is-clipart' : ''}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? 'clipart' : 'image'}" tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? '剪贴图：单击编辑，双击查看' : '图片：单击编辑，双击查看'))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false"></button>`
     : '';
-  return `<span class="ymz-outline-accessories" contenteditable="false" aria-label="节点附加内容">${icons}${image}</span>`;
+  const tags = accessories.tags.length
+    ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" title="标签：${escapeAttribute(accessories.tags.join('、'))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute(tag)}</span>`).join('')}</span>`
+    : '';
+  const note = accessories.hasNote ? statusButton('note', '备注', 'N') : '';
+  const comments = accessories.commentCount ? statusButton('comments', `批注 ${accessories.commentCount}`, String(accessories.commentCount)) : '';
+  const link = accessories.link ? statusButton('link', accessories.link, '↗') : '';
+  const outerFrame = accessories.hasOuterFrame ? statusButton('outer-frame', '已有外框', '□') : '';
+  return `<span class="ymz-outline-accessories" contenteditable="false" aria-label="节点附加内容">${todo}${icons}${image}${tags}${note}${comments}${link}${outerFrame}</span>`;
 }

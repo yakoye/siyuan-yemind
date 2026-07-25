@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.25 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.26 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -39,11 +39,11 @@ const releaseInfo_1 = __require(29);
 const constants_1 = __require(28);
 const dock_1 = __require(38);
 const tabs_1 = __require(39);
-const OpenMapTabRegistry_1 = __require(263);
-const pluginUrl_1 = __require(264);
-const operationSafety_1 = __require(265);
-const pluginStartup_1 = __require(266);
-const globalSearch_1 = __require(267);
+const OpenMapTabRegistry_1 = __require(264);
+const pluginUrl_1 = __require(265);
+const operationSafety_1 = __require(266);
+const pluginStartup_1 = __require(267);
+const globalSearch_1 = __require(268);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -15844,7 +15844,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.25';
+exports.PLUGIN_VERSION = '0.9.26';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -15861,20 +15861,20 @@ const constants_1 = __require(28);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-24T13:53:45Z',
-    buildId: 'yemind-v0.9.25-20260724',
+    buildTime: '2026-07-24T15:57:06Z',
+    buildId: 'yemind-v0.9.26-20260724',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '优化文本转导图的大文本预览与导入节点宽度，统一暗黑主题项目控件，并让大纲同步显示和添加图片、图标与剪贴图。',
+    releaseSummary: '修复文本导入长节点布局，统一深度折叠与单层展开语义，并补齐大纲图片浏览和节点内容操作。',
     highlights: [
-        '文本转导图对话框限制在视口内，原始文本和处理后结构分别滚动，右侧预览展示去除树形符号后的真实层级结果。',
-        '超过约二十个汉字显示宽度的导入节点默认使用 280px 自动换行，不修改原始文字；用户手动调整宽度后以自定义值持久保存。',
-        '主题与线型改为自定义选择面板，结构、主题、线型、样式和保存状态在暗黑主题下使用统一可读前景、悬停和选中配色。',
-        '大纲以紧凑附件槽同步显示节点图标、图片和剪贴图，并复用导图的图标、剪贴图和图片添加入口。',
-        '大纲只同步节点内容，不复制节点边框、背景、形状和连线等画布装饰样式。',
-        '保留 v0.9.24 的文本导入、连续 Enter 退层级、公式图标和主题切换视图稳定性修复。',
+        '文本导入节点只使用 customTextWidth 控制自动换行，升级时安全清理 v0.9.25 自动宽度节点中重复的 width 字段。',
+        '导入完成后等待文本尺寸稳定再执行一次整体重排，并恢复原画布缩放、平移和活动节点，避免长节点文字、边框和连线错位。',
+        '节点折叠会递归折叠全部后代分支；重新展开时只展开当前一层。全局折叠后再次展开也只显示中心主题的一级节点。',
+        '大纲图片和剪贴图支持单击编辑、双击进入共享大图浏览器，单击与双击通过可取消延迟避免冲突。',
+        '大纲添加菜单补齐待办、外框、备注、批注、标签、图标、链接、剪贴图、图片、代码块、公式和行内链接，并复用导图同一份节点数据。',
+        '大纲同步待办、标签、备注、批注、链接和外框状态，但继续不复制节点背景、边框、形状和分支线等画布装饰。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -16987,10 +16987,10 @@ function escapeHtml(value) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
 const YeMindEditor_1 = __require(40);
-const deferredMount_1 = __require(261);
+const deferredMount_1 = __require(262);
 const constants_1 = __require(28);
-const visibleElement_1 = __require(244);
-const tabNodeFocus_1 = __require(262);
+const visibleElement_1 = __require(245);
+const tabNodeFocus_1 = __require(263);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -17093,48 +17093,50 @@ const relationData_1 = __require(206);
 const commands_1 = __require(207);
 const nodeDecorations_1 = __require(197);
 const registerPlugins_1 = __require(91);
-const checkpointDialog_1 = __require(213);
-const contextMenu_1 = __require(216);
+const checkpointDialog_1 = __require(214);
+const contextMenu_1 = __require(217);
 const dialogs_1 = __require(25);
-const textToMapDialog_1 = __require(223);
-const nodeContentDialogs_1 = __require(217);
-const richTextDialogs_1 = __require(228);
-const editorStats_1 = __require(229);
-const editorTemplate_1 = __require(230);
-const outlineDrag_1 = __require(231);
-const StructuredOutlineEditorController_1 = __require(232);
-const splitPane_1 = __require(233);
-const RichTextToolbar_1 = __require(234);
+const textToMapDialog_1 = __require(224);
+const outlineTreeImport_1 = __require(225);
+const nodeContentDialogs_1 = __require(218);
+const richTextDialogs_1 = __require(229);
+const editorStats_1 = __require(230);
+const editorTemplate_1 = __require(231);
+const outlineDrag_1 = __require(232);
+const StructuredOutlineEditorController_1 = __require(233);
+const splitPane_1 = __require(234);
+const RichTextToolbar_1 = __require(235);
 const shortcuts_1 = __require(32);
-const selectionPresentation_1 = __require(238);
-const saveRevision_1 = __require(239);
-const relationPresentation_1 = __require(240);
-const outerFramePresentation_1 = __require(241);
-const toolbarAvailability_1 = __require(242);
-const linkNavigation_1 = __require(243);
-const visibleElement_1 = __require(244);
-const imageFileLoading_1 = __require(218);
-const nodeImageInput_1 = __require(245);
-const nodeHoverPreview_1 = __require(246);
-const imageLightbox_1 = __require(247);
-const nodeStylePanel_1 = __require(248);
-const projectStylePanel_1 = __require(249);
-const layoutGalleryPanel_1 = __require(250);
-const projectChoicePanel_1 = __require(251);
-const localAssetDialogs_1 = __require(252);
+const selectionPresentation_1 = __require(239);
+const saveRevision_1 = __require(240);
+const relationPresentation_1 = __require(241);
+const outerFramePresentation_1 = __require(242);
+const toolbarAvailability_1 = __require(243);
+const linkNavigation_1 = __require(244);
+const visibleElement_1 = __require(245);
+const imageFileLoading_1 = __require(219);
+const nodeImageInput_1 = __require(246);
+const nodeHoverPreview_1 = __require(247);
+const imageLightbox_1 = __require(248);
+const nodeStylePanel_1 = __require(249);
+const projectStylePanel_1 = __require(250);
+const layoutGalleryPanel_1 = __require(251);
+const projectChoicePanel_1 = __require(252);
+const localAssetDialogs_1 = __require(253);
 const layoutAssetPresets_1 = __require(14);
 const measurementHost_1 = __require(205);
-const canvasRichTextVisibility_1 = __require(253);
-const searchPanelState_1 = __require(254);
+const canvasRichTextVisibility_1 = __require(254);
+const searchPanelState_1 = __require(255);
 const projectStyle_1 = __require(20);
-const appearanceTransaction_1 = __require(255);
-const nodeQuickActions_1 = __require(256);
+const appearanceTransaction_1 = __require(256);
+const nodeQuickActions_1 = __require(257);
 const projectControls_1 = __require(35);
 const nodeNoteState_1 = __require(198);
-const canvasRightDrag_1 = __require(257);
-const liveNodeWidthLayout_1 = __require(258);
-const focusHighlight_1 = __require(259);
-const editingSurfaceCoordinator_1 = __require(260);
+const nodeContentMenu_1 = __require(223);
+const canvasRightDrag_1 = __require(258);
+const liveNodeWidthLayout_1 = __require(259);
+const focusHighlight_1 = __require(260);
+const editingSurfaceCoordinator_1 = __require(261);
 const clipartGeometry_1 = __require(212);
 class YeMindEditor {
     constructor(options) {
@@ -17165,6 +17167,9 @@ class YeMindEditor {
         this.searchText = "";
         this.applyingCheckpoint = false;
         this.applyingAppearance = false;
+        this.applyingImportLayout = false;
+        this.importLayoutRevision = 0;
+        this.pendingImportLayout = null;
         this.pendingAppearanceRefresh = false;
         this.resizeFrame = null;
         this.splitResizeFrame = null;
@@ -17629,10 +17634,11 @@ class YeMindEditor {
         if (lineStyleSelect)
             lineStyleSelect.value = this.current.lineStyle;
         let runtimeData = this.current.data;
-        const normalized = (0, dragBehavior_1.stripCustomPositions)(runtimeData);
+        const importedWidthRepair = (0, outlineTreeImport_1.repairImportedAutoWidthTree)(runtimeData);
+        const normalized = (0, dragBehavior_1.stripCustomPositions)(importedWidthRepair.tree);
         const sanitized = (0, relationData_1.sanitizeAssociativeLines)(normalized.tree);
         runtimeData = sanitized.tree;
-        if (normalized.changed || sanitized.changed) {
+        if (importedWidthRepair.changed || normalized.changed || sanitized.changed) {
             this.current.data = runtimeData;
             void this.options.repository
                 .update(this.current.id, { data: runtimeData })
@@ -17747,6 +17753,24 @@ class YeMindEditor {
             },
             onToggle: (uid, expanded) => this.setOutlineExpanded(uid, expanded),
             onContextMenu: (event, uid) => this.openOutlineContextMenu(event, uid),
+            onImageEdit: (uid, kind) => {
+                if (!this.commands || this.commands.isReadonly())
+                    return;
+                this.commands.goToNode(uid);
+                this.activateOutlineUid(uid, false);
+                if (kind === 'clipart')
+                    (0, localAssetDialogs_1.openClipartPicker)(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl });
+                else
+                    (0, nodeContentDialogs_1.openImageDialog)(this.commands);
+            },
+            onImagePreview: (uid) => {
+                const data = this.findTreeNodeData(uid);
+                const source = String(data?.image ?? '');
+                const title = String(data?.imageTitle ?? '');
+                if (source)
+                    this.imageLightbox?.show(source, title);
+            },
+            onContentAction: (uid, type) => this.runOutlineContentAction(uid, type),
             onUndo: () => this.commands?.undo(),
             onRedo: () => this.commands?.redo(),
             onDiagnostic: (action, details) => this.options.diagnostics.record("outline", action, this.current.id, details),
@@ -18077,7 +18101,7 @@ class YeMindEditor {
             this.scheduleSave();
         });
         this.map.on("view_data_change", (viewData) => {
-            if (this.applyingCheckpoint || this.applyingAppearance)
+            if (this.applyingCheckpoint || this.applyingAppearance || this.applyingImportLayout)
                 return;
             this.updateZoom();
             const normalized = (0, dragBehavior_1.normalizePersistedViewData)(viewData);
@@ -18701,6 +18725,11 @@ class YeMindEditor {
                 this.map.resize();
                 if (this.pendingAppearanceRefresh)
                     this.applyMapAppearance(true);
+                const pendingImport = this.pendingImportLayout;
+                if (pendingImport) {
+                    this.pendingImportLayout = null;
+                    this.runImportedTreeLayout(pendingImport.activeUid, pendingImport.transform, pendingImport.revision);
+                }
                 this.updateDiagnosticState();
             }
             catch (error) {
@@ -18873,6 +18902,14 @@ class YeMindEditor {
             readonly,
             isRoot: state.isRoot,
             hasChildren: state.hasChildren,
+            expanded: state.expanded,
+            todoLabel: (0, nodeContentMenu_1.createTodoMenuDescriptor)(this.commands.getTodo()).label,
+            todoWarning: (0, nodeContentMenu_1.createTodoMenuDescriptor)(this.commands.getTodo()).warning,
+            outerFrameLabel: this.commands.hasOuterFrameForSelection() ? '删除外框' : '外框',
+            canOuterFrame: this.commands.hasOuterFrameForSelection() || this.commands.canAddOuterFrame(),
+            canCodeBlock: Boolean(this.outlineRichText.getSelectedText() || this.outlineRichText.getCodeBlock()),
+            canInlineLink: Boolean(this.outlineRichText.getSelectedText() || this.outlineRichText.getSelectedInlineLink()),
+            canFormula: true,
             canMoveUp: state.canMoveUp,
             canMoveDown: state.canMoveDown,
             onEdit: () => this.outlineRichText?.editLine(uid),
@@ -18883,11 +18920,18 @@ class YeMindEditor {
                 targetUid: uid,
                 getTree: () => this.current.data,
                 onApply: (tree, result, insertMode) => {
-                    const applied = Boolean(this.commands?.replaceTree(tree));
+                    const repaired = (0, outlineTreeImport_1.repairImportedAutoWidthTree)(tree).tree;
+                    const importTransform = this.map?.view?.getTransformData?.();
+                    this.applyingImportLayout = true;
+                    const applied = Boolean(this.commands?.replaceTree(repaired));
                     if (applied) {
-                        this.current.data = tree;
-                        this.renderOutline(tree);
+                        this.current.data = repaired;
+                        this.renderOutline(repaired);
                         this.activateOutlineUid(uid, true);
+                        this.stabilizeImportedTreeLayout(uid, importTransform);
+                    }
+                    else {
+                        this.applyingImportLayout = false;
                     }
                     this.options.diagnostics.record('outline', 'text-to-map', this.current.id, {
                         applied,
@@ -18901,6 +18945,32 @@ class YeMindEditor {
                     return applied;
                 },
             }),
+            onTodo: () => {
+                activate();
+                const action = (0, nodeContentMenu_1.createTodoMenuDescriptor)(this.commands?.getTodo());
+                this.commands?.setTodo(action.next);
+            },
+            onOuterFrame: () => {
+                activate();
+                if (this.commands?.hasOuterFrameForSelection())
+                    this.commands.removeOuterFrameForSelection();
+                else
+                    this.commands?.addOuterFrame();
+            },
+            onNote: () => { activate(); if (this.commands)
+                (0, nodeContentDialogs_1.openNoteDialog)(this.commands); },
+            onComments: () => { activate(); if (this.commands)
+                (0, nodeContentDialogs_1.openCommentsDialog)(this.commands); },
+            onTags: () => { activate(); if (this.commands)
+                (0, nodeContentDialogs_1.openTagsDialog)(this.commands); },
+            onNodeLink: () => { activate(); if (this.commands)
+                (0, nodeContentDialogs_1.openLinkDialog)(this.commands, this.settings.inlineLinkAutoHttps); },
+            onCodeBlock: () => { if (this.outlineRichText)
+                (0, richTextDialogs_1.openCodeBlockDialog)(this.outlineRichText, this.settings); },
+            onFormula: () => { if (this.outlineRichText)
+                (0, nodeContentDialogs_1.openFormulaDialog)(this.outlineRichText); },
+            onInlineLink: () => { if (this.outlineRichText)
+                (0, richTextDialogs_1.openInlineLinkDialog)(this.outlineRichText, this.settings); },
             onMarkers: () => {
                 activate();
                 if (this.commands)
@@ -18922,11 +18992,131 @@ class YeMindEditor {
             onPastePlain: () => this.outlineRichText.pasteCurrentLine(uid, true),
             onMoveUp: () => { activate(); this.commands?.moveUp(); },
             onMoveDown: () => { activate(); this.commands?.moveDown(); },
-            onToggleExpand: () => this.setOutlineExpanded(uid, !state.expanded),
+            onToggleExpand: () => { this.outlineRichText?.flush('before-toggle-deep'); this.commands?.toggleBranchExpandByUid(uid); },
             onRemoveSubtree: () => { activate(); this.commands?.remove(); },
             onRemoveOnlyCurrent: () => { activate(); this.commands?.removeOnlyCurrent(); },
             onAction: (action) => this.options.diagnostics.record('outline-menu', action, this.current.id, { uid }),
         });
+    }
+    findTreeNodeData(uid, tree = this.current.data) {
+        if (String(tree.data?.uid ?? '') === uid)
+            return tree.data;
+        for (const child of tree.children ?? []) {
+            const found = this.findTreeNodeData(uid, child);
+            if (found)
+                return found;
+        }
+        return null;
+    }
+    runOutlineContentAction(uid, type) {
+        if (!this.commands)
+            return;
+        this.commands.goToNode(uid);
+        this.activateOutlineUid(uid, false);
+        const readonly = this.commands.isReadonly();
+        if (type === 'note') {
+            (0, nodeContentDialogs_1.openNoteDialog)(this.commands, { readonly });
+            return;
+        }
+        if (type === 'link') {
+            const href = String(this.commands.getPrimaryNodeData()?.hyperlink ?? '');
+            if (readonly) {
+                if (href)
+                    this.openLink(href);
+            }
+            else
+                (0, nodeContentDialogs_1.openLinkDialog)(this.commands, this.settings.inlineLinkAutoHttps);
+            return;
+        }
+        if (readonly)
+            return;
+        if (type === 'todo') {
+            this.commands.toggleTodo();
+            return;
+        }
+        if (type === 'comments') {
+            (0, nodeContentDialogs_1.openCommentsDialog)(this.commands);
+            return;
+        }
+        if (type === 'tags') {
+            (0, nodeContentDialogs_1.openTagsDialog)(this.commands);
+            return;
+        }
+        if (type === 'outer-frame') {
+            if (this.commands.hasOuterFrameForSelection())
+                this.commands.removeOuterFrameForSelection();
+            else
+                this.commands.addOuterFrame();
+        }
+    }
+    stabilizeImportedTreeLayout(activeUid, capturedTransform) {
+        if (!this.map || this.destroyed) {
+            this.applyingImportLayout = false;
+            return;
+        }
+        const map = this.map;
+        const transform = capturedTransform ?? map.view?.getTransformData?.();
+        const revision = ++this.importLayoutRevision;
+        if (this.viewMode === 'outline' || !(0, visibleElement_1.hasNonZeroSize)(this.canvasEl)) {
+            this.pendingImportLayout = { activeUid, transform, revision };
+            this.applyingImportLayout = false;
+            this.options.diagnostics.record('outline', 'text-to-map-layout-deferred', this.current.id, {
+                uid: activeUid,
+                mode: this.viewMode,
+                canvasWidth: this.canvasEl.clientWidth,
+                canvasHeight: this.canvasEl.clientHeight,
+            });
+            return;
+        }
+        this.pendingImportLayout = null;
+        this.runImportedTreeLayout(activeUid, transform, revision);
+    }
+    runImportedTreeLayout(activeUid, transform, revision) {
+        if (!this.map || this.destroyed || revision !== this.importLayoutRevision)
+            return;
+        const map = this.map;
+        this.applyingImportLayout = true;
+        const restore = () => {
+            if (transform && typeof map.view?.setTransformData === 'function') {
+                const value = typeof structuredClone === 'function'
+                    ? structuredClone(transform)
+                    : JSON.parse(JSON.stringify(transform));
+                map.view.setTransformData(value);
+            }
+            const node = map.renderer?.findNodeByUid?.(activeUid);
+            if (node)
+                this.activateOnlyNode(node);
+        };
+        const finish = () => {
+            if (revision !== this.importLayoutRevision || this.destroyed)
+                return;
+            restore();
+            this.applyingImportLayout = false;
+            if (this.pendingImportLayout?.revision === revision)
+                this.pendingImportLayout = null;
+            this.nodeQuickActions?.scheduleRefresh();
+            this.options.diagnostics.record('outline', 'text-to-map-layout-stabilized', this.current.id, {
+                uid: activeUid,
+                mode: this.viewMode,
+            });
+        };
+        const redraw = () => {
+            if (revision !== this.importLayoutRevision || this.destroyed || !this.map)
+                return;
+            if (this.viewMode === 'outline' || !(0, visibleElement_1.hasNonZeroSize)(this.canvasEl)) {
+                this.pendingImportLayout = { activeUid, transform, revision };
+                this.applyingImportLayout = false;
+                return;
+            }
+            (0, measurementHost_1.stabilizeMindMapMeasurementHost)(map, this.rootEl);
+            if (typeof map.reRender === 'function') {
+                map.reRender(() => { restore(); requestAnimationFrame(finish); }, 'textToMapImport');
+            }
+            else {
+                map.render?.(() => { restore(); requestAnimationFrame(finish); }, 'textToMapImport');
+            }
+        };
+        requestAnimationFrame(() => requestAnimationFrame(redraw));
     }
     renderOutline(data) {
         const readonly = this.rootEl.dataset.readonly === "true";
@@ -82372,6 +82562,7 @@ const codeBlock_1 = __require(209);
 const nodeStyle_1 = __require(210);
 const combinedSummary_1 = __require(211);
 const clipartGeometry_1 = __require(212);
+const expandState_1 = __require(213);
 function createCommandAdapter(mindMap) {
     const activeNodes = () => Array.isArray(mindMap.renderer?.activeNodeList)
         ? mindMap.renderer.activeNodeList
@@ -82421,6 +82612,25 @@ function createCommandAdapter(mindMap) {
         data.yemindTextPristine = false;
         data.yemindTextEdited = true;
     };
+    const currentTree = () => {
+        const value = mindMap.getData?.(false);
+        return value && typeof value === 'object' ? value : null;
+    };
+    const applyExpansionTransform = (transform) => {
+        if (!canMutate())
+            return false;
+        const tree = currentTree();
+        if (!tree)
+            return false;
+        const result = transform(tree);
+        if (!result.changed)
+            return false;
+        const updateData = mindMap.updateData;
+        if (typeof updateData !== 'function')
+            return false;
+        updateData.call(mindMap, result.tree);
+        return true;
+    };
     return {
         isReadonly,
         hasRichTextSelection,
@@ -82443,7 +82653,13 @@ function createCommandAdapter(mindMap) {
             mindMap.execCommand('UP_NODE'); },
         moveDown: () => { if (canMutate() && primaryIsMovable())
             mindMap.execCommand('DOWN_NODE'); },
-        toggleExpand: () => mindMap.renderer.toggleActiveExpand(),
+        toggleExpand: () => {
+            const uid = String(primaryNode()?.getData?.('uid') ?? '');
+            if (!uid || !applyExpansionTransform((tree) => (0, expandState_1.toggleBranchExpansion)(tree, uid))) {
+                mindMap.renderer.toggleActiveExpand?.();
+            }
+        },
+        toggleBranchExpandByUid: (uid) => applyExpansionTransform((tree) => (0, expandState_1.toggleBranchExpansion)(tree, uid)),
         remove: () => {
             if (!canMutate())
                 return;
@@ -82464,9 +82680,13 @@ function createCommandAdapter(mindMap) {
             mindMap.execCommand('FORWARD'); },
         fit: () => mindMap.view.fit(),
         centerRoot: () => mindMap.renderer.setRootNodeCenter?.(),
-        expandAll: () => mindMap.execCommand('EXPAND_ALL'),
-        collapseAll: () => mindMap.execCommand('UNEXPAND_ALL'),
+        expandAll: () => { if (!applyExpansionTransform(expandState_1.expandRootOneLevel))
+            mindMap.execCommand('EXPAND_ALL'); },
+        collapseAll: () => { if (!applyExpansionTransform(expandState_1.collapseAllBranches))
+            mindMap.execCommand('UNEXPAND_ALL'); },
         toggleAllExpand: () => {
+            if (applyExpansionTransform(expandState_1.toggleAllExpansion))
+                return;
             let hasCollapsed = false;
             walkRenderedTree((node) => {
                 if (!node?.isRoot && Array.isArray(node.children) && node.children.length > 0 && node.getData?.('expand') === false)
@@ -83470,14 +83690,112 @@ function isLegacyDefaultClipartGeometry(data) {
 
 },
 213: function(module, exports, __require, __externalRequire) {
+// /src/core/expandState.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.collapseBranchDeep = collapseBranchDeep;
+exports.expandBranchOneLevel = expandBranchOneLevel;
+exports.toggleBranchExpansion = toggleBranchExpansion;
+exports.collapseAllBranches = collapseAllBranches;
+exports.expandRootOneLevel = expandRootOneLevel;
+exports.toggleAllExpansion = toggleAllExpansion;
+function cloneTree(value) {
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(value);
+        }
+        catch { /* JSON fallback */ }
+    }
+    return JSON.parse(JSON.stringify(value));
+}
+function branch(node) {
+    return Array.isArray(node.children) && node.children.length > 0;
+}
+function findNode(tree, uid) {
+    if (String(tree.data?.uid ?? '') === uid)
+        return tree;
+    for (const child of tree.children ?? []) {
+        const found = findNode(child, uid);
+        if (found)
+            return found;
+    }
+    return null;
+}
+function setBranchState(node, expanded, includeSelf = true) {
+    let changed = 0;
+    if (includeSelf && branch(node) && node.data.expand !== expanded) {
+        node.data.expand = expanded;
+        changed += 1;
+    }
+    for (const child of node.children ?? []) {
+        changed += setBranchState(child, expanded, true);
+    }
+    return changed;
+}
+function collapseBranchDeep(tree, uid) {
+    const next = cloneTree(tree);
+    const target = findNode(next, uid);
+    if (!target || !branch(target))
+        return { tree: next, changed: false };
+    return { tree: next, changed: setBranchState(target, false, true) > 0 };
+}
+function expandBranchOneLevel(tree, uid) {
+    const next = cloneTree(tree);
+    const target = findNode(next, uid);
+    if (!target || !branch(target))
+        return { tree: next, changed: false };
+    let changed = 0;
+    if (target.data.expand !== true) {
+        target.data.expand = true;
+        changed += 1;
+    }
+    for (const child of target.children ?? []) {
+        changed += setBranchState(child, false, true);
+    }
+    return { tree: next, changed: changed > 0 };
+}
+function toggleBranchExpansion(tree, uid) {
+    const target = findNode(tree, uid);
+    if (!target || !branch(target))
+        return { tree: cloneTree(tree), changed: false };
+    return target.data.expand === false
+        ? expandBranchOneLevel(tree, uid)
+        : collapseBranchDeep(tree, uid);
+}
+function collapseAllBranches(tree) {
+    const next = cloneTree(tree);
+    return { tree: next, changed: setBranchState(next, false, true) > 0 };
+}
+function expandRootOneLevel(tree) {
+    const next = cloneTree(tree);
+    if (!branch(next))
+        return { tree: next, changed: false };
+    let changed = 0;
+    if (next.data.expand !== true) {
+        next.data.expand = true;
+        changed += 1;
+    }
+    for (const child of next.children ?? []) {
+        changed += setBranchState(child, false, true);
+    }
+    return { tree: next, changed: changed > 0 };
+}
+function toggleAllExpansion(tree) {
+    return tree.data.expand === false
+        ? expandRootOneLevel(tree)
+        : collapseAllBranches(tree);
+}
+
+},
+214: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.openCheckpointManager = openCheckpointManager;
 const siyuan_1 = __externalRequire("siyuan");
-const checkpointPresentation_1 = __require(214);
+const checkpointPresentation_1 = __require(215);
 const dialogs_1 = __require(25);
-const checkpointDialogTemplate_1 = __require(215);
+const checkpointDialogTemplate_1 = __require(216);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -83562,7 +83880,7 @@ function openCheckpointManager(options) {
 }
 
 },
-214: function(module, exports, __require, __externalRequire) {
+215: function(module, exports, __require, __externalRequire) {
 // /src/checkpoints/checkpointPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83598,12 +83916,12 @@ function renderCheckpointListHtml(checkpoints, options) {
 }
 
 },
-215: function(module, exports, __require, __externalRequire) {
+216: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialogTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildCheckpointDialogContent = buildCheckpointDialogContent;
-const checkpointPresentation_1 = __require(214);
+const checkpointPresentation_1 = __require(215);
 function buildCheckpointDialogContent(checkpoints, readonly) {
     return `<div class="b3-dialog__content ymz-checkpoint-dialog">
     <div class="ymz-checkpoint-dialog__intro">检查点保存在独立历史文件中。恢复前会自动保存当前状态为保护检查点。</div>
@@ -83616,7 +83934,7 @@ function buildCheckpointDialogContent(checkpoints, readonly) {
 }
 
 },
-216: function(module, exports, __require, __externalRequire) {
+217: function(module, exports, __require, __externalRequire) {
 // /src/ui/contextMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83627,8 +83945,8 @@ const siyuan_1 = __externalRequire("siyuan");
 const layoutPresets_1 = __require(13);
 const themePresets_1 = __require(11);
 const projectControls_1 = __require(35);
-const nodeContentDialogs_1 = __require(217);
-const nodeContentMenu_1 = __require(222);
+const nodeContentDialogs_1 = __require(218);
+const nodeContentMenu_1 = __require(223);
 function openCanvasContextMenu(event, commands, options) {
     event.preventDefault();
     event.stopPropagation();
@@ -83667,7 +83985,7 @@ function openCanvasContextMenu(event, commands, options) {
     });
     menu.addItem({ iconHTML: (0, projectControls_1.projectStyleIcon)(), label: '样式', disabled: commands.isReadonly(), click: run('project-style', () => options.onProjectStyle?.()) });
     menu.addSeparator();
-    menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（所有节点）', click: run('toggle-all-expand', () => commands.toggleAllExpand()) });
+    menu.addItem({ icon: 'iconRefresh', label: '折叠所有节点 / 展开一级节点', click: run('toggle-all-expand', () => commands.toggleAllExpand()) });
     menu.addSeparator();
     menu.addItem({ icon: 'iconEye', label: options.zen ? '退出禅模式' : '进入禅模式', click: run('toggle-zen', () => options.onZenChange(!options.zen)) });
     menu.addItem({ icon: 'iconLock', label: options.readonly ? '退出只读模式' : '进入只读模式', click: run('toggle-readonly', () => options.onReadonlyChange(!options.readonly)) });
@@ -83704,7 +84022,7 @@ function openNodeContextMenu(event, commands, options = {}) {
         menu.addItem({ iconHTML: (0, projectControls_1.nodeStyleIcon)(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
         menu.addItem({ iconHTML: (0, projectControls_1.summaryIcon)(), label: '{} 添加综合概要', accelerator: 'Ctrl+Alt+G', disabled: !availability.summary, click: run('summary-add', () => commands.addSummary()) });
         menu.addItem({ iconHTML: (0, projectControls_1.relationIcon)(), label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
-        menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
+        menu.addItem({ icon: 'iconRefresh', label: primary?.getData?.('expand') === false ? '展开一级下级节点' : '折叠全部下级节点', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
         menu.addSeparator();
         menu.addItem({ icon: 'iconCopy', label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });
         menu.addItem({ iconHTML: (0, projectControls_1.clipboardIcon)('cut'), label: '剪切', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) });
@@ -83748,7 +84066,7 @@ function openNodeContextMenu(event, commands, options = {}) {
     menu.addSeparator();
     menu.addItem({ icon: 'iconUp', label: '上移节点', accelerator: 'Ctrl+↑', disabled: !availability.move, click: run('move-up', () => commands.moveUp()) });
     menu.addItem({ icon: 'iconDown', label: '下移节点', accelerator: 'Ctrl+↓', disabled: !availability.move, click: run('move-down', () => commands.moveDown()) });
-    menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
+    menu.addItem({ icon: 'iconRefresh', label: primary?.getData?.('expand') === false ? '展开一级下级节点' : '折叠全部下级节点', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
     menu.addSeparator();
     menu.addItem({ icon: 'iconTrashcan', label: '删除当前和子节点', accelerator: 'Delete', warning: true, disabled: !availability.remove, click: run('remove-subtree', () => commands.remove()) });
     menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前', accelerator: 'Shift+Backspace', disabled: !availability.removeOnlyCurrent, click: run('remove-only-current', () => commands.removeOnlyCurrent()) });
@@ -83788,9 +84106,18 @@ function openOutlineContextMenu(event, options) {
     menu.addItem({
         type: 'submenu', icon: 'iconAdd', label: '添加', disabled,
         submenu: [
+            { icon: 'iconCheck', label: options.todoLabel, warning: options.todoWarning, disabled, click: run('todo', () => options.onTodo?.()) },
+            { iconHTML: (0, projectControls_1.outerFrameIcon)(), label: options.outerFrameLabel, disabled: disabled || !options.canOuterFrame, click: run('outer-frame', () => options.onOuterFrame?.()) },
+            { icon: 'iconYeMindNote', label: '备注', disabled, click: run('note', () => options.onNote?.()) },
+            { icon: 'iconYeMindComment', label: '批注', disabled, click: run('comments', () => options.onComments?.()) },
+            { icon: 'iconTags', label: '标签', disabled, click: run('tags', () => options.onTags?.()) },
             { iconHTML: (0, projectControls_1.markerIcon)(), label: '图标', disabled, click: run('icons', () => options.onMarkers?.()) },
+            { icon: 'iconLink', label: '链接', disabled, click: run('node-link', () => options.onNodeLink?.()) },
             { iconHTML: (0, projectControls_1.clipartIcon)(), label: '剪贴图', disabled, click: run('clipart', () => options.onClipart?.()) },
             { icon: 'iconImage', label: '图片', disabled, click: run('image', () => options.onImage?.()) },
+            { icon: 'iconCode', label: '代码块', disabled: disabled || !options.canCodeBlock, click: run('code-block', () => options.onCodeBlock?.()) },
+            { icon: 'iconMath', label: '公式', disabled: disabled || !options.canFormula, click: run('formula', () => options.onFormula?.()) },
+            { icon: 'iconLink', label: '行内链接', disabled: disabled || !options.canInlineLink, click: run('inline-link', () => options.onInlineLink?.()) },
         ],
     });
     menu.addSeparator();
@@ -83801,7 +84128,7 @@ function openOutlineContextMenu(event, options) {
     menu.addSeparator();
     menu.addItem({ icon: 'iconUp', label: '上移节点', disabled: disabled || !options.canMoveUp, click: run('move-up', options.onMoveUp) });
     menu.addItem({ icon: 'iconDown', label: '下移节点', disabled: disabled || !options.canMoveDown, click: run('move-down', options.onMoveDown) });
-    menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !options.hasChildren, click: run('toggle-expand', options.onToggleExpand) });
+    menu.addItem({ icon: 'iconRefresh', label: options.expanded ? '折叠全部下级节点' : '展开一级下级节点', disabled: !options.hasChildren, click: run('toggle-expand', options.onToggleExpand) });
     menu.addSeparator();
     menu.addItem({ icon: 'iconTrashcan', label: '删除当前行和子级', warning: true, disabled: disabled || options.isRoot, click: run('remove-subtree', options.onRemoveSubtree) });
     menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前行', disabled: disabled || options.isRoot, click: run('remove-only-current', options.onRemoveOnlyCurrent) });
@@ -83809,7 +84136,7 @@ function openOutlineContextMenu(event, options) {
 }
 
 },
-217: function(module, exports, __require, __externalRequire) {
+218: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83822,12 +84149,12 @@ exports.openImageDialog = openImageDialog;
 exports.openNoteDialog = openNoteDialog;
 exports.openCommentsDialog = openCommentsDialog;
 exports.showNodeActionUnavailable = showNodeActionUnavailable;
-const imageFileLoading_1 = __require(218);
+const imageFileLoading_1 = __require(219);
 const siyuan_1 = __externalRequire("siyuan");
 const nodeContentState_1 = __require(208);
-const dialogResize_1 = __require(219);
-const commentsPresentation_1 = __require(220);
-const inlineLink_1 = __require(221);
+const dialogResize_1 = __require(220);
+const commentsPresentation_1 = __require(221);
+const inlineLink_1 = __require(222);
 const nodeNoteState_1 = __require(198);
 function activeData(commands) {
     return commands.getPrimaryNodeData() ?? {};
@@ -84232,7 +84559,7 @@ function escapeAttribute(value) {
 }
 
 },
-218: function(module, exports, __require, __externalRequire) {
+219: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageFileLoading.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84250,7 +84577,7 @@ async function loadImageFileSelection(file, dependencies) {
 }
 
 },
-219: function(module, exports, __require, __externalRequire) {
+220: function(module, exports, __require, __externalRequire) {
 // /src/ui/dialogResize.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84317,7 +84644,7 @@ function bindDialogResize(handle, container) {
 }
 
 },
-220: function(module, exports, __require, __externalRequire) {
+221: function(module, exports, __require, __externalRequire) {
 // /src/ui/commentsPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84367,7 +84694,7 @@ function escapeAttribute(value) {
 }
 
 },
-221: function(module, exports, __require, __externalRequire) {
+222: function(module, exports, __require, __externalRequire) {
 // /src/editor/inlineLink.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84395,7 +84722,7 @@ function isSiyuanInlineLink(value) {
 }
 
 },
-222: function(module, exports, __require, __externalRequire) {
+223: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84464,14 +84791,14 @@ function createNodeMenuAvailability(input) {
 }
 
 },
-223: function(module, exports, __require, __externalRequire) {
+224: function(module, exports, __require, __externalRequire) {
 // /src/ui/textToMapDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.previewRowsHtml = previewRowsHtml;
 exports.openTextToMapDialog = openTextToMapDialog;
 const siyuan_1 = __externalRequire("siyuan");
-const outlineTreeImport_1 = __require(224);
+const outlineTreeImport_1 = __require(225);
 const MODES = [
     ['auto', '自动识别'],
     ['unicode-tree', 'Unicode 树形符号'],
@@ -84589,16 +84916,17 @@ function openTextToMapDialog(options) {
 }
 
 },
-224: function(module, exports, __require, __externalRequire) {
+225: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineTreeImport.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OUTLINE_TREE_IMPORT_PLACEHOLDERS = exports.OUTLINE_IMPORT_AUTO_WIDTH = exports.OUTLINE_IMPORT_WRAP_UNITS = void 0;
 exports.outlineImportDisplayUnits = outlineImportDisplayUnits;
+exports.repairImportedAutoWidthTree = repairImportedAutoWidthTree;
 exports.parseOutlineTreeText = parseOutlineTreeText;
 exports.applyOutlineImport = applyOutlineImport;
 const textEditingPolicy_1 = __require(24);
-const structuredOutlineDocument_1 = __require(225);
+const structuredOutlineDocument_1 = __require(226);
 exports.OUTLINE_IMPORT_WRAP_UNITS = 20;
 exports.OUTLINE_IMPORT_AUTO_WIDTH = 280;
 function outlineImportDisplayUnits(value) {
@@ -84622,11 +84950,34 @@ function importedNodeData(text) {
         yemindTextEdited: true,
     };
     if (outlineImportDisplayUnits(text) > exports.OUTLINE_IMPORT_WRAP_UNITS) {
-        data.width = exports.OUTLINE_IMPORT_AUTO_WIDTH;
         data.customTextWidth = exports.OUTLINE_IMPORT_AUTO_WIDTH;
         data.yemindImportedAutoWidth = true;
     }
     return (0, textEditingPolicy_1.pristineNodeData)(data);
+}
+/**
+ * v0.9.25 stored both `width` and `customTextWidth` for imported wrapped
+ * nodes. simple-mind-map can measure those fields through different paths,
+ * leaving the text box, node border, and branch anchor out of sync. Keep only
+ * the native text-width field while preserving every explicit user width.
+ */
+function repairImportedAutoWidthTree(tree) {
+    const next = cloneTree(tree);
+    let repaired = 0;
+    const visit = (node) => {
+        const data = node.data ?? {};
+        const legacyAutoWidth = data.yemindImportedAutoWidth === true
+            && typeof data.width === 'number'
+            && typeof data.customTextWidth === 'number'
+            && data.width === data.customTextWidth;
+        if (legacyAutoWidth) {
+            delete data.width;
+            repaired += 1;
+        }
+        (node.children ?? []).forEach(visit);
+    };
+    visit(next);
+    return { tree: next, changed: repaired > 0, repaired };
 }
 exports.OUTLINE_TREE_IMPORT_PLACEHOLDERS = {
     auto: '粘贴树形文本、Windows Tree、空格/Tab 缩进、Markdown 列表或编号大纲，系统将自动识别。',
@@ -84919,8 +85270,8 @@ function applyOutlineImport(baseTree, targetUid, result, insertMode = 'append-un
             yemindTextPristine: false,
             yemindTextEdited: true,
             expand: true,
-            ...(target.data.width === undefined && first.data.width !== undefined
-                ? { width: first.data.width, customTextWidth: first.data.width, yemindImportedAutoWidth: true }
+            ...(target.data.customTextWidth === undefined && first.data.customTextWidth !== undefined
+                ? { customTextWidth: first.data.customTextWidth, yemindImportedAutoWidth: true }
                 : {}),
         };
         target.children = [...first.children, ...forest, ...(target.children ?? [])];
@@ -84933,7 +85284,7 @@ function applyOutlineImport(baseTree, targetUid, result, insertMode = 'append-un
 }
 
 },
-225: function(module, exports, __require, __externalRequire) {
+226: function(module, exports, __require, __externalRequire) {
 // /src/editor/structuredOutlineDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84946,8 +85297,8 @@ exports.parseStructuredOutlinePaste = parseStructuredOutlinePaste;
 exports.serializeStructuredOutlineBlocks = serializeStructuredOutlineBlocks;
 exports.createStructuredOutlineUid = createStructuredOutlineUid;
 const sanitizeRichHtml_1 = __require(199);
-const outlineTextDocument_1 = __require(226);
-const outlineAccessories_1 = __require(227);
+const outlineTextDocument_1 = __require(227);
+const outlineAccessories_1 = __require(228);
 function cloneValue(value) {
     if (typeof structuredClone === 'function') {
         try {
@@ -85111,7 +85462,7 @@ function buildTreeFromStructuredOutline(baseTree, inputBlocks) {
             hasChildren: false,
             isRoot: true,
             pristine: false,
-            accessories: { icons: [], image: null },
+            accessories: { icons: [], image: null, todo: null, tags: [], link: '', hasNote: false, commentCount: 0, hasOuterFrame: false },
         });
     }
     const existing = indexExistingData(baseTree);
@@ -85184,7 +85535,7 @@ function createStructuredOutlineUid() {
 }
 
 },
-226: function(module, exports, __require, __externalRequire) {
+227: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineTextDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85573,7 +85924,7 @@ function insertOutlineNewline(value, selectionStart, selectionEnd) {
 }
 
 },
-227: function(module, exports, __require, __externalRequire) {
+228: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineAccessories.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85603,6 +85954,22 @@ function normalizeIcons(value) {
         ? value.map((item) => String(item ?? '').trim()).filter(Boolean)
         : [];
 }
+function normalizeTags(value) {
+    return Array.isArray(value)
+        ? value.map((item) => String(item ?? '').trim()).filter(Boolean)
+        : [];
+}
+function hasMeaningfulNote(value) {
+    if (!value)
+        return false;
+    if (typeof value === 'string')
+        return value.replace(/<[^>]*>/g, '').trim().length > 0;
+    if (typeof value === 'object') {
+        const html = String(value.html ?? '');
+        return html.replace(/<[^>]*>/g, '').trim().length > 0 || /<img\b/i.test(html);
+    }
+    return false;
+}
 function outlineAccessoriesFromData(data) {
     const image = typeof data.image === 'string' && data.image.trim()
         ? {
@@ -85613,7 +85980,26 @@ function outlineAccessoriesFromData(data) {
                 : {}),
         }
         : null;
-    return { icons: normalizeIcons(data.icon), image };
+    const todoValue = data.yemindTodo && typeof data.yemindTodo === 'object'
+        ? data.yemindTodo
+        : null;
+    const todo = todoValue
+        ? { checked: Boolean(todoValue.checked), text: String(todoValue.text ?? '') }
+        : null;
+    const comments = Array.isArray(data.yemindComments) ? data.yemindComments : [];
+    const outerFrame = data.outerFrame && typeof data.outerFrame === 'object'
+        ? String(data.outerFrame.groupId ?? '')
+        : '';
+    return {
+        icons: normalizeIcons(data.icon),
+        image,
+        todo,
+        tags: normalizeTags(data.tag),
+        link: typeof data.hyperlink === 'string' ? data.hyperlink : '',
+        hasNote: hasMeaningfulNote(data.yemindNote ?? data.note),
+        commentCount: comments.length,
+        hasOuterFrame: Boolean(outerFrame),
+    };
 }
 function iconHtml(value, pluginBaseUrl) {
     const marker = (0, localAssetCatalogs_1.markerItemFromValue)(value);
@@ -85624,18 +86010,33 @@ function iconHtml(value, pluginBaseUrl) {
     const label = LEGACY_ICON_LABELS[value] ?? '•';
     return `<span class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon="${escapeAttribute(value)}" title="${escapeAttribute(value)}">${escapeAttribute(label)}</span>`;
 }
+function statusButton(type, title, label) {
+    return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute(type)}" data-outline-content="${escapeAttribute(type)}" tabindex="-1" title="${escapeAttribute(title)}" aria-label="${escapeAttribute(title)}">${label}</button>`;
+}
 function outlineAccessoriesHtml(accessories, pluginBaseUrl) {
-    if (!accessories.icons.length && !accessories.image)
+    const hasAny = accessories.icons.length || accessories.image || accessories.todo || accessories.tags.length
+        || accessories.link || accessories.hasNote || accessories.commentCount || accessories.hasOuterFrame;
+    if (!hasAny)
         return '';
+    const todo = accessories.todo
+        ? statusButton('todo', accessories.todo.text || (accessories.todo.checked ? '已完成待办' : '待办'), accessories.todo.checked ? '☑' : '☐')
+        : '';
     const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join('');
     const image = accessories.image
-        ? `<button type="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? ' is-clipart' : ''}" data-outline-image-preview tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? '剪贴图' : '图片'))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false"></button>`
+        ? `<button type="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? ' is-clipart' : ''}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? 'clipart' : 'image'}" tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? '剪贴图：单击编辑，双击查看' : '图片：单击编辑，双击查看'))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false"></button>`
         : '';
-    return `<span class="ymz-outline-accessories" contenteditable="false" aria-label="节点附加内容">${icons}${image}</span>`;
+    const tags = accessories.tags.length
+        ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" title="标签：${escapeAttribute(accessories.tags.join('、'))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute(tag)}</span>`).join('')}</span>`
+        : '';
+    const note = accessories.hasNote ? statusButton('note', '备注', 'N') : '';
+    const comments = accessories.commentCount ? statusButton('comments', `批注 ${accessories.commentCount}`, String(accessories.commentCount)) : '';
+    const link = accessories.link ? statusButton('link', accessories.link, '↗') : '';
+    const outerFrame = accessories.hasOuterFrame ? statusButton('outer-frame', '已有外框', '□') : '';
+    return `<span class="ymz-outline-accessories" contenteditable="false" aria-label="节点附加内容">${todo}${icons}${image}${tags}${note}${comments}${link}${outerFrame}</span>`;
 }
 
 },
-228: function(module, exports, __require, __externalRequire) {
+229: function(module, exports, __require, __externalRequire) {
 // /src/ui/richTextDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85643,7 +86044,7 @@ exports.CODE_LANGUAGES = void 0;
 exports.openInlineLinkDialog = openInlineLinkDialog;
 exports.openCodeBlockDialog = openCodeBlockDialog;
 const siyuan_1 = __externalRequire("siyuan");
-const inlineLink_1 = __require(221);
+const inlineLink_1 = __require(222);
 const CODE_LANGUAGES = [
     ['plain', '纯文本'],
     ['javascript', 'JavaScript'],
@@ -85783,7 +86184,7 @@ function openCodeBlockDialog(commands, settings) {
 }
 
 },
-229: function(module, exports, __require, __externalRequire) {
+230: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorStats.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85816,7 +86217,7 @@ function calculateEditorStats(tree) {
 }
 
 },
-230: function(module, exports, __require, __externalRequire) {
+231: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85975,7 +86376,7 @@ function escapeHtml(value) {
 }
 
 },
-231: function(module, exports, __require, __externalRequire) {
+232: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86070,15 +86471,15 @@ function resolveOutlinePointerDropIntent(input) {
 }
 
 },
-232: function(module, exports, __require, __externalRequire) {
+233: function(module, exports, __require, __externalRequire) {
 // /src/editor/StructuredOutlineEditorController.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StructuredOutlineEditorController = void 0;
 const sanitizeRichHtml_1 = __require(199);
-const outlineTextDocument_1 = __require(226);
-const outlineAccessories_1 = __require(227);
-const structuredOutlineDocument_1 = __require(225);
+const outlineTextDocument_1 = __require(227);
+const outlineAccessories_1 = __require(228);
+const structuredOutlineDocument_1 = __require(226);
 const INDENT_SIZE = 22;
 const PLAIN_INDENT = '    ';
 const BLOCK_TAGS = new Set(['DIV', 'P', 'LI', 'UL', 'OL', 'SECTION', 'ARTICLE']);
@@ -86279,6 +86680,7 @@ function isImageClipboard(data) {
 class StructuredOutlineEditorController {
     constructor(options) {
         this.options = options;
+        this.outlineImageClickTimer = null;
         this.timer = null;
         this.dirty = false;
         this.applying = false;
@@ -86315,6 +86717,33 @@ class StructuredOutlineEditorController {
             if (!row)
                 return;
             const uid = row.dataset.outlineUid ?? '';
+            const imageAction = target.closest('[data-outline-image-action]');
+            if (imageAction) {
+                event.preventDefault();
+                event.stopPropagation();
+                this.activateUid(uid, false);
+                if (!this.options.isReadonly())
+                    this.options.onActivate(uid);
+                if (this.outlineImageClickTimer !== null)
+                    window.clearTimeout(this.outlineImageClickTimer);
+                const kind = imageAction.dataset.outlineImageKind === 'clipart' ? 'clipart' : 'image';
+                this.outlineImageClickTimer = window.setTimeout(() => {
+                    this.outlineImageClickTimer = null;
+                    if (!this.options.isReadonly())
+                        this.options.onImageEdit?.(uid, kind);
+                }, 220);
+                return;
+            }
+            const contentAction = target.closest('[data-outline-content]');
+            if (contentAction) {
+                event.preventDefault();
+                event.stopPropagation();
+                this.activateUid(uid, false);
+                if (!this.options.isReadonly())
+                    this.options.onActivate(uid);
+                this.options.onContentAction?.(uid, contentAction.dataset.outlineContent ?? '');
+                return;
+            }
             const toggle = target.closest('[data-outline-toggle]');
             if (toggle && row.dataset.outlineHasChildren === 'true') {
                 event.preventDefault();
@@ -86327,6 +86756,22 @@ class StructuredOutlineEditorController {
             this.activateUid(uid, false);
             if (!this.options.isReadonly())
                 this.options.onActivate(uid);
+        };
+        this.onDoubleClick = (event) => {
+            const target = event.target;
+            const imageAction = target.closest('[data-outline-image-action]');
+            const row = target.closest('[data-outline-uid]');
+            if (!imageAction || !row)
+                return;
+            event.preventDefault();
+            event.stopPropagation();
+            if (this.outlineImageClickTimer !== null)
+                window.clearTimeout(this.outlineImageClickTimer);
+            this.outlineImageClickTimer = null;
+            const uid = row.dataset.outlineUid ?? '';
+            const kind = imageAction.dataset.outlineImageKind === 'clipart' ? 'clipart' : 'image';
+            this.activateUid(uid, false);
+            this.options.onImagePreview?.(uid, kind);
         };
         this.onContextMenu = (event) => {
             const target = event.target;
@@ -87042,6 +87487,7 @@ class StructuredOutlineEditorController {
         root.addEventListener('pointerup', this.onPointerUp);
         root.addEventListener('focusin', this.onFocusIn);
         root.addEventListener('click', this.onClick);
+        root.addEventListener('dblclick', this.onDoubleClick);
         root.addEventListener('contextmenu', this.onContextMenu);
         root.addEventListener('blur', this.onBlur, true);
         root.addEventListener('compositionstart', this.onCompositionStart);
@@ -87060,7 +87506,11 @@ class StructuredOutlineEditorController {
         root.removeEventListener('pointerup', this.onPointerUp);
         root.removeEventListener('focusin', this.onFocusIn);
         root.removeEventListener('click', this.onClick);
+        root.removeEventListener('dblclick', this.onDoubleClick);
         root.removeEventListener('contextmenu', this.onContextMenu);
+        if (this.outlineImageClickTimer !== null)
+            window.clearTimeout(this.outlineImageClickTimer);
+        this.outlineImageClickTimer = null;
         root.removeEventListener('blur', this.onBlur, true);
         root.removeEventListener('compositionstart', this.onCompositionStart);
         root.removeEventListener('compositionend', this.onCompositionEnd);
@@ -87285,7 +87735,7 @@ class StructuredOutlineEditorController {
                 hasChildren: row.dataset.outlineHasChildren === 'true',
                 isRoot: index === 0,
                 pristine: row.dataset.outlinePristine === 'true',
-                accessories: previous?.accessories ?? { icons: [], image: null },
+                accessories: previous?.accessories ?? { icons: [], image: null, todo: null, tags: [], link: '', hasNote: false, commentCount: 0, hasOuterFrame: false },
             };
         });
     }
@@ -87483,7 +87933,7 @@ class StructuredOutlineEditorController {
             hasChildren: false,
             isRoot: false,
             pristine: false,
-            accessories: { icons: [], image: null },
+            accessories: { icons: [], image: null, todo: null, tags: [], link: '', hasNote: false, commentCount: 0, hasOuterFrame: false },
         };
         const updatedCurrent = {
             ...current,
@@ -87994,7 +88444,7 @@ function closestElement(node) {
 }
 
 },
-233: function(module, exports, __require, __externalRequire) {
+234: function(module, exports, __require, __externalRequire) {
 // /src/editor/splitPane.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88017,15 +88467,15 @@ function ratioFromPointer(rect, clientX) {
 }
 
 },
-234: function(module, exports, __require, __externalRequire) {
+235: function(module, exports, __require, __externalRequire) {
 // /src/editor/RichTextToolbar.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RichTextToolbar = void 0;
 const YeMindRichText_1 = __require(192);
-const richTextActions_1 = __require(235);
-const colorPresentation_1 = __require(236);
-const colorPalette_1 = __require(237);
+const richTextActions_1 = __require(236);
+const colorPresentation_1 = __require(237);
+const colorPalette_1 = __require(238);
 function option(value, label) {
     return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -88445,7 +88895,7 @@ class RichTextToolbar {
 exports.RichTextToolbar = RichTextToolbar;
 
 },
-235: function(module, exports, __require, __externalRequire) {
+236: function(module, exports, __require, __externalRequire) {
 // /src/editor/richTextActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88476,7 +88926,7 @@ function isClozeFormat(formatInfo) {
 }
 
 },
-236: function(module, exports, __require, __externalRequire) {
+237: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88543,7 +88993,7 @@ function presentColor(value) {
 }
 
 },
-237: function(module, exports, __require, __externalRequire) {
+238: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPalette.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88574,7 +89024,7 @@ function colorPaletteInnerHtml() {
 }
 
 },
-238: function(module, exports, __require, __externalRequire) {
+239: function(module, exports, __require, __externalRequire) {
 // /src/editor/selectionPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88635,7 +89085,7 @@ function shouldBlockRootDeleteShortcut(key, nodes) {
 }
 
 },
-239: function(module, exports, __require, __externalRequire) {
+240: function(module, exports, __require, __externalRequire) {
 // /src/editor/saveRevision.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88666,7 +89116,7 @@ class SaveRevisionTracker {
 exports.SaveRevisionTracker = SaveRevisionTracker;
 
 },
-240: function(module, exports, __require, __externalRequire) {
+241: function(module, exports, __require, __externalRequire) {
 // /src/editor/relationPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88682,7 +89132,7 @@ function createRelationPresentation(input) {
 }
 
 },
-241: function(module, exports, __require, __externalRequire) {
+242: function(module, exports, __require, __externalRequire) {
 // /src/editor/outerFramePresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88741,7 +89191,7 @@ function createOuterFramePresentation(input) {
 }
 
 },
-242: function(module, exports, __require, __externalRequire) {
+243: function(module, exports, __require, __externalRequire) {
 // /src/editor/toolbarAvailability.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88763,12 +89213,12 @@ function createToolbarAvailability(input) {
 }
 
 },
-243: function(module, exports, __require, __externalRequire) {
+244: function(module, exports, __require, __externalRequire) {
 // /src/editor/linkNavigation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolveLinkNavigation = resolveLinkNavigation;
-const inlineLink_1 = __require(221);
+const inlineLink_1 = __require(222);
 function resolveLinkNavigation(value, externalMode) {
     const href = (0, inlineLink_1.normalizeInlineLink)(value, true);
     if (!href)
@@ -88780,7 +89230,7 @@ function resolveLinkNavigation(value, externalMode) {
 }
 
 },
-244: function(module, exports, __require, __externalRequire) {
+245: function(module, exports, __require, __externalRequire) {
 // /src/plugin/visibleElement.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88845,7 +89295,7 @@ function waitForNonZeroSize(element, options = {}) {
 }
 
 },
-245: function(module, exports, __require, __externalRequire) {
+246: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeImageInput.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88906,7 +89356,7 @@ function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
 }
 
 },
-246: function(module, exports, __require, __externalRequire) {
+247: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeHoverPreview.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88914,7 +89364,7 @@ exports.NodeHoverPreview = void 0;
 exports.computeHoverPreviewPlacement = computeHoverPreviewPlacement;
 exports.buildHoverPreviewHtml = buildHoverPreviewHtml;
 const sanitizeRichHtml_1 = __require(199);
-const commentsPresentation_1 = __require(220);
+const commentsPresentation_1 = __require(221);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -89107,7 +89557,7 @@ class NodeHoverPreview {
 exports.NodeHoverPreview = NodeHoverPreview;
 
 },
-247: function(module, exports, __require, __externalRequire) {
+248: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageLightbox.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89210,13 +89660,13 @@ class ImageLightbox {
 exports.ImageLightbox = ImageLightbox;
 
 },
-248: function(module, exports, __require, __externalRequire) {
+249: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeStylePanel = void 0;
-const colorPalette_1 = __require(237);
-const colorPresentation_1 = __require(236);
+const colorPalette_1 = __require(238);
+const colorPresentation_1 = __require(237);
 const INPUT_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 function toInputValue(value) {
     return value === null || value === undefined ? '' : String(value);
@@ -89527,14 +89977,14 @@ class NodeStylePanel {
 exports.NodeStylePanel = NodeStylePanel;
 
 },
-249: function(module, exports, __require, __externalRequire) {
+250: function(module, exports, __require, __externalRequire) {
 // /src/ui/projectStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectStylePanel = void 0;
 const projectStyle_1 = __require(20);
-const colorPalette_1 = __require(237);
-const colorPresentation_1 = __require(236);
+const colorPalette_1 = __require(238);
+const colorPresentation_1 = __require(237);
 const colorSchemes_1 = __require(21);
 const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 class ProjectStylePanel {
@@ -89835,7 +90285,7 @@ class ProjectStylePanel {
 exports.ProjectStylePanel = ProjectStylePanel;
 
 },
-250: function(module, exports, __require, __externalRequire) {
+251: function(module, exports, __require, __externalRequire) {
 // /src/ui/layoutGalleryPanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89933,7 +90383,7 @@ class LayoutGalleryPanel {
 exports.LayoutGalleryPanel = LayoutGalleryPanel;
 
 },
-251: function(module, exports, __require, __externalRequire) {
+252: function(module, exports, __require, __externalRequire) {
 // /src/ui/projectChoicePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90071,7 +90521,7 @@ class ProjectChoicePanel {
 exports.ProjectChoicePanel = ProjectChoicePanel;
 
 },
-252: function(module, exports, __require, __externalRequire) {
+253: function(module, exports, __require, __externalRequire) {
 // /src/ui/localAssetDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90267,7 +90717,7 @@ function openClipartPicker(commands, options = {}) {
 }
 
 },
-253: function(module, exports, __require, __externalRequire) {
+254: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRichTextVisibility.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90304,7 +90754,7 @@ function synchronizeCanvasRichTextVisibility(map) {
 }
 
 },
-254: function(module, exports, __require, __externalRequire) {
+255: function(module, exports, __require, __externalRequire) {
 // /src/editor/searchPanelState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90324,7 +90774,7 @@ function setSearchReplaceExpanded(panel, expanded) {
 }
 
 },
-255: function(module, exports, __require, __externalRequire) {
+256: function(module, exports, __require, __externalRequire) {
 // /src/core/appearanceTransaction.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90473,7 +90923,7 @@ function applyMapAppearanceTransaction(options) {
 }
 
 },
-256: function(module, exports, __require, __externalRequire) {
+257: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeQuickActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90691,7 +91141,7 @@ class NodeQuickActionsController {
 exports.NodeQuickActionsController = NodeQuickActionsController;
 
 },
-257: function(module, exports, __require, __externalRequire) {
+258: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRightDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90870,7 +91320,7 @@ class CanvasRightDragController {
 exports.CanvasRightDragController = CanvasRightDragController;
 
 },
-258: function(module, exports, __require, __externalRequire) {
+259: function(module, exports, __require, __externalRequire) {
 // /src/editor/liveNodeWidthLayout.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90927,7 +91377,7 @@ class LiveNodeWidthLayoutController {
 exports.LiveNodeWidthLayoutController = LiveNodeWidthLayoutController;
 
 },
-259: function(module, exports, __require, __externalRequire) {
+260: function(module, exports, __require, __externalRequire) {
 // /src/editor/focusHighlight.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90992,7 +91442,7 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
 }
 
 },
-260: function(module, exports, __require, __externalRequire) {
+261: function(module, exports, __require, __externalRequire) {
 // /src/editor/editingSurfaceCoordinator.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91081,7 +91531,7 @@ class EditingSurfaceCoordinator {
 exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
 
 },
-261: function(module, exports, __require, __externalRequire) {
+262: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91103,7 +91553,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-262: function(module, exports, __require, __externalRequire) {
+263: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91127,7 +91577,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-263: function(module, exports, __require, __externalRequire) {
+264: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91183,7 +91633,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-264: function(module, exports, __require, __externalRequire) {
+265: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91209,7 +91659,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-265: function(module, exports, __require, __externalRequire) {
+266: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91225,7 +91675,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-266: function(module, exports, __require, __externalRequire) {
+267: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91252,7 +91702,7 @@ function initializePluginStartup(options) {
 }
 
 },
-267: function(module, exports, __require, __externalRequire) {
+268: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

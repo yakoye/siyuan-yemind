@@ -30,3 +30,5 @@ import '../suites/outline-split/v0918SplitRevealCurrentSelection.suite';
 import '../suites/outline-split/v0924OutlineImportAndEnter.suite';
 import '../suites/outline-split/v0925ImportWidthPolicy.suite';
 import '../suites/outline-split/v0925OutlineAccessories.suite';
+import '../suites/outline-split/v0926ImportGeometry.suite';
+import '../suites/outline-split/v0926OutlineContentParity.suite';

@@ -2,7 +2,7 @@
 
 ## Current baseline
 
-- Product version: 0.9.25
+- Product version: 0.9.26
 - Host baseline: SiYuan 3.7.3
 - Plugin ID and folder: `siyuan-yemind`
 
@@ -29,11 +29,14 @@
 - Viewport-bounded text-to-map dialog with processed hierarchy preview and long-label import-width policy.
 - Custom dark-aware Theme/Line panels and a unified project-control interaction palette.
 - Content-only outline projection and shared Add actions for node icons, images and clipart.
+- Conservative import-width repair and post-measure relayout with exact viewport restoration.
+- Recursive branch collapse with one-level expansion for node and global disclosure.
+- Outline image single-click editing, double-click lightbox preview and full node-content action parity.
 
 ## Next priorities
 
-1. Validate v0.9.25 processed import preview, custom Theme/Line panels and outline image/icon/clipart actions inside SiYuan 3.7.3 with built-in and representative third-party themes.
-2. Profile 1,000+ node import, outline editing and drag-target resolution without weakening transaction safety.
-3. Extend compact outline content indicators to notes, links, tags and formulas while keeping row geometry stable.
-4. Continue accessibility, screen-reader and keyboard-navigation coverage.
+1. Validate v0.9.26 import geometry, recursive disclosure and outline image/content actions inside SiYuan 3.7.3 with built-in and representative third-party themes.
+2. Profile 1,000+ node import, outline editing and recursive disclosure without weakening transaction safety.
+3. Improve keyboard access and screen-reader labels for outline content status controls and image actions.
+4. Continue accessibility and mobile-layout coverage for content-rich outline rows.
 5. Prepare a stable 1.0 compatibility and migration policy.

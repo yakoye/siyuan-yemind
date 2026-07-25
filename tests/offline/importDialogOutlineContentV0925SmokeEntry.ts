@@ -26,7 +26,7 @@ assert(outlineImportDisplayUnits(longText) > 20, 'long CJK text must cross the i
 const base: MindMapTree = { data: { uid: 'root', text: '根' }, children: [{ data: { uid: 'target', text: '目标' }, children: [] }] };
 const imported = applyOutlineImport(base, 'target', parseOutlineTreeText(`短节点\n${longText}`, 'plain'), 'append-under-current');
 assert(imported.children[0].children[0].data.width === undefined, 'short import must not receive forced width');
-assert(imported.children[0].children[1].data.width === OUTLINE_IMPORT_AUTO_WIDTH, 'long import must receive the default width');
+assert(imported.children[0].children[1].data.width === undefined, 'long import must not persist a conflicting node width');
 assert(imported.children[0].children[1].data.customTextWidth === OUTLINE_IMPORT_AUTO_WIDTH, 'runtime text width must be applied');
 assert(imported.children[0].children[1].data.text === longText, 'import width policy must not insert source newlines');
 

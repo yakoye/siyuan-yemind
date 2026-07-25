@@ -7,6 +7,7 @@ import type { RichTextFormattingTarget } from '../editor/richTextTarget';
 import { normalizeNodeStylePatch, nodeStyleSnapshot, type NodeStylePatch } from '../editor/nodeStyle';
 import { addCombinedSummary } from './combinedSummary';
 import { CLIPART_GEOMETRY_VERSION } from './clipartGeometry';
+import { collapseAllBranches, expandRootOneLevel, toggleAllExpansion, toggleBranchExpansion } from './expandState';
 
 export interface NodeImageInput {
   url: string | null;
@@ -25,6 +26,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   moveUp(): void;
   moveDown(): void;
   toggleExpand(): void;
+  toggleBranchExpandByUid(uid: string): boolean;
   remove(): void;
   removeOnlyCurrent(): void;
   undo(): void;
@@ -156,6 +158,21 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     data.yemindTextPristine = false;
     data.yemindTextEdited = true;
   };
+  const currentTree = (): MindMapTree | null => {
+    const value = (mindMap as any).getData?.(false);
+    return value && typeof value === 'object' ? value as MindMapTree : null;
+  };
+  const applyExpansionTransform = (transform: (tree: MindMapTree) => { tree: MindMapTree; changed: boolean }): boolean => {
+    if (!canMutate()) return false;
+    const tree = currentTree();
+    if (!tree) return false;
+    const result = transform(tree);
+    if (!result.changed) return false;
+    const updateData = (mindMap as any).updateData;
+    if (typeof updateData !== 'function') return false;
+    updateData.call(mindMap, result.tree);
+    return true;
+  };
 
   return {
     isReadonly,
@@ -173,7 +190,13 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     addParent: () => { if (canMutate() && primaryIsMovable()) mindMap.execCommand('INSERT_PARENT_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }); },
     moveUp: () => { if (canMutate() && primaryIsMovable()) mindMap.execCommand('UP_NODE'); },
     moveDown: () => { if (canMutate() && primaryIsMovable()) mindMap.execCommand('DOWN_NODE'); },
-    toggleExpand: () => mindMap.renderer.toggleActiveExpand(),
+    toggleExpand: () => {
+      const uid = String(primaryNode()?.getData?.('uid') ?? '');
+      if (!uid || !applyExpansionTransform((tree) => toggleBranchExpansion(tree, uid))) {
+        mindMap.renderer.toggleActiveExpand?.();
+      }
+    },
+    toggleBranchExpandByUid: (uid) => applyExpansionTransform((tree) => toggleBranchExpansion(tree, uid)),
     remove: () => {
       if (!canMutate()) return;
       const nodes = removableNodes();
@@ -188,9 +211,10 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     redo: () => { if (canMutate()) mindMap.execCommand('FORWARD'); },
     fit: () => (mindMap.view as any).fit(),
     centerRoot: () => (mindMap.renderer as any).setRootNodeCenter?.(),
-    expandAll: () => mindMap.execCommand('EXPAND_ALL'),
-    collapseAll: () => mindMap.execCommand('UNEXPAND_ALL'),
+    expandAll: () => { if (!applyExpansionTransform(expandRootOneLevel)) mindMap.execCommand('EXPAND_ALL'); },
+    collapseAll: () => { if (!applyExpansionTransform(collapseAllBranches)) mindMap.execCommand('UNEXPAND_ALL'); },
     toggleAllExpand: () => {
+      if (applyExpansionTransform(toggleAllExpansion)) return;
       let hasCollapsed = false;
       walkRenderedTree((node) => {
         if (!node?.isRoot && Array.isArray(node.children) && node.children.length > 0 && node.getData?.('expand') === false) hasCollapsed = true;

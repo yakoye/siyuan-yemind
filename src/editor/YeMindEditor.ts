@@ -35,12 +35,14 @@ import { openCheckpointManager } from "../ui/checkpointDialog";
 import { openCanvasContextMenu, openNodeContextMenu, openOutlineContextMenu } from "../ui/contextMenu";
 import { promptText } from "../ui/dialogs";
 import { openTextToMapDialog } from "../ui/textToMapDialog";
+import { repairImportedAutoWidthTree } from "./outlineTreeImport";
 import {
   openCommentsDialog,
   openFormulaDialog,
   openImageDialog,
   openLinkDialog,
   openNoteDialog,
+  openTagsDialog,
 } from "../ui/nodeContentDialogs";
 import {
   openCodeBlockDialog,
@@ -100,6 +102,7 @@ import { applyMapAppearanceTransaction } from "../core/appearanceTransaction";
 import { NodeQuickActionsController } from "./nodeQuickActions";
 import { canvasModeIcon, lineStyleIcon } from "./projectControls";
 import { normalizeNodeNote } from "../content/nodeNoteState";
+import { createTodoMenuDescriptor } from "../ui/nodeContentMenu";
 import { CanvasRightDragController } from "./canvasRightDrag";
 import { LiveNodeWidthLayoutController } from "./liveNodeWidthLayout";
 import { scheduleFocusedNodeHighlight } from "./focusHighlight";
@@ -194,6 +197,9 @@ export class YeMindEditor {
   private searchText = "";
   private applyingCheckpoint = false;
   private applyingAppearance = false;
+  private applyingImportLayout = false;
+  private importLayoutRevision = 0;
+  private pendingImportLayout: { activeUid: string; transform: unknown; revision: number } | null = null;
   private pendingAppearanceRefresh = false;
   private resizeFrame: number | null = null;
   private splitResizeFrame: number | null = null;
@@ -744,10 +750,11 @@ export class YeMindEditor {
     if (lineStyleSelect) lineStyleSelect.value = this.current.lineStyle;
 
     let runtimeData = this.current.data;
-    const normalized = stripCustomPositions(runtimeData);
+    const importedWidthRepair = repairImportedAutoWidthTree(runtimeData);
+    const normalized = stripCustomPositions(importedWidthRepair.tree);
     const sanitized = sanitizeAssociativeLines(normalized.tree);
     runtimeData = sanitized.tree;
-    if (normalized.changed || sanitized.changed) {
+    if (importedWidthRepair.changed || normalized.changed || sanitized.changed) {
       this.current.data = runtimeData;
       void this.options.repository
         .update(this.current.id, { data: runtimeData })
@@ -875,6 +882,20 @@ export class YeMindEditor {
       },
       onToggle: (uid, expanded) => this.setOutlineExpanded(uid, expanded),
       onContextMenu: (event, uid) => this.openOutlineContextMenu(event, uid),
+      onImageEdit: (uid, kind) => {
+        if (!this.commands || this.commands.isReadonly()) return;
+        this.commands.goToNode(uid);
+        this.activateOutlineUid(uid, false);
+        if (kind === 'clipart') openClipartPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl });
+        else openImageDialog(this.commands);
+      },
+      onImagePreview: (uid) => {
+        const data = this.findTreeNodeData(uid);
+        const source = String(data?.image ?? '');
+        const title = String(data?.imageTitle ?? '');
+        if (source) this.imageLightbox?.show(source, title);
+      },
+      onContentAction: (uid, type) => this.runOutlineContentAction(uid, type),
       onUndo: () => this.commands?.undo(),
       onRedo: () => this.commands?.redo(),
       onDiagnostic: (action, details) =>
@@ -1233,7 +1254,7 @@ export class YeMindEditor {
       this.scheduleSave();
     });
     this.map.on("view_data_change", (viewData: Record<string, unknown>) => {
-      if (this.applyingCheckpoint || this.applyingAppearance) return;
+      if (this.applyingCheckpoint || this.applyingAppearance || this.applyingImportLayout) return;
       this.updateZoom();
       const normalized = normalizePersistedViewData(viewData);
       if (!normalized) return;
@@ -1942,6 +1963,11 @@ export class YeMindEditor {
         stabilizeMindMapMeasurementHost(this.map as any, this.rootEl);
         this.map.resize();
         if (this.pendingAppearanceRefresh) this.applyMapAppearance(true);
+        const pendingImport = this.pendingImportLayout;
+        if (pendingImport) {
+          this.pendingImportLayout = null;
+          this.runImportedTreeLayout(pendingImport.activeUid, pendingImport.transform, pendingImport.revision);
+        }
         this.updateDiagnosticState();
       } catch (error) {
         this.options.diagnostics.recordError(
@@ -2164,6 +2190,14 @@ export class YeMindEditor {
       readonly,
       isRoot: state.isRoot,
       hasChildren: state.hasChildren,
+      expanded: state.expanded,
+      todoLabel: createTodoMenuDescriptor(this.commands.getTodo()).label,
+      todoWarning: createTodoMenuDescriptor(this.commands.getTodo()).warning,
+      outerFrameLabel: this.commands.hasOuterFrameForSelection() ? '删除外框' : '外框',
+      canOuterFrame: this.commands.hasOuterFrameForSelection() || this.commands.canAddOuterFrame(),
+      canCodeBlock: Boolean(this.outlineRichText.getSelectedText() || this.outlineRichText.getCodeBlock()),
+      canInlineLink: Boolean(this.outlineRichText.getSelectedText() || this.outlineRichText.getSelectedInlineLink()),
+      canFormula: true,
       canMoveUp: state.canMoveUp,
       canMoveDown: state.canMoveDown,
       onEdit: () => this.outlineRichText?.editLine(uid),
@@ -2174,11 +2208,17 @@ export class YeMindEditor {
         targetUid: uid,
         getTree: () => this.current.data,
         onApply: (tree, result, insertMode) => {
-          const applied = Boolean(this.commands?.replaceTree(tree));
+          const repaired = repairImportedAutoWidthTree(tree).tree;
+          const importTransform = (this.map as any)?.view?.getTransformData?.();
+          this.applyingImportLayout = true;
+          const applied = Boolean(this.commands?.replaceTree(repaired));
           if (applied) {
-            this.current.data = tree;
-            this.renderOutline(tree);
+            this.current.data = repaired;
+            this.renderOutline(repaired);
             this.activateOutlineUid(uid, true);
+            this.stabilizeImportedTreeLayout(uid, importTransform);
+          } else {
+            this.applyingImportLayout = false;
           }
           this.options.diagnostics.record('outline', 'text-to-map', this.current.id, {
             applied,
@@ -2192,6 +2232,23 @@ export class YeMindEditor {
           return applied;
         },
       }),
+      onTodo: () => {
+        activate();
+        const action = createTodoMenuDescriptor(this.commands?.getTodo());
+        this.commands?.setTodo(action.next);
+      },
+      onOuterFrame: () => {
+        activate();
+        if (this.commands?.hasOuterFrameForSelection()) this.commands.removeOuterFrameForSelection();
+        else this.commands?.addOuterFrame();
+      },
+      onNote: () => { activate(); if (this.commands) openNoteDialog(this.commands); },
+      onComments: () => { activate(); if (this.commands) openCommentsDialog(this.commands); },
+      onTags: () => { activate(); if (this.commands) openTagsDialog(this.commands); },
+      onNodeLink: () => { activate(); if (this.commands) openLinkDialog(this.commands, this.settings.inlineLinkAutoHttps); },
+      onCodeBlock: () => { if (this.outlineRichText) openCodeBlockDialog(this.outlineRichText, this.settings); },
+      onFormula: () => { if (this.outlineRichText) openFormulaDialog(this.outlineRichText); },
+      onInlineLink: () => { if (this.outlineRichText) openInlineLinkDialog(this.outlineRichText, this.settings); },
       onMarkers: () => {
         activate();
         if (this.commands) openMarkerPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl });
@@ -2210,11 +2267,107 @@ export class YeMindEditor {
       onPastePlain: () => this.outlineRichText!.pasteCurrentLine(uid, true),
       onMoveUp: () => { activate(); this.commands?.moveUp(); },
       onMoveDown: () => { activate(); this.commands?.moveDown(); },
-      onToggleExpand: () => this.setOutlineExpanded(uid, !state.expanded),
+      onToggleExpand: () => { this.outlineRichText?.flush('before-toggle-deep'); this.commands?.toggleBranchExpandByUid(uid); },
       onRemoveSubtree: () => { activate(); this.commands?.remove(); },
       onRemoveOnlyCurrent: () => { activate(); this.commands?.removeOnlyCurrent(); },
       onAction: (action) => this.options.diagnostics.record('outline-menu', action, this.current.id, { uid }),
     });
+  }
+
+  private findTreeNodeData(uid: string, tree: MindMapTree = this.current.data): Record<string, any> | null {
+    if (String(tree.data?.uid ?? '') === uid) return tree.data as Record<string, any>;
+    for (const child of tree.children ?? []) {
+      const found = this.findTreeNodeData(uid, child);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  private runOutlineContentAction(uid: string, type: string): void {
+    if (!this.commands) return;
+    this.commands.goToNode(uid);
+    this.activateOutlineUid(uid, false);
+    const readonly = this.commands.isReadonly();
+    if (type === 'note') { openNoteDialog(this.commands, { readonly }); return; }
+    if (type === 'link') {
+      const href = String(this.commands.getPrimaryNodeData()?.hyperlink ?? '');
+      if (readonly) { if (href) this.openLink(href); }
+      else openLinkDialog(this.commands, this.settings.inlineLinkAutoHttps);
+      return;
+    }
+    if (readonly) return;
+    if (type === 'todo') { this.commands.toggleTodo(); return; }
+    if (type === 'comments') { openCommentsDialog(this.commands); return; }
+    if (type === 'tags') { openTagsDialog(this.commands); return; }
+    if (type === 'outer-frame') {
+      if (this.commands.hasOuterFrameForSelection()) this.commands.removeOuterFrameForSelection();
+      else this.commands.addOuterFrame();
+    }
+  }
+
+  private stabilizeImportedTreeLayout(activeUid: string, capturedTransform?: unknown): void {
+    if (!this.map || this.destroyed) {
+      this.applyingImportLayout = false;
+      return;
+    }
+    const map = this.map as any;
+    const transform = capturedTransform ?? map.view?.getTransformData?.();
+    const revision = ++this.importLayoutRevision;
+    if (this.viewMode === 'outline' || !hasNonZeroSize(this.canvasEl)) {
+      this.pendingImportLayout = { activeUid, transform, revision };
+      this.applyingImportLayout = false;
+      this.options.diagnostics.record('outline', 'text-to-map-layout-deferred', this.current.id, {
+        uid: activeUid,
+        mode: this.viewMode,
+        canvasWidth: this.canvasEl.clientWidth,
+        canvasHeight: this.canvasEl.clientHeight,
+      });
+      return;
+    }
+    this.pendingImportLayout = null;
+    this.runImportedTreeLayout(activeUid, transform, revision);
+  }
+
+  private runImportedTreeLayout(activeUid: string, transform: unknown, revision: number): void {
+    if (!this.map || this.destroyed || revision !== this.importLayoutRevision) return;
+    const map = this.map as any;
+    this.applyingImportLayout = true;
+    const restore = (): void => {
+      if (transform && typeof map.view?.setTransformData === 'function') {
+        const value = typeof structuredClone === 'function'
+          ? structuredClone(transform)
+          : JSON.parse(JSON.stringify(transform));
+        map.view.setTransformData(value);
+      }
+      const node = map.renderer?.findNodeByUid?.(activeUid);
+      if (node) this.activateOnlyNode(node);
+    };
+    const finish = (): void => {
+      if (revision !== this.importLayoutRevision || this.destroyed) return;
+      restore();
+      this.applyingImportLayout = false;
+      if (this.pendingImportLayout?.revision === revision) this.pendingImportLayout = null;
+      this.nodeQuickActions?.scheduleRefresh();
+      this.options.diagnostics.record('outline', 'text-to-map-layout-stabilized', this.current.id, {
+        uid: activeUid,
+        mode: this.viewMode,
+      });
+    };
+    const redraw = (): void => {
+      if (revision !== this.importLayoutRevision || this.destroyed || !this.map) return;
+      if (this.viewMode === 'outline' || !hasNonZeroSize(this.canvasEl)) {
+        this.pendingImportLayout = { activeUid, transform, revision };
+        this.applyingImportLayout = false;
+        return;
+      }
+      stabilizeMindMapMeasurementHost(map, this.rootEl);
+      if (typeof map.reRender === 'function') {
+        map.reRender(() => { restore(); requestAnimationFrame(finish); }, 'textToMapImport');
+      } else {
+        map.render?.(() => { restore(); requestAnimationFrame(finish); }, 'textToMapImport');
+      }
+    };
+    requestAnimationFrame(() => requestAnimationFrame(redraw));
   }
 
   private renderOutline(data: MindMapTree): void {

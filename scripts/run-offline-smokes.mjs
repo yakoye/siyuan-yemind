@@ -19,6 +19,7 @@ const entries = [
   'iconLayoutDarkV0923SmokeEntry',
   'outlineImportDarkV0924SmokeEntry',
   'importDialogOutlineContentV0925SmokeEntry',
+  'importCollapseOutlineV0926SmokeEntry',
 ];
 
 rmSync(outDir, { recursive: true, force: true });

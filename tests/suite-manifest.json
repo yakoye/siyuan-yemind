@@ -65,7 +65,8 @@
     "shortcuts.suite.ts",
     "upstreamClipboardBehavior.suite.ts",
     "v093NodeQuickHover.suite.ts",
-    "v0913ContextMenuSelection.suite.ts"
+    "v0913ContextMenuSelection.suite.ts",
+    "v0926ExpandSemantics.suite.ts"
   ],
   "node-content": [
     "commentsDialogPresentation.suite.ts",
@@ -214,7 +215,9 @@
     "v094StructuredOutlineDocument.suite.ts",
     "v094StructuredOutlineEditor.suite.ts",
     "v094StructuredOutlineVisual.suite.ts",
-    "v099OutlineGuideGeometry.suite.ts"
+    "v099OutlineGuideGeometry.suite.ts",
+    "v0926ImportGeometry.suite.ts",
+    "v0926OutlineContentParity.suite.ts"
   ],
   "search-navigation": [
     "searchCommands.suite.ts",

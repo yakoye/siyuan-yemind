@@ -28,7 +28,8 @@ describe('v0.9.25 imported node width policy', () => {
     const next = applyOutlineImport(base, 'target', parsed, 'append-under-current');
     const imported = next.children[0].children;
     expect(imported[0].data.width).toBeUndefined();
-    expect(imported[1].data.width).toBe(OUTLINE_IMPORT_AUTO_WIDTH);
+    expect(imported[1].data.customTextWidth).toBe(OUTLINE_IMPORT_AUTO_WIDTH);
+    expect(imported[1].data.width).toBeUndefined();
     expect(imported[1].data.text).toBe(longText);
     expect(imported[1].data.text).not.toContain('\n');
   });

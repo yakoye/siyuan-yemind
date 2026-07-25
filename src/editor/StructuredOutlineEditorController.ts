@@ -39,6 +39,9 @@ export interface StructuredOutlineEditorOptions {
   onActivate(uid: string): void;
   onToggle(uid: string, expanded: boolean): void;
   onContextMenu?(event: MouseEvent, uid: string): void;
+  onImageEdit?(uid: string, kind: 'image' | 'clipart'): void;
+  onImagePreview?(uid: string, kind: 'image' | 'clipart'): void;
+  onContentAction?(uid: string, type: string): void;
   onUndo(): void;
   onRedo(): void;
   onSelectionChange(
@@ -281,6 +284,7 @@ function isImageClipboard(data: DataTransfer | null): boolean {
  */
 export class StructuredOutlineEditorController implements RichTextFormattingTarget {
   private readonly debounceMs: number;
+  private outlineImageClickTimer: number | null = null;
   private timer: number | null = null;
   private dirty = false;
   private applying = false;
@@ -755,6 +759,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     root.addEventListener('pointerup', this.onPointerUp);
     root.addEventListener('focusin', this.onFocusIn);
     root.addEventListener('click', this.onClick);
+    root.addEventListener('dblclick', this.onDoubleClick);
     root.addEventListener('contextmenu', this.onContextMenu);
     root.addEventListener('blur', this.onBlur, true);
     root.addEventListener('compositionstart', this.onCompositionStart);
@@ -774,7 +779,10 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     root.removeEventListener('pointerup', this.onPointerUp);
     root.removeEventListener('focusin', this.onFocusIn);
     root.removeEventListener('click', this.onClick);
+    root.removeEventListener('dblclick', this.onDoubleClick);
     root.removeEventListener('contextmenu', this.onContextMenu);
+    if (this.outlineImageClickTimer !== null) window.clearTimeout(this.outlineImageClickTimer);
+    this.outlineImageClickTimer = null;
     root.removeEventListener('blur', this.onBlur, true);
     root.removeEventListener('compositionstart', this.onCompositionStart);
     root.removeEventListener('compositionend', this.onCompositionEnd);
@@ -803,6 +811,29 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     const row = target.closest<HTMLElement>('[data-outline-uid]');
     if (!row) return;
     const uid = row.dataset.outlineUid ?? '';
+    const imageAction = target.closest<HTMLElement>('[data-outline-image-action]');
+    if (imageAction) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.activateUid(uid, false);
+      if (!this.options.isReadonly()) this.options.onActivate(uid);
+      if (this.outlineImageClickTimer !== null) window.clearTimeout(this.outlineImageClickTimer);
+      const kind = imageAction.dataset.outlineImageKind === 'clipart' ? 'clipart' : 'image';
+      this.outlineImageClickTimer = window.setTimeout(() => {
+        this.outlineImageClickTimer = null;
+        if (!this.options.isReadonly()) this.options.onImageEdit?.(uid, kind);
+      }, 220);
+      return;
+    }
+    const contentAction = target.closest<HTMLElement>('[data-outline-content]');
+    if (contentAction) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.activateUid(uid, false);
+      if (!this.options.isReadonly()) this.options.onActivate(uid);
+      this.options.onContentAction?.(uid, contentAction.dataset.outlineContent ?? '');
+      return;
+    }
     const toggle = target.closest<HTMLElement>('[data-outline-toggle]');
     if (toggle && row.dataset.outlineHasChildren === 'true') {
       event.preventDefault();
@@ -813,6 +844,21 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     if (target.closest('[data-outline-drag-handle]')) return;
     this.activateUid(uid, false);
     if (!this.options.isReadonly()) this.options.onActivate(uid);
+  };
+
+  private readonly onDoubleClick = (event: MouseEvent): void => {
+    const target = event.target as HTMLElement;
+    const imageAction = target.closest<HTMLElement>('[data-outline-image-action]');
+    const row = target.closest<HTMLElement>('[data-outline-uid]');
+    if (!imageAction || !row) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.outlineImageClickTimer !== null) window.clearTimeout(this.outlineImageClickTimer);
+    this.outlineImageClickTimer = null;
+    const uid = row.dataset.outlineUid ?? '';
+    const kind = imageAction.dataset.outlineImageKind === 'clipart' ? 'clipart' : 'image';
+    this.activateUid(uid, false);
+    this.options.onImagePreview?.(uid, kind);
   };
 
   private readonly onContextMenu = (event: MouseEvent): void => {
@@ -1258,7 +1304,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
         hasChildren: row.dataset.outlineHasChildren === 'true',
         isRoot: index === 0,
         pristine: row.dataset.outlinePristine === 'true',
-        accessories: previous?.accessories ?? { icons: [], image: null },
+        accessories: previous?.accessories ?? { icons: [], image: null, todo: null, tags: [], link: '', hasNote: false, commentCount: 0, hasOuterFrame: false },
       };
     });
   }
@@ -1452,7 +1498,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       hasChildren: false,
       isRoot: false,
       pristine: false,
-      accessories: { icons: [], image: null },
+      accessories: { icons: [], image: null, todo: null, tags: [], link: '', hasNote: false, commentCount: 0, hasOuterFrame: false },
     };
     const updatedCurrent: StructuredOutlineBlock = {
       ...current,

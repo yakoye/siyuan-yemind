@@ -54,11 +54,42 @@ function importedNodeData(text: string): MindMapNodeData {
     yemindTextEdited: true,
   };
   if (outlineImportDisplayUnits(text) > OUTLINE_IMPORT_WRAP_UNITS) {
-    data.width = OUTLINE_IMPORT_AUTO_WIDTH;
     data.customTextWidth = OUTLINE_IMPORT_AUTO_WIDTH;
     data.yemindImportedAutoWidth = true;
   }
   return pristineNodeData(data);
+}
+
+
+export interface ImportedAutoWidthRepairResult {
+  tree: MindMapTree;
+  changed: boolean;
+  repaired: number;
+}
+
+/**
+ * v0.9.25 stored both `width` and `customTextWidth` for imported wrapped
+ * nodes. simple-mind-map can measure those fields through different paths,
+ * leaving the text box, node border, and branch anchor out of sync. Keep only
+ * the native text-width field while preserving every explicit user width.
+ */
+export function repairImportedAutoWidthTree(tree: MindMapTree): ImportedAutoWidthRepairResult {
+  const next = cloneTree(tree);
+  let repaired = 0;
+  const visit = (node: MindMapTree): void => {
+    const data = node.data ?? ({} as MindMapNodeData);
+    const legacyAutoWidth = data.yemindImportedAutoWidth === true
+      && typeof data.width === 'number'
+      && typeof data.customTextWidth === 'number'
+      && data.width === data.customTextWidth;
+    if (legacyAutoWidth) {
+      delete data.width;
+      repaired += 1;
+    }
+    (node.children ?? []).forEach(visit);
+  };
+  visit(next);
+  return { tree: next, changed: repaired > 0, repaired };
 }
 
 export const OUTLINE_TREE_IMPORT_PLACEHOLDERS: Record<OutlineTreeImportMode, string> = {
@@ -325,8 +356,8 @@ export function applyOutlineImport(
       yemindTextPristine: false,
       yemindTextEdited: true,
       expand: true,
-      ...(target.data.width === undefined && first.data.width !== undefined
-        ? { width: first.data.width, customTextWidth: first.data.width, yemindImportedAutoWidth: true }
+      ...(target.data.customTextWidth === undefined && first.data.customTextWidth !== undefined
+        ? { customTextWidth: first.data.customTextWidth, yemindImportedAutoWidth: true }
         : {}),
     };
     target.children = [...first.children, ...forest, ...(target.children ?? [])];

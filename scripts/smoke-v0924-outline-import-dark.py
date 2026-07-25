@@ -49,7 +49,7 @@ with sync_playwright() as p:
     page.wait_for_selector('.ymz-context-menu--outline')
     labels=page.locator('.ymz-context-menu--outline > .b3-menu__item .b3-menu__label').all_text_contents()
     sequence=page.locator('.ymz-context-menu--outline').evaluate("e=>[...e.children].map(x=>x.classList.contains('b3-menu__separator')?'---':x.querySelector('.b3-menu__label')?.textContent||'')")
-    expected=['编辑节点','插入上级节点','插入同级节点','插入下级节点','文本转导图…','添加','复制（当前行）','剪切（当前行）','粘贴（当前光标处）','粘贴（纯文本）','上移节点','下移节点','展开/折叠（下级节点）','删除当前行和子级','仅删除当前行']
+    expected=['编辑节点','插入上级节点','插入同级节点','插入下级节点','文本转导图…','添加','复制（当前行）','剪切（当前行）','粘贴（当前光标处）','粘贴（纯文本）','上移节点','下移节点','折叠全部下级节点','删除当前行和子级','仅删除当前行']
     if labels != expected: raise RuntimeError(f'outline menu order mismatch: {labels}')
     expected_sequence=expected[:6]+['---']+expected[6:10]+['---']+expected[10:13]+['---']+expected[13:]
     if sequence != expected_sequence: raise RuntimeError(f'outline menu separators mismatch: {sequence}')

@@ -66,7 +66,7 @@ export function openCanvasContextMenu(event: MouseEvent, commands: YeMindCommand
   });
   menu.addItem({ iconHTML: projectStyleIcon(), label: '样式', disabled: commands.isReadonly(), click: run('project-style', () => options.onProjectStyle?.()) });
   menu.addSeparator();
-  menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（所有节点）', click: run('toggle-all-expand', () => commands.toggleAllExpand()) });
+  menu.addItem({ icon: 'iconRefresh', label: '折叠所有节点 / 展开一级节点', click: run('toggle-all-expand', () => commands.toggleAllExpand()) });
   menu.addSeparator();
   menu.addItem({ icon: 'iconEye', label: options.zen ? '退出禅模式' : '进入禅模式', click: run('toggle-zen', () => options.onZenChange(!options.zen)) });
   menu.addItem({ icon: 'iconLock', label: options.readonly ? '退出只读模式' : '进入只读模式', click: run('toggle-readonly', () => options.onReadonlyChange(!options.readonly)) });
@@ -118,7 +118,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
     menu.addItem({ iconHTML: nodeStyleIcon(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
     menu.addItem({ iconHTML: summaryIcon(), label: '{} 添加综合概要', accelerator: 'Ctrl+Alt+G', disabled: !availability.summary, click: run('summary-add', () => commands.addSummary()) });
     menu.addItem({ iconHTML: relationIcon(), label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
-    menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
+    menu.addItem({ icon: 'iconRefresh', label: primary?.getData?.('expand') === false ? '展开一级下级节点' : '折叠全部下级节点', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
     menu.addSeparator();
     menu.addItem({ icon: 'iconCopy', label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });
     menu.addItem({ iconHTML: clipboardIcon('cut'), label: '剪切', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) });
@@ -163,7 +163,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   menu.addSeparator();
   menu.addItem({ icon: 'iconUp', label: '上移节点', accelerator: 'Ctrl+↑', disabled: !availability.move, click: run('move-up', () => commands.moveUp()) });
   menu.addItem({ icon: 'iconDown', label: '下移节点', accelerator: 'Ctrl+↓', disabled: !availability.move, click: run('move-down', () => commands.moveDown()) });
-  menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
+  menu.addItem({ icon: 'iconRefresh', label: primary?.getData?.('expand') === false ? '展开一级下级节点' : '折叠全部下级节点', disabled: !availability.toggleExpand, click: run('toggle-expand', () => commands.toggleExpand()) });
   menu.addSeparator();
   menu.addItem({ icon: 'iconTrashcan', label: '删除当前和子节点', accelerator: 'Delete', warning: true, disabled: !availability.remove, click: run('remove-subtree', () => commands.remove()) });
   menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前', accelerator: 'Shift+Backspace', disabled: !availability.removeOnlyCurrent, click: run('remove-only-current', () => commands.removeOnlyCurrent()) });
@@ -174,6 +174,14 @@ export interface OutlineContextMenuOptions {
   readonly: boolean;
   isRoot: boolean;
   hasChildren: boolean;
+  expanded: boolean;
+  todoLabel: string;
+  todoWarning?: boolean;
+  outerFrameLabel: string;
+  canOuterFrame: boolean;
+  canCodeBlock: boolean;
+  canInlineLink: boolean;
+  canFormula: boolean;
   canMoveUp: boolean;
   canMoveDown: boolean;
   onEdit(): void;
@@ -181,6 +189,15 @@ export interface OutlineContextMenuOptions {
   onAddSibling(): void;
   onAddChild(): void;
   onTextToMap(): void;
+  onTodo?(): void;
+  onOuterFrame?(): void;
+  onNote?(): void;
+  onComments?(): void;
+  onTags?(): void;
+  onNodeLink?(): void;
+  onCodeBlock?(): void;
+  onFormula?(): void;
+  onInlineLink?(): void;
   onMarkers?(): void;
   onClipart?(): void;
   onImage?(): void;
@@ -231,9 +248,18 @@ export function openOutlineContextMenu(event: MouseEvent, options: OutlineContex
   menu.addItem({
     type: 'submenu', icon: 'iconAdd', label: '添加', disabled,
     submenu: [
+      { icon: 'iconCheck', label: options.todoLabel, warning: options.todoWarning, disabled, click: run('todo', () => options.onTodo?.()) },
+      { iconHTML: outerFrameIcon(), label: options.outerFrameLabel, disabled: disabled || !options.canOuterFrame, click: run('outer-frame', () => options.onOuterFrame?.()) },
+      { icon: 'iconYeMindNote', label: '备注', disabled, click: run('note', () => options.onNote?.()) },
+      { icon: 'iconYeMindComment', label: '批注', disabled, click: run('comments', () => options.onComments?.()) },
+      { icon: 'iconTags', label: '标签', disabled, click: run('tags', () => options.onTags?.()) },
       { iconHTML: markerIcon(), label: '图标', disabled, click: run('icons', () => options.onMarkers?.()) },
+      { icon: 'iconLink', label: '链接', disabled, click: run('node-link', () => options.onNodeLink?.()) },
       { iconHTML: clipartIcon(), label: '剪贴图', disabled, click: run('clipart', () => options.onClipart?.()) },
       { icon: 'iconImage', label: '图片', disabled, click: run('image', () => options.onImage?.()) },
+      { icon: 'iconCode', label: '代码块', disabled: disabled || !options.canCodeBlock, click: run('code-block', () => options.onCodeBlock?.()) },
+      { icon: 'iconMath', label: '公式', disabled: disabled || !options.canFormula, click: run('formula', () => options.onFormula?.()) },
+      { icon: 'iconLink', label: '行内链接', disabled: disabled || !options.canInlineLink, click: run('inline-link', () => options.onInlineLink?.()) },
     ],
   });
   menu.addSeparator();
@@ -244,7 +270,7 @@ export function openOutlineContextMenu(event: MouseEvent, options: OutlineContex
   menu.addSeparator();
   menu.addItem({ icon: 'iconUp', label: '上移节点', disabled: disabled || !options.canMoveUp, click: run('move-up', options.onMoveUp) });
   menu.addItem({ icon: 'iconDown', label: '下移节点', disabled: disabled || !options.canMoveDown, click: run('move-down', options.onMoveDown) });
-  menu.addItem({ icon: 'iconRefresh', label: '展开/折叠（下级节点）', disabled: !options.hasChildren, click: run('toggle-expand', options.onToggleExpand) });
+  menu.addItem({ icon: 'iconRefresh', label: options.expanded ? '折叠全部下级节点' : '展开一级下级节点', disabled: !options.hasChildren, click: run('toggle-expand', options.onToggleExpand) });
   menu.addSeparator();
   menu.addItem({ icon: 'iconTrashcan', label: '删除当前行和子级', warning: true, disabled: disabled || options.isRoot, click: run('remove-subtree', options.onRemoveSubtree) });
   menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前行', disabled: disabled || options.isRoot, click: run('remove-only-current', options.onRemoveOnlyCurrent) });

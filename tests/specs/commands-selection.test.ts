@@ -9,3 +9,4 @@ import '../suites/commands-selection/shortcuts.suite';
 import '../suites/commands-selection/upstreamClipboardBehavior.suite';
 import '../suites/commands-selection/v093NodeQuickHover.suite';
 import '../suites/commands-selection/v0913ContextMenuSelection.suite';
+import '../suites/commands-selection/v0926ExpandSemantics.suite';

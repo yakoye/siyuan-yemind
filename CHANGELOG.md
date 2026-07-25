@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.26 - 2026-07-24
+
+- Removed redundant `width` from newly imported wrapped nodes and added a conservative upgrade repair for v0.9.25 nodes marked with `yemindImportedAutoWidth` when `width` equals `customTextWidth`.
+- Added a post-import measured redraw that preserves the exact viewport transform and selected node, preventing long wrapped labels from desynchronizing text, node bounds and branch anchors.
+- Changed branch disclosure to recursively collapse every descendant branch and to expand only the selected level; global disclosure now collapses all branches and restores only the root's first level.
+- Added outline image and clipart single-click editing plus cancellable double-click lightbox preview through the existing shared image tools.
+- Expanded outline content projection and actions for todo, outer frame, notes, comments, tags, node links, markers, clipart, images, code blocks, formulas and inline links without mirroring canvas decoration.
+- Added v0.9.26 unit, dependency-free runtime and Chromium regressions for width migration, collapse state, image interaction and outline content parity.
+
 ## 0.9.25 - 2026-07-24
 
 - Fixed the Text to Mind Map dialog at a viewport-safe size with independently scrollable source and processed-preview panes.

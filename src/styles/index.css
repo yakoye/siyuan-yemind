@@ -1708,3 +1708,19 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
 .ymz-outline-row{align-items:center}
 .ymz-outline-row__editor{min-width:20px}
 .ymz-editor[data-appearance="dark"] :is(.ymz-project-choice-panel,.ymz-layout-gallery,.ymz-project-style-panel,.ymz-node-style-panel){background:var(--b3-theme-surface,#22252b)}
+
+/* v0.9.26 outline content projection and image interaction */
+.ymz-outline-accessories__status{
+  display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 3px;flex:0 0 auto;
+  border:1px solid color-mix(in srgb,var(--b3-theme-on-surface) 18%,transparent);border-radius:5px;
+  background:color-mix(in srgb,var(--b3-theme-on-surface) 6%,transparent);color:var(--b3-theme-on-surface);
+  font:600 10px/1 var(--b3-font-family);cursor:pointer;box-sizing:border-box
+}
+.ymz-outline-accessories__status:hover{border-color:var(--b3-theme-primary);background:var(--ymz-control-hover-bg);color:var(--b3-theme-on-background)}
+.ymz-outline-accessories__status--todo{font-size:14px;color:var(--b3-theme-primary)}
+.ymz-outline-accessories__status--link{font-size:13px}
+.ymz-outline-accessories__tags{display:inline-flex;align-items:center;gap:2px;max-width:150px;overflow:hidden}
+.ymz-outline-accessories__tags>span{display:inline-block;max-width:70px;padding:1px 5px;border-radius:999px;background:color-mix(in srgb,var(--b3-theme-primary) 12%,transparent);color:var(--b3-theme-primary);font-size:10px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ymz-outline-accessories__image:focus-visible,.ymz-outline-accessories__status:focus-visible{outline:2px solid var(--b3-theme-primary);outline-offset:1px}
+.ymz-editor[data-appearance="dark"] .ymz-outline-accessories__image{background:color-mix(in srgb,var(--b3-theme-surface) 84%,transparent);border-color:color-mix(in srgb,var(--b3-theme-on-background) 22%,transparent)}
+.ymz-editor[data-appearance="dark"] .ymz-outline-accessories__status{background:color-mix(in srgb,var(--b3-theme-on-background) 8%,transparent);border-color:color-mix(in srgb,var(--b3-theme-on-background) 20%,transparent);color:var(--b3-theme-on-background)}
