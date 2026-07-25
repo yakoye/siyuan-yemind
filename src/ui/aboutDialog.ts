@@ -4,6 +4,7 @@ import { downloadDiagnosticsArchive } from '../diagnostics/DiagnosticsService';
 import { ROOT_ICON_URL } from '../plugin/constants';
 import { RELEASE_INFO, resolveVersionConsistency } from '../releaseInfo';
 import { openDiagnosticsDialog } from './diagnosticsDialog';
+import { createYeMindDialog } from './dialogChrome';
 
 export interface AboutDialogOptions {
   diagnostics?: DiagnosticsService;
@@ -66,7 +67,7 @@ export function createAboutDialogTemplate(): string {
 }
 
 export function openYeMindAboutDialog(options: AboutDialogOptions = {}): void {
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: `关于 ${RELEASE_INFO.productName}`,
     content: createAboutDialogTemplate(),
     width: '680px',

@@ -168,8 +168,11 @@ export function buildHoverPreviewHtml(type: NodeHoverPreviewType, value: NodeHov
 
 export class NodeHoverPreview {
   private readonly element: HTMLElement;
+  private readonly resizeObserver: ResizeObserver | null;
   private showTimer: number | null = null;
   private hideTimer: number | null = null;
+  private positionFrame: number | null = null;
+  private settleFrame: number | null = null;
   private anchor: HTMLElement | null = null;
 
   constructor(private readonly root: HTMLElement) {
@@ -178,6 +181,9 @@ export class NodeHoverPreview {
     this.element.hidden = true;
     this.element.addEventListener('pointerenter', () => this.cancelHide());
     this.element.addEventListener('pointerleave', () => this.scheduleHide());
+    this.resizeObserver = typeof ResizeObserver === 'function'
+      ? new ResizeObserver(() => this.schedulePosition())
+      : null;
     root.appendChild(this.element);
   }
 
@@ -188,8 +194,23 @@ export class NodeHoverPreview {
       this.showTimer = null;
       this.element.dataset.type = type;
       this.element.innerHTML = buildHoverPreviewHtml(type, value);
+      this.element.style.visibility = 'hidden';
       this.element.hidden = false;
-      this.position(anchor);
+      this.resizeObserver?.disconnect();
+      this.resizeObserver?.observe(this.element);
+      this.element.querySelectorAll<HTMLImageElement>('img').forEach((image) => {
+        if (!image.complete) image.addEventListener('load', () => this.schedulePosition(), { once: true });
+      });
+      this.positionFrame = window.requestAnimationFrame(() => {
+        this.positionFrame = null;
+        if (!this.anchor || this.element.hidden) return;
+        this.position(this.anchor);
+        this.element.style.visibility = '';
+        this.settleFrame = window.requestAnimationFrame(() => {
+          this.settleFrame = null;
+          if (this.anchor && !this.element.hidden) this.position(this.anchor);
+        });
+      });
     }, delay);
   }
 
@@ -202,8 +223,10 @@ export class NodeHoverPreview {
 
   hide(): void {
     this.cancelTimers();
+    this.resizeObserver?.disconnect();
     this.element.hidden = true;
     this.element.innerHTML = '';
+    this.element.style.removeProperty('visibility');
     this.element.style.removeProperty('width');
     this.element.style.removeProperty('max-height');
     delete this.element.dataset.placement;
@@ -212,7 +235,16 @@ export class NodeHoverPreview {
 
   destroy(): void {
     this.hide();
+    this.resizeObserver?.disconnect();
     this.element.remove();
+  }
+
+  private schedulePosition(): void {
+    if (!this.anchor || this.element.hidden || this.positionFrame !== null) return;
+    this.positionFrame = window.requestAnimationFrame(() => {
+      this.positionFrame = null;
+      if (this.anchor && !this.element.hidden) this.position(this.anchor);
+    });
   }
 
   private cancelHide(): void {
@@ -223,10 +255,15 @@ export class NodeHoverPreview {
   private cancelTimers(): void {
     if (this.showTimer !== null) window.clearTimeout(this.showTimer);
     this.showTimer = null;
+    if (this.positionFrame !== null) window.cancelAnimationFrame(this.positionFrame);
+    if (this.settleFrame !== null) window.cancelAnimationFrame(this.settleFrame);
+    this.positionFrame = null;
+    this.settleFrame = null;
     this.cancelHide();
   }
 
   private position(anchor: HTMLElement): void {
+    if (!anchor.isConnected || !this.element.isConnected) return;
     const rootRect = this.root.getBoundingClientRect();
     const anchorRect = anchor.getBoundingClientRect();
     const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
@@ -239,8 +276,9 @@ export class NodeHoverPreview {
       width: rootWidth,
       height: rootHeight,
     };
-    const desiredWidth = Math.min(360, Math.max(180, this.element.offsetWidth || 360));
-    const desiredHeight = Math.min(320, Math.max(80, this.element.offsetHeight || 220));
+    const measured = this.element.getBoundingClientRect();
+    const desiredWidth = Math.min(360, Math.max(180, measured.width || this.element.scrollWidth || 360));
+    const desiredHeight = Math.min(320, Math.max(80, measured.height || this.element.scrollHeight || 220));
     const placement = computeHoverPreviewPlacement({
       root: normalizedRoot,
       anchor: anchorRect,

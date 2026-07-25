@@ -1,4 +1,5 @@
 import { Dialog } from 'siyuan';
+import { createYeMindDialog } from './dialogChrome';
 
 function escapeHtml(value: string): string {
   return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
@@ -7,7 +8,7 @@ function escapeHtml(value: string): string {
 export function promptText(title: string, initialValue: string, placeholder = ''): Promise<string | null> {
   return new Promise((resolve) => {
     const inputId = `ymz-input-${Date.now()}`;
-    const dialog = new Dialog({
+    const dialog = createYeMindDialog({
       title,
       width: '440px',
       content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml(initialValue)}" placeholder="${escapeHtml(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
@@ -36,7 +37,7 @@ export function promptText(title: string, initialValue: string, placeholder = ''
 
 export function confirmAction(title: string, message: string, confirmText = '确定'): Promise<boolean> {
   return new Promise((resolve) => {
-    const dialog = new Dialog({
+    const dialog = createYeMindDialog({
       title,
       width: '440px',
       content: `<div class="b3-dialog__content"><p>${escapeHtml(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml(confirmText)}</button></div>`,

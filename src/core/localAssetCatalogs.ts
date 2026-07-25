@@ -139,6 +139,26 @@ export function markerButtonStyle(pluginBaseUrl: string | undefined, item: Marke
   return getYemindMarkerStyle(createRuntimeAssetResolver(pluginBaseUrl).markerSpriteUrl(), item);
 }
 
+function pixel(value: number): string {
+  const rounded = Math.round(value * 10000) / 10000;
+  return `${Object.is(rounded, -0) ? 0 : rounded}px`;
+}
+
+export function compactMarkerButtonStyle(
+  pluginBaseUrl: string | undefined,
+  item: MarkerItem,
+  targetSize = 18,
+): Record<string, string> {
+  const scale = targetSize / markerCatalog.iconSize.width;
+  const [x, y] = parsePosition(item.backgroundPosition);
+  return {
+    backgroundImage: `url("${createRuntimeAssetResolver(pluginBaseUrl).markerSpriteUrl()}")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: `${pixel(markerCatalog.displaySize.width * scale)} ${pixel(markerCatalog.displaySize.height * scale)}`,
+    backgroundPosition: `${pixel(x * scale)} ${pixel(y * scale)}`,
+  };
+}
+
 export function searchClipart(query: string, categoryId?: string): ClipartItem[] {
   const keyword = query.trim().toLocaleLowerCase();
   return clipartCatalog.items.filter((item) => {

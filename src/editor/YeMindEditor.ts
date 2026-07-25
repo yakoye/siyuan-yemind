@@ -112,6 +112,7 @@ import {
   isLegacyDefaultClipartGeometry,
   resolveClipartDisplaySize,
 } from "../core/clipartGeometry";
+import { createYeMindDialog } from '../ui/dialogChrome';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -2890,7 +2891,7 @@ export class YeMindEditor {
   }
 
   private openHelp(): void {
-    const dialog = new Dialog({
+    const dialog = createYeMindDialog({
       title: "YeMind 快速操作",
       content: `<div class="b3-dialog__content ymz-help">
         <p><b>双击</b> 编辑节点</p>

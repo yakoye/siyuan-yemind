@@ -10,6 +10,7 @@ import {
 } from './SettingsStore';
 import { createSettingsDialogTemplate, SHORTCUT_ROWS } from './settingsDialogTemplate';
 import { saveSettingsDraft } from './saveSettingsDraft';
+import { createYeMindDialog } from '../ui/dialogChrome';
 
 function cloneSettings(settings: YeMindSettings): YeMindSettings {
   return { ...settings, shortcutMap: { ...settings.shortcutMap } };
@@ -29,7 +30,7 @@ export interface SettingsDialogOptions {
 export function openYeMindSettingsDialog(store: SettingsStore, options: SettingsDialogOptions = {}): void {
   let draft = cloneSettings(store.get());
   let recordingCleanup: (() => void) | null = null;
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: 'YeMind 设置',
     content: createSettingsDialogTemplate(draft),
     width: '880px',

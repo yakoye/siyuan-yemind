@@ -1,5 +1,5 @@
 import type { MindMapNodeData } from '../model/types';
-import { markerButtonStyle, markerItemFromValue } from '../core/localAssetCatalogs';
+import { compactMarkerButtonStyle, markerItemFromValue } from '../core/localAssetCatalogs';
 
 export interface OutlineAccessoryImage {
   url: string;
@@ -111,11 +111,16 @@ export function outlineAccessoriesFromData(data: MindMapNodeData | Record<string
 function iconHtml(value: string, pluginBaseUrl?: string): string {
   const marker = markerItemFromValue(value);
   if (marker) {
-    const style = styleAttribute(markerButtonStyle(pluginBaseUrl, marker));
-    return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon-action data-outline-icon="${escapeAttribute(value)}" tabindex="-1" title="${escapeAttribute(marker.groupLabel)} ${marker.orderInGroup}" aria-label="修改图标"><span class="ymz-marker-sprite" style="${escapeAttribute(style)}"></span></button>`;
+    const style = styleAttribute(compactMarkerButtonStyle(pluginBaseUrl, marker));
+    return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon-action data-outline-icon="${escapeAttribute(value)}" tabindex="-1" title="${escapeAttribute(marker.groupLabel)} ${marker.orderInGroup}" aria-label="修改图标" style="${escapeAttribute(style)}"></button>`;
   }
   const label = LEGACY_ICON_LABELS[value] ?? '•';
   return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon-action data-outline-icon="${escapeAttribute(value)}" tabindex="-1" title="${escapeAttribute(value)}" aria-label="修改图标">${escapeAttribute(label)}</button>`;
+}
+
+function symbolIcon(symbol: string): string {
+  const safe = escapeAttribute(symbol);
+  return `<svg aria-hidden="true" focusable="false"><use href="#${safe}" xlink:href="#${safe}"></use></svg>`;
 }
 
 function statusButton(type: string, title: string, label: string): string {
@@ -136,8 +141,8 @@ export function outlineAccessoriesHtml(accessories: OutlineAccessories, pluginBa
   const tags = accessories.tags.length
     ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute(accessories.tags.join('、'))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute(tag)}</span>`).join('')}</span>`
     : '';
-  const note = accessories.hasNote ? statusButton('note', '备注', 'N') : '';
-  const comments = accessories.commentCount ? statusButton('comments', `批注 ${accessories.commentCount}`, String(accessories.commentCount)) : '';
+  const note = accessories.hasNote ? statusButton('note', '备注', symbolIcon('iconYeMindNote')) : '';
+  const comments = accessories.commentCount ? statusButton('comments', `批注 ${accessories.commentCount}`, symbolIcon('iconYeMindComment')) : '';
   const link = accessories.link ? statusButton('link', accessories.link, '↗') : '';
   const outerFrame = accessories.hasOuterFrame ? statusButton('outer-frame', '已有外框', '□') : '';
   return `<span class="ymz-outline-accessories" contenteditable="false" aria-label="节点附加内容">${todo}${icons}${image}${tags}${note}${comments}${link}${outerFrame}</span>`;

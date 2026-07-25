@@ -57,7 +57,7 @@ with sync_playwright() as p:
 
     marker=row.locator('[data-outline-icon-action]')
     if marker.count()!=1: raise RuntimeError('outline marker action missing')
-    marker_style=marker.locator('.ymz-marker-sprite').evaluate("e=>({background:getComputedStyle(e).backgroundImage,pattern:e.innerHTML.includes('<pattern')})")
+    marker_style=marker.evaluate("e=>({background:getComputedStyle(e).backgroundImage,pattern:e.innerHTML.includes('<pattern')})")
     if marker_style['background']=='none' or marker_style['pattern']:
         raise RuntimeError(f'outline marker sprite invalid: {marker_style}')
     marker_rect=rect(page,marker)
@@ -128,7 +128,7 @@ with sync_playwright() as p:
     if abs((cb['top']+cb['height']/2)-(tx['top']+tx['height']/2))>3:
         raise RuntimeError(f'map todo vertical alignment invalid: checkbox={cb}, text={tx}')
 
-    # Canvas clipart opens the picker directly and never shows the ordinary image selection frame.
+    # Canvas clipart keeps direct-manipulation geometry while opening the picker.
     map_clip_node=page.locator('.smm-node').filter(has_text='剪贴图节点').first
     map_clip_img=map_clip_node.locator('image').first
     if map_clip_img.count()!=1:
@@ -139,8 +139,9 @@ with sync_playwright() as p:
     page.wait_for_selector('.ymz-clipart-dialog')
     map_clip_picker=page.locator('.b3-dialog:has(.ymz-clipart-dialog)')
     map_clip_picker_rect=rect(page,map_clip_picker.locator('.b3-dialog__container'))
-    if page.locator('.ymz-node-image-frame[data-mode="selected"]:visible').count()!=0:
-        raise RuntimeError('canvas clipart still opened the ordinary image selection toolbar')
+    frame=page.locator('.ymz-node-image-frame[data-mode="selected"][data-asset-kind="clipart"]:visible')
+    if frame.count()!=1 or frame.locator('.ymz-node-image-resize-handle').count()!=8 or frame.locator('.ymz-node-image-delete').count()!=1:
+        raise RuntimeError('canvas clipart direct-manipulation frame missing')
     if intersects(map_clip_rect,map_clip_picker_rect):
         raise RuntimeError(f'canvas clipart picker obscured its source image: image={map_clip_rect}, dialog={map_clip_picker_rect}')
     map_clip_picker.locator('.ymz-local-asset-dialog__header [data-asset-dialog-action="close"]').click()

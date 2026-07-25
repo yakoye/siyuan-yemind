@@ -2,6 +2,7 @@ import { Dialog, showMessage } from 'siyuan';
 import type { RichTextFormattingTarget } from '../editor/richTextTarget';
 import type { YeMindSettings } from '../settings/SettingsStore';
 import { normalizeInlineLink } from '../editor/inlineLink';
+import { createYeMindDialog } from './dialogChrome';
 
 const CODE_LANGUAGES = [
   ['plain', '纯文本'],
@@ -33,7 +34,7 @@ export function openInlineLinkDialog(commands: RichTextFormattingTarget, setting
     showMessage('请先在节点中选择要添加链接的文字', 2800, 'info');
     return;
   }
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: existing ? '编辑行内链接' : '添加行内链接',
     width: '480px',
     content: `<div class="b3-dialog__content ymz-node-dialog">
@@ -82,7 +83,7 @@ export function openCodeBlockDialog(commands: RichTextFormattingTarget, settings
     showMessage('请先在节点中选择要转换为代码块的文字', 2800, 'info');
     return;
   }
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: existing ? '编辑代码块' : '插入代码块',
     width: '680px',
     content: `<div class="b3-dialog__content ymz-node-dialog ymz-code-dialog">

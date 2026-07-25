@@ -8,6 +8,7 @@ import {
   type OutlineTreeImportMode,
   type OutlineTreeImportResult,
 } from '../editor/outlineTreeImport';
+import { createYeMindDialog } from './dialogChrome';
 
 export interface TextToMapDialogOptions {
   targetUid: string;
@@ -57,7 +58,7 @@ function resultStatus(result: OutlineTreeImportResult): string {
 }
 
 export function openTextToMapDialog(options: TextToMapDialogOptions): void {
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: '文本转导图',
     width: 'min(980px, calc(100vw - 48px))',
     height: 'min(700px, calc(100vh - 64px))',

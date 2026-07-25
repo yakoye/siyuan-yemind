@@ -1745,15 +1745,6 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
   cursor:pointer;
 }
 .ymz-outline-accessories__icon:hover{background:var(--b3-list-hover)}
-.ymz-outline-accessories__icon--marker .ymz-marker-sprite{
-  display:block!important;
-  width:28px!important;
-  height:28px!important;
-  min-width:28px;
-  flex:0 0 28px!important;
-  transform:scale(.6428571429);
-  transform-origin:center;
-}
 .ymz-outline-accessories__todo{
   appearance:none;
   display:grid;
@@ -1821,3 +1812,100 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
 }
 .ymz-asset-dialog-shell:has(.ymz-marker-dialog) .b3-dialog__container{--ymz-asset-dialog-width:600px}
 .ymz-asset-dialog-shell:has(.ymz-clipart-dialog) .b3-dialog__container{--ymz-asset-dialog-width:660px}
+
+
+/* v0.9.28 outline geometry, clipart manipulation and unified dialog chrome */
+.ymz-outline-accessories__icon--marker{
+  background-color:transparent;
+  background-origin:border-box;
+  background-clip:border-box;
+}
+.ymz-outline-accessories__status svg{
+  display:block;
+  width:14px;
+  height:14px;
+  pointer-events:none;
+}
+.ymz-outline-accessories__status--note,
+.ymz-outline-accessories__status--comments{
+  width:20px;
+  min-width:20px;
+  padding:0;
+}
+.ymz-node-image-frame[data-asset-kind="clipart"] .ymz-node-image-toolbar{display:none}
+
+.ymz-dialog-shell .b3-dialog__container{
+  color:var(--b3-theme-on-background);
+  border-radius:12px;
+  overflow:hidden;
+}
+.ymz-dialog-shell .b3-dialog__header{
+  display:flex;
+  align-items:center;
+  min-height:46px;
+  box-sizing:border-box;
+  padding:0 12px 0 16px;
+  border-bottom:1px solid color-mix(in srgb,var(--ymz-border) 72%,transparent);
+  color:var(--b3-theme-on-background);
+  font-weight:700;
+  line-height:1.2;
+}
+.ymz-dialog-shell .b3-dialog__header>div,
+.ymz-dialog-shell .b3-dialog__header>span,
+.ymz-dialog-shell .b3-dialog__header strong{font-weight:700;line-height:1.2}
+.ymz-dialog-shell .b3-dialog__close{
+  position:static!important;
+  display:grid;
+  place-items:center;
+  width:30px;
+  height:30px;
+  min-width:30px;
+  margin:0 0 0 auto;
+  padding:0;
+  align-self:center;
+  border-radius:7px;
+  color:var(--b3-theme-on-surface-light);
+}
+.ymz-dialog-shell .b3-dialog__close:hover,
+.ymz-dialog-shell .b3-dialog__close:focus-visible{background:var(--b3-list-hover);color:var(--b3-theme-on-background)}
+.ymz-dialog-shell .b3-dialog__action{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  min-height:54px;
+  box-sizing:border-box;
+  padding:10px 14px;
+  border-top:1px solid color-mix(in srgb,var(--ymz-border) 72%,transparent);
+}
+.ymz-dialog-shell .b3-dialog__action .fn__space{display:none}
+.ymz-dialog-shell :is(.ymz-local-asset-dialog__header,.ymz-node-dialog__header){
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  min-height:46px;
+  box-sizing:border-box;
+}
+.ymz-dialog-shell :is(.ymz-local-asset-dialog__header,.ymz-node-dialog__header)>strong{
+  font-size:15px;
+  font-weight:700;
+  line-height:1.2;
+}
+.ymz-dialog-shell :is(.ymz-local-asset-dialog__close,.ymz-node-dialog__close){
+  display:grid;
+  place-items:center;
+  width:30px;
+  height:30px;
+  min-width:30px;
+  margin:0;
+  padding:0;
+  align-self:center;
+  line-height:1;
+}
+.ymz-dialog-shell :is(.ymz-local-asset-dialog__footer,.ymz-note-dialog__footer,.ymz-comments-dialog__footer){
+  display:flex;
+  align-items:center;
+  justify-content:flex-end!important;
+  gap:8px;
+}
+.ymz-dialog-shell :is(.ymz-local-asset-dialog__footer,.ymz-note-dialog__footer,.ymz-comments-dialog__footer) .fn__space{display:none}

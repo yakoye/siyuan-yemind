@@ -75,7 +75,7 @@ with sync_playwright() as p:
 
     # Single click opens the shared image editor after the cancellable delay.
     image.click()
-    page.wait_for_timeout(280)
+    page.wait_for_timeout(450)
     if page.locator('.b3-dialog[data-dialog-title="图片"]').count()!=1:
         raise RuntimeError('single-click outline image did not open image editor')
     page.locator('.b3-dialog[data-dialog-title="图片"]').evaluate('e=>e.remove()')

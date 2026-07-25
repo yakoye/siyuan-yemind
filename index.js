@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.27 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.28 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -30,20 +30,20 @@ const isolatedLifecycleProbe_1 = __require(9);
 const CheckpointRepository_1 = __require(10);
 const MapRepository_1 = __require(22);
 const dialogs_1 = __require(25);
-const diagnosticsDialog_1 = __require(26);
-const aboutDialog_1 = __require(27);
-const settings_1 = __require(30);
-const settingsDialog_1 = __require(31);
-const SettingsStore_1 = __require(33);
-const releaseInfo_1 = __require(29);
-const constants_1 = __require(28);
-const dock_1 = __require(38);
-const tabs_1 = __require(39);
-const OpenMapTabRegistry_1 = __require(264);
-const pluginUrl_1 = __require(265);
-const operationSafety_1 = __require(266);
-const pluginStartup_1 = __require(267);
-const globalSearch_1 = __require(268);
+const diagnosticsDialog_1 = __require(27);
+const aboutDialog_1 = __require(28);
+const settings_1 = __require(31);
+const settingsDialog_1 = __require(32);
+const SettingsStore_1 = __require(34);
+const releaseInfo_1 = __require(30);
+const constants_1 = __require(29);
+const dock_1 = __require(39);
+const tabs_1 = __require(40);
+const OpenMapTabRegistry_1 = __require(266);
+const pluginUrl_1 = __require(267);
+const operationSafety_1 = __require(268);
+const pluginStartup_1 = __require(269);
+const globalSearch_1 = __require(270);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -5805,6 +5805,7 @@ exports.markerGroupForValue = markerGroupForValue;
 exports.markerSvg = markerSvg;
 exports.createMarkerIconList = createMarkerIconList;
 exports.markerButtonStyle = markerButtonStyle;
+exports.compactMarkerButtonStyle = compactMarkerButtonStyle;
 exports.searchClipart = searchClipart;
 exports.groupLayouts = groupLayouts;
 const marker_catalog_json_1 = __importDefault(__require(16));
@@ -5869,6 +5870,20 @@ function createMarkerIconList(pluginBaseUrl) {
 }
 function markerButtonStyle(pluginBaseUrl, item) {
     return (0, yemind_local_assets_1.getYemindMarkerStyle)(createRuntimeAssetResolver(pluginBaseUrl).markerSpriteUrl(), item);
+}
+function pixel(value) {
+    const rounded = Math.round(value * 10000) / 10000;
+    return `${Object.is(rounded, -0) ? 0 : rounded}px`;
+}
+function compactMarkerButtonStyle(pluginBaseUrl, item, targetSize = 18) {
+    const scale = targetSize / exports.markerCatalog.iconSize.width;
+    const [x, y] = parsePosition(item.backgroundPosition);
+    return {
+        backgroundImage: `url("${createRuntimeAssetResolver(pluginBaseUrl).markerSpriteUrl()}")`,
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: `${pixel(exports.markerCatalog.displaySize.width * scale)} ${pixel(exports.markerCatalog.displaySize.height * scale)}`,
+        backgroundPosition: `${pixel(x * scale)} ${pixel(y * scale)}`,
+    };
 }
 function searchClipart(query, categoryId) {
     const keyword = query.trim().toLocaleLowerCase();
@@ -15499,14 +15514,14 @@ function editableTextLength(quill) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.promptText = promptText;
 exports.confirmAction = confirmAction;
-const siyuan_1 = __externalRequire("siyuan");
+const dialogChrome_1 = __require(26);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
 function promptText(title, initialValue, placeholder = '') {
     return new Promise((resolve) => {
         const inputId = `ymz-input-${Date.now()}`;
-        const dialog = new siyuan_1.Dialog({
+        const dialog = (0, dialogChrome_1.createYeMindDialog)({
             title,
             width: '440px',
             content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml(initialValue)}" placeholder="${escapeHtml(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
@@ -15537,7 +15552,7 @@ function promptText(title, initialValue, placeholder = '') {
 }
 function confirmAction(title, message, confirmText = '确定') {
     return new Promise((resolve) => {
-        const dialog = new siyuan_1.Dialog({
+        const dialog = (0, dialogChrome_1.createYeMindDialog)({
             title,
             width: '440px',
             content: `<div class="b3-dialog__content"><p>${escapeHtml(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml(confirmText)}</button></div>`,
@@ -15558,12 +15573,32 @@ function confirmAction(title, message, confirmText = '确定') {
 
 },
 26: function(module, exports, __require, __externalRequire) {
+// /src/ui/dialogChrome.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.YEMIND_DIALOG_CLASS = void 0;
+exports.applyDialogChrome = applyDialogChrome;
+exports.createYeMindDialog = createYeMindDialog;
+const siyuan_1 = __externalRequire("siyuan");
+exports.YEMIND_DIALOG_CLASS = 'ymz-dialog-shell';
+function applyDialogChrome(dialog) {
+    dialog.element.classList.add(exports.YEMIND_DIALOG_CLASS);
+    dialog.element.dataset.yemindDialog = 'true';
+    return dialog;
+}
+function createYeMindDialog(options) {
+    return applyDialogChrome(new siyuan_1.Dialog(options));
+}
+
+},
+27: function(module, exports, __require, __externalRequire) {
 // /src/ui/diagnosticsDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.openDiagnosticsDialog = openDiagnosticsDialog;
 const siyuan_1 = __externalRequire("siyuan");
 const DiagnosticsService_1 = __require(5);
+const dialogChrome_1 = __require(26);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -15594,7 +15629,7 @@ function renderSearchState(service) {
   </div>`;
 }
 function openDiagnosticsDialog(service) {
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: 'YeMind 诊断与回归',
         width: '760px',
         content: `<div class="b3-dialog__content ymz-diagnostics">
@@ -15688,7 +15723,7 @@ function openDiagnosticsDialog(service) {
 }
 
 },
-27: function(module, exports, __require, __externalRequire) {
+28: function(module, exports, __require, __externalRequire) {
 // /src/ui/aboutDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -15696,9 +15731,10 @@ exports.createAboutDialogTemplate = createAboutDialogTemplate;
 exports.openYeMindAboutDialog = openYeMindAboutDialog;
 const siyuan_1 = __externalRequire("siyuan");
 const DiagnosticsService_1 = __require(5);
-const constants_1 = __require(28);
-const releaseInfo_1 = __require(29);
-const diagnosticsDialog_1 = __require(26);
+const constants_1 = __require(29);
+const releaseInfo_1 = __require(30);
+const diagnosticsDialog_1 = __require(27);
+const dialogChrome_1 = __require(26);
 function escapeHtml(value) {
     return value
         .replaceAll('&', '&amp;')
@@ -15753,7 +15789,7 @@ function createAboutDialogTemplate() {
   </div>`;
 }
 function openYeMindAboutDialog(options = {}) {
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: `关于 ${releaseInfo_1.RELEASE_INFO.productName}`,
         content: createAboutDialogTemplate(),
         width: '680px',
@@ -15827,7 +15863,7 @@ function openYeMindAboutDialog(options = {}) {
 }
 
 },
-28: function(module, exports, __require, __externalRequire) {
+29: function(module, exports, __require, __externalRequire) {
 // /src/plugin/constants.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -15844,37 +15880,37 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.27';
+exports.PLUGIN_VERSION = '0.9.28';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
 exports.ROOT_ICON_URL = `/plugins/${exports.PLUGIN_ID}/icon.png`;
 
 },
-29: function(module, exports, __require, __externalRequire) {
+30: function(module, exports, __require, __externalRequire) {
 // /src/releaseInfo.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RELEASE_INFO = void 0;
 exports.resolveVersionConsistency = resolveVersionConsistency;
-const constants_1 = __require(28);
+const constants_1 = __require(29);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-25T02:21:07Z',
-    buildId: 'yemind-v0.9.27-20260725',
+    buildTime: '2026-07-25T03:58:24Z',
+    buildId: 'yemind-v0.9.28-20260725',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '统一大纲与导图的图标、图片和剪贴图交互，优化资源与备注对话框，并修复待办及跨视图内容同步。',
+    releaseSummary: '修复大纲图标与语义状态显示，恢复剪贴图直接缩放，并统一所有对话框的标题、关闭与底部操作区域。',
     highlights: [
-        '大纲图标改用与导图一致的 marker sprite 渲染，单击可直接打开对应分类的图标选择器并即时同步修改结果。',
-        '大纲图片和剪贴图继续区分单击编辑与双击共享大图浏览，备注、批注、待办、标签、链接和外框支持悬停预览。',
-        '图标与剪贴图对话框改为紧凑宽度、自定义加粗标题栏和明确关闭按钮，并根据点击位置避开当前节点。',
-        '备注对话框操作按钮右对齐；标题栏关闭或点击遮罩会自动保存，显式取消仍放弃本次修改。',
-        '导图剪贴图单击直接打开选择器，不再显示图片替换/删除浮动工具栏；图标选择器同样锚定在点击节点旁。',
-        '待办前缀统一为 18px 方形布局，并在大纲文字编辑期间仅刷新附件投影，保持图标、图片和状态在导图、大纲及分屏一致。',
+        '大纲 marker 使用数学缩放后的紧凑 sprite 背景，修复图标外框与图形偏移；备注、批注改用明确语义图标，不再把批注数量误显示为节点编号。',
+        '大纲悬停预览等待真实布局和图片加载后再显示，并通过 ResizeObserver 持续校正，避免首次出现时内容被截断。',
+        '大纲图片单击继续编辑，双击稳定进入与导图完全相同的共享大图浏览器，单击与双击通过可取消延迟正确仲裁。',
+        '导图剪贴图重新保留八方向缩放框和删除按钮，同时单击仍可打开剪贴图选择器；普通图片行为不受影响。',
+        '图标和剪贴图选择器使用八方向候选与视口夹紧算法，在屏幕四角和各边缘附近均优先避开被点击节点。',
+        '全部 YeMind 对话框接入统一外壳：标题加粗并垂直居中，关闭按钮对齐，底部按钮统一右对齐，原生和自定义标题栏保持同一几何。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -15890,12 +15926,12 @@ function resolveVersionConsistency(manifestVersion) {
 }
 
 },
-30: function(module, exports, __require, __externalRequire) {
+31: function(module, exports, __require, __externalRequire) {
 // /src/settings/settings.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerSettings = registerSettings;
-const settingsDialog_1 = __require(31);
+const settingsDialog_1 = __require(32);
 /**
  * Keep SiYuan's built-in plugin settings entry small and route it to the
  * complete YeMind dialog. This prevents the native list and the custom
@@ -15919,16 +15955,17 @@ function registerSettings(plugin, store, diagnostics) {
 }
 
 },
-31: function(module, exports, __require, __externalRequire) {
+32: function(module, exports, __require, __externalRequire) {
 // /src/settings/settingsDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.openYeMindSettingsDialog = openYeMindSettingsDialog;
 const siyuan_1 = __externalRequire("siyuan");
-const shortcuts_1 = __require(32);
-const SettingsStore_1 = __require(33);
-const settingsDialogTemplate_1 = __require(34);
-const saveSettingsDraft_1 = __require(37);
+const shortcuts_1 = __require(33);
+const SettingsStore_1 = __require(34);
+const settingsDialogTemplate_1 = __require(35);
+const saveSettingsDraft_1 = __require(38);
+const dialogChrome_1 = __require(26);
 function cloneSettings(settings) {
     return { ...settings, shortcutMap: { ...settings.shortcutMap } };
 }
@@ -15943,7 +15980,7 @@ function setControlValue(control, value) {
 function openYeMindSettingsDialog(store, options = {}) {
     let draft = cloneSettings(store.get());
     let recordingCleanup = null;
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: 'YeMind 设置',
         content: (0, settingsDialogTemplate_1.createSettingsDialogTemplate)(draft),
         width: '880px',
@@ -16106,7 +16143,7 @@ function openYeMindSettingsDialog(store, options = {}) {
 }
 
 },
-32: function(module, exports, __require, __externalRequire) {
+33: function(module, exports, __require, __externalRequire) {
 // /src/editor/shortcuts.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -16215,7 +16252,7 @@ function isEditableTarget(target) {
 }
 
 },
-33: function(module, exports, __require, __externalRequire) {
+34: function(module, exports, __require, __externalRequire) {
 // /src/settings/SettingsStore.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -16404,13 +16441,13 @@ class SettingsStore {
 exports.SettingsStore = SettingsStore;
 
 },
-34: function(module, exports, __require, __externalRequire) {
+35: function(module, exports, __require, __externalRequire) {
 // /src/settings/settingsDialogTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SHORTCUT_ROWS = void 0;
 exports.createSettingsDialogTemplate = createSettingsDialogTemplate;
-const projectControls_1 = __require(35);
+const projectControls_1 = __require(36);
 exports.SHORTCUT_ROWS = [
     { key: 'search', label: '项目内搜索', group: '导图命令' },
     { key: 'toggleZen', label: '切换禅模式', group: '导图命令' },
@@ -16624,7 +16661,7 @@ function createSettingsDialogTemplate(settings) {
 }
 
 },
-35: function(module, exports, __require, __externalRequire) {
+36: function(module, exports, __require, __externalRequire) {
 // /src/editor/projectControls.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -16649,7 +16686,7 @@ exports.outerFrameIcon = outerFrameIcon;
 exports.fullscreenIcon = fullscreenIcon;
 exports.lockIcon = lockIcon;
 exports.meditationIcon = meditationIcon;
-const suppliedIcons_1 = __require(36);
+const suppliedIcons_1 = __require(37);
 function iconSlot(content, modifier = '') {
     const suffix = modifier ? ` ${modifier}` : '';
     return `<span class="ymz-icon-slot${suffix}" aria-hidden="true">${content}</span>`;
@@ -16743,7 +16780,7 @@ function meditationIcon() {
 }
 
 },
-36: function(module, exports, __require, __externalRequire) {
+37: function(module, exports, __require, __externalRequire) {
 // /src/editor/suppliedIcons.ts
 "use strict";
 /**
@@ -16874,7 +16911,7 @@ exports.suppliedIconSourceNames = Object.freeze({
 });
 
 },
-37: function(module, exports, __require, __externalRequire) {
+38: function(module, exports, __require, __externalRequire) {
 // /src/settings/saveSettingsDraft.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -16885,12 +16922,12 @@ async function saveSettingsDraft(store, draft) {
 }
 
 },
-38: function(module, exports, __require, __externalRequire) {
+39: function(module, exports, __require, __externalRequire) {
 // /src/plugin/dock.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindDock = registerYeMindDock;
-const constants_1 = __require(28);
+const constants_1 = __require(29);
 class YeMindDockView {
     constructor(host, element) {
         this.host = host;
@@ -16981,16 +17018,16 @@ function escapeHtml(value) {
 }
 
 },
-39: function(module, exports, __require, __externalRequire) {
+40: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
-const YeMindEditor_1 = __require(40);
-const deferredMount_1 = __require(262);
-const constants_1 = __require(28);
-const visibleElement_1 = __require(245);
-const tabNodeFocus_1 = __require(263);
+const YeMindEditor_1 = __require(41);
+const deferredMount_1 = __require(264);
+const constants_1 = __require(29);
+const visibleElement_1 = __require(246);
+const tabNodeFocus_1 = __require(265);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -17078,66 +17115,67 @@ function registerYeMindTab(plugin, host) {
 }
 
 },
-40: function(module, exports, __require, __externalRequire) {
+41: function(module, exports, __require, __externalRequire) {
 // /src/editor/YeMindEditor.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.YeMindEditor = void 0;
 const siyuan_1 = __externalRequire("siyuan");
-const createMindMap_1 = __require(41);
-const dragBehavior_1 = __require(200);
+const createMindMap_1 = __require(42);
+const dragBehavior_1 = __require(201);
 const themePresets_1 = __require(11);
-const relationConfig_1 = __require(201);
-const outerFrameConfig_1 = __require(202);
-const relationData_1 = __require(206);
-const commands_1 = __require(207);
-const nodeDecorations_1 = __require(197);
-const registerPlugins_1 = __require(91);
-const checkpointDialog_1 = __require(214);
-const contextMenu_1 = __require(217);
+const relationConfig_1 = __require(202);
+const outerFrameConfig_1 = __require(203);
+const relationData_1 = __require(207);
+const commands_1 = __require(208);
+const nodeDecorations_1 = __require(198);
+const registerPlugins_1 = __require(92);
+const checkpointDialog_1 = __require(215);
+const contextMenu_1 = __require(218);
 const dialogs_1 = __require(25);
-const textToMapDialog_1 = __require(224);
-const outlineTreeImport_1 = __require(225);
-const nodeContentDialogs_1 = __require(218);
-const richTextDialogs_1 = __require(229);
-const editorStats_1 = __require(230);
-const editorTemplate_1 = __require(231);
-const outlineDrag_1 = __require(232);
-const StructuredOutlineEditorController_1 = __require(233);
-const splitPane_1 = __require(234);
-const RichTextToolbar_1 = __require(235);
-const shortcuts_1 = __require(32);
-const selectionPresentation_1 = __require(239);
-const saveRevision_1 = __require(240);
-const relationPresentation_1 = __require(241);
-const outerFramePresentation_1 = __require(242);
-const toolbarAvailability_1 = __require(243);
-const linkNavigation_1 = __require(244);
-const visibleElement_1 = __require(245);
-const imageFileLoading_1 = __require(219);
-const nodeImageInput_1 = __require(246);
-const nodeHoverPreview_1 = __require(247);
-const imageLightbox_1 = __require(248);
-const nodeStylePanel_1 = __require(249);
-const projectStylePanel_1 = __require(250);
-const layoutGalleryPanel_1 = __require(251);
-const projectChoicePanel_1 = __require(252);
-const localAssetDialogs_1 = __require(253);
+const textToMapDialog_1 = __require(225);
+const outlineTreeImport_1 = __require(226);
+const nodeContentDialogs_1 = __require(219);
+const richTextDialogs_1 = __require(230);
+const editorStats_1 = __require(231);
+const editorTemplate_1 = __require(232);
+const outlineDrag_1 = __require(233);
+const StructuredOutlineEditorController_1 = __require(234);
+const splitPane_1 = __require(235);
+const RichTextToolbar_1 = __require(236);
+const shortcuts_1 = __require(33);
+const selectionPresentation_1 = __require(240);
+const saveRevision_1 = __require(241);
+const relationPresentation_1 = __require(242);
+const outerFramePresentation_1 = __require(243);
+const toolbarAvailability_1 = __require(244);
+const linkNavigation_1 = __require(245);
+const visibleElement_1 = __require(246);
+const imageFileLoading_1 = __require(220);
+const nodeImageInput_1 = __require(247);
+const nodeHoverPreview_1 = __require(248);
+const imageLightbox_1 = __require(249);
+const nodeStylePanel_1 = __require(250);
+const projectStylePanel_1 = __require(251);
+const layoutGalleryPanel_1 = __require(252);
+const projectChoicePanel_1 = __require(253);
+const localAssetDialogs_1 = __require(254);
 const layoutAssetPresets_1 = __require(14);
-const measurementHost_1 = __require(205);
-const canvasRichTextVisibility_1 = __require(254);
-const searchPanelState_1 = __require(255);
+const measurementHost_1 = __require(206);
+const canvasRichTextVisibility_1 = __require(256);
+const searchPanelState_1 = __require(257);
 const projectStyle_1 = __require(20);
-const appearanceTransaction_1 = __require(256);
-const nodeQuickActions_1 = __require(257);
-const projectControls_1 = __require(35);
-const nodeNoteState_1 = __require(198);
-const nodeContentMenu_1 = __require(223);
-const canvasRightDrag_1 = __require(258);
-const liveNodeWidthLayout_1 = __require(259);
-const focusHighlight_1 = __require(260);
-const editingSurfaceCoordinator_1 = __require(261);
-const clipartGeometry_1 = __require(212);
+const appearanceTransaction_1 = __require(258);
+const nodeQuickActions_1 = __require(259);
+const projectControls_1 = __require(36);
+const nodeNoteState_1 = __require(199);
+const nodeContentMenu_1 = __require(224);
+const canvasRightDrag_1 = __require(260);
+const liveNodeWidthLayout_1 = __require(261);
+const focusHighlight_1 = __require(262);
+const editingSurfaceCoordinator_1 = __require(263);
+const clipartGeometry_1 = __require(213);
+const dialogChrome_1 = __require(26);
 class YeMindEditor {
     constructor(options) {
         this.options = options;
@@ -19598,7 +19636,7 @@ class YeMindEditor {
         }
     }
     openHelp() {
-        const dialog = new siyuan_1.Dialog({
+        const dialog = (0, dialogChrome_1.createYeMindDialog)({
             title: "YeMind 快速操作",
             content: `<div class="b3-dialog__content ymz-help">
         <p><b>双击</b> 编辑节点</p>
@@ -19620,7 +19658,7 @@ class YeMindEditor {
 exports.YeMindEditor = YeMindEditor;
 
 },
-41: function(module, exports, __require, __externalRequire) {
+42: function(module, exports, __require, __externalRequire) {
 // /src/core/createMindMap.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -19629,17 +19667,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createImageDeleteGuard = createImageDeleteGuard;
 exports.createMindMap = createMindMap;
-const simple_mind_map_1 = __importDefault(__require(42));
-const registerPlugins_1 = __require(91);
-const registerLayouts_1 = __require(195);
-const nodeDecorations_1 = __require(197);
-const dragBehavior_1 = __require(200);
-const relationConfig_1 = __require(201);
-const outerFrameConfig_1 = __require(202);
-const shortcutSafety_1 = __require(203);
+const simple_mind_map_1 = __importDefault(__require(43));
+const registerPlugins_1 = __require(92);
+const registerLayouts_1 = __require(196);
+const nodeDecorations_1 = __require(198);
+const dragBehavior_1 = __require(201);
+const relationConfig_1 = __require(202);
+const outerFrameConfig_1 = __require(203);
+const shortcutSafety_1 = __require(204);
 const themePresets_1 = __require(11);
-const themeColorRuntime_1 = __require(204);
-const measurementHost_1 = __require(205);
+const themeColorRuntime_1 = __require(205);
+const measurementHost_1 = __require(206);
 function createImageDeleteGuard(confirmDelete) {
     return async (node) => {
         if (!confirmDelete)
@@ -19730,7 +19768,7 @@ function createMindMap(options) {
 }
 
 },
-42: function(module, exports, __require, __externalRequire) {
+43: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/index.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -19770,20 +19808,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const View_1 = __importDefault(__require(43));
-const Event_1 = __importDefault(__require(45));
-const Render_1 = __importDefault(__require(47));
-const deepmerge_1 = __importDefault(__require(48));
-const theme_1 = __importDefault(__require(84));
-const Style_1 = __importDefault(__require(52));
-const KeyCommand_1 = __importDefault(__require(85));
-const Command_1 = __importDefault(__require(87));
-const BatchExecution_1 = __importDefault(__require(89));
-const constant_1 = __require(44);
-const svg_js_1 = __require(61);
-const utils_1 = __require(53);
-const default_1 = __importStar(__require(62));
-const defaultOptions_1 = __require(90);
+const View_1 = __importDefault(__require(44));
+const Event_1 = __importDefault(__require(46));
+const Render_1 = __importDefault(__require(48));
+const deepmerge_1 = __importDefault(__require(49));
+const theme_1 = __importDefault(__require(85));
+const Style_1 = __importDefault(__require(53));
+const KeyCommand_1 = __importDefault(__require(86));
+const Command_1 = __importDefault(__require(88));
+const BatchExecution_1 = __importDefault(__require(90));
+const constant_1 = __require(45);
+const svg_js_1 = __require(62);
+const utils_1 = __require(54);
+const default_1 = __importStar(__require(63));
+const defaultOptions_1 = __require(91);
 //  思维导图
 class MindMap {
     //  构造函数
@@ -20522,11 +20560,11 @@ MindMap.removeTheme = name => {
 exports.default = MindMap;
 
 },
-43: function(module, exports, __require, __externalRequire) {
+44: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/view/View.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const constant_1 = __require(44);
+const constant_1 = __require(45);
 //  视图操作类
 class View {
     //  构造函数
@@ -20944,7 +20982,7 @@ class View {
 exports.default = View;
 
 },
-44: function(module, exports, __require, __externalRequire) {
+45: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/constants/constant.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -21214,15 +21252,15 @@ exports.richTextSupportStyleList = [
 ];
 
 },
-45: function(module, exports, __require, __externalRequire) {
+46: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/event/Event.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const eventemitter3_1 = __importDefault(__require(46));
-const constant_1 = __require(44);
+const eventemitter3_1 = __importDefault(__require(47));
+const constant_1 = __require(45);
 //  事件类
 class Event extends eventemitter3_1.default {
     //  构造函数
@@ -21406,7 +21444,7 @@ class Event extends eventemitter3_1.default {
 exports.default = Event;
 
 },
-46: function(module, exports, __require, __externalRequire) {
+47: function(module, exports, __require, __externalRequire) {
 // /node_modules/eventemitter3/index.js
 'use strict';
 var has = Object.prototype.hasOwnProperty, prefix = '~';
@@ -21715,27 +21753,27 @@ if ('undefined' !== typeof module) {
 }
 
 },
-47: function(module, exports, __require, __externalRequire) {
+48: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/Render.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const deepmerge_1 = __importDefault(__require(48));
-const LogicalStructure_1 = __importDefault(__require(49));
-const MindMap_1 = __importDefault(__require(76));
-const CatalogOrganization_1 = __importDefault(__require(77));
-const OrganizationStructure_1 = __importDefault(__require(78));
-const Timeline_1 = __importDefault(__require(79));
-const VerticalTimeline_1 = __importDefault(__require(80));
-const Fishbone_1 = __importDefault(__require(81));
-const TextEdit_1 = __importDefault(__require(83));
-const utils_1 = __require(53);
-const Shape_1 = __require(63);
-const default_1 = __require(62);
-const constant_1 = __require(44);
-const svg_js_1 = __require(61);
+const deepmerge_1 = __importDefault(__require(49));
+const LogicalStructure_1 = __importDefault(__require(50));
+const MindMap_1 = __importDefault(__require(77));
+const CatalogOrganization_1 = __importDefault(__require(78));
+const OrganizationStructure_1 = __importDefault(__require(79));
+const Timeline_1 = __importDefault(__require(80));
+const VerticalTimeline_1 = __importDefault(__require(81));
+const Fishbone_1 = __importDefault(__require(82));
+const TextEdit_1 = __importDefault(__require(84));
+const utils_1 = __require(54);
+const Shape_1 = __require(64);
+const default_1 = __require(63);
+const constant_1 = __require(45);
+const svg_js_1 = __require(62);
 // 布局列表
 const layouts = {
     // 逻辑结构图
@@ -23716,7 +23754,7 @@ class Render {
 exports.default = Render;
 
 },
-48: function(module, exports, __require, __externalRequire) {
+49: function(module, exports, __require, __externalRequire) {
 // /node_modules/deepmerge/dist/es.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -23807,16 +23845,16 @@ var deepmerge_1 = deepmerge;
 exports.default = deepmerge_1;
 
 },
-49: function(module, exports, __require, __externalRequire) {
+50: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/LogicalStructure.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Base_1 = __importDefault(__require(50));
-const utils_1 = __require(53);
-const constant_1 = __require(44);
+const Base_1 = __importDefault(__require(51));
+const utils_1 = __require(54);
+const constant_1 = __require(45);
 //  逻辑结构图
 class LogicalStructure extends Base_1.default {
     //  构造函数
@@ -24141,17 +24179,17 @@ class LogicalStructure extends Base_1.default {
 exports.default = LogicalStructure;
 
 },
-50: function(module, exports, __require, __externalRequire) {
+51: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/Base.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const MindMapNode_1 = __importDefault(__require(51));
-const constant_1 = __require(44);
-const Lru_1 = __importDefault(__require(75));
-const index_1 = __require(53);
+const MindMapNode_1 = __importDefault(__require(52));
+const constant_1 = __require(45);
+const Lru_1 = __importDefault(__require(76));
+const index_1 = __require(54);
 //  布局基类
 class Base {
     //  构造函数
@@ -24766,27 +24804,27 @@ class Base {
 exports.default = Base;
 
 },
-51: function(module, exports, __require, __externalRequire) {
+52: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/MindMapNode.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Style_1 = __importDefault(__require(52));
-const Shape_1 = __importDefault(__require(63));
-const svg_js_1 = __require(61);
-const nodeGeneralization_1 = __importDefault(__require(64));
-const nodeExpandBtn_1 = __importDefault(__require(65));
-const nodeCommandWraps_1 = __importDefault(__require(67));
-const nodeCreateContents_1 = __importDefault(__require(68));
-const nodeExpandBtnPlaceholderRect_1 = __importDefault(__require(70));
-const nodeModifyWidth_1 = __importDefault(__require(71));
-const nodeCooperate_1 = __importDefault(__require(72));
-const quickCreateChildBtn_1 = __importDefault(__require(73));
-const nodeLayout_1 = __importDefault(__require(74));
-const constant_1 = __require(44);
-const index_1 = __require(53);
+const Style_1 = __importDefault(__require(53));
+const Shape_1 = __importDefault(__require(64));
+const svg_js_1 = __require(62);
+const nodeGeneralization_1 = __importDefault(__require(65));
+const nodeExpandBtn_1 = __importDefault(__require(66));
+const nodeCommandWraps_1 = __importDefault(__require(68));
+const nodeCreateContents_1 = __importDefault(__require(69));
+const nodeExpandBtnPlaceholderRect_1 = __importDefault(__require(71));
+const nodeModifyWidth_1 = __importDefault(__require(72));
+const nodeCooperate_1 = __importDefault(__require(73));
+const quickCreateChildBtn_1 = __importDefault(__require(74));
+const nodeLayout_1 = __importDefault(__require(75));
+const constant_1 = __require(45);
+const index_1 = __require(54);
 //  节点类
 class MindMapNode {
     //  构造函数
@@ -25819,12 +25857,12 @@ class MindMapNode {
 exports.default = MindMapNode;
 
 },
-52: function(module, exports, __require, __externalRequire) {
+53: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/Style.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.shapeStyleProps = void 0;
-const index_1 = __require(53);
+const index_1 = __require(54);
 const backgroundStyleProps = [
     'backgroundColor',
     'backgroundImage',
@@ -26177,7 +26215,7 @@ Style.cacheStyle = null;
 exports.default = Style;
 
 },
-53: function(module, exports, __require, __externalRequire) {
+54: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/utils/index.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -26186,12 +26224,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseAddGeneralizationNodeList = exports.checkHasSupSubRelation = exports.getTopAncestorsFomNodeList = exports.mergerIconList = exports.isNodeNotNeedRenderData = exports.checkIsNodeStyleDataKey = exports.getObjectChangedProps = exports.isMobile = exports.removeRichTextStyes = exports.textToNodeRichTextWithWrap = exports.nodeRichTextToTextWithWrap = exports.removeFormulaTags = exports.getVisibleColorFromTheme = exports.isTransparent = exports.isWhite = exports.removeHtmlNodeByClass = exports.replaceHtmlText = exports.checkIsRichText = exports.addHtmlStyle = exports.removeHtmlStyle = exports.isUndef = exports.getType = exports.removeHTMLEntities = exports.loadImage = exports.createUid = exports.getImageSize = exports.nodeToHTML = exports.readBlob = exports.getTextFromHtml = exports.checkNodeOuter = exports.nextTick = exports.joinFontStr = exports.measureText = exports.camelCaseToHyphen = exports.degToRad = exports.asyncRun = exports.debounce = exports.throttle = exports.downloadFile = exports.parseDataUrl = exports.imgToDataUrl = exports.copyNodeTree = exports.copyRenderTree = exports.simpleDeepClone = exports.getStrWithBrFromHtml = exports.resizeImg = exports.resizeImgSize = exports.resizeImgSizeByOriginRatio = exports.bfsWalk = exports.walk = void 0;
 exports.compareVersion = exports.getNodeRichTextStyles = exports.mergeTheme = exports.sortNodeList = exports.addXmlns = exports.defenseXSS = exports.formatGetNodeGeneralization = exports.createForeignObjectNode = exports.exitFullScreen = exports.fullScreen = exports.fullscrrenEvent = exports.getNodeListBoundingRect = exports.getNodeTreeBoundingRect = exports.handleGetSvgDataExtraContent = exports.getRectRelativePosition = exports.getTwoPointDistance = exports.transformObjectToTreeData = exports.transformTreeDataToObject = exports.handleInputPasteText = exports.checkSmmFormatData = exports.createSmmFormatData = exports.getChromeVersion = exports.checkNodeListIsEqual = exports.handleSelfCloseTags = exports.removeFromParentNodeData = exports.getDataFromClipboard = exports.setDataToClipboard = exports.checkClipboardReadEnable = exports.isSameObject = exports.htmlEscape = exports.generateColorByContent = exports.getNodeIndexInNodeList = exports.getNodeDataIndex = exports.formatDataToArray = exports.createUidForAppointNodes = exports.addDataToAppointNodes = exports.selectAllInput = exports.focusInput = exports.checkTwoRectIsOverlap = void 0;
-const uuid_1 = __require(54);
-const constant_1 = __require(44);
-const mersenneTwister_1 = __importDefault(__require(60));
-const svg_js_1 = __require(61);
-const deepmerge_1 = __importDefault(__require(48));
-const default_1 = __require(62);
+const uuid_1 = __require(55);
+const constant_1 = __require(45);
+const mersenneTwister_1 = __importDefault(__require(61));
+const svg_js_1 = __require(62);
+const deepmerge_1 = __importDefault(__require(49));
+const default_1 = __require(63);
 //  深度优先遍历树
 const walk = (root, parent, beforeCallback, afterCallback, isRoot, layerIndex = 0, index = 0, ancestors = []) => {
     let stop = false;
@@ -27853,7 +27891,7 @@ const compareVersion = (a, b) => {
 exports.compareVersion = compareVersion;
 
 },
-54: function(module, exports, __require, __externalRequire) {
+55: function(module, exports, __require, __externalRequire) {
 // /node_modules/uuid/index.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -27861,20 +27899,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.v4 = void 0;
-var v4_js_1 = __require(55);
+var v4_js_1 = __require(56);
 Object.defineProperty(exports, "v4", { enumerable: true, get: function () { return __importDefault(v4_js_1).default; } });
 
 },
-55: function(module, exports, __require, __externalRequire) {
+56: function(module, exports, __require, __externalRequire) {
 // /node_modules/uuid/dist/esm-browser/v4.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const native_js_1 = __importDefault(__require(56));
-const rng_js_1 = __importDefault(__require(57));
-const stringify_js_1 = __require(58);
+const native_js_1 = __importDefault(__require(57));
+const rng_js_1 = __importDefault(__require(58));
+const stringify_js_1 = __require(59);
 function v4(options, buf, offset) {
     if (native_js_1.default.randomUUID && !buf && !options) {
         return native_js_1.default.randomUUID();
@@ -27895,7 +27933,7 @@ function v4(options, buf, offset) {
 exports.default = v4;
 
 },
-56: function(module, exports, __require, __externalRequire) {
+57: function(module, exports, __require, __externalRequire) {
 // /node_modules/uuid/dist/esm-browser/native.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -27905,7 +27943,7 @@ exports.default = {
 };
 
 },
-57: function(module, exports, __require, __externalRequire) {
+58: function(module, exports, __require, __externalRequire) {
 // /node_modules/uuid/dist/esm-browser/rng.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -27928,7 +27966,7 @@ function rng() {
 }
 
 },
-58: function(module, exports, __require, __externalRequire) {
+59: function(module, exports, __require, __externalRequire) {
 // /node_modules/uuid/dist/esm-browser/stringify.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -27936,7 +27974,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.unsafeStringify = unsafeStringify;
-const validate_js_1 = __importDefault(__require(59));
+const validate_js_1 = __importDefault(__require(60));
 /**
  * Convert array of 16 byte values to UUID string format of the form:
  * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
@@ -27964,7 +28002,7 @@ function stringify(arr, offset = 0) {
 exports.default = stringify;
 
 },
-59: function(module, exports, __require, __externalRequire) {
+60: function(module, exports, __require, __externalRequire) {
 // /node_modules/uuid/dist/esm-browser/validate.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -27973,7 +28011,7 @@ const REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a
 function validate(value) { return typeof value === 'string' && REGEX.test(value); }
 
 },
-60: function(module, exports, __require, __externalRequire) {
+61: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/utils/mersenneTwister.js
 "use strict";
 /**
@@ -28032,7 +28070,7 @@ MersenneTwister.prototype.genrand_int32 = function () {
 };
 
 },
-61: function(module, exports, __require, __externalRequire) {
+62: function(module, exports, __require, __externalRequire) {
 // /node_modules/@svgdotjs/svg.js/dist/svg.esm.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -33887,7 +33925,7 @@ makeMorphable();
 //# sourceMappingURL=svg.esm.js.map
 
 },
-62: function(module, exports, __require, __externalRequire) {
+63: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/theme/default.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -34145,13 +34183,13 @@ exports.lineStyleProps = [
 ];
 
 },
-63: function(module, exports, __require, __externalRequire) {
+64: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/Shape.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.shapeList = void 0;
-const svg_js_1 = __require(61);
-const constant_1 = __require(44);
+const svg_js_1 = __require(62);
+const constant_1 = __require(45);
 //  节点形状类
 class Shape {
     constructor(node) {
@@ -34457,15 +34495,15 @@ exports.shapeList = [
 ];
 
 },
-64: function(module, exports, __require, __externalRequire) {
+65: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeGeneralization.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const MindMapNode_1 = __importDefault(__require(51));
-const index_1 = __require(53);
+const MindMapNode_1 = __importDefault(__require(52));
+const index_1 = __require(54);
 // 获取节点概要数据
 function formatGetGeneralization() {
     const data = this.getData('generalization');
@@ -34688,16 +34726,16 @@ exports.default = {
 };
 
 },
-65: function(module, exports, __require, __externalRequire) {
+66: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeExpandBtn.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const btns_1 = __importDefault(__require(66));
-const svg_js_1 = __require(61);
-const utils_1 = __require(53);
+const btns_1 = __importDefault(__require(67));
+const svg_js_1 = __require(62);
+const utils_1 = __require(54);
 // 创建展开收起按钮的内容节点
 function createExpandNodeContent() {
     if (this._openExpandNode) {
@@ -34865,7 +34903,7 @@ exports.default = {
 };
 
 },
-66: function(module, exports, __require, __externalRequire) {
+67: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/svg/btns.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -34888,7 +34926,7 @@ exports.default = {
 };
 
 },
-67: function(module, exports, __require, __externalRequire) {
+68: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeCommandWraps.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -34951,17 +34989,17 @@ exports.default = {
 };
 
 },
-68: function(module, exports, __require, __externalRequire) {
+69: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeCreateContents.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(53);
-const svg_js_1 = __require(61);
-const icons_1 = __importDefault(__require(69));
-const constant_1 = __require(44);
+const utils_1 = __require(54);
+const svg_js_1 = __require(62);
+const icons_1 = __importDefault(__require(70));
+const constant_1 = __require(45);
 // 测量svg文本宽高
 const measureText = (text, style) => {
     const g = new svg_js_1.G();
@@ -35508,12 +35546,12 @@ exports.default = {
 };
 
 },
-69: function(module, exports, __require, __externalRequire) {
+70: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/svg/icons.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.nodeIconList = void 0;
-const utils_1 = __require(53);
+const utils_1 = __require(54);
 // 超链接图标
 const hyperlink = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1024 1024" ><path d="M435.484444 251.733333v68.892445L295.822222 320.682667a168.504889 168.504889 0 0 0-2.844444 336.952889h142.506666v68.892444H295.822222a237.397333 237.397333 0 0 1 0-474.794667h139.662222z m248.945778 0a237.397333 237.397333 0 0 1 0 474.851556H544.654222v-69.006222l139.776 0.056889a168.504889 168.504889 0 0 0 2.844445-336.952889H544.597333V251.676444h139.776z m-25.827555 203.946667a34.474667 34.474667 0 0 1 0 68.892444H321.649778a34.474667 34.474667 0 0 1 0-68.892444h336.952889z" ></path></svg>';
 // 备注图标
@@ -35820,11 +35858,11 @@ exports.default = {
 };
 
 },
-70: function(module, exports, __require, __externalRequire) {
+71: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeExpandBtnPlaceholderRect.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const svg_js_1 = __require(61);
+const svg_js_1 = __require(62);
 // 渲染展开收起按钮的隐藏占位元素
 function renderExpandBtnPlaceholderRect() {
     // 根节点或没有子节点不需要渲染
@@ -35880,11 +35918,11 @@ exports.default = {
 };
 
 },
-71: function(module, exports, __require, __externalRequire) {
+72: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeModifyWidth.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const svg_js_1 = __require(61);
+const svg_js_1 = __require(62);
 // 初始化拖拽
 function initDragHandle() {
     if (!this.checkEnableDragModifyNodeWidth()) {
@@ -36027,12 +36065,12 @@ exports.default = {
 };
 
 },
-72: function(module, exports, __require, __externalRequire) {
+73: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeCooperate.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const svg_js_1 = __require(61);
-const index_1 = __require(53);
+const svg_js_1 = __require(62);
+const index_1 = __require(54);
 // 协同相关功能
 // 创建容器
 function createUserListNode() {
@@ -36147,15 +36185,15 @@ exports.default = {
 };
 
 },
-73: function(module, exports, __require, __externalRequire) {
+74: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/quickCreateChildBtn.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const btns_1 = __importDefault(__require(66));
-const svg_js_1 = __require(61);
+const btns_1 = __importDefault(__require(67));
+const svg_js_1 = __require(62);
 function initQuickCreateChildBtn() {
     if (this.isGeneralization)
         return;
@@ -36240,13 +36278,13 @@ exports.default = {
 };
 
 },
-74: function(module, exports, __require, __externalRequire) {
+75: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/node/nodeLayout.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const constant_1 = __require(44);
-const svg_js_1 = __require(61);
-const index_1 = __require(53);
+const constant_1 = __require(45);
+const svg_js_1 = __require(62);
+const index_1 = __require(54);
 // 根据图片放置位置返回图片和文本的间距值
 function getImgTextMarin(dir, imgWidth, textWidth, imgHeight, textHeight) {
     // 图片和文字节点的间距
@@ -36749,7 +36787,7 @@ exports.default = {
 };
 
 },
-75: function(module, exports, __require, __externalRequire) {
+76: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/utils/Lru.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -36802,16 +36840,16 @@ class Lru {
 exports.default = Lru;
 
 },
-76: function(module, exports, __require, __externalRequire) {
+77: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/MindMap.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Base_1 = __importDefault(__require(50));
-const utils_1 = __require(53);
-const constant_1 = __require(44);
+const Base_1 = __importDefault(__require(51));
+const utils_1 = __require(54);
+const constant_1 = __require(45);
 //  思维导图
 class MindMap extends Base_1.default {
     //  构造函数
@@ -37175,15 +37213,15 @@ class MindMap extends Base_1.default {
 exports.default = MindMap;
 
 },
-77: function(module, exports, __require, __externalRequire) {
+78: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/CatalogOrganization.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Base_1 = __importDefault(__require(50));
-const utils_1 = __require(53);
+const Base_1 = __importDefault(__require(51));
+const utils_1 = __require(54);
 //  目录组织图
 class CatalogOrganization extends Base_1.default {
     //  构造函数
@@ -37508,15 +37546,15 @@ class CatalogOrganization extends Base_1.default {
 exports.default = CatalogOrganization;
 
 },
-78: function(module, exports, __require, __externalRequire) {
+79: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/OrganizationStructure.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Base_1 = __importDefault(__require(50));
-const utils_1 = __require(53);
+const Base_1 = __importDefault(__require(51));
+const utils_1 = __require(54);
 //  组织结构图
 // 和逻辑结构图基本一样，只是方向变成向下生长，所以先计算节点的top，后计算节点的left、最后调整节点的left即可
 class OrganizationStructure extends Base_1.default {
@@ -37784,16 +37822,16 @@ class OrganizationStructure extends Base_1.default {
 exports.default = OrganizationStructure;
 
 },
-79: function(module, exports, __require, __externalRequire) {
+80: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/Timeline.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Base_1 = __importDefault(__require(50));
-const utils_1 = __require(53);
-const constant_1 = __require(44);
+const Base_1 = __importDefault(__require(51));
+const utils_1 = __require(54);
+const constant_1 = __require(45);
 //  时间轴
 class Timeline extends Base_1.default {
     //  构造函数
@@ -38108,16 +38146,16 @@ class Timeline extends Base_1.default {
 exports.default = Timeline;
 
 },
-80: function(module, exports, __require, __externalRequire) {
+81: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/VerticalTimeline.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Base_1 = __importDefault(__require(50));
-const utils_1 = __require(53);
-const constant_1 = __require(44);
+const Base_1 = __importDefault(__require(51));
+const utils_1 = __require(54);
+const constant_1 = __require(45);
 //  竖向时间轴
 class VerticalTimeline extends Base_1.default {
     //  构造函数
@@ -38523,19 +38561,19 @@ class VerticalTimeline extends Base_1.default {
 exports.default = VerticalTimeline;
 
 },
-81: function(module, exports, __require, __externalRequire) {
+82: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/Fishbone.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Base_1 = __importDefault(__require(50));
-const utils_1 = __require(53);
-const constant_1 = __require(44);
-const fishboneUtils_1 = __importDefault(__require(82));
-const svg_js_1 = __require(61);
-const Style_1 = __require(52);
+const Base_1 = __importDefault(__require(51));
+const utils_1 = __require(54);
+const constant_1 = __require(45);
+const fishboneUtils_1 = __importDefault(__require(83));
+const svg_js_1 = __require(62);
+const Style_1 = __require(53);
 //  鱼骨图
 class Fishbone extends Base_1.default {
     //  构造函数
@@ -39039,11 +39077,11 @@ class Fishbone extends Base_1.default {
 exports.default = Fishbone;
 
 },
-82: function(module, exports, __require, __externalRequire) {
+83: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/layouts/fishboneUtils.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(53);
+const utils_1 = __require(54);
 exports.default = {
     top: {
         renderExpandBtn({ node, btn, expandBtnSize, translateX, translateY, width, height }) {
@@ -39234,12 +39272,12 @@ exports.default = {
 };
 
 },
-83: function(module, exports, __require, __externalRequire) {
+84: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/render/TextEdit.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(53);
-const constant_1 = __require(44);
+const utils_1 = __require(54);
+const constant_1 = __require(45);
 const SMM_NODE_EDIT_WRAP = 'smm-node-edit-wrap';
 //  节点文字编辑类
 class TextEdit {
@@ -39700,24 +39738,24 @@ class TextEdit {
 exports.default = TextEdit;
 
 },
-84: function(module, exports, __require, __externalRequire) {
+85: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/theme/index.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const default_1 = __importDefault(__require(62));
+const default_1 = __importDefault(__require(63));
 exports.default = {
     default: default_1.default
 };
 
 },
-85: function(module, exports, __require, __externalRequire) {
+86: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/command/KeyCommand.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const keyMap_1 = __require(86);
+const keyMap_1 = __require(87);
 //  快捷按键、命令处理类
 class KeyCommand {
     //  构造函数
@@ -39949,7 +39987,7 @@ class KeyCommand {
 exports.default = KeyCommand;
 
 },
-86: function(module, exports, __require, __externalRequire) {
+87: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/command/keyMap.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -40011,16 +40049,16 @@ const isKey = (e, key) => {
 exports.isKey = isKey;
 
 },
-87: function(module, exports, __require, __externalRequire) {
+88: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/core/command/Command.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(53);
-const constant_1 = __require(44);
-const package_json_1 = __importDefault(__require(88));
+const utils_1 = __require(54);
+const constant_1 = __require(45);
+const package_json_1 = __importDefault(__require(89));
 //  命令类
 class Command {
     //  构造函数
@@ -40239,18 +40277,18 @@ class Command {
 exports.default = Command;
 
 },
-88: function(module, exports, __require, __externalRequire) {
+89: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/package.json
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = { name: 'simple-mind-map', version: '0.14.0-fix.3' };
 
 },
-89: function(module, exports, __require, __externalRequire) {
+90: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/utils/BatchExecution.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const _1 = __require(53);
+const _1 = __require(54);
 //  批量执行
 class BatchExecution {
     //  构造函数
@@ -40297,12 +40335,12 @@ class BatchExecution {
 exports.default = BatchExecution;
 
 },
-90: function(module, exports, __require, __externalRequire) {
+91: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/constants/defaultOptions.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.defaultOpt = void 0;
-const constant_1 = __require(44);
+const constant_1 = __require(45);
 // 默认选项配置
 exports.defaultOpt = {
     // 【基本】
@@ -40810,7 +40848,7 @@ exports.defaultOpt = {
 };
 
 },
-91: function(module, exports, __require, __externalRequire) {
+92: function(module, exports, __require, __externalRequire) {
 // /src/core/registerPlugins.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -40820,18 +40858,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MIND_MAP_PLUGIN_NAMES = void 0;
 exports.configureMindMapPlugins = configureMindMapPlugins;
 exports.registerMindMapPlugins = registerMindMapPlugins;
-const simple_mind_map_1 = __importDefault(__require(42));
-const YeMindDrag_1 = __importDefault(__require(92));
-const Select_1 = __importDefault(__require(98));
-const MiniMap_1 = __importDefault(__require(99));
-const Search_1 = __importDefault(__require(100));
-const Export_1 = __importDefault(__require(101));
-const Formula_1 = __importDefault(__require(105));
-const YeMindAssociativeLine_1 = __importDefault(__require(181));
-const OuterFrame_1 = __importDefault(__require(186));
-const YeMindNodeImgAdjust_1 = __importDefault(__require(189));
-const RainbowLines_1 = __importDefault(__require(191));
-const YeMindRichText_1 = __importDefault(__require(192));
+const simple_mind_map_1 = __importDefault(__require(43));
+const YeMindDrag_1 = __importDefault(__require(93));
+const Select_1 = __importDefault(__require(99));
+const MiniMap_1 = __importDefault(__require(100));
+const Search_1 = __importDefault(__require(101));
+const Export_1 = __importDefault(__require(102));
+const Formula_1 = __importDefault(__require(106));
+const YeMindAssociativeLine_1 = __importDefault(__require(182));
+const OuterFrame_1 = __importDefault(__require(187));
+const YeMindNodeImgAdjust_1 = __importDefault(__require(190));
+const RainbowLines_1 = __importDefault(__require(192));
+const YeMindRichText_1 = __importDefault(__require(193));
 exports.MIND_MAP_PLUGIN_NAMES = [
     'Drag',
     'Select',
@@ -40879,7 +40917,7 @@ function registerMindMapPlugins(settings) {
 }
 
 },
-92: function(module, exports, __require, __externalRequire) {
+93: function(module, exports, __require, __externalRequire) {
 // /src/core/YeMindDrag.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -40893,10 +40931,10 @@ exports.createDragCandidateState = createDragCandidateState;
 exports.updateStableDragCandidate = updateStableDragCandidate;
 exports.calculateDragGuidePath = calculateDragGuidePath;
 exports.calculateOriginalParentGuideStyle = calculateOriginalParentGuideStyle;
-const Drag_1 = __importDefault(__require(93));
-const officialDragIntent_1 = __require(95);
-const treeDropIntent_1 = __require(96);
-const dragPreviewEdges_1 = __require(97);
+const Drag_1 = __importDefault(__require(94));
+const officialDragIntent_1 = __require(96);
+const treeDropIntent_1 = __require(97);
+const dragPreviewEdges_1 = __require(98);
 function captureIncomingDragLines(nodes) {
     const snapshots = [];
     const seen = new Set();
@@ -41584,17 +41622,17 @@ exports.default = YeMindDrag;
 YeMindDrag.instanceName = 'drag';
 
 },
-93: function(module, exports, __require, __externalRequire) {
+94: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/Drag.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(53);
-const Base_1 = __importDefault(__require(50));
-const constant_1 = __require(44);
-const AutoMove_1 = __importDefault(__require(94));
+const utils_1 = __require(54);
+const Base_1 = __importDefault(__require(51));
+const constant_1 = __require(45);
+const AutoMove_1 = __importDefault(__require(95));
 // 节点拖动插件
 class Drag extends Base_1.default {
     //  构造函数
@@ -42735,7 +42773,7 @@ Drag.instanceName = 'drag';
 exports.default = Drag;
 
 },
-94: function(module, exports, __require, __externalRequire) {
+95: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/utils/AutoMove.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -42794,7 +42832,7 @@ class AutoMove {
 exports.default = AutoMove;
 
 },
-95: function(module, exports, __require, __externalRequire) {
+96: function(module, exports, __require, __externalRequire) {
 // /src/core/officialDragIntent.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -42810,7 +42848,7 @@ exports.officialCandidateParent = officialCandidateParent;
 exports.isOfficialDragCandidateNoop = isOfficialDragCandidateNoop;
 exports.calculateOfficialInsertionGuide = calculateOfficialInsertionGuide;
 exports.clampOfficialIndex = clampOfficialIndex;
-const treeDropIntent_1 = __require(96);
+const treeDropIntent_1 = __require(97);
 const CHILD_TAIL_LENGTH = 54;
 const CHILD_CROSS_PADDING = 9;
 const CHILD_BODY_PADDING = 4;
@@ -43646,7 +43684,7 @@ function clampOfficialIndex(value, length) {
 }
 
 },
-96: function(module, exports, __require, __externalRequire) {
+97: function(module, exports, __require, __externalRequire) {
 // /src/core/treeDropIntent.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -43710,7 +43748,7 @@ function distanceToRange(value, start, end) {
 }
 
 },
-97: function(module, exports, __require, __externalRequire) {
+98: function(module, exports, __require, __externalRequire) {
 // /src/core/dragPreviewEdges.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -43806,15 +43844,15 @@ function restoreShiftedIncomingLineOverlays(snapshots) {
 }
 
 },
-98: function(module, exports, __require, __externalRequire) {
+99: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/Select.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(53);
-const AutoMove_1 = __importDefault(__require(94));
+const utils_1 = __require(54);
+const AutoMove_1 = __importDefault(__require(95));
 // 节点选择插件
 class Select {
     //  构造函数
@@ -44025,11 +44063,11 @@ Select.instanceName = 'select';
 exports.default = Select;
 
 },
-99: function(module, exports, __require, __externalRequire) {
+100: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/MiniMap.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const index_1 = __require(53);
+const index_1 = __require(54);
 // 小地图插件
 class MiniMap {
     //  构造函数
@@ -44224,16 +44262,16 @@ MiniMap.instanceName = 'miniMap';
 exports.default = MiniMap;
 
 },
-100: function(module, exports, __require, __externalRequire) {
+101: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/Search.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const index_1 = __require(53);
-const MindMapNode_1 = __importDefault(__require(51));
-const constant_1 = __require(44);
+const index_1 = __require(54);
+const MindMapNode_1 = __importDefault(__require(52));
+const constant_1 = __require(45);
 // 搜索插件
 class Search {
     //  构造函数
@@ -44532,19 +44570,19 @@ Search.instanceName = 'search';
 exports.default = Search;
 
 },
-101: function(module, exports, __require, __externalRequire) {
+102: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/Export.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(53);
-const svg_js_1 = __require(61);
-const simulateCSSBackgroundInCanvas_1 = __importDefault(__require(102));
-const toMarkdown_1 = __require(103);
-const constant_1 = __require(44);
-const toTxt_1 = __require(104);
+const utils_1 = __require(54);
+const svg_js_1 = __require(62);
+const simulateCSSBackgroundInCanvas_1 = __importDefault(__require(103));
+const toMarkdown_1 = __require(104);
+const constant_1 = __require(45);
+const toTxt_1 = __require(105);
 //  导出插件
 class Export {
     //  构造函数
@@ -44916,7 +44954,7 @@ Export.instanceName = 'doExport';
 exports.default = Export;
 
 },
-102: function(module, exports, __require, __externalRequire) {
+103: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/utils/simulateCSSBackgroundInCanvas.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -45226,12 +45264,12 @@ const drawBackgroundImageToCanvas = (ctx, width, height, img, { backgroundSize, 
 exports.default = drawBackgroundImageToCanvas;
 
 },
-103: function(module, exports, __require, __externalRequire) {
+104: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/parse/toMarkdown.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transformToMarkdown = void 0;
-const utils_1 = __require(53);
+const utils_1 = __require(54);
 const getNodeText = data => {
     return data.richText ? (0, utils_1.nodeRichTextToTextWithWrap)(data.text) : data.text;
 };
@@ -45275,12 +45313,12 @@ const transformToMarkdown = root => {
 exports.transformToMarkdown = transformToMarkdown;
 
 },
-104: function(module, exports, __require, __externalRequire) {
+105: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/parse/toTxt.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transformToTxt = void 0;
-const utils_1 = __require(53);
+const utils_1 = __require(54);
 const getNodeText = data => {
     return data.richText ? (0, utils_1.nodeRichTextToTextWithWrap)(data.text) : data.text;
 };
@@ -45310,17 +45348,17 @@ const transformToTxt = root => {
 exports.transformToTxt = transformToTxt;
 
 },
-105: function(module, exports, __require, __externalRequire) {
+106: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/Formula.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const katex_1 = __importDefault(__require(106));
-const quill_1 = __importDefault(__require(107));
-const index_1 = __require(53);
-const FormulaStyle_1 = __require(180);
+const katex_1 = __importDefault(__require(107));
+const quill_1 = __importDefault(__require(108));
+const index_1 = __require(54);
+const FormulaStyle_1 = __require(181);
 let extended = false;
 const QuillFormula = quill_1.default.import('formats/formula');
 // 数学公式支持插件
@@ -45508,7 +45546,7 @@ Formula.instanceName = 'formula';
 exports.default = Formula;
 
 },
-106: function(module, exports, __require, __externalRequire) {
+107: function(module, exports, __require, __externalRequire) {
 // /node_modules/katex/dist/katex.mjs
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -62241,7 +62279,7 @@ var katex = {
 exports.default = katex;
 
 },
-107: function(module, exports, __require, __externalRequire) {
+108: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/quill.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -62282,37 +62320,37 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Range = exports.Parchment = exports.OpIterator = exports.Op = exports.Module = exports.Delta = exports.AttributeMap = void 0;
-const core_js_1 = __importDefault(__require(108));
-const align_js_1 = __require(140);
-const direction_js_1 = __require(144);
-const indent_js_1 = __importDefault(__require(155));
-const blockquote_js_1 = __importDefault(__require(156));
-const header_js_1 = __importDefault(__require(157));
-const list_js_1 = __importDefault(__require(158));
-const background_js_1 = __require(141);
-const color_js_1 = __require(142);
-const font_js_1 = __require(145);
-const size_js_1 = __require(146);
-const bold_js_1 = __importDefault(__require(159));
-const italic_js_1 = __importDefault(__require(160));
-const link_js_1 = __importDefault(__require(161));
-const script_js_1 = __importDefault(__require(162));
-const strike_js_1 = __importDefault(__require(163));
-const underline_js_1 = __importDefault(__require(164));
-const formula_js_1 = __importDefault(__require(165));
-const image_js_1 = __importDefault(__require(166));
-const video_js_1 = __importDefault(__require(167));
-const code_js_1 = __importStar(__require(143));
-const syntax_js_1 = __importDefault(__require(168));
-const table_js_1 = __importDefault(__require(169));
-const toolbar_js_1 = __importDefault(__require(171));
-const icons_js_1 = __importDefault(__require(172));
-const picker_js_1 = __importDefault(__require(173));
-const color_picker_js_1 = __importDefault(__require(174));
-const icon_picker_js_1 = __importDefault(__require(175));
-const tooltip_js_1 = __importDefault(__require(176));
-const bubble_js_1 = __importDefault(__require(177));
-const snow_js_1 = __importDefault(__require(179));
+const core_js_1 = __importDefault(__require(109));
+const align_js_1 = __require(141);
+const direction_js_1 = __require(145);
+const indent_js_1 = __importDefault(__require(156));
+const blockquote_js_1 = __importDefault(__require(157));
+const header_js_1 = __importDefault(__require(158));
+const list_js_1 = __importDefault(__require(159));
+const background_js_1 = __require(142);
+const color_js_1 = __require(143);
+const font_js_1 = __require(146);
+const size_js_1 = __require(147);
+const bold_js_1 = __importDefault(__require(160));
+const italic_js_1 = __importDefault(__require(161));
+const link_js_1 = __importDefault(__require(162));
+const script_js_1 = __importDefault(__require(163));
+const strike_js_1 = __importDefault(__require(164));
+const underline_js_1 = __importDefault(__require(165));
+const formula_js_1 = __importDefault(__require(166));
+const image_js_1 = __importDefault(__require(167));
+const video_js_1 = __importDefault(__require(168));
+const code_js_1 = __importStar(__require(144));
+const syntax_js_1 = __importDefault(__require(169));
+const table_js_1 = __importDefault(__require(170));
+const toolbar_js_1 = __importDefault(__require(172));
+const icons_js_1 = __importDefault(__require(173));
+const picker_js_1 = __importDefault(__require(174));
+const color_picker_js_1 = __importDefault(__require(175));
+const icon_picker_js_1 = __importDefault(__require(176));
+const tooltip_js_1 = __importDefault(__require(177));
+const bubble_js_1 = __importDefault(__require(178));
+const snow_js_1 = __importDefault(__require(180));
 core_js_1.default.register({
     'attributors/attribute/direction': direction_js_1.DirectionAttribute,
     'attributors/class/align': align_js_1.AlignClass,
@@ -62361,7 +62399,7 @@ core_js_1.default.register({
     'ui/color-picker': color_picker_js_1.default,
     'ui/tooltip': tooltip_js_1.default
 }, true);
-var core_js_2 = __require(108);
+var core_js_2 = __require(109);
 Object.defineProperty(exports, "AttributeMap", { enumerable: true, get: function () { return core_js_2.AttributeMap; } });
 Object.defineProperty(exports, "Delta", { enumerable: true, get: function () { return core_js_2.Delta; } });
 Object.defineProperty(exports, "Module", { enumerable: true, get: function () { return core_js_2.Module; } });
@@ -62373,7 +62411,7 @@ exports.default = core_js_1.default;
 //# sourceMappingURL=quill.js.map
 
 },
-108: function(module, exports, __require, __externalRequire) {
+109: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -62414,29 +62452,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Range = exports.Parchment = exports.AttributeMap = exports.OpIterator = exports.Op = exports.Delta = exports.Module = void 0;
-const quill_js_1 = __importStar(__require(109));
+const quill_js_1 = __importStar(__require(110));
 Object.defineProperty(exports, "Parchment", { enumerable: true, get: function () { return quill_js_1.Parchment; } });
 Object.defineProperty(exports, "Range", { enumerable: true, get: function () { return quill_js_1.Range; } });
-const block_js_1 = __importStar(__require(121));
-const break_js_1 = __importDefault(__require(122));
-const container_js_1 = __importDefault(__require(137));
-const cursor_js_1 = __importDefault(__require(125));
-const embed_js_1 = __importDefault(__require(133));
-const inline_js_1 = __importDefault(__require(123));
-const scroll_js_1 = __importDefault(__require(138));
-const text_js_1 = __importDefault(__require(124));
-const clipboard_js_1 = __importDefault(__require(139));
-const history_js_1 = __importDefault(__require(151));
-const keyboard_js_1 = __importDefault(__require(147));
-const uploader_js_1 = __importDefault(__require(152));
-const quill_delta_1 = __importStar(__require(114));
+const block_js_1 = __importStar(__require(122));
+const break_js_1 = __importDefault(__require(123));
+const container_js_1 = __importDefault(__require(138));
+const cursor_js_1 = __importDefault(__require(126));
+const embed_js_1 = __importDefault(__require(134));
+const inline_js_1 = __importDefault(__require(124));
+const scroll_js_1 = __importDefault(__require(139));
+const text_js_1 = __importDefault(__require(125));
+const clipboard_js_1 = __importDefault(__require(140));
+const history_js_1 = __importDefault(__require(152));
+const keyboard_js_1 = __importDefault(__require(148));
+const uploader_js_1 = __importDefault(__require(153));
+const quill_delta_1 = __importStar(__require(115));
 exports.Delta = quill_delta_1.default;
 Object.defineProperty(exports, "Op", { enumerable: true, get: function () { return quill_delta_1.Op; } });
 Object.defineProperty(exports, "OpIterator", { enumerable: true, get: function () { return quill_delta_1.OpIterator; } });
 Object.defineProperty(exports, "AttributeMap", { enumerable: true, get: function () { return quill_delta_1.AttributeMap; } });
-const input_js_1 = __importDefault(__require(153));
-const uiNode_js_1 = __importDefault(__require(154));
-var module_js_1 = __require(131);
+const input_js_1 = __importDefault(__require(154));
+const uiNode_js_1 = __importDefault(__require(155));
+var module_js_1 = __require(132);
 Object.defineProperty(exports, "Module", { enumerable: true, get: function () { return __importDefault(module_js_1).default; } });
 quill_js_1.default.register({
     'blots/block': block_js_1.default,
@@ -62459,7 +62497,7 @@ exports.default = quill_js_1.default;
 //# sourceMappingURL=core.js.map
 
 },
-109: function(module, exports, __require, __externalRequire) {
+110: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/quill.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -62502,21 +62540,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.globalRegistry = exports.Range = exports.Parchment = void 0;
 exports.expandConfig = expandConfig;
 exports.overload = overload;
-const lodash_es_1 = __require(110);
-const Parchment = __importStar(__require(113));
+const lodash_es_1 = __require(111);
+const Parchment = __importStar(__require(114));
 exports.Parchment = Parchment;
-const quill_delta_1 = __importDefault(__require(114));
-const editor_js_1 = __importDefault(__require(120));
-const emitter_js_1 = __importDefault(__require(127));
-const instances_js_1 = __importDefault(__require(129));
-const logger_js_1 = __importDefault(__require(130));
-const module_js_1 = __importDefault(__require(131));
-const selection_js_1 = __importStar(__require(126));
+const quill_delta_1 = __importDefault(__require(115));
+const editor_js_1 = __importDefault(__require(121));
+const emitter_js_1 = __importDefault(__require(128));
+const instances_js_1 = __importDefault(__require(130));
+const logger_js_1 = __importDefault(__require(131));
+const module_js_1 = __importDefault(__require(132));
+const selection_js_1 = __importStar(__require(127));
 Object.defineProperty(exports, "Range", { enumerable: true, get: function () { return selection_js_1.Range; } });
-const composition_js_1 = __importDefault(__require(132));
-const theme_js_1 = __importDefault(__require(134));
-const scrollRectIntoView_js_1 = __importDefault(__require(135));
-const createRegistryWithFormats_js_1 = __importDefault(__require(136));
+const composition_js_1 = __importDefault(__require(133));
+const theme_js_1 = __importDefault(__require(135));
+const scrollRectIntoView_js_1 = __importDefault(__require(136));
+const createRegistryWithFormats_js_1 = __importDefault(__require(137));
 const debug = (0, logger_js_1.default)('quill');
 const globalRegistry = new Parchment.Registry();
 exports.globalRegistry = globalRegistry;
@@ -63141,7 +63179,7 @@ function shiftRange(range, index, lengthOrSource, source) {
 //# sourceMappingURL=quill.js.map
 
 },
-110: function(module, exports, __require, __externalRequire) {
+111: function(module, exports, __require, __externalRequire) {
 // /node_modules/lodash-es/index.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -63150,9 +63188,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isEqual = exports.cloneDeep = void 0;
 exports.merge = merge;
-const lodash_clonedeep_1 = __importDefault(__require(111));
+const lodash_clonedeep_1 = __importDefault(__require(112));
 exports.cloneDeep = lodash_clonedeep_1.default;
-const lodash_isequal_1 = __importDefault(__require(112));
+const lodash_isequal_1 = __importDefault(__require(113));
 exports.isEqual = lodash_isequal_1.default;
 const isObject = value => value !== null && typeof value === 'object';
 function merge(target, ...sources) {
@@ -63180,7 +63218,7 @@ function merge(target, ...sources) {
 }
 
 },
-111: function(module, exports, __require, __externalRequire) {
+112: function(module, exports, __require, __externalRequire) {
 // /node_modules/lodash.clonedeep/index.js
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -64729,7 +64767,7 @@ function stubFalse() {
 module.exports = cloneDeep;
 
 },
-112: function(module, exports, __require, __externalRequire) {
+113: function(module, exports, __require, __externalRequire) {
 // /node_modules/lodash.isequal/index.js
 /**
  * Lodash (Custom Build) <https://lodash.com/>
@@ -66333,7 +66371,7 @@ function stubFalse() {
 module.exports = isEqual;
 
 },
-113: function(module, exports, __require, __externalRequire) {
+114: function(module, exports, __require, __externalRequire) {
 // /node_modules/parchment/dist/parchment.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -67169,7 +67207,7 @@ exports.TextBlot = TextBlot$1;
 //# sourceMappingURL=parchment.js.map
 
 },
-114: function(module, exports, __require, __externalRequire) {
+115: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill-delta/index.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -67177,29 +67215,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OpIterator = exports.Op = exports.AttributeMap = exports.default = void 0;
-var Delta_js_1 = __require(115);
+var Delta_js_1 = __require(116);
 Object.defineProperty(exports, "default", { enumerable: true, get: function () { return __importDefault(Delta_js_1).default; } });
-var AttributeMap_js_1 = __require(117);
+var AttributeMap_js_1 = __require(118);
 Object.defineProperty(exports, "AttributeMap", { enumerable: true, get: function () { return __importDefault(AttributeMap_js_1).default; } });
-var Op_js_1 = __require(118);
+var Op_js_1 = __require(119);
 Object.defineProperty(exports, "Op", { enumerable: true, get: function () { return __importDefault(Op_js_1).default; } });
-var OpIterator_js_1 = __require(119);
+var OpIterator_js_1 = __require(120);
 Object.defineProperty(exports, "OpIterator", { enumerable: true, get: function () { return __importDefault(OpIterator_js_1).default; } });
 
 },
-115: function(module, exports, __require, __externalRequire) {
+116: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill-delta/dist/Delta.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AttributeMap = exports.OpIterator = exports.Op = void 0;
-const diff = __require(116);
-const cloneDeep = __require(111);
-const isEqual = __require(112);
-const AttributeMap_1 = __require(117);
+const diff = __require(117);
+const cloneDeep = __require(112);
+const isEqual = __require(113);
+const AttributeMap_1 = __require(118);
 exports.AttributeMap = AttributeMap_1.default;
-const Op_1 = __require(118);
+const Op_1 = __require(119);
 exports.Op = Op_1.default;
-const OpIterator_1 = __require(119);
+const OpIterator_1 = __require(120);
 exports.OpIterator = OpIterator_1.default;
 const NULL_CHARACTER = String.fromCharCode(0); // Placeholder char for embed in diff()
 const getEmbedTypeAndData = (a, b) => {
@@ -67668,7 +67706,7 @@ if (typeof module === 'object') {
 }
 
 },
-116: function(module, exports, __require, __externalRequire) {
+117: function(module, exports, __require, __externalRequire) {
 // /node_modules/fast-diff/diff.js
 /**
  * This library modifies the diff-patch-match library by Neil Fraser
@@ -68711,12 +68749,12 @@ diff.EQUAL = DIFF_EQUAL;
 module.exports = diff;
 
 },
-117: function(module, exports, __require, __externalRequire) {
+118: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill-delta/dist/AttributeMap.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const cloneDeep = __require(111);
-const isEqual = __require(112);
+const cloneDeep = __require(112);
+const isEqual = __require(113);
 var AttributeMap;
 (function (AttributeMap) {
     function compose(a = {}, b = {}, keepNull = false) {
@@ -68800,7 +68838,7 @@ var AttributeMap;
 exports.default = AttributeMap;
 
 },
-118: function(module, exports, __require, __externalRequire) {
+119: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill-delta/dist/Op.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -68825,11 +68863,11 @@ var Op;
 exports.default = Op;
 
 },
-119: function(module, exports, __require, __externalRequire) {
+120: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill-delta/dist/OpIterator.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Op_1 = __require(118);
+const Op_1 = __require(119);
 class Iterator {
     constructor(ops) {
         this.ops = ops;
@@ -68934,7 +68972,7 @@ class Iterator {
 exports.default = Iterator;
 
 },
-120: function(module, exports, __require, __externalRequire) {
+121: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/editor.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -68974,14 +69012,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const lodash_es_1 = __require(110);
-const parchment_1 = __require(113);
-const quill_delta_1 = __importStar(__require(114));
-const block_js_1 = __importStar(__require(121));
-const break_js_1 = __importDefault(__require(122));
-const cursor_js_1 = __importDefault(__require(125));
-const text_js_1 = __importStar(__require(124));
-const selection_js_1 = __require(126);
+const lodash_es_1 = __require(111);
+const parchment_1 = __require(114);
+const quill_delta_1 = __importStar(__require(115));
+const block_js_1 = __importStar(__require(122));
+const break_js_1 = __importDefault(__require(123));
+const cursor_js_1 = __importDefault(__require(126));
+const text_js_1 = __importStar(__require(125));
+const selection_js_1 = __require(127);
 const ASCII = /^[ -~]*$/;
 class Editor {
     constructor(scroll) {
@@ -69390,7 +69428,7 @@ exports.default = Editor;
 //# sourceMappingURL=editor.js.map
 
 },
-121: function(module, exports, __require, __externalRequire) {
+122: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/block.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -69400,11 +69438,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.BlockEmbed = void 0;
 exports.blockDelta = blockDelta;
 exports.bubbleFormats = bubbleFormats;
-const parchment_1 = __require(113);
-const quill_delta_1 = __importDefault(__require(114));
-const break_js_1 = __importDefault(__require(122));
-const inline_js_1 = __importDefault(__require(123));
-const text_js_1 = __importDefault(__require(124));
+const parchment_1 = __require(114);
+const quill_delta_1 = __importDefault(__require(115));
+const break_js_1 = __importDefault(__require(123));
+const inline_js_1 = __importDefault(__require(124));
+const text_js_1 = __importDefault(__require(125));
 const NEWLINE_LENGTH = 1;
 class Block extends parchment_1.BlockBlot {
     constructor() {
@@ -69590,11 +69628,11 @@ function bubbleFormats(blot) {
 //# sourceMappingURL=block.js.map
 
 },
-122: function(module, exports, __require, __externalRequire) {
+123: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/break.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(113);
+const parchment_1 = __require(114);
 class Break extends parchment_1.EmbedBlot {
     static value() {
         return undefined;
@@ -69617,16 +69655,16 @@ exports.default = Break;
 //# sourceMappingURL=break.js.map
 
 },
-123: function(module, exports, __require, __externalRequire) {
+124: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/inline.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(113);
-const break_js_1 = __importDefault(__require(122));
-const text_js_1 = __importDefault(__require(124));
+const parchment_1 = __require(114);
+const break_js_1 = __importDefault(__require(123));
+const text_js_1 = __importDefault(__require(125));
 class Inline extends parchment_1.InlineBlot {
     static { this.allowedChildren = [Inline, break_js_1.default, parchment_1.EmbedBlot, text_js_1.default]; }
     // Lower index means deeper in the DOM tree, since not found (-1) is for embeds
@@ -69675,13 +69713,13 @@ exports.default = Inline;
 //# sourceMappingURL=inline.js.map
 
 },
-124: function(module, exports, __require, __externalRequire) {
+125: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/text.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = void 0;
 exports.escapeText = escapeText;
-const parchment_1 = __require(113);
+const parchment_1 = __require(114);
 class Text extends parchment_1.TextBlot {
 }
 exports.default = Text;
@@ -69699,15 +69737,15 @@ function escapeText(text) {
 //# sourceMappingURL=text.js.map
 
 },
-125: function(module, exports, __require, __externalRequire) {
+126: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/cursor.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(113);
-const text_js_1 = __importDefault(__require(124));
+const parchment_1 = __require(114);
+const text_js_1 = __importDefault(__require(125));
 class Cursor extends parchment_1.EmbedBlot {
     static { this.blotName = 'cursor'; }
     static { this.className = 'ql-cursor'; }
@@ -69877,7 +69915,7 @@ exports.default = Cursor;
 //# sourceMappingURL=cursor.js.map
 
 },
-126: function(module, exports, __require, __externalRequire) {
+127: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/selection.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -69885,10 +69923,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Range = void 0;
-const parchment_1 = __require(113);
-const lodash_es_1 = __require(110);
-const emitter_js_1 = __importDefault(__require(127));
-const logger_js_1 = __importDefault(__require(130));
+const parchment_1 = __require(114);
+const lodash_es_1 = __require(111);
+const emitter_js_1 = __importDefault(__require(128));
+const logger_js_1 = __importDefault(__require(131));
 const debug = (0, logger_js_1.default)('quill:selection');
 class Range {
     constructor(index) {
@@ -70279,16 +70317,16 @@ exports.default = Selection;
 //# sourceMappingURL=selection.js.map
 
 },
-127: function(module, exports, __require, __externalRequire) {
+128: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/emitter.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const eventemitter3_1 = __require(128);
-const instances_js_1 = __importDefault(__require(129));
-const logger_js_1 = __importDefault(__require(130));
+const eventemitter3_1 = __require(129);
+const instances_js_1 = __importDefault(__require(130));
+const logger_js_1 = __importDefault(__require(131));
 const debug = (0, logger_js_1.default)('quill:events');
 const EVENTS = ['selectionchange', 'mousedown', 'mouseup', 'click'];
 EVENTS.forEach(eventName => {
@@ -70363,7 +70401,7 @@ exports.default = Emitter;
 //# sourceMappingURL=emitter.js.map
 
 },
-128: function(module, exports, __require, __externalRequire) {
+129: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/node_modules/eventemitter3/index.js
 'use strict';
 var has = Object.prototype.hasOwnProperty, prefix = '~';
@@ -70672,7 +70710,7 @@ if ('undefined' !== typeof module) {
 }
 
 },
-129: function(module, exports, __require, __externalRequire) {
+130: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/instances.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -70680,7 +70718,7 @@ exports.default = new WeakMap();
 //# sourceMappingURL=instances.js.map
 
 },
-130: function(module, exports, __require, __externalRequire) {
+131: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/logger.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -70710,7 +70748,7 @@ exports.default = namespace;
 //# sourceMappingURL=logger.js.map
 
 },
-131: function(module, exports, __require, __externalRequire) {
+132: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/module.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -70726,15 +70764,15 @@ exports.default = Module;
 //# sourceMappingURL=module.js.map
 
 },
-132: function(module, exports, __require, __externalRequire) {
+133: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/composition.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const embed_js_1 = __importDefault(__require(133));
-const emitter_js_1 = __importDefault(__require(127));
+const embed_js_1 = __importDefault(__require(134));
+const emitter_js_1 = __importDefault(__require(128));
 class Composition {
     constructor(scroll, emitter) {
         this.isComposing = false;
@@ -70779,15 +70817,15 @@ exports.default = Composition;
 //# sourceMappingURL=composition.js.map
 
 },
-133: function(module, exports, __require, __externalRequire) {
+134: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/embed.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(113);
-const text_js_1 = __importDefault(__require(124));
+const parchment_1 = __require(114);
+const text_js_1 = __importDefault(__require(125));
 const GUARD_TEXT = '\uFEFF';
 class Embed extends parchment_1.EmbedBlot {
     constructor(scroll, node) {
@@ -70866,7 +70904,7 @@ exports.default = Embed;
 //# sourceMappingURL=embed.js.map
 
 },
-134: function(module, exports, __require, __externalRequire) {
+135: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/theme.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -70900,7 +70938,7 @@ exports.default = Theme;
 //# sourceMappingURL=theme.js.map
 
 },
-135: function(module, exports, __require, __externalRequire) {
+136: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/utils/scrollRectIntoView.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -70978,11 +71016,11 @@ exports.default = scrollRectIntoView;
 //# sourceMappingURL=scrollRectIntoView.js.map
 
 },
-136: function(module, exports, __require, __externalRequire) {
+137: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/core/utils/createRegistryWithFormats.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(113);
+const parchment_1 = __require(114);
 const MAX_REGISTER_ITERATIONS = 100;
 const CORE_FORMATS = ['block', 'break', 'cursor', 'inline', 'scroll', 'text'];
 const createRegistryWithFormats = (formats, sourceRegistry, debug) => {
@@ -71014,18 +71052,18 @@ exports.default = createRegistryWithFormats;
 //# sourceMappingURL=createRegistryWithFormats.js.map
 
 },
-137: function(module, exports, __require, __externalRequire) {
+138: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/container.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(113);
+const parchment_1 = __require(114);
 class Container extends parchment_1.ContainerBlot {
 }
 exports.default = Container;
 //# sourceMappingURL=container.js.map
 
 },
-138: function(module, exports, __require, __externalRequire) {
+139: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/blots/scroll.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -71065,12 +71103,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(113);
-const quill_delta_1 = __importStar(__require(114));
-const emitter_js_1 = __importDefault(__require(127));
-const block_js_1 = __importStar(__require(121));
-const break_js_1 = __importDefault(__require(122));
-const container_js_1 = __importDefault(__require(137));
+const parchment_1 = __require(114);
+const quill_delta_1 = __importStar(__require(115));
+const emitter_js_1 = __importDefault(__require(128));
+const block_js_1 = __importStar(__require(122));
+const break_js_1 = __importDefault(__require(123));
+const container_js_1 = __importDefault(__require(138));
 function isLine(blot) {
     return blot instanceof block_js_1.default || blot instanceof block_js_1.BlockEmbed;
 }
@@ -71428,7 +71466,7 @@ exports.default = Scroll;
 //# sourceMappingURL=scroll.js.map
 
 },
-139: function(module, exports, __require, __externalRequire) {
+140: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/clipboard.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -71441,21 +71479,21 @@ exports.matchBlot = matchBlot;
 exports.matchNewline = matchNewline;
 exports.matchText = matchText;
 exports.traverse = traverse;
-const parchment_1 = __require(113);
-const quill_delta_1 = __importDefault(__require(114));
-const block_js_1 = __require(121);
-const logger_js_1 = __importDefault(__require(130));
-const module_js_1 = __importDefault(__require(131));
-const quill_js_1 = __importDefault(__require(109));
-const align_js_1 = __require(140);
-const background_js_1 = __require(141);
-const code_js_1 = __importDefault(__require(143));
-const color_js_1 = __require(142);
-const direction_js_1 = __require(144);
-const font_js_1 = __require(145);
-const size_js_1 = __require(146);
-const keyboard_js_1 = __require(147);
-const index_js_1 = __importDefault(__require(148));
+const parchment_1 = __require(114);
+const quill_delta_1 = __importDefault(__require(115));
+const block_js_1 = __require(122);
+const logger_js_1 = __importDefault(__require(131));
+const module_js_1 = __importDefault(__require(132));
+const quill_js_1 = __importDefault(__require(110));
+const align_js_1 = __require(141);
+const background_js_1 = __require(142);
+const code_js_1 = __importDefault(__require(144));
+const color_js_1 = __require(143);
+const direction_js_1 = __require(145);
+const font_js_1 = __require(146);
+const size_js_1 = __require(147);
+const keyboard_js_1 = __require(148);
+const index_js_1 = __importDefault(__require(149));
 const debug = (0, logger_js_1.default)('quill:clipboard');
 const CLIPBOARD_CONFIG = [[Node.TEXT_NODE, matchText], [Node.TEXT_NODE, matchNewline], ['br', matchBreak], [Node.ELEMENT_NODE, matchNewline], [Node.ELEMENT_NODE, matchBlot], [Node.ELEMENT_NODE, matchAttributor], [Node.ELEMENT_NODE, matchStyles], ['li', matchIndent], ['ol, ul', matchList], ['pre', matchCodeBlock], ['tr', matchTable], ['b', createMatchAlias('bold')], ['i', createMatchAlias('italic')], ['strike', createMatchAlias('strike')], ['style', matchIgnore]];
 const ATTRIBUTE_ATTRIBUTORS = [align_js_1.AlignAttribute, direction_js_1.DirectionAttribute].reduce((memo, attr) => {
@@ -71927,12 +71965,12 @@ function matchText(node, delta, scroll) {
 //# sourceMappingURL=clipboard.js.map
 
 },
-140: function(module, exports, __require, __externalRequire) {
+141: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/align.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AlignStyle = exports.AlignClass = exports.AlignAttribute = void 0;
-const parchment_1 = __require(113);
+const parchment_1 = __require(114);
 const config = {
     scope: parchment_1.Scope.BLOCK,
     whitelist: ['right', 'center', 'justify']
@@ -71946,13 +71984,13 @@ exports.AlignStyle = AlignStyle;
 //# sourceMappingURL=align.js.map
 
 },
-141: function(module, exports, __require, __externalRequire) {
+142: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/background.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BackgroundStyle = exports.BackgroundClass = void 0;
-const parchment_1 = __require(113);
-const color_js_1 = __require(142);
+const parchment_1 = __require(114);
+const color_js_1 = __require(143);
 const BackgroundClass = new parchment_1.ClassAttributor('background', 'ql-bg', {
     scope: parchment_1.Scope.INLINE
 });
@@ -71964,12 +72002,12 @@ exports.BackgroundStyle = BackgroundStyle;
 //# sourceMappingURL=background.js.map
 
 },
-142: function(module, exports, __require, __externalRequire) {
+143: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/color.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ColorStyle = exports.ColorClass = exports.ColorAttributor = void 0;
-const parchment_1 = __require(113);
+const parchment_1 = __require(114);
 class ColorAttributor extends parchment_1.StyleAttributor {
     value(domNode) {
         let value = super.value(domNode);
@@ -71992,7 +72030,7 @@ exports.ColorStyle = ColorStyle;
 //# sourceMappingURL=color.js.map
 
 },
-143: function(module, exports, __require, __externalRequire) {
+144: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/code.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -72033,13 +72071,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.CodeBlockContainer = exports.Code = void 0;
-const block_js_1 = __importDefault(__require(121));
-const break_js_1 = __importDefault(__require(122));
-const cursor_js_1 = __importDefault(__require(125));
-const inline_js_1 = __importDefault(__require(123));
-const text_js_1 = __importStar(__require(124));
-const container_js_1 = __importDefault(__require(137));
-const quill_js_1 = __importDefault(__require(109));
+const block_js_1 = __importDefault(__require(122));
+const break_js_1 = __importDefault(__require(123));
+const cursor_js_1 = __importDefault(__require(126));
+const inline_js_1 = __importDefault(__require(124));
+const text_js_1 = __importStar(__require(125));
+const container_js_1 = __importDefault(__require(138));
+const quill_js_1 = __importDefault(__require(110));
 class CodeBlockContainer extends container_js_1.default {
     static create(value) {
         const domNode = super.create(value);
@@ -72082,12 +72120,12 @@ CodeBlock.requiredContainer = CodeBlockContainer;
 //# sourceMappingURL=code.js.map
 
 },
-144: function(module, exports, __require, __externalRequire) {
+145: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/direction.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DirectionStyle = exports.DirectionClass = exports.DirectionAttribute = void 0;
-const parchment_1 = __require(113);
+const parchment_1 = __require(114);
 const config = {
     scope: parchment_1.Scope.BLOCK,
     whitelist: ['rtl']
@@ -72101,12 +72139,12 @@ exports.DirectionStyle = DirectionStyle;
 //# sourceMappingURL=direction.js.map
 
 },
-145: function(module, exports, __require, __externalRequire) {
+146: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/font.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FontClass = exports.FontStyle = void 0;
-const parchment_1 = __require(113);
+const parchment_1 = __require(114);
 const config = {
     scope: parchment_1.Scope.INLINE,
     whitelist: ['serif', 'monospace']
@@ -72123,12 +72161,12 @@ exports.FontStyle = FontStyle;
 //# sourceMappingURL=font.js.map
 
 },
-146: function(module, exports, __require, __externalRequire) {
+147: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/size.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SizeStyle = exports.SizeClass = void 0;
-const parchment_1 = __require(113);
+const parchment_1 = __require(114);
 const SizeClass = new parchment_1.ClassAttributor('size', 'ql-size', {
     scope: parchment_1.Scope.INLINE,
     whitelist: ['small', 'large', 'huge']
@@ -72142,7 +72180,7 @@ exports.SizeStyle = SizeStyle;
 //# sourceMappingURL=size.js.map
 
 },
-147: function(module, exports, __require, __externalRequire) {
+148: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/keyboard.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -72185,12 +72223,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SHORTKEY = exports.default = void 0;
 exports.normalize = normalize;
 exports.deleteRange = deleteRange;
-const lodash_es_1 = __require(110);
-const quill_delta_1 = __importStar(__require(114));
-const parchment_1 = __require(113);
-const quill_js_1 = __importDefault(__require(109));
-const logger_js_1 = __importDefault(__require(130));
-const module_js_1 = __importDefault(__require(131));
+const lodash_es_1 = __require(111);
+const quill_delta_1 = __importStar(__require(115));
+const parchment_1 = __require(114);
+const quill_js_1 = __importDefault(__require(110));
+const logger_js_1 = __importDefault(__require(131));
+const module_js_1 = __importDefault(__require(132));
 const debug = (0, logger_js_1.default)('quill:keyboard');
 const SHORTKEY = /Mac/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
 exports.SHORTKEY = SHORTKEY;
@@ -72913,15 +72951,15 @@ function tableSide(_table, row, cell, offset) {
 //# sourceMappingURL=keyboard.js.map
 
 },
-148: function(module, exports, __require, __externalRequire) {
+149: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/normalizeExternalHTML/index.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const googleDocs_js_1 = __importDefault(__require(149));
-const msWord_js_1 = __importDefault(__require(150));
+const googleDocs_js_1 = __importDefault(__require(150));
+const msWord_js_1 = __importDefault(__require(151));
 const NORMALIZERS = [msWord_js_1.default, googleDocs_js_1.default];
 const normalizeExternalHTML = doc => {
     if (doc.documentElement) {
@@ -72934,7 +72972,7 @@ exports.default = normalizeExternalHTML;
 //# sourceMappingURL=index.js.map
 
 },
-149: function(module, exports, __require, __externalRequire) {
+150: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/normalizeExternalHTML/normalizers/googleDocs.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -72965,7 +73003,7 @@ function normalize(doc) {
 //# sourceMappingURL=googleDocs.js.map
 
 },
-150: function(module, exports, __require, __externalRequire) {
+151: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/normalizeExternalHTML/normalizers/msWord.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -73053,7 +73091,7 @@ function normalize(doc) {
 //# sourceMappingURL=msWord.js.map
 
 },
-151: function(module, exports, __require, __externalRequire) {
+152: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/history.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -73062,9 +73100,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = void 0;
 exports.getLastChangeIndex = getLastChangeIndex;
-const parchment_1 = __require(113);
-const module_js_1 = __importDefault(__require(131));
-const quill_js_1 = __importDefault(__require(109));
+const parchment_1 = __require(114);
+const module_js_1 = __importDefault(__require(132));
+const quill_js_1 = __importDefault(__require(110));
 class History extends module_js_1.default {
     static { this.DEFAULTS = {
         delay: 1000,
@@ -73253,16 +73291,16 @@ function transformRange(range, delta) {
 //# sourceMappingURL=history.js.map
 
 },
-152: function(module, exports, __require, __externalRequire) {
+153: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/uploader.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const quill_delta_1 = __importDefault(__require(114));
-const emitter_js_1 = __importDefault(__require(127));
-const module_js_1 = __importDefault(__require(131));
+const quill_delta_1 = __importDefault(__require(115));
+const emitter_js_1 = __importDefault(__require(128));
+const module_js_1 = __importDefault(__require(132));
 class Uploader extends module_js_1.default {
     constructor(quill, options) {
         super(quill, options);
@@ -73332,17 +73370,17 @@ exports.default = Uploader;
 //# sourceMappingURL=uploader.js.map
 
 },
-153: function(module, exports, __require, __externalRequire) {
+154: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/input.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const quill_delta_1 = __importDefault(__require(114));
-const module_js_1 = __importDefault(__require(131));
-const quill_js_1 = __importDefault(__require(109));
-const keyboard_js_1 = __require(147);
+const quill_delta_1 = __importDefault(__require(115));
+const module_js_1 = __importDefault(__require(132));
+const quill_js_1 = __importDefault(__require(110));
+const keyboard_js_1 = __require(148);
 const INSERT_TYPES = ['insertText', 'insertReplacementText'];
 class Input extends module_js_1.default {
     constructor(quill, options) {
@@ -73424,7 +73462,7 @@ exports.default = Input;
 //# sourceMappingURL=input.js.map
 
 },
-154: function(module, exports, __require, __externalRequire) {
+155: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/uiNode.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -73432,9 +73470,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TTL_FOR_VALID_SELECTION_CHANGE = void 0;
-const parchment_1 = __require(113);
-const module_js_1 = __importDefault(__require(131));
-const quill_js_1 = __importDefault(__require(109));
+const parchment_1 = __require(114);
+const module_js_1 = __importDefault(__require(132));
+const quill_js_1 = __importDefault(__require(110));
 const isMac = /Mac/i.test(navigator.platform);
 // Export for testing
 exports.TTL_FOR_VALID_SELECTION_CHANGE = 100;
@@ -73527,11 +73565,11 @@ exports.default = UINode;
 //# sourceMappingURL=uiNode.js.map
 
 },
-155: function(module, exports, __require, __externalRequire) {
+156: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/indent.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(113);
+const parchment_1 = __require(114);
 class IndentAttributor extends parchment_1.ClassAttributor {
     add(node, value) {
         let normalizedValue = 0;
@@ -73564,14 +73602,14 @@ exports.default = IndentClass;
 //# sourceMappingURL=indent.js.map
 
 },
-156: function(module, exports, __require, __externalRequire) {
+157: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/blockquote.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const block_js_1 = __importDefault(__require(121));
+const block_js_1 = __importDefault(__require(122));
 class Blockquote extends block_js_1.default {
     static { this.blotName = 'blockquote'; }
     static { this.tagName = 'blockquote'; }
@@ -73580,14 +73618,14 @@ exports.default = Blockquote;
 //# sourceMappingURL=blockquote.js.map
 
 },
-157: function(module, exports, __require, __externalRequire) {
+158: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/header.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const block_js_1 = __importDefault(__require(121));
+const block_js_1 = __importDefault(__require(122));
 class Header extends block_js_1.default {
     static { this.blotName = 'header'; }
     static { this.tagName = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6']; }
@@ -73599,7 +73637,7 @@ exports.default = Header;
 //# sourceMappingURL=header.js.map
 
 },
-158: function(module, exports, __require, __externalRequire) {
+159: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/list.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -73607,9 +73645,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.ListContainer = void 0;
-const block_js_1 = __importDefault(__require(121));
-const container_js_1 = __importDefault(__require(137));
-const quill_js_1 = __importDefault(__require(109));
+const block_js_1 = __importDefault(__require(122));
+const container_js_1 = __importDefault(__require(138));
+const quill_js_1 = __importDefault(__require(110));
 class ListContainer extends container_js_1.default {
 }
 exports.ListContainer = ListContainer;
@@ -73664,14 +73702,14 @@ ListItem.requiredContainer = ListContainer;
 //# sourceMappingURL=list.js.map
 
 },
-159: function(module, exports, __require, __externalRequire) {
+160: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/bold.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const inline_js_1 = __importDefault(__require(123));
+const inline_js_1 = __importDefault(__require(124));
 class Bold extends inline_js_1.default {
     static { this.blotName = 'bold'; }
     static { this.tagName = ['STRONG', 'B']; }
@@ -73692,14 +73730,14 @@ exports.default = Bold;
 //# sourceMappingURL=bold.js.map
 
 },
-160: function(module, exports, __require, __externalRequire) {
+161: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/italic.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const bold_js_1 = __importDefault(__require(159));
+const bold_js_1 = __importDefault(__require(160));
 class Italic extends bold_js_1.default {
     static { this.blotName = 'italic'; }
     static { this.tagName = ['EM', 'I']; }
@@ -73708,7 +73746,7 @@ exports.default = Italic;
 //# sourceMappingURL=italic.js.map
 
 },
-161: function(module, exports, __require, __externalRequire) {
+162: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/link.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -73717,7 +73755,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = void 0;
 exports.sanitize = sanitize;
-const inline_js_1 = __importDefault(__require(123));
+const inline_js_1 = __importDefault(__require(124));
 class Link extends inline_js_1.default {
     static { this.blotName = 'link'; }
     static { this.tagName = 'A'; }
@@ -73756,14 +73794,14 @@ function sanitize(url, protocols) {
 //# sourceMappingURL=link.js.map
 
 },
-162: function(module, exports, __require, __externalRequire) {
+163: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/script.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const inline_js_1 = __importDefault(__require(123));
+const inline_js_1 = __importDefault(__require(124));
 class Script extends inline_js_1.default {
     static { this.blotName = 'script'; }
     static { this.tagName = ['SUB', 'SUP']; }
@@ -73788,14 +73826,14 @@ exports.default = Script;
 //# sourceMappingURL=script.js.map
 
 },
-163: function(module, exports, __require, __externalRequire) {
+164: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/strike.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const bold_js_1 = __importDefault(__require(159));
+const bold_js_1 = __importDefault(__require(160));
 class Strike extends bold_js_1.default {
     static { this.blotName = 'strike'; }
     static { this.tagName = ['S', 'STRIKE']; }
@@ -73804,14 +73842,14 @@ exports.default = Strike;
 //# sourceMappingURL=strike.js.map
 
 },
-164: function(module, exports, __require, __externalRequire) {
+165: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/underline.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const inline_js_1 = __importDefault(__require(123));
+const inline_js_1 = __importDefault(__require(124));
 class Underline extends inline_js_1.default {
     static { this.blotName = 'underline'; }
     static { this.tagName = 'U'; }
@@ -73820,14 +73858,14 @@ exports.default = Underline;
 //# sourceMappingURL=underline.js.map
 
 },
-165: function(module, exports, __require, __externalRequire) {
+166: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/formula.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const embed_js_1 = __importDefault(__require(133));
+const embed_js_1 = __importDefault(__require(134));
 class Formula extends embed_js_1.default {
     static { this.blotName = 'formula'; }
     static { this.className = 'ql-formula'; }
@@ -73860,12 +73898,12 @@ exports.default = Formula;
 //# sourceMappingURL=formula.js.map
 
 },
-166: function(module, exports, __require, __externalRequire) {
+167: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/image.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const parchment_1 = __require(113);
-const link_js_1 = __require(161);
+const parchment_1 = __require(114);
+const link_js_1 = __require(162);
 const ATTRIBUTES = ['alt', 'height', 'width'];
 class Image extends parchment_1.EmbedBlot {
     static { this.blotName = 'image'; }
@@ -73912,15 +73950,15 @@ exports.default = Image;
 //# sourceMappingURL=image.js.map
 
 },
-167: function(module, exports, __require, __externalRequire) {
+168: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/video.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const block_js_1 = __require(121);
-const link_js_1 = __importDefault(__require(161));
+const block_js_1 = __require(122);
+const link_js_1 = __importDefault(__require(162));
 const ATTRIBUTES = ['height', 'width'];
 class Video extends block_js_1.BlockEmbed {
     static { this.blotName = 'video'; }
@@ -73969,7 +74007,7 @@ exports.default = Video;
 //# sourceMappingURL=video.js.map
 
 },
-168: function(module, exports, __require, __externalRequire) {
+169: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/syntax.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -74010,17 +74048,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.CodeToken = exports.CodeBlock = void 0;
-const quill_delta_1 = __importDefault(__require(114));
-const parchment_1 = __require(113);
-const inline_js_1 = __importDefault(__require(123));
-const quill_js_1 = __importDefault(__require(109));
-const module_js_1 = __importDefault(__require(131));
-const block_js_1 = __require(121);
-const break_js_1 = __importDefault(__require(122));
-const cursor_js_1 = __importDefault(__require(125));
-const text_js_1 = __importStar(__require(124));
-const code_js_1 = __importStar(__require(143));
-const clipboard_js_1 = __require(139);
+const quill_delta_1 = __importDefault(__require(115));
+const parchment_1 = __require(114);
+const inline_js_1 = __importDefault(__require(124));
+const quill_js_1 = __importDefault(__require(110));
+const module_js_1 = __importDefault(__require(132));
+const block_js_1 = __require(122);
+const break_js_1 = __importDefault(__require(123));
+const cursor_js_1 = __importDefault(__require(126));
+const text_js_1 = __importStar(__require(125));
+const code_js_1 = __importStar(__require(144));
+const clipboard_js_1 = __require(140);
 const TokenAttributor = new parchment_1.ClassAttributor('code-token', 'hljs', {
     scope: parchment_1.Scope.INLINE
 });
@@ -74345,17 +74383,17 @@ Syntax.DEFAULTS = {
 //# sourceMappingURL=syntax.js.map
 
 },
-169: function(module, exports, __require, __externalRequire) {
+170: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/table.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const quill_delta_1 = __importDefault(__require(114));
-const quill_js_1 = __importDefault(__require(109));
-const module_js_1 = __importDefault(__require(131));
-const table_js_1 = __require(170);
+const quill_delta_1 = __importDefault(__require(115));
+const quill_js_1 = __importDefault(__require(110));
+const module_js_1 = __importDefault(__require(132));
+const table_js_1 = __require(171);
 class Table extends module_js_1.default {
     static register() {
         quill_js_1.default.register(table_js_1.TableCell);
@@ -74490,7 +74528,7 @@ exports.default = Table;
 //# sourceMappingURL=table.js.map
 
 },
-170: function(module, exports, __require, __externalRequire) {
+171: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/formats/table.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -74499,8 +74537,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TableContainer = exports.TableBody = exports.TableRow = exports.TableCell = void 0;
 exports.tableId = tableId;
-const block_js_1 = __importDefault(__require(121));
-const container_js_1 = __importDefault(__require(137));
+const block_js_1 = __importDefault(__require(122));
+const container_js_1 = __importDefault(__require(138));
 class TableCell extends block_js_1.default {
     static { this.blotName = 'table'; }
     static { this.tagName = 'TD'; }
@@ -74687,7 +74725,7 @@ function tableId() {
 //# sourceMappingURL=table.js.map
 
 },
-171: function(module, exports, __require, __externalRequire) {
+172: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/modules/toolbar.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -74696,11 +74734,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = void 0;
 exports.addControls = addControls;
-const quill_delta_1 = __importDefault(__require(114));
-const parchment_1 = __require(113);
-const quill_js_1 = __importDefault(__require(109));
-const logger_js_1 = __importDefault(__require(130));
-const module_js_1 = __importDefault(__require(131));
+const quill_delta_1 = __importDefault(__require(115));
+const parchment_1 = __require(114);
+const quill_js_1 = __importDefault(__require(110));
+const logger_js_1 = __importDefault(__require(131));
+const module_js_1 = __importDefault(__require(132));
 const debug = (0, logger_js_1.default)('quill:toolbar');
 class Toolbar extends module_js_1.default {
     constructor(quill, options) {
@@ -74987,7 +75025,7 @@ Toolbar.DEFAULTS = {
 //# sourceMappingURL=toolbar.js.map
 
 },
-172: function(module, exports, __require, __externalRequire) {
+173: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/ui/icons.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75075,7 +75113,7 @@ exports.default = {
 //# sourceMappingURL=icons.js.map
 
 },
-173: function(module, exports, __require, __externalRequire) {
+174: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/ui/picker.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75254,14 +75292,14 @@ exports.default = Picker;
 //# sourceMappingURL=picker.js.map
 
 },
-174: function(module, exports, __require, __externalRequire) {
+175: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/ui/color-picker.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const picker_js_1 = __importDefault(__require(173));
+const picker_js_1 = __importDefault(__require(174));
 class ColorPicker extends picker_js_1.default {
     constructor(select, label) {
         super(select);
@@ -75294,14 +75332,14 @@ exports.default = ColorPicker;
 //# sourceMappingURL=color-picker.js.map
 
 },
-175: function(module, exports, __require, __externalRequire) {
+176: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/ui/icon-picker.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const picker_js_1 = __importDefault(__require(173));
+const picker_js_1 = __importDefault(__require(174));
 class IconPicker extends picker_js_1.default {
     constructor(select, icons) {
         super(select);
@@ -75326,7 +75364,7 @@ exports.default = IconPicker;
 //# sourceMappingURL=icon-picker.js.map
 
 },
-176: function(module, exports, __require, __externalRequire) {
+177: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/ui/tooltip.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -75386,7 +75424,7 @@ exports.default = Tooltip;
 //# sourceMappingURL=tooltip.js.map
 
 },
-177: function(module, exports, __require, __externalRequire) {
+178: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/themes/bubble.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -75427,12 +75465,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.BubbleTooltip = void 0;
-const lodash_es_1 = __require(110);
-const emitter_js_1 = __importDefault(__require(127));
-const base_js_1 = __importStar(__require(178));
-const selection_js_1 = __require(126);
-const icons_js_1 = __importDefault(__require(172));
-const quill_js_1 = __importDefault(__require(109));
+const lodash_es_1 = __require(111);
+const emitter_js_1 = __importDefault(__require(128));
+const base_js_1 = __importStar(__require(179));
+const selection_js_1 = __require(127);
+const icons_js_1 = __importDefault(__require(173));
+const quill_js_1 = __importDefault(__require(110));
 const TOOLBAR_CONFIG = [['bold', 'italic', 'link'], [{
             header: 1
         }, {
@@ -75549,7 +75587,7 @@ BubbleTheme.DEFAULTS = (0, lodash_es_1.merge)({}, base_js_1.default.DEFAULTS, {
 //# sourceMappingURL=bubble.js.map
 
 },
-178: function(module, exports, __require, __externalRequire) {
+179: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/themes/base.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -75557,13 +75595,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.BaseTooltip = void 0;
-const lodash_es_1 = __require(110);
-const emitter_js_1 = __importDefault(__require(127));
-const theme_js_1 = __importDefault(__require(134));
-const color_picker_js_1 = __importDefault(__require(174));
-const icon_picker_js_1 = __importDefault(__require(175));
-const picker_js_1 = __importDefault(__require(173));
-const tooltip_js_1 = __importDefault(__require(176));
+const lodash_es_1 = __require(111);
+const emitter_js_1 = __importDefault(__require(128));
+const theme_js_1 = __importDefault(__require(135));
+const color_picker_js_1 = __importDefault(__require(175));
+const icon_picker_js_1 = __importDefault(__require(176));
+const picker_js_1 = __importDefault(__require(174));
+const tooltip_js_1 = __importDefault(__require(177));
 const ALIGNS = [false, 'center', 'right', 'justify'];
 const COLORS = ['#000000', '#e60000', '#ff9900', '#ffff00', '#008a00', '#0066cc', '#9933ff', '#ffffff', '#facccc', '#ffebcc', '#ffffcc', '#cce8cc', '#cce0f5', '#ebd6ff', '#bbbbbb', '#f06666', '#ffc266', '#ffff66', '#66b966', '#66a3e0', '#c285ff', '#888888', '#a10000', '#b26b00', '#b2b200', '#006100', '#0047b2', '#6b24b2', '#444444', '#5c0000', '#663d00', '#666600', '#003700', '#002966', '#3d1466'];
 const FONTS = [false, 'serif', 'monospace'];
@@ -75825,7 +75863,7 @@ function fillSelect(select, values) {
 //# sourceMappingURL=base.js.map
 
 },
-179: function(module, exports, __require, __externalRequire) {
+180: function(module, exports, __require, __externalRequire) {
 // /node_modules/quill/themes/snow.js
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -75865,13 +75903,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const lodash_es_1 = __require(110);
-const emitter_js_1 = __importDefault(__require(127));
-const base_js_1 = __importStar(__require(178));
-const link_js_1 = __importDefault(__require(161));
-const selection_js_1 = __require(126);
-const icons_js_1 = __importDefault(__require(172));
-const quill_js_1 = __importDefault(__require(109));
+const lodash_es_1 = __require(111);
+const emitter_js_1 = __importDefault(__require(128));
+const base_js_1 = __importStar(__require(179));
+const link_js_1 = __importDefault(__require(162));
+const selection_js_1 = __require(127);
+const icons_js_1 = __importDefault(__require(173));
+const quill_js_1 = __importDefault(__require(110));
 const TOOLBAR_CONFIG = [[{
             header: ['1', '2', '3', false]
         }], ['bold', 'italic', 'underline', 'link'], [{
@@ -75995,7 +76033,7 @@ exports.default = SnowTheme;
 //# sourceMappingURL=snow.js.map
 
 },
-180: function(module, exports, __require, __externalRequire) {
+181: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/FormulaStyle.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -77094,14 +77132,14 @@ body {
 exports.getBaseStyleText = getBaseStyleText;
 
 },
-181: function(module, exports, __require, __externalRequire) {
+182: function(module, exports, __require, __externalRequire) {
 // /src/core/YeMindAssociativeLine.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const AssociativeLine_1 = __importDefault(__require(182));
+const AssociativeLine_1 = __importDefault(__require(183));
 const BaseAssociativeLine = AssociativeLine_1.default;
 /**
  * Keeps the upstream editable Bézier relation-line implementation while
@@ -77130,18 +77168,18 @@ class YeMindAssociativeLine extends BaseAssociativeLine {
 exports.default = YeMindAssociativeLine;
 
 },
-182: function(module, exports, __require, __externalRequire) {
+183: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/AssociativeLine.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(53);
-const uuid_1 = __require(54);
-const associativeLineUtils_1 = __require(183);
-const associativeLineControls_1 = __importDefault(__require(184));
-const associativeLineText_1 = __importDefault(__require(185));
+const utils_1 = __require(54);
+const uuid_1 = __require(55);
+const associativeLineUtils_1 = __require(184);
+const associativeLineControls_1 = __importDefault(__require(185));
+const associativeLineText_1 = __importDefault(__require(186));
 const styleProps = [
     'associativeLineWidth',
     'associativeLineColor',
@@ -77805,12 +77843,12 @@ AssociativeLine.instanceName = 'associativeLine';
 exports.default = AssociativeLine;
 
 },
-183: function(module, exports, __require, __externalRequire) {
+184: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/associativeLine/associativeLineUtils.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDefaultControlPointOffsets = exports.getNodeLinePath = exports.computeNodePoints = exports.getNodePoint = exports.calcPoint = exports.cubicBezierPath = exports.joinCubicBezierPath = exports.computeCubicBezierPathPoints = exports.getAssociativeLineTargetIndex = void 0;
-const index_1 = __require(53);
+const index_1 = __require(54);
 // 获取目标节点在起始节点的目标数组中的索引
 const getAssociativeLineTargetIndex = (node, toNode) => {
     return node.getData('associativeLineTargets').findIndex(item => {
@@ -78124,11 +78162,11 @@ const getDefaultControlPointOffsets = (startPoint, endPoint) => {
 exports.getDefaultControlPointOffsets = getDefaultControlPointOffsets;
 
 },
-184: function(module, exports, __require, __externalRequire) {
+185: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/associativeLine/associativeLineControls.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const associativeLineUtils_1 = __require(183);
+const associativeLineUtils_1 = __require(184);
 // 创建控制点、连线节点
 function createControlNodes(node, toNode) {
     let { associativeLineActiveColor } = this.getStyleConfig(node, toNode);
@@ -78392,12 +78430,12 @@ exports.default = {
 };
 
 },
-185: function(module, exports, __require, __externalRequire) {
+186: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/associativeLine/associativeLineText.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const svg_js_1 = __require(61);
-const index_1 = __require(53);
+const svg_js_1 = __require(62);
+const index_1 = __require(54);
 const ASSOCIATIVE_LINE_TEXT_EDIT_WRAP = 'associative-line-text-edit-warp';
 // 创建文字节点
 function createText(data) {
@@ -78586,16 +78624,16 @@ exports.default = {
 };
 
 },
-186: function(module, exports, __require, __externalRequire) {
+187: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/OuterFrame.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __require(53);
-const outerFrameUtils_1 = __require(187);
-const outerFrameText_1 = __importDefault(__require(188));
+const utils_1 = __require(54);
+const outerFrameUtils_1 = __require(188);
+const outerFrameText_1 = __importDefault(__require(189));
 // 默认外框样式
 const defaultStyle = {
     // 外框圆角大小
@@ -78951,12 +78989,12 @@ OuterFrame.defaultStyle = defaultStyle;
 exports.default = OuterFrame;
 
 },
-187: function(module, exports, __require, __externalRequire) {
+188: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/outerFrame/outerFrameUtils.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getNodeOuterFrameList = exports.parseAddNodeList = void 0;
-const utils_1 = __require(53);
+const utils_1 = __require(54);
 // 解析要添加外框的节点实例列表
 const parseAddNodeList = list => {
     // 找出顶层节点
@@ -79084,12 +79122,12 @@ const getNodeOuterFrameList = node => {
 exports.getNodeOuterFrameList = getNodeOuterFrameList;
 
 },
-188: function(module, exports, __require, __externalRequire) {
+189: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/outerFrame/outerFrameText.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const svg_js_1 = __require(61);
-const index_1 = __require(53);
+const svg_js_1 = __require(62);
+const index_1 = __require(54);
 const OUTER_FRAME_TEXT_EDIT_WRAP = 'outer-frame-text-edit-warp';
 // 创建文字节点
 function createText(el, cur, range) {
@@ -79311,7 +79349,7 @@ exports.default = {
 };
 
 },
-189: function(module, exports, __require, __externalRequire) {
+190: function(module, exports, __require, __externalRequire) {
 // /src/core/YeMindNodeImgAdjust.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -79319,8 +79357,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.calculateImageResizeRect = calculateImageResizeRect;
-const NodeImgAdjust_1 = __importDefault(__require(190));
+const NodeImgAdjust_1 = __importDefault(__require(191));
 const RESIZE_HANDLES = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+const CLIPART_SINGLE_CLICK_DELAY = 380;
 const BaseNodeImgAdjust = NodeImgAdjust_1.default;
 function finitePositive(value, fallback) {
     const parsed = Number(value);
@@ -79432,6 +79471,7 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
         this.resizeStartRect = null;
         this.resizeCurrentRect = null;
         this.clipartClickTimer = null;
+        this.selectedAssetKind = 'image';
         this.onImageClickBound = this.onImageClick.bind(this);
         this.onImageDoubleClickBound = this.onImageDoubleClick.bind(this);
         this.onNodeClickBound = this.onNodeClick.bind(this);
@@ -79514,6 +79554,7 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
             return;
         this.setHandleElRect();
         this.handleEl.style.display = 'block';
+        this.handleEl.dataset.assetKind = this.selectedAssetKind;
         this.isShowHandleEl = true;
     }
     hideHandleEl(force = false) {
@@ -79680,40 +79721,46 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
         event?.stopPropagation?.();
         if (!node || !img)
             return;
-        if (node.getData?.('yemindClipartId')) {
-            this.closeImageSelection();
+        const kind = node.getData?.('yemindClipartId') ? 'clipart' : 'image';
+        this.selectImage(node, img, kind);
+        if (kind === 'clipart') {
             if (this.clipartClickTimer !== null)
                 window.clearTimeout(this.clipartClickTimer);
+            this.clipartClickTimer = null;
+            if (event?.detail > 1)
+                return;
             this.clipartClickTimer = window.setTimeout(() => {
                 this.clipartClickTimer = null;
                 this.mindMap.emit('yemind_node_clipart_edit', node, event, img);
-            }, 220);
+            }, CLIPART_SINGLE_CLICK_DELAY);
             return;
         }
+        this.mindMap.emit('yemind_node_image_selected', node);
+    }
+    selectImage(node, img, kind) {
         this.node = node;
         this.img = img;
         this.rect = img.rbox?.() ?? null;
         if (!this.rect)
             return;
+        this.selectedAssetKind = kind;
         this.imageSelected = true;
         this.hoverVisible = false;
         this.showHandleEl();
+        if (this.handleEl)
+            this.handleEl.dataset.assetKind = kind;
         this.setMode('selected');
-        this.mindMap.emit('yemind_node_image_selected', node);
     }
     onImageDoubleClick(node, event, img) {
         event?.preventDefault?.();
         event?.stopPropagation?.();
         if (!node)
             return;
-        if (node.getData?.('yemindClipartId')) {
-            if (this.clipartClickTimer !== null)
-                window.clearTimeout(this.clipartClickTimer);
-            this.clipartClickTimer = null;
-        }
-        else if (img) {
-            this.onImageClick(node, img, event);
-        }
+        if (this.clipartClickTimer !== null)
+            window.clearTimeout(this.clipartClickTimer);
+        this.clipartClickTimer = null;
+        if (img)
+            this.selectImage(node, img, node.getData?.('yemindClipartId') ? 'clipart' : 'image');
         this.mindMap.emit('yemind_node_image_preview', node);
     }
     onNodeClick() {
@@ -79828,6 +79875,9 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
         this.node = null;
         this.img = null;
         this.rect = null;
+        this.selectedAssetKind = 'image';
+        if (this.handleEl)
+            delete this.handleEl.dataset.assetKind;
     }
     replaceSelectedImage() {
         if (!this.node || this.mindMap.opt.readonly)
@@ -79855,7 +79905,7 @@ exports.default = YeMindNodeImgAdjust;
 YeMindNodeImgAdjust.instanceName = 'nodeImgAdjust';
 
 },
-190: function(module, exports, __require, __externalRequire) {
+191: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/NodeImgAdjust.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -79863,8 +79913,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 // 节点图片大小调整插件
-const index_1 = __require(53);
-const btns_1 = __importDefault(__require(66));
+const index_1 = __require(54);
+const btns_1 = __importDefault(__require(67));
 class NodeImgAdjust {
     //  构造函数
     constructor({ mindMap }) {
@@ -80196,11 +80246,11 @@ NodeImgAdjust.instanceName = 'nodeImgAdjust';
 exports.default = NodeImgAdjust;
 
 },
-191: function(module, exports, __require, __externalRequire) {
+192: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/RainbowLines.js
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const index_1 = __require(53);
+const index_1 = __require(54);
 const defaultColorsList = [
     'rgb(255, 213, 73)',
     'rgb(255, 136, 126)',
@@ -80284,7 +80334,7 @@ RainbowLines.instanceName = 'rainbowLines';
 exports.default = RainbowLines;
 
 },
-192: function(module, exports, __require, __externalRequire) {
+193: function(module, exports, __require, __externalRequire) {
 // /src/editor/YeMindRichText.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -80293,13 +80343,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.YEMIND_RICH_TEXT_FORMATS = exports.YEMIND_SIZE_VALUES = exports.YEMIND_FONT_VALUES = void 0;
 exports.registerYeMindFormats = registerYeMindFormats;
-const RichText_1 = __importDefault(__require(193));
-const utils_1 = __require(53);
-const quill_1 = __importDefault(__require(107));
-const quill_delta_1 = __importDefault(__require(114));
-const parchment_1 = __require(113);
+const RichText_1 = __importDefault(__require(194));
+const utils_1 = __require(54);
+const quill_1 = __importDefault(__require(108));
+const quill_delta_1 = __importDefault(__require(115));
+const parchment_1 = __require(114);
 const textEditingPolicy_1 = __require(24);
-const richTextGeometry_1 = __require(194);
+const richTextGeometry_1 = __require(195);
 exports.YEMIND_FONT_VALUES = [
     'sans-serif',
     'serif',
@@ -80778,20 +80828,20 @@ class YeMindRichText extends RichText_1.default {
 exports.default = YeMindRichText;
 
 },
-193: function(module, exports, __require, __externalRequire) {
+194: function(module, exports, __require, __externalRequire) {
 // /node_modules/simple-mind-map/src/plugins/RichText.js
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const quill_1 = __importDefault(__require(107));
-const quill_delta_1 = __importDefault(__require(114));
+const quill_1 = __importDefault(__require(108));
+const quill_delta_1 = __importDefault(__require(115));
 __require(1);
-const utils_1 = __require(53);
-const constant_1 = __require(44);
-const MindMapNode_1 = __importDefault(__require(51));
-const parchment_1 = __require(113);
+const utils_1 = __require(54);
+const constant_1 = __require(45);
+const MindMapNode_1 = __importDefault(__require(52));
+const parchment_1 = __require(114);
 let extended = false;
 // 扩展quill的字体列表
 let fontFamilyList = [
@@ -81574,7 +81624,7 @@ RichText.instanceName = 'richText';
 exports.default = RichText;
 
 },
-194: function(module, exports, __require, __externalRequire) {
+195: function(module, exports, __require, __externalRequire) {
 // /src/editor/richTextGeometry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -81732,7 +81782,7 @@ function resolveRenderedTextRect(node) {
 }
 
 },
-195: function(module, exports, __require, __externalRequire) {
+196: function(module, exports, __require, __externalRequire) {
 // /src/core/registerLayouts.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -81740,8 +81790,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerMindMapLayouts = registerMindMapLayouts;
-const simple_mind_map_1 = __importDefault(__require(42));
-const RightFishbone_1 = __importDefault(__require(196));
+const simple_mind_map_1 = __importDefault(__require(43));
+const RightFishbone_1 = __importDefault(__require(197));
 let registered = false;
 /** Register layouts that upstream exposes as constants but does not install. */
 function registerMindMapLayouts() {
@@ -81754,7 +81804,7 @@ function registerMindMapLayouts() {
 }
 
 },
-196: function(module, exports, __require, __externalRequire) {
+197: function(module, exports, __require, __externalRequire) {
 // /src/core/RightFishbone.ts
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -81762,8 +81812,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.mirrorPathHorizontally = mirrorPathHorizontally;
-const Fishbone_1 = __importDefault(__require(81));
-const svg_js_1 = __require(61);
+const Fishbone_1 = __importDefault(__require(82));
+const svg_js_1 = __require(62);
 const RIGHT_FISH_HEAD_PATH = 'M284.2857142857143,181 C284.2857142857143,181, 288.2857142857143,177, 284.2857142857143,173 Q 192.1904761904762,0, 0,0 L 0,354 Q 240.23809523809524,354, 280.2857142857143,218.18367346938777 C280.2857142857143,218.18367346938777, 282.2857142857143,214.18367346938777, 280.2857142857143,214.18367346938777 L 247.10204081632654,214.18367346938777 Z';
 const RIGHT_FISH_TAIL_PATH = 'M 819.3342905223708 0 Q 713.1342905223709 -177 606.9342905223708 -177 L 660.0342905223708 0 L 606.9342905223708 177 Q 713.1342905223709 177 819.3342905223708 0 z';
 const PARAM_COUNTS = {
@@ -81926,7 +81976,7 @@ class RightFishbone extends Fishbone_1.default {
 exports.default = RightFishbone;
 
 },
-197: function(module, exports, __require, __externalRequire) {
+198: function(module, exports, __require, __externalRequire) {
 // /src/core/nodeDecorations.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -81935,7 +81985,7 @@ exports.configureNodeDecorations = configureNodeDecorations;
 exports.createYemindIconList = createYemindIconList;
 exports.createNodePrefixContent = createNodePrefixContent;
 exports.createNodePostfixContent = createNodePostfixContent;
-const nodeNoteState_1 = __require(198);
+const nodeNoteState_1 = __require(199);
 const localAssetCatalogs_1 = __require(15);
 let decorationSettings = { showTodoBadge: true, showCommentBadge: true };
 function configureNodeDecorations(patch) {
@@ -82020,13 +82070,13 @@ function createNodePostfixContent(node) {
 }
 
 },
-198: function(module, exports, __require, __externalRequire) {
+199: function(module, exports, __require, __externalRequire) {
 // /src/content/nodeNoteState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.normalizeNodeNote = normalizeNodeNote;
 exports.updateNodeNote = updateNodeNote;
-const sanitizeRichHtml_1 = __require(199);
+const sanitizeRichHtml_1 = __require(200);
 function cleanDimension(value) {
     const number = Number(value);
     return Number.isFinite(number) && number > 0 ? Math.round(number) : undefined;
@@ -82071,7 +82121,7 @@ function updateNodeNote(previous, html, now = Date.now(), size = {}) {
 }
 
 },
-199: function(module, exports, __require, __externalRequire) {
+200: function(module, exports, __require, __externalRequire) {
 // /src/content/sanitizeRichHtml.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82127,7 +82177,7 @@ function sanitizeRichHtml(value) {
 }
 
 },
-200: function(module, exports, __require, __externalRequire) {
+201: function(module, exports, __require, __externalRequire) {
 // /src/core/dragBehavior.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82205,7 +82255,7 @@ function buildDragAndLayoutOptions(settings) {
 }
 
 },
-201: function(module, exports, __require, __externalRequire) {
+202: function(module, exports, __require, __externalRequire) {
 // /src/core/relationConfig.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82220,7 +82270,7 @@ function buildRelationOptions(settings) {
 }
 
 },
-202: function(module, exports, __require, __externalRequire) {
+203: function(module, exports, __require, __externalRequire) {
 // /src/core/outerFrameConfig.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82243,7 +82293,7 @@ function buildOuterFrameOptions(settings) {
 }
 
 },
-203: function(module, exports, __require, __externalRequire) {
+204: function(module, exports, __require, __externalRequire) {
 // /src/editor/shortcutSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82282,7 +82332,7 @@ function shouldBlockUpstreamShortcut(shortcut, nodes, readonly) {
 }
 
 },
-204: function(module, exports, __require, __externalRequire) {
+205: function(module, exports, __require, __externalRequire) {
 // /src/core/themeColorRuntime.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82435,7 +82485,7 @@ function configureThemeColorRuntime(mindMap, config) {
 }
 
 },
-205: function(module, exports, __require, __externalRequire) {
+206: function(module, exports, __require, __externalRequire) {
 // /src/core/measurementHost.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82555,7 +82605,7 @@ function stabilizeMindMapMeasurementHost(map, editorRoot = document.body) {
 }
 
 },
-206: function(module, exports, __require, __externalRequire) {
+207: function(module, exports, __require, __externalRequire) {
 // /src/core/relationData.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82637,17 +82687,17 @@ function sanitizeAssociativeLines(input) {
 }
 
 },
-207: function(module, exports, __require, __externalRequire) {
+208: function(module, exports, __require, __externalRequire) {
 // /src/core/commands.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createCommandAdapter = createCommandAdapter;
-const nodeContentState_1 = __require(208);
-const codeBlock_1 = __require(209);
-const nodeStyle_1 = __require(210);
-const combinedSummary_1 = __require(211);
-const clipartGeometry_1 = __require(212);
-const expandState_1 = __require(213);
+const nodeContentState_1 = __require(209);
+const codeBlock_1 = __require(210);
+const nodeStyle_1 = __require(211);
+const combinedSummary_1 = __require(212);
+const clipartGeometry_1 = __require(213);
+const expandState_1 = __require(214);
 function createCommandAdapter(mindMap) {
     const activeNodes = () => Array.isArray(mindMap.renderer?.activeNodeList)
         ? mindMap.renderer.activeNodeList
@@ -83291,7 +83341,7 @@ function createCommandAdapter(mindMap) {
 }
 
 },
-208: function(module, exports, __require, __externalRequire) {
+209: function(module, exports, __require, __externalRequire) {
 // /src/content/nodeContentState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83342,7 +83392,7 @@ function normalizeStringList(values) {
 }
 
 },
-209: function(module, exports, __require, __externalRequire) {
+210: function(module, exports, __require, __externalRequire) {
 // /src/editor/codeBlock.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83405,7 +83455,7 @@ function deleteCodeBlock(quill, block) {
 }
 
 },
-210: function(module, exports, __require, __externalRequire) {
+211: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeStyle.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83512,7 +83562,7 @@ function resetNodeStylePatch() {
 }
 
 },
-211: function(module, exports, __require, __externalRequire) {
+212: function(module, exports, __require, __externalRequire) {
 // /src/core/combinedSummary.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83648,7 +83698,7 @@ function addCombinedSummary(mindMap, selectedNodes) {
 }
 
 },
-212: function(module, exports, __require, __externalRequire) {
+213: function(module, exports, __require, __externalRequire) {
 // /src/core/clipartGeometry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83774,7 +83824,7 @@ function isLegacyDefaultClipartGeometry(data) {
 }
 
 },
-213: function(module, exports, __require, __externalRequire) {
+214: function(module, exports, __require, __externalRequire) {
 // /src/core/expandState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83872,20 +83922,21 @@ function toggleAllExpansion(tree) {
 }
 
 },
-214: function(module, exports, __require, __externalRequire) {
+215: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.openCheckpointManager = openCheckpointManager;
 const siyuan_1 = __externalRequire("siyuan");
-const checkpointPresentation_1 = __require(215);
+const checkpointPresentation_1 = __require(216);
 const dialogs_1 = __require(25);
-const checkpointDialogTemplate_1 = __require(216);
+const checkpointDialogTemplate_1 = __require(217);
+const dialogChrome_1 = __require(26);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
 function openCheckpointManager(options) {
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: `检查点 · ${escapeHtml(options.mapTitle)}`,
         width: '720px',
         content: (0, checkpointDialogTemplate_1.buildCheckpointDialogContent)(options.repository.list(options.mapId), options.readonly),
@@ -83965,7 +84016,7 @@ function openCheckpointManager(options) {
 }
 
 },
-215: function(module, exports, __require, __externalRequire) {
+216: function(module, exports, __require, __externalRequire) {
 // /src/checkpoints/checkpointPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84001,12 +84052,12 @@ function renderCheckpointListHtml(checkpoints, options) {
 }
 
 },
-216: function(module, exports, __require, __externalRequire) {
+217: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialogTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildCheckpointDialogContent = buildCheckpointDialogContent;
-const checkpointPresentation_1 = __require(215);
+const checkpointPresentation_1 = __require(216);
 function buildCheckpointDialogContent(checkpoints, readonly) {
     return `<div class="b3-dialog__content ymz-checkpoint-dialog">
     <div class="ymz-checkpoint-dialog__intro">检查点保存在独立历史文件中。恢复前会自动保存当前状态为保护检查点。</div>
@@ -84019,7 +84070,7 @@ function buildCheckpointDialogContent(checkpoints, readonly) {
 }
 
 },
-217: function(module, exports, __require, __externalRequire) {
+218: function(module, exports, __require, __externalRequire) {
 // /src/ui/contextMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84029,9 +84080,9 @@ exports.openOutlineContextMenu = openOutlineContextMenu;
 const siyuan_1 = __externalRequire("siyuan");
 const layoutPresets_1 = __require(13);
 const themePresets_1 = __require(11);
-const projectControls_1 = __require(35);
-const nodeContentDialogs_1 = __require(218);
-const nodeContentMenu_1 = __require(223);
+const projectControls_1 = __require(36);
+const nodeContentDialogs_1 = __require(219);
+const nodeContentMenu_1 = __require(224);
 function openCanvasContextMenu(event, commands, options) {
     event.preventDefault();
     event.stopPropagation();
@@ -84221,7 +84272,7 @@ function openOutlineContextMenu(event, options) {
 }
 
 },
-218: function(module, exports, __require, __externalRequire) {
+219: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84234,13 +84285,14 @@ exports.openImageDialog = openImageDialog;
 exports.openNoteDialog = openNoteDialog;
 exports.openCommentsDialog = openCommentsDialog;
 exports.showNodeActionUnavailable = showNodeActionUnavailable;
-const imageFileLoading_1 = __require(219);
+const imageFileLoading_1 = __require(220);
 const siyuan_1 = __externalRequire("siyuan");
-const nodeContentState_1 = __require(208);
-const dialogResize_1 = __require(220);
-const commentsPresentation_1 = __require(221);
-const inlineLink_1 = __require(222);
-const nodeNoteState_1 = __require(198);
+const nodeContentState_1 = __require(209);
+const dialogResize_1 = __require(221);
+const commentsPresentation_1 = __require(222);
+const inlineLink_1 = __require(223);
+const nodeNoteState_1 = __require(199);
+const dialogChrome_1 = __require(26);
 function activeData(commands) {
     return commands.getPrimaryNodeData() ?? {};
 }
@@ -84264,7 +84316,7 @@ function compactDialogWidth(preferred) {
 }
 function openTodoDialog(commands) {
     const existing = (activeData(commands).yemindTodo ?? null);
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: '待办',
         content: `<div class="b3-dialog__content ymz-node-dialog">
       <label>待办内容</label><input class="b3-text-field fn__block" data-field="todo-text" placeholder="输入待办内容">
@@ -84286,7 +84338,7 @@ function openTodoDialog(commands) {
 }
 function openTagsDialog(commands) {
     const data = activeData(commands);
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: '标签',
         content: `<div class="b3-dialog__content ymz-node-dialog">
       <label>标签</label><input class="b3-text-field fn__block" data-field="tags" placeholder="PCIe, ATS, 重点">
@@ -84312,7 +84364,7 @@ const ICON_OPTIONS = [
 ];
 function openIconsDialog(commands) {
     const selected = new Set((0, nodeContentState_1.normalizeStringList)(activeData(commands).icon));
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: '图标',
         content: `<div class="b3-dialog__content ymz-node-dialog"><div class="ymz-icon-grid">
       ${ICON_OPTIONS.map(([value, label]) => `<label><input type="checkbox" value="${value}"> <span>${label}</span></label>`).join('')}
@@ -84329,7 +84381,7 @@ function openIconsDialog(commands) {
 }
 function openLinkDialog(commands, autoHttps = true) {
     const data = activeData(commands);
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: '链接',
         content: `<div class="b3-dialog__content ymz-node-dialog">
       <label>链接地址</label><input class="b3-text-field fn__block" data-field="url" placeholder="https://… 或 siyuan://blocks/…">
@@ -84363,7 +84415,7 @@ function openLinkDialog(commands, autoHttps = true) {
     url.focus();
 }
 function openFormulaDialog(commands) {
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: '公式',
         content: `<div class="b3-dialog__content ymz-node-dialog">
       <div class="ymz-formula-mode" role="group" aria-label="公式模式">
@@ -84407,7 +84459,7 @@ function openImageDialog(commands) {
     let fileData = '';
     let fileSize = { width: 0, height: 0 };
     const data = activeData(commands);
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: '图片',
         content: `<div class="b3-dialog__content ymz-node-dialog">
       <label>图片地址</label><input class="b3-text-field fn__block" data-field="url" placeholder="https://… 或 data:image/…">
@@ -84475,7 +84527,7 @@ function openNoteDialog(commands, options = {}) {
     const current = (0, nodeNoteState_1.normalizeNodeNote)(data.yemindNote ?? data.note);
     const width = Math.max(420, current?.width ?? 560);
     const height = Math.max(280, current?.height ?? 380);
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: readonly ? '备注（只读）' : '备注',
         hideCloseIcon: true,
         content: `<div class="b3-dialog__content ymz-node-dialog ymz-note-dialog">
@@ -84550,7 +84602,7 @@ function openCommentsDialog(commands, options = {}) {
     const readonly = Boolean(options.readonly);
     let comments = (activeData(commands).yemindComments ?? []).map((item) => ({ ...item }));
     let editingId = null;
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: readonly ? '批注（只读）' : '批注',
         hideCloseIcon: true,
         content: `<div class="b3-dialog__content ymz-node-dialog ymz-comments-dialog">
@@ -84656,7 +84708,7 @@ function escapeAttribute(value) {
 }
 
 },
-219: function(module, exports, __require, __externalRequire) {
+220: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageFileLoading.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84674,7 +84726,7 @@ async function loadImageFileSelection(file, dependencies) {
 }
 
 },
-220: function(module, exports, __require, __externalRequire) {
+221: function(module, exports, __require, __externalRequire) {
 // /src/ui/dialogResize.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84741,7 +84793,7 @@ function bindDialogResize(handle, container) {
 }
 
 },
-221: function(module, exports, __require, __externalRequire) {
+222: function(module, exports, __require, __externalRequire) {
 // /src/ui/commentsPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84791,7 +84843,7 @@ function escapeAttribute(value) {
 }
 
 },
-222: function(module, exports, __require, __externalRequire) {
+223: function(module, exports, __require, __externalRequire) {
 // /src/editor/inlineLink.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84819,7 +84871,7 @@ function isSiyuanInlineLink(value) {
 }
 
 },
-223: function(module, exports, __require, __externalRequire) {
+224: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84827,7 +84879,7 @@ exports.NODE_CONTENT_MENU_LABELS = void 0;
 exports.createTodoMenuDescriptor = createTodoMenuDescriptor;
 exports.createSummaryMenuDescriptor = createSummaryMenuDescriptor;
 exports.createNodeMenuAvailability = createNodeMenuAvailability;
-const nodeContentState_1 = __require(208);
+const nodeContentState_1 = __require(209);
 exports.NODE_CONTENT_MENU_LABELS = [
     '添加待办',
     '删除待办',
@@ -84888,14 +84940,15 @@ function createNodeMenuAvailability(input) {
 }
 
 },
-224: function(module, exports, __require, __externalRequire) {
+225: function(module, exports, __require, __externalRequire) {
 // /src/ui/textToMapDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.previewRowsHtml = previewRowsHtml;
 exports.openTextToMapDialog = openTextToMapDialog;
 const siyuan_1 = __externalRequire("siyuan");
-const outlineTreeImport_1 = __require(225);
+const outlineTreeImport_1 = __require(226);
+const dialogChrome_1 = __require(26);
 const MODES = [
     ['auto', '自动识别'],
     ['unicode-tree', 'Unicode 树形符号'],
@@ -84936,7 +84989,7 @@ function resultStatus(result) {
     return parts.join('　');
 }
 function openTextToMapDialog(options) {
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: '文本转导图',
         width: 'min(980px, calc(100vw - 48px))',
         height: 'min(700px, calc(100vh - 64px))',
@@ -85013,7 +85066,7 @@ function openTextToMapDialog(options) {
 }
 
 },
-225: function(module, exports, __require, __externalRequire) {
+226: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineTreeImport.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85023,7 +85076,7 @@ exports.repairImportedAutoWidthTree = repairImportedAutoWidthTree;
 exports.parseOutlineTreeText = parseOutlineTreeText;
 exports.applyOutlineImport = applyOutlineImport;
 const textEditingPolicy_1 = __require(24);
-const structuredOutlineDocument_1 = __require(226);
+const structuredOutlineDocument_1 = __require(227);
 exports.OUTLINE_IMPORT_WRAP_UNITS = 20;
 exports.OUTLINE_IMPORT_AUTO_WIDTH = 280;
 function outlineImportDisplayUnits(value) {
@@ -85381,7 +85434,7 @@ function applyOutlineImport(baseTree, targetUid, result, insertMode = 'append-un
 }
 
 },
-226: function(module, exports, __require, __externalRequire) {
+227: function(module, exports, __require, __externalRequire) {
 // /src/editor/structuredOutlineDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85393,9 +85446,9 @@ exports.buildTreeFromStructuredOutline = buildTreeFromStructuredOutline;
 exports.parseStructuredOutlinePaste = parseStructuredOutlinePaste;
 exports.serializeStructuredOutlineBlocks = serializeStructuredOutlineBlocks;
 exports.createStructuredOutlineUid = createStructuredOutlineUid;
-const sanitizeRichHtml_1 = __require(199);
-const outlineTextDocument_1 = __require(227);
-const outlineAccessories_1 = __require(228);
+const sanitizeRichHtml_1 = __require(200);
+const outlineTextDocument_1 = __require(228);
+const outlineAccessories_1 = __require(229);
 function cloneValue(value) {
     if (typeof structuredClone === 'function') {
         try {
@@ -85632,7 +85685,7 @@ function createStructuredOutlineUid() {
 }
 
 },
-227: function(module, exports, __require, __externalRequire) {
+228: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineTextDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86021,7 +86074,7 @@ function insertOutlineNewline(value, selectionStart, selectionEnd) {
 }
 
 },
-228: function(module, exports, __require, __externalRequire) {
+229: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineAccessories.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86109,11 +86162,15 @@ function outlineAccessoriesFromData(data) {
 function iconHtml(value, pluginBaseUrl) {
     const marker = (0, localAssetCatalogs_1.markerItemFromValue)(value);
     if (marker) {
-        const style = styleAttribute((0, localAssetCatalogs_1.markerButtonStyle)(pluginBaseUrl, marker));
-        return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon-action data-outline-icon="${escapeAttribute(value)}" tabindex="-1" title="${escapeAttribute(marker.groupLabel)} ${marker.orderInGroup}" aria-label="修改图标"><span class="ymz-marker-sprite" style="${escapeAttribute(style)}"></span></button>`;
+        const style = styleAttribute((0, localAssetCatalogs_1.compactMarkerButtonStyle)(pluginBaseUrl, marker));
+        return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon-action data-outline-icon="${escapeAttribute(value)}" tabindex="-1" title="${escapeAttribute(marker.groupLabel)} ${marker.orderInGroup}" aria-label="修改图标" style="${escapeAttribute(style)}"></button>`;
     }
     const label = LEGACY_ICON_LABELS[value] ?? '•';
     return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon-action data-outline-icon="${escapeAttribute(value)}" tabindex="-1" title="${escapeAttribute(value)}" aria-label="修改图标">${escapeAttribute(label)}</button>`;
+}
+function symbolIcon(symbol) {
+    const safe = escapeAttribute(symbol);
+    return `<svg aria-hidden="true" focusable="false"><use href="#${safe}" xlink:href="#${safe}"></use></svg>`;
 }
 function statusButton(type, title, label) {
     return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute(type)}" data-outline-content="${escapeAttribute(type)}" tabindex="-1" aria-label="${escapeAttribute(title)}">${label}</button>`;
@@ -86133,15 +86190,15 @@ function outlineAccessoriesHtml(accessories, pluginBaseUrl) {
     const tags = accessories.tags.length
         ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute(accessories.tags.join('、'))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute(tag)}</span>`).join('')}</span>`
         : '';
-    const note = accessories.hasNote ? statusButton('note', '备注', 'N') : '';
-    const comments = accessories.commentCount ? statusButton('comments', `批注 ${accessories.commentCount}`, String(accessories.commentCount)) : '';
+    const note = accessories.hasNote ? statusButton('note', '备注', symbolIcon('iconYeMindNote')) : '';
+    const comments = accessories.commentCount ? statusButton('comments', `批注 ${accessories.commentCount}`, symbolIcon('iconYeMindComment')) : '';
     const link = accessories.link ? statusButton('link', accessories.link, '↗') : '';
     const outerFrame = accessories.hasOuterFrame ? statusButton('outer-frame', '已有外框', '□') : '';
     return `<span class="ymz-outline-accessories" contenteditable="false" aria-label="节点附加内容">${todo}${icons}${image}${tags}${note}${comments}${link}${outerFrame}</span>`;
 }
 
 },
-229: function(module, exports, __require, __externalRequire) {
+230: function(module, exports, __require, __externalRequire) {
 // /src/ui/richTextDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86149,7 +86206,8 @@ exports.CODE_LANGUAGES = void 0;
 exports.openInlineLinkDialog = openInlineLinkDialog;
 exports.openCodeBlockDialog = openCodeBlockDialog;
 const siyuan_1 = __externalRequire("siyuan");
-const inlineLink_1 = __require(222);
+const inlineLink_1 = __require(223);
+const dialogChrome_1 = __require(26);
 const CODE_LANGUAGES = [
     ['plain', '纯文本'],
     ['javascript', 'JavaScript'],
@@ -86179,7 +86237,7 @@ function openInlineLinkDialog(commands, settings) {
         (0, siyuan_1.showMessage)('请先在节点中选择要添加链接的文字', 2800, 'info');
         return;
     }
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: existing ? '编辑行内链接' : '添加行内链接',
         width: '480px',
         content: `<div class="b3-dialog__content ymz-node-dialog">
@@ -86231,7 +86289,7 @@ function openCodeBlockDialog(commands, settings) {
         (0, siyuan_1.showMessage)('请先在节点中选择要转换为代码块的文字', 2800, 'info');
         return;
     }
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: existing ? '编辑代码块' : '插入代码块',
         width: '680px',
         content: `<div class="b3-dialog__content ymz-node-dialog ymz-code-dialog">
@@ -86289,7 +86347,7 @@ function openCodeBlockDialog(commands, settings) {
 }
 
 },
-230: function(module, exports, __require, __externalRequire) {
+231: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorStats.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86322,7 +86380,7 @@ function calculateEditorStats(tree) {
 }
 
 },
-231: function(module, exports, __require, __externalRequire) {
+232: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86330,7 +86388,7 @@ exports.createEditorTemplate = createEditorTemplate;
 const themePresets_1 = __require(11);
 const layoutPresets_1 = __require(13);
 const colorSchemes_1 = __require(21);
-const projectControls_1 = __require(35);
+const projectControls_1 = __require(36);
 function createEditorTemplate(title, theme = 'yemind-default', lineStyle = 'curve') {
     return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map">
@@ -86481,7 +86539,7 @@ function escapeHtml(value) {
 }
 
 },
-232: function(module, exports, __require, __externalRequire) {
+233: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86490,7 +86548,7 @@ exports.resolveOutlineDropIntent = resolveOutlineDropIntent;
 exports.isOutlineTextSelectionTarget = isOutlineTextSelectionTarget;
 exports.shouldStartOutlinePointerDrag = shouldStartOutlinePointerDrag;
 exports.resolveOutlinePointerDropIntent = resolveOutlinePointerDropIntent;
-const treeDropIntent_1 = __require(96);
+const treeDropIntent_1 = __require(97);
 const OUTLINE_ROW_SPLIT_RATIO = 0.5;
 function isOutlinePointerInDragZone(input) {
     const tolerance = Math.max(0, input.tolerance ?? 0);
@@ -86576,16 +86634,17 @@ function resolveOutlinePointerDropIntent(input) {
 }
 
 },
-233: function(module, exports, __require, __externalRequire) {
+234: function(module, exports, __require, __externalRequire) {
 // /src/editor/StructuredOutlineEditorController.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StructuredOutlineEditorController = void 0;
-const sanitizeRichHtml_1 = __require(199);
-const outlineTextDocument_1 = __require(227);
-const outlineAccessories_1 = __require(228);
-const structuredOutlineDocument_1 = __require(226);
+const sanitizeRichHtml_1 = __require(200);
+const outlineTextDocument_1 = __require(228);
+const outlineAccessories_1 = __require(229);
+const structuredOutlineDocument_1 = __require(227);
 const INDENT_SIZE = 22;
+const OUTLINE_IMAGE_SINGLE_CLICK_DELAY = 380;
 const PLAIN_INDENT = '    ';
 const BLOCK_TAGS = new Set(['DIV', 'P', 'LI', 'UL', 'OL', 'SECTION', 'ARTICLE']);
 function escapeHtml(value) {
@@ -86842,12 +86901,15 @@ class StructuredOutlineEditorController {
                     this.options.onActivate(uid);
                 if (this.outlineImageClickTimer !== null)
                     window.clearTimeout(this.outlineImageClickTimer);
+                this.outlineImageClickTimer = null;
+                if (event.detail > 1)
+                    return;
                 const kind = imageAction.dataset.outlineImageKind === 'clipart' ? 'clipart' : 'image';
                 this.outlineImageClickTimer = window.setTimeout(() => {
                     this.outlineImageClickTimer = null;
                     if (!this.options.isReadonly())
                         this.options.onImageEdit?.(uid, kind, imageAction);
-                }, 220);
+                }, OUTLINE_IMAGE_SINGLE_CLICK_DELAY);
                 return;
             }
             const contentAction = target.closest('[data-outline-content]');
@@ -86950,6 +87012,11 @@ class StructuredOutlineEditorController {
             }, 0);
         };
         this.onPointerDown = (event) => {
+            const imageAction = event.target?.closest('[data-outline-image-action]');
+            if (imageAction && event.detail > 1 && this.outlineImageClickTimer !== null) {
+                window.clearTimeout(this.outlineImageClickTimer);
+                this.outlineImageClickTimer = null;
+            }
             this.clearWholeSelection();
             this.pointerSelecting = Boolean(event.target?.closest('[data-outline-editor]'));
             if (this.pointerSelecting && this.options.isReadonly())
@@ -88616,7 +88683,7 @@ function closestElement(node) {
 }
 
 },
-234: function(module, exports, __require, __externalRequire) {
+235: function(module, exports, __require, __externalRequire) {
 // /src/editor/splitPane.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -88639,15 +88706,15 @@ function ratioFromPointer(rect, clientX) {
 }
 
 },
-235: function(module, exports, __require, __externalRequire) {
+236: function(module, exports, __require, __externalRequire) {
 // /src/editor/RichTextToolbar.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RichTextToolbar = void 0;
-const YeMindRichText_1 = __require(192);
-const richTextActions_1 = __require(236);
-const colorPresentation_1 = __require(237);
-const colorPalette_1 = __require(238);
+const YeMindRichText_1 = __require(193);
+const richTextActions_1 = __require(237);
+const colorPresentation_1 = __require(238);
+const colorPalette_1 = __require(239);
 function option(value, label) {
     return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -89067,7 +89134,7 @@ class RichTextToolbar {
 exports.RichTextToolbar = RichTextToolbar;
 
 },
-236: function(module, exports, __require, __externalRequire) {
+237: function(module, exports, __require, __externalRequire) {
 // /src/editor/richTextActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89098,7 +89165,7 @@ function isClozeFormat(formatInfo) {
 }
 
 },
-237: function(module, exports, __require, __externalRequire) {
+238: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89165,7 +89232,7 @@ function presentColor(value) {
 }
 
 },
-238: function(module, exports, __require, __externalRequire) {
+239: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPalette.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89196,7 +89263,7 @@ function colorPaletteInnerHtml() {
 }
 
 },
-239: function(module, exports, __require, __externalRequire) {
+240: function(module, exports, __require, __externalRequire) {
 // /src/editor/selectionPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89257,7 +89324,7 @@ function shouldBlockRootDeleteShortcut(key, nodes) {
 }
 
 },
-240: function(module, exports, __require, __externalRequire) {
+241: function(module, exports, __require, __externalRequire) {
 // /src/editor/saveRevision.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89288,7 +89355,7 @@ class SaveRevisionTracker {
 exports.SaveRevisionTracker = SaveRevisionTracker;
 
 },
-241: function(module, exports, __require, __externalRequire) {
+242: function(module, exports, __require, __externalRequire) {
 // /src/editor/relationPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89304,7 +89371,7 @@ function createRelationPresentation(input) {
 }
 
 },
-242: function(module, exports, __require, __externalRequire) {
+243: function(module, exports, __require, __externalRequire) {
 // /src/editor/outerFramePresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89363,7 +89430,7 @@ function createOuterFramePresentation(input) {
 }
 
 },
-243: function(module, exports, __require, __externalRequire) {
+244: function(module, exports, __require, __externalRequire) {
 // /src/editor/toolbarAvailability.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89385,12 +89452,12 @@ function createToolbarAvailability(input) {
 }
 
 },
-244: function(module, exports, __require, __externalRequire) {
+245: function(module, exports, __require, __externalRequire) {
 // /src/editor/linkNavigation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolveLinkNavigation = resolveLinkNavigation;
-const inlineLink_1 = __require(222);
+const inlineLink_1 = __require(223);
 function resolveLinkNavigation(value, externalMode) {
     const href = (0, inlineLink_1.normalizeInlineLink)(value, true);
     if (!href)
@@ -89402,7 +89469,7 @@ function resolveLinkNavigation(value, externalMode) {
 }
 
 },
-245: function(module, exports, __require, __externalRequire) {
+246: function(module, exports, __require, __externalRequire) {
 // /src/plugin/visibleElement.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89467,7 +89534,7 @@ function waitForNonZeroSize(element, options = {}) {
 }
 
 },
-246: function(module, exports, __require, __externalRequire) {
+247: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeImageInput.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89528,15 +89595,15 @@ function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
 }
 
 },
-247: function(module, exports, __require, __externalRequire) {
+248: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeHoverPreview.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeHoverPreview = void 0;
 exports.computeHoverPreviewPlacement = computeHoverPreviewPlacement;
 exports.buildHoverPreviewHtml = buildHoverPreviewHtml;
-const sanitizeRichHtml_1 = __require(199);
-const commentsPresentation_1 = __require(221);
+const sanitizeRichHtml_1 = __require(200);
+const commentsPresentation_1 = __require(222);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -89668,12 +89735,17 @@ class NodeHoverPreview {
         this.root = root;
         this.showTimer = null;
         this.hideTimer = null;
+        this.positionFrame = null;
+        this.settleFrame = null;
         this.anchor = null;
         this.element = document.createElement('div');
         this.element.className = 'ymz-node-hover-preview';
         this.element.hidden = true;
         this.element.addEventListener('pointerenter', () => this.cancelHide());
         this.element.addEventListener('pointerleave', () => this.scheduleHide());
+        this.resizeObserver = typeof ResizeObserver === 'function'
+            ? new ResizeObserver(() => this.schedulePosition())
+            : null;
         root.appendChild(this.element);
     }
     show(type, value, anchor, delay = 220) {
@@ -89683,8 +89755,26 @@ class NodeHoverPreview {
             this.showTimer = null;
             this.element.dataset.type = type;
             this.element.innerHTML = buildHoverPreviewHtml(type, value);
+            this.element.style.visibility = 'hidden';
             this.element.hidden = false;
-            this.position(anchor);
+            this.resizeObserver?.disconnect();
+            this.resizeObserver?.observe(this.element);
+            this.element.querySelectorAll('img').forEach((image) => {
+                if (!image.complete)
+                    image.addEventListener('load', () => this.schedulePosition(), { once: true });
+            });
+            this.positionFrame = window.requestAnimationFrame(() => {
+                this.positionFrame = null;
+                if (!this.anchor || this.element.hidden)
+                    return;
+                this.position(this.anchor);
+                this.element.style.visibility = '';
+                this.settleFrame = window.requestAnimationFrame(() => {
+                    this.settleFrame = null;
+                    if (this.anchor && !this.element.hidden)
+                        this.position(this.anchor);
+                });
+            });
         }, delay);
     }
     scheduleHide(delay = 160) {
@@ -89696,8 +89786,10 @@ class NodeHoverPreview {
     }
     hide() {
         this.cancelTimers();
+        this.resizeObserver?.disconnect();
         this.element.hidden = true;
         this.element.innerHTML = '';
+        this.element.style.removeProperty('visibility');
         this.element.style.removeProperty('width');
         this.element.style.removeProperty('max-height');
         delete this.element.dataset.placement;
@@ -89705,7 +89797,17 @@ class NodeHoverPreview {
     }
     destroy() {
         this.hide();
+        this.resizeObserver?.disconnect();
         this.element.remove();
+    }
+    schedulePosition() {
+        if (!this.anchor || this.element.hidden || this.positionFrame !== null)
+            return;
+        this.positionFrame = window.requestAnimationFrame(() => {
+            this.positionFrame = null;
+            if (this.anchor && !this.element.hidden)
+                this.position(this.anchor);
+        });
     }
     cancelHide() {
         if (this.hideTimer !== null)
@@ -89716,9 +89818,17 @@ class NodeHoverPreview {
         if (this.showTimer !== null)
             window.clearTimeout(this.showTimer);
         this.showTimer = null;
+        if (this.positionFrame !== null)
+            window.cancelAnimationFrame(this.positionFrame);
+        if (this.settleFrame !== null)
+            window.cancelAnimationFrame(this.settleFrame);
+        this.positionFrame = null;
+        this.settleFrame = null;
         this.cancelHide();
     }
     position(anchor) {
+        if (!anchor.isConnected || !this.element.isConnected)
+            return;
         const rootRect = this.root.getBoundingClientRect();
         const anchorRect = anchor.getBoundingClientRect();
         const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
@@ -89731,8 +89841,9 @@ class NodeHoverPreview {
             width: rootWidth,
             height: rootHeight,
         };
-        const desiredWidth = Math.min(360, Math.max(180, this.element.offsetWidth || 360));
-        const desiredHeight = Math.min(320, Math.max(80, this.element.offsetHeight || 220));
+        const measured = this.element.getBoundingClientRect();
+        const desiredWidth = Math.min(360, Math.max(180, measured.width || this.element.scrollWidth || 360));
+        const desiredHeight = Math.min(320, Math.max(80, measured.height || this.element.scrollHeight || 220));
         const placement = computeHoverPreviewPlacement({
             root: normalizedRoot,
             anchor: anchorRect,
@@ -89748,7 +89859,7 @@ class NodeHoverPreview {
 exports.NodeHoverPreview = NodeHoverPreview;
 
 },
-248: function(module, exports, __require, __externalRequire) {
+249: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageLightbox.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89851,13 +89962,13 @@ class ImageLightbox {
 exports.ImageLightbox = ImageLightbox;
 
 },
-249: function(module, exports, __require, __externalRequire) {
+250: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeStylePanel = void 0;
-const colorPalette_1 = __require(238);
-const colorPresentation_1 = __require(237);
+const colorPalette_1 = __require(239);
+const colorPresentation_1 = __require(238);
 const INPUT_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 function toInputValue(value) {
     return value === null || value === undefined ? '' : String(value);
@@ -90168,14 +90279,14 @@ class NodeStylePanel {
 exports.NodeStylePanel = NodeStylePanel;
 
 },
-250: function(module, exports, __require, __externalRequire) {
+251: function(module, exports, __require, __externalRequire) {
 // /src/ui/projectStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectStylePanel = void 0;
 const projectStyle_1 = __require(20);
-const colorPalette_1 = __require(238);
-const colorPresentation_1 = __require(237);
+const colorPalette_1 = __require(239);
+const colorPresentation_1 = __require(238);
 const colorSchemes_1 = __require(21);
 const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 class ProjectStylePanel {
@@ -90476,7 +90587,7 @@ class ProjectStylePanel {
 exports.ProjectStylePanel = ProjectStylePanel;
 
 },
-251: function(module, exports, __require, __externalRequire) {
+252: function(module, exports, __require, __externalRequire) {
 // /src/ui/layoutGalleryPanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90574,7 +90685,7 @@ class LayoutGalleryPanel {
 exports.LayoutGalleryPanel = LayoutGalleryPanel;
 
 },
-252: function(module, exports, __require, __externalRequire) {
+253: function(module, exports, __require, __externalRequire) {
 // /src/ui/projectChoicePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90712,26 +90823,27 @@ class ProjectChoicePanel {
 exports.ProjectChoicePanel = ProjectChoicePanel;
 
 },
-253: function(module, exports, __require, __externalRequire) {
+254: function(module, exports, __require, __externalRequire) {
 // /src/ui/localAssetDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.computeAssetDialogPlacement = void 0;
 exports.positionAssetDialog = positionAssetDialog;
 exports.openMarkerPicker = openMarkerPicker;
 exports.openClipartPicker = openClipartPicker;
-const siyuan_1 = __externalRequire("siyuan");
 const localAssetCatalogs_1 = __require(15);
-const nodeContentState_1 = __require(208);
-const clipartGeometry_1 = __require(212);
+const nodeContentState_1 = __require(209);
+const clipartGeometry_1 = __require(213);
+const anchoredPlacement_1 = __require(255);
+const dialogChrome_1 = __require(26);
 function applyStyle(element, style) {
     Object.assign(element.style, style);
 }
 function selectedIcons(commands) {
     return (0, nodeContentState_1.normalizeStringList)(commands.getPrimaryNodeData()?.icon);
 }
-function clamp(value, min, max) {
-    return Math.max(min, Math.min(value, max));
-}
+var anchoredPlacement_2 = __require(255);
+Object.defineProperty(exports, "computeAssetDialogPlacement", { enumerable: true, get: function () { return anchoredPlacement_2.computeAssetDialogPlacement; } });
 function positionAssetDialog(dialog, anchorRect) {
     if (!anchorRect)
         return;
@@ -90740,38 +90852,22 @@ function positionAssetDialog(dialog, anchorRect) {
         if (!container?.isConnected)
             return;
         const rect = container.getBoundingClientRect();
-        const margin = 12;
-        const gap = 14;
-        const maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
-        const maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
-        const roomRight = window.innerWidth - anchorRect.right - gap;
-        const roomLeft = anchorRect.left - gap;
-        let left = roomRight >= rect.width
-            ? anchorRect.right + gap
-            : roomLeft >= rect.width
-                ? anchorRect.left - gap - rect.width
-                : clamp(anchorRect.left + anchorRect.width / 2 - rect.width / 2, margin, maxLeft);
-        let top = clamp(anchorRect.top + anchorRect.height / 2 - rect.height / 2, margin, maxTop);
-        const overlaps = left < anchorRect.right && left + rect.width > anchorRect.left
-            && top < anchorRect.bottom && top + rect.height > anchorRect.top;
-        if (overlaps) {
-            const below = anchorRect.bottom + gap;
-            const above = anchorRect.top - gap - rect.height;
-            if (below + rect.height <= window.innerHeight - margin)
-                top = below;
-            else if (above >= margin)
-                top = above;
-        }
-        left = clamp(left, margin, maxLeft);
-        top = clamp(top, margin, maxTop);
+        const placement = (0, anchoredPlacement_1.computeAssetDialogPlacement)({
+            viewport: { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight, width: window.innerWidth, height: window.innerHeight },
+            anchor: anchorRect,
+            dialog: { width: rect.width, height: rect.height },
+            margin: 12,
+            gap: 14,
+        });
         Object.assign(container.style, {
             position: 'fixed',
-            left: `${Math.round(left)}px`,
-            top: `${Math.round(top)}px`,
+            left: `${Math.round(placement.left)}px`,
+            top: `${Math.round(placement.top)}px`,
             margin: '0',
             transform: 'none',
         });
         container.dataset.assetDialogAnchored = 'true';
+        container.dataset.assetDialogPlacement = placement.placement;
     });
 }
 function prepareAssetDialog(dialog, anchorRect) {
@@ -90797,7 +90893,7 @@ function openMarkerPicker(commands, options = {}) {
     let activeGroupId = options.initialGroupId && localAssetCatalogs_1.markerCatalog.groups.some((group) => group.id === options.initialGroupId)
         ? options.initialGroupId
         : '';
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: '图标',
         content: `<div class="b3-dialog__content ymz-local-asset-dialog ymz-marker-dialog">
       ${assetHeader('图标')}
@@ -90897,7 +90993,7 @@ function openClipartPicker(commands, options = {}) {
     const resolver = (0, localAssetCatalogs_1.createRuntimeAssetResolver)(options.pluginBaseUrl);
     let categoryId = '';
     let query = '';
-    const dialog = new siyuan_1.Dialog({
+    const dialog = (0, dialogChrome_1.createYeMindDialog)({
         title: '剪贴图',
         content: `<div class="b3-dialog__content ymz-local-asset-dialog ymz-clipart-dialog">
       ${assetHeader('剪贴图')}
@@ -90968,7 +91064,68 @@ function openClipartPicker(commands, options = {}) {
 }
 
 },
-254: function(module, exports, __require, __externalRequire) {
+255: function(module, exports, __require, __externalRequire) {
+// /src/ui/anchoredPlacement.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.computeAssetDialogPlacement = computeAssetDialogPlacement;
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(value, max));
+}
+function overlapArea(a, b) {
+    const width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+    const height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+    return width * height;
+}
+function rect(left, top, width, height) {
+    return { left, top, right: left + width, bottom: top + height, width, height };
+}
+function computeAssetDialogPlacement(input) {
+    const gap = Math.max(0, input.gap ?? 14);
+    const margin = Math.max(0, input.margin ?? 12);
+    const viewport = input.viewport;
+    const anchor = input.anchor;
+    const width = Math.min(Math.max(1, input.dialog.width), Math.max(1, viewport.width - margin * 2));
+    const height = Math.min(Math.max(1, input.dialog.height), Math.max(1, viewport.height - margin * 2));
+    const minLeft = viewport.left + margin;
+    const minTop = viewport.top + margin;
+    const maxLeft = Math.max(minLeft, viewport.right - margin - width);
+    const maxTop = Math.max(minTop, viewport.bottom - margin - height);
+    const centerLeft = anchor.left + (anchor.width - width) / 2;
+    const centerTop = anchor.top + (anchor.height - height) / 2;
+    const candidates = [
+        { placement: 'right', left: anchor.right + gap, top: centerTop },
+        { placement: 'left', left: anchor.left - gap - width, top: centerTop },
+        { placement: 'bottom', left: centerLeft, top: anchor.bottom + gap },
+        { placement: 'top', left: centerLeft, top: anchor.top - gap - height },
+        { placement: 'right-bottom', left: anchor.right + gap, top: anchor.bottom + gap },
+        { placement: 'right-top', left: anchor.right + gap, top: anchor.top - gap - height },
+        { placement: 'left-bottom', left: anchor.left - gap - width, top: anchor.bottom + gap },
+        { placement: 'left-top', left: anchor.left - gap - width, top: anchor.top - gap - height },
+    ];
+    const scored = candidates.map((candidate, index) => {
+        const left = clamp(candidate.left, minLeft, maxLeft);
+        const top = clamp(candidate.top, minTop, maxTop);
+        const placed = rect(left, top, width, height);
+        const overlap = overlapArea(placed, anchor);
+        const displacement = Math.abs(left - candidate.left) + Math.abs(top - candidate.top);
+        const score = overlap * 1_000_000 + displacement * 10 + index;
+        return { ...candidate, left, top, overlap, score };
+    }).sort((a, b) => a.score - b.score);
+    const best = scored[0];
+    return {
+        left: best.left,
+        top: best.top,
+        width,
+        height,
+        placement: best.placement,
+        candidateCount: candidates.length,
+        overlapsAnchor: best.overlap > 0,
+    };
+}
+
+},
+256: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRichTextVisibility.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91005,7 +91162,7 @@ function synchronizeCanvasRichTextVisibility(map) {
 }
 
 },
-255: function(module, exports, __require, __externalRequire) {
+257: function(module, exports, __require, __externalRequire) {
 // /src/editor/searchPanelState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91025,12 +91182,12 @@ function setSearchReplaceExpanded(panel, expanded) {
 }
 
 },
-256: function(module, exports, __require, __externalRequire) {
+258: function(module, exports, __require, __externalRequire) {
 // /src/core/appearanceTransaction.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.applyMapAppearanceTransaction = applyMapAppearanceTransaction;
-const themeColorRuntime_1 = __require(204);
+const themeColorRuntime_1 = __require(205);
 const APPEARANCE_RENDER_SOURCE = 'changeTheme';
 const REVISION_BY_MAP = new WeakMap();
 const ACTIVE_NODE_UIDS_BY_MAP = new WeakMap();
@@ -91174,7 +91331,7 @@ function applyMapAppearanceTransaction(options) {
 }
 
 },
-257: function(module, exports, __require, __externalRequire) {
+259: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeQuickActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91392,7 +91549,7 @@ class NodeQuickActionsController {
 exports.NodeQuickActionsController = NodeQuickActionsController;
 
 },
-258: function(module, exports, __require, __externalRequire) {
+260: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRightDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91571,7 +91728,7 @@ class CanvasRightDragController {
 exports.CanvasRightDragController = CanvasRightDragController;
 
 },
-259: function(module, exports, __require, __externalRequire) {
+261: function(module, exports, __require, __externalRequire) {
 // /src/editor/liveNodeWidthLayout.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91628,7 +91785,7 @@ class LiveNodeWidthLayoutController {
 exports.LiveNodeWidthLayoutController = LiveNodeWidthLayoutController;
 
 },
-260: function(module, exports, __require, __externalRequire) {
+262: function(module, exports, __require, __externalRequire) {
 // /src/editor/focusHighlight.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91693,7 +91850,7 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
 }
 
 },
-261: function(module, exports, __require, __externalRequire) {
+263: function(module, exports, __require, __externalRequire) {
 // /src/editor/editingSurfaceCoordinator.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91782,7 +91939,7 @@ class EditingSurfaceCoordinator {
 exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
 
 },
-262: function(module, exports, __require, __externalRequire) {
+264: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91804,7 +91961,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-263: function(module, exports, __require, __externalRequire) {
+265: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91828,7 +91985,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-264: function(module, exports, __require, __externalRequire) {
+266: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91884,7 +92041,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-265: function(module, exports, __require, __externalRequire) {
+267: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91910,7 +92067,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-266: function(module, exports, __require, __externalRequire) {
+268: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91926,7 +92083,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-267: function(module, exports, __require, __externalRequire) {
+269: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91953,7 +92110,7 @@ function initializePluginStartup(options) {
 }
 
 },
-268: function(module, exports, __require, __externalRequire) {
+270: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

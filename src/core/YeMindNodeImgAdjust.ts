@@ -17,6 +17,7 @@ export interface ImageResizeLimits {
 }
 
 const RESIZE_HANDLES: ImageResizeHandle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+const CLIPART_SINGLE_CLICK_DELAY = 380;
 const BaseNodeImgAdjust = NodeImgAdjust as any;
 
 function finitePositive(value: unknown, fallback: number): number {
@@ -133,6 +134,7 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   private resizeStartRect: ImageResizeRect | null = null;
   private resizeCurrentRect: ImageResizeRect | null = null;
   private clipartClickTimer: number | null = null;
+  private selectedAssetKind: 'image' | 'clipart' = 'image';
   private onImageClickBound: (node: any, img: any, event: MouseEvent) => void;
   private onImageDoubleClickBound: (node: any, event: MouseEvent, img: any) => void;
   private onNodeClickBound: (node: any, event: MouseEvent) => void;
@@ -223,6 +225,7 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     if (!this.handleEl || !this.rect) return;
     this.setHandleElRect();
     this.handleEl.style.display = 'block';
+    this.handleEl.dataset.assetKind = this.selectedAssetKind;
     this.isShowHandleEl = true;
   }
 
@@ -399,36 +402,41 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     event?.preventDefault?.();
     event?.stopPropagation?.();
     if (!node || !img) return;
-    if (node.getData?.('yemindClipartId')) {
-      this.closeImageSelection();
+    const kind = node.getData?.('yemindClipartId') ? 'clipart' : 'image';
+    this.selectImage(node, img, kind);
+    if (kind === 'clipart') {
       if (this.clipartClickTimer !== null) window.clearTimeout(this.clipartClickTimer);
+      this.clipartClickTimer = null;
+      if (event?.detail > 1) return;
       this.clipartClickTimer = window.setTimeout(() => {
         this.clipartClickTimer = null;
         this.mindMap.emit('yemind_node_clipart_edit', node, event, img);
-      }, 220);
+      }, CLIPART_SINGLE_CLICK_DELAY);
       return;
     }
+    this.mindMap.emit('yemind_node_image_selected', node);
+  }
+
+  private selectImage(node: any, img: any, kind: 'image' | 'clipart'): void {
     this.node = node;
     this.img = img;
     this.rect = img.rbox?.() ?? null;
     if (!this.rect) return;
+    this.selectedAssetKind = kind;
     this.imageSelected = true;
     this.hoverVisible = false;
     this.showHandleEl();
+    if (this.handleEl) this.handleEl.dataset.assetKind = kind;
     this.setMode('selected');
-    this.mindMap.emit('yemind_node_image_selected', node);
   }
 
   private onImageDoubleClick(node: any, event: MouseEvent, img: any): void {
     event?.preventDefault?.();
     event?.stopPropagation?.();
     if (!node) return;
-    if (node.getData?.('yemindClipartId')) {
-      if (this.clipartClickTimer !== null) window.clearTimeout(this.clipartClickTimer);
-      this.clipartClickTimer = null;
-    } else if (img) {
-      this.onImageClick(node, img, event);
-    }
+    if (this.clipartClickTimer !== null) window.clearTimeout(this.clipartClickTimer);
+    this.clipartClickTimer = null;
+    if (img) this.selectImage(node, img, node.getData?.('yemindClipartId') ? 'clipart' : 'image');
     this.mindMap.emit('yemind_node_image_preview', node);
   }
 
@@ -540,6 +548,8 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     this.node = null;
     this.img = null;
     this.rect = null;
+    this.selectedAssetKind = 'image';
+    if (this.handleEl) delete this.handleEl.dataset.assetKind;
   }
 
   private replaceSelectedImage(): void {

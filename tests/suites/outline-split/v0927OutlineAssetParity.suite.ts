@@ -17,7 +17,6 @@ describe('v0.9.27 outline asset and dialog parity', () => {
       uid: 'n1', text: 'node', icon: ['yemarkerpriority_priority-03'],
     }), '/plugins/siyuan-yemind/');
     expect(html).toContain('data-outline-icon-action');
-    expect(html).toContain('ymz-marker-sprite');
     expect(html).toContain('background-image:');
     expect(html).not.toContain('<pattern');
     expect(controller).toContain('onIconEdit?');

@@ -14,6 +14,7 @@ import { bindDialogResize } from './dialogResize';
 import { buildCommentsListHtml, requestClearAllComments } from './commentsPresentation';
 import { normalizeInlineLink } from '../editor/inlineLink';
 import { normalizeNodeNote, updateNodeNote } from '../content/nodeNoteState';
+import { createYeMindDialog } from './dialogChrome';
 
 function activeData(commands: YeMindCommands): Record<string, any> {
   return commands.getPrimaryNodeData() ?? {};
@@ -43,7 +44,7 @@ function compactDialogWidth(preferred: number): string {
 
 export function openTodoDialog(commands: YeMindCommands): void {
   const existing = (activeData(commands).yemindTodo ?? null) as NodeTodo | null;
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: '待办',
     content: `<div class="b3-dialog__content ymz-node-dialog">
       <label>待办内容</label><input class="b3-text-field fn__block" data-field="todo-text" placeholder="输入待办内容">
@@ -66,7 +67,7 @@ export function openTodoDialog(commands: YeMindCommands): void {
 
 export function openTagsDialog(commands: YeMindCommands): void {
   const data = activeData(commands);
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: '标签',
     content: `<div class="b3-dialog__content ymz-node-dialog">
       <label>标签</label><input class="b3-text-field fn__block" data-field="tags" placeholder="PCIe, ATS, 重点">
@@ -94,7 +95,7 @@ const ICON_OPTIONS = [
 
 export function openIconsDialog(commands: YeMindCommands): void {
   const selected = new Set(normalizeStringList(activeData(commands).icon));
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: '图标',
     content: `<div class="b3-dialog__content ymz-node-dialog"><div class="ymz-icon-grid">
       ${ICON_OPTIONS.map(([value, label]) => `<label><input type="checkbox" value="${value}"> <span>${label}</span></label>`).join('')}
@@ -112,7 +113,7 @@ export function openIconsDialog(commands: YeMindCommands): void {
 
 export function openLinkDialog(commands: YeMindCommands, autoHttps = true): void {
   const data = activeData(commands);
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: '链接',
     content: `<div class="b3-dialog__content ymz-node-dialog">
       <label>链接地址</label><input class="b3-text-field fn__block" data-field="url" placeholder="https://… 或 siyuan://blocks/…">
@@ -147,7 +148,7 @@ export function openLinkDialog(commands: YeMindCommands, autoHttps = true): void
 }
 
 export function openFormulaDialog(commands: RichTextFormattingTarget): void {
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: '公式',
     content: `<div class="b3-dialog__content ymz-node-dialog">
       <div class="ymz-formula-mode" role="group" aria-label="公式模式">
@@ -191,7 +192,7 @@ export function openImageDialog(commands: YeMindCommands): void {
   let fileData = '';
   let fileSize = { width: 0, height: 0 };
   const data = activeData(commands);
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: '图片',
     content: `<div class="b3-dialog__content ymz-node-dialog">
       <label>图片地址</label><input class="b3-text-field fn__block" data-field="url" placeholder="https://… 或 data:image/…">
@@ -263,7 +264,7 @@ export function openNoteDialog(commands: YeMindCommands, options: { readonly?: b
   const current = normalizeNodeNote(data.yemindNote ?? data.note);
   const width = Math.max(420, current?.width ?? 560);
   const height = Math.max(280, current?.height ?? 380);
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: readonly ? '备注（只读）' : '备注',
     hideCloseIcon: true,
     content: `<div class="b3-dialog__content ymz-node-dialog ymz-note-dialog">
@@ -335,7 +336,7 @@ export function openCommentsDialog(commands: YeMindCommands, options: { readonly
   const readonly = Boolean(options.readonly);
   let comments = ((activeData(commands).yemindComments ?? []) as NodeComment[]).map((item) => ({ ...item }));
   let editingId: string | null = null;
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: readonly ? '批注（只读）' : '批注',
     hideCloseIcon: true,
     content: `<div class="b3-dialog__content ymz-node-dialog ymz-comments-dialog">

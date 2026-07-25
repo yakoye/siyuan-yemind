@@ -218,7 +218,8 @@
     "v099OutlineGuideGeometry.suite.ts",
     "v0926ImportGeometry.suite.ts",
     "v0926OutlineContentParity.suite.ts",
-    "v0927OutlineAssetParity.suite.ts"
+    "v0927OutlineAssetParity.suite.ts",
+    "v0928OutlineDialogConsistency.suite.ts"
   ],
   "search-navigation": [
     "searchCommands.suite.ts",

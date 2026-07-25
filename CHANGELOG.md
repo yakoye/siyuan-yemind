@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.28 - 2026-07-25
+
+- Replaced transformed outline marker children with a directly scaled compact sprite background, fixing marker artwork and border alignment.
+- Replaced visible note/comment number badges with semantic SVG symbols and stabilized first-hover previews through measured hidden layout, animation-frame settling, image-load updates and `ResizeObserver` repositioning.
+- Increased outline image click arbitration so single click opens the image editor while double click consistently cancels editing and opens the shared canvas lightbox.
+- Restored canvas clipart direct manipulation with eight resize handles and a delete control while keeping direct picker access and suppressing only the ordinary replace toolbar.
+- Added a pure eight-candidate anchored placement engine that keeps marker and clipart dialogs inside the viewport and avoids the clicked asset at edges and corners.
+- Routed native and custom dialogs through a shared YeMind dialog shell, standardizing bold centered titles, close-button geometry and right-aligned footer actions.
+- Added v0.9.28 unit, dependency-free runtime and Chromium regressions for marker geometry, semantic outline icons, stable previews, click arbitration, clipart handles, anchored placement and dialog chrome.
+
 ## 0.9.27 - 2026-07-25
 
 - Replaced outline marker SVG reconstruction with the same sprite-backed rendering used by the canvas and made every outline marker directly editable through the marker picker.

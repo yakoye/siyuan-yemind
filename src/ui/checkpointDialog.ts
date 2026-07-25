@@ -5,6 +5,7 @@ import type { CheckpointRepository } from '../model/CheckpointRepository';
 import type { YeMindMapDocument } from '../model/types';
 import { confirmAction, promptText } from './dialogs';
 import { buildCheckpointDialogContent } from './checkpointDialogTemplate';
+import { createYeMindDialog } from './dialogChrome';
 
 export interface CheckpointDialogOptions {
   mapId: string;
@@ -22,7 +23,7 @@ function escapeHtml(value: string): string {
 }
 
 export function openCheckpointManager(options: CheckpointDialogOptions): void {
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: `检查点 · ${escapeHtml(options.mapTitle)}`,
     width: '720px',
     content: buildCheckpointDialogContent(options.repository.list(options.mapId), options.readonly),

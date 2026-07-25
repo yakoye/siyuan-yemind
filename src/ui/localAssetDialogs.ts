@@ -1,4 +1,4 @@
-import { Dialog } from 'siyuan';
+import type { Dialog } from 'siyuan';
 import type { YeMindCommands } from '../core/commands';
 import {
   clipartCatalog,
@@ -11,6 +11,8 @@ import {
 } from '../core/localAssetCatalogs';
 import { normalizeStringList } from '../content/nodeContentState';
 import { resolveClipartDisplaySize } from '../core/clipartGeometry';
+import { computeAssetDialogPlacement } from './anchoredPlacement';
+import { createYeMindDialog } from './dialogChrome';
 
 function applyStyle(element: HTMLElement, style: Record<string, string>): void {
   Object.assign(element.style, style);
@@ -20,9 +22,8 @@ function selectedIcons(commands: YeMindCommands): string[] {
   return normalizeStringList(commands.getPrimaryNodeData()?.icon);
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(value, max));
-}
+
+export { computeAssetDialogPlacement } from './anchoredPlacement';
 
 export function positionAssetDialog(dialog: Dialog, anchorRect?: DOMRect): void {
   if (!anchorRect) return;
@@ -30,36 +31,22 @@ export function positionAssetDialog(dialog: Dialog, anchorRect?: DOMRect): void 
     const container = dialog.element.querySelector<HTMLElement>('.b3-dialog__container');
     if (!container?.isConnected) return;
     const rect = container.getBoundingClientRect();
-    const margin = 12;
-    const gap = 14;
-    const maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
-    const maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
-    const roomRight = window.innerWidth - anchorRect.right - gap;
-    const roomLeft = anchorRect.left - gap;
-    let left = roomRight >= rect.width
-      ? anchorRect.right + gap
-      : roomLeft >= rect.width
-        ? anchorRect.left - gap - rect.width
-        : clamp(anchorRect.left + anchorRect.width / 2 - rect.width / 2, margin, maxLeft);
-    let top = clamp(anchorRect.top + anchorRect.height / 2 - rect.height / 2, margin, maxTop);
-    const overlaps = left < anchorRect.right && left + rect.width > anchorRect.left
-      && top < anchorRect.bottom && top + rect.height > anchorRect.top;
-    if (overlaps) {
-      const below = anchorRect.bottom + gap;
-      const above = anchorRect.top - gap - rect.height;
-      if (below + rect.height <= window.innerHeight - margin) top = below;
-      else if (above >= margin) top = above;
-    }
-    left = clamp(left, margin, maxLeft);
-    top = clamp(top, margin, maxTop);
+    const placement = computeAssetDialogPlacement({
+      viewport: { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight, width: window.innerWidth, height: window.innerHeight },
+      anchor: anchorRect,
+      dialog: { width: rect.width, height: rect.height },
+      margin: 12,
+      gap: 14,
+    });
     Object.assign(container.style, {
       position: 'fixed',
-      left: `${Math.round(left)}px`,
-      top: `${Math.round(top)}px`,
+      left: `${Math.round(placement.left)}px`,
+      top: `${Math.round(placement.top)}px`,
       margin: '0',
       transform: 'none',
     });
     container.dataset.assetDialogAnchored = 'true';
+    container.dataset.assetDialogPlacement = placement.placement;
   });
 }
 
@@ -91,7 +78,7 @@ export function openMarkerPicker(
   let activeGroupId = options.initialGroupId && markerCatalog.groups.some((group) => group.id === options.initialGroupId)
     ? options.initialGroupId
     : '';
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: '图标',
     content: `<div class="b3-dialog__content ymz-local-asset-dialog ymz-marker-dialog">
       ${assetHeader('图标')}
@@ -196,7 +183,7 @@ export function openClipartPicker(
   const resolver = createRuntimeAssetResolver(options.pluginBaseUrl);
   let categoryId = '';
   let query = '';
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: '剪贴图',
     content: `<div class="b3-dialog__content ymz-local-asset-dialog ymz-clipart-dialog">
       ${assetHeader('剪贴图')}

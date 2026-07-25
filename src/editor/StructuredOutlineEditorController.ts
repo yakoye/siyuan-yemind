@@ -81,6 +81,7 @@ interface SelectionBookmark {
 }
 
 const INDENT_SIZE = 22;
+const OUTLINE_IMAGE_SINGLE_CLICK_DELAY = 380;
 const PLAIN_INDENT = '    ';
 const BLOCK_TAGS = new Set(['DIV', 'P', 'LI', 'UL', 'OL', 'SECTION', 'ARTICLE']);
 
@@ -839,11 +840,13 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       this.activateUid(uid, false);
       if (!this.options.isReadonly()) this.options.onActivate(uid);
       if (this.outlineImageClickTimer !== null) window.clearTimeout(this.outlineImageClickTimer);
+      this.outlineImageClickTimer = null;
+      if (event.detail > 1) return;
       const kind = imageAction.dataset.outlineImageKind === 'clipart' ? 'clipart' : 'image';
       this.outlineImageClickTimer = window.setTimeout(() => {
         this.outlineImageClickTimer = null;
         if (!this.options.isReadonly()) this.options.onImageEdit?.(uid, kind, imageAction);
-      }, 220);
+      }, OUTLINE_IMAGE_SINGLE_CLICK_DELAY);
       return;
     }
     const contentAction = target.closest<HTMLElement>('[data-outline-content]');
@@ -948,6 +951,11 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
   };
 
   private readonly onPointerDown = (event: PointerEvent): void => {
+    const imageAction = (event.target as Element | null)?.closest('[data-outline-image-action]');
+    if (imageAction && event.detail > 1 && this.outlineImageClickTimer !== null) {
+      window.clearTimeout(this.outlineImageClickTimer);
+      this.outlineImageClickTimer = null;
+    }
     this.clearWholeSelection();
     this.pointerSelecting = Boolean((event.target as Element | null)?.closest('[data-outline-editor]'));
     if (this.pointerSelecting && this.options.isReadonly()) this.options.root.focus({ preventScroll: true });

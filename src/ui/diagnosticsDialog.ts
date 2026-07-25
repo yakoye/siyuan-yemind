@@ -2,6 +2,7 @@ import { Dialog, showMessage } from 'siyuan';
 import type { DiagnosticsService } from '../diagnostics/DiagnosticsService';
 import { downloadDiagnosticsArchive } from '../diagnostics/DiagnosticsService';
 import type { SelfCheckReport } from '../diagnostics/selfCheck';
+import { createYeMindDialog } from './dialogChrome';
 
 function escapeHtml(value: string): string {
   return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
@@ -35,7 +36,7 @@ function renderSearchState(service: DiagnosticsService): string {
 }
 
 export function openDiagnosticsDialog(service: DiagnosticsService): void {
-  const dialog = new Dialog({
+  const dialog = createYeMindDialog({
     title: 'YeMind 诊断与回归',
     width: '760px',
     content: `<div class="b3-dialog__content ymz-diagnostics">

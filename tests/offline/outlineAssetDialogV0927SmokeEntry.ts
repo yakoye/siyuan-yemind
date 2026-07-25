@@ -12,7 +12,7 @@ const html = outlineAccessoriesHtml(outlineAccessoriesFromData({
   tag: ['PCIe'], hyperlink: 'https://example.com', outerFrame: { groupId: 'g1' },
 }), '/plugins/siyuan-yemind/');
 assert(html.includes('data-outline-icon-action'), 'outline marker must be actionable');
-assert(html.includes('ymz-marker-sprite'), 'outline marker must use marker sprite');
+assert(html.includes('background-image:'), 'outline marker must use marker sprite background');
 assert(!html.includes('<pattern'), 'outline marker must not duplicate SVG pattern IDs');
 assert(html.includes('ymz-outline-accessories__todo'), 'todo must use compact borderless outline control');
 
