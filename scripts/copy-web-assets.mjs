@@ -13,6 +13,9 @@ await cp(path.join(root, 'assets'), path.join(output, 'assets'), {
 await cp(path.join(root, 'icon.png'), path.join(output, 'icon.png'), {
   force: true,
 });
+await cp(path.join(root, 'web', 'VERSION'), path.join(output, 'VERSION'), {
+  force: true,
+});
 await writeFile(path.join(output, '.nojekyll'), '');
 
-console.log('[web-assets] copied assets/, icon.png and .nojekyll');
+console.log('[web-assets] copied assets/, icon.png, VERSION and .nojekyll');

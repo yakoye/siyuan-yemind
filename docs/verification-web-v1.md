@@ -1,6 +1,7 @@
 # YeMind 网页版首版验证记录
 
 验证日期：2026-07-27
+版本：`1.0.0`
 
 ## 功能范围
 
@@ -43,4 +44,3 @@ npm run build:web
 Build command: npm ci && npm run build:web
 Output directory: web-dist
 ```
-

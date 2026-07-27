@@ -15,7 +15,7 @@ function pickerHost(): HTMLElement {
   return host;
 }
 
-describe('v0.9.32 grouped rainbow scheme picker', () => {
+describe('v1.0.0 grouped rainbow scheme picker', () => {
   it('renders grouped two-column palette cards and selects a scheme', () => {
     const host = pickerHost();
     const onSelect = vi.fn();

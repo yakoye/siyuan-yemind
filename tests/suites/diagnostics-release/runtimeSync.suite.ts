@@ -23,7 +23,7 @@ afterEach(async () => {
   await Promise.all(temporaryRoots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 
-describe('v0.9.32 minimal runtime synchronization', () => {
+describe('v1.0.0 minimal runtime synchronization', () => {
   it('defines only deployable root files and runtime asset directories', () => {
     expect(RUNTIME_ROOT_FILES).toEqual([
       'plugin.json',
@@ -33,6 +33,7 @@ describe('v0.9.32 minimal runtime synchronization', () => {
       'LICENSE',
       'README.md',
       'README_zh_CN.md',
+      'VERSION',
     ]);
     expect(RUNTIME_ROOT_FILES).not.toContain('index.js.map');
     expect(RUNTIME_DIRECTORIES).toEqual(['assets', 'i18n']);
@@ -70,6 +71,7 @@ describe('v0.9.32 minimal runtime synchronization', () => {
       'LICENSE',
       'README.md',
       'README_zh_CN.md',
+      'VERSION',
       'assets/assets.txt',
       'data/user.json',
       'i18n/i18n.txt',
@@ -106,6 +108,7 @@ describe('v0.9.32 minimal runtime synchronization', () => {
       'LICENSE',
       'README.md',
       'README_zh_CN.md',
+      'VERSION',
       'assets/current.txt',
       'data/user.json',
       'i18n/current.txt',

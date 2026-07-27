@@ -394,15 +394,15 @@ git commit -m "build: sync minimal plugin runtime"
 - Modify: `src/plugin/constants.ts`
 - Modify: `src/releaseInfo.ts`
 - Modify: `CHANGELOG.md`
-- Create: `docs/verification-v0.9.32.md`
+- Create: `docs/verification-v1.0.0.md`
 
-- [ ] **Step 1: 版本统一为 0.9.32**
+- [ ] **Step 1: 版本统一为 1.0.0**
 
 修改 package、manifest、常量和 release 信息，运行：
 
 Run: `npm install --package-lock-only`
 
-Expected: lockfile 根 package version 为 `0.9.32`。
+Expected: lockfile 根 package version 为 `1.0.0`。
 
 - [ ] **Step 2: 运行完整验证**
 
@@ -440,9 +440,9 @@ Expected: `src` 和 `index.js.map` 都为 `False`；语法检查 exit 0。
 
 - [ ] **Step 5: 写验证记录并提交**
 
-`docs/verification-v0.9.32.md` 记录命令、时间、结果、运行目录清单及未自动验证的真实思源交互项。
+`docs/verification-v1.0.0.md` 记录命令、时间、结果、运行目录清单及未自动验证的真实思源交互项。
 
 ```bash
-git add package.json package-lock.json plugin.json src/plugin/constants.ts src/releaseInfo.ts CHANGELOG.md docs/verification-v0.9.32.md index.js index.css
-git commit -m "release: validate YeMind v0.9.32"
+git add package.json package-lock.json plugin.json src/plugin/constants.ts src/releaseInfo.ts CHANGELOG.md docs/verification-v1.0.0.md index.js index.css
+git commit -m "release: validate YeMind v1.0.0"
 ```

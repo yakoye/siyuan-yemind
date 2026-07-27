@@ -1,4 +1,4 @@
-# YeMind v0.9.32 验证记录
+# YeMind v1.0.0 验证记录
 
 验证日期：2026-07-27
 
@@ -8,7 +8,7 @@
 - “样式 > 彩虹连线”改为分组、双列卡片选择器，窄屏自动切换为单列。
 - 恢复可复现的本地 `simple-mind-map` 补丁依赖。
 - 运行目录使用白名单同步，只部署插件实际运行所需文件。
-- 发布版本统一为 `0.9.32`。
+- 发布版本统一为 `1.0.0`。
 
 ## 自动验证
 
@@ -63,11 +63,12 @@ LICENSE
 plugin.json
 README.md
 README_zh_CN.md
+VERSION
 ```
 
 验证结果：
 
-- `plugin.json` 版本为 `0.9.32`。
+- `plugin.json` 版本为 `1.0.0`。
 - `index.js`、`index.css`、`plugin.json` 与仓库构建产物 SHA-256 一致。
 - `src/`、`tests/`、`docs/`、`scripts/`、`vendor/`、`node_modules/`、`index.js.map` 均不存在。
 - 同步器保留运行目录中的 `data/` 用户数据（若存在）。

@@ -1,4 +1,5 @@
 import { YeMindEditor, type YeMindEditorOptions } from '../../src/editor/YeMindEditor';
+import { PLUGIN_VERSION } from '../../src/plugin/constants';
 import { confirm, showMessage } from './siyuanAdapter';
 import {
   createBackup,
@@ -94,7 +95,7 @@ export class YeMindWebApp {
       <div class="ymw-app">
         <aside class="ymw-sidebar" aria-label="导图库">
           <header class="ymw-sidebar__header">
-            <div class="ymw-brand"><img src="./icon.png" alt=""><span><strong>YeMind</strong><small>本地网页版</small></span></div>
+            <div class="ymw-brand"><img src="./icon.png" alt=""><span><strong>YeMind</strong><small>本地网页版 · v${PLUGIN_VERSION}</small></span></div>
             <button type="button" class="ymw-primary" data-web-action="new-map">＋ 新建</button>
           </header>
           <div class="ymw-map-list" data-web-map-list></div>

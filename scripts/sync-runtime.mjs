@@ -18,6 +18,7 @@ export const RUNTIME_ROOT_FILES = [
   'LICENSE',
   'README.md',
   'README_zh_CN.md',
+  'VERSION',
 ];
 
 export const RUNTIME_DIRECTORIES = ['assets', 'i18n'];

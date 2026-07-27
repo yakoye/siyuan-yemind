@@ -6688,7 +6688,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "0.9.32";
+const PLUGIN_VERSION = "1.0.0";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -6697,7 +6697,7 @@ const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
   buildTime: "2026-07-27T03:00:00Z",
-  buildId: "yemind-v0.9.32-20260727",
+  buildId: "yemind-v1.0.0-20260727",
   productName: PRODUCT_NAME,
   hostBaseline: "SiYuan 3.7.3",
   releaseSummary: "修正经典主题真实色预览，增加分组彩虹配色卡、最小运行目录同步和独立网页版。",
@@ -64779,6 +64779,7 @@ function rangeHtml(editor, startOffset, endOffset) {
   return sanitizeRichHtml(wrapper.innerHTML);
 }
 function selectionRect(range) {
+  if (typeof range.getBoundingClientRect !== "function") return null;
   const rect2 = range.getBoundingClientRect();
   if (!rect2 || !rect2.width && !rect2.height) return null;
   return {

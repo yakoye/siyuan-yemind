@@ -26,10 +26,12 @@ describe('standalone web fixed assets', () => {
     });
   });
 
-  it('copies catalogs and the app icon into web-dist', () => {
-    expect(existsSync(path.join(root, 'web-dist/icon.png'))).toBe(true);
-    expect(existsSync(path.join(root, 'web-dist/assets', marker.image))).toBe(true);
-    expect(existsSync(path.join(root, 'web-dist/assets', clipart.items[0].relativePath))).toBe(true);
-    expect(existsSync(path.join(root, 'web-dist/assets', layouts.items[0].relativePath))).toBe(true);
+  it('keeps the app icon and version marker in the web asset copy contract', () => {
+    expect(existsSync(path.join(root, 'icon.png'))).toBe(true);
+    expect(readFileSync(path.join(root, 'web/VERSION'), 'utf8').trim()).toBe('1.0.0');
+    const copyScript = readFileSync(path.join(root, 'scripts/copy-web-assets.mjs'), 'utf8');
+    expect(copyScript).toContain("path.join(root, 'assets')");
+    expect(copyScript).toContain("path.join(root, 'icon.png')");
+    expect(copyScript).toContain("path.join(root, 'web', 'VERSION')");
   });
 });

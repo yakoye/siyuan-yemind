@@ -239,6 +239,7 @@ function rangeHtml(editor: HTMLElement, startOffset: number, endOffset: number):
 }
 
 function selectionRect(range: Range): RichTextSelectionRect | null {
+  if (typeof range.getBoundingClientRect !== 'function') return null;
   const rect = range.getBoundingClientRect();
   if (!rect || (!rect.width && !rect.height)) return null;
   return {

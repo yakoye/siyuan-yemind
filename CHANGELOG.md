@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.9.32 - 2026-07-27
+## 1.0.0 - 2026-07-27
 
 - Fixed classic theme palette cards so they show only colors that the selected theme actually applies.
 - Replaced the native rainbow-line scheme select with grouped two-column palette cards.

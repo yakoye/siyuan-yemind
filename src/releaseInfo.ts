@@ -4,7 +4,7 @@ export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
   buildTime: '2026-07-27T03:00:00Z',
-  buildId: 'yemind-v0.9.32-20260727',
+  buildId: 'yemind-v1.0.0-20260727',
   productName: PRODUCT_NAME,
   projectName: PROJECT_PACKAGE_NAME,
   tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
