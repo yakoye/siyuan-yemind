@@ -64,6 +64,57 @@ describe('v0.9.13 hidden-tab rich-text measurement', () => {
     canvas.remove();
   });
 
+  it('remeasures node geometry after web fonts finish loading', async () => {
+    let resolveFonts!: () => void;
+    const fontsReady = new Promise<void>((resolve) => { resolveFonts = resolve; });
+    const originalFonts = Object.getOwnPropertyDescriptor(document, 'fonts');
+    Object.defineProperty(document, 'fonts', {
+      configurable: true,
+      value: { ready: fontsReady },
+    });
+    const canvas = document.createElement('div');
+    document.body.append(canvas);
+    const render = vi.fn();
+    const map = { commonCaches: {}, render, on: vi.fn() };
+
+    stabilizeMindMapMeasurementHost(map, canvas);
+    resolveFonts();
+    await fontsReady;
+    await Promise.resolve();
+
+    expect(render).toHaveBeenCalledWith(null, 'yemind-fonts-ready');
+    if (originalFonts) Object.defineProperty(document, 'fonts', originalFonts);
+    else delete (document as Document & { fonts?: FontFaceSet }).fonts;
+    canvas.remove();
+  });
+
+  it('does not remeasure a map destroyed before web fonts finish loading', async () => {
+    let resolveFonts!: () => void;
+    const fontsReady = new Promise<void>((resolve) => { resolveFonts = resolve; });
+    const originalFonts = Object.getOwnPropertyDescriptor(document, 'fonts');
+    Object.defineProperty(document, 'fonts', {
+      configurable: true,
+      value: { ready: fontsReady },
+    });
+    const callbacks = new Map<string, () => void>();
+    const render = vi.fn();
+    const map = {
+      commonCaches: {},
+      render,
+      on: vi.fn((name: string, callback: () => void) => callbacks.set(name, callback)),
+    };
+
+    stabilizeMindMapMeasurementHost(map, document.body);
+    callbacks.get('beforeDestroy')?.();
+    resolveFonts();
+    await fontsReady;
+    await Promise.resolve();
+
+    expect(render).not.toHaveBeenCalled();
+    if (originalFonts) Object.defineProperty(document, 'fonts', originalFonts);
+    else delete (document as Document & { fonts?: FontFaceSet }).fonts;
+  });
+
   it('stabilizes the measurement host after map creation and before visible-canvas resize', () => {
     const factorySource = readFileSync(resolve(process.cwd(), 'src/core/createMindMap.ts'), 'utf8');
     const editorSource = readFileSync(resolve(process.cwd(), 'src/editor/YeMindEditor.ts'), 'utf8');

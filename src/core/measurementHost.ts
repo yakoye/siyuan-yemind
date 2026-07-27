@@ -12,6 +12,7 @@ interface MindMapMeasurementTarget {
 const registeredMaps = new WeakSet<object>();
 const hosts = new WeakMap<object, HTMLElement>();
 const repairScheduled = new WeakSet<object>();
+const fontRepairsRegistered = new WeakSet<object>();
 
 function measurementElements(map: MindMapMeasurementTarget): HTMLElement[] {
   const caches = map.commonCaches;
@@ -94,6 +95,20 @@ function scheduleFullGeometryRepair(map: MindMapMeasurementTarget): void {
   }
 }
 
+function repairAfterFontsReady(map: MindMapMeasurementTarget, editorRoot: HTMLElement): void {
+  const key = map as object;
+  if (fontRepairsRegistered.has(key)) return;
+  const ready = typeof document !== 'undefined' ? document.fonts?.ready : undefined;
+  if (!ready || typeof ready.then !== 'function') return;
+  fontRepairsRegistered.add(key);
+  void ready.then(() => {
+    if (!registeredMaps.has(key) || typeof document === 'undefined') return;
+    const context = editorRoot.closest<HTMLElement>('.ymz-editor') ?? editorRoot;
+    moveMeasurementElements(map, getHost(map, context));
+    map.render?.(null, 'yemind-fonts-ready');
+  });
+}
+
 /**
  * Keep simple-mind-map's DOM measurement caches in a visible, off-screen host.
  * The host preserves the editor's scoped CSS and variables even when a SiYuan
@@ -114,8 +129,12 @@ export function stabilizeMindMapMeasurementHost(
   const moved = relocate();
   if (!registeredMaps.has(map as object)) {
     registeredMaps.add(map as object);
+    repairAfterFontsReady(map, context);
     map.on?.('node_tree_render_end', relocate);
     map.on?.('beforeDestroy', () => {
+      registeredMaps.delete(map as object);
+      fontRepairsRegistered.delete(map as object);
+      repairScheduled.delete(map as object);
       hosts.get(map as object)?.remove();
       hosts.delete(map as object);
     });

@@ -16,7 +16,7 @@ const map: any = { opt:{}, renderer:{activeNodeList:[]}, view:{getTransformData:
 const appearance = getThemeColorAppearance('scheme-code','dark'); assert(appearance,'dark appearance missing');
 applyMapAppearanceTransaction({map,themeConfig:{},rainbowLinesConfig:{},colorAppearance:appearance,useThemeLineColors:true});
 assert(JSON.stringify(setCalls[0])===JSON.stringify(transform),'view transform must be restored');
-const source = readFileSync('src/editor/RichTextToolbar.ts','utf8'); assert(source.includes('#iconMath')&&!source.includes('>π<'),'formula icon not replaced');
+const source = readFileSync('src/editor/RichTextToolbar.ts','utf8'); assert(source.includes('data-yemind-formula-icon')&&source.includes('<path')&&!source.includes('#iconMath')&&!source.includes('>π<'),'standalone formula icon missing');
 const menu = readFileSync('src/ui/contextMenu.ts','utf8'); assert(menu.includes('文本转导图…')&&menu.includes('剪切（当前行）'),'outline menu not added');
 const css = readFileSync('src/styles/index.css','utf8'); assert(/\.ymz-project-control select[^}]*color-scheme/s.test(css),'native theme/line select must expose color-scheme');
 export default { parser:true, defaultCenterOnly:true, transformRestored:true, formulaIcon:true, outlineMenu:true, darkControls:true };

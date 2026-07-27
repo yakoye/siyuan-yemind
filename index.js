@@ -6751,7 +6751,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.1.0";
+const PLUGIN_VERSION = "1.1.1";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -6759,16 +6759,16 @@ const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-27T03:00:00Z",
-  buildId: "yemind-v1.1.0-20260727",
+  buildTime: "2026-07-27T04:25:00Z",
+  buildId: "yemind-v1.1.1-20260727",
   productName: PRODUCT_NAME,
   hostBaseline: "SiYuan 3.7.3",
-  releaseSummary: "重构 28 种导图结构，统一节点快捷控件方向，并完善大纲拖动与媒体选中交互。",
+  releaseSummary: "修复网页版菜单越界、节点折叠、字体测量和公式图标兼容问题。",
   highlights: [
-    "28 个结构预设使用明确的运行时布局，补齐镜像、上下双向、S 型、环形、表格和括号结构。",
-    "根节点、中间节点、叶子节点的加号、折叠和数量控件按实际分支生长方向定位。",
-    "大纲视图移除大块左侧留白，增加六点拖动手柄和十字移动光标。",
-    "大纲图片与剪贴图支持八点选中、直接删除，并统一替换与删除 SVG 图标。"
+    "网页版画布、节点和大纲右键菜单支持完整子菜单、内置图标和视口边界约束。",
+    "根节点与中间节点的加号、减号和数量按钮直接驱动实时渲染节点，折叠展开立即生效。",
+    "Web 字体加载完成后自动重新测量全部节点，避免中英文长文本漂出边框。",
+    "选中文字工具栏使用自包含公式 SVG，不再依赖思源宿主的图标精灵。"
   ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -61715,6 +61715,7 @@ function configureThemeColorRuntime(mindMap, config2) {
 const registeredMaps = /* @__PURE__ */ new WeakSet();
 const hosts = /* @__PURE__ */ new WeakMap();
 const repairScheduled = /* @__PURE__ */ new WeakSet();
+const fontRepairsRegistered = /* @__PURE__ */ new WeakSet();
 function measurementElements(map2) {
   const caches = map2.commonCaches;
   if (!caches) return [];
@@ -61791,6 +61792,21 @@ function scheduleFullGeometryRepair(map2) {
     queueMicrotask(run);
   }
 }
+function repairAfterFontsReady(map2, editorRoot) {
+  var _a;
+  const key = map2;
+  if (fontRepairsRegistered.has(key)) return;
+  const ready = typeof document !== "undefined" ? (_a = document.fonts) == null ? void 0 : _a.ready : void 0;
+  if (!ready || typeof ready.then !== "function") return;
+  fontRepairsRegistered.add(key);
+  void ready.then(() => {
+    var _a2;
+    if (!registeredMaps.has(key) || typeof document === "undefined") return;
+    const context = editorRoot.closest(".ymz-editor") ?? editorRoot;
+    moveMeasurementElements(map2, getHost(map2, context));
+    (_a2 = map2.render) == null ? void 0 : _a2.call(map2, null, "yemind-fonts-ready");
+  });
+}
 function stabilizeMindMapMeasurementHost(map2, editorRoot = document.body) {
   var _a, _b;
   const context = editorRoot.closest(".ymz-editor") ?? editorRoot;
@@ -61802,9 +61818,13 @@ function stabilizeMindMapMeasurementHost(map2, editorRoot = document.body) {
   const moved = relocate();
   if (!registeredMaps.has(map2)) {
     registeredMaps.add(map2);
+    repairAfterFontsReady(map2, context);
     (_a = map2.on) == null ? void 0 : _a.call(map2, "node_tree_render_end", relocate);
     (_b = map2.on) == null ? void 0 : _b.call(map2, "beforeDestroy", () => {
       var _a2;
+      registeredMaps.delete(map2);
+      fontRepairsRegistered.delete(map2);
+      repairScheduled.delete(map2);
       (_a2 = hosts.get(map2)) == null ? void 0 : _a2.remove();
       hosts.delete(map2);
     });
@@ -62402,20 +62422,6 @@ function collapseBranchDeep(tree, uid) {
   const target = findNode$1(next2, uid);
   if (!target || !branch(target)) return { tree: next2, changed: false };
   return { tree: next2, changed: setBranchState(target, false, true) > 0 };
-}
-function expandBranchOneLevel(tree, uid) {
-  const next2 = cloneTree$1(tree);
-  const target = findNode$1(next2, uid);
-  if (!target || !branch(target)) return { tree: next2, changed: false };
-  let changed = 0;
-  if (target.data.expand !== true) {
-    target.data.expand = true;
-    changed += 1;
-  }
-  for (const child of target.children ?? []) {
-    changed += setBranchState(child, false, true);
-  }
-  return { tree: next2, changed: changed > 0 };
 }
 function expandAllBranches(tree) {
   const next2 = cloneTree$1(tree);
@@ -63064,7 +63070,6 @@ function createCommandAdapter(mindMap) {
       const node = findNodeByUid(uid);
       const persistedChildren = Array.isArray((_a = node == null ? void 0 : node.nodeData) == null ? void 0 : _a.children) ? node.nodeData.children : Array.isArray((_b = node == null ? void 0 : node.getData) == null ? void 0 : _b.call(node, "children")) ? node.getData("children") : Array.isArray(node == null ? void 0 : node.children) ? node.children : [];
       if (!node || node.isGeneralization || persistedChildren.length === 0) return false;
-      if (applyExpansionTransform((tree) => expanded ? expandBranchOneLevel(tree, uid) : collapseBranchDeep(tree, uid))) return true;
       mindMap.execCommand("SET_NODE_EXPAND", node, expanded);
       return true;
     },
@@ -67300,7 +67305,7 @@ class RichTextToolbar {
       <span class="ymz-rich-toolbar__separator"></span>
       <button type="button" data-rich-action="link" title="行内链接">链接</button>
       <button type="button" data-rich-action="cloze" title="模糊/取消模糊">模糊</button>
-      <button type="button" data-rich-action="formula" title="插入公式" aria-label="插入公式"><svg class="ymz-rich-toolbar__icon" aria-hidden="true"><use xlink:href="#iconMath"></use></svg></button>
+      <button type="button" data-rich-action="formula" title="插入公式" aria-label="插入公式"><svg class="ymz-rich-toolbar__icon" data-yemind-formula-icon viewBox="0 0 24 24" aria-hidden="true"><path d="M18 4H6l6 8-6 8h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
       <button type="button" data-rich-action="clear" title="清除全部格式">清除</button>`;
     this.colorPopover = document.createElement("div");
     this.colorPopover.className = "ymz-color-popover";

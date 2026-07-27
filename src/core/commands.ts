@@ -624,12 +624,11 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
           ? node.getData('children')
           : Array.isArray(node?.children)
             ? node.children
-            : [];
+          : [];
       if (!node || node.isGeneralization || persistedChildren.length === 0) return false;
-      if (applyExpansionTransform((tree) => expanded
-        ? expandBranchOneLevel(tree, uid)
-        : collapseBranchDeep(tree, uid))) return true;
-      // Compatibility fallback for minimal hosts/tests without updateData().
+      // A quick action targets the live rendered node. Whole-tree updateData()
+      // can replace that instance before the click finishes, which left Root
+      // and some imported branches visually unchanged in the web runtime.
       mindMap.execCommand('SET_NODE_EXPAND', node, expanded);
       return true;
     },

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1 - 2026-07-27
+
+- Completed standalone canvas, node and outline context-menu parity with viewport clamping, scrollable tall menus, nested submenus, current-state marks and self-contained icons.
+- Routed node quick disclosure through the live renderer so Root and intermediate branches reliably collapse and expand.
+- Recalculated rich-text node geometry after web fonts load, preventing imported mixed-language labels from drifting outside their node bounds.
+- Replaced the host-only formula symbol reference with a self-contained SVG visible in standalone text-selection toolbars.
+
 ## 1.1.0 - 2026-07-27
 
 - Replaced approximate gallery mappings with 28 explicit runtime layout contracts and a compatibility bridge for existing documents.

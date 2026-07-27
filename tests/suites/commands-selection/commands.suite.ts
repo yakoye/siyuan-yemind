@@ -272,4 +272,27 @@ describe('node style command bridge', () => {
     expect(map.execCommand.mock.calls).toContainEqual(['SET_NODE_EXPAND', root, true]);
   });
 
+  it('uses the live native expand command even when whole-tree updateData is available', () => {
+    const root = {
+      isRoot: true,
+      isGeneralization: false,
+      children: [{}],
+      nodeData: { children: [{ data: { uid: 'child' }, children: [] }] },
+      getData: (key?: string) => key === 'uid' ? 'root' : key === 'expand' ? true : undefined,
+    };
+    const map = fakeMindMap() as any;
+    map.opt = { readonly: false };
+    map.renderer.findNodeByUid = (uid: string) => uid === 'root' ? root : null;
+    map.getData = vi.fn(() => ({
+      data: { uid: 'root', expand: true },
+      children: [{ data: { uid: 'child' }, children: [] }],
+    }));
+    map.updateData = vi.fn();
+    const commands = createCommandAdapter(map as never);
+
+    expect(commands.setNodeExpandedByUid('root', false)).toBe(true);
+    expect(map.execCommand).toHaveBeenCalledWith('SET_NODE_EXPAND', root, false);
+    expect(map.updateData).not.toHaveBeenCalled();
+  });
+
 });
