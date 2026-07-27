@@ -1,0 +1,22 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+const css = readFileSync(resolve(process.cwd(), 'web/src/styles.css'), 'utf8');
+
+describe('standalone web appearance styles', () => {
+  it('defines dark tokens and applies them to every web shell surface', () => {
+    expect(css).toContain(':root[data-appearance="dark"]');
+    expect(css).toMatch(/:root\[data-appearance="dark"\]\{[^}]*--b3-theme-background:#111714/s);
+    expect(css).toContain('background:var(--ymw-app-background)');
+    expect(css).toContain('background:var(--b3-theme-surface)');
+    expect(css).toContain('color:var(--b3-theme-on-background)');
+  });
+
+  it('keeps menus dialogs focus rings and the mobile launcher readable in dark mode', () => {
+    expect(css).toMatch(/\.b3-dialog__container\{[^}]*background:var\(--b3-theme-surface\)/s);
+    expect(css).toMatch(/\.ymw-menu\{[^}]*background:var\(--b3-theme-surface\)/s);
+    expect(css).toMatch(/:focus-visible\{[^}]*outline:/s);
+    expect(css).toMatch(/\.ymw-sidebar-toggle\{[^}]*background:var\(--b3-theme-surface\)/s);
+  });
+});

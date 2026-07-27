@@ -5,6 +5,9 @@ import { createMemoryWebStore } from '../src/webStorage';
 
 afterEach(() => {
   document.body.innerHTML = '';
+  delete document.documentElement.dataset.appearance;
+  delete document.documentElement.dataset.appearanceMode;
+  document.documentElement.style.colorScheme = '';
 });
 
 describe('standalone YeMind workspace', () => {
@@ -58,6 +61,29 @@ describe('standalone YeMind workspace', () => {
     await Promise.resolve();
     expect(openExportDialog).toHaveBeenCalledOnce();
     expect(openImportPicker).toHaveBeenCalledOnce();
+    app.destroy();
+  });
+
+  it('keeps the web shell synchronized with the shared appearance setting', async () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    const services = createWebServices(createMemoryWebStore());
+    const app = new YeMindWebApp(root, services, {
+      createEditor: () => ({
+        destroy: () => undefined,
+        resize: () => undefined,
+      }),
+    });
+
+    await app.start();
+    expect(document.documentElement.dataset.appearanceMode).toBe('system');
+    expect(['light', 'dark']).toContain(document.documentElement.dataset.appearance);
+
+    await services.settingsStore.update({ appearanceMode: 'dark' });
+
+    expect(document.documentElement.dataset.appearanceMode).toBe('dark');
+    expect(document.documentElement.dataset.appearance).toBe('dark');
+    expect(document.documentElement.style.colorScheme).toBe('dark');
     app.destroy();
   });
 });

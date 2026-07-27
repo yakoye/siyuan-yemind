@@ -1,5 +1,6 @@
 import { YeMindEditor, type YeMindEditorOptions } from '../../src/editor/YeMindEditor';
 import { PLUGIN_VERSION } from '../../src/plugin/constants';
+import { AppearanceController } from '../../src/ui/AppearanceController';
 import { confirm, showMessage } from './siyuanAdapter';
 import {
   createBackup,
@@ -25,6 +26,8 @@ export class YeMindWebApp {
   private mapList: HTMLElement | null = null;
   private fileInput: HTMLInputElement | null = null;
   private unsubscribe: (() => void) | null = null;
+  private appearanceUnsubscribe: (() => void) | null = null;
+  private appearanceController: AppearanceController | null = null;
   private readonly createEditor: (options: YeMindEditorOptions) => EditorHandle;
 
   constructor(
@@ -37,6 +40,22 @@ export class YeMindWebApp {
 
   async start(): Promise<void> {
     await this.services.load();
+    const getSystemDark = (): boolean => typeof matchMedia === 'function'
+      && matchMedia('(prefers-color-scheme: dark)').matches;
+    this.appearanceController = new AppearanceController({
+      root: document.documentElement,
+      getSystemDark,
+      subscribeSystem: (listener) => {
+        if (typeof matchMedia !== 'function') return () => undefined;
+        const media = matchMedia('(prefers-color-scheme: dark)');
+        const onChange = (event: MediaQueryListEvent): void => listener(event.matches);
+        media.addEventListener?.('change', onChange);
+        return () => media.removeEventListener?.('change', onChange);
+      },
+    });
+    this.appearanceUnsubscribe = this.services.settingsStore.subscribe((settings) => {
+      this.appearanceController?.setMode(settings.appearanceMode);
+    });
     this.renderShell();
     this.unsubscribe = this.services.repository.subscribe(() => this.renderMapList());
     const active = this.services.repository.getActiveMapId()
@@ -49,6 +68,10 @@ export class YeMindWebApp {
     this.editor = null;
     this.unsubscribe?.();
     this.unsubscribe = null;
+    this.appearanceUnsubscribe?.();
+    this.appearanceUnsubscribe = null;
+    this.appearanceController?.destroy();
+    this.appearanceController = null;
     window.removeEventListener('resize', this.onResize);
     this.root.removeEventListener('click', this.onClick);
     this.fileInput?.removeEventListener('change', this.onFileChange);

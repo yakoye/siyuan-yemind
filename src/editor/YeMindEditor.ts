@@ -121,6 +121,7 @@ import { ResourceActionPopover } from './resourceActionPopover';
 import { createExportArtifact, downloadExportArtifact } from '../transfer/exporter';
 import { importMindMapBytes } from '../transfer/importer';
 import type { ExportFormatId } from '../transfer/formatCatalog';
+import { AppearanceController } from '../ui/AppearanceController';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -223,12 +224,9 @@ export class YeMindEditor {
   private outlinePointerDrag: OutlinePointerDragSession | null = null;
   private suppressOutlineClickUntil = 0;
   private readonly editingSurface = new EditingSurfaceCoordinator<PendingOutlineFocus>();
-  private appearanceObserver: MutationObserver | null = null;
-  private appearanceMedia: MediaQueryList | null = null;
+  private appearanceController: AppearanceController | null = null;
   private appearanceMode: YeMindAppearance | null = null;
-  private readonly onAppearanceMediaChange = (): void => {
-    this.refreshAppearanceIfNeeded();
-  };
+  private applyingSettings = false;
 
   private readonly onCanvasPointerDown = (event: PointerEvent): void => {
     if (event.button !== 0) return;
@@ -585,13 +583,8 @@ export class YeMindEditor {
     this.destroyed = true;
     this.repositoryUnsubscribe?.();
     this.settingsUnsubscribe?.();
-    this.appearanceObserver?.disconnect();
-    this.appearanceObserver = null;
-    this.appearanceMedia?.removeEventListener?.(
-      "change",
-      this.onAppearanceMediaChange,
-    );
-    this.appearanceMedia = null;
+    this.appearanceController?.destroy();
+    this.appearanceController = null;
     this.richTextToolbar?.destroy();
     this.richTextToolbar = null;
     this.nodeHoverPreview?.destroy();
@@ -715,6 +708,15 @@ export class YeMindEditor {
     this.rootEl = this.options.container.querySelector(
       ".ymz-editor",
     ) as HTMLElement;
+    this.appearanceController = new AppearanceController({
+      root: this.rootEl,
+      getSystemDark: () => detectAppearance() === 'dark',
+      subscribeSystem: (listener) => this.subscribeHostAppearance(listener),
+      onChange: () => {
+        if (!this.applyingSettings) this.refreshAppearanceIfNeeded();
+      },
+    });
+    this.appearanceController.setMode(this.settings.appearanceMode);
     this.resourceActionPopover = new ResourceActionPopover(this.rootEl);
     this.canvasEl = this.options.container.querySelector(
       '[data-role="canvas"]',
@@ -991,7 +993,7 @@ export class YeMindEditor {
     window.requestAnimationFrame(() => {
       void this.repairLegacyClipartGeometry();
     });
-    this.bindAppearanceObserver();
+    this.applyMapAppearance(false);
     this.repositoryUnsubscribe = this.options.repository.subscribe((state) => {
       const next = state.maps.find((item) => item.id === this.current.id);
       if (!next) {
@@ -1896,7 +1898,9 @@ export class YeMindEditor {
 
   private applySettings(settings: YeMindSettings): void {
     const firstApply = !this.settingsInitialized;
+    this.applyingSettings = true;
     this.settings = settings;
+    this.appearanceController?.setMode(settings.appearanceMode);
     this.toolbarVisibility?.setPinned(settings.toolbarsPinned);
     this.updateToolbarPinPresentation();
     this.richTextToolbar?.setEnabled(
@@ -1938,6 +1942,7 @@ export class YeMindEditor {
       ...outerFrameOptions,
     });
     this.applyMapAppearance();
+    this.applyingSettings = false;
     this.updateRelationPresentation();
     this.updateOuterFramePresentation();
     this.updateSelectionPresentation();
@@ -1955,7 +1960,7 @@ export class YeMindEditor {
     this.current.theme = normalizeThemePresetId(this.current.theme);
     this.current.lineStyle = normalizeLineStyle(this.current.lineStyle);
     const behavior = buildDragAndLayoutOptions(this.settings);
-    const appearanceMode = detectAppearance();
+    const appearanceMode = this.appearanceController?.getResolved() ?? detectAppearance();
     const appearance = buildThemeConfig({
       presetId: this.current.theme,
       appearance: appearanceMode,
@@ -1997,46 +2002,9 @@ export class YeMindEditor {
     if (!canRender) this.applyingAppearance = false;
   }
 
-  private bindAppearanceObserver(): void {
-    this.appearanceMode = detectAppearance();
-    if (typeof MutationObserver !== "undefined") {
-      this.appearanceObserver = new MutationObserver(() =>
-        this.refreshAppearanceIfNeeded(),
-      );
-      this.appearanceObserver.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: [
-          "class",
-          "data-theme",
-          "data-theme-mode",
-          "data-color-mode",
-        ],
-      });
-      if (document.body) {
-        this.appearanceObserver.observe(document.body, {
-          attributes: true,
-          attributeFilter: [
-            "class",
-            "data-theme",
-            "data-theme-mode",
-            "data-color-mode",
-          ],
-        });
-      }
-    }
-    if (typeof matchMedia === "function") {
-      this.appearanceMedia = matchMedia("(prefers-color-scheme: dark)");
-      this.appearanceMedia.addEventListener?.(
-        "change",
-        this.onAppearanceMediaChange,
-      );
-    }
-    this.applyMapAppearance(false);
-  }
-
   private refreshAppearanceIfNeeded(): void {
     if (this.destroyed || !this.map) return;
-    const next = detectAppearance();
+    const next = this.appearanceController?.getResolved() ?? detectAppearance();
     if (next === this.appearanceMode) return;
     this.applyMapAppearance();
     this.options.diagnostics.record(
@@ -2045,6 +2013,27 @@ export class YeMindEditor {
       this.current.id,
       { appearance: next },
     );
+  }
+
+  private subscribeHostAppearance(listener: (dark: boolean) => void): () => void {
+    const notify = (): void => listener(detectAppearance() === 'dark');
+    const observer = typeof MutationObserver === 'undefined'
+      ? null
+      : new MutationObserver(notify);
+    const attributes = {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme', 'data-theme-mode', 'data-color-mode'],
+    };
+    observer?.observe(document.documentElement, attributes);
+    if (document.body) observer?.observe(document.body, attributes);
+    const media = typeof matchMedia === 'function'
+      ? matchMedia('(prefers-color-scheme: dark)')
+      : null;
+    media?.addEventListener?.('change', notify);
+    return () => {
+      observer?.disconnect();
+      media?.removeEventListener?.('change', notify);
+    };
   }
 
   private bindSplitDivider(): void {
