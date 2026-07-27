@@ -254,6 +254,7 @@
   ],
   "user-regressions": [
     "v0523UserReportedRegressionMatrix.suite.ts",
-    "v0917UserReportedInteractionRegression.suite.ts"
+    "v0917UserReportedInteractionRegression.suite.ts",
+    "v130CoreAcceptanceMatrix.suite.ts"
   ]
 }
