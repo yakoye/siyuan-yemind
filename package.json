@@ -26,7 +26,7 @@
     "parchment": "^3.0.0",
     "quill": "^2.0.3",
     "quill-delta": "^5.1.0",
-    "simple-mind-map": "0.14.0-fix.3"
+    "simple-mind-map": "file:vendor/simple-mind-map-runtime"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

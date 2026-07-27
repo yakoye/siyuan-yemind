@@ -288,14 +288,15 @@ function branchFilteredSiblings(
   if (layout !== 'mindMap' && !branchDirection) return siblings;
   const parentRect = getRect(parent);
   if (!finiteRect(parentRect) && !branchDirection) return siblings;
+  const parentCenterX = finiteRect(parentRect) ? rectCenter(parentRect).x : null;
   const branch = branchDirection
-    ?? (pointer.x < rectCenter(parentRect!).x ? 'left' : 'right');
+    ?? (pointer.x < parentCenterX! ? 'left' : 'right');
   const filtered = siblings.filter((node) => {
     const direction = normalizedDirection(node?.dir);
     if (direction === 'left' || direction === 'right') return direction === branch;
     const rect = getRect(node);
-    return finiteRect(rect)
-      ? (rectCenter(rect).x < rectCenter(parentRect).x ? 'left' : 'right') === branch
+    return finiteRect(rect) && parentCenterX !== null
+      ? (rectCenter(rect).x < parentCenterX ? 'left' : 'right') === branch
       : false;
   });
   return filtered.length > 0 ? filtered : siblings;
