@@ -24,6 +24,7 @@ const entries = [
   'outlineDialogConsistencyV0928SmokeEntry',
   'floatingRelationQuickActionsV0929SmokeEntry',
   'branchControlsToolbarResourcesV0930SmokeEntry',
+  'themePalettePanelV0931SmokeEntry',
 ];
 
 rmSync(outDir, { recursive: true, force: true });

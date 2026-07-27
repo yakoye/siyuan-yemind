@@ -5,12 +5,14 @@ export interface ProjectChoiceOption {
   description?: string;
   iconHtml?: string;
   previewColor?: string;
+  previewColors?: readonly string[];
 }
 
 export interface ProjectChoicePanelOptions {
   role: string;
   title: string;
   options: readonly ProjectChoiceOption[];
+  presentation?: 'list' | 'palette';
   selected: string;
   readonly(): boolean;
   onSelect(value: string): void;
@@ -20,6 +22,7 @@ export class ProjectChoicePanel {
   private readonly panel: HTMLElement;
   private readonly body: HTMLElement;
   private selected: string;
+  private activeGroup = '';
   private anchor: HTMLElement | null = null;
 
   constructor(
@@ -29,6 +32,8 @@ export class ProjectChoicePanel {
     this.panel = root.querySelector<HTMLElement>(`[data-role="${config.role}"]`)!;
     this.body = this.panel.querySelector<HTMLElement>('[data-project-choice-body]')!;
     this.selected = config.selected;
+    this.activeGroup = this.groupForValue(config.selected) ?? this.groups()[0] ?? '';
+    this.panel.classList.toggle('is-palette', config.presentation === 'palette');
     this.panel.querySelector('[data-project-choice-action="close"]')?.addEventListener('click', () => this.hide());
     this.panel.addEventListener('click', this.onPanelClick);
     document.addEventListener('mousedown', this.onDocumentMouseDown, true);
@@ -39,6 +44,7 @@ export class ProjectChoicePanel {
 
   setSelected(value: string): void {
     this.selected = value;
+    this.activeGroup = this.groupForValue(value) ?? this.activeGroup;
     this.render();
   }
 
@@ -51,13 +57,14 @@ export class ProjectChoicePanel {
 
   show(anchor: HTMLElement): void {
     this.anchor = anchor;
+    this.activeGroup = this.groupForValue(this.selected) ?? this.activeGroup;
     this.render();
     this.panel.hidden = false;
     anchor.classList.add('is-active');
     anchor.setAttribute('aria-expanded', 'true');
     const rootRect = this.root.getBoundingClientRect();
     const anchorRect = anchor.getBoundingClientRect();
-    const width = this.panel.offsetWidth || 260;
+    const width = this.panel.offsetWidth || (this.config.presentation === 'palette' ? 390 : 260);
     const height = this.panel.offsetHeight || 360;
     const left = Math.max(8, Math.min(anchorRect.left - rootRect.left, rootRect.width - width - 8));
     const below = anchorRect.bottom - rootRect.top + 6;
@@ -89,7 +96,17 @@ export class ProjectChoicePanel {
 
   private readonly onPanelClick = (event: MouseEvent): void => {
     event.stopPropagation();
-    const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-project-choice-value]');
+    const target = event.target as HTMLElement;
+    const tab = target.closest<HTMLButtonElement>('[data-project-choice-group]');
+    if (tab) {
+      const group = tab.dataset.projectChoiceGroup ?? '';
+      if (group && group !== this.activeGroup) {
+        this.activeGroup = group;
+        this.render();
+      }
+      return;
+    }
+    const button = target.closest<HTMLButtonElement>('[data-project-choice-value]');
     if (!button || button.disabled || this.config.readonly()) return;
     const value = button.dataset.projectChoiceValue ?? '';
     if (!value) return;
@@ -99,7 +116,81 @@ export class ProjectChoicePanel {
     this.hide();
   };
 
+  private groups(): string[] {
+    return [...new Set(this.config.options.map((option) => option.group ?? '').filter(Boolean))];
+  }
+
+  private groupForValue(value: string): string | undefined {
+    return this.config.options.find((option) => option.value === value)?.group ?? undefined;
+  }
+
   private render(): void {
+    this.body.innerHTML = '';
+    if (this.config.presentation === 'palette') this.renderPalette();
+    else this.renderList();
+  }
+
+  private renderPalette(): void {
+    const groups = this.groups();
+    if (!this.activeGroup || !groups.includes(this.activeGroup)) {
+      this.activeGroup = this.groupForValue(this.selected) ?? groups[0] ?? '';
+    }
+
+    const tabs = document.createElement('div');
+    tabs.className = 'ymz-project-choice-panel__tabs';
+    tabs.setAttribute('role', 'tablist');
+    tabs.setAttribute('aria-label', `${this.config.title}分类`);
+    groups.forEach((group) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `ymz-project-choice-panel__tab${group === this.activeGroup ? ' is-active' : ''}`;
+      button.dataset.projectChoiceGroup = group;
+      button.textContent = group;
+      button.setAttribute('role', 'tab');
+      button.setAttribute('aria-selected', String(group === this.activeGroup));
+      tabs.appendChild(button);
+    });
+
+    const grid = document.createElement('div');
+    grid.className = 'ymz-project-choice-panel__palette-grid';
+    grid.setAttribute('role', 'listbox');
+    grid.setAttribute('aria-label', `${this.activeGroup || this.config.title}主题`);
+    const options = this.config.options.filter((option) => (option.group ?? '') === this.activeGroup);
+    options.forEach((option) => {
+      const selected = option.value === this.selected;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `ymz-project-choice-panel__palette-item${selected ? ' is-selected' : ''}`;
+      button.dataset.projectChoiceValue = option.value;
+      button.setAttribute('role', 'option');
+      button.setAttribute('aria-selected', String(selected));
+      button.setAttribute('aria-label', option.label);
+      button.disabled = this.config.readonly();
+
+      const label = document.createElement('strong');
+      label.className = 'ymz-project-choice-panel__palette-label';
+      label.textContent = option.label;
+
+      const strip = document.createElement('span');
+      strip.className = 'ymz-project-choice-panel__palette-strip';
+      strip.setAttribute('aria-hidden', 'true');
+      const colors = [...(option.previewColors ?? [])].slice(0, 6);
+      const fallback = colors[colors.length - 1] ?? option.previewColor ?? 'var(--b3-theme-primary)';
+      while (colors.length < 6) colors.push(fallback);
+      colors.forEach((color) => {
+        const block = document.createElement('i');
+        block.className = 'ymz-project-choice-panel__palette-block';
+        block.style.backgroundColor = color;
+        strip.appendChild(block);
+      });
+      button.append(label, strip);
+      grid.appendChild(button);
+    });
+
+    this.body.append(tabs, grid);
+  }
+
+  private renderList(): void {
     const groups = new Map<string, ProjectChoiceOption[]>();
     this.config.options.forEach((option) => {
       const key = option.group ?? '';
@@ -107,7 +198,6 @@ export class ProjectChoicePanel {
       items.push(option);
       groups.set(key, items);
     });
-    this.body.innerHTML = '';
     groups.forEach((items, group) => {
       const section = document.createElement('section');
       section.className = 'ymz-project-choice-panel__group';

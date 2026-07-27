@@ -71,3 +71,7 @@ Clipart insertion is coordinated by `src/core/clipartGeometry.ts`. The picker re
 ## Branch controls and floating resource actions (v0.9.30)
 
 Node quick controls resolve their side from the same official layout-growth contract used by structural drag intent. The compact control remains a one-level disclosure action, while context-menu commands use explicit recursive subtree or whole-map transforms. Top, bottom and left toolbars share one persisted pin state and one visibility controller. Marker and clipart interactions in canvas and outline pass through one UID-targeted resource action popover before invoking the existing asset pickers; this keeps presentation state transient and canonical node data authoritative.
+
+## Theme dropdown presentation (v0.9.31)
+
+`src/editor/themeChoicePresentation.ts` derives exactly six preview blocks from each existing preset’s light `level1Background` branch colors without mutating the preset. `ProjectChoicePanel` keeps one shared controller with an opt-in `palette` renderer used only by Theme; the Line Style panel continues through the original list renderer. Group tabs are generated from existing preset groups, so IDs, categories, selection callbacks, persistence and map appearance remain canonical in the existing theme system.

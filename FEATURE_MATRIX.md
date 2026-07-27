@@ -12,7 +12,7 @@
 | Selection toolbar | Canvas and outline share selection formatting; double-click full selection opens the toolbar immediately and saved ranges survive control focus |
 | Context menus | Separate single-node, multi-node and blank-canvas menus with text-to-map import, full subtree/global disclosure, exact supplied SVG image-isolated actions and state-aware content commands |
 | Supplied icon isolation | 14 exact Base64 SVG documents, fixed 18px outer boxes, no inline path exposure to host CSS, SHA-256 source-byte regression |
-| Style panels | Structure, Theme, Line and Style use dark-aware anchored panels with shared hover/selected states; node controls use a denser two-column layout |
+| Style panels | Structure, Theme, Line and Style use dark-aware anchored panels; Theme uses grouped two-column cards with six real colors per preset, while Line remains a list |
 | Relation editing | Editable persisted Bézier endpoints/control points, tangent-driven arrows, lifecycle guards and a clear blue selected state |
 | Outline model | One structured contenteditable document; no user-facing text/node mode split |
 | Outline selection | Native cross-row ranges; first Ctrl/Cmd+A selects the current node, second selects the complete outline |

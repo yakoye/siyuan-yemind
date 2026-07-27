@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.31 - 2026-07-26
+
+- Changed only the Theme dropdown presentation to grouped tabs and two-column palette cards.
+- Added exactly six real first-level branch color blocks to every existing theme card without modifying preset data.
+- Preserved all 22 theme IDs, the Basic/Colorful/Classic groups, selection, persistence and map-appearance behavior.
+- Kept the Line Style dropdown on its existing list presentation and added unit, offline and Chromium regressions for the display-only change.
+
 ## 0.9.30 - 2026-07-25
 
 - Positioned node quick controls from the actual outgoing child connector across logical, bilateral, tree, timeline, organization and fishbone layouts.

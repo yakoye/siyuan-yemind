@@ -92,7 +92,7 @@ with sync_playwright() as p:
     panel=page.locator('[data-role="theme-choice-panel"]')
     panel_bg=panel.evaluate('e=>getComputedStyle(e).backgroundColor')
     if rgb_luma(panel_bg)>100: raise RuntimeError(f'dark theme panel is too bright: {panel_bg}')
-    selected=panel.locator('.ymz-project-choice-panel__item.is-selected')
+    selected=panel.locator('.ymz-project-choice-panel__item.is-selected, .ymz-project-choice-panel__palette-item.is-selected')
     if selected.count()!=1: raise RuntimeError('theme selected item missing')
     normal_color=page.locator('[data-action="layout-gallery"]').evaluate('e=>getComputedStyle(e).color')
     theme_color=page.locator('[data-action="theme-gallery"]').evaluate('e=>getComputedStyle(e).color')

@@ -3,19 +3,18 @@ import { PLUGIN_VERSION, PRODUCT_NAME, PROJECT_PACKAGE_NAME } from './plugin/con
 export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: '2026-07-25T15:36:30Z',
-  buildId: 'yemind-v0.9.30-20260725',
+  buildTime: '2026-07-26T15:53:25Z',
+  buildId: 'yemind-v0.9.31-20260726',
   productName: PRODUCT_NAME,
   projectName: PROJECT_PACKAGE_NAME,
   tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
   hostBaseline: 'SiYuan 3.7.3',
-  releaseSummary: '统一分支控件方向、完整展开范围、三边工具栏状态，以及图标和剪贴图的两步资源操作。',
+  releaseSummary: '仅重做主题下拉菜单的分组标签与六色色条展示，保留全部主题数据和切换逻辑。',
   highlights: [
-    '节点快捷控件跟随真实子分支出口定位，右向、左向、双侧以及树状、时间线、组织图和鱼骨图采用一致的连接方向规则。',
-    '节点右键菜单完整展开或折叠当前子树，空白菜单完整展开或折叠全图；节点数字仍只展开一级并只显示直接子节点数量。',
-    '顶部、底部和左侧工具栏默认固定显示，竖图钉表示固定、斜图钉表示自动隐藏，一个图钉统一控制三边工具栏。',
-    '底部只读按钮使用明确的开锁和闭锁图标，并同步标题与无障碍状态。',
-    '导图节点右键菜单增加文本转导图入口；导图和大纲中的图标、剪贴图单击先显示替换/删除，再按需打开资源选择器。',
+    '主题下拉菜单改为分组标签与双列卡片布局，每个现有主题显示名称和六个真实一级分支颜色块。',
+    '基础、缤纷、经典三个现有分类和全部二十二个主题保持不变，当前主题所在分类会自动打开并高亮。',
+    '亮色与暗黑宿主仅改变面板外观，六色色条始终保留主题真实颜色。',
+    '线型下拉菜单继续使用原有列表展示，主题应用、保存和导图刷新逻辑没有变化。',
   ]
 } as const;
 

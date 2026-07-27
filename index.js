@@ -1,5 +1,5 @@
 "use strict";
-// YeMind v0.9.30 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
+// YeMind v0.9.31 offline release bundle. Generated from current source and the v0.9.0 verified dependency Source Map.
 const __modules = {
 0: function(module, exports, __require, __externalRequire) {
 // /src/index.ts
@@ -39,11 +39,11 @@ const releaseInfo_1 = __require(30);
 const constants_1 = __require(29);
 const dock_1 = __require(39);
 const tabs_1 = __require(40);
-const OpenMapTabRegistry_1 = __require(271);
-const pluginUrl_1 = __require(272);
-const operationSafety_1 = __require(273);
-const pluginStartup_1 = __require(274);
-const globalSearch_1 = __require(275);
+const OpenMapTabRegistry_1 = __require(272);
+const pluginUrl_1 = __require(273);
+const operationSafety_1 = __require(274);
+const pluginStartup_1 = __require(275);
+const globalSearch_1 = __require(276);
 class YeMindPlugin extends siyuan_1.Plugin {
     constructor() {
         super(...arguments);
@@ -15880,7 +15880,7 @@ exports.CHECKPOINT_STORAGE_NAME = 'checkpoints.json';
 exports.DIAGNOSTIC_PROBE_STORAGE_NAME = 'diagnostics-probe.json';
 exports.DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = 'diagnostics-lifecycle-maps';
 exports.DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = 'diagnostics-lifecycle-checkpoints';
-exports.PLUGIN_VERSION = '0.9.30';
+exports.PLUGIN_VERSION = '0.9.31';
 exports.TAB_TYPE = 'yemind-map';
 exports.DOCK_TYPE = 'yemind-dock';
 exports.ICON_ID = 'iconYeMind';
@@ -15897,19 +15897,18 @@ const constants_1 = __require(29);
 exports.RELEASE_INFO = {
     version: constants_1.PLUGIN_VERSION,
     buildVersion: constants_1.PLUGIN_VERSION,
-    buildTime: '2026-07-25T15:36:30Z',
-    buildId: 'yemind-v0.9.30-20260725',
+    buildTime: '2026-07-26T15:53:25Z',
+    buildId: 'yemind-v0.9.31-20260726',
     productName: constants_1.PRODUCT_NAME,
     projectName: constants_1.PROJECT_PACKAGE_NAME,
     tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
     hostBaseline: 'SiYuan 3.7.3',
-    releaseSummary: '统一分支控件方向、完整展开范围、三边工具栏状态，以及图标和剪贴图的两步资源操作。',
+    releaseSummary: '仅重做主题下拉菜单的分组标签与六色色条展示，保留全部主题数据和切换逻辑。',
     highlights: [
-        '节点快捷控件跟随真实子分支出口定位，右向、左向、双侧以及树状、时间线、组织图和鱼骨图采用一致的连接方向规则。',
-        '节点右键菜单完整展开或折叠当前子树，空白菜单完整展开或折叠全图；节点数字仍只展开一级并只显示直接子节点数量。',
-        '顶部、底部和左侧工具栏默认固定显示，竖图钉表示固定、斜图钉表示自动隐藏，一个图钉统一控制三边工具栏。',
-        '底部只读按钮使用明确的开锁和闭锁图标，并同步标题与无障碍状态。',
-        '导图节点右键菜单增加文本转导图入口；导图和大纲中的图标、剪贴图单击先显示替换/删除，再按需打开资源选择器。',
+        '主题下拉菜单改为分组标签与双列卡片布局，每个现有主题显示名称和六个真实一级分支颜色块。',
+        '基础、缤纷、经典三个现有分类和全部二十二个主题保持不变，当前主题所在分类会自动打开并高亮。',
+        '亮色与暗黑宿主仅改变面板外观，六色色条始终保留主题真实颜色。',
+        '线型下拉菜单继续使用原有列表展示，主题应用、保存和导图刷新逻辑没有变化。',
     ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -17036,10 +17035,10 @@ function escapeHtml(value) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerYeMindTab = registerYeMindTab;
 const YeMindEditor_1 = __require(41);
-const deferredMount_1 = __require(269);
+const deferredMount_1 = __require(270);
 const constants_1 = __require(29);
-const visibleElement_1 = __require(247);
-const tabNodeFocus_1 = __require(270);
+const visibleElement_1 = __require(248);
+const tabNodeFocus_1 = __require(271);
 function registerYeMindTab(plugin, host) {
     const states = new WeakMap();
     plugin.addTab({
@@ -17137,62 +17136,63 @@ const siyuan_1 = __externalRequire("siyuan");
 const createMindMap_1 = __require(42);
 const dragBehavior_1 = __require(202);
 const themePresets_1 = __require(11);
+const themeChoicePresentation_1 = __require(208);
 const relationConfig_1 = __require(203);
 const outerFrameConfig_1 = __require(204);
-const relationData_1 = __require(208);
-const commands_1 = __require(209);
+const relationData_1 = __require(209);
+const commands_1 = __require(210);
 const nodeDecorations_1 = __require(199);
 const registerPlugins_1 = __require(92);
-const checkpointDialog_1 = __require(216);
-const contextMenu_1 = __require(219);
+const checkpointDialog_1 = __require(217);
+const contextMenu_1 = __require(220);
 const dialogs_1 = __require(25);
-const textToMapDialog_1 = __require(226);
-const outlineTreeImport_1 = __require(227);
-const nodeContentDialogs_1 = __require(220);
-const richTextDialogs_1 = __require(231);
-const editorStats_1 = __require(232);
-const editorTemplate_1 = __require(233);
-const outlineDrag_1 = __require(234);
-const StructuredOutlineEditorController_1 = __require(235);
-const splitPane_1 = __require(236);
-const RichTextToolbar_1 = __require(237);
+const textToMapDialog_1 = __require(227);
+const outlineTreeImport_1 = __require(228);
+const nodeContentDialogs_1 = __require(221);
+const richTextDialogs_1 = __require(232);
+const editorStats_1 = __require(233);
+const editorTemplate_1 = __require(234);
+const outlineDrag_1 = __require(235);
+const StructuredOutlineEditorController_1 = __require(236);
+const splitPane_1 = __require(237);
+const RichTextToolbar_1 = __require(238);
 const shortcuts_1 = __require(33);
-const selectionPresentation_1 = __require(241);
-const saveRevision_1 = __require(242);
-const relationPresentation_1 = __require(243);
-const outerFramePresentation_1 = __require(244);
-const toolbarAvailability_1 = __require(245);
-const linkNavigation_1 = __require(246);
-const visibleElement_1 = __require(247);
-const imageFileLoading_1 = __require(221);
-const nodeImageInput_1 = __require(248);
-const nodeHoverPreview_1 = __require(249);
-const imageLightbox_1 = __require(250);
-const nodeStylePanel_1 = __require(251);
-const projectStylePanel_1 = __require(252);
-const layoutGalleryPanel_1 = __require(253);
-const projectChoicePanel_1 = __require(254);
-const localAssetDialogs_1 = __require(255);
+const selectionPresentation_1 = __require(242);
+const saveRevision_1 = __require(243);
+const relationPresentation_1 = __require(244);
+const outerFramePresentation_1 = __require(245);
+const toolbarAvailability_1 = __require(246);
+const linkNavigation_1 = __require(247);
+const visibleElement_1 = __require(248);
+const imageFileLoading_1 = __require(222);
+const nodeImageInput_1 = __require(249);
+const nodeHoverPreview_1 = __require(250);
+const imageLightbox_1 = __require(251);
+const nodeStylePanel_1 = __require(252);
+const projectStylePanel_1 = __require(253);
+const layoutGalleryPanel_1 = __require(254);
+const projectChoicePanel_1 = __require(255);
+const localAssetDialogs_1 = __require(256);
 const layoutAssetPresets_1 = __require(14);
 const measurementHost_1 = __require(207);
-const canvasRichTextVisibility_1 = __require(257);
-const searchPanelState_1 = __require(258);
+const canvasRichTextVisibility_1 = __require(258);
+const searchPanelState_1 = __require(259);
 const projectStyle_1 = __require(20);
-const appearanceTransaction_1 = __require(259);
-const nodeQuickActions_1 = __require(260);
+const appearanceTransaction_1 = __require(260);
+const nodeQuickActions_1 = __require(261);
 const projectControls_1 = __require(36);
 const nodeNoteState_1 = __require(200);
-const nodeContentMenu_1 = __require(225);
-const canvasRightDrag_1 = __require(261);
-const liveNodeWidthLayout_1 = __require(262);
-const focusHighlight_1 = __require(263);
-const editingSurfaceCoordinator_1 = __require(264);
-const clipartGeometry_1 = __require(214);
+const nodeContentMenu_1 = __require(226);
+const canvasRightDrag_1 = __require(262);
+const liveNodeWidthLayout_1 = __require(263);
+const focusHighlight_1 = __require(264);
+const editingSurfaceCoordinator_1 = __require(265);
+const clipartGeometry_1 = __require(215);
 const dialogChrome_1 = __require(26);
-const ToolbarVisibilityController_1 = __require(265);
-const zoomPercent_1 = __require(266);
-const mapTitle_1 = __require(267);
-const resourceActionPopover_1 = __require(268);
+const ToolbarVisibilityController_1 = __require(266);
+const zoomPercent_1 = __require(267);
+const mapTitle_1 = __require(268);
+const resourceActionPopover_1 = __require(269);
 class YeMindEditor {
     constructor(options) {
         this.options = options;
@@ -17752,7 +17752,9 @@ class YeMindEditor {
                 group: preset.group,
                 description: preset.description,
                 previewColor: preset.light.colorAppearance.centerBackground,
+                previewColors: (0, themeChoicePresentation_1.themePaletteColors)(preset),
             })),
+            presentation: 'palette',
             selected: this.current.theme,
             readonly: () => Boolean(this.commands?.isReadonly()),
             onSelect: (value) => this.setTheme(value),
@@ -82868,6 +82870,30 @@ function stabilizeMindMapMeasurementHost(map, editorRoot = document.body) {
 
 },
 208: function(module, exports, __require, __externalRequire) {
+// /src/editor/themeChoicePresentation.ts
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.themePaletteColors = themePaletteColors;
+const THEME_PREVIEW_COLOR_COUNT = 6;
+/**
+ * Returns the six existing first-level branch colors used by the theme picker.
+ * The preset is never mutated. Current YeMind themes already provide six branch
+ * entries; the fallback only protects future partial custom presets.
+ */
+function themePaletteColors(preset) {
+    const source = preset.light.colorAppearance.branches
+        .slice(0, THEME_PREVIEW_COLOR_COUNT)
+        .map((branch) => branch.level1Background);
+    const fallback = source[source.length - 1]
+        ?? preset.light.colorAppearance.centerBackground
+        ?? preset.light.colorAppearance.background;
+    while (source.length < THEME_PREVIEW_COLOR_COUNT)
+        source.push(fallback);
+    return source;
+}
+
+},
+209: function(module, exports, __require, __externalRequire) {
 // /src/core/relationData.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -82949,17 +82975,17 @@ function sanitizeAssociativeLines(input) {
 }
 
 },
-209: function(module, exports, __require, __externalRequire) {
+210: function(module, exports, __require, __externalRequire) {
 // /src/core/commands.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createCommandAdapter = createCommandAdapter;
-const nodeContentState_1 = __require(210);
-const codeBlock_1 = __require(211);
-const nodeStyle_1 = __require(212);
-const combinedSummary_1 = __require(213);
-const clipartGeometry_1 = __require(214);
-const expandState_1 = __require(215);
+const nodeContentState_1 = __require(211);
+const codeBlock_1 = __require(212);
+const nodeStyle_1 = __require(213);
+const combinedSummary_1 = __require(214);
+const clipartGeometry_1 = __require(215);
+const expandState_1 = __require(216);
 function createCommandAdapter(mindMap) {
     const activeNodes = () => Array.isArray(mindMap.renderer?.activeNodeList)
         ? mindMap.renderer.activeNodeList
@@ -83640,7 +83666,7 @@ function createCommandAdapter(mindMap) {
 }
 
 },
-210: function(module, exports, __require, __externalRequire) {
+211: function(module, exports, __require, __externalRequire) {
 // /src/content/nodeContentState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83691,7 +83717,7 @@ function normalizeStringList(values) {
 }
 
 },
-211: function(module, exports, __require, __externalRequire) {
+212: function(module, exports, __require, __externalRequire) {
 // /src/editor/codeBlock.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83754,7 +83780,7 @@ function deleteCodeBlock(quill, block) {
 }
 
 },
-212: function(module, exports, __require, __externalRequire) {
+213: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeStyle.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83861,7 +83887,7 @@ function resetNodeStylePatch() {
 }
 
 },
-213: function(module, exports, __require, __externalRequire) {
+214: function(module, exports, __require, __externalRequire) {
 // /src/core/combinedSummary.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -83997,7 +84023,7 @@ function addCombinedSummary(mindMap, selectedNodes) {
 }
 
 },
-214: function(module, exports, __require, __externalRequire) {
+215: function(module, exports, __require, __externalRequire) {
 // /src/core/clipartGeometry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84123,7 +84149,7 @@ function isLegacyDefaultClipartGeometry(data) {
 }
 
 },
-215: function(module, exports, __require, __externalRequire) {
+216: function(module, exports, __require, __externalRequire) {
 // /src/core/expandState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84248,15 +84274,15 @@ function toggleAllExpansion(tree) {
 }
 
 },
-216: function(module, exports, __require, __externalRequire) {
+217: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.openCheckpointManager = openCheckpointManager;
 const siyuan_1 = __externalRequire("siyuan");
-const checkpointPresentation_1 = __require(217);
+const checkpointPresentation_1 = __require(218);
 const dialogs_1 = __require(25);
-const checkpointDialogTemplate_1 = __require(218);
+const checkpointDialogTemplate_1 = __require(219);
 const dialogChrome_1 = __require(26);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
@@ -84342,7 +84368,7 @@ function openCheckpointManager(options) {
 }
 
 },
-217: function(module, exports, __require, __externalRequire) {
+218: function(module, exports, __require, __externalRequire) {
 // /src/checkpoints/checkpointPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84378,12 +84404,12 @@ function renderCheckpointListHtml(checkpoints, options) {
 }
 
 },
-218: function(module, exports, __require, __externalRequire) {
+219: function(module, exports, __require, __externalRequire) {
 // /src/ui/checkpointDialogTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildCheckpointDialogContent = buildCheckpointDialogContent;
-const checkpointPresentation_1 = __require(217);
+const checkpointPresentation_1 = __require(218);
 function buildCheckpointDialogContent(checkpoints, readonly) {
     return `<div class="b3-dialog__content ymz-checkpoint-dialog">
     <div class="ymz-checkpoint-dialog__intro">检查点保存在独立历史文件中。恢复前会自动保存当前状态为保护检查点。</div>
@@ -84396,7 +84422,7 @@ function buildCheckpointDialogContent(checkpoints, readonly) {
 }
 
 },
-219: function(module, exports, __require, __externalRequire) {
+220: function(module, exports, __require, __externalRequire) {
 // /src/ui/contextMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84407,8 +84433,8 @@ const siyuan_1 = __externalRequire("siyuan");
 const layoutPresets_1 = __require(13);
 const themePresets_1 = __require(11);
 const projectControls_1 = __require(36);
-const nodeContentDialogs_1 = __require(220);
-const nodeContentMenu_1 = __require(225);
+const nodeContentDialogs_1 = __require(221);
+const nodeContentMenu_1 = __require(226);
 function openCanvasContextMenu(event, commands, options) {
     event.preventDefault();
     event.stopPropagation();
@@ -84606,7 +84632,7 @@ function openOutlineContextMenu(event, options) {
 }
 
 },
-220: function(module, exports, __require, __externalRequire) {
+221: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -84619,12 +84645,12 @@ exports.openImageDialog = openImageDialog;
 exports.openNoteDialog = openNoteDialog;
 exports.openCommentsDialog = openCommentsDialog;
 exports.showNodeActionUnavailable = showNodeActionUnavailable;
-const imageFileLoading_1 = __require(221);
+const imageFileLoading_1 = __require(222);
 const siyuan_1 = __externalRequire("siyuan");
-const nodeContentState_1 = __require(210);
-const dialogResize_1 = __require(222);
-const commentsPresentation_1 = __require(223);
-const inlineLink_1 = __require(224);
+const nodeContentState_1 = __require(211);
+const dialogResize_1 = __require(223);
+const commentsPresentation_1 = __require(224);
+const inlineLink_1 = __require(225);
 const nodeNoteState_1 = __require(200);
 const dialogChrome_1 = __require(26);
 function activeData(commands) {
@@ -85042,7 +85068,7 @@ function escapeAttribute(value) {
 }
 
 },
-221: function(module, exports, __require, __externalRequire) {
+222: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageFileLoading.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85060,7 +85086,7 @@ async function loadImageFileSelection(file, dependencies) {
 }
 
 },
-222: function(module, exports, __require, __externalRequire) {
+223: function(module, exports, __require, __externalRequire) {
 // /src/ui/dialogResize.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85127,7 +85153,7 @@ function bindDialogResize(handle, container) {
 }
 
 },
-223: function(module, exports, __require, __externalRequire) {
+224: function(module, exports, __require, __externalRequire) {
 // /src/ui/commentsPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85177,7 +85203,7 @@ function escapeAttribute(value) {
 }
 
 },
-224: function(module, exports, __require, __externalRequire) {
+225: function(module, exports, __require, __externalRequire) {
 // /src/editor/inlineLink.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85205,7 +85231,7 @@ function isSiyuanInlineLink(value) {
 }
 
 },
-225: function(module, exports, __require, __externalRequire) {
+226: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeContentMenu.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85213,7 +85239,7 @@ exports.NODE_CONTENT_MENU_LABELS = void 0;
 exports.createTodoMenuDescriptor = createTodoMenuDescriptor;
 exports.createSummaryMenuDescriptor = createSummaryMenuDescriptor;
 exports.createNodeMenuAvailability = createNodeMenuAvailability;
-const nodeContentState_1 = __require(210);
+const nodeContentState_1 = __require(211);
 exports.NODE_CONTENT_MENU_LABELS = [
     '添加待办',
     '删除待办',
@@ -85274,14 +85300,14 @@ function createNodeMenuAvailability(input) {
 }
 
 },
-226: function(module, exports, __require, __externalRequire) {
+227: function(module, exports, __require, __externalRequire) {
 // /src/ui/textToMapDialog.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.previewRowsHtml = previewRowsHtml;
 exports.openTextToMapDialog = openTextToMapDialog;
 const siyuan_1 = __externalRequire("siyuan");
-const outlineTreeImport_1 = __require(227);
+const outlineTreeImport_1 = __require(228);
 const dialogChrome_1 = __require(26);
 const MODES = [
     ['auto', '自动识别'],
@@ -85400,7 +85426,7 @@ function openTextToMapDialog(options) {
 }
 
 },
-227: function(module, exports, __require, __externalRequire) {
+228: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineTreeImport.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85410,7 +85436,7 @@ exports.repairImportedAutoWidthTree = repairImportedAutoWidthTree;
 exports.parseOutlineTreeText = parseOutlineTreeText;
 exports.applyOutlineImport = applyOutlineImport;
 const textEditingPolicy_1 = __require(24);
-const structuredOutlineDocument_1 = __require(228);
+const structuredOutlineDocument_1 = __require(229);
 exports.OUTLINE_IMPORT_WRAP_UNITS = 20;
 exports.OUTLINE_IMPORT_AUTO_WIDTH = 280;
 function outlineImportDisplayUnits(value) {
@@ -85768,7 +85794,7 @@ function applyOutlineImport(baseTree, targetUid, result, insertMode = 'append-un
 }
 
 },
-228: function(module, exports, __require, __externalRequire) {
+229: function(module, exports, __require, __externalRequire) {
 // /src/editor/structuredOutlineDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -85781,8 +85807,8 @@ exports.parseStructuredOutlinePaste = parseStructuredOutlinePaste;
 exports.serializeStructuredOutlineBlocks = serializeStructuredOutlineBlocks;
 exports.createStructuredOutlineUid = createStructuredOutlineUid;
 const sanitizeRichHtml_1 = __require(201);
-const outlineTextDocument_1 = __require(229);
-const outlineAccessories_1 = __require(230);
+const outlineTextDocument_1 = __require(230);
+const outlineAccessories_1 = __require(231);
 function cloneValue(value) {
     if (typeof structuredClone === 'function') {
         try {
@@ -86019,7 +86045,7 @@ function createStructuredOutlineUid() {
 }
 
 },
-229: function(module, exports, __require, __externalRequire) {
+230: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineTextDocument.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86408,7 +86434,7 @@ function insertOutlineNewline(value, selectionStart, selectionEnd) {
 }
 
 },
-230: function(module, exports, __require, __externalRequire) {
+231: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineAccessories.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86532,7 +86558,7 @@ function outlineAccessoriesHtml(accessories, pluginBaseUrl) {
 }
 
 },
-231: function(module, exports, __require, __externalRequire) {
+232: function(module, exports, __require, __externalRequire) {
 // /src/ui/richTextDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86540,7 +86566,7 @@ exports.CODE_LANGUAGES = void 0;
 exports.openInlineLinkDialog = openInlineLinkDialog;
 exports.openCodeBlockDialog = openCodeBlockDialog;
 const siyuan_1 = __externalRequire("siyuan");
-const inlineLink_1 = __require(224);
+const inlineLink_1 = __require(225);
 const dialogChrome_1 = __require(26);
 const CODE_LANGUAGES = [
     ['plain', '纯文本'],
@@ -86681,7 +86707,7 @@ function openCodeBlockDialog(commands, settings) {
 }
 
 },
-232: function(module, exports, __require, __externalRequire) {
+233: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorStats.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86714,7 +86740,7 @@ function calculateEditorStats(tree) {
 }
 
 },
-233: function(module, exports, __require, __externalRequire) {
+234: function(module, exports, __require, __externalRequire) {
 // /src/editor/editorTemplate.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86874,7 +86900,7 @@ function escapeHtml(value) {
 }
 
 },
-234: function(module, exports, __require, __externalRequire) {
+235: function(module, exports, __require, __externalRequire) {
 // /src/editor/outlineDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -86969,15 +86995,15 @@ function resolveOutlinePointerDropIntent(input) {
 }
 
 },
-235: function(module, exports, __require, __externalRequire) {
+236: function(module, exports, __require, __externalRequire) {
 // /src/editor/StructuredOutlineEditorController.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StructuredOutlineEditorController = void 0;
 const sanitizeRichHtml_1 = __require(201);
-const outlineTextDocument_1 = __require(229);
-const outlineAccessories_1 = __require(230);
-const structuredOutlineDocument_1 = __require(228);
+const outlineTextDocument_1 = __require(230);
+const outlineAccessories_1 = __require(231);
+const structuredOutlineDocument_1 = __require(229);
 const INDENT_SIZE = 22;
 const OUTLINE_IMAGE_SINGLE_CLICK_DELAY = 380;
 const PLAIN_INDENT = '    ';
@@ -89018,7 +89044,7 @@ function closestElement(node) {
 }
 
 },
-236: function(module, exports, __require, __externalRequire) {
+237: function(module, exports, __require, __externalRequire) {
 // /src/editor/splitPane.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89041,15 +89067,15 @@ function ratioFromPointer(rect, clientX) {
 }
 
 },
-237: function(module, exports, __require, __externalRequire) {
+238: function(module, exports, __require, __externalRequire) {
 // /src/editor/RichTextToolbar.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RichTextToolbar = void 0;
 const YeMindRichText_1 = __require(194);
-const richTextActions_1 = __require(238);
-const colorPresentation_1 = __require(239);
-const colorPalette_1 = __require(240);
+const richTextActions_1 = __require(239);
+const colorPresentation_1 = __require(240);
+const colorPalette_1 = __require(241);
 function option(value, label) {
     return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -89469,7 +89495,7 @@ class RichTextToolbar {
 exports.RichTextToolbar = RichTextToolbar;
 
 },
-238: function(module, exports, __require, __externalRequire) {
+239: function(module, exports, __require, __externalRequire) {
 // /src/editor/richTextActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89500,7 +89526,7 @@ function isClozeFormat(formatInfo) {
 }
 
 },
-239: function(module, exports, __require, __externalRequire) {
+240: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89567,7 +89593,7 @@ function presentColor(value) {
 }
 
 },
-240: function(module, exports, __require, __externalRequire) {
+241: function(module, exports, __require, __externalRequire) {
 // /src/editor/colorPalette.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89598,7 +89624,7 @@ function colorPaletteInnerHtml() {
 }
 
 },
-241: function(module, exports, __require, __externalRequire) {
+242: function(module, exports, __require, __externalRequire) {
 // /src/editor/selectionPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89659,7 +89685,7 @@ function shouldBlockRootDeleteShortcut(key, nodes) {
 }
 
 },
-242: function(module, exports, __require, __externalRequire) {
+243: function(module, exports, __require, __externalRequire) {
 // /src/editor/saveRevision.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89690,7 +89716,7 @@ class SaveRevisionTracker {
 exports.SaveRevisionTracker = SaveRevisionTracker;
 
 },
-243: function(module, exports, __require, __externalRequire) {
+244: function(module, exports, __require, __externalRequire) {
 // /src/editor/relationPresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89706,7 +89732,7 @@ function createRelationPresentation(input) {
 }
 
 },
-244: function(module, exports, __require, __externalRequire) {
+245: function(module, exports, __require, __externalRequire) {
 // /src/editor/outerFramePresentation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89765,7 +89791,7 @@ function createOuterFramePresentation(input) {
 }
 
 },
-245: function(module, exports, __require, __externalRequire) {
+246: function(module, exports, __require, __externalRequire) {
 // /src/editor/toolbarAvailability.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89787,12 +89813,12 @@ function createToolbarAvailability(input) {
 }
 
 },
-246: function(module, exports, __require, __externalRequire) {
+247: function(module, exports, __require, __externalRequire) {
 // /src/editor/linkNavigation.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolveLinkNavigation = resolveLinkNavigation;
-const inlineLink_1 = __require(224);
+const inlineLink_1 = __require(225);
 function resolveLinkNavigation(value, externalMode) {
     const href = (0, inlineLink_1.normalizeInlineLink)(value, true);
     if (!href)
@@ -89804,7 +89830,7 @@ function resolveLinkNavigation(value, externalMode) {
 }
 
 },
-247: function(module, exports, __require, __externalRequire) {
+248: function(module, exports, __require, __externalRequire) {
 // /src/plugin/visibleElement.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89869,7 +89895,7 @@ function waitForNonZeroSize(element, options = {}) {
 }
 
 },
-248: function(module, exports, __require, __externalRequire) {
+249: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeImageInput.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89930,7 +89956,7 @@ function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
 }
 
 },
-249: function(module, exports, __require, __externalRequire) {
+250: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeHoverPreview.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -89938,7 +89964,7 @@ exports.NodeHoverPreview = void 0;
 exports.computeHoverPreviewPlacement = computeHoverPreviewPlacement;
 exports.buildHoverPreviewHtml = buildHoverPreviewHtml;
 const sanitizeRichHtml_1 = __require(201);
-const commentsPresentation_1 = __require(223);
+const commentsPresentation_1 = __require(224);
 function escapeHtml(value) {
     return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
@@ -90194,7 +90220,7 @@ class NodeHoverPreview {
 exports.NodeHoverPreview = NodeHoverPreview;
 
 },
-250: function(module, exports, __require, __externalRequire) {
+251: function(module, exports, __require, __externalRequire) {
 // /src/ui/imageLightbox.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -90297,13 +90323,13 @@ class ImageLightbox {
 exports.ImageLightbox = ImageLightbox;
 
 },
-251: function(module, exports, __require, __externalRequire) {
+252: function(module, exports, __require, __externalRequire) {
 // /src/ui/nodeStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeStylePanel = void 0;
-const colorPalette_1 = __require(240);
-const colorPresentation_1 = __require(239);
+const colorPalette_1 = __require(241);
+const colorPresentation_1 = __require(240);
 const INPUT_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 function toInputValue(value) {
     return value === null || value === undefined ? '' : String(value);
@@ -90614,14 +90640,14 @@ class NodeStylePanel {
 exports.NodeStylePanel = NodeStylePanel;
 
 },
-252: function(module, exports, __require, __externalRequire) {
+253: function(module, exports, __require, __externalRequire) {
 // /src/ui/projectStylePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectStylePanel = void 0;
 const projectStyle_1 = __require(20);
-const colorPalette_1 = __require(240);
-const colorPresentation_1 = __require(239);
+const colorPalette_1 = __require(241);
+const colorPresentation_1 = __require(240);
 const colorSchemes_1 = __require(21);
 const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'];
 class ProjectStylePanel {
@@ -90922,7 +90948,7 @@ class ProjectStylePanel {
 exports.ProjectStylePanel = ProjectStylePanel;
 
 },
-253: function(module, exports, __require, __externalRequire) {
+254: function(module, exports, __require, __externalRequire) {
 // /src/ui/layoutGalleryPanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91020,7 +91046,7 @@ class LayoutGalleryPanel {
 exports.LayoutGalleryPanel = LayoutGalleryPanel;
 
 },
-254: function(module, exports, __require, __externalRequire) {
+255: function(module, exports, __require, __externalRequire) {
 // /src/ui/projectChoicePanel.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91029,6 +91055,7 @@ class ProjectChoicePanel {
     constructor(root, config) {
         this.root = root;
         this.config = config;
+        this.activeGroup = '';
         this.anchor = null;
         this.onDocumentMouseDown = (event) => {
             if (this.panel.hidden)
@@ -91040,7 +91067,17 @@ class ProjectChoicePanel {
         };
         this.onPanelClick = (event) => {
             event.stopPropagation();
-            const button = event.target.closest('[data-project-choice-value]');
+            const target = event.target;
+            const tab = target.closest('[data-project-choice-group]');
+            if (tab) {
+                const group = tab.dataset.projectChoiceGroup ?? '';
+                if (group && group !== this.activeGroup) {
+                    this.activeGroup = group;
+                    this.render();
+                }
+                return;
+            }
+            const button = target.closest('[data-project-choice-value]');
             if (!button || button.disabled || this.config.readonly())
                 return;
             const value = button.dataset.projectChoiceValue ?? '';
@@ -91054,6 +91091,8 @@ class ProjectChoicePanel {
         this.panel = root.querySelector(`[data-role="${config.role}"]`);
         this.body = this.panel.querySelector('[data-project-choice-body]');
         this.selected = config.selected;
+        this.activeGroup = this.groupForValue(config.selected) ?? this.groups()[0] ?? '';
+        this.panel.classList.toggle('is-palette', config.presentation === 'palette');
         this.panel.querySelector('[data-project-choice-action="close"]')?.addEventListener('click', () => this.hide());
         this.panel.addEventListener('click', this.onPanelClick);
         document.addEventListener('mousedown', this.onDocumentMouseDown, true);
@@ -91062,6 +91101,7 @@ class ProjectChoicePanel {
     isVisible() { return !this.panel.hidden; }
     setSelected(value) {
         this.selected = value;
+        this.activeGroup = this.groupForValue(value) ?? this.activeGroup;
         this.render();
     }
     refreshReadonly() { this.render(); }
@@ -91073,13 +91113,14 @@ class ProjectChoicePanel {
     }
     show(anchor) {
         this.anchor = anchor;
+        this.activeGroup = this.groupForValue(this.selected) ?? this.activeGroup;
         this.render();
         this.panel.hidden = false;
         anchor.classList.add('is-active');
         anchor.setAttribute('aria-expanded', 'true');
         const rootRect = this.root.getBoundingClientRect();
         const anchorRect = anchor.getBoundingClientRect();
-        const width = this.panel.offsetWidth || 260;
+        const width = this.panel.offsetWidth || (this.config.presentation === 'palette' ? 390 : 260);
         const height = this.panel.offsetHeight || 360;
         const left = Math.max(8, Math.min(anchorRect.left - rootRect.left, rootRect.width - width - 8));
         const below = anchorRect.bottom - rootRect.top + 6;
@@ -91099,7 +91140,75 @@ class ProjectChoicePanel {
         this.panel.removeEventListener('click', this.onPanelClick);
         this.panel.remove();
     }
+    groups() {
+        return [...new Set(this.config.options.map((option) => option.group ?? '').filter(Boolean))];
+    }
+    groupForValue(value) {
+        return this.config.options.find((option) => option.value === value)?.group ?? undefined;
+    }
     render() {
+        this.body.innerHTML = '';
+        if (this.config.presentation === 'palette')
+            this.renderPalette();
+        else
+            this.renderList();
+    }
+    renderPalette() {
+        const groups = this.groups();
+        if (!this.activeGroup || !groups.includes(this.activeGroup)) {
+            this.activeGroup = this.groupForValue(this.selected) ?? groups[0] ?? '';
+        }
+        const tabs = document.createElement('div');
+        tabs.className = 'ymz-project-choice-panel__tabs';
+        tabs.setAttribute('role', 'tablist');
+        tabs.setAttribute('aria-label', `${this.config.title}分类`);
+        groups.forEach((group) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `ymz-project-choice-panel__tab${group === this.activeGroup ? ' is-active' : ''}`;
+            button.dataset.projectChoiceGroup = group;
+            button.textContent = group;
+            button.setAttribute('role', 'tab');
+            button.setAttribute('aria-selected', String(group === this.activeGroup));
+            tabs.appendChild(button);
+        });
+        const grid = document.createElement('div');
+        grid.className = 'ymz-project-choice-panel__palette-grid';
+        grid.setAttribute('role', 'listbox');
+        grid.setAttribute('aria-label', `${this.activeGroup || this.config.title}主题`);
+        const options = this.config.options.filter((option) => (option.group ?? '') === this.activeGroup);
+        options.forEach((option) => {
+            const selected = option.value === this.selected;
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `ymz-project-choice-panel__palette-item${selected ? ' is-selected' : ''}`;
+            button.dataset.projectChoiceValue = option.value;
+            button.setAttribute('role', 'option');
+            button.setAttribute('aria-selected', String(selected));
+            button.setAttribute('aria-label', option.label);
+            button.disabled = this.config.readonly();
+            const label = document.createElement('strong');
+            label.className = 'ymz-project-choice-panel__palette-label';
+            label.textContent = option.label;
+            const strip = document.createElement('span');
+            strip.className = 'ymz-project-choice-panel__palette-strip';
+            strip.setAttribute('aria-hidden', 'true');
+            const colors = [...(option.previewColors ?? [])].slice(0, 6);
+            const fallback = colors[colors.length - 1] ?? option.previewColor ?? 'var(--b3-theme-primary)';
+            while (colors.length < 6)
+                colors.push(fallback);
+            colors.forEach((color) => {
+                const block = document.createElement('i');
+                block.className = 'ymz-project-choice-panel__palette-block';
+                block.style.backgroundColor = color;
+                strip.appendChild(block);
+            });
+            button.append(label, strip);
+            grid.appendChild(button);
+        });
+        this.body.append(tabs, grid);
+    }
+    renderList() {
         const groups = new Map();
         this.config.options.forEach((option) => {
             const key = option.group ?? '';
@@ -91107,7 +91216,6 @@ class ProjectChoicePanel {
             items.push(option);
             groups.set(key, items);
         });
-        this.body.innerHTML = '';
         groups.forEach((items, group) => {
             const section = document.createElement('section');
             section.className = 'ymz-project-choice-panel__group';
@@ -91158,7 +91266,7 @@ class ProjectChoicePanel {
 exports.ProjectChoicePanel = ProjectChoicePanel;
 
 },
-255: function(module, exports, __require, __externalRequire) {
+256: function(module, exports, __require, __externalRequire) {
 // /src/ui/localAssetDialogs.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91167,9 +91275,9 @@ exports.positionAssetDialog = positionAssetDialog;
 exports.openMarkerPicker = openMarkerPicker;
 exports.openClipartPicker = openClipartPicker;
 const localAssetCatalogs_1 = __require(15);
-const nodeContentState_1 = __require(210);
-const clipartGeometry_1 = __require(214);
-const anchoredPlacement_1 = __require(256);
+const nodeContentState_1 = __require(211);
+const clipartGeometry_1 = __require(215);
+const anchoredPlacement_1 = __require(257);
 const dialogChrome_1 = __require(26);
 function applyStyle(element, style) {
     Object.assign(element.style, style);
@@ -91177,7 +91285,7 @@ function applyStyle(element, style) {
 function selectedIcons(commands) {
     return (0, nodeContentState_1.normalizeStringList)(commands.getPrimaryNodeData()?.icon);
 }
-var anchoredPlacement_2 = __require(256);
+var anchoredPlacement_2 = __require(257);
 Object.defineProperty(exports, "computeAssetDialogPlacement", { enumerable: true, get: function () { return anchoredPlacement_2.computeAssetDialogPlacement; } });
 function positionAssetDialog(dialog, anchorRect) {
     if (!anchorRect)
@@ -91399,7 +91507,7 @@ function openClipartPicker(commands, options = {}) {
 }
 
 },
-256: function(module, exports, __require, __externalRequire) {
+257: function(module, exports, __require, __externalRequire) {
 // /src/ui/anchoredPlacement.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91460,7 +91568,7 @@ function computeAssetDialogPlacement(input) {
 }
 
 },
-257: function(module, exports, __require, __externalRequire) {
+258: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRichTextVisibility.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91497,7 +91605,7 @@ function synchronizeCanvasRichTextVisibility(map) {
 }
 
 },
-258: function(module, exports, __require, __externalRequire) {
+259: function(module, exports, __require, __externalRequire) {
 // /src/editor/searchPanelState.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91517,7 +91625,7 @@ function setSearchReplaceExpanded(panel, expanded) {
 }
 
 },
-259: function(module, exports, __require, __externalRequire) {
+260: function(module, exports, __require, __externalRequire) {
 // /src/core/appearanceTransaction.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91666,7 +91774,7 @@ function applyMapAppearanceTransaction(options) {
 }
 
 },
-260: function(module, exports, __require, __externalRequire) {
+261: function(module, exports, __require, __externalRequire) {
 // /src/editor/nodeQuickActions.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -91982,7 +92090,7 @@ class NodeQuickActionsController {
 exports.NodeQuickActionsController = NodeQuickActionsController;
 
 },
-261: function(module, exports, __require, __externalRequire) {
+262: function(module, exports, __require, __externalRequire) {
 // /src/editor/canvasRightDrag.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92161,7 +92269,7 @@ class CanvasRightDragController {
 exports.CanvasRightDragController = CanvasRightDragController;
 
 },
-262: function(module, exports, __require, __externalRequire) {
+263: function(module, exports, __require, __externalRequire) {
 // /src/editor/liveNodeWidthLayout.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92218,7 +92326,7 @@ class LiveNodeWidthLayoutController {
 exports.LiveNodeWidthLayoutController = LiveNodeWidthLayoutController;
 
 },
-263: function(module, exports, __require, __externalRequire) {
+264: function(module, exports, __require, __externalRequire) {
 // /src/editor/focusHighlight.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92283,7 +92391,7 @@ function scheduleFocusedNodeHighlight(renderer, uid, options = {}) {
 }
 
 },
-264: function(module, exports, __require, __externalRequire) {
+265: function(module, exports, __require, __externalRequire) {
 // /src/editor/editingSurfaceCoordinator.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92372,7 +92480,7 @@ class EditingSurfaceCoordinator {
 exports.EditingSurfaceCoordinator = EditingSurfaceCoordinator;
 
 },
-265: function(module, exports, __require, __externalRequire) {
+266: function(module, exports, __require, __externalRequire) {
 // /src/editor/ToolbarVisibilityController.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92486,7 +92594,7 @@ class ToolbarVisibilityController {
 exports.ToolbarVisibilityController = ToolbarVisibilityController;
 
 },
-266: function(module, exports, __require, __externalRequire) {
+267: function(module, exports, __require, __externalRequire) {
 // /src/editor/zoomPercent.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92504,7 +92612,7 @@ function parseZoomPercent(value, min, max) {
 }
 
 },
-267: function(module, exports, __require, __externalRequire) {
+268: function(module, exports, __require, __externalRequire) {
 // /src/editor/mapTitle.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92517,7 +92625,7 @@ function normalizeMapTitle(value) {
 }
 
 },
-268: function(module, exports, __require, __externalRequire) {
+269: function(module, exports, __require, __externalRequire) {
 // /src/editor/resourceActionPopover.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92605,7 +92713,7 @@ class ResourceActionPopover {
 exports.ResourceActionPopover = ResourceActionPopover;
 
 },
-269: function(module, exports, __require, __externalRequire) {
+270: function(module, exports, __require, __externalRequire) {
 // /src/plugin/deferredMount.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92627,7 +92735,7 @@ async function mountAfterReady(state, ready, resolveValue, mount, onError) {
 }
 
 },
-270: function(module, exports, __require, __externalRequire) {
+271: function(module, exports, __require, __externalRequire) {
 // /src/plugin/tabNodeFocus.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92651,7 +92759,7 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
 }
 
 },
-271: function(module, exports, __require, __externalRequire) {
+272: function(module, exports, __require, __externalRequire) {
 // /src/plugin/OpenMapTabRegistry.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92707,7 +92815,7 @@ class OpenMapTabRegistry {
 exports.OpenMapTabRegistry = OpenMapTabRegistry;
 
 },
-272: function(module, exports, __require, __externalRequire) {
+273: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginUrl.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92733,7 +92841,7 @@ function createYeMindMapUrl(mapId, pluginName) {
 }
 
 },
-273: function(module, exports, __require, __externalRequire) {
+274: function(module, exports, __require, __externalRequire) {
 // /src/plugin/operationSafety.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92749,7 +92857,7 @@ async function runSafeOperation(operation, onError) {
 }
 
 },
-274: function(module, exports, __require, __externalRequire) {
+275: function(module, exports, __require, __externalRequire) {
 // /src/plugin/pluginStartup.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -92776,7 +92884,7 @@ function initializePluginStartup(options) {
 }
 
 },
-275: function(module, exports, __require, __externalRequire) {
+276: function(module, exports, __require, __externalRequire) {
 // /src/plugin/globalSearch.ts
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });

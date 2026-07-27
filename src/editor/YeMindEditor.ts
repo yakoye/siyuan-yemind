@@ -14,6 +14,7 @@ import {
   YEMIND_THEME_PRESETS,
   type YeMindAppearance,
 } from "../core/themePresets";
+import { themePaletteColors } from './themeChoicePresentation';
 import { buildRelationOptions } from "../core/relationConfig";
 import { buildOuterFrameOptions } from "../core/outerFrameConfig";
 import { sanitizeAssociativeLines } from "../core/relationData";
@@ -838,7 +839,9 @@ export class YeMindEditor {
         group: preset.group,
         description: preset.description,
         previewColor: preset.light.colorAppearance.centerBackground,
+        previewColors: themePaletteColors(preset),
       })),
+      presentation: 'palette',
       selected: this.current.theme,
       readonly: () => Boolean(this.commands?.isReadonly()),
       onSelect: (value) => this.setTheme(value),

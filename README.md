@@ -2,8 +2,15 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.30`
+Current version: `0.9.31`
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.31 six-color Theme dropdown
+
+- Changes only the Theme dropdown presentation; theme definitions, IDs, categories, colors, application, persistence and map refresh behavior remain unchanged.
+- Uses the existing Basic, Colorful and Classic groups as tabs and opens the group containing the current theme.
+- Shows every theme as its name plus one six-block strip sourced from the existing first-level branch colors in a two-column card grid.
+- Light/dark host appearance changes panel chrome only; palette strips keep their actual colors, and the Line dropdown remains the existing list UI.
 
 ## v0.9.30 branch controls, full expansion and three-edge toolbars
 
