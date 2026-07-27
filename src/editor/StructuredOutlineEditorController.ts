@@ -1343,10 +1343,11 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
 
   private rowHtml(block: StructuredOutlineBlock): string {
     const leaf = !block.hasChildren;
+    const draggable = !block.isRoot && block.kind === 'node';
     const marker = block.hasChildren
       ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle contenteditable="false" tabindex="-1" aria-label="${block.expanded ? '折叠' : '展开'}"><span class="ymz-outline-row__triangle" data-direction="${block.expanded ? 'down' : 'right'}"></span></button>`
       : `<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" contenteditable="false" aria-hidden="true"><span class="ymz-outline-row__leaf-square"></span></span>`;
-    return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : 'false'}" data-outline-uid="${escapeHtml(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml(block.parentUid ?? '')}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${!block.isRoot && block.kind === 'node'}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" role="button" aria-label="拖动节点"><span class="ymz-outline-drag-grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></span><span class="ymz-outline-row__drop-indicator" contenteditable="false" aria-hidden="true"></span>${marker}${outlineAccessoriesHtml(block.accessories, this.options.pluginBaseUrl)}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${structuredOutlineIsRichHtml(block.html)}">${block.html}</div></div>`;
+    return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : 'false'}" data-outline-uid="${escapeHtml(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml(block.parentUid ?? '')}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${draggable}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" role="button" tabindex="${draggable ? '0' : '-1'}" aria-label="拖动节点"><span class="ymz-outline-drag-grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></span><span class="ymz-outline-row__drop-indicator" contenteditable="false" aria-hidden="true"></span>${marker}${outlineAccessoriesHtml(block.accessories, this.options.pluginBaseUrl)}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${structuredOutlineIsRichHtml(block.html)}">${block.html}</div></div>`;
   }
 
   private selectOutlineMedia(uid: string, kind: 'image' | 'clipart'): void {
@@ -1385,6 +1386,8 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     row.dataset.outlineExpanded = String(block.expanded);
     row.dataset.outlineDragSource = String(!block.isRoot && block.kind === 'node');
     row.style.setProperty('--ymz-outline-depth', String(block.depth));
+    const dragHandle = row.querySelector<HTMLElement>('[data-outline-drag-handle]');
+    if (dragHandle) dragHandle.tabIndex = !block.isRoot && block.kind === 'node' ? 0 : -1;
     let marker = row.querySelector<HTMLElement>('.ymz-outline-row__branch');
     if (block.hasChildren) {
       if (!(marker instanceof HTMLButtonElement)) {

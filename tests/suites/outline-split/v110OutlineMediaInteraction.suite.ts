@@ -8,7 +8,7 @@ const controller = readFileSync('src/editor/StructuredOutlineEditorController.ts
 describe('v1.1.0 compact outline drag and media selection', () => {
   it('removes the presentation gutter and exposes a six-dot drag handle', () => {
     expect(css).toContain('--ymz-outline-drag-width:16px');
-    expect(css).toMatch(/data-view="outline"[^\{]*\.ymz-outline\{padding-inline:8px/);
+    expect(css).toMatch(/data-view="outline"[^\{]*\.ymz-outline\{padding-inline:2px/);
     expect(controller).toContain('ymz-outline-drag-grip');
     expect(controller).toContain('aria-label="拖动节点"');
     expect(css).toContain('grid-template-columns:repeat(2,2px)');

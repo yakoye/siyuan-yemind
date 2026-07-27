@@ -2099,11 +2099,11 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
 @media(max-width:520px){.ymz-project-choice-panel.is-palette{width:min(330px,calc(100% - 16px))}.ymz-project-choice-panel__palette-grid{grid-template-columns:1fr}}
 
 /* v1.1.0 compact outline drag grip and selected media chrome */
-.ymz-editor[data-view="outline"] .ymz-outline{padding-inline:8px}
+.ymz-editor[data-view="outline"] .ymz-outline{padding-inline:2px}
 .ymz-outline-tree,
 .ymz-structured-outline{
   --ymz-outline-drag-width:16px;
-  --ymz-outline-row-start:2px;
+  --ymz-outline-row-start:0px;
 }
 
 /* v1.2.0 shared import/export panel */
@@ -2122,8 +2122,15 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
   display:grid;
   place-items:center;
   width:var(--ymz-outline-drag-width);
+  min-width:var(--ymz-outline-drag-width);
   flex:0 0 var(--ymz-outline-drag-width);
+  border-radius:6px;
+  outline:0;
   cursor:move;
+}
+.ymz-outline-row__drag:focus-visible{
+  outline:2px solid color-mix(in srgb,var(--ymz-accent) 58%,transparent);
+  outline-offset:-3px;
 }
 .ymz-outline-row__drag:active,
 .ymz-outline-row.is-dragging .ymz-outline-row__drag{cursor:grabbing}
@@ -2132,8 +2139,9 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
   grid-template-columns:repeat(2,2px);
   grid-template-rows:repeat(3,2px);
   gap:2px;
-  opacity:.26;
-  transition:opacity .14s ease,color .14s ease;
+  opacity:0;
+  transform:scale(.82);
+  transition:opacity .14s ease,color .14s ease,transform .14s ease;
   color:var(--ymz-outline-symbol-color);
   pointer-events:none;
 }
@@ -2144,9 +2152,9 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
   border-radius:50%;
   background:currentColor;
 }
-.ymz-outline-row:hover .ymz-outline-drag-grip,
-.ymz-outline-row.is-active .ymz-outline-drag-grip,
-.ymz-outline-row.is-dragging .ymz-outline-drag-grip{opacity:.9;color:var(--ymz-accent)}
+.ymz-outline-row__drag:hover .ymz-outline-drag-grip,
+.ymz-outline-row__drag:focus-visible .ymz-outline-drag-grip,
+.ymz-outline-row.is-dragging .ymz-outline-drag-grip{opacity:.9;transform:scale(1);color:var(--ymz-accent)}
 .ymz-outline-row[data-outline-drag-source="false"] .ymz-outline-drag-grip{visibility:hidden}
 
 .ymz-outline-accessories__image{position:relative;overflow:visible}

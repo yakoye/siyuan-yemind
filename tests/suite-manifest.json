@@ -241,7 +241,8 @@
     "v0926OutlineContentParity.suite.ts",
     "v0927OutlineAssetParity.suite.ts",
     "v0928OutlineDialogConsistency.suite.ts"
-    ,"v110OutlineMediaInteraction.suite.ts"
+    ,"v110OutlineMediaInteraction.suite.ts",
+    "v130OutlineDragGrip.suite.ts"
   ],
   "search-navigation": [
     "searchCommands.suite.ts",
