@@ -3,6 +3,9 @@ import { extname, resolve, sep } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 
 const assetRoot = resolve(__dirname, 'assets');
+const rootFiles = new Map([
+  ['/icon.png', resolve(__dirname, 'icon.png')],
+]);
 const assetMimeTypes: Record<string, string> = {
   '.gif': 'image/gif',
   '.jpeg': 'image/jpeg',
@@ -18,6 +21,21 @@ function serveWorkspaceAssets(): Plugin {
     name: 'yemind-workspace-assets',
     apply: 'serve',
     configureServer(server) {
+      server.middlewares.use(async (request, response, next) => {
+        const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
+        const file = rootFiles.get(pathname);
+        if (!file) {
+          next();
+          return;
+        }
+        try {
+          response.statusCode = 200;
+          response.setHeader('Content-Type', assetMimeTypes[extname(file).toLowerCase()] ?? 'application/octet-stream');
+          response.end(await readFile(file));
+        } catch {
+          next();
+        }
+      });
       server.middlewares.use('/assets', async (request, response, next) => {
         try {
           const pathname = decodeURIComponent(new URL(request.url ?? '/', 'http://localhost').pathname)

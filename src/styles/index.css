@@ -2013,7 +2013,7 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
 .ymz-editor[data-leftbar-visible="true"] .ymz-leftbar{opacity:1;pointer-events:auto}
 .ymz-toolbar-edge{
   position:absolute;
-  z-index:29;
+  z-index:90;
   display:none;
   place-items:center;
   width:28px;

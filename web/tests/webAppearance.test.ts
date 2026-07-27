@@ -18,5 +18,6 @@ describe('standalone web appearance styles', () => {
     expect(css).toMatch(/\.ymw-menu\{[^}]*background:var\(--b3-theme-surface\)/s);
     expect(css).toMatch(/:focus-visible\{[^}]*outline:/s);
     expect(css).toMatch(/\.ymw-sidebar-toggle\{[^}]*background:var\(--b3-theme-surface\)/s);
+    expect(css).toMatch(/@media\(max-width:760px\)[\s\S]*\.ymw-sidebar-toggle\{[^}]*z-index:90/s);
   });
 });

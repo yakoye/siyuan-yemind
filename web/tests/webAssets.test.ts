@@ -30,8 +30,13 @@ describe('standalone web fixed assets', () => {
     expect(existsSync(path.join(root, 'icon.png'))).toBe(true);
     expect(readFileSync(path.join(root, 'web/VERSION'), 'utf8').trim()).toBe('1.2.0');
     const copyScript = readFileSync(path.join(root, 'scripts/copy-web-assets.mjs'), 'utf8');
+    const viteConfig = readFileSync(path.join(root, 'vite.web.config.ts'), 'utf8');
+    const webHtml = readFileSync(path.join(root, 'web/index.html'), 'utf8');
     expect(copyScript).toContain("path.join(root, 'assets')");
     expect(copyScript).toContain("path.join(root, 'icon.png')");
     expect(copyScript).toContain("path.join(root, 'web', 'VERSION')");
+    expect(viteConfig).toContain("'/icon.png'");
+    expect(viteConfig).toContain("resolve(__dirname, 'icon.png')");
+    expect(webHtml).toContain('<link rel="icon" href="./icon.png"');
   });
 });

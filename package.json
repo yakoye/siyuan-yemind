@@ -21,6 +21,7 @@
     "pretest:watch": "npm run generate:theme-colors",
     "test:watch": "vitest",
     "test:web": "vitest run --config vitest.web.config.ts",
+    "test:e2e": "playwright test",
     "test:structure": "node scripts/check-test-structure.mjs",
     "test:syntax": "node scripts/check-typescript-syntax.mjs",
     "test:offline": "node scripts/run-offline-smokes.mjs",
@@ -36,6 +37,7 @@
     "simple-mind-map": "file:vendor/simple-mind-map-runtime"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "@types/node": "^22.0.0",
     "jsdom": "^26.1.0",
     "typescript": "^5.7.0",

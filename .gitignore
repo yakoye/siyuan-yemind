@@ -5,4 +5,7 @@ dist/
 .superpowers/
 web-dist/
 index.js.map
+output/playwright/
+test-results/
+playwright-report/
 .DS_Store
