@@ -101,7 +101,7 @@ import { setSearchReplaceExpanded } from "./searchPanelState";
 import { normalizeProjectStyle, resolveProjectAppearance } from "./projectStyle";
 import { applyMapAppearanceTransaction } from "../core/appearanceTransaction";
 import { NodeQuickActionsController } from "./nodeQuickActions";
-import { canvasModeIcon, lineStyleIcon, lockIcon, pinIcon } from "./projectControls";
+import { appearanceIcon, canvasModeIcon, lineStyleIcon, lockIcon, pinIcon } from "./projectControls";
 import { normalizeNodeNote } from "../content/nodeNoteState";
 import { createTodoMenuDescriptor } from "../ui/nodeContentMenu";
 import { CanvasRightDragController } from "./canvasRightDrag";
@@ -1201,6 +1201,9 @@ export class YeMindEditor {
           button.blur();
           void this.toggleToolbarsPinned();
           break;
+        case "cycle-appearance":
+          void this.cycleAppearanceMode();
+          break;
         case "fullscreen":
           void this.toggleFullscreen();
           break;
@@ -1901,6 +1904,7 @@ export class YeMindEditor {
     this.applyingSettings = true;
     this.settings = settings;
     this.appearanceController?.setMode(settings.appearanceMode);
+    this.updateAppearancePresentation();
     this.toolbarVisibility?.setPinned(settings.toolbarsPinned);
     this.updateToolbarPinPresentation();
     this.richTextToolbar?.setEnabled(
@@ -2209,6 +2213,33 @@ export class YeMindEditor {
         const icon = button.querySelector<HTMLElement>('[data-role="canvas-mode-icon"]');
         if (icon) icon.innerHTML = canvasModeIcon(this.settings.canvasMode);
       });
+  }
+
+  private updateAppearancePresentation(): void {
+    const labels = {
+      system: '当前跟随系统；切换为明亮外观',
+      light: '当前明亮外观；切换为暗黑外观',
+      dark: '当前暗黑外观；切换为跟随系统',
+    } as const;
+    this.rootEl
+      .querySelectorAll<HTMLElement>('[data-action="cycle-appearance"]')
+      .forEach((button) => {
+        button.innerHTML = appearanceIcon(this.settings.appearanceMode);
+        button.title = labels[this.settings.appearanceMode];
+        button.setAttribute('aria-label', labels[this.settings.appearanceMode]);
+      });
+  }
+
+  private async cycleAppearanceMode(): Promise<void> {
+    const order = ['system', 'light', 'dark'] as const;
+    const current = order.indexOf(this.settings.appearanceMode);
+    const next = order[(current + 1) % order.length];
+    try {
+      await this.options.settingsStore.update({ appearanceMode: next });
+    } catch (error) {
+      console.error('[YeMind] appearance mode save failed', error);
+      showMessage('界面外观保存失败，请重试', 4000, 'error');
+    }
   }
 
   private setViewMode(mode: ViewMode): void {

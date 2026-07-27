@@ -58,9 +58,9 @@ describe('v0.9.21 source SVG, flat asset dialog and checkpoint polish', () => {
     expect(clipboardIcon('copy')).toContain('currentColor');
   });
 
-  it('shows the mode reached after clicking the footer mode button', () => {
-    expect(canvasModeIcon('select')).toContain('ymz-icon-canvas-pan');
-    expect(canvasModeIcon('pan')).toContain('ymz-icon-canvas-select');
+  it('shows the current footer canvas mode', () => {
+    expect(canvasModeIcon('select')).toContain('ymz-icon-canvas-select');
+    expect(canvasModeIcon('pan')).toContain('ymz-icon-canvas-pan');
   });
 
   it('renders marker icons continuously in one fixed dialog without group headings or item cards', () => {

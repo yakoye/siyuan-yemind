@@ -1,14 +1,14 @@
 import { normalizeLineStyle, themeOptionsHtml } from '../core/themePresets';
 import { layoutOptionsHtml } from '../core/layoutPresets';
 import { rainbowSchemeOptionsHtml } from '../core/colorSchemes';
-import { canvasModeIcon, fitViewIcon, fullscreenIcon, historyIcon, lineStyleIcon, lockIcon, meditationIcon, pinIcon, projectControlIcon, projectStyleIcon, redoIcon, searchIcon, undoIcon } from './projectControls';
+import { appearanceIcon, canvasModeIcon, fitViewIcon, fullscreenIcon, helpIcon, historyIcon, lineStyleIcon, lockIcon, meditationIcon, pinIcon, projectControlIcon, projectStyleIcon, redoIcon, searchIcon, transferIcon, undoIcon, zoomIcon } from './projectControls';
 import { EXPORT_FORMATS, IMPORT_ACCEPT } from '../transfer/formatCatalog';
 export function createEditorTemplate(title: string, theme: unknown = 'yemind-default', lineStyle: unknown = 'curve'): string {
   return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map" data-toolbars-pinned="true" data-topbar-visible="true" data-statusbar-visible="true" data-leftbar-visible="true">
       <div class="ymz-canvas-wrap">
         <div class="ymz-floating ymz-topbar" role="toolbar" aria-label="YeMind 工具栏">
-          <button class="ymz-brand" data-action="fit" title="适配视图">YeMind</button>
+          <span class="ymz-brand" aria-label="YeMind">YeMind</span>
           <span class="ymz-separator"></span>
           <button class="is-active" data-action="view-map">导图</button>
           <button data-action="view-split">分屏</button>
@@ -37,8 +37,8 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
           </select>
           <button class="ymz-project-control ymz-project-button" data-action="project-style" title="整图样式">${projectStyleIcon()}<span>样式</span></button>
           <span class="ymz-separator"></span>
-          <button data-action="import-file" title="导入导图文件">导入</button>
-          <button data-action="export-file" title="导出当前导图">导出</button>
+          <button class="ymz-transfer-action" data-action="import-file" title="导入导图文件" aria-label="导入导图文件">${transferIcon('import')}<span>导入</span></button>
+          <button class="ymz-transfer-action" data-action="export-file" title="导出当前导图" aria-label="导出当前导图">${transferIcon('export')}<span>导出</span></button>
           <span class="ymz-save-state" data-role="save-state">已保存</span>
         </div>
 
@@ -146,11 +146,12 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
           <button class="ymz-icon-button" data-action="readonly" title="进入只读模式" aria-label="进入只读模式" aria-pressed="false">${lockIcon(false)}</button>
           <button class="ymz-icon-button" data-action="zen" title="禅模式" aria-label="禅模式">${meditationIcon()}</button>
           <button class="ymz-icon-button ymz-toolbar-pin" data-action="toggle-toolbar-pin" title="工具栏已固定" aria-label="工具栏已固定" aria-pressed="true">${pinIcon(true)}</button>
-          <button data-action="zoom-out" title="缩小">−</button>
+          <button class="ymz-icon-button" data-action="cycle-appearance" title="当前跟随系统；切换为明亮外观" aria-label="当前跟随系统；切换为明亮外观">${appearanceIcon('system')}</button>
+          <button class="ymz-icon-button" data-action="zoom-out" title="缩小" aria-label="缩小">${zoomIcon('out')}</button>
           <input class="ymz-zoom" data-role="zoom" value="100%" inputmode="decimal" aria-label="缩放百分比" title="点击输入缩放百分比">
-          <button data-action="zoom-in" title="放大">＋</button>
+          <button class="ymz-icon-button" data-action="zoom-in" title="放大" aria-label="放大">${zoomIcon('in')}</button>
           <button class="ymz-icon-button" data-action="fullscreen" title="全屏" aria-label="全屏">${fullscreenIcon()}</button>
-          <button data-action="help" title="帮助">?</button>
+          <button class="ymz-icon-button" data-action="help" title="帮助" aria-label="帮助">${helpIcon()}</button>
         </div>
         <button type="button" class="ymz-toolbar-edge ymz-toolbar-edge--top" data-toolbar-edge="top" aria-label="显示顶部工具栏"><span aria-hidden="true"></span></button>
         <button type="button" class="ymz-toolbar-edge ymz-toolbar-edge--left" data-toolbar-edge="left" aria-label="显示左侧工具栏"><span aria-hidden="true"></span></button>
