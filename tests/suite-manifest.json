@@ -157,7 +157,8 @@
     "isolatedLifecycleProbe.suite.ts",
     "selfCheckOutline.suite.ts",
     "v0517Diagnostics.suite.ts",
-    "v070AboutDiagnostics.suite.ts"
+    "v070AboutDiagnostics.suite.ts",
+    "runtimeSync.suite.ts"
   ],
   "drag-interactions": [
     "dragBehavior.suite.ts",

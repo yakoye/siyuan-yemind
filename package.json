@@ -19,7 +19,8 @@
     "test:structure": "node scripts/check-test-structure.mjs",
     "test:syntax": "node scripts/check-typescript-syntax.mjs",
     "test:offline": "node scripts/run-offline-smokes.mjs",
-    "verify:assets": "node scripts/verify-yemind-assets.mjs"
+    "verify:assets": "node scripts/verify-yemind-assets.mjs",
+    "sync:runtime": "node scripts/sync-runtime.mjs --target D:\\myDatabase\\SiYuan\\data\\plugins\\siyuan-yemind"
   },
   "dependencies": {
     "jszip": "^3.10.1",
