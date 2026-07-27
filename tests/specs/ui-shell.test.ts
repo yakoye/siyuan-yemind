@@ -34,3 +34,4 @@ import '../suites/ui-shell/v0930ContextMenuContracts.suite';
 import '../suites/ui-shell/v0930ToolbarStateIcons.suite';
 import '../suites/ui-shell/v110LayoutGeometry.suite';
 import '../suites/ui-shell/v120TransferUi.suite';
+import '../suites/ui-shell/v130IndependentToolbars.suite';

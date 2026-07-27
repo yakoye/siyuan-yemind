@@ -152,6 +152,9 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
           <button class="ymz-icon-button" data-action="fullscreen" title="全屏" aria-label="全屏">${fullscreenIcon()}</button>
           <button data-action="help" title="帮助">?</button>
         </div>
+        <button type="button" class="ymz-toolbar-edge ymz-toolbar-edge--top" data-toolbar-edge="top" aria-label="显示顶部工具栏"><span aria-hidden="true"></span></button>
+        <button type="button" class="ymz-toolbar-edge ymz-toolbar-edge--left" data-toolbar-edge="left" aria-label="显示左侧工具栏"><span aria-hidden="true"></span></button>
+        <button type="button" class="ymz-toolbar-edge ymz-toolbar-edge--bottom" data-toolbar-edge="bottom" aria-label="显示底部工具栏"><span aria-hidden="true"></span></button>
       </div>
     </div>`;
 }
