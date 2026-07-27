@@ -4,6 +4,7 @@ dist/
 .worktrees/
 .superpowers/
 web-dist/
+/release/
 index.js.map
 output/playwright/
 test-results/
