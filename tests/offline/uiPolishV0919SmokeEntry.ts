@@ -53,8 +53,8 @@ assert(undoIcon().includes('ymz-icon-undo') && undoIcon().includes('data:image/s
 assert(redoIcon().includes('ymz-icon-redo') && redoIcon().includes('data:image/svg+xml;base64,'), 'redo must preserve the exact supplied source document');
 assert(searchIcon().includes('ymz-icon-search') && searchIcon().startsWith('<span '), 'search must use the fixed isolated supplied source SVG slot');
 assert(suppliedIconSourceNames.insertParent.includes('插入父节点图标'), 'supplied icons must retain source traceability');
-assert(canvasModeIcon('select').includes('ymz-icon-canvas-pan'), 'canvas mode button must show the action after click');
-assert(canvasModeIcon('pan').includes('ymz-icon-canvas-select'), 'canvas mode button must reverse the current mode icon');
+assert(canvasModeIcon('select').includes('ymz-icon-canvas-select'), 'canvas mode button must show the current select state');
+assert(canvasModeIcon('pan').includes('ymz-icon-canvas-pan'), 'canvas mode button must show the current pan state');
 
 const parentIndex = contextMenuSource.indexOf("label: '插入上级节点'");
 const siblingIndex = contextMenuSource.indexOf("label: '插入同级节点'");

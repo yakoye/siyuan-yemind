@@ -2011,6 +2011,32 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
 }
 .ymz-editor[data-toolbars-pinned="true"] .ymz-leftbar,
 .ymz-editor[data-leftbar-visible="true"] .ymz-leftbar{opacity:1;pointer-events:auto}
+.ymz-toolbar-edge{
+  position:absolute;
+  z-index:90;
+  display:none;
+  place-items:center;
+  width:28px;
+  height:16px;
+  padding:0;
+  border:1px solid color-mix(in srgb,var(--b3-theme-primary) 42%,var(--ymz-border));
+  border-radius:999px;
+  background:color-mix(in srgb,var(--ymz-panel) 92%,transparent);
+  color:var(--b3-theme-primary);
+  box-shadow:0 3px 12px color-mix(in srgb,var(--b3-theme-on-background) 13%,transparent);
+  cursor:pointer;
+  opacity:.72;
+  transition:opacity .16s ease,transform .16s ease;
+}
+.ymz-toolbar-edge span{width:10px;height:2px;border-radius:2px;background:currentColor}
+.ymz-toolbar-edge:hover,.ymz-toolbar-edge:focus-visible{opacity:1;outline:2px solid color-mix(in srgb,var(--b3-theme-primary) 38%,transparent);outline-offset:2px}
+.ymz-toolbar-edge--top{top:2px;left:50%;transform:translateX(-50%)}
+.ymz-toolbar-edge--left{top:50%;left:2px;transform:translateY(-50%) rotate(90deg)}
+.ymz-toolbar-edge--bottom{bottom:2px;left:50%;transform:translateX(-50%)}
+.ymz-editor[data-toolbars-pinned="false"][data-topbar-visible="false"] .ymz-toolbar-edge--top,
+.ymz-editor[data-toolbars-pinned="false"][data-leftbar-visible="false"] .ymz-toolbar-edge--left,
+.ymz-editor[data-toolbars-pinned="false"][data-statusbar-visible="false"] .ymz-toolbar-edge--bottom{display:grid}
+.ymz-editor[data-zen="true"] .ymz-toolbar-edge{display:none!important}
 .ymz-toolbar-pin[aria-pressed="true"]{
   color:var(--b3-theme-primary);
   background:var(--b3-theme-primary-lightest,color-mix(in srgb,var(--b3-theme-primary) 14%,transparent));
@@ -2073,11 +2099,11 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
 @media(max-width:520px){.ymz-project-choice-panel.is-palette{width:min(330px,calc(100% - 16px))}.ymz-project-choice-panel__palette-grid{grid-template-columns:1fr}}
 
 /* v1.1.0 compact outline drag grip and selected media chrome */
-.ymz-editor[data-view="outline"] .ymz-outline{padding-inline:8px}
+.ymz-editor[data-view="outline"] .ymz-outline{padding-inline:2px}
 .ymz-outline-tree,
 .ymz-structured-outline{
   --ymz-outline-drag-width:16px;
-  --ymz-outline-row-start:2px;
+  --ymz-outline-row-start:0px;
 }
 
 /* v1.2.0 shared import/export panel */
@@ -2096,8 +2122,15 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
   display:grid;
   place-items:center;
   width:var(--ymz-outline-drag-width);
+  min-width:var(--ymz-outline-drag-width);
   flex:0 0 var(--ymz-outline-drag-width);
+  border-radius:6px;
+  outline:0;
   cursor:move;
+}
+.ymz-outline-row__drag:focus-visible{
+  outline:2px solid color-mix(in srgb,var(--ymz-accent) 58%,transparent);
+  outline-offset:-3px;
 }
 .ymz-outline-row__drag:active,
 .ymz-outline-row.is-dragging .ymz-outline-row__drag{cursor:grabbing}
@@ -2106,8 +2139,9 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
   grid-template-columns:repeat(2,2px);
   grid-template-rows:repeat(3,2px);
   gap:2px;
-  opacity:.26;
-  transition:opacity .14s ease,color .14s ease;
+  opacity:0;
+  transform:scale(.82);
+  transition:opacity .14s ease,color .14s ease,transform .14s ease;
   color:var(--ymz-outline-symbol-color);
   pointer-events:none;
 }
@@ -2118,9 +2152,9 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
   border-radius:50%;
   background:currentColor;
 }
-.ymz-outline-row:hover .ymz-outline-drag-grip,
-.ymz-outline-row.is-active .ymz-outline-drag-grip,
-.ymz-outline-row.is-dragging .ymz-outline-drag-grip{opacity:.9;color:var(--ymz-accent)}
+.ymz-outline-row__drag:hover .ymz-outline-drag-grip,
+.ymz-outline-row__drag:focus-visible .ymz-outline-drag-grip,
+.ymz-outline-row.is-dragging .ymz-outline-drag-grip{opacity:.9;transform:scale(1);color:var(--ymz-accent)}
 .ymz-outline-row[data-outline-drag-source="false"] .ymz-outline-drag-grip{visibility:hidden}
 
 .ymz-outline-accessories__image{position:relative;overflow:visible}

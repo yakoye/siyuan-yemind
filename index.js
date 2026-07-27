@@ -6751,7 +6751,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.2.0";
+const PLUGIN_VERSION = "1.3.0";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -6759,16 +6759,16 @@ const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-27T04:40:00Z",
-  buildId: "yemind-v1.2.0-20260727",
+  buildTime: "2026-07-27T06:30:22.700Z",
+  buildId: "yemind-v1.3.0-20260727",
   productName: PRODUCT_NAME,
   hostBaseline: "SiYuan 3.7.3",
-  releaseSummary: "新增插件版与网页版共用的多格式导入导出，并提供可恢复的 YeMind SVG/ZIP/PNG 包。",
+  releaseSummary: "统一思源插件与独立网页版，完成结构、编辑、外观、导入导出和发布链路的稳定性整理。",
   highlights: [
-    "默认导出 .yemind.svg：普通 SVG 软件可预览，YeMind 可无损恢复完整导图。",
-    "支持 SVG 包、KMindz、ZIP、Markdown、OPML、XMind、PNG、Text、HTML 和 PDF。",
-    "自动识别 KMindZ、SVG、PNG、ZIP、XMind、旧 KMind/JSON 以及 MD/OPML/TXT/MM 大纲。",
-    "思源插件与独立网页版共用实时画布导出和导入解析流程。"
+    "思源插件与独立网页版共用编辑器、数据模型、导入导出和交互实现。",
+    "回归 28 种结构、导图和大纲编辑拖动、附件、关联线、明暗主题与响应式工具栏。",
+    "修复导图和大纲的选区工具栏、模糊切换、编辑及删除等连续操作。",
+    "提供双端 ZIP、发布清单、SHA-256 校验、CI、GitHub Release 和 Pages 自动部署。"
   ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -6975,6 +6975,12 @@ function isEditableTarget(target) {
   if (target.isContentEditable || target.contentEditable === "true" || target.closest('[contenteditable="true"], [contenteditable=""], .ql-editor')) return true;
   return false;
 }
+function normalizeAppearanceMode(value) {
+  return value === "light" || value === "dark" ? value : "system";
+}
+function resolveAppearance(mode, systemDark) {
+  return mode === "system" ? systemDark ? "dark" : "light" : mode;
+}
 const DEFAULT_SHORTCUTS = {
   search: "Ctrl+f / Cmd+f",
   toggleZen: "Ctrl+Alt+z / Cmd+Alt+z",
@@ -6989,6 +6995,7 @@ const DEFAULT_SHORTCUTS = {
   relation: "Ctrl+Alt+l / Cmd+Alt+l"
 };
 const DEFAULT_SETTINGS = {
+  appearanceMode: "system",
   defaultLayout: "logicalStructure",
   canvasMode: "select",
   wheelMode: "pan",
@@ -7073,6 +7080,7 @@ function normalizeSettings(value) {
   const minZoomRatio = numberInRange(value.minZoomRatio, DEFAULT_SETTINGS.minZoomRatio, 5, 100);
   const maxZoomRatio = Math.max(minZoomRatio, numberInRange(value.maxZoomRatio, DEFAULT_SETTINGS.maxZoomRatio, 100, 1e3));
   return {
+    appearanceMode: normalizeAppearanceMode(value.appearanceMode),
     defaultLayout: LAYOUTS.has(value.defaultLayout) ? value.defaultLayout : DEFAULT_SETTINGS.defaultLayout,
     canvasMode: CANVAS_MODES.has(value.canvasMode) ? value.canvasMode : DEFAULT_SETTINGS.canvasMode,
     wheelMode: WHEEL_MODES.has(value.wheelMode) ? value.wheelMode : DEFAULT_SETTINGS.wheelMode,
@@ -7258,9 +7266,29 @@ function fitViewIcon() {
 }
 function canvasModeIcon(mode) {
   if (mode === "select") {
-    return '<svg class="ymz-toolbar-icon ymz-icon-canvas-pan" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.4 11.2V7.8a1.5 1.5 0 0 1 3 0v2.6-4.1a1.5 1.5 0 0 1 3 0v4.1-3.1a1.5 1.5 0 0 1 3 0v4.1-1.9a1.5 1.5 0 0 1 3 0v5.1c0 4.1-2.8 6.4-6.6 6.4h-1.1c-2.5 0-4.1-1.1-5.4-3l-2.2-3.2a1.6 1.6 0 0 1 .4-2.2 1.7 1.7 0 0 1 2.2.3l.7.9v-2.6Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    return '<svg class="ymz-toolbar-icon ymz-icon-canvas-select" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 12.7 9.1-5.6 1.1 3.2 5.4-2.6 1.5-3.1-5.3L6 19.1 5 3Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   }
-  return '<svg class="ymz-toolbar-icon ymz-icon-canvas-select" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 12.7 9.1-5.6 1.1 3.2 5.4-2.6 1.5-3.1-5.3L6 19.1 5 3Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  return '<svg class="ymz-toolbar-icon ymz-icon-canvas-pan" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.4 11.2V7.8a1.5 1.5 0 0 1 3 0v2.6-4.1a1.5 1.5 0 0 1 3 0v4.1-3.1a1.5 1.5 0 0 1 3 0v4.1-1.9a1.5 1.5 0 0 1 3 0v5.1c0 4.1-2.8 6.4-6.6 6.4h-1.1c-2.5 0-4.1-1.1-5.4-3l-2.2-3.2a1.6 1.6 0 0 1 .4-2.2 1.7 1.7 0 0 1 2.2.3l.7.9v-2.6Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+function appearanceIcon(mode) {
+  if (mode === "light") {
+    return '<svg class="ymz-toolbar-icon ymz-icon-appearance-light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+  }
+  if (mode === "dark") {
+    return '<svg class="ymz-toolbar-icon ymz-icon-appearance-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.8 15.2A8 8 0 0 1 8.8 4.2 8.1 8.1 0 1 0 19.8 15.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';
+  }
+  return '<svg class="ymz-toolbar-icon ymz-icon-appearance-system" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 21h8M12 17v4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7 10.5h3M8.5 9v3M15.5 8.7v3.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+}
+function transferIcon(kind) {
+  const arrow = kind === "import" ? "M12 4v10m-4-4 4 4 4-4" : "M12 14V4m-4 4 4-4 4 4";
+  return `<svg class="ymz-toolbar-icon ymz-icon-transfer ymz-icon-transfer--${kind}" viewBox="0 0 24 24" aria-hidden="true"><path d="${arrow}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 14v5h14v-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function zoomIcon(kind) {
+  const vertical = kind === "in" ? '<path d="M12 8v8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>' : "";
+  return `<svg class="ymz-toolbar-icon ymz-icon-zoom ymz-icon-zoom--${kind}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 12h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>${vertical}<path d="m16 16 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
+}
+function helpIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-help" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9.7 9a2.5 2.5 0 1 1 3.3 2.4c-.8.3-1 1-1 1.8v.3M12 17.5h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
 }
 function clipboardIcon(kind) {
   const base = 'class="ymz-menu-icon';
@@ -7427,6 +7455,11 @@ function createSettingsDialogTemplate(settings) {
       <section class="ymz-settings-page" data-settings-panel="general">
         <header><h2>常规</h2><p>修改后点击保存，将应用到所有已打开的 YeMind 标签页。</p></header>
         <div class="ymz-settings-group"><h3>默认视图模式</h3>
+          ${selectRow("界面外观", "控制工具栏、面板和网页外壳；不会改变导图节点配色。", "appearanceMode", [
+    option$1("system", "跟随系统或思源", settings.appearanceMode),
+    option$1("light", "明亮", settings.appearanceMode),
+    option$1("dark", "暗黑", settings.appearanceMode)
+  ].join(""))}
           ${selectRow("默认视图", "新打开导图时使用导图、大纲或分屏。", "defaultViewMode", [
     option$1("map", "导图", settings.defaultViewMode),
     option$1("split", "分屏", settings.defaultViewMode),
@@ -84260,7 +84293,7 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map" data-toolbars-pinned="true" data-topbar-visible="true" data-statusbar-visible="true" data-leftbar-visible="true">
       <div class="ymz-canvas-wrap">
         <div class="ymz-floating ymz-topbar" role="toolbar" aria-label="YeMind 工具栏">
-          <button class="ymz-brand" data-action="fit" title="适配视图">YeMind</button>
+          <span class="ymz-brand" aria-label="YeMind">YeMind</span>
           <span class="ymz-separator"></span>
           <button class="is-active" data-action="view-map">导图</button>
           <button data-action="view-split">分屏</button>
@@ -84289,8 +84322,8 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
           </select>
           <button class="ymz-project-control ymz-project-button" data-action="project-style" title="整图样式">${projectStyleIcon()}<span>样式</span></button>
           <span class="ymz-separator"></span>
-          <button data-action="import-file" title="导入导图文件">导入</button>
-          <button data-action="export-file" title="导出当前导图">导出</button>
+          <button class="ymz-transfer-action" data-action="import-file" title="导入导图文件" aria-label="导入导图文件">${transferIcon("import")}<span>导入</span></button>
+          <button class="ymz-transfer-action" data-action="export-file" title="导出当前导图" aria-label="导出当前导图">${transferIcon("export")}<span>导出</span></button>
           <span class="ymz-save-state" data-role="save-state">已保存</span>
         </div>
 
@@ -84398,12 +84431,16 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
           <button class="ymz-icon-button" data-action="readonly" title="进入只读模式" aria-label="进入只读模式" aria-pressed="false">${lockIcon(false)}</button>
           <button class="ymz-icon-button" data-action="zen" title="禅模式" aria-label="禅模式">${meditationIcon()}</button>
           <button class="ymz-icon-button ymz-toolbar-pin" data-action="toggle-toolbar-pin" title="工具栏已固定" aria-label="工具栏已固定" aria-pressed="true">${pinIcon(true)}</button>
-          <button data-action="zoom-out" title="缩小">−</button>
+          <button class="ymz-icon-button" data-action="cycle-appearance" title="当前跟随系统；切换为明亮外观" aria-label="当前跟随系统；切换为明亮外观">${appearanceIcon("system")}</button>
+          <button class="ymz-icon-button" data-action="zoom-out" title="缩小" aria-label="缩小">${zoomIcon("out")}</button>
           <input class="ymz-zoom" data-role="zoom" value="100%" inputmode="decimal" aria-label="缩放百分比" title="点击输入缩放百分比">
-          <button data-action="zoom-in" title="放大">＋</button>
+          <button class="ymz-icon-button" data-action="zoom-in" title="放大" aria-label="放大">${zoomIcon("in")}</button>
           <button class="ymz-icon-button" data-action="fullscreen" title="全屏" aria-label="全屏">${fullscreenIcon()}</button>
-          <button data-action="help" title="帮助">?</button>
+          <button class="ymz-icon-button" data-action="help" title="帮助" aria-label="帮助">${helpIcon()}</button>
         </div>
+        <button type="button" class="ymz-toolbar-edge ymz-toolbar-edge--top" data-toolbar-edge="top" aria-label="显示顶部工具栏"><span aria-hidden="true"></span></button>
+        <button type="button" class="ymz-toolbar-edge ymz-toolbar-edge--left" data-toolbar-edge="left" aria-label="显示左侧工具栏"><span aria-hidden="true"></span></button>
+        <button type="button" class="ymz-toolbar-edge ymz-toolbar-edge--bottom" data-toolbar-edge="bottom" aria-label="显示底部工具栏"><span aria-hidden="true"></span></button>
       </div>
     </div>`;
 }
@@ -85421,7 +85458,29 @@ class StructuredOutlineEditorController {
     this.afterFormatting("clear-format");
   }
   setCloze(enabled) {
-    this.formatText(enabled ? { color: "transparent", background: "#f5dfa0" } : { color: false, background: false });
+    this.restoreSelection();
+    const range2 = this.currentRange();
+    if (!range2 || range2.collapsed || this.options.isReadonly()) return;
+    if (enabled) {
+      const cloze = this.wrapSelection("span", {
+        color: "transparent",
+        backgroundColor: "#f5dfa0"
+      });
+      if (cloze) cloze.dataset.yemindCloze = "true";
+    } else {
+      const bookmark = this.captureSelectionBookmark();
+      Array.from(
+        this.options.root.querySelectorAll("[data-yemind-cloze]")
+      ).forEach((cloze) => {
+        if (!range2.intersectsNode(cloze)) return;
+        const parent = cloze.parentNode;
+        if (!parent) return;
+        while (cloze.firstChild) parent.insertBefore(cloze.firstChild, cloze);
+        cloze.remove();
+      });
+      if (bookmark) this.restoreSelectionBookmark(bookmark);
+    }
+    this.afterFormatting(enabled ? "cloze-enable" : "cloze-disable");
   }
   bind() {
     const root2 = this.options.root;
@@ -85609,8 +85668,9 @@ class StructuredOutlineEditorController {
   }
   rowHtml(block) {
     const leaf = !block.hasChildren;
+    const draggable = !block.isRoot && block.kind === "node";
     const marker = block.hasChildren ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle contenteditable="false" tabindex="-1" aria-label="${block.expanded ? "折叠" : "展开"}"><span class="ymz-outline-row__triangle" data-direction="${block.expanded ? "down" : "right"}"></span></button>` : `<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" contenteditable="false" aria-hidden="true"><span class="ymz-outline-row__leaf-square"></span></span>`;
-    return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : "false"}" data-outline-uid="${escapeHtml$2(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml$2(block.parentUid ?? "")}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${!block.isRoot && block.kind === "node"}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" role="button" aria-label="拖动节点"><span class="ymz-outline-drag-grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></span><span class="ymz-outline-row__drop-indicator" contenteditable="false" aria-hidden="true"></span>${marker}${outlineAccessoriesHtml(block.accessories, this.options.pluginBaseUrl)}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${structuredOutlineIsRichHtml(block.html)}">${block.html}</div></div>`;
+    return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : "false"}" data-outline-uid="${escapeHtml$2(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml$2(block.parentUid ?? "")}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${draggable}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" role="button" tabindex="${draggable ? "0" : "-1"}" aria-label="拖动节点"><span class="ymz-outline-drag-grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></span><span class="ymz-outline-row__drop-indicator" contenteditable="false" aria-hidden="true"></span>${marker}${outlineAccessoriesHtml(block.accessories, this.options.pluginBaseUrl)}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${structuredOutlineIsRichHtml(block.html)}">${block.html}</div></div>`;
   }
   selectOutlineMedia(uid2, kind) {
     this.clearOutlineMediaSelection();
@@ -85643,6 +85703,8 @@ class StructuredOutlineEditorController {
     row.dataset.outlineExpanded = String(block.expanded);
     row.dataset.outlineDragSource = String(!block.isRoot && block.kind === "node");
     row.style.setProperty("--ymz-outline-depth", String(block.depth));
+    const dragHandle = row.querySelector("[data-outline-drag-handle]");
+    if (dragHandle) dragHandle.tabIndex = !block.isRoot && block.kind === "node" ? 0 : -1;
     let marker = row.querySelector(".ymz-outline-row__branch");
     if (block.hasChildren) {
       if (!(marker instanceof HTMLButtonElement)) {
@@ -86627,6 +86689,8 @@ class RichTextToolbar {
     };
     this.element.addEventListener("mousedown", markInteracting);
     this.colorPopover.addEventListener("mousedown", markInteracting);
+    this.element.addEventListener("click", (event) => event.stopPropagation());
+    this.colorPopover.addEventListener("click", (event) => event.stopPropagation());
     const isolateInputEvent = (event) => event.stopPropagation();
     [
       "keydown",
@@ -89454,30 +89518,57 @@ class EditingSurfaceCoordinator {
     return ticket ? this.take(ticket) : null;
   }
 }
+const SIDES = ["top", "left", "bottom"];
+const DATASET_KEYS = {
+  top: "topbarVisible",
+  left: "leftbarVisible",
+  bottom: "statusbarVisible"
+};
+const OWNER_SELECTORS = {
+  top: ".ymz-topbar, .ymz-layout-gallery, .ymz-project-choice-panel, .ymz-project-style-panel, .ymz-node-style-panel, .ymz-transfer-panel",
+  left: ".ymz-leftbar",
+  bottom: ".ymz-statusbar"
+};
 class ToolbarVisibilityController {
   constructor(options) {
     __publicField(this, "pinned");
-    __publicField(this, "hideTimer", null);
     __publicField(this, "hideDelayMs");
     __publicField(this, "hotZonePx");
+    __publicField(this, "sides", {
+      top: { timer: null },
+      left: { timer: null },
+      bottom: { timer: null }
+    });
     __publicField(this, "onPointerMove", (event) => {
       if (this.pinned) return;
       const rect2 = this.options.root.getBoundingClientRect();
       const x2 = event.clientX - rect2.left;
       const y2 = event.clientY - rect2.top;
       const target = event.target;
-      if (y2 <= this.hotZonePx || target.closest(".ymz-topbar, .ymz-layout-gallery, .ymz-project-choice-panel, .ymz-project-style-panel, .ymz-node-style-panel")) this.revealTop();
-      if (rect2.height - y2 <= this.hotZonePx || target.closest(".ymz-statusbar")) this.revealBottom();
-      if (x2 <= this.hotZonePx || target.closest(".ymz-leftbar")) this.revealLeft();
+      const ownedSide = this.sideFromTarget(target);
+      if (ownedSide) this.reveal(ownedSide);
+      if (y2 <= this.hotZonePx) this.reveal("top");
+      if (rect2.height - y2 <= this.hotZonePx) this.reveal("bottom");
+      if (x2 <= this.hotZonePx) this.reveal("left");
     });
-    __publicField(this, "onPointerLeave", () => this.scheduleHide());
+    __publicField(this, "onPointerLeave", () => {
+      if (!this.pinned) SIDES.forEach((side) => this.scheduleHide(side));
+    });
     __publicField(this, "onFocusIn", (event) => {
       const target = event.target;
-      if (target.closest(".ymz-topbar")) this.revealTop();
-      if (target.closest(".ymz-statusbar")) this.revealBottom();
-      if (target.closest(".ymz-leftbar")) this.revealLeft();
+      const side = this.sideFromTarget(target);
+      if (side) this.reveal(side);
     });
-    __publicField(this, "onFocusOut", () => this.scheduleHide());
+    __publicField(this, "onFocusOut", (event) => {
+      const target = event.target;
+      const side = this.sideFromTarget(target);
+      if (side && !this.pinned) this.scheduleHide(side);
+    });
+    __publicField(this, "onClick", (event) => {
+      const target = event.target;
+      const side = this.sideFromTarget(target);
+      if (side && target.closest("[data-toolbar-edge]")) this.reveal(side);
+    });
     this.options = options;
     this.pinned = Boolean(options.pinned);
     this.hideDelayMs = options.hideDelayMs ?? 700;
@@ -89486,67 +89577,82 @@ class ToolbarVisibilityController {
     options.root.addEventListener("pointerleave", this.onPointerLeave);
     options.root.addEventListener("focusin", this.onFocusIn);
     options.root.addEventListener("focusout", this.onFocusOut);
+    options.root.addEventListener("click", this.onClick);
     this.applyPinnedState();
-    if (!this.pinned) this.scheduleHide();
+    if (!this.pinned) SIDES.forEach((side) => this.scheduleHide(side));
   }
   destroy() {
-    this.clearTimer();
+    SIDES.forEach((side) => this.clearTimer(side));
     this.options.root.removeEventListener("pointermove", this.onPointerMove);
     this.options.root.removeEventListener("pointerleave", this.onPointerLeave);
     this.options.root.removeEventListener("focusin", this.onFocusIn);
     this.options.root.removeEventListener("focusout", this.onFocusOut);
+    this.options.root.removeEventListener("click", this.onClick);
   }
   setPinned(value) {
     this.pinned = Boolean(value);
     this.applyPinnedState();
-    if (this.pinned) this.revealAll();
-    else this.scheduleHide();
+    if (this.pinned) {
+      this.revealAll();
+      return;
+    }
+    SIDES.forEach((side) => this.scheduleHide(side));
   }
   revealAll() {
-    this.options.root.dataset.topbarVisible = "true";
-    this.options.root.dataset.statusbarVisible = "true";
-    this.options.root.dataset.leftbarVisible = "true";
-    this.clearTimer();
+    SIDES.forEach((side) => this.reveal(side, false));
+    if (!this.pinned) SIDES.forEach((side) => this.scheduleHide(side));
   }
   revealBoth() {
     this.revealAll();
   }
   revealTop() {
-    this.options.root.dataset.topbarVisible = "true";
-    this.clearTimer();
-    if (!this.pinned) this.scheduleHide();
+    this.reveal("top");
   }
   revealBottom() {
-    this.options.root.dataset.statusbarVisible = "true";
-    this.clearTimer();
-    if (!this.pinned) this.scheduleHide();
+    this.reveal("bottom");
   }
   revealLeft() {
-    this.options.root.dataset.leftbarVisible = "true";
-    this.clearTimer();
-    if (!this.pinned) this.scheduleHide();
+    this.reveal("left");
+  }
+  reveal(side, reschedule = true) {
+    this.options.root.dataset[DATASET_KEYS[side]] = "true";
+    this.clearTimer(side);
+    if (!this.pinned && reschedule) this.scheduleHide(side);
   }
   applyPinnedState() {
     this.options.root.dataset.toolbarsPinned = String(this.pinned);
-    if (this.pinned) this.revealAll();
   }
-  scheduleHide() {
+  scheduleHide(side) {
     if (this.pinned) return;
-    this.clearTimer();
-    this.hideTimer = window.setTimeout(() => {
-      this.hideTimer = null;
-      if (this.options.root.querySelector(".ymz-topbar:hover, .ymz-statusbar:hover, .ymz-leftbar:hover, .ymz-layout-gallery:hover, .ymz-project-choice-panel:hover, .ymz-project-style-panel:hover, .ymz-node-style-panel:hover, .ymz-topbar :focus, .ymz-statusbar :focus, .ymz-leftbar :focus")) {
-        this.scheduleHide();
+    this.clearTimer(side);
+    this.sides[side].timer = window.setTimeout(() => {
+      this.sides[side].timer = null;
+      if (this.sideOwnsInteraction(side)) {
+        this.scheduleHide(side);
         return;
       }
-      this.options.root.dataset.topbarVisible = "false";
-      this.options.root.dataset.statusbarVisible = "false";
-      this.options.root.dataset.leftbarVisible = "false";
+      this.options.root.dataset[DATASET_KEYS[side]] = "false";
     }, this.hideDelayMs);
   }
-  clearTimer() {
-    if (this.hideTimer !== null) window.clearTimeout(this.hideTimer);
-    this.hideTimer = null;
+  sideOwnsInteraction(side) {
+    const selector = OWNER_SELECTORS[side];
+    const active = document.activeElement;
+    if (active instanceof Element && active.closest(selector)) return true;
+    return Boolean(this.options.root.querySelector(`:is(${selector}):hover`));
+  }
+  clearTimer(side) {
+    const timer = this.sides[side].timer;
+    if (timer !== null) window.clearTimeout(timer);
+    this.sides[side].timer = null;
+  }
+  sideFromTarget(target) {
+    var _a;
+    const edge = (_a = target.closest("[data-toolbar-edge]")) == null ? void 0 : _a.dataset.toolbarEdge;
+    if (edge === "top" || edge === "left" || edge === "bottom") return edge;
+    if (target.closest(OWNER_SELECTORS.top)) return "top";
+    if (target.closest(OWNER_SELECTORS.left)) return "left";
+    if (target.closest(OWNER_SELECTORS.bottom)) return "bottom";
+    return null;
   }
 }
 function parseZoomPercent(value, min, max) {
@@ -90302,6 +90408,55 @@ async function importMindMapBytes(source, options = {}) {
   }
   throw new Error("无法自动识别该文件格式");
 }
+class AppearanceController {
+  constructor(options) {
+    __publicField(this, "mode", "system");
+    __publicField(this, "systemDark");
+    __publicField(this, "resolved");
+    __publicField(this, "unsubscribeSystem", null);
+    __publicField(this, "destroyed", false);
+    __publicField(this, "lastNotified", null);
+    var _a, _b;
+    this.options = options;
+    this.systemDark = Boolean((_a = options.getSystemDark) == null ? void 0 : _a.call(options));
+    this.resolved = resolveAppearance(this.mode, this.systemDark);
+    this.apply();
+    this.unsubscribeSystem = ((_b = options.subscribeSystem) == null ? void 0 : _b.call(options, (dark) => {
+      if (this.destroyed) return;
+      this.systemDark = Boolean(dark);
+      if (this.mode === "system") this.apply();
+    })) ?? null;
+  }
+  setMode(value) {
+    if (this.destroyed) return;
+    this.mode = normalizeAppearanceMode(value);
+    this.apply();
+  }
+  getMode() {
+    return this.mode;
+  }
+  getResolved() {
+    return this.resolved;
+  }
+  destroy() {
+    var _a;
+    if (this.destroyed) return;
+    this.destroyed = true;
+    (_a = this.unsubscribeSystem) == null ? void 0 : _a.call(this);
+    this.unsubscribeSystem = null;
+  }
+  apply() {
+    var _a, _b;
+    this.resolved = resolveAppearance(this.mode, this.systemDark);
+    this.options.root.dataset.appearanceMode = this.mode;
+    this.options.root.dataset.appearance = this.resolved;
+    this.options.root.style.colorScheme = this.resolved;
+    if (this.lastNotified !== this.resolved) {
+      this.lastNotified = this.resolved;
+      (_b = (_a = this.options).onChange) == null ? void 0 : _b.call(_a, this.resolved, this.mode);
+    }
+  }
+}
 class YeMindEditor {
   constructor(options) {
     __publicField(this, "map", null);
@@ -90365,12 +90520,9 @@ class YeMindEditor {
     __publicField(this, "outlinePointerDrag", null);
     __publicField(this, "suppressOutlineClickUntil", 0);
     __publicField(this, "editingSurface", new EditingSurfaceCoordinator());
-    __publicField(this, "appearanceObserver", null);
-    __publicField(this, "appearanceMedia", null);
+    __publicField(this, "appearanceController", null);
     __publicField(this, "appearanceMode", null);
-    __publicField(this, "onAppearanceMediaChange", () => {
-      this.refreshAppearanceIfNeeded();
-    });
+    __publicField(this, "applyingSettings", false);
     __publicField(this, "onCanvasPointerDown", (event) => {
       if (event.button !== 0) return;
       this.claimCanvasInteraction("canvas-pointerdown");
@@ -90712,7 +90864,7 @@ class YeMindEditor {
     input.click();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A;
     this.options.diagnostics.record(
       "editor",
       "destroy-started",
@@ -90725,50 +90877,44 @@ class YeMindEditor {
     this.destroyed = true;
     (_b = this.repositoryUnsubscribe) == null ? void 0 : _b.call(this);
     (_c2 = this.settingsUnsubscribe) == null ? void 0 : _c2.call(this);
-    (_d2 = this.appearanceObserver) == null ? void 0 : _d2.disconnect();
-    this.appearanceObserver = null;
-    (_f = (_e = this.appearanceMedia) == null ? void 0 : _e.removeEventListener) == null ? void 0 : _f.call(
-      _e,
-      "change",
-      this.onAppearanceMediaChange
-    );
-    this.appearanceMedia = null;
-    (_g = this.richTextToolbar) == null ? void 0 : _g.destroy();
+    (_d2 = this.appearanceController) == null ? void 0 : _d2.destroy();
+    this.appearanceController = null;
+    (_e = this.richTextToolbar) == null ? void 0 : _e.destroy();
     this.richTextToolbar = null;
-    (_h = this.nodeHoverPreview) == null ? void 0 : _h.destroy();
+    (_f = this.nodeHoverPreview) == null ? void 0 : _f.destroy();
     this.nodeHoverPreview = null;
-    (_i = this.imageLightbox) == null ? void 0 : _i.destroy();
+    (_g = this.imageLightbox) == null ? void 0 : _g.destroy();
     this.imageLightbox = null;
-    (_j = this.nodeStylePanel) == null ? void 0 : _j.destroy();
+    (_h = this.nodeStylePanel) == null ? void 0 : _h.destroy();
     this.nodeStylePanel = null;
-    (_k = this.projectStylePanel) == null ? void 0 : _k.destroy();
+    (_i = this.projectStylePanel) == null ? void 0 : _i.destroy();
     this.projectStylePanel = null;
-    (_l = this.layoutGalleryPanel) == null ? void 0 : _l.destroy();
+    (_j = this.layoutGalleryPanel) == null ? void 0 : _j.destroy();
     this.layoutGalleryPanel = null;
-    (_m = this.themeChoicePanel) == null ? void 0 : _m.destroy();
+    (_k = this.themeChoicePanel) == null ? void 0 : _k.destroy();
     this.themeChoicePanel = null;
-    (_n = this.lineStyleChoicePanel) == null ? void 0 : _n.destroy();
+    (_l = this.lineStyleChoicePanel) == null ? void 0 : _l.destroy();
     this.lineStyleChoicePanel = null;
-    (_o = this.toolbarVisibility) == null ? void 0 : _o.destroy();
+    (_m = this.toolbarVisibility) == null ? void 0 : _m.destroy();
     this.toolbarVisibility = null;
-    (_p = this.resourceActionPopover) == null ? void 0 : _p.destroy();
+    (_n = this.resourceActionPopover) == null ? void 0 : _n.destroy();
     this.resourceActionPopover = null;
-    (_q = this.nodeQuickActions) == null ? void 0 : _q.destroy();
+    (_o = this.nodeQuickActions) == null ? void 0 : _o.destroy();
     this.nodeQuickActions = null;
-    (_r = this.canvasRightDrag) == null ? void 0 : _r.destroy();
+    (_p = this.canvasRightDrag) == null ? void 0 : _p.destroy();
     this.canvasRightDrag = null;
-    (_s = this.liveNodeWidthLayout) == null ? void 0 : _s.destroy();
+    (_q = this.liveNodeWidthLayout) == null ? void 0 : _q.destroy();
     this.liveNodeWidthLayout = null;
-    (_t = this.cancelFocusedNodeHighlight) == null ? void 0 : _t.call(this);
+    (_r = this.cancelFocusedNodeHighlight) == null ? void 0 : _r.call(this);
     this.cancelFocusedNodeHighlight = null;
-    (_u = this.rootEl) == null ? void 0 : _u.removeEventListener("keydown", this.onRootKeydown, true);
-    (_v = this.outlinePaneEl) == null ? void 0 : _v.removeEventListener("keydown", this.onOutlineKeydownBubble);
-    (_w = this.rootEl) == null ? void 0 : _w.removeEventListener("paste", this.onImagePaste);
-    (_x = this.canvasEl) == null ? void 0 : _x.removeEventListener("dragover", this.onImageDragOver);
-    (_y = this.canvasEl) == null ? void 0 : _y.removeEventListener("drop", this.onImageDrop);
-    (_z = this.canvasEl) == null ? void 0 : _z.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
-    (_A = this.canvasEl) == null ? void 0 : _A.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
-    (_B = this.outlineEl) == null ? void 0 : _B.removeEventListener(
+    (_s = this.rootEl) == null ? void 0 : _s.removeEventListener("keydown", this.onRootKeydown, true);
+    (_t = this.outlinePaneEl) == null ? void 0 : _t.removeEventListener("keydown", this.onOutlineKeydownBubble);
+    (_u = this.rootEl) == null ? void 0 : _u.removeEventListener("paste", this.onImagePaste);
+    (_v = this.canvasEl) == null ? void 0 : _v.removeEventListener("dragover", this.onImageDragOver);
+    (_w = this.canvasEl) == null ? void 0 : _w.removeEventListener("drop", this.onImageDrop);
+    (_x = this.canvasEl) == null ? void 0 : _x.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
+    (_y = this.canvasEl) == null ? void 0 : _y.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
+    (_z = this.outlineEl) == null ? void 0 : _z.removeEventListener(
       "pointerdown",
       this.onOutlinePointerDown,
       true
@@ -90785,7 +90931,7 @@ class YeMindEditor {
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_C = this.map) == null ? void 0 : _C.destroy();
+    (_A = this.map) == null ? void 0 : _A.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record(
@@ -90854,6 +91000,15 @@ class YeMindEditor {
     this.rootEl = this.options.container.querySelector(
       ".ymz-editor"
     );
+    this.appearanceController = new AppearanceController({
+      root: this.rootEl,
+      getSystemDark: () => detectAppearance() === "dark",
+      subscribeSystem: (listener) => this.subscribeHostAppearance(listener),
+      onChange: () => {
+        if (!this.applyingSettings) this.refreshAppearanceIfNeeded();
+      }
+    });
+    this.appearanceController.setMode(this.settings.appearanceMode);
     this.resourceActionPopover = new ResourceActionPopover(this.rootEl);
     this.canvasEl = this.options.container.querySelector(
       '[data-role="canvas"]'
@@ -91147,7 +91302,7 @@ class YeMindEditor {
     window.requestAnimationFrame(() => {
       void this.repairLegacyClipartGeometry();
     });
-    this.bindAppearanceObserver();
+    this.applyMapAppearance(false);
     this.repositoryUnsubscribe = this.options.repository.subscribe((state) => {
       var _a2, _b;
       const next2 = state.maps.find((item) => item.id === this.current.id);
@@ -91349,6 +91504,9 @@ class YeMindEditor {
         case "toggle-toolbar-pin":
           button.blur();
           void this.toggleToolbarsPinned();
+          break;
+        case "cycle-appearance":
+          void this.cycleAppearanceMode();
           break;
         case "fullscreen":
           void this.toggleFullscreen();
@@ -92010,12 +92168,15 @@ class YeMindEditor {
     if (this.outerFramePanelEl) this.outerFramePanelEl.hidden = true;
   }
   applySettings(settings) {
-    var _a, _b, _c2;
+    var _a, _b, _c2, _d2;
     const firstApply = !this.settingsInitialized;
+    this.applyingSettings = true;
     this.settings = settings;
-    (_a = this.toolbarVisibility) == null ? void 0 : _a.setPinned(settings.toolbarsPinned);
+    (_a = this.appearanceController) == null ? void 0 : _a.setMode(settings.appearanceMode);
+    this.updateAppearancePresentation();
+    (_b = this.toolbarVisibility) == null ? void 0 : _b.setPinned(settings.toolbarsPinned);
     this.updateToolbarPinPresentation();
-    (_b = this.richTextToolbar) == null ? void 0 : _b.setEnabled(
+    (_c2 = this.richTextToolbar) == null ? void 0 : _c2.setEnabled(
       settings.showRichTextToolbar && this.rootEl.dataset.readonly !== "true"
     );
     configureMindMapPlugins(settings);
@@ -92039,7 +92200,7 @@ class YeMindEditor {
     const behavior = buildDragAndLayoutOptions(settings);
     const relationOptions = buildRelationOptions(settings);
     const outerFrameOptions = buildOuterFrameOptions(settings);
-    (_c2 = this.map) == null ? void 0 : _c2.updateConfig({
+    (_d2 = this.map) == null ? void 0 : _d2.updateConfig({
       useLeftKeySelectionRightKeyDrag: settings.canvasMode === "select",
       mousewheelAction: settings.wheelMode === "zoom" ? "zoom" : "move",
       disableMouseWheelZoom: settings.wheelMode === "none",
@@ -92054,6 +92215,7 @@ class YeMindEditor {
       ...outerFrameOptions
     });
     this.applyMapAppearance();
+    this.applyingSettings = false;
     this.updateRelationPresentation();
     this.updateOuterFramePresentation();
     this.updateSelectionPresentation();
@@ -92065,11 +92227,12 @@ class YeMindEditor {
     }
   }
   applyMapAppearance(render3 = true) {
+    var _a;
     if (!this.map) return;
     this.current.theme = normalizeThemePresetId(this.current.theme);
     this.current.lineStyle = normalizeLineStyle(this.current.lineStyle);
     const behavior = buildDragAndLayoutOptions(this.settings);
-    const appearanceMode = detectAppearance();
+    const appearanceMode = ((_a = this.appearanceController) == null ? void 0 : _a.getResolved()) ?? detectAppearance();
     const appearance = buildThemeConfig({
       presetId: this.current.theme,
       appearance: appearanceMode,
@@ -92100,10 +92263,10 @@ class YeMindEditor {
       rootBackground: String(projectAppearance.themeConfig.backgroundColor ?? appearance.colorAppearance.background),
       render: canRender,
       afterRender: () => {
-        var _a, _b, _c2, _d2, _e, _f, _g;
+        var _a2, _b, _c2, _d2, _e, _f, _g;
         this.applyingAppearance = false;
         this.pendingAppearanceRefresh = false;
-        (_c2 = (_b = (_a = this.map) == null ? void 0 : _a.associativeLine) == null ? void 0 : _b.renderAllLines) == null ? void 0 : _c2.call(_b);
+        (_c2 = (_b = (_a2 = this.map) == null ? void 0 : _a2.associativeLine) == null ? void 0 : _b.renderAllLines) == null ? void 0 : _c2.call(_b);
         (_f = (_e = (_d2 = this.map) == null ? void 0 : _d2.outerFrame) == null ? void 0 : _e.renderOuterFrames) == null ? void 0 : _f.call(_e);
         (_g = this.nodeQuickActions) == null ? void 0 : _g.scheduleRefresh();
         this.updateSelectionPresentation();
@@ -92111,47 +92274,10 @@ class YeMindEditor {
     });
     if (!canRender) this.applyingAppearance = false;
   }
-  bindAppearanceObserver() {
-    var _a, _b;
-    this.appearanceMode = detectAppearance();
-    if (typeof MutationObserver !== "undefined") {
-      this.appearanceObserver = new MutationObserver(
-        () => this.refreshAppearanceIfNeeded()
-      );
-      this.appearanceObserver.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: [
-          "class",
-          "data-theme",
-          "data-theme-mode",
-          "data-color-mode"
-        ]
-      });
-      if (document.body) {
-        this.appearanceObserver.observe(document.body, {
-          attributes: true,
-          attributeFilter: [
-            "class",
-            "data-theme",
-            "data-theme-mode",
-            "data-color-mode"
-          ]
-        });
-      }
-    }
-    if (typeof matchMedia === "function") {
-      this.appearanceMedia = matchMedia("(prefers-color-scheme: dark)");
-      (_b = (_a = this.appearanceMedia).addEventListener) == null ? void 0 : _b.call(
-        _a,
-        "change",
-        this.onAppearanceMediaChange
-      );
-    }
-    this.applyMapAppearance(false);
-  }
   refreshAppearanceIfNeeded() {
+    var _a;
     if (this.destroyed || !this.map) return;
-    const next2 = detectAppearance();
+    const next2 = ((_a = this.appearanceController) == null ? void 0 : _a.getResolved()) ?? detectAppearance();
     if (next2 === this.appearanceMode) return;
     this.applyMapAppearance();
     this.options.diagnostics.record(
@@ -92160,6 +92286,24 @@ class YeMindEditor {
       this.current.id,
       { appearance: next2 }
     );
+  }
+  subscribeHostAppearance(listener) {
+    var _a;
+    const notify = () => listener(detectAppearance() === "dark");
+    const observer = typeof MutationObserver === "undefined" ? null : new MutationObserver(notify);
+    const attributes = {
+      attributes: true,
+      attributeFilter: ["class", "data-theme", "data-theme-mode", "data-color-mode"]
+    };
+    observer == null ? void 0 : observer.observe(document.documentElement, attributes);
+    if (document.body) observer == null ? void 0 : observer.observe(document.body, attributes);
+    const media = typeof matchMedia === "function" ? matchMedia("(prefers-color-scheme: dark)") : null;
+    (_a = media == null ? void 0 : media.addEventListener) == null ? void 0 : _a.call(media, "change", notify);
+    return () => {
+      var _a2;
+      observer == null ? void 0 : observer.disconnect();
+      (_a2 = media == null ? void 0 : media.removeEventListener) == null ? void 0 : _a2.call(media, "change", notify);
+    };
   }
   bindSplitDivider() {
     const endDrag = (event) => {
@@ -92321,6 +92465,29 @@ class YeMindEditor {
       const icon = button.querySelector('[data-role="canvas-mode-icon"]');
       if (icon) icon.innerHTML = canvasModeIcon(this.settings.canvasMode);
     });
+  }
+  updateAppearancePresentation() {
+    const labels = {
+      system: "当前跟随系统；切换为明亮外观",
+      light: "当前明亮外观；切换为暗黑外观",
+      dark: "当前暗黑外观；切换为跟随系统"
+    };
+    this.rootEl.querySelectorAll('[data-action="cycle-appearance"]').forEach((button) => {
+      button.innerHTML = appearanceIcon(this.settings.appearanceMode);
+      button.title = labels[this.settings.appearanceMode];
+      button.setAttribute("aria-label", labels[this.settings.appearanceMode]);
+    });
+  }
+  async cycleAppearanceMode() {
+    const order = ["system", "light", "dark"];
+    const current = order.indexOf(this.settings.appearanceMode);
+    const next2 = order[(current + 1) % order.length];
+    try {
+      await this.options.settingsStore.update({ appearanceMode: next2 });
+    } catch (error2) {
+      console.error("[YeMind] appearance mode save failed", error2);
+      siyuan.showMessage("界面外观保存失败，请重试", 4e3, "error");
+    }
   }
   setViewMode(mode) {
     var _a, _b, _c2, _d2, _e;
