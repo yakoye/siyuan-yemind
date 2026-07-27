@@ -5,7 +5,8 @@
     "registerPlugins.suite.ts",
     "v081CurrentPluginId.suite.ts",
     "v081PluginIdentity.suite.ts",
-    "v120TransferFormats.suite.ts"
+    "v120TransferFormats.suite.ts",
+    "v130WorkflowContract.suite.ts"
   ],
   "checkpoints": [
     "checkpointDialog.suite.ts",

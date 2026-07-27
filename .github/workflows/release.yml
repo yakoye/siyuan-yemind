@@ -1,0 +1,43 @@
+name: Publish YeMind Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Validate tag and project version
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PROJECT_VERSION="$(node -p "require('./package.json').version")"
+          test "${VERSION}" = "${PROJECT_VERSION}"
+          echo "VERSION=${VERSION}" >> "${GITHUB_ENV}"
+      - run: npm run release:build
+      - run: npm run release:verify
+      - name: Check release file names
+        shell: bash
+        run: |
+          test -f "release/v${VERSION}/siyuan-yemind-v${VERSION}.zip"
+          test -f "release/v${VERSION}/yemind-web-v${VERSION}.zip"
+          test -f "release/v${VERSION}/release-manifest.json"
+          test -f "release/v${VERSION}/SHA256SUMS"
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            release/v*/siyuan-yemind-v*.zip
+            release/v*/yemind-web-v*.zip
+            release/v*/release-manifest.json
+            release/v*/SHA256SUMS

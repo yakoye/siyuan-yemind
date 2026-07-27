@@ -5,3 +5,4 @@ import '../suites/contracts-compatibility/registerPlugins.suite';
 import '../suites/contracts-compatibility/v081CurrentPluginId.suite';
 import '../suites/contracts-compatibility/v081PluginIdentity.suite';
 import '../suites/contracts-compatibility/v120TransferFormats.suite';
+import '../suites/contracts-compatibility/v130WorkflowContract.suite';
