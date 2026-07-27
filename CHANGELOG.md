@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0 - 2026-07-27
+
+- Unified the SiYuan plugin and standalone web app around one source tree, one eight-marker version contract and reproducible dual-host release ZIPs with manifests and SHA-256 checksums.
+- Added independent top, left and bottom toolbar hiding with discoverable edge indicators, persisted light/dark/system appearance and responsive desktop/mobile behavior.
+- Stabilized all 28 structure layouts, branch controls, canvas/outline CRUD and dragging, context-menu viewport clamping, media editing/preview, relation lines and complete multi-format transfer.
+- Fixed selected-text formatting on canvas and outline so every shared toolbar action preserves its range; fixed reversible cloze formatting and outline edit/delete context actions.
+- Added unit, web, offline and real-browser acceptance suites plus GitHub CI, Pages deployment and tag-driven dual-package releases.
+
 ## 1.2.0 - 2026-07-27
 
 - Added one shared 12-format export workflow for the SiYuan plugin and standalone web app, with `.yemind.svg` as the default.

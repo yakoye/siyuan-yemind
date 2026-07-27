@@ -3,18 +3,18 @@ import { PLUGIN_VERSION, PRODUCT_NAME, PROJECT_PACKAGE_NAME } from './plugin/con
 export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: '2026-07-27T04:40:00Z',
-  buildId: 'yemind-v1.2.0-20260727',
+  buildTime: '2026-07-27T06:30:22.700Z',
+  buildId: 'yemind-v1.3.0-20260727',
   productName: PRODUCT_NAME,
   projectName: PROJECT_PACKAGE_NAME,
   tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
   hostBaseline: 'SiYuan 3.7.3',
-  releaseSummary: '新增插件版与网页版共用的多格式导入导出，并提供可恢复的 YeMind SVG/ZIP/PNG 包。',
+  releaseSummary: '统一思源插件与独立网页版，完成结构、编辑、外观、导入导出和发布链路的稳定性整理。',
   highlights: [
-    '默认导出 .yemind.svg：普通 SVG 软件可预览，YeMind 可无损恢复完整导图。',
-    '支持 SVG 包、KMindz、ZIP、Markdown、OPML、XMind、PNG、Text、HTML 和 PDF。',
-    '自动识别 KMindZ、SVG、PNG、ZIP、XMind、旧 KMind/JSON 以及 MD/OPML/TXT/MM 大纲。',
-    '思源插件与独立网页版共用实时画布导出和导入解析流程。',
+    '思源插件与独立网页版共用编辑器、数据模型、导入导出和交互实现。',
+    '回归 28 种结构、导图和大纲编辑拖动、附件、关联线、明暗主题与响应式工具栏。',
+    '修复导图和大纲的选区工具栏、模糊切换、编辑及删除等连续操作。',
+    '提供双端 ZIP、发布清单、SHA-256 校验、CI、GitHub Release 和 Pages 自动部署。',
   ]
 } as const;
 

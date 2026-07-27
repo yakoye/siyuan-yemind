@@ -2,8 +2,16 @@
 
 YeMind 是面向思源笔记的本地优先思维导图插件，支持导图、分屏大纲、纯大纲、富文本节点、图片、备注、批注、标签、待办、节点样式、整图主题、检查点和全局搜索。
 
-当前版本：`1.2.0`
+当前版本：`1.3.0`
 开发基线：SiYuan `3.7.3`
+
+## v1.3.0 双端统一稳定版
+
+- 思源插件与独立网页版共用同一套编辑器、数据模型、导入导出和界面逻辑。
+- 28 种结构、节点快捷折叠、导图/大纲增删改拖动、图片与剪贴图、关联线、主题及明暗模式统一回归。
+- 顶部、左侧和底部工具栏可分别隐藏，边缘保留可发现标记；桌面和移动视口均有真实浏览器验收。
+- 导图和大纲选中文字后，粗体、斜体、下划线、删除线、代码、颜色、字号、字体、链接、代码块、公式、模糊与清除均保留选区并可连续使用。
+- `npm run release:build` 同时生成插件 ZIP 和网页版 ZIP，`npm run release:verify` 校验清单、文件结构与 SHA-256。
 
 ## v1.2.0 多格式导入导出
 
@@ -11,6 +19,20 @@ YeMind 是面向思源笔记的本地优先思维导图插件，支持导图、�
 - 支持 SVG 包、SVG、KMindz、YeMind ZIP、Markdown、OPML、XMind、PNG、Text、HTML 和 PDF。
 - 自动识别 KMindZ/SVG/PNG/ZIP、XMind、旧 KMind/JSON，以及 Markdown/OPML/Text/FreeMind 大纲。
 - 思源插件版与独立网页版共用实时画布导出和导入流程。
+
+## 开发、验证与发布
+
+```text
+npm ci
+npm run check
+npm test
+npm run test:web
+npm run test:e2e
+npm run release:build
+npm run release:verify
+```
+
+版本升级使用 `npm run version:set -- 1.3.0`，随后更新 CHANGELOG、README 和验收记录。完整规则见 `docs/版本与发布规范.md`。
 
 ## v1.1.1 网页版交互修复版
 

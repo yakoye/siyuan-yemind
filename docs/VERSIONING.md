@@ -2,7 +2,7 @@
 
 YeMind 使用 `Major.Minor.Patch`。
 
-当前发布版本：`1.2.0`。
+当前发布版本：`1.3.0`。
 
 ## Major
 

@@ -2,8 +2,16 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `1.2.0`
+Current version: `1.3.0`
 Host baseline: SiYuan `3.7.3`
+
+## v1.3.0 unified dual-host stability release
+
+- Shares one editor, data model, transfer layer and UI behavior between the SiYuan plugin and standalone web app.
+- Regresses all 28 layouts, branch controls, map/outline CRUD and drag behavior, media, relations, themes and light/dark appearance.
+- Independently hides the top, left and bottom toolbars while leaving discoverable edge indicators, with desktop and mobile browser acceptance.
+- Preserves selected text across every shared canvas/outline formatting action, including dialogs and reversible cloze formatting.
+- Builds deterministic plugin/web ZIPs with `npm run release:build` and verifies their manifest, structure and SHA-256 using `npm run release:verify`.
 
 ## v1.2.0 multi-format import and export
 
@@ -11,6 +19,20 @@ Host baseline: SiYuan `3.7.3`
 - Exports SVG packages, SVG, KMindz, YeMind ZIP, Markdown, OPML, XMind, PNG, Text, HTML and PDF.
 - Auto-detects KMindZ/SVG/PNG/ZIP, XMind, legacy KMind/JSON and Markdown/OPML/Text/FreeMind outlines.
 - Shares one live-canvas export and import workflow between the SiYuan plugin and standalone web app.
+
+## Development, verification and release
+
+```text
+npm ci
+npm run check
+npm test
+npm run test:web
+npm run test:e2e
+npm run release:build
+npm run release:verify
+```
+
+Set one release version with `npm run version:set -- 1.3.0`, then update CHANGELOG, README and the acceptance record. See `docs/版本与发布规范.md`.
 
 ## v1.1.1 standalone web interaction fixes
 
