@@ -3,6 +3,11 @@ import {
   distanceToRange,
   type TreeDropIntent,
 } from './treeDropIntent';
+import {
+  layoutGeometryByEngine,
+  resolveLayoutGrowthDirection,
+  resolveLayoutSiblingAxis,
+} from './layoutGeometry';
 
 export interface OfficialDragRect {
   x: number;
@@ -88,7 +93,8 @@ const OFFICIAL_GEOMETRY_LAYOUTS = new Set([
 ]);
 
 export function supportsOfficialDragGeometry(layout: string): boolean {
-  return OFFICIAL_GEOMETRY_LAYOUTS.has(String(layout));
+  return OFFICIAL_GEOMETRY_LAYOUTS.has(String(layout))
+    || Boolean(layoutGeometryByEngine(layout));
 }
 
 export function emptyOfficialDragCandidate(): OfficialDragCandidate {
@@ -161,6 +167,8 @@ function normalizedDirection(value: unknown): OfficialDragGrowthDirection | null
 }
 
 export function resolveOfficialDragGrowthDirection(layout: string, node: any): OfficialDragGrowthDirection {
+  const presetDirection = resolveLayoutGrowthDirection(layout, node);
+  if (presetDirection) return presetDirection;
   switch (layout) {
     case 'logicalStructureLeft':
       return 'left';
@@ -211,6 +219,18 @@ export function resolveOfficialDragGuideOrientation(
 }
 
 export function resolveOfficialDragSiblingAxis(layout: string, parent: any): OfficialDragSiblingAxis {
+  const geometry = layoutGeometryByEngine(layout);
+  const presetAxis = resolveLayoutSiblingAxis(layout);
+  if (geometry && presetAxis) {
+    const root = Number(parent?.layerIndex ?? 0) === 0 || parent?.isRoot;
+    if (
+      root
+      && ['catalogOrganization', 'timeline', 'fishbone2', 'rightFishbone2'].includes(geometry.baseLayout)
+    ) {
+      return 'x';
+    }
+    return presetAxis;
+  }
   switch (layout) {
     case 'organizationStructure':
       return 'x';

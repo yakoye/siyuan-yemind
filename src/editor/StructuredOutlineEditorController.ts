@@ -41,6 +41,7 @@ export interface StructuredOutlineEditorOptions {
   onContextMenu?(event: MouseEvent, uid: string): void;
   onIconEdit?(uid: string, value: string, anchor: HTMLElement): void;
   onImageEdit?(uid: string, kind: 'image' | 'clipart', anchor: HTMLElement): void;
+  onImageDelete?(uid: string, kind: 'image' | 'clipart'): void;
   onImagePreview?(uid: string, kind: 'image' | 'clipart'): void;
   onContentAction?(uid: string, type: string): void;
   onContentHover?(uid: string, type: string, anchor: HTMLElement, entering: boolean): void;
@@ -289,6 +290,7 @@ function isImageClipboard(data: DataTransfer | null): boolean {
 export class StructuredOutlineEditorController implements RichTextFormattingTarget {
   private readonly debounceMs: number;
   private outlineImageClickTimer: number | null = null;
+  private selectedMedia: { uid: string; kind: 'image' | 'clipart' } | null = null;
   private timer: number | null = null;
   private dirty = false;
   private applying = false;
@@ -588,6 +590,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
   destroy(): void {
     this.flush('destroy');
     this.cancelTimer();
+    this.clearOutlineMediaSelection();
     if (this.guideFrame !== null) window.cancelAnimationFrame(this.guideFrame);
     this.guideFrame = null;
     this.guideResizeObserver?.disconnect();
@@ -823,6 +826,20 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     const row = target.closest<HTMLElement>('[data-outline-uid]');
     if (!row) return;
     const uid = row.dataset.outlineUid ?? '';
+    const mediaDelete = target.closest<HTMLElement>('[data-outline-media-delete]');
+    if (mediaDelete) {
+      event.preventDefault();
+      event.stopPropagation();
+      const media = mediaDelete.closest<HTMLElement>('[data-outline-image-action]');
+      const kind = media?.dataset.outlineImageKind === 'clipart' ? 'clipart' : 'image';
+      this.activateUid(uid, false);
+      if (!this.options.isReadonly()) {
+        this.options.onActivate(uid);
+        this.options.onImageDelete?.(uid, kind);
+      }
+      this.clearOutlineMediaSelection();
+      return;
+    }
     const iconAction = target.closest<HTMLElement>('[data-outline-icon-action]');
     if (iconAction) {
       event.preventDefault();
@@ -844,6 +861,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       this.outlineImageClickTimer = null;
       if (event.detail > 1) return;
       const kind = imageAction.dataset.outlineImageKind === 'clipart' ? 'clipart' : 'image';
+      this.selectOutlineMedia(uid, kind);
       this.outlineImageClickTimer = window.setTimeout(() => {
         this.outlineImageClickTimer = null;
         if (!this.options.isReadonly()) this.options.onImageEdit?.(uid, kind, imageAction);
@@ -952,10 +970,14 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
   };
 
   private readonly onPointerDown = (event: PointerEvent): void => {
-    const imageAction = (event.target as Element | null)?.closest('[data-outline-image-action]');
+    const target = event.target as Element | null;
+    const imageAction = target?.closest('[data-outline-image-action]');
     if (imageAction && event.detail > 1 && this.outlineImageClickTimer !== null) {
       window.clearTimeout(this.outlineImageClickTimer);
       this.outlineImageClickTimer = null;
+    }
+    if (!imageAction && !target?.closest('[data-outline-media-delete]')) {
+      this.clearOutlineMediaSelection();
     }
     this.clearWholeSelection();
     this.pointerSelecting = Boolean((event.target as Element | null)?.closest('[data-outline-editor]'));
@@ -1003,6 +1025,23 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
     if (event.isComposing || this.composing) return;
+    if (
+      this.selectedMedia
+      && (event.key === 'Delete' || event.key === 'Backspace')
+      && !this.options.isReadonly()
+      && !(event.target as Element | null)?.closest('[data-outline-editor]')
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      const { uid, kind } = this.selectedMedia;
+      this.options.onImageDelete?.(uid, kind);
+      this.clearOutlineMediaSelection();
+      return;
+    }
+    if (event.key === 'Escape' && this.selectedMedia) {
+      this.clearOutlineMediaSelection();
+      return;
+    }
     const command = event.ctrlKey || event.metaKey;
     if (command && !event.altKey && event.key.toLowerCase() === 'a') {
       event.preventDefault();
@@ -1192,6 +1231,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
         if (editorHost) row.insertBefore(next, editorHost);
       }
     });
+    this.syncOutlineMediaSelection();
   }
 
   private patchBlocks(blocks: StructuredOutlineBlock[], bookmark: SelectionBookmark | null): void {
@@ -1224,6 +1264,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     this.guideResizeObserver?.observe(root);
     desired.forEach((row) => this.guideResizeObserver?.observe(row));
     this.scheduleGuideRender();
+    this.syncOutlineMediaSelection();
     if (bookmark) this.restoreSelectionBookmark(bookmark);
   }
 
@@ -1305,7 +1346,32 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     const marker = block.hasChildren
       ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle contenteditable="false" tabindex="-1" aria-label="${block.expanded ? '折叠' : '展开'}"><span class="ymz-outline-row__triangle" data-direction="${block.expanded ? 'down' : 'right'}"></span></button>`
       : `<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" contenteditable="false" aria-hidden="true"><span class="ymz-outline-row__leaf-square"></span></span>`;
-    return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : 'false'}" data-outline-uid="${escapeHtml(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml(block.parentUid ?? '')}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${!block.isRoot && block.kind === 'node'}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" aria-hidden="true"></span><span class="ymz-outline-row__drop-indicator" contenteditable="false" aria-hidden="true"></span>${marker}${outlineAccessoriesHtml(block.accessories, this.options.pluginBaseUrl)}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${structuredOutlineIsRichHtml(block.html)}">${block.html}</div></div>`;
+    return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : 'false'}" data-outline-uid="${escapeHtml(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml(block.parentUid ?? '')}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${!block.isRoot && block.kind === 'node'}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" role="button" aria-label="拖动节点"><span class="ymz-outline-drag-grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></span><span class="ymz-outline-row__drop-indicator" contenteditable="false" aria-hidden="true"></span>${marker}${outlineAccessoriesHtml(block.accessories, this.options.pluginBaseUrl)}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${structuredOutlineIsRichHtml(block.html)}">${block.html}</div></div>`;
+  }
+
+  private selectOutlineMedia(uid: string, kind: 'image' | 'clipart'): void {
+    this.clearOutlineMediaSelection();
+    this.selectedMedia = { uid, kind };
+    this.syncOutlineMediaSelection();
+  }
+
+  private syncOutlineMediaSelection(): void {
+    this.options.root.querySelectorAll<HTMLElement>('[data-outline-image-action].is-selected')
+      .forEach((element) => element.classList.remove('is-selected'));
+    if (!this.selectedMedia) return;
+    const row = this.rowByUid(this.selectedMedia.uid);
+    const media = row?.querySelector<HTMLElement>('[data-outline-image-action]');
+    if (!media) {
+      this.selectedMedia = null;
+      return;
+    }
+    media.classList.add('is-selected');
+  }
+
+  private clearOutlineMediaSelection(): void {
+    this.selectedMedia = null;
+    this.options.root.querySelectorAll<HTMLElement>('[data-outline-image-action].is-selected')
+      .forEach((element) => element.classList.remove('is-selected'));
   }
 
   private patchRow(row: HTMLElement, block: StructuredOutlineBlock, selectionProtected: boolean): void {

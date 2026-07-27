@@ -1,3 +1,5 @@
+import { resourceActionIcon } from '../ui/resourceActionIcons';
+
 export type ResourceActionKind = 'marker' | 'clipart';
 
 export interface ResourceActionPopoverShowOptions {
@@ -21,8 +23,8 @@ export class ResourceActionPopover {
     this.element.className = 'ymz-resource-action-popover';
     this.element.hidden = true;
     this.element.innerHTML = `
-      <button type="button" data-resource-action="replace" title="替换">↻ <span>替换</span></button>
-      <button type="button" data-resource-action="delete" title="删除">⌫ <span>删除</span></button>`;
+      <button type="button" data-resource-action="replace" title="替换">${resourceActionIcon('replace')}<span>替换</span></button>
+      <button type="button" data-resource-action="delete" title="删除">${resourceActionIcon('delete')}<span>删除</span></button>`;
     this.root.appendChild(this.element);
     this.element.addEventListener('click', this.onClick);
     document.addEventListener('pointerdown', this.onDocumentPointerDown, true);

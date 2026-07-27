@@ -124,9 +124,9 @@ describe('v0.9.18 layout drag parity', () => {
     );
     expect(unadapted).toEqual([]);
     expect(YEMIND_LAYOUT_ASSET_PRESETS.find((preset) => preset.id === 'tree-table-top-title')?.engineLayout)
-      .toBe('catalogOrganization');
+      .toBe('yemindTreeTableTop');
     expect(YEMIND_LAYOUT_ASSET_PRESETS.find((preset) => preset.id === 'bracket-left')?.engineLayout)
-      .toBe('logicalStructureLeft');
+      .toBe('yemindBracketLeft');
   });
 
   it('registers right fishbone renderers before MindMap construction and mirrors paths', () => {

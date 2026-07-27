@@ -127,6 +127,14 @@ function statusButton(type: string, title: string, label: string): string {
   return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute(type)}" data-outline-content="${escapeAttribute(type)}" tabindex="-1" aria-label="${escapeAttribute(title)}">${label}</button>`;
 }
 
+function outlineMediaChrome(kind: 'image' | 'clipart'): string {
+  const handles = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']
+    .map((direction) => `<span class="ymz-outline-media-handle" data-outline-media-handle="${direction}" aria-hidden="true"></span>`)
+    .join('');
+  const title = kind === 'clipart' ? '删除剪贴图' : '删除图片';
+  return `${handles}<button type="button" class="ymz-outline-media-delete" data-outline-media-delete tabindex="-1" aria-label="${title}" title="${title}">×</button>`;
+}
+
 export function outlineAccessoriesHtml(accessories: OutlineAccessories, pluginBaseUrl?: string): string {
   const hasAny = accessories.icons.length || accessories.image || accessories.todo || accessories.tags.length
     || accessories.link || accessories.hasNote || accessories.commentCount || accessories.hasOuterFrame;
@@ -136,7 +144,7 @@ export function outlineAccessoriesHtml(accessories: OutlineAccessories, pluginBa
     : '';
   const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join('');
   const image = accessories.image
-    ? `<button type="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? ' is-clipart' : ''}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? 'clipart' : 'image'}" tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? '剪贴图：单击编辑，双击查看' : '图片：单击编辑，双击查看'))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false"></button>`
+    ? `<span role="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? ' is-clipart' : ''}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? 'clipart' : 'image'}" tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? '剪贴图：单击编辑，双击查看' : '图片：单击编辑，双击查看'))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false">${outlineMediaChrome(accessories.image.clipartId ? 'clipart' : 'image')}</span>`
     : '';
   const tags = accessories.tags.length
     ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute(accessories.tags.join('、'))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute(tag)}</span>`).join('')}</span>`

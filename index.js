@@ -5721,6 +5721,80 @@ function themeOptionsHtml(selected) {
   const value = normalizeThemePresetId(selected);
   return ["基础", "缤纷", "经典"].map((group) => `<optgroup label="${group}">${YEMIND_THEME_PRESETS.filter((preset) => preset.group === group).map((preset) => `<option value="${preset.id}"${preset.id === value ? " selected" : ""}>${preset.label}</option>`).join("")}</optgroup>`).join("");
 }
+const definitions = [
+  { presetId: "right-mindmap", engineLayout: "yemindRightMindMap", baseLayout: "logicalStructure", kind: "native", rootGrowth: "right", nodeGrowth: "right", siblingAxis: "y", branchMode: "fixed" },
+  { presetId: "left-mindmap", engineLayout: "yemindLeftMindMap", baseLayout: "logicalStructureLeft", kind: "native", rootGrowth: "left", nodeGrowth: "left", siblingAxis: "y", branchMode: "fixed" },
+  { presetId: "mindmap", engineLayout: "yemindMindMap", baseLayout: "mindMap", kind: "native", rootGrowth: "right", nodeGrowth: "right", siblingAxis: "y", branchMode: "horizontal" },
+  { presetId: "reverse-mindmap", engineLayout: "yemindReverseMindMap", baseLayout: "mindMap", kind: "derived", rootGrowth: "left", nodeGrowth: "left", siblingAxis: "y", branchMode: "horizontal", transform: "mirror-x" },
+  { presetId: "balanced-down", engineLayout: "yemindBalancedDown", baseLayout: "organizationStructure", kind: "specialized", rootGrowth: "bottom", nodeGrowth: "bottom", siblingAxis: "x", branchMode: "vertical" },
+  { presetId: "tree-right-down", engineLayout: "yemindTreeRightDown", baseLayout: "catalogOrganization", kind: "native", rootGrowth: "bottom", nodeGrowth: "right", siblingAxis: "y", branchMode: "fixed" },
+  { presetId: "tree-left-down", engineLayout: "yemindTreeLeftDown", baseLayout: "catalogOrganization", kind: "derived", rootGrowth: "bottom", nodeGrowth: "left", siblingAxis: "y", branchMode: "fixed", transform: "mirror-x" },
+  { presetId: "tree-down-symmetric", engineLayout: "yemindTreeDownSymmetric", baseLayout: "organizationStructure", kind: "native", rootGrowth: "bottom", nodeGrowth: "bottom", siblingAxis: "x", branchMode: "fixed" },
+  { presetId: "tree-up-symmetric", engineLayout: "yemindTreeUpSymmetric", baseLayout: "organizationStructure", kind: "derived", rootGrowth: "top", nodeGrowth: "top", siblingAxis: "x", branchMode: "fixed", transform: "mirror-y" },
+  { presetId: "tree-right-up", engineLayout: "yemindTreeRightUp", baseLayout: "catalogOrganization", kind: "derived", rootGrowth: "top", nodeGrowth: "right", siblingAxis: "y", branchMode: "fixed", transform: "mirror-y" },
+  { presetId: "tree-left-up", engineLayout: "yemindTreeLeftUp", baseLayout: "catalogOrganization", kind: "derived", rootGrowth: "top", nodeGrowth: "left", siblingAxis: "y", branchMode: "fixed", transform: "mirror-xy" },
+  { presetId: "timeline-right", engineLayout: "yemindTimelineRight", baseLayout: "timeline", kind: "native", rootGrowth: "right", nodeGrowth: "bottom", siblingAxis: "y", branchMode: "fixed" },
+  { presetId: "timeline-left", engineLayout: "yemindTimelineLeft", baseLayout: "timeline", kind: "derived", rootGrowth: "left", nodeGrowth: "bottom", siblingAxis: "y", branchMode: "fixed", transform: "mirror-x" },
+  { presetId: "timeline-down", engineLayout: "yemindTimelineDown", baseLayout: "verticalTimeline", kind: "native", rootGrowth: "bottom", nodeGrowth: "bottom", siblingAxis: "y", branchMode: "fixed" },
+  { presetId: "timeline-up", engineLayout: "yemindTimelineUp", baseLayout: "verticalTimeline", kind: "derived", rootGrowth: "top", nodeGrowth: "top", siblingAxis: "y", branchMode: "fixed", transform: "mirror-y" },
+  { presetId: "timeline-s", engineLayout: "yemindTimelineS", baseLayout: "timeline", kind: "specialized", rootGrowth: "right", nodeGrowth: "right", siblingAxis: "x", branchMode: "horizontal" },
+  { presetId: "organization-down", engineLayout: "yemindOrganizationDown", baseLayout: "organizationStructure", kind: "native", rootGrowth: "bottom", nodeGrowth: "bottom", siblingAxis: "x", branchMode: "fixed" },
+  { presetId: "organization-bidirectional", engineLayout: "yemindOrganizationBidirectional", baseLayout: "organizationStructure", kind: "specialized", rootGrowth: "bottom", nodeGrowth: "bottom", siblingAxis: "x", branchMode: "vertical" },
+  { presetId: "organization-up", engineLayout: "yemindOrganizationUp", baseLayout: "organizationStructure", kind: "derived", rootGrowth: "top", nodeGrowth: "top", siblingAxis: "x", branchMode: "fixed", transform: "mirror-y" },
+  { presetId: "fishbone-left", engineLayout: "yemindFishboneLeft", baseLayout: "fishbone2", kind: "native", rootGrowth: "right", nodeGrowth: "right", siblingAxis: "y", branchMode: "fishbone" },
+  { presetId: "fishbone-right", engineLayout: "yemindFishboneRight", baseLayout: "rightFishbone2", kind: "derived", rootGrowth: "left", nodeGrowth: "left", siblingAxis: "y", branchMode: "fishbone", transform: "mirror-x" },
+  { presetId: "tree-table-top-title", engineLayout: "yemindTreeTableTop", baseLayout: "organizationStructure", kind: "specialized", rootGrowth: "bottom", nodeGrowth: "bottom", siblingAxis: "x", branchMode: "fixed" },
+  { presetId: "tree-table-left-title", engineLayout: "yemindTreeTableLeft", baseLayout: "logicalStructure", kind: "specialized", rootGrowth: "right", nodeGrowth: "right", siblingAxis: "y", branchMode: "fixed" },
+  { presetId: "radial-sector", engineLayout: "yemindRadialSector", baseLayout: "mindMap", kind: "specialized", rootGrowth: "radial", nodeGrowth: "radial", siblingAxis: "radial", branchMode: "radial" },
+  { presetId: "circle", engineLayout: "yemindCircle", baseLayout: "mindMap", kind: "specialized", rootGrowth: "radial", nodeGrowth: "radial", siblingAxis: "radial", branchMode: "radial" },
+  { presetId: "bubble", engineLayout: "yemindBubble", baseLayout: "mindMap", kind: "specialized", rootGrowth: "radial", nodeGrowth: "radial", siblingAxis: "radial", branchMode: "radial" },
+  { presetId: "bracket-right", engineLayout: "yemindBracketRight", baseLayout: "logicalStructure", kind: "specialized", rootGrowth: "right", nodeGrowth: "right", siblingAxis: "y", branchMode: "fixed" },
+  { presetId: "bracket-left", engineLayout: "yemindBracketLeft", baseLayout: "logicalStructureLeft", kind: "specialized", rootGrowth: "left", nodeGrowth: "left", siblingAxis: "y", branchMode: "fixed" }
+];
+const byPreset = new Map(definitions.map((definition) => [definition.presetId, definition]));
+const byEngine = new Map(definitions.map((definition) => [definition.engineLayout, definition]));
+const YEMIND_LAYOUT_ENGINE_IDS = definitions.map((definition) => definition.engineLayout);
+function layoutGeometryForPreset(presetId) {
+  return byPreset.get(String(presetId ?? "")) ?? byPreset.get("right-mindmap");
+}
+function layoutGeometryByEngine(engineLayout) {
+  return byEngine.get(String(engineLayout ?? "")) ?? null;
+}
+function normalizedDirection$1(value) {
+  const direction = String(value ?? "").toLowerCase();
+  if (direction === "left" || direction === "right" || direction === "top" || direction === "bottom") {
+    return direction;
+  }
+  return null;
+}
+function resolveLayoutGrowthDirection(engineLayout, node) {
+  var _a, _b;
+  const geometry = layoutGeometryByEngine(engineLayout);
+  if (!geometry) return null;
+  const layer = Number((node == null ? void 0 : node.layerIndex) ?? 0);
+  if (layer === 0 || (node == null ? void 0 : node.isRoot)) {
+    return geometry.rootGrowth === "radial" ? "right" : geometry.rootGrowth;
+  }
+  const direction = normalizedDirection$1(
+    (node == null ? void 0 : node.dir) ?? (node == null ? void 0 : node.direction) ?? ((_a = node == null ? void 0 : node.getData) == null ? void 0 : _a.call(node, "dir")) ?? ((_b = node == null ? void 0 : node.getData) == null ? void 0 : _b.call(node, "direction"))
+  );
+  if (geometry.branchMode === "horizontal" && (direction === "left" || direction === "right")) {
+    return direction;
+  }
+  if (geometry.branchMode === "vertical" && (direction === "top" || direction === "bottom")) {
+    return direction;
+  }
+  if (geometry.branchMode === "fishbone" && (direction === "top" || direction === "bottom")) {
+    return direction;
+  }
+  if (geometry.branchMode === "radial" && direction) return direction;
+  return geometry.nodeGrowth === "radial" ? geometry.rootGrowth === "radial" ? "right" : geometry.rootGrowth : geometry.nodeGrowth;
+}
+function resolveLayoutSiblingAxis(engineLayout) {
+  var _a;
+  const axis = (_a = layoutGeometryByEngine(engineLayout)) == null ? void 0 : _a.siblingAxis;
+  return axis === "radial" || !axis ? null : axis;
+}
 const YEMIND_LAYOUT_PRESETS = [
   { id: "logicalStructure", label: "向右逻辑图", family: "logic" },
   { id: "logicalStructureLeft", label: "向左逻辑图", family: "logic" },
@@ -5737,7 +5811,10 @@ const YEMIND_LAYOUT_PRESETS = [
   { id: "rightFishbone", label: "右鱼骨·单侧", family: "fishbone" },
   { id: "rightFishbone2", label: "右鱼骨·双侧", family: "fishbone" }
 ];
-const LAYOUT_IDS = new Set(YEMIND_LAYOUT_PRESETS.map((item) => item.id));
+const LAYOUT_IDS = /* @__PURE__ */ new Set([
+  ...YEMIND_LAYOUT_PRESETS.map((item) => item.id),
+  ...YEMIND_LAYOUT_ENGINE_IDS
+]);
 function normalizeLayoutId(value) {
   return typeof value === "string" && LAYOUT_IDS.has(value) ? value : "logicalStructure";
 }
@@ -5770,7 +5847,7 @@ const clipartCatalogJson = {
   categories,
   items: items$1
 };
-const items = [{ "id": "mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "思维导图", "fileName": "01_mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/01_mindmap.svg" }, { "id": "reverse-mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "逆向导图", "fileName": "02_reverse-mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/02_reverse-mindmap.svg" }, { "id": "balanced-down", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "双向平衡向下", "fileName": "03_balanced-down.svg", "relativePath": "layout-thumbnails/01_mindmap/03_balanced-down.svg" }, { "id": "right-mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "右向导图", "fileName": "04_right-mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/04_right-mindmap.svg" }, { "id": "left-mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "左向导图", "fileName": "05_left-mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/05_left-mindmap.svg" }, { "id": "tree-right-down", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（右下）", "fileName": "01_tree-right-down.svg", "relativePath": "layout-thumbnails/02_tree/01_tree-right-down.svg" }, { "id": "tree-left-down", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（左下）", "fileName": "02_tree-left-down.svg", "relativePath": "layout-thumbnails/02_tree/02_tree-left-down.svg" }, { "id": "tree-down-symmetric", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（向下对称）", "fileName": "03_tree-down-symmetric.svg", "relativePath": "layout-thumbnails/02_tree/03_tree-down-symmetric.svg" }, { "id": "tree-up-symmetric", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（向上对称）", "fileName": "04_tree-up-symmetric.svg", "relativePath": "layout-thumbnails/02_tree/04_tree-up-symmetric.svg" }, { "id": "tree-right-up", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（右上）", "fileName": "05_tree-right-up.svg", "relativePath": "layout-thumbnails/02_tree/05_tree-right-up.svg" }, { "id": "tree-left-up", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（左上）", "fileName": "06_tree-left-up.svg", "relativePath": "layout-thumbnails/02_tree/06_tree-left-up.svg" }, { "id": "timeline-right", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向右）", "fileName": "01_timeline-right.svg", "relativePath": "layout-thumbnails/03_timeline/01_timeline-right.svg" }, { "id": "timeline-left", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向左）", "fileName": "02_timeline-left.svg", "relativePath": "layout-thumbnails/03_timeline/02_timeline-left.svg" }, { "id": "timeline-down", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向下）", "fileName": "03_timeline-down.svg", "relativePath": "layout-thumbnails/03_timeline/03_timeline-down.svg" }, { "id": "timeline-up", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向上）", "fileName": "04_timeline-up.svg", "relativePath": "layout-thumbnails/03_timeline/04_timeline-up.svg" }, { "id": "timeline-s", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（S型）", "fileName": "05_timeline-s.svg", "relativePath": "layout-thumbnails/03_timeline/05_timeline-s.svg" }, { "id": "organization-down", "groupId": "organization", "groupLabel": "组织结构图", "title": "组织结构图（向下）", "fileName": "01_organization-down.svg", "relativePath": "layout-thumbnails/04_organization/01_organization-down.svg" }, { "id": "organization-bidirectional", "groupId": "organization", "groupLabel": "组织结构图", "title": "组织结构图（上下双向）", "fileName": "02_organization-bidirectional.svg", "relativePath": "layout-thumbnails/04_organization/02_organization-bidirectional.svg" }, { "id": "organization-up", "groupId": "organization", "groupLabel": "组织结构图", "title": "组织结构图（向上）", "fileName": "03_organization-up.svg", "relativePath": "layout-thumbnails/04_organization/03_organization-up.svg" }, { "id": "fishbone-left", "groupId": "fishbone", "groupLabel": "鱼骨图", "title": "鱼骨图（左）", "fileName": "01_fishbone-left.svg", "relativePath": "layout-thumbnails/05_fishbone/01_fishbone-left.svg" }, { "id": "fishbone-right", "groupId": "fishbone", "groupLabel": "鱼骨图", "title": "鱼骨图（右）", "fileName": "02_fishbone-right.svg", "relativePath": "layout-thumbnails/05_fishbone/02_fishbone-right.svg" }, { "id": "tree-table-top-title", "groupId": "tree-table", "groupLabel": "树形表格", "title": "树形表格（顶部标题）", "fileName": "01_tree-table-top-title.svg", "relativePath": "layout-thumbnails/06_tree-table/01_tree-table-top-title.svg" }, { "id": "tree-table-left-title", "groupId": "tree-table", "groupLabel": "树形表格", "title": "树形表格（左侧标题）", "fileName": "02_tree-table-left-title.svg", "relativePath": "layout-thumbnails/06_tree-table/02_tree-table-left-title.svg" }, { "id": "radial-sector", "groupId": "other", "groupLabel": "其他", "title": "扇形放射图", "fileName": "01_radial-sector.svg", "relativePath": "layout-thumbnails/07_other/01_radial-sector.svg" }, { "id": "circle", "groupId": "other", "groupLabel": "其他", "title": "圆形图", "fileName": "02_circle.svg", "relativePath": "layout-thumbnails/07_other/02_circle.svg" }, { "id": "bubble", "groupId": "other", "groupLabel": "其他", "title": "气泡图", "fileName": "03_bubble.svg", "relativePath": "layout-thumbnails/07_other/03_bubble.svg" }, { "id": "bracket-right", "groupId": "other", "groupLabel": "其他", "title": "括号图（右）", "fileName": "04_bracket-right.svg", "relativePath": "layout-thumbnails/07_other/04_bracket-right.svg" }, { "id": "bracket-left", "groupId": "other", "groupLabel": "其他", "title": "括号图（左）", "fileName": "05_bracket-left.svg", "relativePath": "layout-thumbnails/07_other/05_bracket-left.svg" }];
+const items = [{ "id": "right-mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "右向导图", "fileName": "04_right-mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/04_right-mindmap.svg" }, { "id": "left-mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "左向导图", "fileName": "05_left-mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/05_left-mindmap.svg" }, { "id": "mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "思维导图", "fileName": "01_mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/01_mindmap.svg" }, { "id": "reverse-mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "逆向导图", "fileName": "02_reverse-mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/02_reverse-mindmap.svg" }, { "id": "balanced-down", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "双向平衡向下", "fileName": "03_balanced-down.svg", "relativePath": "layout-thumbnails/01_mindmap/03_balanced-down.svg" }, { "id": "tree-right-down", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（右下）", "fileName": "01_tree-right-down.svg", "relativePath": "layout-thumbnails/02_tree/01_tree-right-down.svg" }, { "id": "tree-left-down", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（左下）", "fileName": "02_tree-left-down.svg", "relativePath": "layout-thumbnails/02_tree/02_tree-left-down.svg" }, { "id": "tree-down-symmetric", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（向下对称）", "fileName": "03_tree-down-symmetric.svg", "relativePath": "layout-thumbnails/02_tree/03_tree-down-symmetric.svg" }, { "id": "tree-up-symmetric", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（向上对称）", "fileName": "04_tree-up-symmetric.svg", "relativePath": "layout-thumbnails/02_tree/04_tree-up-symmetric.svg" }, { "id": "tree-right-up", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（右上）", "fileName": "05_tree-right-up.svg", "relativePath": "layout-thumbnails/02_tree/05_tree-right-up.svg" }, { "id": "tree-left-up", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（左上）", "fileName": "06_tree-left-up.svg", "relativePath": "layout-thumbnails/02_tree/06_tree-left-up.svg" }, { "id": "timeline-right", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向右）", "fileName": "01_timeline-right.svg", "relativePath": "layout-thumbnails/03_timeline/01_timeline-right.svg" }, { "id": "timeline-left", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向左）", "fileName": "02_timeline-left.svg", "relativePath": "layout-thumbnails/03_timeline/02_timeline-left.svg" }, { "id": "timeline-down", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向下）", "fileName": "03_timeline-down.svg", "relativePath": "layout-thumbnails/03_timeline/03_timeline-down.svg" }, { "id": "timeline-up", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向上）", "fileName": "04_timeline-up.svg", "relativePath": "layout-thumbnails/03_timeline/04_timeline-up.svg" }, { "id": "timeline-s", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（S型）", "fileName": "05_timeline-s.svg", "relativePath": "layout-thumbnails/03_timeline/05_timeline-s.svg" }, { "id": "organization-down", "groupId": "organization", "groupLabel": "组织结构图", "title": "组织结构图（向下）", "fileName": "01_organization-down.svg", "relativePath": "layout-thumbnails/04_organization/01_organization-down.svg" }, { "id": "organization-bidirectional", "groupId": "organization", "groupLabel": "组织结构图", "title": "组织结构图（上下双向）", "fileName": "02_organization-bidirectional.svg", "relativePath": "layout-thumbnails/04_organization/02_organization-bidirectional.svg" }, { "id": "organization-up", "groupId": "organization", "groupLabel": "组织结构图", "title": "组织结构图（向上）", "fileName": "03_organization-up.svg", "relativePath": "layout-thumbnails/04_organization/03_organization-up.svg" }, { "id": "fishbone-left", "groupId": "fishbone", "groupLabel": "鱼骨图", "title": "鱼骨图（左）", "fileName": "01_fishbone-left.svg", "relativePath": "layout-thumbnails/05_fishbone/01_fishbone-left.svg" }, { "id": "fishbone-right", "groupId": "fishbone", "groupLabel": "鱼骨图", "title": "鱼骨图（右）", "fileName": "02_fishbone-right.svg", "relativePath": "layout-thumbnails/05_fishbone/02_fishbone-right.svg" }, { "id": "tree-table-top-title", "groupId": "tree-table", "groupLabel": "树形表格", "title": "树形表格（顶部标题）", "fileName": "01_tree-table-top-title.svg", "relativePath": "layout-thumbnails/06_tree-table/01_tree-table-top-title.svg" }, { "id": "tree-table-left-title", "groupId": "tree-table", "groupLabel": "树形表格", "title": "树形表格（左侧标题）", "fileName": "02_tree-table-left-title.svg", "relativePath": "layout-thumbnails/06_tree-table/02_tree-table-left-title.svg" }, { "id": "radial-sector", "groupId": "other", "groupLabel": "其他", "title": "扇形放射图", "fileName": "01_radial-sector.svg", "relativePath": "layout-thumbnails/07_other/01_radial-sector.svg" }, { "id": "circle", "groupId": "other", "groupLabel": "其他", "title": "圆形图", "fileName": "02_circle.svg", "relativePath": "layout-thumbnails/07_other/02_circle.svg" }, { "id": "bubble", "groupId": "other", "groupLabel": "其他", "title": "气泡图", "fileName": "03_bubble.svg", "relativePath": "layout-thumbnails/07_other/03_bubble.svg" }, { "id": "bracket-right", "groupId": "other", "groupLabel": "其他", "title": "括号图（右）", "fileName": "04_bracket-right.svg", "relativePath": "layout-thumbnails/07_other/04_bracket-right.svg" }, { "id": "bracket-left", "groupId": "other", "groupLabel": "其他", "title": "括号图（左）", "fileName": "05_bracket-left.svg", "relativePath": "layout-thumbnails/07_other/05_bracket-left.svg" }];
 const layoutCatalogJson = {
   items
 };
@@ -5902,46 +5979,32 @@ function groupLayouts() {
   }
   return output;
 }
-const ENGINE_LAYOUT_BY_ASSET_ID = {
-  mindmap: "mindMap",
-  "reverse-mindmap": "logicalStructureLeft",
-  "balanced-down": "mindMap",
-  "right-mindmap": "logicalStructure",
-  "left-mindmap": "logicalStructureLeft",
-  "tree-right-down": "catalogOrganization",
-  "tree-left-down": "catalogOrganization",
-  "tree-down-symmetric": "organizationStructure",
-  "tree-up-symmetric": "organizationStructure",
-  "tree-right-up": "catalogOrganization",
-  "tree-left-up": "catalogOrganization",
-  "timeline-right": "timeline",
-  "timeline-left": "timeline2",
-  "timeline-down": "verticalTimeline",
-  "timeline-up": "verticalTimeline2",
-  "timeline-s": "verticalTimeline3",
-  "organization-down": "organizationStructure",
-  "organization-bidirectional": "catalogOrganization",
-  "organization-up": "organizationStructure",
-  "fishbone-left": "fishbone2",
-  "fishbone-right": "rightFishbone2",
-  "tree-table-top-title": "catalogOrganization",
-  "tree-table-left-title": "logicalStructure",
-  "radial-sector": "mindMap",
-  circle: "mindMap",
-  bubble: "mindMap",
-  "bracket-right": "logicalStructure",
-  "bracket-left": "logicalStructureLeft"
-};
 const YEMIND_LAYOUT_ASSET_PRESETS = layoutCatalog.items.map((item) => ({
   ...item,
-  engineLayout: normalizeLayoutId(ENGINE_LAYOUT_BY_ASSET_ID[item.id] ?? "logicalStructure")
+  engineLayout: layoutGeometryForPreset(item.id).engineLayout
 }));
+const LEGACY_ENGINE_LAYOUT_PRESETS = {
+  logicalStructure: "right-mindmap",
+  logicalStructureLeft: "left-mindmap",
+  mindMap: "mindmap",
+  organizationStructure: "organization-down",
+  catalogOrganization: "tree-right-down",
+  timeline: "timeline-right",
+  timeline2: "timeline-right",
+  verticalTimeline: "timeline-down",
+  verticalTimeline2: "timeline-up",
+  verticalTimeline3: "timeline-s",
+  fishbone: "fishbone-left",
+  fishbone2: "fishbone-left",
+  rightFishbone: "fishbone-right",
+  rightFishbone2: "fishbone-right"
+};
 function normalizeLayoutAssetId(value, engineLayout) {
   var _a;
   const id = String(value ?? "");
   if (YEMIND_LAYOUT_ASSET_PRESETS.some((item) => item.id === id)) return id;
-  const engine = normalizeLayoutId(engineLayout);
-  return ((_a = YEMIND_LAYOUT_ASSET_PRESETS.find((item) => item.engineLayout === engine)) == null ? void 0 : _a.id) ?? "right-mindmap";
+  const engine = String(engineLayout ?? "");
+  return ((_a = YEMIND_LAYOUT_ASSET_PRESETS.find((item) => item.engineLayout === engine)) == null ? void 0 : _a.id) ?? LEGACY_ENGINE_LAYOUT_PRESETS[engine] ?? "right-mindmap";
 }
 function getLayoutAssetPreset(id) {
   const normalized2 = normalizeLayoutAssetId(id);
@@ -6688,7 +6751,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.0.0";
+const PLUGIN_VERSION = "1.1.0";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -6697,15 +6760,15 @@ const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
   buildTime: "2026-07-27T03:00:00Z",
-  buildId: "yemind-v1.0.0-20260727",
+  buildId: "yemind-v1.1.0-20260727",
   productName: PRODUCT_NAME,
   hostBaseline: "SiYuan 3.7.3",
-  releaseSummary: "修正经典主题真实色预览，增加分组彩虹配色卡、最小运行目录同步和独立网页版。",
+  releaseSummary: "重构 28 种导图结构，统一节点快捷控件方向，并完善大纲拖动与媒体选中交互。",
   highlights: [
-    "经典主题不再显示未参与循环的伪颜色，只展示实际画布、中心、连线、节点和文字颜色。",
-    "彩虹连线配色改为缤纷与经典分组的双列色卡，并保留隐藏原生值用于兼容。",
-    "运行目录通过白名单原子同步，仅保留插件运行文件和固定资源。",
-    "新增 IndexedDB 本地存储、单图传输与整库备份恢复的独立网页版。"
+    "28 个结构预设使用明确的运行时布局，补齐镜像、上下双向、S 型、环形、表格和括号结构。",
+    "根节点、中间节点、叶子节点的加号、折叠和数量控件按实际分支生长方向定位。",
+    "大纲视图移除大块左侧留白，增加六点拖动手柄和十字移动光标。",
+    "大纲图片与剪贴图支持八点选中、直接删除，并统一替换与删除 SVG 图标。"
   ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -27035,7 +27098,7 @@ const OFFICIAL_GEOMETRY_LAYOUTS = /* @__PURE__ */ new Set([
   "rightFishbone2"
 ]);
 function supportsOfficialDragGeometry(layout2) {
-  return OFFICIAL_GEOMETRY_LAYOUTS.has(String(layout2));
+  return OFFICIAL_GEOMETRY_LAYOUTS.has(String(layout2)) || Boolean(layoutGeometryByEngine(layout2));
 }
 function emptyOfficialDragCandidate() {
   return {
@@ -27091,6 +27154,8 @@ function normalizedDirection(value) {
   return null;
 }
 function resolveOfficialDragGrowthDirection(layout2, node) {
+  const presetDirection = resolveLayoutGrowthDirection(layout2, node);
+  if (presetDirection) return presetDirection;
   switch (layout2) {
     case "logicalStructureLeft":
       return "left";
@@ -27134,6 +27199,15 @@ function resolveOfficialDragGuideOrientation(layout2, node) {
   return direction === "top" || direction === "bottom" ? "vertical" : "horizontal";
 }
 function resolveOfficialDragSiblingAxis(layout2, parent) {
+  const geometry = layoutGeometryByEngine(layout2);
+  const presetAxis = resolveLayoutSiblingAxis(layout2);
+  if (geometry && presetAxis) {
+    const root2 = Number((parent == null ? void 0 : parent.layerIndex) ?? 0) === 0 || (parent == null ? void 0 : parent.isRoot);
+    if (root2 && ["catalogOrganization", "timeline", "fishbone2", "rightFishbone2"].includes(geometry.baseLayout)) {
+      return "x";
+    }
+    return presetAxis;
+  }
   switch (layout2) {
     case "organizationStructure":
       return "x";
@@ -45539,8 +45613,8 @@ const _Registry = class _Registry2 {
     let match2;
     return typeof query == "string" ? match2 = this.types[query] || this.attributes[query] : query instanceof Text || query.nodeType === Node.TEXT_NODE ? match2 = this.types.text : typeof query == "number" ? query & Scope.LEVEL & Scope.BLOCK ? match2 = this.types.block : query & Scope.LEVEL & Scope.INLINE && (match2 = this.types.inline) : query instanceof Element && ((query.getAttribute("class") || "").split(/\s+/).some((name) => (match2 = this.classes[name], !!match2)), match2 = match2 || this.tags[query.tagName]), match2 == null ? null : "scope" in match2 && scope & Scope.LEVEL & match2.scope && scope & Scope.TYPE & match2.scope ? match2 : null;
   }
-  register(...definitions) {
-    return definitions.map((definition) => {
+  register(...definitions2) {
+    return definitions2.map((definition) => {
       const isBlot = "blotName" in definition, isAttr = "attrName" in definition;
       if (!isBlot && !isAttr)
         throw new ParchmentError("Invalid definition");
@@ -46192,8 +46266,8 @@ const EmbedBlot$1 = EmbedBlot, OBSERVER_CONFIG = {
   query(query, scope = Scope.ANY) {
     return this.registry.query(query, scope);
   }
-  register(...definitions) {
-    return this.registry.register(...definitions);
+  register(...definitions2) {
+    return this.registry.register(...definitions2);
   }
   build() {
     this.scroll != null && super.build();
@@ -58707,6 +58781,13 @@ class NodeImgAdjust {
   }
 }
 NodeImgAdjust.instanceName = "nodeImgAdjust";
+const ICONS = {
+  replace: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.75 8.25V4.75h3.5M19.25 15.75v3.5h-3.5M5.2 7.35A7.5 7.5 0 0 1 18.1 6l1.15 1.45M18.8 16.65A7.5 7.5 0 0 1 5.9 18l-1.15-1.45" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><rect x="8.25" y="8.25" width="7.5" height="7.5" rx="1.35" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
+  delete: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5.25 7.25h13.5M9 7.25V4.8h6v2.45M7.25 7.25l.7 12h8.1l.7-12M10 10.25v5.75M14 10.25v5.75" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+function resourceActionIcon(name) {
+  return ICONS[name];
+}
 const RESIZE_HANDLES = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
 const CLIPART_SINGLE_CLICK_DELAY = 380;
 const BaseNodeImgAdjust = NodeImgAdjust;
@@ -58777,12 +58858,6 @@ function calculateImageResizeRect(start, handle, deltaX, deltaY, shiftKey = fals
     width: rounded(width2),
     height: rounded(height2)
   };
-}
-function toolbarIcon(name) {
-  if (name === "replace") {
-    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7zM4 10V4h6M20 14v6h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  }
-  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9 7V4.8h6V7M8 10v7M12 10v7M16 10v7M6.5 7l.8 13h9.4l.8-13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   constructor(options) {
@@ -58947,8 +59022,8 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     toolbar.setAttribute("role", "toolbar");
     toolbar.setAttribute("aria-label", "图片工具");
     toolbar.innerHTML = `
-      <button type="button" data-image-action="replace">${toolbarIcon("replace")}<span>替换</span></button>
-      <button type="button" data-image-action="delete">${toolbarIcon("delete")}<span>删除</span></button>
+      <button type="button" data-image-action="replace">${resourceActionIcon("replace")}<span>替换</span></button>
+      <button type="button" data-image-action="delete">${resourceActionIcon("delete")}<span>删除</span></button>
     `;
     toolbar.addEventListener("mousedown", (event) => {
       event.preventDefault();
@@ -60771,12 +60846,466 @@ class RightFishbone extends Fishbone {
     this.fishTail.x(mirroredAnchor - tailWidth).cy(this.root.top + this.root.height / 2);
   }
 }
+function visitTree$1(root2, callback) {
+  if (!root2) return;
+  callback(root2);
+  (root2.children ?? []).forEach((child) => visitTree$1(child, callback));
+}
+function moveSubtree(root2, deltaX, deltaY) {
+  visitTree$1(root2, (node) => {
+    node._left = Number(node.left) + deltaX;
+    node._top = Number(node.top) + deltaY;
+    if (node.customLeft !== void 0) node.customLeft = Number(node.customLeft) + deltaX;
+    if (node.customTop !== void 0) node.customTop = Number(node.customTop) + deltaY;
+  });
+}
+function commandParameterCounts(command) {
+  return { M: 2, L: 2, H: 1, V: 1, C: 6, S: 4, Q: 4, T: 2, A: 7, Z: 0 }[command.toUpperCase()] ?? 0;
+}
+function coordinateIndexes(command) {
+  switch (command.toUpperCase()) {
+    case "M":
+    case "L":
+    case "T":
+      return { x: /* @__PURE__ */ new Set([0]), y: /* @__PURE__ */ new Set([1]) };
+    case "H":
+      return { x: /* @__PURE__ */ new Set([0]), y: /* @__PURE__ */ new Set() };
+    case "V":
+      return { x: /* @__PURE__ */ new Set(), y: /* @__PURE__ */ new Set([0]) };
+    case "C":
+      return { x: /* @__PURE__ */ new Set([0, 2, 4]), y: /* @__PURE__ */ new Set([1, 3, 5]) };
+    case "S":
+    case "Q":
+      return { x: /* @__PURE__ */ new Set([0, 2]), y: /* @__PURE__ */ new Set([1, 3]) };
+    case "A":
+      return { x: /* @__PURE__ */ new Set([5]), y: /* @__PURE__ */ new Set([6]) };
+    default:
+      return { x: /* @__PURE__ */ new Set(), y: /* @__PURE__ */ new Set() };
+  }
+}
+function mirrorSvgPath(path2, axisX, axisY, transform2) {
+  const tokens = String(path2 ?? "").match(/[a-zA-Z]|[-+]?(?:\d*\.?\d+(?:e[-+]?\d+)?)/gi) ?? [];
+  const output = [];
+  let command = "";
+  let index = 0;
+  let count = 0;
+  let indexes = { x: /* @__PURE__ */ new Set(), y: /* @__PURE__ */ new Set() };
+  tokens.forEach((token) => {
+    if (/^[a-zA-Z]$/.test(token)) {
+      command = token;
+      index = 0;
+      count = commandParameterCounts(command);
+      indexes = coordinateIndexes(command);
+      output.push(command);
+      return;
+    }
+    let value = Number(token);
+    if (command === command.toUpperCase()) {
+      if (transform2 !== "mirror-y" && indexes.x.has(index)) value = axisX * 2 - value;
+      if (transform2 !== "mirror-x" && indexes.y.has(index)) value = axisY * 2 - value;
+    }
+    output.push(String(value));
+    if (count > 0) index = (index + 1) % count;
+  });
+  return output.join(" ");
+}
+function createAliasLayout(BaseLayout, baseLayout) {
+  return class YeMindAliasLayout extends BaseLayout {
+    constructor(options) {
+      super(options, baseLayout);
+      this.layout = baseLayout;
+    }
+  };
+}
+function createMirroredLayout(BaseLayout, baseLayout, transform2) {
+  return class YeMindMirroredLayout extends BaseLayout {
+    constructor(options) {
+      super(options, baseLayout);
+      __publicField(this, "mirrorAxisX", 0);
+      __publicField(this, "mirrorAxisY", 0);
+      __publicField(this, "original", /* @__PURE__ */ new Map());
+      __publicField(this, "pathTransformEnabled", false);
+      this.layout = baseLayout;
+    }
+    doLayout(callback) {
+      BaseLayout.prototype.doLayout.call(this, (root2) => {
+        this.mirrorAxisX = Number(root2.left) + Number(root2.width) / 2;
+        this.mirrorAxisY = Number(root2.top) + Number(root2.height) / 2;
+        this.original.clear();
+        visitTree$1(root2, (node) => {
+          const position2 = {
+            left: Number(node.left) || 0,
+            top: Number(node.top) || 0,
+            customLeft: node.customLeft,
+            customTop: node.customTop
+          };
+          this.original.set(node, position2);
+          if (transform2 !== "mirror-y") {
+            const left = this.mirrorAxisX * 2 - (position2.left + Number(node.width || 0));
+            node._left = left;
+            if (node.customLeft !== void 0) node.customLeft = left;
+          }
+          if (transform2 !== "mirror-x") {
+            const top = this.mirrorAxisY * 2 - (position2.top + Number(node.height || 0));
+            node._top = top;
+            if (node.customTop !== void 0) node.customTop = top;
+          }
+        });
+        callback(root2);
+      });
+    }
+    withOriginalGeometry(callback) {
+      const mirrored = /* @__PURE__ */ new Map();
+      this.original.forEach((position2, node) => {
+        mirrored.set(node, {
+          left: Number(node.left) || 0,
+          top: Number(node.top) || 0,
+          customLeft: node.customLeft,
+          customTop: node.customTop
+        });
+        node._left = position2.left;
+        node._top = position2.top;
+        if (position2.customLeft !== void 0) node.customLeft = position2.customLeft;
+        if (position2.customTop !== void 0) node.customTop = position2.customTop;
+      });
+      this.pathTransformEnabled = true;
+      try {
+        return callback();
+      } finally {
+        this.pathTransformEnabled = false;
+        mirrored.forEach((position2, node) => {
+          node._left = position2.left;
+          node._top = position2.top;
+          if (position2.customLeft !== void 0) node.customLeft = position2.customLeft;
+          if (position2.customTop !== void 0) node.customTop = position2.customTop;
+        });
+      }
+    }
+    transformPath(path2) {
+      const transformed = BaseLayout.prototype.transformPath.call(this, path2);
+      return this.pathTransformEnabled ? mirrorSvgPath(transformed, this.mirrorAxisX, this.mirrorAxisY, transform2) : transformed;
+    }
+    renderLine(node, lines, style, lineStyle) {
+      return this.withOriginalGeometry(() => BaseLayout.prototype.renderLine.call(this, node, lines, style, lineStyle));
+    }
+    renderGeneralization(list) {
+      if (typeof BaseLayout.prototype.renderGeneralization !== "function") return;
+      this.withOriginalGeometry(() => BaseLayout.prototype.renderGeneralization.call(this, list));
+      list.forEach((item) => {
+        const node = item == null ? void 0 : item.generalizationNode;
+        if (!node) return;
+        if (transform2 !== "mirror-y") node.left = this.mirrorAxisX * 2 - (Number(node.left) + Number(node.width || 0));
+        if (transform2 !== "mirror-x") node.top = this.mirrorAxisY * 2 - (Number(node.top) + Number(node.height || 0));
+      });
+    }
+  };
+}
+function directionFromAngle(angle) {
+  const x2 = Math.cos(angle);
+  const y2 = Math.sin(angle);
+  return Math.abs(x2) >= Math.abs(y2) ? x2 < 0 ? "left" : "right" : y2 < 0 ? "top" : "bottom";
+}
+function renderDirectionalLines(layout2, node, lines, style) {
+  var _a;
+  if (!((_a = node == null ? void 0 : node.children) == null ? void 0 : _a.length)) return;
+  const parentCenter = {
+    x: Number(node.left) + Number(node.width) / 2,
+    y: Number(node.top) + Number(node.height) / 2
+  };
+  node.children.forEach((child, index) => {
+    const childCenter = {
+      x: Number(child.left) + Number(child.width) / 2,
+      y: Number(child.top) + Number(child.height) / 2
+    };
+    const dx2 = childCenter.x - parentCenter.x;
+    const dy2 = childCenter.y - parentCenter.y;
+    let x1 = parentCenter.x;
+    let y1 = parentCenter.y;
+    let x2 = childCenter.x;
+    let y2 = childCenter.y;
+    if (Math.abs(dx2) >= Math.abs(dy2)) {
+      x1 += dx2 < 0 ? -Number(node.width) / 2 : Number(node.width) / 2;
+      x2 += dx2 < 0 ? Number(child.width) / 2 : -Number(child.width) / 2;
+    } else {
+      y1 += dy2 < 0 ? -Number(node.height) / 2 : Number(node.height) / 2;
+      y2 += dy2 < 0 ? Number(child.height) / 2 : -Number(child.height) / 2;
+    }
+    const path2 = Math.abs(dx2) >= Math.abs(dy2) ? `M ${x1},${y1} C ${(x1 + x2) / 2},${y1} ${(x1 + x2) / 2},${y2} ${x2},${y2}` : `M ${x1},${y1} C ${x1},${(y1 + y2) / 2} ${x2},${(y1 + y2) / 2} ${x2},${y2}`;
+    layout2.setLineStyle(style, lines[index], layout2.transformPath(path2), child);
+  });
+}
+class BidirectionalOrganization extends OrganizationStructure {
+  doLayout(callback) {
+    super.doLayout((root2) => {
+      const axisY = Number(root2.top) + Number(root2.height) / 2;
+      (root2.children ?? []).forEach((child, index) => {
+        const top = index % 2 === 0;
+        visitTree$1(child, (node) => {
+          node.dir = top ? "top" : "bottom";
+          if (top) node._top = axisY * 2 - (Number(node.top) + Number(node.height || 0));
+        });
+      });
+      callback(root2);
+    });
+  }
+  renderLine(node, lines, style) {
+    renderDirectionalLines(this, node, lines, style);
+  }
+}
+class SerpentineTimeline extends Timeline2 {
+  constructor(options) {
+    super(options, "timeline");
+    __publicField(this, "rootSequence", []);
+    this.layout = "timeline";
+  }
+  doLayout(callback) {
+    super.doLayout((root2) => {
+      const children = root2.children ?? [];
+      this.rootSequence = children;
+      const columnWidth = Math.max(
+        Number(root2.width || 0),
+        ...children.map((node) => Number(node.width || 0))
+      ) + 62;
+      const rowHeight = Math.max(
+        Number(root2.height || 0),
+        ...children.map((node) => Number(node.height || 0))
+      ) + 92;
+      const rowSize = 4;
+      children.forEach((child, index) => {
+        const slot = index + 1;
+        const row = Math.floor(slot / rowSize);
+        const rawColumn = slot % rowSize;
+        const column = row % 2 === 0 ? rawColumn : rowSize - 1 - rawColumn;
+        const targetLeft = Number(root2.left) + column * columnWidth;
+        const targetTop = Number(root2.top) + row * rowHeight;
+        moveSubtree(child, targetLeft - Number(child.left), targetTop - Number(child.top));
+        child.dir = row % 2 === 0 ? "right" : "left";
+      });
+      callback(root2);
+    });
+  }
+  renderLine(node, lines, style) {
+    var _a;
+    if (!((_a = node == null ? void 0 : node.children) == null ? void 0 : _a.length)) return;
+    if (!node.isRoot) {
+      renderDirectionalLines(this, node, lines, style);
+      return;
+    }
+    node.children.forEach((child, index) => {
+      const previous = index === 0 ? node : this.rootSequence[index - 1];
+      const previousCenter = {
+        x: Number(previous.left) + Number(previous.width) / 2,
+        y: Number(previous.top) + Number(previous.height) / 2
+      };
+      const childCenter = {
+        x: Number(child.left) + Number(child.width) / 2,
+        y: Number(child.top) + Number(child.height) / 2
+      };
+      const sameRow = Math.abs(previousCenter.y - childCenter.y) < 4;
+      const path2 = sameRow ? `M ${previousCenter.x},${previousCenter.y} L ${childCenter.x},${childCenter.y}` : `M ${previousCenter.x},${previousCenter.y} C ${previousCenter.x + 64},${previousCenter.y} ${childCenter.x + 64},${childCenter.y} ${childCenter.x},${childCenter.y}`;
+      this.setLineStyle(style, lines[index], this.transformPath(path2), child);
+    });
+  }
+}
+class TreeTableTopLayout extends OrganizationStructure {
+  renderLine(node, lines, style) {
+    var _a;
+    if (!((_a = node == null ? void 0 : node.children) == null ? void 0 : _a.length)) return;
+    const parentX = Number(node.left) + Number(node.width) / 2;
+    const parentY = Number(node.top) + Number(node.height);
+    node.children.forEach((child, index) => {
+      const childX = Number(child.left) + Number(child.width) / 2;
+      const childY = Number(child.top);
+      const railY = parentY + (childY - parentY) * 0.48;
+      const path2 = `M ${parentX},${parentY} L ${parentX},${railY} L ${childX},${railY} L ${childX},${childY}`;
+      this.setLineStyle(style, lines[index], this.transformPath(path2), child);
+    });
+  }
+}
+class TreeTableLeftLayout extends LogicalStructure {
+  constructor(options) {
+    super(options, "logicalStructure");
+  }
+  renderLine(node, lines, style) {
+    var _a;
+    if (!((_a = node == null ? void 0 : node.children) == null ? void 0 : _a.length)) return;
+    const parentX = Number(node.left) + Number(node.width);
+    const parentY = Number(node.top) + Number(node.height) / 2;
+    node.children.forEach((child, index) => {
+      const childX = Number(child.left);
+      const childY = Number(child.top) + Number(child.height) / 2;
+      const railX = parentX + (childX - parentX) * 0.48;
+      const path2 = `M ${parentX},${parentY} L ${railX},${parentY} L ${railX},${childY} L ${childX},${childY}`;
+      this.setLineStyle(style, lines[index], this.transformPath(path2), child);
+    });
+  }
+}
+class BracketLayout extends LogicalStructure {
+  constructor(options, useLeft) {
+    super(options, useLeft ? "logicalStructureLeft" : "logicalStructure");
+    __publicField(this, "useLeft");
+    this.useLeft = useLeft;
+  }
+  renderLine(node, lines, style) {
+    var _a;
+    if (!((_a = node == null ? void 0 : node.children) == null ? void 0 : _a.length)) return;
+    const parentX = this.useLeft ? Number(node.left) : Number(node.left) + Number(node.width);
+    const parentY = Number(node.top) + Number(node.height) / 2;
+    node.children.forEach((child, index) => {
+      const childX = this.useLeft ? Number(child.left) + Number(child.width) : Number(child.left);
+      const childY = Number(child.top) + Number(child.height) / 2;
+      const bracketX = parentX + (childX - parentX) * 0.56;
+      const middleY = parentY + (childY - parentY) / 2;
+      const path2 = `M ${parentX},${parentY} C ${bracketX},${parentY} ${bracketX},${middleY} ${bracketX},${middleY} C ${bracketX},${childY} ${bracketX},${childY} ${childX},${childY}`;
+      this.setLineStyle(style, lines[index], this.transformPath(path2), child);
+    });
+  }
+}
+class BracketRightLayout extends BracketLayout {
+  constructor(options) {
+    super(options, false);
+  }
+}
+class BracketLeftLayout extends BracketLayout {
+  constructor(options) {
+    super(options, true);
+  }
+}
+class RadialPresetLayout extends MindMap$1 {
+  constructor(options, mode) {
+    super(options);
+    __publicField(this, "mode");
+    this.mode = mode;
+  }
+  doLayout(callback) {
+    super.doLayout((root2) => {
+      const cx2 = Number(root2.left) + Number(root2.width) / 2;
+      const cy2 = Number(root2.top) + Number(root2.height) / 2;
+      const children = root2.children ?? [];
+      const start = this.mode === "sector" ? -Math.PI * 0.72 : -Math.PI;
+      const span = this.mode === "sector" ? Math.PI * 1.44 : Math.PI * 2;
+      const place = (node, angle, depth, sector) => {
+        const radius = (this.mode === "bubble" ? 96 : 112) + depth * (this.mode === "bubble" ? 76 : 96);
+        const x2 = cx2 + Math.cos(angle) * radius;
+        const y2 = cy2 + Math.sin(angle) * radius;
+        node._left = x2 - Number(node.width) / 2;
+        node._top = y2 - Number(node.height) / 2;
+        node.dir = directionFromAngle(angle);
+        const descendants = node.children ?? [];
+        descendants.forEach((child, index) => {
+          const local = descendants.length <= 1 ? angle : angle - sector / 2 + sector * (index / (descendants.length - 1));
+          place(child, local, depth + 1, Math.max(0.22, sector * 0.58));
+        });
+      };
+      children.forEach((child, index) => {
+        const angle = start + span * ((index + 0.5) / Math.max(1, children.length));
+        place(child, angle, 1, span / Math.max(3, children.length));
+      });
+      callback(root2);
+    });
+  }
+  renderLine(node, lines, style) {
+    renderDirectionalLines(this, node, lines, style);
+  }
+}
+class RadialSectorLayout extends RadialPresetLayout {
+  constructor(options) {
+    super(options, "sector");
+  }
+}
+class CircleLayout extends RadialPresetLayout {
+  constructor(options) {
+    super(options, "circle");
+  }
+}
+class BubbleLayout extends RadialPresetLayout {
+  constructor(options) {
+    super(options, "bubble");
+  }
+}
+class YeMindFishboneLeft extends Fishbone {
+  isFishbone2() {
+    return true;
+  }
+}
+class YeMindFishboneRight extends RightFishbone {
+  isFishbone2() {
+    return true;
+  }
+}
+const PRESET_LAYOUT_CLASSES = {
+  yemindRightMindMap: createAliasLayout(LogicalStructure, "logicalStructure"),
+  yemindLeftMindMap: createAliasLayout(LogicalStructure, "logicalStructureLeft"),
+  yemindMindMap: createAliasLayout(MindMap$1, "mindMap"),
+  yemindReverseMindMap: createMirroredLayout(MindMap$1, "mindMap", "mirror-x"),
+  yemindBalancedDown: createAliasLayout(OrganizationStructure, "organizationStructure"),
+  yemindTreeRightDown: createAliasLayout(CatalogOrganization, "catalogOrganization"),
+  yemindTreeLeftDown: createMirroredLayout(CatalogOrganization, "catalogOrganization", "mirror-x"),
+  yemindTreeDownSymmetric: createAliasLayout(OrganizationStructure, "organizationStructure"),
+  yemindTreeUpSymmetric: createMirroredLayout(OrganizationStructure, "organizationStructure", "mirror-y"),
+  yemindTreeRightUp: createMirroredLayout(CatalogOrganization, "catalogOrganization", "mirror-y"),
+  yemindTreeLeftUp: createMirroredLayout(CatalogOrganization, "catalogOrganization", "mirror-xy"),
+  yemindTimelineRight: createAliasLayout(Timeline2, "timeline"),
+  yemindTimelineLeft: createMirroredLayout(Timeline2, "timeline", "mirror-x"),
+  yemindTimelineDown: createAliasLayout(VerticalTimeline, "verticalTimeline"),
+  yemindTimelineUp: createMirroredLayout(VerticalTimeline, "verticalTimeline", "mirror-y"),
+  yemindTimelineS: SerpentineTimeline,
+  yemindOrganizationDown: createAliasLayout(OrganizationStructure, "organizationStructure"),
+  yemindOrganizationBidirectional: BidirectionalOrganization,
+  yemindOrganizationUp: createMirroredLayout(OrganizationStructure, "organizationStructure", "mirror-y"),
+  yemindFishboneLeft: YeMindFishboneLeft,
+  yemindFishboneRight: YeMindFishboneRight,
+  yemindTreeTableTop: TreeTableTopLayout,
+  yemindTreeTableLeft: TreeTableLeftLayout,
+  yemindRadialSector: RadialSectorLayout,
+  yemindCircle: CircleLayout,
+  yemindBubble: BubbleLayout,
+  yemindBracketRight: BracketRightLayout,
+  yemindBracketLeft: BracketLeftLayout
+};
 let registered = false;
+const LAYOUT_BRIDGE_FLAG = "__yemindPresetLayoutBridgeInstalled";
+function installPresetLayoutBridge(prototype) {
+  if (prototype[LAYOUT_BRIDGE_FLAG]) return;
+  const upstreamHandleOpt = prototype.handleOpt;
+  const upstreamSetLayout = prototype.setLayout;
+  prototype.handleOpt = function handleYeMindLayoutOptions(options) {
+    const requested = layoutGeometryByEngine(options == null ? void 0 : options.layout);
+    if (!requested) return upstreamHandleOpt.call(this, options);
+    const normalized2 = upstreamHandleOpt.call(this, {
+      ...options,
+      layout: requested.baseLayout
+    });
+    normalized2.layout = requested.engineLayout;
+    return normalized2;
+  };
+  prototype.setLayout = function setYeMindLayout(layout2, notRender = false) {
+    const requested = layoutGeometryByEngine(layout2);
+    if (!requested) {
+      upstreamSetLayout.call(this, layout2, notRender);
+      return;
+    }
+    this.opt.layout = requested.engineLayout;
+    this.view.reset();
+    this.renderer.setLayout();
+    if (!notRender) this.render(null, "changeLayout");
+    this.emit("layout_change", requested.engineLayout);
+  };
+  Object.defineProperty(prototype, LAYOUT_BRIDGE_FLAG, {
+    configurable: false,
+    enumerable: false,
+    value: true
+  });
+}
 function registerMindMapLayouts() {
   if (registered) return;
   const prototype = MindMap2.prototype;
+  installPresetLayoutBridge(prototype);
   prototype.rightFishbone = RightFishbone;
   prototype.rightFishbone2 = RightFishbone;
+  Object.entries(PRESET_LAYOUT_CLASSES).forEach(([layout2, LayoutClass]) => {
+    prototype[layout2] = LayoutClass;
+  });
   registered = true;
 }
 const BLOCKED_ELEMENTS = "script,style,iframe,object,embed,meta,link,base,form,input,button,textarea,select,option";
@@ -62237,6 +62766,11 @@ function createCommandAdapter(mindMap) {
     setImage: (image) => {
       if (canMutate()) forEachActive((node) => mindMap.execCommand("SET_NODE_IMAGE", node, image));
     },
+    clearImageByUid: (uid) => {
+      if (!canMutate()) return;
+      const node = findNodeByUid(uid);
+      if (node) mindMap.execCommand("SET_NODE_IMAGE", node, { url: null });
+    },
     setClipart: (image) => {
       if (!canMutate()) return;
       forEachActive((node) => {
@@ -63677,12 +64211,17 @@ function symbolIcon(symbol) {
 function statusButton(type, title, label) {
   return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute(type)}" data-outline-content="${escapeAttribute(type)}" tabindex="-1" aria-label="${escapeAttribute(title)}">${label}</button>`;
 }
+function outlineMediaChrome(kind) {
+  const handles = ["nw", "n", "ne", "e", "se", "s", "sw", "w"].map((direction) => `<span class="ymz-outline-media-handle" data-outline-media-handle="${direction}" aria-hidden="true"></span>`).join("");
+  const title = kind === "clipart" ? "删除剪贴图" : "删除图片";
+  return `${handles}<button type="button" class="ymz-outline-media-delete" data-outline-media-delete tabindex="-1" aria-label="${title}" title="${title}">×</button>`;
+}
 function outlineAccessoriesHtml(accessories, pluginBaseUrl) {
   const hasAny = accessories.icons.length || accessories.image || accessories.todo || accessories.tags.length || accessories.link || accessories.hasNote || accessories.commentCount || accessories.hasOuterFrame;
   if (!hasAny) return "";
   const todo = accessories.todo ? `<button type="button" class="ymz-outline-accessories__todo${accessories.todo.checked ? " is-checked" : ""}" data-outline-content="todo" tabindex="-1" aria-label="${accessories.todo.checked ? "待办已完成" : "待办未完成"}">${accessories.todo.checked ? "✓" : ""}</button>` : "";
   const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join("");
-  const image = accessories.image ? `<button type="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? " is-clipart" : ""}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? "clipart" : "image"}" tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? "剪贴图：单击编辑，双击查看" : "图片：单击编辑，双击查看"))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false"></button>` : "";
+  const image = accessories.image ? `<span role="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? " is-clipart" : ""}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? "clipart" : "image"}" tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? "剪贴图：单击编辑，双击查看" : "图片：单击编辑，双击查看"))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false">${outlineMediaChrome(accessories.image.clipartId ? "clipart" : "image")}</span>` : "";
   const tags = accessories.tags.length ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute(accessories.tags.join("、"))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute(tag)}</span>`).join("")}</span>` : "";
   const note2 = accessories.hasNote ? statusButton("note", "备注", symbolIcon("iconYeMindNote")) : "";
   const comments = accessories.commentCount ? statusButton("comments", `批注 ${accessories.commentCount}`, symbolIcon("iconYeMindComment")) : "";
@@ -64817,6 +65356,7 @@ class StructuredOutlineEditorController {
   constructor(options) {
     __publicField(this, "debounceMs");
     __publicField(this, "outlineImageClickTimer", null);
+    __publicField(this, "selectedMedia", null);
     __publicField(this, "timer", null);
     __publicField(this, "dirty", false);
     __publicField(this, "applying", false);
@@ -64850,11 +65390,25 @@ class StructuredOutlineEditorController {
       this.markDirty("composition-end");
     });
     __publicField(this, "onClick", (event) => {
-      var _a, _b, _c2, _d2;
+      var _a, _b, _c2, _d2, _e, _f;
       const target = event.target;
       const row = target.closest("[data-outline-uid]");
       if (!row) return;
       const uid = row.dataset.outlineUid ?? "";
+      const mediaDelete = target.closest("[data-outline-media-delete]");
+      if (mediaDelete) {
+        event.preventDefault();
+        event.stopPropagation();
+        const media = mediaDelete.closest("[data-outline-image-action]");
+        const kind = (media == null ? void 0 : media.dataset.outlineImageKind) === "clipart" ? "clipart" : "image";
+        this.activateUid(uid, false);
+        if (!this.options.isReadonly()) {
+          this.options.onActivate(uid);
+          (_b = (_a = this.options).onImageDelete) == null ? void 0 : _b.call(_a, uid, kind);
+        }
+        this.clearOutlineMediaSelection();
+        return;
+      }
       const iconAction = target.closest("[data-outline-icon-action]");
       if (iconAction) {
         event.preventDefault();
@@ -64862,7 +65416,7 @@ class StructuredOutlineEditorController {
         this.activateUid(uid, false);
         if (!this.options.isReadonly()) {
           this.options.onActivate(uid);
-          (_b = (_a = this.options).onIconEdit) == null ? void 0 : _b.call(_a, uid, iconAction.dataset.outlineIcon ?? "", iconAction);
+          (_d2 = (_c2 = this.options).onIconEdit) == null ? void 0 : _d2.call(_c2, uid, iconAction.dataset.outlineIcon ?? "", iconAction);
         }
         return;
       }
@@ -64876,6 +65430,7 @@ class StructuredOutlineEditorController {
         this.outlineImageClickTimer = null;
         if (event.detail > 1) return;
         const kind = imageAction.dataset.outlineImageKind === "clipart" ? "clipart" : "image";
+        this.selectOutlineMedia(uid, kind);
         this.outlineImageClickTimer = window.setTimeout(() => {
           var _a2, _b2;
           this.outlineImageClickTimer = null;
@@ -64889,7 +65444,7 @@ class StructuredOutlineEditorController {
         event.stopPropagation();
         this.activateUid(uid, false);
         if (!this.options.isReadonly()) this.options.onActivate(uid);
-        (_d2 = (_c2 = this.options).onContentAction) == null ? void 0 : _d2.call(_c2, uid, contentAction.dataset.outlineContent ?? "");
+        (_f = (_e = this.options).onContentAction) == null ? void 0 : _f.call(_e, uid, contentAction.dataset.outlineContent ?? "");
         return;
       }
       const toggle = target.closest("[data-outline-toggle]");
@@ -64984,14 +65539,18 @@ class StructuredOutlineEditorController {
       }, 0);
     });
     __publicField(this, "onPointerDown", (event) => {
-      var _a, _b;
-      const imageAction = (_a = event.target) == null ? void 0 : _a.closest("[data-outline-image-action]");
+      var _a;
+      const target = event.target;
+      const imageAction = target == null ? void 0 : target.closest("[data-outline-image-action]");
       if (imageAction && event.detail > 1 && this.outlineImageClickTimer !== null) {
         window.clearTimeout(this.outlineImageClickTimer);
         this.outlineImageClickTimer = null;
       }
+      if (!imageAction && !(target == null ? void 0 : target.closest("[data-outline-media-delete]"))) {
+        this.clearOutlineMediaSelection();
+      }
       this.clearWholeSelection();
-      this.pointerSelecting = Boolean((_b = event.target) == null ? void 0 : _b.closest("[data-outline-editor]"));
+      this.pointerSelecting = Boolean((_a = event.target) == null ? void 0 : _a.closest("[data-outline-editor]"));
       if (this.pointerSelecting && this.options.isReadonly()) this.options.root.focus({ preventScroll: true });
       this.options.onSelectionChange(false, null, null, this);
     });
@@ -65031,7 +65590,20 @@ class StructuredOutlineEditorController {
       }
     });
     __publicField(this, "onKeyDown", (event) => {
+      var _a, _b, _c2;
       if (event.isComposing || this.composing) return;
+      if (this.selectedMedia && (event.key === "Delete" || event.key === "Backspace") && !this.options.isReadonly() && !((_a = event.target) == null ? void 0 : _a.closest("[data-outline-editor]"))) {
+        event.preventDefault();
+        event.stopPropagation();
+        const { uid, kind } = this.selectedMedia;
+        (_c2 = (_b = this.options).onImageDelete) == null ? void 0 : _c2.call(_b, uid, kind);
+        this.clearOutlineMediaSelection();
+        return;
+      }
+      if (event.key === "Escape" && this.selectedMedia) {
+        this.clearOutlineMediaSelection();
+        return;
+      }
       const command = event.ctrlKey || event.metaKey;
       if (command && !event.altKey && event.key.toLowerCase() === "a") {
         event.preventDefault();
@@ -65438,6 +66010,7 @@ class StructuredOutlineEditorController {
     var _a;
     this.flush("destroy");
     this.cancelTimer();
+    this.clearOutlineMediaSelection();
     if (this.guideFrame !== null) window.cancelAnimationFrame(this.guideFrame);
     this.guideFrame = null;
     (_a = this.guideResizeObserver) == null ? void 0 : _a.disconnect();
@@ -65674,6 +66247,7 @@ class StructuredOutlineEditorController {
         if (editorHost) row.insertBefore(next2, editorHost);
       }
     });
+    this.syncOutlineMediaSelection();
   }
   patchBlocks(blocks, bookmark) {
     var _a, _b;
@@ -65709,6 +66283,7 @@ class StructuredOutlineEditorController {
       return (_a2 = this.guideResizeObserver) == null ? void 0 : _a2.observe(row);
     });
     this.scheduleGuideRender();
+    this.syncOutlineMediaSelection();
     if (bookmark) this.restoreSelectionBookmark(bookmark);
   }
   scheduleGuideRender() {
@@ -65779,7 +66354,27 @@ class StructuredOutlineEditorController {
   rowHtml(block) {
     const leaf = !block.hasChildren;
     const marker = block.hasChildren ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle contenteditable="false" tabindex="-1" aria-label="${block.expanded ? "折叠" : "展开"}"><span class="ymz-outline-row__triangle" data-direction="${block.expanded ? "down" : "right"}"></span></button>` : `<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" contenteditable="false" aria-hidden="true"><span class="ymz-outline-row__leaf-square"></span></span>`;
-    return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : "false"}" data-outline-uid="${escapeHtml$2(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml$2(block.parentUid ?? "")}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${!block.isRoot && block.kind === "node"}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" aria-hidden="true"></span><span class="ymz-outline-row__drop-indicator" contenteditable="false" aria-hidden="true"></span>${marker}${outlineAccessoriesHtml(block.accessories, this.options.pluginBaseUrl)}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${structuredOutlineIsRichHtml(block.html)}">${block.html}</div></div>`;
+    return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : "false"}" data-outline-uid="${escapeHtml$2(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml$2(block.parentUid ?? "")}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${!block.isRoot && block.kind === "node"}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" role="button" aria-label="拖动节点"><span class="ymz-outline-drag-grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></span><span class="ymz-outline-row__drop-indicator" contenteditable="false" aria-hidden="true"></span>${marker}${outlineAccessoriesHtml(block.accessories, this.options.pluginBaseUrl)}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${structuredOutlineIsRichHtml(block.html)}">${block.html}</div></div>`;
+  }
+  selectOutlineMedia(uid, kind) {
+    this.clearOutlineMediaSelection();
+    this.selectedMedia = { uid, kind };
+    this.syncOutlineMediaSelection();
+  }
+  syncOutlineMediaSelection() {
+    this.options.root.querySelectorAll("[data-outline-image-action].is-selected").forEach((element) => element.classList.remove("is-selected"));
+    if (!this.selectedMedia) return;
+    const row = this.rowByUid(this.selectedMedia.uid);
+    const media = row == null ? void 0 : row.querySelector("[data-outline-image-action]");
+    if (!media) {
+      this.selectedMedia = null;
+      return;
+    }
+    media.classList.add("is-selected");
+  }
+  clearOutlineMediaSelection() {
+    this.selectedMedia = null;
+    this.options.root.querySelectorAll("[data-outline-image-action].is-selected").forEach((element) => element.classList.remove("is-selected"));
   }
   patchRow(row, block, selectionProtected) {
     row.setAttribute("aria-level", String(block.depth + 1));
@@ -69109,7 +69704,8 @@ function resolveNodeQuickActionSide(layout2, node, nodeRect, childRects = []) {
   var _a, _b;
   const value = String(layout2 ?? "logicalStructure");
   const dir = (node == null ? void 0 : node.dir) ?? (node == null ? void 0 : node.direction) ?? ((_a = node == null ? void 0 : node.getData) == null ? void 0 : _a.call(node, "dir")) ?? ((_b = node == null ? void 0 : node.getData) == null ? void 0 : _b.call(node, "direction"));
-  const fallback = resolveOfficialDragGrowthDirection(value, { ...node, dir });
+  const fallback = resolveLayoutGrowthDirection(value, { ...node, dir }) ?? resolveOfficialDragGrowthDirection(value, { ...node, dir });
+  if (layoutGeometryByEngine(value)) return fallback;
   return nodeRect && childRects.length > 0 ? resolveQuickActionAnchor(nodeRect, childRects, fallback).side : fallback;
 }
 function visibleNodeList(root2) {
@@ -69238,10 +69834,12 @@ class NodeQuickActionsController {
         var _a2, _b2, _c3;
         return (_c3 = (_b2 = (_a2 = child == null ? void 0 : child.group) == null ? void 0 : _a2.node) == null ? void 0 : _b2.getBoundingClientRect) == null ? void 0 : _c3.call(_b2);
       }).filter((childRect) => Boolean(childRect && (childRect.width > 0 || childRect.height > 0)));
-      const resolvedSide = resolveNodeQuickActionSide((_f = (_e = this.options).getLayout) == null ? void 0 : _f.call(_e), node, rect2, childRects);
-      const side = childRects.length > 0 ? resolvedSide : this.lastKnownSideByUid.get(uid) ?? resolvedSide;
-      if (childRects.length > 0) this.lastKnownSideByUid.set(uid, side);
-      const anchor = resolveQuickActionAnchor(rect2, childRects, side);
+      const layout2 = (_f = (_e = this.options).getLayout) == null ? void 0 : _f.call(_e);
+      const geometryDriven = Boolean(layoutGeometryByEngine(layout2));
+      const resolvedSide = resolveNodeQuickActionSide(layout2, node, rect2, childRects);
+      const side = geometryDriven || childRects.length > 0 ? resolvedSide : this.lastKnownSideByUid.get(uid) ?? resolvedSide;
+      if (geometryDriven || childRects.length > 0) this.lastKnownSideByUid.set(uid, side);
+      const anchor = resolveQuickActionAnchor(rect2, geometryDriven ? [] : childRects, side);
       container.dataset.quickSide = anchor.side;
       container.style.left = `${anchor.x - rootRect.left}px`;
       container.style.top = `${anchor.y - rootRect.top}px`;
@@ -69741,8 +70339,8 @@ class ResourceActionPopover {
     this.element.className = "ymz-resource-action-popover";
     this.element.hidden = true;
     this.element.innerHTML = `
-      <button type="button" data-resource-action="replace" title="替换">↻ <span>替换</span></button>
-      <button type="button" data-resource-action="delete" title="删除">⌫ <span>删除</span></button>`;
+      <button type="button" data-resource-action="replace" title="替换">${resourceActionIcon("replace")}<span>替换</span></button>
+      <button type="button" data-resource-action="delete" title="删除">${resourceActionIcon("delete")}<span>删除</span></button>`;
     this.root.appendChild(this.element);
     this.element.addEventListener("click", this.onClick);
     document.addEventListener("pointerdown", this.onDocumentPointerDown, true);
@@ -70565,6 +71163,12 @@ class YeMindEditor {
           this.activateNodeByUid(uid);
           openImageDialog(this.commands);
         }
+      },
+      onImageDelete: (uid, kind) => {
+        if (!this.commands || this.commands.isReadonly()) return;
+        if (kind === "clipart") this.commands.clearClipartByUid(uid);
+        else this.commands.clearImageByUid(uid);
+        this.refreshOutlineFromMap();
       },
       onImagePreview: (uid) => {
         var _a2;

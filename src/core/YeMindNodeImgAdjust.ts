@@ -1,4 +1,5 @@
 import NodeImgAdjust from 'simple-mind-map/src/plugins/NodeImgAdjust';
+import { resourceActionIcon } from '../ui/resourceActionIcons';
 
 export type ImageResizeHandle = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 
@@ -117,13 +118,6 @@ export function calculateImageResizeRect(
     width: rounded(width),
     height: rounded(height),
   };
-}
-
-function toolbarIcon(name: 'replace' | 'delete'): string {
-  if (name === 'replace') {
-    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7zM4 10V4h6M20 14v6h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  }
-  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9 7V4.8h6V7M8 10v7M12 10v7M16 10v7M6.5 7l.8 13h9.4l.8-13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
 export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
@@ -302,8 +296,8 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     toolbar.setAttribute('role', 'toolbar');
     toolbar.setAttribute('aria-label', '图片工具');
     toolbar.innerHTML = `
-      <button type="button" data-image-action="replace">${toolbarIcon('replace')}<span>替换</span></button>
-      <button type="button" data-image-action="delete">${toolbarIcon('delete')}<span>删除</span></button>
+      <button type="button" data-image-action="replace">${resourceActionIcon('replace')}<span>替换</span></button>
+      <button type="button" data-image-action="delete">${resourceActionIcon('delete')}<span>删除</span></button>
     `;
     toolbar.addEventListener('mousedown', (event) => {
       event.preventDefault();

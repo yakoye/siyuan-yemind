@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "svg-layout-thumbnail-collection",
   "assetRoot": "assets",
   "collectionRoot": "layout-thumbnails",
@@ -11,6 +11,22 @@
     "connector": "darker gray"
   },
   "items": [
+    {
+      "id": "right-mindmap",
+      "groupId": "mindmap",
+      "groupLabel": "思维导图（逻辑图）",
+      "title": "右向导图",
+      "fileName": "04_right-mindmap.svg",
+      "relativePath": "layout-thumbnails/01_mindmap/04_right-mindmap.svg"
+    },
+    {
+      "id": "left-mindmap",
+      "groupId": "mindmap",
+      "groupLabel": "思维导图（逻辑图）",
+      "title": "左向导图",
+      "fileName": "05_left-mindmap.svg",
+      "relativePath": "layout-thumbnails/01_mindmap/05_left-mindmap.svg"
+    },
     {
       "id": "mindmap",
       "groupId": "mindmap",
@@ -34,22 +50,6 @@
       "title": "双向平衡向下",
       "fileName": "03_balanced-down.svg",
       "relativePath": "layout-thumbnails/01_mindmap/03_balanced-down.svg"
-    },
-    {
-      "id": "right-mindmap",
-      "groupId": "mindmap",
-      "groupLabel": "思维导图（逻辑图）",
-      "title": "右向导图",
-      "fileName": "04_right-mindmap.svg",
-      "relativePath": "layout-thumbnails/01_mindmap/04_right-mindmap.svg"
-    },
-    {
-      "id": "left-mindmap",
-      "groupId": "mindmap",
-      "groupLabel": "思维导图（逻辑图）",
-      "title": "左向导图",
-      "fileName": "05_left-mindmap.svg",
-      "relativePath": "layout-thumbnails/01_mindmap/05_left-mindmap.svg"
     },
     {
       "id": "tree-right-down",

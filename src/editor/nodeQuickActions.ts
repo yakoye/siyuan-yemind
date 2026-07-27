@@ -1,4 +1,9 @@
 import { resolveOfficialDragGrowthDirection } from '../core/officialDragIntent';
+import {
+  layoutGeometryByEngine,
+  resolveLayoutGrowthDirection,
+} from '../core/layoutGeometry';
+
 export type NodeQuickActionName = 'collapse' | 'expand' | 'add-child';
 
 export interface NodeQuickActionDescriptor {
@@ -88,10 +93,26 @@ export function resolveNodeQuickActionSide(
     ?? node?.direction
     ?? node?.getData?.('dir')
     ?? node?.getData?.('direction');
-  const fallback = resolveOfficialDragGrowthDirection(value, { ...node, dir });
+  const fallback = resolveLayoutGrowthDirection(value, { ...node, dir })
+    ?? resolveOfficialDragGrowthDirection(value, { ...node, dir });
+  if (layoutGeometryByEngine(value)) return fallback;
   return nodeRect && childRects.length > 0
     ? resolveQuickActionAnchor(nodeRect, childRects, fallback).side
     : fallback;
+}
+
+export function resolveNodeQuickActionAnchorForLayout(
+  layout: unknown,
+  node: any,
+  nodeRect: QuickActionRect,
+  childRects: QuickActionRect[] = [],
+): QuickActionAnchor {
+  const side = resolveNodeQuickActionSide(layout, node, nodeRect, childRects);
+  return resolveQuickActionAnchor(
+    nodeRect,
+    layoutGeometryByEngine(layout) ? [] : childRects,
+    side,
+  );
 }
 
 export function quickActionSideForLayout(layout: unknown): QuickActionSide {
@@ -219,12 +240,14 @@ export class NodeQuickActionsController {
       const childRects = (Array.isArray(node.children) ? node.children : [])
         .map((child: any) => child?.group?.node?.getBoundingClientRect?.())
         .filter((childRect: DOMRect | undefined): childRect is DOMRect => Boolean(childRect && (childRect.width > 0 || childRect.height > 0)));
-      const resolvedSide = resolveNodeQuickActionSide(this.options.getLayout?.(), node, rect, childRects);
-      const side = childRects.length > 0
+      const layout = this.options.getLayout?.();
+      const geometryDriven = Boolean(layoutGeometryByEngine(layout));
+      const resolvedSide = resolveNodeQuickActionSide(layout, node, rect, childRects);
+      const side = geometryDriven || childRects.length > 0
         ? resolvedSide
         : (this.lastKnownSideByUid.get(uid) ?? resolvedSide);
-      if (childRects.length > 0) this.lastKnownSideByUid.set(uid, side);
-      const anchor = resolveQuickActionAnchor(rect, childRects, side);
+      if (geometryDriven || childRects.length > 0) this.lastKnownSideByUid.set(uid, side);
+      const anchor = resolveQuickActionAnchor(rect, geometryDriven ? [] : childRects, side);
       container.dataset.quickSide = anchor.side;
       container.style.left = `${anchor.x - rootRect.left}px`;
       container.style.top = `${anchor.y - rootRect.top}px`;

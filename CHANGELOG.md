@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0 - 2026-07-27
+
+- Replaced approximate gallery mappings with 28 explicit runtime layout contracts and a compatibility bridge for existing documents.
+- Added mirrored tree/timeline/organization layouts plus bidirectional organization, serpentine timeline, radial, table and bracket renderers.
+- Unified quick-action and drag geometry with each layout's actual branch direction.
+- Compacted the outline gutter, added a visible six-dot move handle, and added eight-point image/clipart selection with direct deletion.
+- Redesigned shared replace/delete SVG actions and fixed standalone web development asset serving.
+
 ## 1.0.0 - 2026-07-27
 
 - Fixed classic theme palette cards so they show only colors that the selected theme actually applies.

@@ -66,6 +66,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   setIconsByUid(uid: string, icons: string[]): void;
   setLink(link: string, title?: string): void;
   setImage(image: NodeImageInput): void;
+  clearImageByUid(uid: string): void;
   setClipart(image: NodeImageInput & { id: string }): void;
   clearClipart(): void;
   clearClipartByUid(uid: string): void;
@@ -366,6 +367,11 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     },
     setLink: (link, title = '') => { if (canMutate()) forEachActive((node) => mindMap.execCommand('SET_NODE_HYPERLINK', node, link, title)); },
     setImage: (image) => { if (canMutate()) forEachActive((node) => mindMap.execCommand('SET_NODE_IMAGE', node, image)); },
+    clearImageByUid: (uid) => {
+      if (!canMutate()) return;
+      const node = findNodeByUid(uid);
+      if (node) mindMap.execCommand('SET_NODE_IMAGE', node, { url: null });
+    },
     setClipart: (image) => {
       if (!canMutate()) return;
       forEachActive((node) => {

@@ -4,17 +4,17 @@ export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
   buildTime: '2026-07-27T03:00:00Z',
-  buildId: 'yemind-v1.0.0-20260727',
+  buildId: 'yemind-v1.1.0-20260727',
   productName: PRODUCT_NAME,
   projectName: PROJECT_PACKAGE_NAME,
   tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
   hostBaseline: 'SiYuan 3.7.3',
-  releaseSummary: '修正经典主题真实色预览，增加分组彩虹配色卡、最小运行目录同步和独立网页版。',
+  releaseSummary: '重构 28 种导图结构，统一节点快捷控件方向，并完善大纲拖动与媒体选中交互。',
   highlights: [
-    '经典主题不再显示未参与循环的伪颜色，只展示实际画布、中心、连线、节点和文字颜色。',
-    '彩虹连线配色改为缤纷与经典分组的双列色卡，并保留隐藏原生值用于兼容。',
-    '运行目录通过白名单原子同步，仅保留插件运行文件和固定资源。',
-    '新增 IndexedDB 本地存储、单图传输与整库备份恢复的独立网页版。',
+    '28 个结构预设使用明确的运行时布局，补齐镜像、上下双向、S 型、环形、表格和括号结构。',
+    '根节点、中间节点、叶子节点的加号、折叠和数量控件按实际分支生长方向定位。',
+    '大纲视图移除大块左侧留白，增加六点拖动手柄和十字移动光标。',
+    '大纲图片与剪贴图支持八点选中、直接删除，并统一替换与删除 SVG 图标。',
   ]
 } as const;
 

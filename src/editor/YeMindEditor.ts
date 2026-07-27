@@ -919,6 +919,12 @@ export class YeMindEditor {
           openImageDialog(this.commands);
         }
       },
+      onImageDelete: (uid, kind) => {
+        if (!this.commands || this.commands.isReadonly()) return;
+        if (kind === 'clipart') this.commands.clearClipartByUid(uid);
+        else this.commands.clearImageByUid(uid);
+        this.refreshOutlineFromMap();
+      },
       onImagePreview: (uid) => {
         const data = this.findTreeNodeData(uid);
         const source = String(data?.image ?? '');

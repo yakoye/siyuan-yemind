@@ -28,7 +28,7 @@ describe('standalone web fixed assets', () => {
 
   it('keeps the app icon and version marker in the web asset copy contract', () => {
     expect(existsSync(path.join(root, 'icon.png'))).toBe(true);
-    expect(readFileSync(path.join(root, 'web/VERSION'), 'utf8').trim()).toBe('1.0.0');
+    expect(readFileSync(path.join(root, 'web/VERSION'), 'utf8').trim()).toBe('1.1.0');
     const copyScript = readFileSync(path.join(root, 'scripts/copy-web-assets.mjs'), 'utf8');
     expect(copyScript).toContain("path.join(root, 'assets')");
     expect(copyScript).toContain("path.join(root, 'icon.png')");

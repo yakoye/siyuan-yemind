@@ -2,6 +2,8 @@
 
 YeMind 使用 `Major.Minor.Patch`。
 
+当前发布版本：`1.1.0`。
+
 ## Major
 
 出现不兼容的数据格式、公共行为或迁移要求时增加主版本。进入 `1.0.0` 还要求导图、大纲、搜索、存储、迁移和诊断经过多个稳定版本验证。
@@ -30,3 +32,5 @@ YeMind 使用 `Major.Minor.Patch`。
 - 验证报告
 
 任何一项不一致都不得发布。
+
+仓库根目录的 `VERSION` 是插件发布标记，`web/VERSION` 是独立网页版发布标记。二者必须与 `package.json`、`package-lock.json`、`plugin.json`、`src/plugin/constants.ts` 和 `src/releaseInfo.ts` 完全一致；提交前执行 `npm run check:version`。

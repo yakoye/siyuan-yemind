@@ -72,6 +72,7 @@
     "v0929QuickActionGeometry.suite.ts",
     "v0930BranchControlPlacement.suite.ts",
     "v0930ExpansionScopes.suite.ts"
+    ,"v110LayoutQuickActions.suite.ts"
   ],
   "node-content": [
     "commentsDialogPresentation.suite.ts",
@@ -95,6 +96,7 @@
     "v0916DirectImageEditing.suite.ts",
     "v0929ViewImagePreviewState.suite.ts",
     "v0930ResourceActionPopover.suite.ts"
+    ,"v110ResourceActionIcons.suite.ts"
   ],
   "ui-shell": [
     "contextMenuAvailability.suite.ts",
@@ -128,6 +130,7 @@
     "v0929FloatingToolbarFields.suite.ts",
     "v0930ContextMenuContracts.suite.ts",
     "v0930ToolbarStateIcons.suite.ts"
+    ,"v110LayoutGeometry.suite.ts"
   ],
   "storage-lifecycle": [
     "createMapLifecycle.suite.ts",
@@ -232,6 +235,7 @@
     "v0926OutlineContentParity.suite.ts",
     "v0927OutlineAssetParity.suite.ts",
     "v0928OutlineDialogConsistency.suite.ts"
+    ,"v110OutlineMediaInteraction.suite.ts"
   ],
   "search-navigation": [
     "searchCommands.suite.ts",

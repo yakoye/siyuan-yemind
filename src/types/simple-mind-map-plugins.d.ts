@@ -52,6 +52,30 @@ declare module 'simple-mind-map/src/plugins/outerFrame/outerFrameUtils.js' {
   export const getNodeOuterFrameList: (node: any) => Array<{ nodeList: any[]; range: [number, number] }> | undefined;
 }
 
+declare module 'simple-mind-map/src/layouts/LogicalStructure' {
+  const Layout: any;
+  export default Layout;
+}
+declare module 'simple-mind-map/src/layouts/MindMap' {
+  const Layout: any;
+  export default Layout;
+}
+declare module 'simple-mind-map/src/layouts/CatalogOrganization' {
+  const Layout: any;
+  export default Layout;
+}
+declare module 'simple-mind-map/src/layouts/OrganizationStructure' {
+  const Layout: any;
+  export default Layout;
+}
+declare module 'simple-mind-map/src/layouts/Timeline' {
+  const Layout: any;
+  export default Layout;
+}
+declare module 'simple-mind-map/src/layouts/VerticalTimeline' {
+  const Layout: any;
+  export default Layout;
+}
 declare module 'simple-mind-map/src/layouts/Fishbone' {
   export default class Fishbone {
     [key: string]: any;

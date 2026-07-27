@@ -53,7 +53,7 @@ describe('v0.9.12 fixed local assets', () => {
       expect(preset.engineLayout).toBeTruthy();
       expect(preset.relativePath.endsWith('.svg')).toBe(true);
     }
-    expect(getLayoutAssetPreset('right-mindmap').engineLayout).toBe('logicalStructure');
-    expect(getLayoutAssetPreset('fishbone-right').engineLayout).toContain('Fishbone');
+    expect(getLayoutAssetPreset('right-mindmap').engineLayout).toBe('yemindRightMindMap');
+    expect(getLayoutAssetPreset('fishbone-right').engineLayout).toBe('yemindFishboneRight');
   });
 });

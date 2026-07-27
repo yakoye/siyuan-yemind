@@ -21,7 +21,12 @@ export const YEMIND_LAYOUT_PRESETS: readonly YeMindLayoutPreset[] = [
   { id: 'rightFishbone2', label: '右鱼骨·双侧', family: 'fishbone' },
 ] as const;
 
-const LAYOUT_IDS = new Set(YEMIND_LAYOUT_PRESETS.map((item) => item.id));
+import { YEMIND_LAYOUT_ENGINE_IDS } from './layoutGeometry';
+
+const LAYOUT_IDS = new Set([
+  ...YEMIND_LAYOUT_PRESETS.map((item) => item.id),
+  ...YEMIND_LAYOUT_ENGINE_IDS,
+]);
 
 export function normalizeLayoutId(value: unknown): string {
   return typeof value === 'string' && LAYOUT_IDS.has(value) ? value : 'logicalStructure';
