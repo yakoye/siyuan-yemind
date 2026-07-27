@@ -2,7 +2,8 @@ import type { ProjectStyle } from '../editor/projectStyle';
 import { densitySpacing, normalizeProjectStyle } from '../editor/projectStyle';
 import { colorPaletteInnerHtml } from '../editor/colorPalette';
 import { parseEditableColor, presentColor } from '../editor/colorPresentation';
-import { getColorScheme, normalizeColorSchemeId } from '../core/colorSchemes';
+import { normalizeColorSchemeId } from '../core/colorSchemes';
+import { RainbowSchemePicker } from './rainbowSchemePicker';
 
 const BLOCKED_EVENTS = ['keydown', 'keyup', 'beforeinput', 'input', 'paste', 'compositionstart', 'compositionupdate', 'compositionend'] as const;
 
@@ -10,6 +11,7 @@ export class ProjectStylePanel {
   private readonly panel: HTMLElement | null;
   private readonly colorPopover: HTMLElement;
   private readonly customColorInput: HTMLInputElement;
+  private readonly rainbowPicker: RainbowSchemePicker | null;
   private style: ProjectStyle;
 
   constructor(
@@ -31,6 +33,11 @@ export class ProjectStylePanel {
     this.customColorInput.setAttribute('aria-hidden', 'true');
     this.colorPopover.appendChild(this.customColorInput);
     root.appendChild(this.colorPopover);
+    this.rainbowPicker = this.panel ? new RainbowSchemePicker(this.panel, {
+      selected: this.style.rainbowScheme ?? 'rainbow',
+      readonly: this.readonly,
+      onSelect: (rainbowScheme) => this.commit({ rainbowScheme, rainbowLines: true }),
+    }) : null;
     if (!this.panel) return;
     this.panel.addEventListener('click', this.onClick);
     this.panel.addEventListener('change', this.onControl);
@@ -59,6 +66,7 @@ export class ProjectStylePanel {
     BLOCKED_EVENTS.forEach((type) => this.colorPopover.removeEventListener(type, this.stop));
     this.customColorInput.removeEventListener('input', this.onNativeColorInput);
     document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
+    this.rainbowPicker?.destroy();
     this.colorPopover.remove();
   }
 
@@ -150,9 +158,7 @@ export class ProjectStylePanel {
     const rainbowScheme = this.panel.querySelector<HTMLSelectElement>('[data-project-style="rainbowScheme"]');
     const selectedScheme = normalizeColorSchemeId(this.style.rainbowScheme) ?? 'rainbow';
     if (rainbowScheme) rainbowScheme.value = selectedScheme;
-    const rainbowPreview = this.panel.querySelector<HTMLElement>('[data-project-rainbow-preview]');
-    const colors = getColorScheme(selectedScheme)?.colors ?? [];
-    if (rainbowPreview) rainbowPreview.style.background = colors.length ? `linear-gradient(90deg, ${colors.join(',')})` : '';
+    this.rainbowPicker?.setSelected(selectedScheme);
     this.syncBackgroundTrigger();
     this.panel.querySelectorAll<HTMLButtonElement>('[data-project-background]').forEach((button) => {
       button.classList.toggle('is-active', (button.dataset.projectBackground || null) === this.style.backgroundColor);
@@ -161,6 +167,7 @@ export class ProjectStylePanel {
       if (control.dataset.projectStyleAction === 'close') return;
       control.disabled = this.readonly();
     });
+    this.rainbowPicker?.refreshReadonly();
   }
 
   private syncBackgroundTrigger(): void {

@@ -54,7 +54,8 @@
     "v093RootBackground.suite.ts",
     "v0913RelationSelection.suite.ts",
     "v0924AppearanceViewStability.suite.ts",
-    "v0931ThemePalettePanel.suite.ts"
+    "v0931ThemePalettePanel.suite.ts",
+    "v0932RainbowSchemePicker.suite.ts"
   ],
   "commands-selection": [
     "commands.suite.ts",

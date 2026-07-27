@@ -175,14 +175,13 @@ export class ProjectChoicePanel {
       strip.className = 'ymz-project-choice-panel__palette-strip';
       strip.setAttribute('aria-hidden', 'true');
       const colors = [...(option.previewColors ?? [])].slice(0, 6);
-      const fallback = colors[colors.length - 1] ?? option.previewColor ?? 'var(--b3-theme-primary)';
-      while (colors.length < 6) colors.push(fallback);
       colors.forEach((color) => {
         const block = document.createElement('i');
         block.className = 'ymz-project-choice-panel__palette-block';
         block.style.backgroundColor = color;
         strip.appendChild(block);
       });
+      strip.style.setProperty('--ymz-palette-count', String(Math.max(1, colors.length)));
       button.append(label, strip);
       grid.appendChild(button);
     });
