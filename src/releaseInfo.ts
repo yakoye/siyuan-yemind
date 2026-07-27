@@ -3,18 +3,18 @@ import { PLUGIN_VERSION, PRODUCT_NAME, PROJECT_PACKAGE_NAME } from './plugin/con
 export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: '2026-07-26T15:53:25Z',
-  buildId: 'yemind-v0.9.31-20260726',
+  buildTime: '2026-07-27T03:00:00Z',
+  buildId: 'yemind-v0.9.32-20260727',
   productName: PRODUCT_NAME,
   projectName: PROJECT_PACKAGE_NAME,
   tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',
   hostBaseline: 'SiYuan 3.7.3',
-  releaseSummary: '仅重做主题下拉菜单的分组标签与六色色条展示，保留全部主题数据和切换逻辑。',
+  releaseSummary: '修正经典主题真实色预览，增加分组彩虹配色卡、最小运行目录同步和独立网页版。',
   highlights: [
-    '主题下拉菜单改为分组标签与双列卡片布局，每个现有主题显示名称和六个真实一级分支颜色块。',
-    '基础、缤纷、经典三个现有分类和全部二十二个主题保持不变，当前主题所在分类会自动打开并高亮。',
-    '亮色与暗黑宿主仅改变面板外观，六色色条始终保留主题真实颜色。',
-    '线型下拉菜单继续使用原有列表展示，主题应用、保存和导图刷新逻辑没有变化。',
+    '经典主题不再显示未参与循环的伪颜色，只展示实际画布、中心、连线、节点和文字颜色。',
+    '彩虹连线配色改为缤纷与经典分组的双列色卡，并保留隐藏原生值用于兼容。',
+    '运行目录通过白名单原子同步，仅保留插件运行文件和固定资源。',
+    '新增 IndexedDB 本地存储、单图传输与整库备份恢复的独立网页版。',
   ]
 } as const;
 

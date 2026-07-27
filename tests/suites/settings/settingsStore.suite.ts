@@ -60,6 +60,7 @@ describe('SettingsStore', () => {
       defaultOuterFrameText: '外框',
       outerFramePaddingX: 10,
       outerFramePaddingY: 10,
+      toolbarsPinned: true,
       shortcutMap: DEFAULT_SHORTCUTS,
     });
   });

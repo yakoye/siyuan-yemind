@@ -15,13 +15,13 @@ describe('v0.6.5 canvas rich-text visibility regression', () => {
     expect(wrapper.style.getPropertyValue('color')).toBe('rgb(30, 41, 59)');
     expect(wrapper.style.getPropertyPriority('color')).toBe('important');
     expect(wrapper.style.background).toBe('rgb(255, 255, 255)');
-    expect(wrapper.style.border).toBe('0px');
-    expect(wrapper.style.outline).toBe('0px');
+    expect(['0', '0px']).toContain(wrapper.style.border);
+    expect(['0', '0px']).toContain(wrapper.style.outline);
     expect(wrapper.style.boxShadow).toBe('none');
     const editor = wrapper.querySelector<HTMLElement>('.ql-editor')!;
     expect(editor.style.color).toBe('inherit');
-    expect(editor.style.border).toBe('0px');
-    expect(editor.style.outline).toBe('0px');
+    expect(['0', '0px']).toContain(editor.style.border);
+    expect(['0', '0px']).toContain(editor.style.outline);
     expect(editor.style.boxShadow).toBe('none');
   });
 });
@@ -64,20 +64,26 @@ it('keeps real double-click editing visible and shows formatting tools for a par
   const toolbar = new RichTextToolbar(wrapper, commands);
   map.on('rich_text_selection_change', (hasRange: boolean, bounds: any, format: any) => toolbar.update(hasRange, bounds, format, commands));
 
-  map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, clientX: 20, clientY: 20 }));
-  await new Promise((resolve) => setTimeout(resolve, 0));
-  const editWrap = wrapper.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap')!;
-  expect(editWrap.style.getPropertyValue('color')).toBe('rgb(30, 41, 59)');
-  expect(editWrap.style.background).toBe('rgb(255, 255, 255)');
+  try {
+    for (let attempt = 0; attempt < 50 && !map.renderer.root?.group?.node; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    expect(map.renderer.root?.group?.node).toBeTruthy();
+    map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, clientX: 20, clientY: 20 }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const editWrap = wrapper.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap')!;
+    expect(editWrap.style.getPropertyValue('color')).toBe('rgb(30, 41, 59)');
+    expect(editWrap.style.background).toBe('rgb(255, 255, 255)');
 
-  map.richText.quill.setSelection(0, 7, 'user');
-  await new Promise((resolve) => setTimeout(resolve, 0));
-  expect(wrapper.querySelector<HTMLElement>('.ymz-rich-toolbar')?.hidden).toBe(false);
-  wrapper.querySelector<HTMLButtonElement>('[data-rich-action="bold"]')!.click();
-  expect(map.richText.quill.getFormat(0, 7).bold).toBe(true);
-  expect(map.richText.quill.getFormat(8, 4).bold).not.toBe(true);
-
-  toolbar.destroy();
-  map.destroy();
-  wrapper.remove();
+    map.richText.quill.setSelection(0, 7, 'user');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(wrapper.querySelector<HTMLElement>('.ymz-rich-toolbar')?.hidden).toBe(false);
+    wrapper.querySelector<HTMLButtonElement>('[data-rich-action="bold"]')!.click();
+    expect(map.richText.quill.getFormat(0, 7).bold).toBe(true);
+    expect(map.richText.quill.getFormat(8, 4).bold).not.toBe(true);
+  } finally {
+    toolbar.destroy();
+    map.destroy();
+    wrapper.remove();
+  }
 });

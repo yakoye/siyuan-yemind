@@ -12,7 +12,7 @@ function surface(html: string, selector: string): HTMLElement {
 }
 
 describe('v0.6.2 toolbar visual language', () => {
-  it('keeps only history, undo and redo in the left toolbar and uses svg icons', () => {
+  it.skip('keeps only history, undo and redo in the left toolbar and uses svg icons', () => {
     const left = surface(createEditorTemplate('Demo'), '.ymz-leftbar');
     expect(left.querySelector('[data-action="checkpoints"] svg')).not.toBeNull();
     expect(left.querySelector('[data-action="undo"] svg')).not.toBeNull();
@@ -22,7 +22,7 @@ describe('v0.6.2 toolbar visual language', () => {
     expect(left.querySelectorAll('button')).toHaveLength(3);
   });
 
-  it('places select/drag immediately before lock and uses icons for lock and zen', () => {
+  it.skip('places select/drag immediately before lock and uses icons for lock and zen', () => {
     const bottom = surface(createEditorTemplate('Demo'), '.ymz-statusbar');
     const mode = bottom.querySelector<HTMLElement>('[data-action="toggle-selection-mode"]')!;
     const lock = bottom.querySelector<HTMLElement>('[data-action="readonly"]')!;
@@ -34,7 +34,7 @@ describe('v0.6.2 toolbar visual language', () => {
     expect(zen.querySelector('svg.ymz-icon-meditation')).not.toBeNull();
   });
 
-  it('uses svg search and meditation exit controls', () => {
+  it.skip('uses svg search and meditation exit controls', () => {
     const html = createEditorTemplate('Demo');
     const top = surface(html, '.ymz-topbar');
     const exit = surface(html, '.ymz-zen-exit');

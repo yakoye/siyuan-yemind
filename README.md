@@ -2,8 +2,15 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `0.9.31`
+Current version: `0.9.32`
 Host baseline: SiYuan `3.7.3`
+
+## v0.9.32 real theme colors, rainbow cards and standalone web app
+
+- Classic theme cards now show only colors that the active theme really applies.
+- Rainbow-line schemes use grouped Colorful/Classic two-column palette cards.
+- `npm run sync:runtime` atomically deploys the verified runtime whitelist.
+- `npm run dev:web` starts the SiYuan-independent web app with IndexedDB storage, map transfer and full-library backups.
 
 ## v0.9.31 six-color Theme dropdown
 

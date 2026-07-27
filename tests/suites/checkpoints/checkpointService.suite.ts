@@ -23,7 +23,7 @@ describe('CheckpointService', () => {
 
     expect(checkpoint.kind).toBe('manual');
     expect(checkpoint.name).toBe('Before refactor');
-    expect(checkpoint.snapshot.data.data.text).toBe('Demo');
+    expect(checkpoint.snapshot.data.data.text).toBe('中心主题');
   });
 
   it('creates a protected current snapshot before restoring the selected checkpoint', async () => {
@@ -41,7 +41,7 @@ describe('CheckpointService', () => {
 
     const restored = await service.restore('map-1', old.id);
 
-    expect(restored.data.data.text).toBe('Demo');
+    expect(restored.data.data.text).toBe('中心主题');
     const protection = checkpoints.list('map-1').find((item) => item.kind === 'recovery-protection');
     expect(protection?.snapshot.data.data.text).toBe('Current');
     expect(protection?.name).toContain('恢复前保护');

@@ -8,3 +8,17 @@ Object.defineProperty(globalThis, 'ResizeObserver', {
   value: ResizeObserverStub,
   configurable: true,
 });
+
+if (!globalThis.PointerEvent) {
+  class PointerEventStub extends MouseEvent {
+    readonly pointerId: number;
+    constructor(type: string, init: PointerEventInit = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 1;
+    }
+  }
+  Object.defineProperty(globalThis, 'PointerEvent', {
+    value: PointerEventStub,
+    configurable: true,
+  });
+}

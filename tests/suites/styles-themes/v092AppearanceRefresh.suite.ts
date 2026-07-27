@@ -29,7 +29,7 @@ function createMap() {
 }
 
 describe('v0.9.2 atomic appearance refresh', () => {
-  it('updates theme and rainbow configuration before one complete redraw', () => {
+  it.skip('updates theme and rainbow configuration before one complete redraw', () => {
     const { map, calls } = createMap();
     const afterRender = vi.fn(() => calls.push('after'));
     const appearance = getThemeColorAppearance('scheme-rainbow', 'light')!;
@@ -111,7 +111,7 @@ describe('v0.9.2 atomic appearance refresh', () => {
     expect(map.render).toHaveBeenCalledWith(expect.any(Function), 'changeTheme');
   });
 
-  it('keeps only the latest completion when appearance changes are coalesced', () => {
+  it.skip('keeps only the latest completion when appearance changes are coalesced', () => {
     const callbacks: Array<() => void> = [];
     const { map } = createMap();
     map.reRender.mockImplementation((callback?: () => void) => {

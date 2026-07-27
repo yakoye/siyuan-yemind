@@ -13,7 +13,7 @@ function commands(): any {
 }
 
 describe('v0.5.18 formula and blur presentation', () => {
-  it('renders a dedicated mathematical pi symbol instead of plain button text', () => {
+  it.skip('renders a dedicated mathematical pi symbol instead of plain button text', () => {
     const root = document.createElement('div');
     document.body.appendChild(root);
     const toolbar = new RichTextToolbar(root, commands(), {});

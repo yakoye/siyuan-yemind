@@ -72,8 +72,8 @@ describe('YeMind plugin identity and install layout', () => {
     expect(manifest.displayName.default).toBe('YeMind');
     expect(manifest.displayName.zh_CN).toBe('YeMind');
     expect(packageJson.name).toBe('siyuan-yemind');
-    expect(manifest.version).toBe('0.9.30');
-    expect(packageJson.version).toBe('0.9.30');
+    expect(manifest.version).toBe('0.9.32');
+    expect(packageJson.version).toBe('0.9.32');
   });
 
   it('uses the renamed YeMindPlugin source entry and removes the old current source filename', () => {

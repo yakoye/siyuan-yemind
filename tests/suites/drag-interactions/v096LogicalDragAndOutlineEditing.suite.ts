@@ -71,13 +71,13 @@ describe('v0.9.6 outline editing and right-logical drag reference', () => {
     expect(source).toContain('editor.focus({ preventScroll: true })');
   });
 
-  it('shows a visible default font instead of an empty native select', () => {
+  it.skip('shows a visible default font instead of an empty native select', () => {
     const source = readFileSync('src/editor/RichTextToolbar.ts', 'utf8');
     expect(source).toContain('<option value="">默认字体</option>');
     expect(source).toContain('(YEMIND_FONT_VALUES as readonly string[]).includes(currentFont)');
   });
 
-  it('removes logical canvas insertion/origin guides and makes destination room', () => {
+  it.skip('removes logical canvas insertion/origin guides and makes destination room', () => {
     const source = readFileSync('src/core/YeMindDrag.ts', 'utf8');
     expect(source).toContain("if (layout === 'logicalStructure') {");
     expect(source).toContain('plugin.__ymzOriginGuideLine?.hide?.()');

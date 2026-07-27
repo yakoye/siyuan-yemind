@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { ResourceActionPopover } from '../../../src/editor/resourceActionPopover';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
-const editorSource = readFileSync(new URL('../../../src/editor/YeMindEditor.ts', import.meta.url), 'utf8');
+const editorSource = readFileSync(resolve(process.cwd(), 'src/editor/YeMindEditor.ts'), 'utf8');
 
 describe('v0.9.30 marker and clipart resource actions', () => {
   it('shows replace/delete before opening an asset picker', () => {

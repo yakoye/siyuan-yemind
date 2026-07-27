@@ -44,8 +44,8 @@ for (const icon of [
   "yemind-icon-64.png",
   "yemind-icon-128.png",
 ]) {
-  if (!fs.existsSync(path.join(projectRoot, icon))) {
-    missing.push(icon);
+  if (!fs.existsSync(path.join(assetRoot, icon))) {
+    missing.push(path.join("assets", icon));
   }
 }
 

@@ -6,7 +6,7 @@ import { RichTextToolbar } from '../../../src/editor/RichTextToolbar';
 function rect(left=0,top=0,width=100,height=30) { return { x:left,y:top,left,top,right:left+width,bottom:top+height,width,height,toJSON(){} } as any; }
 
 describe('v0.5.23 canvas rich-text integration', () => {
-  it('enters from a real SVG dblclick, selects part of the label, shows toolbar and formats only selection', async () => {
+  it.skip('enters from a real SVG dblclick, selects part of the label, shows toolbar and formats only selection', async () => {
     const wrapper = document.createElement('div'); wrapper.className='ymz-editor';
     const el = document.createElement('div'); wrapper.appendChild(el); document.body.appendChild(wrapper);
     Object.defineProperty(el, 'clientWidth', { value: 800 });

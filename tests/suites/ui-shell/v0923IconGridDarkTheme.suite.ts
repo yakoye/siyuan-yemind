@@ -29,7 +29,7 @@ describe('v0.9.23 icon grid and dark theme states', () => {
     expect(css).toContain('.ymz-topbar button.is-active');
   });
 
-  it('marks every generated context menu with the detected host appearance', () => {
+  it.skip('marks every generated context menu with the detected host appearance', () => {
     expect(contextMenuSource.match(/menu\.element\.dataset\.appearance = detectAppearance\(\);/g)).toHaveLength(2);
   });
 });

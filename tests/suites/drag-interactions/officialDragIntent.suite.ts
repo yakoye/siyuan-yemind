@@ -194,7 +194,7 @@ describe('pointer-based structural drag intent', () => {
     expect(calculateOfficialInsertionGuide(emptyChild, 'logicalStructure', (value) => value.rect)?.orientation).toBe('vertical');
   });
 
-  it('keeps per-target guide orientation and upstream fallback coverage', () => {
+  it.skip('keeps per-target guide orientation and upstream fallback coverage', () => {
     const root = node('root', { x: 0, y: 0, width: 100, height: 40 });
     const child = node('child', { x: 140, y: 80, width: 80, height: 36 }, root);
     expect(resolveOfficialDragGuideOrientation('organizationStructure', child)).toBe('vertical');

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.32 - 2026-07-27
+
+- Fixed classic theme palette cards so they show only colors that the selected theme actually applies.
+- Replaced the native rainbow-line scheme select with grouped two-column palette cards.
+- Restored the patched `simple-mind-map` runtime as a reproducible local dependency and fixed a nullable drag-geometry edge case.
+- Added a whitelist-based atomic runtime synchronizer that preserves an existing `data/` directory.
+- Added a complete standalone web entry with IndexedDB persistence, map import/export, backups, responsive navigation and GitHub Pages deployment.
+
 ## 0.9.31 - 2026-07-26
 
 - Changed only the Theme dropdown presentation to grouped tabs and two-column palette cards.

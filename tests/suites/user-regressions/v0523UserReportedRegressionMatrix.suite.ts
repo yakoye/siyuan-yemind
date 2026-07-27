@@ -21,6 +21,7 @@ describe('user-reported interaction regression matrix', () => {
     expect(describeNodeQuickActions({ isRoot: true, childCount: 3, expanded: true, selected: true }).map(x => x.action)).toEqual(['collapse', 'add-child']);
     expect(describeNodeQuickActions({ isRoot: true, childCount: 3, expanded: false, selected: true })).toEqual([
       expect.objectContaining({ action: 'expand', text: '3' }),
+      expect.objectContaining({ action: 'add-child' }),
     ]);
   });
 

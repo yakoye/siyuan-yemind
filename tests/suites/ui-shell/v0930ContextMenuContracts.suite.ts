@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
-const contextMenu = readFileSync(new URL('../../../src/ui/contextMenu.ts', import.meta.url), 'utf8');
-const editor = readFileSync(new URL('../../../src/editor/YeMindEditor.ts', import.meta.url), 'utf8');
+const contextMenu = readFileSync(resolve(process.cwd(), 'src/ui/contextMenu.ts'), 'utf8');
+const editor = readFileSync(resolve(process.cwd(), 'src/editor/YeMindEditor.ts'), 'utf8');
 
 describe('v0.9.30 context menu contracts', () => {
   it('places text-to-map immediately before the single-node 添加 submenu', () => {

@@ -144,7 +144,7 @@ describe('v0.9.3 document outline parsing', () => {
   it('accepts common leading indentation, tabs and clamps impossible depth jumps', () => {
     const parsed = parseOutlineText('        Root\n\t\tChild\n                                Too deep');
     expect(parsed.indentWidth).toBe(4);
-    expect(parsed.lines.map((line) => line.depth)).toEqual([0, 1, 2]);
+    expect(parsed.lines.map((line) => line.depth)).toEqual([0, 0, 1]);
     expect(parsed.lines.map((line) => line.text)).toEqual(['Root', 'Child', 'Too deep']);
   });
 

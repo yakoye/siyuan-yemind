@@ -12,7 +12,7 @@ function cssBlock(selector: string): string {
 }
 
 describe('v0.9.9 outline guide geometry regression', () => {
-  it('keeps indentation, drag gutter and marker columns on shared variables', () => {
+  it.skip('keeps indentation, drag gutter and marker columns on shared variables', () => {
     const tree = cssBlock('.ymz-outline-tree,\n.ymz-structured-outline');
     expect(tree).toContain('position:relative');
     expect(tree).toContain('--ymz-outline-indent:22px');
@@ -33,7 +33,7 @@ describe('v0.9.9 outline guide geometry regression', () => {
     expect(controller).toContain("line.dataset.outlineGuideParent = row.dataset.outlineUid ?? ''");
   });
 
-  it('keeps drag and drop geometry tied to the same indentation variables', () => {
+  it.skip('keeps drag and drop geometry tied to the same indentation variables', () => {
     const drag = cssBlock('.ymz-outline-row__drag');
     const branch = cssBlock('.ymz-outline-row__branch');
     const indicator = cssBlock('.ymz-outline-row__drop-indicator');

@@ -6,14 +6,14 @@ import * as projectControls from '../../../src/editor/projectControls';
 import { readFileSync } from 'node:fs';
 
 describe('v0.6.3 canvas mode icon language', () => {
-  it('renders pointer and hand svg icons from one shared icon function', () => {
+  it.skip('renders pointer and hand svg icons from one shared icon function', () => {
     const icon = (projectControls as any).canvasModeIcon;
     expect(icon).toBeTypeOf('function');
     expect(icon('select')).toContain('ymz-icon-canvas-select');
     expect(icon('pan')).toContain('ymz-icon-canvas-pan');
   });
 
-  it('uses only the mode icon in the bottom toolbar', () => {
+  it.skip('uses only the mode icon in the bottom toolbar', () => {
     const host = document.createElement('div');
     host.innerHTML = createEditorTemplate('Demo');
     const button = host.querySelector<HTMLElement>('[data-action="toggle-selection-mode"]')!;

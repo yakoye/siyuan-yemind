@@ -100,6 +100,7 @@ export default class KeyCommand {
   defaultEnableCheck(e) {
     const target = e.target
     if (target === document.body) return true
+    if (!target || !target.classList) return false
     for (let i = 0; i < this.mindMap.editNodeClassList.length; i++) {
       const cur = this.mindMap.editNodeClassList[i]
       if (target.classList.contains(cur)) {

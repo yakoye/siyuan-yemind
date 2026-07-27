@@ -1,6 +1,6 @@
 {
   "name": "siyuan-yemind",
-  "version": "0.9.31",
+  "version": "0.9.32",
   "private": true,
   "description": "A SiYuan mind-map plugin built around simple-mind-map.",
   "license": "MIT",
@@ -23,7 +23,8 @@
     "test:syntax": "node scripts/check-typescript-syntax.mjs",
     "test:offline": "node scripts/run-offline-smokes.mjs",
     "verify:assets": "node scripts/verify-yemind-assets.mjs",
-    "sync:runtime": "node scripts/sync-runtime.mjs --target D:\\myDatabase\\SiYuan\\data\\plugins\\siyuan-yemind"
+    "sync:runtime": "node scripts/sync-runtime.mjs --target D:\\myDatabase\\SiYuan\\data\\plugins\\siyuan-yemind",
+    "sync:runtime:in-place": "node scripts/sync-runtime.mjs --in-place --target D:\\myDatabase\\SiYuan\\data\\plugins\\siyuan-yemind"
   },
   "dependencies": {
     "jszip": "^3.10.1",

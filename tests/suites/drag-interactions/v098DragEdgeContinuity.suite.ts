@@ -81,8 +81,8 @@ describe('v0.9.8 drag edge continuity and flat canvas editing', () => {
     expect(synchronizeCanvasRichTextVisibility(map as any)).toBe(true);
     const editor = wrapper.querySelector<HTMLElement>('.ql-editor')!;
     [wrapper, editor].forEach((element) => {
-      expect(element.style.border).toBe('0px');
-      expect(element.style.outline).toBe('0px');
+      expect(['0', '0px']).toContain(element.style.border);
+      expect(['0', '0px']).toContain(element.style.outline);
       expect(element.style.boxShadow).toBe('none');
     });
     expect(wrapper.style.color).toBe('rgb(15, 23, 42)');

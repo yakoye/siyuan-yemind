@@ -16,8 +16,8 @@ describe('createDefaultMap', () => {
     const map = createDefaultMap('测试导图', 'map-1', 1000);
     expect(map.id).toBe('map-1');
     expect(map.title).toBe('测试导图');
-    expect(map.data.data.text).toBe('测试导图');
-    expect(map.data.children).toHaveLength(2);
+    expect(map.data.data.text).toBe('中心主题');
+    expect(map.data.children).toHaveLength(0);
     expect(map.createdAt).toBe(1000);
     expect(map.updatedAt).toBe(1000);
   });

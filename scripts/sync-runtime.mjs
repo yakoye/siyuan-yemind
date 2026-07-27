@@ -141,6 +141,47 @@ export async function syncRuntime({
   }
 }
 
+export async function syncRuntimeInPlace({
+  source,
+  target,
+  expectedTarget = DEFAULT_RUNTIME_TARGET,
+}) {
+  const sourcePath = path.resolve(source);
+  const targetPath = path.resolve(target);
+  assertRuntimeTarget(targetPath, expectedTarget);
+  await assertSourceComplete(sourcePath);
+  await mkdir(targetPath, { recursive: true });
+
+  const allowedRoots = new Set([
+    ...RUNTIME_ROOT_FILES,
+    ...RUNTIME_DIRECTORIES,
+    'data',
+  ]);
+  for (const entry of await readdir(targetPath, { withFileTypes: true })) {
+    if (!allowedRoots.has(entry.name)) {
+      await rm(path.join(targetPath, entry.name), {
+        recursive: entry.isDirectory(),
+        force: true,
+      });
+    }
+  }
+
+  for (const filename of RUNTIME_ROOT_FILES) {
+    await cp(path.join(sourcePath, filename), path.join(targetPath, filename), {
+      force: true,
+    });
+  }
+  for (const directory of RUNTIME_DIRECTORIES) {
+    const destination = path.join(targetPath, directory);
+    await rm(destination, { recursive: true, force: true });
+    await cp(path.join(sourcePath, directory), destination, { recursive: true });
+  }
+
+  const files = await runtimeManifest(targetPath);
+  assertStagedManifest(files);
+  return { files, target: targetPath };
+}
+
 function argumentValue(name) {
   const index = process.argv.indexOf(name);
   return index >= 0 ? process.argv[index + 1] : undefined;
@@ -150,7 +191,10 @@ const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : '';
 if (invokedPath.toLowerCase() === fileURLToPath(import.meta.url).toLowerCase()) {
   const source = argumentValue('--source') ?? path.resolve('.');
   const target = argumentValue('--target') ?? DEFAULT_RUNTIME_TARGET;
-  const result = await syncRuntime({
+  const synchronize = process.argv.includes('--in-place')
+    ? syncRuntimeInPlace
+    : syncRuntime;
+  const result = await synchronize({
     source,
     target,
     expectedTarget: DEFAULT_RUNTIME_TARGET,

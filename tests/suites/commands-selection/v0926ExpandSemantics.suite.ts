@@ -43,10 +43,10 @@ describe('v0.9.26 deterministic expansion semantics', () => {
     expect(state(toggleBranchExpansion(collapsed, 'a').tree)).toMatchObject({ a: true, b: false });
   });
 
-  it('collapses all branches and restores only root first-level visibility', () => {
+  it('collapses all branches and lets the global toggle restore the full tree', () => {
     const collapsed = collapseAllBranches(sample()).tree;
     expect(state(collapsed)).toMatchObject({ root: false, a: false, b: false });
     expect(state(expandRootOneLevel(collapsed).tree)).toMatchObject({ root: true, a: false, b: false });
-    expect(state(toggleAllExpansion(collapsed).tree)).toMatchObject({ root: true, a: false, b: false });
+    expect(state(toggleAllExpansion(collapsed).tree)).toMatchObject({ root: true, a: true, b: true, c: true });
   });
 });

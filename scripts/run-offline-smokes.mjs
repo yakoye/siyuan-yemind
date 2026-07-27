@@ -37,8 +37,12 @@ function resolveCommand(command) {
   return lookup.status === 0 ? String(lookup.stdout).trim().split(/\r?\n/)[0] : command;
 }
 
-const tsc = resolveCommand(process.platform === 'win32' ? 'tsc.cmd' : 'tsc');
-const tscBin = dirname(tsc);
+const localTsc = resolve(root, 'node_modules', 'typescript', 'bin', 'tsc');
+const tsc = existsSync(localTsc)
+  ? process.execPath
+  : resolveCommand(process.platform === 'win32' ? 'tsc.cmd' : 'tsc');
+const tscPrefixArgs = existsSync(localTsc) ? [localTsc] : [];
+const tscBin = existsSync(localTsc) ? dirname(localTsc) : dirname(tsc);
 const nodeTypesCandidates = [
   resolve(tscBin, '..', 'lib', 'node_modules', 'ts-node', 'node_modules', '@types'),
   resolve(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', '@types'),
@@ -65,7 +69,7 @@ if (nodeTypeRoot) {
   args.push('--types', 'node', '--typeRoots', nodeTypeRoot);
 }
 
-const result = spawnSync(tsc, args, {
+const result = spawnSync(tsc, [...tscPrefixArgs, ...args], {
   cwd: root,
   encoding: 'utf8',
   stdio: 'pipe',
