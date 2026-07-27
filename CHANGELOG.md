@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 - 2026-07-27
+
+- Added one shared 12-format export workflow for the SiYuan plugin and standalone web app, with `.yemind.svg` as the default.
+- Added recoverable YeMind JSON/ZIP payloads for SVG, SVG package, KMindz, YeMind ZIP and PNG exports.
+- Added automatic import detection for YeMind/KMindZ SVG and PNG packages, ZIP, XMind, legacy KMind/JSON, Markdown, OPML, text and FreeMind outlines.
+- Reused the mature simple-mind-map SVG, PNG, XMind and PDF renderers while preserving YeMind layout, theme, project style and node extension fields in native packages.
+
 ## 1.1.1 - 2026-07-27
 
 - Completed standalone canvas, node and outline context-menu parity with viewport clamping, scrollable tall menus, nested submenus, current-state marks and self-contained icons.

@@ -4,7 +4,8 @@
     "pluginUrl.suite.ts",
     "registerPlugins.suite.ts",
     "v081CurrentPluginId.suite.ts",
-    "v081PluginIdentity.suite.ts"
+    "v081PluginIdentity.suite.ts",
+    "v120TransferFormats.suite.ts"
   ],
   "checkpoints": [
     "checkpointDialog.suite.ts",
@@ -130,7 +131,8 @@
     "v0929FloatingToolbarFields.suite.ts",
     "v0930ContextMenuContracts.suite.ts",
     "v0930ToolbarStateIcons.suite.ts"
-    ,"v110LayoutGeometry.suite.ts"
+    ,"v110LayoutGeometry.suite.ts",
+    "v120TransferUi.suite.ts"
   ],
   "storage-lifecycle": [
     "createMapLifecycle.suite.ts",

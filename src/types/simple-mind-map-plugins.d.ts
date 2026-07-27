@@ -18,6 +18,10 @@ declare module 'simple-mind-map/src/plugins/Export' {
   const plugin: any;
   export default plugin;
 }
+declare module 'simple-mind-map/src/plugins/ExportPDF' {
+  const plugin: any;
+  export default plugin;
+}
 declare module 'simple-mind-map/src/plugins/RichText' {
   const plugin: any;
   export default plugin;

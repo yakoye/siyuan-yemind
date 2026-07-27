@@ -2,8 +2,15 @@
 
 YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
 
-Current version: `1.1.1`
+Current version: `1.2.0`
 Host baseline: SiYuan `3.7.3`
+
+## v1.2.0 multi-format import and export
+
+- Uses `.yemind.svg` by default: it remains a standard previewable SVG and also preserves the complete editable YeMind document.
+- Exports SVG packages, SVG, KMindz, YeMind ZIP, Markdown, OPML, XMind, PNG, Text, HTML and PDF.
+- Auto-detects KMindZ/SVG/PNG/ZIP, XMind, legacy KMind/JSON and Markdown/OPML/Text/FreeMind outlines.
+- Shares one live-canvas export and import workflow between the SiYuan plugin and standalone web app.
 
 ## v1.1.1 standalone web interaction fixes
 

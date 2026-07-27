@@ -72,6 +72,24 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
             pluginBaseUrl: `/plugins/${encodeURIComponent(plugin.name)}`,
             onMissing: () => this.tab.close(),
             onTitleChange: (title) => this.tab.updateTitle(title),
+            onImport: async (imported) => {
+              const created = await host.repository.create(imported.title, imported.layout);
+              try {
+                await host.repository.update(created.id, {
+                  data: imported.data,
+                  layout: imported.layout,
+                  layoutPresetId: imported.layoutPresetId,
+                  theme: imported.theme,
+                  lineStyle: imported.lineStyle,
+                  projectStyle: imported.projectStyle,
+                  viewData: imported.viewData,
+                });
+              } catch (error) {
+                await host.repository.remove(created.id);
+                throw error;
+              }
+              await host.openMap(created.id);
+            },
           });
           host.diagnostics.record('global-search', 'map-editor-ready', resolvedMapId, { pendingTarget: true });
           host.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'map-editor-ready' });

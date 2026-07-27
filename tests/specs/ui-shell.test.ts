@@ -33,3 +33,4 @@ import '../suites/ui-shell/v0929FloatingToolbarFields.suite';
 import '../suites/ui-shell/v0930ContextMenuContracts.suite';
 import '../suites/ui-shell/v0930ToolbarStateIcons.suite';
 import '../suites/ui-shell/v110LayoutGeometry.suite';
+import '../suites/ui-shell/v120TransferUi.suite';

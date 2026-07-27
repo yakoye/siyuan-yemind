@@ -72,8 +72,8 @@ describe('YeMind plugin identity and install layout', () => {
     expect(manifest.displayName.default).toBe('YeMind');
     expect(manifest.displayName.zh_CN).toBe('YeMind');
     expect(packageJson.name).toBe('siyuan-yemind');
-    expect(manifest.version).toBe('1.1.1');
-    expect(packageJson.version).toBe('1.1.1');
+    expect(manifest.version).toBe('1.2.0');
+    expect(packageJson.version).toBe('1.2.0');
   });
 
   it('uses the renamed YeMindPlugin source entry and removes the old current source filename', () => {
@@ -130,7 +130,7 @@ describe('YeMind plugin identity and install layout', () => {
         'docs/PRODUCT_BOUNDARIES_v0.9.30.md',
       ])),
     ].map((file) => readFileSync(resolve(file), 'utf8')).join('\n');
-    expect(publicDocs).not.toMatch(/kmind/i);
+    expect(publicDocs).not.toMatch(/KMind Zen|siyuan-kmind-zen/i);
     expect(publicDocs).not.toContain('SiYuan 3.7.2');
     expect(publicDocs).toContain('SiYuan 3.7.3');
     const manifest = JSON.parse(readFileSync(resolve('plugin.json'), 'utf8'));

@@ -2,8 +2,15 @@
 
 YeMind 是面向思源笔记的本地优先思维导图插件，支持导图、分屏大纲、纯大纲、富文本节点、图片、备注、批注、标签、待办、节点样式、整图主题、检查点和全局搜索。
 
-当前版本：`1.1.1`
+当前版本：`1.2.0`
 开发基线：SiYuan `3.7.3`
+
+## v1.2.0 多格式导入导出
+
+- 默认导出 `.yemind.svg`：普通 SVG 软件可直接预览，YeMind 可无损恢复完整可编辑导图。
+- 支持 SVG 包、SVG、KMindz、YeMind ZIP、Markdown、OPML、XMind、PNG、Text、HTML 和 PDF。
+- 自动识别 KMindZ/SVG/PNG/ZIP、XMind、旧 KMind/JSON，以及 Markdown/OPML/Text/FreeMind 大纲。
+- 思源插件版与独立网页版共用实时画布导出和导入流程。
 
 ## v1.1.1 网页版交互修复版
 

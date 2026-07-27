@@ -4,8 +4,6 @@ import { confirm, showMessage } from './siyuanAdapter';
 import {
   createBackup,
   downloadJson,
-  exportMapFile,
-  importMapFile,
   restoreBackup,
 } from './webFileTransfer';
 import type { WebServices } from './webServices';
@@ -13,14 +11,13 @@ import type { WebServices } from './webServices';
 interface EditorHandle {
   destroy(): void;
   resize(): void;
+  openExportDialog?(): void;
+  openImportPicker?(): void;
 }
 
 interface WebAppOptions {
   createEditor?: (options: YeMindEditorOptions) => EditorHandle;
 }
-
-const safeFilename = (value: string): string =>
-  value.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-').trim() || '未命名导图';
 
 export class YeMindWebApp {
   private editor: EditorHandle | null = null;
@@ -86,6 +83,24 @@ export class YeMindWebApp {
       pluginBaseUrl: basePath,
       onTitleChange: () => this.renderMapList(),
       onMissing: () => this.renderMapList(),
+      onImport: async (imported) => {
+        const created = await this.services.repository.create(imported.title, imported.layout);
+        try {
+          await this.services.repository.update(created.id, {
+            data: imported.data,
+            layout: imported.layout,
+            layoutPresetId: imported.layoutPresetId,
+            theme: imported.theme,
+            lineStyle: imported.lineStyle,
+            projectStyle: imported.projectStyle,
+            viewData: imported.viewData,
+          });
+        } catch (error) {
+          await this.services.repository.remove(created.id);
+          throw error;
+        }
+        await this.mountMap(created.id);
+      },
     });
     this.renderMapList();
   }
@@ -108,7 +123,7 @@ export class YeMindWebApp {
         </aside>
         <main class="ymw-editor" data-web-editor></main>
         <button type="button" class="ymw-sidebar-toggle" data-web-action="toggle-sidebar" aria-label="打开导图库">☰</button>
-        <input type="file" data-web-file hidden accept=".json,.yemind,application/json">
+        <input type="file" data-web-file hidden accept=".json,application/json">
       </div>
     `;
     this.editorHost = this.root.querySelector<HTMLElement>('[data-web-editor]');
@@ -182,9 +197,10 @@ export class YeMindWebApp {
           }
         }
       }
-      if (action === 'export') this.exportActiveMap();
+      if (action === 'export') this.editor?.openExportDialog?.();
       if (action === 'backup') this.exportBackup();
-      if (action === 'import' || action === 'restore') {
+      if (action === 'import') this.editor?.openImportPicker?.();
+      if (action === 'restore') {
         if (this.fileInput) {
           this.fileInput.dataset.mode = action;
           this.fileInput.value = '';
@@ -198,13 +214,6 @@ export class YeMindWebApp {
       showMessage(error instanceof Error ? error.message : '操作失败', 4000, 'error');
     }
   };
-
-  private exportActiveMap(): void {
-    const id = this.services.repository.getActiveMapId();
-    const map = id ? this.services.repository.get(id) : undefined;
-    if (!map) throw new Error('没有可导出的导图');
-    downloadJson(`${safeFilename(map.title)}.yemind`, exportMapFile(map));
-  }
 
   private exportBackup(): void {
     const backup = createBackup(
@@ -228,19 +237,7 @@ export class YeMindWebApp {
         window.location.reload();
         return;
       }
-      const imported = importMapFile(value);
-      const created = await this.services.repository.create(imported.title, imported.layout);
-      await this.services.repository.update(created.id, {
-        data: imported.data,
-        layout: imported.layout,
-        layoutPresetId: imported.layoutPresetId,
-        theme: imported.theme,
-        lineStyle: imported.lineStyle,
-        projectStyle: imported.projectStyle,
-        viewData: imported.viewData,
-      });
-      await this.mountMap(created.id);
-      showMessage('导图已导入');
+      throw new Error('请使用导入按钮导入导图文件');
     } catch (error) {
       showMessage(error instanceof Error ? error.message : '文件读取失败', 5000, 'error');
     }

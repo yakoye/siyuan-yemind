@@ -4,6 +4,7 @@ import Select from 'simple-mind-map/src/plugins/Select';
 import MiniMap from 'simple-mind-map/src/plugins/MiniMap';
 import Search from 'simple-mind-map/src/plugins/Search';
 import Export from 'simple-mind-map/src/plugins/Export';
+import ExportPDF from 'simple-mind-map/src/plugins/ExportPDF';
 import Formula from 'simple-mind-map/src/plugins/Formula';
 import YeMindAssociativeLine from './YeMindAssociativeLine';
 import OuterFrame from 'simple-mind-map/src/plugins/OuterFrame';
@@ -18,6 +19,7 @@ export const MIND_MAP_PLUGIN_NAMES = [
   'MiniMap',
   'Search',
   'Export',
+  'ExportPDF',
   'RichText',
   'Formula',
   'AssociativeLine',
@@ -26,7 +28,7 @@ export const MIND_MAP_PLUGIN_NAMES = [
   'RainbowLines',
 ] as const;
 
-const plugins = [YeMindDrag, Select, MiniMap, Search, Export, YeMindRichText, Formula, YeMindAssociativeLine, OuterFrame, YeMindNodeImgAdjust, RainbowLines];
+const plugins = [YeMindDrag, Select, MiniMap, Search, Export, ExportPDF, YeMindRichText, Formula, YeMindAssociativeLine, OuterFrame, YeMindNodeImgAdjust, RainbowLines];
 let registered = false;
 
 export function configureMindMapPlugins(settings?: YeMindSettings): void {

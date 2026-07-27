@@ -12,6 +12,7 @@ describe('mind-map plugin registration', () => {
       'OuterFrame',
       'NodeImgAdjust',
       'RainbowLines',
+      'ExportPDF',
     ]));
   });
 });

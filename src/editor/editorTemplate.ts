@@ -2,6 +2,7 @@ import { normalizeLineStyle, themeOptionsHtml } from '../core/themePresets';
 import { layoutOptionsHtml } from '../core/layoutPresets';
 import { rainbowSchemeOptionsHtml } from '../core/colorSchemes';
 import { canvasModeIcon, fitViewIcon, fullscreenIcon, historyIcon, lineStyleIcon, lockIcon, meditationIcon, pinIcon, projectControlIcon, projectStyleIcon, redoIcon, searchIcon, undoIcon } from './projectControls';
+import { EXPORT_FORMATS, IMPORT_ACCEPT } from '../transfer/formatCatalog';
 export function createEditorTemplate(title: string, theme: unknown = 'yemind-default', lineStyle: unknown = 'curve'): string {
   return `
     <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map" data-toolbars-pinned="true" data-topbar-visible="true" data-statusbar-visible="true" data-leftbar-visible="true">
@@ -35,6 +36,9 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
             <option value="direct"${normalizeLineStyle(lineStyle) === 'direct' ? ' selected' : ''}>直线</option>
           </select>
           <button class="ymz-project-control ymz-project-button" data-action="project-style" title="整图样式">${projectStyleIcon()}<span>样式</span></button>
+          <span class="ymz-separator"></span>
+          <button data-action="import-file" title="导入导图文件">导入</button>
+          <button data-action="export-file" title="导出当前导图">导出</button>
           <span class="ymz-save-state" data-role="save-state">已保存</span>
         </div>
 
@@ -54,6 +58,14 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
             <button data-search-action="replace-all" title="全部替换">全部</button>
           </div>
         </div>
+
+        <input type="file" data-role="import-file-input" accept="${IMPORT_ACCEPT}" hidden>
+        <aside class="ymz-transfer-panel" data-role="export-panel" aria-label="导出导图" hidden>
+          <header><strong>导出导图</strong><button type="button" data-action="close-export-panel" aria-label="关闭导出面板">×</button></header>
+          <div class="ymz-transfer-panel__formats">
+            ${EXPORT_FORMATS.map((format) => `<button type="button" data-export-format="${format.id}"${format.default ? ' data-default="true"' : ''}><span><strong>${format.label}</strong><small>${format.extension}</small></span><em>${format.description}</em></button>`).join('')}
+          </div>
+        </aside>
 
         <div class="ymz-workspace">
           <div class="ymz-canvas" data-role="canvas"></div>

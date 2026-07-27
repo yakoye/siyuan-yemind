@@ -118,6 +118,9 @@ import { ToolbarVisibilityController } from './ToolbarVisibilityController';
 import { parseZoomPercent } from './zoomPercent';
 import { normalizeMapTitle } from './mapTitle';
 import { ResourceActionPopover } from './resourceActionPopover';
+import { createExportArtifact, downloadExportArtifact } from '../transfer/exporter';
+import { importMindMapBytes } from '../transfer/importer';
+import type { ExportFormatId } from '../transfer/formatCatalog';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -129,6 +132,7 @@ export interface YeMindEditorOptions {
   diagnostics: DiagnosticsService;
   onMissing?: () => void;
   onTitleChange?: (title: string) => void;
+  onImport?: (map: YeMindMapDocument) => Promise<void> | void;
   pluginBaseUrl?: string;
 }
 
@@ -552,6 +556,20 @@ export class YeMindEditor {
 
   resize(): void {
     this.scheduleSafeResize();
+  }
+
+  openExportDialog(): void {
+    const panel = this.rootEl?.querySelector<HTMLElement>('[data-role="export-panel"]');
+    if (!panel) return;
+    panel.hidden = false;
+    panel.querySelector<HTMLButtonElement>('[data-default="true"]')?.focus();
+  }
+
+  openImportPicker(): void {
+    const input = this.rootEl?.querySelector<HTMLInputElement>('[data-role="import-file-input"]');
+    if (!input) return;
+    input.value = '';
+    input.click();
   }
 
   destroy(): void {
@@ -1023,6 +1041,13 @@ export class YeMindEditor {
         return;
       }
 
+      const exportButton = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-export-format]');
+      if (exportButton) {
+        const format = exportButton.dataset.exportFormat as ExportFormatId | undefined;
+        if (format) void this.exportCurrentMap(format);
+        return;
+      }
+
       const searchButton = (event.target as HTMLElement).closest<HTMLElement>(
         "[data-search-action]",
       );
@@ -1152,6 +1177,15 @@ export class YeMindEditor {
           this.nodeStylePanel?.hide();
           this.projectStylePanel?.toggle(button);
           break;
+        case "import-file":
+          this.openImportPicker();
+          break;
+        case "export-file":
+          this.openExportDialog();
+          break;
+        case "close-export-panel":
+          this.closeExportDialog();
+          break;
         case "readonly":
           this.setReadonly(this.rootEl.dataset.readonly !== "true");
           break;
@@ -1224,6 +1258,11 @@ export class YeMindEditor {
     this.rootEl
       .querySelector<HTMLSelectElement>('[data-action="line-style"]')
       ?.addEventListener("change", (event) => this.setLineStyle((event.target as HTMLSelectElement).value));
+    this.rootEl
+      .querySelector<HTMLInputElement>('[data-role="import-file-input"]')
+      ?.addEventListener('change', (event) => {
+        void this.importSelectedFile(event.target as HTMLInputElement);
+      });
 
     this.titleEl.addEventListener('click', () => this.beginTitleRename());
     this.titleInputEl.addEventListener('keydown', (event) => {
@@ -1251,6 +1290,64 @@ export class YeMindEditor {
       }
     });
     this.zoomEl.addEventListener('blur', () => this.commitZoomInput());
+  }
+
+  private closeExportDialog(): void {
+    const panel = this.rootEl?.querySelector<HTMLElement>('[data-role="export-panel"]');
+    if (panel) panel.hidden = true;
+  }
+
+  private transferSnapshot(): YeMindMapDocument {
+    if (!this.map) throw new Error('导图画布尚未准备完成');
+    return {
+      ...structuredClone(this.current),
+      data: this.map.getData(false) as MindMapTree,
+      layout: this.map.getLayout(),
+      viewData: (this.map.view as any)?.getTransformData?.(),
+    };
+  }
+
+  private async exportCurrentMap(format: ExportFormatId): Promise<void> {
+    if (!this.map) return;
+    const panel = this.rootEl.querySelector<HTMLElement>('[data-role="export-panel"]');
+    panel?.setAttribute('aria-busy', 'true');
+    try {
+      const artifact = await createExportArtifact(format, this.transferSnapshot(), {
+        render: async (type) => {
+          const result = await (this.map as any)?.export?.(type, false, this.current.title);
+          if (typeof result !== 'string') throw new Error(`${type.toUpperCase()} 导出失败`);
+          return result;
+        },
+      });
+      downloadExportArtifact(artifact);
+      this.closeExportDialog();
+      showMessage(`已导出 ${artifact.filename}`);
+    } catch (error) {
+      console.error('[YeMind] export failed', error);
+      showMessage(error instanceof Error ? error.message : '导出失败', 5000, 'error');
+    } finally {
+      panel?.removeAttribute('aria-busy');
+    }
+  }
+
+  private async importSelectedFile(input: HTMLInputElement): Promise<void> {
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const map = await importMindMapBytes({
+        name: file.name,
+        type: file.type,
+        bytes: new Uint8Array(await file.arrayBuffer()),
+      });
+      if (!this.options.onImport) throw new Error('当前宿主没有提供导入目标');
+      await this.options.onImport(map);
+      showMessage(`已导入 ${map.title}`);
+    } catch (error) {
+      console.error('[YeMind] import failed', error);
+      showMessage(error instanceof Error ? error.message : '文件读取失败', 5000, 'error');
+    } finally {
+      input.value = '';
+    }
   }
 
   private updateToolbarPinPresentation(): void {

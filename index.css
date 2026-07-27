@@ -2079,6 +2079,19 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
   --ymz-outline-drag-width:16px;
   --ymz-outline-row-start:2px;
 }
+
+/* v1.2.0 shared import/export panel */
+.ymz-transfer-panel{position:absolute;z-index:75;top:62px;right:14px;width:min(520px,calc(100% - 28px));max-height:min(620px,calc(100% - 90px));overflow:hidden;border:1px solid var(--ymz-border);border-radius:13px;background:var(--ymz-panel);color:var(--b3-theme-on-background);box-shadow:0 18px 50px rgba(25,45,37,.22)}
+.ymz-transfer-panel[hidden]{display:none}.ymz-transfer-panel[aria-busy="true"]{pointer-events:none;opacity:.7}
+.ymz-transfer-panel>header{display:flex;align-items:center;justify-content:space-between;height:46px;padding:0 14px;border-bottom:1px solid var(--ymz-border)}
+.ymz-transfer-panel>header button{width:30px;height:30px;border:0;border-radius:8px;background:transparent;color:inherit;font-size:20px;cursor:pointer}
+.ymz-transfer-panel>header button:hover{background:var(--b3-list-hover)}
+.ymz-transfer-panel__formats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:calc(min(620px,100vh - 90px) - 47px);overflow:auto;padding:10px}
+.ymz-transfer-panel__formats>button{display:grid;gap:5px;min-width:0;padding:10px 11px;border:1px solid var(--ymz-border);border-radius:10px;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.ymz-transfer-panel__formats>button:hover,.ymz-transfer-panel__formats>button:focus-visible{border-color:var(--b3-theme-primary);background:var(--b3-theme-primary-lighter);outline:0}
+.ymz-transfer-panel__formats>button[data-default="true"]{border-color:color-mix(in srgb,var(--b3-theme-primary) 55%,var(--ymz-border))}
+.ymz-transfer-panel__formats span{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.ymz-transfer-panel__formats strong{font-size:13px}.ymz-transfer-panel__formats small{color:var(--b3-theme-primary);font-size:11px}.ymz-transfer-panel__formats em{overflow:hidden;color:var(--b3-theme-on-surface-light);font-size:11px;font-style:normal;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:560px){.ymz-transfer-panel__formats{grid-template-columns:1fr}}
 .ymz-outline-row__drag{
   display:grid;
   place-items:center;

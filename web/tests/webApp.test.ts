@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { YeMindWebApp } from '../src/webApp';
 import { createWebServices } from '../src/webServices';
 import { createMemoryWebStore } from '../src/webStorage';
@@ -35,6 +35,29 @@ describe('standalone YeMind workspace', () => {
     expect(mounted).toHaveLength(2);
     expect(destroyed).toEqual([mounted[0]]);
     expect(root.querySelectorAll('[data-web-map-id]')).toHaveLength(2);
+    app.destroy();
+  });
+
+  it('delegates map import and export to the live shared editor', async () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    const services = createWebServices(createMemoryWebStore());
+    const openExportDialog = vi.fn();
+    const openImportPicker = vi.fn();
+    const app = new YeMindWebApp(root, services, {
+      createEditor: () => ({
+        destroy: () => undefined,
+        resize: () => undefined,
+        openExportDialog,
+        openImportPicker,
+      }),
+    });
+    await app.start();
+    root.querySelector<HTMLButtonElement>('[data-web-action="export"]')!.click();
+    root.querySelector<HTMLButtonElement>('[data-web-action="import"]')!.click();
+    await Promise.resolve();
+    expect(openExportDialog).toHaveBeenCalledOnce();
+    expect(openImportPicker).toHaveBeenCalledOnce();
     app.destroy();
   });
 });

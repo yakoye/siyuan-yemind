@@ -1,5 +1,14 @@
 declare module 'jszip' {
+  interface JSZipEntry {
+    name: string;
+    dir: boolean;
+    async(type: 'string'): Promise<string>;
+    async(type: 'uint8array'): Promise<Uint8Array>;
+  }
   export default class JSZip {
+    files: Record<string, JSZipEntry>;
+    static loadAsync(data: unknown): Promise<JSZip>;
+    file(path: string): JSZipEntry | null;
     file(path: string, data: unknown): this;
     generateAsync(options: Record<string, unknown>): Promise<Uint8Array>;
   }
