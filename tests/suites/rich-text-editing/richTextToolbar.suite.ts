@@ -45,6 +45,21 @@ describe('RichTextToolbar', () => {
     root.remove();
   });
 
+  it('owns toolbar clicks so the canvas body handler cannot close text editing', () => {
+    const root = setup();
+    const toolbar = new RichTextToolbar(root, commands());
+    toolbar.update(true, { left: 10, top: 10, right: 80, bottom: 30, width: 70 }, {});
+    const bodyClick = vi.fn();
+    document.body.addEventListener('click', bodyClick);
+
+    root.querySelector<HTMLButtonElement>('[data-rich-action="bold"]')!.click();
+
+    expect(bodyClick).not.toHaveBeenCalled();
+    document.body.removeEventListener('click', bodyClick);
+    toolbar.destroy();
+    root.remove();
+  });
+
   it('opens link and code-block editors with the active formatting target', () => {
     const root = setup();
     const target = commands();

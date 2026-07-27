@@ -180,6 +180,21 @@ describe('v0.9.4 unified structured outline editor', () => {
     root.remove();
   });
 
+  it('applies and removes a visible cloze without losing the selected outline text', () => {
+    const { root, controller, current } = mount();
+    select(root, 'a', 0, 'a', 5);
+
+    controller.setCloze(true);
+    expect(root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-yemind-cloze]')?.textContent).toBe('Alpha');
+    expect(String(current().children[0].data.text)).toContain('data-yemind-cloze');
+
+    controller.setCloze(false);
+    expect(root.querySelector('[data-outline-uid="a"] [data-yemind-cloze]')).toBeNull();
+    expect(String(current().children[0].data.text)).not.toContain('data-yemind-cloze');
+    controller.destroy();
+    root.remove();
+  });
+
   it('defers reconciliation during IME composition', () => {
     const { root, controller, onApply } = mount();
     const editor = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-editor]')!;

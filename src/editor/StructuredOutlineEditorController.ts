@@ -753,9 +753,29 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
   }
 
   setCloze(enabled: boolean): void {
-    this.formatText(enabled
-      ? { color: 'transparent', background: '#f5dfa0' }
-      : { color: false, background: false });
+    this.restoreSelection();
+    const range = this.currentRange();
+    if (!range || range.collapsed || this.options.isReadonly()) return;
+    if (enabled) {
+      const cloze = this.wrapSelection('span', {
+        color: 'transparent',
+        backgroundColor: '#f5dfa0',
+      });
+      if (cloze) cloze.dataset.yemindCloze = 'true';
+    } else {
+      const bookmark = this.captureSelectionBookmark();
+      Array.from(
+        this.options.root.querySelectorAll<HTMLElement>('[data-yemind-cloze]'),
+      ).forEach((cloze) => {
+        if (!range.intersectsNode(cloze)) return;
+        const parent = cloze.parentNode;
+        if (!parent) return;
+        while (cloze.firstChild) parent.insertBefore(cloze.firstChild, cloze);
+        cloze.remove();
+      });
+      if (bookmark) this.restoreSelectionBookmark(bookmark);
+    }
+    this.afterFormatting(enabled ? 'cloze-enable' : 'cloze-disable');
   }
 
   private bind(): void {

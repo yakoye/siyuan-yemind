@@ -202,6 +202,11 @@ export class RichTextToolbar {
     };
     this.element.addEventListener("mousedown", markInteracting);
     this.colorPopover.addEventListener("mousedown", markInteracting);
+    // simple-mind-map ends canvas text editing from its document.body click
+    // listener. Toolbar clicks are part of the current edit transaction and
+    // must never be reinterpreted as an outside-canvas click.
+    this.element.addEventListener("click", (event) => event.stopPropagation());
+    this.colorPopover.addEventListener("click", (event) => event.stopPropagation());
 
     const isolateInputEvent = (event: Event): void => event.stopPropagation();
     [
