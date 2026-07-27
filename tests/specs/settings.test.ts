@@ -5,3 +5,4 @@ import '../suites/settings/settingsDialogLifecycle.suite';
 import '../suites/settings/settingsSaveLifecycle.suite';
 import '../suites/settings/settingsStore.suite';
 import '../suites/settings/v0913AboutEntry.suite';
+import '../suites/settings/v130AppearanceMode.suite';

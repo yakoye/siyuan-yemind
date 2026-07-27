@@ -199,7 +199,8 @@
     "settingsDialogLifecycle.suite.ts",
     "settingsSaveLifecycle.suite.ts",
     "settingsStore.suite.ts",
-    "v0913AboutEntry.suite.ts"
+    "v0913AboutEntry.suite.ts",
+    "v130AppearanceMode.suite.ts"
   ],
   "outline-split": [
     "outline.suite.ts",

@@ -1,3 +1,8 @@
+import {
+  normalizeAppearanceMode,
+  type AppearanceMode,
+} from '../core/appearanceMode';
+
 export type YeMindLayout = 'logicalStructure' | 'logicalStructureLeft' | 'mindMap' | 'organizationStructure' | 'catalogOrganization';
 export type CanvasMode = 'pan' | 'select';
 export type WheelMode = 'zoom' | 'pan' | 'none';
@@ -22,6 +27,7 @@ export const DEFAULT_SHORTCUTS: ShortcutMap = {
 };
 
 export interface YeMindSettings {
+  appearanceMode: AppearanceMode;
   defaultLayout: YeMindLayout;
   canvasMode: CanvasMode;
   wheelMode: WheelMode;
@@ -73,6 +79,7 @@ interface SettingsStorage {
 type Listener = (settings: YeMindSettings) => void;
 
 export const DEFAULT_SETTINGS: YeMindSettings = {
+  appearanceMode: 'system',
   defaultLayout: 'logicalStructure',
   canvasMode: 'select',
   wheelMode: 'pan',
@@ -166,6 +173,7 @@ function normalizeSettings(value: Partial<YeMindSettings>): YeMindSettings {
   const minZoomRatio = numberInRange(value.minZoomRatio, DEFAULT_SETTINGS.minZoomRatio, 5, 100);
   const maxZoomRatio = Math.max(minZoomRatio, numberInRange(value.maxZoomRatio, DEFAULT_SETTINGS.maxZoomRatio, 100, 1000));
   return {
+    appearanceMode: normalizeAppearanceMode(value.appearanceMode),
     defaultLayout: LAYOUTS.has(value.defaultLayout as YeMindLayout) ? value.defaultLayout as YeMindLayout : DEFAULT_SETTINGS.defaultLayout,
     canvasMode: CANVAS_MODES.has(value.canvasMode as CanvasMode) ? value.canvasMode as CanvasMode : DEFAULT_SETTINGS.canvasMode,
     wheelMode: WHEEL_MODES.has(value.wheelMode as WheelMode) ? value.wheelMode as WheelMode : DEFAULT_SETTINGS.wheelMode,

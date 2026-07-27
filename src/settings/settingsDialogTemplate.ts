@@ -111,6 +111,11 @@ export function createSettingsDialogTemplate(settings: YeMindSettings): string {
       <section class="ymz-settings-page" data-settings-panel="general">
         <header><h2>常规</h2><p>修改后点击保存，将应用到所有已打开的 YeMind 标签页。</p></header>
         <div class="ymz-settings-group"><h3>默认视图模式</h3>
+          ${selectRow('界面外观', '控制工具栏、面板和网页外壳；不会改变导图节点配色。', 'appearanceMode', [
+            option('system', '跟随系统或思源', settings.appearanceMode),
+            option('light', '明亮', settings.appearanceMode),
+            option('dark', '暗黑', settings.appearanceMode),
+          ].join(''))}
           ${selectRow('默认视图', '新打开导图时使用导图、大纲或分屏。', 'defaultViewMode', [
             option('map', '导图', settings.defaultViewMode),
             option('split', '分屏', settings.defaultViewMode),

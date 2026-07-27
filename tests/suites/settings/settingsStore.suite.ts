@@ -21,6 +21,7 @@ describe('SettingsStore', () => {
     await store.load();
 
     expect(store.get()).toEqual({
+      appearanceMode: 'system',
       defaultLayout: 'logicalStructure',
       canvasMode: 'select',
       wheelMode: 'pan',
