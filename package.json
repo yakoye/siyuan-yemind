@@ -11,7 +11,7 @@
     "dev:web": "vite --config vite.web.config.ts",
     "prebuild": "npm run generate:theme-colors",
     "build": "vite build && node scripts/copy-build.mjs",
-    "build:web": "vite build --config vite.web.config.ts",
+    "build:web": "vite build --config vite.web.config.ts && node scripts/copy-web-assets.mjs",
     "precheck": "npm run generate:theme-colors",
     "check": "tsc --noEmit",
     "pretest": "npm run generate:theme-colors",

@@ -73,7 +73,7 @@ export class YeMindWebApp {
     this.editor = null;
     this.editorHost.innerHTML = '';
     await this.services.repository.setActiveMap(mapId);
-    const basePath = new URL('./', document.baseURI).pathname.replace(/\/$/, '');
+    const basePath = new URL('./', document.baseURI).pathname.replace(/\/$/, '') || '.';
     this.editor = this.createEditor({
       container: this.editorHost,
       mapId,
