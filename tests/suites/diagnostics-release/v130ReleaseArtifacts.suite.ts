@@ -9,6 +9,7 @@ import {
 } from '../../../scripts/release/version-contract.mjs';
 import {
   assertSafeReleaseDirectory,
+  RELEASE_ZIP_DATE,
   releaseArtifactNames,
 } from '../../../scripts/release/build-release.mjs';
 
@@ -37,6 +38,7 @@ describe('v1.3.0 unified release artifacts', () => {
   });
 
   it('names both host packages and refuses release cleanup outside release root', async () => {
+    expect(RELEASE_ZIP_DATE.toISOString()).toBe('1980-01-01T00:00:00.000Z');
     expect(releaseArtifactNames('1.3.0')).toEqual({
       plugin: 'siyuan-yemind-v1.3.0.zip',
       web: 'yemind-web-v1.3.0.zip',

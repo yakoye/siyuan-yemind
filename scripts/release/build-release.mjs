@@ -17,6 +17,7 @@ export const PLUGIN_RELEASE_ROOT_FILES = [
   'VERSION',
 ];
 export const PLUGIN_RELEASE_DIRECTORIES = ['assets', 'i18n'];
+export const RELEASE_ZIP_DATE = new Date('1980-01-01T00:00:00.000Z');
 
 export function releaseArtifactNames(version) {
   return {
@@ -61,7 +62,10 @@ async function collectFiles(root, relative = '') {
 async function zipFiles(root, relativeFiles) {
   const zip = new JSZip();
   for (const relative of relativeFiles) {
-    zip.file(relative, await readFile(path.join(root, relative)));
+    zip.file(relative, await readFile(path.join(root, relative)), {
+      createFolders: false,
+      date: RELEASE_ZIP_DATE,
+    });
   }
   return zip.generateAsync({
     type: 'nodebuffer',
