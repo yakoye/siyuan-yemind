@@ -1,6 +1,7 @@
 export interface WebKeyValueStore {
   get(key: string): Promise<unknown>;
   set(key: string, value: unknown): Promise<void>;
+  delete(key: string): Promise<void>;
   transaction(values: Record<string, unknown>): Promise<void>;
 }
 
@@ -21,6 +22,13 @@ export function createMemoryWebStore(): WebKeyValueStore {
     set(key, value) {
       const operation = writeQueue.then(() => {
         values.set(key, clone(value));
+      });
+      writeQueue = operation.catch(() => undefined);
+      return operation;
+    },
+    delete(key) {
+      const operation = writeQueue.then(() => {
+        values.delete(key);
       });
       writeQueue = operation.catch(() => undefined);
       return operation;
@@ -89,6 +97,14 @@ export function createIndexedDbWebStore(
         const db = await database();
         const transaction = db.transaction('documents', 'readwrite');
         transaction.objectStore('documents').put(clone(value), key);
+        await transactionComplete(transaction);
+      });
+    },
+    delete(key) {
+      return enqueue(async () => {
+        const db = await database();
+        const transaction = db.transaction('documents', 'readwrite');
+        transaction.objectStore('documents').delete(key);
         await transactionComplete(transaction);
       });
     },
