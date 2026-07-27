@@ -1,4 +1,7 @@
 node_modules/
 dist/
 *.zip
+.worktrees/
+.superpowers/
+web-dist/
 .DS_Store
