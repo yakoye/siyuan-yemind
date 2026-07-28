@@ -48,4 +48,4 @@
 2. Profile 1,000+ node import, outline editing and recursive disclosure without weakening transaction safety.
 3. Improve keyboard access and screen-reader labels for outline content status controls and image actions.
 4. Continue accessibility and mobile-layout coverage for content-rich outline rows.
-5. Prepare a stable 1.0 compatibility and migration policy.
+5. Work with the vendored `simple-mind-map` runtime to remove unused Tern/ESLint/Glob dependencies, move build tools back to `devDependencies`, upgrade UUID safely and adopt a Quill HTML-export fix without changing editor behavior.
