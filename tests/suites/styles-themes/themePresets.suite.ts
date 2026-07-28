@@ -32,12 +32,14 @@ describe('YeMind theme presets', () => {
     expect(result.themeConfig.backgroundColor).toBe('#F8FAFC');
   });
 
-  it('provides three base themes and all nineteen named themes', () => {
+  it('provides the six confirmed base themes and all nineteen named themes', () => {
     expect(YEMIND_THEME_PRESETS.map((item) => item.id)).toEqual([
-      'yemind-default', 'ink-branch', 'material-3-basic', ...EXPECTED_SCHEME_IDS,
+      'yemind-default', 'ink-branch', 'material-3-basic',
+      'aurora', 'morning-mist', 'dunes',
+      ...EXPECTED_SCHEME_IDS,
     ]);
-    expect(YEMIND_THEME_PRESETS).toHaveLength(22);
-    expect(YEMIND_THEME_PRESETS.filter((item) => item.group === '基础')).toHaveLength(3);
+    expect(YEMIND_THEME_PRESETS).toHaveLength(25);
+    expect(YEMIND_THEME_PRESETS.filter((item) => item.group === '基础')).toHaveLength(6);
     expect(YEMIND_THEME_PRESETS.filter((item) => item.group === '缤纷')).toHaveLength(10);
     expect(YEMIND_THEME_PRESETS.filter((item) => item.group === '经典')).toHaveLength(9);
 
@@ -46,6 +48,7 @@ describe('YeMind theme presets', () => {
     expect(options).toContain('<optgroup label="缤纷">');
     expect(options).toContain('<optgroup label="经典">');
     expect(options).toContain('<option value="scheme-mint" selected>薄荷</option>');
+    expect(options).toContain('<option value="aurora">极光</option>');
 
     const light = buildThemeConfig({ presetId: 'yemind-default', appearance: 'light', lineStyle: 'curve' });
     const dark = buildThemeConfig({ presetId: 'yemind-default', appearance: 'dark', lineStyle: 'curve' });
@@ -60,6 +63,21 @@ describe('YeMind theme presets', () => {
     expect(result.themeConfig.node.fillColor).toMatch(/^#/);
     expect(result.rainbow.open).toBe(true);
     expect(result.rainbow.colorsList).toHaveLength(result.colorAppearance.cycleLength);
+  });
+
+  it('gives fixed vivid and classic themes a readable dark canvas without changing the theme id', () => {
+    for (const presetId of ['scheme-rainbow', 'scheme-eternity']) {
+      const light = buildThemeConfig({ presetId, appearance: 'light', lineStyle: 'curve' });
+      const dark = buildThemeConfig({ presetId, appearance: 'dark', lineStyle: 'curve' });
+      expect(dark.presetId).toBe(presetId);
+      expect(dark.colorAppearance.presetId).toBe(presetId);
+      expect(dark.colorAppearance.appearance).toBe('dark');
+      expect(dark.themeConfig.backgroundColor).toBe('#111318');
+      expect(dark.themeConfig.backgroundColor).not.toBe(light.themeConfig.backgroundColor);
+      expect(dark.themeConfig.root.fillColor).not.toBe('transparent');
+      expect(dark.themeConfig.node.fillColor).not.toBe('transparent');
+      expect(dark.themeConfig.node.color).toBe('#E8EDF5');
+    }
   });
 
   it('keeps user spacing settings authoritative over preset spacing', () => {

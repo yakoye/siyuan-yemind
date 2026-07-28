@@ -82,7 +82,6 @@ interface SelectionBookmark {
 }
 
 const INDENT_SIZE = 22;
-const OUTLINE_IMAGE_SINGLE_CLICK_DELAY = 380;
 const PLAIN_INDENT = '    ';
 const BLOCK_TAGS = new Set(['DIV', 'P', 'LI', 'UL', 'OL', 'SECTION', 'ARTICLE']);
 
@@ -289,7 +288,6 @@ function isImageClipboard(data: DataTransfer | null): boolean {
  */
 export class StructuredOutlineEditorController implements RichTextFormattingTarget {
   private readonly debounceMs: number;
-  private outlineImageClickTimer: number | null = null;
   private selectedMedia: { uid: string; kind: 'image' | 'clipart' } | null = null;
   private timer: number | null = null;
   private dirty = false;
@@ -816,8 +814,6 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     root.removeEventListener('pointerout', this.onPointerOut);
     root.removeEventListener('dblclick', this.onDoubleClick);
     root.removeEventListener('contextmenu', this.onContextMenu);
-    if (this.outlineImageClickTimer !== null) window.clearTimeout(this.outlineImageClickTimer);
-    this.outlineImageClickTimer = null;
     root.removeEventListener('blur', this.onBlur, true);
     root.removeEventListener('compositionstart', this.onCompositionStart);
     root.removeEventListener('compositionend', this.onCompositionEnd);
@@ -877,15 +873,10 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       event.stopPropagation();
       this.activateUid(uid, false);
       if (!this.options.isReadonly()) this.options.onActivate(uid);
-      if (this.outlineImageClickTimer !== null) window.clearTimeout(this.outlineImageClickTimer);
-      this.outlineImageClickTimer = null;
       if (event.detail > 1) return;
       const kind = imageAction.dataset.outlineImageKind === 'clipart' ? 'clipart' : 'image';
       this.selectOutlineMedia(uid, kind);
-      this.outlineImageClickTimer = window.setTimeout(() => {
-        this.outlineImageClickTimer = null;
-        if (!this.options.isReadonly()) this.options.onImageEdit?.(uid, kind, imageAction);
-      }, OUTLINE_IMAGE_SINGLE_CLICK_DELAY);
+      if (!this.options.isReadonly()) this.options.onImageEdit?.(uid, kind, imageAction);
       return;
     }
     const contentAction = target.closest<HTMLElement>('[data-outline-content]');
@@ -946,8 +937,6 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     if (!imageAction || !row) return;
     event.preventDefault();
     event.stopPropagation();
-    if (this.outlineImageClickTimer !== null) window.clearTimeout(this.outlineImageClickTimer);
-    this.outlineImageClickTimer = null;
     const uid = row.dataset.outlineUid ?? '';
     const kind = imageAction.dataset.outlineImageKind === 'clipart' ? 'clipart' : 'image';
     this.activateUid(uid, false);
@@ -992,10 +981,6 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
   private readonly onPointerDown = (event: PointerEvent): void => {
     const target = event.target as Element | null;
     const imageAction = target?.closest('[data-outline-image-action]');
-    if (imageAction && event.detail > 1 && this.outlineImageClickTimer !== null) {
-      window.clearTimeout(this.outlineImageClickTimer);
-      this.outlineImageClickTimer = null;
-    }
     if (!imageAction && !target?.closest('[data-outline-media-delete]')) {
       this.clearOutlineMediaSelection();
     }

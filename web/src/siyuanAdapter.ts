@@ -94,6 +94,9 @@ export class Menu {
   readonly element: HTMLElement;
   private readonly list: HTMLElement;
   private readonly submenus = new Set<HTMLElement>();
+  private readonly submenuOpeners = new Map<HTMLButtonElement, () => void>();
+  private readonly submenuParents = new Map<HTMLElement, HTMLButtonElement>();
+  private returnFocus: HTMLElement | null = null;
   private closed = false;
 
   constructor(id = 'yemind-web-menu', private readonly closeCallback?: () => void) {
@@ -103,7 +106,7 @@ export class Menu {
     this.element.hidden = true;
     this.element.setAttribute('role', 'menu');
     this.list = document.createElement('div');
-    this.list.className = 'ymw-menu__list';
+    this.list.className = 'ymw-menu__list b3-menu__items';
     this.element.appendChild(this.list);
     document.body.appendChild(this.element);
   }
@@ -118,7 +121,9 @@ export class Menu {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = `b3-menu__item${option.warning ? ' is-warning' : ''}${option.current ? ' is-current' : ''}`;
-    button.setAttribute('role', 'menuitem');
+    button.setAttribute('role', option.current ? 'menuitemradio' : 'menuitem');
+    if (option.current) button.setAttribute('aria-checked', 'true');
+    button.tabIndex = -1;
     button.disabled = Boolean(option.disabled);
     if (option.iconHTML || option.icon) {
       const icon = document.createElement('span');
@@ -151,6 +156,7 @@ export class Menu {
       children.forEach((child) => this.appendItem(submenu, child));
       this.element.appendChild(submenu);
       this.submenus.add(submenu);
+      this.submenuParents.set(submenu, button);
       let hideTimer = 0;
       const hide = (): void => {
         window.clearTimeout(hideTimer);
@@ -176,6 +182,7 @@ export class Menu {
         submenu.style.top = `${Math.round(clampMenuAxis(anchor.top, height, window.innerHeight))}px`;
         submenu.style.maxHeight = `${Math.max(80, window.innerHeight - MENU_MARGIN * 2)}px`;
       };
+      this.submenuOpeners.set(button, show);
       entry.addEventListener('mouseenter', show);
       entry.addEventListener('mouseleave', hide);
       submenu.addEventListener('mouseenter', () => window.clearTimeout(hideTimer));
@@ -206,19 +213,26 @@ export class Menu {
   }
 
   open({ x, y }: { x: number; y: number }): void {
+    this.returnFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
     this.element.hidden = false;
     this.element.style.maxHeight = `${Math.max(80, window.innerHeight - MENU_MARGIN * 2)}px`;
     const rect = this.element.getBoundingClientRect();
     this.element.style.left = `${Math.round(clampMenuAxis(x, rect.width, window.innerWidth))}px`;
     this.element.style.top = `${Math.round(clampMenuAxis(y, rect.height, window.innerHeight))}px`;
     document.addEventListener('mousedown', this.onDocumentMouseDown, true);
+    document.addEventListener('keydown', this.onDocumentKeyDown, true);
+    this.enabledItems(this.list)[0]?.focus();
   }
 
   close(): void {
     if (this.closed) return;
     this.closed = true;
     document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
+    document.removeEventListener('keydown', this.onDocumentKeyDown, true);
     this.element.remove();
+    if (this.returnFocus?.isConnected) this.returnFocus.focus();
     this.closeCallback?.();
   }
 
@@ -230,6 +244,71 @@ export class Menu {
     const target = event.target as Node | null;
     if (target && this.element.contains(target)) return;
     this.close();
+  };
+
+  private enabledItems(container: HTMLElement): HTMLButtonElement[] {
+    return Array.from(
+      container.querySelectorAll<HTMLButtonElement>(
+        ':scope > .ymw-menu__entry > .b3-menu__item:not(:disabled)',
+      ),
+    );
+  }
+
+  private readonly onDocumentKeyDown = (event: KeyboardEvent): void => {
+    if (this.closed || this.element.hidden) return;
+    const active = document.activeElement instanceof HTMLButtonElement
+      && this.element.contains(document.activeElement)
+      ? document.activeElement
+      : null;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      this.close();
+      return;
+    }
+    if (event.key === 'Tab') {
+      this.close();
+      return;
+    }
+    const container = active?.closest<HTMLElement>('.ymw-submenu') ?? this.list;
+    const items = this.enabledItems(container);
+    if (!items.length) return;
+    const index = Math.max(0, items.indexOf(active ?? items[0]));
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      const step = event.key === 'ArrowDown' ? 1 : -1;
+      items[(index + step + items.length) % items.length]?.focus();
+      return;
+    }
+    if (event.key === 'Home' || event.key === 'End') {
+      event.preventDefault();
+      items[event.key === 'Home' ? 0 : items.length - 1]?.focus();
+      return;
+    }
+    if (event.key === 'ArrowRight' && active) {
+      const open = this.submenuOpeners.get(active);
+      if (!open) return;
+      event.preventDefault();
+      open();
+      const submenu = Array.from(this.submenuParents.entries())
+        .find(([, parent]) => parent === active)?.[0];
+      if (submenu) this.enabledItems(submenu)[0]?.focus();
+      return;
+    }
+    if (event.key === 'ArrowLeft') {
+      const submenu = active?.closest<HTMLElement>('.ymw-submenu');
+      const parent = submenu ? this.submenuParents.get(submenu) : null;
+      if (!submenu || !parent) return;
+      event.preventDefault();
+      submenu.hidden = true;
+      parent.setAttribute('aria-expanded', 'false');
+      parent.focus();
+      return;
+    }
+    if ((event.key === 'Enter' || event.key === ' ') && active) {
+      event.preventDefault();
+      active.click();
+    }
   };
 }
 

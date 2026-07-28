@@ -19,38 +19,38 @@ afterEach(async () => {
   await Promise.all(temporaryRoots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 
-describe('v1.3.0 unified release artifacts', () => {
+describe('v1.5.0 unified release artifacts', () => {
   it('reads one version contract across every release marker', async () => {
     const contract = await readVersionContract(path.resolve('.'));
-    expect(contract.expected).toBe('1.3.0');
+    expect(contract.expected).toBe('1.5.0');
     expect(Object.keys(contract.versions)).toHaveLength(VERSION_MARKER_COUNT);
     expect(() => assertVersionContract(contract)).not.toThrow();
   });
 
   it('reports the exact marker when one version drifts', () => {
     expect(() => assertVersionContract({
-      expected: '1.3.0',
+      expected: '1.5.0',
       versions: {
-        'package.json': '1.3.0',
+        'package.json': '1.5.0',
         'web/VERSION': '1.2.0',
       },
-    })).toThrow(/web\/VERSION.*1\.2\.0.*1\.3\.0/s);
+    })).toThrow(/web\/VERSION.*1\.2\.0.*1\.5\.0/s);
   });
 
   it('names both host packages and refuses release cleanup outside release root', async () => {
     expect(RELEASE_ZIP_DATE.toISOString()).toBe('1980-01-01T00:00:00.000Z');
-    expect(releaseArtifactNames('1.3.0')).toEqual({
-      plugin: 'siyuan-yemind-v1.3.0.zip',
-      web: 'yemind-web-v1.3.0.zip',
+    expect(releaseArtifactNames('1.5.0')).toEqual({
+      plugin: 'siyuan-yemind-v1.5.0.zip',
+      web: 'yemind-web-v1.5.0.zip',
       manifest: 'release-manifest.json',
       checksums: 'SHA256SUMS',
     });
     const root = await mkdtemp(path.join(os.tmpdir(), 'yemind-release-'));
     temporaryRoots.push(root);
     const releaseRoot = path.join(root, 'release');
-    const target = path.join(releaseRoot, 'v1.3.0');
-    expect(() => assertSafeReleaseDirectory(target, releaseRoot, '1.3.0')).not.toThrow();
-    expect(() => assertSafeReleaseDirectory(root, releaseRoot, '1.3.0')).toThrow(/unsafe/i);
+    const target = path.join(releaseRoot, 'v1.5.0');
+    expect(() => assertSafeReleaseDirectory(target, releaseRoot, '1.5.0')).not.toThrow();
+    expect(() => assertSafeReleaseDirectory(root, releaseRoot, '1.5.0')).toThrow(/unsafe/i);
   });
 
   it('keeps the version setter and verifier wired to the shared contract', async () => {

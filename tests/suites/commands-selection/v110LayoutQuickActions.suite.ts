@@ -21,6 +21,7 @@ describe('v1.1.0 quick actions follow every preset geometry', () => {
       ['left-mindmap', 'left'],
       ['tree-up-symmetric', 'top'],
       ['organization-up', 'top'],
+      ['organization-right', 'right'],
       ['timeline-down', 'bottom'],
     ] as const;
     for (const [presetId, expected] of cases) {
@@ -35,9 +36,6 @@ describe('v1.1.0 quick actions follow every preset geometry', () => {
     const mindMap = layoutGeometryForPreset('mindmap').engineLayout;
     expect(resolveNodeQuickActionSide(mindMap, node(1, 'left'))).toBe('left');
     expect(resolveNodeQuickActionSide(mindMap, node(1, 'right'))).toBe('right');
-    const organization = layoutGeometryForPreset('organization-bidirectional').engineLayout;
-    expect(resolveNodeQuickActionSide(organization, node(1, 'top'))).toBe('top');
-    expect(resolveNodeQuickActionSide(organization, node(1, 'bottom'))).toBe('bottom');
     const fishbone = layoutGeometryForPreset('fishbone-right').engineLayout;
     expect(resolveNodeQuickActionSide(fishbone, node(0))).toBe('left');
     expect(resolveNodeQuickActionSide(fishbone, node(1, 'top'))).toBe('top');

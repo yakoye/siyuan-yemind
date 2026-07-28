@@ -57,4 +57,5 @@ body{overflow:hidden;background:var(--ymw-body-background);color:var(--b3-theme-
   .ymw-sidebar{position:absolute;inset:0 auto 0 0;width:min(300px,88vw);transform:translateX(-105%);transition:transform .2s ease}
   .ymw-app.is-sidebar-open .ymw-sidebar{transform:translateX(0)}
   .ymw-sidebar-toggle{position:absolute;z-index:90;top:12px;left:12px;display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--b3-border-color);border-radius:10px;background:var(--b3-theme-surface);color:var(--b3-theme-primary);box-shadow:0 5px 18px var(--ymw-shadow)}
+  .ymw-editor .ymz-topbar{padding-left:58px}
 }

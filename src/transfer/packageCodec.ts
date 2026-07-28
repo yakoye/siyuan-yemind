@@ -21,6 +21,48 @@ const PNG_PACKAGE_MARKER = encoder.encode('\nYEMINDZ-PACKAGE\0');
 const MAX_PACKAGE_BYTES = 100 * 1024 * 1024;
 const MAX_PACKAGE_ENTRIES = 512;
 const MAX_PACKAGE_JSON_CHARS = 20 * 1024 * 1024;
+const MAX_PACKAGE_ENTRY_BYTES = 24 * 1024 * 1024;
+const MAX_PACKAGE_UNCOMPRESSED_BYTES = 100 * 1024 * 1024;
+
+interface ZipBudgetOptions {
+  maxEntries?: number;
+  maxEntryBytes?: number;
+  maxTotalUncompressedBytes?: number;
+  maxCompressionRatio?: number;
+}
+
+function entrySizes(entry: object): { compressed: number; uncompressed: number } {
+  const data = (entry as unknown as {
+    _data?: { compressedSize?: number; uncompressedSize?: number };
+  })._data;
+  return {
+    compressed: Number(data?.compressedSize ?? 0),
+    uncompressed: Number(data?.uncompressedSize ?? 0),
+  };
+}
+
+export function assertSafeZipEntries(zip: JSZip, options: ZipBudgetOptions = {}): void {
+  const maxEntries = options.maxEntries ?? MAX_PACKAGE_ENTRIES;
+  const maxEntryBytes = options.maxEntryBytes ?? MAX_PACKAGE_ENTRY_BYTES;
+  const maxTotal = options.maxTotalUncompressedBytes ?? MAX_PACKAGE_UNCOMPRESSED_BYTES;
+  const maxRatio = options.maxCompressionRatio ?? 1000;
+  const entries = Object.values(zip.files);
+  if (entries.length > maxEntries) throw new Error('压缩包文件数量过多');
+  let total = 0;
+  for (const entry of entries) {
+    if (entry.name.includes('..') || /^[\\/]/.test(entry.name)) {
+      throw new Error('压缩包包含不安全路径');
+    }
+    if (entry.dir) continue;
+    const { compressed, uncompressed } = entrySizes(entry);
+    if (uncompressed > maxEntryBytes) throw new Error(`压缩包文件过大：${entry.name}`);
+    total += uncompressed;
+    if (total > maxTotal) throw new Error('压缩包解压后总大小超出限制');
+    if (uncompressed > 5 * 1024 * 1024 && compressed > 0 && uncompressed / compressed > maxRatio) {
+      throw new Error(`压缩包压缩比异常：${entry.name}`);
+    }
+  }
+}
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
@@ -83,11 +125,7 @@ export async function readYeMindPackage(bytes: Uint8Array): Promise<YeMindMapDoc
   } catch {
     throw new Error('YeMind 压缩包损坏');
   }
-  const entries = Object.values(zip.files);
-  if (entries.length > MAX_PACKAGE_ENTRIES) throw new Error('YeMind 压缩包文件数量过多');
-  if (entries.some((entry) => entry.name.includes('..') || /^[\\/]/.test(entry.name))) {
-    throw new Error('YeMind 压缩包包含不安全路径');
-  }
+  assertSafeZipEntries(zip);
   const manifestFile = zip.file('manifest.json');
   if (!manifestFile) throw new Error('压缩包不是 YeMind 格式');
   const manifestJson = await manifestFile.async('string');

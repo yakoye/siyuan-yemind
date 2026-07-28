@@ -36,7 +36,7 @@ const definitions: readonly LayoutGeometryDefinition[] = [
   { presetId: 'timeline-s', engineLayout: 'yemindTimelineS', baseLayout: 'timeline', kind: 'specialized', rootGrowth: 'right', nodeGrowth: 'right', siblingAxis: 'x', branchMode: 'horizontal' },
 
   { presetId: 'organization-down', engineLayout: 'yemindOrganizationDown', baseLayout: 'organizationStructure', kind: 'native', rootGrowth: 'bottom', nodeGrowth: 'bottom', siblingAxis: 'x', branchMode: 'fixed' },
-  { presetId: 'organization-bidirectional', engineLayout: 'yemindOrganizationBidirectional', baseLayout: 'organizationStructure', kind: 'specialized', rootGrowth: 'bottom', nodeGrowth: 'bottom', siblingAxis: 'x', branchMode: 'vertical' },
+  { presetId: 'organization-right', engineLayout: 'yemindOrganizationRight', baseLayout: 'logicalStructure', kind: 'derived', rootGrowth: 'right', nodeGrowth: 'right', siblingAxis: 'y', branchMode: 'fixed' },
   { presetId: 'organization-up', engineLayout: 'yemindOrganizationUp', baseLayout: 'organizationStructure', kind: 'derived', rootGrowth: 'top', nodeGrowth: 'top', siblingAxis: 'x', branchMode: 'fixed', transform: 'mirror-y' },
 
   { presetId: 'fishbone-left', engineLayout: 'yemindFishboneLeft', baseLayout: 'fishbone2', kind: 'native', rootGrowth: 'right', nodeGrowth: 'right', siblingAxis: 'y', branchMode: 'fishbone' },

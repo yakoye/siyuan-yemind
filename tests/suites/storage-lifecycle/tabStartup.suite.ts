@@ -61,3 +61,8 @@ it('cleans a registered tab handle when editor mounting fails', () => {
   expect(source).toContain('state.unregister?.();');
   expect(source).toContain('state.unregister = undefined;');
 });
+
+it('persists imported study cards with the same contract as the web host', () => {
+  const source = require('node:fs').readFileSync(require('node:path').resolve(process.cwd(), 'src/plugin/tabs.ts'), 'utf8');
+  expect(source).toContain('studyCards: imported.studyCards');
+});

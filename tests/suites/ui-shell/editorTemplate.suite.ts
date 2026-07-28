@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { createEditorTemplate } from '../../../src/editor/editorTemplate';
 
-describe('editor template v0.5 controls', () => {
-  it('contains map, split, outline and search/replace surfaces', () => {
+describe('editor template primary controls', () => {
+  it('contains the v1.5 primary views and search/replace surfaces', () => {
     const html = createEditorTemplate('Demo');
     expect(html).toContain('data-action="view-map"');
-    expect(html).toContain('data-action="view-split"');
     expect(html).toContain('data-action="view-outline"');
+    expect(html).toContain('data-action="view-cards"');
+    expect(html).toContain('data-action="view-review"');
+    expect(html).not.toContain('data-action="view-split"');
     expect(html).toContain('data-action="open-search"');
     expect(html).toContain('data-role="search-panel"');
     expect(html).toContain('data-search-action="replace-all"');
@@ -18,7 +20,8 @@ describe('editor template v0.5 controls', () => {
     expect(html).toContain('data-action="zoom-out"');
     expect(html).toContain('data-action="readonly"');
     expect(html).toContain('data-action="zen"');
-    expect(html).toContain('data-action="fullscreen"');
+    expect(html).toContain('data-action="outline-fullscreen"');
+    expect(html).not.toContain('data-action="fullscreen"');
     expect(html).toContain('data-action="layout"');
     expect(html).toContain('data-action="theme"');
     expect(html).toContain('data-action="line-style"');
@@ -26,7 +29,8 @@ describe('editor template v0.5 controls', () => {
     expect(html).not.toContain('data-action="remove"');
     expect(html).toContain('data-project-control="layout"');
     expect(html).toContain('data-project-control="theme"');
-    expect(html).toContain('data-project-control="line-style"');
+    expect(html).not.toContain('data-project-control="line-style"');
     expect(html).toContain('data-role="node-style-panel"');
+    expect(html).toContain('data-role="study-panel"');
   });
 });

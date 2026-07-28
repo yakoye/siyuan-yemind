@@ -28,6 +28,8 @@ export class YeMindWebApp {
   private unsubscribe: (() => void) | null = null;
   private appearanceUnsubscribe: (() => void) | null = null;
   private appearanceController: AppearanceController | null = null;
+  private longPressTimer: number | null = null;
+  private longPressStart: { x: number; y: number; target: HTMLElement } | null = null;
   private readonly createEditor: (options: YeMindEditorOptions) => EditorHandle;
 
   constructor(
@@ -74,6 +76,11 @@ export class YeMindWebApp {
     this.appearanceController = null;
     window.removeEventListener('resize', this.onResize);
     this.root.removeEventListener('click', this.onClick);
+    this.editorHost?.removeEventListener('pointerdown', this.onLongPressStart);
+    this.editorHost?.removeEventListener('pointermove', this.onLongPressMove);
+    this.editorHost?.removeEventListener('pointerup', this.cancelLongPress);
+    this.editorHost?.removeEventListener('pointercancel', this.cancelLongPress);
+    this.cancelLongPress();
     this.fileInput?.removeEventListener('change', this.onFileChange);
     this.root.innerHTML = '';
   }
@@ -117,6 +124,7 @@ export class YeMindWebApp {
             lineStyle: imported.lineStyle,
             projectStyle: imported.projectStyle,
             viewData: imported.viewData,
+            studyCards: imported.studyCards,
           });
         } catch (error) {
           await this.services.repository.remove(created.id);
@@ -153,6 +161,10 @@ export class YeMindWebApp {
     this.mapList = this.root.querySelector<HTMLElement>('[data-web-map-list]');
     this.fileInput = this.root.querySelector<HTMLInputElement>('[data-web-file]');
     this.root.addEventListener('click', this.onClick);
+    this.editorHost?.addEventListener('pointerdown', this.onLongPressStart);
+    this.editorHost?.addEventListener('pointermove', this.onLongPressMove);
+    this.editorHost?.addEventListener('pointerup', this.cancelLongPress);
+    this.editorHost?.addEventListener('pointercancel', this.cancelLongPress);
     this.fileInput?.addEventListener('change', this.onFileChange);
     window.addEventListener('resize', this.onResize);
     this.renderMapList();
@@ -191,6 +203,43 @@ export class YeMindWebApp {
   }
 
   private readonly onResize = (): void => this.editor?.resize();
+
+  private readonly onLongPressStart = (event: PointerEvent): void => {
+    if (event.pointerType !== 'touch' || event.button !== 0) return;
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    if (
+      !target
+      || target.closest('input,textarea,[contenteditable="true"],button,select')
+      || !target.closest('.ymz-canvas,.ymz-outline-tree')
+    ) return;
+    this.cancelLongPress();
+    this.longPressStart = { x: event.clientX, y: event.clientY, target };
+    this.longPressTimer = window.setTimeout(() => {
+      const start = this.longPressStart;
+      this.longPressTimer = null;
+      this.longPressStart = null;
+      if (!start || !start.target.isConnected) return;
+      start.target.dispatchEvent(new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: start.x,
+        clientY: start.y,
+        button: 2,
+      }));
+    }, 560);
+  };
+
+  private readonly onLongPressMove = (event: PointerEvent): void => {
+    const start = this.longPressStart;
+    if (!start || Math.hypot(event.clientX - start.x, event.clientY - start.y) <= 10) return;
+    this.cancelLongPress();
+  };
+
+  private readonly cancelLongPress = (): void => {
+    if (this.longPressTimer !== null) window.clearTimeout(this.longPressTimer);
+    this.longPressTimer = null;
+    this.longPressStart = null;
+  };
 
   private readonly onClick = async (event: MouseEvent): Promise<void> => {
     const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-web-action]');

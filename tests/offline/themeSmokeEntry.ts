@@ -26,13 +26,13 @@ function runThemeSmoke(): Record<string, unknown> {
   const expectedNames = ['晨曦','彩虹','活力','舞动','代码','和风','岛屿','玫瑰','薄荷','绿茶','永恒','奶油','花海','珊瑚','绚丽','香槟','香水','禅心','律动'];
   assert(JSON.stringify(YEMIND_THEME_SOURCE_NAMES) === JSON.stringify(expectedNames), '19 source theme names/order mismatch');
   assert(YEMIND_THEME_COLOR_APPEARANCES.length === 25, 'appearance count must be 25');
-  assert(YEMIND_THEME_PRESETS.length === 22, 'theme preset count must be 22');
+  assert(YEMIND_THEME_PRESETS.length === 25, 'theme preset count must be 25');
 
   const groupCounts = YEMIND_THEME_PRESETS.reduce<Record<string, number>>((counts, preset) => {
     counts[preset.group] = (counts[preset.group] ?? 0) + 1;
     return counts;
   }, {});
-  assert(groupCounts['基础'] === 3, 'base theme count mismatch');
+  assert(groupCounts['基础'] === 6, 'base theme count mismatch');
   assert(groupCounts['缤纷'] === 10, 'colorful theme count mismatch');
   assert(groupCounts['经典'] === 9, 'classic theme count mismatch');
 

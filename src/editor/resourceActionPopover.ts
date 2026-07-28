@@ -1,6 +1,6 @@
 import { resourceActionIcon } from '../ui/resourceActionIcons';
 
-export type ResourceActionKind = 'marker' | 'clipart';
+export type ResourceActionKind = 'marker' | 'clipart' | 'image';
 
 export interface ResourceActionPopoverShowOptions {
   kind: ResourceActionKind;
@@ -48,11 +48,16 @@ export class ResourceActionPopover {
         { left: options.anchorRect.right + gap, top: options.anchorRect.top + options.anchorRect.height / 2 - rect.height / 2 },
         { left: options.anchorRect.left - rect.width - gap, top: options.anchorRect.top + options.anchorRect.height / 2 - rect.height / 2 },
       ];
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      const fitting = candidates.find((item) => item.left >= margin && item.top >= margin && item.left + rect.width <= viewportWidth - margin && item.top + rect.height <= viewportHeight - margin) ?? candidates[0];
-      this.element.style.left = `${Math.round(clamp(fitting.left, margin, Math.max(margin, viewportWidth - rect.width - margin)))}px`;
-      this.element.style.top = `${Math.round(clamp(fitting.top, margin, Math.max(margin, viewportHeight - rect.height - margin)))}px`;
+      const rootRect = this.root.getBoundingClientRect();
+      const bounds = {
+        left: Math.max(0, rootRect.left) + margin,
+        top: Math.max(0, rootRect.top) + margin,
+        right: Math.min(window.innerWidth, rootRect.right) - margin,
+        bottom: Math.min(window.innerHeight, rootRect.bottom) - margin,
+      };
+      const fitting = candidates.find((item) => item.left >= bounds.left && item.top >= bounds.top && item.left + rect.width <= bounds.right && item.top + rect.height <= bounds.bottom) ?? candidates[0];
+      this.element.style.left = `${Math.round(clamp(fitting.left, bounds.left, Math.max(bounds.left, bounds.right - rect.width)))}px`;
+      this.element.style.top = `${Math.round(clamp(fitting.top, bounds.top, Math.max(bounds.top, bounds.bottom - rect.height)))}px`;
       this.element.style.visibility = 'visible';
     });
   }

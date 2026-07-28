@@ -25,11 +25,17 @@ const LEGACY_ENGINE_LAYOUT_PRESETS: Readonly<Record<string, string>> = {
   fishbone2: 'fishbone-left',
   rightFishbone: 'fishbone-right',
   rightFishbone2: 'fishbone-right',
+  yemindOrganizationBidirectional: 'organization-right',
+};
+
+const LEGACY_PRESET_ALIASES: Readonly<Record<string, string>> = {
+  'organization-bidirectional': 'organization-right',
 };
 
 export function normalizeLayoutAssetId(value: unknown, engineLayout?: unknown): string {
   const id = String(value ?? '');
   if (YEMIND_LAYOUT_ASSET_PRESETS.some((item) => item.id === id)) return id;
+  if (LEGACY_PRESET_ALIASES[id]) return LEGACY_PRESET_ALIASES[id];
   const engine = String(engineLayout ?? '');
   return YEMIND_LAYOUT_ASSET_PRESETS.find((item) => item.engineLayout === engine)?.id
     ?? LEGACY_ENGINE_LAYOUT_PRESETS[engine]

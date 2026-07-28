@@ -182,21 +182,21 @@
       "viewBox": "0 0 40 32"
     },
     {
-      "id": "organization-bidirectional",
-      "title": "组织结构图（上下双向）",
-      "groupId": "organization",
-      "groupTitle": "组织结构图",
-      "file": "04_organization/02_organization-bidirectional.svg",
-      "width": 40,
-      "height": 32,
-      "viewBox": "0 0 40 32"
-    },
-    {
       "id": "organization-up",
       "title": "组织结构图（向上）",
       "groupId": "organization",
       "groupTitle": "组织结构图",
       "file": "04_organization/03_organization-up.svg",
+      "width": 40,
+      "height": 32,
+      "viewBox": "0 0 40 32"
+    },
+    {
+      "id": "organization-right",
+      "title": "组织结构图（向右）",
+      "groupId": "organization",
+      "groupTitle": "组织结构图",
+      "file": "04_organization/02_organization-right.svg",
       "width": 40,
       "height": 32,
       "viewBox": "0 0 40 32"

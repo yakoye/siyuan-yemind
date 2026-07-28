@@ -4,6 +4,7 @@ import { normalizeLineStyle, normalizeThemePresetId } from '../core/themePresets
 import { normalizeLayoutId } from '../core/layoutPresets';
 import { normalizeLayoutAssetId } from '../core/layoutAssetPresets';
 import { normalizeProjectStyle } from '../editor/projectStyle';
+import { normalizeStudyCards } from '../review/studyCards';
 
 interface RepositoryOptions {
   now?: () => number;
@@ -28,6 +29,7 @@ function normalizeMap(value: unknown): NormalizedMapResult {
     ? candidate.title.trim()
     : '未命名导图';
   const normalizedTree = normalizeLegacyTree(clone(candidate.data), fallbackTime);
+  const studyCards = normalizeStudyCards(candidate.studyCards);
   const map: YeMindMapDocument = {
     id: String(candidate.id),
     title: normalizedTitle,
@@ -40,6 +42,7 @@ function normalizeMap(value: unknown): NormalizedMapResult {
     projectStyle: normalizeProjectStyle(candidate.projectStyle),
     data: normalizedTree.tree,
     viewData: candidate.viewData ? clone(candidate.viewData) : undefined,
+    ...(candidate.studyCards !== undefined ? { studyCards } : {}),
   };
   const changed = normalizedTitle !== candidate.title
     || normalizedTree.changed
@@ -47,7 +50,9 @@ function normalizeMap(value: unknown): NormalizedMapResult {
     || map.layoutPresetId !== candidate.layoutPresetId
     || map.theme !== candidate.theme
     || map.lineStyle !== candidate.lineStyle
-    || JSON.stringify(map.projectStyle) !== JSON.stringify(candidate.projectStyle ?? {});
+    || JSON.stringify(map.projectStyle) !== JSON.stringify(candidate.projectStyle ?? {})
+    || (candidate.studyCards !== undefined
+      && JSON.stringify(studyCards) !== JSON.stringify(candidate.studyCards));
   return { map, changed };
 }
 
@@ -170,7 +175,7 @@ export class MapRepository {
     });
   }
 
-  async update(id: string, patch: Partial<Pick<YeMindMapDocument, 'data' | 'layout' | 'layoutPresetId' | 'theme' | 'lineStyle' | 'projectStyle' | 'viewData'>>): Promise<void> {
+  async update(id: string, patch: Partial<Pick<YeMindMapDocument, 'data' | 'layout' | 'layoutPresetId' | 'theme' | 'lineStyle' | 'projectStyle' | 'viewData' | 'studyCards'>>): Promise<void> {
     await this.ensureLoaded();
     await this.enqueueMutation((draft) => {
       const map = draft.maps.find((item) => item.id === id);
@@ -182,6 +187,7 @@ export class MapRepository {
       if (patch.lineStyle !== undefined) map.lineStyle = normalizeLineStyle(patch.lineStyle);
       if (patch.projectStyle !== undefined) map.projectStyle = normalizeProjectStyle(patch.projectStyle);
       if (patch.viewData !== undefined) map.viewData = clone(patch.viewData);
+      if (patch.studyCards !== undefined) map.studyCards = normalizeStudyCards(patch.studyCards);
       map.updatedAt = this.now();
       return { changed: true, value: undefined };
     });

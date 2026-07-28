@@ -135,7 +135,9 @@
     "v0930ToolbarStateIcons.suite.ts"
     ,"v110LayoutGeometry.suite.ts",
     "v120TransferUi.suite.ts",
-    "v130IndependentToolbars.suite.ts",
+    "v150UnifiedToolbars.suite.ts",
+    "v150ShellVisual.suite.ts",
+    "v150StudyPanel.suite.ts",
     "v130ToolbarIconSemantics.suite.ts"
   ],
   "storage-lifecycle": [
@@ -156,7 +158,8 @@
     "tabStartup.suite.ts",
     "v081StorageMigration.suite.ts",
     "v0913DefaultMapNaming.suite.ts",
-    "v0924DefaultMap.suite.ts"
+    "v0924DefaultMap.suite.ts",
+    "v150StudyCards.suite.ts"
   ],
   "diagnostics-release": [
     "diagnosticsIntegration.suite.ts",

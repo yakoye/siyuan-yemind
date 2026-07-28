@@ -10,7 +10,7 @@ function iconSlot(content: string, modifier = ''): string {
 
 
 export function fitViewIcon(): string {
-  return '<svg class="ymz-toolbar-icon ymz-icon-fit-view" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M4 16v4h4M20 16v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+  return '<svg class="ymz-toolbar-icon ymz-icon-fit-view" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3-5 5m0-5v5h5m8-5 5 5m0-5v5h-5M8 21l-5-5m0 5v-5h5m8 5 5-5m0 5v-5h-5" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
 export function canvasModeIcon(mode: CanvasMode): string {
@@ -42,6 +42,40 @@ export function zoomIcon(kind: 'in' | 'out'): string {
 
 export function helpIcon(): string {
   return '<svg class="ymz-toolbar-icon ymz-icon-help" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9.7 9a2.5 2.5 0 1 1 3.3 2.4c-.8.3-1 1-1 1.8v.3M12 17.5h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+}
+
+export function resetZoomIcon(): string {
+  return '<svg class="ymz-toolbar-icon ymz-icon-reset-zoom" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+
+export function miniMapIcon(): string {
+  return '<svg class="ymz-toolbar-icon ymz-icon-minimap" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 5-3 8 3 5-3v15l-5 3-8-3-5 3V6Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3v15M16 6v15" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round"/></svg>';
+}
+
+export function presentationIcon(): string {
+  return '<svg class="ymz-toolbar-icon ymz-icon-presentation" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m10 8 5 2.5-5 2.5V8ZM12 17v4M8 21h8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+
+export function brandIcon(): string {
+  return '<svg class="ymz-brand-icon" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="ymz-brand-gradient" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#2dd4a8"/><stop offset="1" stop-color="#0d9e72"/></linearGradient></defs><rect width="32" height="32" rx="7.5" fill="url(#ymz-brand-gradient)"/><path d="M16 8.5v13.5M16 14q-2.6.7-5 3M16 14q2.6.7 5 3M16 19.5q-3 1-6 4M16 19.5q3 1 6 4" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><circle cx="16" cy="8.5" r="2.3" fill="#fff"/><circle cx="11" cy="17" r="1.8" fill="#fff" opacity=".78"/><circle cx="21" cy="17" r="1.8" fill="#fff" opacity=".78"/><circle cx="10" cy="23.5" r="2" fill="#fff" opacity=".92"/><circle cx="22" cy="23.5" r="2" fill="#fff" opacity=".92"/></svg>';
+}
+
+export function primaryViewIcon(kind: 'map' | 'outline' | 'cards' | 'review'): string {
+  const paths = {
+    map: '<path d="M5 7.5h5M14 5h5v5h-5zM5 14h5M14 12h5v5h-5zM10 7.5h2v7H10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    outline: '<path d="M8 6h11M8 12h11M8 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    cards: '<rect x="4" y="5" width="12" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 2h10a2 2 0 0 1 2 2v12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+    review: '<path d="M5 5.5A3.5 3.5 0 0 1 8.5 2H12v17H8.5A3.5 3.5 0 0 0 5 22V5.5ZM19 5.5A3.5 3.5 0 0 0 15.5 2H12v17h3.5A3.5 3.5 0 0 1 19 22V5.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>',
+  } as const;
+  return `<svg class="ymz-toolbar-icon ymz-primary-view-icon ymz-primary-view-icon--${kind}" viewBox="0 0 24 24" aria-hidden="true">${paths[kind]}</svg>`;
+}
+
+export function shareIcon(): string {
+  return '<svg class="ymz-toolbar-icon ymz-icon-share" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="6" cy="12" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="19" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+}
+
+export function saveIcon(): string {
+  return '<svg class="ymz-toolbar-icon ymz-icon-save" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l2 2v16H5V3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 3v6h8V3M8 21v-7h8v7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
 }
 
 export function clipboardIcon(kind: 'copy' | 'cut' | 'paste'): string {
@@ -95,7 +129,7 @@ export function summaryIcon(): string {
 
 
 export function projectStyleIcon(): string {
-  return suppliedIcon('projectStyle');
+  return iconSlot('<svg class="ymz-project-icon ymz-icon-project-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h3M11 12h9M4 18h8M16 18h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="16" cy="6" r="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="14" cy="18" r="2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>', 'ymz-icon-slot--project');
 }
 
 

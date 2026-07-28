@@ -14,9 +14,10 @@ describe('v0.6.1 toolbar consolidation', () => {
     expect(top.querySelector('[data-action="layout"]')).not.toBeNull();
     expect(top.querySelector('[data-action="theme"]')).not.toBeNull();
     expect(top.querySelector('[data-action="line-style"]')).not.toBeNull();
-    expect(top.textContent).toContain('线型');
     expect(top.querySelector('[data-action="project-style"]')).not.toBeNull();
     expect(top.textContent).toContain('样式');
+    expect(top.querySelector('[data-action="view-cards"]')).not.toBeNull();
+    expect(top.querySelector('[data-action="view-review"]')).not.toBeNull();
 
     for (const action of ['add-child', 'add-sibling', 'checkpoints', 'undo', 'redo']) {
       expect(top.querySelector(`[data-action="${action}"]`)).toBeNull();

@@ -25,11 +25,12 @@ describe('v0.9.27 outline asset and dialog parity', () => {
     expect(editor).toContain('onChange: () => this.refreshOutlineFromMap()');
   });
 
-  it('keeps image single-click editing, double-click lightbox preview, and content hover delegation', () => {
+  it('keeps image single-click selection actions, double-click lightbox preview, and content hover delegation', () => {
     expect(controller).toContain("root.addEventListener('pointerover', this.onPointerOver)");
     expect(controller).toContain("root.addEventListener('pointerout', this.onPointerOut)");
     expect(controller).toContain('onContentHover?');
-    expect(controller).toContain('outlineImageClickTimer');
+    expect(controller).not.toContain('outlineImageClickTimer');
+    expect(editor).toContain('showImageResourceActions');
     expect(editor).toContain('onContentHover:');
     expect(editor).toContain('this.imageLightbox?.show');
   });

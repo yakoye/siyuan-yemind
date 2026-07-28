@@ -45,10 +45,12 @@ describe('v0.9.28 outline and dialog consistency', () => {
     expect(hover).toContain("this.element.style.visibility = 'hidden'");
   });
 
-  it('uses a double-click-safe outline image arbitration window', () => {
-    expect(controller).toContain('OUTLINE_IMAGE_SINGLE_CLICK_DELAY');
-    expect(controller).toMatch(/OUTLINE_IMAGE_SINGLE_CLICK_DELAY\s*=\s*380/);
+  it('selects outline images immediately while reserving double click for preview', () => {
+    expect(controller).not.toContain('OUTLINE_IMAGE_SINGLE_CLICK_DELAY');
+    expect(controller).not.toContain('outlineImageClickTimer');
     expect(controller).toContain('event.detail > 1');
+    expect(controller).toContain('this.selectOutlineMedia(uid, kind)');
+    expect(controller).toContain('this.options.onImageEdit?.(uid, kind, imageAction)');
     expect(controller).toContain('onImagePreview?.(uid, kind)');
   });
 

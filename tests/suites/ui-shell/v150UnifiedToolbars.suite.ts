@@ -40,7 +40,7 @@ function visible(root: HTMLElement, side: ToolbarSide): string | undefined {
       : root.dataset.statusbarVisible;
 }
 
-describe('v1.3.0 independent toolbar visibility', () => {
+describe('v1.5.0 unified toolbar visibility', () => {
   it('renders one accessible discovery handle for each hidden edge', () => {
     const host = document.createElement('div');
     host.innerHTML = createEditorTemplate('工具栏');
@@ -55,7 +55,7 @@ describe('v1.3.0 independent toolbar visibility', () => {
     handles.forEach((button) => expect(button.type).toBe('button'));
   });
 
-  it('uses a separate hide deadline for each side', () => {
+  it('uses one shared reveal and hide state for all three toolbars', () => {
     vi.useFakeTimers();
     const root = createRoot();
     const controller = new ToolbarVisibilityController({
@@ -68,19 +68,15 @@ describe('v1.3.0 independent toolbar visibility', () => {
       .toEqual(['false', 'false', 'false']);
 
     controller.revealLeft();
-    vi.advanceTimersByTime(300);
-    controller.revealTop();
-    vi.advanceTimersByTime(450);
-
-    expect(visible(root, 'left')).toBe('false');
-    expect(visible(root, 'top')).toBe('true');
-    expect(visible(root, 'bottom')).toBe('false');
-    vi.advanceTimersByTime(250);
-    expect(visible(root, 'top')).toBe('false');
+    expect([visible(root, 'top'), visible(root, 'left'), visible(root, 'bottom')])
+      .toEqual(['true', 'true', 'true']);
+    vi.advanceTimersByTime(700);
+    expect([visible(root, 'top'), visible(root, 'left'), visible(root, 'bottom')])
+      .toEqual(['false', 'false', 'false']);
     controller.destroy();
   });
 
-  it('reveals only the approached edge and supports click or keyboard discovery', () => {
+  it('reveals all toolbars from any approached, clicked or focused edge', () => {
     vi.useFakeTimers();
     const root = createRoot();
     const controller = new ToolbarVisibilityController({
@@ -97,13 +93,17 @@ describe('v1.3.0 independent toolbar visibility', () => {
       clientY: 2,
     }));
     expect([visible(root, 'top'), visible(root, 'left'), visible(root, 'bottom')])
-      .toEqual(['true', 'false', 'false']);
+      .toEqual(['true', 'true', 'true']);
 
+    vi.advanceTimersByTime(700);
     root.querySelector<HTMLButtonElement>('[data-toolbar-edge="bottom"]')!.click();
-    expect(visible(root, 'bottom')).toBe('true');
+    expect([visible(root, 'top'), visible(root, 'left'), visible(root, 'bottom')])
+      .toEqual(['true', 'true', 'true']);
+    vi.advanceTimersByTime(700);
     root.querySelector<HTMLButtonElement>('[data-toolbar-edge="left"]')!
       .dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
-    expect(visible(root, 'left')).toBe('true');
+    expect([visible(root, 'top'), visible(root, 'left'), visible(root, 'bottom')])
+      .toEqual(['true', 'true', 'true']);
     controller.destroy();
   });
 

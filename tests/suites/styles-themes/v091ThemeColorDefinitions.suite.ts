@@ -29,6 +29,10 @@ describe('v0.9.2 complete theme color and border definitions', () => {
     for (const [name, theme] of Object.entries<any>(source.themes)) {
       expect(['缤纷', '经典']).toContain(theme.category);
       expect([1, 3, 4, 6]).toContain(theme.cycleLength);
+      if (theme.category === '经典') {
+        expect(theme.cycleLength).toBe(6);
+        expect(theme.palette).toHaveLength(6);
+      }
       expect(theme.branches).toHaveLength(6);
       expect([theme.background, theme.centerText, theme.centerBackground, theme.centerBorder].every((value) => COLOR.test(value))).toBe(true);
       for (const branch of theme.branches) {
@@ -55,13 +59,13 @@ describe('v0.9.2 complete theme color and border definitions', () => {
     }
   });
 
-  it('registers three base, ten vivid and nine classic themes in source order', () => {
-    expect(YEMIND_THEME_PRESETS).toHaveLength(22);
-    expect(YEMIND_THEME_PRESETS.slice(0, 3).map((item) => item.label)).toEqual([
-      'YeMind 默认', 'Ink Branch', 'Material 3 Basic',
+  it('registers six base, ten vivid and nine classic themes in source order', () => {
+    expect(YEMIND_THEME_PRESETS).toHaveLength(25);
+    expect(YEMIND_THEME_PRESETS.slice(0, 6).map((item) => item.label)).toEqual([
+      'YeMind 默认', '墨枝', '质感', '极光', '晨雾', '沙丘',
     ]);
-    expect(YEMIND_THEME_PRESETS.slice(3).map((item) => item.label)).toEqual(EXPECTED_NAMES);
-    expect(YEMIND_THEME_PRESETS.filter((item) => item.group === '基础')).toHaveLength(3);
+    expect(YEMIND_THEME_PRESETS.slice(6).map((item) => item.label)).toEqual(EXPECTED_NAMES);
+    expect(YEMIND_THEME_PRESETS.filter((item) => item.group === '基础')).toHaveLength(6);
     expect(YEMIND_THEME_PRESETS.filter((item) => item.group === '缤纷')).toHaveLength(10);
     expect(YEMIND_THEME_PRESETS.filter((item) => item.group === '经典')).toHaveLength(9);
     const html = themeOptionsHtml('scheme-rhythm');

@@ -1,7 +1,7 @@
 import type { YeMindMapDocument } from '../model/types';
 import { PLUGIN_VERSION } from '../plugin/constants';
 import { exportFormat, safeExportFilename, type ExportFormatId } from './formatCatalog';
-import { exportHtml, exportMarkdown, exportOpml, exportText } from './outlineCodecs';
+import { exportHtml, exportMapHtml, exportMarkdown, exportOpml, exportText } from './outlineCodecs';
 import {
   createYeMindPackage,
   embedMapFileInSvg,
@@ -56,6 +56,7 @@ export async function createExportArtifact(
   else if (id === 'opml') bytes = encoder.encode(exportOpml(map));
   else if (id === 'text') bytes = encoder.encode(exportText(map));
   else if (id === 'html') bytes = encoder.encode(exportHtml(map));
+  else if (id === 'html-map') bytes = encoder.encode(exportMapHtml(map));
   else if (id === 'yemind-zip') bytes = await createYeMindPackage(map, { appVersion: PLUGIN_VERSION });
   else if (id === 'xmind') bytes = await exportXMind(map);
   else if (id === 'svg') bytes = await renderBytes(renderer, 'svg');
@@ -78,7 +79,12 @@ export async function createExportArtifact(
     bytes = await renderBytes(renderer, 'pdf');
   }
 
-  return { filename: `${base}${definition.extension}`, mime: definition.mime, bytes };
+  const filenameBase = id === 'html'
+    ? `${base}-大纲`
+    : id === 'html-map'
+      ? `${base}-导图`
+      : base;
+  return { filename: `${filenameBase}${definition.extension}`, mime: definition.mime, bytes };
 }
 
 export function downloadExportArtifact(artifact: ExportArtifact): void {

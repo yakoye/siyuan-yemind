@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.0 - 2026-07-28
+
+- Rebuilt the shared editor shell around the confirmed version47 design with unified three-edge toolbar behavior, responsive overflow, discoverable hidden edges, and complete light/dark surfaces.
+- Added persistent cards and focused review with progress, search, favorites, flipping, status changes, node linkage, three review ratings, and a same-session requeue for “again”.
+- Expanded the Basic theme group to YeMind Default, Ink Branch, Material, Aurora, Morning Mist, and Dunes with real light/dark six-color definitions and explicit apply behavior.
+- Replaced the obsolete bidirectional organization entry with a real right-growing organization structure and aligned all 28 gallery contracts, thumbnails, quick controls, and drag directions.
+- Restored text selections before every canvas/outline rich-text action, expanded the outline panel controls, and added keyboard/touch-safe context menus.
+- Finalized `.yemind.svg`, `.yemind.zip`, outline HTML and interactive map HTML exports while keeping legacy `.yemindz.*` imports compatible.
+
 ## 1.3.0 - 2026-07-27
 
 - Unified the SiYuan plugin and standalone web app around one source tree, one eight-marker version contract and reproducible dual-host release ZIPs with manifests and SHA-256 checksums.

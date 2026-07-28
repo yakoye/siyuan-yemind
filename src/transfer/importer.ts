@@ -10,6 +10,7 @@ import {
   extractPackageFromSvg,
   isPng,
   isZip,
+  assertSafeZipEntries,
   readYeMindPackage,
 } from './packageCodec';
 import { importXMind } from './xmindCodec';
@@ -54,6 +55,7 @@ function normalizeImportedMap(
     lineStyle: source.lineStyle === 'straight' || source.lineStyle === 'direct' ? source.lineStyle : 'curve',
     projectStyle: source.projectStyle && typeof source.projectStyle === 'object' ? source.projectStyle : map.projectStyle,
     viewData: source.viewData && typeof source.viewData === 'object' ? source.viewData : undefined,
+    studyCards: Array.isArray(source.studyCards) ? source.studyCards : map.studyCards,
   };
 }
 
@@ -62,6 +64,7 @@ function titleFromName(name: string): string {
     .replace(/\.yemindz\.svg$/i, '')
     .replace(/\.yemind\.svg$/i, '')
     .replace(/\.yemindz\.zip$/i, '')
+    .replace(/\.yemind\.zip$/i, '')
     .replace(/\.[^.]+$/, '')
     .trim() || '导入导图';
 }
@@ -140,6 +143,7 @@ async function mapFromZip(source: MindMapImportSource, options: ImportOptions): 
   } catch (error) {
     const zip = await JSZip.loadAsync(source.bytes).catch(() => null);
     if (!zip) throw error;
+    assertSafeZipEntries(zip);
     if (zip.file('content.json') || zip.file('content.xml') || zip.file('/content.xml')) {
       const tree = await importXMind(source.bytes);
       if (!isTree(tree)) throw new Error('XMind 文件没有可识别的根节点');

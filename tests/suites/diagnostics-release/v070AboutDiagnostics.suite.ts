@@ -41,8 +41,8 @@ describe('v0.7.x about and diagnostics release contract', () => {
   });
 
   it('uses the current semantic version consistently', () => {
-    expect(RELEASE_INFO.version).toBe('1.3.0');
-    expect(resolveVersionConsistency('1.3.0')).toEqual({ manifest: '1.3.0', runtime: '1.3.0', build: '1.3.0', consistent: true });
+    expect(RELEASE_INFO.version).toBe('1.5.0');
+    expect(resolveVersionConsistency('1.5.0')).toEqual({ manifest: '1.5.0', runtime: '1.5.0', build: '1.5.0', consistent: true });
   });
 
   it('keeps package, lockfile, manifest, runtime metadata and release docs on one identity', () => {
@@ -52,10 +52,10 @@ describe('v0.7.x about and diagnostics release contract', () => {
     const readme = readFileSync(resolve(process.cwd(), 'README_zh_CN.md'), 'utf8');
     const changelog = readFileSync(resolve(process.cwd(), 'CHANGELOG.md'), 'utf8');
     for (const version of [packageJson.version, packageLock.version, packageLock.packages[''].version, manifest.version, RELEASE_INFO.version, RELEASE_INFO.buildVersion]) {
-      expect(version).toBe('1.3.0');
+      expect(version).toBe('1.5.0');
     }
-    expect(readme).toContain('当前版本：`1.3.0`');
-    expect(changelog).toContain('## 1.3.0');
+    expect(readme).toContain('当前版本：`1.5.0`');
+    expect(changelog).toContain('## 1.5.0');
   });
 
   it('exports structured diagnostics files for direct analysis', async () => {

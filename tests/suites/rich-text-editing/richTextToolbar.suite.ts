@@ -146,7 +146,7 @@ describe('RichTextToolbar', () => {
     toolbar.update(true, { left: 20, top: 20, right: 80, bottom: 40, width: 60 }, {});
     root.querySelector<HTMLButtonElement>('[data-rich-action="formula"]')!.click();
 
-    expect(actions.restoreSelection).toHaveBeenCalledTimes(2);
+    expect(actions.restoreSelection).toHaveBeenCalledTimes(5);
     expect(actions.formatText).toHaveBeenCalledWith({ size: '18px' });
     expect(actions.formatText).toHaveBeenCalledWith({ font: 'serif' });
     expect(actions.setCloze).toHaveBeenCalledWith(true);

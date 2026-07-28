@@ -30,6 +30,15 @@ describe('v0.9.13 marker and image regressions', () => {
     expect(css).toContain('.ymz-node-image-frame[data-mode="selected"] .ymz-node-image-toolbar{display:flex}');
   });
 
+  it('keeps canvas image controls below the fixed shell and clears them for study views', () => {
+    expect(css).toMatch(/\.ymz-node-image-frame\{[^}]*z-index:1[0-9](?:;|})/s);
+    expect(css).toContain('[data-study-view="cards"] .ymz-node-image-frame');
+    expect(css).toContain('[data-study-view="review"] .ymz-node-image-frame');
+    expect(editorSource).toContain('nodeImgAdjust?.clearSelectionForViewChange?.()');
+    expect(editorSource).toContain('this.resourceActionPopover?.hide()');
+    expect(editorSource).toContain('this.closeSearchPanel()');
+  });
+
   it('keeps the enlarged-image backdrop blurred but translucent enough to see the map', () => {
     expect(css).toMatch(/\.ymz-image-lightbox\{background:rgba\(7,10,13,\.62\);backdrop-filter:blur\(8px\)\}/s);
   });

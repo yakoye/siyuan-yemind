@@ -220,26 +220,6 @@ function renderDirectionalLines(layout: any, node: any, lines: any[], style?: (.
   });
 }
 
-class BidirectionalOrganization extends OrganizationStructure {
-  doLayout(callback: (root: any) => void): void {
-    super.doLayout((root: any) => {
-      const axisY = Number(root.top) + Number(root.height) / 2;
-      (root.children ?? []).forEach((child: any, index: number) => {
-        const top = index % 2 === 0;
-        visitTree(child, (node) => {
-          node.dir = top ? 'top' : 'bottom';
-          if (top) node._top = axisY * 2 - (Number(node.top) + Number(node.height || 0));
-        });
-      });
-      callback(root);
-    });
-  }
-
-  renderLine(node: any, lines: any[], style?: (...args: any[]) => void): void {
-    renderDirectionalLines(this, node, lines, style);
-  }
-}
-
 class SerpentineTimeline extends Timeline {
   private rootSequence: any[] = [];
 
@@ -446,7 +426,7 @@ export const PRESET_LAYOUT_CLASSES: Record<string, any> = {
   yemindTimelineS: SerpentineTimeline,
 
   yemindOrganizationDown: createAliasLayout(OrganizationStructure, 'organizationStructure'),
-  yemindOrganizationBidirectional: BidirectionalOrganization,
+  yemindOrganizationRight: createAliasLayout(LogicalStructure, 'logicalStructure'),
   yemindOrganizationUp: createMirroredLayout(OrganizationStructure, 'organizationStructure', 'mirror-y'),
 
   yemindFishboneLeft: YeMindFishboneLeft,

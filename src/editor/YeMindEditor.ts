@@ -101,7 +101,7 @@ import { setSearchReplaceExpanded } from "./searchPanelState";
 import { normalizeProjectStyle, resolveProjectAppearance } from "./projectStyle";
 import { applyMapAppearanceTransaction } from "../core/appearanceTransaction";
 import { NodeQuickActionsController } from "./nodeQuickActions";
-import { appearanceIcon, canvasModeIcon, lineStyleIcon, lockIcon, pinIcon } from "./projectControls";
+import { appearanceIcon, canvasModeIcon, lockIcon, pinIcon } from "./projectControls";
 import { normalizeNodeNote } from "../content/nodeNoteState";
 import { createTodoMenuDescriptor } from "../ui/nodeContentMenu";
 import { CanvasRightDragController } from "./canvasRightDrag";
@@ -122,6 +122,9 @@ import { createExportArtifact, downloadExportArtifact } from '../transfer/export
 import { importMindMapBytes } from '../transfer/importer';
 import type { ExportFormatId } from '../transfer/formatCatalog';
 import { AppearanceController } from '../ui/AppearanceController';
+import { StudyPanelController, type StudyPanelMode } from './StudyPanelController';
+import { normalizeStudyCards } from '../review/studyCards';
+import { MiniMapController } from './MiniMapController';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -198,7 +201,6 @@ export class YeMindEditor {
   private projectStylePanel: ProjectStylePanel | null = null;
   private layoutGalleryPanel: LayoutGalleryPanel | null = null;
   private themeChoicePanel: ProjectChoicePanel | null = null;
-  private lineStyleChoicePanel: ProjectChoicePanel | null = null;
   private nodeQuickActions: NodeQuickActionsController | null = null;
   private toolbarVisibility: ToolbarVisibilityController | null = null;
   private resourceActionPopover: ResourceActionPopover | null = null;
@@ -225,6 +227,15 @@ export class YeMindEditor {
   private suppressOutlineClickUntil = 0;
   private readonly editingSurface = new EditingSurfaceCoordinator<PendingOutlineFocus>();
   private appearanceController: AppearanceController | null = null;
+  private studyPanel: StudyPanelController | null = null;
+  private miniMapController: MiniMapController | null = null;
+  private studyMode: StudyPanelMode | null = null;
+  private presentationState: {
+    readonly: boolean;
+    zen: boolean;
+    viewMode: ViewMode;
+    studyMode: StudyPanelMode | null;
+  } | null = null;
   private appearanceMode: YeMindAppearance | null = null;
   private applyingSettings = false;
 
@@ -448,11 +459,74 @@ export class YeMindEditor {
   };
 
   private readonly onRootKeydown = (event: KeyboardEvent): void => {
+    const overflowMenu = this.rootEl?.querySelector<HTMLElement>(
+      '[data-role="top-overflow-menu"]',
+    );
+    const statusOverflowMenu = this.rootEl?.querySelector<HTMLElement>(
+      '[data-role="status-overflow-menu"]',
+    );
+    if (
+      overflowMenu
+      && !overflowMenu.hidden
+      && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)
+    ) {
+      const items = Array.from(overflowMenu.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
+      if (items.length) {
+        event.preventDefault();
+        const current = Math.max(0, items.indexOf(document.activeElement as HTMLButtonElement));
+        const next = event.key === 'Home'
+          ? 0
+          : event.key === 'End'
+            ? items.length - 1
+            : event.key === 'ArrowDown'
+              ? (current + 1) % items.length
+              : (current - 1 + items.length) % items.length;
+        items[next].focus();
+      }
+      return;
+    }
+    if (event.key === "Escape" && overflowMenu && !overflowMenu.hidden) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.toggleTopOverflow(false, true);
+      return;
+    }
+    if (
+      this.rootEl?.dataset.statusOverflowOpen === 'true'
+      && statusOverflowMenu
+      && ['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)
+    ) {
+      const items = Array.from(statusOverflowMenu.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
+      if (items.length) {
+        event.preventDefault();
+        const current = Math.max(0, items.indexOf(document.activeElement as HTMLButtonElement));
+        const next = event.key === 'Home'
+          ? 0
+          : event.key === 'End'
+            ? items.length - 1
+            : event.key === 'ArrowRight'
+              ? (current + 1) % items.length
+              : (current - 1 + items.length) % items.length;
+        items[next].focus();
+      }
+      return;
+    }
+    if (event.key === "Escape" && this.rootEl?.dataset.statusOverflowOpen === 'true') {
+      event.preventDefault();
+      event.stopPropagation();
+      this.toggleStatusOverflow(false, true);
+      return;
+    }
     if (event.key === "Escape" && this.commands?.isRelationCreating()) {
       event.preventDefault();
       event.stopPropagation();
       this.commands.cancelRelation();
       this.updateRelationPresentation();
+      return;
+    }
+    if (event.key === "Escape" && this.presentationState) {
+      event.preventDefault();
+      void this.togglePresentation(false);
       return;
     }
     if (event.key === "Escape" && this.rootEl?.dataset.zen === "true") {
@@ -585,6 +659,10 @@ export class YeMindEditor {
     this.settingsUnsubscribe?.();
     this.appearanceController?.destroy();
     this.appearanceController = null;
+    this.studyPanel?.destroy();
+    this.studyPanel = null;
+    this.miniMapController?.destroy();
+    this.miniMapController = null;
     this.richTextToolbar?.destroy();
     this.richTextToolbar = null;
     this.nodeHoverPreview?.destroy();
@@ -599,8 +677,6 @@ export class YeMindEditor {
     this.layoutGalleryPanel = null;
     this.themeChoicePanel?.destroy();
     this.themeChoicePanel = null;
-    this.lineStyleChoicePanel?.destroy();
-    this.lineStyleChoicePanel = null;
     this.toolbarVisibility?.destroy();
     this.toolbarVisibility = null;
     this.resourceActionPopover?.destroy();
@@ -825,6 +901,47 @@ export class YeMindEditor {
       pluginBaseUrl: this.options.pluginBaseUrl,
     });
     this.commands = createCommandAdapter(this.map);
+    const miniMapElement = this.options.container.querySelector<HTMLElement>('[data-role="minimap"]');
+    if (miniMapElement) {
+      this.miniMapController = new MiniMapController(this.rootEl, this.map, miniMapElement);
+    }
+    const studyPanelElement = this.options.container.querySelector<HTMLElement>(
+      '[data-role="study-panel"]',
+    );
+    if (studyPanelElement) {
+      this.studyPanel = new StudyPanelController({
+        panel: studyPanelElement,
+        getCards: () => this.current.studyCards ?? [],
+        readonly: () => Boolean(this.commands?.isReadonly()),
+        getActiveNode: () => {
+          const node = this.commands?.getPrimaryNode();
+          const data = node?.getData?.() as Record<string, unknown> | undefined;
+          const uid = String(data?.uid ?? node?.getData?.('uid') ?? '').trim();
+          if (!uid) return null;
+          const note = normalizeNodeNote(data?.yemindNote ?? data?.note);
+          return {
+            uid,
+            text: String(data?.text ?? node?.getData?.('text') ?? ''),
+            back: note?.html ?? '',
+          };
+        },
+        onChange: async (cards) => {
+          const normalizedCards = normalizeStudyCards(cards);
+          await this.options.repository.update(this.current.id, {
+            studyCards: normalizedCards,
+          });
+          this.current.studyCards = normalizedCards;
+          this.setSaveStateLabel('已保存', 'saved');
+        },
+        onClose: () => this.setStudyMode(null),
+        onMessage: (message, kind) =>
+          showMessage(
+            message,
+            kind === 'error' ? 5000 : 3000,
+            kind === 'error' ? 'error' : undefined,
+          ),
+      });
+    }
     this.liveNodeWidthLayout = new LiveNodeWidthLayoutController(this.map);
     this.canvasRightDrag = new CanvasRightDragController({
       root: this.rootEl,
@@ -841,6 +958,8 @@ export class YeMindEditor {
         this.applyMapAppearance();
         this.scheduleSave();
       },
+      this.current.lineStyle,
+      (lineStyle) => this.setLineStyle(lineStyle),
     );
     this.current.layoutPresetId = normalizeLayoutAssetId(this.current.layoutPresetId, this.current.layout);
     this.layoutGalleryPanel = new LayoutGalleryPanel(
@@ -863,20 +982,9 @@ export class YeMindEditor {
       })),
       presentation: 'palette',
       selected: this.current.theme,
+      applyLabel: (option) => `应用主题 · ${option.label}`,
       readonly: () => Boolean(this.commands?.isReadonly()),
       onSelect: (value) => this.setTheme(value),
-    });
-    this.lineStyleChoicePanel = new ProjectChoicePanel(this.rootEl, {
-      role: "line-style-choice-panel",
-      title: "线型",
-      options: [
-        { value: "curve", label: "弧线", description: "平滑曲线", iconHtml: lineStyleIcon("curve") },
-        { value: "straight", label: "圆角折线", description: "水平与垂直折线", iconHtml: lineStyleIcon("straight") },
-        { value: "direct", label: "直线", description: "节点之间直接连接", iconHtml: lineStyleIcon("direct") },
-      ],
-      selected: this.current.lineStyle,
-      readonly: () => Boolean(this.commands?.isReadonly()),
-      onSelect: (value) => this.setLineStyle(value),
     });
     this.nodeQuickActions = new NodeQuickActionsController({
       root: this.rootEl,
@@ -934,10 +1042,7 @@ export class YeMindEditor {
       onImageEdit: (uid, kind, anchor) => {
         if (!this.commands || this.commands.isReadonly()) return;
         if (kind === 'clipart') this.showClipartResourceActions(uid, anchor.getBoundingClientRect());
-        else {
-          this.activateNodeByUid(uid);
-          openImageDialog(this.commands);
-        }
+        else this.showImageResourceActions(uid, anchor.getBoundingClientRect());
       },
       onImageDelete: (uid, kind) => {
         if (!this.commands || this.commands.isReadonly()) return;
@@ -946,6 +1051,7 @@ export class YeMindEditor {
         this.refreshOutlineFromMap();
       },
       onImagePreview: (uid) => {
+        this.resourceActionPopover?.hide();
         const data = this.findTreeNodeData(uid);
         const source = String(data?.image ?? '');
         const title = String(data?.imageTitle ?? '');
@@ -1006,6 +1112,11 @@ export class YeMindEditor {
         this.titleEl.title = '点击重命名';
         this.titleInputEl.value = next.title;
       }
+      const nextCards = normalizeStudyCards(next.studyCards);
+      if (JSON.stringify(nextCards) !== JSON.stringify(this.current.studyCards ?? [])) {
+        this.current.studyCards = nextCards;
+        this.studyPanel?.refresh();
+      }
     });
     this.settingsUnsubscribe = this.options.settingsStore.subscribe(
       (settings) => this.applySettings(settings),
@@ -1033,6 +1144,25 @@ export class YeMindEditor {
 
   private bindToolbar(): void {
     this.rootEl.addEventListener("click", (event) => {
+      const clickTarget = event.target as HTMLElement;
+      const overflowMenu = this.rootEl.querySelector<HTMLElement>(
+        '[data-role="top-overflow-menu"]',
+      );
+      if (
+        overflowMenu
+        && !overflowMenu.hidden
+        && !clickTarget.closest('[data-role="top-overflow-menu"]')
+        && !clickTarget.closest('[data-action="toggle-top-overflow"]')
+      ) {
+        this.toggleTopOverflow(false);
+      }
+      if (
+        this.rootEl.dataset.statusOverflowOpen === 'true'
+        && !clickTarget.closest('[data-role="status-overflow-menu"]')
+        && !clickTarget.closest('[data-action="toggle-status-overflow"]')
+      ) {
+        this.toggleStatusOverflow(false);
+      }
       const anchor = (event.target as HTMLElement).closest<HTMLAnchorElement>(
         "a[href]",
       );
@@ -1093,6 +1223,12 @@ export class YeMindEditor {
       );
       if (!button || !this.commands || !this.map) return;
       const action = button.dataset.action;
+      if (
+        action !== 'toggle-top-overflow'
+        && button.closest('[data-role="top-overflow-menu"]')
+      ) {
+        queueMicrotask(() => this.toggleTopOverflow(false));
+      }
       if (action)
         this.options.diagnostics.record("toolbar", action, this.current.id);
       switch (action) {
@@ -1130,13 +1266,46 @@ export class YeMindEditor {
           this.commands.zoomOut();
           break;
         case "view-map":
+          this.setStudyMode(null);
           this.setViewMode("map");
           break;
         case "view-split":
+          this.setStudyMode(null);
           this.setViewMode("split");
           break;
         case "view-outline":
-          this.setViewMode("outline");
+          this.setStudyMode(null);
+          this.setViewMode(
+            this.viewMode === "split" || this.viewMode === "outline"
+              ? "map"
+              : "split",
+          );
+          break;
+        case "view-cards":
+          this.setStudyMode(this.studyMode === "cards" ? null : "cards");
+          break;
+        case "view-review":
+          this.setStudyMode(this.studyMode === "review" ? null : "review");
+          break;
+        case "toggle-top-overflow":
+          this.toggleTopOverflow();
+          break;
+        case "toggle-status-overflow":
+          this.toggleStatusOverflow();
+          break;
+        case "outline-fullscreen":
+          this.setViewMode(this.viewMode === "outline" ? "split" : "outline");
+          break;
+        case "close-side-panel":
+          this.setViewMode("map");
+          break;
+        case "outline-expand-all":
+          this.outlineRichText?.flush("outline-expand-all");
+          this.commands.expandAll();
+          break;
+        case "outline-collapse-all":
+          this.outlineRichText?.flush("outline-collapse-all");
+          this.commands.collapseAll();
           break;
         case "open-search":
           this.openSearchPanel();
@@ -1148,34 +1317,23 @@ export class YeMindEditor {
           this.projectStylePanel?.hide();
           this.layoutGalleryPanel?.hide();
           this.themeChoicePanel?.hide();
-          this.lineStyleChoicePanel?.hide();
           this.nodeStylePanel?.toggle(button);
           break;
         case "layout-gallery":
           this.nodeStylePanel?.hide();
           this.projectStylePanel?.hide();
           this.themeChoicePanel?.hide();
-          this.lineStyleChoicePanel?.hide();
           this.layoutGalleryPanel?.toggle(button);
           break;
         case "theme-gallery":
           this.layoutGalleryPanel?.hide();
           this.nodeStylePanel?.hide();
           this.projectStylePanel?.hide();
-          this.lineStyleChoicePanel?.hide();
           this.themeChoicePanel?.toggle(button);
-          break;
-        case "line-style-gallery":
-          this.layoutGalleryPanel?.hide();
-          this.nodeStylePanel?.hide();
-          this.projectStylePanel?.hide();
-          this.themeChoicePanel?.hide();
-          this.lineStyleChoicePanel?.toggle(button);
           break;
         case "project-style":
           this.layoutGalleryPanel?.hide();
           this.themeChoicePanel?.hide();
-          this.lineStyleChoicePanel?.hide();
           this.nodeStylePanel?.hide();
           this.projectStylePanel?.toggle(button);
           break;
@@ -1184,6 +1342,12 @@ export class YeMindEditor {
           break;
         case "export-file":
           this.openExportDialog();
+          break;
+        case "share":
+          void this.shareCurrentMap();
+          break;
+        case "save":
+          void this.saveNow();
           break;
         case "close-export-panel":
           this.closeExportDialog();
@@ -1195,7 +1359,8 @@ export class YeMindEditor {
           this.toggleZen(true);
           break;
         case "zen-exit":
-          this.toggleZen(false);
+          if (this.presentationState) void this.togglePresentation(false);
+          else this.toggleZen(false);
           break;
         case "toggle-toolbar-pin":
           button.blur();
@@ -1207,6 +1372,17 @@ export class YeMindEditor {
         case "fullscreen":
           void this.toggleFullscreen();
           break;
+        case "presentation":
+          void this.togglePresentation(!this.presentationState);
+          break;
+        case "toggle-minimap": {
+          const visible = this.miniMapController?.toggle() ?? false;
+          button.classList.toggle('is-active', visible);
+          button.setAttribute('aria-pressed', String(visible));
+          button.title = visible ? '隐藏缩略图' : '显示缩略图';
+          button.setAttribute('aria-label', button.title);
+          break;
+        }
         case "help":
           this.openHelp();
           break;
@@ -1214,6 +1390,9 @@ export class YeMindEditor {
     });
 
     this.outlinePaneEl.addEventListener("keydown", this.onOutlineKeydownBubble);
+    this.rootEl
+      .querySelector<HTMLInputElement>('[data-role="outline-search"]')
+      ?.addEventListener('input', () => this.applyOutlineSearch());
     this.bindOutlineDrag();
     this.bindSplitDivider();
 
@@ -1332,6 +1511,85 @@ export class YeMindEditor {
       showMessage(error instanceof Error ? error.message : '导出失败', 5000, 'error');
     } finally {
       panel?.removeAttribute('aria-busy');
+    }
+  }
+
+  private toggleTopOverflow(force?: boolean, restoreFocus = false): void {
+    const menu = this.rootEl.querySelector<HTMLElement>(
+      '[data-role="top-overflow-menu"]',
+    );
+    const trigger = this.rootEl.querySelector<HTMLButtonElement>(
+      '[data-action="toggle-top-overflow"]',
+    );
+    if (!menu || !trigger) return;
+    const open = force ?? menu.hidden;
+    menu.hidden = !open;
+    trigger.setAttribute('aria-expanded', String(open));
+    if (open) {
+      menu.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+    } else if (restoreFocus) {
+      trigger.focus();
+    }
+  }
+
+  private toggleStatusOverflow(force?: boolean, restoreFocus = false): void {
+    const menu = this.rootEl.querySelector<HTMLElement>(
+      '[data-role="status-overflow-menu"]',
+    );
+    const trigger = this.rootEl.querySelector<HTMLButtonElement>(
+      '[data-action="toggle-status-overflow"]',
+    );
+    if (!menu || !trigger) return;
+    const open = force ?? this.rootEl.dataset.statusOverflowOpen !== 'true';
+    this.rootEl.dataset.statusOverflowOpen = String(open);
+    trigger.setAttribute('aria-expanded', String(open));
+    if (open) {
+      menu.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+    } else if (restoreFocus) {
+      trigger.focus();
+    }
+  }
+
+  private async shareCurrentMap(): Promise<void> {
+    if (!this.map) return;
+    try {
+      const artifact = await createExportArtifact('yemind-svg', this.transferSnapshot(), {
+        render: async (type) => {
+          const result = await (this.map as any)?.export?.(type, false, this.current.title);
+          if (typeof result !== 'string') {
+            throw new Error(`${type.toUpperCase()} 导出失败`);
+          }
+          return result;
+        },
+      });
+      const file = new File(
+        [artifact.bytes as BlobPart],
+        artifact.filename,
+        { type: artifact.mime },
+      );
+      const shareData: ShareData = {
+        title: this.current.title,
+        text: `YeMind 导图：${this.current.title}`,
+        files: [file],
+      };
+      if (
+        typeof navigator.share === 'function'
+        && (!navigator.canShare || navigator.canShare(shareData))
+      ) {
+        await navigator.share(shareData);
+        showMessage('已打开系统分享');
+        return;
+      }
+      downloadExportArtifact(artifact);
+      showMessage(`当前环境不支持系统分享，已下载 ${artifact.filename}`);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      console.error('[YeMind] share failed', error);
+      showMessage(
+        error instanceof Error ? error.message : '分享失败',
+        5000,
+        'error',
+      );
     }
   }
 
@@ -1467,9 +1725,7 @@ export class YeMindEditor {
     this.current.lineStyle = normalizeLineStyle(value);
     const select = this.rootEl.querySelector<HTMLSelectElement>('[data-action="line-style"]');
     if (select) select.value = this.current.lineStyle;
-    this.lineStyleChoicePanel?.setSelected(this.current.lineStyle);
-    const icon = this.rootEl.querySelector<HTMLElement>('[data-role="line-style-icon"]');
-    if (icon) icon.innerHTML = lineStyleIcon(this.current.lineStyle);
+    this.projectStylePanel?.setLineStyle(this.current.lineStyle);
     this.applyMapAppearance();
     this.options.diagnostics.record("appearance", "line-style-changed", this.current.id, { lineStyle: this.current.lineStyle });
     this.nodeQuickActions?.scheduleRefresh();
@@ -1674,6 +1930,7 @@ export class YeMindEditor {
       if (list.length > 0) this.nodeStylePanel?.refresh();
       else this.nodeStylePanel?.hide();
       this.nodeQuickActions?.scheduleRefresh();
+      this.studyPanel?.refresh();
       const active = node ?? list[0];
       const uid = active?.getData?.("uid");
       this.activateOutlineUid(uid ? String(uid) : "", true);
@@ -2160,7 +2417,6 @@ export class YeMindEditor {
       "node-style": !this.commands.isReadonly() && nodes.length > 0,
       "project-style": !this.commands.isReadonly(),
       "theme-gallery": !this.commands.isReadonly(),
-      "line-style-gallery": !this.commands.isReadonly(),
     };
     this.rootEl
       .querySelectorAll<HTMLButtonElement>("button[data-action]")
@@ -2182,7 +2438,7 @@ export class YeMindEditor {
     );
     if (lineStyle) lineStyle.disabled = this.commands.isReadonly();
     this.themeChoicePanel?.refreshReadonly();
-    this.lineStyleChoicePanel?.refreshReadonly();
+    this.projectStylePanel?.setLineStyle(this.current.lineStyle);
   }
 
   private updateSelectionPresentation(count?: number): void {
@@ -2224,7 +2480,9 @@ export class YeMindEditor {
     this.rootEl
       .querySelectorAll<HTMLElement>('[data-action="cycle-appearance"]')
       .forEach((button) => {
-        button.innerHTML = appearanceIcon(this.settings.appearanceMode);
+        const icon = button.querySelector<HTMLElement>('[data-role="appearance-icon"]');
+        if (icon) icon.innerHTML = appearanceIcon(this.settings.appearanceMode);
+        else button.innerHTML = appearanceIcon(this.settings.appearanceMode);
         button.title = labels[this.settings.appearanceMode];
         button.setAttribute('aria-label', labels[this.settings.appearanceMode]);
       });
@@ -2244,6 +2502,11 @@ export class YeMindEditor {
 
   private setViewMode(mode: ViewMode): void {
     this.resourceActionPopover?.hide();
+    if ((mode === 'split' || mode === 'outline') && this.studyMode) {
+      this.studyMode = null;
+      this.rootEl.dataset.studyView = 'none';
+      this.studyPanel?.hide();
+    }
     if (mode !== 'map' || this.viewMode !== 'map') {
       (this.map as any)?.nodeImgAdjust?.clearSelectionForViewChange?.();
     }
@@ -2259,14 +2522,7 @@ export class YeMindEditor {
       { mode },
     );
     this.updateDiagnosticState({ viewMode: mode });
-    this.rootEl
-      .querySelectorAll<HTMLElement>('[data-action^="view-"]')
-      .forEach((button) => {
-        button.classList.toggle(
-          "is-active",
-          button.dataset.action === `view-${mode}`,
-        );
-      });
+    this.updatePrimaryViewPresentation();
     if (mode !== "outline") {
       this.scheduleSafeResize();
     } else if (this.resizeFrame !== null) {
@@ -2277,6 +2533,67 @@ export class YeMindEditor {
       window.requestAnimationFrame(() => this.revealCurrentOutlineSelection());
     }
     this.nodeQuickActions?.scheduleRefresh();
+  }
+
+  private showImageResourceActions(uid: string, anchorRect: DOMRect): void {
+    if (!uid || !this.commands || this.commands.isReadonly() || !this.resourceActionPopover) return;
+    this.activateNodeByUid(uid);
+    this.resourceActionPopover.show({
+      kind: 'image',
+      anchorRect,
+      onReplace: () => {
+        if (!this.commands) return;
+        this.activateNodeByUid(uid);
+        openImageDialog(this.commands);
+      },
+      onDelete: () => {
+        if (!this.commands) return;
+        this.activateNodeByUid(uid);
+        this.commands.clearImageByUid(uid);
+        this.refreshOutlineFromMap();
+      },
+    });
+  }
+
+  private setStudyMode(mode: StudyPanelMode | null): void {
+    if (mode && this.viewMode !== 'map') this.setViewMode('map');
+    this.resourceActionPopover?.hide();
+    this.richTextToolbar?.hide();
+    this.nodeHoverPreview?.hide();
+    this.imageLightbox?.hide();
+    (this.map as any)?.nodeImgAdjust?.clearSelectionForViewChange?.();
+    if (mode && !this.searchPanelEl.hidden) this.closeSearchPanel();
+    this.studyMode = mode;
+    this.rootEl.dataset.studyView = mode ?? 'none';
+    if (mode) this.studyPanel?.show(mode);
+    else this.studyPanel?.hide();
+    this.updatePrimaryViewPresentation();
+    this.nodeQuickActions?.scheduleRefresh();
+    this.scheduleSafeResize();
+    this.miniMapController?.refresh();
+    this.options.diagnostics.record(
+      'editor',
+      'study-mode-changed',
+      this.current.id,
+      { mode },
+    );
+  }
+
+  private updatePrimaryViewPresentation(): void {
+    this.rootEl
+      .querySelectorAll<HTMLElement>('[data-primary-view]')
+      .forEach((button) => {
+        const action = button.dataset.action;
+        const active = action === 'view-cards'
+          ? this.studyMode === 'cards'
+          : action === 'view-review'
+            ? this.studyMode === 'review'
+            : action === 'view-outline'
+              ? !this.studyMode && (this.viewMode === 'split' || this.viewMode === 'outline')
+              : action === 'view-map' && !this.studyMode && this.viewMode === 'map';
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
   }
 
   private revealCurrentOutlineSelection(): void {
@@ -2744,10 +3061,66 @@ export class YeMindEditor {
     this.outlinePaneEl.setAttribute("aria-readonly", String(readonly));
     this.outlineEl.setAttribute("aria-readonly", String(readonly));
     this.outlineRichText?.syncFromTree(data);
+    this.updateOutlineMetadata(data);
+    this.applyOutlineSearch();
     const selectedUid = String(
       this.commands?.getPrimaryNode()?.getData?.("uid") ?? "",
     );
     this.activateOutlineUid(selectedUid);
+  }
+
+  private updateOutlineMetadata(data: MindMapTree): void {
+    let nodes = 0;
+    let maxDepth = 1;
+    const visit = (node: MindMapTree, depth: number): void => {
+      nodes += 1;
+      maxDepth = Math.max(maxDepth, depth);
+      node.children.forEach((child) => visit(child, depth + 1));
+    };
+    visit(data, 1);
+    this.rootEl
+      .querySelectorAll<HTMLElement>(
+        '[data-role="outline-node-count"],[data-role="outline-footer-count"]',
+      )
+      .forEach((element) => { element.textContent = String(nodes); });
+    const depthElement = this.rootEl.querySelector<HTMLElement>(
+      '[data-role="outline-max-depth"]',
+    );
+    if (depthElement) depthElement.textContent = String(maxDepth);
+  }
+
+  private applyOutlineSearch(): void {
+    const input = this.rootEl.querySelector<HTMLInputElement>(
+      '[data-role="outline-search"]',
+    );
+    const query = input?.value.trim().toLocaleLowerCase() ?? '';
+    const rows = Array.from(
+      this.outlineEl.querySelectorAll<HTMLElement>('[data-outline-uid]'),
+    );
+    if (!query) {
+      rows.forEach((row) => { delete row.dataset.outlineFiltered; });
+      this.outlinePaneEl.dataset.outlineFiltering = 'false';
+      return;
+    }
+    const byUid = new Map(rows.map((row) => [row.dataset.outlineUid ?? '', row]));
+    const visible = new Set<string>();
+    rows.forEach((row) => {
+      const text = row.textContent?.toLocaleLowerCase() ?? '';
+      if (!text.includes(query)) return;
+      let current: HTMLElement | undefined = row;
+      while (current) {
+        const uid = current.dataset.outlineUid ?? '';
+        if (!uid || visible.has(uid)) break;
+        visible.add(uid);
+        current = byUid.get(current.dataset.outlineParentUid ?? '');
+      }
+    });
+    rows.forEach((row) => {
+      row.dataset.outlineFiltered = String(
+        visible.has(row.dataset.outlineUid ?? ''),
+      );
+    });
+    this.outlinePaneEl.dataset.outlineFiltering = 'true';
   }
 
   private setOutlineExpanded(uid: string, expanded: boolean): void {
@@ -2907,7 +3280,7 @@ export class YeMindEditor {
         '[data-action="line-style"]',
       );
       if (lineStyleSelect) lineStyleSelect.value = this.current.lineStyle;
-      this.lineStyleChoicePanel?.setSelected(this.current.lineStyle);
+      this.projectStylePanel?.setLineStyle(this.current.lineStyle);
       this.projectStylePanel?.setStyle(this.current.projectStyle);
       this.applyMapAppearance();
       if (!viewData) {
@@ -2926,7 +3299,7 @@ export class YeMindEditor {
       this.updateZoom();
       const revision = this.saveRevisions.markChanged();
       this.saveRevisions.markSaved(revision);
-      this.saveStateEl.textContent = "已恢复";
+      this.setSaveStateLabel("已恢复", "saved");
     } finally {
       this.applyingCheckpoint = false;
     }
@@ -3026,7 +3399,7 @@ export class YeMindEditor {
   private scheduleSave(): void {
     if (this.destroyed) return;
     const revision = this.saveRevisions.markChanged();
-    this.saveStateEl.textContent = "保存中…";
+    this.setSaveStateLabel("保存中…", "saving");
     this.updateDiagnosticState({ saveState: "saving" });
     if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.saveTimer = window.setTimeout(() => {
@@ -3045,6 +3418,7 @@ export class YeMindEditor {
     if (!this.map || this.destroyed || !this.saveRevisions.isDirty()) return;
     if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.saveTimer = null;
+    this.setSaveStateLabel("保存中…", "saving");
     await this.persist(this.saveRevisions.current(), true);
   }
 
@@ -3074,7 +3448,7 @@ export class YeMindEditor {
       this.current.projectStyle = patch.projectStyle;
       await this.options.repository.update(this.current.id, patch);
       if (!this.destroyed && this.saveRevisions.markSaved(revision)) {
-        this.saveStateEl.textContent = "已保存";
+        this.setSaveStateLabel("已保存", "saved");
         this.options.diagnostics.record("save", "completed", this.current.id, {
           revision,
         });
@@ -3090,7 +3464,7 @@ export class YeMindEditor {
       );
       console.error("[YeMind] save failed", error);
       if (!this.destroyed && revision === this.saveRevisions.current()) {
-        this.saveStateEl.textContent = "保存失败";
+        this.setSaveStateLabel("保存失败", "failed");
         this.updateDiagnosticState({ saveState: "failed" });
         showMessage("YeMind 保存失败", 5000, "error");
       }
@@ -3098,9 +3472,21 @@ export class YeMindEditor {
     }
   }
 
+  private setSaveStateLabel(
+    label: string,
+    state: 'saving' | 'saved' | 'failed',
+  ): void {
+    const labelElement = this.saveStateEl?.querySelector<HTMLElement>(
+      '[data-role="save-state-label"]',
+    );
+    if (labelElement) labelElement.textContent = label;
+    else if (this.saveStateEl) this.saveStateEl.textContent = label;
+    if (this.saveStateEl) this.saveStateEl.dataset.saveState = state;
+  }
+
   private updateStats(data: MindMapTree): void {
     const stats = calculateEditorStats(data);
-    this.statsEl.textContent = `roots ${stats.roots} · nodes ${stats.nodes} · words ${stats.words}`;
+    this.statsEl.textContent = `根节点 ${stats.roots} · 节点 ${stats.nodes} · 字数 ${stats.words}`;
   }
 
   private updateZoom(): void {
@@ -3175,6 +3561,7 @@ export class YeMindEditor {
       this.settings.showRichTextToolbar && !enabled,
     );
     this.outlineRichText?.setReadonly(enabled);
+    this.studyPanel?.refresh();
     this.map.setMode(enabled ? "readonly" : "edit");
     this.renderOutline(this.current.data);
     this.options.diagnostics.record(
@@ -3193,6 +3580,63 @@ export class YeMindEditor {
 
   private toggleZen(enabled: boolean): void {
     this.rootEl.dataset.zen = String(enabled);
+  }
+
+  private async togglePresentation(enabled: boolean): Promise<void> {
+    if (enabled === Boolean(this.presentationState)) return;
+    const button = this.rootEl.querySelector<HTMLElement>('[data-action="presentation"]');
+    const exit = this.rootEl.querySelector<HTMLElement>('[data-action="zen-exit"]');
+    if (enabled) {
+      this.presentationState = {
+        readonly: this.rootEl.dataset.readonly === 'true',
+        zen: this.rootEl.dataset.zen === 'true',
+        viewMode: this.viewMode,
+        studyMode: this.studyMode,
+      };
+      this.setStudyMode(null);
+      this.setViewMode('map');
+      this.setReadonly(true);
+      this.rootEl.dataset.presentation = 'true';
+      this.toggleZen(true);
+      if (button) {
+        button.classList.add('is-active');
+        button.setAttribute('aria-pressed', 'true');
+        button.setAttribute('aria-label', '退出演示模式');
+      }
+      if (exit) {
+        exit.title = '退出演示模式';
+        exit.setAttribute('aria-label', '退出演示模式');
+        exit.querySelector<HTMLElement>('.ymz-zen-exit__label span:last-child')!.textContent = '退出演示模式';
+      }
+      try {
+        if (!document.fullscreenElement) await this.rootEl.requestFullscreen?.();
+      } catch {
+        // Fullscreen may be blocked by the host; read-only zen presentation still remains usable.
+      }
+      return;
+    }
+    const previous = this.presentationState;
+    this.presentationState = null;
+    this.rootEl.dataset.presentation = 'false';
+    if (document.fullscreenElement === this.rootEl) {
+      try { await document.exitFullscreen?.(); } catch { /* host already exited */ }
+    }
+    if (previous) {
+      this.setReadonly(previous.readonly);
+      this.toggleZen(previous.zen);
+      this.setViewMode(previous.viewMode);
+      this.setStudyMode(previous.studyMode);
+    }
+    if (button) {
+      button.classList.remove('is-active');
+      button.setAttribute('aria-pressed', 'false');
+      button.setAttribute('aria-label', '进入演示模式');
+    }
+    if (exit) {
+      exit.title = '退出禅模式';
+      exit.setAttribute('aria-label', '退出禅模式');
+      exit.querySelector<HTMLElement>('.ymz-zen-exit__label span:last-child')!.textContent = '退出禅模式';
+    }
   }
 
   private async toggleFullscreen(): Promise<void> {

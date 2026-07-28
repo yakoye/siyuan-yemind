@@ -959,11 +959,12 @@
     },
     "永恒": {
       "category": "经典",
+      "palette": ["#3949AB", "#E53935", "#C0CA33", "#00897B", "#1E88E5", "#8E24AA"],
       "background": "#FFFFFF",
       "centerText": "#3949AB",
       "centerBackground": "transparent",
       "centerBorder": "transparent",
-      "cycleLength": 1,
+      "cycleLength": 6,
       "branches": [
         {
           "centerToLevel1Line": "#141414",
@@ -1053,11 +1054,12 @@
     },
     "奶油": {
       "category": "经典",
+      "palette": ["#2196F3", "#3F51B5", "#F44336", "#FF9800", "#CDDC39", "#009688"],
       "background": "#FFE0E5",
       "centerText": "#000000",
       "centerBackground": "transparent",
       "centerBorder": "transparent",
-      "cycleLength": 1,
+      "cycleLength": 6,
       "branches": [
         {
           "centerToLevel1Line": "#FFFFFF",
@@ -1147,11 +1149,12 @@
     },
     "花海": {
       "category": "经典",
+      "palette": ["#982B3C", "#AE942F", "#307047", "#225373", "#19417C", "#5A2866"],
       "background": "#FFFFFF",
       "centerText": "#A61D39",
       "centerBackground": "transparent",
       "centerBorder": "transparent",
-      "cycleLength": 1,
+      "cycleLength": 6,
       "branches": [
         {
           "centerToLevel1Line": "#4A1019",
@@ -1241,11 +1244,12 @@
     },
     "珊瑚": {
       "category": "经典",
+      "palette": ["#DF7474", "#F4D956", "#BAC74C", "#4396B5", "#7574B7", "#C36D8D"],
       "background": "#140407",
       "centerText": "#EF6C70",
       "centerBackground": "transparent",
       "centerBorder": "transparent",
-      "cycleLength": 1,
+      "cycleLength": 6,
       "branches": [
         {
           "centerToLevel1Line": "#FDF1F1",
@@ -1335,11 +1339,12 @@
     },
     "绚丽": {
       "category": "经典",
+      "palette": ["#BF3E4C", "#E8CA43", "#ACBA3A", "#255AA0", "#514A9B", "#783B86"],
       "background": "#D02F48",
       "centerText": "#000000",
       "centerBackground": "transparent",
       "centerBorder": "transparent",
-      "cycleLength": 1,
+      "cycleLength": 6,
       "branches": [
         {
           "centerToLevel1Line": "#FFFFFF",
@@ -1429,11 +1434,12 @@
     },
     "香槟": {
       "category": "经典",
+      "palette": ["#BDACA6", "#C5BEA4", "#A2B5A6", "#A2B3B8", "#A2A2AE", "#BAADB0"],
       "background": "#EEE8E6",
       "centerText": "#000000",
       "centerBackground": "transparent",
       "centerBorder": "transparent",
-      "cycleLength": 1,
+      "cycleLength": 6,
       "branches": [
         {
           "centerToLevel1Line": "#88675E",
@@ -1523,11 +1529,12 @@
     },
     "香水": {
       "category": "经典",
+      "palette": ["#A79552", "#5C8668", "#38697B", "#545279", "#674B6F", "#835264"],
       "background": "#EFE6C6",
       "centerText": "#000000",
       "centerBackground": "transparent",
       "centerBorder": "transparent",
-      "cycleLength": 1,
+      "cycleLength": 6,
       "branches": [
         {
           "centerToLevel1Line": "#201E14",
@@ -1617,11 +1624,12 @@
     },
     "禅心": {
       "category": "经典",
+      "palette": ["#FFFFFF", "#EDEDED", "#D3D3D3", "#393939", "#202020", "#080808"],
       "background": "#FFFFFF",
       "centerText": "#000000",
       "centerBackground": "transparent",
       "centerBorder": "transparent",
-      "cycleLength": 1,
+      "cycleLength": 6,
       "branches": [
         {
           "centerToLevel1Line": "#232323",
@@ -1711,11 +1719,12 @@
     },
     "律动": {
       "category": "经典",
+      "palette": ["#E15241", "#F19D38", "#67AD5B", "#4994EC", "#4350AF", "#D63864"],
       "background": "#FFFFFF",
       "centerText": "#F44336",
       "centerBackground": "transparent",
       "centerBorder": "transparent",
-      "cycleLength": 1,
+      "cycleLength": 6,
       "branches": [
         {
           "centerToLevel1Line": "#F44336",

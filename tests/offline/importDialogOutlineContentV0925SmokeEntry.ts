@@ -15,7 +15,12 @@ const contextMenu = readFileSync('src/ui/contextMenu.ts', 'utf8');
 assert(dialog.includes("height: 'min(700px, calc(100vh - 64px))'"), 'dialog height must be viewport bounded');
 assert(dialog.includes('previewRowsHtml') && dialog.includes('ymz-text-map-dialog__preview-row'), 'processed preview rows missing');
 assert(/\.ymz-text-map-dialog__body\{[^}]*min-height:0[^}]*overflow:hidden/s.test(css), 'dialog body must not grow with pasted text');
-assert(template.includes('data-role="theme-choice-panel"') && template.includes('data-role="line-style-choice-panel"'), 'custom theme/line panels missing');
+assert(
+  template.includes('data-role="theme-choice-panel"')
+    && template.includes('data-project-line-style="curve"')
+    && template.includes('data-project-line-style="straight"'),
+  'theme panel or consolidated line-style controls missing',
+);
 assert(editor.includes('ProjectChoicePanel'), 'choice panel controller missing');
 assert(importer.includes('OUTLINE_IMPORT_AUTO_WIDTH') && importer.includes('outlineImportDisplayUnits'), 'import width policy missing');
 assert(outline.includes('accessories: outlineAccessoriesFromData'), 'outline accessory synchronization missing');

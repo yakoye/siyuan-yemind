@@ -43,4 +43,32 @@ describe('v0.6.4 whole-map style persistence', () => {
     expect(onChange).toHaveBeenLastCalledWith({ density: 'compact', rainbowLines: null, rainbowScheme: null, backgroundColor: '#8fa1cf' });
     panel.destroy();
   });
+
+  it('maps every visible line-style choice to a distinct real engine value', () => {
+    const host = document.createElement('div');
+    host.innerHTML = `
+      <aside data-role="project-style-panel">
+        <button data-project-style-action="close"></button>
+        <button data-project-line-style="curve"></button>
+        <button data-project-line-style="direct"></button>
+        <button data-project-line-style="straight"></button>
+      </aside>`;
+    const onLineStyleChange = vi.fn();
+    const panel = new ProjectStylePanel(
+      host,
+      { density: 'default', rainbowLines: null, rainbowScheme: null, backgroundColor: null },
+      () => false,
+      vi.fn(),
+      'curve',
+      onLineStyleChange,
+    );
+
+    host.querySelector<HTMLButtonElement>('[data-project-line-style="direct"]')!.click();
+    expect(onLineStyleChange).toHaveBeenLastCalledWith('direct');
+    expect(host.querySelector('[data-project-line-style="direct"]')?.classList.contains('is-active')).toBe(true);
+    host.querySelector<HTMLButtonElement>('[data-project-line-style="straight"]')!.click();
+    expect(onLineStyleChange).toHaveBeenLastCalledWith('straight');
+    expect(new Set(['curve', 'direct', 'straight']).size).toBe(3);
+    panel.destroy();
+  });
 });

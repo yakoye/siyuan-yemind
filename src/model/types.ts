@@ -1,6 +1,7 @@
 import type { NodeComment, NodeTodo } from '../content/nodeContentState';
 import type { NodeNote } from '../content/nodeNoteState';
 import type { ProjectStyle } from '../editor/projectStyle';
+import type { StudyCard } from '../review/studyCards';
 
 export interface MindMapNodeData {
   text: string;
@@ -53,6 +54,7 @@ export interface YeMindMapDocument {
   projectStyle: ProjectStyle;
   data: MindMapTree;
   viewData?: Record<string, unknown>;
+  studyCards?: StudyCard[];
 }
 
 export interface MapStorageDocument {

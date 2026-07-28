@@ -5,6 +5,7 @@ import {
   normalizeLayoutAssetId,
   YEMIND_LAYOUT_ASSET_PRESETS,
 } from '../../../src/core/layoutAssetPresets';
+import { normalizeLayoutId } from '../../../src/core/layoutPresets';
 import {
   layoutGeometryByEngine,
   layoutGeometryForPreset,
@@ -42,7 +43,7 @@ describe('v1.1.0 layout geometry catalog', () => {
       'tree-left-up',
       'timeline-left',
       'timeline-up',
-      'organization-bidirectional',
+      'organization-right',
       'organization-up',
       'tree-table-top-title',
       'tree-table-left-title',
@@ -61,6 +62,8 @@ describe('v1.1.0 layout geometry catalog', () => {
     expect(normalizeLayoutAssetId('', 'organizationStructure')).toBe('organization-down');
     expect(normalizeLayoutAssetId('', 'verticalTimeline2')).toBe('timeline-up');
     expect(normalizeLayoutAssetId('', 'rightFishbone2')).toBe('fishbone-right');
+    expect(normalizeLayoutAssetId('organization-bidirectional', 'yemindOrganizationBidirectional')).toBe('organization-right');
+    expect(normalizeLayoutId('yemindOrganizationBidirectional')).toBe('yemindOrganizationRight');
   });
 
   it('lets registered preset ids pass the upstream runtime layout whitelist', () => {

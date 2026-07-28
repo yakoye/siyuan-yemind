@@ -68,6 +68,35 @@ export function exportHtml(map: YeMindMapDocument): string {
 <script type="application/yemind+json">${payload}</script></body></html>`;
 }
 
+export function exportMapHtml(map: YeMindMapDocument): string {
+  const payload = JSON.stringify({ product: 'YeMind', format: 'yemind-map', version: 1, map })
+    .replaceAll('<', '\\u003c');
+  return `<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${htmlEscape(map.title)}</title>
+<style>
+:root{color-scheme:light dark;font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+*{box-sizing:border-box}body{margin:0;overflow:hidden;background:#eef0f5;color:#172033}
+header{position:fixed;z-index:2;top:12px;left:50%;display:flex;align-items:center;gap:8px;transform:translateX(-50%);padding:7px 10px;border:1px solid #dfe3eb;border-radius:12px;background:#fffc;box-shadow:0 8px 28px #25314a18;backdrop-filter:blur(12px)}
+button{height:30px;padding:0 10px;border:0;border-radius:8px;background:#f0f2f6;color:inherit;cursor:pointer}button:hover{background:#e4e8ef}
+#viewport{width:100vw;height:100vh;overflow:auto;padding:80px 8vw}.map{display:flex;align-items:center;min-width:max-content;transform-origin:top left}
+.branch{display:flex;align-items:center;gap:34px}.node{position:relative;padding:8px 12px;border:1px solid #c9d4e6;border-radius:10px;background:#fff;box-shadow:0 2px 8px #25314a12;white-space:pre-wrap}
+.children{display:grid;gap:14px}.child{display:flex;align-items:center;gap:34px}.child>.node::before{content:"";position:absolute;top:50%;right:100%;width:34px;border-top:2px solid #92a7c5}
+.toggle{position:absolute;top:50%;right:-22px;width:18px;height:18px;padding:0;transform:translateY(-50%);border:1px solid #9eb0ca;border-radius:50%;background:#fff;font:12px/16px system-ui}
+.child[hidden]{display:none}@media(prefers-color-scheme:dark){body{background:#111318;color:#e6eaf2}header,.node{border-color:#343a48;background:#1c1f28}.node{box-shadow:0 2px 8px #0006}button{background:#252833}.toggle{background:#252833;color:#e6eaf2}}
+</style></head>
+<body data-yemind-map><header><strong>${htmlEscape(map.title)}</strong><button data-action="zoom-out">−</button><span data-zoom>100%</span><button data-action="zoom-in">＋</button><button data-action="fit">适合</button><button data-action="expand">展开</button><button data-action="collapse">折叠</button></header><main id="viewport"><div class="map" data-map></div></main>
+<script type="application/yemind+json" id="data">${payload}</script>
+<script>
+(()=>{const doc=JSON.parse(document.getElementById('data').textContent),root=doc.map.data,host=document.querySelector('[data-map]');let zoom=1;
+const text=n=>{const box=document.createElement('div');box.innerHTML=n.data.richText?n.data.text:'';return n.data.richText?(box.textContent||''):String(n.data.text||'')};
+const render=(n,isRoot=false)=>{const branch=document.createElement('div');branch.className=isRoot?'branch':'child';const label=document.createElement('div');label.className='node';label.textContent=text(n);branch.append(label);
+if(n.children&&n.children.length){const children=document.createElement('div');children.className='children';n.children.forEach(c=>children.append(render(c)));branch.append(children);const toggle=document.createElement('button');toggle.className='toggle';toggle.textContent='−';toggle.title='折叠/展开';toggle.onclick=()=>{const hidden=!children.hidden;children.hidden=hidden;toggle.textContent=hidden?'+':'−'};label.append(toggle)}return branch};host.append(render(root,true));
+const setZoom=v=>{zoom=Math.max(.25,Math.min(2,v));host.style.transform='scale('+zoom+')';document.querySelector('[data-zoom]').textContent=Math.round(zoom*100)+'%'};
+document.addEventListener('click',e=>{const a=e.target.closest('[data-action]');if(!a)return;const action=a.dataset.action;if(action==='zoom-in')setZoom(zoom+.1);if(action==='zoom-out')setZoom(zoom-.1);if(action==='fit'){const vp=document.getElementById('viewport');setZoom(Math.min(1,(vp.clientWidth-80)/host.scrollWidth,(vp.clientHeight-100)/host.scrollHeight))}if(action==='expand'||action==='collapse'){document.querySelectorAll('.children').forEach(el=>el.hidden=action==='collapse');document.querySelectorAll('.toggle').forEach(el=>el.textContent=action==='collapse'?'+':'−')}})
+})();</script></body></html>`;
+}
+
 interface OutlineLine {
   depth: number;
   text: string;

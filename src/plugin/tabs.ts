@@ -83,6 +83,7 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
                   lineStyle: imported.lineStyle,
                   projectStyle: imported.projectStyle,
                   viewData: imported.viewData,
+                  studyCards: imported.studyCards,
                 });
               } catch (error) {
                 await host.repository.remove(created.id);

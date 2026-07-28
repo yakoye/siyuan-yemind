@@ -229,6 +229,9 @@ export class RichTextToolbar {
       if (!button || !this.target) return;
       const action = button.dataset.richAction ?? "";
       this.callbacks.onAction?.(action);
+      // Toolbar focus may replace the DOM range in both Quill and the
+      // structured outline. Restore the saved range before every command.
+      this.target.restoreSelection?.();
       if (["bold", "italic", "underline", "strike"].includes(action)) {
         this.target.formatText(
           nextToggleFormat(action as RichTextBooleanFormat, this.formatInfo),

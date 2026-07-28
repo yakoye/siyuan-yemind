@@ -7,10 +7,6 @@ export interface ToolbarVisibilityOptions {
   hotZonePx?: number;
 }
 
-interface SideState {
-  timer: number | null;
-}
-
 const SIDES: ToolbarSide[] = ['top', 'left', 'bottom'];
 
 const DATASET_KEYS: Record<ToolbarSide, 'topbarVisible' | 'leftbarVisible' | 'statusbarVisible'> = {
@@ -20,20 +16,17 @@ const DATASET_KEYS: Record<ToolbarSide, 'topbarVisible' | 'leftbarVisible' | 'st
 };
 
 const OWNER_SELECTORS: Record<ToolbarSide, string> = {
-  top: '.ymz-topbar, .ymz-layout-gallery, .ymz-project-choice-panel, .ymz-project-style-panel, .ymz-node-style-panel, .ymz-transfer-panel',
+  top: '.ymz-topbar, .ymz-topbar__overflow-menu, .ymz-search-panel, .ymz-layout-gallery, .ymz-project-choice-panel, .ymz-project-style-panel, .ymz-node-style-panel, .ymz-transfer-panel',
   left: '.ymz-leftbar',
   bottom: '.ymz-statusbar',
 };
+const OWNER_SELECTOR = Object.values(OWNER_SELECTORS).join(', ');
 
 export class ToolbarVisibilityController {
   private pinned: boolean;
   private readonly hideDelayMs: number;
   private readonly hotZonePx: number;
-  private readonly sides: Record<ToolbarSide, SideState> = {
-    top: { timer: null },
-    left: { timer: null },
-    bottom: { timer: null },
-  };
+  private timer: number | null = null;
 
   constructor(private readonly options: ToolbarVisibilityOptions) {
     this.pinned = Boolean(options.pinned);
@@ -45,11 +38,11 @@ export class ToolbarVisibilityController {
     options.root.addEventListener('focusout', this.onFocusOut);
     options.root.addEventListener('click', this.onClick);
     this.applyPinnedState();
-    if (!this.pinned) SIDES.forEach((side) => this.scheduleHide(side));
+    if (!this.pinned) this.scheduleHide();
   }
 
   destroy(): void {
-    SIDES.forEach((side) => this.clearTimer(side));
+    this.clearTimer();
     this.options.root.removeEventListener('pointermove', this.onPointerMove);
     this.options.root.removeEventListener('pointerleave', this.onPointerLeave);
     this.options.root.removeEventListener('focusin', this.onFocusIn);
@@ -64,12 +57,15 @@ export class ToolbarVisibilityController {
       this.revealAll();
       return;
     }
-    SIDES.forEach((side) => this.scheduleHide(side));
+    this.scheduleHide();
   }
 
   revealAll(): void {
-    SIDES.forEach((side) => this.reveal(side, false));
-    if (!this.pinned) SIDES.forEach((side) => this.scheduleHide(side));
+    SIDES.forEach((side) => {
+      this.options.root.dataset[DATASET_KEYS[side]] = 'true';
+    });
+    this.clearTimer();
+    if (!this.pinned) this.scheduleHide();
   }
 
   revealBoth(): void {
@@ -77,51 +73,45 @@ export class ToolbarVisibilityController {
   }
 
   revealTop(): void {
-    this.reveal('top');
+    this.revealAll();
   }
 
   revealBottom(): void {
-    this.reveal('bottom');
+    this.revealAll();
   }
 
   revealLeft(): void {
-    this.reveal('left');
-  }
-
-  private reveal(side: ToolbarSide, reschedule = true): void {
-    this.options.root.dataset[DATASET_KEYS[side]] = 'true';
-    this.clearTimer(side);
-    if (!this.pinned && reschedule) this.scheduleHide(side);
+    this.revealAll();
   }
 
   private applyPinnedState(): void {
     this.options.root.dataset.toolbarsPinned = String(this.pinned);
   }
 
-  private scheduleHide(side: ToolbarSide): void {
+  private scheduleHide(): void {
     if (this.pinned) return;
-    this.clearTimer(side);
-    this.sides[side].timer = window.setTimeout(() => {
-      this.sides[side].timer = null;
-      if (this.sideOwnsInteraction(side)) {
-        this.scheduleHide(side);
+    this.clearTimer();
+    this.timer = window.setTimeout(() => {
+      this.timer = null;
+      if (this.ownsInteraction()) {
+        this.scheduleHide();
         return;
       }
-      this.options.root.dataset[DATASET_KEYS[side]] = 'false';
+      SIDES.forEach((side) => {
+        this.options.root.dataset[DATASET_KEYS[side]] = 'false';
+      });
     }, this.hideDelayMs);
   }
 
-  private sideOwnsInteraction(side: ToolbarSide): boolean {
-    const selector = OWNER_SELECTORS[side];
+  private ownsInteraction(): boolean {
     const active = document.activeElement;
-    if (active instanceof Element && active.closest(selector)) return true;
-    return Boolean(this.options.root.querySelector(`:is(${selector}):hover`));
+    if (active instanceof Element && active.closest(OWNER_SELECTOR)) return true;
+    return Boolean(this.options.root.querySelector(`:is(${OWNER_SELECTOR}):hover`));
   }
 
-  private clearTimer(side: ToolbarSide): void {
-    const timer = this.sides[side].timer;
-    if (timer !== null) window.clearTimeout(timer);
-    this.sides[side].timer = null;
+  private clearTimer(): void {
+    if (this.timer !== null) window.clearTimeout(this.timer);
+    this.timer = null;
   }
 
   private sideFromTarget(target: HTMLElement): ToolbarSide | null {
@@ -140,31 +130,33 @@ export class ToolbarVisibilityController {
     const y = event.clientY - rect.top;
     const target = event.target as HTMLElement;
     const ownedSide = this.sideFromTarget(target);
-    if (ownedSide) this.reveal(ownedSide);
-    if (y <= this.hotZonePx) this.reveal('top');
-    if (rect.height - y <= this.hotZonePx) this.reveal('bottom');
-    if (x <= this.hotZonePx) this.reveal('left');
+    if (
+      ownedSide
+      || y <= this.hotZonePx
+      || rect.height - y <= this.hotZonePx
+      || x <= this.hotZonePx
+    ) this.revealAll();
   };
 
   private readonly onPointerLeave = (): void => {
-    if (!this.pinned) SIDES.forEach((side) => this.scheduleHide(side));
+    if (!this.pinned) this.scheduleHide();
   };
 
   private readonly onFocusIn = (event: FocusEvent): void => {
     const target = event.target as HTMLElement;
     const side = this.sideFromTarget(target);
-    if (side) this.reveal(side);
+    if (side) this.revealAll();
   };
 
   private readonly onFocusOut = (event: FocusEvent): void => {
     const target = event.target as HTMLElement;
     const side = this.sideFromTarget(target);
-    if (side && !this.pinned) this.scheduleHide(side);
+    if (side && !this.pinned) this.scheduleHide();
   };
 
   private readonly onClick = (event: MouseEvent): void => {
     const target = event.target as HTMLElement;
     const side = this.sideFromTarget(target);
-    if (side && target.closest('[data-toolbar-edge]')) this.reveal(side);
+    if (side && target.closest('[data-toolbar-edge]')) this.revealAll();
   };
 }

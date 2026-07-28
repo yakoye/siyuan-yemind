@@ -78,4 +78,32 @@ describe('standalone SiYuan adapter', () => {
     expect(menu.element.querySelectorAll('.ymw-submenu .b3-menu__item')).toHaveLength(2);
     expect(menu.element.querySelector('.ymw-submenu .is-current')?.textContent).toContain('右向导图');
   });
+
+  it('supports arrow, Home, End, submenu and Escape keyboard navigation', () => {
+    const origin = document.createElement('button');
+    origin.textContent = '打开菜单';
+    document.body.appendChild(origin);
+    origin.focus();
+    const menu = new Menu('keyboard');
+    menu.addItem({ label: '禁用', disabled: true });
+    menu.addItem({ label: '第一项' });
+    menu.addItem({ label: '结构', submenu: [{ label: '右向导图' }] } as any);
+    menu.addItem({ label: '最后一项' });
+    menu.open({ x: 12, y: 12 });
+
+    expect(document.activeElement?.textContent).toContain('第一项');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    expect(document.activeElement?.textContent).toContain('最后一项');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+    expect(document.activeElement?.textContent).toContain('第一项');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement?.textContent).toContain('结构');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    expect(document.activeElement?.textContent).toContain('右向导图');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    expect(document.activeElement?.textContent).toContain('结构');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(document.querySelector('[data-menu-id="keyboard"]')).toBeNull();
+    expect(document.activeElement).toBe(origin);
+  });
 });

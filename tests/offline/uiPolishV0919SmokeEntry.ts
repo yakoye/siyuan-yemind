@@ -29,7 +29,6 @@ const supplied = [
   nodeInsertIcon('parent'),
   nodeInsertIcon('sibling'),
   nodeInsertIcon('child'),
-  projectStyleIcon(),
   nodeStyleIcon(),
   markerIcon(),
   clipartIcon(),
@@ -47,7 +46,8 @@ assert(supplied.every((icon) => !icon.includes('<svg') && !icon.includes('<path'
 assert(nodeInsertIcon('parent').includes('ymz-icon-insert-parent'), 'upper-node icon must use the supplied parent source artwork');
 assert(nodeInsertIcon('sibling').includes('ymz-icon-insert-sibling'), 'same-level icon must use the supplied sibling source artwork');
 assert(nodeInsertIcon('child').includes('ymz-icon-insert-child'), 'lower-node icon must use the supplied child source artwork');
-assert(projectStyleIcon().includes('ymz-icon-project-style') && projectStyleIcon().includes('data:image/svg+xml;base64,'), 'project style must preserve the supplied magic-wand document');
+assert(projectStyleIcon().includes('ymz-icon-project-style') && projectStyleIcon().includes('<svg'), 'project style must use the approved version47 linear sliders icon');
+assert(!projectStyleIcon().includes('data:image/svg+xml;base64,'), 'project style must not fall back to the obsolete Base64 magic-wand artwork');
 assert(nodeStyleIcon().includes('ymz-icon-node-style') && !nodeStyleIcon().includes('<svg'), 'node style must isolate the supplied settings artwork');
 assert(undoIcon().includes('ymz-icon-undo') && undoIcon().includes('data:image/svg+xml;base64,'), 'undo must preserve the exact supplied source document');
 assert(redoIcon().includes('ymz-icon-redo') && redoIcon().includes('data:image/svg+xml;base64,'), 'redo must preserve the exact supplied source document');
@@ -77,7 +77,7 @@ assert(templateSource.includes('fullscreenIcon()'), 'fullscreen toolbar must use
 assert(cssSource.includes('var(--ymz-outline-branch-half)'), 'outline insertion square must align to the target branch marker center');
 
 export default {
-  icons: 15,
+  icons: supplied.length + 1,
   menus: 4,
   dialogs: 6,
   checkpoints: 2,

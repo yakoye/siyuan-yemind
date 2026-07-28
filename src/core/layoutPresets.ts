@@ -28,8 +28,14 @@ const LAYOUT_IDS = new Set([
   ...YEMIND_LAYOUT_ENGINE_IDS,
 ]);
 
+const LEGACY_LAYOUT_ALIASES: Readonly<Record<string, string>> = {
+  yemindOrganizationBidirectional: 'yemindOrganizationRight',
+};
+
 export function normalizeLayoutId(value: unknown): string {
-  return typeof value === 'string' && LAYOUT_IDS.has(value) ? value : 'logicalStructure';
+  if (typeof value !== 'string') return 'logicalStructure';
+  const normalized = LEGACY_LAYOUT_ALIASES[value] ?? value;
+  return LAYOUT_IDS.has(normalized) ? normalized : 'logicalStructure';
 }
 
 export function layoutOptionsHtml(selected: unknown): string {

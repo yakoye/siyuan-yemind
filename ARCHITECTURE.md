@@ -2,6 +2,8 @@
 
 YeMind is a local-first SiYuan mind-map plugin built with TypeScript, Vite, Quill and `simple-mind-map`.
 
+The v1.5.0 release builds the SiYuan plugin and standalone web app from the same editor, command, model, theme and transfer modules. Host adapters only own persistence, file selection/download, sharing and window integration.
+
 ## Layers
 
 - `src/plugin/`: SiYuan lifecycle, Dock, tabs, global search and protocol links.
@@ -11,6 +13,7 @@ YeMind is a local-first SiYuan mind-map plugin built with TypeScript, Vite, Quil
 - `src/ui/`: dialogs, menus, color panels, image preview and diagnostics surfaces.
 - `src/settings/`: settings storage plus shortcut and general configuration pages.
 - `src/diagnostics/`: structured event timeline, self-checks and exportable diagnostic archives.
+- `src/review/`: study-card normalization, filtering and review scheduling shared by both hosts.
 
 ## State ownership
 
@@ -75,3 +78,11 @@ Node quick controls resolve their side from the same official layout-growth cont
 ## Theme dropdown presentation (v0.9.31)
 
 `src/editor/themeChoicePresentation.ts` derives exactly six preview blocks from each existing preset’s light `level1Background` branch colors without mutating the preset. `ProjectChoicePanel` keeps one shared controller with an opt-in `palette` renderer used only by Theme; the Line Style panel continues through the original list renderer. Group tabs are generated from existing preset groups, so IDs, categories, selection callbacks, persistence and map appearance remain canonical in the existing theme system.
+
+## Unified v1.5.0 shell and study workflow
+
+- `ToolbarVisibilityController` owns one pinned/visible state for the top, left and bottom toolbars. Any edge rail reveals all three without resizing the canvas.
+- `MiniMapController` renders the live tree into a fitted overview and keeps viewport controls independent from map data.
+- `StudyPanelController` presents cards and review as two views over `YeMindMapDocument.studyCards`; all changes go through the same repository save path as the map.
+- Classic themes carry explicit six-color palettes. The generated theme branches, palette cards and persisted theme ID all use one canonical definition.
+- Import/export logic remains in `src/transfer/`; `.yemind.svg` and `.yemind.zip` are current names while old `yemindz` files are accepted for import only.

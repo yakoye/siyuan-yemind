@@ -6,7 +6,7 @@
 | Structure | Add, delete, move, reorder, fold, one combined multi-selection summary, outer frame, relation line and six-mode structured text-to-map import with processed preview |
 | Content | Rich text, node links, selection-scoped inline links, formulas, code, images, notes, comments, tags, icons and todo |
 | Appearance | 22 themes, 25 light/dark appearances, density, background and named rainbow lines |
-| Theme colors | Per-level text, fill, border and parent-child line colors with 1/3/4/6 branch cycles |
+| Theme colors | Per-level text, fill, border and parent-child line colors; all nine Classic themes use the six exact v1.5 branch colors |
 | Appearance refresh | One atomic full redraw; immediate theme/rainbow updates; viewport and selection preserved; transparent root resolves to canvas background |
 | Local style priority | Node-local text, fill, border and line values override whole-map themes |
 | Selection toolbar | Canvas and outline share selection formatting; double-click full selection opens the toolbar immediately and saved ranges survive control focus |
@@ -25,6 +25,8 @@
 | Drag safety | Self/descendant/root/no-op rejection, Escape cancellation, one-step undo and stable UID/metadata preservation |
 | Resource actions | Images retain resize/lightbox editing; canvas and outline marker/clipart clicks use one viewport-aware Replace/Delete popover before the shared asset pickers |
 | Persistence | Local maps, settings, checkpoints, autosave and restore protection |
+| Cards and review | UID-linked study cards, search/filter/favorite/edit/flip, three-grade review scheduling and persisted progress |
+| Transfer | `.yemind.svg` and `.yemind.zip`, SVG/KMindz/XMind/Markdown/OPML/PNG/Text/HTML/PDF plus legacy import compatibility |
 | Integration | SiYuan tabs, Dock, protocol links and global-search node navigation |
 | Floating UI | Top, bottom and left toolbars default pinned, share one persisted pin state, reveal from three edge hot zones in auto-hide mode and expose explicit pin/lock icons |
 | Reliability | Structured diagnostics, same-generation hidden-tab text/frame measurement and 15-domain manifest-controlled regression architecture |

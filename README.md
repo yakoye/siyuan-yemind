@@ -1,314 +1,48 @@
 # YeMind
 
-YeMind is a local-first mind-map plugin for SiYuan. It provides canvas, split-outline and outline views, rich node editing, images, notes, comments, styles, checkpoints, diagnostics and global-search navigation.
+YeMind is a local-first mind-map workspace for SiYuan and the web. One shared TypeScript codebase powers both hosts, so maps, outlines, cards, themes, import/export, and interaction behavior stay compatible.
 
-Current version: `1.3.0`
-Host baseline: SiYuan `3.7.3`
+Current version: `1.5.0`
+SiYuan baseline: `3.7.3`
 
-## v1.3.0 unified dual-host stability release
+## Highlights
 
-- Shares one editor, data model, transfer layer and UI behavior between the SiYuan plugin and standalone web app.
-- Regresses all 28 layouts, branch controls, map/outline CRUD and drag behavior, media, relations, themes and light/dark appearance.
-- Independently hides the top, left and bottom toolbars while leaving discoverable edge indicators, with desktop and mobile browser acceptance.
-- Preserves selected text across every shared canvas/outline formatting action, including dialogs and reversible cloze formatting.
-- Builds deterministic plugin/web ZIPs with `npm run release:build` and verifies their manifest, structure and SHA-256 using `npm run release:verify`.
+- 28 real map structures covering directional mind maps, trees, timelines, organization charts, fishbones, tree tables, radial diagrams, bubbles, and bracket diagrams.
+- Editable canvas and structured outline with synchronized selection, rich text, drag-and-drop, images, clipart, markers, notes, comments, relations, and outer frames.
+- Cards and focused review with persistent status, favorites, progress, scheduling, and node linkage.
+- Light, dark, and system/host appearance plus 25 project themes and responsive, discoverable toolbars.
+- Shared import/export for editable YeMind SVG/ZIP, SVG, KMindz, XMind, Markdown, OPML, PNG, Text, outline/interactive HTML, and PDF.
+- Local storage by default: SiYuan data remains in the plugin store; the standalone web app uses IndexedDB.
 
-## v1.2.0 multi-format import and export
+## Install and use
 
-- Uses `.yemind.svg` by default: it remains a standard previewable SVG and also preserves the complete editable YeMind document.
-- Exports SVG packages, SVG, KMindz, YeMind ZIP, Markdown, OPML, XMind, PNG, Text, HTML and PDF.
-- Auto-detects KMindZ/SVG/PNG/ZIP, XMind, legacy KMind/JSON and Markdown/OPML/Text/FreeMind outlines.
-- Shares one live-canvas export and import workflow between the SiYuan plugin and standalone web app.
+For SiYuan, install the release ZIP as `data/plugins/siyuan-yemind`. For the standalone edition, open the deployed GitHub Pages site or host the web release ZIP on any static host.
 
-## Development, verification and release
+Before upgrades, export a `.yemind.svg` or create a full library backup. Existing `.yemindz.svg` and `.yemindz.zip` files remain import-compatible.
+
+## Development
 
 ```text
 npm ci
+npm run dev
+npm run dev:web
+```
+
+Verification and release:
+
+```text
 npm run check
 npm test
 npm run test:web
+npm run test:offline
+npm run verify:assets
 npm run test:e2e
 npm run release:build
 npm run release:verify
 ```
 
-Set one release version with `npm run version:set -- 1.3.0`, then update CHANGELOG, README and the acceptance record. See `docs/版本与发布规范.md`.
+See [版本与发布规范](docs/版本与发布规范.md), [测试与验收](docs/测试与验收.md), and [v1.5.0 design](docs/设计-v1.5.0-界面与双端统一.md). Release history is maintained in [CHANGELOG.md](CHANGELOG.md).
 
-## v1.1.1 standalone web interaction fixes
+## License
 
-- Keeps canvas, node and outline context menus inside the viewport and renders the shared SiYuan submenu hierarchy.
-- Makes Root and intermediate `+ / − / count` actions update the live map immediately.
-- Remeasures rich-text nodes after web fonts load so long mixed-language labels stay inside their node bounds.
-- Shows a self-contained formula icon in the selected-text toolbar without relying on SiYuan SVG symbols.
-
-## v1.1.0 layout and outline interaction release
-
-- Gives all 28 structure presets explicit runtime geometry, including mirrored, bidirectional, serpentine, radial, table and bracket layouts.
-- Positions `+ / − / count` controls from the real branch direction for root, branch and leaf nodes.
-- Compacts the outline gutter and adds a six-dot drag grip plus eight-point image/clipart selection with direct deletion.
-- Shares redesigned replace/delete icons across canvas and outline, and serves fixed local assets during standalone web development.
-
-## v1.0.0 stable runtime and standalone web app
-
-- Classic theme cards now show only colors that the active theme really applies.
-- Rainbow-line schemes use grouped Colorful/Classic two-column palette cards.
-- `npm run sync:runtime` atomically deploys the verified runtime whitelist.
-- `npm run dev:web` starts the SiYuan-independent web app with IndexedDB storage, map transfer and full-library backups.
-
-## v0.9.31 six-color Theme dropdown
-
-- Changes only the Theme dropdown presentation; theme definitions, IDs, categories, colors, application, persistence and map refresh behavior remain unchanged.
-- Uses the existing Basic, Colorful and Classic groups as tabs and opens the group containing the current theme.
-- Shows every theme as its name plus one six-block strip sourced from the existing first-level branch colors in a two-column card grid.
-- Light/dark host appearance changes panel chrome only; palette strips keep their actual colors, and the Line dropdown remains the existing list UI.
-
-## v0.9.30 branch controls, full expansion and three-edge toolbars
-
-- Anchors `+ / - / count` at the real outgoing child connector: right/left logical layouts remain side-consistent, bilateral maps follow each branch side, and tree, timeline, organization and fishbone layouts follow their growth direction.
-- Node menus fully expand or collapse the selected subtree, blank-canvas menus fully expand or collapse the entire map, while the compact count control still expands one level and reports direct children only.
-- Pins the top, bottom and left toolbars by default; a vertical pin means fixed, a diagonal pin means auto-hide, and one persisted control governs all three edges.
-- Shows distinct unlocked/locked icons for read-only state and adds Text to Mind Map immediately above Add in the canvas node menu.
-- Routes canvas and outline marker/clipart clicks through a shared Replace/Delete popover before opening the relevant asset picker.
-
-## v0.9.29 floating toolbars, relation selection and node quick actions
-
-- Auto-hides the top and bottom toolbars by default, reveals them from edge or toolbar hover, and persists one bottom pin that fixes both toolbars.
-- Makes the zoom percentage directly editable and lets the bottom map title rename the map while synchronizing repository data and the current SiYuan tab.
-- Adds a 12px invisible relation-line hit target without changing the visible stroke and keeps relation overlays out of node text/layout measurement.
-- Positions `+ / - / count` controls on the actual child-branch side in every supported layout; counts direct children, recursively collapses descendants and expands one level only.
-- Clears image/clipart resize overlays and resource toolbars when leaving map view, while outline image double-click continues to use the shared canvas lightbox.
-
-## v0.9.28 outline semantics, clipart editing and unified dialogs
-
-- Fixes outline marker alignment by rendering the sprite directly inside an 18px compact viewport with scaled background size and position rather than an oversized transformed child.
-- Replaces visible note/comment counts with semantic note and comment SVG icons; hover previews wait for measured layout, image loading and resize changes before becoming visible.
-- Keeps outline image single-click editing while making double-click reliably open the exact shared canvas lightbox through a cancellable arbitration window.
-- Restores canvas clipart selection geometry with eight resize handles and a delete control while retaining direct single-click access to the clipart picker.
-- Places marker and clipart dialogs using eight viewport-aware candidates, choosing a non-overlapping side or corner and clamping the result at every screen edge.
-- Applies one dialog-chrome contract to all YeMind dialogs: bold vertically centered titles, consistently aligned close controls and right-aligned footer actions.
-
-## v0.9.27 outline asset editing and dialog parity
-
-- Renders outline markers through the same sprite contract as the canvas and opens the marker picker directly from every outline icon, with immediate map/outline/split synchronization.
-- Keeps image and clipart single-click editing distinct from shared double-click lightbox preview, and adds hover previews for notes, comments, todo, tags, links and outer-frame status.
-- Uses compact marker and clipart dialogs with bold custom title bars, explicit close buttons and anchor-aware placement that avoids covering the clicked node.
-- Right-aligns note actions and autosaves note content when closing from the title bar or backdrop while explicit Cancel still discards the edit.
-- Opens the clipart picker directly from canvas clipart clicks without the old replace/delete image toolbar; ordinary image resize and replacement remain unchanged.
-- Normalizes todo prefix geometry and refreshes outline accessories independently while text is being edited, preventing stale or divergent node content across views.
-
-## v0.9.26 import geometry, deterministic collapse and outline content parity
-
-- Repairs v0.9.25 imported long-node data that persisted both `width` and `customTextWidth`, while preserving user-adjusted widths and unrelated node metadata.
-- Waits for imported rich text to be measured before one whole-map relayout, then restores the exact viewport transform and active node to keep text, borders and branch anchors aligned.
-- Recursively collapses every descendant branch and expands only one level at a time; the global command likewise restores only the center topic's immediate children.
-- Lets outline images and clipart open the shared editor on single click and the shared zoomable lightbox on double click.
-- Exposes todo, outer frame, note, comment, tag, marker, link, clipart, image, code block, formula and inline-link actions in outline while continuing to omit canvas-only fill, border, shape and connection decoration.
-
-## v0.9.25 import preview, dark project controls and outline content
-
-- Keeps the Text to Mind Map dialog within the viewport, gives source and preview panes independent scrolling, and shows parsed hierarchy without Unicode/ASCII tree glyphs.
-- Applies a 280px default content width only to imported labels longer than roughly 20 full-width characters; original text is unchanged and later user width edits are persisted.
-- Replaces visible native Theme and Line selects with custom anchored panels, unifying Structure/Theme/Line/Style/Saved foregrounds and hover/selected states in dark mode.
-- Projects node icons, images and clipart into compact non-editable outline accessory slots and reuses the canvas marker, clipart and image commands from the outline Add submenu.
-- Keeps the outline content-focused: node fill, border, shape, connection and other canvas decoration are not mirrored into outline rows.
-
-## v0.9.24 outline import and dark-theme stability
-
-- Reorganizes the outline node context menu around edit/insert, text import, current-line clipboard actions, sibling ordering, disclosure and two distinct delete semantics; cutting a line clears text only and preserves the node and subtree.
-- Adds Text to Mind Map import for Unicode trees, Windows Tree output, spaces or tabs, Markdown lists, numbered outlines and plain lines, with mode-specific gray examples and live preview.
-- Creates new maps with the center topic only; Enter creates a sibling, while repeated Enter on an empty row promotes it one level until the root-child boundary removes it and focuses the center topic.
-- Captures and restores the exact canvas transform twice around host appearance redraws, deferring zero-size hidden canvases to prevent dark-mode horizontal drift.
-- Makes Theme and Line controls, labels, icons, hover/open states and native option lists fully dark-aware.
-- Replaces the selected-text π control with SiYuan's shared `iconMath` formula icon.
-
-## v0.9.23 icon grid and dark-theme polish
-
-- Places every YeMind custom icon in a fixed `22 × 22` slot with proportional artwork constrained to `15 × 15` and a consistent `4px` label gap.
-- Applies the same `22/15` geometry to native SiYuan context-menu SVGs, keeping first-level and nested menu labels aligned.
-- Preserves the exact light Base64 source for all 14 supplied icons while adding isolated dark variants that are pixel-audited in Chromium.
-- Makes outline hover, active, branch-marker and drag states theme-aware instead of showing bright or invisible states in dark themes.
-- Improves dark-mode contrast for selected and hovered top-toolbar controls and floating panels.
-
-## v0.9.22 exact supplied SVG isolation
-
-- Uses the Base64 SVG documents from `图标-svg.txt` byte-for-byte for search, project style, undo/redo, upper/same/lower insertion, node style, relation, outer frame, marker, clipart and fullscreen actions.
-- Renders supplied artwork through an `<img>` document boundary, preventing SiYuan themes or custom CSS rules such as `svg path { fill: ... }` from turning stroke-only paths into solid black shapes.
-- Keeps a consistent 18 × 18 outer layout box without rewriting source paths, colors, masks, dashes or opacity, so the result matches direct browser preview.
-- Adds SHA-256 source-contract, dependency-free offline and hostile-host-CSS Chromium regressions.
-
-## v0.9.21 supplied SVG adaptation and double-click formatting toolbar
-
-- Keeps the exact path geometry supplied in `图标-svg.txt`, while normalizing the outer `20 × 20` viewport, centered `18 × 18` artwork area and menu slot.
-- Converts fixed dark strokes and fills to `currentColor` without redrawing masks, dashed guides or opacity, so toolbar and context-menu artwork follows light, dark and custom themes.
-- Double-clicking node text still selects the complete text and now opens the shared rich-text formatting toolbar immediately.
-
-## v0.9.20 icon consistency, flat asset dialogs and cross-root dragging
-
-- Redraw custom command icons as consistent lightweight 20×20 current-color SVGs.
-- Flatten marker and clipart dialogs while keeping fixed category navigation and resource scrolling.
-- Allow mind-map root children to cross the centre and immediately adopt the mirrored target-side ordering and child rules.
-
-## v0.9.19 icons, asset dialogs, checkpoints and outline alignment
-
-- Replaces style, node-style, undo, redo, relationship, hierarchy insert, clipart, outer-frame, search and fullscreen artwork with a consistent supplied SVG set.
-- Renames and orders hierarchy commands as Insert upper-level, same-level and lower-level node.
-- The footer mode button now shows the mode reached after clicking; select-first displays the hand action for switching to pan-first.
-- Marker and clipart dialogs use fixed dimensions. All marker groups remain in one scroll view, while clipart no longer uses pagination.
-- Both asset dialogs provide an explicit close button and outside-click dismissal.
-- Checkpoints open directly in the manager, which now supports creation as well as restore, rename and delete.
-- The outline insertion square aligns with the branch marker center at the intended target depth.
-
-## v0.9.19 split reveal and layout drag parity
-
-- Opening split or outline view immediately reveals the row for the currently selected canvas node inside the outline scroller.
-- The proven right-logical local drag zones, sticky target, one green parent preview and live room making remain unchanged as the reference behavior.
-- Left logical mirrors the same geometry; mind map, reverse mind map, balanced-down, tree, timeline and organization layouts normalize their branch direction into that interaction frame.
-- Right fishbone now uses a dedicated mirror renderer so its nodes, edges, summaries and tail are the horizontal mirror of left fishbone while text remains readable.
-- Tree-table and other gallery presets inherit the same drag behavior through their mapped engine layouts.
-
-## v0.9.17 live width layout, context menu and selection ownership
-
-- Resizing a node's text width now schedules one full tree layout per animation frame, so descendants and connecting lines follow while the pointer is still down.
-- “Edit node” enters text editing and selects the node text. Sibling, child and parent operations now use “Insert” wording and matching relationship icons.
-- Outer-frame and todo actions live in the Add submenu and switch between add/remove labels according to the selected node state.
-- Copy, cut and both paste actions are grouped before node movement; custom SVG menu icons share one aligned 18px box.
-- Canvas selection now passively synchronizes the outline and clears stale outline DOM ranges, preventing another outline row from reclaiming selection.
-- Marker sprite SVGs clip overflow and disable pointer events on the oversized source image so transparent sprite regions cannot intercept unrelated node clicks.
-
-## v0.9.16 proportional clipart geometry
-
-- Clipart insertion now reads authored SVG `width`/`height`, falling back to `viewBox`, instead of forcing every item to `72 × 72`.
-- Landscape, portrait and square assets are fitted proportionally inside a 48px box, and node frames use the resulting display size.
-- Legacy default clipart nodes with `yemindClipartId` and the old square geometry are repaired automatically when a map opens.
-- The local asset contract now matches the corrected set of 764 SVGs in 13 categories.
-
-## v0.9.14 combined summaries, stable geometry and right-drag isolation
-
-- Multi-selection summary now creates one combined range summary instead of one summary per selected node.
-- Rich-text measurement uses an off-screen editor-context host and one full geometry repair render, keeping long text, custom widths and image nodes aligned with their frames.
-- In drag-first mode, right-button drag pans only; it no longer draws a selection rectangle or changes the active node selection, while stationary right-click still opens the menu.
-
-## v0.9.13 interaction polish
-
-- Marker sprites are clipped through SVG patterns so icons and text remain inside node bounds.
-- Image tools appear on hover; the magnifier opens preview and the lighter blurred backdrop keeps the map visible.
-- Selected relation lines use a clear blue accent with a small width increase.
-- Structure closes on outside click, toolbar buttons regain hover feedback, and style panels are more compact.
-- About is a top-bar entry between Settings and Diagnostics.
-- New maps use `中心主题` and two `新节点` labels while the file remains `未命名导图`.
-- Multi-selection survives right-click on any selected node.
-- Hidden-tab rich-text measurement is stabilized to prevent blank pill-shaped nodes.
-
-## v0.9.12 local assets
-
-- 126 marker icons in eight groups, rendered from the fixed local sprite.
-- 764 searchable clipart SVGs in thirteen categories, placed above node text.
-- 28 layout thumbnails in seven visual groups, with persisted layout preset identity.
-- Runtime paths are resolved from the actual SiYuan plugin base URL; catalogs are authoritative.
-- The default AI artifact is a resource-excluded update package and intentionally omits fixed visual resources while keeping the ordinary versioned ZIP filename.
-
-
-## v0.9.10
-
-- Replaces per-row gradient guide fragments with one structured-outline guide overlay that paints each expanded parent segment exactly once.
-- Aligns every vertical guide directly below the expanded triangle tip and keeps all segments at a uniform `1px` width.
-- Extends each parent guide only through its visible subtree, preserving the four-color indent-rainbow cycle without duplicate overlap.
-- Reveals the matching outline row when a canvas node becomes active, using outline-local scrolling rather than page-level `scrollIntoView()`.
-- Keeps outline-to-canvas navigation centred through `GO_TARGET_NODE`, completing bidirectional visible-node synchronization.
-- Adds real Chromium geometry, duplicate-line and bidirectional reveal regression coverage.
-
-## v0.9.9
-
-- Rebuilds outline indent-guide geometry from one shared set of row-start, indent, drag-gutter and marker-column variables.
-- Removes the redundant guide left of the root and places the first guide exactly halfway between root and first-level marker columns.
-- Places every deeper guide halfway between adjacent marker columns while retaining the four-color indent-rainbow cycle.
-- Keeps marker, text and drag hit areas fixed; hover, active, expand/collapse and drag feedback no longer shift guide coordinates.
-- Adds CSS-contract and real Chromium geometry regression coverage.
-
-## v0.9.8
-
-- Preserves unaffected solid parent-child edges while another subtree is being dragged and preview siblings make room.
-- Replaces only the dragged subtree root's original incoming edge with the continuous green candidate-parent preview.
-- Removes extra canvas rich-text editing borders, outlines and shadows while retaining the caret and native text selection.
-
-## v0.9.7
-
-- Rebuilds right-logical dragging around the nearest legal node and an enlarged per-node local target box, so unequal node sizes do not require fixed global lanes.
-- Uses the target's left upper/lower halves for sibling before/after and its right half/outward extension for child placement.
-- Adds sticky-target hysteresis between dense neighbours while preserving immediate switching when the pointer enters a new node body or child side.
-- Keeps one YeMind-green dashed parent link visible throughout the drag: original parent fallback first, then real-time candidate-parent switching.
-- Draws parent and ghost endpoints in one scene coordinate system and makes the dashed link, room preview and final commit consume the same candidate.
-
-## v0.9.6
-
-- Added native outline Enter splitting, Shift+Enter soft breaks and two-stage empty-node deletion.
-- Expanded the outline drag hit area to the complete indent cell and stabilized green depth-aligned guides.
-- Displayed “Default font” semantics instead of an empty inherited-font field.
-- Removed right-logical canvas insertion lines in favour of one candidate-parent dashed link and live room making.
-
-## v0.9.5
-
-- Structural outline dragging now starts only from the invisible gutter left of the marker; text remains selectable and editable, and leaf squares are `5 × 5px`.
-- Depth-aligned YeMind-green insertion guides show sibling-before, sibling-after, child and parent-aligned destinations.
-- Canvas drop intent is pointer-driven, so large image ghosts no longer trigger targets while the pointer remains in a neutral gap.
-- Dashed parent previews remain visible throughout canvas dragging and switch from the original parent to the current candidate parent.
-- Sibling targets respond quickly, child targets require a short dwell, and neutral space clears stale candidates immediately.
-- Invalid/self/descendant/root/no-op targets do not mutate data or history; Escape cancels the active drag session.
-- The trash-can artwork is visually matched to the magnifier while button boxes and hit areas remain unchanged.
-- Image preview, delete and resize controls are isolated from structural node dragging.
-
-## v0.9.4
-
-- Replaces the separate text/tree outline modes with one structured node document that supports native selection across rows.
-- Implements staged `Ctrl/Cmd+A`: current-node content first, complete outline second; an existing cross-node range promotes directly to the full outline.
-- Makes paste replace the live selection across single nodes, multiple nodes, rich text, plain text and indentation-based tree input.
-- Commits structural edits as one undoable tree transaction while preserving stable UIDs, metadata, local styles and unselected subtrees.
-- Uses equal black triangles and leaf squares, retains indent-rainbow guides, and removes row/input borders and focus shadows.
-- Restricts node dragging to a dedicated gutter and shows depth-aligned before/inside/after insertion feedback.
-- Shows the rich-format toolbar only after selection completes and keeps staged selection/copy available in readonly mode.
-
-## v0.9.3
-
-- Resolves transparent center topics against the effective theme/project canvas background.
-- Shows node add/collapse/expand actions on pointer hover with a gap-safe interaction bridge.
-- Adds a single continuous outline document with native multiline selection, clipboard editing and indentation-based tree import.
-- Defers synchronization during IME composition and preserves node identity/metadata even when a label is completely rewritten.
-- Keeps the node-tree outline as a synchronized secondary mode for rich text, drag and expand/collapse operations.
-
-## v0.9.2
-
-- Added center, first-level, second-level and normal-node border colors to all named themes.
-- Unified theme and rainbow-line changes into one atomic appearance transaction followed by one complete redraw.
-- Theme and rainbow palette changes now refresh immediately while preserving zoom, pan, selection and local node styles.
-
-## v0.9.1
-
-- Completed all 19 named theme definitions for center and descendant node levels.
-- Registered 22 public themes backed by one generated runtime catalog.
-- Preserved node-local text, fill and line styles above whole-map theme values.
-
-## v0.9.0
-
-- Safe node-image deletion with confirmation.
-- In-editor image lightbox with wheel zoom, reset and multiple close gestures.
-- Clean note/comment hover previews without native title overlays.
-- Ten named rainbow-line palettes and matching whole-map themes.
-- Three retained base themes: YeMind Default, Ink Branch and Material 3 Basic.
-
-## Install
-
-Extract the flat release archive directly into:
-
-`<workspace>/data/plugins/siyuan-yemind/`
-
-The release archive does not include user map, settings or checkpoint data.
-
-## Validate
-
-```bash
-npm ci
-npm test
-npm run check
-npm run build
-node --check index.js
-```
+MIT

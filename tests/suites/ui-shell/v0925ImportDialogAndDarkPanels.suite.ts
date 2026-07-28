@@ -17,14 +17,18 @@ describe('v0.9.25 import dialog and dark project panels', () => {
     expect(css).toMatch(/\.ymz-text-map-dialog__preview[^}]*overflow:auto/s);
   });
 
-  it('uses custom theme and line panels with one dark interaction palette', () => {
+  it('uses the custom theme and consolidated style panels with one dark interaction palette', () => {
     expect(template).toContain('data-action="theme-gallery"');
     expect(template).toContain('data-role="theme-choice-panel"');
-    expect(template).toContain('data-action="line-style-gallery"');
-    expect(template).toContain('data-role="line-style-choice-panel"');
+    expect(template).not.toContain('data-action="line-style-gallery"');
+    expect(template).not.toContain('data-role="line-style-choice-panel"');
+    expect(template).toContain('data-project-line-style="curve"');
+    expect(template).toContain('data-action="project-style"');
     expect(editor).toContain('ProjectChoicePanel');
     expect(css).toContain('.ymz-project-choice-panel');
-    expect(css).toMatch(/\.ymz-editor\[data-appearance="dark"\] \.ymz-topbar[^}]*color:var\(--b3-theme-on-background/s);
+    expect(css).toMatch(/\.ymz-editor\[data-appearance="dark"\] \.ymz-topbar[^}]*color:var\(--ymz-text-80/s);
+    expect(css).toMatch(/\.ymz-editor\[data-appearance="dark"\] \.ymz-rainbow-trigger[^}]*background:var\(--ymz-input-bg/s);
+    expect(css).toMatch(/\.ymz-editor\[data-appearance="dark"\] \.ymz-rainbow-picker[^}]*background:var\(--ymz-panel-bg/s);
     expect(css).toMatch(/\.ymz-project-choice-panel__item\.is-selected[^}]*background:var\(--ymz-accent-soft-strong/s);
     expect(css).toMatch(/\.ymz-project-choice-panel__item:hover[^}]*background:var\(--ymz-control-hover-bg/s);
   });

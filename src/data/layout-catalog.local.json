@@ -148,20 +148,20 @@
       "relativePath": "layout-thumbnails/04_organization/01_organization-down.svg"
     },
     {
-      "id": "organization-bidirectional",
-      "groupId": "organization",
-      "groupLabel": "组织结构图",
-      "title": "组织结构图（上下双向）",
-      "fileName": "02_organization-bidirectional.svg",
-      "relativePath": "layout-thumbnails/04_organization/02_organization-bidirectional.svg"
-    },
-    {
       "id": "organization-up",
       "groupId": "organization",
       "groupLabel": "组织结构图",
       "title": "组织结构图（向上）",
       "fileName": "03_organization-up.svg",
       "relativePath": "layout-thumbnails/04_organization/03_organization-up.svg"
+    },
+    {
+      "id": "organization-right",
+      "groupId": "organization",
+      "groupLabel": "组织结构图",
+      "title": "组织结构图（向右）",
+      "fileName": "02_organization-right.svg",
+      "relativePath": "layout-thumbnails/04_organization/02_organization-right.svg"
     },
     {
       "id": "fishbone-left",

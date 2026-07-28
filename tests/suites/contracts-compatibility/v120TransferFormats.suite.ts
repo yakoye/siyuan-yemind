@@ -13,6 +13,7 @@ import {
   parseOutlineDocument,
 } from '../../../src/transfer/outlineCodecs';
 import {
+  assertSafeZipEntries,
   createYeMindPackage,
   embedMapFileInSvg,
   embedPackageInPng,
@@ -43,15 +44,16 @@ describe('v1.2.0 transfer format contracts', () => {
   it('publishes the requested export order with YeMind SVG as default', () => {
     expect(EXPORT_FORMATS.map((item) => item.extension)).toEqual([
       '.yemind.svg',
-      '.yemindz.svg',
+      '.yemind.svg',
       '.svg',
       '.kmindz',
-      '.yemindz.zip',
+      '.yemind.zip',
       '.md',
       '.opml',
       '.xmind',
       '.png',
       '.txt',
+      '.html',
       '.html',
       '.pdf',
     ]);
@@ -104,6 +106,21 @@ describe('v1.2.0 transfer format contracts', () => {
     expect(exportOpml(map)).toContain('用户 &lt;API&gt; &amp; 权限');
     expect(exportHtml(map)).toContain('用户 &lt;API&gt; &amp; 权限');
     expect(exportHtml(map)).toContain('application/yemind+json');
+  });
+
+  it('publishes separate outline and interactive map HTML exports', async () => {
+    const map = sampleMap();
+    const { createExportArtifact } = await import('../../../src/transfer/exporter');
+    const outline = await createExportArtifact('html', map);
+    const interactive = await createExportArtifact('html-map', map);
+    const outlineText = new TextDecoder().decode(outline.bytes);
+    const interactiveText = new TextDecoder().decode(interactive.bytes);
+
+    expect(outline.filename).toBe('接口设计-大纲.html');
+    expect(interactive.filename).toBe('接口设计-导图.html');
+    expect(outlineText).toContain('<main><ul>');
+    expect(interactiveText).toContain('data-yemind-map');
+    expect(interactiveText).toContain('接口设计');
   });
 
   it('imports Markdown, OPML, plain text and FreeMind outlines', () => {
@@ -178,5 +195,17 @@ describe('v1.2.0 transfer format contracts', () => {
     expect(tree.data.text).toBe('接口设计');
     expect(tree.children[0].data.hyperlink).toBe('https://example.com');
     expect(tree.children[0].children[0].data.text).toBe('创建用户');
+  });
+
+  it('rejects excessive declared ZIP expansion before reading entry contents', async () => {
+    const source = new JSZip();
+    source.file('large.json', 'x'.repeat(4096));
+    const bytes = await source.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+    const loaded = await JSZip.loadAsync(bytes);
+
+    expect(() => assertSafeZipEntries(loaded, {
+      maxEntryBytes: 1024,
+      maxTotalUncompressedBytes: 2048,
+    })).toThrow(/文件过大|总大小/);
   });
 });

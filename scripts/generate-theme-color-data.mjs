@@ -44,6 +44,7 @@ const BRANCH_KEYS = [
   'normalBorder',
 ];
 const COLOR_RE = /^(?:#[0-9A-F]{6}|transparent)$/;
+const OPAQUE_COLOR_RE = /^#[0-9A-F]{6}$/;
 
 function branch(
   line,
@@ -126,9 +127,37 @@ function validateDefinition(item, path) {
   validateColor(item.centerBackground, `${path}.centerBackground`);
   validateColor(item.centerBorder, `${path}.centerBorder`);
   if (![1, 3, 4, 6].includes(item.cycleLength)) fail(`${path}.cycleLength must be 1, 3, 4, or 6`);
+  if (item.category === '经典') {
+    if (!Array.isArray(item.palette) || item.palette.length !== 6) fail(`${path}.palette must contain six colors`);
+    item.palette.forEach((color, index) => {
+      if (typeof color !== 'string' || !OPAQUE_COLOR_RE.test(color)) fail(`${path}.palette[${index}] must be #RRGGBB`);
+    });
+  }
   if (!Array.isArray(item.branches) || item.branches.length !== 6) fail(`${path}.branches must contain six source records`);
   item.branches.forEach((entry, index) => {
     for (const key of BRANCH_KEYS) validateColor(entry?.[key], `${path}.branches[${index}].${key}`);
+  });
+}
+
+function contrastText(hex) {
+  const channels = [1, 3, 5].map((offset) => Number.parseInt(hex.slice(offset, offset + 2), 16) / 255);
+  const linear = channels.map((value) => value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+  const luminance = 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+  return luminance > 0.44 ? '#000000' : '#FFFFFF';
+}
+
+function applyClassicPalette(sourceTheme) {
+  if (sourceTheme.category !== '经典') return sourceTheme.branches;
+  return sourceTheme.branches.map((entry, index) => {
+    const color = sourceTheme.palette[index];
+    return {
+      ...entry,
+      centerToLevel1Line: color,
+      level1Text: contrastText(color),
+      level1Background: color,
+      level1ToLevel2Line: color,
+      level2ToNormalLine: color,
+    };
   });
 }
 
@@ -153,7 +182,7 @@ const generatedThemes = names.map((name) => {
     centerBackground: sourceTheme.centerBackground,
     centerBorder: sourceTheme.centerBorder,
     cycleLength: sourceTheme.cycleLength,
-    branches: sourceTheme.branches,
+    branches: applyClassicPalette(sourceTheme),
   };
 });
 

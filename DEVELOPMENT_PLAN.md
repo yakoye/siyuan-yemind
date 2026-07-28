@@ -2,7 +2,7 @@
 
 ## Current baseline
 
-- Product version: 0.9.31
+- Product version: 1.5.0
 - Host baseline: SiYuan 3.7.3
 - Plugin ID and folder: `siyuan-yemind`
 
@@ -37,10 +37,14 @@
 - Persisted floating toolbar visibility, inline zoom/title editing, wide relation hit targets and layout-aware direct-child quick actions.
 - Connector-derived branch controls, full subtree/global disclosure, default-pinned three-edge toolbars and shared marker/clipart resource actions.
 - Display-only Theme dropdown palette cards with existing group tabs and six real branch colors per theme.
+- Version47-aligned top/bottom/left shell, shared auto-hide rails, responsive overflow menus and live minimap.
+- Standalone web host built from the same editor/model/transfer code as the SiYuan plugin.
+- Cards and review workflow persisted with each map document.
+- Current `.yemind.svg` / `.yemind.zip` package names with legacy import compatibility.
 
 ## Next priorities
 
-1. Validate v0.9.31 Theme dropdown palette cards inside SiYuan 3.7.3 with built-in and representative third-party light/dark themes.
+1. Complete v1.5.0 release verification in SiYuan 3.7.3, Chromium desktop/mobile and the deployed GitHub Pages build.
 2. Profile 1,000+ node import, outline editing and recursive disclosure without weakening transaction safety.
 3. Improve keyboard access and screen-reader labels for outline content status controls and image actions.
 4. Continue accessibility and mobile-layout coverage for content-rich outline rows.

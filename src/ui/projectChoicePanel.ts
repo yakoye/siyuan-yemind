@@ -14,6 +14,7 @@ export interface ProjectChoicePanelOptions {
   options: readonly ProjectChoiceOption[];
   presentation?: 'list' | 'palette';
   selected: string;
+  applyLabel?(option: ProjectChoiceOption): string;
   readonly(): boolean;
   onSelect(value: string): void;
 }
@@ -106,14 +107,23 @@ export class ProjectChoicePanel {
       }
       return;
     }
+    const apply = target.closest<HTMLButtonElement>('[data-project-choice-apply]');
+    if (apply) {
+      if (apply.disabled || this.config.readonly()) return;
+      this.config.onSelect(this.selected);
+      this.hide();
+      return;
+    }
     const button = target.closest<HTMLButtonElement>('[data-project-choice-value]');
     if (!button || button.disabled || this.config.readonly()) return;
     const value = button.dataset.projectChoiceValue ?? '';
     if (!value) return;
     this.selected = value;
-    this.config.onSelect(value);
     this.render();
-    this.hide();
+    if (!this.config.applyLabel) {
+      this.config.onSelect(value);
+      this.hide();
+    }
   };
 
   private groups(): string[] {
@@ -187,6 +197,18 @@ export class ProjectChoicePanel {
     });
 
     this.body.append(tabs, grid);
+    const selectedOption = this.config.options.find((option) => option.value === this.selected);
+    if (this.config.applyLabel && selectedOption) {
+      const footer = document.createElement('footer');
+      footer.className = 'ymz-project-choice-panel__footer';
+      const apply = document.createElement('button');
+      apply.type = 'button';
+      apply.dataset.projectChoiceApply = 'true';
+      apply.textContent = this.config.applyLabel(selectedOption);
+      apply.disabled = this.config.readonly();
+      footer.appendChild(apply);
+      this.body.appendChild(footer);
+    }
   }
 
   private renderList(): void {

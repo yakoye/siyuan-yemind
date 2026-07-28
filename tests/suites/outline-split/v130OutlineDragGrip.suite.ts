@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const css = readFileSync('src/styles/index.css', 'utf8');
+const css = readFileSync('src/styles/index.css', 'utf8').replace(/\r\n?/g, '\n');
 const controller = readFileSync('src/editor/StructuredOutlineEditorController.ts', 'utf8');
 
 function finalCssBlock(selector: string): string {

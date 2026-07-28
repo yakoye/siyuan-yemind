@@ -144,7 +144,7 @@ export function outlineAccessoriesHtml(accessories: OutlineAccessories, pluginBa
     : '';
   const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join('');
   const image = accessories.image
-    ? `<span role="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? ' is-clipart' : ''}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? 'clipart' : 'image'}" tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? '剪贴图：单击编辑，双击查看' : '图片：单击编辑，双击查看'))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false">${outlineMediaChrome(accessories.image.clipartId ? 'clipart' : 'image')}</span>`
+    ? `<span role="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? ' is-clipart' : ''}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? 'clipart' : 'image'}" tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? '剪贴图：单击选择，双击预览' : '图片：单击选择，双击预览'))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false">${outlineMediaChrome(accessories.image.clipartId ? 'clipart' : 'image')}</span>`
     : '';
   const tags = accessories.tags.length
     ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute(accessories.tags.join('、'))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute(tag)}</span>`).join('')}</span>`

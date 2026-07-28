@@ -4614,88 +4614,88 @@ const YEMIND_THEME_COLOR_APPEARANCES = [
     "centerText": "#3949AB",
     "centerBackground": "transparent",
     "centerBorder": "transparent",
-    "cycleLength": 1,
+    "cycleLength": 6,
     "branches": [
       {
-        "centerToLevel1Line": "#141414",
-        "level1Text": "#000000",
-        "level1Background": "#EEEEEE",
+        "centerToLevel1Line": "#3949AB",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#3949AB",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#141414",
+        "level1ToLevel2Line": "#3949AB",
         "level2Text": "#000000",
         "level2Background": "#EEEEEE",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#141414",
+        "level2ToNormalLine": "#3949AB",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#141414",
-        "level1Text": "#000000",
-        "level1Background": "#EEEEEE",
+        "centerToLevel1Line": "#E53935",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#E53935",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#141414",
+        "level1ToLevel2Line": "#E53935",
         "level2Text": "#000000",
         "level2Background": "#EEEEEE",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#141414",
+        "level2ToNormalLine": "#E53935",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#141414",
+        "centerToLevel1Line": "#C0CA33",
         "level1Text": "#000000",
-        "level1Background": "#EEEEEE",
+        "level1Background": "#C0CA33",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#141414",
+        "level1ToLevel2Line": "#C0CA33",
         "level2Text": "#000000",
         "level2Background": "#EEEEEE",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#141414",
+        "level2ToNormalLine": "#C0CA33",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#141414",
-        "level1Text": "#000000",
-        "level1Background": "#EEEEEE",
+        "centerToLevel1Line": "#00897B",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#00897B",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#141414",
+        "level1ToLevel2Line": "#00897B",
         "level2Text": "#000000",
         "level2Background": "#EEEEEE",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#141414",
+        "level2ToNormalLine": "#00897B",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#141414",
-        "level1Text": "#000000",
-        "level1Background": "#EEEEEE",
+        "centerToLevel1Line": "#1E88E5",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#1E88E5",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#141414",
+        "level1ToLevel2Line": "#1E88E5",
         "level2Text": "#000000",
         "level2Background": "#EEEEEE",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#141414",
+        "level2ToNormalLine": "#1E88E5",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#141414",
-        "level1Text": "#000000",
-        "level1Background": "#EEEEEE",
+        "centerToLevel1Line": "#8E24AA",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#8E24AA",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#141414",
+        "level1ToLevel2Line": "#8E24AA",
         "level2Text": "#000000",
         "level2Background": "#EEEEEE",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#141414",
+        "level2ToNormalLine": "#8E24AA",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
@@ -4712,88 +4712,88 @@ const YEMIND_THEME_COLOR_APPEARANCES = [
     "centerText": "#000000",
     "centerBackground": "transparent",
     "centerBorder": "transparent",
-    "cycleLength": 1,
+    "cycleLength": 6,
     "branches": [
       {
-        "centerToLevel1Line": "#FFFFFF",
-        "level1Text": "#000000",
-        "level1Background": "#FFFFFF",
+        "centerToLevel1Line": "#2196F3",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#2196F3",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FFFFFF",
+        "level1ToLevel2Line": "#2196F3",
         "level2Text": "#000000",
         "level2Background": "#FFFFFF",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FFFFFF",
+        "level2ToNormalLine": "#2196F3",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FFFFFF",
-        "level1Text": "#000000",
-        "level1Background": "#FFFFFF",
+        "centerToLevel1Line": "#3F51B5",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#3F51B5",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FFFFFF",
+        "level1ToLevel2Line": "#3F51B5",
         "level2Text": "#000000",
         "level2Background": "#FFFFFF",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FFFFFF",
+        "level2ToNormalLine": "#3F51B5",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FFFFFF",
-        "level1Text": "#000000",
-        "level1Background": "#FFFFFF",
+        "centerToLevel1Line": "#F44336",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#F44336",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FFFFFF",
+        "level1ToLevel2Line": "#F44336",
         "level2Text": "#000000",
         "level2Background": "#FFFFFF",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FFFFFF",
+        "level2ToNormalLine": "#F44336",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FFFFFF",
-        "level1Text": "#000000",
-        "level1Background": "#FFFFFF",
+        "centerToLevel1Line": "#FF9800",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#FF9800",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FFFFFF",
+        "level1ToLevel2Line": "#FF9800",
         "level2Text": "#000000",
         "level2Background": "#FFFFFF",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FFFFFF",
+        "level2ToNormalLine": "#FF9800",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FFFFFF",
+        "centerToLevel1Line": "#CDDC39",
         "level1Text": "#000000",
-        "level1Background": "#FFFFFF",
+        "level1Background": "#CDDC39",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FFFFFF",
+        "level1ToLevel2Line": "#CDDC39",
         "level2Text": "#000000",
         "level2Background": "#FFFFFF",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FFFFFF",
+        "level2ToNormalLine": "#CDDC39",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FFFFFF",
-        "level1Text": "#000000",
-        "level1Background": "#FFFFFF",
+        "centerToLevel1Line": "#009688",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#009688",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FFFFFF",
+        "level1ToLevel2Line": "#009688",
         "level2Text": "#000000",
         "level2Background": "#FFFFFF",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FFFFFF",
+        "level2ToNormalLine": "#009688",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
@@ -4810,88 +4810,88 @@ const YEMIND_THEME_COLOR_APPEARANCES = [
     "centerText": "#A61D39",
     "centerBackground": "transparent",
     "centerBorder": "transparent",
-    "cycleLength": 1,
+    "cycleLength": 6,
     "branches": [
       {
-        "centerToLevel1Line": "#4A1019",
+        "centerToLevel1Line": "#982B3C",
         "level1Text": "#FFFFFF",
-        "level1Background": "#D02F48",
+        "level1Background": "#982B3C",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#4A1019",
+        "level1ToLevel2Line": "#982B3C",
         "level2Text": "#000000",
         "level2Background": "#E5E5E5",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#4A1019",
+        "level2ToNormalLine": "#982B3C",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#4A1019",
+        "centerToLevel1Line": "#AE942F",
         "level1Text": "#FFFFFF",
-        "level1Background": "#D02F48",
+        "level1Background": "#AE942F",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#4A1019",
+        "level1ToLevel2Line": "#AE942F",
         "level2Text": "#000000",
         "level2Background": "#E5E5E5",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#4A1019",
+        "level2ToNormalLine": "#AE942F",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#4A1019",
+        "centerToLevel1Line": "#307047",
         "level1Text": "#FFFFFF",
-        "level1Background": "#D02F48",
+        "level1Background": "#307047",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#4A1019",
+        "level1ToLevel2Line": "#307047",
         "level2Text": "#000000",
         "level2Background": "#E5E5E5",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#4A1019",
+        "level2ToNormalLine": "#307047",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#4A1019",
+        "centerToLevel1Line": "#225373",
         "level1Text": "#FFFFFF",
-        "level1Background": "#D02F48",
+        "level1Background": "#225373",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#4A1019",
+        "level1ToLevel2Line": "#225373",
         "level2Text": "#000000",
         "level2Background": "#E5E5E5",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#4A1019",
+        "level2ToNormalLine": "#225373",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#4A1019",
+        "centerToLevel1Line": "#19417C",
         "level1Text": "#FFFFFF",
-        "level1Background": "#D02F48",
+        "level1Background": "#19417C",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#4A1019",
+        "level1ToLevel2Line": "#19417C",
         "level2Text": "#000000",
         "level2Background": "#E5E5E5",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#4A1019",
+        "level2ToNormalLine": "#19417C",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#4A1019",
+        "centerToLevel1Line": "#5A2866",
         "level1Text": "#FFFFFF",
-        "level1Background": "#D02F48",
+        "level1Background": "#5A2866",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#4A1019",
+        "level1ToLevel2Line": "#5A2866",
         "level2Text": "#000000",
         "level2Background": "#E5E5E5",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#4A1019",
+        "level2ToNormalLine": "#5A2866",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
@@ -4908,88 +4908,88 @@ const YEMIND_THEME_COLOR_APPEARANCES = [
     "centerText": "#EF6C70",
     "centerBackground": "transparent",
     "centerBorder": "transparent",
-    "cycleLength": 1,
+    "cycleLength": 6,
     "branches": [
       {
-        "centerToLevel1Line": "#FDF1F1",
+        "centerToLevel1Line": "#DF7474",
         "level1Text": "#FFFFFF",
-        "level1Background": "#D02F48",
+        "level1Background": "#DF7474",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FDF1F1",
+        "level1ToLevel2Line": "#DF7474",
         "level2Text": "#FFFFFF",
         "level2Background": "#7C1C2B",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FDF1F1",
+        "level2ToNormalLine": "#DF7474",
         "normalText": "#FFFFFF",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FDF1F1",
-        "level1Text": "#FFFFFF",
-        "level1Background": "#D02F48",
+        "centerToLevel1Line": "#F4D956",
+        "level1Text": "#000000",
+        "level1Background": "#F4D956",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FDF1F1",
+        "level1ToLevel2Line": "#F4D956",
         "level2Text": "#FFFFFF",
         "level2Background": "#7C1C2B",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FDF1F1",
+        "level2ToNormalLine": "#F4D956",
         "normalText": "#FFFFFF",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FDF1F1",
-        "level1Text": "#FFFFFF",
-        "level1Background": "#D02F48",
+        "centerToLevel1Line": "#BAC74C",
+        "level1Text": "#000000",
+        "level1Background": "#BAC74C",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FDF1F1",
+        "level1ToLevel2Line": "#BAC74C",
         "level2Text": "#FFFFFF",
         "level2Background": "#7C1C2B",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FDF1F1",
+        "level2ToNormalLine": "#BAC74C",
         "normalText": "#FFFFFF",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FDF1F1",
+        "centerToLevel1Line": "#4396B5",
         "level1Text": "#FFFFFF",
-        "level1Background": "#D02F48",
+        "level1Background": "#4396B5",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FDF1F1",
+        "level1ToLevel2Line": "#4396B5",
         "level2Text": "#FFFFFF",
         "level2Background": "#7C1C2B",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FDF1F1",
+        "level2ToNormalLine": "#4396B5",
         "normalText": "#FFFFFF",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FDF1F1",
+        "centerToLevel1Line": "#7574B7",
         "level1Text": "#FFFFFF",
-        "level1Background": "#D02F48",
+        "level1Background": "#7574B7",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FDF1F1",
+        "level1ToLevel2Line": "#7574B7",
         "level2Text": "#FFFFFF",
         "level2Background": "#7C1C2B",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FDF1F1",
+        "level2ToNormalLine": "#7574B7",
         "normalText": "#FFFFFF",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FDF1F1",
+        "centerToLevel1Line": "#C36D8D",
         "level1Text": "#FFFFFF",
-        "level1Background": "#D02F48",
+        "level1Background": "#C36D8D",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FDF1F1",
+        "level1ToLevel2Line": "#C36D8D",
         "level2Text": "#FFFFFF",
         "level2Background": "#7C1C2B",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FDF1F1",
+        "level2ToNormalLine": "#C36D8D",
         "normalText": "#FFFFFF",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
@@ -5006,88 +5006,88 @@ const YEMIND_THEME_COLOR_APPEARANCES = [
     "centerText": "#000000",
     "centerBackground": "transparent",
     "centerBorder": "transparent",
-    "cycleLength": 1,
+    "cycleLength": 6,
     "branches": [
       {
-        "centerToLevel1Line": "#FFFFFF",
-        "level1Text": "#000000",
-        "level1Background": "#FFFFFF",
+        "centerToLevel1Line": "#BF3E4C",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#BF3E4C",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FFFFFF",
+        "level1ToLevel2Line": "#BF3E4C",
         "level2Text": "#FFFFFF",
         "level2Background": "#7C1C2B",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FFFFFF",
+        "level2ToNormalLine": "#BF3E4C",
         "normalText": "#FFFFFF",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FFFFFF",
+        "centerToLevel1Line": "#E8CA43",
         "level1Text": "#000000",
-        "level1Background": "#FFFFFF",
+        "level1Background": "#E8CA43",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FFFFFF",
+        "level1ToLevel2Line": "#E8CA43",
         "level2Text": "#FFFFFF",
         "level2Background": "#7C1C2B",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FFFFFF",
+        "level2ToNormalLine": "#E8CA43",
         "normalText": "#FFFFFF",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FFFFFF",
+        "centerToLevel1Line": "#ACBA3A",
         "level1Text": "#000000",
-        "level1Background": "#FFFFFF",
+        "level1Background": "#ACBA3A",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FFFFFF",
+        "level1ToLevel2Line": "#ACBA3A",
         "level2Text": "#FFFFFF",
         "level2Background": "#7C1C2B",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FFFFFF",
+        "level2ToNormalLine": "#ACBA3A",
         "normalText": "#FFFFFF",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FFFFFF",
-        "level1Text": "#000000",
-        "level1Background": "#FFFFFF",
+        "centerToLevel1Line": "#255AA0",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#255AA0",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FFFFFF",
+        "level1ToLevel2Line": "#255AA0",
         "level2Text": "#FFFFFF",
         "level2Background": "#7C1C2B",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FFFFFF",
+        "level2ToNormalLine": "#255AA0",
         "normalText": "#FFFFFF",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FFFFFF",
-        "level1Text": "#000000",
-        "level1Background": "#FFFFFF",
+        "centerToLevel1Line": "#514A9B",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#514A9B",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FFFFFF",
+        "level1ToLevel2Line": "#514A9B",
         "level2Text": "#FFFFFF",
         "level2Background": "#7C1C2B",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FFFFFF",
+        "level2ToNormalLine": "#514A9B",
         "normalText": "#FFFFFF",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#FFFFFF",
-        "level1Text": "#000000",
-        "level1Background": "#FFFFFF",
+        "centerToLevel1Line": "#783B86",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#783B86",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#FFFFFF",
+        "level1ToLevel2Line": "#783B86",
         "level2Text": "#FFFFFF",
         "level2Background": "#7C1C2B",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#FFFFFF",
+        "level2ToNormalLine": "#783B86",
         "normalText": "#FFFFFF",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
@@ -5104,88 +5104,88 @@ const YEMIND_THEME_COLOR_APPEARANCES = [
     "centerText": "#000000",
     "centerBackground": "transparent",
     "centerBorder": "transparent",
-    "cycleLength": 1,
+    "cycleLength": 6,
     "branches": [
       {
-        "centerToLevel1Line": "#88675E",
-        "level1Text": "#000000",
-        "level1Background": "#C1ABA5",
+        "centerToLevel1Line": "#BDACA6",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#BDACA6",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#88675E",
+        "level1ToLevel2Line": "#BDACA6",
         "level2Text": "#000000",
         "level2Background": "#E6DDDA",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#88675E",
+        "level2ToNormalLine": "#BDACA6",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#88675E",
+        "centerToLevel1Line": "#C5BEA4",
         "level1Text": "#000000",
-        "level1Background": "#C1ABA5",
+        "level1Background": "#C5BEA4",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#88675E",
+        "level1ToLevel2Line": "#C5BEA4",
         "level2Text": "#000000",
         "level2Background": "#E6DDDA",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#88675E",
+        "level2ToNormalLine": "#C5BEA4",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#88675E",
-        "level1Text": "#000000",
-        "level1Background": "#C1ABA5",
+        "centerToLevel1Line": "#A2B5A6",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#A2B5A6",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#88675E",
+        "level1ToLevel2Line": "#A2B5A6",
         "level2Text": "#000000",
         "level2Background": "#E6DDDA",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#88675E",
+        "level2ToNormalLine": "#A2B5A6",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#88675E",
-        "level1Text": "#000000",
-        "level1Background": "#C1ABA5",
+        "centerToLevel1Line": "#A2B3B8",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#A2B3B8",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#88675E",
+        "level1ToLevel2Line": "#A2B3B8",
         "level2Text": "#000000",
         "level2Background": "#E6DDDA",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#88675E",
+        "level2ToNormalLine": "#A2B3B8",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#88675E",
-        "level1Text": "#000000",
-        "level1Background": "#C1ABA5",
+        "centerToLevel1Line": "#A2A2AE",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#A2A2AE",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#88675E",
+        "level1ToLevel2Line": "#A2A2AE",
         "level2Text": "#000000",
         "level2Background": "#E6DDDA",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#88675E",
+        "level2ToNormalLine": "#A2A2AE",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#88675E",
-        "level1Text": "#000000",
-        "level1Background": "#C1ABA5",
+        "centerToLevel1Line": "#BAADB0",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#BAADB0",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#88675E",
+        "level1ToLevel2Line": "#BAADB0",
         "level2Text": "#000000",
         "level2Background": "#E6DDDA",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#88675E",
+        "level2ToNormalLine": "#BAADB0",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
@@ -5202,88 +5202,88 @@ const YEMIND_THEME_COLOR_APPEARANCES = [
     "centerText": "#000000",
     "centerBackground": "transparent",
     "centerBorder": "transparent",
-    "cycleLength": 1,
+    "cycleLength": 6,
     "branches": [
       {
-        "centerToLevel1Line": "#201E14",
-        "level1Text": "#000000",
-        "level1Background": "#AB9446",
+        "centerToLevel1Line": "#A79552",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#A79552",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#201E14",
+        "level1ToLevel2Line": "#A79552",
         "level2Text": "#000000",
         "level2Background": "#AB9446",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#201E14",
+        "level2ToNormalLine": "#A79552",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#201E14",
-        "level1Text": "#000000",
-        "level1Background": "#AB9446",
+        "centerToLevel1Line": "#5C8668",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#5C8668",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#201E14",
+        "level1ToLevel2Line": "#5C8668",
         "level2Text": "#000000",
         "level2Background": "#AB9446",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#201E14",
+        "level2ToNormalLine": "#5C8668",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#201E14",
-        "level1Text": "#000000",
-        "level1Background": "#AB9446",
+        "centerToLevel1Line": "#38697B",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#38697B",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#201E14",
+        "level1ToLevel2Line": "#38697B",
         "level2Text": "#000000",
         "level2Background": "#AB9446",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#201E14",
+        "level2ToNormalLine": "#38697B",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#201E14",
-        "level1Text": "#000000",
-        "level1Background": "#AB9446",
+        "centerToLevel1Line": "#545279",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#545279",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#201E14",
+        "level1ToLevel2Line": "#545279",
         "level2Text": "#000000",
         "level2Background": "#AB9446",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#201E14",
+        "level2ToNormalLine": "#545279",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#201E14",
-        "level1Text": "#000000",
-        "level1Background": "#AB9446",
+        "centerToLevel1Line": "#674B6F",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#674B6F",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#201E14",
+        "level1ToLevel2Line": "#674B6F",
         "level2Text": "#000000",
         "level2Background": "#AB9446",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#201E14",
+        "level2ToNormalLine": "#674B6F",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#201E14",
-        "level1Text": "#000000",
-        "level1Background": "#AB9446",
+        "centerToLevel1Line": "#835264",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#835264",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#201E14",
+        "level1ToLevel2Line": "#835264",
         "level2Text": "#000000",
         "level2Background": "#AB9446",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#201E14",
+        "level2ToNormalLine": "#835264",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
@@ -5300,88 +5300,88 @@ const YEMIND_THEME_COLOR_APPEARANCES = [
     "centerText": "#000000",
     "centerBackground": "transparent",
     "centerBorder": "transparent",
-    "cycleLength": 1,
+    "cycleLength": 6,
     "branches": [
       {
-        "centerToLevel1Line": "#232323",
+        "centerToLevel1Line": "#FFFFFF",
         "level1Text": "#000000",
-        "level1Background": "#D6D6D6",
+        "level1Background": "#FFFFFF",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#232323",
+        "level1ToLevel2Line": "#FFFFFF",
         "level2Text": "#000000",
         "level2Background": "#D6D6D6",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#232323",
+        "level2ToNormalLine": "#FFFFFF",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#232323",
+        "centerToLevel1Line": "#EDEDED",
         "level1Text": "#000000",
-        "level1Background": "#D6D6D6",
+        "level1Background": "#EDEDED",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#232323",
+        "level1ToLevel2Line": "#EDEDED",
         "level2Text": "#000000",
         "level2Background": "#D6D6D6",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#232323",
+        "level2ToNormalLine": "#EDEDED",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#232323",
+        "centerToLevel1Line": "#D3D3D3",
         "level1Text": "#000000",
-        "level1Background": "#D6D6D6",
+        "level1Background": "#D3D3D3",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#232323",
+        "level1ToLevel2Line": "#D3D3D3",
         "level2Text": "#000000",
         "level2Background": "#D6D6D6",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#232323",
+        "level2ToNormalLine": "#D3D3D3",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#232323",
-        "level1Text": "#000000",
-        "level1Background": "#D6D6D6",
+        "centerToLevel1Line": "#393939",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#393939",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#232323",
+        "level1ToLevel2Line": "#393939",
         "level2Text": "#000000",
         "level2Background": "#D6D6D6",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#232323",
+        "level2ToNormalLine": "#393939",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#232323",
-        "level1Text": "#000000",
-        "level1Background": "#D6D6D6",
+        "centerToLevel1Line": "#202020",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#202020",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#232323",
+        "level1ToLevel2Line": "#202020",
         "level2Text": "#000000",
         "level2Background": "#D6D6D6",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#232323",
+        "level2ToNormalLine": "#202020",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#232323",
-        "level1Text": "#000000",
-        "level1Background": "#D6D6D6",
+        "centerToLevel1Line": "#080808",
+        "level1Text": "#FFFFFF",
+        "level1Background": "#080808",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#232323",
+        "level1ToLevel2Line": "#080808",
         "level2Text": "#000000",
         "level2Background": "#D6D6D6",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#232323",
+        "level2ToNormalLine": "#080808",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
@@ -5398,88 +5398,88 @@ const YEMIND_THEME_COLOR_APPEARANCES = [
     "centerText": "#F44336",
     "centerBackground": "transparent",
     "centerBorder": "transparent",
-    "cycleLength": 1,
+    "cycleLength": 6,
     "branches": [
       {
-        "centerToLevel1Line": "#F44336",
+        "centerToLevel1Line": "#E15241",
         "level1Text": "#FFFFFF",
-        "level1Background": "#F44336",
+        "level1Background": "#E15241",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#F44336",
+        "level1ToLevel2Line": "#E15241",
         "level2Text": "#FFFFFF",
         "level2Background": "#F44336",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#F44336",
+        "level2ToNormalLine": "#E15241",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#F44336",
+        "centerToLevel1Line": "#F19D38",
         "level1Text": "#FFFFFF",
-        "level1Background": "#F44336",
+        "level1Background": "#F19D38",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#F44336",
+        "level1ToLevel2Line": "#F19D38",
         "level2Text": "#FFFFFF",
         "level2Background": "#F44336",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#F44336",
+        "level2ToNormalLine": "#F19D38",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#F44336",
+        "centerToLevel1Line": "#67AD5B",
         "level1Text": "#FFFFFF",
-        "level1Background": "#F44336",
+        "level1Background": "#67AD5B",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#F44336",
+        "level1ToLevel2Line": "#67AD5B",
         "level2Text": "#FFFFFF",
         "level2Background": "#F44336",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#F44336",
+        "level2ToNormalLine": "#67AD5B",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#F44336",
+        "centerToLevel1Line": "#4994EC",
         "level1Text": "#FFFFFF",
-        "level1Background": "#F44336",
+        "level1Background": "#4994EC",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#F44336",
+        "level1ToLevel2Line": "#4994EC",
         "level2Text": "#FFFFFF",
         "level2Background": "#F44336",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#F44336",
+        "level2ToNormalLine": "#4994EC",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#F44336",
+        "centerToLevel1Line": "#4350AF",
         "level1Text": "#FFFFFF",
-        "level1Background": "#F44336",
+        "level1Background": "#4350AF",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#F44336",
+        "level1ToLevel2Line": "#4350AF",
         "level2Text": "#FFFFFF",
         "level2Background": "#F44336",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#F44336",
+        "level2ToNormalLine": "#4350AF",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
       },
       {
-        "centerToLevel1Line": "#F44336",
+        "centerToLevel1Line": "#D63864",
         "level1Text": "#FFFFFF",
-        "level1Background": "#F44336",
+        "level1Background": "#D63864",
         "level1Border": "transparent",
-        "level1ToLevel2Line": "#F44336",
+        "level1ToLevel2Line": "#D63864",
         "level2Text": "#FFFFFF",
         "level2Background": "#F44336",
         "level2Border": "transparent",
-        "level2ToNormalLine": "#F44336",
+        "level2ToNormalLine": "#D63864",
         "normalText": "#000000",
         "normalBackground": "transparent",
         "normalBorder": "transparent"
@@ -5509,6 +5509,72 @@ function requiredAppearance(presetId, appearance) {
   const item = getThemeColorAppearance(presetId, appearance);
   if (!item) throw new Error(`Missing theme color appearance: ${presetId}/${appearance}`);
   return item;
+}
+function mixHex(background, foreground, ratio) {
+  const channel = (value, offset) => Number.parseInt(value.slice(offset, offset + 2), 16);
+  const mixed = [1, 3, 5].map((offset) => Math.round(
+    channel(background, offset) * (1 - ratio) + channel(foreground, offset) * ratio
+  ));
+  return `#${mixed.map((value) => value.toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+}
+const DARK_CANVAS = "#111318";
+function darkFixedAppearance(input) {
+  var _a;
+  const primary = ((_a = input.branches[0]) == null ? void 0 : _a.centerToLevel1Line) ?? "#22C9A0";
+  const centerSource = input.centerBackground === "transparent" ? primary : input.centerBackground;
+  return {
+    ...input,
+    id: `${input.presetId}-dark`,
+    appearance: "dark",
+    background: DARK_CANVAS,
+    centerText: "#F8FAFC",
+    centerBackground: mixHex(DARK_CANVAS, centerSource, 0.55),
+    centerBorder: input.centerBorder === "transparent" ? primary : input.centerBorder,
+    branches: input.branches.map((branch2) => {
+      const color2 = branch2.centerToLevel1Line;
+      return {
+        ...branch2,
+        level1Text: "#F8FAFC",
+        level1Background: mixHex(DARK_CANVAS, color2, 0.28),
+        level1Border: color2,
+        level2Text: "#E8EDF5",
+        level2Background: mixHex(DARK_CANVAS, color2, 0.18),
+        level2Border: mixHex(DARK_CANVAS, color2, 0.62),
+        normalText: "#D8DFEA",
+        normalBackground: mixHex(DARK_CANVAS, color2, 0.09),
+        normalBorder: mixHex(DARK_CANVAS, color2, 0.4)
+      };
+    })
+  };
+}
+function baseColorAppearance(input) {
+  const dark = input.appearance === "dark";
+  return {
+    id: `${input.presetId}-${input.appearance}`,
+    presetId: input.presetId,
+    name: input.name,
+    category: "基础",
+    appearance: input.appearance,
+    background: input.background,
+    centerText: input.centerText,
+    centerBackground: input.centerBackground,
+    centerBorder: mixHex(input.centerBackground, input.colors[0], dark ? 0.72 : 0.5),
+    cycleLength: 6,
+    branches: input.colors.map((color2) => ({
+      centerToLevel1Line: color2,
+      level1Text: dark ? "#F8FAFC" : "#172033",
+      level1Background: mixHex(input.background, color2, dark ? 0.28 : 0.16),
+      level1Border: color2,
+      level1ToLevel2Line: color2,
+      level2Text: dark ? "#E8EDF5" : "#263248",
+      level2Background: mixHex(input.background, color2, dark ? 0.2 : 0.1),
+      level2Border: mixHex(input.background, color2, dark ? 0.65 : 0.52),
+      level2ToNormalLine: mixHex(input.background, color2, dark ? 0.72 : 0.62),
+      normalText: dark ? "#D8DFEA" : "#344158",
+      normalBackground: mixHex(input.background, color2, dark ? 0.13 : 0.055),
+      normalBorder: mixHex(input.background, color2, dark ? 0.48 : 0.35)
+    }))
+  };
 }
 function buildVariant(colors, visual) {
   const branch2 = colors.branches[0];
@@ -5585,7 +5651,7 @@ const BASE_PRESETS = [
   },
   {
     id: "ink-branch",
-    label: "Ink Branch",
+    label: "墨枝",
     description: "粗线条极简分支",
     group: "基础",
     light: buildVariant(requiredAppearance("ink-branch", "light"), "ink"),
@@ -5593,11 +5659,83 @@ const BASE_PRESETS = [
   },
   {
     id: "material-3-basic",
-    label: "Material 3 Basic",
+    label: "质感",
     description: "柔和圆角 Material 风格",
     group: "基础",
     light: buildVariant(requiredAppearance("material-3-basic", "light"), "material"),
     dark: buildVariant(requiredAppearance("material-3-basic", "dark"), "material")
+  },
+  {
+    id: "aurora",
+    label: "极光",
+    description: "深空底色与极光渐变分支",
+    group: "基础",
+    light: buildVariant(baseColorAppearance({
+      presetId: "aurora",
+      name: "极光",
+      appearance: "light",
+      background: "#F2F5FF",
+      centerBackground: "#18213B",
+      centerText: "#F8FAFF",
+      colors: ["#5B6CFF", "#7C4DFF", "#C34DFF", "#00A8E8", "#00C9A7", "#4FD1C5"]
+    }), "scheme"),
+    dark: buildVariant(baseColorAppearance({
+      presetId: "aurora",
+      name: "极光",
+      appearance: "dark",
+      background: "#0E1220",
+      centerBackground: "#19213A",
+      centerText: "#F8FAFF",
+      colors: ["#7D8CFF", "#9B73FF", "#D56AFF", "#35C4FF", "#26E0B4", "#6FE7DA"]
+    }), "scheme")
+  },
+  {
+    id: "morning-mist",
+    label: "晨雾",
+    description: "低饱和雾蓝与清晨柔光",
+    group: "基础",
+    light: buildVariant(baseColorAppearance({
+      presetId: "morning-mist",
+      name: "晨雾",
+      appearance: "light",
+      background: "#F4F7F8",
+      centerBackground: "#E6EEF0",
+      centerText: "#263B42",
+      colors: ["#6D9FA8", "#7BA6B2", "#91AAA6", "#A3A99B", "#8B96AC", "#A88F9E"]
+    }), "scheme"),
+    dark: buildVariant(baseColorAppearance({
+      presetId: "morning-mist",
+      name: "晨雾",
+      appearance: "dark",
+      background: "#151B1D",
+      centerBackground: "#273337",
+      centerText: "#E8F1F3",
+      colors: ["#79B5C0", "#83B8C6", "#9ABCB6", "#B5B9A9", "#9DA9C1", "#BAA0AE"]
+    }), "scheme")
+  },
+  {
+    id: "dunes",
+    label: "沙丘",
+    description: "温暖砂岩与大地色分支",
+    group: "基础",
+    light: buildVariant(baseColorAppearance({
+      presetId: "dunes",
+      name: "沙丘",
+      appearance: "light",
+      background: "#FBF5E9",
+      centerBackground: "#8A6042",
+      centerText: "#FFF9EF",
+      colors: ["#B77948", "#D39B5E", "#C4A66A", "#9F8C5D", "#B86F52", "#8A7356"]
+    }), "scheme"),
+    dark: buildVariant(baseColorAppearance({
+      presetId: "dunes",
+      name: "沙丘",
+      appearance: "dark",
+      background: "#211A15",
+      centerBackground: "#725039",
+      centerText: "#FFF3DF",
+      colors: ["#D4935F", "#E2AD70", "#D0B474", "#B4A06D", "#D18466", "#A88B69"]
+    }), "scheme")
   }
 ];
 const COLOR_PRESETS = YEMIND_THEME_COLOR_APPEARANCES.filter((item) => item.appearance === "fixed").map((item) => ({
@@ -5606,7 +5744,7 @@ const COLOR_PRESETS = YEMIND_THEME_COLOR_APPEARANCES.filter((item) => item.appea
   description: `${item.name}主题`,
   group: item.category,
   light: buildVariant(item, "scheme"),
-  dark: buildVariant(item, "scheme")
+  dark: buildVariant(darkFixedAppearance(item), "scheme")
 }));
 const YEMIND_THEME_PRESETS = [
   ...BASE_PRESETS,
@@ -5739,7 +5877,7 @@ const definitions = [
   { presetId: "timeline-up", engineLayout: "yemindTimelineUp", baseLayout: "verticalTimeline", kind: "derived", rootGrowth: "top", nodeGrowth: "top", siblingAxis: "y", branchMode: "fixed", transform: "mirror-y" },
   { presetId: "timeline-s", engineLayout: "yemindTimelineS", baseLayout: "timeline", kind: "specialized", rootGrowth: "right", nodeGrowth: "right", siblingAxis: "x", branchMode: "horizontal" },
   { presetId: "organization-down", engineLayout: "yemindOrganizationDown", baseLayout: "organizationStructure", kind: "native", rootGrowth: "bottom", nodeGrowth: "bottom", siblingAxis: "x", branchMode: "fixed" },
-  { presetId: "organization-bidirectional", engineLayout: "yemindOrganizationBidirectional", baseLayout: "organizationStructure", kind: "specialized", rootGrowth: "bottom", nodeGrowth: "bottom", siblingAxis: "x", branchMode: "vertical" },
+  { presetId: "organization-right", engineLayout: "yemindOrganizationRight", baseLayout: "logicalStructure", kind: "derived", rootGrowth: "right", nodeGrowth: "right", siblingAxis: "y", branchMode: "fixed" },
   { presetId: "organization-up", engineLayout: "yemindOrganizationUp", baseLayout: "organizationStructure", kind: "derived", rootGrowth: "top", nodeGrowth: "top", siblingAxis: "x", branchMode: "fixed", transform: "mirror-y" },
   { presetId: "fishbone-left", engineLayout: "yemindFishboneLeft", baseLayout: "fishbone2", kind: "native", rootGrowth: "right", nodeGrowth: "right", siblingAxis: "y", branchMode: "fishbone" },
   { presetId: "fishbone-right", engineLayout: "yemindFishboneRight", baseLayout: "rightFishbone2", kind: "derived", rootGrowth: "left", nodeGrowth: "left", siblingAxis: "y", branchMode: "fishbone", transform: "mirror-x" },
@@ -5815,8 +5953,13 @@ const LAYOUT_IDS = /* @__PURE__ */ new Set([
   ...YEMIND_LAYOUT_PRESETS.map((item) => item.id),
   ...YEMIND_LAYOUT_ENGINE_IDS
 ]);
+const LEGACY_LAYOUT_ALIASES = {
+  yemindOrganizationBidirectional: "yemindOrganizationRight"
+};
 function normalizeLayoutId(value) {
-  return typeof value === "string" && LAYOUT_IDS.has(value) ? value : "logicalStructure";
+  if (typeof value !== "string") return "logicalStructure";
+  const normalized2 = LEGACY_LAYOUT_ALIASES[value] ?? value;
+  return LAYOUT_IDS.has(normalized2) ? normalized2 : "logicalStructure";
 }
 function layoutOptionsHtml(selected) {
   const value = normalizeLayoutId(selected);
@@ -5847,7 +5990,7 @@ const clipartCatalogJson = {
   categories,
   items: items$1
 };
-const items = [{ "id": "right-mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "右向导图", "fileName": "04_right-mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/04_right-mindmap.svg" }, { "id": "left-mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "左向导图", "fileName": "05_left-mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/05_left-mindmap.svg" }, { "id": "mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "思维导图", "fileName": "01_mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/01_mindmap.svg" }, { "id": "reverse-mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "逆向导图", "fileName": "02_reverse-mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/02_reverse-mindmap.svg" }, { "id": "balanced-down", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "双向平衡向下", "fileName": "03_balanced-down.svg", "relativePath": "layout-thumbnails/01_mindmap/03_balanced-down.svg" }, { "id": "tree-right-down", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（右下）", "fileName": "01_tree-right-down.svg", "relativePath": "layout-thumbnails/02_tree/01_tree-right-down.svg" }, { "id": "tree-left-down", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（左下）", "fileName": "02_tree-left-down.svg", "relativePath": "layout-thumbnails/02_tree/02_tree-left-down.svg" }, { "id": "tree-down-symmetric", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（向下对称）", "fileName": "03_tree-down-symmetric.svg", "relativePath": "layout-thumbnails/02_tree/03_tree-down-symmetric.svg" }, { "id": "tree-up-symmetric", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（向上对称）", "fileName": "04_tree-up-symmetric.svg", "relativePath": "layout-thumbnails/02_tree/04_tree-up-symmetric.svg" }, { "id": "tree-right-up", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（右上）", "fileName": "05_tree-right-up.svg", "relativePath": "layout-thumbnails/02_tree/05_tree-right-up.svg" }, { "id": "tree-left-up", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（左上）", "fileName": "06_tree-left-up.svg", "relativePath": "layout-thumbnails/02_tree/06_tree-left-up.svg" }, { "id": "timeline-right", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向右）", "fileName": "01_timeline-right.svg", "relativePath": "layout-thumbnails/03_timeline/01_timeline-right.svg" }, { "id": "timeline-left", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向左）", "fileName": "02_timeline-left.svg", "relativePath": "layout-thumbnails/03_timeline/02_timeline-left.svg" }, { "id": "timeline-down", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向下）", "fileName": "03_timeline-down.svg", "relativePath": "layout-thumbnails/03_timeline/03_timeline-down.svg" }, { "id": "timeline-up", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向上）", "fileName": "04_timeline-up.svg", "relativePath": "layout-thumbnails/03_timeline/04_timeline-up.svg" }, { "id": "timeline-s", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（S型）", "fileName": "05_timeline-s.svg", "relativePath": "layout-thumbnails/03_timeline/05_timeline-s.svg" }, { "id": "organization-down", "groupId": "organization", "groupLabel": "组织结构图", "title": "组织结构图（向下）", "fileName": "01_organization-down.svg", "relativePath": "layout-thumbnails/04_organization/01_organization-down.svg" }, { "id": "organization-bidirectional", "groupId": "organization", "groupLabel": "组织结构图", "title": "组织结构图（上下双向）", "fileName": "02_organization-bidirectional.svg", "relativePath": "layout-thumbnails/04_organization/02_organization-bidirectional.svg" }, { "id": "organization-up", "groupId": "organization", "groupLabel": "组织结构图", "title": "组织结构图（向上）", "fileName": "03_organization-up.svg", "relativePath": "layout-thumbnails/04_organization/03_organization-up.svg" }, { "id": "fishbone-left", "groupId": "fishbone", "groupLabel": "鱼骨图", "title": "鱼骨图（左）", "fileName": "01_fishbone-left.svg", "relativePath": "layout-thumbnails/05_fishbone/01_fishbone-left.svg" }, { "id": "fishbone-right", "groupId": "fishbone", "groupLabel": "鱼骨图", "title": "鱼骨图（右）", "fileName": "02_fishbone-right.svg", "relativePath": "layout-thumbnails/05_fishbone/02_fishbone-right.svg" }, { "id": "tree-table-top-title", "groupId": "tree-table", "groupLabel": "树形表格", "title": "树形表格（顶部标题）", "fileName": "01_tree-table-top-title.svg", "relativePath": "layout-thumbnails/06_tree-table/01_tree-table-top-title.svg" }, { "id": "tree-table-left-title", "groupId": "tree-table", "groupLabel": "树形表格", "title": "树形表格（左侧标题）", "fileName": "02_tree-table-left-title.svg", "relativePath": "layout-thumbnails/06_tree-table/02_tree-table-left-title.svg" }, { "id": "radial-sector", "groupId": "other", "groupLabel": "其他", "title": "扇形放射图", "fileName": "01_radial-sector.svg", "relativePath": "layout-thumbnails/07_other/01_radial-sector.svg" }, { "id": "circle", "groupId": "other", "groupLabel": "其他", "title": "圆形图", "fileName": "02_circle.svg", "relativePath": "layout-thumbnails/07_other/02_circle.svg" }, { "id": "bubble", "groupId": "other", "groupLabel": "其他", "title": "气泡图", "fileName": "03_bubble.svg", "relativePath": "layout-thumbnails/07_other/03_bubble.svg" }, { "id": "bracket-right", "groupId": "other", "groupLabel": "其他", "title": "括号图（右）", "fileName": "04_bracket-right.svg", "relativePath": "layout-thumbnails/07_other/04_bracket-right.svg" }, { "id": "bracket-left", "groupId": "other", "groupLabel": "其他", "title": "括号图（左）", "fileName": "05_bracket-left.svg", "relativePath": "layout-thumbnails/07_other/05_bracket-left.svg" }];
+const items = [{ "id": "right-mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "右向导图", "fileName": "04_right-mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/04_right-mindmap.svg" }, { "id": "left-mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "左向导图", "fileName": "05_left-mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/05_left-mindmap.svg" }, { "id": "mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "思维导图", "fileName": "01_mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/01_mindmap.svg" }, { "id": "reverse-mindmap", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "逆向导图", "fileName": "02_reverse-mindmap.svg", "relativePath": "layout-thumbnails/01_mindmap/02_reverse-mindmap.svg" }, { "id": "balanced-down", "groupId": "mindmap", "groupLabel": "思维导图（逻辑图）", "title": "双向平衡向下", "fileName": "03_balanced-down.svg", "relativePath": "layout-thumbnails/01_mindmap/03_balanced-down.svg" }, { "id": "tree-right-down", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（右下）", "fileName": "01_tree-right-down.svg", "relativePath": "layout-thumbnails/02_tree/01_tree-right-down.svg" }, { "id": "tree-left-down", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（左下）", "fileName": "02_tree-left-down.svg", "relativePath": "layout-thumbnails/02_tree/02_tree-left-down.svg" }, { "id": "tree-down-symmetric", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（向下对称）", "fileName": "03_tree-down-symmetric.svg", "relativePath": "layout-thumbnails/02_tree/03_tree-down-symmetric.svg" }, { "id": "tree-up-symmetric", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（向上对称）", "fileName": "04_tree-up-symmetric.svg", "relativePath": "layout-thumbnails/02_tree/04_tree-up-symmetric.svg" }, { "id": "tree-right-up", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（右上）", "fileName": "05_tree-right-up.svg", "relativePath": "layout-thumbnails/02_tree/05_tree-right-up.svg" }, { "id": "tree-left-up", "groupId": "tree", "groupLabel": "树状图", "title": "树状图（左上）", "fileName": "06_tree-left-up.svg", "relativePath": "layout-thumbnails/02_tree/06_tree-left-up.svg" }, { "id": "timeline-right", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向右）", "fileName": "01_timeline-right.svg", "relativePath": "layout-thumbnails/03_timeline/01_timeline-right.svg" }, { "id": "timeline-left", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向左）", "fileName": "02_timeline-left.svg", "relativePath": "layout-thumbnails/03_timeline/02_timeline-left.svg" }, { "id": "timeline-down", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向下）", "fileName": "03_timeline-down.svg", "relativePath": "layout-thumbnails/03_timeline/03_timeline-down.svg" }, { "id": "timeline-up", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（向上）", "fileName": "04_timeline-up.svg", "relativePath": "layout-thumbnails/03_timeline/04_timeline-up.svg" }, { "id": "timeline-s", "groupId": "timeline", "groupLabel": "时间轴", "title": "时间轴（S型）", "fileName": "05_timeline-s.svg", "relativePath": "layout-thumbnails/03_timeline/05_timeline-s.svg" }, { "id": "organization-down", "groupId": "organization", "groupLabel": "组织结构图", "title": "组织结构图（向下）", "fileName": "01_organization-down.svg", "relativePath": "layout-thumbnails/04_organization/01_organization-down.svg" }, { "id": "organization-up", "groupId": "organization", "groupLabel": "组织结构图", "title": "组织结构图（向上）", "fileName": "03_organization-up.svg", "relativePath": "layout-thumbnails/04_organization/03_organization-up.svg" }, { "id": "organization-right", "groupId": "organization", "groupLabel": "组织结构图", "title": "组织结构图（向右）", "fileName": "02_organization-right.svg", "relativePath": "layout-thumbnails/04_organization/02_organization-right.svg" }, { "id": "fishbone-left", "groupId": "fishbone", "groupLabel": "鱼骨图", "title": "鱼骨图（左）", "fileName": "01_fishbone-left.svg", "relativePath": "layout-thumbnails/05_fishbone/01_fishbone-left.svg" }, { "id": "fishbone-right", "groupId": "fishbone", "groupLabel": "鱼骨图", "title": "鱼骨图（右）", "fileName": "02_fishbone-right.svg", "relativePath": "layout-thumbnails/05_fishbone/02_fishbone-right.svg" }, { "id": "tree-table-top-title", "groupId": "tree-table", "groupLabel": "树形表格", "title": "树形表格（顶部标题）", "fileName": "01_tree-table-top-title.svg", "relativePath": "layout-thumbnails/06_tree-table/01_tree-table-top-title.svg" }, { "id": "tree-table-left-title", "groupId": "tree-table", "groupLabel": "树形表格", "title": "树形表格（左侧标题）", "fileName": "02_tree-table-left-title.svg", "relativePath": "layout-thumbnails/06_tree-table/02_tree-table-left-title.svg" }, { "id": "radial-sector", "groupId": "other", "groupLabel": "其他", "title": "扇形放射图", "fileName": "01_radial-sector.svg", "relativePath": "layout-thumbnails/07_other/01_radial-sector.svg" }, { "id": "circle", "groupId": "other", "groupLabel": "其他", "title": "圆形图", "fileName": "02_circle.svg", "relativePath": "layout-thumbnails/07_other/02_circle.svg" }, { "id": "bubble", "groupId": "other", "groupLabel": "其他", "title": "气泡图", "fileName": "03_bubble.svg", "relativePath": "layout-thumbnails/07_other/03_bubble.svg" }, { "id": "bracket-right", "groupId": "other", "groupLabel": "其他", "title": "括号图（右）", "fileName": "04_bracket-right.svg", "relativePath": "layout-thumbnails/07_other/04_bracket-right.svg" }, { "id": "bracket-left", "groupId": "other", "groupLabel": "其他", "title": "括号图（左）", "fileName": "05_bracket-left.svg", "relativePath": "layout-thumbnails/07_other/05_bracket-left.svg" }];
 const layoutCatalogJson = {
   items
 };
@@ -5997,12 +6140,17 @@ const LEGACY_ENGINE_LAYOUT_PRESETS = {
   fishbone: "fishbone-left",
   fishbone2: "fishbone-left",
   rightFishbone: "fishbone-right",
-  rightFishbone2: "fishbone-right"
+  rightFishbone2: "fishbone-right",
+  yemindOrganizationBidirectional: "organization-right"
+};
+const LEGACY_PRESET_ALIASES = {
+  "organization-bidirectional": "organization-right"
 };
 function normalizeLayoutAssetId(value, engineLayout) {
   var _a;
   const id = String(value ?? "");
   if (YEMIND_LAYOUT_ASSET_PRESETS.some((item) => item.id === id)) return id;
+  if (LEGACY_PRESET_ALIASES[id]) return LEGACY_PRESET_ALIASES[id];
   const engine = String(engineLayout ?? "");
   return ((_a = YEMIND_LAYOUT_ASSET_PRESETS.find((item) => item.engineLayout === engine)) == null ? void 0 : _a.id) ?? LEGACY_ENGINE_LAYOUT_PRESETS[engine] ?? "right-mindmap";
 }
@@ -6266,7 +6414,7 @@ const LEGACY_DEFAULT_NODE_TEXTS = /* @__PURE__ */ new Set([
   "另一个主题",
   "未命名导图"
 ]);
-function plainText$3(value) {
+function plainText$4(value) {
   const text2 = String(value ?? "");
   if (!/[<&]/.test(text2)) return text2.replace(/\u00a0/g, " ").trim();
   const host = document.createElement("div");
@@ -6277,7 +6425,7 @@ function isPristineNodeTextData(data2) {
   if (!data2) return false;
   if (data2.yemindTextEdited === true) return false;
   if (data2.yemindTextPristine === true) return true;
-  return LEGACY_DEFAULT_NODE_TEXTS.has(plainText$3(data2.text));
+  return LEGACY_DEFAULT_NODE_TEXTS.has(plainText$4(data2.text));
 }
 function markNodeTextEditedData(data2) {
   if (!data2) return;
@@ -6316,6 +6464,114 @@ function createDefaultMap(title = "未命名导图", id = ((_b) => (_b = ((_a) =
     data: createDefaultTree(normalizedTitle)
   };
 }
+const DAY_MS = 24 * 60 * 60 * 1e3;
+const AGAIN_DELAY_MS = 10 * 60 * 1e3;
+function finiteNumber(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+function nonNegativeInteger(value, fallback = 0) {
+  return Math.max(0, Math.round(finiteNumber(value, fallback)));
+}
+function normalizeStatus(value) {
+  return value === "learning" || value === "mastered" ? value : "new";
+}
+function createStudyCard(input) {
+  const now = finiteNumber(input.now, Date.now());
+  return {
+    id: String(input.id).trim(),
+    nodeUid: String(input.nodeUid).trim(),
+    front: String(input.front).trim(),
+    back: String(input.back ?? "").trim(),
+    status: "new",
+    starred: false,
+    createdAt: now,
+    updatedAt: now,
+    dueAt: now,
+    repetitions: 0,
+    lapses: 0,
+    intervalDays: 0,
+    easeFactor: 2.5
+  };
+}
+function normalizeStudyCards(value) {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const source = item;
+    const id = String(source.id ?? "").trim();
+    const front2 = String(source.front ?? "").trim();
+    if (!id || !front2) return [];
+    const createdAt = Math.max(0, finiteNumber(source.createdAt));
+    const updatedAt = Math.max(createdAt, finiteNumber(source.updatedAt, createdAt));
+    const lastReviewedAt = finiteNumber(source.lastReviewedAt, -1);
+    const card = {
+      id,
+      nodeUid: String(source.nodeUid ?? "").trim(),
+      front: front2,
+      back: String(source.back ?? "").trim(),
+      status: normalizeStatus(source.status),
+      starred: source.starred === true,
+      createdAt,
+      updatedAt,
+      dueAt: Math.max(0, finiteNumber(source.dueAt)),
+      repetitions: nonNegativeInteger(source.repetitions),
+      lapses: nonNegativeInteger(source.lapses),
+      intervalDays: nonNegativeInteger(source.intervalDays),
+      easeFactor: Math.min(3, Math.max(1.3, finiteNumber(source.easeFactor, 2.5)))
+    };
+    if (lastReviewedAt >= 0) card.lastReviewedAt = lastReviewedAt;
+    return [card];
+  });
+}
+function rateStudyCard(source, rating, reviewedAt = Date.now()) {
+  const card = normalizeStudyCards([source])[0] ?? createStudyCard({
+    id: source.id,
+    nodeUid: source.nodeUid,
+    front: source.front,
+    back: source.back,
+    now: reviewedAt
+  });
+  if (rating === "again") {
+    return {
+      ...card,
+      status: "learning",
+      repetitions: 0,
+      lapses: card.lapses + 1,
+      intervalDays: 0,
+      easeFactor: Math.max(1.3, card.easeFactor - 0.2),
+      lastReviewedAt: reviewedAt,
+      dueAt: reviewedAt + AGAIN_DELAY_MS,
+      updatedAt: reviewedAt
+    };
+  }
+  const repetitions = card.repetitions + 1;
+  let intervalDays;
+  let easeFactor = card.easeFactor;
+  if (rating === "hard") {
+    intervalDays = Math.max(1, Math.round((card.intervalDays || 1) * 1.2));
+    easeFactor = Math.max(1.3, easeFactor - 0.15);
+  } else if (rating === "easy") {
+    intervalDays = card.repetitions === 0 ? 4 : Math.max(4, Math.round((card.intervalDays || 1) * easeFactor * 1.3));
+    easeFactor = Math.min(3, easeFactor + 0.15);
+  } else if (card.repetitions === 0) {
+    intervalDays = 1;
+  } else if (card.repetitions === 1) {
+    intervalDays = 3;
+  } else {
+    intervalDays = Math.max(1, Math.round(card.intervalDays * easeFactor));
+  }
+  return {
+    ...card,
+    status: repetitions >= 3 ? "mastered" : "learning",
+    repetitions,
+    intervalDays,
+    easeFactor,
+    lastReviewedAt: reviewedAt,
+    dueAt: reviewedAt + intervalDays * DAY_MS,
+    updatedAt: reviewedAt
+  };
+}
 const clone$3 = (value) => JSON.parse(JSON.stringify(value));
 function normalizeMap(value) {
   var _a;
@@ -6325,6 +6581,7 @@ function normalizeMap(value) {
   const fallbackTime = Number(candidate.updatedAt) || Number(candidate.createdAt) || Date.now();
   const normalizedTitle = typeof candidate.title === "string" && candidate.title.trim() ? candidate.title.trim() : "未命名导图";
   const normalizedTree = normalizeLegacyTree(clone$3(candidate.data), fallbackTime);
+  const studyCards = normalizeStudyCards(candidate.studyCards);
   const map2 = {
     id: String(candidate.id),
     title: normalizedTitle,
@@ -6336,9 +6593,10 @@ function normalizeMap(value) {
     lineStyle: normalizeLineStyle(candidate.lineStyle),
     projectStyle: normalizeProjectStyle(candidate.projectStyle),
     data: normalizedTree.tree,
-    viewData: candidate.viewData ? clone$3(candidate.viewData) : void 0
+    viewData: candidate.viewData ? clone$3(candidate.viewData) : void 0,
+    ...candidate.studyCards !== void 0 ? { studyCards } : {}
   };
-  const changed = normalizedTitle !== candidate.title || normalizedTree.changed || map2.layout !== candidate.layout || map2.layoutPresetId !== candidate.layoutPresetId || map2.theme !== candidate.theme || map2.lineStyle !== candidate.lineStyle || JSON.stringify(map2.projectStyle) !== JSON.stringify(candidate.projectStyle ?? {});
+  const changed = normalizedTitle !== candidate.title || normalizedTree.changed || map2.layout !== candidate.layout || map2.layoutPresetId !== candidate.layoutPresetId || map2.theme !== candidate.theme || map2.lineStyle !== candidate.lineStyle || JSON.stringify(map2.projectStyle) !== JSON.stringify(candidate.projectStyle ?? {}) || candidate.studyCards !== void 0 && JSON.stringify(studyCards) !== JSON.stringify(candidate.studyCards);
   return { map: map2, changed };
 }
 function normalizeLegacyTree(tree, fallbackTime, path2 = "root") {
@@ -6466,6 +6724,7 @@ class MapRepository {
       if (patch.lineStyle !== void 0) map2.lineStyle = normalizeLineStyle(patch.lineStyle);
       if (patch.projectStyle !== void 0) map2.projectStyle = normalizeProjectStyle(patch.projectStyle);
       if (patch.viewData !== void 0) map2.viewData = clone$3(patch.viewData);
+      if (patch.studyCards !== void 0) map2.studyCards = normalizeStudyCards(patch.studyCards);
       map2.updatedAt = this.now();
       return { changed: true, value: void 0 };
     });
@@ -6577,7 +6836,7 @@ function applyDialogChrome(dialog) {
 function createYeMindDialog(options) {
   return applyDialogChrome(new siyuan.Dialog(options));
 }
-function escapeHtml$f(value) {
+function escapeHtml$g(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function promptText(title, initialValue, placeholder = "") {
@@ -6586,7 +6845,7 @@ function promptText(title, initialValue, placeholder = "") {
     const dialog = createYeMindDialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$f(initialValue)}" placeholder="${escapeHtml$f(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
+      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$g(initialValue)}" placeholder="${escapeHtml$g(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
       destroyCallback: () => resolve(null)
     });
     const element = dialog.element;
@@ -6618,7 +6877,7 @@ function confirmAction(title, message, confirmText = "确定") {
     const dialog = createYeMindDialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><p>${escapeHtml$f(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$f(confirmText)}</button></div>`,
+      content: `<div class="b3-dialog__content"><p>${escapeHtml$g(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$g(confirmText)}</button></div>`,
       destroyCallback: () => resolve(false)
     });
     let completed = false;
@@ -6632,7 +6891,7 @@ function confirmAction(title, message, confirmText = "确定") {
     (_b = dialog.element.querySelector(".b3-button--text")) == null ? void 0 : _b.addEventListener("click", () => finish(true));
   });
 }
-function escapeHtml$e(value) {
+function escapeHtml$f(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function renderReport(report) {
@@ -6643,7 +6902,7 @@ function renderReport(report) {
   </div>
   <div class="ymz-diagnostics-list">${report.items.map((item) => `<div class="ymz-diagnostics-check" data-status="${item.status}">
     <span class="ymz-diagnostics-check__mark">${item.status === "pass" ? "✓" : item.status === "warning" ? "!" : "×"}</span>
-    <div><b>${escapeHtml$e(item.id)}</b><p>${escapeHtml$e(item.summary)}</p></div>
+    <div><b>${escapeHtml$f(item.id)}</b><p>${escapeHtml$f(item.summary)}</p></div>
   </div>`).join("")}</div>`;
 }
 function renderSearchState(service) {
@@ -6654,10 +6913,10 @@ function renderSearchState(service) {
     <dl>
       <div><dt>思源 / YeMind 结果</dt><dd>${state.nativeResultCount} / ${state.yemindResultCount}</dd></div>
       <div><dt>列表 / 预览</dt><dd>${state.listMounted ? "已挂载" : "未挂载"} / ${state.previewVisible ? "可见" : "不可见"}</dd></div>
-      <div><dt>最后步骤</dt><dd>${escapeHtml$e(state.lastNavigationStep)}</dd></div>
+      <div><dt>最后步骤</dt><dd>${escapeHtml$f(state.lastNavigationStep)}</dd></div>
       <div><dt>导航结果</dt><dd>${navigation}</dd></div>
     </dl>
-    ${state.lastFailure ? `<p>${escapeHtml$e(state.lastFailure)}</p>` : ""}
+    ${state.lastFailure ? `<p>${escapeHtml$f(state.lastFailure)}</p>` : ""}
   </div>`;
 }
 function openDiagnosticsDialog(service) {
@@ -6751,7 +7010,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.3.0";
+const PLUGIN_VERSION = "1.5.0";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -6759,16 +7018,16 @@ const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-27T06:30:22.700Z",
-  buildId: "yemind-v1.3.0-20260727",
+  buildTime: "2026-07-28T09:04:26.333Z",
+  buildId: "yemind-v1.5.0-20260728",
   productName: PRODUCT_NAME,
   hostBaseline: "SiYuan 3.7.3",
-  releaseSummary: "统一思源插件与独立网页版，完成结构、编辑、外观、导入导出和发布链路的稳定性整理。",
+  releaseSummary: "对齐 version47 界面并统一插件与网页版，新增卡片复习、完整基础主题和 v1.5.0 传输契约。",
   highlights: [
-    "思源插件与独立网页版共用编辑器、数据模型、导入导出和交互实现。",
-    "回归 28 种结构、导图和大纲编辑拖动、附件、关联线、明暗主题与响应式工具栏。",
-    "修复导图和大纲的选区工具栏、模糊切换、编辑及删除等连续操作。",
-    "提供双端 ZIP、发布清单、SHA-256 校验、CI、GitHub Release 和 Pages 自动部署。"
+    "采用 version47 工具栏、面板、菜单、卡片和明暗视觉，并按编辑器宽度完成桌面与窄屏适配。",
+    "补齐 6 个基础主题、向右组织结构、导图/大纲富文本选区恢复及共享资源交互。",
+    "新增独立卡片数据、掌握进度、收藏筛选、翻面、状态管理和三档复习队列。",
+    "统一 .yemind.svg、.yemind.zip、双 HTML 与旧格式兼容，并继续产出双端可验证发布包。"
   ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -6782,7 +7041,7 @@ function resolveVersionConsistency(manifestVersion) {
     consistent: manifest !== "unknown" && manifest === runtime && runtime === build2
   };
 }
-function escapeHtml$d(value) {
+function escapeHtml$e(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 async function writeClipboard(text2) {
@@ -6804,25 +7063,25 @@ function createAboutDialogTemplate() {
   return `<div class="ymz-about-dialog">
     <div class="ymz-about-hero">
       <img src="${ROOT_ICON_URL}" alt="YeMind">
-      <div><h3>${escapeHtml$d(RELEASE_INFO.productName)}</h3><p>${escapeHtml$d(RELEASE_INFO.releaseSummary)}</p></div>
+      <div><h3>${escapeHtml$e(RELEASE_INFO.productName)}</h3><p>${escapeHtml$e(RELEASE_INFO.releaseSummary)}</p></div>
     </div>
     <div class="ymz-settings-group ymz-about-version-card">
       <h3>版本信息</h3>
       <dl class="ymz-about-version-grid">
-        <div><dt>当前版本</dt><dd>${escapeHtml$d(RELEASE_INFO.version)}</dd></div>
+        <div><dt>当前版本</dt><dd>${escapeHtml$e(RELEASE_INFO.version)}</dd></div>
         <div><dt>插件声明版本</dt><dd data-about-version="manifest">正在读取…</dd></div>
-        <div><dt>运行时代码版本</dt><dd data-about-version="runtime">${escapeHtml$d(RELEASE_INFO.version)}</dd></div>
-        <div><dt>构建版本</dt><dd data-about-version="build">${escapeHtml$d(RELEASE_INFO.buildVersion)}</dd></div>
-        <div><dt>构建标识</dt><dd>${escapeHtml$d(RELEASE_INFO.buildId)}</dd></div>
-        <div><dt>构建时间</dt><dd>${escapeHtml$d(RELEASE_INFO.buildTime)}</dd></div>
+        <div><dt>运行时代码版本</dt><dd data-about-version="runtime">${escapeHtml$e(RELEASE_INFO.version)}</dd></div>
+        <div><dt>构建版本</dt><dd data-about-version="build">${escapeHtml$e(RELEASE_INFO.buildVersion)}</dd></div>
+        <div><dt>构建标识</dt><dd>${escapeHtml$e(RELEASE_INFO.buildId)}</dd></div>
+        <div><dt>构建时间</dt><dd>${escapeHtml$e(RELEASE_INFO.buildTime)}</dd></div>
         <div><dt>思源版本</dt><dd data-about-version="siyuan">正在读取…</dd></div>
-        <div><dt>开发基线</dt><dd>${escapeHtml$d(RELEASE_INFO.hostBaseline)}</dd></div>
+        <div><dt>开发基线</dt><dd>${escapeHtml$e(RELEASE_INFO.hostBaseline)}</dd></div>
       </dl>
       <div class="ymz-about-consistency" data-about-consistency="pending">正在检查版本一致性…</div>
     </div>
     <div class="ymz-settings-group ymz-about-highlights">
       <h3>本版更新</h3>
-      <ul>${RELEASE_INFO.highlights.map((item) => `<li>${escapeHtml$d(item)}</li>`).join("")}</ul>
+      <ul>${RELEASE_INFO.highlights.map((item) => `<li>${escapeHtml$e(item)}</li>`).join("")}</ul>
     </div>
     <div class="ymz-about-actions">
       <button class="b3-button b3-button--outline" data-about-action="copy-version">复制版本信息</button>
@@ -7262,7 +7521,7 @@ function iconSlot(content, modifier = "") {
   return `<span class="ymz-icon-slot${suffix}" aria-hidden="true">${content}</span>`;
 }
 function fitViewIcon() {
-  return '<svg class="ymz-toolbar-icon ymz-icon-fit-view" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M4 16v4h4M20 16v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+  return '<svg class="ymz-toolbar-icon ymz-icon-fit-view" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3-5 5m0-5v5h5m8-5 5 5m0-5v5h-5M8 21l-5-5m0 5v-5h5m8 5 5-5m0 5v-5h-5" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 function canvasModeIcon(mode) {
   if (mode === "select") {
@@ -7289,6 +7548,33 @@ function zoomIcon(kind) {
 }
 function helpIcon() {
   return '<svg class="ymz-toolbar-icon ymz-icon-help" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9.7 9a2.5 2.5 0 1 1 3.3 2.4c-.8.3-1 1-1 1.8v.3M12 17.5h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+}
+function resetZoomIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-reset-zoom" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+function miniMapIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-minimap" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 5-3 8 3 5-3v15l-5 3-8-3-5 3V6Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3v15M16 6v15" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round"/></svg>';
+}
+function presentationIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-presentation" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m10 8 5 2.5-5 2.5V8ZM12 17v4M8 21h8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+function brandIcon() {
+  return '<svg class="ymz-brand-icon" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="ymz-brand-gradient" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#2dd4a8"/><stop offset="1" stop-color="#0d9e72"/></linearGradient></defs><rect width="32" height="32" rx="7.5" fill="url(#ymz-brand-gradient)"/><path d="M16 8.5v13.5M16 14q-2.6.7-5 3M16 14q2.6.7 5 3M16 19.5q-3 1-6 4M16 19.5q3 1 6 4" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><circle cx="16" cy="8.5" r="2.3" fill="#fff"/><circle cx="11" cy="17" r="1.8" fill="#fff" opacity=".78"/><circle cx="21" cy="17" r="1.8" fill="#fff" opacity=".78"/><circle cx="10" cy="23.5" r="2" fill="#fff" opacity=".92"/><circle cx="22" cy="23.5" r="2" fill="#fff" opacity=".92"/></svg>';
+}
+function primaryViewIcon(kind) {
+  const paths = {
+    map: '<path d="M5 7.5h5M14 5h5v5h-5zM5 14h5M14 12h5v5h-5zM10 7.5h2v7H10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    outline: '<path d="M8 6h11M8 12h11M8 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    cards: '<rect x="4" y="5" width="12" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 2h10a2 2 0 0 1 2 2v12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+    review: '<path d="M5 5.5A3.5 3.5 0 0 1 8.5 2H12v17H8.5A3.5 3.5 0 0 0 5 22V5.5ZM19 5.5A3.5 3.5 0 0 0 15.5 2H12v17h3.5A3.5 3.5 0 0 1 19 22V5.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>'
+  };
+  return `<svg class="ymz-toolbar-icon ymz-primary-view-icon ymz-primary-view-icon--${kind}" viewBox="0 0 24 24" aria-hidden="true">${paths[kind]}</svg>`;
+}
+function shareIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-share" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="6" cy="12" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="19" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+}
+function saveIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-save" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l2 2v16H5V3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 3v6h8V3M8 21v-7h8v7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
 }
 function clipboardIcon(kind) {
   const base = 'class="ymz-menu-icon';
@@ -7321,7 +7607,7 @@ function summaryIcon() {
   return suppliedIcon("summary");
 }
 function projectStyleIcon() {
-  return suppliedIcon("projectStyle");
+  return iconSlot('<svg class="ymz-project-icon ymz-icon-project-style" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h3M11 12h9M4 18h8M16 18h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="16" cy="6" r="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="14" cy="18" r="2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>', "ymz-icon-slot--project");
 }
 function nodeStyleIcon() {
   return suppliedIcon("nodeStyle");
@@ -7381,24 +7667,24 @@ const SHORTCUT_ROWS = [
   { key: "summary", label: "概要", group: "节点命令" },
   { key: "relation", label: "关联线", group: "节点命令" }
 ];
-function escapeHtml$c(value) {
+function escapeHtml$d(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function checked(value) {
   return value ? " checked" : "";
 }
 function option$1(value, label, current) {
-  return `<option value="${escapeHtml$c(value)}"${value === current ? " selected" : ""}>${escapeHtml$c(label)}</option>`;
+  return `<option value="${escapeHtml$d(value)}"${value === current ? " selected" : ""}>${escapeHtml$d(label)}</option>`;
 }
 function switchRow(title, description, key, value) {
   return `<label class="ymz-settings-row ymz-settings-row--switch">
-    <span><b>${escapeHtml$c(title)}</b><small>${escapeHtml$c(description)}</small></span>
+    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
     <input class="b3-switch" type="checkbox" data-setting="${String(key)}"${checked(value)}>
   </label>`;
 }
 function selectRow(title, description, key, options) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$c(title)}</b><small>${escapeHtml$c(description)}</small></span>
+    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
     <select class="b3-select fn__size200" data-setting="${String(key)}">${options}</select>
   </label>`;
 }
@@ -7418,24 +7704,24 @@ function canvasModeRow(settings) {
 }
 function textRow(title, description, key, value) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$c(title)}</b><small>${escapeHtml$c(description)}</small></span>
-    <input class="b3-text-field fn__size200" type="text" data-setting="${String(key)}" value="${escapeHtml$c(value)}">
+    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
+    <input class="b3-text-field fn__size200" type="text" data-setting="${String(key)}" value="${escapeHtml$d(value)}">
   </label>`;
 }
 function numberRow(title, description, key, value, min, max, step, suffix) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$c(title)}</b><small>${escapeHtml$c(description)}</small></span>
-    <span class="ymz-settings-number"><input class="b3-text-field" type="number" data-setting="${String(key)}" value="${value}" min="${min}" max="${max}" step="${step}"><em>${escapeHtml$c(suffix)}</em></span>
+    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
+    <span class="ymz-settings-number"><input class="b3-text-field" type="number" data-setting="${String(key)}" value="${value}" min="${min}" max="${max}" step="${step}"><em>${escapeHtml$d(suffix)}</em></span>
   </label>`;
 }
 function shortcutsHtml(shortcuts) {
   let currentGroup = "";
   return SHORTCUT_ROWS.map((row) => {
-    const group = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$c(row.group)}</h3>` : "";
+    const group = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$d(row.group)}</h3>` : "";
     currentGroup = row.group;
     return `${group}<div class="ymz-shortcut-row" data-shortcut-row="${row.key}">
-      <span class="ymz-shortcut-row__label">${escapeHtml$c(row.label)}</span>
-      <input class="b3-text-field" data-shortcut="${row.key}" value="${escapeHtml$c(shortcuts[row.key])}" placeholder="未设置">
+      <span class="ymz-shortcut-row__label">${escapeHtml$d(row.label)}</span>
+      <input class="b3-text-field" data-shortcut="${row.key}" value="${escapeHtml$d(shortcuts[row.key])}" placeholder="未设置">
       <button class="b3-button b3-button--outline" data-shortcut-action="record" data-shortcut-key="${row.key}">录制</button>
       <button class="b3-button b3-button--cancel" data-shortcut-action="disable" data-shortcut-key="${row.key}">禁用</button>
       <button class="b3-button b3-button--outline" data-shortcut-action="restore" data-shortcut-key="${row.key}">恢复默认</button>
@@ -7790,7 +8076,7 @@ class YeMindDockView {
         const row = document.createElement("div");
         row.className = `ymz-dock__item${map2.id === activeId ? " is-active" : ""}`;
         row.dataset.mapId = map2.id;
-        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$b(map2.title)}">${escapeHtml$b(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
+        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$c(map2.title)}">${escapeHtml$c(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
         body.appendChild(row);
       });
     }
@@ -7839,7 +8125,7 @@ function registerYeMindDock(plugin, host) {
     }
   });
 }
-function escapeHtml$b(value) {
+function escapeHtml$c(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 const CONSTANTS = {
@@ -80270,24 +80556,6 @@ function renderDirectionalLines(layout2, node, lines, style) {
     layout2.setLineStyle(style, lines[index], layout2.transformPath(path2), child);
   });
 }
-class BidirectionalOrganization extends OrganizationStructure {
-  doLayout(callback) {
-    super.doLayout((root2) => {
-      const axisY = Number(root2.top) + Number(root2.height) / 2;
-      (root2.children ?? []).forEach((child, index) => {
-        const top = index % 2 === 0;
-        visitTree$1(child, (node) => {
-          node.dir = top ? "top" : "bottom";
-          if (top) node._top = axisY * 2 - (Number(node.top) + Number(node.height || 0));
-        });
-      });
-      callback(root2);
-    });
-  }
-  renderLine(node, lines, style) {
-    renderDirectionalLines(this, node, lines, style);
-  }
-}
 class SerpentineTimeline extends Timeline2 {
   constructor(options) {
     super(options, "timeline");
@@ -80487,7 +80755,7 @@ const PRESET_LAYOUT_CLASSES = {
   yemindTimelineUp: createMirroredLayout(VerticalTimeline, "verticalTimeline", "mirror-y"),
   yemindTimelineS: SerpentineTimeline,
   yemindOrganizationDown: createAliasLayout(OrganizationStructure, "organizationStructure"),
-  yemindOrganizationBidirectional: BidirectionalOrganization,
+  yemindOrganizationRight: createAliasLayout(LogicalStructure, "logicalStructure"),
   yemindOrganizationUp: createMirroredLayout(OrganizationStructure, "organizationStructure", "mirror-y"),
   yemindFishboneLeft: YeMindFishboneLeft,
   yemindFishboneRight: YeMindFishboneRight,
@@ -82346,7 +82614,7 @@ function createCommandAdapter(mindMap) {
     }
   };
 }
-function escapeHtml$a(value) {
+function escapeHtml$b(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function formatCheckpointTime(value) {
@@ -82361,9 +82629,9 @@ function renderCheckpointListHtml(checkpoints, options) {
   return checkpoints.map((checkpoint) => {
     const kind = checkpoint.kind === "recovery-protection" ? "恢复前保护" : "普通检查点";
     const restoreDisabled = options.readonly ? " disabled" : "";
-    return `<article class="ymz-checkpoint-item" data-checkpoint-id="${escapeHtml$a(checkpoint.id)}">
+    return `<article class="ymz-checkpoint-item" data-checkpoint-id="${escapeHtml$b(checkpoint.id)}">
       <div class="ymz-checkpoint-item__main">
-        <strong>${escapeHtml$a(checkpoint.name)}</strong>
+        <strong>${escapeHtml$b(checkpoint.name)}</strong>
         <span>${kind} · ${formatCheckpointTime(checkpoint.createdAt)} · ${checkpoint.nodeCount} 个节点</span>
       </div>
       <div class="ymz-checkpoint-item__actions">
@@ -82384,13 +82652,13 @@ function buildCheckpointDialogContent(checkpoints, readonly) {
     <button class="b3-button b3-button--cancel" data-checkpoint-dialog-action="close">关闭</button>
   </div>`;
 }
-function escapeHtml$9(value) {
+function escapeHtml$a(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function openCheckpointManager(options) {
   var _a, _b;
   const dialog = createYeMindDialog({
-    title: `检查点 · ${escapeHtml$9(options.mapTitle)}`,
+    title: `检查点 · ${escapeHtml$a(options.mapTitle)}`,
     width: "720px",
     content: buildCheckpointDialogContent(options.repository.list(options.mapId), options.readonly)
   });
@@ -82536,7 +82804,7 @@ function buildCommentsListHtml(comments, editingId = null) {
   if (comments.length === 0) return '<div class="ymz-empty-hint">暂无批注</div>';
   return comments.map((comment) => {
     const editing = comment.id === editingId;
-    const body = editing ? `<textarea class="b3-text-field fn__block ymz-comment__editor" rows="3" data-field="edit-comment">${escapeHtml$8(comment.text)}</textarea>` : `<div class="ymz-comment__text">${escapeHtml$8(comment.text).replaceAll("\n", "<br>")}</div>`;
+    const body = editing ? `<textarea class="b3-text-field fn__block ymz-comment__editor" rows="3" data-field="edit-comment">${escapeHtml$9(comment.text)}</textarea>` : `<div class="ymz-comment__text">${escapeHtml$9(comment.text).replaceAll("\n", "<br>")}</div>`;
     const actions = editing ? `<button class="b3-button b3-button--outline" data-action="save-comment">保存</button>
          <button class="b3-button b3-button--cancel" data-action="cancel-edit-comment">取消</button>` : `<button class="b3-button b3-button--outline" data-action="edit-comment">编辑</button>
          <button class="b3-button b3-button--cancel" data-action="delete-comment">删除</button>`;
@@ -82556,11 +82824,11 @@ function requestClearAllComments(confirmHandler, onClear) {
     onClear
   );
 }
-function escapeHtml$8(value) {
+function escapeHtml$9(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function escapeAttribute$2(value) {
-  return escapeHtml$8(value);
+  return escapeHtml$9(value);
 }
 const SUPPORTED_PROTOCOLS = /* @__PURE__ */ new Set(["http:", "https:", "mailto:", "tel:", "siyuan:"]);
 const BARE_DOMAIN = /^(?:localhost(?::\d+)?|(?:[a-z0-9-]+\.)+[a-z]{2,})(?:[/:?#].*)?$/i;
@@ -82672,7 +82940,7 @@ function openFormulaDialog(commands) {
     }
     try {
       const katex2 = window.katex;
-      preview.innerHTML = (katex2 == null ? void 0 : katex2.renderToString) ? katex2.renderToString(value, { throwOnError: false }) : escapeHtml$7(value);
+      preview.innerHTML = (katex2 == null ? void 0 : katex2.renderToString) ? katex2.renderToString(value, { throwOnError: false }) : escapeHtml$8(value);
     } catch {
       preview.textContent = value;
     }
@@ -82934,11 +83202,11 @@ function getImageSize(url) {
     image.src = url;
   });
 }
-function escapeHtml$7(value) {
+function escapeHtml$8(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function escapeAttribute$1(value) {
-  return escapeHtml$7(value);
+  return escapeHtml$8(value);
 }
 function createTodoMenuDescriptor(todo) {
   return getTodoMenuState(todo);
@@ -83462,7 +83730,7 @@ function outlineAccessoriesHtml(accessories, pluginBaseUrl) {
   if (!hasAny) return "";
   const todo = accessories.todo ? `<button type="button" class="ymz-outline-accessories__todo${accessories.todo.checked ? " is-checked" : ""}" data-outline-content="todo" tabindex="-1" aria-label="${accessories.todo.checked ? "待办已完成" : "待办未完成"}">${accessories.todo.checked ? "✓" : ""}</button>` : "";
   const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join("");
-  const image = accessories.image ? `<span role="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? " is-clipart" : ""}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? "clipart" : "image"}" tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? "剪贴图：单击编辑，双击查看" : "图片：单击编辑，双击查看"))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false">${outlineMediaChrome(accessories.image.clipartId ? "clipart" : "image")}</span>` : "";
+  const image = accessories.image ? `<span role="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? " is-clipart" : ""}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? "clipart" : "image"}" tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? "剪贴图：单击选择，双击预览" : "图片：单击选择，双击预览"))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false">${outlineMediaChrome(accessories.image.clipartId ? "clipart" : "image")}</span>` : "";
   const tags = accessories.tags.length ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute(accessories.tags.join("、"))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute(tag)}</span>`).join("")}</span>` : "";
   const note2 = accessories.hasNote ? statusButton("note", "备注", symbolIcon("iconYeMindNote")) : "";
   const comments = accessories.commentCount ? statusButton("comments", `批注 ${accessories.commentCount}`, symbolIcon("iconYeMindComment")) : "";
@@ -83479,7 +83747,7 @@ function cloneValue(value) {
   }
   return JSON.parse(JSON.stringify(value));
 }
-function escapeHtml$6(value) {
+function escapeHtml$7(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;").replaceAll("\n", "<br>");
 }
 function structuredOutlineHtmlToText(value) {
@@ -83498,7 +83766,7 @@ function structuredOutlineIsRichHtml(value) {
 }
 function displayHtml(data2) {
   const value = String(data2.text ?? "");
-  return data2.richText ? sanitizeRichHtml(value) : escapeHtml$6(value);
+  return data2.richText ? sanitizeRichHtml(value) : escapeHtml$7(value);
 }
 function summaries(data2) {
   const value = data2.generalization;
@@ -83570,10 +83838,10 @@ function indexExistingData(tree) {
 }
 function normalizedBlockHtml(block) {
   const sanitized = sanitizeRichHtml(String(block.html ?? ""));
-  const text2 = structuredOutlineHtmlToText(sanitized || escapeHtml$6(String(block.text ?? "")));
+  const text2 = structuredOutlineHtmlToText(sanitized || escapeHtml$7(String(block.text ?? "")));
   const richText = structuredOutlineIsRichHtml(sanitized);
   return {
-    html: richText ? sanitized : escapeHtml$6(text2),
+    html: richText ? sanitized : escapeHtml$7(text2),
     text: text2,
     richText
   };
@@ -83994,7 +84262,7 @@ const MODES = [
   ["numbered", "编号大纲"],
   ["plain", "普通多行文本"]
 ];
-function escapeHtml$5(value) {
+function escapeHtml$6(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function previewRowsHtml(result) {
@@ -84002,7 +84270,7 @@ function previewRowsHtml(result) {
     return '<div class="ymz-text-map-dialog__empty">等待粘贴文本…<small>解析后将在此显示移除树形符号后的节点层级。</small></div>';
   }
   return result.lines.map((line) => {
-    const text2 = escapeHtml$5(line.text).replaceAll("\n", "<br>");
+    const text2 = escapeHtml$6(line.text).replaceAll("\n", "<br>");
     return `<div class="ymz-text-map-dialog__preview-row" style="--ymz-import-depth:${Math.max(0, line.depth)}" data-import-depth="${Math.max(0, line.depth)}"><span>${text2}</span></div>`;
   }).join("");
 }
@@ -84072,8 +84340,8 @@ function openTextToMapDialog(options) {
     preview.innerHTML = previewRowsHtml(current);
     status.textContent = source.value.trim() ? resultStatus(current) : "粘贴文本后将自动预览。";
     messages2.innerHTML = [
-      ...current.errors.map((text2) => `<div class="ymz-text-map-dialog__error">${escapeHtml$5(text2)}</div>`),
-      ...current.warnings.map((text2) => `<div class="ymz-text-map-dialog__warning">${escapeHtml$5(text2)}</div>`)
+      ...current.errors.map((text2) => `<div class="ymz-text-map-dialog__error">${escapeHtml$6(text2)}</div>`),
+      ...current.warnings.map((text2) => `<div class="ymz-text-map-dialog__warning">${escapeHtml$6(text2)}</div>`)
     ].join("");
     apply2.disabled = !source.value.trim() || current.lines.length === 0 || current.errors.length > 0;
   };
@@ -84112,7 +84380,7 @@ const CODE_LANGUAGES = [
   ["markdown", "Markdown"],
   ["yaml", "YAML"]
 ];
-function escapeHtml$4(value) {
+function escapeHtml$5(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function openInlineLinkDialog(commands, settings) {
@@ -84128,7 +84396,7 @@ function openInlineLinkDialog(commands, settings) {
     width: "480px",
     content: `<div class="b3-dialog__content ymz-node-dialog">
       <label>选中文字</label>
-      <div class="ymz-selection-preview">${escapeHtml$4(selectedText || "当前链接")}</div>
+      <div class="ymz-selection-preview">${escapeHtml$5(selectedText || "当前链接")}</div>
       <label>链接地址</label>
       <input class="b3-text-field fn__block" data-field="inline-link" placeholder="https://…、example.com 或 siyuan://blocks/…">
       <div class="b3-label__text">支持网页、邮箱、电话和思源块链接。</div>
@@ -84234,7 +84502,7 @@ function openCodeBlockDialog(commands, settings) {
     if (!existing) editor.select();
   });
 }
-function plainText$2(value) {
+function plainText$3(value) {
   return String(value ?? "").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
 }
 function countWords(value) {
@@ -84245,7 +84513,7 @@ function calculateEditorStats(tree) {
   let words = 0;
   const walk2 = (node) => {
     nodes += 1;
-    words += countWords(plainText$2(node.data.text));
+    words += countWords(plainText$3(node.data.text));
     node.children.forEach(walk2);
   };
   walk2(tree);
@@ -84253,16 +84521,17 @@ function calculateEditorStats(tree) {
 }
 const EXPORT_FORMATS = [
   { id: "yemind-svg", label: "YeMind SVG", extension: ".yemind.svg", description: "可预览、可继续编辑的默认格式", mime: "image/svg+xml", default: true },
-  { id: "yemind-package-svg", label: "SVG 包", extension: ".yemindz.svg", description: "SVG 预览与完整压缩包", mime: "image/svg+xml" },
+  { id: "yemind-package-svg", label: "SVG 包", extension: ".yemind.svg", description: "SVG 预览与完整压缩包", mime: "image/svg+xml" },
   { id: "svg", label: "SVG", extension: ".svg", description: "通用矢量图片", mime: "image/svg+xml" },
   { id: "kmindz", label: "KMindz", extension: ".kmindz", description: "KMindZ 兼容 SVG 包", mime: "image/svg+xml" },
-  { id: "yemind-zip", label: "Zip", extension: ".yemindz.zip", description: "完整 YeMind 压缩包", mime: "application/zip" },
+  { id: "yemind-zip", label: "Zip", extension: ".yemind.zip", description: "完整 YeMind 压缩包", mime: "application/zip" },
   { id: "markdown", label: "Markdown", extension: ".md", description: "Markdown 层级大纲", mime: "text/markdown;charset=utf-8" },
   { id: "opml", label: "OPML", extension: ".opml", description: "通用大纲交换格式", mime: "text/x-opml;charset=utf-8" },
   { id: "xmind", label: "XMind", extension: ".xmind", description: "XMind 思维导图", mime: "application/zip" },
   { id: "png", label: "PNG", extension: ".png", description: "高清图片，内含恢复数据", mime: "image/png" },
   { id: "text", label: "Text", extension: ".txt", description: "缩进纯文本大纲", mime: "text/plain;charset=utf-8" },
-  { id: "html", label: "HTML", extension: ".html", description: "可独立打开的网页大纲", mime: "text/html;charset=utf-8" },
+  { id: "html", label: "HTML 大纲", extension: ".html", description: "可独立打开的网页大纲", mime: "text/html;charset=utf-8" },
+  { id: "html-map", label: "HTML 导图", extension: ".html", description: "可缩放、折叠的独立网页导图", mime: "text/html;charset=utf-8" },
   { id: "pdf", label: "PDF", extension: ".pdf", description: "单页 PDF 文档", mime: "application/pdf" }
 ];
 const IMPORT_EXTENSIONS = [
@@ -84290,41 +84559,58 @@ function safeExportFilename(value) {
 }
 function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "curve") {
   return `
-    <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map" data-toolbars-pinned="true" data-topbar-visible="true" data-statusbar-visible="true" data-leftbar-visible="true">
+    <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map" data-study-view="none" data-toolbars-pinned="true" data-topbar-visible="true" data-statusbar-visible="true" data-leftbar-visible="true" data-status-overflow-open="false">
       <div class="ymz-canvas-wrap">
         <div class="ymz-floating ymz-topbar" role="toolbar" aria-label="YeMind 工具栏">
-          <span class="ymz-brand" aria-label="YeMind">YeMind</span>
+          <span class="ymz-brand" aria-label="YeMind">${brandIcon()}<span class="ymz-brand__name">YeMind</span></span>
           <span class="ymz-separator"></span>
-          <button class="is-active" data-action="view-map">导图</button>
-          <button data-action="view-split">分屏</button>
-          <button data-action="view-outline">大纲</button>
-          <button class="ymz-icon-button" data-action="open-search" title="项目内搜索" aria-label="项目内搜索">${searchIcon()}</button>
-          <span class="ymz-separator"></span>
-          <button class="ymz-project-control ymz-project-button" data-project-control="layout" data-action="layout-gallery" title="结构">
+          <button class="ymz-primary-view is-active" data-primary-view data-action="view-map" title="导图" aria-label="导图">${primaryViewIcon("map")}<span>导图</span></button>
+          <button class="ymz-primary-view" data-primary-view data-action="view-outline" title="大纲" aria-label="大纲">${primaryViewIcon("outline")}<span>大纲</span></button>
+          <button class="ymz-primary-view" data-primary-view data-action="view-cards" title="卡片" aria-label="卡片">${primaryViewIcon("cards")}<span>卡片</span></button>
+          <button class="ymz-primary-view" data-primary-view data-action="view-review" title="复习" aria-label="复习">${primaryViewIcon("review")}<span>复习</span></button>
+          <span class="ymz-separator ymz-topbar__desktop-utility"></span>
+          <button class="ymz-project-control ymz-project-button ymz-topbar__desktop-utility" data-project-control="layout" data-action="layout-gallery" title="结构">
             ${projectControlIcon("layout")}<span data-role="layout-label">结构</span>
           </button>
           <select data-action="layout" aria-label="结构" hidden>
             ${layoutOptionsHtml("logicalStructure")}
           </select>
-          <button class="ymz-project-control ymz-project-button" data-project-control="theme" data-action="theme-gallery" title="主题" aria-haspopup="listbox" aria-expanded="false">
+          <button class="ymz-project-control ymz-project-button ymz-topbar__desktop-utility" data-project-control="theme" data-action="theme-gallery" title="主题" aria-haspopup="listbox" aria-expanded="false">
             ${projectControlIcon("theme")}<span>主题</span>
           </button>
           <select data-action="theme" aria-label="主题" hidden>
             ${themeOptionsHtml(theme2)}
           </select>
-          <button class="ymz-project-control ymz-project-button ymz-project-control--line" data-project-control="line-style" data-action="line-style-gallery" title="线型" aria-haspopup="listbox" aria-expanded="false">
-            <span data-role="line-style-icon">${lineStyleIcon(lineStyle)}</span><span>线型</span>
-          </button>
           <select data-action="line-style" aria-label="线型" hidden>
             <option value="curve"${normalizeLineStyle(lineStyle) === "curve" ? " selected" : ""}>弧线</option>
             <option value="straight"${normalizeLineStyle(lineStyle) === "straight" ? " selected" : ""}>圆角折线</option>
             <option value="direct"${normalizeLineStyle(lineStyle) === "direct" ? " selected" : ""}>直线</option>
           </select>
-          <button class="ymz-project-control ymz-project-button" data-action="project-style" title="整图样式">${projectStyleIcon()}<span>样式</span></button>
-          <span class="ymz-separator"></span>
-          <button class="ymz-transfer-action" data-action="import-file" title="导入导图文件" aria-label="导入导图文件">${transferIcon("import")}<span>导入</span></button>
-          <button class="ymz-transfer-action" data-action="export-file" title="导出当前导图" aria-label="导出当前导图">${transferIcon("export")}<span>导出</span></button>
-          <span class="ymz-save-state" data-role="save-state">已保存</span>
+          <button class="ymz-project-control ymz-project-button ymz-topbar__desktop-utility" data-action="project-style" title="整图样式">${projectStyleIcon()}<span>样式</span></button>
+          <span class="ymz-separator ymz-topbar__desktop-utility"></span>
+          <button class="ymz-search-action ymz-topbar__desktop-utility" data-action="open-search" title="项目内搜索" aria-label="项目内搜索">${searchIcon()}<span>搜索</span><kbd data-role="search-shortcut">Ctrl+K</kbd></button>
+          <span class="ymz-toolbar-spacer"></span>
+          <button class="ymz-transfer-action ymz-topbar__desktop-utility" data-action="import-file" title="导入导图文件" aria-label="导入导图文件">${transferIcon("import")}<span>导入</span></button>
+          <button class="ymz-transfer-action ymz-topbar__desktop-utility" data-action="export-file" title="导出当前导图" aria-label="导出当前导图">${transferIcon("export")}<span>导出</span></button>
+          <button class="ymz-share-action ymz-topbar__desktop-utility" data-action="share" title="分享当前导图" aria-label="分享当前导图">${shareIcon()}<span>分享</span></button>
+          <span class="ymz-separator ymz-topbar__desktop-utility"></span>
+          <button class="ymz-icon-button ymz-topbar__desktop-utility" data-action="cycle-appearance" title="当前跟随系统；切换为明亮外观" aria-label="当前跟随系统；切换为明亮外观"><span data-role="appearance-icon">${appearanceIcon("system")}</span></button>
+          <button class="ymz-save-state ymz-topbar__desktop-utility" data-role="save-state" data-action="save" title="立即保存">${saveIcon()}<span data-role="save-state-label">已保存</span></button>
+          <button class="ymz-topbar__overflow-trigger" data-action="toggle-top-overflow" title="更多操作" aria-label="更多操作" aria-haspopup="menu" aria-expanded="false">•••</button>
+        </div>
+
+        <div class="ymz-topbar__overflow-menu" data-role="top-overflow-menu" role="menu" aria-label="更多操作" hidden>
+          <button role="menuitem" data-action="layout-gallery">${projectControlIcon("layout")}<span>结构</span></button>
+          <button role="menuitem" data-action="theme-gallery">${projectControlIcon("theme")}<span>主题</span></button>
+          <button role="menuitem" data-action="project-style">${projectStyleIcon()}<span>样式</span></button>
+          <span class="ymz-topbar__overflow-separator"></span>
+          <button role="menuitem" data-action="open-search">${searchIcon()}<span>搜索</span><kbd>Ctrl+K</kbd></button>
+          <button role="menuitem" data-action="import-file">${transferIcon("import")}<span>导入</span></button>
+          <button role="menuitem" data-action="export-file">${transferIcon("export")}<span>导出</span></button>
+          <button role="menuitem" data-action="share">${shareIcon()}<span>分享</span></button>
+          <span class="ymz-topbar__overflow-separator"></span>
+          <button role="menuitem" data-action="cycle-appearance"><span data-role="appearance-icon">${appearanceIcon("system")}</span><span>明暗主题</span></button>
+          <button role="menuitem" data-action="save">${saveIcon()}<span>立即保存</span></button>
         </div>
 
         <div class="ymz-search-panel" data-role="search-panel" data-replace-expanded="false" hidden>
@@ -84356,8 +84642,12 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
           <div class="ymz-canvas" data-role="canvas"></div>
           <div class="ymz-split-divider" data-role="split-divider" role="separator" aria-orientation="vertical" aria-label="调整导图和大纲宽度" aria-valuemin="25" aria-valuemax="70" aria-valuenow="42" tabindex="0"></div>
           <aside class="ymz-outline" data-role="outline" aria-label="导图大纲">
+            <header class="ymz-outline-panel__header"><div class="ymz-outline-panel__title">${primaryViewIcon("outline")}<span><strong>大纲</strong><small><span data-role="outline-node-count">0</span> 个节点</small></span></div><span><button type="button" data-action="outline-fullscreen" title="切换全屏大纲" aria-label="切换全屏大纲">${fullscreenIcon()}</button><button type="button" data-action="close-side-panel" title="关闭大纲" aria-label="关闭大纲">×</button></span></header>
+            <div class="ymz-outline-panel__tools"><label>${searchIcon()}<input data-role="outline-search" placeholder="搜索大纲" aria-label="搜索大纲"></label><button type="button" data-action="outline-expand-all" title="展开全部" aria-label="展开全部">＋</button><button type="button" data-action="outline-collapse-all" title="折叠全部" aria-label="折叠全部">−</button></div>
             <div class="ymz-outline-tree ymz-structured-outline" data-role="outline-tree" role="tree" aria-label="结构化大纲编辑器" spellcheck="false"></div>
+            <footer class="ymz-outline-panel__footer"><span><b data-role="outline-footer-count">0</b> 个节点</span><span>最大 <b data-role="outline-max-depth">1</b> 层</span></footer>
           </aside>
+          <aside class="ymz-study-panel" data-role="study-panel" aria-label="卡片与复习" hidden></aside>
         </div>
 
         <div class="ymz-floating ymz-leftbar" role="toolbar" aria-label="画布工具">
@@ -84378,15 +84668,11 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
           <div class="ymz-project-choice-panel__body" data-project-choice-body></div>
         </aside>
 
-        <aside class="ymz-project-choice-panel" data-role="line-style-choice-panel" aria-label="线型" role="listbox" hidden>
-          <header class="ymz-project-choice-panel__header"><strong>线型</strong><button type="button" data-project-choice-action="close" aria-label="关闭线型面板">×</button></header>
-          <div class="ymz-project-choice-panel__body" data-project-choice-body></div>
-        </aside>
-
         <aside class="ymz-project-style-panel" data-role="project-style-panel" aria-label="整图样式" hidden>
           <header class="ymz-project-style-panel__header"><strong>样式</strong><button type="button" data-project-style-action="close" aria-label="关闭样式">×</button></header>
           <section><h4>密度</h4><div class="ymz-density-options" role="group" aria-label="节点密度"><button type="button" data-project-density="compact"><strong>紧凑</strong></button><button type="button" data-project-density="default"><strong>默认</strong></button><button type="button" data-project-density="comfortable"><strong>舒展</strong></button></div><div class="ymz-custom-spacing" aria-label="自定义节点间距"><label><span>左右</span><input type="number" min="12" max="240" step="1" data-project-spacing="horizontal" aria-label="水平间距"></label><label><span>上下</span><input type="number" min="2" max="100" step="1" data-project-spacing="vertical" aria-label="垂直间距"></label></div></section>
           <section class="ymz-project-style-panel__rainbow"><h4>彩虹连线</h4><label class="ymz-project-style-panel__switch"><strong>启用</strong><input type="checkbox" data-project-style="rainbowLines"></label><div class="ymz-project-style-panel__palette"><span>配色</span><button type="button" class="ymz-rainbow-trigger" data-rainbow-trigger aria-haspopup="listbox" aria-expanded="false"><span data-rainbow-current-label>彩虹</span><i data-project-rainbow-preview aria-hidden="true"></i><span class="ymz-rainbow-trigger__arrow" aria-hidden="true">⌄</span></button><select data-project-style="rainbowScheme" aria-label="彩虹连线配色" hidden>${rainbowSchemeOptionsHtml("rainbow")}</select><div data-rainbow-picker hidden></div></div></section>
+          <section class="ymz-project-style-panel__lines"><h4>线型</h4><div class="ymz-project-line-options" role="radiogroup" aria-label="导图连线线型"><button type="button" data-project-line-style="curve" role="radio">曲线</button><button type="button" data-project-line-style="direct" role="radio">直线</button><button type="button" data-project-line-style="straight" role="radio">圆角折线</button></div></section>
           <section><h4>背景色</h4><div class="ymz-background-options"><button type="button" data-project-background="" title="主题背景">主题</button><button type="button" data-project-background="#ffffff" title="白色"></button><button type="button" data-project-background="#e2e8f0" title="岩灰"></button><button type="button" data-project-background="#ffe7ba" title="暖色"></button><button type="button" data-project-background="#c8f0dc" title="薄荷"></button><button type="button" data-project-background="#d7e8ff" title="天空"></button><button type="button" data-project-background="#f7cbd5" title="玫瑰"></button><button type="button" data-project-background="#0f172a" title="深色"></button></div><label class="ymz-project-style-panel__custom"><span>自定义</span><button type="button" class="ymz-node-color-trigger ymz-project-color-trigger" data-project-color-trigger="backgroundColor"><i data-project-color-swatch="backgroundColor"></i><span data-project-color-label="backgroundColor">默认</span></button></label></section>
           <footer><button type="button" data-project-style-action="reset">恢复主题默认</button></footer>
         </aside>
@@ -84422,29 +84708,49 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
           <button class="is-danger" data-outer-frame-action="delete">删除外框</button>
         </div>
 
-        <div class="ymz-floating ymz-statusbar">
-          <button class="ymz-status-title" data-role="title" title="点击重命名">${escapeHtml$3(title)}</button><input class="ymz-status-title-input" data-role="title-input" value="${escapeHtml$3(title)}" aria-label="导图标题" hidden>
-          <span class="ymz-stats" data-role="stats">roots 1 · nodes 0 · words 0</span>
+        <div class="ymz-floating ymz-statusbar" role="toolbar" aria-label="导图状态与视图工具">
+          <button class="ymz-status-title" data-role="title" title="点击重命名">${escapeHtml$4(title)}</button><input class="ymz-status-title-input" data-role="title-input" value="${escapeHtml$4(title)}" aria-label="导图标题" hidden>
+          <span class="ymz-stats" data-role="stats">根节点 1 · 节点 0 · 字数 0</span>
           <span class="ymz-selection-count" data-role="selection-count" hidden></span>
-          <button class="ymz-icon-button" data-action="fit" title="适配视图" aria-label="适配视图">${fitViewIcon()}</button>
-          <button class="ymz-canvas-mode ymz-icon-button" data-action="toggle-selection-mode" title="切换为拖动优先：左键拖动画布，Ctrl/Cmd + 左键框选" aria-label="切换为拖动优先：左键拖动画布，Ctrl/Cmd + 左键框选" aria-pressed="false"><span data-role="canvas-mode-icon">${canvasModeIcon("select")}</span></button>
-          <button class="ymz-icon-button" data-action="readonly" title="进入只读模式" aria-label="进入只读模式" aria-pressed="false">${lockIcon(false)}</button>
-          <button class="ymz-icon-button" data-action="zen" title="禅模式" aria-label="禅模式">${meditationIcon()}</button>
-          <button class="ymz-icon-button ymz-toolbar-pin" data-action="toggle-toolbar-pin" title="工具栏已固定" aria-label="工具栏已固定" aria-pressed="true">${pinIcon(true)}</button>
-          <button class="ymz-icon-button" data-action="cycle-appearance" title="当前跟随系统；切换为明亮外观" aria-label="当前跟随系统；切换为明亮外观">${appearanceIcon("system")}</button>
-          <button class="ymz-icon-button" data-action="zoom-out" title="缩小" aria-label="缩小">${zoomIcon("out")}</button>
-          <input class="ymz-zoom" data-role="zoom" value="100%" inputmode="decimal" aria-label="缩放百分比" title="点击输入缩放百分比">
-          <button class="ymz-icon-button" data-action="zoom-in" title="放大" aria-label="放大">${zoomIcon("in")}</button>
-          <button class="ymz-icon-button" data-action="fullscreen" title="全屏" aria-label="全屏">${fullscreenIcon()}</button>
-          <button class="ymz-icon-button" data-action="help" title="帮助" aria-label="帮助">${helpIcon()}</button>
+          <span class="ymz-statusbar__spacer"></span>
+          <span class="ymz-statusbar__group ymz-statusbar__group--core">
+            <button class="ymz-icon-button" data-action="fit" title="适配视图" aria-label="适配视图">${fitViewIcon()}</button>
+            <button class="ymz-canvas-mode ymz-icon-button" data-action="toggle-selection-mode" title="切换为拖动优先：左键拖动画布，Ctrl/Cmd + 左键框选" aria-label="切换为拖动优先：左键拖动画布，Ctrl/Cmd + 左键框选" aria-pressed="false"><span data-role="canvas-mode-icon">${canvasModeIcon("select")}</span></button>
+            <button class="ymz-icon-button" data-action="readonly" title="进入只读模式" aria-label="进入只读模式" aria-pressed="false">${lockIcon(false)}</button>
+          </span>
+          <span class="ymz-statusbar__overflow-panel" data-role="status-overflow-menu" role="menu" aria-label="更多底栏操作">
+            <span class="ymz-statusbar__group ymz-statusbar__group--secondary">
+              <button class="ymz-icon-button" data-action="zen" title="禅模式" aria-label="禅模式">${meditationIcon()}</button>
+              <button class="ymz-icon-button ymz-toolbar-pin" data-action="toggle-toolbar-pin" title="工具栏已固定" aria-label="工具栏已固定" aria-pressed="true">${pinIcon(true)}</button>
+              <button class="ymz-icon-button" data-action="presentation" title="演示模式" aria-label="进入演示模式" aria-pressed="false">${presentationIcon()}</button>
+            </span>
+            <span class="ymz-statusbar__separator" aria-hidden="true"></span>
+            <span class="ymz-statusbar__group ymz-statusbar__group--zoom">
+              <button class="ymz-icon-button" data-action="zoom-out" title="缩小" aria-label="缩小">${zoomIcon("out")}</button>
+              <input class="ymz-zoom" data-role="zoom" value="100%" inputmode="decimal" aria-label="缩放百分比" title="点击输入缩放百分比">
+              <button class="ymz-icon-button" data-action="zoom-in" title="放大" aria-label="放大">${zoomIcon("in")}</button>
+              <button class="ymz-icon-button" data-action="reset" title="重置缩放" aria-label="重置缩放">${resetZoomIcon()}</button>
+            </span>
+            <span class="ymz-statusbar__separator" aria-hidden="true"></span>
+            <span class="ymz-statusbar__group ymz-statusbar__group--utility">
+              <button class="ymz-icon-button is-active" data-action="toggle-minimap" title="隐藏缩略图" aria-label="隐藏缩略图" aria-pressed="true">${miniMapIcon()}</button>
+              <button class="ymz-icon-button" data-action="help" title="帮助" aria-label="帮助">${helpIcon()}</button>
+            </span>
+          </span>
+          <button class="ymz-icon-button ymz-statusbar__overflow-trigger" data-action="toggle-status-overflow" title="更多底栏操作" aria-label="更多底栏操作" aria-haspopup="menu" aria-expanded="false">•••</button>
         </div>
+        <aside class="ymz-minimap" data-role="minimap" aria-label="导图缩略图">
+          <div class="ymz-minimap__content" data-role="minimap-content" aria-hidden="true"></div>
+          <div class="ymz-minimap__viewport" data-role="minimap-viewport" aria-label="当前可视区域"></div>
+          <span class="ymz-minimap__label" aria-hidden="true">MINIMAP</span>
+        </aside>
         <button type="button" class="ymz-toolbar-edge ymz-toolbar-edge--top" data-toolbar-edge="top" aria-label="显示顶部工具栏"><span aria-hidden="true"></span></button>
         <button type="button" class="ymz-toolbar-edge ymz-toolbar-edge--left" data-toolbar-edge="left" aria-label="显示左侧工具栏"><span aria-hidden="true"></span></button>
         <button type="button" class="ymz-toolbar-edge ymz-toolbar-edge--bottom" data-toolbar-edge="bottom" aria-label="显示底部工具栏"><span aria-hidden="true"></span></button>
       </div>
     </div>`;
 }
-function escapeHtml$3(value) {
+function escapeHtml$4(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 const OUTLINE_ROW_SPLIT_RATIO = 0.5;
@@ -84487,10 +84793,9 @@ function resolveOutlinePointerDropIntent(input) {
     kind: vertical
   };
 }
-const OUTLINE_IMAGE_SINGLE_CLICK_DELAY = 380;
 const PLAIN_INDENT = "    ";
 const BLOCK_TAGS = /* @__PURE__ */ new Set(["DIV", "P", "LI", "UL", "OL", "SECTION", "ARTICLE"]);
-function escapeHtml$2(value) {
+function escapeHtml$3(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;").replaceAll("\n", "<br>");
 }
 function textLength(element) {
@@ -84640,7 +84945,7 @@ function blockKey(block) {
   return `${block.kind}:${block.uid}`;
 }
 function richHtmlForText(value) {
-  return escapeHtml$2(value);
+  return escapeHtml$3(value);
 }
 function isImageClipboard(data2) {
   return Array.from((data2 == null ? void 0 : data2.items) ?? []).some((item) => item.kind === "file" && item.type.startsWith("image/"));
@@ -84648,7 +84953,6 @@ function isImageClipboard(data2) {
 class StructuredOutlineEditorController {
   constructor(options) {
     __publicField(this, "debounceMs");
-    __publicField(this, "outlineImageClickTimer", null);
     __publicField(this, "selectedMedia", null);
     __publicField(this, "timer", null);
     __publicField(this, "dirty", false);
@@ -84683,7 +84987,7 @@ class StructuredOutlineEditorController {
       this.markDirty("composition-end");
     });
     __publicField(this, "onClick", (event) => {
-      var _a, _b, _c2, _d2, _e, _f;
+      var _a, _b, _c2, _d2, _e, _f, _g, _h;
       const target = event.target;
       const row = target.closest("[data-outline-uid]");
       if (!row) return;
@@ -84719,16 +85023,10 @@ class StructuredOutlineEditorController {
         event.stopPropagation();
         this.activateUid(uid2, false);
         if (!this.options.isReadonly()) this.options.onActivate(uid2);
-        if (this.outlineImageClickTimer !== null) window.clearTimeout(this.outlineImageClickTimer);
-        this.outlineImageClickTimer = null;
         if (event.detail > 1) return;
         const kind = imageAction.dataset.outlineImageKind === "clipart" ? "clipart" : "image";
         this.selectOutlineMedia(uid2, kind);
-        this.outlineImageClickTimer = window.setTimeout(() => {
-          var _a2, _b2;
-          this.outlineImageClickTimer = null;
-          if (!this.options.isReadonly()) (_b2 = (_a2 = this.options).onImageEdit) == null ? void 0 : _b2.call(_a2, uid2, kind, imageAction);
-        }, OUTLINE_IMAGE_SINGLE_CLICK_DELAY);
+        if (!this.options.isReadonly()) (_f = (_e = this.options).onImageEdit) == null ? void 0 : _f.call(_e, uid2, kind, imageAction);
         return;
       }
       const contentAction = target.closest("[data-outline-content]");
@@ -84737,7 +85035,7 @@ class StructuredOutlineEditorController {
         event.stopPropagation();
         this.activateUid(uid2, false);
         if (!this.options.isReadonly()) this.options.onActivate(uid2);
-        (_f = (_e = this.options).onContentAction) == null ? void 0 : _f.call(_e, uid2, contentAction.dataset.outlineContent ?? "");
+        (_h = (_g = this.options).onContentAction) == null ? void 0 : _h.call(_g, uid2, contentAction.dataset.outlineContent ?? "");
         return;
       }
       const toggle = target.closest("[data-outline-toggle]");
@@ -84791,8 +85089,6 @@ class StructuredOutlineEditorController {
       if (!imageAction || !row) return;
       event.preventDefault();
       event.stopPropagation();
-      if (this.outlineImageClickTimer !== null) window.clearTimeout(this.outlineImageClickTimer);
-      this.outlineImageClickTimer = null;
       const uid2 = row.dataset.outlineUid ?? "";
       const kind = imageAction.dataset.outlineImageKind === "clipart" ? "clipart" : "image";
       this.activateUid(uid2, false);
@@ -84835,10 +85131,6 @@ class StructuredOutlineEditorController {
       var _a;
       const target = event.target;
       const imageAction = target == null ? void 0 : target.closest("[data-outline-image-action]");
-      if (imageAction && event.detail > 1 && this.outlineImageClickTimer !== null) {
-        window.clearTimeout(this.outlineImageClickTimer);
-        this.outlineImageClickTimer = null;
-      }
       if (!imageAction && !(target == null ? void 0 : target.closest("[data-outline-media-delete]"))) {
         this.clearOutlineMediaSelection();
       }
@@ -85032,7 +85324,7 @@ class StructuredOutlineEditorController {
       const whole = this.isWholeSelectionActive((context == null ? void 0 : context.range) ?? null);
       const multiline = /\r|\n/.test(text2);
       if (!whole && context && !context.spansRows && !multiline) {
-        this.insertInlineHtml(html2 ? inlineHtmlFromClipboard(html2) : escapeHtml$2(text2));
+        this.insertInlineHtml(html2 ? inlineHtmlFromClipboard(html2) : escapeHtml$3(text2));
         this.markDirty("paste-inline");
         this.placeSelectionToolbarLater();
         return;
@@ -85282,7 +85574,7 @@ class StructuredOutlineEditorController {
     if (!(selection == null ? void 0 : selection.anchorNode) || !editor.contains(selection.anchorNode)) {
       this.selectEditorRange(editor, textLength(editor), textLength(editor));
     }
-    this.insertInlineHtml(!plainOnly && html2 ? inlineHtmlFromClipboard(html2) : escapeHtml$2(text2));
+    this.insertInlineHtml(!plainOnly && html2 ? inlineHtmlFromClipboard(html2) : escapeHtml$3(text2));
     this.markDirty(plainOnly ? "paste-current-line-plain" : "paste-current-line");
     this.flush(plainOnly ? "paste-current-line-plain" : "paste-current-line");
   }
@@ -85519,8 +85811,6 @@ class StructuredOutlineEditorController {
     root2.removeEventListener("pointerout", this.onPointerOut);
     root2.removeEventListener("dblclick", this.onDoubleClick);
     root2.removeEventListener("contextmenu", this.onContextMenu);
-    if (this.outlineImageClickTimer !== null) window.clearTimeout(this.outlineImageClickTimer);
-    this.outlineImageClickTimer = null;
     root2.removeEventListener("blur", this.onBlur, true);
     root2.removeEventListener("compositionstart", this.onCompositionStart);
     root2.removeEventListener("compositionend", this.onCompositionEnd);
@@ -85670,7 +85960,7 @@ class StructuredOutlineEditorController {
     const leaf = !block.hasChildren;
     const draggable = !block.isRoot && block.kind === "node";
     const marker = block.hasChildren ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle contenteditable="false" tabindex="-1" aria-label="${block.expanded ? "折叠" : "展开"}"><span class="ymz-outline-row__triangle" data-direction="${block.expanded ? "down" : "right"}"></span></button>` : `<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" contenteditable="false" aria-hidden="true"><span class="ymz-outline-row__leaf-square"></span></span>`;
-    return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : "false"}" data-outline-uid="${escapeHtml$2(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml$2(block.parentUid ?? "")}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${draggable}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" role="button" tabindex="${draggable ? "0" : "-1"}" aria-label="拖动节点"><span class="ymz-outline-drag-grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></span><span class="ymz-outline-row__drop-indicator" contenteditable="false" aria-hidden="true"></span>${marker}${outlineAccessoriesHtml(block.accessories, this.options.pluginBaseUrl)}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${structuredOutlineIsRichHtml(block.html)}">${block.html}</div></div>`;
+    return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : "false"}" data-outline-uid="${escapeHtml$3(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml$3(block.parentUid ?? "")}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${draggable}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" role="button" tabindex="${draggable ? "0" : "-1"}" aria-label="拖动节点"><span class="ymz-outline-drag-grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></span><span class="ymz-outline-row__drop-indicator" contenteditable="false" aria-hidden="true"></span>${marker}${outlineAccessoriesHtml(block.accessories, this.options.pluginBaseUrl)}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${structuredOutlineIsRichHtml(block.html)}">${block.html}</div></div>`;
   }
   selectOutlineMedia(uid2, kind) {
     this.clearOutlineMediaSelection();
@@ -86066,7 +86356,7 @@ class StructuredOutlineEditorController {
     if (!context) return;
     const parsed = parseOutlineText(value);
     if (!context.spansRows && parsed.lines.length <= 1) {
-      this.insertInlineHtml(escapeHtml$2(((_a = parsed.lines[0]) == null ? void 0 : _a.text) ?? ""));
+      this.insertInlineHtml(escapeHtml$3(((_a = parsed.lines[0]) == null ? void 0 : _a.text) ?? ""));
       this.markDirty(reason);
       this.flush(reason);
       return;
@@ -86283,9 +86573,9 @@ class StructuredOutlineEditorController {
   }
   selectedStructuredHtml(context, plain2, whole = false) {
     if (whole) {
-      return flattenStructuredOutline(this.options.getTree()).filter((block) => block.kind === "node").map((block) => `<div data-yemind-outline-depth="${block.depth}">${escapeHtml$2(PLAIN_INDENT.repeat(block.depth))}${block.html}</div>`).join("");
+      return flattenStructuredOutline(this.options.getTree()).filter((block) => block.kind === "node").map((block) => `<div data-yemind-outline-depth="${block.depth}">${escapeHtml$3(PLAIN_INDENT.repeat(block.depth))}${block.html}</div>`).join("");
     }
-    if (!context) return plain2.split("\n").map((line) => `<div>${escapeHtml$2(line)}</div>`).join("");
+    if (!context) return plain2.split("\n").map((line) => `<div>${escapeHtml$3(line)}</div>`).join("");
     if (!context.spansRows) {
       const fragment = context.range.cloneContents();
       const wrapper = document.createElement("div");
@@ -86305,7 +86595,7 @@ class StructuredOutlineEditorController {
       const depth = Number.parseInt(row.style.getPropertyValue("--ymz-outline-depth") || "0", 10) || 0;
       const start = index === startIndex ? context.start.offset : 0;
       const end = index === endIndex ? context.end.offset : textLength(editor);
-      return `<div data-yemind-outline-depth="${depth}">${escapeHtml$2(PLAIN_INDENT.repeat(depth))}${rangeHtml(editor, start, end)}</div>`;
+      return `<div data-yemind-outline-depth="${depth}">${escapeHtml$3(PLAIN_INDENT.repeat(depth))}${rangeHtml(editor, start, end)}</div>`;
     }).filter(Boolean).join("");
   }
   publishSelection() {
@@ -86705,13 +86995,14 @@ class RichTextToolbar {
       (type) => this.colorPopover.addEventListener(type, isolateInputEvent)
     );
     this.element.addEventListener("click", (event) => {
-      var _a2, _b2, _c2, _d2, _e, _f, _g, _h;
+      var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j;
       const button = event.target.closest(
         "[data-rich-action]"
       );
       if (!button || !this.target) return;
       const action = button.dataset.richAction ?? "";
       (_b2 = (_a2 = this.callbacks).onAction) == null ? void 0 : _b2.call(_a2, action);
+      (_d2 = (_c2 = this.target).restoreSelection) == null ? void 0 : _d2.call(_c2);
       if (["bold", "italic", "underline", "strike"].includes(action)) {
         this.target.formatText(
           nextToggleFormat(action, this.formatInfo)
@@ -86729,12 +87020,12 @@ class RichTextToolbar {
         case "code-block":
           this.colorPopover.hidden = true;
           this.element.hidden = true;
-          (_d2 = (_c2 = this.callbacks).onCodeBlock) == null ? void 0 : _d2.call(_c2, this.target);
+          (_f = (_e = this.callbacks).onCodeBlock) == null ? void 0 : _f.call(_e, this.target);
           break;
         case "link":
           this.colorPopover.hidden = true;
           this.element.hidden = true;
-          (_f = (_e = this.callbacks).onLink) == null ? void 0 : _f.call(_e, this.target);
+          (_h = (_g = this.callbacks).onLink) == null ? void 0 : _h.call(_g, this.target);
           break;
         case "cloze": {
           const next2 = !isClozeFormat(this.formatInfo);
@@ -86747,7 +87038,7 @@ class RichTextToolbar {
         case "formula":
           this.colorPopover.hidden = true;
           this.element.hidden = true;
-          (_h = (_g = this.callbacks).onFormula) == null ? void 0 : _h.call(_g, this.target);
+          (_j = (_i = this.callbacks).onFormula) == null ? void 0 : _j.call(_i, this.target);
           break;
         case "clear":
           this.target.clearTextFormat();
@@ -87196,7 +87487,7 @@ function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
   visit2(root2);
   return match2;
 }
-function escapeHtml$1(value) {
+function escapeHtml$2(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function intersects(a, b) {
@@ -87296,21 +87587,21 @@ function buildHoverPreviewHtml(type, value) {
   if (type === "comments") {
     const comments = Array.isArray(value) ? value : [];
     if (!comments.length) return '<div class="ymz-empty-hint">暂无批注</div>';
-    return `<div class="ymz-node-hover-preview__comments">${comments.map((comment) => `<div class="ymz-node-hover-preview__comment"><div class="ymz-node-hover-preview__comment-text">${escapeHtml$1(comment.text).replaceAll("\n", "<br>")}</div><time class="ymz-node-hover-preview__comment-time" datetime="${new Date(comment.createdAt).toISOString()}">${formatCommentTimestamp(comment.createdAt)}</time></div>`).join("")}</div>`;
+    return `<div class="ymz-node-hover-preview__comments">${comments.map((comment) => `<div class="ymz-node-hover-preview__comment"><div class="ymz-node-hover-preview__comment-text">${escapeHtml$2(comment.text).replaceAll("\n", "<br>")}</div><time class="ymz-node-hover-preview__comment-time" datetime="${new Date(comment.createdAt).toISOString()}">${formatCommentTimestamp(comment.createdAt)}</time></div>`).join("")}</div>`;
   }
   if (type === "todo") {
     const todo = value && typeof value === "object" && !Array.isArray(value) ? value : null;
     const label = (todo == null ? void 0 : todo.checked) ? "已完成" : "未完成";
     const text2 = String((todo == null ? void 0 : todo.text) ?? "").trim();
-    return `<div class="ymz-node-hover-preview__summary"><strong>${label}</strong>${text2 ? `<span>${escapeHtml$1(text2)}</span>` : ""}</div>`;
+    return `<div class="ymz-node-hover-preview__summary"><strong>${label}</strong>${text2 ? `<span>${escapeHtml$2(text2)}</span>` : ""}</div>`;
   }
   if (type === "tags") {
     const tags = Array.isArray(value) ? value.map((item) => String(item ?? "").trim()).filter(Boolean) : [];
-    return tags.length ? `<div class="ymz-node-hover-preview__tags">${tags.map((tag) => `<span>${escapeHtml$1(tag)}</span>`).join("")}</div>` : '<div class="ymz-empty-hint">暂无标签</div>';
+    return tags.length ? `<div class="ymz-node-hover-preview__tags">${tags.map((tag) => `<span>${escapeHtml$2(tag)}</span>`).join("")}</div>` : '<div class="ymz-empty-hint">暂无标签</div>';
   }
   if (type === "link") {
     const link = typeof value === "string" ? value.trim() : "";
-    return link ? `<div class="ymz-node-hover-preview__link">${escapeHtml$1(link)}</div>` : '<div class="ymz-empty-hint">暂无链接</div>';
+    return link ? `<div class="ymz-node-hover-preview__link">${escapeHtml$2(link)}</div>` : '<div class="ymz-empty-hint">暂无链接</div>';
   }
   return value ? '<div class="ymz-node-hover-preview__summary"><strong>已有外框</strong><span>单击可编辑或移除</span></div>' : '<div class="ymz-empty-hint">暂无外框</div>';
 }
@@ -87940,12 +88231,13 @@ class RainbowSchemePicker {
 }
 const BLOCKED_EVENTS = ["keydown", "keyup", "beforeinput", "input", "paste", "compositionstart", "compositionupdate", "compositionend"];
 class ProjectStylePanel {
-  constructor(root2, initial, readonly, onChange) {
+  constructor(root2, initial, readonly, onChange, initialLineStyle = "curve", onLineStyleChange) {
     __publicField(this, "panel");
     __publicField(this, "colorPopover");
     __publicField(this, "customColorInput");
     __publicField(this, "rainbowPicker");
     __publicField(this, "style");
+    __publicField(this, "lineStyle");
     __publicField(this, "stop", (event) => event.stopPropagation());
     __publicField(this, "onDocumentMouseDown", (event) => {
       if (!this.panel || this.panel.hidden) return;
@@ -87998,7 +88290,7 @@ class ProjectStylePanel {
       }
     });
     __publicField(this, "onClick", (event) => {
-      var _a, _b, _c2;
+      var _a, _b, _c2, _d2, _e;
       event.stopPropagation();
       const target = event.target;
       const action = (_a = target.closest("[data-project-style-action]")) == null ? void 0 : _a.dataset.projectStyleAction;
@@ -88017,13 +88309,23 @@ class ProjectStylePanel {
         this.commit({ density });
         return;
       }
-      const background = (_c2 = target.closest("[data-project-background]")) == null ? void 0 : _c2.dataset.projectBackground;
+      const lineStyle = (_c2 = target.closest("[data-project-line-style]")) == null ? void 0 : _c2.dataset.projectLineStyle;
+      if (lineStyle) {
+        this.lineStyle = normalizeLineStyle(lineStyle);
+        (_d2 = this.onLineStyleChange) == null ? void 0 : _d2.call(this, this.lineStyle);
+        this.refresh();
+        return;
+      }
+      const background = (_e = target.closest("[data-project-background]")) == null ? void 0 : _e.dataset.projectBackground;
       if (background !== void 0) this.commit({ backgroundColor: background || null });
     });
+    var _a;
     this.root = root2;
     this.readonly = readonly;
     this.onChange = onChange;
+    this.onLineStyleChange = onLineStyleChange;
     this.style = normalizeProjectStyle(initial);
+    this.lineStyle = normalizeLineStyle(initialLineStyle);
     this.panel = root2.querySelector('[data-role="project-style-panel"]');
     this.colorPopover = document.createElement("div");
     this.colorPopover.className = "ymz-color-popover ymz-project-color-popover";
@@ -88036,7 +88338,7 @@ class ProjectStylePanel {
     this.customColorInput.setAttribute("aria-hidden", "true");
     this.colorPopover.appendChild(this.customColorInput);
     root2.appendChild(this.colorPopover);
-    this.rainbowPicker = this.panel ? new RainbowSchemePicker(this.panel, {
+    this.rainbowPicker = ((_a = this.panel) == null ? void 0 : _a.querySelector("[data-rainbow-trigger]")) && this.panel.querySelector("[data-rainbow-picker]") ? new RainbowSchemePicker(this.panel, {
       selected: this.style.rainbowScheme ?? "rainbow",
       readonly: this.readonly,
       onSelect: (rainbowScheme) => this.commit({ rainbowScheme, rainbowLines: true })
@@ -88046,8 +88348,8 @@ class ProjectStylePanel {
     this.panel.addEventListener("change", this.onControl);
     this.panel.addEventListener("input", this.onControl);
     BLOCKED_EVENTS.forEach((type) => {
-      var _a;
-      return (_a = this.panel) == null ? void 0 : _a.addEventListener(type, this.stop);
+      var _a2;
+      return (_a2 = this.panel) == null ? void 0 : _a2.addEventListener(type, this.stop);
     });
     this.panel.addEventListener("pointerdown", this.stop);
     this.colorPopover.addEventListener("click", this.onColorPopoverClick);
@@ -88120,6 +88422,10 @@ class ProjectStylePanel {
     this.style = normalizeProjectStyle(style);
     this.refresh();
   }
+  setLineStyle(lineStyle) {
+    this.lineStyle = normalizeLineStyle(lineStyle);
+    this.refresh();
+  }
   commit(patch) {
     if (this.readonly()) return;
     this.style = normalizeProjectStyle({ ...this.style, ...patch });
@@ -88148,6 +88454,11 @@ class ProjectStylePanel {
     const selectedScheme = normalizeColorSchemeId(this.style.rainbowScheme) ?? "rainbow";
     if (rainbowScheme) rainbowScheme.value = selectedScheme;
     (_a = this.rainbowPicker) == null ? void 0 : _a.setSelected(selectedScheme);
+    this.panel.querySelectorAll("[data-project-line-style]").forEach((button) => {
+      const active = button.dataset.projectLineStyle === this.lineStyle;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-checked", String(active));
+    });
     this.syncBackgroundTrigger();
     this.panel.querySelectorAll("[data-project-background]").forEach((button) => {
       button.classList.toggle("is-active", (button.dataset.projectBackground || null) === this.style.backgroundColor);
@@ -88339,14 +88650,23 @@ class ProjectChoicePanel {
         }
         return;
       }
+      const apply2 = target.closest("[data-project-choice-apply]");
+      if (apply2) {
+        if (apply2.disabled || this.config.readonly()) return;
+        this.config.onSelect(this.selected);
+        this.hide();
+        return;
+      }
       const button = target.closest("[data-project-choice-value]");
       if (!button || button.disabled || this.config.readonly()) return;
       const value = button.dataset.projectChoiceValue ?? "";
       if (!value) return;
       this.selected = value;
-      this.config.onSelect(value);
       this.render();
-      this.hide();
+      if (!this.config.applyLabel) {
+        this.config.onSelect(value);
+        this.hide();
+      }
     });
     var _a;
     this.root = root2;
@@ -88470,6 +88790,18 @@ class ProjectChoicePanel {
       grid.appendChild(button);
     });
     this.body.append(tabs, grid);
+    const selectedOption = this.config.options.find((option2) => option2.value === this.selected);
+    if (this.config.applyLabel && selectedOption) {
+      const footer = document.createElement("footer");
+      footer.className = "ymz-project-choice-panel__footer";
+      const apply2 = document.createElement("button");
+      apply2.type = "button";
+      apply2.dataset.projectChoiceApply = "true";
+      apply2.textContent = this.config.applyLabel(selectedOption);
+      apply2.disabled = this.config.readonly();
+      footer.appendChild(apply2);
+      this.body.appendChild(footer);
+    }
   }
   renderList() {
     const groups2 = /* @__PURE__ */ new Map();
@@ -89525,20 +89857,17 @@ const DATASET_KEYS = {
   bottom: "statusbarVisible"
 };
 const OWNER_SELECTORS = {
-  top: ".ymz-topbar, .ymz-layout-gallery, .ymz-project-choice-panel, .ymz-project-style-panel, .ymz-node-style-panel, .ymz-transfer-panel",
+  top: ".ymz-topbar, .ymz-topbar__overflow-menu, .ymz-search-panel, .ymz-layout-gallery, .ymz-project-choice-panel, .ymz-project-style-panel, .ymz-node-style-panel, .ymz-transfer-panel",
   left: ".ymz-leftbar",
   bottom: ".ymz-statusbar"
 };
+const OWNER_SELECTOR = Object.values(OWNER_SELECTORS).join(", ");
 class ToolbarVisibilityController {
   constructor(options) {
     __publicField(this, "pinned");
     __publicField(this, "hideDelayMs");
     __publicField(this, "hotZonePx");
-    __publicField(this, "sides", {
-      top: { timer: null },
-      left: { timer: null },
-      bottom: { timer: null }
-    });
+    __publicField(this, "timer", null);
     __publicField(this, "onPointerMove", (event) => {
       if (this.pinned) return;
       const rect2 = this.options.root.getBoundingClientRect();
@@ -89546,28 +89875,25 @@ class ToolbarVisibilityController {
       const y2 = event.clientY - rect2.top;
       const target = event.target;
       const ownedSide = this.sideFromTarget(target);
-      if (ownedSide) this.reveal(ownedSide);
-      if (y2 <= this.hotZonePx) this.reveal("top");
-      if (rect2.height - y2 <= this.hotZonePx) this.reveal("bottom");
-      if (x2 <= this.hotZonePx) this.reveal("left");
+      if (ownedSide || y2 <= this.hotZonePx || rect2.height - y2 <= this.hotZonePx || x2 <= this.hotZonePx) this.revealAll();
     });
     __publicField(this, "onPointerLeave", () => {
-      if (!this.pinned) SIDES.forEach((side) => this.scheduleHide(side));
+      if (!this.pinned) this.scheduleHide();
     });
     __publicField(this, "onFocusIn", (event) => {
       const target = event.target;
       const side = this.sideFromTarget(target);
-      if (side) this.reveal(side);
+      if (side) this.revealAll();
     });
     __publicField(this, "onFocusOut", (event) => {
       const target = event.target;
       const side = this.sideFromTarget(target);
-      if (side && !this.pinned) this.scheduleHide(side);
+      if (side && !this.pinned) this.scheduleHide();
     });
     __publicField(this, "onClick", (event) => {
       const target = event.target;
       const side = this.sideFromTarget(target);
-      if (side && target.closest("[data-toolbar-edge]")) this.reveal(side);
+      if (side && target.closest("[data-toolbar-edge]")) this.revealAll();
     });
     this.options = options;
     this.pinned = Boolean(options.pinned);
@@ -89579,10 +89905,10 @@ class ToolbarVisibilityController {
     options.root.addEventListener("focusout", this.onFocusOut);
     options.root.addEventListener("click", this.onClick);
     this.applyPinnedState();
-    if (!this.pinned) SIDES.forEach((side) => this.scheduleHide(side));
+    if (!this.pinned) this.scheduleHide();
   }
   destroy() {
-    SIDES.forEach((side) => this.clearTimer(side));
+    this.clearTimer();
     this.options.root.removeEventListener("pointermove", this.onPointerMove);
     this.options.root.removeEventListener("pointerleave", this.onPointerLeave);
     this.options.root.removeEventListener("focusin", this.onFocusIn);
@@ -89596,54 +89922,52 @@ class ToolbarVisibilityController {
       this.revealAll();
       return;
     }
-    SIDES.forEach((side) => this.scheduleHide(side));
+    this.scheduleHide();
   }
   revealAll() {
-    SIDES.forEach((side) => this.reveal(side, false));
-    if (!this.pinned) SIDES.forEach((side) => this.scheduleHide(side));
+    SIDES.forEach((side) => {
+      this.options.root.dataset[DATASET_KEYS[side]] = "true";
+    });
+    this.clearTimer();
+    if (!this.pinned) this.scheduleHide();
   }
   revealBoth() {
     this.revealAll();
   }
   revealTop() {
-    this.reveal("top");
+    this.revealAll();
   }
   revealBottom() {
-    this.reveal("bottom");
+    this.revealAll();
   }
   revealLeft() {
-    this.reveal("left");
-  }
-  reveal(side, reschedule = true) {
-    this.options.root.dataset[DATASET_KEYS[side]] = "true";
-    this.clearTimer(side);
-    if (!this.pinned && reschedule) this.scheduleHide(side);
+    this.revealAll();
   }
   applyPinnedState() {
     this.options.root.dataset.toolbarsPinned = String(this.pinned);
   }
-  scheduleHide(side) {
+  scheduleHide() {
     if (this.pinned) return;
-    this.clearTimer(side);
-    this.sides[side].timer = window.setTimeout(() => {
-      this.sides[side].timer = null;
-      if (this.sideOwnsInteraction(side)) {
-        this.scheduleHide(side);
+    this.clearTimer();
+    this.timer = window.setTimeout(() => {
+      this.timer = null;
+      if (this.ownsInteraction()) {
+        this.scheduleHide();
         return;
       }
-      this.options.root.dataset[DATASET_KEYS[side]] = "false";
+      SIDES.forEach((side) => {
+        this.options.root.dataset[DATASET_KEYS[side]] = "false";
+      });
     }, this.hideDelayMs);
   }
-  sideOwnsInteraction(side) {
-    const selector = OWNER_SELECTORS[side];
+  ownsInteraction() {
     const active = document.activeElement;
-    if (active instanceof Element && active.closest(selector)) return true;
-    return Boolean(this.options.root.querySelector(`:is(${selector}):hover`));
+    if (active instanceof Element && active.closest(OWNER_SELECTOR)) return true;
+    return Boolean(this.options.root.querySelector(`:is(${OWNER_SELECTOR}):hover`));
   }
-  clearTimer(side) {
-    const timer = this.sides[side].timer;
-    if (timer !== null) window.clearTimeout(timer);
-    this.sides[side].timer = null;
+  clearTimer() {
+    if (this.timer !== null) window.clearTimeout(this.timer);
+    this.timer = null;
   }
   sideFromTarget(target) {
     var _a;
@@ -89725,11 +90049,16 @@ class ResourceActionPopover {
         { left: options.anchorRect.right + gap, top: options.anchorRect.top + options.anchorRect.height / 2 - rect2.height / 2 },
         { left: options.anchorRect.left - rect2.width - gap, top: options.anchorRect.top + options.anchorRect.height / 2 - rect2.height / 2 }
       ];
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      const fitting = candidates.find((item) => item.left >= margin && item.top >= margin && item.left + rect2.width <= viewportWidth - margin && item.top + rect2.height <= viewportHeight - margin) ?? candidates[0];
-      this.element.style.left = `${Math.round(clamp(fitting.left, margin, Math.max(margin, viewportWidth - rect2.width - margin)))}px`;
-      this.element.style.top = `${Math.round(clamp(fitting.top, margin, Math.max(margin, viewportHeight - rect2.height - margin)))}px`;
+      const rootRect = this.root.getBoundingClientRect();
+      const bounds = {
+        left: Math.max(0, rootRect.left) + margin,
+        top: Math.max(0, rootRect.top) + margin,
+        right: Math.min(window.innerWidth, rootRect.right) - margin,
+        bottom: Math.min(window.innerHeight, rootRect.bottom) - margin
+      };
+      const fitting = candidates.find((item) => item.left >= bounds.left && item.top >= bounds.top && item.left + rect2.width <= bounds.right && item.top + rect2.height <= bounds.bottom) ?? candidates[0];
+      this.element.style.left = `${Math.round(clamp(fitting.left, bounds.left, Math.max(bounds.left, bounds.right - rect2.width)))}px`;
+      this.element.style.top = `${Math.round(clamp(fitting.top, bounds.top, Math.max(bounds.top, bounds.bottom - rect2.height)))}px`;
       this.element.style.visibility = "visible";
     });
   }
@@ -89749,7 +90078,7 @@ const uid$1 = () => {
   var _a, _b;
   return ((_b = (_a = globalThis.crypto) == null ? void 0 : _a.randomUUID) == null ? void 0 : _b.call(_a)) ?? `import-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 };
-function plainText$1(data2) {
+function plainText$2(data2) {
   const value = String(data2.text ?? "");
   if (!data2.richText) return value;
   if (typeof DOMParser !== "undefined") {
@@ -89766,7 +90095,7 @@ function visit(tree, callback, depth = 0) {
 function exportMarkdown(map2) {
   const lines = [];
   visit(map2.data, (node, depth) => {
-    const text2 = plainText$1(node.data).replace(/\r?\n/g, " ");
+    const text2 = plainText$2(node.data).replace(/\r?\n/g, " ");
     lines.push(depth < 6 ? `${"#".repeat(depth + 1)} ${text2}` : `${"  ".repeat(depth - 6)}- ${text2}`);
   });
   return `${lines.join("\n\n")}
@@ -89774,13 +90103,13 @@ function exportMarkdown(map2) {
 }
 function exportText(map2) {
   const lines = [];
-  visit(map2.data, (node, depth) => lines.push(`${"  ".repeat(depth)}${plainText$1(node.data).replace(/\r?\n/g, " ")}`));
+  visit(map2.data, (node, depth) => lines.push(`${"  ".repeat(depth)}${plainText$2(node.data).replace(/\r?\n/g, " ")}`));
   return `${lines.join("\n")}
 `;
 }
 function opmlNode(node, depth) {
   const padding = "  ".repeat(depth);
-  const text2 = xmlEscape(plainText$1(node.data).replace(/\r?\n/g, " "));
+  const text2 = xmlEscape(plainText$2(node.data).replace(/\r?\n/g, " "));
   if (node.children.length === 0) return `${padding}<outline text="${text2}"/>`;
   return `${padding}<outline text="${text2}">
 ${node.children.map((child) => opmlNode(child, depth + 1)).join("\n")}
@@ -89797,7 +90126,7 @@ ${opmlNode(map2.data, 2)}
 `;
 }
 function htmlNode(node) {
-  const label = htmlEscape(plainText$1(node.data));
+  const label = htmlEscape(plainText$2(node.data));
   if (node.children.length === 0) return `<li><span>${label}</span></li>`;
   return `<li><span>${label}</span><ul>${node.children.map(htmlNode).join("")}</ul></li>`;
 }
@@ -89809,6 +90138,33 @@ function exportHtml(map2) {
 <style>body{max-width:960px;margin:40px auto;padding:0 24px;font:16px/1.7 system-ui,sans-serif;color:#172033}h1{font-size:28px}ul{padding-left:1.5em}li{margin:.35em 0}span{padding:.12em .35em;border-radius:5px}li::marker{color:#8894a7}</style></head>
 <body><h1>${htmlEscape(map2.title)}</h1><main><ul>${htmlNode(map2.data)}</ul></main>
 <script type="application/yemind+json">${payload}<\/script></body></html>`;
+}
+function exportMapHtml(map2) {
+  const payload = JSON.stringify({ product: "YeMind", format: "yemind-map", version: 1, map: map2 }).replaceAll("<", "\\u003c");
+  return `<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${htmlEscape(map2.title)}</title>
+<style>
+:root{color-scheme:light dark;font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+*{box-sizing:border-box}body{margin:0;overflow:hidden;background:#eef0f5;color:#172033}
+header{position:fixed;z-index:2;top:12px;left:50%;display:flex;align-items:center;gap:8px;transform:translateX(-50%);padding:7px 10px;border:1px solid #dfe3eb;border-radius:12px;background:#fffc;box-shadow:0 8px 28px #25314a18;backdrop-filter:blur(12px)}
+button{height:30px;padding:0 10px;border:0;border-radius:8px;background:#f0f2f6;color:inherit;cursor:pointer}button:hover{background:#e4e8ef}
+#viewport{width:100vw;height:100vh;overflow:auto;padding:80px 8vw}.map{display:flex;align-items:center;min-width:max-content;transform-origin:top left}
+.branch{display:flex;align-items:center;gap:34px}.node{position:relative;padding:8px 12px;border:1px solid #c9d4e6;border-radius:10px;background:#fff;box-shadow:0 2px 8px #25314a12;white-space:pre-wrap}
+.children{display:grid;gap:14px}.child{display:flex;align-items:center;gap:34px}.child>.node::before{content:"";position:absolute;top:50%;right:100%;width:34px;border-top:2px solid #92a7c5}
+.toggle{position:absolute;top:50%;right:-22px;width:18px;height:18px;padding:0;transform:translateY(-50%);border:1px solid #9eb0ca;border-radius:50%;background:#fff;font:12px/16px system-ui}
+.child[hidden]{display:none}@media(prefers-color-scheme:dark){body{background:#111318;color:#e6eaf2}header,.node{border-color:#343a48;background:#1c1f28}.node{box-shadow:0 2px 8px #0006}button{background:#252833}.toggle{background:#252833;color:#e6eaf2}}
+</style></head>
+<body data-yemind-map><header><strong>${htmlEscape(map2.title)}</strong><button data-action="zoom-out">−</button><span data-zoom>100%</span><button data-action="zoom-in">＋</button><button data-action="fit">适合</button><button data-action="expand">展开</button><button data-action="collapse">折叠</button></header><main id="viewport"><div class="map" data-map></div></main>
+<script type="application/yemind+json" id="data">${payload}<\/script>
+<script>
+(()=>{const doc=JSON.parse(document.getElementById('data').textContent),root=doc.map.data,host=document.querySelector('[data-map]');let zoom=1;
+const text=n=>{const box=document.createElement('div');box.innerHTML=n.data.richText?n.data.text:'';return n.data.richText?(box.textContent||''):String(n.data.text||'')};
+const render=(n,isRoot=false)=>{const branch=document.createElement('div');branch.className=isRoot?'branch':'child';const label=document.createElement('div');label.className='node';label.textContent=text(n);branch.append(label);
+if(n.children&&n.children.length){const children=document.createElement('div');children.className='children';n.children.forEach(c=>children.append(render(c)));branch.append(children);const toggle=document.createElement('button');toggle.className='toggle';toggle.textContent='−';toggle.title='折叠/展开';toggle.onclick=()=>{const hidden=!children.hidden;children.hidden=hidden;toggle.textContent=hidden?'+':'−'};label.append(toggle)}return branch};host.append(render(root,true));
+const setZoom=v=>{zoom=Math.max(.25,Math.min(2,v));host.style.transform='scale('+zoom+')';document.querySelector('[data-zoom]').textContent=Math.round(zoom*100)+'%'};
+document.addEventListener('click',e=>{const a=e.target.closest('[data-action]');if(!a)return;const action=a.dataset.action;if(action==='zoom-in')setZoom(zoom+.1);if(action==='zoom-out')setZoom(zoom-.1);if(action==='fit'){const vp=document.getElementById('viewport');setZoom(Math.min(1,(vp.clientWidth-80)/host.scrollWidth,(vp.clientHeight-100)/host.scrollHeight))}if(action==='expand'||action==='collapse'){document.querySelectorAll('.children').forEach(el=>el.hidden=action==='collapse');document.querySelectorAll('.toggle').forEach(el=>el.textContent=action==='collapse'?'+':'−')}})
+})();<\/script></body></html>`;
 }
 function treeFromLines(lines, fallbackTitle) {
   if (lines.length === 0) throw new Error("大纲文件没有可导入的节点");
@@ -89892,6 +90248,37 @@ const PNG_PACKAGE_MARKER = encoder$1.encode("\nYEMINDZ-PACKAGE\0");
 const MAX_PACKAGE_BYTES = 100 * 1024 * 1024;
 const MAX_PACKAGE_ENTRIES = 512;
 const MAX_PACKAGE_JSON_CHARS = 20 * 1024 * 1024;
+const MAX_PACKAGE_ENTRY_BYTES = 24 * 1024 * 1024;
+const MAX_PACKAGE_UNCOMPRESSED_BYTES = 100 * 1024 * 1024;
+function entrySizes(entry) {
+  const data2 = entry._data;
+  return {
+    compressed: Number((data2 == null ? void 0 : data2.compressedSize) ?? 0),
+    uncompressed: Number((data2 == null ? void 0 : data2.uncompressedSize) ?? 0)
+  };
+}
+function assertSafeZipEntries(zip, options = {}) {
+  const maxEntries = options.maxEntries ?? MAX_PACKAGE_ENTRIES;
+  const maxEntryBytes = options.maxEntryBytes ?? MAX_PACKAGE_ENTRY_BYTES;
+  const maxTotal = options.maxTotalUncompressedBytes ?? MAX_PACKAGE_UNCOMPRESSED_BYTES;
+  const maxRatio = options.maxCompressionRatio ?? 1e3;
+  const entries = Object.values(zip.files);
+  if (entries.length > maxEntries) throw new Error("压缩包文件数量过多");
+  let total = 0;
+  for (const entry of entries) {
+    if (entry.name.includes("..") || /^[\\/]/.test(entry.name)) {
+      throw new Error("压缩包包含不安全路径");
+    }
+    if (entry.dir) continue;
+    const { compressed, uncompressed } = entrySizes(entry);
+    if (uncompressed > maxEntryBytes) throw new Error(`压缩包文件过大：${entry.name}`);
+    total += uncompressed;
+    if (total > maxTotal) throw new Error("压缩包解压后总大小超出限制");
+    if (uncompressed > 5 * 1024 * 1024 && compressed > 0 && uncompressed / compressed > maxRatio) {
+      throw new Error(`压缩包压缩比异常：${entry.name}`);
+    }
+  }
+}
 const clone = (value) => JSON.parse(JSON.stringify(value));
 function bytesToBase64(bytes) {
   if (typeof Buffer !== "undefined") return Buffer.from(bytes).toString("base64");
@@ -89942,11 +90329,7 @@ async function readYeMindPackage(bytes) {
   } catch {
     throw new Error("YeMind 压缩包损坏");
   }
-  const entries = Object.values(zip.files);
-  if (entries.length > MAX_PACKAGE_ENTRIES) throw new Error("YeMind 压缩包文件数量过多");
-  if (entries.some((entry) => entry.name.includes("..") || /^[\\/]/.test(entry.name))) {
-    throw new Error("YeMind 压缩包包含不安全路径");
-  }
+  assertSafeZipEntries(zip);
   const manifestFile = zip.file("manifest.json");
   if (!manifestFile) throw new Error("压缩包不是 YeMind 格式");
   const manifestJson = await manifestFile.async("string");
@@ -90228,6 +90611,7 @@ async function createExportArtifact(id, map2, renderer) {
   else if (id === "opml") bytes = encoder.encode(exportOpml(map2));
   else if (id === "text") bytes = encoder.encode(exportText(map2));
   else if (id === "html") bytes = encoder.encode(exportHtml(map2));
+  else if (id === "html-map") bytes = encoder.encode(exportMapHtml(map2));
   else if (id === "yemind-zip") bytes = await createYeMindPackage(map2, { appVersion: PLUGIN_VERSION });
   else if (id === "xmind") bytes = await exportXMind(map2);
   else if (id === "svg") bytes = await renderBytes(renderer, "svg");
@@ -90249,7 +90633,8 @@ async function createExportArtifact(id, map2, renderer) {
   } else {
     bytes = await renderBytes(renderer, "pdf");
   }
-  return { filename: `${base}${definition.extension}`, mime: definition.mime, bytes };
+  const filenameBase = id === "html" ? `${base}-大纲` : id === "html-map" ? `${base}-导图` : base;
+  return { filename: `${filenameBase}${definition.extension}`, mime: definition.mime, bytes };
 }
 function downloadExportArtifact(artifact) {
   const blob = new Blob([artifact.bytes], { type: artifact.mime });
@@ -90283,11 +90668,12 @@ function normalizeImportedMap(source, title, options) {
     theme: typeof source.theme === "string" ? source.theme : map2.theme,
     lineStyle: source.lineStyle === "straight" || source.lineStyle === "direct" ? source.lineStyle : "curve",
     projectStyle: source.projectStyle && typeof source.projectStyle === "object" ? source.projectStyle : map2.projectStyle,
-    viewData: source.viewData && typeof source.viewData === "object" ? source.viewData : void 0
+    viewData: source.viewData && typeof source.viewData === "object" ? source.viewData : void 0,
+    studyCards: Array.isArray(source.studyCards) ? source.studyCards : map2.studyCards
   };
 }
 function titleFromName(name) {
-  return name.replace(/\.yemindz\.svg$/i, "").replace(/\.yemind\.svg$/i, "").replace(/\.yemindz\.zip$/i, "").replace(/\.[^.]+$/, "").trim() || "导入导图";
+  return name.replace(/\.yemindz\.svg$/i, "").replace(/\.yemind\.svg$/i, "").replace(/\.yemindz\.zip$/i, "").replace(/\.yemind\.zip$/i, "").replace(/\.[^.]+$/, "").trim() || "导入导图";
 }
 function mapFromJson(value, name, options) {
   var _a, _b;
@@ -90355,6 +90741,7 @@ async function mapFromZip(source, options) {
   } catch (error2) {
     const zip = await JSZip.loadAsync(source.bytes).catch(() => null);
     if (!zip) throw error2;
+    assertSafeZipEntries(zip);
     if (zip.file("content.json") || zip.file("content.xml") || zip.file("/content.xml")) {
       const tree = await importXMind(source.bytes);
       if (!isTree(tree)) throw new Error("XMind 文件没有可识别的根节点");
@@ -90457,6 +90844,460 @@ class AppearanceController {
     }
   }
 }
+function escapeHtml$1(value) {
+  return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+function plainText$1(value) {
+  return String(value ?? "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+}
+function statusLabel(status) {
+  if (status === "mastered") return "已掌握";
+  if (status === "learning") return "学习中";
+  return "新卡片";
+}
+class StudyPanelController {
+  constructor(options) {
+    __publicField(this, "element");
+    __publicField(this, "mode", "cards");
+    __publicField(this, "filter", "all");
+    __publicField(this, "search", "");
+    __publicField(this, "revealed", false);
+    __publicField(this, "reviewCardId", "");
+    __publicField(this, "reviewQueue", []);
+    __publicField(this, "reviewCompleted", /* @__PURE__ */ new Set());
+    __publicField(this, "flipped", /* @__PURE__ */ new Set());
+    __publicField(this, "fullscreen", false);
+    __publicField(this, "saving", false);
+    __publicField(this, "optimisticCards", null);
+    __publicField(this, "queuedCards", null);
+    __publicField(this, "onClick", (event) => {
+      var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z;
+      const target = event.target;
+      const action = (_a = target.closest("[data-study-action]")) == null ? void 0 : _a.dataset.studyAction;
+      const filter2 = (_b = target.closest("[data-study-filter]")) == null ? void 0 : _b.dataset.studyFilter;
+      const rating = (_c2 = target.closest("[data-study-rating]")) == null ? void 0 : _c2.dataset.studyRating;
+      if (filter2 === "all" || filter2 === "new" || filter2 === "learning" || filter2 === "mastered") {
+        this.filter = filter2;
+        this.render();
+        return;
+      }
+      if (filter2 === "starred") {
+        this.filter = filter2;
+        this.render();
+        return;
+      }
+      if (rating) {
+        if ((_e = (_d2 = this.options).readonly) == null ? void 0 : _e.call(_d2)) return;
+        const card = this.cards().find((item) => item.id === this.reviewCardId);
+        if (!card) return;
+        const reviewed = rateStudyCard(card, rating, ((_g = (_f = this.options).now) == null ? void 0 : _g.call(_f)) ?? Date.now());
+        this.reviewQueue = this.reviewQueue.filter((id2) => id2 !== reviewed.id);
+        if (rating === "again") this.reviewQueue.push(reviewed.id);
+        else this.reviewCompleted.add(reviewed.id);
+        this.revealed = false;
+        this.reviewCardId = "";
+        void this.persist(this.cards().map((item) => item.id === reviewed.id ? reviewed : item));
+        return;
+      }
+      const article = target.closest("[data-study-card-id]");
+      const id = article == null ? void 0 : article.dataset.studyCardId;
+      const status = (_h = target.closest("[data-study-status]")) == null ? void 0 : _h.dataset.studyStatus;
+      if (id && (status === "new" || status === "learning" || status === "mastered")) {
+        if ((_j = (_i = this.options).readonly) == null ? void 0 : _j.call(_i)) return;
+        void this.persist(this.cards().map((card) => {
+          var _a2, _b2;
+          return card.id === id ? { ...card, status, updatedAt: ((_b2 = (_a2 = this.options).now) == null ? void 0 : _b2.call(_a2)) ?? Date.now() } : card;
+        }));
+        return;
+      }
+      if (!action) return;
+      if (action === "close") {
+        (_l = (_k = this.options).onClose) == null ? void 0 : _l.call(_k);
+        return;
+      }
+      if (action === "open-cards") {
+        this.show("cards");
+        return;
+      }
+      if (action === "fullscreen") {
+        this.fullscreen = !this.fullscreen;
+        this.render();
+        return;
+      }
+      if (action === "start-review") {
+        const visibleIds = Array.from(this.element.querySelectorAll("[data-study-card-id]")).map((item) => item.dataset.studyCardId).filter((id2) => Boolean(id2));
+        this.show("review", visibleIds);
+        return;
+      }
+      if (action === "reveal") {
+        this.revealed = true;
+        this.render();
+        return;
+      }
+      if (action === "create") {
+        if ((_n = (_m = this.options).readonly) == null ? void 0 : _n.call(_m)) return;
+        const node = this.options.getActiveNode();
+        if (!node) {
+          (_p = (_o = this.options).onMessage) == null ? void 0 : _p.call(_o, "请先选中一个导图节点");
+          return;
+        }
+        const now = ((_r = (_q = this.options).now) == null ? void 0 : _r.call(_q)) ?? Date.now();
+        const card = createStudyCard({
+          id: ((_t = (_s = this.options).id) == null ? void 0 : _t.call(_s)) ?? ((_v = (_u = globalThis.crypto) == null ? void 0 : _u.randomUUID) == null ? void 0 : _v.call(_u)) ?? `card-${now}`,
+          nodeUid: node.uid,
+          front: plainText$1(node.text) || "未命名卡片",
+          back: plainText$1(node.back),
+          now
+        });
+        void this.persist([...this.cards(), card]);
+        return;
+      }
+      if (!id) return;
+      if (action === "flip") {
+        if (this.flipped.has(id)) this.flipped.delete(id);
+        else this.flipped.add(id);
+        this.render();
+        return;
+      }
+      if (action === "delete") {
+        if ((_x = (_w = this.options).readonly) == null ? void 0 : _x.call(_w)) return;
+        void this.persist(this.cards().filter((card) => card.id !== id));
+      } else if (action === "star") {
+        if ((_z = (_y = this.options).readonly) == null ? void 0 : _z.call(_y)) return;
+        void this.persist(this.cards().map((card) => {
+          var _a2, _b2;
+          return card.id === id ? { ...card, starred: !card.starred, updatedAt: ((_b2 = (_a2 = this.options).now) == null ? void 0 : _b2.call(_a2)) ?? Date.now() } : card;
+        }));
+      }
+    });
+    __publicField(this, "onInput", (event) => {
+      var _a;
+      const input = event.target.closest("[data-study-search]");
+      if (!input) return;
+      this.search = input.value;
+      this.render();
+      (_a = this.element.querySelector("[data-study-search]")) == null ? void 0 : _a.focus();
+    });
+    __publicField(this, "onChange", (event) => {
+      var _a, _b, _c2, _d2;
+      if ((_b = (_a = this.options).readonly) == null ? void 0 : _b.call(_a)) return;
+      const field = event.target.closest("[data-study-field]");
+      const article = field == null ? void 0 : field.closest("[data-study-card-id]");
+      const id = article == null ? void 0 : article.dataset.studyCardId;
+      const key = field == null ? void 0 : field.dataset.studyField;
+      if (!field || !id || key !== "front" && key !== "back") return;
+      const value = field.value.trim();
+      if (key === "front" && !value) {
+        (_d2 = (_c2 = this.options).onMessage) == null ? void 0 : _d2.call(_c2, "卡片正面不能为空", "error");
+        this.render();
+        return;
+      }
+      void this.persist(this.cards().map((card) => {
+        var _a2, _b2;
+        return card.id === id ? { ...card, [key]: value, updatedAt: ((_b2 = (_a2 = this.options).now) == null ? void 0 : _b2.call(_a2)) ?? Date.now() } : card;
+      }));
+    });
+    this.options = options;
+    this.element = options.panel;
+    this.element.addEventListener("click", this.onClick);
+    this.element.addEventListener("input", this.onInput);
+    this.element.addEventListener("change", this.onChange);
+  }
+  destroy() {
+    this.element.removeEventListener("click", this.onClick);
+    this.element.removeEventListener("input", this.onInput);
+    this.element.removeEventListener("change", this.onChange);
+  }
+  show(mode, requestedReviewQueue) {
+    var _a, _b;
+    const modeChanged = this.mode !== mode;
+    this.mode = mode;
+    this.element.hidden = false;
+    this.element.dataset.studyMode = mode;
+    this.revealed = false;
+    this.reviewCardId = "";
+    if (mode === "review" && (requestedReviewQueue || modeChanged || this.reviewQueue.length === 0)) {
+      const now = ((_b = (_a = this.options).now) == null ? void 0 : _b.call(_a)) ?? Date.now();
+      this.reviewQueue = requestedReviewQueue ? requestedReviewQueue.filter((id) => this.cards().some((card) => card.id === id)) : this.cards().filter((card) => card.dueAt <= now).map((card) => card.id);
+      this.reviewCompleted.clear();
+    }
+    this.render();
+  }
+  hide() {
+    this.element.hidden = true;
+  }
+  refresh() {
+    if (!this.element.hidden) this.render();
+  }
+  cards() {
+    return this.optimisticCards ?? normalizeStudyCards(this.options.getCards());
+  }
+  render() {
+    const cards = this.cards();
+    this.element.dataset.studyFullscreen = String(this.fullscreen || this.mode === "review");
+    this.element.innerHTML = `
+      <header class="ymz-study-panel__header">
+        <div>
+          <strong>${this.mode === "review" ? "复习" : "卡片"}</strong>
+          <small>${cards.length} 张卡片</small>
+        </div>
+        ${this.mode === "cards" ? `<button type="button" data-study-action="fullscreen" title="${this.fullscreen ? "缩小" : "全屏"}" aria-label="${this.fullscreen ? "缩小" : "全屏"}卡片面板">${this.fullscreen ? "↙" : "↗"}</button>` : ""}
+        <button type="button" data-study-action="close" title="关闭" aria-label="关闭${this.mode === "review" ? "复习" : "卡片"}面板">×</button>
+      </header>
+      ${this.mode === "review" ? this.renderReview(cards) : this.renderCards(cards)}
+    `;
+  }
+  renderCards(cards) {
+    var _a, _b;
+    const activeNode = this.options.getActiveNode();
+    const readonly = Boolean((_b = (_a = this.options).readonly) == null ? void 0 : _b.call(_a));
+    const mastered = cards.filter((card) => card.status === "mastered").length;
+    const learning = cards.filter((card) => card.status === "learning").length;
+    const fresh = cards.length - mastered - learning;
+    const progress = cards.length ? Math.round(mastered / cards.length * 100) : 0;
+    const filtered = cards.filter((card) => {
+      if (this.filter === "starred" && !card.starred) return false;
+      if ((this.filter === "new" || this.filter === "learning" || this.filter === "mastered") && card.status !== this.filter) return false;
+      if (!this.search) return true;
+      const haystack = `${card.front}
+${card.back}
+${card.nodeUid}`.toLocaleLowerCase();
+      return haystack.includes(this.search.toLocaleLowerCase());
+    });
+    const filters = [
+      ["all", "全部"],
+      ["starred", "收藏"],
+      ["new", "新卡片"],
+      ["learning", "学习中"],
+      ["mastered", "已掌握"]
+    ];
+    return `
+      <section class="ymz-study-progress" data-role="study-progress" aria-label="掌握进度">
+        <div><strong>${progress}%</strong><span>掌握进度</span><small>待学 ${fresh} · 学习中 ${learning} · 已掌握 ${mastered}</small></div>
+        <i><b style="width:${progress}%"></b></i>
+      </section>
+      <div class="ymz-study-panel__toolbar">
+        <label class="ymz-study-search"><span aria-hidden="true">⌕</span><input data-study-search value="${escapeHtml$1(this.search)}" placeholder="搜索卡片" aria-label="搜索卡片"></label>
+        <button type="button" class="ymz-study-create" data-study-action="create"${activeNode && !readonly ? "" : " disabled"} title="${readonly ? "只读模式下不能创建卡片" : activeNode ? "从当前选中节点创建卡片" : "请先选中一个导图节点"}">＋ 当前节点</button>
+      </div>
+      <div class="ymz-study-filters" role="group" aria-label="卡片状态筛选">
+        ${filters.map(([value, label]) => `<button type="button" data-study-filter="${value}" class="${this.filter === value ? "is-active" : ""}" aria-pressed="${this.filter === value}">${label}</button>`).join("")}
+      </div>
+      ${filtered.length ? `<div class="ymz-study-start"><button type="button" data-study-action="start-review">开始学习 · ${filtered.length} 张卡片 <span aria-hidden="true">→</span></button></div>` : ""}
+      <div class="ymz-study-card-list" data-role="study-card-list">
+        ${filtered.length ? filtered.map((card) => this.renderCard(card, readonly)).join("") : `
+          <div class="ymz-study-empty">
+            <strong>${cards.length ? "没有符合条件的卡片" : "还没有卡片"}</strong>
+            <span>${activeNode ? "点击“当前节点”创建第一张卡片。" : "先在导图中选中节点，再创建卡片。"}</span>
+          </div>
+        `}
+      </div>
+    `;
+  }
+  renderCard(card, readonly) {
+    const flipped = this.flipped.has(card.id);
+    const lastReviewed = card.lastReviewedAt ? new Date(card.lastReviewedAt).toLocaleDateString("zh-CN") : "";
+    return `
+      <article class="ymz-study-card" data-study-card-id="${escapeHtml$1(card.id)}">
+        <header>
+          <span><i class="ymz-study-source-dot" aria-hidden="true"></i>${escapeHtml$1(card.nodeUid || "独立卡片")}</span>
+          <button type="button" data-study-action="star" aria-pressed="${card.starred}" title="${card.starred ? "取消重点" : "设为重点"}"${readonly ? " disabled" : ""}>${card.starred ? "★" : "☆"}</button>
+        </header>
+        <button type="button" class="ymz-study-card__face" data-study-action="flip" data-study-face="${flipped ? "back" : "front"}">
+          <small>${flipped ? "答案" : "问题"}</small>
+          <strong>${escapeHtml$1(flipped ? card.back || "（尚未填写答案）" : card.front)}</strong>
+          <em>点击翻面</em>
+        </button>
+        <details>
+          <summary>编辑卡片</summary>
+          <label><span>正面</span><input data-study-field="front" value="${escapeHtml$1(card.front)}" aria-label="卡片正面"${readonly ? " disabled" : ""}></label>
+          <label><span>背面</span><textarea data-study-field="back" aria-label="卡片背面" placeholder="输入答案或补充内容"${readonly ? " disabled" : ""}>${escapeHtml$1(card.back)}</textarea></label>
+        </details>
+        <div class="ymz-study-card__statuses" role="group" aria-label="卡片状态">
+          ${["new", "learning", "mastered"].map((status) => `<button type="button" data-study-status="${status}" class="${card.status === status ? "is-active" : ""}" aria-pressed="${card.status === status}"${readonly ? " disabled" : ""}>${statusLabel(status)}</button>`).join("")}
+        </div>
+        <footer>
+          <small>${card.repetitions ? `复习 ${card.repetitions} 次${lastReviewed ? ` · ${lastReviewed}` : ""}` : "尚未复习"}</small>
+          <button type="button" data-study-action="delete" class="is-danger"${readonly ? " disabled" : ""}>删除</button>
+        </footer>
+      </article>
+    `;
+  }
+  renderReview(cards) {
+    var _a, _b;
+    const readonly = Boolean((_b = (_a = this.options).readonly) == null ? void 0 : _b.call(_a));
+    this.reviewQueue = this.reviewQueue.filter((id) => cards.some((card) => card.id === id));
+    let current = cards.find((card) => card.id === this.reviewCardId && this.reviewQueue.includes(card.id));
+    if (!current) current = cards.find((card) => card.id === this.reviewQueue[0]);
+    this.reviewCardId = (current == null ? void 0 : current.id) ?? "";
+    if (!current) {
+      return `
+        <div class="ymz-study-review-empty">
+          <span class="ymz-study-review-empty__icon" aria-hidden="true">✓</span>
+          <strong>本轮复习已完成</strong>
+          <span>${cards.length ? "暂无到期卡片，可以回到卡片面板继续整理。" : "创建卡片后会在这里安排复习。"}</span>
+          <button type="button" data-study-action="open-cards">查看卡片</button>
+        </div>
+      `;
+    }
+    const total = this.reviewCompleted.size + this.reviewQueue.length;
+    const progress = total ? Math.round(this.reviewCompleted.size / total * 100) : 0;
+    return `
+      <div class="ymz-study-review">
+        <div class="ymz-study-review__progress"><span>卡片 ${this.reviewCompleted.size + 1} / ${Math.max(1, total)}</span><small>已完成 ${this.reviewCompleted.size} 张 · ${progress}%</small></div>
+        <article class="ymz-study-review-card" data-study-card-id="${escapeHtml$1(current.id)}">
+          <span class="ymz-study-review-card__eyebrow">${current.starred ? "★ 重点卡片" : statusLabel(current.status)}</span>
+          <h2>${escapeHtml$1(current.front)}</h2>
+          <div class="ymz-study-review-card__answer" data-role="study-answer"${this.revealed ? "" : " hidden"}>${escapeHtml$1(current.back || "（尚未填写答案）")}</div>
+          <button type="button" class="ymz-study-reveal" data-study-action="reveal"${this.revealed ? " hidden" : ""}>显示答案</button>
+          <div class="ymz-study-ratings"${this.revealed ? "" : " hidden"} aria-label="复习评价">
+            <button type="button" data-study-rating="again"${readonly ? " disabled" : ""}><strong>再来一次</strong><small>本轮稍后</small></button>
+            <button type="button" data-study-rating="hard"${readonly ? " disabled" : ""}><strong>有点难</strong><small>1 天</small></button>
+            <button type="button" data-study-rating="easy"${readonly ? " disabled" : ""}><strong>掌握了</strong><small>延长间隔</small></button>
+          </div>
+        </article>
+      </div>
+    `;
+  }
+  async persist(cards) {
+    var _a, _b, _c2, _d2;
+    if ((_b = (_a = this.options).readonly) == null ? void 0 : _b.call(_a)) return;
+    const normalizedCards = normalizeStudyCards(cards);
+    this.optimisticCards = normalizedCards;
+    this.queuedCards = normalizedCards;
+    if (this.saving) return;
+    this.saving = true;
+    this.element.setAttribute("aria-busy", "true");
+    try {
+      while (this.queuedCards) {
+        const nextCards = this.queuedCards;
+        this.queuedCards = null;
+        await this.options.onChange(nextCards);
+        if (!this.queuedCards) this.optimisticCards = null;
+      }
+    } catch {
+      this.queuedCards = null;
+      this.optimisticCards = null;
+      (_d2 = (_c2 = this.options).onMessage) == null ? void 0 : _d2.call(_c2, "卡片保存失败，请重试", "error");
+    } finally {
+      this.saving = false;
+      this.element.removeAttribute("aria-busy");
+      this.render();
+    }
+  }
+}
+function fitMiniMapSvg(svg2) {
+  if (!svg2) return false;
+  const width2 = Number.parseFloat(svg2.getAttribute("width") ?? "");
+  const height2 = Number.parseFloat(svg2.getAttribute("height") ?? "");
+  if (!(width2 > 0) || !(height2 > 0)) return false;
+  if (!svg2.hasAttribute("viewBox")) svg2.setAttribute("viewBox", `0 0 ${width2} ${height2}`);
+  svg2.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  svg2.setAttribute("width", "100%");
+  svg2.setAttribute("height", "100%");
+  return true;
+}
+class MiniMapController {
+  constructor(root2, map2, element) {
+    __publicField(this, "content");
+    __publicField(this, "viewport");
+    __publicField(this, "frame", null);
+    __publicField(this, "visible", true);
+    __publicField(this, "draggingViewport", false);
+    __publicField(this, "schedule", () => {
+      if (!this.visible || this.frame !== null) return;
+      this.frame = window.requestAnimationFrame(() => {
+        this.frame = null;
+        this.render();
+      });
+    });
+    __publicField(this, "onViewportChange", (style) => {
+      this.applyViewportStyle(style);
+    });
+    __publicField(this, "onPointerDown", (event) => {
+      var _a, _b;
+      if (event.button !== 0) return;
+      event.preventDefault();
+      const plugin = this.map.miniMap;
+      this.draggingViewport = Boolean(event.target.closest('[data-role="minimap-viewport"]'));
+      if (this.draggingViewport) (_a = plugin == null ? void 0 : plugin.onViewBoxMousedown) == null ? void 0 : _a.call(plugin, event);
+      else (_b = plugin == null ? void 0 : plugin.onMousedown) == null ? void 0 : _b.call(plugin, event);
+    });
+    __publicField(this, "onPointerMove", (event) => {
+      var _a, _b;
+      const plugin = this.map.miniMap;
+      if (this.draggingViewport) (_a = plugin == null ? void 0 : plugin.onViewBoxMousemove) == null ? void 0 : _a.call(plugin, event);
+      else (_b = plugin == null ? void 0 : plugin.onMousemove) == null ? void 0 : _b.call(plugin, event, 4);
+    });
+    __publicField(this, "onPointerUp", () => {
+      var _a, _b;
+      (_b = (_a = this.map.miniMap) == null ? void 0 : _a.onMouseup) == null ? void 0 : _b.call(_a);
+      this.draggingViewport = false;
+      this.schedule();
+    });
+    var _a;
+    this.root = root2;
+    this.map = map2;
+    this.element = element;
+    this.content = element.querySelector('[data-role="minimap-content"]');
+    this.viewport = element.querySelector('[data-role="minimap-viewport"]');
+    element.addEventListener("pointerdown", this.onPointerDown);
+    window.addEventListener("pointermove", this.onPointerMove);
+    window.addEventListener("pointerup", this.onPointerUp);
+    window.addEventListener("pointercancel", this.onPointerUp);
+    ["node_tree_render_end", "scale", "translate", "data_change", "layout_change"].forEach((event) => {
+      var _a2;
+      return (_a2 = map2.on) == null ? void 0 : _a2.call(map2, event, this.schedule);
+    });
+    (_a = map2.on) == null ? void 0 : _a.call(map2, "mini_map_view_box_position_change", this.onViewportChange);
+    this.schedule();
+  }
+  destroy() {
+    var _a, _b;
+    if (this.frame !== null) window.cancelAnimationFrame(this.frame);
+    this.frame = null;
+    this.element.removeEventListener("pointerdown", this.onPointerDown);
+    window.removeEventListener("pointermove", this.onPointerMove);
+    window.removeEventListener("pointerup", this.onPointerUp);
+    window.removeEventListener("pointercancel", this.onPointerUp);
+    ["node_tree_render_end", "scale", "translate", "data_change", "layout_change"].forEach((event) => {
+      var _a2, _b2;
+      return (_b2 = (_a2 = this.map).off) == null ? void 0 : _b2.call(_a2, event, this.schedule);
+    });
+    (_b = (_a = this.map).off) == null ? void 0 : _b.call(_a, "mini_map_view_box_position_change", this.onViewportChange);
+  }
+  toggle() {
+    this.setVisible(!this.visible);
+    return this.visible;
+  }
+  setVisible(visible2) {
+    this.visible = Boolean(visible2);
+    this.element.hidden = !this.visible;
+    this.root.dataset.minimapVisible = String(this.visible);
+    if (this.visible) this.schedule();
+  }
+  refresh() {
+    this.schedule();
+  }
+  render() {
+    const plugin = this.map.miniMap;
+    if (!(plugin == null ? void 0 : plugin.calculationMiniMap) || this.element.hidden) return;
+    const width2 = Math.max(120, this.element.clientWidth);
+    const height2 = Math.max(72, this.element.clientHeight);
+    try {
+      const state = plugin.calculationMiniMap(width2, height2);
+      this.content.innerHTML = state.svgHTML;
+      fitMiniMapSvg(this.content.querySelector("svg"));
+      this.applyViewportStyle(state.viewBoxStyle);
+    } catch {
+    }
+  }
+  applyViewportStyle(style) {
+    ["left", "right", "top", "bottom"].forEach((key) => {
+      if (style[key] !== void 0) this.viewport.style[key] = style[key];
+    });
+  }
+}
 class YeMindEditor {
   constructor(options) {
     __publicField(this, "map", null);
@@ -90494,7 +91335,6 @@ class YeMindEditor {
     __publicField(this, "projectStylePanel", null);
     __publicField(this, "layoutGalleryPanel", null);
     __publicField(this, "themeChoicePanel", null);
-    __publicField(this, "lineStyleChoicePanel", null);
     __publicField(this, "nodeQuickActions", null);
     __publicField(this, "toolbarVisibility", null);
     __publicField(this, "resourceActionPopover", null);
@@ -90521,6 +91361,10 @@ class YeMindEditor {
     __publicField(this, "suppressOutlineClickUntil", 0);
     __publicField(this, "editingSurface", new EditingSurfaceCoordinator());
     __publicField(this, "appearanceController", null);
+    __publicField(this, "studyPanel", null);
+    __publicField(this, "miniMapController", null);
+    __publicField(this, "studyMode", null);
+    __publicField(this, "presentationState", null);
     __publicField(this, "appearanceMode", null);
     __publicField(this, "applyingSettings", false);
     __publicField(this, "onCanvasPointerDown", (event) => {
@@ -90720,20 +91564,63 @@ class YeMindEditor {
       }
     });
     __publicField(this, "onRootKeydown", (event) => {
-      var _a, _b, _c2;
-      if (event.key === "Escape" && ((_a = this.commands) == null ? void 0 : _a.isRelationCreating())) {
+      var _a, _b, _c2, _d2, _e, _f, _g;
+      const overflowMenu = (_a = this.rootEl) == null ? void 0 : _a.querySelector(
+        '[data-role="top-overflow-menu"]'
+      );
+      const statusOverflowMenu = (_b = this.rootEl) == null ? void 0 : _b.querySelector(
+        '[data-role="status-overflow-menu"]'
+      );
+      if (overflowMenu && !overflowMenu.hidden && ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+        const items2 = Array.from(overflowMenu.querySelectorAll("button:not(:disabled)"));
+        if (items2.length) {
+          event.preventDefault();
+          const current = Math.max(0, items2.indexOf(document.activeElement));
+          const next2 = event.key === "Home" ? 0 : event.key === "End" ? items2.length - 1 : event.key === "ArrowDown" ? (current + 1) % items2.length : (current - 1 + items2.length) % items2.length;
+          items2[next2].focus();
+        }
+        return;
+      }
+      if (event.key === "Escape" && overflowMenu && !overflowMenu.hidden) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.toggleTopOverflow(false, true);
+        return;
+      }
+      if (((_c2 = this.rootEl) == null ? void 0 : _c2.dataset.statusOverflowOpen) === "true" && statusOverflowMenu && ["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) {
+        const items2 = Array.from(statusOverflowMenu.querySelectorAll("button:not(:disabled)"));
+        if (items2.length) {
+          event.preventDefault();
+          const current = Math.max(0, items2.indexOf(document.activeElement));
+          const next2 = event.key === "Home" ? 0 : event.key === "End" ? items2.length - 1 : event.key === "ArrowRight" ? (current + 1) % items2.length : (current - 1 + items2.length) % items2.length;
+          items2[next2].focus();
+        }
+        return;
+      }
+      if (event.key === "Escape" && ((_d2 = this.rootEl) == null ? void 0 : _d2.dataset.statusOverflowOpen) === "true") {
+        event.preventDefault();
+        event.stopPropagation();
+        this.toggleStatusOverflow(false, true);
+        return;
+      }
+      if (event.key === "Escape" && ((_e = this.commands) == null ? void 0 : _e.isRelationCreating())) {
         event.preventDefault();
         event.stopPropagation();
         this.commands.cancelRelation();
         this.updateRelationPresentation();
         return;
       }
-      if (event.key === "Escape" && ((_b = this.rootEl) == null ? void 0 : _b.dataset.zen) === "true") {
+      if (event.key === "Escape" && this.presentationState) {
+        event.preventDefault();
+        void this.togglePresentation(false);
+        return;
+      }
+      if (event.key === "Escape" && ((_f = this.rootEl) == null ? void 0 : _f.dataset.zen) === "true") {
         event.preventDefault();
         this.toggleZen(false);
         return;
       }
-      const activeOutlineEditor = (_c2 = this.outlineRichText) == null ? void 0 : _c2.activeHost;
+      const activeOutlineEditor = (_g = this.outlineRichText) == null ? void 0 : _g.activeHost;
       const eventTarget = event.target instanceof Node ? event.target : null;
       const activeElement = document.activeElement;
       const outlineEditing = Boolean(
@@ -90864,7 +91751,7 @@ class YeMindEditor {
     input.click();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B;
     this.options.diagnostics.record(
       "editor",
       "destroy-started",
@@ -90879,42 +91766,44 @@ class YeMindEditor {
     (_c2 = this.settingsUnsubscribe) == null ? void 0 : _c2.call(this);
     (_d2 = this.appearanceController) == null ? void 0 : _d2.destroy();
     this.appearanceController = null;
-    (_e = this.richTextToolbar) == null ? void 0 : _e.destroy();
+    (_e = this.studyPanel) == null ? void 0 : _e.destroy();
+    this.studyPanel = null;
+    (_f = this.miniMapController) == null ? void 0 : _f.destroy();
+    this.miniMapController = null;
+    (_g = this.richTextToolbar) == null ? void 0 : _g.destroy();
     this.richTextToolbar = null;
-    (_f = this.nodeHoverPreview) == null ? void 0 : _f.destroy();
+    (_h = this.nodeHoverPreview) == null ? void 0 : _h.destroy();
     this.nodeHoverPreview = null;
-    (_g = this.imageLightbox) == null ? void 0 : _g.destroy();
+    (_i = this.imageLightbox) == null ? void 0 : _i.destroy();
     this.imageLightbox = null;
-    (_h = this.nodeStylePanel) == null ? void 0 : _h.destroy();
+    (_j = this.nodeStylePanel) == null ? void 0 : _j.destroy();
     this.nodeStylePanel = null;
-    (_i = this.projectStylePanel) == null ? void 0 : _i.destroy();
+    (_k = this.projectStylePanel) == null ? void 0 : _k.destroy();
     this.projectStylePanel = null;
-    (_j = this.layoutGalleryPanel) == null ? void 0 : _j.destroy();
+    (_l = this.layoutGalleryPanel) == null ? void 0 : _l.destroy();
     this.layoutGalleryPanel = null;
-    (_k = this.themeChoicePanel) == null ? void 0 : _k.destroy();
+    (_m = this.themeChoicePanel) == null ? void 0 : _m.destroy();
     this.themeChoicePanel = null;
-    (_l = this.lineStyleChoicePanel) == null ? void 0 : _l.destroy();
-    this.lineStyleChoicePanel = null;
-    (_m = this.toolbarVisibility) == null ? void 0 : _m.destroy();
+    (_n = this.toolbarVisibility) == null ? void 0 : _n.destroy();
     this.toolbarVisibility = null;
-    (_n = this.resourceActionPopover) == null ? void 0 : _n.destroy();
+    (_o = this.resourceActionPopover) == null ? void 0 : _o.destroy();
     this.resourceActionPopover = null;
-    (_o = this.nodeQuickActions) == null ? void 0 : _o.destroy();
+    (_p = this.nodeQuickActions) == null ? void 0 : _p.destroy();
     this.nodeQuickActions = null;
-    (_p = this.canvasRightDrag) == null ? void 0 : _p.destroy();
+    (_q = this.canvasRightDrag) == null ? void 0 : _q.destroy();
     this.canvasRightDrag = null;
-    (_q = this.liveNodeWidthLayout) == null ? void 0 : _q.destroy();
+    (_r = this.liveNodeWidthLayout) == null ? void 0 : _r.destroy();
     this.liveNodeWidthLayout = null;
-    (_r = this.cancelFocusedNodeHighlight) == null ? void 0 : _r.call(this);
+    (_s = this.cancelFocusedNodeHighlight) == null ? void 0 : _s.call(this);
     this.cancelFocusedNodeHighlight = null;
-    (_s = this.rootEl) == null ? void 0 : _s.removeEventListener("keydown", this.onRootKeydown, true);
-    (_t = this.outlinePaneEl) == null ? void 0 : _t.removeEventListener("keydown", this.onOutlineKeydownBubble);
-    (_u = this.rootEl) == null ? void 0 : _u.removeEventListener("paste", this.onImagePaste);
-    (_v = this.canvasEl) == null ? void 0 : _v.removeEventListener("dragover", this.onImageDragOver);
-    (_w = this.canvasEl) == null ? void 0 : _w.removeEventListener("drop", this.onImageDrop);
-    (_x = this.canvasEl) == null ? void 0 : _x.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
-    (_y = this.canvasEl) == null ? void 0 : _y.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
-    (_z = this.outlineEl) == null ? void 0 : _z.removeEventListener(
+    (_t = this.rootEl) == null ? void 0 : _t.removeEventListener("keydown", this.onRootKeydown, true);
+    (_u = this.outlinePaneEl) == null ? void 0 : _u.removeEventListener("keydown", this.onOutlineKeydownBubble);
+    (_v = this.rootEl) == null ? void 0 : _v.removeEventListener("paste", this.onImagePaste);
+    (_w = this.canvasEl) == null ? void 0 : _w.removeEventListener("dragover", this.onImageDragOver);
+    (_x = this.canvasEl) == null ? void 0 : _x.removeEventListener("drop", this.onImageDrop);
+    (_y = this.canvasEl) == null ? void 0 : _y.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
+    (_z = this.canvasEl) == null ? void 0 : _z.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
+    (_A = this.outlineEl) == null ? void 0 : _A.removeEventListener(
       "pointerdown",
       this.onOutlinePointerDown,
       true
@@ -90931,7 +91820,7 @@ class YeMindEditor {
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_A = this.map) == null ? void 0 : _A.destroy();
+    (_B = this.map) == null ? void 0 : _B.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record(
@@ -91112,6 +92001,50 @@ class YeMindEditor {
       pluginBaseUrl: this.options.pluginBaseUrl
     });
     this.commands = createCommandAdapter(this.map);
+    const miniMapElement = this.options.container.querySelector('[data-role="minimap"]');
+    if (miniMapElement) {
+      this.miniMapController = new MiniMapController(this.rootEl, this.map, miniMapElement);
+    }
+    const studyPanelElement = this.options.container.querySelector(
+      '[data-role="study-panel"]'
+    );
+    if (studyPanelElement) {
+      this.studyPanel = new StudyPanelController({
+        panel: studyPanelElement,
+        getCards: () => this.current.studyCards ?? [],
+        readonly: () => {
+          var _a2;
+          return Boolean((_a2 = this.commands) == null ? void 0 : _a2.isReadonly());
+        },
+        getActiveNode: () => {
+          var _a2, _b, _c2, _d2;
+          const node = (_a2 = this.commands) == null ? void 0 : _a2.getPrimaryNode();
+          const data2 = (_b = node == null ? void 0 : node.getData) == null ? void 0 : _b.call(node);
+          const uid2 = String((data2 == null ? void 0 : data2.uid) ?? ((_c2 = node == null ? void 0 : node.getData) == null ? void 0 : _c2.call(node, "uid")) ?? "").trim();
+          if (!uid2) return null;
+          const note2 = normalizeNodeNote((data2 == null ? void 0 : data2.yemindNote) ?? (data2 == null ? void 0 : data2.note));
+          return {
+            uid: uid2,
+            text: String((data2 == null ? void 0 : data2.text) ?? ((_d2 = node == null ? void 0 : node.getData) == null ? void 0 : _d2.call(node, "text")) ?? ""),
+            back: (note2 == null ? void 0 : note2.html) ?? ""
+          };
+        },
+        onChange: async (cards) => {
+          const normalizedCards = normalizeStudyCards(cards);
+          await this.options.repository.update(this.current.id, {
+            studyCards: normalizedCards
+          });
+          this.current.studyCards = normalizedCards;
+          this.setSaveStateLabel("已保存", "saved");
+        },
+        onClose: () => this.setStudyMode(null),
+        onMessage: (message, kind) => siyuan.showMessage(
+          message,
+          kind === "error" ? 5e3 : 3e3,
+          kind === "error" ? "error" : void 0
+        )
+      });
+    }
     this.liveNodeWidthLayout = new LiveNodeWidthLayoutController(this.map);
     this.canvasRightDrag = new CanvasRightDragController({
       root: this.rootEl,
@@ -91130,7 +92063,9 @@ class YeMindEditor {
         this.current.projectStyle = normalizeProjectStyle(style);
         this.applyMapAppearance();
         this.scheduleSave();
-      }
+      },
+      this.current.lineStyle,
+      (lineStyle) => this.setLineStyle(lineStyle)
     );
     this.current.layoutPresetId = normalizeLayoutAssetId(this.current.layoutPresetId, this.current.layout);
     this.layoutGalleryPanel = new LayoutGalleryPanel(
@@ -91156,26 +92091,12 @@ class YeMindEditor {
       })),
       presentation: "palette",
       selected: this.current.theme,
+      applyLabel: (option2) => `应用主题 · ${option2.label}`,
       readonly: () => {
         var _a2;
         return Boolean((_a2 = this.commands) == null ? void 0 : _a2.isReadonly());
       },
       onSelect: (value) => this.setTheme(value)
-    });
-    this.lineStyleChoicePanel = new ProjectChoicePanel(this.rootEl, {
-      role: "line-style-choice-panel",
-      title: "线型",
-      options: [
-        { value: "curve", label: "弧线", description: "平滑曲线", iconHtml: lineStyleIcon("curve") },
-        { value: "straight", label: "圆角折线", description: "水平与垂直折线", iconHtml: lineStyleIcon("straight") },
-        { value: "direct", label: "直线", description: "节点之间直接连接", iconHtml: lineStyleIcon("direct") }
-      ],
-      selected: this.current.lineStyle,
-      readonly: () => {
-        var _a2;
-        return Boolean((_a2 = this.commands) == null ? void 0 : _a2.isReadonly());
-      },
-      onSelect: (value) => this.setLineStyle(value)
     });
     this.nodeQuickActions = new NodeQuickActionsController({
       root: this.rootEl,
@@ -91247,10 +92168,7 @@ class YeMindEditor {
       onImageEdit: (uid2, kind, anchor) => {
         if (!this.commands || this.commands.isReadonly()) return;
         if (kind === "clipart") this.showClipartResourceActions(uid2, anchor.getBoundingClientRect());
-        else {
-          this.activateNodeByUid(uid2);
-          openImageDialog(this.commands);
-        }
+        else this.showImageResourceActions(uid2, anchor.getBoundingClientRect());
       },
       onImageDelete: (uid2, kind) => {
         if (!this.commands || this.commands.isReadonly()) return;
@@ -91259,11 +92177,12 @@ class YeMindEditor {
         this.refreshOutlineFromMap();
       },
       onImagePreview: (uid2) => {
-        var _a2;
+        var _a2, _b;
+        (_a2 = this.resourceActionPopover) == null ? void 0 : _a2.hide();
         const data2 = this.findTreeNodeData(uid2);
         const source = String((data2 == null ? void 0 : data2.image) ?? "");
         const title = String((data2 == null ? void 0 : data2.imageTitle) ?? "");
-        if (source) (_a2 = this.imageLightbox) == null ? void 0 : _a2.show(source, title);
+        if (source) (_b = this.imageLightbox) == null ? void 0 : _b.show(source, title);
       },
       onContentAction: (uid2, type) => this.runOutlineContentAction(uid2, type),
       onContentHover: (uid2, type, anchor, entering) => {
@@ -91304,7 +92223,7 @@ class YeMindEditor {
     });
     this.applyMapAppearance(false);
     this.repositoryUnsubscribe = this.options.repository.subscribe((state) => {
-      var _a2, _b;
+      var _a2, _b, _c2;
       const next2 = state.maps.find((item) => item.id === this.current.id);
       if (!next2) {
         (_b = (_a2 = this.options).onMissing) == null ? void 0 : _b.call(_a2);
@@ -91315,6 +92234,11 @@ class YeMindEditor {
         this.titleEl.textContent = next2.title;
         this.titleEl.title = "点击重命名";
         this.titleInputEl.value = next2.title;
+      }
+      const nextCards = normalizeStudyCards(next2.studyCards);
+      if (JSON.stringify(nextCards) !== JSON.stringify(this.current.studyCards ?? [])) {
+        this.current.studyCards = nextCards;
+        (_c2 = this.studyPanel) == null ? void 0 : _c2.refresh();
       }
     });
     this.settingsUnsubscribe = this.options.settingsStore.subscribe(
@@ -91341,9 +92265,19 @@ class YeMindEditor {
     this.updateDiagnosticState({ mounted: true });
   }
   bindToolbar() {
-    var _a, _b, _c2, _d2;
+    var _a, _b, _c2, _d2, _e;
     this.rootEl.addEventListener("click", (event) => {
-      var _a2, _b2, _c3, _d3, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y;
+      var _a2, _b2, _c3, _d3, _e2, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s;
+      const clickTarget = event.target;
+      const overflowMenu = this.rootEl.querySelector(
+        '[data-role="top-overflow-menu"]'
+      );
+      if (overflowMenu && !overflowMenu.hidden && !clickTarget.closest('[data-role="top-overflow-menu"]') && !clickTarget.closest('[data-action="toggle-top-overflow"]')) {
+        this.toggleTopOverflow(false);
+      }
+      if (this.rootEl.dataset.statusOverflowOpen === "true" && !clickTarget.closest('[data-role="status-overflow-menu"]') && !clickTarget.closest('[data-action="toggle-status-overflow"]')) {
+        this.toggleStatusOverflow(false);
+      }
       const anchor = event.target.closest(
         "a[href]"
       );
@@ -91397,6 +92331,9 @@ class YeMindEditor {
       );
       if (!button || !this.commands || !this.map) return;
       const action = button.dataset.action;
+      if (action !== "toggle-top-overflow" && button.closest('[data-role="top-overflow-menu"]')) {
+        queueMicrotask(() => this.toggleTopOverflow(false));
+      }
       if (action)
         this.options.diagnostics.record("toolbar", action, this.current.id);
       switch (action) {
@@ -91434,13 +92371,44 @@ class YeMindEditor {
           this.commands.zoomOut();
           break;
         case "view-map":
+          this.setStudyMode(null);
           this.setViewMode("map");
           break;
         case "view-split":
+          this.setStudyMode(null);
           this.setViewMode("split");
           break;
         case "view-outline":
-          this.setViewMode("outline");
+          this.setStudyMode(null);
+          this.setViewMode(
+            this.viewMode === "split" || this.viewMode === "outline" ? "map" : "split"
+          );
+          break;
+        case "view-cards":
+          this.setStudyMode(this.studyMode === "cards" ? null : "cards");
+          break;
+        case "view-review":
+          this.setStudyMode(this.studyMode === "review" ? null : "review");
+          break;
+        case "toggle-top-overflow":
+          this.toggleTopOverflow();
+          break;
+        case "toggle-status-overflow":
+          this.toggleStatusOverflow();
+          break;
+        case "outline-fullscreen":
+          this.setViewMode(this.viewMode === "outline" ? "split" : "outline");
+          break;
+        case "close-side-panel":
+          this.setViewMode("map");
+          break;
+        case "outline-expand-all":
+          (_a2 = this.outlineRichText) == null ? void 0 : _a2.flush("outline-expand-all");
+          this.commands.expandAll();
+          break;
+        case "outline-collapse-all":
+          (_b2 = this.outlineRichText) == null ? void 0 : _b2.flush("outline-collapse-all");
+          this.commands.collapseAll();
           break;
         case "open-search":
           this.openSearchPanel();
@@ -91449,45 +92417,40 @@ class YeMindEditor {
           this.openCheckpointManager();
           break;
         case "node-style":
-          (_a2 = this.projectStylePanel) == null ? void 0 : _a2.hide();
-          (_b2 = this.layoutGalleryPanel) == null ? void 0 : _b2.hide();
-          (_c3 = this.themeChoicePanel) == null ? void 0 : _c3.hide();
-          (_d3 = this.lineStyleChoicePanel) == null ? void 0 : _d3.hide();
-          (_e = this.nodeStylePanel) == null ? void 0 : _e.toggle(button);
+          (_c3 = this.projectStylePanel) == null ? void 0 : _c3.hide();
+          (_d3 = this.layoutGalleryPanel) == null ? void 0 : _d3.hide();
+          (_e2 = this.themeChoicePanel) == null ? void 0 : _e2.hide();
+          (_f = this.nodeStylePanel) == null ? void 0 : _f.toggle(button);
           break;
         case "layout-gallery":
-          (_f = this.nodeStylePanel) == null ? void 0 : _f.hide();
-          (_g = this.projectStylePanel) == null ? void 0 : _g.hide();
-          (_h = this.themeChoicePanel) == null ? void 0 : _h.hide();
-          (_i = this.lineStyleChoicePanel) == null ? void 0 : _i.hide();
+          (_g = this.nodeStylePanel) == null ? void 0 : _g.hide();
+          (_h = this.projectStylePanel) == null ? void 0 : _h.hide();
+          (_i = this.themeChoicePanel) == null ? void 0 : _i.hide();
           (_j = this.layoutGalleryPanel) == null ? void 0 : _j.toggle(button);
           break;
         case "theme-gallery":
           (_k = this.layoutGalleryPanel) == null ? void 0 : _k.hide();
           (_l = this.nodeStylePanel) == null ? void 0 : _l.hide();
           (_m = this.projectStylePanel) == null ? void 0 : _m.hide();
-          (_n = this.lineStyleChoicePanel) == null ? void 0 : _n.hide();
-          (_o = this.themeChoicePanel) == null ? void 0 : _o.toggle(button);
-          break;
-        case "line-style-gallery":
-          (_p = this.layoutGalleryPanel) == null ? void 0 : _p.hide();
-          (_q = this.nodeStylePanel) == null ? void 0 : _q.hide();
-          (_r = this.projectStylePanel) == null ? void 0 : _r.hide();
-          (_s = this.themeChoicePanel) == null ? void 0 : _s.hide();
-          (_t = this.lineStyleChoicePanel) == null ? void 0 : _t.toggle(button);
+          (_n = this.themeChoicePanel) == null ? void 0 : _n.toggle(button);
           break;
         case "project-style":
-          (_u = this.layoutGalleryPanel) == null ? void 0 : _u.hide();
-          (_v = this.themeChoicePanel) == null ? void 0 : _v.hide();
-          (_w = this.lineStyleChoicePanel) == null ? void 0 : _w.hide();
-          (_x = this.nodeStylePanel) == null ? void 0 : _x.hide();
-          (_y = this.projectStylePanel) == null ? void 0 : _y.toggle(button);
+          (_o = this.layoutGalleryPanel) == null ? void 0 : _o.hide();
+          (_p = this.themeChoicePanel) == null ? void 0 : _p.hide();
+          (_q = this.nodeStylePanel) == null ? void 0 : _q.hide();
+          (_r = this.projectStylePanel) == null ? void 0 : _r.toggle(button);
           break;
         case "import-file":
           this.openImportPicker();
           break;
         case "export-file":
           this.openExportDialog();
+          break;
+        case "share":
+          void this.shareCurrentMap();
+          break;
+        case "save":
+          void this.saveNow();
           break;
         case "close-export-panel":
           this.closeExportDialog();
@@ -91499,7 +92462,8 @@ class YeMindEditor {
           this.toggleZen(true);
           break;
         case "zen-exit":
-          this.toggleZen(false);
+          if (this.presentationState) void this.togglePresentation(false);
+          else this.toggleZen(false);
           break;
         case "toggle-toolbar-pin":
           button.blur();
@@ -91511,12 +92475,24 @@ class YeMindEditor {
         case "fullscreen":
           void this.toggleFullscreen();
           break;
+        case "presentation":
+          void this.togglePresentation(!this.presentationState);
+          break;
+        case "toggle-minimap": {
+          const visible2 = ((_s = this.miniMapController) == null ? void 0 : _s.toggle()) ?? false;
+          button.classList.toggle("is-active", visible2);
+          button.setAttribute("aria-pressed", String(visible2));
+          button.title = visible2 ? "隐藏缩略图" : "显示缩略图";
+          button.setAttribute("aria-label", button.title);
+          break;
+        }
         case "help":
           this.openHelp();
           break;
       }
     });
     this.outlinePaneEl.addEventListener("keydown", this.onOutlineKeydownBubble);
+    (_a = this.rootEl.querySelector('[data-role="outline-search"]')) == null ? void 0 : _a.addEventListener("input", () => this.applyOutlineSearch());
     this.bindOutlineDrag();
     this.bindSplitDivider();
     this.rootEl.addEventListener("change", (event) => {
@@ -91553,10 +92529,10 @@ class YeMindEditor {
       event.preventDefault();
       this.replaceCurrentSearch();
     });
-    (_a = this.rootEl.querySelector('[data-action="layout"]')) == null ? void 0 : _a.addEventListener("change", (event) => this.setLayout(event.target.value));
-    (_b = this.rootEl.querySelector('[data-action="theme"]')) == null ? void 0 : _b.addEventListener("change", (event) => this.setTheme(event.target.value));
-    (_c2 = this.rootEl.querySelector('[data-action="line-style"]')) == null ? void 0 : _c2.addEventListener("change", (event) => this.setLineStyle(event.target.value));
-    (_d2 = this.rootEl.querySelector('[data-role="import-file-input"]')) == null ? void 0 : _d2.addEventListener("change", (event) => {
+    (_b = this.rootEl.querySelector('[data-action="layout"]')) == null ? void 0 : _b.addEventListener("change", (event) => this.setLayout(event.target.value));
+    (_c2 = this.rootEl.querySelector('[data-action="theme"]')) == null ? void 0 : _c2.addEventListener("change", (event) => this.setTheme(event.target.value));
+    (_d2 = this.rootEl.querySelector('[data-action="line-style"]')) == null ? void 0 : _d2.addEventListener("change", (event) => this.setLineStyle(event.target.value));
+    (_e = this.rootEl.querySelector('[data-role="import-file-input"]')) == null ? void 0 : _e.addEventListener("change", (event) => {
       void this.importSelectedFile(event.target);
     });
     this.titleEl.addEventListener("click", () => this.beginTitleRename());
@@ -91622,6 +92598,82 @@ class YeMindEditor {
       siyuan.showMessage(error2 instanceof Error ? error2.message : "导出失败", 5e3, "error");
     } finally {
       panel == null ? void 0 : panel.removeAttribute("aria-busy");
+    }
+  }
+  toggleTopOverflow(force, restoreFocus = false) {
+    var _a;
+    const menu = this.rootEl.querySelector(
+      '[data-role="top-overflow-menu"]'
+    );
+    const trigger = this.rootEl.querySelector(
+      '[data-action="toggle-top-overflow"]'
+    );
+    if (!menu || !trigger) return;
+    const open2 = force ?? menu.hidden;
+    menu.hidden = !open2;
+    trigger.setAttribute("aria-expanded", String(open2));
+    if (open2) {
+      (_a = menu.querySelector("button:not(:disabled)")) == null ? void 0 : _a.focus();
+    } else if (restoreFocus) {
+      trigger.focus();
+    }
+  }
+  toggleStatusOverflow(force, restoreFocus = false) {
+    var _a;
+    const menu = this.rootEl.querySelector(
+      '[data-role="status-overflow-menu"]'
+    );
+    const trigger = this.rootEl.querySelector(
+      '[data-action="toggle-status-overflow"]'
+    );
+    if (!menu || !trigger) return;
+    const open2 = force ?? this.rootEl.dataset.statusOverflowOpen !== "true";
+    this.rootEl.dataset.statusOverflowOpen = String(open2);
+    trigger.setAttribute("aria-expanded", String(open2));
+    if (open2) {
+      (_a = menu.querySelector("button:not(:disabled)")) == null ? void 0 : _a.focus();
+    } else if (restoreFocus) {
+      trigger.focus();
+    }
+  }
+  async shareCurrentMap() {
+    if (!this.map) return;
+    try {
+      const artifact = await createExportArtifact("yemind-svg", this.transferSnapshot(), {
+        render: async (type) => {
+          var _a, _b;
+          const result = await ((_b = (_a = this.map) == null ? void 0 : _a.export) == null ? void 0 : _b.call(_a, type, false, this.current.title));
+          if (typeof result !== "string") {
+            throw new Error(`${type.toUpperCase()} 导出失败`);
+          }
+          return result;
+        }
+      });
+      const file = new File(
+        [artifact.bytes],
+        artifact.filename,
+        { type: artifact.mime }
+      );
+      const shareData = {
+        title: this.current.title,
+        text: `YeMind 导图：${this.current.title}`,
+        files: [file]
+      };
+      if (typeof navigator.share === "function" && (!navigator.canShare || navigator.canShare(shareData))) {
+        await navigator.share(shareData);
+        siyuan.showMessage("已打开系统分享");
+        return;
+      }
+      downloadExportArtifact(artifact);
+      siyuan.showMessage(`当前环境不支持系统分享，已下载 ${artifact.filename}`);
+    } catch (error2) {
+      if (error2 instanceof DOMException && error2.name === "AbortError") return;
+      console.error("[YeMind] share failed", error2);
+      siyuan.showMessage(
+        error2 instanceof Error ? error2.message : "分享失败",
+        5e3,
+        "error"
+      );
     }
   }
   async importSelectedFile(input) {
@@ -91756,9 +92808,7 @@ class YeMindEditor {
     this.current.lineStyle = normalizeLineStyle(value);
     const select = this.rootEl.querySelector('[data-action="line-style"]');
     if (select) select.value = this.current.lineStyle;
-    (_b = this.lineStyleChoicePanel) == null ? void 0 : _b.setSelected(this.current.lineStyle);
-    const icon = this.rootEl.querySelector('[data-role="line-style-icon"]');
-    if (icon) icon.innerHTML = lineStyleIcon(this.current.lineStyle);
+    (_b = this.projectStylePanel) == null ? void 0 : _b.setLineStyle(this.current.lineStyle);
     this.applyMapAppearance();
     this.options.diagnostics.record("appearance", "line-style-changed", this.current.id, { lineStyle: this.current.lineStyle });
     (_c2 = this.nodeQuickActions) == null ? void 0 : _c2.scheduleRefresh();
@@ -91941,7 +92991,7 @@ class YeMindEditor {
       }
     );
     this.map.on("node_active", (node, list) => {
-      var _a, _b, _c2, _d2, _e;
+      var _a, _b, _c2, _d2, _e, _f;
       const activeOutlineHost = ((_a = this.outlineRichText) == null ? void 0 : _a.activeHost) ?? null;
       const activeElement = document.activeElement;
       if (activeOutlineHost && (!activeElement || !this.outlineEl.contains(activeElement))) {
@@ -91954,8 +93004,9 @@ class YeMindEditor {
       if (list.length > 0) (_b = this.nodeStylePanel) == null ? void 0 : _b.refresh();
       else (_c2 = this.nodeStylePanel) == null ? void 0 : _c2.hide();
       (_d2 = this.nodeQuickActions) == null ? void 0 : _d2.scheduleRefresh();
+      (_e = this.studyPanel) == null ? void 0 : _e.refresh();
       const active = node ?? list[0];
-      const uid2 = (_e = active == null ? void 0 : active.getData) == null ? void 0 : _e.call(active, "uid");
+      const uid2 = (_f = active == null ? void 0 : active.getData) == null ? void 0 : _f.call(active, "uid");
       this.activateOutlineUid(uid2 ? String(uid2) : "", true);
     });
     this.map.on(
@@ -92419,8 +93470,7 @@ class YeMindEditor {
       "reset-layout": state.resetLayout,
       "node-style": !this.commands.isReadonly() && nodes.length > 0,
       "project-style": !this.commands.isReadonly(),
-      "theme-gallery": !this.commands.isReadonly(),
-      "line-style-gallery": !this.commands.isReadonly()
+      "theme-gallery": !this.commands.isReadonly()
     };
     this.rootEl.querySelectorAll("button[data-action]").forEach((button) => {
       const action = button.dataset.action ?? "";
@@ -92440,7 +93490,7 @@ class YeMindEditor {
     );
     if (lineStyle) lineStyle.disabled = this.commands.isReadonly();
     (_a = this.themeChoicePanel) == null ? void 0 : _a.refreshReadonly();
-    (_b = this.lineStyleChoicePanel) == null ? void 0 : _b.refreshReadonly();
+    (_b = this.projectStylePanel) == null ? void 0 : _b.setLineStyle(this.current.lineStyle);
   }
   updateSelectionPresentation(count) {
     var _a, _b;
@@ -92473,7 +93523,9 @@ class YeMindEditor {
       dark: "当前暗黑外观；切换为跟随系统"
     };
     this.rootEl.querySelectorAll('[data-action="cycle-appearance"]').forEach((button) => {
-      button.innerHTML = appearanceIcon(this.settings.appearanceMode);
+      const icon = button.querySelector('[data-role="appearance-icon"]');
+      if (icon) icon.innerHTML = appearanceIcon(this.settings.appearanceMode);
+      else button.innerHTML = appearanceIcon(this.settings.appearanceMode);
       button.title = labels[this.settings.appearanceMode];
       button.setAttribute("aria-label", labels[this.settings.appearanceMode]);
     });
@@ -92490,10 +93542,15 @@ class YeMindEditor {
     }
   }
   setViewMode(mode) {
-    var _a, _b, _c2, _d2, _e;
+    var _a, _b, _c2, _d2, _e, _f;
     (_a = this.resourceActionPopover) == null ? void 0 : _a.hide();
+    if ((mode === "split" || mode === "outline") && this.studyMode) {
+      this.studyMode = null;
+      this.rootEl.dataset.studyView = "none";
+      (_b = this.studyPanel) == null ? void 0 : _b.hide();
+    }
     if (mode !== "map" || this.viewMode !== "map") {
-      (_d2 = (_c2 = (_b = this.map) == null ? void 0 : _b.nodeImgAdjust) == null ? void 0 : _c2.clearSelectionForViewChange) == null ? void 0 : _d2.call(_c2);
+      (_e = (_d2 = (_c2 = this.map) == null ? void 0 : _c2.nodeImgAdjust) == null ? void 0 : _d2.clearSelectionForViewChange) == null ? void 0 : _e.call(_d2);
     }
     if (mode === "map" && this.viewMode !== "map") {
       this.claimCanvasInteraction("view-map");
@@ -92507,12 +93564,7 @@ class YeMindEditor {
       { mode }
     );
     this.updateDiagnosticState({ viewMode: mode });
-    this.rootEl.querySelectorAll('[data-action^="view-"]').forEach((button) => {
-      button.classList.toggle(
-        "is-active",
-        button.dataset.action === `view-${mode}`
-      );
-    });
+    this.updatePrimaryViewPresentation();
     if (mode !== "outline") {
       this.scheduleSafeResize();
     } else if (this.resizeFrame !== null) {
@@ -92522,7 +93574,58 @@ class YeMindEditor {
     if (mode === "split" || mode === "outline") {
       window.requestAnimationFrame(() => this.revealCurrentOutlineSelection());
     }
-    (_e = this.nodeQuickActions) == null ? void 0 : _e.scheduleRefresh();
+    (_f = this.nodeQuickActions) == null ? void 0 : _f.scheduleRefresh();
+  }
+  showImageResourceActions(uid2, anchorRect) {
+    if (!uid2 || !this.commands || this.commands.isReadonly() || !this.resourceActionPopover) return;
+    this.activateNodeByUid(uid2);
+    this.resourceActionPopover.show({
+      kind: "image",
+      anchorRect,
+      onReplace: () => {
+        if (!this.commands) return;
+        this.activateNodeByUid(uid2);
+        openImageDialog(this.commands);
+      },
+      onDelete: () => {
+        if (!this.commands) return;
+        this.activateNodeByUid(uid2);
+        this.commands.clearImageByUid(uid2);
+        this.refreshOutlineFromMap();
+      }
+    });
+  }
+  setStudyMode(mode) {
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k;
+    if (mode && this.viewMode !== "map") this.setViewMode("map");
+    (_a = this.resourceActionPopover) == null ? void 0 : _a.hide();
+    (_b = this.richTextToolbar) == null ? void 0 : _b.hide();
+    (_c2 = this.nodeHoverPreview) == null ? void 0 : _c2.hide();
+    (_d2 = this.imageLightbox) == null ? void 0 : _d2.hide();
+    (_g = (_f = (_e = this.map) == null ? void 0 : _e.nodeImgAdjust) == null ? void 0 : _f.clearSelectionForViewChange) == null ? void 0 : _g.call(_f);
+    if (mode && !this.searchPanelEl.hidden) this.closeSearchPanel();
+    this.studyMode = mode;
+    this.rootEl.dataset.studyView = mode ?? "none";
+    if (mode) (_h = this.studyPanel) == null ? void 0 : _h.show(mode);
+    else (_i = this.studyPanel) == null ? void 0 : _i.hide();
+    this.updatePrimaryViewPresentation();
+    (_j = this.nodeQuickActions) == null ? void 0 : _j.scheduleRefresh();
+    this.scheduleSafeResize();
+    (_k = this.miniMapController) == null ? void 0 : _k.refresh();
+    this.options.diagnostics.record(
+      "editor",
+      "study-mode-changed",
+      this.current.id,
+      { mode }
+    );
+  }
+  updatePrimaryViewPresentation() {
+    this.rootEl.querySelectorAll("[data-primary-view]").forEach((button) => {
+      const action = button.dataset.action;
+      const active = action === "view-cards" ? this.studyMode === "cards" : action === "view-review" ? this.studyMode === "review" : action === "view-outline" ? !this.studyMode && (this.viewMode === "split" || this.viewMode === "outline") : action === "view-map" && !this.studyMode && this.viewMode === "map";
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
   }
   revealCurrentOutlineSelection() {
     var _a, _b;
@@ -93015,10 +94118,67 @@ class YeMindEditor {
     this.outlinePaneEl.setAttribute("aria-readonly", String(readonly));
     this.outlineEl.setAttribute("aria-readonly", String(readonly));
     (_a = this.outlineRichText) == null ? void 0 : _a.syncFromTree(data2);
+    this.updateOutlineMetadata(data2);
+    this.applyOutlineSearch();
     const selectedUid = String(
       ((_d2 = (_c2 = (_b = this.commands) == null ? void 0 : _b.getPrimaryNode()) == null ? void 0 : _c2.getData) == null ? void 0 : _d2.call(_c2, "uid")) ?? ""
     );
     this.activateOutlineUid(selectedUid);
+  }
+  updateOutlineMetadata(data2) {
+    let nodes = 0;
+    let maxDepth = 1;
+    const visit2 = (node, depth) => {
+      nodes += 1;
+      maxDepth = Math.max(maxDepth, depth);
+      node.children.forEach((child) => visit2(child, depth + 1));
+    };
+    visit2(data2, 1);
+    this.rootEl.querySelectorAll(
+      '[data-role="outline-node-count"],[data-role="outline-footer-count"]'
+    ).forEach((element) => {
+      element.textContent = String(nodes);
+    });
+    const depthElement = this.rootEl.querySelector(
+      '[data-role="outline-max-depth"]'
+    );
+    if (depthElement) depthElement.textContent = String(maxDepth);
+  }
+  applyOutlineSearch() {
+    const input = this.rootEl.querySelector(
+      '[data-role="outline-search"]'
+    );
+    const query = (input == null ? void 0 : input.value.trim().toLocaleLowerCase()) ?? "";
+    const rows = Array.from(
+      this.outlineEl.querySelectorAll("[data-outline-uid]")
+    );
+    if (!query) {
+      rows.forEach((row) => {
+        delete row.dataset.outlineFiltered;
+      });
+      this.outlinePaneEl.dataset.outlineFiltering = "false";
+      return;
+    }
+    const byUid = new Map(rows.map((row) => [row.dataset.outlineUid ?? "", row]));
+    const visible2 = /* @__PURE__ */ new Set();
+    rows.forEach((row) => {
+      var _a;
+      const text2 = ((_a = row.textContent) == null ? void 0 : _a.toLocaleLowerCase()) ?? "";
+      if (!text2.includes(query)) return;
+      let current = row;
+      while (current) {
+        const uid2 = current.dataset.outlineUid ?? "";
+        if (!uid2 || visible2.has(uid2)) break;
+        visible2.add(uid2);
+        current = byUid.get(current.dataset.outlineParentUid ?? "");
+      }
+    });
+    rows.forEach((row) => {
+      row.dataset.outlineFiltered = String(
+        visible2.has(row.dataset.outlineUid ?? "")
+      );
+    });
+    this.outlinePaneEl.dataset.outlineFiltering = "true";
   }
   setOutlineExpanded(uid2, expanded) {
     var _a, _b;
@@ -93164,7 +94324,7 @@ class YeMindEditor {
         '[data-action="line-style"]'
       );
       if (lineStyleSelect) lineStyleSelect.value = this.current.lineStyle;
-      (_c2 = this.lineStyleChoicePanel) == null ? void 0 : _c2.setSelected(this.current.lineStyle);
+      (_c2 = this.projectStylePanel) == null ? void 0 : _c2.setLineStyle(this.current.lineStyle);
       (_d2 = this.projectStylePanel) == null ? void 0 : _d2.setStyle(this.current.projectStyle);
       this.applyMapAppearance();
       if (!viewData) {
@@ -93184,7 +94344,7 @@ class YeMindEditor {
       this.updateZoom();
       const revision = this.saveRevisions.markChanged();
       this.saveRevisions.markSaved(revision);
-      this.saveStateEl.textContent = "已恢复";
+      this.setSaveStateLabel("已恢复", "saved");
     } finally {
       this.applyingCheckpoint = false;
     }
@@ -93267,7 +94427,7 @@ class YeMindEditor {
   scheduleSave() {
     if (this.destroyed) return;
     const revision = this.saveRevisions.markChanged();
-    this.saveStateEl.textContent = "保存中…";
+    this.setSaveStateLabel("保存中…", "saving");
     this.updateDiagnosticState({ saveState: "saving" });
     if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.saveTimer = window.setTimeout(() => {
@@ -93284,6 +94444,7 @@ class YeMindEditor {
     if (!this.map || this.destroyed || !this.saveRevisions.isDirty()) return;
     if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.saveTimer = null;
+    this.setSaveStateLabel("保存中…", "saving");
     await this.persist(this.saveRevisions.current(), true);
   }
   async persist(revision, throwOnError = false) {
@@ -93312,7 +94473,7 @@ class YeMindEditor {
       this.current.projectStyle = patch.projectStyle;
       await this.options.repository.update(this.current.id, patch);
       if (!this.destroyed && this.saveRevisions.markSaved(revision)) {
-        this.saveStateEl.textContent = "已保存";
+        this.setSaveStateLabel("已保存", "saved");
         this.options.diagnostics.record("save", "completed", this.current.id, {
           revision
         });
@@ -93328,16 +94489,25 @@ class YeMindEditor {
       );
       console.error("[YeMind] save failed", error2);
       if (!this.destroyed && revision === this.saveRevisions.current()) {
-        this.saveStateEl.textContent = "保存失败";
+        this.setSaveStateLabel("保存失败", "failed");
         this.updateDiagnosticState({ saveState: "failed" });
         siyuan.showMessage("YeMind 保存失败", 5e3, "error");
       }
       if (throwOnError) throw error2;
     }
   }
+  setSaveStateLabel(label, state) {
+    var _a;
+    const labelElement = (_a = this.saveStateEl) == null ? void 0 : _a.querySelector(
+      '[data-role="save-state-label"]'
+    );
+    if (labelElement) labelElement.textContent = label;
+    else if (this.saveStateEl) this.saveStateEl.textContent = label;
+    if (this.saveStateEl) this.saveStateEl.dataset.saveState = state;
+  }
   updateStats(data2) {
     const stats = calculateEditorStats(data2);
-    this.statsEl.textContent = `roots ${stats.roots} · nodes ${stats.nodes} · words ${stats.words}`;
+    this.statsEl.textContent = `根节点 ${stats.roots} · 节点 ${stats.nodes} · 字数 ${stats.words}`;
   }
   updateZoom() {
     var _a, _b;
@@ -93367,7 +94537,7 @@ class YeMindEditor {
     });
   }
   setReadonly(enabled) {
-    var _a, _b, _c2, _d2, _e;
+    var _a, _b, _c2, _d2, _e, _f;
     if (!this.map) return;
     this.rootEl.dataset.readonly = String(enabled);
     this.rootEl.querySelectorAll('[data-action="readonly"]').forEach((button) => {
@@ -93394,6 +94564,7 @@ class YeMindEditor {
       this.settings.showRichTextToolbar && !enabled
     );
     (_c2 = this.outlineRichText) == null ? void 0 : _c2.setReadonly(enabled);
+    (_d2 = this.studyPanel) == null ? void 0 : _d2.refresh();
     this.map.setMode(enabled ? "readonly" : "edit");
     this.renderOutline(this.current.data);
     this.options.diagnostics.record(
@@ -93406,11 +94577,70 @@ class YeMindEditor {
     this.updateToolbarAvailability();
     this.updateRelationPresentation();
     this.updateOuterFramePresentation();
-    (_d2 = this.nodeStylePanel) == null ? void 0 : _d2.refresh();
-    (_e = this.nodeQuickActions) == null ? void 0 : _e.scheduleRefresh();
+    (_e = this.nodeStylePanel) == null ? void 0 : _e.refresh();
+    (_f = this.nodeQuickActions) == null ? void 0 : _f.scheduleRefresh();
   }
   toggleZen(enabled) {
     this.rootEl.dataset.zen = String(enabled);
+  }
+  async togglePresentation(enabled) {
+    var _a, _b, _c2;
+    if (enabled === Boolean(this.presentationState)) return;
+    const button = this.rootEl.querySelector('[data-action="presentation"]');
+    const exit = this.rootEl.querySelector('[data-action="zen-exit"]');
+    if (enabled) {
+      this.presentationState = {
+        readonly: this.rootEl.dataset.readonly === "true",
+        zen: this.rootEl.dataset.zen === "true",
+        viewMode: this.viewMode,
+        studyMode: this.studyMode
+      };
+      this.setStudyMode(null);
+      this.setViewMode("map");
+      this.setReadonly(true);
+      this.rootEl.dataset.presentation = "true";
+      this.toggleZen(true);
+      if (button) {
+        button.classList.add("is-active");
+        button.setAttribute("aria-pressed", "true");
+        button.setAttribute("aria-label", "退出演示模式");
+      }
+      if (exit) {
+        exit.title = "退出演示模式";
+        exit.setAttribute("aria-label", "退出演示模式");
+        exit.querySelector(".ymz-zen-exit__label span:last-child").textContent = "退出演示模式";
+      }
+      try {
+        if (!document.fullscreenElement) await ((_b = (_a = this.rootEl).requestFullscreen) == null ? void 0 : _b.call(_a));
+      } catch {
+      }
+      return;
+    }
+    const previous = this.presentationState;
+    this.presentationState = null;
+    this.rootEl.dataset.presentation = "false";
+    if (document.fullscreenElement === this.rootEl) {
+      try {
+        await ((_c2 = document.exitFullscreen) == null ? void 0 : _c2.call(document));
+      } catch {
+      }
+    }
+    if (previous) {
+      this.setReadonly(previous.readonly);
+      this.toggleZen(previous.zen);
+      this.setViewMode(previous.viewMode);
+      this.setStudyMode(previous.studyMode);
+    }
+    if (button) {
+      button.classList.remove("is-active");
+      button.setAttribute("aria-pressed", "false");
+      button.setAttribute("aria-label", "进入演示模式");
+    }
+    if (exit) {
+      exit.title = "退出禅模式";
+      exit.setAttribute("aria-label", "退出禅模式");
+      exit.querySelector(".ymz-zen-exit__label span:last-child").textContent = "退出禅模式";
+    }
   }
   async toggleFullscreen() {
     try {
@@ -93536,7 +94766,8 @@ function registerYeMindTab(plugin, host) {
                   theme: imported.theme,
                   lineStyle: imported.lineStyle,
                   projectStyle: imported.projectStyle,
-                  viewData: imported.viewData
+                  viewData: imported.viewData,
+                  studyCards: imported.studyCards
                 });
               } catch (error2) {
                 await host.repository.remove(created.id);

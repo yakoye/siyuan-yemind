@@ -7,7 +7,7 @@ const editor = readFileSync('src/editor/YeMindEditor.ts', 'utf8');
 const controller = readFileSync('src/editor/StructuredOutlineEditorController.ts', 'utf8');
 
 describe('v0.9.26 outline content parity', () => {
-  it('marks outline images for single-click editing and double-click preview', () => {
+  it('marks outline images for single-click selection/actions and double-click preview', () => {
     const accessories = outlineAccessoriesFromData({
       uid: 'n1', text: 'node', image: 'data:image/png;base64,AAAA', imageTitle: 'preview',
     });
@@ -15,7 +15,8 @@ describe('v0.9.26 outline content parity', () => {
     expect(html).toContain('data-outline-image-action');
     expect(html).toContain('data-outline-image-kind="image"');
     expect(controller).toContain("root.addEventListener('dblclick', this.onDoubleClick)");
-    expect(controller).toContain('outlineImageClickTimer');
+    expect(controller).not.toContain('outlineImageClickTimer');
+    expect(controller).toContain('this.selectOutlineMedia(uid, kind)');
     expect(editor).toContain('onImageEdit:');
     expect(editor).toContain('onImagePreview:');
   });
