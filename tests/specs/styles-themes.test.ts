@@ -23,3 +23,4 @@ import '../suites/styles-themes/v0924AppearanceViewStability.suite';
 import '../suites/styles-themes/v0931ThemePalettePanel.suite';
 import '../suites/styles-themes/v0932RainbowSchemePicker.suite';
 import '../suites/styles-themes/v130AppearanceController.suite';
+import '../suites/styles-themes/v151AppearanceContrast.suite';

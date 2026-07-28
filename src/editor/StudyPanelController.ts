@@ -5,6 +5,7 @@ import {
   type StudyCard,
   type StudyCardRating,
 } from '../review/studyCards';
+import { fullscreenIcon } from './projectControls';
 
 export type StudyPanelMode = 'cards' | 'review';
 
@@ -21,6 +22,7 @@ export interface StudyPanelOptions {
   readonly?(): boolean;
   onChange(cards: StudyCard[]): Promise<void> | void;
   onClose?(): void;
+  onNavigate?(mode: StudyPanelMode, cardIds?: string[]): void;
   onMessage?(message: string, kind?: 'info' | 'error'): void;
   now?: () => number;
   id?: () => string;
@@ -58,6 +60,7 @@ export class StudyPanelController {
   private revealed = false;
   private reviewCardId = '';
   private reviewQueue: string[] = [];
+  private locatedCardId = '';
   private reviewCompleted = new Set<string>();
   private flipped = new Set<string>();
   private fullscreen = false;
@@ -78,17 +81,18 @@ export class StudyPanelController {
     this.element.removeEventListener('change', this.onChange);
   }
 
-  show(mode: StudyPanelMode, requestedReviewQueue?: string[]): void {
+  show(mode: StudyPanelMode, requestedCardIds?: string[]): void {
     const modeChanged = this.mode !== mode;
     this.mode = mode;
     this.element.hidden = false;
     this.element.dataset.studyMode = mode;
     this.revealed = false;
     this.reviewCardId = '';
-    if (mode === 'review' && (requestedReviewQueue || modeChanged || this.reviewQueue.length === 0)) {
+    this.locatedCardId = mode === 'cards' ? String(requestedCardIds?.[0] ?? '') : '';
+    if (mode === 'review' && (requestedCardIds || modeChanged || this.reviewQueue.length === 0)) {
       const now = this.options.now?.() ?? Date.now();
-      this.reviewQueue = requestedReviewQueue
-        ? requestedReviewQueue.filter((id) => this.cards().some((card) => card.id === id))
+      this.reviewQueue = requestedCardIds
+        ? requestedCardIds.filter((id) => this.cards().some((card) => card.id === id))
         : this.cards().filter((card) => card.dueAt <= now).map((card) => card.id);
       this.reviewCompleted.clear();
     }
@@ -116,7 +120,7 @@ export class StudyPanelController {
           <strong>${this.mode === 'review' ? '复习' : '卡片'}</strong>
           <small>${cards.length} 张卡片</small>
         </div>
-        ${this.mode === 'cards' ? `<button type="button" data-study-action="fullscreen" title="${this.fullscreen ? '缩小' : '全屏'}" aria-label="${this.fullscreen ? '缩小' : '全屏'}卡片面板">${this.fullscreen ? '↙' : '↗'}</button>` : ''}
+        ${this.mode === 'cards' ? `<button type="button" data-study-action="fullscreen" title="${this.fullscreen ? '缩小' : '全屏'}" aria-label="${this.fullscreen ? '缩小' : '全屏'}卡片面板">${fullscreenIcon()}</button>` : ''}
         <button type="button" data-study-action="close" title="关闭" aria-label="关闭${this.mode === 'review' ? '复习' : '卡片'}面板">×</button>
       </header>
       ${this.mode === 'review' ? this.renderReview(cards) : this.renderCards(cards)}
@@ -177,7 +181,7 @@ export class StudyPanelController {
       ? new Date(card.lastReviewedAt).toLocaleDateString('zh-CN')
       : '';
     return `
-      <article class="ymz-study-card" data-study-card-id="${escapeHtml(card.id)}">
+      <article class="ymz-study-card${card.id === this.locatedCardId ? ' is-located' : ''}" data-study-card-id="${escapeHtml(card.id)}">
         <header>
           <span><i class="ymz-study-source-dot" aria-hidden="true"></i>${escapeHtml(card.nodeUid || '独立卡片')}</span>
           <button type="button" data-study-action="star" aria-pressed="${card.starred}" title="${card.starred ? '取消重点' : '设为重点'}"${readonly ? ' disabled' : ''}>${card.starred ? '★' : '☆'}</button>
@@ -225,7 +229,10 @@ export class StudyPanelController {
       <div class="ymz-study-review">
         <div class="ymz-study-review__progress"><span>卡片 ${this.reviewCompleted.size + 1} / ${Math.max(1, total)}</span><small>已完成 ${this.reviewCompleted.size} 张 · ${progress}%</small></div>
         <article class="ymz-study-review-card" data-study-card-id="${escapeHtml(current.id)}">
-          <span class="ymz-study-review-card__eyebrow">${current.starred ? '★ 重点卡片' : statusLabel(current.status)}</span>
+          <div class="ymz-study-review-card__meta">
+            <span class="ymz-study-review-card__eyebrow">${current.starred ? '★ 重点卡片' : statusLabel(current.status)}</span>
+            <button type="button" data-study-action="open-current-card">查看卡片</button>
+          </div>
           <h2>${escapeHtml(current.front)}</h2>
           <div class="ymz-study-review-card__answer" data-role="study-answer"${this.revealed ? '' : ' hidden'}>${escapeHtml(current.back || '（尚未填写答案）')}</div>
           <button type="button" class="ymz-study-reveal" data-study-action="reveal"${this.revealed ? ' hidden' : ''}>显示答案</button>
@@ -309,7 +316,14 @@ export class StudyPanelController {
       return;
     }
     if (action === 'open-cards') {
-      this.show('cards');
+      this.options.onNavigate?.('cards');
+      if (!this.options.onNavigate) this.show('cards');
+      return;
+    }
+    if (action === 'open-current-card') {
+      const cardId = this.reviewCardId;
+      this.options.onNavigate?.('cards', cardId ? [cardId] : undefined);
+      if (!this.options.onNavigate) this.show('cards', cardId ? [cardId] : undefined);
       return;
     }
     if (action === 'fullscreen') {
@@ -321,7 +335,8 @@ export class StudyPanelController {
       const visibleIds = Array.from(this.element.querySelectorAll<HTMLElement>('[data-study-card-id]'))
         .map((item) => item.dataset.studyCardId)
         .filter((id): id is string => Boolean(id));
-      this.show('review', visibleIds);
+      this.options.onNavigate?.('review', visibleIds);
+      if (!this.options.onNavigate) this.show('review', visibleIds);
       return;
     }
     if (action === 'reveal') {

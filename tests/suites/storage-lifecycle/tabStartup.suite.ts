@@ -62,6 +62,29 @@ it('cleans a registered tab handle when editor mounting fails', () => {
   expect(source).toContain('state.unregister = undefined;');
 });
 
+it('registers a restored tab before waiting for repository readiness or visibility', () => {
+  const source = require('node:fs').readFileSync(require('node:path').resolve(process.cwd(), 'src/plugin/tabs.ts'), 'utf8');
+  const registerAt = source.indexOf('host.tabRegistry.tryRegister(mapId');
+  const mountAt = source.indexOf('void mountAfterReady(');
+  expect(registerAt).toBeGreaterThan(0);
+  expect(registerAt).toBeLessThan(mountAt);
+});
+
+it('uses the custom-tab destroy lifecycle instead of transient head attachment during restore', () => {
+  const source = require('node:fs').readFileSync(require('node:path').resolve(process.cwd(), 'src/plugin/tabs.ts'), 'utf8');
+  expect(source).toContain('isAlive: () => !state.destroyed');
+  expect(source).not.toContain('headElement.isConnected');
+});
+
+it('does not mount an editor for a duplicate restored owner and closes it after attachment', () => {
+  const source = require('node:fs').readFileSync(require('node:path').resolve(process.cwd(), 'src/plugin/tabs.ts'), 'utf8');
+  expect(source).toContain('host.tabRegistry.tryRegister(mapId');
+  expect(source).toContain('if (!registration.accepted)');
+  expect(source).toContain('window.requestAnimationFrame(() => closeTab(attempt + 1))');
+  expect(source).toContain("import { closeSiYuanTab } from './siyuanTabLifecycle'");
+  expect(source).toContain('closeSiYuanTab(this.tab as any)');
+});
+
 it('persists imported study cards with the same contract as the web host', () => {
   const source = require('node:fs').readFileSync(require('node:path').resolve(process.cwd(), 'src/plugin/tabs.ts'), 'utf8');
   expect(source).toContain('studyCards: imported.studyCards');

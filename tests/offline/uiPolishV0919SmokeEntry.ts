@@ -37,12 +37,12 @@ const supplied = [
   undoIcon(),
   redoIcon(),
   searchIcon(),
-  fullscreenIcon(),
 ];
 assert(supplied.every((icon) => icon.startsWith('<span ') && icon.includes('ymz-icon-slot')), 'all supplied operation icons must use a fixed isolated icon slot');
 assert(supplied.every((icon) => (icon.match(/src="data:image\/svg\+xml;base64,/g) ?? []).length === 2), 'all supplied icons must retain isolated light and dark Base64 SVG documents');
 assert(supplied.every((icon) => icon.includes('draggable="false"')), 'supplied icons must not start native image dragging');
 assert(supplied.every((icon) => !icon.includes('<svg') && !icon.includes('<path')), 'host CSS must not reach supplied SVG geometry');
+assert(fullscreenIcon().includes('ymz-icon-fullscreen') && fullscreenIcon().includes('stroke="currentColor"'), 'shared fullscreen controls must use the approved theme-aware linear icon');
 assert(nodeInsertIcon('parent').includes('ymz-icon-insert-parent'), 'upper-node icon must use the supplied parent source artwork');
 assert(nodeInsertIcon('sibling').includes('ymz-icon-insert-sibling'), 'same-level icon must use the supplied sibling source artwork');
 assert(nodeInsertIcon('child').includes('ymz-icon-insert-child'), 'lower-node icon must use the supplied child source artwork');

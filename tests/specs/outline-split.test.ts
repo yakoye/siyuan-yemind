@@ -36,3 +36,4 @@ import '../suites/outline-split/v0927OutlineAssetParity.suite';
 import '../suites/outline-split/v0928OutlineDialogConsistency.suite';
 import '../suites/outline-split/v110OutlineMediaInteraction.suite';
 import '../suites/outline-split/v130OutlineDragGrip.suite';
+import '../suites/outline-split/v151OutlinePresentation.suite';

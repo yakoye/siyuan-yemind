@@ -5,7 +5,7 @@
 | Views | Canvas, split outline and full outline backed by the same map tree |
 | Structure | Add, delete, move, reorder, fold, one combined multi-selection summary, outer frame, relation line and six-mode structured text-to-map import with processed preview |
 | Content | Rich text, node links, selection-scoped inline links, formulas, code, images, notes, comments, tags, icons and todo |
-| Appearance | 22 themes, 25 light/dark appearances, density, background and named rainbow lines |
+| Appearance | 25 themes with light/dark definitions, density, background and named rainbow lines |
 | Theme colors | Per-level text, fill, border and parent-child line colors; all nine Classic themes use the six exact v1.5 branch colors |
 | Appearance refresh | One atomic full redraw; immediate theme/rainbow updates; viewport and selection preserved; transparent root resolves to canvas background |
 | Local style priority | Node-local text, fill, border and line values override whole-map themes |
@@ -20,7 +20,7 @@
 | Imported label width | Long imported labels use a 280px automatic wrap width without source newlines; later manual widths persist and disable the automatic marker |
 | Outline structure editing | Enter, Shift+Enter, Tab/Shift+Tab, atomic multiline replacement and stable UID/metadata preservation |
 | Outline drag | Full indent-cell move gutter, 5px threshold and stable YeMind-green depth-aligned BEFORE/AFTER/CHILD guides |
-| Outline presentation | Theme-aware triangles/squares, midpoint-aligned indent-rainbow guides and compact content-only icon/image/clipart accessory slots without node background or border styling |
+| Outline presentation | Stable branch-colored triangles/squares, segmented one-pixel-left indent guides, readable active/selection states and compact content-only icon/image/clipart accessory slots |
 | Canvas drag | Right-logical nearest-node local zones, continuous candidate-parent preview and atomic subtree moves; drag-first right-button panning is isolated from selection |
 | Drag safety | Self/descendant/root/no-op rejection, Escape cancellation, one-step undo and stable UID/metadata preservation |
 | Resource actions | Images retain resize/lightbox editing; canvas and outline marker/clipart clicks use one viewport-aware Replace/Delete popover before the shared asset pickers |
@@ -29,6 +29,9 @@
 | Transfer | `.yemind.svg` and `.yemind.zip`, SVG/KMindz/XMind/Markdown/OPML/PNG/Text/HTML/PDF plus legacy import compatibility |
 | Integration | SiYuan tabs, Dock, protocol links and global-search node navigation |
 | Floating UI | Top, bottom and left toolbars default pinned, share one persisted pin state, reveal from three edge hot zones in auto-hide mode and expose explicit pin/lock icons |
+| Search and replace | Version47/VS Code two-row panel with case, whole-word, regex, selected-node scope and preserve-case controls; every occurrence navigates independently and rich-text replacement preserves inline markup |
+| Render lifecycle | Revisioned animation-frame transactions update newly typed labels immediately and discard stale frames after deletion or structural mutation |
+| SiYuan tab lifecycle | Restored and concurrently opened tabs deduplicate by map ID before repository startup |
 | Reliability | Structured diagnostics, same-generation hidden-tab text/frame measurement and 15-domain manifest-controlled regression architecture |
 
 ## Fixed local assets (v0.9.12)

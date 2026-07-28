@@ -72,7 +72,7 @@ test('keeps hidden toolbars discoverable through three edge markers', async ({ p
   expect(edgeBox).not.toBeNull();
   const editorBox = await editor.boundingBox();
   expect(edgeBox!.width).toBeGreaterThan(editorBox!.width * 0.9);
-  await expect(edge.locator('span')).toHaveCSS('height', '3px');
+  await expect(edge.locator('span')).toHaveCSS('height', '2px');
   await page.mouse.move(edgeBox!.x + edgeBox!.width / 2, edgeBox!.y + edgeBox!.height / 2);
   await expect(editor).toHaveAttribute('data-topbar-visible', 'true');
 });

@@ -97,7 +97,12 @@ import { openClipartPicker, openMarkerPicker } from "../ui/localAssetDialogs";
 import { normalizeLayoutAssetId } from "../core/layoutAssetPresets";
 import { stabilizeMindMapMeasurementHost } from "../core/measurementHost";
 import { synchronizeCanvasRichTextVisibility } from "./canvasRichTextVisibility";
-import { setSearchReplaceExpanded } from "./searchPanelState";
+import {
+  DEFAULT_SEARCH_OPTIONS,
+  setSearchReplaceExpanded,
+  toggleSearchOption,
+} from "./searchPanelState";
+import { buildSearchPattern, type SearchOptions } from './searchEngine';
 import { normalizeProjectStyle, resolveProjectAppearance } from "./projectStyle";
 import { applyMapAppearanceTransaction } from "../core/appearanceTransaction";
 import { NodeQuickActionsController } from "./nodeQuickActions";
@@ -125,6 +130,10 @@ import { AppearanceController } from '../ui/AppearanceController';
 import { StudyPanelController, type StudyPanelMode } from './StudyPanelController';
 import { normalizeStudyCards } from '../review/studyCards';
 import { MiniMapController } from './MiniMapController';
+import {
+  RenderLifecycleCoordinator,
+  type RenderTextEditPayload,
+} from './RenderLifecycleCoordinator';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -189,6 +198,7 @@ export class YeMindEditor {
   private searchInputEl!: HTMLInputElement;
   private replaceInputEl!: HTMLInputElement;
   private searchInfoEl!: HTMLElement;
+  private searchErrorEl!: HTMLElement;
   private selectionCountEl!: HTMLElement;
   private relationPanelEl!: HTMLElement;
   private relationHintEl!: HTMLElement;
@@ -212,6 +222,7 @@ export class YeMindEditor {
   private settingsInitialized = false;
   private viewMode: ViewMode = "map";
   private searchText = "";
+  private searchOptions: SearchOptions = { ...DEFAULT_SEARCH_OPTIONS };
   private applyingCheckpoint = false;
   private applyingAppearance = false;
   private applyingImportLayout = false;
@@ -229,6 +240,7 @@ export class YeMindEditor {
   private appearanceController: AppearanceController | null = null;
   private studyPanel: StudyPanelController | null = null;
   private miniMapController: MiniMapController | null = null;
+  private renderLifecycle: RenderLifecycleCoordinator | null = null;
   private studyMode: StudyPanelMode | null = null;
   private presentationState: {
     readonly: boolean;
@@ -663,6 +675,8 @@ export class YeMindEditor {
     this.studyPanel = null;
     this.miniMapController?.destroy();
     this.miniMapController = null;
+    this.renderLifecycle?.destroy();
+    this.renderLifecycle = null;
     this.richTextToolbar?.destroy();
     this.richTextToolbar = null;
     this.nodeHoverPreview?.destroy();
@@ -833,6 +847,9 @@ export class YeMindEditor {
     this.searchInfoEl = this.options.container.querySelector(
       '[data-role="search-info"]',
     ) as HTMLElement;
+    this.searchErrorEl = this.options.container.querySelector(
+      '[data-role="search-error"]',
+    ) as HTMLElement;
     this.selectionCountEl = this.options.container.querySelector(
       '[data-role="selection-count"]',
     ) as HTMLElement;
@@ -901,6 +918,10 @@ export class YeMindEditor {
       pluginBaseUrl: this.options.pluginBaseUrl,
     });
     this.commands = createCommandAdapter(this.map);
+    this.renderLifecycle = new RenderLifecycleCoordinator(this.map, () => {
+      this.nodeQuickActions?.scheduleRefresh();
+      this.miniMapController?.refresh();
+    });
     const miniMapElement = this.options.container.querySelector<HTMLElement>('[data-role="minimap"]');
     if (miniMapElement) {
       this.miniMapController = new MiniMapController(this.rootEl, this.map, miniMapElement);
@@ -934,6 +955,7 @@ export class YeMindEditor {
           this.setSaveStateLabel('已保存', 'saved');
         },
         onClose: () => this.setStudyMode(null),
+        onNavigate: (mode, cardIds) => this.setStudyMode(mode, cardIds),
         onMessage: (message, kind) =>
           showMessage(
             message,
@@ -1187,6 +1209,19 @@ export class YeMindEditor {
         this.handleSearchAction(searchButton.dataset.searchAction ?? "");
         return;
       }
+      const searchOption = (event.target as HTMLElement).closest<HTMLElement>(
+        '[data-search-option]',
+      );
+      if (searchOption) {
+        this.searchOptions = toggleSearchOption(
+          this.searchPanelEl,
+          searchOption.dataset.searchOption ?? '',
+          this.searchOptions,
+        );
+        this.searchText = '';
+        if (this.searchInputEl.value.trim()) this.ensureSearch();
+        return;
+      }
 
       const relationButton = (event.target as HTMLElement).closest<HTMLElement>(
         "[data-relation-action]",
@@ -1413,6 +1448,7 @@ export class YeMindEditor {
       if (!this.searchInputEl.value.trim()) {
         this.commands?.endSearch();
         this.searchText = "";
+        this.setSearchError('');
         this.updateSearchInfo({ currentIndex: -1, total: 0 });
       } else if (this.searchInputEl.value.trim() !== this.searchText) {
         this.searchInfoEl.textContent = "按 Enter 搜索";
@@ -1759,8 +1795,12 @@ export class YeMindEditor {
         payload?.details ?? {},
       );
     });
+    this.map.on('node_text_edit_change', (payload: RenderTextEditPayload) => {
+      this.renderLifecycle?.scheduleTextEdit(payload);
+    });
     this.map.on("data_change", (data: MindMapTree) => {
       if (this.applyingCheckpoint) return;
+      this.renderLifecycle?.invalidate();
       this.current.data = data;
       this.options.diagnostics.record(
         "editor",
@@ -2555,7 +2595,7 @@ export class YeMindEditor {
     });
   }
 
-  private setStudyMode(mode: StudyPanelMode | null): void {
+  private setStudyMode(mode: StudyPanelMode | null, cardIds?: string[]): void {
     if (mode && this.viewMode !== 'map') this.setViewMode('map');
     this.resourceActionPopover?.hide();
     this.richTextToolbar?.hide();
@@ -2565,7 +2605,7 @@ export class YeMindEditor {
     if (mode && !this.searchPanelEl.hidden) this.closeSearchPanel();
     this.studyMode = mode;
     this.rootEl.dataset.studyView = mode ?? 'none';
-    if (mode) this.studyPanel?.show(mode);
+    if (mode) this.studyPanel?.show(mode, cardIds);
     else this.studyPanel?.hide();
     this.updatePrimaryViewPresentation();
     this.nodeQuickActions?.scheduleRefresh();
@@ -3151,6 +3191,7 @@ export class YeMindEditor {
   private closeSearchPanel(): void {
     this.commands?.endSearch();
     this.searchText = "";
+    this.setSearchError('');
     this.searchPanelEl.hidden = true;
     this.updateSearchInfo({ currentIndex: -1, total: 0 });
     this.canvasEl.focus();
@@ -3173,9 +3214,18 @@ export class YeMindEditor {
   private ensureSearch(): boolean {
     const text = this.searchInputEl.value.trim();
     if (!text || !this.commands) return false;
+    const built = buildSearchPattern(text, this.searchOptions);
+    if (!built.pattern) {
+      this.setSearchError(built.error || '搜索表达式无效');
+      this.commands.endSearch();
+      this.searchText = '';
+      this.updateSearchInfo({ currentIndex: -1, total: 0 });
+      return false;
+    }
+    this.setSearchError('');
     if (this.searchText !== text) {
       this.searchText = text;
-      this.commands.search(text);
+      this.commands.search(text, this.searchOptions);
     }
     return true;
   }
@@ -3191,12 +3241,18 @@ export class YeMindEditor {
 
   private replaceCurrentSearch(): void {
     if (!this.ensureSearch()) return;
-    this.commands?.replaceSearch(this.replaceInputEl.value);
+    this.commands?.replaceSearch(this.replaceInputEl.value, this.searchOptions);
   }
 
   private replaceAllSearch(): void {
     if (!this.ensureSearch()) return;
-    this.commands?.replaceSearchAll(this.replaceInputEl.value);
+    this.commands?.replaceSearchAll(this.replaceInputEl.value, this.searchOptions);
+  }
+
+  private setSearchError(message: string): void {
+    if (!this.searchErrorEl) return;
+    this.searchErrorEl.textContent = message;
+    this.searchErrorEl.hidden = !message;
   }
 
   private updateSearchInfo(info: {

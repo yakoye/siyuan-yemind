@@ -99,7 +99,9 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     iconList: createYemindIconList(options.pluginBaseUrl),
     createNodePrefixContent,
     createNodePostfixContent,
-    openRealtimeRenderOnNodeTextEdit: true,
+    // YeMind owns the revisioned live-edit render transaction so a trailing
+    // upstream debounce cannot repaint a node after it was moved or deleted.
+    openRealtimeRenderOnNodeTextEdit: false,
     enableEditFormulaInRichTextEdit: true,
     customHyperlinkJump: (href: string) => options.onHyperlink?.(href),
     beforeDeleteNodeImg: createImageDeleteGuard(options.onConfirmDeleteImage),

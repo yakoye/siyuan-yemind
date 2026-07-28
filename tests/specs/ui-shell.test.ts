@@ -38,3 +38,4 @@ import '../suites/ui-shell/v150UnifiedToolbars.suite';
 import '../suites/ui-shell/v150ShellVisual.suite';
 import '../suites/ui-shell/v150StudyPanel.suite';
 import '../suites/ui-shell/v130ToolbarIconSemantics.suite';
+import '../suites/ui-shell/v151Version47Shell.suite';

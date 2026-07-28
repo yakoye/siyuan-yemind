@@ -81,8 +81,12 @@ Node quick controls resolve their side from the same official layout-growth cont
 
 ## Unified v1.5.0 shell and study workflow
 
-- `ToolbarVisibilityController` owns one pinned/visible state for the top, left and bottom toolbars. Any edge rail reveals all three without resizing the canvas.
-- `MiniMapController` renders the live tree into a fitted overview and keeps viewport controls independent from map data.
-- `StudyPanelController` presents cards and review as two views over `YeMindMapDocument.studyCards`; all changes go through the same repository save path as the map.
+- `ToolbarVisibilityController` owns one pinned/visible state for the top, left and bottom toolbars. Any theme-aware edge rail reveals all three, remains open while the pointer stays in its hot zone and never resizes the canvas.
+- `MiniMapController` renders the live tree into a fitted overview. `miniMapProjection` clamps non-finite, negative and over-constrained viewport insets before they reach the DOM.
+- `RenderLifecycleCoordinator` gives each text-edit/render request a revision. It resolves the current live UID on the next animation frame and ignores frames invalidated by deletion or structural mutation.
+- `searchEngine` owns case, whole-word, regex, selection scope and preserve-case semantics. The command adapter records every occurrence instead of collapsing results by node, while block-aware HTML replacement only mutates text nodes so inline markup survives.
+- `outlinePresentation` assigns a stable color to every root branch; descendants inherit it for triangles, leaf squares and segmented guides.
+- `OpenMapTabRegistry` registers a tab handle before asynchronous repository startup and deduplicates restored or concurrent opens by map ID.
+- `StudyPanelController` presents cards and review as two views over `YeMindMapDocument.studyCards`; “查看卡片” switches navigation state and locates the reviewed card, and all changes use the same repository save path as the map.
 - Classic themes carry explicit six-color palettes. The generated theme branches, palette cards and persisted theme ID all use one canonical definition.
 - Import/export logic remains in `src/transfer/`; `.yemind.svg` and `.yemind.zip` are current names while old `yemindz` files are accepted for import only.

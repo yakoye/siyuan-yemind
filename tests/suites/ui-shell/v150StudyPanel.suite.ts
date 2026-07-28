@@ -193,6 +193,42 @@ describe('v1.5.0 cards and review shell', () => {
     expect(controller.element.textContent).not.toContain('排除');
   });
 
+  it('routes cards and review through the shared primary navigation state', () => {
+    const now = Date.UTC(2026, 6, 28);
+    const onNavigate = vi.fn();
+    const controller = new StudyPanelController({
+      panel: document.createElement('aside'),
+      now: () => now,
+      getCards: () => [createStudyCard({ id: 'card-1', nodeUid: 'node-1', front: '问题', back: '答案', now })],
+      getActiveNode: () => null,
+      onChange: vi.fn(),
+      onNavigate,
+    });
+    controller.show('cards');
+    controller.element.querySelector<HTMLButtonElement>('[data-study-action="start-review"]')!.click();
+    expect(onNavigate).toHaveBeenCalledWith('review', ['card-1']);
+  });
+
+  it('switches an active review to cards and locates the reviewed card', () => {
+    const now = Date.UTC(2026, 6, 28);
+    const onNavigate = vi.fn();
+    const controller = new StudyPanelController({
+      panel: document.createElement('aside'),
+      now: () => now,
+      getCards: () => [createStudyCard({ id: 'card-1', nodeUid: 'node-1', front: '问题', back: '答案', now })],
+      getActiveNode: () => null,
+      onChange: vi.fn(),
+      onNavigate,
+    });
+    controller.show('review', ['card-1']);
+
+    controller.element.querySelector<HTMLButtonElement>('[data-study-action="open-current-card"]')!.click();
+
+    expect(onNavigate).toHaveBeenCalledWith('cards', ['card-1']);
+    controller.show('cards', ['card-1']);
+    expect(controller.element.querySelector('[data-study-card-id="card-1"]')?.classList.contains('is-located')).toBe(true);
+  });
+
   it('keeps all card mutations disabled in readonly mode', () => {
     const now = Date.UTC(2026, 6, 28);
     const cards = [createStudyCard({ id: 'card-1', nodeUid: 'node-1', front: '锁定卡片', back: '答案', now })];

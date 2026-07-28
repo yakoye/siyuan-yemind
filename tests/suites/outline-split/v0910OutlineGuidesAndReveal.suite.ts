@@ -12,7 +12,7 @@ describe('v0.9.10 outline guides and bidirectional reveal', () => {
     expect(controller).toContain('markerRect.left + markerRect.width / 2');
     expect(controller).toContain('markerRect.bottom - rootRect.top + root.scrollTop');
     expect(controller).toContain('lastRect.top + lastRect.height / 2');
-    expect(controller).toContain("`var(--ymz-outline-guide-${(depth % 4) + 1})`");
+    expect(controller).toContain("row.style.getPropertyValue('--ymz-outline-branch-color')");
   });
 
   it('renders each parent guide once with uniform physical width', () => {

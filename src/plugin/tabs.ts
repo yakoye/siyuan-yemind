@@ -6,6 +6,7 @@ import type { YeMindPluginHost } from './host';
 import { TAB_TYPE } from './constants';
 import { waitForNonZeroSize } from './visibleElement';
 import { flushPendingTabNodeFocus, requestTabNodeFocus, type TabNodeFocusState } from './tabNodeFocus';
+import { closeSiYuanTab } from './siyuanTabLifecycle';
 
 interface TabMountState extends DeferredMountState, TabNodeFocusState {
   editor?: YeMindEditor;
@@ -25,6 +26,43 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
       const state: TabMountState = { destroyed: false };
       states.set(this, state);
       const mapId = String(this.data?.mapId ?? '');
+      const activateTab = (attempt = 0): void => {
+        if (state.destroyed) return;
+        const head = this.tab.headElement;
+        if (head?.isConnected) {
+          head.click();
+          return;
+        }
+        if (attempt < 20) window.requestAnimationFrame(() => activateTab(attempt + 1));
+      };
+      const closeTab = (attempt = 0): void => {
+        if (state.destroyed) return;
+        const head = this.tab.headElement;
+        if (head?.isConnected || attempt >= 20) {
+          closeSiYuanTab(this.tab as any);
+          return;
+        }
+        window.requestAnimationFrame(() => closeTab(attempt + 1));
+      };
+      // Register before repository readiness or visibility waits. Restored tabs
+      // can otherwise exist in SiYuan while openMap still sees an empty registry
+      // and creates a second tab for the same map.
+      const registration = host.tabRegistry.tryRegister(mapId, {
+        activate: () => activateTab(),
+        close: () => closeTab(),
+        updateTitle: (title) => this.tab.updateTitle(title),
+        focusNode: (uid) => requestTabNodeFocus(state, uid),
+        // During SiYuan workspace restoration a valid headElement may exist
+        // before it is connected to the document. Treating that short startup
+        // window as a dead tab lets every restored duplicate replace the
+        // previous registry owner, so none of them is closed. The custom-tab
+        // destroy callback is the authoritative lifecycle signal.
+        isAlive: () => !state.destroyed,
+      });
+      state.unregister = registration.unregister;
+      if (!registration.accepted) {
+        return;
+      }
 
       void mountAfterReady(
         state,
@@ -36,24 +74,6 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
             return;
           }
           this.tab.updateTitle(map.title);
-          const activateTab = (attempt = 0): void => {
-            if (state.destroyed || !container.isConnected) return;
-            const head = this.tab.headElement;
-            if (head?.isConnected) {
-              head.click();
-              return;
-            }
-            if (attempt < 20) window.requestAnimationFrame(() => activateTab(attempt + 1));
-          };
-          state.unregister = host.tabRegistry.register(resolvedMapId, {
-            activate: () => activateTab(),
-            close: () => this.tab.close(),
-            updateTitle: (title) => this.tab.updateTitle(title),
-            focusNode: (uid) => requestTabNodeFocus(state, uid),
-            isAlive: () => !state.destroyed
-              && container.isConnected
-              && (this.tab.headElement ? this.tab.headElement.isConnected : true),
-          });
           host.diagnostics.record('tab', 'waiting-for-visible-container', resolvedMapId, undefined, 'info', true);
           const visible = await waitForNonZeroSize(container, { isCancelled: () => state.destroyed });
           if (!visible || state.destroyed) {
@@ -70,7 +90,7 @@ export function registerYeMindTab(plugin: Plugin, host: YeMindPluginHost): void 
             checkpointService: host.checkpointService,
             diagnostics: host.diagnostics,
             pluginBaseUrl: `/plugins/${encodeURIComponent(plugin.name)}`,
-            onMissing: () => this.tab.close(),
+            onMissing: () => closeTab(),
             onTitleChange: (title) => this.tab.updateTitle(title),
             onImport: async (imported) => {
               const created = await host.repository.create(imported.title, imported.layout);

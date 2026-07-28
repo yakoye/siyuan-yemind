@@ -14,6 +14,10 @@ import {
   structuredOutlineIsRichHtml,
   type StructuredOutlineBlock,
 } from './structuredOutlineDocument';
+import {
+  outlineBranchColorIndexes,
+  outlineBranchColorVariable,
+} from './outlinePresentation';
 
 export type StructuredOutlineFocusPlacement = 'start' | 'end' | 'select-all' | 'range';
 
@@ -1246,12 +1250,17 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       existing.set(`${row.dataset.outlineKind ?? 'node'}:${row.dataset.outlineUid ?? ''}`, row);
     });
     const desired: HTMLElement[] = [];
+    const branchColors = outlineBranchColorIndexes(blocks);
     const selectionUids = new Set([bookmark?.anchor.uid, bookmark?.focus.uid].filter(Boolean) as string[]);
     blocks.forEach((block) => {
       const key = blockKey(block);
       let row = existing.get(key);
       if (!row) row = this.createRow(block);
       else this.patchRow(row, block, selectionUids.has(block.uid));
+      row.style.setProperty(
+        '--ymz-outline-branch-color',
+        outlineBranchColorVariable(branchColors.get(block.uid) ?? 0),
+      );
       desired.push(row);
       existing.delete(key);
     });
@@ -1311,7 +1320,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       if (!marker || !lastMarker) return;
       const markerRect = marker.getBoundingClientRect();
       const lastRect = lastMarker.getBoundingClientRect();
-      const x = Math.round(markerRect.left + markerRect.width / 2 - rootRect.left + root.scrollLeft);
+      const x = Math.round(markerRect.left + markerRect.width / 2 - rootRect.left + root.scrollLeft) - 1;
       const top = Math.round(markerRect.bottom - rootRect.top + root.scrollTop);
       const end = Math.round(lastRect.top + lastRect.height / 2 - rootRect.top + root.scrollTop);
       const height = Math.max(0, end - top);
@@ -1322,7 +1331,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       line.style.left = `${x}px`;
       line.style.top = `${top}px`;
       line.style.height = `${height}px`;
-      line.style.setProperty('--ymz-outline-guide-color', `var(--ymz-outline-guide-${(depth % 4) + 1})`);
+      line.style.setProperty('--ymz-outline-guide-color', row.style.getPropertyValue('--ymz-outline-branch-color'));
       fragment.append(line);
     });
     this.guideLayer.replaceChildren(fragment);

@@ -16,6 +16,20 @@ const EXPECTED_SCHEME_IDS = [
 ];
 
 describe('YeMind theme presets', () => {
+  it('V151-07 keeps the root visually larger than ordinary branches in every preset', () => {
+    for (const preset of YEMIND_THEME_PRESETS) {
+      const result = buildThemeConfig({
+        presetId: preset.id,
+        appearance: 'light',
+        lineStyle: 'curve',
+      });
+      expect(result.themeConfig.root.fontSize, preset.id)
+        .toBeGreaterThan(result.themeConfig.second.fontSize);
+      expect(Number(result.themeConfig.root.fontWeight), preset.id)
+        .toBeGreaterThanOrEqual(Number(result.themeConfig.second.fontWeight));
+    }
+  });
+
   it('uses YeMind Default and curved parent-child edges by default', () => {
     expect(normalizeThemePresetId('default')).toBe('yemind-default');
     expect(normalizeThemePresetId(undefined)).toBe('yemind-default');

@@ -2,6 +2,11 @@
 
 ## 1.5.0 - 2026-07-28
 
+- Completed the confirmed Version47 follow-up alignment: restored the original network/map symbols, unified fullscreen and appearance icons, removed toolbar separator blocks, flattened context menus, and kept every toolbar/control readable in both appearances.
+- Rebuilt minimap viewport projection, responsive zoom controls, theme-aware two-pixel hidden-edge rails, stable hover reveal, larger root typography, and colored segmented outline guides with matching triangles and leaf squares.
+- Added the full VS Code-style two-row search/replace contract with case sensitivity, whole-word, regular-expression, selected-node scope and preserve-case controls while preserving rich-text markup and navigating every occurrence.
+- Added an atomic revisioned render lifecycle so new-node text appears immediately and stale edit frames cannot move labels after deletion or interfere with unrelated relation lines.
+- Deduplicated restored SiYuan tabs by map identity before repository startup, keeping repeated file opens in the already restored tab, and made review-to-card navigation locate the current card.
 - Rebuilt the shared editor shell around the confirmed version47 design with unified three-edge toolbar behavior, responsive overflow, discoverable hidden edges, and complete light/dark surfaces.
 - Added persistent cards and focused review with progress, search, favorites, flipping, status changes, node linkage, three review ratings, and a same-session requeue for “again”.
 - Expanded the Basic theme group to YeMind Default, Ink Branch, Material, Aurora, Morning Mist, and Dunes with real light/dark six-color definitions and explicit apply behavior.

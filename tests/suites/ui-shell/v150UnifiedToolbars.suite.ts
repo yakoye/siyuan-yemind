@@ -94,8 +94,18 @@ describe('v1.5.0 unified toolbar visibility', () => {
     }));
     expect([visible(root, 'top'), visible(root, 'left'), visible(root, 'bottom')])
       .toEqual(['true', 'true', 'true']);
+    vi.advanceTimersByTime(2_100);
+    expect([visible(root, 'top'), visible(root, 'left'), visible(root, 'bottom')])
+      .toEqual(['true', 'true', 'true']);
 
+    root.dispatchEvent(new PointerEvent('pointermove', {
+      bubbles: true,
+      clientX: 250,
+      clientY: 200,
+    }));
     vi.advanceTimersByTime(700);
+    expect([visible(root, 'top'), visible(root, 'left'), visible(root, 'bottom')])
+      .toEqual(['false', 'false', 'false']);
     root.querySelector<HTMLButtonElement>('[data-toolbar-edge="bottom"]')!.click();
     expect([visible(root, 'top'), visible(root, 'left'), visible(root, 'bottom')])
       .toEqual(['true', 'true', 'true']);
@@ -124,5 +134,32 @@ describe('v1.5.0 unified toolbar visibility', () => {
     vi.advanceTimersByTime(2_000);
     expect([visible(root, 'top'), visible(root, 'left'), visible(root, 'bottom')])
       .toEqual(['true', 'true', 'true']);
+  });
+
+  it('keeps a real neutral canvas zone in very small editor surfaces', () => {
+    vi.useFakeTimers();
+    const root = createRoot();
+    root.getBoundingClientRect = () => ({
+      x: 0, y: 0, left: 0, top: 0, right: 90, bottom: 60,
+      width: 90, height: 60, toJSON: () => ({}),
+    });
+    const controller = new ToolbarVisibilityController({
+      root,
+      pinned: false,
+      hideDelayMs: 100,
+      hotZonePx: 28,
+    });
+    vi.advanceTimersByTime(100);
+
+    root.dispatchEvent(new PointerEvent('pointermove', {
+      bubbles: true,
+      clientX: 45,
+      clientY: 30,
+    }));
+    vi.advanceTimersByTime(100);
+
+    expect([visible(root, 'top'), visible(root, 'left'), visible(root, 'bottom')])
+      .toEqual(['false', 'false', 'false']);
+    controller.destroy();
   });
 });

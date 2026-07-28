@@ -8,6 +8,13 @@ import { normalizeNodeStylePatch, nodeStyleSnapshot, type NodeStylePatch } from 
 import { addCombinedSummary } from './combinedSummary';
 import { CLIPART_GEOMETRY_VERSION } from './clipartGeometry';
 import { collapseAllBranches, collapseBranchDeep, expandAllBranches, expandBranchDeep, expandBranchOneLevel, toggleAllExpansion, toggleBranchDeep, toggleBranchExpansion } from './expandState';
+import {
+  findSearchMatches,
+  plainTextFromSearchValue,
+  replaceSearchMatches,
+  replaceSearchMatchesInHtml,
+  type SearchOptions,
+} from '../editor/searchEngine';
 
 export interface NodeImageInput {
   url: string | null;
@@ -96,11 +103,11 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   formatText(config: Record<string, unknown>): void;
   clearTextFormat(): void;
   setCloze(enabled: boolean): void;
-  search(text: string): void;
+  search(text: string, options?: SearchOptions): void;
   searchNext(): void;
   searchPrevious(): void;
-  replaceSearch(text: string): void;
-  replaceSearchAll(text: string): void;
+  replaceSearch(text: string, options?: SearchOptions): void;
+  replaceSearchAll(text: string, options?: SearchOptions): void;
   endSearch(): void;
   goToNode(uid: string): void;
   setNodeTextByUid(uid: string, text: string): boolean;
@@ -148,6 +155,107 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       children.forEach(visit);
     };
     visit(rendererRoot());
+  };
+  const searchNodeData = (node: any): Record<string, any> => {
+    const value = typeof node?.getData === 'function' ? node.getData() : node?.data;
+    return value && typeof value === 'object' ? value : {};
+  };
+  const walkSearchTree = (callback: (node: any) => void): void => {
+    const onlyRendered = Boolean((mindMap as any).opt?.isOnlySearchCurrentRenderNodes);
+    const root = onlyRendered
+      ? (mindMap.renderer as any)?.root
+      : (mindMap.renderer as any)?.renderTree ?? (mindMap.renderer as any)?.root;
+    const visit = (node: any): void => {
+      if (!node) return;
+      callback(node);
+      const children = Array.isArray(node.children) ? node.children : [];
+      children.forEach(visit);
+    };
+    visit(root);
+  };
+  const runAdvancedSearch = (text: string, options: SearchOptions): void => {
+    const plugin = (mindMap as any).search;
+    if (!plugin) return;
+    plugin.clearHighlightOnReadonly?.();
+    const matches: any[] = [];
+    const selectedUids = new Set(
+      options.scope === 'selection'
+        ? activeNodes().map((node) => String(searchNodeData(node).uid ?? '')).filter(Boolean)
+        : [],
+    );
+    walkSearchTree((node) => {
+      const data = searchNodeData(node);
+      if (options.scope === 'selection' && !selectedUids.has(String(data.uid ?? ''))) return;
+      const value = plainTextFromSearchValue(data.text, Boolean(data.richText));
+      const count = findSearchMatches(value, text, options).length;
+      for (let index = 0; index < count; index += 1) matches.push(node);
+    });
+    plugin.yemindAdvancedOptions = { ...options };
+    plugin.isSearching = true;
+    plugin.searchText = text;
+    plugin.currentIndex = -1;
+    plugin.updateMatchNodeList?.(matches);
+    plugin.searchNext?.();
+    plugin.emitEvent?.();
+  };
+  const replaceNodeSearchText = (
+    node: any,
+    query: string,
+    replacement: string,
+    options: SearchOptions,
+    limit: number,
+    skip = 0,
+  ): { text: string; count: number } => {
+    const data = searchNodeData(node);
+    const source = String(data.text ?? '');
+    const result = data.richText
+      ? replaceSearchMatchesInHtml(source, query, replacement, options, limit, skip)
+      : replaceSearchMatches(source, query, replacement, options, limit, skip);
+    return { text: result.value, count: result.count };
+  };
+  const applyAdvancedReplacement = (
+    replacement: string,
+    options: SearchOptions,
+    replaceAll: boolean,
+  ): void => {
+    if (!canMutate()) return;
+    const plugin = (mindMap as any).search;
+    const query = String(plugin?.searchText ?? '');
+    const matches = Array.isArray(plugin?.matchNodeList) ? [...plugin.matchNodeList] : [];
+    if (!query || matches.length === 0) return;
+    const currentIndex = Math.max(0, Number(plugin.currentIndex ?? 0));
+    const currentNode = matches[currentIndex] ?? matches[0];
+    const targets: Array<{ node: any; skip: number }> = replaceAll
+      ? [...new Set(matches)].map((node) => ({ node, skip: 0 }))
+      : [{
+        node: currentNode,
+        skip: matches.slice(0, currentIndex).filter((node) => node === currentNode).length,
+      }];
+    let changed = false;
+    targets.forEach(({ node, skip }) => {
+      const result = replaceNodeSearchText(
+        node,
+        query,
+        replacement,
+        options,
+        replaceAll ? Number.POSITIVE_INFINITY : 1,
+        skip,
+      );
+      if (result.count === 0) return;
+      changed = true;
+      const data = searchNodeData(node);
+      if (typeof node?.setText === 'function') {
+        node.setText(result.text, Boolean(data.richText));
+      } else if (node?.data) {
+        node.data.text = result.text;
+      }
+    });
+    if (!changed) return;
+    if (replaceAll) {
+      (mindMap as any).render?.();
+      (mindMap as any).command?.addHistory?.();
+    }
+    runAdvancedSearch(query, options);
   };
   const selectedOuterFrameGroupIds = (): Set<string> => {
     const ids = new Set<string>();
@@ -536,11 +644,15 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
         ? { background: '#f5dfa0', color: 'transparent' }
         : { background: false, color: false });
     },
-    search: (text) => (mindMap as any).search?.search?.(text),
+    search: (text, options) => {
+      if (options) runAdvancedSearch(text, options);
+      else (mindMap as any).search?.search?.(text);
+    },
     searchNext: () => {
       const search = (mindMap as any).search;
       if (!search?.searchText) return;
-      search.search(search.searchText);
+      if (search.yemindAdvancedOptions) search.searchNext?.();
+      else search.search(search.searchText);
     },
     searchPrevious: () => {
       const search = (mindMap as any).search;
@@ -549,9 +661,19 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       const current = Number(search.currentIndex ?? 0);
       search.jump((current - 1 + total) % total);
     },
-    replaceSearch: (text) => { if (canMutate()) (mindMap as any).search?.replace?.(text, true); },
-    replaceSearchAll: (text) => { if (canMutate()) (mindMap as any).search?.replaceAll?.(text); },
-    endSearch: () => (mindMap as any).search?.endSearch?.(),
+    replaceSearch: (text, options) => {
+      if (options) applyAdvancedReplacement(text, options, false);
+      else if (canMutate()) (mindMap as any).search?.replace?.(text, true);
+    },
+    replaceSearchAll: (text, options) => {
+      if (options) applyAdvancedReplacement(text, options, true);
+      else if (canMutate()) (mindMap as any).search?.replaceAll?.(text);
+    },
+    endSearch: () => {
+      const search = (mindMap as any).search;
+      if (search) delete search.yemindAdvancedOptions;
+      search?.endSearch?.();
+    },
     goToNode: (uid) => mindMap.execCommand('GO_TARGET_NODE', uid),
     setNodeTextByUid: (uid, text) => {
       if (!canMutate()) return false;

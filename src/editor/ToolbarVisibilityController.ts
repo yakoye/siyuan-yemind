@@ -27,6 +27,7 @@ export class ToolbarVisibilityController {
   private readonly hideDelayMs: number;
   private readonly hotZonePx: number;
   private timer: number | null = null;
+  private pointerInHotZone = false;
 
   constructor(private readonly options: ToolbarVisibilityOptions) {
     this.pinned = Boolean(options.pinned);
@@ -93,7 +94,7 @@ export class ToolbarVisibilityController {
     this.clearTimer();
     this.timer = window.setTimeout(() => {
       this.timer = null;
-      if (this.ownsInteraction()) {
+      if (this.pointerInHotZone || this.ownsInteraction()) {
         this.scheduleHide();
         return;
       }
@@ -128,17 +129,21 @@ export class ToolbarVisibilityController {
     const rect = this.options.root.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
+    const horizontalHotZone = Math.min(this.hotZonePx, Math.max(4, rect.width / 3));
+    const verticalHotZone = Math.min(this.hotZonePx, Math.max(4, rect.height / 3));
     const target = event.target as HTMLElement;
     const ownedSide = this.sideFromTarget(target);
-    if (
+    this.pointerInHotZone = Boolean(
       ownedSide
-      || y <= this.hotZonePx
-      || rect.height - y <= this.hotZonePx
-      || x <= this.hotZonePx
-    ) this.revealAll();
+      || y <= verticalHotZone
+      || rect.height - y <= verticalHotZone
+      || x <= horizontalHotZone
+    );
+    if (this.pointerInHotZone) this.revealAll();
   };
 
   private readonly onPointerLeave = (): void => {
+    this.pointerInHotZone = false;
     if (!this.pinned) this.scheduleHide();
   };
 

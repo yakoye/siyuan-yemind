@@ -63,6 +63,12 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
           <div class="ymz-search-panel__row ymz-search-panel__row--find">
             <button class="ymz-search-panel__disclosure" data-search-action="toggle-replace" title="展开替换" aria-label="展开替换" aria-expanded="false">›</button>
             <input class="b3-text-field" data-role="search-input" placeholder="查找">
+            <span class="ymz-search-panel__options" role="group" aria-label="查找选项">
+              <button type="button" data-search-option="case-sensitive" title="区分大小写" aria-label="区分大小写" aria-pressed="false">Aa</button>
+              <button type="button" data-search-option="whole-word" title="全字匹配" aria-label="全字匹配" aria-pressed="false"><u>ab</u></button>
+              <button type="button" data-search-option="regex" title="使用正则表达式" aria-label="使用正则表达式" aria-pressed="false">.*</button>
+              <button type="button" data-search-option="selection-scope" title="仅在选中节点中查找" aria-label="仅在选中节点中查找" aria-pressed="false">选中</button>
+            </span>
             <span data-role="search-info">无结果</span>
             <button data-search-action="previous" title="上一个" aria-label="上一个">↑</button>
             <button data-search-action="next" title="下一个" aria-label="下一个">↓</button>
@@ -71,9 +77,11 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
           <div class="ymz-search-panel__row ymz-search-panel__row--replace" data-role="replace-row" hidden>
             <span class="ymz-search-panel__replace-indent" aria-hidden="true"></span>
             <input class="b3-text-field" data-role="replace-input" placeholder="替换">
+            <button type="button" data-search-option="preserve-case" title="保留大小写" aria-label="保留大小写" aria-pressed="false">AB</button>
             <button data-search-action="replace" title="替换当前">替换</button>
             <button data-search-action="replace-all" title="全部替换">全部</button>
           </div>
+          <div class="ymz-search-panel__error" data-role="search-error" role="status" hidden></div>
         </div>
 
         <input type="file" data-role="import-file-input" accept="${IMPORT_ACCEPT}" hidden>

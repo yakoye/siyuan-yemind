@@ -23,6 +23,10 @@ import { createYeMindMapUrl, parseYeMindMapUrl } from './pluginUrl';
 import { runSafeOperation } from './operationSafety';
 import { initializePluginStartup } from './pluginStartup';
 import { destroyGlobalSearchIntegrations, mountGlobalSearchResults } from './globalSearch';
+import {
+  collectRestoredMapTabsFromLayout,
+  deduplicateRestoredMapTabs,
+} from './siyuanTabLifecycle';
 
 export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
   repository!: MapRepository;
@@ -33,7 +37,9 @@ export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
   readonly tabRegistry = new OpenMapTabRegistry();
   private ready: Promise<void> = Promise.resolve();
   private readonly pendingNodeTargets = new Map<string, string>();
+  private readonly pendingMapOpens = new Map<string, Promise<void>>();
   private globalSearchTimer: number | null = null;
+  private restoredTabSweepTimers: number[] = [];
 
   onload(): void {
     this.addIcons(`<symbol id="${ICON_ID}" viewBox="0 0 32 32">
@@ -128,12 +134,31 @@ export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
 
   onLayoutReady(): void {
     this.registerTopBar();
+    this.restoredTabSweepTimers = [0, 250, 1000].map((delay) => window.setTimeout(() => {
+      const restored = collectRestoredMapTabsFromLayout(
+        (window as any).siyuan?.layout?.centerLayout,
+        `${this.name}${TAB_TYPE}`,
+      );
+      const closed = deduplicateRestoredMapTabs({ layout: restored });
+      if (closed > 0) {
+        this.diagnostics.record(
+          'tab',
+          'duplicate-restored-tabs-closed',
+          undefined,
+          { closed },
+          'info',
+          true,
+        );
+      }
+    }, delay));
   }
 
   onunload(): void {
     this.eventBus.off('open-siyuan-url-plugin', this.onOpenPluginUrl);
     this.eventBus.off('input-search', this.onGlobalSearchInput);
     if (this.globalSearchTimer !== null) window.clearTimeout(this.globalSearchTimer);
+    this.restoredTabSweepTimers.forEach((timer) => window.clearTimeout(timer));
+    this.restoredTabSweepTimers = [];
     destroyGlobalSearchIntegrations();
     this.diagnostics?.record('plugin', 'unload', undefined, undefined, 'info', true);
     this.diagnostics?.detachGlobalListeners();
@@ -145,7 +170,13 @@ export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
   }
 
   async openMap(mapId: string, options: { position?: 'right' } = {}): Promise<void> {
-    await runSafeOperation(async () => {
+    const pending = this.pendingMapOpens.get(mapId);
+    if (pending) {
+      await pending;
+      this.tabRegistry.activate(mapId);
+      return;
+    }
+    const request = runSafeOperation(async () => {
       await this.ready;
       this.diagnostics.record('operation', 'open-map-requested', mapId);
       const map = this.repository.get(mapId);
@@ -157,6 +188,17 @@ export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
       if (this.tabRegistry.activate(mapId)) {
         this.diagnostics.record('global-search', 'map-tab-found-existing', mapId, { activated: true });
         this.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'map-tab-found-existing' });
+        return;
+      }
+      // A SiYuan workspace restore initializes custom tabs asynchronously.
+      // Give that restored tab a short registration window before creating a
+      // new tab for the same map.
+      if (
+        await this.tabRegistry.waitForRegistration(mapId)
+        && this.tabRegistry.activate(mapId)
+      ) {
+        this.diagnostics.record('global-search', 'map-tab-found-restoring', mapId, { activated: true });
+        this.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'map-tab-found-restoring' });
         return;
       }
       this.diagnostics.record('global-search', 'map-tab-create-request', mapId, { position: options.position ?? 'current' });
@@ -179,6 +221,13 @@ export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
       this.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'map-tab-open-failed', lastNavigationSuccess: false, lastFailure: error instanceof Error ? error.message : String(error) });
       this.reportOperationFailure('打开导图', error);
     });
+    const tracked = request.then(() => undefined);
+    this.pendingMapOpens.set(mapId, tracked);
+    try {
+      await tracked;
+    } finally {
+      if (this.pendingMapOpens.get(mapId) === tracked) this.pendingMapOpens.delete(mapId);
+    }
   }
 
   async openMapAtNode(mapId: string, nodeUid: string, options: { position?: 'right' } = {}): Promise<void> {

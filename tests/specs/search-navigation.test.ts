@@ -10,3 +10,4 @@ import '../suites/search-navigation/v069FocusHighlight.suite';
 import '../suites/search-navigation/v069GlobalSearchPreviewNavigation.suite';
 import '../suites/search-navigation/v070GlobalSearchDiagnostics.suite';
 import '../suites/search-navigation/v071GlobalSearchCloseNavigation.suite';
+import '../suites/search-navigation/v151SearchReplace.suite';

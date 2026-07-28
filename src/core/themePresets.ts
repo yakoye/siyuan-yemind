@@ -161,7 +161,7 @@ function buildVariant(
       lineColor: branch.centerToLevel1Line,
       generalizationLineColor: branch.level1ToLevel2Line,
       associativeLineColor: '#F59E0B',
-      root: level(colors.centerBackground, colors.centerText, colors.centerBorder, borderWidth(colors.centerBorder), 10, 14, '400'),
+      root: level(colors.centerBackground, colors.centerText, colors.centerBorder, borderWidth(colors.centerBorder), 10, 18, '700'),
       second: level(branch.level1Background, branch.level1Text, branch.level1Border, borderWidth(branch.level1Border), 10, 14, '400'),
       node: level(branch.level2Background, branch.level2Text, branch.level2Border, borderWidth(branch.level2Border), 10, 14, '400'),
       rainbow: { open: false, colorsList: colorList },

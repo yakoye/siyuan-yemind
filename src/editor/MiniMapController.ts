@@ -1,8 +1,15 @@
 import type MindMap from 'simple-mind-map';
+import {
+  normalizeMiniMapViewportStyle,
+  type MiniMapViewportStyle,
+} from './miniMapProjection';
 
 interface MiniMapCalculation {
   svgHTML: string;
-  viewBoxStyle: Record<'left' | 'right' | 'top' | 'bottom', string>;
+  viewBoxStyle: MiniMapViewportStyle;
+  miniMapBoxScale: number;
+  miniMapBoxLeft: number;
+  miniMapBoxTop: number;
 }
 
 export function fitMiniMapSvg(svg: SVGSVGElement | null): boolean {
@@ -15,6 +22,21 @@ export function fitMiniMapSvg(svg: SVGSVGElement | null): boolean {
   svg.setAttribute('width', '100%');
   svg.setAttribute('height', '100%');
   return true;
+}
+
+export function commitMiniMapSvg(content: HTMLElement, svgHTML: string): boolean {
+  const candidate = document.createElement('div');
+  candidate.innerHTML = svgHTML;
+  if (!fitMiniMapSvg(candidate.querySelector<SVGSVGElement>('svg'))) return false;
+  content.replaceChildren(...Array.from(candidate.childNodes));
+  return true;
+}
+
+function validCalculation(state: MiniMapCalculation): boolean {
+  return Number.isFinite(state.miniMapBoxScale)
+    && state.miniMapBoxScale > 0
+    && Number.isFinite(state.miniMapBoxLeft)
+    && Number.isFinite(state.miniMapBoxTop);
 }
 
 export class MiniMapController {
@@ -83,23 +105,42 @@ export class MiniMapController {
     const width = Math.max(120, this.element.clientWidth);
     const height = Math.max(72, this.element.clientHeight);
     try {
+      const previousState = plugin.currentState
+        ? {
+          ...plugin.currentState,
+          viewBoxStyle: { ...plugin.currentState.viewBoxStyle },
+        }
+        : null;
       const state = plugin.calculationMiniMap(width, height) as MiniMapCalculation;
-      this.content.innerHTML = state.svgHTML;
-      fitMiniMapSvg(this.content.querySelector<SVGSVGElement>('svg'));
-      this.applyViewportStyle(state.viewBoxStyle);
+      if (!validCalculation(state) || !commitMiniMapSvg(this.content, state.svgHTML)) {
+        plugin.currentState = previousState;
+        return;
+      }
+      const normalized = this.applyViewportStyle(state.viewBoxStyle);
+      if (plugin.currentState) plugin.currentState.viewBoxStyle = { ...normalized };
     } catch {
       // The first frame can precede the mind-map renderer; the next map event retries.
     }
   }
 
-  private applyViewportStyle(style: Partial<Record<'left' | 'right' | 'top' | 'bottom', string>>): void {
-    (['left', 'right', 'top', 'bottom'] as const).forEach((key) => {
-      if (style[key] !== undefined) this.viewport.style[key] = style[key]!;
+  private applyViewportStyle(style: MiniMapViewportStyle): Record<'left' | 'right' | 'top' | 'bottom', string> {
+    const width = Math.max(1, this.element.clientWidth || 160);
+    const height = Math.max(1, this.element.clientHeight || 100);
+    const normalized = normalizeMiniMapViewportStyle(style, {
+      width,
+      height,
+      minimumSize: 6,
     });
+    (['left', 'right', 'top', 'bottom'] as const).forEach((key) => {
+      this.viewport.style[key] = normalized[key];
+    });
+    return normalized;
   }
 
   private readonly onViewportChange = (style: MiniMapCalculation['viewBoxStyle']): void => {
-    this.applyViewportStyle(style);
+    const normalized = this.applyViewportStyle(style);
+    const plugin = (this.map as any).miniMap;
+    if (plugin?.currentState) plugin.currentState.viewBoxStyle = { ...normalized };
   };
 
   private readonly onPointerDown = (event: PointerEvent): void => {

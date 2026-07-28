@@ -27,7 +27,7 @@ export function appearanceIcon(mode: AppearanceMode): string {
   if (mode === 'dark') {
     return '<svg class="ymz-toolbar-icon ymz-icon-appearance-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.8 15.2A8 8 0 0 1 8.8 4.2 8.1 8.1 0 1 0 19.8 15.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';
   }
-  return '<svg class="ymz-toolbar-icon ymz-icon-appearance-system" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 21h8M12 17v4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7 10.5h3M8.5 9v3M15.5 8.7v3.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  return '<svg class="ymz-toolbar-icon ymz-icon-appearance-system ymz-icon-appearance-auto" viewBox="0 0 24 24" aria-hidden="true"><path class="ymz-appearance-sun" d="M12 3v2.2M5.64 5.64 7.2 7.2M3 12h2.2M5.64 18.36 7.2 16.8" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/><path class="ymz-appearance-moon" d="M19.2 14.4A7.2 7.2 0 0 1 9.6 4.8a7.4 7.4 0 1 0 9.6 9.6Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/></svg>';
 }
 
 export function transferIcon(kind: 'import' | 'export'): string {
@@ -57,12 +57,12 @@ export function presentationIcon(): string {
 }
 
 export function brandIcon(): string {
-  return '<svg class="ymz-brand-icon" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="ymz-brand-gradient" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#2dd4a8"/><stop offset="1" stop-color="#0d9e72"/></linearGradient></defs><rect width="32" height="32" rx="7.5" fill="url(#ymz-brand-gradient)"/><path d="M16 8.5v13.5M16 14q-2.6.7-5 3M16 14q2.6.7 5 3M16 19.5q-3 1-6 4M16 19.5q3 1 6 4" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><circle cx="16" cy="8.5" r="2.3" fill="#fff"/><circle cx="11" cy="17" r="1.8" fill="#fff" opacity=".78"/><circle cx="21" cy="17" r="1.8" fill="#fff" opacity=".78"/><circle cx="10" cy="23.5" r="2" fill="#fff" opacity=".92"/><circle cx="22" cy="23.5" r="2" fill="#fff" opacity=".92"/></svg>';
+  return '<svg class="ymz-brand-icon ymz-brand-icon--network" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7.5" fill="#22c9a0"/><g fill="none" stroke="#fff" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"><rect class="ymz-brand-node" x="11" y="11" width="10" height="10" rx="2.4"/><path d="M11.8 12 8 8.2M20.2 12 24 8.2M11 16H6.5M21 16h4.5M11.8 20 8 23.8M20.2 20l3.8 3.8"/></g><g fill="#fff"><circle cx="6.6" cy="6.8" r="2.1"/><circle cx="25.4" cy="6.8" r="2.1"/><circle cx="4.5" cy="16" r="2.1"/><circle cx="27.5" cy="16" r="2.1"/><circle cx="6.6" cy="25.2" r="2.1"/><circle cx="25.4" cy="25.2" r="2.1"/></g></svg>';
 }
 
 export function primaryViewIcon(kind: 'map' | 'outline' | 'cards' | 'review'): string {
   const paths = {
-    map: '<path d="M5 7.5h5M14 5h5v5h-5zM5 14h5M14 12h5v5h-5zM10 7.5h2v7H10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    map: '<g class="ymz-primary-view-icon--map-network" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"><rect class="ymz-map-root" x="9" y="8.5" width="6" height="7" rx="1.5"/><path d="M9 12H5.5M15 10h2.2M15 14h2.2"/><circle cx="4" cy="12" r="1.35"/><rect x="17.2" y="7.8" width="3.2" height="3.2" rx=".8"/><rect x="17.2" y="12.9" width="3.2" height="3.2" rx=".8"/></g>',
     outline: '<path d="M8 6h11M8 12h11M8 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
     cards: '<rect x="4" y="5" width="12" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 2h10a2 2 0 0 1 2 2v12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
     review: '<path d="M5 5.5A3.5 3.5 0 0 1 8.5 2H12v17H8.5A3.5 3.5 0 0 0 5 22V5.5ZM19 5.5A3.5 3.5 0 0 0 15.5 2H12v17h3.5A3.5 3.5 0 0 1 19 22V5.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>',
@@ -175,7 +175,7 @@ export function outerFrameIcon(): string {
 }
 
 export function fullscreenIcon(): string {
-  return suppliedIcon('fullscreen');
+  return '<svg class="ymz-toolbar-icon ymz-icon-fullscreen" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H5v4M15 5h4v4M9 19H5v-4M15 19h4v-4M5.5 8.5 9 5M15 5l3.5 3.5M5.5 15.5 9 19M15 19l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
 

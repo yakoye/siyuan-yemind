@@ -32,7 +32,8 @@
     "yeMindRichText.suite.ts",
     "v0913MeasurementHost.suite.ts",
     "v0914MeasurementGeometry.suite.ts",
-    "v0924FormulaIcon.suite.ts"
+    "v0924FormulaIcon.suite.ts",
+    "v151RenderLifecycle.suite.ts"
   ],
   "styles-themes": [
     "colorPresentation.suite.ts",
@@ -58,7 +59,8 @@
     "v0924AppearanceViewStability.suite.ts",
     "v0931ThemePalettePanel.suite.ts",
     "v0932RainbowSchemePicker.suite.ts",
-    "v130AppearanceController.suite.ts"
+    "v130AppearanceController.suite.ts",
+    "v151AppearanceContrast.suite.ts"
   ],
   "commands-selection": [
     "commands.suite.ts",
@@ -138,7 +140,8 @@
     "v150UnifiedToolbars.suite.ts",
     "v150ShellVisual.suite.ts",
     "v150StudyPanel.suite.ts",
-    "v130ToolbarIconSemantics.suite.ts"
+    "v130ToolbarIconSemantics.suite.ts",
+    "v151Version47Shell.suite.ts"
   ],
   "storage-lifecycle": [
     "createMapLifecycle.suite.ts",
@@ -247,7 +250,8 @@
     "v0927OutlineAssetParity.suite.ts",
     "v0928OutlineDialogConsistency.suite.ts"
     ,"v110OutlineMediaInteraction.suite.ts",
-    "v130OutlineDragGrip.suite.ts"
+    "v130OutlineDragGrip.suite.ts",
+    "v151OutlinePresentation.suite.ts"
   ],
   "search-navigation": [
     "searchCommands.suite.ts",
@@ -260,7 +264,8 @@
     "v069FocusHighlight.suite.ts",
     "v069GlobalSearchPreviewNavigation.suite.ts",
     "v070GlobalSearchDiagnostics.suite.ts",
-    "v071GlobalSearchCloseNavigation.suite.ts"
+    "v071GlobalSearchCloseNavigation.suite.ts",
+    "v151SearchReplace.suite.ts"
   ],
   "user-regressions": [
     "v0523UserReportedRegressionMatrix.suite.ts",

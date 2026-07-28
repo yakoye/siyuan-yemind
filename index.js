@@ -5586,7 +5586,7 @@ function buildVariant(colors, visual) {
       lineColor: branch2.centerToLevel1Line,
       generalizationLineColor: branch2.level1ToLevel2Line,
       associativeLineColor: "#F59E0B",
-      root: level$1(colors.centerBackground, colors.centerText, colors.centerBorder, borderWidth(colors.centerBorder), 10, 14, "400"),
+      root: level$1(colors.centerBackground, colors.centerText, colors.centerBorder, borderWidth(colors.centerBorder), 10, 18, "700"),
       second: level$1(branch2.level1Background, branch2.level1Text, branch2.level1Border, borderWidth(branch2.level1Border), 10, 14, "400"),
       node: level$1(branch2.level2Background, branch2.level2Text, branch2.level2Border, borderWidth(branch2.level2Border), 10, 14, "400"),
       rainbow: { open: false, colorsList: colorList },
@@ -7536,7 +7536,7 @@ function appearanceIcon(mode) {
   if (mode === "dark") {
     return '<svg class="ymz-toolbar-icon ymz-icon-appearance-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.8 15.2A8 8 0 0 1 8.8 4.2 8.1 8.1 0 1 0 19.8 15.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';
   }
-  return '<svg class="ymz-toolbar-icon ymz-icon-appearance-system" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 21h8M12 17v4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7 10.5h3M8.5 9v3M15.5 8.7v3.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  return '<svg class="ymz-toolbar-icon ymz-icon-appearance-system ymz-icon-appearance-auto" viewBox="0 0 24 24" aria-hidden="true"><path class="ymz-appearance-sun" d="M12 3v2.2M5.64 5.64 7.2 7.2M3 12h2.2M5.64 18.36 7.2 16.8" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/><path class="ymz-appearance-moon" d="M19.2 14.4A7.2 7.2 0 0 1 9.6 4.8a7.4 7.4 0 1 0 9.6 9.6Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/></svg>';
 }
 function transferIcon(kind) {
   const arrow = kind === "import" ? "M12 4v10m-4-4 4 4 4-4" : "M12 14V4m-4 4 4-4 4 4";
@@ -7559,11 +7559,11 @@ function presentationIcon() {
   return '<svg class="ymz-toolbar-icon ymz-icon-presentation" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m10 8 5 2.5-5 2.5V8ZM12 17v4M8 21h8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 function brandIcon() {
-  return '<svg class="ymz-brand-icon" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="ymz-brand-gradient" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#2dd4a8"/><stop offset="1" stop-color="#0d9e72"/></linearGradient></defs><rect width="32" height="32" rx="7.5" fill="url(#ymz-brand-gradient)"/><path d="M16 8.5v13.5M16 14q-2.6.7-5 3M16 14q2.6.7 5 3M16 19.5q-3 1-6 4M16 19.5q3 1 6 4" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><circle cx="16" cy="8.5" r="2.3" fill="#fff"/><circle cx="11" cy="17" r="1.8" fill="#fff" opacity=".78"/><circle cx="21" cy="17" r="1.8" fill="#fff" opacity=".78"/><circle cx="10" cy="23.5" r="2" fill="#fff" opacity=".92"/><circle cx="22" cy="23.5" r="2" fill="#fff" opacity=".92"/></svg>';
+  return '<svg class="ymz-brand-icon ymz-brand-icon--network" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7.5" fill="#22c9a0"/><g fill="none" stroke="#fff" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"><rect class="ymz-brand-node" x="11" y="11" width="10" height="10" rx="2.4"/><path d="M11.8 12 8 8.2M20.2 12 24 8.2M11 16H6.5M21 16h4.5M11.8 20 8 23.8M20.2 20l3.8 3.8"/></g><g fill="#fff"><circle cx="6.6" cy="6.8" r="2.1"/><circle cx="25.4" cy="6.8" r="2.1"/><circle cx="4.5" cy="16" r="2.1"/><circle cx="27.5" cy="16" r="2.1"/><circle cx="6.6" cy="25.2" r="2.1"/><circle cx="25.4" cy="25.2" r="2.1"/></g></svg>';
 }
 function primaryViewIcon(kind) {
   const paths = {
-    map: '<path d="M5 7.5h5M14 5h5v5h-5zM5 14h5M14 12h5v5h-5zM10 7.5h2v7H10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    map: '<g class="ymz-primary-view-icon--map-network" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"><rect class="ymz-map-root" x="9" y="8.5" width="6" height="7" rx="1.5"/><path d="M9 12H5.5M15 10h2.2M15 14h2.2"/><circle cx="4" cy="12" r="1.35"/><rect x="17.2" y="7.8" width="3.2" height="3.2" rx=".8"/><rect x="17.2" y="12.9" width="3.2" height="3.2" rx=".8"/></g>',
     outline: '<path d="M8 6h11M8 12h11M8 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
     cards: '<rect x="4" y="5" width="12" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 2h10a2 2 0 0 1 2 2v12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
     review: '<path d="M5 5.5A3.5 3.5 0 0 1 8.5 2H12v17H8.5A3.5 3.5 0 0 0 5 22V5.5ZM19 5.5A3.5 3.5 0 0 0 15.5 2H12v17h3.5A3.5 3.5 0 0 1 19 22V5.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>'
@@ -7637,7 +7637,7 @@ function outerFrameIcon() {
   return suppliedIcon("outerFrame");
 }
 function fullscreenIcon() {
-  return suppliedIcon("fullscreen");
+  return '<svg class="ymz-toolbar-icon ymz-icon-fullscreen" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H5v4M15 5h4v4M9 19H5v-4M15 19h4v-4M5.5 8.5 9 5M15 5l3.5 3.5M5.5 15.5 9 19M15 19l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 function pinIcon(pinned = false) {
   if (pinned) {
@@ -16904,8 +16904,8 @@ function showExpandBtn() {
 function hideExpandBtn() {
   const { alwaysShowExpandBtn, notShowExpandBtn } = this.mindMap.opt;
   if (alwaysShowExpandBtn || this._isMouseenter || notShowExpandBtn) return;
-  let { isActive, expand } = this.getData();
-  if (!isActive && expand) {
+  let { isActive: isActive2, expand } = this.getData();
+  if (!isActive2 && expand) {
     setTimeout(() => {
       this.removeExpandBtn();
     }, 0);
@@ -18080,8 +18080,8 @@ function removeQuickCreateChildBtn() {
 }
 function hideQuickCreateChildBtn() {
   if (this.isGeneralization) return;
-  const { isActive } = this.getData();
-  if (!isActive) {
+  const { isActive: isActive2 } = this.getData();
+  if (!isActive2) {
     this.removeQuickCreateChildBtn();
   }
 }
@@ -18758,15 +18758,15 @@ class MindMapNode {
       }
       if (!readonly && (e.ctrlKey || e.metaKey) && enableCtrlKeyNodeSelection) {
         this.isMultipleChoice = true;
-        const isActive = this.getData("isActive");
-        if (!isActive)
+        const isActive2 = this.getData("isActive");
+        if (!isActive2)
           this.mindMap.emit(
             "before_node_active",
             this,
             this.renderer.activeNodeList
           );
-        this.mindMap.renderer[isActive ? "removeNodeFromActiveList" : "addNodeToActiveList"](this, true);
-        this.renderer.emitNodeActiveEvent(isActive ? null : this);
+        this.mindMap.renderer[isActive2 ? "removeNodeFromActiveList" : "addNodeToActiveList"](this, true);
+        this.renderer.emitNodeActiveEvent(isActive2 ? null : this);
       }
       this.mindMap.emit("node_mousedown", this, e);
     });
@@ -18862,10 +18862,10 @@ class MindMapNode {
           this.renderExpandBtn();
         }
       } else {
-        const { isActive, expand } = this.getData();
+        const { isActive: isActive2, expand } = this.getData();
         if (childrenLength <= 0) {
           this.removeExpandBtn();
-        } else if (expand && !isActive && !this._isMouseenter) {
+        } else if (expand && !isActive2 && !this._isMouseenter) {
           this.hideExpandBtn();
         } else {
           this.showExpandBtn();
@@ -18876,8 +18876,8 @@ class MindMapNode {
       if (childrenLength > 0) {
         this.removeQuickCreateChildBtn();
       } else {
-        const { isActive } = this.getData();
-        if (isActive) {
+        const { isActive: isActive2 } = this.getData();
+        if (isActive2) {
           this.showQuickCreateChildBtn();
         } else {
           this.hideQuickCreateChildBtn();
@@ -18919,8 +18919,8 @@ class MindMapNode {
   // 更新节点激活状态
   updateNodeActiveClass() {
     if (!this.group) return;
-    const isActive = this.getData("isActive");
-    this.group[isActive ? "addClass" : "removeClass"]("active");
+    const isActive2 = this.getData("isActive");
+    this.group[isActive2 ? "addClass" : "removeClass"]("active");
   }
   // 根据是否激活更新节点
   updateNodeByActive(active) {
@@ -30448,7 +30448,7 @@ var copyStringIntoBuffer = function(str, buffer, offset) {
   }
   return length2;
 };
-var escapeRegExp = function(str) {
+var escapeRegExp$1 = function(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 var cleanText = function(text2) {
@@ -30497,7 +30497,7 @@ var buildWordBreakRegex = function(wordBreaks) {
     if (isNewlineChar(wordBreak)) {
       throw new TypeError("`wordBreak` must not include " + newlineCharUnion);
     }
-    escapedRules.push(wordBreak === "" ? "." : escapeRegExp(wordBreak));
+    escapedRules.push(wordBreak === "" ? "." : escapeRegExp$1(wordBreak));
   }
   var breakRules = escapedRules.join("|");
   return new RegExp("(" + newlineCharUnion + ")|((.*?)(" + breakRules + "))", "gm");
@@ -44593,7 +44593,7 @@ var colorToComponents = function(color2) {
 };
 var cx = 0;
 var cy = 0;
-var px = 0;
+var px$1 = 0;
 var py = 0;
 var sx = 0;
 var sy = 0;
@@ -44683,7 +44683,7 @@ var parse = function(path2) {
   return ret;
 };
 var apply$1 = function(commands) {
-  cx = cy = px = py = sx = sy = 0;
+  cx = cy = px$1 = py = sx = sy = 0;
   var cmds = [];
   for (var i = 0; i < commands.length; i++) {
     var c = commands[i];
@@ -44702,7 +44702,7 @@ var runners = {
   M: function(a) {
     cx = a[0];
     cy = a[1];
-    px = py = null;
+    px$1 = py = null;
     sx = cx;
     sy = cy;
     return moveTo(cx, cy);
@@ -44710,7 +44710,7 @@ var runners = {
   m: function(a) {
     cx += a[0];
     cy += a[1];
-    px = py = null;
+    px$1 = py = null;
     sx = cx;
     sy = cy;
     return moveTo(cx, cy);
@@ -44718,44 +44718,44 @@ var runners = {
   C: function(a) {
     cx = a[4];
     cy = a[5];
-    px = a[2];
+    px$1 = a[2];
     py = a[3];
     return appendBezierCurve(a[0], a[1], a[2], a[3], a[4], a[5]);
   },
   c: function(a) {
     var cmd = appendBezierCurve(a[0] + cx, a[1] + cy, a[2] + cx, a[3] + cy, a[4] + cx, a[5] + cy);
-    px = cx + a[2];
+    px$1 = cx + a[2];
     py = cy + a[3];
     cx += a[4];
     cy += a[5];
     return cmd;
   },
   S: function(a) {
-    if (px === null || py === null) {
-      px = cx;
+    if (px$1 === null || py === null) {
+      px$1 = cx;
       py = cy;
     }
-    var cmd = appendBezierCurve(cx - (px - cx), cy - (py - cy), a[0], a[1], a[2], a[3]);
-    px = a[0];
+    var cmd = appendBezierCurve(cx - (px$1 - cx), cy - (py - cy), a[0], a[1], a[2], a[3]);
+    px$1 = a[0];
     py = a[1];
     cx = a[2];
     cy = a[3];
     return cmd;
   },
   s: function(a) {
-    if (px === null || py === null) {
-      px = cx;
+    if (px$1 === null || py === null) {
+      px$1 = cx;
       py = cy;
     }
-    var cmd = appendBezierCurve(cx - (px - cx), cy - (py - cy), cx + a[0], cy + a[1], cx + a[2], cy + a[3]);
-    px = cx + a[0];
+    var cmd = appendBezierCurve(cx - (px$1 - cx), cy - (py - cy), cx + a[0], cy + a[1], cx + a[2], cy + a[3]);
+    px$1 = cx + a[0];
     py = cy + a[1];
     cx += a[2];
     cy += a[3];
     return cmd;
   },
   Q: function(a) {
-    px = a[0];
+    px$1 = a[0];
     py = a[1];
     cx = a[2];
     cy = a[3];
@@ -44763,36 +44763,36 @@ var runners = {
   },
   q: function(a) {
     var cmd = appendQuadraticCurve(a[0] + cx, a[1] + cy, a[2] + cx, a[3] + cy);
-    px = cx + a[0];
+    px$1 = cx + a[0];
     py = cy + a[1];
     cx += a[2];
     cy += a[3];
     return cmd;
   },
   T: function(a) {
-    if (px === null || py === null) {
-      px = cx;
+    if (px$1 === null || py === null) {
+      px$1 = cx;
       py = cy;
     } else {
-      px = cx - (px - cx);
+      px$1 = cx - (px$1 - cx);
       py = cy - (py - cy);
     }
-    var cmd = appendQuadraticCurve(px, py, a[0], a[1]);
-    px = cx - (px - cx);
+    var cmd = appendQuadraticCurve(px$1, py, a[0], a[1]);
+    px$1 = cx - (px$1 - cx);
     py = cy - (py - cy);
     cx = a[0];
     cy = a[1];
     return cmd;
   },
   t: function(a) {
-    if (px === null || py === null) {
-      px = cx;
+    if (px$1 === null || py === null) {
+      px$1 = cx;
       py = cy;
     } else {
-      px = cx - (px - cx);
+      px$1 = cx - (px$1 - cx);
       py = cy - (py - cy);
     }
-    var cmd = appendQuadraticCurve(px, py, cx + a[0], cy + a[1]);
+    var cmd = appendQuadraticCurve(px$1, py, cx + a[0], cy + a[1]);
     cx += a[0];
     cy += a[1];
     return cmd;
@@ -44814,33 +44814,33 @@ var runners = {
   L: function(a) {
     cx = a[0];
     cy = a[1];
-    px = py = null;
+    px$1 = py = null;
     return lineTo(cx, cy);
   },
   l: function(a) {
     cx += a[0];
     cy += a[1];
-    px = py = null;
+    px$1 = py = null;
     return lineTo(cx, cy);
   },
   H: function(a) {
     cx = a[0];
-    px = py = null;
+    px$1 = py = null;
     return lineTo(cx, cy);
   },
   h: function(a) {
     cx += a[0];
-    px = py = null;
+    px$1 = py = null;
     return lineTo(cx, cy);
   },
   V: function(a) {
     cy = a[0];
-    px = py = null;
+    px$1 = py = null;
     return lineTo(cx, cy);
   },
   v: function(a) {
     cy += a[0];
-    px = py = null;
+    px$1 = py = null;
     return lineTo(cx, cy);
   },
   Z: function() {
@@ -44873,9 +44873,9 @@ var arcToSegments = function(x2, y2, rx2, ry2, large, sweep, rotateX, ox, oy) {
   var cosTh = Math.cos(th);
   rx2 = Math.abs(rx2);
   ry2 = Math.abs(ry2);
-  px = cosTh * (ox - x2) * 0.5 + sinTh * (oy - y2) * 0.5;
+  px$1 = cosTh * (ox - x2) * 0.5 + sinTh * (oy - y2) * 0.5;
   py = cosTh * (oy - y2) * 0.5 - sinTh * (ox - x2) * 0.5;
-  var pl = px * px / (rx2 * rx2) + py * py / (ry2 * ry2);
+  var pl = px$1 * px$1 / (rx2 * rx2) + py * py / (ry2 * ry2);
   if (pl > 1) {
     pl = Math.sqrt(pl);
     rx2 *= pl;
@@ -73776,13 +73776,13 @@ class Toolbar extends Module {
         input.setAttribute("aria-pressed", "false");
       } else if (input.hasAttribute("value")) {
         const value = formats[format];
-        const isActive = value === input.getAttribute("value") || value != null && value.toString() === input.getAttribute("value") || value == null && !input.getAttribute("value");
-        input.classList.toggle("ql-active", isActive);
-        input.setAttribute("aria-pressed", isActive.toString());
+        const isActive2 = value === input.getAttribute("value") || value != null && value.toString() === input.getAttribute("value") || value == null && !input.getAttribute("value");
+        input.classList.toggle("ql-active", isActive2);
+        input.setAttribute("aria-pressed", isActive2.toString());
       } else {
-        const isActive = formats[format] != null;
-        input.classList.toggle("ql-active", isActive);
-        input.setAttribute("aria-pressed", isActive.toString());
+        const isActive2 = formats[format] != null;
+        input.classList.toggle("ql-active", isActive2);
+        input.setAttribute("aria-pressed", isActive2.toString());
       }
     });
   }
@@ -74122,8 +74122,8 @@ class Picker {
     } else {
       this.selectItem(null);
     }
-    const isActive = option2 != null && option2 !== this.select.querySelector("option[selected]");
-    this.label.classList.toggle("ql-active", isActive);
+    const isActive2 = option2 != null && option2 !== this.select.querySelector("option[selected]");
+    this.label.classList.toggle("ql-active", isActive2);
   }
 }
 class ColorPicker extends Picker {
@@ -81403,7 +81403,9 @@ function createMindMap(options) {
     iconList: createYemindIconList(options.pluginBaseUrl),
     createNodePrefixContent,
     createNodePostfixContent,
-    openRealtimeRenderOnNodeTextEdit: true,
+    // YeMind owns the revisioned live-edit render transaction so a trailing
+    // upstream debounce cannot repaint a node after it was moved or deleted.
+    openRealtimeRenderOnNodeTextEdit: false,
     enableEditFormulaInRichTextEdit: true,
     customHyperlinkJump: (href) => {
       var _a;
@@ -81947,6 +81949,212 @@ function toggleBranchDeep(tree, uid2) {
 function toggleAllExpansion(tree) {
   return hasCollapsedBranch(tree) ? expandAllBranches(tree) : collapseAllBranches(tree);
 }
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function buildSearchPattern(query, options) {
+  if (!query) return { pattern: null, error: "" };
+  try {
+    const source = options.useRegex ? query : escapeRegExp(query);
+    const bounded = options.wholeWord ? `(?<![\\p{L}\\p{N}_])(?:${source})(?![\\p{L}\\p{N}_])` : source;
+    return {
+      pattern: new RegExp(bounded, `g${options.caseSensitive ? "" : "i"}u`),
+      error: ""
+    };
+  } catch (error2) {
+    return {
+      pattern: null,
+      error: error2 instanceof Error ? error2.message : "正则表达式无效"
+    };
+  }
+}
+function findSearchMatches(value, query, options) {
+  const { pattern } = buildSearchPattern(query, options);
+  if (!pattern) return [];
+  const matches = [];
+  let match2;
+  while ((match2 = pattern.exec(value)) !== null) {
+    matches.push({ start: match2.index, end: match2.index + match2[0].length, text: match2[0] });
+    if (match2[0].length === 0) pattern.lastIndex += 1;
+  }
+  return matches;
+}
+function preserveReplacementCase(match2, replacement) {
+  if (match2 && match2 === match2.toUpperCase()) return replacement.toUpperCase();
+  if (match2 && match2 === match2.toLowerCase()) return replacement.toLowerCase();
+  if (match2.length > 1 && match2[0] === match2[0].toUpperCase() && match2.slice(1) === match2.slice(1).toLowerCase()) {
+    return replacement ? replacement[0].toUpperCase() + replacement.slice(1).toLowerCase() : replacement;
+  }
+  return replacement;
+}
+function expandReplacementTemplate(replacement, match2, source) {
+  const offset = match2.index;
+  const named = match2.groups ?? {};
+  return replacement.replace(/\$(\$|&|`|'|<([^>]+)>|(\d{1,2}))/g, (token, kind, name, digits) => {
+    if (kind === "$") return "$";
+    if (kind === "&") return match2[0];
+    if (kind === "`") return source.slice(0, offset);
+    if (kind === "'") return source.slice(offset + match2[0].length);
+    if (name !== void 0) return Object.hasOwn(named, name) ? named[name] ?? "" : token;
+    const index = Number(digits);
+    if (index > 0 && index < match2.length) return match2[index] ?? "";
+    if (digits.length === 2) {
+      const first = Number(digits[0]);
+      if (first > 0 && first < match2.length) return `${match2[first] ?? ""}${digits[1]}`;
+    }
+    return token;
+  });
+}
+function replacementAt(source, start, pattern, replacement, preserveCase) {
+  const probe = new RegExp(pattern.source, pattern.flags);
+  probe.lastIndex = start;
+  const match2 = probe.exec(source);
+  if (!match2 || match2.index !== start) return replacement;
+  const expanded = expandReplacementTemplate(replacement, match2, source);
+  return preserveCase ? preserveReplacementCase(match2[0], expanded) : expanded;
+}
+function replaceSearchMatches(value, query, replacement, options, limit = Number.POSITIVE_INFINITY, skip = 0) {
+  const built = buildSearchPattern(query, options);
+  if (!built.pattern) return { value, count: 0, error: built.error };
+  let count = 0;
+  const pattern = built.pattern;
+  let seen = 0;
+  const next2 = value.replace(pattern, (match2, ...args) => {
+    if (seen++ < skip) return match2;
+    if (count >= limit) return match2;
+    const groupsOffset = typeof args.at(-1) === "object" ? 1 : 0;
+    const offset = Number(args.at(-(2 + groupsOffset)));
+    count += 1;
+    return replacementAt(value, offset, pattern, replacement, options.preserveCase);
+  });
+  return { value: next2, count, error: "" };
+}
+function replaceSearchMatchesInHtml(html2, query, replacement, options, limit = Number.POSITIVE_INFINITY, skip = 0) {
+  if (typeof document === "undefined") {
+    return replaceSearchMatches(html2, query, replacement, options, limit);
+  }
+  const host = document.createElement("div");
+  host.innerHTML = html2;
+  const built = buildSearchPattern(query, options);
+  if (!built.pattern) return { value: html2, count: 0, error: built.error };
+  const blockTags = /* @__PURE__ */ new Set([
+    "ADDRESS",
+    "ARTICLE",
+    "ASIDE",
+    "BLOCKQUOTE",
+    "DIV",
+    "DL",
+    "DT",
+    "DD",
+    "FIELDSET",
+    "FIGCAPTION",
+    "FIGURE",
+    "FOOTER",
+    "FORM",
+    "H1",
+    "H2",
+    "H3",
+    "H4",
+    "H5",
+    "H6",
+    "HEADER",
+    "HR",
+    "LI",
+    "MAIN",
+    "NAV",
+    "OL",
+    "P",
+    "PRE",
+    "SECTION",
+    "TABLE",
+    "TBODY",
+    "TD",
+    "TFOOT",
+    "TH",
+    "THEAD",
+    "TR",
+    "UL"
+  ]);
+  const runs = [];
+  let current = { text: "", entries: [] };
+  const flush = () => {
+    if (current.entries.length > 0) runs.push(current);
+    current = { text: "", entries: [] };
+  };
+  const appendText = (textNode) => {
+    const value = textNode.nodeValue ?? "";
+    const start = current.text.length;
+    current.text += value;
+    current.entries.push({ node: textNode, start, end: start + value.length });
+  };
+  const visit2 = (parent) => {
+    Array.from(parent.childNodes).forEach((child) => {
+      if (child.nodeType === Node.TEXT_NODE) {
+        appendText(child);
+        return;
+      }
+      if (!(child instanceof Element)) return;
+      if (child.tagName === "BR") {
+        flush();
+        return;
+      }
+      if (blockTags.has(child.tagName)) {
+        flush();
+        visit2(child);
+        flush();
+        return;
+      }
+      visit2(child);
+    });
+  };
+  visit2(host);
+  flush();
+  const candidates = runs.flatMap((run) => findSearchMatches(run.text, query, options).map((match2) => ({ run, match: match2 })));
+  const selected = candidates.slice(skip, skip + limit);
+  const locate = (run, offset, endBoundary) => {
+    for (const entry of run.entries) {
+      if (offset < entry.end || endBoundary && offset === entry.end) {
+        return {
+          node: entry.node,
+          offset: Math.max(0, Math.min(entry.node.length, offset - entry.start))
+        };
+      }
+    }
+    const last2 = run.entries.at(-1);
+    return last2 ? { node: last2.node, offset: last2.node.length } : null;
+  };
+  [...selected].reverse().forEach(({ run, match: match2 }) => {
+    const start = locate(run, match2.start, false);
+    const end = locate(run, match2.end, true);
+    if (!start || !end) return;
+    const range2 = document.createRange();
+    range2.setStart(start.node, start.offset);
+    range2.setEnd(end.node, end.offset);
+    const next2 = replacementAt(
+      run.text,
+      match2.start,
+      built.pattern,
+      replacement,
+      options.preserveCase
+    );
+    range2.deleteContents();
+    range2.insertNode(document.createTextNode(next2));
+  });
+  return { value: host.innerHTML, count: selected.length, error: "" };
+}
+function plainTextFromSearchValue(value, richText = false) {
+  const source = String(value ?? "");
+  if (!richText) return source;
+  if (typeof document === "undefined") {
+    return source.replace(/<\/?(?:address|article|aside|blockquote|div|dl|dt|dd|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|li|main|nav|ol|p|pre|section|table|tbody|td|tfoot|th|thead|tr|ul|br)\b[^>]*>/gi, "\n").replace(/<[^>]*>/g, "");
+  }
+  const host = document.createElement("div");
+  host.innerHTML = source;
+  host.querySelectorAll(
+    "address,article,aside,blockquote,div,dl,dt,dd,fieldset,figcaption,figure,footer,form,h1,h2,h3,h4,h5,h6,header,hr,li,main,nav,ol,p,pre,section,table,tbody,td,tfoot,th,thead,tr,ul,br"
+  ).forEach((element) => element.append(document.createTextNode("\n")));
+  return host.textContent ?? "";
+}
 function createCommandAdapter(mindMap) {
   const activeNodes = () => {
     var _a;
@@ -82001,6 +82209,91 @@ function createCommandAdapter(mindMap) {
       children.forEach(visit2);
     };
     visit2(rendererRoot());
+  };
+  const searchNodeData = (node) => {
+    const value = typeof (node == null ? void 0 : node.getData) === "function" ? node.getData() : node == null ? void 0 : node.data;
+    return value && typeof value === "object" ? value : {};
+  };
+  const walkSearchTree = (callback) => {
+    var _a, _b, _c2, _d2;
+    const onlyRendered = Boolean((_a = mindMap.opt) == null ? void 0 : _a.isOnlySearchCurrentRenderNodes);
+    const root2 = onlyRendered ? (_b = mindMap.renderer) == null ? void 0 : _b.root : ((_c2 = mindMap.renderer) == null ? void 0 : _c2.renderTree) ?? ((_d2 = mindMap.renderer) == null ? void 0 : _d2.root);
+    const visit2 = (node) => {
+      if (!node) return;
+      callback(node);
+      const children = Array.isArray(node.children) ? node.children : [];
+      children.forEach(visit2);
+    };
+    visit2(root2);
+  };
+  const runAdvancedSearch = (text2, options) => {
+    var _a, _b, _c2, _d2;
+    const plugin = mindMap.search;
+    if (!plugin) return;
+    (_a = plugin.clearHighlightOnReadonly) == null ? void 0 : _a.call(plugin);
+    const matches = [];
+    const selectedUids = new Set(
+      options.scope === "selection" ? activeNodes().map((node) => String(searchNodeData(node).uid ?? "")).filter(Boolean) : []
+    );
+    walkSearchTree((node) => {
+      const data2 = searchNodeData(node);
+      if (options.scope === "selection" && !selectedUids.has(String(data2.uid ?? ""))) return;
+      const value = plainTextFromSearchValue(data2.text, Boolean(data2.richText));
+      const count = findSearchMatches(value, text2, options).length;
+      for (let index = 0; index < count; index += 1) matches.push(node);
+    });
+    plugin.yemindAdvancedOptions = { ...options };
+    plugin.isSearching = true;
+    plugin.searchText = text2;
+    plugin.currentIndex = -1;
+    (_b = plugin.updateMatchNodeList) == null ? void 0 : _b.call(plugin, matches);
+    (_c2 = plugin.searchNext) == null ? void 0 : _c2.call(plugin);
+    (_d2 = plugin.emitEvent) == null ? void 0 : _d2.call(plugin);
+  };
+  const replaceNodeSearchText = (node, query, replacement, options, limit, skip = 0) => {
+    const data2 = searchNodeData(node);
+    const source = String(data2.text ?? "");
+    const result = data2.richText ? replaceSearchMatchesInHtml(source, query, replacement, options, limit, skip) : replaceSearchMatches(source, query, replacement, options, limit, skip);
+    return { text: result.value, count: result.count };
+  };
+  const applyAdvancedReplacement = (replacement, options, replaceAll) => {
+    var _a, _b, _c2;
+    if (!canMutate()) return;
+    const plugin = mindMap.search;
+    const query = String((plugin == null ? void 0 : plugin.searchText) ?? "");
+    const matches = Array.isArray(plugin == null ? void 0 : plugin.matchNodeList) ? [...plugin.matchNodeList] : [];
+    if (!query || matches.length === 0) return;
+    const currentIndex = Math.max(0, Number(plugin.currentIndex ?? 0));
+    const currentNode = matches[currentIndex] ?? matches[0];
+    const targets = replaceAll ? [...new Set(matches)].map((node) => ({ node, skip: 0 })) : [{
+      node: currentNode,
+      skip: matches.slice(0, currentIndex).filter((node) => node === currentNode).length
+    }];
+    let changed = false;
+    targets.forEach(({ node, skip }) => {
+      const result = replaceNodeSearchText(
+        node,
+        query,
+        replacement,
+        options,
+        replaceAll ? Number.POSITIVE_INFINITY : 1,
+        skip
+      );
+      if (result.count === 0) return;
+      changed = true;
+      const data2 = searchNodeData(node);
+      if (typeof (node == null ? void 0 : node.setText) === "function") {
+        node.setText(result.text, Boolean(data2.richText));
+      } else if (node == null ? void 0 : node.data) {
+        node.data.text = result.text;
+      }
+    });
+    if (!changed) return;
+    if (replaceAll) {
+      (_a = mindMap.render) == null ? void 0 : _a.call(mindMap);
+      (_c2 = (_b = mindMap.command) == null ? void 0 : _b.addHistory) == null ? void 0 : _c2.call(_b);
+    }
+    runAdvancedSearch(query, options);
   };
   const selectedOuterFrameGroupIds = () => {
     const ids = /* @__PURE__ */ new Set();
@@ -82477,14 +82770,17 @@ function createCommandAdapter(mindMap) {
       if (!canMutate() || !hasRichTextSelection()) return;
       (_b = (_a = richText()) == null ? void 0 : _a.formatText) == null ? void 0 : _b.call(_a, enabled ? { background: "#f5dfa0", color: "transparent" } : { background: false, color: false });
     },
-    search: (text2) => {
+    search: (text2, options) => {
       var _a, _b;
-      return (_b = (_a = mindMap.search) == null ? void 0 : _a.search) == null ? void 0 : _b.call(_a, text2);
+      if (options) runAdvancedSearch(text2, options);
+      else (_b = (_a = mindMap.search) == null ? void 0 : _a.search) == null ? void 0 : _b.call(_a, text2);
     },
     searchNext: () => {
+      var _a;
       const search = mindMap.search;
       if (!(search == null ? void 0 : search.searchText)) return;
-      search.search(search.searchText);
+      if (search.yemindAdvancedOptions) (_a = search.searchNext) == null ? void 0 : _a.call(search);
+      else search.search(search.searchText);
     },
     searchPrevious: () => {
       const search = mindMap.search;
@@ -82493,17 +82789,21 @@ function createCommandAdapter(mindMap) {
       const current = Number(search.currentIndex ?? 0);
       search.jump((current - 1 + total) % total);
     },
-    replaceSearch: (text2) => {
+    replaceSearch: (text2, options) => {
       var _a, _b;
-      if (canMutate()) (_b = (_a = mindMap.search) == null ? void 0 : _a.replace) == null ? void 0 : _b.call(_a, text2, true);
+      if (options) applyAdvancedReplacement(text2, options, false);
+      else if (canMutate()) (_b = (_a = mindMap.search) == null ? void 0 : _a.replace) == null ? void 0 : _b.call(_a, text2, true);
     },
-    replaceSearchAll: (text2) => {
+    replaceSearchAll: (text2, options) => {
       var _a, _b;
-      if (canMutate()) (_b = (_a = mindMap.search) == null ? void 0 : _a.replaceAll) == null ? void 0 : _b.call(_a, text2);
+      if (options) applyAdvancedReplacement(text2, options, true);
+      else if (canMutate()) (_b = (_a = mindMap.search) == null ? void 0 : _a.replaceAll) == null ? void 0 : _b.call(_a, text2);
     },
     endSearch: () => {
-      var _a, _b;
-      return (_b = (_a = mindMap.search) == null ? void 0 : _a.endSearch) == null ? void 0 : _b.call(_a);
+      var _a;
+      const search = mindMap.search;
+      if (search) delete search.yemindAdvancedOptions;
+      (_a = search == null ? void 0 : search.endSearch) == null ? void 0 : _a.call(search);
     },
     goToNode: (uid2) => mindMap.execCommand("GO_TARGET_NODE", uid2),
     setNodeTextByUid: (uid2, text2) => {
@@ -84617,6 +84917,12 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
           <div class="ymz-search-panel__row ymz-search-panel__row--find">
             <button class="ymz-search-panel__disclosure" data-search-action="toggle-replace" title="展开替换" aria-label="展开替换" aria-expanded="false">›</button>
             <input class="b3-text-field" data-role="search-input" placeholder="查找">
+            <span class="ymz-search-panel__options" role="group" aria-label="查找选项">
+              <button type="button" data-search-option="case-sensitive" title="区分大小写" aria-label="区分大小写" aria-pressed="false">Aa</button>
+              <button type="button" data-search-option="whole-word" title="全字匹配" aria-label="全字匹配" aria-pressed="false"><u>ab</u></button>
+              <button type="button" data-search-option="regex" title="使用正则表达式" aria-label="使用正则表达式" aria-pressed="false">.*</button>
+              <button type="button" data-search-option="selection-scope" title="仅在选中节点中查找" aria-label="仅在选中节点中查找" aria-pressed="false">选中</button>
+            </span>
             <span data-role="search-info">无结果</span>
             <button data-search-action="previous" title="上一个" aria-label="上一个">↑</button>
             <button data-search-action="next" title="下一个" aria-label="下一个">↓</button>
@@ -84625,9 +84931,11 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
           <div class="ymz-search-panel__row ymz-search-panel__row--replace" data-role="replace-row" hidden>
             <span class="ymz-search-panel__replace-indent" aria-hidden="true"></span>
             <input class="b3-text-field" data-role="replace-input" placeholder="替换">
+            <button type="button" data-search-option="preserve-case" title="保留大小写" aria-label="保留大小写" aria-pressed="false">AB</button>
             <button data-search-action="replace" title="替换当前">替换</button>
             <button data-search-action="replace-all" title="全部替换">全部</button>
           </div>
+          <div class="ymz-search-panel__error" data-role="search-error" role="status" hidden></div>
         </div>
 
         <input type="file" data-role="import-file-input" accept="${IMPORT_ACCEPT}" hidden>
@@ -84792,6 +85100,27 @@ function resolveOutlinePointerDropIntent(input) {
     desiredDepth: input.targetDepth,
     kind: vertical
   };
+}
+const OUTLINE_BRANCH_COLOR_COUNT = 6;
+function outlineBranchColorIndexes(blocks) {
+  const result = /* @__PURE__ */ new Map();
+  let branch2 = 0;
+  blocks.forEach((block) => {
+    if (block.depth <= 0 || !block.parentUid) {
+      result.set(block.uid, 0);
+      return;
+    }
+    if (block.depth === 1) {
+      branch2 = branch2 % OUTLINE_BRANCH_COLOR_COUNT + 1;
+      result.set(block.uid, branch2);
+      return;
+    }
+    result.set(block.uid, result.get(block.parentUid) ?? 0);
+  });
+  return result;
+}
+function outlineBranchColorVariable(index) {
+  return index > 0 ? `var(--ymz-outline-branch-${Math.min(OUTLINE_BRANCH_COLOR_COUNT, index)})` : "var(--ymz-accent)";
 }
 const PLAIN_INDENT = "    ";
 const BLOCK_TAGS = /* @__PURE__ */ new Set(["DIV", "P", "LI", "UL", "OL", "SECTION", "ARTICLE"]);
@@ -85862,12 +86191,17 @@ class StructuredOutlineEditorController {
       existing.set(`${row.dataset.outlineKind ?? "node"}:${row.dataset.outlineUid ?? ""}`, row);
     });
     const desired = [];
+    const branchColors = outlineBranchColorIndexes(blocks);
     const selectionUids = new Set([bookmark == null ? void 0 : bookmark.anchor.uid, bookmark == null ? void 0 : bookmark.focus.uid].filter(Boolean));
     blocks.forEach((block) => {
       const key = blockKey(block);
       let row = existing.get(key);
       if (!row) row = this.createRow(block);
       else this.patchRow(row, block, selectionUids.has(block.uid));
+      row.style.setProperty(
+        "--ymz-outline-branch-color",
+        outlineBranchColorVariable(branchColors.get(block.uid) ?? 0)
+      );
       desired.push(row);
       existing.delete(key);
     });
@@ -85924,7 +86258,7 @@ class StructuredOutlineEditorController {
       if (!marker || !lastMarker) return;
       const markerRect = marker.getBoundingClientRect();
       const lastRect = lastMarker.getBoundingClientRect();
-      const x2 = Math.round(markerRect.left + markerRect.width / 2 - rootRect.left + root2.scrollLeft);
+      const x2 = Math.round(markerRect.left + markerRect.width / 2 - rootRect.left + root2.scrollLeft) - 1;
       const top = Math.round(markerRect.bottom - rootRect.top + root2.scrollTop);
       const end = Math.round(lastRect.top + lastRect.height / 2 - rootRect.top + root2.scrollTop);
       const height2 = Math.max(0, end - top);
@@ -85935,7 +86269,7 @@ class StructuredOutlineEditorController {
       line.style.left = `${x2}px`;
       line.style.top = `${top}px`;
       line.style.height = `${height2}px`;
-      line.style.setProperty("--ymz-outline-guide-color", `var(--ymz-outline-guide-${depth % 4 + 1})`);
+      line.style.setProperty("--ymz-outline-guide-color", row.style.getPropertyValue("--ymz-outline-branch-color"));
       fragment.append(line);
     });
     this.guideLayer.replaceChildren(fragment);
@@ -89165,6 +89499,40 @@ function synchronizeCanvasRichTextVisibility(map2) {
   });
   return true;
 }
+const DEFAULT_SEARCH_OPTIONS = {
+  caseSensitive: false,
+  wholeWord: false,
+  useRegex: false,
+  preserveCase: false,
+  scope: "document"
+};
+const OPTION_KEYS = {
+  "case-sensitive": "caseSensitive",
+  "whole-word": "wholeWord",
+  regex: "useRegex",
+  "preserve-case": "preserveCase"
+};
+function toggleSearchOption(panel, control, options) {
+  if (control === "selection-scope") {
+    const next22 = {
+      ...options,
+      scope: options.scope === "selection" ? "document" : "selection"
+    };
+    const button2 = panel.querySelector('[data-search-option="selection-scope"]');
+    const active = next22.scope === "selection";
+    button2 == null ? void 0 : button2.setAttribute("aria-pressed", String(active));
+    button2 == null ? void 0 : button2.classList.toggle("is-active", active);
+    return next22;
+  }
+  if (!(control in OPTION_KEYS)) return options;
+  const typedControl = control;
+  const key = OPTION_KEYS[typedControl];
+  const next2 = { ...options, [key]: !options[key] };
+  const button = panel.querySelector(`[data-search-option="${typedControl}"]`);
+  button == null ? void 0 : button.setAttribute("aria-pressed", String(next2[key]));
+  button == null ? void 0 : button.classList.toggle("is-active", next2[key]);
+  return next2;
+}
 function setSearchReplaceExpanded(panel, expanded) {
   panel.dataset.replaceExpanded = String(expanded);
   const row = panel.querySelector('[data-role="replace-row"]');
@@ -89868,16 +90236,23 @@ class ToolbarVisibilityController {
     __publicField(this, "hideDelayMs");
     __publicField(this, "hotZonePx");
     __publicField(this, "timer", null);
+    __publicField(this, "pointerInHotZone", false);
     __publicField(this, "onPointerMove", (event) => {
       if (this.pinned) return;
       const rect2 = this.options.root.getBoundingClientRect();
       const x2 = event.clientX - rect2.left;
       const y2 = event.clientY - rect2.top;
+      const horizontalHotZone = Math.min(this.hotZonePx, Math.max(4, rect2.width / 3));
+      const verticalHotZone = Math.min(this.hotZonePx, Math.max(4, rect2.height / 3));
       const target = event.target;
       const ownedSide = this.sideFromTarget(target);
-      if (ownedSide || y2 <= this.hotZonePx || rect2.height - y2 <= this.hotZonePx || x2 <= this.hotZonePx) this.revealAll();
+      this.pointerInHotZone = Boolean(
+        ownedSide || y2 <= verticalHotZone || rect2.height - y2 <= verticalHotZone || x2 <= horizontalHotZone
+      );
+      if (this.pointerInHotZone) this.revealAll();
     });
     __publicField(this, "onPointerLeave", () => {
+      this.pointerInHotZone = false;
       if (!this.pinned) this.scheduleHide();
     });
     __publicField(this, "onFocusIn", (event) => {
@@ -89951,7 +90326,7 @@ class ToolbarVisibilityController {
     this.clearTimer();
     this.timer = window.setTimeout(() => {
       this.timer = null;
-      if (this.ownsInteraction()) {
+      if (this.pointerInHotZone || this.ownsInteraction()) {
         this.scheduleHide();
         return;
       }
@@ -90864,6 +91239,7 @@ class StudyPanelController {
     __publicField(this, "revealed", false);
     __publicField(this, "reviewCardId", "");
     __publicField(this, "reviewQueue", []);
+    __publicField(this, "locatedCardId", "");
     __publicField(this, "reviewCompleted", /* @__PURE__ */ new Set());
     __publicField(this, "flipped", /* @__PURE__ */ new Set());
     __publicField(this, "fullscreen", false);
@@ -90871,7 +91247,7 @@ class StudyPanelController {
     __publicField(this, "optimisticCards", null);
     __publicField(this, "queuedCards", null);
     __publicField(this, "onClick", (event) => {
-      var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z;
+      var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F;
       const target = event.target;
       const action = (_a = target.closest("[data-study-action]")) == null ? void 0 : _a.dataset.studyAction;
       const filter2 = (_b = target.closest("[data-study-filter]")) == null ? void 0 : _b.dataset.studyFilter;
@@ -90916,7 +91292,14 @@ class StudyPanelController {
         return;
       }
       if (action === "open-cards") {
-        this.show("cards");
+        (_n = (_m = this.options).onNavigate) == null ? void 0 : _n.call(_m, "cards");
+        if (!this.options.onNavigate) this.show("cards");
+        return;
+      }
+      if (action === "open-current-card") {
+        const cardId = this.reviewCardId;
+        (_p = (_o = this.options).onNavigate) == null ? void 0 : _p.call(_o, "cards", cardId ? [cardId] : void 0);
+        if (!this.options.onNavigate) this.show("cards", cardId ? [cardId] : void 0);
         return;
       }
       if (action === "fullscreen") {
@@ -90926,7 +91309,8 @@ class StudyPanelController {
       }
       if (action === "start-review") {
         const visibleIds = Array.from(this.element.querySelectorAll("[data-study-card-id]")).map((item) => item.dataset.studyCardId).filter((id2) => Boolean(id2));
-        this.show("review", visibleIds);
+        (_r = (_q = this.options).onNavigate) == null ? void 0 : _r.call(_q, "review", visibleIds);
+        if (!this.options.onNavigate) this.show("review", visibleIds);
         return;
       }
       if (action === "reveal") {
@@ -90935,15 +91319,15 @@ class StudyPanelController {
         return;
       }
       if (action === "create") {
-        if ((_n = (_m = this.options).readonly) == null ? void 0 : _n.call(_m)) return;
+        if ((_t = (_s = this.options).readonly) == null ? void 0 : _t.call(_s)) return;
         const node = this.options.getActiveNode();
         if (!node) {
-          (_p = (_o = this.options).onMessage) == null ? void 0 : _p.call(_o, "请先选中一个导图节点");
+          (_v = (_u = this.options).onMessage) == null ? void 0 : _v.call(_u, "请先选中一个导图节点");
           return;
         }
-        const now = ((_r = (_q = this.options).now) == null ? void 0 : _r.call(_q)) ?? Date.now();
+        const now = ((_x = (_w = this.options).now) == null ? void 0 : _x.call(_w)) ?? Date.now();
         const card = createStudyCard({
-          id: ((_t = (_s = this.options).id) == null ? void 0 : _t.call(_s)) ?? ((_v = (_u = globalThis.crypto) == null ? void 0 : _u.randomUUID) == null ? void 0 : _v.call(_u)) ?? `card-${now}`,
+          id: ((_z = (_y = this.options).id) == null ? void 0 : _z.call(_y)) ?? ((_B = (_A = globalThis.crypto) == null ? void 0 : _A.randomUUID) == null ? void 0 : _B.call(_A)) ?? `card-${now}`,
           nodeUid: node.uid,
           front: plainText$1(node.text) || "未命名卡片",
           back: plainText$1(node.back),
@@ -90960,10 +91344,10 @@ class StudyPanelController {
         return;
       }
       if (action === "delete") {
-        if ((_x = (_w = this.options).readonly) == null ? void 0 : _x.call(_w)) return;
+        if ((_D = (_C = this.options).readonly) == null ? void 0 : _D.call(_C)) return;
         void this.persist(this.cards().filter((card) => card.id !== id));
       } else if (action === "star") {
-        if ((_z = (_y = this.options).readonly) == null ? void 0 : _z.call(_y)) return;
+        if ((_F = (_E = this.options).readonly) == null ? void 0 : _F.call(_E)) return;
         void this.persist(this.cards().map((card) => {
           var _a2, _b2;
           return card.id === id ? { ...card, starred: !card.starred, updatedAt: ((_b2 = (_a2 = this.options).now) == null ? void 0 : _b2.call(_a2)) ?? Date.now() } : card;
@@ -91008,7 +91392,7 @@ class StudyPanelController {
     this.element.removeEventListener("input", this.onInput);
     this.element.removeEventListener("change", this.onChange);
   }
-  show(mode, requestedReviewQueue) {
+  show(mode, requestedCardIds) {
     var _a, _b;
     const modeChanged = this.mode !== mode;
     this.mode = mode;
@@ -91016,9 +91400,10 @@ class StudyPanelController {
     this.element.dataset.studyMode = mode;
     this.revealed = false;
     this.reviewCardId = "";
-    if (mode === "review" && (requestedReviewQueue || modeChanged || this.reviewQueue.length === 0)) {
+    this.locatedCardId = mode === "cards" ? String((requestedCardIds == null ? void 0 : requestedCardIds[0]) ?? "") : "";
+    if (mode === "review" && (requestedCardIds || modeChanged || this.reviewQueue.length === 0)) {
       const now = ((_b = (_a = this.options).now) == null ? void 0 : _b.call(_a)) ?? Date.now();
-      this.reviewQueue = requestedReviewQueue ? requestedReviewQueue.filter((id) => this.cards().some((card) => card.id === id)) : this.cards().filter((card) => card.dueAt <= now).map((card) => card.id);
+      this.reviewQueue = requestedCardIds ? requestedCardIds.filter((id) => this.cards().some((card) => card.id === id)) : this.cards().filter((card) => card.dueAt <= now).map((card) => card.id);
       this.reviewCompleted.clear();
     }
     this.render();
@@ -91041,7 +91426,7 @@ class StudyPanelController {
           <strong>${this.mode === "review" ? "复习" : "卡片"}</strong>
           <small>${cards.length} 张卡片</small>
         </div>
-        ${this.mode === "cards" ? `<button type="button" data-study-action="fullscreen" title="${this.fullscreen ? "缩小" : "全屏"}" aria-label="${this.fullscreen ? "缩小" : "全屏"}卡片面板">${this.fullscreen ? "↙" : "↗"}</button>` : ""}
+        ${this.mode === "cards" ? `<button type="button" data-study-action="fullscreen" title="${this.fullscreen ? "缩小" : "全屏"}" aria-label="${this.fullscreen ? "缩小" : "全屏"}卡片面板">${fullscreenIcon()}</button>` : ""}
         <button type="button" data-study-action="close" title="关闭" aria-label="关闭${this.mode === "review" ? "复习" : "卡片"}面板">×</button>
       </header>
       ${this.mode === "review" ? this.renderReview(cards) : this.renderCards(cards)}
@@ -91098,7 +91483,7 @@ ${card.nodeUid}`.toLocaleLowerCase();
     const flipped = this.flipped.has(card.id);
     const lastReviewed = card.lastReviewedAt ? new Date(card.lastReviewedAt).toLocaleDateString("zh-CN") : "";
     return `
-      <article class="ymz-study-card" data-study-card-id="${escapeHtml$1(card.id)}">
+      <article class="ymz-study-card${card.id === this.locatedCardId ? " is-located" : ""}" data-study-card-id="${escapeHtml$1(card.id)}">
         <header>
           <span><i class="ymz-study-source-dot" aria-hidden="true"></i>${escapeHtml$1(card.nodeUid || "独立卡片")}</span>
           <button type="button" data-study-action="star" aria-pressed="${card.starred}" title="${card.starred ? "取消重点" : "设为重点"}"${readonly ? " disabled" : ""}>${card.starred ? "★" : "☆"}</button>
@@ -91146,7 +91531,10 @@ ${card.nodeUid}`.toLocaleLowerCase();
       <div class="ymz-study-review">
         <div class="ymz-study-review__progress"><span>卡片 ${this.reviewCompleted.size + 1} / ${Math.max(1, total)}</span><small>已完成 ${this.reviewCompleted.size} 张 · ${progress}%</small></div>
         <article class="ymz-study-review-card" data-study-card-id="${escapeHtml$1(current.id)}">
-          <span class="ymz-study-review-card__eyebrow">${current.starred ? "★ 重点卡片" : statusLabel(current.status)}</span>
+          <div class="ymz-study-review-card__meta">
+            <span class="ymz-study-review-card__eyebrow">${current.starred ? "★ 重点卡片" : statusLabel(current.status)}</span>
+            <button type="button" data-study-action="open-current-card">查看卡片</button>
+          </div>
           <h2>${escapeHtml$1(current.front)}</h2>
           <div class="ymz-study-review-card__answer" data-role="study-answer"${this.revealed ? "" : " hidden"}>${escapeHtml$1(current.back || "（尚未填写答案）")}</div>
           <button type="button" class="ymz-study-reveal" data-study-action="reveal"${this.revealed ? " hidden" : ""}>显示答案</button>
@@ -91186,6 +91574,42 @@ ${card.nodeUid}`.toLocaleLowerCase();
     }
   }
 }
+function finiteInset(value) {
+  const parsed = typeof value === "number" ? value : Number.parseFloat(value ?? "");
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+}
+function normalizeAxis(startValue, endValue, extent, minimumSize) {
+  const safeExtent = Math.max(1, Number.isFinite(extent) ? extent : 1);
+  const safeMinimum = Math.min(
+    safeExtent,
+    Math.max(1, Number.isFinite(minimumSize) ? minimumSize : 1)
+  );
+  let start = Math.min(safeExtent - safeMinimum, finiteInset(startValue));
+  let end = Math.min(safeExtent - safeMinimum, finiteInset(endValue));
+  const maximumInsetTotal = safeExtent - safeMinimum;
+  const insetTotal = start + end;
+  if (insetTotal > maximumInsetTotal && insetTotal > 0) {
+    const ratio = maximumInsetTotal / insetTotal;
+    start *= ratio;
+    end *= ratio;
+  }
+  return [start, end];
+}
+function px(value) {
+  const rounded2 = Math.round(value * 100) / 100;
+  return `${Object.is(rounded2, -0) ? 0 : rounded2}px`;
+}
+function normalizeMiniMapViewportStyle(style, options) {
+  const minimumSize = options.minimumSize;
+  const [left, right] = normalizeAxis(style.left, style.right, options.width, minimumSize);
+  const [top, bottom] = normalizeAxis(style.top, style.bottom, options.height, minimumSize);
+  return {
+    left: px(left),
+    right: px(right),
+    top: px(top),
+    bottom: px(bottom)
+  };
+}
 function fitMiniMapSvg(svg2) {
   if (!svg2) return false;
   const width2 = Number.parseFloat(svg2.getAttribute("width") ?? "");
@@ -91196,6 +91620,16 @@ function fitMiniMapSvg(svg2) {
   svg2.setAttribute("width", "100%");
   svg2.setAttribute("height", "100%");
   return true;
+}
+function commitMiniMapSvg(content, svgHTML) {
+  const candidate = document.createElement("div");
+  candidate.innerHTML = svgHTML;
+  if (!fitMiniMapSvg(candidate.querySelector("svg"))) return false;
+  content.replaceChildren(...Array.from(candidate.childNodes));
+  return true;
+}
+function validCalculation(state) {
+  return Number.isFinite(state.miniMapBoxScale) && state.miniMapBoxScale > 0 && Number.isFinite(state.miniMapBoxLeft) && Number.isFinite(state.miniMapBoxTop);
 }
 class MiniMapController {
   constructor(root2, map2, element) {
@@ -91212,7 +91646,9 @@ class MiniMapController {
       });
     });
     __publicField(this, "onViewportChange", (style) => {
-      this.applyViewportStyle(style);
+      const normalized2 = this.applyViewportStyle(style);
+      const plugin = this.map.miniMap;
+      if (plugin == null ? void 0 : plugin.currentState) plugin.currentState.viewBoxStyle = { ...normalized2 };
     });
     __publicField(this, "onPointerDown", (event) => {
       var _a, _b;
@@ -91285,17 +91721,80 @@ class MiniMapController {
     const width2 = Math.max(120, this.element.clientWidth);
     const height2 = Math.max(72, this.element.clientHeight);
     try {
+      const previousState = plugin.currentState ? {
+        ...plugin.currentState,
+        viewBoxStyle: { ...plugin.currentState.viewBoxStyle }
+      } : null;
       const state = plugin.calculationMiniMap(width2, height2);
-      this.content.innerHTML = state.svgHTML;
-      fitMiniMapSvg(this.content.querySelector("svg"));
-      this.applyViewportStyle(state.viewBoxStyle);
+      if (!validCalculation(state) || !commitMiniMapSvg(this.content, state.svgHTML)) {
+        plugin.currentState = previousState;
+        return;
+      }
+      const normalized2 = this.applyViewportStyle(state.viewBoxStyle);
+      if (plugin.currentState) plugin.currentState.viewBoxStyle = { ...normalized2 };
     } catch {
     }
   }
   applyViewportStyle(style) {
-    ["left", "right", "top", "bottom"].forEach((key) => {
-      if (style[key] !== void 0) this.viewport.style[key] = style[key];
+    const width2 = Math.max(1, this.element.clientWidth || 160);
+    const height2 = Math.max(1, this.element.clientHeight || 100);
+    const normalized2 = normalizeMiniMapViewportStyle(style, {
+      width: width2,
+      height: height2,
+      minimumSize: 6
     });
+    ["left", "right", "top", "bottom"].forEach((key) => {
+      this.viewport.style[key] = normalized2[key];
+    });
+    return normalized2;
+  }
+}
+const browserScheduler = {
+  request: (callback) => window.requestAnimationFrame(callback),
+  cancel: (id) => window.cancelAnimationFrame(id)
+};
+class RenderLifecycleCoordinator {
+  constructor(mindMap, onCommitted, scheduler = browserScheduler) {
+    __publicField(this, "revision", 0);
+    __publicField(this, "frame", null);
+    this.mindMap = mindMap;
+    this.onCommitted = onCommitted;
+    this.scheduler = scheduler;
+  }
+  scheduleTextEdit(payload) {
+    const uid2 = renderedNodeUid(payload.node);
+    if (!uid2) return;
+    const revision = ++this.revision;
+    if (this.frame !== null) this.scheduler.cancel(this.frame);
+    this.frame = this.scheduler.request(() => {
+      var _a, _b, _c2, _d2, _e, _f, _g;
+      this.frame = null;
+      if (revision !== this.revision) return;
+      const node = (_c2 = (_b = (_a = this.mindMap) == null ? void 0 : _a.renderer) == null ? void 0 : _b.findNodeByUid) == null ? void 0 : _c2.call(_b, uid2);
+      if (!node || typeof node.createTextNode !== "function") return;
+      const measurementText = payload.richText ? plainTextFromSearchValue(payload.text, true).trim() : payload.text;
+      node._textData = node.createTextNode(measurementText);
+      const rect2 = (_d2 = node.getNodeRect) == null ? void 0 : _d2.call(node);
+      if (rect2 && Number.isFinite(rect2.width) && Number.isFinite(rect2.height)) {
+        node.width = rect2.width;
+        node.height = rect2.height;
+      }
+      (_e = node.layout) == null ? void 0 : _e.call(node);
+      (_g = (_f = this.mindMap).render) == null ? void 0 : _g.call(_f, () => {
+        var _a2, _b2;
+        if (revision !== this.revision) return;
+        (_b2 = (_a2 = this.mindMap.richText) == null ? void 0 : _a2.updateTextEditNode) == null ? void 0 : _b2.call(_a2);
+        this.onCommitted();
+      });
+    });
+  }
+  invalidate() {
+    this.revision += 1;
+    if (this.frame !== null) this.scheduler.cancel(this.frame);
+    this.frame = null;
+  }
+  destroy() {
+    this.invalidate();
   }
 }
 class YeMindEditor {
@@ -91323,6 +91822,7 @@ class YeMindEditor {
     __publicField(this, "searchInputEl");
     __publicField(this, "replaceInputEl");
     __publicField(this, "searchInfoEl");
+    __publicField(this, "searchErrorEl");
     __publicField(this, "selectionCountEl");
     __publicField(this, "relationPanelEl");
     __publicField(this, "relationHintEl");
@@ -91346,6 +91846,7 @@ class YeMindEditor {
     __publicField(this, "settingsInitialized", false);
     __publicField(this, "viewMode", "map");
     __publicField(this, "searchText", "");
+    __publicField(this, "searchOptions", { ...DEFAULT_SEARCH_OPTIONS });
     __publicField(this, "applyingCheckpoint", false);
     __publicField(this, "applyingAppearance", false);
     __publicField(this, "applyingImportLayout", false);
@@ -91363,6 +91864,7 @@ class YeMindEditor {
     __publicField(this, "appearanceController", null);
     __publicField(this, "studyPanel", null);
     __publicField(this, "miniMapController", null);
+    __publicField(this, "renderLifecycle", null);
     __publicField(this, "studyMode", null);
     __publicField(this, "presentationState", null);
     __publicField(this, "appearanceMode", null);
@@ -91751,7 +92253,7 @@ class YeMindEditor {
     input.click();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C;
     this.options.diagnostics.record(
       "editor",
       "destroy-started",
@@ -91770,40 +92272,42 @@ class YeMindEditor {
     this.studyPanel = null;
     (_f = this.miniMapController) == null ? void 0 : _f.destroy();
     this.miniMapController = null;
-    (_g = this.richTextToolbar) == null ? void 0 : _g.destroy();
+    (_g = this.renderLifecycle) == null ? void 0 : _g.destroy();
+    this.renderLifecycle = null;
+    (_h = this.richTextToolbar) == null ? void 0 : _h.destroy();
     this.richTextToolbar = null;
-    (_h = this.nodeHoverPreview) == null ? void 0 : _h.destroy();
+    (_i = this.nodeHoverPreview) == null ? void 0 : _i.destroy();
     this.nodeHoverPreview = null;
-    (_i = this.imageLightbox) == null ? void 0 : _i.destroy();
+    (_j = this.imageLightbox) == null ? void 0 : _j.destroy();
     this.imageLightbox = null;
-    (_j = this.nodeStylePanel) == null ? void 0 : _j.destroy();
+    (_k = this.nodeStylePanel) == null ? void 0 : _k.destroy();
     this.nodeStylePanel = null;
-    (_k = this.projectStylePanel) == null ? void 0 : _k.destroy();
+    (_l = this.projectStylePanel) == null ? void 0 : _l.destroy();
     this.projectStylePanel = null;
-    (_l = this.layoutGalleryPanel) == null ? void 0 : _l.destroy();
+    (_m = this.layoutGalleryPanel) == null ? void 0 : _m.destroy();
     this.layoutGalleryPanel = null;
-    (_m = this.themeChoicePanel) == null ? void 0 : _m.destroy();
+    (_n = this.themeChoicePanel) == null ? void 0 : _n.destroy();
     this.themeChoicePanel = null;
-    (_n = this.toolbarVisibility) == null ? void 0 : _n.destroy();
+    (_o = this.toolbarVisibility) == null ? void 0 : _o.destroy();
     this.toolbarVisibility = null;
-    (_o = this.resourceActionPopover) == null ? void 0 : _o.destroy();
+    (_p = this.resourceActionPopover) == null ? void 0 : _p.destroy();
     this.resourceActionPopover = null;
-    (_p = this.nodeQuickActions) == null ? void 0 : _p.destroy();
+    (_q = this.nodeQuickActions) == null ? void 0 : _q.destroy();
     this.nodeQuickActions = null;
-    (_q = this.canvasRightDrag) == null ? void 0 : _q.destroy();
+    (_r = this.canvasRightDrag) == null ? void 0 : _r.destroy();
     this.canvasRightDrag = null;
-    (_r = this.liveNodeWidthLayout) == null ? void 0 : _r.destroy();
+    (_s = this.liveNodeWidthLayout) == null ? void 0 : _s.destroy();
     this.liveNodeWidthLayout = null;
-    (_s = this.cancelFocusedNodeHighlight) == null ? void 0 : _s.call(this);
+    (_t = this.cancelFocusedNodeHighlight) == null ? void 0 : _t.call(this);
     this.cancelFocusedNodeHighlight = null;
-    (_t = this.rootEl) == null ? void 0 : _t.removeEventListener("keydown", this.onRootKeydown, true);
-    (_u = this.outlinePaneEl) == null ? void 0 : _u.removeEventListener("keydown", this.onOutlineKeydownBubble);
-    (_v = this.rootEl) == null ? void 0 : _v.removeEventListener("paste", this.onImagePaste);
-    (_w = this.canvasEl) == null ? void 0 : _w.removeEventListener("dragover", this.onImageDragOver);
-    (_x = this.canvasEl) == null ? void 0 : _x.removeEventListener("drop", this.onImageDrop);
-    (_y = this.canvasEl) == null ? void 0 : _y.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
-    (_z = this.canvasEl) == null ? void 0 : _z.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
-    (_A = this.outlineEl) == null ? void 0 : _A.removeEventListener(
+    (_u = this.rootEl) == null ? void 0 : _u.removeEventListener("keydown", this.onRootKeydown, true);
+    (_v = this.outlinePaneEl) == null ? void 0 : _v.removeEventListener("keydown", this.onOutlineKeydownBubble);
+    (_w = this.rootEl) == null ? void 0 : _w.removeEventListener("paste", this.onImagePaste);
+    (_x = this.canvasEl) == null ? void 0 : _x.removeEventListener("dragover", this.onImageDragOver);
+    (_y = this.canvasEl) == null ? void 0 : _y.removeEventListener("drop", this.onImageDrop);
+    (_z = this.canvasEl) == null ? void 0 : _z.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
+    (_A = this.canvasEl) == null ? void 0 : _A.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
+    (_B = this.outlineEl) == null ? void 0 : _B.removeEventListener(
       "pointerdown",
       this.onOutlinePointerDown,
       true
@@ -91820,7 +92324,7 @@ class YeMindEditor {
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_B = this.map) == null ? void 0 : _B.destroy();
+    (_C = this.map) == null ? void 0 : _C.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record(
@@ -91938,6 +92442,9 @@ class YeMindEditor {
     this.searchInfoEl = this.options.container.querySelector(
       '[data-role="search-info"]'
     );
+    this.searchErrorEl = this.options.container.querySelector(
+      '[data-role="search-error"]'
+    );
     this.selectionCountEl = this.options.container.querySelector(
       '[data-role="selection-count"]'
     );
@@ -92001,6 +92508,11 @@ class YeMindEditor {
       pluginBaseUrl: this.options.pluginBaseUrl
     });
     this.commands = createCommandAdapter(this.map);
+    this.renderLifecycle = new RenderLifecycleCoordinator(this.map, () => {
+      var _a2, _b;
+      (_a2 = this.nodeQuickActions) == null ? void 0 : _a2.scheduleRefresh();
+      (_b = this.miniMapController) == null ? void 0 : _b.refresh();
+    });
     const miniMapElement = this.options.container.querySelector('[data-role="minimap"]');
     if (miniMapElement) {
       this.miniMapController = new MiniMapController(this.rootEl, this.map, miniMapElement);
@@ -92038,6 +92550,7 @@ class YeMindEditor {
           this.setSaveStateLabel("已保存", "saved");
         },
         onClose: () => this.setStudyMode(null),
+        onNavigate: (mode, cardIds) => this.setStudyMode(mode, cardIds),
         onMessage: (message, kind) => siyuan.showMessage(
           message,
           kind === "error" ? 5e3 : 3e3,
@@ -92300,6 +92813,19 @@ class YeMindEditor {
         this.handleSearchAction(searchButton.dataset.searchAction ?? "");
         return;
       }
+      const searchOption = event.target.closest(
+        "[data-search-option]"
+      );
+      if (searchOption) {
+        this.searchOptions = toggleSearchOption(
+          this.searchPanelEl,
+          searchOption.dataset.searchOption ?? "",
+          this.searchOptions
+        );
+        this.searchText = "";
+        if (this.searchInputEl.value.trim()) this.ensureSearch();
+        return;
+      }
       const relationButton = event.target.closest(
         "[data-relation-action]"
       );
@@ -92510,6 +93036,7 @@ class YeMindEditor {
       if (!this.searchInputEl.value.trim()) {
         (_a2 = this.commands) == null ? void 0 : _a2.endSearch();
         this.searchText = "";
+        this.setSearchError("");
         this.updateSearchInfo({ currentIndex: -1, total: 0 });
       } else if (this.searchInputEl.value.trim() !== this.searchText) {
         this.searchInfoEl.textContent = "按 Enter 搜索";
@@ -92841,9 +93368,14 @@ class YeMindEditor {
         (payload == null ? void 0 : payload.details) ?? {}
       );
     });
+    this.map.on("node_text_edit_change", (payload) => {
+      var _a;
+      (_a = this.renderLifecycle) == null ? void 0 : _a.scheduleTextEdit(payload);
+    });
     this.map.on("data_change", (data2) => {
-      var _a, _b;
+      var _a, _b, _c2;
       if (this.applyingCheckpoint) return;
+      (_a = this.renderLifecycle) == null ? void 0 : _a.invalidate();
       this.current.data = data2;
       this.options.diagnostics.record(
         "editor",
@@ -92853,8 +93385,8 @@ class YeMindEditor {
       );
       this.updateStats(data2);
       this.renderOutline(data2);
-      (_a = this.nodeStylePanel) == null ? void 0 : _a.refresh();
-      (_b = this.nodeQuickActions) == null ? void 0 : _b.scheduleRefresh();
+      (_b = this.nodeStylePanel) == null ? void 0 : _b.refresh();
+      (_c2 = this.nodeQuickActions) == null ? void 0 : _c2.scheduleRefresh();
       this.scheduleSave();
     });
     this.map.on("view_data_change", (viewData) => {
@@ -93595,7 +94127,7 @@ class YeMindEditor {
       }
     });
   }
-  setStudyMode(mode) {
+  setStudyMode(mode, cardIds) {
     var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k;
     if (mode && this.viewMode !== "map") this.setViewMode("map");
     (_a = this.resourceActionPopover) == null ? void 0 : _a.hide();
@@ -93606,7 +94138,7 @@ class YeMindEditor {
     if (mode && !this.searchPanelEl.hidden) this.closeSearchPanel();
     this.studyMode = mode;
     this.rootEl.dataset.studyView = mode ?? "none";
-    if (mode) (_h = this.studyPanel) == null ? void 0 : _h.show(mode);
+    if (mode) (_h = this.studyPanel) == null ? void 0 : _h.show(mode, cardIds);
     else (_i = this.studyPanel) == null ? void 0 : _i.hide();
     this.updatePrimaryViewPresentation();
     (_j = this.nodeQuickActions) == null ? void 0 : _j.scheduleRefresh();
@@ -94208,6 +94740,7 @@ class YeMindEditor {
     var _a;
     (_a = this.commands) == null ? void 0 : _a.endSearch();
     this.searchText = "";
+    this.setSearchError("");
     this.searchPanelEl.hidden = true;
     this.updateSearchInfo({ currentIndex: -1, total: 0 });
     this.canvasEl.focus();
@@ -94228,9 +94761,18 @@ class YeMindEditor {
   ensureSearch() {
     const text2 = this.searchInputEl.value.trim();
     if (!text2 || !this.commands) return false;
+    const built = buildSearchPattern(text2, this.searchOptions);
+    if (!built.pattern) {
+      this.setSearchError(built.error || "搜索表达式无效");
+      this.commands.endSearch();
+      this.searchText = "";
+      this.updateSearchInfo({ currentIndex: -1, total: 0 });
+      return false;
+    }
+    this.setSearchError("");
     if (this.searchText !== text2) {
       this.searchText = text2;
-      this.commands.search(text2);
+      this.commands.search(text2, this.searchOptions);
     }
     return true;
   }
@@ -94245,12 +94787,17 @@ class YeMindEditor {
   replaceCurrentSearch() {
     var _a;
     if (!this.ensureSearch()) return;
-    (_a = this.commands) == null ? void 0 : _a.replaceSearch(this.replaceInputEl.value);
+    (_a = this.commands) == null ? void 0 : _a.replaceSearch(this.replaceInputEl.value, this.searchOptions);
   }
   replaceAllSearch() {
     var _a;
     if (!this.ensureSearch()) return;
-    (_a = this.commands) == null ? void 0 : _a.replaceSearchAll(this.replaceInputEl.value);
+    (_a = this.commands) == null ? void 0 : _a.replaceSearchAll(this.replaceInputEl.value, this.searchOptions);
+  }
+  setSearchError(message) {
+    if (!this.searchErrorEl) return;
+    this.searchErrorEl.textContent = message;
+    this.searchErrorEl.hidden = !message;
   }
   updateSearchInfo(info) {
     const current = info.total > 0 && info.currentIndex >= 0 ? info.currentIndex + 1 : 0;
@@ -94698,6 +95245,85 @@ function flushPendingTabNodeFocus(state, schedule = (callback) => window.request
     return (_a = state.editor) == null ? void 0 : _a.focusNode(uid2);
   });
 }
+function closeSiYuanTab(tab) {
+  var _a, _b, _c2;
+  if (!tab) return false;
+  if (((_a = tab.parent) == null ? void 0 : _a.removeTab) && tab.id) {
+    tab.parent.removeTab(tab.id);
+    return true;
+  }
+  if (typeof tab.close === "function") {
+    tab.close();
+    return true;
+  }
+  const closeButton = (_c2 = (_b = tab.headElement) == null ? void 0 : _b.querySelector) == null ? void 0 : _c2.call(
+    _b,
+    '[data-type="close"], .item__close'
+  );
+  if (closeButton) {
+    closeButton.click();
+    return true;
+  }
+  return false;
+}
+function isActive(custom) {
+  var _a, _b;
+  const classes2 = (_b = (_a = custom.tab) == null ? void 0 : _a.headElement) == null ? void 0 : _b.classList;
+  return Boolean(
+    (classes2 == null ? void 0 : classes2.contains("item--focus")) || (classes2 == null ? void 0 : classes2.contains("item--active")) || (classes2 == null ? void 0 : classes2.contains("is-active"))
+  );
+}
+function deduplicateRestoredMapTabs(opened) {
+  const groups2 = /* @__PURE__ */ new Map();
+  Object.values(opened ?? {}).flat().forEach((custom) => {
+    var _a;
+    const mapId = String(((_a = custom == null ? void 0 : custom.data) == null ? void 0 : _a.mapId) ?? "").trim();
+    if (!mapId || !(custom == null ? void 0 : custom.tab)) return;
+    const group = groups2.get(mapId) ?? [];
+    group.push(custom);
+    groups2.set(mapId, group);
+  });
+  let closed = 0;
+  groups2.forEach((group) => {
+    if (group.length < 2) return;
+    const keeper = group.find(isActive) ?? group[0];
+    group.forEach((custom) => {
+      if (custom === keeper) return;
+      if (closeSiYuanTab(custom.tab)) closed += 1;
+    });
+  });
+  return closed;
+}
+function lazyCustomData(tab, customModelType) {
+  var _a, _b, _c2;
+  if (((_a = tab.model) == null ? void 0 : _a.type) === customModelType) return tab.model.data ?? null;
+  const serialized = (_c2 = (_b = tab.headElement) == null ? void 0 : _b.getAttribute) == null ? void 0 : _c2.call(_b, "data-initdata");
+  if (!serialized) return null;
+  try {
+    const parsed = JSON.parse(serialized);
+    if (parsed.instance !== "Custom" || parsed.customModelType !== customModelType) {
+      return null;
+    }
+    return parsed.customModelData ?? null;
+  } catch {
+    return null;
+  }
+}
+function collectRestoredMapTabsFromLayout(layout2, customModelType) {
+  const result = [];
+  const visit2 = (value) => {
+    if (!value || typeof value !== "object") return;
+    const candidate = value;
+    if (candidate.id && candidate.headElement) {
+      const data2 = lazyCustomData(candidate, customModelType);
+      if (String((data2 == null ? void 0 : data2.mapId) ?? "").trim()) result.push({ data: data2 ?? void 0, tab: candidate });
+      return;
+    }
+    (candidate.children ?? []).forEach(visit2);
+  };
+  visit2(layout2);
+  return result;
+}
 function registerYeMindTab(plugin, host) {
   const states2 = /* @__PURE__ */ new WeakMap();
   plugin.addTab({
@@ -94712,6 +95338,40 @@ function registerYeMindTab(plugin, host) {
       const state = { destroyed: false };
       states2.set(this, state);
       const mapId = String(((_a = this.data) == null ? void 0 : _a.mapId) ?? "");
+      const activateTab = (attempt = 0) => {
+        if (state.destroyed) return;
+        const head = this.tab.headElement;
+        if (head == null ? void 0 : head.isConnected) {
+          head.click();
+          return;
+        }
+        if (attempt < 20) window.requestAnimationFrame(() => activateTab(attempt + 1));
+      };
+      const closeTab = (attempt = 0) => {
+        if (state.destroyed) return;
+        const head = this.tab.headElement;
+        if ((head == null ? void 0 : head.isConnected) || attempt >= 20) {
+          closeSiYuanTab(this.tab);
+          return;
+        }
+        window.requestAnimationFrame(() => closeTab(attempt + 1));
+      };
+      const registration = host.tabRegistry.tryRegister(mapId, {
+        activate: () => activateTab(),
+        close: () => closeTab(),
+        updateTitle: (title) => this.tab.updateTitle(title),
+        focusNode: (uid2) => requestTabNodeFocus(state, uid2),
+        // During SiYuan workspace restoration a valid headElement may exist
+        // before it is connected to the document. Treating that short startup
+        // window as a dead tab lets every restored duplicate replace the
+        // previous registry owner, so none of them is closed. The custom-tab
+        // destroy callback is the authoritative lifecycle signal.
+        isAlive: () => !state.destroyed
+      });
+      state.unregister = registration.unregister;
+      if (!registration.accepted) {
+        return;
+      }
       void mountAfterReady(
         state,
         host.whenReady(),
@@ -94722,22 +95382,6 @@ function registerYeMindTab(plugin, host) {
             return;
           }
           this.tab.updateTitle(map2.title);
-          const activateTab = (attempt = 0) => {
-            if (state.destroyed || !container.isConnected) return;
-            const head = this.tab.headElement;
-            if (head == null ? void 0 : head.isConnected) {
-              head.click();
-              return;
-            }
-            if (attempt < 20) window.requestAnimationFrame(() => activateTab(attempt + 1));
-          };
-          state.unregister = host.tabRegistry.register(resolvedMapId, {
-            activate: () => activateTab(),
-            close: () => this.tab.close(),
-            updateTitle: (title) => this.tab.updateTitle(title),
-            focusNode: (uid2) => requestTabNodeFocus(state, uid2),
-            isAlive: () => !state.destroyed && container.isConnected && (this.tab.headElement ? this.tab.headElement.isConnected : true)
-          });
           host.diagnostics.record("tab", "waiting-for-visible-container", resolvedMapId, void 0, "info", true);
           const visible2 = await waitForNonZeroSize(container, { isCancelled: () => state.destroyed });
           if (!visible2 || state.destroyed) {
@@ -94754,7 +95398,7 @@ function registerYeMindTab(plugin, host) {
             checkpointService: host.checkpointService,
             diagnostics: host.diagnostics,
             pluginBaseUrl: `/plugins/${encodeURIComponent(plugin.name)}`,
-            onMissing: () => this.tab.close(),
+            onMissing: () => closeTab(),
             onTitleChange: (title) => this.tab.updateTitle(title),
             onImport: async (imported) => {
               const created = await host.repository.create(imported.title, imported.layout);
@@ -94810,11 +95454,24 @@ function registerYeMindTab(plugin, host) {
 class OpenMapTabRegistry {
   constructor() {
     __publicField(this, "handles", /* @__PURE__ */ new Map());
+    __publicField(this, "registrationWaiters", /* @__PURE__ */ new Map());
   }
   register(mapId, handle) {
+    return this.tryRegister(mapId, handle).unregister;
+  }
+  tryRegister(mapId, handle) {
+    const existing = this.getLiveHandle(mapId);
+    if (existing && existing !== handle) {
+      queueMicrotask(() => handle.close());
+      return { accepted: false, unregister: () => void 0 };
+    }
     this.handles.set(mapId, handle);
-    return () => {
-      if (this.handles.get(mapId) === handle) this.handles.delete(mapId);
+    this.resolveWaiters(mapId, true);
+    return {
+      accepted: true,
+      unregister: () => {
+        if (this.handles.get(mapId) === handle) this.handles.delete(mapId);
+      }
     };
   }
   activate(mapId) {
@@ -94840,6 +95497,29 @@ class OpenMapTabRegistry {
   updateTitle(mapId, title) {
     var _a;
     (_a = this.getLiveHandle(mapId)) == null ? void 0 : _a.updateTitle(title);
+  }
+  async waitForRegistration(mapId, timeoutMs = 120) {
+    if (this.getLiveHandle(mapId)) return true;
+    return new Promise((resolve) => {
+      const waiters = this.registrationWaiters.get(mapId) ?? /* @__PURE__ */ new Set();
+      let settled = false;
+      const finish = (registered2) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        waiters.delete(finish);
+        if (waiters.size === 0) this.registrationWaiters.delete(mapId);
+        resolve(registered2);
+      };
+      waiters.add(finish);
+      this.registrationWaiters.set(mapId, waiters);
+      const timer = window.setTimeout(() => finish(Boolean(this.getLiveHandle(mapId))), timeoutMs);
+    });
+  }
+  resolveWaiters(mapId, registered2) {
+    const waiters = this.registrationWaiters.get(mapId);
+    if (!waiters) return;
+    [...waiters].forEach((resolve) => resolve(registered2));
   }
   getLiveHandle(mapId) {
     const handle = this.handles.get(mapId);
@@ -95657,7 +96337,9 @@ class YeMindPlugin extends siyuan.Plugin {
     __publicField(this, "tabRegistry", new OpenMapTabRegistry());
     __publicField(this, "ready", Promise.resolve());
     __publicField(this, "pendingNodeTargets", /* @__PURE__ */ new Map());
+    __publicField(this, "pendingMapOpens", /* @__PURE__ */ new Map());
     __publicField(this, "globalSearchTimer", null);
+    __publicField(this, "restoredTabSweepTimers", []);
     __publicField(this, "onGlobalSearchInput", (event) => {
       var _a;
       const searchElement = (_a = event.detail) == null ? void 0 : _a.searchElement;
@@ -95778,12 +96460,32 @@ class YeMindPlugin extends siyuan.Plugin {
   }
   onLayoutReady() {
     this.registerTopBar();
+    this.restoredTabSweepTimers = [0, 250, 1e3].map((delay) => window.setTimeout(() => {
+      var _a, _b;
+      const restored = collectRestoredMapTabsFromLayout(
+        (_b = (_a = window.siyuan) == null ? void 0 : _a.layout) == null ? void 0 : _b.centerLayout,
+        `${this.name}${TAB_TYPE}`
+      );
+      const closed = deduplicateRestoredMapTabs({ layout: restored });
+      if (closed > 0) {
+        this.diagnostics.record(
+          "tab",
+          "duplicate-restored-tabs-closed",
+          void 0,
+          { closed },
+          "info",
+          true
+        );
+      }
+    }, delay));
   }
   onunload() {
     var _a, _b, _c2;
     this.eventBus.off("open-siyuan-url-plugin", this.onOpenPluginUrl);
     this.eventBus.off("input-search", this.onGlobalSearchInput);
     if (this.globalSearchTimer !== null) window.clearTimeout(this.globalSearchTimer);
+    this.restoredTabSweepTimers.forEach((timer) => window.clearTimeout(timer));
+    this.restoredTabSweepTimers = [];
     destroyGlobalSearchIntegrations();
     (_a = this.diagnostics) == null ? void 0 : _a.record("plugin", "unload", void 0, void 0, "info", true);
     (_b = this.diagnostics) == null ? void 0 : _b.detachGlobalListeners();
@@ -95793,7 +96495,13 @@ class YeMindPlugin extends siyuan.Plugin {
     return this.ready;
   }
   async openMap(mapId, options = {}) {
-    await runSafeOperation(async () => {
+    const pending = this.pendingMapOpens.get(mapId);
+    if (pending) {
+      await pending;
+      this.tabRegistry.activate(mapId);
+      return;
+    }
+    const request = runSafeOperation(async () => {
       await this.ready;
       this.diagnostics.record("operation", "open-map-requested", mapId);
       const map2 = this.repository.get(mapId);
@@ -95805,6 +96513,11 @@ class YeMindPlugin extends siyuan.Plugin {
       if (this.tabRegistry.activate(mapId)) {
         this.diagnostics.record("global-search", "map-tab-found-existing", mapId, { activated: true });
         this.diagnostics.updateGlobalSearchState({ lastNavigationStep: "map-tab-found-existing" });
+        return;
+      }
+      if (await this.tabRegistry.waitForRegistration(mapId) && this.tabRegistry.activate(mapId)) {
+        this.diagnostics.record("global-search", "map-tab-found-restoring", mapId, { activated: true });
+        this.diagnostics.updateGlobalSearchState({ lastNavigationStep: "map-tab-found-restoring" });
         return;
       }
       this.diagnostics.record("global-search", "map-tab-create-request", mapId, { position: options.position ?? "current" });
@@ -95827,6 +96540,13 @@ class YeMindPlugin extends siyuan.Plugin {
       this.diagnostics.updateGlobalSearchState({ lastNavigationStep: "map-tab-open-failed", lastNavigationSuccess: false, lastFailure: error2 instanceof Error ? error2.message : String(error2) });
       this.reportOperationFailure("打开导图", error2);
     });
+    const tracked = request.then(() => void 0);
+    this.pendingMapOpens.set(mapId, tracked);
+    try {
+      await tracked;
+    } finally {
+      if (this.pendingMapOpens.get(mapId) === tracked) this.pendingMapOpens.delete(mapId);
+    }
   }
   async openMapAtNode(mapId, nodeUid2, options = {}) {
     if (!mapId) return;

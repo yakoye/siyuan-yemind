@@ -6,13 +6,34 @@ export interface OpenMapTabHandle {
   isAlive?(): boolean;
 }
 
+export interface OpenMapTabRegistration {
+  accepted: boolean;
+  unregister(): void;
+}
+
 export class OpenMapTabRegistry {
   private readonly handles = new Map<string, OpenMapTabHandle>();
+  private readonly registrationWaiters = new Map<string, Set<(registered: boolean) => void>>();
 
   register(mapId: string, handle: OpenMapTabHandle): () => void {
+    return this.tryRegister(mapId, handle).unregister;
+  }
+
+  tryRegister(mapId: string, handle: OpenMapTabHandle): OpenMapTabRegistration {
+    const existing = this.getLiveHandle(mapId);
+    if (existing && existing !== handle) {
+      // SiYuan can restore the same custom tab more than once from an older
+      // workspace snapshot. Keep the first live owner and close the duplicate.
+      queueMicrotask(() => handle.close());
+      return { accepted: false, unregister: () => undefined };
+    }
     this.handles.set(mapId, handle);
-    return () => {
-      if (this.handles.get(mapId) === handle) this.handles.delete(mapId);
+    this.resolveWaiters(mapId, true);
+    return {
+      accepted: true,
+      unregister: () => {
+        if (this.handles.get(mapId) === handle) this.handles.delete(mapId);
+      },
     };
   }
 
@@ -41,6 +62,31 @@ export class OpenMapTabRegistry {
 
   updateTitle(mapId: string, title: string): void {
     this.getLiveHandle(mapId)?.updateTitle(title);
+  }
+
+  async waitForRegistration(mapId: string, timeoutMs = 120): Promise<boolean> {
+    if (this.getLiveHandle(mapId)) return true;
+    return new Promise<boolean>((resolve) => {
+      const waiters = this.registrationWaiters.get(mapId) ?? new Set();
+      let settled = false;
+      const finish = (registered: boolean): void => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        waiters.delete(finish);
+        if (waiters.size === 0) this.registrationWaiters.delete(mapId);
+        resolve(registered);
+      };
+      waiters.add(finish);
+      this.registrationWaiters.set(mapId, waiters);
+      const timer = window.setTimeout(() => finish(Boolean(this.getLiveHandle(mapId))), timeoutMs);
+    });
+  }
+
+  private resolveWaiters(mapId: string, registered: boolean): void {
+    const waiters = this.registrationWaiters.get(mapId);
+    if (!waiters) return;
+    [...waiters].forEach((resolve) => resolve(registered));
   }
 
   private getLiveHandle(mapId: string): OpenMapTabHandle | null {

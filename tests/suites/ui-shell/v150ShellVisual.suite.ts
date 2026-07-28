@@ -35,7 +35,7 @@ describe('v1.5.0 version47 shell visual contract', () => {
   it('uses quiet edge rails instead of a centered minus pill after unified hiding', () => {
     expect(css).toMatch(/\.ymz-toolbar-edge\{[^}]*border:0[^}]*background:transparent/s);
     expect(css).toMatch(/\.ymz-toolbar-edge--top\{[^}]*left:0[^}]*right:0[^}]*width:auto/s);
-    expect(css).toMatch(/\.ymz-toolbar-edge--top span\{[^}]*height:3px[^}]*background:var\(--ymz-accent\)/s);
+    expect(css).toMatch(/\.ymz-toolbar-edge--top span\{[^}]*height:2px[^}]*background:var\(--ymz-edge-hint\)/s);
     expect(css).not.toMatch(/\.ymz-toolbar-edge\{[^}]*border-radius:999px/s);
   });
 
