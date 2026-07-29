@@ -52,6 +52,10 @@ describe('v0.9.31 theme palette dropdown presentation', () => {
     expect(css).not.toMatch(/data-appearance="dark"[^\n]*ymz-project-choice-panel__palette-block[^\n]*(filter|background)/);
   });
 
+  it('keeps the sticky category bar opaque and above scrolling theme cards', () => {
+    expect(css).toMatch(/\.ymz-project-choice-panel__tabs\{[^}]*z-index:4[^}]*background:var\(--ymz-panel,var\(--b3-theme-background\)\)[^}]*isolation:isolate/s);
+  });
+
   it('applies a theme immediately when its palette card is clicked', () => {
     const host = document.createElement('div');
     host.innerHTML = `
@@ -152,9 +156,9 @@ describe('v0.9.31 theme palette dropdown presentation', () => {
     panel.destroy();
   });
 
-  it('converges theme typography in a second editor transaction after the first render completes', () => {
-    expect(editorSource).toContain('this.applyMapAppearance(true, true);');
-    expect(editorSource).toContain('if (convergeThemeGeometry)');
-    expect(editorSource).toContain('this.applyMapAppearance(true, false);');
+  it('applies each theme with one complete redraw instead of stacking a second render tree', () => {
+    expect(editorSource).toContain('this.applyMapAppearance(true);');
+    expect(editorSource).not.toContain('convergeThemeGeometry');
+    expect(editorSource).not.toContain('this.applyMapAppearance(true, false);');
   });
 });

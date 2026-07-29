@@ -7812,6 +7812,9 @@ function clipartIcon() {
 function markerIcon() {
   return suppliedIcon("marker");
 }
+function symbolIcon$1() {
+  return iconSlot('<svg class="ymz-menu-icon ymz-icon-symbol" viewBox="0 0 20 20" aria-hidden="true"><text x="10" y="14.25" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="15" font-weight="700" fill="currentColor">Ω</text></svg>', "ymz-icon-slot--menu");
+}
 function outerFrameIcon() {
   return suppliedIcon("outerFrame");
 }
@@ -84269,7 +84272,6 @@ function openCanvasContextMenu(event, commands, options) {
   menu.addItem({ icon: "iconLock", label: options.readonly ? "退出只读模式" : "进入只读模式", click: run("toggle-readonly", () => options.onReadonlyChange(!options.readonly)) });
   menu.open({ x: event.clientX, y: event.clientY });
 }
-const symbolIcon$1 = () => '<span class="ymz-symbol-menu-icon" aria-hidden="true">Ω</span>';
 function paste(commands, plain2 = false) {
   const operation = plain2 ? commands.pastePlainText() : commands.paste();
   void operation.catch((error2) => {
@@ -84336,6 +84338,15 @@ function openNodeContextMenu(event, commands, options = {}) {
     icon: "iconAdd",
     label: "添加",
     submenu: [
+      {
+        iconHTML: primaryViewIcon("cards"),
+        label: options.hasCard ? "编辑卡片" : "添加到卡片",
+        disabled: commands.isReadonly(),
+        click: run(options.hasCard ? "card-edit" : "card-create", () => {
+          var _a, _b;
+          return options.hasCard ? (_a = options.onEditCard) == null ? void 0 : _a.call(options) : (_b = options.onCreateCard) == null ? void 0 : _b.call(options);
+        })
+      },
       { icon: "iconCheck", label: todoAction.label, warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? "todo-remove" : "todo-add", () => commands.setTodo(todoAction.next)) },
       { iconHTML: outerFrameIcon(), label: hasOuterFrame ? "删除外框" : "外框", disabled: hasOuterFrame ? commands.isReadonly() : !availability.outerFrame, click: run(hasOuterFrame ? "outer-frame-remove" : "outer-frame-add", () => hasOuterFrame ? commands.removeOuterFrameForSelection() : commands.addOuterFrame()) },
       { icon: "iconYeMindNote", label: "备注", disabled: !availability.nodeContent, click: run("note", () => openNoteDialog(commands)) },
@@ -84363,16 +84374,7 @@ function openNodeContextMenu(event, commands, options = {}) {
       { icon: "iconLink", label: "行内链接", disabled: !availability.inlineLink, click: run("inline-link", () => {
         var _a;
         return (_a = options.onInlineLink) == null ? void 0 : _a.call(options);
-      }) },
-      {
-        iconHTML: primaryViewIcon("cards"),
-        label: options.hasCard ? "编辑当前节点卡片" : "添加当前节点到卡片",
-        disabled: commands.isReadonly(),
-        click: run(options.hasCard ? "card-edit" : "card-create", () => {
-          var _a, _b;
-          return options.hasCard ? (_a = options.onEditCard) == null ? void 0 : _a.call(options) : (_b = options.onCreateCard) == null ? void 0 : _b.call(options);
-        })
-      }
+      }) }
     ]
   });
   menu.addItem({ iconHTML: relationIcon(), label: "关联线", accelerator: "Ctrl+Alt+L", disabled: !availability.relation, click: run("relation", () => options.onRelation ? options.onRelation() : commands.startRelation()) });
@@ -94727,7 +94729,7 @@ class YeMindEditor {
     const select = this.rootEl.querySelector('[data-action="theme"]');
     if (select) select.value = this.current.theme;
     (_b = this.themeChoicePanel) == null ? void 0 : _b.setSelected(this.current.theme);
-    this.applyMapAppearance(true, true);
+    this.applyMapAppearance(true);
     this.options.diagnostics.record("appearance", "theme-changed", this.current.id, { theme: this.current.theme });
     (_c2 = this.nodeQuickActions) == null ? void 0 : _c2.scheduleRefresh();
     this.scheduleSave();
@@ -95244,7 +95246,7 @@ class YeMindEditor {
       this.toggleZen(settings.defaultZenMode);
     }
   }
-  applyMapAppearance(render3 = true, convergeThemeGeometry = false) {
+  applyMapAppearance(render3 = true) {
     var _a;
     if (!this.map) return;
     this.current.theme = normalizeThemePresetId(this.current.theme);
@@ -95288,13 +95290,6 @@ class YeMindEditor {
         (_f = (_e = (_d2 = this.map) == null ? void 0 : _d2.outerFrame) == null ? void 0 : _e.renderOuterFrames) == null ? void 0 : _f.call(_e);
         (_g = this.nodeQuickActions) == null ? void 0 : _g.scheduleRefresh();
         this.updateSelectionPresentation();
-        if (convergeThemeGeometry) {
-          const theme2 = this.current.theme;
-          window.requestAnimationFrame(() => {
-            if (this.destroyed || this.current.theme !== theme2) return;
-            this.applyMapAppearance(true, false);
-          });
-        }
       }
     });
     if (!canRender) this.applyingAppearance = false;

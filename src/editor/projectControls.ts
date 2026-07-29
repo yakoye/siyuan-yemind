@@ -179,6 +179,10 @@ export function markerIcon(): string {
   return suppliedIcon('marker');
 }
 
+export function symbolIcon(): string {
+  return iconSlot('<svg class="ymz-menu-icon ymz-icon-symbol" viewBox="0 0 20 20" aria-hidden="true"><text x="10" y="14.25" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="15" font-weight="700" fill="currentColor">Ω</text></svg>', 'ymz-icon-slot--menu');
+}
+
 export function outerFrameIcon(): string {
   return suppliedIcon('outerFrame');
 }

@@ -1884,7 +1884,7 @@ export class YeMindEditor {
     const select = this.rootEl.querySelector<HTMLSelectElement>('[data-action="theme"]');
     if (select) select.value = this.current.theme;
     this.themeChoicePanel?.setSelected(this.current.theme);
-    this.applyMapAppearance(true, true);
+    this.applyMapAppearance(true);
     this.options.diagnostics.record("appearance", "theme-changed", this.current.id, { theme: this.current.theme });
     this.nodeQuickActions?.scheduleRefresh();
     this.scheduleSave();
@@ -2417,7 +2417,7 @@ export class YeMindEditor {
     }
   }
 
-  private applyMapAppearance(render = true, convergeThemeGeometry = false): void {
+  private applyMapAppearance(render = true): void {
     if (!this.map) return;
     this.current.theme = normalizeThemePresetId(this.current.theme);
     this.current.lineStyle = normalizeLineStyle(this.current.lineStyle);
@@ -2459,13 +2459,6 @@ export class YeMindEditor {
         (this.map as any)?.outerFrame?.renderOuterFrames?.();
         this.nodeQuickActions?.scheduleRefresh();
         this.updateSelectionPresentation();
-        if (convergeThemeGeometry) {
-          const theme = this.current.theme;
-          window.requestAnimationFrame(() => {
-            if (this.destroyed || this.current.theme !== theme) return;
-            this.applyMapAppearance(true, false);
-          });
-        }
       },
     });
     if (!canRender) this.applyingAppearance = false;

@@ -6,6 +6,7 @@ import { SYMBOL_SECTIONS } from '../../../src/content/symbolCatalog';
 
 const contextMenu = readFileSync(resolve(process.cwd(), 'src/ui/contextMenu.ts'), 'utf8');
 const editor = readFileSync(resolve(process.cwd(), 'src/editor/YeMindEditor.ts'), 'utf8');
+const projectControls = readFileSync(resolve(process.cwd(), 'src/editor/projectControls.ts'), 'utf8');
 
 describe('v0.9.30 context menu contracts', () => {
   it('places text-to-map immediately before the single-node 添加 submenu', () => {
@@ -26,10 +27,12 @@ describe('v0.9.30 context menu contracts', () => {
   });
 
   it('keeps the card action inside 添加 without a duplicated plus prefix', () => {
-    expect(contextMenu).toContain("label: options.hasCard ? '编辑当前节点卡片' : '添加当前节点到卡片'");
+    expect(contextMenu).toContain("label: options.hasCard ? '编辑卡片' : '添加到卡片'");
     expect(contextMenu).toContain("iconHTML: primaryViewIcon('cards')");
     expect(contextMenu).not.toContain("type: 'submenu', icon: 'iconGrid', label: '卡片'");
     expect(contextMenu).not.toContain("label: '＋ 当前节点'");
+    expect(contextMenu.indexOf("label: options.hasCard ? '编辑卡片' : '添加到卡片'"))
+      .toBeLessThan(contextMenu.indexOf('label: todoAction.label'));
   });
 
   it('places the Ω symbol action immediately above 图标 in both add submenus', () => {
@@ -39,7 +42,9 @@ describe('v0.9.30 context menu contracts', () => {
       const tail = contextMenu.slice(match.index, match.index! + 320);
       expect(tail.indexOf("label: '图标'")).toBeGreaterThan(0);
     });
-    expect(contextMenu).toContain("aria-hidden=\"true\">Ω</span>");
+    expect(contextMenu).toContain('iconHTML: symbolIcon()');
+    expect(projectControls).toContain('ymz-icon-slot--menu');
+    expect(projectControls).toContain('class="ymz-menu-icon ymz-icon-symbol"');
     expect(SYMBOL_SECTIONS.map((section) => section.label)).toEqual([
       '箭头', '形状', '数字', '括号', '汉字结构', '数学',
     ]);

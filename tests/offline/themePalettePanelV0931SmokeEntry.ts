@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { YEMIND_THEME_PRESETS } from '../../src/core/themePresets';
 import { themePaletteColors } from '../../src/editor/themeChoicePresentation';
+import { buildThemeChoiceOptions, THEME_CHOICE_GROUPS } from '../../src/editor/themeChoiceGroups';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -9,6 +10,8 @@ function assert(condition: unknown, message: string): asserts condition {
 const panelSource = readFileSync('src/ui/projectChoicePanel.ts', 'utf8');
 const editorSource = readFileSync('src/editor/YeMindEditor.ts', 'utf8');
 const css = readFileSync('src/styles/index.css', 'utf8');
+const favoriteId = YEMIND_THEME_PRESETS[0]?.id ?? '';
+const choiceOptions = buildThemeChoiceOptions([favoriteId]);
 
 for (const preset of YEMIND_THEME_PRESETS) {
   const snapshot = JSON.stringify(preset);
@@ -25,7 +28,11 @@ for (const preset of YEMIND_THEME_PRESETS) {
 }
 
 assert(editorSource.includes("presentation: 'palette'"), 'Theme panel is not opted into palette presentation');
-assert(editorSource.includes('previewColors: themePaletteColors(preset)'), 'Theme preview colors are not wired from current presets');
+assert(editorSource.includes('buildThemeChoiceOptions'), 'Theme panel is not wired to the shared dynamic theme choices');
+assert(JSON.stringify(THEME_CHOICE_GROUPS) === JSON.stringify(['常用', '缤纷', '经典']), 'Theme group order mismatch');
+assert(choiceOptions.some((option) => option.group === '常用' && option.value === favoriteId), 'Favorite theme is not projected into 常用');
+assert(choiceOptions.filter((option) => option.group === '经典').length === 15, 'Former base themes are not merged before classic themes');
+assert(choiceOptions.every((option) => (option.previewColors?.length ?? 0) >= 1), 'Theme preview colors are not wired from current presets');
 assert(panelSource.includes('ymz-project-choice-panel__tabs'), 'Theme group tabs are missing');
 assert(panelSource.includes('ymz-project-choice-panel__palette-grid'), 'Theme palette grid is missing');
 assert(panelSource.includes('ymz-project-choice-panel__palette-block'), 'Theme palette blocks are missing');

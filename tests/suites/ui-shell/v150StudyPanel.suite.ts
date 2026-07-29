@@ -274,7 +274,7 @@ describe('v1.5.0 cards and review shell', () => {
   it('wires create and edit card actions into the node right-click menu', () => {
     const menuSource = readFileSync('src/ui/contextMenu.ts', 'utf8');
     const editorSource = readFileSync('src/editor/YeMindEditor.ts', 'utf8');
-    expect(menuSource).toContain("label: options.hasCard ? '编辑当前节点卡片' : '添加当前节点到卡片'");
+    expect(menuSource).toContain("label: options.hasCard ? '编辑卡片' : '添加到卡片'");
     expect(menuSource).toContain("iconHTML: primaryViewIcon('cards')");
     expect(menuSource).not.toContain("label: '＋ 当前节点'");
     expect(editorSource).toContain('onCreateCard:');

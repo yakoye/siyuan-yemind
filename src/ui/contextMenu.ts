@@ -1,7 +1,7 @@
 import { Menu, showMessage } from 'siyuan';
 import { YEMIND_LAYOUT_PRESETS } from '../core/layoutPresets';
 import { detectAppearance, YEMIND_THEME_PRESETS, type YeMindLineStyle } from '../core/themePresets';
-import { clipartIcon, clipboardIcon, lineStyleIcon, markerIcon, nodeInsertIcon, nodeStyleIcon, outerFrameIcon, primaryViewIcon, projectControlIcon, projectStyleIcon, relationIcon, summaryIcon } from '../editor/projectControls';
+import { clipartIcon, clipboardIcon, lineStyleIcon, markerIcon, nodeInsertIcon, nodeStyleIcon, outerFrameIcon, primaryViewIcon, projectControlIcon, projectStyleIcon, relationIcon, summaryIcon, symbolIcon } from '../editor/projectControls';
 import type { YeMindCommands } from '../core/commands';
 import {
   openCommentsDialog,
@@ -91,8 +91,6 @@ export interface NodeContextMenuOptions {
   onAction?: (action: string) => void;
 }
 
-const symbolIcon = (): string => '<span class="ymz-symbol-menu-icon" aria-hidden="true">Ω</span>';
-
 function paste(commands: YeMindCommands, plain = false): void {
   const operation = plain ? commands.pastePlainText() : commands.paste();
   void operation.catch((error) => {
@@ -150,6 +148,14 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   menu.addItem({
     type: 'submenu', icon: 'iconAdd', label: '添加',
     submenu: [
+      {
+        iconHTML: primaryViewIcon('cards'),
+        label: options.hasCard ? '编辑卡片' : '添加到卡片',
+        disabled: commands.isReadonly(),
+        click: run(options.hasCard ? 'card-edit' : 'card-create', () => (
+          options.hasCard ? options.onEditCard?.() : options.onCreateCard?.()
+        )),
+      },
       { icon: 'iconCheck', label: todoAction.label, warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? 'todo-remove' : 'todo-add', () => commands.setTodo(todoAction.next)) },
       { iconHTML: outerFrameIcon(), label: hasOuterFrame ? '删除外框' : '外框', disabled: hasOuterFrame ? commands.isReadonly() : !availability.outerFrame, click: run(hasOuterFrame ? 'outer-frame-remove' : 'outer-frame-add', () => hasOuterFrame ? commands.removeOuterFrameForSelection() : commands.addOuterFrame()) },
       { icon: 'iconYeMindNote', label: '备注', disabled: !availability.nodeContent, click: run('note', () => openNoteDialog(commands)) },
@@ -163,14 +169,6 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
       { icon: 'iconCode', label: '代码块', disabled: !availability.codeBlock, click: run('code-block', () => options.onCodeBlock?.()) },
       { icon: 'iconMath', label: '公式', disabled: !availability.nodeContent, click: run('formula', () => openFormulaDialog(commands)) },
       { icon: 'iconLink', label: '行内链接', disabled: !availability.inlineLink, click: run('inline-link', () => options.onInlineLink?.()) },
-      {
-        iconHTML: primaryViewIcon('cards'),
-        label: options.hasCard ? '编辑当前节点卡片' : '添加当前节点到卡片',
-        disabled: commands.isReadonly(),
-        click: run(options.hasCard ? 'card-edit' : 'card-create', () => (
-          options.hasCard ? options.onEditCard?.() : options.onCreateCard?.()
-        )),
-      },
     ],
   });
   menu.addItem({ iconHTML: relationIcon(), label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
