@@ -1,5 +1,6 @@
 import { renderedNodeUid } from './richTextGeometry';
 import { plainTextFromSearchValue } from './searchEngine';
+import { hasActiveNodeWidthDrag } from './liveNodeWidthLayout';
 
 export interface RenderTextEditPayload {
   node: any;
@@ -76,7 +77,10 @@ export class RenderLifecycleCoordinator {
    * geometry invariant rather than by a specific theme or node label.
    */
   reconcileRenderedTextGeometry(): boolean {
-    if (this.geometryRepairInFlight) return false;
+    if (
+      this.geometryRepairInFlight
+      || hasActiveNodeWidthDrag(this.mindMap?.renderer?.root)
+    ) return false;
     const overflowing: Array<{
       node: any;
       foreignRect: { width: number; height: number };
@@ -178,6 +182,19 @@ export class RenderLifecycleCoordinator {
         node.height = rect.height;
       }
       node.layout?.();
+      // Keep the active Quill editor and its SVG node in one live geometry
+      // transaction. Replacing the whole tree here makes the editor alternate
+      // between the old and new SVG instances for one or more frames.
+      if (this.mindMap?.richText?.showTextEdit === true) {
+        node.update?.();
+        // The incoming connector is owned by the parent, while renderLine on
+        // the edited node only redraws its outgoing subtree.
+        node.parent?.renderLine?.();
+        node.renderLine?.(true);
+        this.mindMap.richText?.updateTextEditNode?.();
+        if (revision === this.revision) this.onCommitted(uid);
+        return;
+      }
       this.mindMap.render?.(() => {
         if (revision !== this.revision) return;
         this.mindMap.richText?.updateTextEditNode?.();

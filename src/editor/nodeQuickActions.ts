@@ -266,7 +266,10 @@ export class NodeQuickActionsController {
         button.dataset.nodeQuickAction = descriptor.action;
         button.title = descriptor.label;
         button.setAttribute('aria-label', descriptor.label);
-        button.textContent = descriptor.text;
+        const visual = document.createElement('span');
+        visual.className = 'ymz-node-quick-action__visual';
+        visual.textContent = descriptor.text;
+        button.appendChild(visual);
         container.appendChild(button);
       });
       this.layer.appendChild(container);

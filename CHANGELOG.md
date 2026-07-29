@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.3 - 2026-07-30
+
+- Kept active canvas editing on one local render transaction so double-click, typing and paste no longer replace the complete SVG tree or flicker between stale and live text placement.
+- Made node borders, connector lines and the Quill editor follow inserted and pasted text immediately, while width-handle drags retain one monotonic draft geometry until commit.
+- Replaced the upstream parent-only drag ghost with a coherent preview of the visible parent subtree and its internal connectors.
+- Enlarged the pointer hit areas for expand, collapse and child-count actions without changing their compact visual circles.
+- Aligned multiline outline triangles and leaf squares to the first text line, and made one Delete or Backspace remove a selected multiline canvas range.
+- Added deterministic unit and real-browser regressions for edit placement, live paste bounds, width resizing, subtree dragging, quick-action hit boxes, first-line outline markers and multiline deletion.
+
 ## 1.5.2 - 2026-07-29
 
 - Stabilized live canvas editing so typing, pasting, clearing and width dragging update the editor, SVG node border and layout in one transaction without duplicate layers, jumps or stale geometry.

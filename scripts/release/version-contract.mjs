@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-export const VERSION_MARKER_COUNT = 8;
+export const VERSION_MARKER_COUNT = 10;
 const SEMVER = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 
 const readText = async (root, relative) =>
@@ -16,6 +16,8 @@ export async function readVersionContract(root = process.cwd()) {
   const plugin = await readJson(resolvedRoot, 'plugin.json');
   const constants = await readText(resolvedRoot, 'src/plugin/constants.ts');
   const releaseInfo = await readText(resolvedRoot, 'src/releaseInfo.ts');
+  const readme = await readText(resolvedRoot, 'README.md');
+  const chineseReadme = await readText(resolvedRoot, 'README_zh_CN.md');
   const expected = String(packageJson.version ?? '');
   return {
     expected,
@@ -30,6 +32,10 @@ export async function readVersionContract(root = process.cwd()) {
         constants.match(/PLUGIN_VERSION\s*=\s*['"]([^'"]+)/)?.[1],
       'src/releaseInfo.ts buildId':
         releaseInfo.match(/buildId:\s*['"]yemind-v([^-]+)/)?.[1],
+      'README.md':
+        readme.match(/Current version:\s*`([^`]+)`/)?.[1],
+      'README_zh_CN.md':
+        chineseReadme.match(/当前版本：`([^`]+)`/)?.[1],
     },
   };
 }
@@ -63,8 +69,12 @@ export async function writeVersionContract(root, version) {
   const plugin = await readJson(resolvedRoot, 'plugin.json');
   const constantsPath = path.join(resolvedRoot, 'src/plugin/constants.ts');
   const releaseInfoPath = path.join(resolvedRoot, 'src/releaseInfo.ts');
+  const readmePath = path.join(resolvedRoot, 'README.md');
+  const chineseReadmePath = path.join(resolvedRoot, 'README_zh_CN.md');
   const constants = await readFile(constantsPath, 'utf8');
   const releaseInfo = await readFile(releaseInfoPath, 'utf8');
+  const readme = await readFile(readmePath, 'utf8');
+  const chineseReadme = await readFile(chineseReadmePath, 'utf8');
   const date = new Date().toISOString();
   const stamp = date.slice(0, 10).replaceAll('-', '');
 
@@ -79,6 +89,14 @@ export async function writeVersionContract(root, version) {
     writeFile(path.join(resolvedRoot, 'plugin.json'), `${JSON.stringify(plugin, null, 2)}\n`),
     writeFile(path.join(resolvedRoot, 'VERSION'), `${version}\n`),
     writeFile(path.join(resolvedRoot, 'web/VERSION'), `${version}\n`),
+    writeFile(
+      readmePath,
+      readme.replace(/Current version:\s*`[^`]+`/, `Current version: \`${version}\``),
+    ),
+    writeFile(
+      chineseReadmePath,
+      chineseReadme.replace(/当前版本：`[^`]+`/, `当前版本：\`${version}\``),
+    ),
     writeFile(
       constantsPath,
       constants.replace(

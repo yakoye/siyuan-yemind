@@ -68,12 +68,13 @@ describe('YeMind plugin identity and install layout', () => {
   it('uses siyuan-yemind for the current manifest, package and installed directory', () => {
     const manifest = JSON.parse(readFileSync(resolve('plugin.json'), 'utf8'));
     const packageJson = JSON.parse(readFileSync(resolve('package.json'), 'utf8'));
+    const currentVersion = readFileSync(resolve('VERSION'), 'utf8').trim();
     expect(manifest.name).toBe('siyuan-yemind');
     expect(manifest.displayName.default).toBe('YeMind');
     expect(manifest.displayName.zh_CN).toBe('YeMind');
     expect(packageJson.name).toBe('siyuan-yemind');
-    expect(manifest.version).toBe('1.5.2');
-    expect(packageJson.version).toBe('1.5.2');
+    expect(manifest.version).toBe(currentVersion);
+    expect(packageJson.version).toBe(currentVersion);
   });
 
   it('uses the renamed YeMindPlugin source entry and removes the old current source filename', () => {

@@ -28,7 +28,8 @@ describe('standalone web fixed assets', () => {
 
   it('keeps the app icon and version marker in the web asset copy contract', () => {
     expect(existsSync(path.join(root, 'icon.png'))).toBe(true);
-    expect(readFileSync(path.join(root, 'web/VERSION'), 'utf8').trim()).toBe('1.5.2');
+    expect(readFileSync(path.join(root, 'web/VERSION'), 'utf8').trim())
+      .toBe(readFileSync(path.join(root, 'VERSION'), 'utf8').trim());
     const copyScript = readFileSync(path.join(root, 'scripts/copy-web-assets.mjs'), 'utf8');
     const viteConfig = readFileSync(path.join(root, 'vite.web.config.ts'), 'utf8');
     const webHtml = readFileSync(path.join(root, 'web/index.html'), 'utf8');

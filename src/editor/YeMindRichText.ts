@@ -77,6 +77,10 @@ export interface CanvasTextPayload {
   richText: boolean;
 }
 
+export function shouldStabilizeOpeningPlacement(isInserting: unknown): boolean {
+  return isInserting === true;
+}
+
 /**
  * Quill always serializes even plain text as HTML (`<p>text</p>`). Persisting
  * that wrapper as rich text changes simple-mind-map's measurement engine after
@@ -215,6 +219,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
 
   showEditText(params: any): void {
     if (this.showTextEdit) return;
+    const stabilizeOpening = shouldStabilizeOpeningPlacement(params?.isInserting);
     const sourceNode = params?.node ?? null;
     const uid = renderedNodeUid(sourceNode);
     const liveNode = resolveLiveRenderedNode(this.mindMap, sourceNode, uid);
@@ -241,7 +246,13 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.normalizeEditorPlacement(rect);
     this.bindTextEditingKeyboard();
     this.bindPlacementTracking();
-    this.schedulePlacementStabilization();
+    // Existing nodes already have final SVG geometry; scheduling another
+    // opening frame makes their editor jump to a transient rectangle and back.
+    // A newly inserted node is the one exception because its dblclick can occur
+    // inside the SVG render stack before the final group transform is flushed.
+    if (stabilizeOpening) {
+      this.schedulePlacementStabilization();
+    }
     this.emitEditingDiagnostic('opened', {
       liveNodeResolved: Boolean(liveNode && liveNode !== sourceNode),
       rectSource: this.lastRectSource,
@@ -466,7 +477,6 @@ export default class YeMindRichText extends (BaseRichText as any) {
       this.placementResizeObserver = new ResizeObserver(this.handlePlacementInvalidation);
       this.placementResizeObserver.observe(target);
     }
-    this.startPlacementMonitor();
   }
 
   private unbindPlacementTracking(): void {
@@ -484,19 +494,6 @@ export default class YeMindRichText extends (BaseRichText as any) {
     }
   }
 
-  private startPlacementMonitor(): void {
-    if (this.placementMonitorFrame !== null
-      || typeof window === 'undefined'
-      || typeof window.requestAnimationFrame !== 'function') return;
-    const tick = (): void => {
-      this.placementMonitorFrame = null;
-      if (!this.placementTracking || !this.showTextEdit) return;
-      this.updateTextEditNode();
-      this.placementMonitorFrame = window.requestAnimationFrame(tick);
-    };
-    this.placementMonitorFrame = window.requestAnimationFrame(tick);
-  }
-
   private cancelPlacementStabilization(): void {
     if (this.placementFrame === null) return;
     window.cancelAnimationFrame?.(this.placementFrame);
@@ -508,6 +505,29 @@ export default class YeMindRichText extends (BaseRichText as any) {
     if (!root || root.dataset.yemindTextKeyboard === 'true') return;
     root.dataset.yemindTextKeyboard = 'true';
     root.addEventListener('keydown', (event: KeyboardEvent) => {
+      if (
+        (event.key === 'Delete' || event.key === 'Backspace')
+        && !event.ctrlKey
+        && !event.metaKey
+        && !event.altKey
+      ) {
+        const selected = this.quill.getSelection?.() ?? this.range ?? null;
+        if (selected && selected.length > 0) {
+          event.preventDefault();
+          event.stopPropagation();
+          this.quill.deleteText(selected.index, selected.length, Quill.sources.USER);
+          this.quill.setSelection(selected.index, 0, Quill.sources.SILENT);
+          this.range = null;
+          this.pasteUseRange = { index: selected.index, length: 0 };
+          this.mindMap?.emit?.('rich_text_selection_change', false, null, null);
+          this.emitEditingDiagnostic('selection-deleted', {
+            key: event.key,
+            index: selected.index,
+            length: selected.length,
+          });
+          return;
+        }
+      }
       if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== 'a') return;
       event.preventDefault();
       event.stopPropagation();

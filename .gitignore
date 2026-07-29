@@ -12,3 +12,4 @@ test-results/
 playwright-report/
 .playwright-cli/
 .DS_Store
+/build/test-backups/

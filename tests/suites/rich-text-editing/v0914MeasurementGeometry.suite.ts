@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { stabilizeMindMapMeasurementHost } from '../../../src/core/measurementHost';
 import YeMindRichText from '../../../src/editor/YeMindRichText';
+import { shouldStabilizeOpeningPlacement } from '../../../src/editor/YeMindRichText';
 import { editorHorizontalMargin } from '../../../src/editor/richTextGeometry';
 
 describe('v0.9.14 stable node measurement geometry', () => {
@@ -102,6 +103,19 @@ describe('v0.9.14 stable node measurement geometry', () => {
     expect(richText.placementFrame).toBeNull();
   });
 
+  it('keeps one opening-frame correction only for a newly inserted node', () => {
+    expect(shouldStabilizeOpeningPlacement(true)).toBe(true);
+    expect(shouldStabilizeOpeningPlacement(false)).toBe(false);
+    expect(shouldStabilizeOpeningPlacement(undefined)).toBe(false);
+    const source = readFileSync(resolve(process.cwd(), 'src/editor/YeMindRichText.ts'), 'utf8');
+    const capture = source.indexOf('const stabilizeOpening = shouldStabilizeOpeningPlacement(params?.isInserting);');
+    const upstreamShow = source.indexOf('super.showEditText({', capture);
+    const schedule = source.indexOf('if (stabilizeOpening)', upstreamShow);
+    expect(capture).toBeGreaterThanOrEqual(0);
+    expect(capture).toBeLessThan(upstreamShow);
+    expect(schedule).toBeGreaterThan(upstreamShow);
+  });
+
   it('drops a stale placement frame after editing moved to another node', () => {
     let frame: FrameRequestCallback | null = null;
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
@@ -146,6 +160,8 @@ describe('v0.9.14 stable node measurement geometry', () => {
 
     richText.bindPlacementTracking();
     expect([...listeners.keys()]).toEqual(expect.arrayContaining(['resize', 'scale', 'translate']));
+    expect(richText.placementMonitorFrame).toBeNull();
+    expect(window.requestAnimationFrame).not.toHaveBeenCalled();
     listeners.get('resize')?.();
     expect(updateTextEditNode).not.toHaveBeenCalled();
     frame?.(0);
@@ -159,6 +175,35 @@ describe('v0.9.14 stable node measurement geometry', () => {
     const source = readFileSync(resolve(process.cwd(), 'src/editor/YeMindRichText.ts'), 'utf8');
     expect(source).toContain('this.bindPlacementTracking();');
     expect(source.match(/this\.unbindPlacementTracking\(\);/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it.each(['Delete', 'Backspace'])('removes a multiline Quill selection with one %s press', (key) => {
+    const root = document.createElement('div');
+    const deleteText = vi.fn();
+    const setSelection = vi.fn();
+    const richText = Object.create(YeMindRichText.prototype) as any;
+    richText.quill = {
+      root,
+      getSelection: () => ({ index: 0, length: 12 }),
+      deleteText,
+      setSelection,
+    };
+    richText.range = { index: 0, length: 12 };
+    richText.pasteUseRange = richText.range;
+    richText.emitEditingDiagnostic = vi.fn();
+
+    richText.bindTextEditingKeyboard();
+    const event = new KeyboardEvent('keydown', {
+      key,
+      bubbles: true,
+      cancelable: true,
+    });
+    root.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(deleteText).toHaveBeenCalledOnce();
+    expect(deleteText).toHaveBeenCalledWith(0, 12, 'user');
+    expect(setSelection).toHaveBeenCalledWith(0, 0, 'silent');
   });
 
   it('never lets text-editor padding overlap a todo or icon prefix', () => {

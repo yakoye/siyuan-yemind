@@ -119,6 +119,22 @@ describe('v0.9.17 user-reported interaction regressions', () => {
     controller.destroy();
   });
 
+  it('uses a larger pointer hit box while keeping quick-action circles compact', () => {
+    expect(css).toMatch(
+      /\.ymz-node-quick-action\s*\{[^}]*width:28px;[^}]*height:26px;[^}]*border:0/s,
+    );
+    expect(css).toMatch(
+      /\.ymz-node-quick-action__visual\{[^}]*min-width:15px;[^}]*height:15px/s,
+    );
+  });
+
+  it('anchors outline disclosure markers to the first text line', () => {
+    const finalOutlineRowRule = css.lastIndexOf('.ymz-outline-row{');
+    expect(finalOutlineRowRule).toBeGreaterThanOrEqual(0);
+    expect(css.slice(finalOutlineRowRule, css.indexOf('}', finalOutlineRowRule) + 1))
+      .toContain('align-items:flex-start');
+  });
+
   it('opens the primary node text editor and lets the configured editor select all text', () => {
     const node = { uid: 'node-a' };
     const show = vi.fn();

@@ -14,6 +14,8 @@ import { CheckpointRepository } from '../../../src/model/CheckpointRepository';
 import { MapRepository } from '../../../src/model/MapRepository';
 import { SettingsStore } from '../../../src/settings/SettingsStore';
 
+const currentVersion = readFileSync(resolve(process.cwd(), 'VERSION'), 'utf8').trim();
+
 function storage() {
   let value: unknown = null;
   return { load: async () => structuredClone(value), save: async (next: unknown) => { value = structuredClone(next); } };
@@ -47,15 +49,20 @@ describe('v0.7.x about and diagnostics release contract', () => {
   });
 
   it('uses the current semantic version consistently', () => {
-    expect(RELEASE_INFO.version).toBe('1.5.2');
-    expect(resolveVersionConsistency('1.5.2')).toEqual({ manifest: '1.5.2', runtime: '1.5.2', build: '1.5.2', consistent: true });
+    expect(RELEASE_INFO.version).toBe(currentVersion);
+    expect(resolveVersionConsistency(currentVersion)).toEqual({
+      manifest: currentVersion,
+      runtime: currentVersion,
+      build: currentVersion,
+      consistent: true,
+    });
   });
 
   it('exposes a source build identity without changing the semantic version', () => {
-    expect(RELEASE_INFO.version).toBe('1.5.2');
+    expect(RELEASE_INFO.version).toBe(currentVersion);
     expect(RELEASE_INFO.sourceBuildId).toMatch(/^(?:[0-9a-f]{7,12}|local)(?:-(?:clean|dirty))?$/);
     expect(RELEASE_INFO.sourceBuildTime).toMatch(/^\d{4}-\d{2}-\d{2}T/);
-    expect(RELEASE_INFO.sourceBuildLabel).toContain('v1.5.2');
+    expect(RELEASE_INFO.sourceBuildLabel).toContain(`v${currentVersion}`);
     expect(RELEASE_INFO.sourceBuildLabel).toContain(RELEASE_INFO.sourceBuildId);
   });
 
@@ -112,10 +119,10 @@ describe('v0.7.x about and diagnostics release contract', () => {
     const readme = readFileSync(resolve(process.cwd(), 'README_zh_CN.md'), 'utf8');
     const changelog = readFileSync(resolve(process.cwd(), 'CHANGELOG.md'), 'utf8');
     for (const version of [packageJson.version, packageLock.version, packageLock.packages[''].version, manifest.version, RELEASE_INFO.version, RELEASE_INFO.buildVersion]) {
-      expect(version).toBe('1.5.2');
+      expect(version).toBe(currentVersion);
     }
-    expect(readme).toContain('当前版本：`1.5.2`');
-    expect(changelog).toContain('## 1.5.2');
+    expect(readme).toContain(`当前版本：\`${currentVersion}\``);
+    expect(changelog).toContain(`## ${currentVersion}`);
   });
 
   it('exports structured diagnostics files for direct analysis', async () => {

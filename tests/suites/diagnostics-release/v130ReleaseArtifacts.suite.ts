@@ -22,8 +22,13 @@ afterEach(async () => {
 describe('v1.5.0 unified release artifacts', () => {
   it('reads one version contract across every release marker', async () => {
     const contract = await readVersionContract(path.resolve('.'));
-    expect(contract.expected).toBe('1.5.2');
+    const currentVersion = (await readFile(path.resolve('VERSION'), 'utf8')).trim();
+    expect(contract.expected).toBe(currentVersion);
     expect(Object.keys(contract.versions)).toHaveLength(VERSION_MARKER_COUNT);
+    expect(contract.versions).toMatchObject({
+      'README.md': currentVersion,
+      'README_zh_CN.md': currentVersion,
+    });
     expect(() => assertVersionContract(contract)).not.toThrow();
   });
 

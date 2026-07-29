@@ -67,6 +67,47 @@ describe('v1.5.1 atomic render lifecycle', () => {
     expect(coordinator.flushPendingTextEdit()).toBe(false);
   });
 
+  it('keeps an open editor on one live SVG node instead of replacing the whole tree', () => {
+    const renderIncomingLine = vi.fn();
+    const renderOutgoingLines = vi.fn();
+    const live = {
+      createTextNode: vi.fn((text) => ({ text })),
+      getNodeRect: vi.fn(() => ({ width: 240, height: 52 })),
+      layout: vi.fn(),
+      update: vi.fn(),
+      renderLine: renderOutgoingLines,
+      parent: { renderLine: renderIncomingLine },
+    };
+    const mindMap = {
+      renderer: { findNodeByUid: vi.fn(() => live) },
+      richText: { showTextEdit: true, updateTextEditNode: vi.fn() },
+      render: vi.fn(),
+    };
+    const committed = vi.fn();
+    const coordinator = new RenderLifecycleCoordinator(mindMap, committed, {
+      request: (callback) => {
+        callback(0);
+        return 1;
+      },
+      cancel: vi.fn(),
+    });
+
+    coordinator.scheduleTextEdit({
+      node: { getData: () => 'editing-node' },
+      text: '<p>编辑过程中边框立即增长</p>',
+      richText: true,
+      reason: 'input',
+    });
+
+    expect(live.layout).toHaveBeenCalledOnce();
+    expect(live.update).toHaveBeenCalledOnce();
+    expect(renderIncomingLine).toHaveBeenCalledOnce();
+    expect(renderOutgoingLines).toHaveBeenCalledWith(true);
+    expect(mindMap.render).not.toHaveBeenCalled();
+    expect(mindMap.richText.updateTextEditNode).toHaveBeenCalledOnce();
+    expect(committed).toHaveBeenCalledWith('editing-node');
+  });
+
   it('reports the committed live UID so every render can restore the single visible edit layer', () => {
     const committed = vi.fn();
     const live = {
@@ -277,6 +318,33 @@ describe('v1.5.1 atomic render lifecycle', () => {
 
     expect(coordinator.reconcileRenderedTextGeometry()).toBe(false);
     expect(node.layout).not.toHaveBeenCalled();
+    expect(mindMap.render).not.toHaveBeenCalled();
+  });
+
+  it('does not start a competing geometry repair while a width handle is being dragged', () => {
+    const node = {
+      isDragHandleMousedown: true,
+      _textData: {
+        nodeContent: {
+          node: {
+            getBoundingClientRect: () => ({ width: 80, height: 24 }),
+            querySelector: () => ({
+              getBoundingClientRect: () => ({ width: 180, height: 48 }),
+            }),
+          },
+        },
+      },
+      children: [],
+      reRender: vi.fn(),
+    };
+    const mindMap = {
+      renderer: { root: node },
+      render: vi.fn(),
+    };
+    const coordinator = new RenderLifecycleCoordinator(mindMap, vi.fn());
+
+    expect(coordinator.reconcileRenderedTextGeometry()).toBe(false);
+    expect(node.reRender).not.toHaveBeenCalled();
     expect(mindMap.render).not.toHaveBeenCalled();
   });
 });

@@ -74,6 +74,143 @@ test('plain canvas editing keeps one measurement path and stable node geometry',
   expect(Math.abs(second!.height - first!.height)).toBeLessThanOrEqual(1);
 });
 
+test('opening a multiline canvas editor does not jump between stale and live placement', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop edit-placement regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  await rootNode.dblclick();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  await textEditor.fill('Power Good\nReference Clock\nPLL Lock\nController Reset Release');
+  await commitCanvasEdit(page);
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeVisible();
+  const placements = await editor.locator('.smm-richtext-node-edit-wrap').evaluate(async (element) => {
+    const result: Array<{ x: number; y: number; width: number; height: number }> = [];
+    for (let index = 0; index < 6; index += 1) {
+      const rect = element.getBoundingClientRect();
+      result.push({ x: rect.x, y: rect.y, width: rect.width, height: rect.height });
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    }
+    return result;
+  });
+  const spread = (key: keyof (typeof placements)[number]) =>
+    Math.max(...placements.map((item) => item[key])) - Math.min(...placements.map((item) => item[key]));
+  expect(spread('x')).toBeLessThanOrEqual(1);
+  expect(spread('y')).toBeLessThanOrEqual(1);
+  expect(spread('width')).toBeLessThanOrEqual(1);
+  expect(spread('height')).toBeLessThanOrEqual(1);
+});
+
+test('a newly inserted child receives one stable final editor placement', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop inserted-node placement regression');
+  await resetWebApp(page);
+  await addRootChild(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const editWrap = editor.locator('.smm-richtext-node-edit-wrap');
+  await expect(editWrap).toBeVisible();
+  const placements = await editWrap.evaluate(async (element) => {
+    const result: Array<{ x: number; y: number }> = [];
+    for (let index = 0; index < 6; index += 1) {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const rect = element.getBoundingClientRect();
+      result.push({ x: rect.x, y: rect.y });
+    }
+    return result;
+  });
+  const tail = placements.slice(1);
+  expect(Math.max(...tail.map((item) => item.x)) - Math.min(...tail.map((item) => item.x)))
+    .toBeLessThanOrEqual(1);
+  expect(Math.max(...tail.map((item) => item.y)) - Math.min(...tail.map((item) => item.y)))
+    .toBeLessThanOrEqual(1);
+});
+
+test('one Delete or Backspace removes a selected multiline canvas range', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop keyboard-selection regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+
+  for (const key of ['Delete', 'Backspace']) {
+    await rootNode.dblclick();
+    await textEditor.fill('第一行\n第二行\n第三行');
+    await textEditor.press('Control+A');
+    await textEditor.press(key);
+    await expect(textEditor).toHaveText('');
+    await textEditor.fill(`下一轮-${key}`);
+    await commitCanvasEdit(page);
+  }
+});
+
+test('width-handle drag grows the live node monotonically without disappearing or jumping', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop pointer-geometry regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  await rootNode.dblclick();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  await textEditor.fill('准备：\nLTSSM 状态读取及历史记录；\n当前 Link Speed、Link Width；\nLane 状态和 PHY PLL/CDR 状态；');
+  await commitCanvasEdit(page);
+  await rootNode.click();
+
+  const handles = rootNode.locator('rect[style*="ew-resize"]');
+  await expect(handles).toHaveCount(2);
+  const handle = handles.last();
+  const handleBox = await handle.boundingBox();
+  const before = await rootNode.boundingBox();
+  expect(handleBox).not.toBeNull();
+  expect(before).not.toBeNull();
+  await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
+  await page.mouse.down();
+  const widths = [before!.width];
+  const tops = [before!.y];
+  for (let step = 1; step <= 5; step += 1) {
+    await page.mouse.move(
+      handleBox!.x + handleBox!.width / 2 + step * 24,
+      handleBox!.y + handleBox!.height / 2,
+      { steps: 1 },
+    );
+    const box = await rootNode.boundingBox();
+    expect(box).not.toBeNull();
+    widths.push(box!.width);
+    tops.push(box!.y);
+  }
+  await page.mouse.up();
+  for (let index = 1; index < widths.length; index += 1) {
+    expect(widths[index]).toBeGreaterThanOrEqual(widths[index - 1] - 1);
+  }
+  expect(widths.at(-1)!).toBeGreaterThan(widths[0] + 80);
+  expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(2);
+  await expect(rootNode).toBeVisible();
+});
+
+test('dragging a parent previews its visible descendants as one coherent subtree', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop structural-drag regression');
+  await resetWebApp(page);
+  await addRootChild(page);
+  await commitCanvasEdit(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const nodes = editor.locator('.smm-node');
+  await nodes.nth(1).click();
+  await editor.locator('[data-node-quick-action="add-child"]').first().click();
+  await commitCanvasEdit(page);
+  await expect(nodes).toHaveCount(3);
+
+  const parent = nodes.nth(1);
+  const box = await parent.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + box!.width / 2 + 90, box!.y + box!.height / 2 + 45, { steps: 6 });
+  const preview = editor.locator('.ymz-drag-subtree-preview');
+  await expect(preview).toBeVisible();
+  await expect(preview).toHaveAttribute('data-preview-node-count', '2');
+  await expect(preview.locator('.smm-node')).toHaveCount(2);
+  await page.mouse.up();
+});
+
 test('canvas paste keeps the live node border aligned with the growing text editor', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop edit-geometry regression');
   await resetWebApp(page);
