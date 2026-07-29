@@ -44,6 +44,23 @@ describe('createCommandAdapter', () => {
     expect(quill.setSelection).toHaveBeenCalledWith(3, 0, 'silent');
   });
 
+  it('keeps inserting into the node that opened the persistent symbol dialog after focus clears selection', () => {
+    const map = fakeMindMap() as any;
+    map.opt = { readonly: false };
+    const source = { getData: () => ({ uid: 'source', text: '节点', richText: false }), nodeData: { data: {} } };
+    map.renderer.activeNodeList = [];
+    map.renderer.findNodeByUid = vi.fn((uid: string) => uid === 'source' ? source : null);
+    map.richText = {
+      quill: { insertText: vi.fn(), setSelection: vi.fn() },
+      lastRange: { index: 1, length: 0 },
+    };
+    const commands = createCommandAdapter(map as never);
+
+    expect(commands.insertSymbol('Ω', 'source')).toBe(true);
+    expect(map.execCommand).toHaveBeenCalledWith('SET_NODE_TEXT', source, '节点Ω', false, true);
+    expect(map.richText.quill.insertText).not.toHaveBeenCalled();
+  });
+
   it('maps node actions to simple-mind-map native commands', () => {
     const map = fakeMindMap();
     const commands = createCommandAdapter(map as never);

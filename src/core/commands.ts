@@ -79,7 +79,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   clearClipart(): void;
   clearClipartByUid(uid: string): void;
   insertFormula(formula: string, mode?: 'inline' | 'block'): void;
-  insertSymbol(symbol: string): boolean;
+  insertSymbol(symbol: string, targetUid?: string): boolean;
   addSummary(): void;
   removeSummary(): void;
   startRelation(): boolean;
@@ -566,14 +566,14 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       }
       mindMap.execCommand('INSERT_FORMULA', value);
     },
-    insertSymbol: (symbol) => {
+    insertSymbol: (symbol, targetUid) => {
       if (!canMutate() || !symbol) return false;
-      const node = primaryNode();
+      const node = targetUid ? findNodeByUid(targetUid) : primaryNode();
       if (!node) return false;
       const editor = richText();
       const quill = editor?.quill;
       const range = richRange();
-      if (quill && range) {
+      if (!targetUid && quill && range) {
         if (range.length > 0) quill.deleteText(range.index, range.length, 'user');
         quill.insertText(range.index, symbol, 'user');
         quill.setSelection(range.index + symbol.length, 0, 'silent');

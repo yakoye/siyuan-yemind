@@ -41,6 +41,7 @@ export class SymbolPicker {
   }
 
   show(): void {
+    this.renderBody();
     this.element.hidden = false;
     this.clamp();
     this.search.focus();

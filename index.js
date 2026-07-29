@@ -80017,13 +80017,13 @@ function snapshotRect(value) {
     toJSON: () => ({ x: x2, y: y2, left, top, right, bottom, width: width2, height: height2 })
   };
 }
-function renderedNodeUid(node) {
+function renderedNodeUid$1(node) {
   var _a, _b;
   if (!node) return "";
   const value = typeof node.getData === "function" ? node.getData("uid") : ((_b = (_a = node == null ? void 0 : node.nodeData) == null ? void 0 : _a.data) == null ? void 0 : _b.uid) ?? (node == null ? void 0 : node.uid);
   return String(value ?? "");
 }
-function resolveLiveRenderedNode(mindMap, node, uid2 = renderedNodeUid(node)) {
+function resolveLiveRenderedNode(mindMap, node, uid2 = renderedNodeUid$1(node)) {
   var _a, _b;
   if (!uid2) return node ?? null;
   const current = (_b = (_a = mindMap == null ? void 0 : mindMap.renderer) == null ? void 0 : _a.findNodeByUid) == null ? void 0 : _b.call(_a, uid2);
@@ -80225,12 +80225,12 @@ class YeMindRichText extends RichText {
   showEditText(params) {
     if (this.showTextEdit) return;
     const sourceNode = (params == null ? void 0 : params.node) ?? null;
-    const uid2 = renderedNodeUid(sourceNode);
+    const uid2 = renderedNodeUid$1(sourceNode);
     const liveNode = resolveLiveRenderedNode(this.mindMap, sourceNode, uid2);
     const liveGeometry = resolveRenderedTextRect(liveNode);
     const parameterRect = isUsableTextRect(params == null ? void 0 : params.rect) ? snapshotRect(params.rect) : null;
     const rect2 = (liveGeometry == null ? void 0 : liveGeometry.rect) ?? parameterRect ?? this.lastValidNodeRect;
-    this.editingUid = uid2 || renderedNodeUid(liveNode);
+    this.editingUid = uid2 || renderedNodeUid$1(liveNode);
     if (rect2) {
       this.lastValidNodeRect = snapshotRect(rect2);
       this.lastRectSource = (liveGeometry == null ? void 0 : liveGeometry.source) ?? (parameterRect ? "show-parameter" : "last-valid");
@@ -83163,14 +83163,14 @@ function createCommandAdapter(mindMap) {
       }
       mindMap.execCommand("INSERT_FORMULA", value);
     },
-    insertSymbol: (symbol) => {
+    insertSymbol: (symbol, targetUid) => {
       if (!canMutate() || !symbol) return false;
-      const node = primaryNode();
+      const node = targetUid ? findNodeByUid(targetUid) : primaryNode();
       if (!node) return false;
       const editor = richText();
       const quill = editor == null ? void 0 : editor.quill;
       const range2 = richRange();
-      if (quill && range2) {
+      if (!targetUid && quill && range2) {
         if (range2.length > 0) quill.deleteText(range2.index, range2.length, "user");
         quill.insertText(range2.index, symbol, "user");
         quill.setSelection(range2.index + symbol.length, 0, "silent");
@@ -90213,6 +90213,7 @@ class SymbolPicker {
     this.renderBody();
   }
   show() {
+    this.renderBody();
     this.element.hidden = false;
     this.clamp();
     this.search.focus();
@@ -92958,7 +92959,7 @@ class RenderLifecycleCoordinator {
     this.scheduler = scheduler;
   }
   scheduleTextEdit(payload) {
-    const uid2 = renderedNodeUid(payload.node);
+    const uid2 = renderedNodeUid$1(payload.node);
     if (!uid2) return;
     const revision = ++this.revision;
     this.pending = { revision, payload };
@@ -93057,7 +93058,7 @@ class RenderLifecycleCoordinator {
   }
   commitTextEdit(payload, revision) {
     var _a, _b, _c2, _d2, _e, _f, _g;
-    const uid2 = renderedNodeUid(payload.node);
+    const uid2 = renderedNodeUid$1(payload.node);
     if (!uid2) return;
     const node = (_c2 = (_b = (_a = this.mindMap) == null ? void 0 : _a.renderer) == null ? void 0 : _b.findNodeByUid) == null ? void 0 : _c2.call(_b, uid2);
     if (!node || typeof node.createTextNode !== "function") return;
@@ -93088,6 +93089,13 @@ class RenderLifecycleCoordinator {
     this.geometryRepairInFlight = false;
     this.pending = null;
   }
+}
+function renderedNodeUid(node) {
+  var _a, _b, _c2, _d2, _e;
+  const data2 = (_a = node == null ? void 0 : node.getData) == null ? void 0 : _a.call(node);
+  return String(
+    ((_b = node == null ? void 0 : node.getData) == null ? void 0 : _b.call(node, "uid")) ?? (data2 == null ? void 0 : data2.uid) ?? ((_d2 = (_c2 = node == null ? void 0 : node.nodeData) == null ? void 0 : _c2.data) == null ? void 0 : _d2.uid) ?? ((_e = node == null ? void 0 : node.nodeData) == null ? void 0 : _e.uid) ?? (node == null ? void 0 : node.uid) ?? ""
+  ).trim();
 }
 class YeMindEditor {
   constructor(options) {
@@ -93128,6 +93136,7 @@ class YeMindEditor {
     __publicField(this, "layoutGalleryPanel", null);
     __publicField(this, "themeChoicePanel", null);
     __publicField(this, "symbolPicker", null);
+    __publicField(this, "symbolTargetUid", "");
     __publicField(this, "nodeQuickActions", null);
     __publicField(this, "toolbarVisibility", null);
     __publicField(this, "resourceActionPopover", null);
@@ -93813,11 +93822,11 @@ class YeMindEditor {
     this.commands = createCommandAdapter(this.map);
     this.symbolPicker = new SymbolPicker(this.rootEl, {
       canInsert: () => Boolean(
-        this.commands && !this.commands.isReadonly() && this.commands.getPrimaryNode()
+        this.commands && !this.commands.isReadonly() && this.symbolTargetUid
       ),
       onInsert: (symbol) => {
         var _a2;
-        const inserted = ((_a2 = this.commands) == null ? void 0 : _a2.insertSymbol(symbol)) ?? false;
+        const inserted = ((_a2 = this.commands) == null ? void 0 : _a2.insertSymbol(symbol, this.symbolTargetUid)) ?? false;
         if (inserted) this.refreshOutlineFromMap();
         return inserted;
       }
@@ -95055,10 +95064,10 @@ class YeMindEditor {
     });
   }
   openContextMenu(event) {
-    var _a, _b, _c2;
+    var _a;
     if (!this.commands) return;
-    const nodeUid2 = String(((_b = (_a = this.commands.getPrimaryNode()) == null ? void 0 : _a.getData) == null ? void 0 : _b.call(_a, "uid")) ?? "").trim();
-    const nodeCard = (_c2 = this.studyPanel) == null ? void 0 : _c2.cardForNode(nodeUid2);
+    const nodeUid2 = renderedNodeUid(this.commands.getPrimaryNode());
+    const nodeCard = (_a = this.studyPanel) == null ? void 0 : _a.cardForNode(nodeUid2);
     this.options.diagnostics.record("context-menu", "opened", this.current.id, {
       selectedNodeCount: this.commands.getActiveNodes().length
     });
@@ -95068,14 +95077,11 @@ class YeMindEditor {
       onNodeLink: () => openLinkDialog(this.commands, this.settings.inlineLinkAutoHttps),
       onRelation: () => this.beginRelation(),
       onMarkers: () => openMarkerPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
-      onSymbols: () => {
-        var _a2;
-        return (_a2 = this.symbolPicker) == null ? void 0 : _a2.show();
-      },
+      onSymbols: () => this.openSymbolPickerForUid(nodeUid2),
       onClipart: () => openClipartPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
       onTextToMap: () => {
-        var _a2, _b2, _c3;
-        const uid2 = String(((_c3 = (_b2 = (_a2 = this.commands) == null ? void 0 : _a2.getPrimaryNode()) == null ? void 0 : _b2.getData) == null ? void 0 : _c3.call(_b2, "uid")) ?? "");
+        var _a2;
+        const uid2 = renderedNodeUid((_a2 = this.commands) == null ? void 0 : _a2.getPrimaryNode());
         if (uid2) this.openTextToMapForUid(uid2);
       },
       hasCard: Boolean(nodeCard),
@@ -95089,9 +95095,9 @@ class YeMindEditor {
         if (nodeCard) this.setStudyMode("cards", [nodeCard.id]);
       },
       onNodeStyle: () => {
-        var _a2, _b2;
+        var _a2, _b;
         (_a2 = this.projectStylePanel) == null ? void 0 : _a2.hide();
-        (_b2 = this.nodeStylePanel) == null ? void 0 : _b2.show({ x: event.clientX, y: event.clientY });
+        (_b = this.nodeStylePanel) == null ? void 0 : _b.show({ x: event.clientX, y: event.clientY });
       },
       onAction: (action) => this.options.diagnostics.record(
         "context-menu",
@@ -95909,9 +95915,7 @@ class YeMindEditor {
         if (this.commands) openMarkerPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() });
       },
       onSymbols: () => {
-        var _a;
-        activate();
-        (_a = this.symbolPicker) == null ? void 0 : _a.show();
+        this.openSymbolPickerForUid(uid2);
       },
       onClipart: () => {
         activate();
@@ -95975,6 +95979,12 @@ class YeMindEditor {
       if (found) return found;
     }
     return null;
+  }
+  openSymbolPickerForUid(uid2) {
+    var _a;
+    if (!uid2 || !this.commands || this.commands.isReadonly()) return;
+    this.symbolTargetUid = uid2;
+    (_a = this.symbolPicker) == null ? void 0 : _a.show();
   }
   buildActiveStudyNode(node) {
     var _a, _b, _c2, _d2, _e;

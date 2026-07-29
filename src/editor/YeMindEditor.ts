@@ -181,6 +181,18 @@ interface OutlinePointerDragSession {
   lastClientY: number;
 }
 
+function renderedNodeUid(node: any): string {
+  const data = node?.getData?.();
+  return String(
+    node?.getData?.('uid')
+    ?? data?.uid
+    ?? node?.nodeData?.data?.uid
+    ?? node?.nodeData?.uid
+    ?? node?.uid
+    ?? '',
+  ).trim();
+}
+
 export class YeMindEditor {
   private map: MindMap | null = null;
   private commands: YeMindCommands | null = null;
@@ -219,6 +231,7 @@ export class YeMindEditor {
   private layoutGalleryPanel: LayoutGalleryPanel | null = null;
   private themeChoicePanel: ProjectChoicePanel | null = null;
   private symbolPicker: SymbolPicker | null = null;
+  private symbolTargetUid = '';
   private nodeQuickActions: NodeQuickActionsController | null = null;
   private toolbarVisibility: ToolbarVisibilityController | null = null;
   private resourceActionPopover: ResourceActionPopover | null = null;
@@ -940,10 +953,10 @@ export class YeMindEditor {
       canInsert: () => Boolean(
         this.commands
         && !this.commands.isReadonly()
-        && this.commands.getPrimaryNode(),
+        && this.symbolTargetUid,
       ),
       onInsert: (symbol) => {
-        const inserted = this.commands?.insertSymbol(symbol) ?? false;
+        const inserted = this.commands?.insertSymbol(symbol, this.symbolTargetUid) ?? false;
         if (inserted) this.refreshOutlineFromMap();
         return inserted;
       },
@@ -2212,7 +2225,7 @@ export class YeMindEditor {
 
   private openContextMenu(event: MouseEvent): void {
     if (!this.commands) return;
-    const nodeUid = String(this.commands.getPrimaryNode()?.getData?.('uid') ?? '').trim();
+    const nodeUid = renderedNodeUid(this.commands.getPrimaryNode());
     const nodeCard = this.studyPanel?.cardForNode(nodeUid);
     this.options.diagnostics.record("context-menu", "opened", this.current.id, {
       selectedNodeCount: this.commands.getActiveNodes().length,
@@ -2224,10 +2237,10 @@ export class YeMindEditor {
         openLinkDialog(this.commands!, this.settings.inlineLinkAutoHttps),
       onRelation: () => this.beginRelation(),
       onMarkers: () => openMarkerPicker(this.commands!, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
-      onSymbols: () => this.symbolPicker?.show(),
+      onSymbols: () => this.openSymbolPickerForUid(nodeUid),
       onClipart: () => openClipartPicker(this.commands!, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
       onTextToMap: () => {
-        const uid = String(this.commands?.getPrimaryNode()?.getData?.('uid') ?? '');
+        const uid = renderedNodeUid(this.commands?.getPrimaryNode());
         if (uid) this.openTextToMapForUid(uid);
       },
       hasCard: Boolean(nodeCard),
@@ -3122,8 +3135,7 @@ export class YeMindEditor {
         if (this.commands) openMarkerPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() });
       },
       onSymbols: () => {
-        activate();
-        this.symbolPicker?.show();
+        this.openSymbolPickerForUid(uid);
       },
       onClipart: () => {
         activate();
@@ -3168,6 +3180,12 @@ export class YeMindEditor {
       if (found) return found;
     }
     return null;
+  }
+
+  private openSymbolPickerForUid(uid: string): void {
+    if (!uid || !this.commands || this.commands.isReadonly()) return;
+    this.symbolTargetUid = uid;
+    this.symbolPicker?.show();
   }
 
   private buildActiveStudyNode(node: any): ActiveStudyNode | null {

@@ -53,18 +53,28 @@ describe('v0.9.30 context menu contracts', () => {
   it('keeps the symbol dialog open on outside clicks and closes only from its close control', () => {
     const root = document.createElement('div');
     document.body.appendChild(root);
+    let canInsert = false;
     const picker = new SymbolPicker(root, {
-      canInsert: () => true,
+      canInsert: () => canInsert,
       onInsert: () => true,
     });
+    canInsert = true;
     picker.show();
     const dialog = root.querySelector<HTMLElement>('.ymz-symbol-picker')!;
+    expect(dialog.querySelector<HTMLButtonElement>('[data-symbol-value="Ω"]')?.disabled).toBe(false);
     document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     expect(dialog.hidden).toBe(false);
     dialog.querySelector<HTMLButtonElement>('[data-symbol-action="close"]')!.click();
     expect(dialog.hidden).toBe(true);
     picker.destroy();
     root.remove();
+  });
+
+  it('locks symbol insertion to the node that opened the persistent dialog', () => {
+    expect(editor).toContain('private symbolTargetUid');
+    expect(editor).toContain('this.commands?.insertSymbol(symbol, this.symbolTargetUid)');
+    expect(editor).toContain('this.openSymbolPickerForUid(nodeUid)');
+    expect(editor).toContain('this.openSymbolPickerForUid(uid)');
   });
 
   it('marks both delete variants as destructive', () => {

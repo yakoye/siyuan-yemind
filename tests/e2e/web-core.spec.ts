@@ -129,6 +129,46 @@ test('cycles appearance and reveals the outline drag grip only on approach', asy
   await expect(grip).toHaveCSS('opacity', '0.9');
 });
 
+test('switches a theme with one render tree and keeps the sticky category bar opaque', async ({ page }) => {
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  await rootNode.click();
+  await editor.locator('[data-node-quick-action="add-child"]').first().click();
+  await expect(editor.locator('.smm-node')).toHaveCount(2);
+
+  if (await editor.locator('[data-action="theme-gallery"]:visible').count() === 0) {
+    await editor.locator('[data-action="toggle-top-overflow"]').click();
+  }
+  await editor.locator('[data-action="theme-gallery"]:visible').click();
+  const tabs = editor.locator('.ymz-project-choice-panel__tabs');
+  await expect(tabs).toHaveCSS('position', 'sticky');
+  await expect(tabs).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await editor.locator('[data-project-choice-group="经典"]').click();
+  await editor.locator('[data-project-choice-value="yemind-default"]').click();
+  await expect(editor.locator('.smm-node')).toHaveCount(2);
+});
+
+test('keeps the symbol source node while the persistent dialog receives focus', async ({ page }) => {
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  await rootNode.click({ button: 'right' });
+  await page.getByRole('menuitem', { name: '添加 ›' }).hover();
+  const symbolMenuItem = page.getByRole('menuitem', { name: '符号' });
+  await expect(symbolMenuItem).toBeVisible();
+  await symbolMenuItem.click();
+  const dialog = editor.locator('.ymz-symbol-picker');
+  await expect(dialog).toBeVisible();
+  const omega = dialog.getByRole('button', { name: 'Ω', exact: true });
+  await expect(omega).toBeEnabled();
+  await omega.click();
+  await expect(editor.locator('.smm-node').first()).toContainText('中心主题Ω');
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: '→', exact: true }).click();
+  await expect(editor.locator('.smm-node').first()).toContainText('中心主题Ω→');
+});
+
 test('keeps hidden toolbars discoverable through three edge markers', async ({ page }) => {
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
