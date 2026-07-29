@@ -7,6 +7,8 @@ web-dist/
 /release/
 index.js.map
 output/playwright/
+output/browser-preview/
 test-results/
 playwright-report/
+.playwright-cli/
 .DS_Store

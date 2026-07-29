@@ -1,14 +1,20 @@
 import { normalizeLineStyle, themeOptionsHtml } from '../core/themePresets';
 import { layoutOptionsHtml } from '../core/layoutPresets';
 import { rainbowSchemeOptionsHtml } from '../core/colorSchemes';
-import { appearanceIcon, brandIcon, canvasModeIcon, fitViewIcon, fullscreenIcon, helpIcon, historyIcon, lockIcon, meditationIcon, miniMapIcon, pinIcon, presentationIcon, primaryViewIcon, projectControlIcon, projectStyleIcon, redoIcon, resetZoomIcon, saveIcon, searchIcon, shareIcon, transferIcon, undoIcon, zoomIcon } from './projectControls';
-import { EXPORT_FORMATS, IMPORT_ACCEPT } from '../transfer/formatCatalog';
-export function createEditorTemplate(title: string, theme: unknown = 'yemind-default', lineStyle: unknown = 'curve'): string {
+import { appearanceIcon, brandIcon, canvasModeIcon, fitViewIcon, fullscreenIcon, helpIcon, historyIcon, lockIcon, meditationIcon, miniMapIcon, panelCloseIcon, pinIcon, presentationIcon, primaryViewIcon, projectControlIcon, projectStyleIcon, redoIcon, resetZoomIcon, saveIcon, searchIcon, shareIcon, transferIcon, undoIcon, zoomIcon } from './projectControls';
+import { EXPORT_CATEGORIES, EXPORT_FORMATS, IMPORT_ACCEPT } from '../transfer/formatCatalog';
+export function createEditorTemplate(
+  title: string,
+  theme: unknown = 'yemind-default',
+  lineStyle: unknown = 'curve',
+  pluginBaseUrl?: string,
+  transferCapabilities: { fullBackup?: boolean; fullRestore?: boolean } = {},
+): string {
   return `
-    <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map" data-study-view="none" data-toolbars-pinned="true" data-topbar-visible="true" data-statusbar-visible="true" data-leftbar-visible="true" data-status-overflow-open="false">
+    <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map" data-study-view="none" data-toolbars-pinned="true" data-topbar-visible="true" data-statusbar-visible="true" data-leftbar-visible="true" data-status-overflow-open="false" data-minimap-visible="false">
       <div class="ymz-canvas-wrap">
         <div class="ymz-floating ymz-topbar" role="toolbar" aria-label="YeMind 工具栏">
-          <span class="ymz-brand" aria-label="YeMind">${brandIcon()}<span class="ymz-brand__name">YeMind</span></span>
+          <span class="ymz-brand" aria-label="YeMind">${brandIcon(pluginBaseUrl)}<span class="ymz-brand__name">YeMind</span></span>
           <span class="ymz-separator"></span>
           <button class="ymz-primary-view is-active" data-primary-view data-action="view-map" title="导图" aria-label="导图">${primaryViewIcon('map')}<span>导图</span></button>
           <button class="ymz-primary-view" data-primary-view data-action="view-outline" title="大纲" aria-label="大纲">${primaryViewIcon('outline')}<span>大纲</span></button>
@@ -28,9 +34,10 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
             ${themeOptionsHtml(theme)}
           </select>
           <select data-action="line-style" aria-label="线型" hidden>
-            <option value="curve"${normalizeLineStyle(lineStyle) === 'curve' ? ' selected' : ''}>弧线</option>
-            <option value="straight"${normalizeLineStyle(lineStyle) === 'straight' ? ' selected' : ''}>圆角折线</option>
+            <option value="curve"${normalizeLineStyle(lineStyle) === 'curve' ? ' selected' : ''}>曲线</option>
             <option value="direct"${normalizeLineStyle(lineStyle) === 'direct' ? ' selected' : ''}>直线</option>
+            <option value="polyline"${normalizeLineStyle(lineStyle) === 'polyline' ? ' selected' : ''}>折线</option>
+            <option value="straight"${normalizeLineStyle(lineStyle) === 'straight' ? ' selected' : ''}>圆角折线</option>
           </select>
           <button class="ymz-project-control ymz-project-button ymz-topbar__desktop-utility" data-action="project-style" title="整图样式">${projectStyleIcon()}<span>样式</span></button>
           <span class="ymz-separator ymz-topbar__desktop-utility"></span>
@@ -61,34 +68,71 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
 
         <div class="ymz-search-panel" data-role="search-panel" data-replace-expanded="false" hidden>
           <div class="ymz-search-panel__row ymz-search-panel__row--find">
-            <button class="ymz-search-panel__disclosure" data-search-action="toggle-replace" title="展开替换" aria-label="展开替换" aria-expanded="false">›</button>
-            <input class="b3-text-field" data-role="search-input" placeholder="查找">
-            <span class="ymz-search-panel__options" role="group" aria-label="查找选项">
-              <button type="button" data-search-option="case-sensitive" title="区分大小写" aria-label="区分大小写" aria-pressed="false">Aa</button>
-              <button type="button" data-search-option="whole-word" title="全字匹配" aria-label="全字匹配" aria-pressed="false"><u>ab</u></button>
-              <button type="button" data-search-option="regex" title="使用正则表达式" aria-label="使用正则表达式" aria-pressed="false">.*</button>
-              <button type="button" data-search-option="selection-scope" title="仅在选中节点中查找" aria-label="仅在选中节点中查找" aria-pressed="false">选中</button>
-            </span>
+            <button class="ymz-search-panel__disclosure" data-search-action="toggle-replace" title="展开替换" aria-label="展开替换" aria-expanded="false">${searchPanelIcon('disclosure')}</button>
+            <label class="ymz-search-panel__field ymz-search-panel__field--find">
+              <input data-role="search-input" placeholder="查找" aria-label="查找">
+              <span class="ymz-search-panel__options" role="group" aria-label="查找选项">
+                <button type="button" data-search-option="case-sensitive" title="区分大小写" aria-label="区分大小写" aria-pressed="false">Aa</button>
+                <button type="button" data-search-option="whole-word" title="全字匹配" aria-label="全字匹配" aria-pressed="false"><u>ab</u></button>
+                <button type="button" data-search-option="regex" title="使用正则表达式" aria-label="使用正则表达式" aria-pressed="false">.*</button>
+              </span>
+            </label>
+            <button type="button" class="ymz-search-panel__scope" data-search-option="selection-scope" title="仅在选中节点中查找" aria-label="仅在选中节点中查找" aria-pressed="false">选中节点</button>
             <span data-role="search-info">无结果</span>
-            <button data-search-action="previous" title="上一个" aria-label="上一个">↑</button>
-            <button data-search-action="next" title="下一个" aria-label="下一个">↓</button>
-            <button data-search-action="close" title="关闭" aria-label="关闭">×</button>
+            <span class="ymz-search-panel__nav" role="group" aria-label="搜索导航">
+              <button data-search-action="previous" title="上一个" aria-label="上一个">${searchPanelIcon('previous')}</button>
+              <button data-search-action="next" title="下一个" aria-label="下一个">${searchPanelIcon('next')}</button>
+              <button data-search-action="close" title="关闭" aria-label="关闭">${searchPanelIcon('close')}</button>
+            </span>
           </div>
           <div class="ymz-search-panel__row ymz-search-panel__row--replace" data-role="replace-row" hidden>
             <span class="ymz-search-panel__replace-indent" aria-hidden="true"></span>
-            <input class="b3-text-field" data-role="replace-input" placeholder="替换">
-            <button type="button" data-search-option="preserve-case" title="保留大小写" aria-label="保留大小写" aria-pressed="false">AB</button>
-            <button data-search-action="replace" title="替换当前">替换</button>
-            <button data-search-action="replace-all" title="全部替换">全部</button>
+            <label class="ymz-search-panel__field ymz-search-panel__field--replace">
+              <input data-role="replace-input" placeholder="替换" aria-label="替换">
+              <button type="button" data-search-option="preserve-case" title="保留大小写" aria-label="保留大小写" aria-pressed="false">AB</button>
+            </label>
+            <span class="ymz-search-panel__replace-actions" role="group" aria-label="替换操作">
+              <button data-search-action="replace" title="替换当前">替换</button>
+              <button data-search-action="replace-all" title="全部替换">全部替换</button>
+            </span>
           </div>
           <div class="ymz-search-panel__error" data-role="search-error" role="status" hidden></div>
         </div>
 
         <input type="file" data-role="import-file-input" accept="${IMPORT_ACCEPT}" hidden>
+        <aside class="ymz-transfer-panel ymz-transfer-panel--import" data-role="import-panel" aria-label="导入与恢复" hidden>
+          <header><strong>导入与恢复</strong><button type="button" data-action="close-import-panel" aria-label="关闭导入面板">×</button></header>
+          <div class="ymz-transfer-panel__import-groups">
+            <section${transferCapabilities.fullRestore ? '' : ' hidden'}>
+              <h4>恢复完整备份</h4>
+              <p>恢复网页版全部导图、设置和检查点；恢复前会再次确认。</p>
+              <button type="button" data-import-kind="host-backup"><strong>选择完整备份</strong><small>.json · YeMind 网页完整备份</small></button>
+            </section>
+            <section>
+              <h4>恢复可编辑导图</h4>
+              <p>识别 YeMind、KMindZ、XMind 及带恢复数据的 SVG、PNG、ZIP，并创建新的导图副本。</p>
+              <button type="button" data-import-kind="map-backup"><strong>选择导图备份</strong><small>.yemind.svg / .yemind.zip / .kmindz / .xmind</small></button>
+            </section>
+            <section>
+              <h4>从其他格式导入</h4>
+              <p>把 Markdown、OPML、TXT、FreeMind MM 或旧 JSON 转换成可编辑导图。</p>
+              <button type="button" data-import-kind="other"><strong>选择其他文件</strong><small>.md / .opml / .txt / .mm / .json</small></button>
+            </section>
+          </div>
+        </aside>
         <aside class="ymz-transfer-panel" data-role="export-panel" aria-label="导出导图" hidden>
           <header><strong>导出导图</strong><button type="button" data-action="close-export-panel" aria-label="关闭导出面板">×</button></header>
+          <section class="ymz-transfer-panel__backup"${transferCapabilities.fullBackup ? '' : ' hidden'}>
+            <h4>完整备份</h4>
+            <p>包含网页版全部导图、设置和检查点，可通过“导入 → 恢复完整备份”恢复。</p>
+            <button type="button" data-export-host-backup><strong>导出完整备份</strong><small>.json</small></button>
+          </section>
+          <p class="ymz-transfer-panel__hint"><strong>.yemind.zip / .yemind.svg</strong> 是当前导图的可恢复备份；SVG、PDF 等用于分享与发布。</p>
+          <nav class="ymz-transfer-panel__categories" aria-label="导出类型">
+            ${EXPORT_CATEGORIES.map((category, index) => `<button type="button" data-export-category="${category.id}" aria-pressed="${index === 0}">${category.label}</button>`).join('')}
+          </nav>
           <div class="ymz-transfer-panel__formats">
-            ${EXPORT_FORMATS.map((format) => `<button type="button" data-export-format="${format.id}"${format.default ? ' data-default="true"' : ''}><span><strong>${format.label}</strong><small>${format.extension}</small></span><em>${format.description}</em></button>`).join('')}
+            ${EXPORT_FORMATS.map((format) => `<button type="button" data-export-format="${format.id}" data-export-category-group="${format.category}"${format.default ? ' data-default="true"' : ''}><span><strong>${format.label}</strong><small>${format.extension}</small></span><em>${format.description}</em></button>`).join('')}
           </div>
         </aside>
 
@@ -96,7 +140,7 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
           <div class="ymz-canvas" data-role="canvas"></div>
           <div class="ymz-split-divider" data-role="split-divider" role="separator" aria-orientation="vertical" aria-label="调整导图和大纲宽度" aria-valuemin="25" aria-valuemax="70" aria-valuenow="42" tabindex="0"></div>
           <aside class="ymz-outline" data-role="outline" aria-label="导图大纲">
-            <header class="ymz-outline-panel__header"><div class="ymz-outline-panel__title">${primaryViewIcon('outline')}<span><strong>大纲</strong><small><span data-role="outline-node-count">0</span> 个节点</small></span></div><span><button type="button" data-action="outline-fullscreen" title="切换全屏大纲" aria-label="切换全屏大纲">${fullscreenIcon()}</button><button type="button" data-action="close-side-panel" title="关闭大纲" aria-label="关闭大纲">×</button></span></header>
+            <header class="ymz-outline-panel__header"><div class="ymz-outline-panel__title">${primaryViewIcon('outline')}<span><strong>大纲</strong><small><span data-role="outline-node-count">0</span> 个节点</small></span></div><span><button type="button" data-action="outline-fullscreen" title="切换全屏大纲" aria-label="切换全屏大纲">${fullscreenIcon()}</button><button type="button" data-action="close-side-panel" title="关闭大纲" aria-label="关闭大纲">${panelCloseIcon()}</button></span></header>
             <div class="ymz-outline-panel__tools"><label>${searchIcon()}<input data-role="outline-search" placeholder="搜索大纲" aria-label="搜索大纲"></label><button type="button" data-action="outline-expand-all" title="展开全部" aria-label="展开全部">＋</button><button type="button" data-action="outline-collapse-all" title="折叠全部" aria-label="折叠全部">−</button></div>
             <div class="ymz-outline-tree ymz-structured-outline" data-role="outline-tree" role="tree" aria-label="结构化大纲编辑器" spellcheck="false"></div>
             <footer class="ymz-outline-panel__footer"><span><b data-role="outline-footer-count">0</b> 个节点</span><span>最大 <b data-role="outline-max-depth">1</b> 层</span></footer>
@@ -125,8 +169,8 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
         <aside class="ymz-project-style-panel" data-role="project-style-panel" aria-label="整图样式" hidden>
           <header class="ymz-project-style-panel__header"><strong>样式</strong><button type="button" data-project-style-action="close" aria-label="关闭样式">×</button></header>
           <section><h4>密度</h4><div class="ymz-density-options" role="group" aria-label="节点密度"><button type="button" data-project-density="compact"><strong>紧凑</strong></button><button type="button" data-project-density="default"><strong>默认</strong></button><button type="button" data-project-density="comfortable"><strong>舒展</strong></button></div><div class="ymz-custom-spacing" aria-label="自定义节点间距"><label><span>左右</span><input type="number" min="12" max="240" step="1" data-project-spacing="horizontal" aria-label="水平间距"></label><label><span>上下</span><input type="number" min="2" max="100" step="1" data-project-spacing="vertical" aria-label="垂直间距"></label></div></section>
-          <section class="ymz-project-style-panel__rainbow"><h4>彩虹连线</h4><label class="ymz-project-style-panel__switch"><strong>启用</strong><input type="checkbox" data-project-style="rainbowLines"></label><div class="ymz-project-style-panel__palette"><span>配色</span><button type="button" class="ymz-rainbow-trigger" data-rainbow-trigger aria-haspopup="listbox" aria-expanded="false"><span data-rainbow-current-label>彩虹</span><i data-project-rainbow-preview aria-hidden="true"></i><span class="ymz-rainbow-trigger__arrow" aria-hidden="true">⌄</span></button><select data-project-style="rainbowScheme" aria-label="彩虹连线配色" hidden>${rainbowSchemeOptionsHtml('rainbow')}</select><div data-rainbow-picker hidden></div></div></section>
-          <section class="ymz-project-style-panel__lines"><h4>线型</h4><div class="ymz-project-line-options" role="radiogroup" aria-label="导图连线线型"><button type="button" data-project-line-style="curve" role="radio">曲线</button><button type="button" data-project-line-style="direct" role="radio">直线</button><button type="button" data-project-line-style="straight" role="radio">圆角折线</button></div></section>
+          <section class="ymz-project-style-panel__rainbow"><h4>彩虹连线配色</h4><div class="ymz-project-style-panel__rainbow-row"><label class="ymz-project-style-panel__switch"><input type="checkbox" data-project-style="rainbowLines"><strong>启用</strong></label><span class="ymz-project-style-panel__rainbow-separator" aria-hidden="true"></span><button type="button" class="ymz-rainbow-trigger" data-rainbow-trigger aria-haspopup="listbox" aria-expanded="false"><span data-rainbow-current-label>彩虹</span><i data-project-rainbow-preview aria-hidden="true"></i><span class="ymz-rainbow-trigger__arrow" aria-hidden="true">⌄</span></button><select data-project-style="rainbowScheme" aria-label="彩虹连线配色" hidden>${rainbowSchemeOptionsHtml('rainbow')}</select><div data-rainbow-picker hidden></div></div></section>
+          <section class="ymz-project-style-panel__lines"><h4>线型</h4><div class="ymz-project-line-options" role="radiogroup" aria-label="导图连线线型"><button type="button" data-project-line-style="curve" role="radio">曲线</button><button type="button" data-project-line-style="direct" role="radio">直线</button><button type="button" data-project-line-style="polyline" role="radio">折线</button><button type="button" data-project-line-style="straight" role="radio">圆角</button></div></section>
           <section><h4>背景色</h4><div class="ymz-background-options"><button type="button" data-project-background="" title="主题背景">主题</button><button type="button" data-project-background="#ffffff" title="白色"></button><button type="button" data-project-background="#e2e8f0" title="岩灰"></button><button type="button" data-project-background="#ffe7ba" title="暖色"></button><button type="button" data-project-background="#c8f0dc" title="薄荷"></button><button type="button" data-project-background="#d7e8ff" title="天空"></button><button type="button" data-project-background="#f7cbd5" title="玫瑰"></button><button type="button" data-project-background="#0f172a" title="深色"></button></div><label class="ymz-project-style-panel__custom"><span>自定义</span><button type="button" class="ymz-node-color-trigger ymz-project-color-trigger" data-project-color-trigger="backgroundColor"><i data-project-color-swatch="backgroundColor"></i><span data-project-color-label="backgroundColor">默认</span></button></label></section>
           <footer><button type="button" data-project-style-action="reset">恢复主题默认</button></footer>
         </aside>
@@ -187,13 +231,13 @@ export function createEditorTemplate(title: string, theme: unknown = 'yemind-def
             </span>
             <span class="ymz-statusbar__separator" aria-hidden="true"></span>
             <span class="ymz-statusbar__group ymz-statusbar__group--utility">
-              <button class="ymz-icon-button is-active" data-action="toggle-minimap" title="隐藏缩略图" aria-label="隐藏缩略图" aria-pressed="true">${miniMapIcon()}</button>
+              <button class="ymz-icon-button" data-action="toggle-minimap" title="显示缩略图" aria-label="显示缩略图" aria-pressed="false">${miniMapIcon()}</button>
               <button class="ymz-icon-button" data-action="help" title="帮助" aria-label="帮助">${helpIcon()}</button>
             </span>
           </span>
           <button class="ymz-icon-button ymz-statusbar__overflow-trigger" data-action="toggle-status-overflow" title="更多底栏操作" aria-label="更多底栏操作" aria-haspopup="menu" aria-expanded="false">•••</button>
         </div>
-        <aside class="ymz-minimap" data-role="minimap" aria-label="导图缩略图">
+        <aside class="ymz-minimap" data-role="minimap" aria-label="导图缩略图" hidden>
           <div class="ymz-minimap__content" data-role="minimap-content" aria-hidden="true"></div>
           <div class="ymz-minimap__viewport" data-role="minimap-viewport" aria-label="当前可视区域"></div>
           <span class="ymz-minimap__label" aria-hidden="true">MINIMAP</span>
@@ -212,4 +256,14 @@ function escapeHtml(value: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
+}
+
+function searchPanelIcon(kind: 'disclosure' | 'previous' | 'next' | 'close'): string {
+  const path = {
+    disclosure: '<path d="m9 6 6 6-6 6"/>',
+    previous: '<path d="m6 14 6-6 6 6"/>',
+    next: '<path d="m6 10 6 6 6-6"/>',
+    close: '<path d="m7 7 10 10M17 7 7 17"/>',
+  }[kind];
+  return `<svg class="ymz-search-panel__icon ymz-search-panel__icon--${kind}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
 }

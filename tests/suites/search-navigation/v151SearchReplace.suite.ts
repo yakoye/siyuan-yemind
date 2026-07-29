@@ -30,8 +30,17 @@ describe('v1.5.1 Version47 search and replace', () => {
     expect(host.querySelector('[data-role="search-error"]')).not.toBeNull();
     expect(host.querySelector('[data-search-action="replace"]')).not.toBeNull();
     expect(host.querySelector('[data-search-action="replace-all"]')).not.toBeNull();
+    expect(host.querySelector('.ymz-search-panel__field--find [data-role="search-input"]')).not.toBeNull();
+    expect(host.querySelector('.ymz-search-panel__field--find .ymz-search-panel__options')).not.toBeNull();
+    expect(host.querySelector('.ymz-search-panel__nav [data-search-action="previous"]')).not.toBeNull();
+    expect(host.querySelector('.ymz-search-panel__nav [data-search-action="close"]')).not.toBeNull();
+    expect(host.querySelector('.ymz-search-panel__field--replace [data-role="replace-input"]')).not.toBeNull();
+    expect(host.querySelector('.ymz-search-panel__replace-actions [data-search-action="replace-all"]')).not.toBeNull();
     expect(css).toContain('.ymz-search-panel__options');
     expect(css).toMatch(/\.ymz-search-panel button\.is-active[^}]*color:var\(--ymz-accent\)/s);
+    expect(css).toMatch(/\.ymz-search-panel__field\{[^}]*background:var\(--ymz-input-bg\)/s);
+    expect(css).toMatch(/\.ymz-search-panel__field input\{[^}]*border:0!important[^}]*background:transparent!important/s);
+    expect(css).toMatch(/\.ymz-search-panel__disclosure\{[^}]*background:transparent/s);
   });
 
   it('V151-23 supports case-sensitive, whole-word and regex matching', () => {
@@ -136,8 +145,9 @@ describe('v1.5.1 Version47 search and replace', () => {
       updateMatchNodeList(list: any[]) {
         this.matchNodeList = list;
       },
-      searchNext() {
+      searchNext(callback: () => void) {
         if (this.matchNodeList.length) this.currentIndex = 0;
+        callback();
       },
       emitEvent: vi.fn(),
       clearHighlightOnReadonly: vi.fn(),
@@ -197,7 +207,67 @@ describe('v1.5.1 Version47 search and replace', () => {
     expect(data.text).toBe('alpha beta');
   });
 
-  it('V151-23 navigates duplicate advanced matches without rebuilding the result list', () => {
+  it('V151-24 replaces through the latest rendered node after search navigation refreshes node instances', () => {
+    const sourceData = { uid: 'node-1', text: 'alpha', richText: false };
+    const freshData = { uid: 'node-1', text: 'alpha', richText: false };
+    const sourceNode = {
+      data: sourceData,
+      children: [],
+      getData: (key?: string) => key ? sourceData[key as keyof typeof sourceData] : sourceData,
+    };
+    const staleRenderedNode = {
+      data: { ...freshData },
+      children: [],
+      getData(key?: string) {
+        return key ? this.data[key as keyof typeof this.data] : this.data;
+      },
+      setText(text: string) {
+        this.data.text = text;
+      },
+    };
+    const freshRenderedNode = {
+      data: freshData,
+      children: [],
+      getData: (key?: string) => key ? freshData[key as keyof typeof freshData] : freshData,
+      setText: (text: string) => {
+        freshData.text = text;
+      },
+    };
+    const search = {
+      matchNodeList: [] as any[],
+      currentIndex: -1,
+      searchText: '',
+      updateMatchNodeList(list: any[]) {
+        this.matchNodeList = list;
+      },
+      searchNext() {
+        if (!this.matchNodeList.length) return;
+        this.currentIndex = 0;
+        this.matchNodeList[0] = staleRenderedNode;
+      },
+      emitEvent: vi.fn(),
+      clearHighlightOnReadonly: vi.fn(),
+    };
+    const mindMap = {
+      renderer: {
+        renderTree: sourceNode,
+        activeNodeList: [],
+        findNodeByUid: vi.fn(() => freshRenderedNode),
+      },
+      opt: { readonly: false, isOnlySearchCurrentRenderNodes: false },
+      search,
+      render: vi.fn((done?: () => void) => done?.()),
+      command: { addHistory: vi.fn() },
+      execCommand: vi.fn(),
+    };
+    const commands = createCommandAdapter(mindMap as any);
+    commands.search('alpha', defaults);
+    commands.replaceSearchAll('beta', defaults);
+    expect(freshData.text).toBe('beta');
+    expect(staleRenderedNode.data.text).toBe('alpha');
+  });
+
+  it('V151-23 navigates duplicate advanced matches in both directions and refreshes the counter', () => {
     const data = { uid: 'node-1', text: 'alpha alpha', richText: false };
     const node = {
       data,
@@ -215,6 +285,9 @@ describe('v1.5.1 Version47 search and replace', () => {
       searchNext: vi.fn(function (this: typeof search) {
         this.currentIndex = (this.currentIndex + 1) % this.matchNodeList.length;
       }),
+      jump: vi.fn(function (this: typeof search, index: number) {
+        this.currentIndex = index;
+      }),
       emitEvent: vi.fn(),
       clearHighlightOnReadonly: vi.fn(),
     };
@@ -226,10 +299,13 @@ describe('v1.5.1 Version47 search and replace', () => {
 
     commands.search('alpha', defaults);
     commands.searchNext();
+    commands.searchPrevious();
 
     expect(search.search).not.toHaveBeenCalled();
     expect(search.searchNext).toHaveBeenCalledTimes(2);
-    expect(search.currentIndex).toBe(1);
+    expect(search.jump).toHaveBeenCalledWith(0);
+    expect(search.emitEvent).toHaveBeenCalledTimes(3);
+    expect(search.currentIndex).toBe(0);
   });
 
   it('V151-23 limits search to the currently selected nodes when requested', () => {

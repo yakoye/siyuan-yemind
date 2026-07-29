@@ -15,6 +15,7 @@ import {
   replaceSearchMatchesInHtml,
   type SearchOptions,
 } from '../editor/searchEngine';
+import { steppedZoomPercent } from '../editor/zoomPercent';
 
 export interface NodeImageInput {
   url: string | null;
@@ -78,6 +79,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   clearClipart(): void;
   clearClipartByUid(uid: string): void;
   insertFormula(formula: string, mode?: 'inline' | 'block'): void;
+  insertSymbol(symbol: string): boolean;
   addSummary(): void;
   removeSummary(): void;
   startRelation(): boolean;
@@ -132,6 +134,24 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     (mindMap as any).getConfig?.('readonly') ?? (mindMap as any).opt?.readonly,
   );
   const canMutate = (): boolean => !isReadonly();
+  const stepZoom = (direction: 'in' | 'out'): void => {
+    const view = (mindMap as any).view;
+    const current = Number(view?.scale) * 100;
+    const min = Number((mindMap as any).opt?.minZoomRatio ?? 20);
+    const max = Number((mindMap as any).opt?.maxZoomRatio ?? 400);
+    const target = steppedZoomPercent(current, direction, min, max);
+    if (typeof view?.setScale === 'function') {
+      const width = Number((mindMap as any).width);
+      const height = Number((mindMap as any).height);
+      if (Number.isFinite(width) && Number.isFinite(height)) {
+        view.setScale(target / 100, width / 2, height / 2);
+      } else {
+        view.setScale(target / 100);
+      }
+      return;
+    }
+    view?.[direction === 'in' ? 'enlarge' : 'narrow']?.(undefined, undefined, false);
+  };
   const forEachActive = (callback: (node: any) => void): void => activeNodes().forEach(callback);
   const richText = (): any => (mindMap as any).richText;
   const richRange = (): any => {
@@ -195,7 +215,7 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     plugin.searchText = text;
     plugin.currentIndex = -1;
     plugin.updateMatchNodeList?.(matches);
-    plugin.searchNext?.();
+    plugin.searchNext?.(() => {});
     plugin.emitEvent?.();
   };
   const replaceNodeSearchText = (
@@ -224,12 +244,26 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     const matches = Array.isArray(plugin?.matchNodeList) ? [...plugin.matchNodeList] : [];
     if (!query || matches.length === 0) return;
     const currentIndex = Math.max(0, Number(plugin.currentIndex ?? 0));
-    const currentNode = matches[currentIndex] ?? matches[0];
+    const latestNode = (node: any): any => {
+      const uid = String(searchNodeData(node).uid ?? '');
+      return (uid ? findNodeByUid(uid) : null) ?? node;
+    };
+    const sameSearchNode = (left: any, right: any): boolean => {
+      if (left === right) return true;
+      const leftUid = String(searchNodeData(left).uid ?? '');
+      const rightUid = String(searchNodeData(right).uid ?? '');
+      return Boolean(leftUid && rightUid && leftUid === rightUid);
+    };
+    const currentMatch = matches[currentIndex] ?? matches[0];
+    const currentNode = latestNode(currentMatch);
     const targets: Array<{ node: any; skip: number }> = replaceAll
-      ? [...new Set(matches)].map((node) => ({ node, skip: 0 }))
+      ? [...new Set(matches.map(latestNode))].map((node) => ({ node, skip: 0 }))
       : [{
         node: currentNode,
-        skip: matches.slice(0, currentIndex).filter((node) => node === currentNode).length,
+        skip: matches
+          .slice(0, currentIndex)
+          .filter((node) => sameSearchNode(node, currentMatch))
+          .length,
       }];
     let changed = false;
     targets.forEach(({ node, skip }) => {
@@ -339,8 +373,8 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     },
     resetZoom: () => mindMap.view.reset(),
     resetLayout: () => { if (canMutate()) mindMap.execCommand('RESET_LAYOUT'); },
-    zoomIn: () => mindMap.view.enlarge(undefined, undefined, false),
-    zoomOut: () => mindMap.view.narrow(undefined, undefined, false),
+    zoomIn: () => stepZoom('in'),
+    zoomOut: () => stepZoom('out'),
     edit: () => {
       if (!canMutate()) return;
       const node = primaryNode();
@@ -532,6 +566,32 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       }
       mindMap.execCommand('INSERT_FORMULA', value);
     },
+    insertSymbol: (symbol) => {
+      if (!canMutate() || !symbol) return false;
+      const node = primaryNode();
+      if (!node) return false;
+      const editor = richText();
+      const quill = editor?.quill;
+      const range = richRange();
+      if (quill && range) {
+        if (range.length > 0) quill.deleteText(range.index, range.length, 'user');
+        quill.insertText(range.index, symbol, 'user');
+        quill.setSelection(range.index + symbol.length, 0, 'silent');
+        return true;
+      }
+      const data = searchNodeData(node);
+      const current = String(data.text ?? '');
+      markNodeTextEdited(node);
+      if (data.richText) {
+        const next = /<\/p>\s*$/i.test(current)
+          ? current.replace(/<\/p>\s*$/i, `${symbol}</p>`)
+          : `${current}${symbol}`;
+        mindMap.execCommand('SET_NODE_TEXT', node, next, true, false);
+      } else {
+        mindMap.execCommand('SET_NODE_TEXT', node, `${current}${symbol}`, false, true);
+      }
+      return true;
+    },
     addSummary: () => { if (canMutate()) addCombinedSummary(mindMap as any, activeNodes()); },
     removeSummary: () => {
       if (!canMutate()) return;
@@ -651,8 +711,12 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     searchNext: () => {
       const search = (mindMap as any).search;
       if (!search?.searchText) return;
-      if (search.yemindAdvancedOptions) search.searchNext?.();
-      else search.search(search.searchText);
+      if (search.yemindAdvancedOptions) {
+        search.searchNext?.(() => {});
+        search.emitEvent?.();
+      } else {
+        search.search(search.searchText);
+      }
     },
     searchPrevious: () => {
       const search = (mindMap as any).search;
@@ -660,6 +724,7 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       if (!total) return;
       const current = Number(search.currentIndex ?? 0);
       search.jump((current - 1 + total) % total);
+      search.emitEvent?.();
     },
     replaceSearch: (text, options) => {
       if (options) applyAdvancedReplacement(text, options, false);

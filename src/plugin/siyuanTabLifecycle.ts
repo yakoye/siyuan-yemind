@@ -6,6 +6,7 @@ interface SiYuanTabLike {
   headElement?: HTMLElement | {
     isConnected?: boolean;
     classList?: { contains(name: string): boolean };
+    click?: () => void;
     getAttribute?(name: string): string | null;
     querySelector?<T extends Element = Element>(selectors: string): T | null;
   };
@@ -82,6 +83,23 @@ export function deduplicateRestoredMapTabs(
     });
   });
   return closed;
+}
+
+export function activateRestoredMapTab(
+  restored: SiYuanCustomLike[] | null | undefined,
+  mapId: string,
+): boolean {
+  const normalizedMapId = String(mapId ?? '').trim();
+  if (!normalizedMapId) return false;
+  const matches = (restored ?? []).filter((custom) => (
+    String(custom?.data?.mapId ?? '').trim() === normalizedMapId
+    && custom.tab?.headElement?.isConnected !== false
+  ));
+  const target = matches.find(isActive) ?? matches[0];
+  const head = target?.tab?.headElement;
+  if (!head || typeof head.click !== 'function') return false;
+  head.click();
+  return true;
 }
 
 function lazyCustomData(

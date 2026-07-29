@@ -27,6 +27,80 @@ test('opens the outline sidebar and returns to the map without losing the editor
   await expect(editor).toHaveAttribute('data-view', 'map');
 });
 
+test('keeps every center-topic glyph inside its rendered SVG text box', async ({ page }) => {
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const expectCenterTextFits = async (expectedText = '中心主题') => {
+    const centerText = editor.locator('.smm-node .smm-richtext-node-wrap').first();
+    await expect(centerText).toContainText(expectedText);
+    const geometry = await centerText.evaluate((element) => {
+      const foreignObject = element.closest('foreignObject');
+      const textRect = element.getBoundingClientRect();
+      const foreignRect = foreignObject?.getBoundingClientRect();
+      return {
+        textWidth: textRect.width,
+        textHeight: textRect.height,
+        foreignWidth: foreignRect?.width ?? 0,
+        foreignHeight: foreignRect?.height ?? 0,
+        fontSize: Number.parseFloat(getComputedStyle(element).fontSize),
+      };
+    });
+    expect(geometry.fontSize).toBe(25);
+    expect(geometry.foreignWidth).toBeGreaterThan(95);
+    expect(geometry.textWidth).toBeLessThanOrEqual(geometry.foreignWidth + 0.5);
+    expect(geometry.textHeight).toBeLessThanOrEqual(geometry.foreignHeight + 0.5);
+  };
+
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  await editor.locator('.smm-node').first().dblclick();
+  await textEditor.fill('未命名');
+  await editor.locator('[data-role="canvas"]').click({ position: { x: 24, y: 160 } });
+  await editor.locator('.smm-node').first().dblclick();
+  await textEditor.fill('中心主题');
+  await editor.locator('[data-role="canvas"]').click({ position: { x: 24, y: 160 } });
+  const visibleThemeButton = editor.locator('button.ymz-project-button:visible').filter({ hasText: '主题' });
+  if (await visibleThemeButton.count() > 0) {
+    await visibleThemeButton.click();
+  } else {
+    await editor.locator('[data-action="toggle-top-overflow"]').click();
+    await editor.getByRole('menuitem', { name: '主题' }).click();
+  }
+  await editor.locator('[data-project-choice-group="缤纷"]').click();
+  await editor.locator('[data-project-choice-value="scheme-rainbow"]').click();
+  await expectCenterTextFits();
+  await expect(editor.locator('[data-role="save-state-label"]')).toHaveText('已保存');
+  await page.reload();
+  await expectCenterTextFits();
+
+  await page.evaluate(async () => {
+    const request = indexedDB.open('yemind-web');
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const transaction = db.transaction('documents', 'readwrite');
+    const store = transaction.objectStore('documents');
+    const maps = await new Promise<any>((resolve, reject) => {
+      const get = store.get('maps');
+      get.onsuccess = () => resolve(get.result);
+      get.onerror = () => reject(get.error);
+    });
+    const map = maps.maps.find((item: any) => item.id === maps.activeMapId) ?? maps.maps[0];
+    map.data.data.text = '<p><span>G1架构总览</span></p>';
+    map.data.data.richText = true;
+    delete map.data.data.width;
+    delete map.data.data.customTextWidth;
+    store.put(maps, 'maps');
+    await new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  });
+  await page.reload();
+  await expectCenterTextFits('G1架构总览');
+});
+
 test('cycles appearance and reveals the outline drag grip only on approach', async ({ page }) => {
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
@@ -104,6 +178,146 @@ test('clears transient image and search overlays before opening cards', async ({
   await expect(editor.locator('.ymz-node-image-frame')).toHaveCSS('display', 'none');
 });
 
+test('完整节点卡片在管理和复习中保留图片备注批注与附件', async ({ page }) => {
+  const errors = recordPageErrors(page);
+  await resetWebApp(page);
+  await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('yemind-web', 1);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const transaction = db.transaction('documents', 'readwrite');
+    const store = transaction.objectStore('documents');
+    const maps = await new Promise<any>((resolve, reject) => {
+      const request = store.get('maps');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const map = maps.maps[0];
+    const uid = map.data.data.uid;
+    map.studyCards = [{
+      id: 'e2e-rich-card',
+      nodeUid: uid,
+      front: '什么是 LTSSM？',
+      back: '链路训练状态机',
+      status: 'new',
+      starred: false,
+      createdAt: 1_000,
+      updatedAt: 1_000,
+      dueAt: 1_000,
+      repetitions: 0,
+      lapses: 0,
+      intervalDays: 0,
+      easeFactor: 2.5,
+      source: {
+        version: 1,
+        capturedAt: 1_000,
+        nodeTextHtml: '<strong>LTSSM</strong><span class="ql-formula" data-value="x^2">x²</span>',
+        nodeTextPlain: 'LTSSM x²',
+        icons: ['yemind_star'],
+        tags: ['PCIe', 'SerDes'],
+        todo: { checked: true, text: '完成学习' },
+        hyperlink: 'https://example.com/ltssm',
+        hyperlinkTitle: 'LTSSM 规范',
+        image: {
+          src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+          title: '状态转换图',
+          kind: 'image',
+          width: 1,
+          height: 1,
+        },
+        noteHtml: '<p>进入 <em>Recovery</em></p>',
+        comments: [
+          { id: 'c1', text: '注意 Detect 状态', createdAt: 1, updatedAt: 1 },
+          { id: 'c2', text: '比较 L0 与 L0s', createdAt: 2, updatedAt: 2 },
+        ],
+      },
+    }];
+    store.put(maps, 'maps');
+    await new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  });
+  await page.reload();
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  await expect(editor).toBeVisible();
+  await editor.locator('[data-primary-view][data-action="view-cards"]').click();
+  await expect(editor).toHaveAttribute('data-study-view', 'cards');
+  await expect(editor.locator('[data-study-source-front]')).toContainText('完成学习');
+  await expect(editor.locator('[data-study-source-front]')).toContainText('PCIe');
+  await expect(editor.locator('[data-study-source-front] .ql-formula')).toBeVisible();
+  await editor.locator('[data-study-action="preview-source-image"]').click();
+  await expect(editor.locator('.ymz-image-lightbox')).toBeVisible();
+  await expect(editor.locator('.ymz-image-lightbox img')).toHaveAttribute('alt', '状态转换图');
+  await editor.getByRole('button', { name: '关闭图片预览' }).click();
+
+  await editor.locator('[data-study-action="flip"]').click();
+  await expect(editor.locator('[data-study-source-back]')).toContainText('Recovery');
+  await expect(editor.locator('[data-study-source-back]')).toContainText('注意 Detect 状态');
+  await editor.locator('[data-study-action="start-review"]').click();
+  await expect(editor).toHaveAttribute('data-study-view', 'review');
+  await expect(editor.locator('[data-study-source-front]')).toContainText('SerDes');
+  await editor.locator('[data-study-action="reveal"]').click();
+  await expect(editor.locator('[data-role="study-answer"]')).toContainText('比较 L0 与 L0s');
+  expect(errors).toEqual([]);
+});
+
+test('searches, navigates, validates regex and replaces map text', async ({ page }) => {
+  const errors = recordPageErrors(page);
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const visibleSearchButton = editor.locator('[data-action="open-search"]:visible');
+  if (await visibleSearchButton.count()) await visibleSearchButton.click();
+  else {
+    await editor.locator('[data-action="toggle-top-overflow"]').click();
+    await editor.locator('[data-action="open-search"]:visible').click();
+  }
+
+  const panel = editor.locator('[data-role="search-panel"]');
+  const find = panel.getByRole('textbox', { name: '查找' });
+  await expect(panel).toBeVisible();
+  await find.fill('中心主题');
+  await find.press('Enter');
+  await expect(panel.locator('[data-role="search-info"]')).toHaveText('1 / 1');
+  await panel.getByRole('button', { name: '下一个' }).click();
+  await panel.getByRole('button', { name: '上一个' }).click();
+  await expect(panel.locator('[data-role="search-info"]')).toHaveText('1 / 1');
+
+  for (const option of ['区分大小写', '全字匹配']) {
+    const button = panel.getByRole('button', { name: option });
+    await button.click();
+    await expect(button).toHaveAttribute('aria-pressed', 'true');
+    await button.click();
+    await expect(button).toHaveAttribute('aria-pressed', 'false');
+  }
+
+  const regex = panel.getByRole('button', { name: '使用正则表达式' });
+  await regex.click();
+  await find.fill('[');
+  await find.press('Enter');
+  await expect(panel.locator('[data-role="search-error"]')).toBeVisible();
+  await expect(panel.locator('[data-role="search-error"]')).not.toHaveText('');
+  await regex.click();
+
+  await find.fill('中心主题');
+  await find.press('Enter');
+  await panel.getByRole('button', { name: '展开替换' }).click();
+  const replace = panel.getByRole('textbox', { name: '替换' });
+  await replace.fill('浏览器替换');
+  await panel.locator('[data-search-action="replace"]').click();
+  await expect(editor.locator('.smm-node').first()).toContainText('浏览器替换');
+
+  await find.fill('浏览器替换');
+  await find.press('Enter');
+  await replace.fill('全部替换成功');
+  await panel.locator('[data-search-action="replace-all"]').click();
+  await expect(editor.locator('.smm-node').first()).toContainText('全部替换成功');
+  expect(errors).toEqual([]);
+});
+
 test('renders and toggles the real minimap and exposes reset zoom', async ({ page }) => {
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
@@ -117,11 +331,9 @@ test('renders and toggles the real minimap and exposes reset zoom', async ({ pag
   } else {
     await expect(editor.getByRole('button', { name: '重置缩放' })).toBeVisible();
     await expect(minimapToggle).toBeVisible();
-    await expect(minimap).toBeVisible();
-    await expect.poll(async () => minimap.locator('svg').count()).toBeGreaterThan(0);
-    await minimapToggle.click();
     await expect(minimap).toBeHidden();
     await minimapToggle.click();
     await expect(minimap).toBeVisible();
+    await expect.poll(async () => minimap.locator('svg').count()).toBeGreaterThan(0);
   }
 });

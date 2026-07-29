@@ -50,8 +50,8 @@ describe('v1.5.1 Version47 outline presentation', () => {
     expect(indexes.get('b1')).toBe(2);
   });
 
-  it('V151-13 aligns guides one pixel left and uses the row branch color', () => {
-    expect(controller).toContain('const x = Math.round(markerRect.left + markerRect.width / 2 - rootRect.left + root.scrollLeft) - 1');
+  it('V151-13 aligns the one-pixel guide body with the exact marker center and uses the row branch color', () => {
+    expect(controller).toContain('const x = Math.round(markerRect.left + markerRect.width / 2 - rootRect.left + root.scrollLeft - 0.5);');
     expect(controller).toContain("line.style.setProperty('--ymz-outline-guide-color', row.style.getPropertyValue('--ymz-outline-branch-color'))");
   });
 

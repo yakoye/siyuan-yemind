@@ -59,6 +59,8 @@ export class RichTextToolbar {
   private target: RichTextFormattingTarget | null = null;
   private activeColorKind: ColorKind = "color";
   private colorSessionOriginal: string | false = false;
+  private anchorFrame = 0;
+  private lastReportedRect: RichTextSelectionRect | null = null;
   private readonly onDocumentMouseDown = (event: MouseEvent): void => {
     const node = event.target as Node;
     if (this.element.contains(node) || this.colorPopover.contains(node)) return;
@@ -174,17 +176,23 @@ export class RichTextToolbar {
     this.formatInfo = formatInfo ?? {};
     this.syncState();
     this.element.hidden = false;
+    this.lastReportedRect = rectInfo;
     this.position(rectInfo);
+    this.trackLiveSelection();
   }
 
   hide(): void {
     this.element.hidden = true;
     this.colorPopover.hidden = true;
+    this.lastReportedRect = null;
+    window.cancelAnimationFrame(this.anchorFrame);
+    this.anchorFrame = 0;
   }
 
   destroy(): void {
     document.removeEventListener("mousedown", this.onDocumentMouseDown, true);
     window.removeEventListener("mouseup", this.onWindowMouseUp, true);
+    window.cancelAnimationFrame(this.anchorFrame);
     this.element.remove();
     this.colorPopover.remove();
     this.target = null;
@@ -514,6 +522,24 @@ export class RichTextToolbar {
   }
 
   private position(rect: RichTextSelectionRect): void {
+    const selection = window.getSelection();
+    if (
+      selection &&
+      selection.rangeCount > 0 &&
+      selection.anchorNode &&
+      this.root.contains(selection.anchorNode)
+    ) {
+      const live = selection.getRangeAt(0).getBoundingClientRect();
+      if (live && (live.width || live.height)) {
+        rect = {
+          left: live.left,
+          top: live.top,
+          right: live.right,
+          bottom: live.bottom,
+          width: live.width,
+        };
+      }
+    }
     const rootRect = this.root.getBoundingClientRect();
     const rootWidth =
       this.root.clientWidth || rootRect.width || window.innerWidth;
@@ -539,8 +565,22 @@ export class RichTextToolbar {
       below + measuredHeight < rootHeight
         ? below
         : Math.max(8, localTop - measuredHeight - 8);
-    this.element.style.left = `${Math.round(left)}px`;
-    this.element.style.top = `${Math.round(top)}px`;
-    this.element.style.maxWidth = `${Math.max(240, rootWidth - 16)}px`;
+    const nextLeft = `${Math.round(left)}px`;
+    const nextTop = `${Math.round(top)}px`;
+    const nextMaxWidth = `${Math.max(240, rootWidth - 16)}px`;
+    if (this.element.style.left !== nextLeft) this.element.style.left = nextLeft;
+    if (this.element.style.top !== nextTop) this.element.style.top = nextTop;
+    if (this.element.style.maxWidth !== nextMaxWidth) this.element.style.maxWidth = nextMaxWidth;
+  }
+
+  private trackLiveSelection(): void {
+    if (this.anchorFrame || this.element.hidden || !this.lastReportedRect) return;
+    const update = (): void => {
+      this.anchorFrame = 0;
+      if (this.element.hidden || !this.lastReportedRect) return;
+      this.position(this.lastReportedRect);
+      this.anchorFrame = window.requestAnimationFrame(update);
+    };
+    this.anchorFrame = window.requestAnimationFrame(update);
   }
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createEditorTemplate } from '../../../src/editor/editorTemplate';
 import { normalizeMapTitle } from '../../../src/editor/mapTitle';
-import { parseZoomPercent } from '../../../src/editor/zoomPercent';
+import { parseZoomPercent, steppedZoomPercent } from '../../../src/editor/zoomPercent';
 import { DEFAULT_SETTINGS } from '../../../src/settings/SettingsStore';
 
 describe('v0.9.29 floating toolbar controls', () => {
@@ -19,6 +19,14 @@ describe('v0.9.29 floating toolbar controls', () => {
     expect(parseZoomPercent('8', 20, 400)).toBe(20);
     expect(parseZoomPercent('900', 20, 400)).toBe(400);
     expect(parseZoomPercent('bad', 20, 400)).toBeNull();
+  });
+
+  it('snaps button zooming to clean 20-percent levels while manual input stays exact', () => {
+    expect(steppedZoomPercent(61, 'in', 20, 400)).toBe(80);
+    expect(steppedZoomPercent(61, 'out', 20, 400)).toBe(40);
+    expect(steppedZoomPercent(100, 'in', 20, 400)).toBe(120);
+    expect(steppedZoomPercent(100, 'out', 20, 400)).toBe(80);
+    expect(parseZoomPercent('61%', 20, 400)).toBe(61);
   });
 
   it('normalizes blank titles', () => {

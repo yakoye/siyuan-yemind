@@ -5750,7 +5750,7 @@ const YEMIND_THEME_PRESETS = [
   ...BASE_PRESETS,
   ...COLOR_PRESETS
 ];
-const THEME_IDS = new Set(YEMIND_THEME_PRESETS.map((item) => item.id));
+const THEME_IDS$1 = new Set(YEMIND_THEME_PRESETS.map((item) => item.id));
 const LEGACY_THEME_ALIASES = {
   default: "yemind-default",
   "kmind-default": "yemind-default",
@@ -5767,10 +5767,10 @@ const LEGACY_THEME_ALIASES = {
   "kmind-midnight-neon": "scheme-code",
   "kmind-rainbow-breeze": "scheme-rainbow"
 };
-const LINE_STYLES = /* @__PURE__ */ new Set(["curve", "straight", "direct"]);
+const LINE_STYLES = /* @__PURE__ */ new Set(["curve", "direct", "polyline", "straight"]);
 function normalizeThemePresetId(value) {
   if (typeof value === "string" && LEGACY_THEME_ALIASES[value]) return LEGACY_THEME_ALIASES[value];
-  return typeof value === "string" && THEME_IDS.has(value) ? value : "yemind-default";
+  return typeof value === "string" && THEME_IDS$1.has(value) ? value : "yemind-default";
 }
 function normalizeLineStyle(value) {
   return typeof value === "string" && LINE_STYLES.has(value) ? value : "curve";
@@ -5816,6 +5816,7 @@ function buildThemeConfig(options) {
   const variant = options.appearance === "dark" ? preset.dark : preset.light;
   const spacing2 = options.spacingConfig ?? {};
   const lineStyle = normalizeLineStyle(options.lineStyle);
+  const engineLineStyle = lineStyle === "polyline" ? "straight" : lineStyle;
   const root2 = { ...cloneLevel(variant.root, 0, 0), ...spacing2.root ?? {} };
   if (presetId === "ink-branch") root2.fontFamily = FONT_MONO;
   const second = { ...cloneLevel(variant.second, 100, 38), ...spacing2.second ?? {} };
@@ -5834,10 +5835,10 @@ function buildThemeConfig(options) {
       lineWidth: variant.lineWidth ?? 2,
       lineColor: variant.lineColor,
       lineDasharray: variant.lineDasharray ?? "none",
-      lineStyle,
+      lineStyle: engineLineStyle,
       rootLineKeepSameInCurve: true,
       rootLineStartPositionKeepSameInCurve: false,
-      lineRadius: variant.lineRadius ?? 10,
+      lineRadius: lineStyle === "polyline" ? 0 : lineStyle === "straight" ? Math.max(8, variant.lineRadius ?? 10) : variant.lineRadius ?? 10,
       generalizationLineWidth: Math.max(1, (variant.lineWidth ?? 2) - 0.5),
       generalizationLineColor: variant.generalizationLineColor,
       associativeLineWidth: 2,
@@ -5857,7 +5858,17 @@ function buildThemeConfig(options) {
 }
 function themeOptionsHtml(selected) {
   const value = normalizeThemePresetId(selected);
-  return ["基础", "缤纷", "经典"].map((group) => `<optgroup label="${group}">${YEMIND_THEME_PRESETS.filter((preset) => preset.group === group).map((preset) => `<option value="${preset.id}"${preset.id === value ? " selected" : ""}>${preset.label}</option>`).join("")}</optgroup>`).join("");
+  const groups2 = [
+    { label: "缤纷", presets: YEMIND_THEME_PRESETS.filter((preset) => preset.group === "缤纷") },
+    {
+      label: "经典",
+      presets: [
+        ...YEMIND_THEME_PRESETS.filter((preset) => preset.group === "基础"),
+        ...YEMIND_THEME_PRESETS.filter((preset) => preset.group === "经典")
+      ]
+    }
+  ];
+  return groups2.map(({ label, presets }) => `<optgroup label="${label}">${presets.map((preset) => `<option value="${preset.id}"${preset.id === value ? " selected" : ""}>${preset.label}</option>`).join("")}</optgroup>`).join("");
 }
 const definitions = [
   { presetId: "right-mindmap", engineLayout: "yemindRightMindMap", baseLayout: "logicalStructure", kind: "native", rootGrowth: "right", nodeGrowth: "right", siblingAxis: "y", branchMode: "fixed" },
@@ -6079,10 +6090,10 @@ function markerSvg(spriteUrl, item) {
 function createMarkerIconList(pluginBaseUrl) {
   const resolver = createRuntimeAssetResolver(pluginBaseUrl);
   const sprite = resolver.markerSpriteUrl();
-  const groups2 = markerCatalog.groups.map((group) => ({
-    name: group.label,
-    type: `yemarker${group.id}`,
-    list: markerCatalog.items.filter((item) => item.groupId === group.id).map((item) => ({ name: item.id, icon: markerSvg(sprite, item) }))
+  const groups2 = markerCatalog.groups.map((group2) => ({
+    name: group2.label,
+    type: `yemarker${group2.id}`,
+    list: markerCatalog.items.filter((item) => item.groupId === group2.id).map((item) => ({ name: item.id, icon: markerSvg(sprite, item) }))
   }));
   return groups2;
 }
@@ -6113,12 +6124,12 @@ function searchClipart(query, categoryId) {
 function groupLayouts() {
   const output = [];
   for (const item of layoutCatalog.items) {
-    let group = output.find((entry) => entry.id === item.groupId);
-    if (!group) {
-      group = { id: item.groupId, label: item.groupLabel, items: [] };
-      output.push(group);
+    let group2 = output.find((entry) => entry.id === item.groupId);
+    if (!group2) {
+      group2 = { id: item.groupId, label: item.groupLabel, items: [] };
+      output.push(group2);
     }
-    group.items.push(item);
+    group2.items.push(item);
   }
   return output;
 }
@@ -6464,6 +6475,146 @@ function createDefaultMap(title = "未命名导图", id = ((_b) => (_b = ((_a) =
     data: createDefaultTree(normalizedTitle)
   };
 }
+const BLOCKED_ELEMENTS = "script,style,iframe,object,embed,meta,link,base,form,input,button,textarea,select,option";
+function isUnsafeUrl(value, attributeName) {
+  const normalized2 = value.trim().replace(/[\u0000-\u001f\u007f\s]+/g, "").toLowerCase();
+  if (!normalized2) return false;
+  if (normalized2.startsWith("javascript:") || normalized2.startsWith("vbscript:")) return true;
+  if (!normalized2.startsWith("data:")) return false;
+  return attributeName === "src" ? !normalized2.startsWith("data:image/") : true;
+}
+function sanitizeRichHtml(value) {
+  const source = String(value ?? "");
+  if (typeof document === "undefined") {
+    return source.replace(/<(script|style|iframe|object|embed|meta|link|base|form|input|button|textarea|select|option)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "").replace(/<(script|style|iframe|object|embed|meta|link|base|form|input|button|textarea|select|option)\b[^>]*\/?\s*>/gi, "").replace(/\s+on[a-z0-9_-]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "").replace(/\s+(href|src)\s*=\s*(["'])\s*(?:javascript|vbscript):[\s\S]*?\2/gi, "");
+  }
+  const template = document.createElement("template");
+  template.innerHTML = source;
+  template.content.querySelectorAll(BLOCKED_ELEMENTS).forEach((node) => node.remove());
+  template.content.querySelectorAll("*").forEach((node) => {
+    Array.from(node.attributes).forEach((attribute) => {
+      const name = attribute.name.toLowerCase();
+      if (name.startsWith("on") || name === "srcdoc") {
+        node.removeAttribute(attribute.name);
+        return;
+      }
+      if ((name === "href" || name === "src" || name === "xlink:href") && isUnsafeUrl(attribute.value, name === "xlink:href" ? "href" : name)) {
+        node.removeAttribute(attribute.name);
+        return;
+      }
+      if (name === "style" && /(url\s*\(|expression\s*\(|javascript:|vbscript:|@import)/i.test(attribute.value)) {
+        node.removeAttribute(attribute.name);
+      }
+    });
+    if (node.tagName === "A" && node.getAttribute("target") === "_blank") {
+      node.setAttribute("rel", "noopener noreferrer");
+    }
+  });
+  return template.innerHTML;
+}
+const MAX_ACCESSORIES = 32;
+const MAX_COMMENTS = 200;
+function finiteTimestamp(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.round(number)) : 0;
+}
+function positiveDimension(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? Math.round(number) : void 0;
+}
+function uniqueStrings(value) {
+  if (!Array.isArray(value)) return [];
+  const result = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const item of value) {
+    const text2 = String(item ?? "").trim();
+    if (!text2 || seen.has(text2)) continue;
+    seen.add(text2);
+    result.push(text2);
+    if (result.length >= MAX_ACCESSORIES) break;
+  }
+  return result;
+}
+function safeResourceUrl(value) {
+  const source = String(value ?? "").trim();
+  const compact = source.replace(/[\u0000-\u001f\u007f\s]+/g, "").toLowerCase();
+  if (!compact || compact.startsWith("javascript:") || compact.startsWith("vbscript:")) return "";
+  if (compact.startsWith("data:") && !compact.startsWith("data:image/")) return "";
+  return source;
+}
+function normalizeTodo(value) {
+  if (!value || typeof value !== "object") return null;
+  const source = value;
+  const text2 = String(source.text ?? "").trim();
+  return {
+    checked: source.checked === true,
+    ...text2 ? { text: text2 } : {}
+  };
+}
+function normalizeComments(value) {
+  if (!Array.isArray(value)) return [];
+  const result = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const source = item;
+    const id = String(source.id ?? "").trim();
+    const text2 = String(source.text ?? "").trim();
+    if (!id || !text2 || seen.has(id)) continue;
+    seen.add(id);
+    const createdAt = finiteTimestamp(source.createdAt);
+    const updatedAt = Math.max(createdAt, finiteTimestamp(source.updatedAt));
+    result.push({ id, text: text2, createdAt, updatedAt });
+    if (result.length >= MAX_COMMENTS) break;
+  }
+  return result;
+}
+function normalizeImage(value) {
+  if (!value || typeof value !== "object") return null;
+  const source = value;
+  const src = safeResourceUrl(source.src);
+  if (!src) return null;
+  const width2 = positiveDimension(source.width);
+  const height2 = positiveDimension(source.height);
+  return {
+    src,
+    title: String(source.title ?? "").trim(),
+    kind: source.kind === "clipart" ? "clipart" : "image",
+    ...width2 ? { width: width2 } : {},
+    ...height2 ? { height: height2 } : {}
+  };
+}
+function normalizeStudyCardSource(value) {
+  if (!value || typeof value !== "object") return void 0;
+  const source = value;
+  return {
+    version: 1,
+    capturedAt: finiteTimestamp(source.capturedAt),
+    nodeTextHtml: sanitizeRichHtml(String(source.nodeTextHtml ?? "")).trim(),
+    nodeTextPlain: String(source.nodeTextPlain ?? "").trim(),
+    icons: uniqueStrings(source.icons),
+    tags: uniqueStrings(source.tags),
+    todo: normalizeTodo(source.todo),
+    hyperlink: safeResourceUrl(source.hyperlink),
+    hyperlinkTitle: String(source.hyperlinkTitle ?? "").trim(),
+    image: normalizeImage(source.image),
+    noteHtml: sanitizeRichHtml(String(source.noteHtml ?? "")).trim(),
+    comments: normalizeComments(source.comments)
+  };
+}
+function studyCardSourceSearchText(value) {
+  var _a, _b;
+  if (!value) return "";
+  return [
+    value.nodeTextPlain,
+    value.tags.join(" "),
+    ((_a = value.todo) == null ? void 0 : _a.text) ?? "",
+    value.hyperlinkTitle,
+    ((_b = value.image) == null ? void 0 : _b.title) ?? "",
+    value.noteHtml.replace(/<[^>]+>/g, " "),
+    ...value.comments.map((comment) => comment.text)
+  ].join("\n").replace(/\s+/g, " ").trim();
+}
 const DAY_MS = 24 * 60 * 60 * 1e3;
 const AGAIN_DELAY_MS = 10 * 60 * 1e3;
 function finiteNumber(value, fallback = 0) {
@@ -6478,6 +6629,7 @@ function normalizeStatus(value) {
 }
 function createStudyCard(input) {
   const now = finiteNumber(input.now, Date.now());
+  const source = normalizeStudyCardSource(input.source);
   return {
     id: String(input.id).trim(),
     nodeUid: String(input.nodeUid).trim(),
@@ -6491,7 +6643,8 @@ function createStudyCard(input) {
     repetitions: 0,
     lapses: 0,
     intervalDays: 0,
-    easeFactor: 2.5
+    easeFactor: 2.5,
+    ...source ? { source } : {}
   };
 }
 function normalizeStudyCards(value) {
@@ -6505,6 +6658,7 @@ function normalizeStudyCards(value) {
     const createdAt = Math.max(0, finiteNumber(source.createdAt));
     const updatedAt = Math.max(createdAt, finiteNumber(source.updatedAt, createdAt));
     const lastReviewedAt = finiteNumber(source.lastReviewedAt, -1);
+    const cardSource = normalizeStudyCardSource(source.source);
     const card = {
       id,
       nodeUid: String(source.nodeUid ?? "").trim(),
@@ -6518,7 +6672,8 @@ function normalizeStudyCards(value) {
       repetitions: nonNegativeInteger(source.repetitions),
       lapses: nonNegativeInteger(source.lapses),
       intervalDays: nonNegativeInteger(source.intervalDays),
-      easeFactor: Math.min(3, Math.max(1.3, finiteNumber(source.easeFactor, 2.5)))
+      easeFactor: Math.min(3, Math.max(1.3, finiteNumber(source.easeFactor, 2.5))),
+      ...cardSource ? { source: cardSource } : {}
     };
     if (lastReviewedAt >= 0) card.lastReviewedAt = lastReviewedAt;
     return [card];
@@ -6530,7 +6685,8 @@ function rateStudyCard(source, rating, reviewedAt = Date.now()) {
     nodeUid: source.nodeUid,
     front: source.front,
     back: source.back,
-    now: reviewedAt
+    now: reviewedAt,
+    source: source.source
   });
   if (rating === "again") {
     return {
@@ -6836,7 +6992,7 @@ function applyDialogChrome(dialog) {
 function createYeMindDialog(options) {
   return applyDialogChrome(new siyuan.Dialog(options));
 }
-function escapeHtml$g(value) {
+function escapeHtml$h(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function promptText(title, initialValue, placeholder = "") {
@@ -6845,7 +7001,7 @@ function promptText(title, initialValue, placeholder = "") {
     const dialog = createYeMindDialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$g(initialValue)}" placeholder="${escapeHtml$g(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
+      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$h(initialValue)}" placeholder="${escapeHtml$h(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
       destroyCallback: () => resolve(null)
     });
     const element = dialog.element;
@@ -6877,7 +7033,7 @@ function confirmAction(title, message, confirmText = "确定") {
     const dialog = createYeMindDialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><p>${escapeHtml$g(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$g(confirmText)}</button></div>`,
+      content: `<div class="b3-dialog__content"><p>${escapeHtml$h(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$h(confirmText)}</button></div>`,
       destroyCallback: () => resolve(false)
     });
     let completed = false;
@@ -6891,7 +7047,7 @@ function confirmAction(title, message, confirmText = "确定") {
     (_b = dialog.element.querySelector(".b3-button--text")) == null ? void 0 : _b.addEventListener("click", () => finish(true));
   });
 }
-function escapeHtml$f(value) {
+function escapeHtml$g(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function renderReport(report) {
@@ -6902,7 +7058,7 @@ function renderReport(report) {
   </div>
   <div class="ymz-diagnostics-list">${report.items.map((item) => `<div class="ymz-diagnostics-check" data-status="${item.status}">
     <span class="ymz-diagnostics-check__mark">${item.status === "pass" ? "✓" : item.status === "warning" ? "!" : "×"}</span>
-    <div><b>${escapeHtml$f(item.id)}</b><p>${escapeHtml$f(item.summary)}</p></div>
+    <div><b>${escapeHtml$g(item.id)}</b><p>${escapeHtml$g(item.summary)}</p></div>
   </div>`).join("")}</div>`;
 }
 function renderSearchState(service) {
@@ -6913,10 +7069,10 @@ function renderSearchState(service) {
     <dl>
       <div><dt>思源 / YeMind 结果</dt><dd>${state.nativeResultCount} / ${state.yemindResultCount}</dd></div>
       <div><dt>列表 / 预览</dt><dd>${state.listMounted ? "已挂载" : "未挂载"} / ${state.previewVisible ? "可见" : "不可见"}</dd></div>
-      <div><dt>最后步骤</dt><dd>${escapeHtml$f(state.lastNavigationStep)}</dd></div>
+      <div><dt>最后步骤</dt><dd>${escapeHtml$g(state.lastNavigationStep)}</dd></div>
       <div><dt>导航结果</dt><dd>${navigation}</dd></div>
     </dl>
-    ${state.lastFailure ? `<p>${escapeHtml$f(state.lastFailure)}</p>` : ""}
+    ${state.lastFailure ? `<p>${escapeHtml$g(state.lastFailure)}</p>` : ""}
   </div>`;
 }
 function openDiagnosticsDialog(service) {
@@ -7041,7 +7197,7 @@ function resolveVersionConsistency(manifestVersion) {
     consistent: manifest !== "unknown" && manifest === runtime && runtime === build2
   };
 }
-function escapeHtml$e(value) {
+function escapeHtml$f(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 async function writeClipboard(text2) {
@@ -7063,25 +7219,25 @@ function createAboutDialogTemplate() {
   return `<div class="ymz-about-dialog">
     <div class="ymz-about-hero">
       <img src="${ROOT_ICON_URL}" alt="YeMind">
-      <div><h3>${escapeHtml$e(RELEASE_INFO.productName)}</h3><p>${escapeHtml$e(RELEASE_INFO.releaseSummary)}</p></div>
+      <div><h3>${escapeHtml$f(RELEASE_INFO.productName)}</h3><p>${escapeHtml$f(RELEASE_INFO.releaseSummary)}</p></div>
     </div>
     <div class="ymz-settings-group ymz-about-version-card">
       <h3>版本信息</h3>
       <dl class="ymz-about-version-grid">
-        <div><dt>当前版本</dt><dd>${escapeHtml$e(RELEASE_INFO.version)}</dd></div>
+        <div><dt>当前版本</dt><dd>${escapeHtml$f(RELEASE_INFO.version)}</dd></div>
         <div><dt>插件声明版本</dt><dd data-about-version="manifest">正在读取…</dd></div>
-        <div><dt>运行时代码版本</dt><dd data-about-version="runtime">${escapeHtml$e(RELEASE_INFO.version)}</dd></div>
-        <div><dt>构建版本</dt><dd data-about-version="build">${escapeHtml$e(RELEASE_INFO.buildVersion)}</dd></div>
-        <div><dt>构建标识</dt><dd>${escapeHtml$e(RELEASE_INFO.buildId)}</dd></div>
-        <div><dt>构建时间</dt><dd>${escapeHtml$e(RELEASE_INFO.buildTime)}</dd></div>
+        <div><dt>运行时代码版本</dt><dd data-about-version="runtime">${escapeHtml$f(RELEASE_INFO.version)}</dd></div>
+        <div><dt>构建版本</dt><dd data-about-version="build">${escapeHtml$f(RELEASE_INFO.buildVersion)}</dd></div>
+        <div><dt>构建标识</dt><dd>${escapeHtml$f(RELEASE_INFO.buildId)}</dd></div>
+        <div><dt>构建时间</dt><dd>${escapeHtml$f(RELEASE_INFO.buildTime)}</dd></div>
         <div><dt>思源版本</dt><dd data-about-version="siyuan">正在读取…</dd></div>
-        <div><dt>开发基线</dt><dd>${escapeHtml$e(RELEASE_INFO.hostBaseline)}</dd></div>
+        <div><dt>开发基线</dt><dd>${escapeHtml$f(RELEASE_INFO.hostBaseline)}</dd></div>
       </dl>
       <div class="ymz-about-consistency" data-about-consistency="pending">正在检查版本一致性…</div>
     </div>
     <div class="ymz-settings-group ymz-about-highlights">
       <h3>本版更新</h3>
-      <ul>${RELEASE_INFO.highlights.map((item) => `<li>${escapeHtml$e(item)}</li>`).join("")}</ul>
+      <ul>${RELEASE_INFO.highlights.map((item) => `<li>${escapeHtml$f(item)}</li>`).join("")}</ul>
     </div>
     <div class="ymz-about-actions">
       <button class="b3-button b3-button--outline" data-about-action="copy-version">复制版本信息</button>
@@ -7295,6 +7451,7 @@ const DEFAULT_SETTINGS = {
   outerFramePaddingX: 10,
   outerFramePaddingY: 10,
   toolbarsPinned: true,
+  favoriteThemeIds: [],
   shortcutMap: { ...DEFAULT_SHORTCUTS }
 };
 const LAYOUTS = /* @__PURE__ */ new Set(["logicalStructure", "logicalStructureLeft", "mindMap", "organizationStructure", "catalogOrganization"]);
@@ -7304,6 +7461,7 @@ const LINK_MODES = /* @__PURE__ */ new Set(["new-window", "current-window"]);
 const CLOZE_MODES = /* @__PURE__ */ new Set(["hidden", "blur"]);
 const VIEW_MODES = /* @__PURE__ */ new Set(["map", "split", "outline"]);
 const SHORTCUT_COMMANDS = Object.keys(DEFAULT_SHORTCUTS);
+const THEME_IDS = new Set(YEMIND_THEME_PRESETS.map((preset) => preset.id));
 function numberInRange(value, fallback, min, max) {
   const number = Number(value);
   return Number.isFinite(number) && number >= min && number <= max ? number : fallback;
@@ -7333,6 +7491,16 @@ function normalizeShortcutMap(value) {
     result[key] = typeof current === "string" ? current.trim() : DEFAULT_SHORTCUTS[key];
     return result;
   }, {});
+}
+function normalizeFavoriteThemeIds(value) {
+  if (!Array.isArray(value)) return [];
+  const seen = /* @__PURE__ */ new Set();
+  return value.reduce((result, item) => {
+    if (typeof item !== "string" || !THEME_IDS.has(item) || seen.has(item)) return result;
+    seen.add(item);
+    result.push(item);
+    return result;
+  }, []);
 }
 function normalizeSettings(value) {
   const tabSize = Number(value.codeBlockTabSize);
@@ -7380,6 +7548,7 @@ function normalizeSettings(value) {
     outerFramePaddingX: integerClamped(value.outerFramePaddingX, DEFAULT_SETTINGS.outerFramePaddingX, 0, 80),
     outerFramePaddingY: integerClamped(value.outerFramePaddingY, DEFAULT_SETTINGS.outerFramePaddingY, 0, 80),
     toolbarsPinned: booleanOrDefault(value.toolbarsPinned, DEFAULT_SETTINGS.toolbarsPinned),
+    favoriteThemeIds: normalizeFavoriteThemeIds(value.favoriteThemeIds),
     shortcutMap: normalizeShortcutMap(value.shortcutMap)
   };
 }
@@ -7396,12 +7565,20 @@ class SettingsStore {
     this.emit();
   }
   get() {
-    return { ...this.state, shortcutMap: { ...this.state.shortcutMap } };
+    return {
+      ...this.state,
+      favoriteThemeIds: [...this.state.favoriteThemeIds],
+      shortcutMap: { ...this.state.shortcutMap }
+    };
   }
   update(patch) {
     const operation = this.updateQueue.then(async () => {
       const next2 = normalizeSettings({ ...this.state, ...patch });
-      const snapshot = { ...next2, shortcutMap: { ...next2.shortcutMap } };
+      const snapshot = {
+        ...next2,
+        favoriteThemeIds: [...next2.favoriteThemeIds],
+        shortcutMap: { ...next2.shortcutMap }
+      };
       await this.storage.save(snapshot);
       this.state = next2;
       this.emit();
@@ -7530,21 +7707,18 @@ function canvasModeIcon(mode) {
   return '<svg class="ymz-toolbar-icon ymz-icon-canvas-pan" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.4 11.2V7.8a1.5 1.5 0 0 1 3 0v2.6-4.1a1.5 1.5 0 0 1 3 0v4.1-3.1a1.5 1.5 0 0 1 3 0v4.1-1.9a1.5 1.5 0 0 1 3 0v5.1c0 4.1-2.8 6.4-6.6 6.4h-1.1c-2.5 0-4.1-1.1-5.4-3l-2.2-3.2a1.6 1.6 0 0 1 .4-2.2 1.7 1.7 0 0 1 2.2.3l.7.9v-2.6Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 function appearanceIcon(mode) {
-  if (mode === "light") {
-    return '<svg class="ymz-toolbar-icon ymz-icon-appearance-light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
-  }
-  if (mode === "dark") {
-    return '<svg class="ymz-toolbar-icon ymz-icon-appearance-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.8 15.2A8 8 0 0 1 8.8 4.2 8.1 8.1 0 1 0 19.8 15.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';
-  }
-  return '<svg class="ymz-toolbar-icon ymz-icon-appearance-system ymz-icon-appearance-auto" viewBox="0 0 24 24" aria-hidden="true"><path class="ymz-appearance-sun" d="M12 3v2.2M5.64 5.64 7.2 7.2M3 12h2.2M5.64 18.36 7.2 16.8" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/><path class="ymz-appearance-moon" d="M19.2 14.4A7.2 7.2 0 0 1 9.6 4.8a7.4 7.4 0 1 0 9.6 9.6Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/></svg>';
+  const id = mode === "light" ? "iconLight" : mode === "dark" ? "iconDark" : "iconMode";
+  const modifier = mode === "system" ? " ymz-icon-appearance-auto" : "";
+  const fallback = mode === "light" ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>' : mode === "dark" ? '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>' : '<path d="M12 2v2M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715M16 12a4 4 0 0 0-4-4m7-3-1.256 1.256M20 12h2"/>';
+  return `<svg class="ymz-toolbar-icon ymz-icon-appearance-${mode}${modifier}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use class="ymz-siyuan-icon-use" href="#${id}" xlink:href="#${id}"></use><g class="ymz-siyuan-icon-fallback">${fallback}</g></svg>`;
 }
 function transferIcon(kind) {
   const arrow = kind === "import" ? "M12 4v10m-4-4 4 4 4-4" : "M12 14V4m-4 4 4-4 4 4";
   return `<svg class="ymz-toolbar-icon ymz-icon-transfer ymz-icon-transfer--${kind}" viewBox="0 0 24 24" aria-hidden="true"><path d="${arrow}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 14v5h14v-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 function zoomIcon(kind) {
-  const vertical = kind === "in" ? '<path d="M12 8v8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>' : "";
-  return `<svg class="ymz-toolbar-icon ymz-icon-zoom ymz-icon-zoom--${kind}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 12h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>${vertical}<path d="m16 16 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
+  const vertical = kind === "in" ? '<line x1="11" x2="11" y1="8" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' : "";
+  return `<svg class="ymz-toolbar-icon ymz-icon-zoom ymz-icon-zoom--${kind}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/><line x1="21" x2="16.65" y1="21" y2="16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" x2="14" y1="11" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>${vertical}</svg>`;
 }
 function helpIcon() {
   return '<svg class="ymz-toolbar-icon ymz-icon-help" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9.7 9a2.5 2.5 0 1 1 3.3 2.4c-.8.3-1 1-1 1.8v.3M12 17.5h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
@@ -7558,8 +7732,12 @@ function miniMapIcon() {
 function presentationIcon() {
   return '<svg class="ymz-toolbar-icon ymz-icon-presentation" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m10 8 5 2.5-5 2.5V8ZM12 17v4M8 21h8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
-function brandIcon() {
-  return '<svg class="ymz-brand-icon ymz-brand-icon--network" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7.5" fill="#22c9a0"/><g fill="none" stroke="#fff" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"><rect class="ymz-brand-node" x="11" y="11" width="10" height="10" rx="2.4"/><path d="M11.8 12 8 8.2M20.2 12 24 8.2M11 16H6.5M21 16h4.5M11.8 20 8 23.8M20.2 20l3.8 3.8"/></g><g fill="#fff"><circle cx="6.6" cy="6.8" r="2.1"/><circle cx="25.4" cy="6.8" r="2.1"/><circle cx="4.5" cy="16" r="2.1"/><circle cx="27.5" cy="16" r="2.1"/><circle cx="6.6" cy="25.2" r="2.1"/><circle cx="25.4" cy="25.2" r="2.1"/></g></svg>';
+function brandIcon(pluginBaseUrl) {
+  const resolver = createRuntimeAssetResolver(pluginBaseUrl);
+  const icon32 = resolver.url("yemind-icon-32.png");
+  const icon64 = resolver.url("yemind-icon-64.png");
+  const icon128 = resolver.url("yemind-icon-128.png");
+  return `<img class="ymz-brand-icon" src="${icon32}" srcset="${icon64} 2x, ${icon128} 4x" alt="" aria-hidden="true" draggable="false">`;
 }
 function primaryViewIcon(kind) {
   const paths = {
@@ -7599,9 +7777,10 @@ function projectControlIcon(kind) {
   return iconSlot('<svg class="ymz-project-icon ymz-icon-theme" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 4.2 10 2.8h4l1.8 1.4 3.2 1.2-1.5 4.1V21H6.5V9.5L5 5.4l3.2-1.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.2 4.2c.8 1.7 2 2.6 3.8 2.6s3-.9 3.8-2.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>', "ymz-icon-slot--project");
 }
 function lineStyleIcon(style) {
-  const normalized2 = style === "straight" || style === "direct" ? style : "curve";
-  const path2 = normalized2 === "curve" ? "M3 18C8 18 8 6 14 6h7" : normalized2 === "straight" ? "M3 18h8V6h10" : "M3 18 14 6h7";
-  return iconSlot(`<svg class="ymz-line-icon ymz-line-icon--${normalized2}" viewBox="0 0 24 24"><path d="${path2}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`, "ymz-icon-slot--project");
+  const normalized2 = style === "straight" || style === "direct" || style === "polyline" ? style : "curve";
+  const path2 = normalized2 === "curve" ? "M3 18C8 18 8 6 14 6h7" : normalized2 === "straight" || normalized2 === "polyline" ? "M3 18h8V6h10" : "M3 18 14 6h7";
+  const lineJoin = normalized2 === "polyline" ? "miter" : "round";
+  return iconSlot(`<svg class="ymz-line-icon ymz-line-icon--${normalized2}" viewBox="0 0 24 24"><path d="${path2}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="${lineJoin}"/></svg>`, "ymz-icon-slot--project");
 }
 function summaryIcon() {
   return suppliedIcon("summary");
@@ -7637,7 +7816,10 @@ function outerFrameIcon() {
   return suppliedIcon("outerFrame");
 }
 function fullscreenIcon() {
-  return '<svg class="ymz-toolbar-icon ymz-icon-fullscreen" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H5v4M15 5h4v4M9 19H5v-4M15 19h4v-4M5.5 8.5 9 5M15 5l3.5 3.5M5.5 15.5 9 19M15 19l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  return '<svg class="ymz-toolbar-icon ymz-icon-fullscreen" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+function panelCloseIcon() {
+  return '<svg class="ymz-toolbar-icon ymz-icon-panel-close" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 }
 function pinIcon(pinned = false) {
   if (pinned) {
@@ -7667,24 +7849,24 @@ const SHORTCUT_ROWS = [
   { key: "summary", label: "概要", group: "节点命令" },
   { key: "relation", label: "关联线", group: "节点命令" }
 ];
-function escapeHtml$d(value) {
+function escapeHtml$e(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function checked(value) {
   return value ? " checked" : "";
 }
 function option$1(value, label, current) {
-  return `<option value="${escapeHtml$d(value)}"${value === current ? " selected" : ""}>${escapeHtml$d(label)}</option>`;
+  return `<option value="${escapeHtml$e(value)}"${value === current ? " selected" : ""}>${escapeHtml$e(label)}</option>`;
 }
 function switchRow(title, description, key, value) {
   return `<label class="ymz-settings-row ymz-settings-row--switch">
-    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
+    <span><b>${escapeHtml$e(title)}</b><small>${escapeHtml$e(description)}</small></span>
     <input class="b3-switch" type="checkbox" data-setting="${String(key)}"${checked(value)}>
   </label>`;
 }
 function selectRow(title, description, key, options) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
+    <span><b>${escapeHtml$e(title)}</b><small>${escapeHtml$e(description)}</small></span>
     <select class="b3-select fn__size200" data-setting="${String(key)}">${options}</select>
   </label>`;
 }
@@ -7704,24 +7886,24 @@ function canvasModeRow(settings) {
 }
 function textRow(title, description, key, value) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
-    <input class="b3-text-field fn__size200" type="text" data-setting="${String(key)}" value="${escapeHtml$d(value)}">
+    <span><b>${escapeHtml$e(title)}</b><small>${escapeHtml$e(description)}</small></span>
+    <input class="b3-text-field fn__size200" type="text" data-setting="${String(key)}" value="${escapeHtml$e(value)}">
   </label>`;
 }
 function numberRow(title, description, key, value, min, max, step, suffix) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
-    <span class="ymz-settings-number"><input class="b3-text-field" type="number" data-setting="${String(key)}" value="${value}" min="${min}" max="${max}" step="${step}"><em>${escapeHtml$d(suffix)}</em></span>
+    <span><b>${escapeHtml$e(title)}</b><small>${escapeHtml$e(description)}</small></span>
+    <span class="ymz-settings-number"><input class="b3-text-field" type="number" data-setting="${String(key)}" value="${value}" min="${min}" max="${max}" step="${step}"><em>${escapeHtml$e(suffix)}</em></span>
   </label>`;
 }
 function shortcutsHtml(shortcuts) {
   let currentGroup = "";
   return SHORTCUT_ROWS.map((row) => {
-    const group = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$d(row.group)}</h3>` : "";
+    const group2 = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$e(row.group)}</h3>` : "";
     currentGroup = row.group;
-    return `${group}<div class="ymz-shortcut-row" data-shortcut-row="${row.key}">
-      <span class="ymz-shortcut-row__label">${escapeHtml$d(row.label)}</span>
-      <input class="b3-text-field" data-shortcut="${row.key}" value="${escapeHtml$d(shortcuts[row.key])}" placeholder="未设置">
+    return `${group2}<div class="ymz-shortcut-row" data-shortcut-row="${row.key}">
+      <span class="ymz-shortcut-row__label">${escapeHtml$e(row.label)}</span>
+      <input class="b3-text-field" data-shortcut="${row.key}" value="${escapeHtml$e(shortcuts[row.key])}" placeholder="未设置">
       <button class="b3-button b3-button--outline" data-shortcut-action="record" data-shortcut-key="${row.key}">录制</button>
       <button class="b3-button b3-button--cancel" data-shortcut-action="disable" data-shortcut-key="${row.key}">禁用</button>
       <button class="b3-button b3-button--outline" data-shortcut-action="restore" data-shortcut-key="${row.key}">恢复默认</button>
@@ -8076,7 +8258,7 @@ class YeMindDockView {
         const row = document.createElement("div");
         row.className = `ymz-dock__item${map2.id === activeId ? " is-active" : ""}`;
         row.dataset.mapId = map2.id;
-        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$c(map2.title)}">${escapeHtml$c(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
+        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$d(map2.title)}">${escapeHtml$d(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
         body.appendChild(row);
       });
     }
@@ -8125,7 +8307,7 @@ function registerYeMindDock(plugin, host) {
     }
   });
 }
-function escapeHtml$c(value) {
+function escapeHtml$d(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 const CONSTANTS = {
@@ -16948,7 +17130,7 @@ function setTag$6(tag) {
 function setShape(shape) {
   this.mindMap.execCommand("SET_NODE_SHAPE", this, shape);
 }
-function setStyle(prop, value) {
+function setStyle$1(prop, value) {
   this.mindMap.execCommand("SET_NODE_STYLE", this, prop, value);
 }
 function setStyles(style) {
@@ -16964,7 +17146,7 @@ const nodeCommandWrapsMethods = {
   setAttachment,
   setTag: setTag$6,
   setShape,
-  setStyle,
+  setStyle: setStyle$1,
   setStyles
 };
 const hyperlink = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1024 1024" ><path d="M435.484444 251.733333v68.892445L295.822222 320.682667a168.504889 168.504889 0 0 0-2.844444 336.952889h142.506666v68.892444H295.822222a237.397333 237.397333 0 0 1 0-474.794667h139.662222z m248.945778 0a237.397333 237.397333 0 0 1 0 474.851556H544.654222v-69.006222l139.776 0.056889a168.504889 168.504889 0 0 0 2.844445-336.952889H544.597333V251.676444h139.776z m-25.827555 203.946667a34.474667 34.474667 0 0 1 0 68.892444H321.649778a34.474667 34.474667 0 0 1 0-68.892444h336.952889z" ></path></svg>';
@@ -27387,7 +27569,7 @@ function updateStableTreeDropIntent(state, candidate, now, options = {}) {
     pending: { candidate, since: now, frames: 1 }
   };
 }
-function clamp$4(value, minimum, maximum) {
+function clamp$5(value, minimum, maximum) {
   return Math.max(minimum, Math.min(maximum, value));
 }
 function distanceToRange(value, start, end) {
@@ -27773,7 +27955,7 @@ function pointDistanceToRect(point2, rect2) {
   );
 }
 function logicalExpandedRect(rect2, retention = false) {
-  const vertical = clamp$4(
+  const vertical = clamp$5(
     rect2.height * (retention ? 0.72 : 0.52),
     LOGICAL_LOCAL_MIN_VERTICAL_PADDING,
     retention ? LOGICAL_LOCAL_MAX_VERTICAL_PADDING + 10 : LOGICAL_LOCAL_MAX_VERTICAL_PADDING
@@ -49462,27 +49644,27 @@ var ESCAPE_LOOKUP = {
 };
 var ESCAPE_REGEX = /[&><"']/g;
 var escape = (text2) => String(text2).replace(ESCAPE_REGEX, (match2) => ESCAPE_LOOKUP[match2]);
-var getBaseElem = (group) => {
-  if (group.type === "ordgroup") {
-    if (group.body.length === 1) {
-      return getBaseElem(group.body[0]);
+var getBaseElem = (group2) => {
+  if (group2.type === "ordgroup") {
+    if (group2.body.length === 1) {
+      return getBaseElem(group2.body[0]);
     } else {
-      return group;
+      return group2;
     }
-  } else if (group.type === "color") {
-    if (group.body.length === 1) {
-      return getBaseElem(group.body[0]);
+  } else if (group2.type === "color") {
+    if (group2.body.length === 1) {
+      return getBaseElem(group2.body[0]);
     } else {
-      return group;
+      return group2;
     }
-  } else if (group.type === "font") {
-    return getBaseElem(group.body);
+  } else if (group2.type === "font") {
+    return getBaseElem(group2.body);
   } else {
-    return group;
+    return group2;
   }
 };
 var characterNodesTypes = /* @__PURE__ */ new Set(["mathord", "textord", "atom"]);
-var isCharacterBox = (group) => characterNodesTypes.has(getBaseElem(group).type);
+var isCharacterBox = (group2) => characterNodesTypes.has(getBaseElem(group2).type);
 var protocolFromUrl = (url) => {
   var protocol = /^[\x00-\x20]*([^\\/#?]*?)(:|&#0*58|&#x0*3a|&colon)/i.exec(url);
   if (!protocol) {
@@ -50502,18 +50684,18 @@ class LineNode {
     return markup;
   }
 }
-function assertSymbolDomNode(group) {
-  if (group instanceof SymbolNode) {
-    return group;
+function assertSymbolDomNode(group2) {
+  if (group2 instanceof SymbolNode) {
+    return group2;
   } else {
-    throw new Error("Expected symbolNode but got " + String(group) + ".");
+    throw new Error("Expected symbolNode but got " + String(group2) + ".");
   }
 }
-function assertSpan(group) {
-  if (group instanceof Span) {
-    return group;
+function assertSpan(group2) {
+  if (group2 instanceof Span) {
+    return group2;
   } else {
-    throw new Error("Expected span<HtmlDomNode> but got " + String(group) + ".");
+    throw new Error("Expected span<HtmlDomNode> but got " + String(group2) + ".");
   }
 }
 var hasHtmlDomChildren = (node) => node instanceof Span || node instanceof Anchor || node instanceof DocumentFragment;
@@ -52803,10 +52985,10 @@ var symbols = {
   "math": {},
   "text": {}
 };
-function defineSymbol(mode, font, group, replace, name, acceptUnicodeChar) {
+function defineSymbol(mode, font, group2, replace, name, acceptUnicodeChar) {
   symbols[mode][name] = {
     font,
-    group,
+    group: group2,
     replace
   };
   if (acceptUnicodeChar && replace) {
@@ -53721,9 +53903,9 @@ var boldSymbol = function boldSymbol2(value, mode, type) {
     };
   }
 };
-var makeOrd = function makeOrd2(group, options, type) {
-  var mode = group.mode;
-  var text2 = group.text;
+var makeOrd = function makeOrd2(group2, options, type) {
+  var mode = group2.mode;
+  var text2 = group2.text;
   var classes2 = ["mord"];
   var {
     font,
@@ -53864,11 +54046,11 @@ var makeFragment = function makeFragment2(children) {
   sizeElementFromChildren(fragment);
   return fragment;
 };
-var wrapFragment = function wrapFragment2(group, options) {
-  if (group instanceof DocumentFragment) {
-    return makeSpan([], [group], options);
+var wrapFragment = function wrapFragment2(group2, options) {
+  if (group2 instanceof DocumentFragment) {
+    return makeSpan([], [group2], options);
   }
-  return group;
+  return group2;
 };
 var getVListChildrenAndDepth = function getVListChildrenAndDepth2(params) {
   if (params.positionType === "individualShift") {
@@ -54386,12 +54568,12 @@ var makeNullDelimiter = function makeNullDelimiter2(options, classes2) {
   var moreClasses = ["nulldelimiter"].concat(options.baseSizingClasses());
   return makeSpan(classes2.concat(moreClasses));
 };
-var buildGroup$1 = function buildGroup(group, options, baseOptions) {
-  if (!group) {
+var buildGroup$1 = function buildGroup(group2, options, baseOptions) {
+  if (!group2) {
     return makeSpan();
   }
-  if (_htmlGroupBuilders[group.type]) {
-    var groupNode = _htmlGroupBuilders[group.type](group, options);
+  if (_htmlGroupBuilders[group2.type]) {
+    var groupNode = _htmlGroupBuilders[group2.type](group2, options);
     if (baseOptions && options.size !== baseOptions.size) {
       groupNode = makeSpan(options.sizingClasses(baseOptions), [groupNode], options);
       var multiplier = options.sizeMultiplier / baseOptions.sizeMultiplier;
@@ -54400,7 +54582,7 @@ var buildGroup$1 = function buildGroup(group, options, baseOptions) {
     }
     return groupNode;
   } else {
-    throw new ParseError("Got group of unknown type: '" + group.type + "'");
+    throw new ParseError("Got group of unknown type: '" + group2.type + "'");
   }
 };
 function buildHTMLUnbreakable(children, options) {
@@ -54658,7 +54840,7 @@ var makeRow = function makeRow2(body) {
 };
 var mathFontVariants = {
   mathit: "italic",
-  boldsymbol: (group) => group.type === "textord" ? "bold" : "bold-italic",
+  boldsymbol: (group2) => group2.type === "textord" ? "bold" : "bold-italic",
   mathbf: "bold",
   mathbb: "double-struck",
   mathsfit: "sans-serif-italic",
@@ -54668,8 +54850,8 @@ var mathFontVariants = {
   mathsf: "sans-serif",
   mathtt: "monospace"
 };
-var getVariant = (group, options) => {
-  if (group.mode === "text") {
+var getVariant = (group2, options) => {
+  if (group2.mode === "text") {
     if (options.fontFamily === "texttt") {
       return "monospace";
     } else if (options.fontFamily === "textsf") {
@@ -54694,12 +54876,12 @@ var getVariant = (group, options) => {
   if (!font || font === "mathnormal") {
     return null;
   }
-  var mode = group.mode;
+  var mode = group2.mode;
   var mathVariant = mathFontVariants[font];
   if (mathVariant) {
-    return typeof mathVariant === "function" ? mathVariant(group) : mathVariant;
+    return typeof mathVariant === "function" ? mathVariant(group2) : mathVariant;
   }
-  var text2 = group.text;
+  var text2 = group2.text;
   if (noVariantSymbols.has(text2)) {
     return null;
   }
@@ -54715,15 +54897,15 @@ var getVariant = (group, options) => {
   }
   return null;
 };
-function isNumberPunctuation(group) {
-  if (!group) {
+function isNumberPunctuation(group2) {
+  if (!group2) {
     return false;
   }
-  if (group.type === "mi" && group.children.length === 1) {
-    var child = group.children[0];
+  if (group2.type === "mi" && group2.children.length === 1) {
+    var child = group2.children[0];
     return child instanceof TextNode && child.text === ".";
-  } else if (group.type === "mo" && group.children.length === 1 && group.getAttribute("separator") === "true" && group.getAttribute("lspace") === "0em" && group.getAttribute("rspace") === "0em") {
-    var _child = group.children[0];
+  } else if (group2.type === "mo" && group2.children.length === 1 && group2.getAttribute("separator") === "true" && group2.getAttribute("lspace") === "0em" && group2.getAttribute("rspace") === "0em") {
+    var _child = group2.children[0];
     return _child instanceof TextNode && _child.text === ",";
   } else {
     return false;
@@ -54731,12 +54913,12 @@ function isNumberPunctuation(group) {
 }
 var buildExpression2 = function buildExpression3(expression, options, isOrdgroup) {
   if (expression.length === 1) {
-    var group = buildGroup2(expression[0], options);
-    if (isOrdgroup && group instanceof MathNode && group.type === "mo") {
-      group.setAttribute("lspace", "0em");
-      group.setAttribute("rspace", "0em");
+    var group2 = buildGroup2(expression[0], options);
+    if (isOrdgroup && group2 instanceof MathNode && group2.type === "mo") {
+      group2.setAttribute("lspace", "0em");
+      group2.setAttribute("rspace", "0em");
     }
-    return [group];
+    return [group2];
   }
   var groups2 = [];
   var lastGroup;
@@ -54780,14 +54962,14 @@ var buildExpression2 = function buildExpression3(expression, options, isOrdgroup
 var buildExpressionRow = function buildExpressionRow2(expression, options, isOrdgroup) {
   return makeRow(buildExpression2(expression, options, isOrdgroup));
 };
-var buildGroup2 = function buildGroup3(group, options) {
-  if (!group) {
+var buildGroup2 = function buildGroup3(group2, options) {
+  if (!group2) {
     return new MathNode("mrow");
   }
-  if (_mathmlGroupBuilders[group.type]) {
-    return _mathmlGroupBuilders[group.type](group, options);
+  if (_mathmlGroupBuilders[group2.type]) {
+    return _mathmlGroupBuilders[group2.type](group2, options);
   } else {
-    throw new ParseError("Got group of unknown type: '" + group.type + "'");
+    throw new ParseError("Got group of unknown type: '" + group2.type + "'");
   }
 };
 function buildMathML(tree, texExpression, options, isDisplayMode, forMathmlOnly) {
@@ -55219,12 +55401,12 @@ var katexImagesData = {
   xleftequilibrium: [["shortbaraboveleftharpoon", "shortrightharpoonabovebar"], 1.75, 716]
 };
 var wideAccentLabels = /* @__PURE__ */ new Set(["widehat", "widecheck", "widetilde", "utilde"]);
-var stretchySvg = function stretchySvg2(group, options) {
+var stretchySvg = function stretchySvg2(group2, options) {
   function buildSvgSpan_() {
     var viewBoxWidth = 4e5;
-    var label = group.label.slice(1);
-    if (wideAccentLabels.has(label) && "base" in group) {
-      var numChars = group.base.type === "ordgroup" ? group.base.body.length : 1;
+    var label = group2.label.slice(1);
+    if (wideAccentLabels.has(label) && "base" in group2) {
+      var numChars = group2.base.type === "ordgroup" ? group2.base.body.length : 1;
       var viewBoxHeight;
       var pathName;
       var _height;
@@ -55409,48 +55591,48 @@ function checkSymbolNodeType(node) {
   }
   return null;
 }
-var getBaseSymbol = (group) => {
-  if (group instanceof SymbolNode) {
-    return group;
+var getBaseSymbol = (group2) => {
+  if (group2 instanceof SymbolNode) {
+    return group2;
   }
-  if (hasHtmlDomChildren(group) && group.children.length === 1) {
-    return getBaseSymbol(group.children[0]);
+  if (hasHtmlDomChildren(group2) && group2.children.length === 1) {
+    return getBaseSymbol(group2.children[0]);
   }
 };
 var htmlBuilder$a = (grp, options) => {
   var base;
-  var group;
+  var group2;
   var supSubGroup;
   if (grp && grp.type === "supsub") {
-    group = assertNodeType(grp.base, "accent");
-    base = group.base;
+    group2 = assertNodeType(grp.base, "accent");
+    base = group2.base;
     grp.base = base;
     supSubGroup = assertSpan(buildGroup$1(grp, options));
-    grp.base = group;
+    grp.base = group2;
   } else {
-    group = assertNodeType(grp, "accent");
-    base = group.base;
+    group2 = assertNodeType(grp, "accent");
+    base = group2.base;
   }
   var body = buildGroup$1(base, options.havingCrampedStyle());
-  var mustShift = group.isShifty && isCharacterBox(base);
+  var mustShift = group2.isShifty && isCharacterBox(base);
   var skew = 0;
   if (mustShift) {
     var _getBaseSymbol$skew, _getBaseSymbol;
     skew = (_getBaseSymbol$skew = (_getBaseSymbol = getBaseSymbol(body)) == null ? void 0 : _getBaseSymbol.skew) != null ? _getBaseSymbol$skew : 0;
   }
-  var accentBelow = group.label === "\\c";
+  var accentBelow = group2.label === "\\c";
   var clearance = accentBelow ? body.height + body.depth : Math.min(body.height, options.fontMetrics().xHeight);
   var accentBody;
-  if (!group.isStretchy) {
+  if (!group2.isStretchy) {
     var accent2;
     var width2;
-    if (group.label === "\\vec") {
+    if (group2.label === "\\vec") {
       accent2 = staticSvg("vec", options);
       width2 = svgData.vec[1];
     } else {
       accent2 = makeOrd({
-        mode: group.mode,
-        text: group.label
+        mode: group2.mode,
+        text: group2.label
       }, options, "textord");
       accent2 = assertSymbolDomNode(accent2);
       accent2.italic = 0;
@@ -55460,7 +55642,7 @@ var htmlBuilder$a = (grp, options) => {
       }
     }
     accentBody = makeSpan(["accent-body"], [accent2]);
-    var accentFull = group.label === "\\textcircled";
+    var accentFull = group2.label === "\\textcircled";
     if (accentFull) {
       accentBody.classes.push("accent-full");
       clearance = body.height;
@@ -55470,7 +55652,7 @@ var htmlBuilder$a = (grp, options) => {
       left -= width2 / 2;
     }
     accentBody.style.left = makeEm(left);
-    if (group.label === "\\textcircled") {
+    if (group2.label === "\\textcircled") {
       accentBody.style.top = ".2em";
     }
     accentBody = makeVList({
@@ -55487,7 +55669,7 @@ var htmlBuilder$a = (grp, options) => {
       }]
     });
   } else {
-    accentBody = stretchySvg(group, options);
+    accentBody = stretchySvg(group2, options);
     accentBody = makeVList({
       positionType: "firstBaseline",
       children: [{
@@ -55514,9 +55696,9 @@ var htmlBuilder$a = (grp, options) => {
     return accentWrap;
   }
 };
-var mathmlBuilder$9 = (group, options) => {
-  var accentNode = group.isStretchy ? stretchyMathML(group.label) : new MathNode("mo", [makeText(group.label, group.mode)]);
-  var node = new MathNode("mover", [buildGroup2(group.base, options), accentNode]);
+var mathmlBuilder$9 = (group2, options) => {
+  var accentNode = group2.isStretchy ? stretchyMathML(group2.label) : new MathNode("mo", [makeText(group2.label, group2.mode)]);
+  var node = new MathNode("mover", [buildGroup2(group2.base, options), accentNode]);
   node.setAttribute("accent", "true");
   return node;
 };
@@ -55591,10 +55773,10 @@ defineFunction({
       base
     };
   },
-  htmlBuilder: (group, options) => {
-    var innerGroup = buildGroup$1(group.base, options);
-    var accentBody = stretchySvg(group, options);
-    var kern = group.label === "\\utilde" ? 0.12 : 0;
+  htmlBuilder: (group2, options) => {
+    var innerGroup = buildGroup$1(group2.base, options);
+    var accentBody = stretchySvg(group2, options);
+    var kern = group2.label === "\\utilde" ? 0.12 : 0;
     var vlist = makeVList({
       positionType: "top",
       positionData: innerGroup.height,
@@ -55612,15 +55794,15 @@ defineFunction({
     });
     return makeSpan(["mord", "accentunder"], [vlist], options);
   },
-  mathmlBuilder: (group, options) => {
-    var accentNode = stretchyMathML(group.label);
-    var node = new MathNode("munder", [buildGroup2(group.base, options), accentNode]);
+  mathmlBuilder: (group2, options) => {
+    var accentNode = stretchyMathML(group2.label);
+    var node = new MathNode("munder", [buildGroup2(group2.base, options), accentNode]);
     node.setAttribute("accentunder", "true");
     return node;
   }
 });
-var paddedNode = (group) => {
-  var node = new MathNode("mpadded", group ? [group] : []);
+var paddedNode = (group2) => {
+  var node = new MathNode("mpadded", group2 ? [group2] : []);
   node.setAttribute("width", "+0.6em");
   node.setAttribute("lspace", "0.3em");
   return node;
@@ -55674,22 +55856,22 @@ defineFunction({
       below: optArgs[0]
     };
   },
-  htmlBuilder(group, options) {
+  htmlBuilder(group2, options) {
     var style = options.style;
     var newOptions = options.havingStyle(style.sup());
-    var upperGroup = wrapFragment(buildGroup$1(group.body, newOptions, options), options);
-    var arrowPrefix = group.label.slice(0, 2) === "\\x" ? "x" : "cd";
+    var upperGroup = wrapFragment(buildGroup$1(group2.body, newOptions, options), options);
+    var arrowPrefix = group2.label.slice(0, 2) === "\\x" ? "x" : "cd";
     upperGroup.classes.push(arrowPrefix + "-arrow-pad");
     var lowerGroup;
-    if (group.below) {
+    if (group2.below) {
       newOptions = options.havingStyle(style.sub());
-      lowerGroup = wrapFragment(buildGroup$1(group.below, newOptions, options), options);
+      lowerGroup = wrapFragment(buildGroup$1(group2.below, newOptions, options), options);
       lowerGroup.classes.push(arrowPrefix + "-arrow-pad");
     }
-    var arrowBody = stretchySvg(group, options);
+    var arrowBody = stretchySvg(group2, options);
     var arrowShift = -options.fontMetrics().axisHeight + 0.5 * arrowBody.height;
     var upperShift = -options.fontMetrics().axisHeight - 0.5 * arrowBody.height - 0.111;
-    if (upperGroup.depth > 0.25 || group.label === "\\xleftequilibrium") {
+    if (upperGroup.depth > 0.25 || group2.label === "\\xleftequilibrium") {
       upperShift -= upperGroup.depth;
     }
     var vlist;
@@ -55729,20 +55911,20 @@ defineFunction({
     }
     return makeSpan(["mrel", "x-arrow"], [vlist], options);
   },
-  mathmlBuilder(group, options) {
-    var arrowNode = stretchyMathML(group.label);
-    arrowNode.setAttribute("minsize", group.label.charAt(0) === "x" ? "1.75em" : "3.0em");
+  mathmlBuilder(group2, options) {
+    var arrowNode = stretchyMathML(group2.label);
+    arrowNode.setAttribute("minsize", group2.label.charAt(0) === "x" ? "1.75em" : "3.0em");
     var node;
-    if (group.body) {
-      var upperNode = paddedNode(buildGroup2(group.body, options));
-      if (group.below) {
-        var lowerNode = paddedNode(buildGroup2(group.below, options));
+    if (group2.body) {
+      var upperNode = paddedNode(buildGroup2(group2.body, options));
+      if (group2.below) {
+        var lowerNode = paddedNode(buildGroup2(group2.below, options));
         node = new MathNode("munderover", [arrowNode, lowerNode, upperNode]);
       } else {
         node = new MathNode("mover", [arrowNode, upperNode]);
       }
-    } else if (group.below) {
-      var _lowerNode = paddedNode(buildGroup2(group.below, options));
+    } else if (group2.below) {
+      var _lowerNode = paddedNode(buildGroup2(group2.below, options));
       node = new MathNode("munder", [arrowNode, _lowerNode]);
     } else {
       node = paddedNode();
@@ -55751,39 +55933,39 @@ defineFunction({
     return node;
   }
 });
-function htmlBuilder$9(group, options) {
-  var elements2 = buildExpression$1(group.body, options, true);
-  return makeSpan([group.mclass], elements2, options);
+function htmlBuilder$9(group2, options) {
+  var elements2 = buildExpression$1(group2.body, options, true);
+  return makeSpan([group2.mclass], elements2, options);
 }
-function mathmlBuilder$8(group, options) {
+function mathmlBuilder$8(group2, options) {
   var node;
-  var inner2 = buildExpression2(group.body, options);
-  if (group.mclass === "minner") {
+  var inner2 = buildExpression2(group2.body, options);
+  if (group2.mclass === "minner") {
     node = new MathNode("mpadded", inner2);
-  } else if (group.mclass === "mord") {
-    if (group.isCharacterBox) {
+  } else if (group2.mclass === "mord") {
+    if (group2.isCharacterBox) {
       node = inner2[0];
       node.type = "mi";
     } else {
       node = new MathNode("mi", inner2);
     }
   } else {
-    if (group.isCharacterBox) {
+    if (group2.isCharacterBox) {
       node = inner2[0];
       node.type = "mo";
     } else {
       node = new MathNode("mo", inner2);
     }
-    if (group.mclass === "mbin") {
+    if (group2.mclass === "mbin") {
       node.attributes.lspace = "0.22em";
       node.attributes.rspace = "0.22em";
-    } else if (group.mclass === "mpunct") {
+    } else if (group2.mclass === "mpunct") {
       node.attributes.lspace = "0em";
       node.attributes.rspace = "0.17em";
-    } else if (group.mclass === "mopen" || group.mclass === "mclose") {
+    } else if (group2.mclass === "mopen" || group2.mclass === "mclose") {
       node.attributes.lspace = "0em";
       node.attributes.rspace = "0em";
-    } else if (group.mclass === "minner") {
+    } else if (group2.mclass === "minner") {
       node.attributes.lspace = "0.0556em";
       node.attributes.width = "+0.1111em";
     }
@@ -55907,14 +56089,14 @@ defineFunction({
       body: ordargument(args[0])
     };
   },
-  htmlBuilder(group, options) {
-    var elements2 = buildExpression$1(group.body, options, true);
-    var node = makeSpan([group.mclass], elements2, options);
+  htmlBuilder(group2, options) {
+    var elements2 = buildExpression$1(group2.body, options, true);
+    var node = makeSpan([group2.mclass], elements2, options);
     node.style.textShadow = "0.02em 0.01em 0.04px";
     return node;
   },
-  mathmlBuilder(group, style) {
-    var inner2 = buildExpression2(group.body, style);
+  mathmlBuilder(group2, style) {
+    var inner2 = buildExpression2(group2.body, style);
     var node = new MathNode("mstyle", inner2);
     node.setAttribute("style", "text-shadow: 0.02em 0.01em 0.04px");
     return node;
@@ -56113,20 +56295,20 @@ defineFunction({
       label: args[0]
     };
   },
-  htmlBuilder(group, options) {
+  htmlBuilder(group2, options) {
     var newOptions = options.havingStyle(options.style.sup());
-    var label = wrapFragment(buildGroup$1(group.label, newOptions, options), options);
-    label.classes.push("cd-label-" + group.side);
+    var label = wrapFragment(buildGroup$1(group2.label, newOptions, options), options);
+    label.classes.push("cd-label-" + group2.side);
     label.style.bottom = makeEm(0.8 - label.depth);
     label.height = 0;
     label.depth = 0;
     return label;
   },
-  mathmlBuilder(group, options) {
-    var label = new MathNode("mrow", [buildGroup2(group.label, options)]);
+  mathmlBuilder(group2, options) {
+    var label = new MathNode("mrow", [buildGroup2(group2.label, options)]);
     label = new MathNode("mpadded", [label]);
     label.setAttribute("width", "0");
-    if (group.side === "left") {
+    if (group2.side === "left") {
       label.setAttribute("lspace", "-1width");
     }
     label.setAttribute("voffset", "0.7em");
@@ -56152,13 +56334,13 @@ defineFunction({
       fragment: args[0]
     };
   },
-  htmlBuilder(group, options) {
-    var parent = wrapFragment(buildGroup$1(group.fragment, options), options);
+  htmlBuilder(group2, options) {
+    var parent = wrapFragment(buildGroup$1(group2.fragment, options), options);
     parent.classes.push("cd-vert-arrow");
     return parent;
   },
-  mathmlBuilder(group, options) {
-    return new MathNode("mrow", [buildGroup2(group.fragment, options)]);
+  mathmlBuilder(group2, options) {
+    return new MathNode("mrow", [buildGroup2(group2.fragment, options)]);
   }
 });
 defineFunction({
@@ -56173,10 +56355,10 @@ defineFunction({
       parser: parser2
     } = _ref;
     var arg = assertNodeType(args[0], "ordgroup");
-    var group = arg.body;
+    var group2 = arg.body;
     var number = "";
-    for (var i = 0; i < group.length; i++) {
-      var node = assertNodeType(group[i], "textord");
+    for (var i = 0; i < group2.length; i++) {
+      var node = assertNodeType(group2[i], "textord");
       number += node.text;
     }
     var code = parseInt(number);
@@ -56198,14 +56380,14 @@ defineFunction({
     };
   }
 });
-var htmlBuilder$8 = (group, options) => {
-  var elements2 = buildExpression$1(group.body, options.withColor(group.color), false);
+var htmlBuilder$8 = (group2, options) => {
+  var elements2 = buildExpression$1(group2.body, options.withColor(group2.color), false);
   return makeFragment(elements2);
 };
-var mathmlBuilder$7 = (group, options) => {
-  var inner2 = buildExpression2(group.body, options.withColor(group.color));
+var mathmlBuilder$7 = (group2, options) => {
+  var inner2 = buildExpression2(group2.body, options.withColor(group2.color));
   var node = new MathNode("mstyle", inner2);
-  node.setAttribute("mathcolor", group.color);
+  node.setAttribute("mathcolor", group2.color);
   return node;
 };
 defineFunction({
@@ -56281,22 +56463,22 @@ defineFunction({
   },
   // The following builders are called only at the top level,
   // not within tabular/array environments.
-  htmlBuilder(group, options) {
+  htmlBuilder(group2, options) {
     var span = makeSpan(["mspace"], [], options);
-    if (group.newLine) {
+    if (group2.newLine) {
       span.classes.push("newline");
-      if (group.size) {
-        span.style.marginTop = makeEm(calculateSize(group.size, options));
+      if (group2.size) {
+        span.style.marginTop = makeEm(calculateSize(group2.size, options));
       }
     }
     return span;
   },
-  mathmlBuilder(group, options) {
+  mathmlBuilder(group2, options) {
     var node = new MathNode("mspace");
-    if (group.newLine) {
+    if (group2.newLine) {
       node.setAttribute("linebreak", "newline");
-      if (group.size) {
-        node.setAttribute("height", makeEm(calculateSize(group.size, options)));
+      if (group2.size) {
+        node.setAttribute("height", makeEm(calculateSize(group2.size, options)));
       }
     }
     return node;
@@ -57072,32 +57254,32 @@ defineFunction({
       delim: delim.text
     };
   },
-  htmlBuilder: (group, options) => {
-    if (group.delim === ".") {
-      return makeSpan([group.mclass]);
+  htmlBuilder: (group2, options) => {
+    if (group2.delim === ".") {
+      return makeSpan([group2.mclass]);
     }
-    return makeSizedDelim(group.delim, group.size, options, group.mode, [group.mclass]);
+    return makeSizedDelim(group2.delim, group2.size, options, group2.mode, [group2.mclass]);
   },
-  mathmlBuilder: (group) => {
+  mathmlBuilder: (group2) => {
     var children = [];
-    if (group.delim !== ".") {
-      children.push(makeText(group.delim, group.mode));
+    if (group2.delim !== ".") {
+      children.push(makeText(group2.delim, group2.mode));
     }
     var node = new MathNode("mo", children);
-    if (group.mclass === "mopen" || group.mclass === "mclose") {
+    if (group2.mclass === "mopen" || group2.mclass === "mclose") {
       node.setAttribute("fence", "true");
     } else {
       node.setAttribute("fence", "false");
     }
     node.setAttribute("stretchy", "true");
-    var size2 = makeEm(sizeToMaxHeight[group.size]);
+    var size2 = makeEm(sizeToMaxHeight[group2.size]);
     node.setAttribute("minsize", size2);
     node.setAttribute("maxsize", size2);
     return node;
   }
 });
-function assertParsed(group) {
-  if (!group.body) {
+function assertParsed(group2) {
+  if (!group2.body) {
     throw new Error("Bug: The leftright ParseNode wasn't fully parsed.");
   }
 }
@@ -57146,9 +57328,9 @@ defineFunction({
       rightColor: right.color
     };
   },
-  htmlBuilder: (group, options) => {
-    assertParsed(group);
-    var inner2 = buildExpression$1(group.body, options, true, ["mopen", "mclose"]);
+  htmlBuilder: (group2, options) => {
+    assertParsed(group2);
+    var inner2 = buildExpression$1(group2.body, options, true, ["mopen", "mclose"]);
     var innerHeight = 0;
     var innerDepth = 0;
     var hadMiddle = false;
@@ -57164,10 +57346,10 @@ defineFunction({
     innerHeight *= options.sizeMultiplier;
     innerDepth *= options.sizeMultiplier;
     var leftDelim;
-    if (group.left === ".") {
+    if (group2.left === ".") {
       leftDelim = makeNullDelimiter(options, ["mopen"]);
     } else {
-      leftDelim = makeLeftRightDelim(group.left, innerHeight, innerDepth, options, group.mode, ["mopen"]);
+      leftDelim = makeLeftRightDelim(group2.left, innerHeight, innerDepth, options, group2.mode, ["mopen"]);
     }
     inner2.unshift(leftDelim);
     if (hadMiddle) {
@@ -57175,33 +57357,33 @@ defineFunction({
         var middleDelim = inner2[_i];
         if (isMiddleDelimNode(middleDelim)) {
           var isMiddle = middleDelim.isMiddle;
-          inner2[_i] = makeLeftRightDelim(isMiddle.delim, innerHeight, innerDepth, isMiddle.options, group.mode, []);
+          inner2[_i] = makeLeftRightDelim(isMiddle.delim, innerHeight, innerDepth, isMiddle.options, group2.mode, []);
         }
       }
     }
     var rightDelim;
-    if (group.right === ".") {
+    if (group2.right === ".") {
       rightDelim = makeNullDelimiter(options, ["mclose"]);
     } else {
-      var colorOptions = group.rightColor ? options.withColor(group.rightColor) : options;
-      rightDelim = makeLeftRightDelim(group.right, innerHeight, innerDepth, colorOptions, group.mode, ["mclose"]);
+      var colorOptions = group2.rightColor ? options.withColor(group2.rightColor) : options;
+      rightDelim = makeLeftRightDelim(group2.right, innerHeight, innerDepth, colorOptions, group2.mode, ["mclose"]);
     }
     inner2.push(rightDelim);
     return makeSpan(["minner"], inner2, options);
   },
-  mathmlBuilder: (group, options) => {
-    assertParsed(group);
-    var inner2 = buildExpression2(group.body, options);
-    if (group.left !== ".") {
-      var leftNode = new MathNode("mo", [makeText(group.left, group.mode)]);
+  mathmlBuilder: (group2, options) => {
+    assertParsed(group2);
+    var inner2 = buildExpression2(group2.body, options);
+    if (group2.left !== ".") {
+      var leftNode = new MathNode("mo", [makeText(group2.left, group2.mode)]);
       leftNode.setAttribute("fence", "true");
       inner2.unshift(leftNode);
     }
-    if (group.right !== ".") {
-      var rightNode = new MathNode("mo", [makeText(group.right, group.mode)]);
+    if (group2.right !== ".") {
+      var rightNode = new MathNode("mo", [makeText(group2.right, group2.mode)]);
       rightNode.setAttribute("fence", "true");
-      if (group.rightColor) {
-        rightNode.setAttribute("mathcolor", group.rightColor);
+      if (group2.rightColor) {
+        rightNode.setAttribute("mathcolor", group2.rightColor);
       }
       inner2.push(rightNode);
     }
@@ -57226,21 +57408,21 @@ defineFunction({
       delim: delim.text
     };
   },
-  htmlBuilder: (group, options) => {
+  htmlBuilder: (group2, options) => {
     var middleDelim;
-    if (group.delim === ".") {
+    if (group2.delim === ".") {
       middleDelim = makeNullDelimiter(options, []);
     } else {
-      middleDelim = makeSizedDelim(group.delim, 1, options, group.mode, []);
+      middleDelim = makeSizedDelim(group2.delim, 1, options, group2.mode, []);
       middleDelim.isMiddle = {
-        delim: group.delim,
+        delim: group2.delim,
         options
       };
     }
     return middleDelim;
   },
-  mathmlBuilder: (group, options) => {
-    var textNode = group.delim === "\\vert" || group.delim === "|" ? makeText("|", "text") : makeText(group.delim, group.mode);
+  mathmlBuilder: (group2, options) => {
+    var textNode = group2.delim === "\\vert" || group2.delim === "|" ? makeText("|", "text") : makeText(group2.delim, group2.mode);
     var middleNode = new MathNode("mo", [textNode]);
     middleNode.setAttribute("fence", "true");
     middleNode.setAttribute("lspace", "0.05em");
@@ -57248,13 +57430,13 @@ defineFunction({
     return middleNode;
   }
 });
-var htmlBuilder$7 = (group, options) => {
-  var inner2 = wrapFragment(buildGroup$1(group.body, options), options);
-  var label = group.label.slice(1);
+var htmlBuilder$7 = (group2, options) => {
+  var inner2 = wrapFragment(buildGroup$1(group2.body, options), options);
+  var label = group2.label.slice(1);
   var scale2 = options.sizeMultiplier;
   var img;
   var imgShift;
-  var isSingleChar = isCharacterBox(group.body);
+  var isSingleChar = isCharacterBox(group2.body);
   if (label === "sout") {
     img = makeSpan(["stretchy", "sout"]);
     img.height = options.fontMetrics().defaultRuleThickness / scale2;
@@ -57321,15 +57503,15 @@ var htmlBuilder$7 = (group, options) => {
       img.style.borderRightWidth = makeEm(ruleThickness);
     }
     imgShift = inner2.depth + bottomPad;
-    if (group.backgroundColor) {
-      img.style.backgroundColor = group.backgroundColor;
-      if (group.borderColor) {
-        img.style.borderColor = group.borderColor;
+    if (group2.backgroundColor) {
+      img.style.backgroundColor = group2.backgroundColor;
+      if (group2.borderColor) {
+        img.style.borderColor = group2.borderColor;
       }
     }
   }
   var vlist;
-  if (group.backgroundColor) {
+  if (group2.backgroundColor) {
     vlist = makeVList({
       positionType: "individualShift",
       children: [
@@ -57376,10 +57558,10 @@ var htmlBuilder$7 = (group, options) => {
     return makeSpan(["mord"], [vlist], options);
   }
 };
-var mathmlBuilder$6 = (group, options) => {
+var mathmlBuilder$6 = (group2, options) => {
   var fboxsep;
-  var node = new MathNode(group.label.includes("colorbox") ? "mpadded" : "menclose", [buildGroup2(group.body, options)]);
-  switch (group.label) {
+  var node = new MathNode(group2.label.includes("colorbox") ? "mpadded" : "menclose", [buildGroup2(group2.body, options)]);
+  switch (group2.label) {
     case "\\cancel":
       node.setAttribute("notation", "updiagonalstrike");
       break;
@@ -57405,21 +57587,21 @@ var mathmlBuilder$6 = (group, options) => {
       node.setAttribute("height", "+" + 2 * fboxsep + "pt");
       node.setAttribute("lspace", fboxsep + "pt");
       node.setAttribute("voffset", fboxsep + "pt");
-      if (group.label === "\\fcolorbox") {
+      if (group2.label === "\\fcolorbox") {
         var thk = Math.max(
           options.fontMetrics().fboxrule,
           // default
           options.minRuleThickness
         );
-        node.setAttribute("style", "border: " + makeEm(thk) + " solid " + group.borderColor);
+        node.setAttribute("style", "border: " + makeEm(thk) + " solid " + group2.borderColor);
       }
       break;
     case "\\xcancel":
       node.setAttribute("notation", "updiagonalstrike downdiagonalstrike");
       break;
   }
-  if (group.backgroundColor) {
-    node.setAttribute("mathbackground", group.backgroundColor);
+  if (group2.backgroundColor) {
+    node.setAttribute("mathbackground", group2.backgroundColor);
   }
   return node;
 };
@@ -57800,11 +57982,11 @@ function dCellStyle(envName) {
     return "text";
   }
 }
-var htmlBuilder$6 = function htmlBuilder(group, options) {
+var htmlBuilder$6 = function htmlBuilder(group2, options) {
   var r;
   var c;
-  var nr = group.body.length;
-  var hLinesBeforeRow = group.hLinesBeforeRow;
+  var nr = group2.body.length;
+  var hLinesBeforeRow = group2.hLinesBeforeRow;
   var nc = 0;
   var body = new Array(nr);
   var hlines = [];
@@ -57815,16 +57997,16 @@ var htmlBuilder$6 = function htmlBuilder(group, options) {
   );
   var pt = 1 / options.fontMetrics().ptPerEm;
   var arraycolsep = 5 * pt;
-  if (group.colSeparationType && group.colSeparationType === "small") {
+  if (group2.colSeparationType && group2.colSeparationType === "small") {
     var localMultiplier = options.havingStyle(Style$1.SCRIPT).sizeMultiplier;
     arraycolsep = 0.2778 * (localMultiplier / options.sizeMultiplier);
   }
-  var baselineskip = group.colSeparationType === "CD" ? calculateSize({
+  var baselineskip = group2.colSeparationType === "CD" ? calculateSize({
     number: 3,
     unit: "ex"
   }, options) : 12 * pt;
   var jot = 3 * pt;
-  var arrayskip = group.arraystretch * baselineskip;
+  var arrayskip = group2.arraystretch * baselineskip;
   var arstrutHeight = 0.7 * arrayskip;
   var arstrutDepth = 0.3 * arrayskip;
   var totalHeight = 0;
@@ -57840,8 +58022,8 @@ var htmlBuilder$6 = function htmlBuilder(group, options) {
     }
   }
   setHLinePos(hLinesBeforeRow[0]);
-  for (r = 0; r < group.body.length; ++r) {
-    var inrow = group.body[r];
+  for (r = 0; r < group2.body.length; ++r) {
+    var inrow = group2.body[r];
     var height2 = arstrutHeight;
     var depth = arstrutDepth;
     if (nc < inrow.length) {
@@ -57863,7 +58045,7 @@ var htmlBuilder$6 = function htmlBuilder(group, options) {
       }
       outrow.cells[c] = elt;
     }
-    var rowGap = group.rowGaps[r];
+    var rowGap = group2.rowGaps[r];
     var gap = 0;
     if (rowGap) {
       gap = calculateSize(rowGap, options);
@@ -57875,7 +58057,7 @@ var htmlBuilder$6 = function htmlBuilder(group, options) {
         gap = 0;
       }
     }
-    if (group.addJot && r < group.body.length - 1) {
+    if (group2.addJot && r < group2.body.length - 1) {
       depth += jot;
     }
     outrow.height = height2;
@@ -57887,16 +58069,16 @@ var htmlBuilder$6 = function htmlBuilder(group, options) {
     setHLinePos(hLinesBeforeRow[r + 1]);
   }
   var offset = totalHeight / 2 + options.fontMetrics().axisHeight;
-  var colDescriptions = group.cols || [];
+  var colDescriptions = group2.cols || [];
   var cols = [];
   var colSep;
   var colDescrNum;
   var tagSpans = [];
-  if (group.tags && group.tags.some((tag2) => tag2)) {
+  if (group2.tags && group2.tags.some((tag2) => tag2)) {
     for (r = 0; r < nr; ++r) {
       var rw = body[r];
       var shift = rw.pos - offset;
-      var tag = group.tags[r];
+      var tag = group2.tags[r];
       var tagSpan = void 0;
       if (tag === true) {
         tagSpan = makeSpan(["eqn-num"], [], options);
@@ -57954,7 +58136,7 @@ var htmlBuilder$6 = function htmlBuilder(group, options) {
       continue;
     }
     var sepwidth = void 0;
-    if (c > 0 || group.hskipBeforeAndAfter) {
+    if (c > 0 || group2.hskipBeforeAndAfter) {
       var _colDescr$pregap, _colDescr2;
       sepwidth = (_colDescr$pregap = (_colDescr2 = colDescr) == null ? void 0 : _colDescr2.pregap) != null ? _colDescr$pregap : arraycolsep;
       if (sepwidth !== 0) {
@@ -57985,7 +58167,7 @@ var htmlBuilder$6 = function htmlBuilder(group, options) {
     });
     var colSpan = makeSpan(["col-align-" + (((_colDescr3 = colDescr) == null ? void 0 : _colDescr3.align) || "c")], [colVList]);
     cols.push(colSpan);
-    if (c < nc - 1 || group.hskipBeforeAndAfter) {
+    if (c < nc - 1 || group2.hskipBeforeAndAfter) {
       var _colDescr$postgap, _colDescr4;
       sepwidth = (_colDescr$postgap = (_colDescr4 = colDescr) == null ? void 0 : _colDescr4.postgap) != null ? _colDescr$postgap : arraycolsep;
       if (sepwidth !== 0) {
@@ -58042,20 +58224,20 @@ var alignMap = {
   l: "left ",
   r: "right "
 };
-var mathmlBuilder$5 = function mathmlBuilder(group, options) {
+var mathmlBuilder$5 = function mathmlBuilder(group2, options) {
   var tbl = [];
   var glue = new MathNode("mtd", [], ["mtr-glue"]);
   var tag = new MathNode("mtd", [], ["mml-eqn-num"]);
-  for (var i = 0; i < group.body.length; i++) {
-    var rw = group.body[i];
+  for (var i = 0; i < group2.body.length; i++) {
+    var rw = group2.body[i];
     var row = [];
     for (var j = 0; j < rw.length; j++) {
       row.push(new MathNode("mtd", [buildGroup2(rw[j], options)]));
     }
-    if (group.tags && group.tags[i]) {
+    if (group2.tags && group2.tags[i]) {
       row.unshift(glue);
       row.push(glue);
-      if (group.leqno) {
+      if (group2.leqno) {
         row.unshift(tag);
       } else {
         row.push(tag);
@@ -58064,12 +58246,12 @@ var mathmlBuilder$5 = function mathmlBuilder(group, options) {
     tbl.push(new MathNode("mtr", row));
   }
   var table = new MathNode("mtable", tbl);
-  var gap = group.arraystretch === 0.5 ? 0.1 : 0.16 + group.arraystretch - 1 + (group.addJot ? 0.09 : 0);
+  var gap = group2.arraystretch === 0.5 ? 0.1 : 0.16 + group2.arraystretch - 1 + (group2.addJot ? 0.09 : 0);
   table.setAttribute("rowspacing", makeEm(gap));
   var menclose = "";
   var align = "";
-  if (group.cols && group.cols.length > 0) {
-    var cols = group.cols;
+  if (group2.cols && group2.cols.length > 0) {
+    var cols = group2.cols;
     var columnLines = "";
     var prevTypeWasAlign = false;
     var iStart = 0;
@@ -58102,24 +58284,24 @@ var mathmlBuilder$5 = function mathmlBuilder(group, options) {
       table.setAttribute("columnlines", columnLines.trim());
     }
   }
-  if (group.colSeparationType === "align") {
-    var _cols = group.cols || [];
+  if (group2.colSeparationType === "align") {
+    var _cols = group2.cols || [];
     var spacing2 = "";
     for (var _i2 = 1; _i2 < _cols.length; _i2++) {
       spacing2 += _i2 % 2 ? "0em " : "1em ";
     }
     table.setAttribute("columnspacing", spacing2.trim());
-  } else if (group.colSeparationType === "alignat" || group.colSeparationType === "gather") {
+  } else if (group2.colSeparationType === "alignat" || group2.colSeparationType === "gather") {
     table.setAttribute("columnspacing", "0em");
-  } else if (group.colSeparationType === "small") {
+  } else if (group2.colSeparationType === "small") {
     table.setAttribute("columnspacing", "0.2778em");
-  } else if (group.colSeparationType === "CD") {
+  } else if (group2.colSeparationType === "CD") {
     table.setAttribute("columnspacing", "0.5em");
   } else {
     table.setAttribute("columnspacing", "1em");
   }
   var rowLines = "";
-  var hlines = group.hLinesBeforeRow;
+  var hlines = group2.hLinesBeforeRow;
   menclose += hlines[0].length > 0 ? "left " : "";
   menclose += hlines[hlines.length - 1].length > 0 ? "right " : "";
   for (var _i3 = 1; _i3 < hlines.length - 1; _i3++) {
@@ -58132,7 +58314,7 @@ var mathmlBuilder$5 = function mathmlBuilder(group, options) {
     table = new MathNode("menclose", [table]);
     table.setAttribute("notation", menclose.trim());
   }
-  if (group.arraystretch && group.arraystretch < 1) {
+  if (group2.arraystretch && group2.arraystretch < 1) {
     table = new MathNode("mstyle", [table]);
     table.setAttribute("scriptlevel", "1");
   }
@@ -58546,15 +58728,15 @@ defineFunction({
     };
   }
 });
-var htmlBuilder$5 = (group, options) => {
-  var font = group.font;
+var htmlBuilder$5 = (group2, options) => {
+  var font = group2.font;
   var newOptions = options.withFont(font);
-  return buildGroup$1(group.body, newOptions);
+  return buildGroup$1(group2.body, newOptions);
 };
-var mathmlBuilder$4 = (group, options) => {
-  var font = group.font;
+var mathmlBuilder$4 = (group2, options) => {
+  var font = group2.font;
   var newOptions = options.withFont(font);
-  return buildGroup2(group.body, newOptions);
+  return buildGroup2(group2.body, newOptions);
 };
 var fontAliases = {
   "\\Bbb": "\\mathbb",
@@ -58662,27 +58844,27 @@ defineFunction({
   htmlBuilder: htmlBuilder$5,
   mathmlBuilder: mathmlBuilder$4
 });
-var htmlBuilder$4 = (group, options) => {
+var htmlBuilder$4 = (group2, options) => {
   var style = options.style;
   var nstyle = style.fracNum();
   var dstyle = style.fracDen();
   var newOptions;
   newOptions = options.havingStyle(nstyle);
-  var numerm = buildGroup$1(group.numer, newOptions, options);
-  if (group.continued) {
+  var numerm = buildGroup$1(group2.numer, newOptions, options);
+  if (group2.continued) {
     var hStrut = 8.5 / options.fontMetrics().ptPerEm;
     var dStrut = 3.5 / options.fontMetrics().ptPerEm;
     numerm.height = numerm.height < hStrut ? hStrut : numerm.height;
     numerm.depth = numerm.depth < dStrut ? dStrut : numerm.depth;
   }
   newOptions = options.havingStyle(dstyle);
-  var denomm = buildGroup$1(group.denom, newOptions, options);
+  var denomm = buildGroup$1(group2.denom, newOptions, options);
   var rule;
   var ruleWidth;
   var ruleSpacing;
-  if (group.hasBarLine) {
-    if (group.barSize) {
-      ruleWidth = calculateSize(group.barSize, options);
+  if (group2.hasBarLine) {
+    if (group2.barSize) {
+      ruleWidth = calculateSize(group2.barSize, options);
       rule = makeLineSpan("frac-line", options, ruleWidth);
     } else {
       rule = makeLineSpan("frac-line", options);
@@ -58773,38 +58955,38 @@ var htmlBuilder$4 = (group, options) => {
   }
   var leftDelim;
   var rightDelim;
-  if (group.leftDelim == null) {
+  if (group2.leftDelim == null) {
     leftDelim = makeNullDelimiter(options, ["mopen"]);
   } else {
-    leftDelim = makeCustomSizedDelim(group.leftDelim, delimSize, true, options.havingStyle(style), group.mode, ["mopen"]);
+    leftDelim = makeCustomSizedDelim(group2.leftDelim, delimSize, true, options.havingStyle(style), group2.mode, ["mopen"]);
   }
-  if (group.continued) {
+  if (group2.continued) {
     rightDelim = makeSpan([]);
-  } else if (group.rightDelim == null) {
+  } else if (group2.rightDelim == null) {
     rightDelim = makeNullDelimiter(options, ["mclose"]);
   } else {
-    rightDelim = makeCustomSizedDelim(group.rightDelim, delimSize, true, options.havingStyle(style), group.mode, ["mclose"]);
+    rightDelim = makeCustomSizedDelim(group2.rightDelim, delimSize, true, options.havingStyle(style), group2.mode, ["mclose"]);
   }
   return makeSpan(["mord"].concat(newOptions.sizingClasses(options)), [leftDelim, makeSpan(["mfrac"], [frac]), rightDelim], options);
 };
-var mathmlBuilder$3 = (group, options) => {
-  var node = new MathNode("mfrac", [buildGroup2(group.numer, options), buildGroup2(group.denom, options)]);
-  if (!group.hasBarLine) {
+var mathmlBuilder$3 = (group2, options) => {
+  var node = new MathNode("mfrac", [buildGroup2(group2.numer, options), buildGroup2(group2.denom, options)]);
+  if (!group2.hasBarLine) {
     node.setAttribute("linethickness", "0px");
-  } else if (group.barSize) {
-    var ruleWidth = calculateSize(group.barSize, options);
+  } else if (group2.barSize) {
+    var ruleWidth = calculateSize(group2.barSize, options);
     node.setAttribute("linethickness", makeEm(ruleWidth));
   }
-  if (group.leftDelim != null || group.rightDelim != null) {
+  if (group2.leftDelim != null || group2.rightDelim != null) {
     var withDelims = [];
-    if (group.leftDelim != null) {
-      var leftOp = new MathNode("mo", [new TextNode(group.leftDelim.replace("\\", ""))]);
+    if (group2.leftDelim != null) {
+      var leftOp = new MathNode("mo", [new TextNode(group2.leftDelim.replace("\\", ""))]);
       leftOp.setAttribute("fence", "true");
       withDelims.push(leftOp);
     }
     withDelims.push(node);
-    if (group.rightDelim != null) {
-      var rightOp = new MathNode("mo", [new TextNode(group.rightDelim.replace("\\", ""))]);
+    if (group2.rightDelim != null) {
+      var rightOp = new MathNode("mo", [new TextNode(group2.rightDelim.replace("\\", ""))]);
       rightOp.setAttribute("fence", "true");
       withDelims.push(rightOp);
     }
@@ -59065,17 +59247,17 @@ defineFunction({
 var htmlBuilder$3 = (grp, options) => {
   var style = options.style;
   var supSubGroup;
-  var group;
+  var group2;
   if (grp.type === "supsub") {
     supSubGroup = grp.sup ? buildGroup$1(grp.sup, options.havingStyle(style.sup()), options) : buildGroup$1(grp.sub, options.havingStyle(style.sub()), options);
-    group = assertNodeType(grp.base, "horizBrace");
+    group2 = assertNodeType(grp.base, "horizBrace");
   } else {
-    group = assertNodeType(grp, "horizBrace");
+    group2 = assertNodeType(grp, "horizBrace");
   }
-  var body = buildGroup$1(group.base, options.havingBaseStyle(Style$1.DISPLAY));
-  var braceBody = stretchySvg(group, options);
+  var body = buildGroup$1(group2.base, options.havingBaseStyle(Style$1.DISPLAY));
+  var braceBody = stretchySvg(group2, options);
   var vlist;
-  if (group.isOver) {
+  if (group2.isOver) {
     vlist = makeVList({
       positionType: "firstBaseline",
       children: [{
@@ -59108,8 +59290,8 @@ var htmlBuilder$3 = (grp, options) => {
     });
   }
   if (supSubGroup) {
-    var vSpan = makeSpan(["minner", group.isOver ? "mover" : "munder"], [vlist], options);
-    if (group.isOver) {
+    var vSpan = makeSpan(["minner", group2.isOver ? "mover" : "munder"], [vlist], options);
+    if (group2.isOver) {
       vlist = makeVList({
         positionType: "firstBaseline",
         children: [{
@@ -59140,11 +59322,11 @@ var htmlBuilder$3 = (grp, options) => {
       });
     }
   }
-  return makeSpan(["minner", group.isOver ? "mover" : "munder"], [vlist], options);
+  return makeSpan(["minner", group2.isOver ? "mover" : "munder"], [vlist], options);
 };
-var mathmlBuilder$2 = (group, options) => {
-  var accentNode = stretchyMathML(group.label);
-  return new MathNode(group.isOver ? "mover" : "munder", [buildGroup2(group.base, options), accentNode]);
+var mathmlBuilder$2 = (group2, options) => {
+  var accentNode = stretchyMathML(group2.label);
+  return new MathNode(group2.isOver ? "mover" : "munder", [buildGroup2(group2.base, options), accentNode]);
 };
 defineFunction({
   type: "horizBrace",
@@ -59195,16 +59377,16 @@ defineFunction({
       body: ordargument(body)
     };
   },
-  htmlBuilder: (group, options) => {
-    var elements2 = buildExpression$1(group.body, options, false);
-    return makeAnchor(group.href, [], elements2, options);
+  htmlBuilder: (group2, options) => {
+    var elements2 = buildExpression$1(group2.body, options, false);
+    return makeAnchor(group2.href, [], elements2, options);
   },
-  mathmlBuilder: (group, options) => {
-    var math2 = buildExpressionRow(group.body, options);
+  mathmlBuilder: (group2, options) => {
+    var math2 = buildExpressionRow(group2.body, options);
     if (!(math2 instanceof MathNode)) {
       math2 = new MathNode("mrow", [math2]);
     }
-    math2.setAttribute("href", group.href);
+    math2.setAttribute("href", group2.href);
     return math2;
   }
 });
@@ -59272,12 +59454,12 @@ defineFunction({
       body: ordargument(args[0])
     };
   },
-  htmlBuilder(group, options) {
-    var elements2 = buildExpression$1(group.body, options.withFont(""), false);
+  htmlBuilder(group2, options) {
+    var elements2 = buildExpression$1(group2.body, options.withFont(""), false);
     return makeFragment(elements2);
   },
-  mathmlBuilder(group, options) {
-    return new MathNode("mrow", buildExpression2(group.body, options.withFont("")));
+  mathmlBuilder(group2, options) {
+    return new MathNode("mrow", buildExpression2(group2.body, options.withFont("")));
   }
 });
 defineFunction({
@@ -59354,22 +59536,22 @@ defineFunction({
       body: ordargument(body)
     };
   },
-  htmlBuilder: (group, options) => {
-    var elements2 = buildExpression$1(group.body, options, false);
+  htmlBuilder: (group2, options) => {
+    var elements2 = buildExpression$1(group2.body, options, false);
     var classes2 = ["enclosing"];
-    if (group.attributes.class) {
-      classes2.push(...group.attributes.class.trim().split(/\s+/));
+    if (group2.attributes.class) {
+      classes2.push(...group2.attributes.class.trim().split(/\s+/));
     }
     var span = makeSpan(classes2, elements2, options);
-    for (var attr2 in group.attributes) {
-      if (attr2 !== "class" && group.attributes.hasOwnProperty(attr2)) {
-        span.setAttribute(attr2, group.attributes[attr2]);
+    for (var attr2 in group2.attributes) {
+      if (attr2 !== "class" && group2.attributes.hasOwnProperty(attr2)) {
+        span.setAttribute(attr2, group2.attributes[attr2]);
       }
     }
     return span;
   },
-  mathmlBuilder: (group, options) => {
-    return buildExpressionRow(group.body, options);
+  mathmlBuilder: (group2, options) => {
+    return buildExpressionRow(group2.body, options);
   }
 });
 defineFunction({
@@ -59391,12 +59573,12 @@ defineFunction({
       mathml: ordargument(args[1])
     };
   },
-  htmlBuilder: (group, options) => {
-    var elements2 = buildExpression$1(group.html, options, false);
+  htmlBuilder: (group2, options) => {
+    var elements2 = buildExpression$1(group2.html, options, false);
     return makeFragment(elements2);
   },
-  mathmlBuilder: (group, options) => {
-    return buildExpressionRow(group.mathml, options);
+  mathmlBuilder: (group2, options) => {
+    return buildExpressionRow(group2.mathml, options);
   }
 });
 var sizeData = function sizeData2(str) {
@@ -59495,15 +59677,15 @@ defineFunction({
       src
     };
   },
-  htmlBuilder: (group, options) => {
-    var height2 = calculateSize(group.height, options);
+  htmlBuilder: (group2, options) => {
+    var height2 = calculateSize(group2.height, options);
     var depth = 0;
-    if (group.totalheight.number > 0) {
-      depth = calculateSize(group.totalheight, options) - height2;
+    if (group2.totalheight.number > 0) {
+      depth = calculateSize(group2.totalheight, options) - height2;
     }
     var width2 = 0;
-    if (group.width.number > 0) {
-      width2 = calculateSize(group.width, options);
+    if (group2.width.number > 0) {
+      width2 = calculateSize(group2.width, options);
     }
     var style = {
       height: makeEm(height2 + depth)
@@ -59514,26 +59696,26 @@ defineFunction({
     if (depth > 0) {
       style.verticalAlign = makeEm(-depth);
     }
-    var node = new Img(group.src, group.alt, style);
+    var node = new Img(group2.src, group2.alt, style);
     node.height = height2;
     node.depth = depth;
     return node;
   },
-  mathmlBuilder: (group, options) => {
+  mathmlBuilder: (group2, options) => {
     var node = new MathNode("mglyph", []);
-    node.setAttribute("alt", group.alt);
-    var height2 = calculateSize(group.height, options);
+    node.setAttribute("alt", group2.alt);
+    var height2 = calculateSize(group2.height, options);
     var depth = 0;
-    if (group.totalheight.number > 0) {
-      depth = calculateSize(group.totalheight, options) - height2;
+    if (group2.totalheight.number > 0) {
+      depth = calculateSize(group2.totalheight, options) - height2;
       node.setAttribute("valign", makeEm(-depth));
     }
     node.setAttribute("height", makeEm(height2 + depth));
-    if (group.width.number > 0) {
-      var width2 = calculateSize(group.width, options);
+    if (group2.width.number > 0) {
+      var width2 = calculateSize(group2.width, options);
       node.setAttribute("width", makeEm(width2));
     }
-    node.setAttribute("src", group.src);
+    node.setAttribute("src", group2.src);
     return node;
   }
 });
@@ -59574,11 +59756,11 @@ defineFunction({
       dimension: size2.value
     };
   },
-  htmlBuilder(group, options) {
-    return makeGlue(group.dimension, options);
+  htmlBuilder(group2, options) {
+    return makeGlue(group2.dimension, options);
   },
-  mathmlBuilder(group, options) {
-    var dimension = calculateSize(group.dimension, options);
+  mathmlBuilder(group2, options) {
+    var dimension = calculateSize(group2.dimension, options);
     return new SpaceNode(dimension);
   }
 });
@@ -59602,16 +59784,16 @@ defineFunction({
       body
     };
   },
-  htmlBuilder: (group, options) => {
+  htmlBuilder: (group2, options) => {
     var inner2;
-    if (group.alignment === "clap") {
-      inner2 = makeSpan([], [buildGroup$1(group.body, options)]);
+    if (group2.alignment === "clap") {
+      inner2 = makeSpan([], [buildGroup$1(group2.body, options)]);
       inner2 = makeSpan(["inner"], [inner2], options);
     } else {
-      inner2 = makeSpan(["inner"], [buildGroup$1(group.body, options)]);
+      inner2 = makeSpan(["inner"], [buildGroup$1(group2.body, options)]);
     }
     var fix = makeSpan(["fix"], []);
-    var node = makeSpan([group.alignment], [inner2, fix], options);
+    var node = makeSpan([group2.alignment], [inner2, fix], options);
     var strut = makeSpan(["strut"]);
     strut.style.height = makeEm(node.height + node.depth);
     if (node.depth) {
@@ -59621,10 +59803,10 @@ defineFunction({
     node = makeSpan(["thinbox"], [node], options);
     return makeSpan(["mord", "vbox"], [node], options);
   },
-  mathmlBuilder: (group, options) => {
-    var node = new MathNode("mpadded", [buildGroup2(group.body, options)]);
-    if (group.alignment !== "rlap") {
-      var offset = group.alignment === "llap" ? "-1" : "-0.5";
+  mathmlBuilder: (group2, options) => {
+    var node = new MathNode("mpadded", [buildGroup2(group2.body, options)]);
+    if (group2.alignment !== "rlap") {
+      var offset = group2.alignment === "llap" ? "-1" : "-0.5";
       node.setAttribute("lspace", offset + "width");
     }
     node.setAttribute("width", "0px");
@@ -59672,18 +59854,18 @@ defineFunction({
     throw new ParseError("Mismatched " + context.funcName);
   }
 });
-var chooseMathStyle = (group, options) => {
+var chooseMathStyle = (group2, options) => {
   switch (options.style.size) {
     case Style$1.DISPLAY.size:
-      return group.display;
+      return group2.display;
     case Style$1.TEXT.size:
-      return group.text;
+      return group2.text;
     case Style$1.SCRIPT.size:
-      return group.script;
+      return group2.script;
     case Style$1.SCRIPTSCRIPT.size:
-      return group.scriptscript;
+      return group2.scriptscript;
     default:
-      return group.text;
+      return group2.text;
   }
 };
 defineFunction({
@@ -59706,13 +59888,13 @@ defineFunction({
       scriptscript: ordargument(args[3])
     };
   },
-  htmlBuilder: (group, options) => {
-    var body = chooseMathStyle(group, options);
+  htmlBuilder: (group2, options) => {
+    var body = chooseMathStyle(group2, options);
     var elements2 = buildExpression$1(body, options, false);
     return makeFragment(elements2);
   },
-  mathmlBuilder: (group, options) => {
-    var body = chooseMathStyle(group, options);
+  mathmlBuilder: (group2, options) => {
+    var body = chooseMathStyle(group2, options);
     return buildExpressionRow(body, options);
   }
 });
@@ -59822,30 +60004,30 @@ var htmlBuilder$2 = (grp, options) => {
   var supGroup;
   var subGroup;
   var hasLimits = false;
-  var group;
+  var group2;
   if (grp.type === "supsub") {
     supGroup = grp.sup;
     subGroup = grp.sub;
-    group = assertNodeType(grp.base, "op");
+    group2 = assertNodeType(grp.base, "op");
     hasLimits = true;
   } else {
-    group = assertNodeType(grp, "op");
+    group2 = assertNodeType(grp, "op");
   }
   var style = options.style;
   var large = false;
-  if (style.size === Style$1.DISPLAY.size && group.symbol && !noSuccessor.has(group.name)) {
+  if (style.size === Style$1.DISPLAY.size && group2.symbol && !noSuccessor.has(group2.name)) {
     large = true;
   }
   var base;
   var symbolItalic;
-  if (group.symbol) {
+  if (group2.symbol) {
     var fontName = large ? "Size2-Regular" : "Size1-Regular";
     var stash = "";
-    if (group.name === "\\oiint" || group.name === "\\oiiint") {
-      stash = group.name.slice(1);
-      group.name = stash === "oiint" ? "\\iint" : "\\iiint";
+    if (group2.name === "\\oiint" || group2.name === "\\oiiint") {
+      stash = group2.name.slice(1);
+      group2.name = stash === "oiint" ? "\\iint" : "\\iiint";
     }
-    base = makeSymbol(group.name, fontName, "math", options, ["mop", "op-symbol", large ? "large-op" : "small-op"]);
+    base = makeSymbol(group2.name, fontName, "math", options, ["mop", "op-symbol", large ? "large-op" : "small-op"]);
     symbolItalic = base.italic;
     if (stash.length > 0) {
       var oval = staticSvg(stash + "Size" + (large ? "2" : "1"), options);
@@ -59861,12 +60043,12 @@ var htmlBuilder$2 = (grp, options) => {
           shift: large ? 0.08 : 0
         }]
       });
-      group.name = "\\" + stash;
+      group2.name = "\\" + stash;
       base.classes.unshift("mop");
       base.italic = symbolItalic;
     }
-  } else if (group.body) {
-    var inner2 = buildExpression$1(group.body, options, true);
+  } else if (group2.body) {
+    var inner2 = buildExpression$1(group2.body, options, true);
     if (inner2.length === 1 && inner2[0] instanceof SymbolNode) {
       base = inner2[0];
       base.classes[0] = "mop";
@@ -59875,14 +60057,14 @@ var htmlBuilder$2 = (grp, options) => {
     }
   } else {
     var output = [];
-    for (var i = 1; i < group.name.length; i++) {
-      output.push(mathsym(group.name[i], group.mode, options));
+    for (var i = 1; i < group2.name.length; i++) {
+      output.push(mathsym(group2.name[i], group2.mode, options));
     }
     base = makeSpan(["mop"], output, options);
   }
   var baseShift = 0;
   var slant = 0;
-  if ((base instanceof SymbolNode || group.name === "\\oiint" || group.name === "\\oiiint") && !group.suppressBaseShift) {
+  if ((base instanceof SymbolNode || group2.name === "\\oiint" || group2.name === "\\oiiint") && !group2.suppressBaseShift) {
     var _base$italic;
     baseShift = (base.height - base.depth) / 2 - options.fontMetrics().axisHeight;
     slant = (_base$italic = base.italic) != null ? _base$italic : 0;
@@ -59897,19 +60079,19 @@ var htmlBuilder$2 = (grp, options) => {
     return base;
   }
 };
-var mathmlBuilder$1 = (group, options) => {
+var mathmlBuilder$1 = (group2, options) => {
   var node;
-  if (group.symbol) {
-    node = new MathNode("mo", [makeText(group.name, group.mode)]);
-    if (noSuccessor.has(group.name)) {
+  if (group2.symbol) {
+    node = new MathNode("mo", [makeText(group2.name, group2.mode)]);
+    if (noSuccessor.has(group2.name)) {
       node.setAttribute("largeop", "false");
     }
-  } else if (group.body) {
-    node = new MathNode("mo", buildExpression2(group.body, options));
+  } else if (group2.body) {
+    node = new MathNode("mo", buildExpression2(group2.body, options));
   } else {
-    node = new MathNode("mi", [new TextNode(group.name.slice(1))]);
+    node = new MathNode("mi", [new TextNode(group2.name.slice(1))]);
     var operator = new MathNode("mo", [makeText("⁡", "text")]);
-    if (group.parentIsSupSub) {
+    if (group2.parentIsSupSub) {
       node = new MathNode("mrow", [node, operator]);
     } else {
       node = newDocumentFragment([node, operator]);
@@ -60068,18 +60250,18 @@ var htmlBuilder$1 = (grp, options) => {
   var supGroup;
   var subGroup;
   var hasLimits = false;
-  var group;
+  var group2;
   if (grp.type === "supsub") {
     supGroup = grp.sup;
     subGroup = grp.sub;
-    group = assertNodeType(grp.base, "operatorname");
+    group2 = assertNodeType(grp.base, "operatorname");
     hasLimits = true;
   } else {
-    group = assertNodeType(grp, "operatorname");
+    group2 = assertNodeType(grp, "operatorname");
   }
   var base;
-  if (group.body.length > 0) {
-    var body = group.body.map((child2) => {
+  if (group2.body.length > 0) {
+    var body = group2.body.map((child2) => {
       var childText = "text" in child2 ? child2.text : void 0;
       if (typeof childText === "string") {
         return {
@@ -60108,8 +60290,8 @@ var htmlBuilder$1 = (grp, options) => {
     return base;
   }
 };
-var mathmlBuilder2 = (group, options) => {
-  var expression = buildExpression2(group.body, options.withFont("mathrm"));
+var mathmlBuilder2 = (group2, options) => {
+  var expression = buildExpression2(group2.body, options.withFont("mathrm"));
   var isAllString = true;
   for (var i = 0; i < expression.length; i++) {
     var node = expression[i];
@@ -60145,7 +60327,7 @@ var mathmlBuilder2 = (group, options) => {
   var identifier = new MathNode("mi", expression);
   identifier.setAttribute("mathvariant", "normal");
   var operator = new MathNode("mo", [makeText("⁡", "text")]);
-  if (group.parentIsSupSub) {
+  if (group2.parentIsSupSub) {
     return new MathNode("mrow", [identifier, operator]);
   } else {
     return newDocumentFragment([identifier, operator]);
@@ -60178,14 +60360,14 @@ defineFunction({
 defineMacro("\\operatorname", "\\@ifstar\\operatornamewithlimits\\operatorname@");
 defineFunctionBuilders({
   type: "ordgroup",
-  htmlBuilder(group, options) {
-    if (group.semisimple) {
-      return makeFragment(buildExpression$1(group.body, options, false));
+  htmlBuilder(group2, options) {
+    if (group2.semisimple) {
+      return makeFragment(buildExpression$1(group2.body, options, false));
     }
-    return makeSpan(["mord"], buildExpression$1(group.body, options, true), options);
+    return makeSpan(["mord"], buildExpression$1(group2.body, options, true), options);
   },
-  mathmlBuilder(group, options) {
-    return buildExpressionRow(group.body, options, true);
+  mathmlBuilder(group2, options) {
+    return buildExpressionRow(group2.body, options, true);
   }
 });
 defineFunction({
@@ -60205,8 +60387,8 @@ defineFunction({
       body
     };
   },
-  htmlBuilder(group, options) {
-    var innerGroup = buildGroup$1(group.body, options.havingCrampedStyle());
+  htmlBuilder(group2, options) {
+    var innerGroup = buildGroup$1(group2.body, options.havingCrampedStyle());
     var line = makeLineSpan("overline-line", options);
     var defaultRuleThickness = options.fontMetrics().defaultRuleThickness;
     var vlist = makeVList({
@@ -60227,10 +60409,10 @@ defineFunction({
     });
     return makeSpan(["mord", "overline"], [vlist], options);
   },
-  mathmlBuilder(group, options) {
+  mathmlBuilder(group2, options) {
     var operator = new MathNode("mo", [new TextNode("‾")]);
     operator.setAttribute("stretchy", "true");
-    var node = new MathNode("mover", [buildGroup2(group.body, options), operator]);
+    var node = new MathNode("mover", [buildGroup2(group2.body, options), operator]);
     node.setAttribute("accent", "true");
     return node;
   }
@@ -60253,12 +60435,12 @@ defineFunction({
       body: ordargument(body)
     };
   },
-  htmlBuilder: (group, options) => {
-    var elements2 = buildExpression$1(group.body, options.withPhantom(), false);
+  htmlBuilder: (group2, options) => {
+    var elements2 = buildExpression$1(group2.body, options.withPhantom(), false);
     return makeFragment(elements2);
   },
-  mathmlBuilder: (group, options) => {
-    var inner2 = buildExpression2(group.body, options);
+  mathmlBuilder: (group2, options) => {
+    var inner2 = buildExpression2(group2.body, options);
     return new MathNode("mphantom", inner2);
   }
 });
@@ -60281,13 +60463,13 @@ defineFunction({
       body
     };
   },
-  htmlBuilder: (group, options) => {
-    var inner2 = makeSpan(["inner"], [buildGroup$1(group.body, options.withPhantom())]);
+  htmlBuilder: (group2, options) => {
+    var inner2 = makeSpan(["inner"], [buildGroup$1(group2.body, options.withPhantom())]);
     var fix = makeSpan(["fix"], []);
     return makeSpan(["mord", "rlap"], [inner2, fix], options);
   },
-  mathmlBuilder: (group, options) => {
-    var inner2 = buildExpression2(ordargument(group.body), options);
+  mathmlBuilder: (group2, options) => {
+    var inner2 = buildExpression2(ordargument(group2.body), options);
     var phantom = new MathNode("mphantom", inner2);
     var node = new MathNode("mpadded", [phantom]);
     node.setAttribute("width", "0px");
@@ -60315,9 +60497,9 @@ defineFunction({
       body
     };
   },
-  htmlBuilder(group, options) {
-    var body = buildGroup$1(group.body, options);
-    var dy2 = calculateSize(group.dy, options);
+  htmlBuilder(group2, options) {
+    var body = buildGroup$1(group2.body, options);
+    var dy2 = calculateSize(group2.dy, options);
     return makeVList({
       positionType: "shift",
       positionData: -dy2,
@@ -60327,9 +60509,9 @@ defineFunction({
       }]
     });
   },
-  mathmlBuilder(group, options) {
-    var node = new MathNode("mpadded", [buildGroup2(group.body, options)]);
-    var dy2 = group.dy.number + group.dy.unit;
+  mathmlBuilder(group2, options) {
+    var node = new MathNode("mpadded", [buildGroup2(group2.body, options)]);
+    var dy2 = group2.dy.number + group2.dy.unit;
     node.setAttribute("voffset", dy2);
     return node;
   }
@@ -60377,11 +60559,11 @@ defineFunction({
       height: height2.value
     };
   },
-  htmlBuilder(group, options) {
+  htmlBuilder(group2, options) {
     var rule = makeSpan(["mord", "rule"], [], options);
-    var width2 = calculateSize(group.width, options);
-    var height2 = calculateSize(group.height, options);
-    var shift = group.shift ? calculateSize(group.shift, options) : 0;
+    var width2 = calculateSize(group2.width, options);
+    var height2 = calculateSize(group2.height, options);
+    var shift = group2.shift ? calculateSize(group2.shift, options) : 0;
     rule.style.borderRightWidth = makeEm(width2);
     rule.style.borderTopWidth = makeEm(height2);
     rule.style.bottom = makeEm(shift);
@@ -60391,10 +60573,10 @@ defineFunction({
     rule.maxFontSize = height2 * 1.125 * options.sizeMultiplier;
     return rule;
   },
-  mathmlBuilder(group, options) {
-    var width2 = calculateSize(group.width, options);
-    var height2 = calculateSize(group.height, options);
-    var shift = group.shift ? calculateSize(group.shift, options) : 0;
+  mathmlBuilder(group2, options) {
+    var width2 = calculateSize(group2.width, options);
+    var height2 = calculateSize(group2.height, options);
+    var shift = group2.shift ? calculateSize(group2.shift, options) : 0;
     var color2 = options.color && options.getColor() || "black";
     var rule = new MathNode("mspace");
     rule.setAttribute("mathbackground", color2);
@@ -60427,9 +60609,9 @@ function sizingGroup(value, options, baseOptions) {
   return makeFragment(inner2);
 }
 var sizeFuncs = ["\\tiny", "\\sixptsize", "\\scriptsize", "\\footnotesize", "\\small", "\\normalsize", "\\large", "\\Large", "\\LARGE", "\\huge", "\\Huge"];
-var htmlBuilder2 = (group, options) => {
-  var newOptions = options.havingSize(group.size);
-  return sizingGroup(group.body, newOptions, options);
+var htmlBuilder2 = (group2, options) => {
+  var newOptions = options.havingSize(group2.size);
+  return sizingGroup(group2.body, newOptions, options);
 };
 defineFunction({
   type: "sizing",
@@ -60454,9 +60636,9 @@ defineFunction({
     };
   },
   htmlBuilder: htmlBuilder2,
-  mathmlBuilder: (group, options) => {
-    var newOptions = options.havingSize(group.size);
-    var inner2 = buildExpression2(group.body, newOptions);
+  mathmlBuilder: (group2, options) => {
+    var newOptions = options.havingSize(group2.size);
+    var inner2 = buildExpression2(group2.body, newOptions);
     var node = new MathNode("mstyle", inner2);
     node.setAttribute("mathsize", makeEm(newOptions.sizeMultiplier));
     return node;
@@ -60505,26 +60687,26 @@ defineFunction({
       smashDepth
     };
   },
-  htmlBuilder: (group, options) => {
-    var node = makeSpan([], [buildGroup$1(group.body, options)]);
-    if (!group.smashHeight && !group.smashDepth) {
+  htmlBuilder: (group2, options) => {
+    var node = makeSpan([], [buildGroup$1(group2.body, options)]);
+    if (!group2.smashHeight && !group2.smashDepth) {
       return node;
     }
-    if (group.smashHeight) {
+    if (group2.smashHeight) {
       node.height = 0;
     }
-    if (group.smashDepth) {
+    if (group2.smashDepth) {
       node.depth = 0;
     }
-    if (group.smashHeight && group.smashDepth) {
+    if (group2.smashHeight && group2.smashDepth) {
       return makeSpan(["mord", "smash"], [node], options);
     }
     if (node.children) {
       for (var i = 0; i < node.children.length; i++) {
-        if (group.smashHeight) {
+        if (group2.smashHeight) {
           node.children[i].height = 0;
         }
-        if (group.smashDepth) {
+        if (group2.smashDepth) {
           node.children[i].depth = 0;
         }
       }
@@ -60538,12 +60720,12 @@ defineFunction({
     });
     return makeSpan(["mord"], [smashedNode], options);
   },
-  mathmlBuilder: (group, options) => {
-    var node = new MathNode("mpadded", [buildGroup2(group.body, options)]);
-    if (group.smashHeight) {
+  mathmlBuilder: (group2, options) => {
+    var node = new MathNode("mpadded", [buildGroup2(group2.body, options)]);
+    if (group2.smashHeight) {
       node.setAttribute("height", "0px");
     }
-    if (group.smashDepth) {
+    if (group2.smashDepth) {
       node.setAttribute("depth", "0px");
     }
     return node;
@@ -60569,8 +60751,8 @@ defineFunction({
       index
     };
   },
-  htmlBuilder(group, options) {
-    var inner2 = buildGroup$1(group.body, options.havingCrampedStyle());
+  htmlBuilder(group2, options) {
+    var inner2 = buildGroup$1(group2.body, options.havingCrampedStyle());
     if (inner2.height === 0) {
       inner2.height = options.fontMetrics().xHeight;
     }
@@ -60611,11 +60793,11 @@ defineFunction({
         size: ruleWidth
       }]
     });
-    if (!group.index) {
+    if (!group2.index) {
       return makeSpan(["mord", "sqrt"], [body], options);
     } else {
       var newOptions = options.havingStyle(Style$1.SCRIPTSCRIPT);
-      var rootm = buildGroup$1(group.index, newOptions, options);
+      var rootm = buildGroup$1(group2.index, newOptions, options);
       var toShift = 0.6 * (body.height - body.depth);
       var rootVList = makeVList({
         positionType: "shift",
@@ -60629,11 +60811,11 @@ defineFunction({
       return makeSpan(["mord", "sqrt"], [rootVListWrap, body], options);
     }
   },
-  mathmlBuilder(group, options) {
+  mathmlBuilder(group2, options) {
     var {
       body,
       index
-    } = group;
+    } = group2;
     return index ? new MathNode("mroot", [buildGroup2(body, options), buildGroup2(index, options)]) : new MathNode("msqrt", [buildGroup2(body, options)]);
   }
 });
@@ -60674,21 +60856,21 @@ defineFunction({
       body
     };
   },
-  htmlBuilder(group, options) {
-    var newStyle = styleMap[group.style];
+  htmlBuilder(group2, options) {
+    var newStyle = styleMap[group2.style];
     var newOptions = options.havingStyle(newStyle);
-    if (group.resetFont) {
+    if (group2.resetFont) {
       newOptions = newOptions.withFont("");
     }
-    return sizingGroup(group.body, newOptions, options);
+    return sizingGroup(group2.body, newOptions, options);
   },
-  mathmlBuilder(group, options) {
-    var newStyle = styleMap[group.style];
+  mathmlBuilder(group2, options) {
+    var newStyle = styleMap[group2.style];
     var newOptions = options.havingStyle(newStyle);
-    if (group.resetFont) {
+    if (group2.resetFont) {
       newOptions = newOptions.withFont("");
     }
-    var inner2 = buildExpression2(group.body, newOptions);
+    var inner2 = buildExpression2(group2.body, newOptions);
     var node = new MathNode("mstyle", inner2);
     var styleAttributes = {
       "display": ["0", "true"],
@@ -60696,14 +60878,14 @@ defineFunction({
       "script": ["1", "false"],
       "scriptscript": ["2", "false"]
     };
-    var attr2 = styleAttributes[group.style];
+    var attr2 = styleAttributes[group2.style];
     node.setAttribute("scriptlevel", attr2[0]);
     node.setAttribute("displaystyle", attr2[1]);
     return node;
   }
 });
-var htmlBuilderDelegate = function htmlBuilderDelegate2(group, options) {
-  var base = group.base;
+var htmlBuilderDelegate = function htmlBuilderDelegate2(group2, options) {
+  var base = group2.base;
   if (!base) {
     return null;
   } else if (base.type === "op") {
@@ -60715,7 +60897,7 @@ var htmlBuilderDelegate = function htmlBuilderDelegate2(group, options) {
   } else if (base.type === "accent") {
     return isCharacterBox(base.base) ? htmlBuilder$a : null;
   } else if (base.type === "horizBrace") {
-    var isSup = !group.sub;
+    var isSup = !group2.sub;
     return isSup === base.isOver ? htmlBuilder$3 : null;
   } else {
     return null;
@@ -60723,16 +60905,16 @@ var htmlBuilderDelegate = function htmlBuilderDelegate2(group, options) {
 };
 defineFunctionBuilders({
   type: "supsub",
-  htmlBuilder(group, options) {
-    var builderDelegate = htmlBuilderDelegate(group, options);
+  htmlBuilder(group2, options) {
+    var builderDelegate = htmlBuilderDelegate(group2, options);
     if (builderDelegate) {
-      return builderDelegate(group, options);
+      return builderDelegate(group2, options);
     }
     var {
       base: valueBase,
       sup: valueSup,
       sub: valueSub
-    } = group;
+    } = group2;
     var base = buildGroup$1(valueBase, options);
     var supm;
     var subm;
@@ -60766,7 +60948,7 @@ defineFunctionBuilders({
     var marginRight = makeEm(0.5 / metrics.ptPerEm / multiplier);
     var marginLeft = null;
     if (subm) {
-      var isOiint = group.base && group.base.type === "op" && group.base.name && (group.base.name === "\\oiint" || group.base.name === "\\oiiint");
+      var isOiint = group2.base && group2.base.type === "op" && group2.base.name && (group2.base.name === "\\oiint" || group2.base.name === "\\oiiint");
       if (base instanceof SymbolNode || isOiint) {
         var _base$italic;
         marginLeft = makeEm(-((_base$italic = base.italic) != null ? _base$italic : 0));
@@ -60832,32 +61014,32 @@ defineFunctionBuilders({
     var mclass = getTypeOfDomTree(base, "right") || "mord";
     return makeSpan([mclass], [base, makeSpan(["msupsub"], [supsub])], options);
   },
-  mathmlBuilder(group, options) {
+  mathmlBuilder(group2, options) {
     var isBrace = false;
     var isOver;
     var isSup;
-    if (group.base && group.base.type === "horizBrace") {
-      isSup = !!group.sup;
-      if (isSup === group.base.isOver) {
+    if (group2.base && group2.base.type === "horizBrace") {
+      isSup = !!group2.sup;
+      if (isSup === group2.base.isOver) {
         isBrace = true;
-        isOver = group.base.isOver;
+        isOver = group2.base.isOver;
       }
     }
-    if (group.base && (group.base.type === "op" || group.base.type === "operatorname")) {
-      group.base.parentIsSupSub = true;
+    if (group2.base && (group2.base.type === "op" || group2.base.type === "operatorname")) {
+      group2.base.parentIsSupSub = true;
     }
-    var children = [buildGroup2(group.base, options)];
-    if (group.sub) {
-      children.push(buildGroup2(group.sub, options));
+    var children = [buildGroup2(group2.base, options)];
+    if (group2.sub) {
+      children.push(buildGroup2(group2.sub, options));
     }
-    if (group.sup) {
-      children.push(buildGroup2(group.sup, options));
+    if (group2.sup) {
+      children.push(buildGroup2(group2.sup, options));
     }
     var nodeType;
     if (isBrace) {
       nodeType = isOver ? "mover" : "munder";
-    } else if (!group.sub) {
-      var base = group.base;
+    } else if (!group2.sub) {
+      var base = group2.base;
       if (base && base.type === "op" && base.limits && (options.style === Style$1.DISPLAY || base.alwaysHandleSupSub)) {
         nodeType = "mover";
       } else if (base && base.type === "operatorname" && base.alwaysHandleSupSub && (base.limits || options.style === Style$1.DISPLAY)) {
@@ -60865,8 +61047,8 @@ defineFunctionBuilders({
       } else {
         nodeType = "msup";
       }
-    } else if (!group.sup) {
-      var _base = group.base;
+    } else if (!group2.sup) {
+      var _base = group2.base;
       if (_base && _base.type === "op" && _base.limits && (options.style === Style$1.DISPLAY || _base.alwaysHandleSupSub)) {
         nodeType = "munder";
       } else if (_base && _base.type === "operatorname" && _base.alwaysHandleSupSub && (_base.limits || options.style === Style$1.DISPLAY)) {
@@ -60875,7 +61057,7 @@ defineFunctionBuilders({
         nodeType = "msub";
       }
     } else {
-      var _base2 = group.base;
+      var _base2 = group2.base;
       if (_base2 && _base2.type === "op" && _base2.limits && options.style === Style$1.DISPLAY) {
         nodeType = "munderover";
       } else if (_base2 && _base2.type === "operatorname" && _base2.alwaysHandleSupSub && (options.style === Style$1.DISPLAY || _base2.limits)) {
@@ -60889,19 +61071,19 @@ defineFunctionBuilders({
 });
 defineFunctionBuilders({
   type: "atom",
-  htmlBuilder(group, options) {
-    return mathsym(group.text, group.mode, options, ["m" + group.family]);
+  htmlBuilder(group2, options) {
+    return mathsym(group2.text, group2.mode, options, ["m" + group2.family]);
   },
-  mathmlBuilder(group, options) {
-    var node = new MathNode("mo", [makeText(group.text, group.mode)]);
-    if (group.family === "bin") {
-      var variant = getVariant(group, options);
+  mathmlBuilder(group2, options) {
+    var node = new MathNode("mo", [makeText(group2.text, group2.mode)]);
+    if (group2.family === "bin") {
+      var variant = getVariant(group2, options);
       if (variant === "bold-italic") {
         node.setAttribute("mathvariant", variant);
       }
-    } else if (group.family === "punct") {
+    } else if (group2.family === "punct") {
       node.setAttribute("separator", "true");
-    } else if (group.family === "open" || group.family === "close") {
+    } else if (group2.family === "open" || group2.family === "close") {
       node.setAttribute("stretchy", "false");
     }
     return node;
@@ -60914,12 +61096,12 @@ var defaultVariant = {
 };
 defineFunctionBuilders({
   type: "mathord",
-  htmlBuilder(group, options) {
-    return makeOrd(group, options, "mathord");
+  htmlBuilder(group2, options) {
+    return makeOrd(group2, options, "mathord");
   },
-  mathmlBuilder(group, options) {
-    var node = new MathNode("mi", [makeText(group.text, group.mode, options)]);
-    var variant = getVariant(group, options) || "italic";
+  mathmlBuilder(group2, options) {
+    var node = new MathNode("mi", [makeText(group2.text, group2.mode, options)]);
+    var variant = getVariant(group2, options) || "italic";
     if (variant !== defaultVariant[node.type]) {
       node.setAttribute("mathvariant", variant);
     }
@@ -60928,18 +61110,18 @@ defineFunctionBuilders({
 });
 defineFunctionBuilders({
   type: "textord",
-  htmlBuilder(group, options) {
-    return makeOrd(group, options, "textord");
+  htmlBuilder(group2, options) {
+    return makeOrd(group2, options, "textord");
   },
-  mathmlBuilder(group, options) {
-    var text2 = makeText(group.text, group.mode, options);
-    var variant = getVariant(group, options) || "normal";
+  mathmlBuilder(group2, options) {
+    var text2 = makeText(group2.text, group2.mode, options);
+    var variant = getVariant(group2, options) || "normal";
     var node;
-    if (group.mode === "text") {
+    if (group2.mode === "text") {
       node = new MathNode("mtext", [text2]);
-    } else if (/[0-9]/.test(group.text)) {
+    } else if (/[0-9]/.test(group2.text)) {
       node = new MathNode("mn", [text2]);
-    } else if (group.text === "\\prime") {
+    } else if (group2.text === "\\prime") {
       node = new MathNode("mo", [text2]);
     } else {
       node = new MathNode("mi", [text2]);
@@ -60967,30 +61149,30 @@ var regularSpace = {
 };
 defineFunctionBuilders({
   type: "spacing",
-  htmlBuilder(group, options) {
-    if (regularSpace.hasOwnProperty(group.text)) {
-      var className = regularSpace[group.text].className || "";
-      if (group.mode === "text") {
-        var ord = makeOrd(group, options, "textord");
+  htmlBuilder(group2, options) {
+    if (regularSpace.hasOwnProperty(group2.text)) {
+      var className = regularSpace[group2.text].className || "";
+      if (group2.mode === "text") {
+        var ord = makeOrd(group2, options, "textord");
         ord.classes.push(className);
         return ord;
       } else {
-        return makeSpan(["mspace", className], [mathsym(group.text, group.mode, options)], options);
+        return makeSpan(["mspace", className], [mathsym(group2.text, group2.mode, options)], options);
       }
-    } else if (cssSpace.hasOwnProperty(group.text)) {
-      return makeSpan(["mspace", cssSpace[group.text]], [], options);
+    } else if (cssSpace.hasOwnProperty(group2.text)) {
+      return makeSpan(["mspace", cssSpace[group2.text]], [], options);
     } else {
-      throw new ParseError('Unknown type of space "' + group.text + '"');
+      throw new ParseError('Unknown type of space "' + group2.text + '"');
     }
   },
-  mathmlBuilder(group, options) {
+  mathmlBuilder(group2, options) {
     var node;
-    if (regularSpace.hasOwnProperty(group.text)) {
+    if (regularSpace.hasOwnProperty(group2.text)) {
       node = new MathNode("mtext", [new TextNode(" ")]);
-    } else if (cssSpace.hasOwnProperty(group.text)) {
+    } else if (cssSpace.hasOwnProperty(group2.text)) {
       return new MathNode("mspace");
     } else {
-      throw new ParseError('Unknown type of space "' + group.text + '"');
+      throw new ParseError('Unknown type of space "' + group2.text + '"');
     }
     return node;
   }
@@ -61002,8 +61184,8 @@ var pad = () => {
 };
 defineFunctionBuilders({
   type: "tag",
-  mathmlBuilder(group, options) {
-    var table = new MathNode("mtable", [new MathNode("mtr", [pad(), new MathNode("mtd", [buildExpressionRow(group.body, options)]), pad(), new MathNode("mtd", [buildExpressionRow(group.tag, options)])])]);
+  mathmlBuilder(group2, options) {
+    var table = new MathNode("mtable", [new MathNode("mtr", [pad(), new MathNode("mtd", [buildExpressionRow(group2.body, options)]), pad(), new MathNode("mtd", [buildExpressionRow(group2.tag, options)])])]);
     table.setAttribute("width", "100%");
     return table;
   }
@@ -61023,8 +61205,8 @@ var textFontShapes = {
   "\\textit": "textit",
   "\\textup": "textup"
 };
-var optionsWithFont = (group, options) => {
-  var font = group.font;
+var optionsWithFont = (group2, options) => {
+  var font = group2.font;
   if (!font) {
     return options;
   } else if (textFontFamilies[font]) {
@@ -61072,14 +61254,14 @@ defineFunction({
       font: funcName
     };
   },
-  htmlBuilder(group, options) {
-    var newOptions = optionsWithFont(group, options);
-    var inner2 = buildExpression$1(group.body, newOptions, true);
+  htmlBuilder(group2, options) {
+    var newOptions = optionsWithFont(group2, options);
+    var inner2 = buildExpression$1(group2.body, newOptions, true);
     return makeSpan(["mord", "text"], inner2, newOptions);
   },
-  mathmlBuilder(group, options) {
-    var newOptions = optionsWithFont(group, options);
-    return buildExpressionRow(group.body, newOptions);
+  mathmlBuilder(group2, options) {
+    var newOptions = optionsWithFont(group2, options);
+    return buildExpressionRow(group2.body, newOptions);
   }
 });
 defineFunction({
@@ -61099,8 +61281,8 @@ defineFunction({
       body: args[0]
     };
   },
-  htmlBuilder(group, options) {
-    var innerGroup = buildGroup$1(group.body, options);
+  htmlBuilder(group2, options) {
+    var innerGroup = buildGroup$1(group2.body, options);
     var line = makeLineSpan("underline-line", options);
     var defaultRuleThickness = options.fontMetrics().defaultRuleThickness;
     var vlist = makeVList({
@@ -61122,10 +61304,10 @@ defineFunction({
     });
     return makeSpan(["mord", "underline"], [vlist], options);
   },
-  mathmlBuilder(group, options) {
+  mathmlBuilder(group2, options) {
     var operator = new MathNode("mo", [new TextNode("‾")]);
     operator.setAttribute("stretchy", "true");
-    var node = new MathNode("munder", [buildGroup2(group.body, options), operator]);
+    var node = new MathNode("munder", [buildGroup2(group2.body, options), operator]);
     node.setAttribute("accentunder", "true");
     return node;
   }
@@ -61149,8 +61331,8 @@ defineFunction({
       body: args[0]
     };
   },
-  htmlBuilder(group, options) {
-    var body = buildGroup$1(group.body, options);
+  htmlBuilder(group2, options) {
+    var body = buildGroup$1(group2.body, options);
     var axisHeight = options.fontMetrics().axisHeight;
     var dy2 = 0.5 * (body.height - axisHeight - (body.depth + axisHeight));
     return makeVList({
@@ -61162,8 +61344,8 @@ defineFunction({
       }]
     });
   },
-  mathmlBuilder(group, options) {
-    var mpadded = new MathNode("mpadded", [buildGroup2(group.body, options)], ["vcenter"]);
+  mathmlBuilder(group2, options) {
+    var mpadded = new MathNode("mpadded", [buildGroup2(group2.body, options)], ["vcenter"]);
     return new MathNode("mrow", [mpadded]);
   }
 });
@@ -61177,8 +61359,8 @@ defineFunction({
   handler(context, args, optArgs) {
     throw new ParseError("\\verb ended by end of line instead of matching delimiter");
   },
-  htmlBuilder(group, options) {
-    var text2 = makeVerb(group);
+  htmlBuilder(group2, options) {
+    var text2 = makeVerb(group2);
     var body = [];
     var newOptions = options.havingStyle(options.style.text());
     for (var i = 0; i < text2.length; i++) {
@@ -61186,18 +61368,18 @@ defineFunction({
       if (c === "~") {
         c = "\\textasciitilde";
       }
-      body.push(makeSymbol(c, "Typewriter-Regular", group.mode, newOptions, ["mord", "texttt"]));
+      body.push(makeSymbol(c, "Typewriter-Regular", group2.mode, newOptions, ["mord", "texttt"]));
     }
     return makeSpan(["mord", "text"].concat(newOptions.sizingClasses(options)), tryCombineChars(body), newOptions);
   },
-  mathmlBuilder(group, options) {
-    var text2 = new TextNode(makeVerb(group));
+  mathmlBuilder(group2, options) {
+    var text2 = new TextNode(makeVerb(group2));
     var node = new MathNode("mtext", [text2]);
     node.setAttribute("mathvariant", "monospace");
     return node;
   }
 });
-var makeVerb = (group) => group.body.replace(/ /g, group.star ? "␣" : " ");
+var makeVerb = (group2) => group2.body.replace(/ /g, group2.star ? "␣" : " ");
 var functions = _functions;
 var spaceRegexString = "[ \r\n	]";
 var controlWordRegexString = "\\\\[a-zA-Z@]+";
@@ -63109,15 +63291,15 @@ class Parser {
     var symbol = symbolToken.text;
     this.consume();
     this.consumeSpaces();
-    var group;
+    var group2;
     do {
       var _group;
-      group = this.parseGroup(name);
-    } while (((_group = group) == null ? void 0 : _group.type) === "internal");
-    if (!group) {
+      group2 = this.parseGroup(name);
+    } while (((_group = group2) == null ? void 0 : _group.type) === "internal");
+    if (!group2) {
       throw new ParseError("Expected group after '" + symbol + "'", symbolToken);
     }
-    return group;
+    return group2;
   }
   /**
    * Converts the textual input of an unsupported command into a text node
@@ -63343,11 +63525,11 @@ class Parser {
       case "text":
         return this.parseArgumentGroup(optional, type);
       case "hbox": {
-        var group = this.parseArgumentGroup(optional, "text");
-        return group != null ? {
+        var group2 = this.parseArgumentGroup(optional, "text");
+        return group2 != null ? {
           type: "styling",
-          mode: group.mode,
-          body: [group],
+          mode: group2.mode,
+          body: [group2],
           style: "text",
           // simulate \textstyle
           resetFont: true
@@ -63582,22 +63764,22 @@ class Parser {
    * characters in its value.  The representation is still ASCII source.
    * The group will be modified in place.
    */
-  formLigatures(group) {
-    var n = group.length - 1;
+  formLigatures(group2) {
+    var n = group2.length - 1;
     for (var i = 0; i < n; ++i) {
-      var a = group[i];
+      var a = group2[i];
       if (a.type !== "textord") {
         continue;
       }
       var v = a.text;
-      var next2 = group[i + 1];
+      var next2 = group2[i + 1];
       if (!next2 || next2.type !== "textord") {
         continue;
       }
       if (v === "-" && next2.text === "-") {
-        var afterNext = group[i + 2];
+        var afterNext = group2[i + 2];
         if (i + 1 < n && afterNext && afterNext.type === "textord" && afterNext.text === "-") {
-          group.splice(i, 3, {
+          group2.splice(i, 3, {
             type: "textord",
             mode: "text",
             loc: SourceLocation.range(a, afterNext),
@@ -63605,7 +63787,7 @@ class Parser {
           });
           n -= 2;
         } else {
-          group.splice(i, 2, {
+          group2.splice(i, 2, {
             type: "textord",
             mode: "text",
             loc: SourceLocation.range(a, next2),
@@ -63615,7 +63797,7 @@ class Parser {
         }
       }
       if ((v === "'" || v === "`") && next2.text === v) {
-        group.splice(i, 2, {
+        group2.splice(i, 2, {
           type: "textord",
           mode: "text",
           loc: SourceLocation.range(a, next2),
@@ -63670,20 +63852,20 @@ class Parser {
       if (this.settings.strict && this.mode === "math" && extraLatin.includes(text2)) {
         this.settings.reportNonstrict("unicodeTextInMathMode", 'Latin-1/Unicode text character "' + text2[0] + '" used in math mode', nucleus);
       }
-      var group = symbols[this.mode][text2].group;
+      var group2 = symbols[this.mode][text2].group;
       var loc = SourceLocation.range(nucleus);
       var s;
-      if (isAtom(group)) {
+      if (isAtom(group2)) {
         s = {
           type: "atom",
           mode: this.mode,
-          family: group,
+          family: group2,
           loc,
           text: text2
         };
       } else {
         s = {
-          type: group,
+          type: group2,
           mode: this.mode,
           loc,
           text: text2
@@ -73806,22 +73988,22 @@ function addControls(container, groups2) {
     groups2 = [groups2];
   }
   groups2.forEach((controls) => {
-    const group = document.createElement("span");
-    group.classList.add("ql-formats");
+    const group2 = document.createElement("span");
+    group2.classList.add("ql-formats");
     controls.forEach((control) => {
       if (typeof control === "string") {
-        addButton(group, control);
+        addButton(group2, control);
       } else {
         const format = Object.keys(control)[0];
         const value = control[format];
         if (Array.isArray(value)) {
-          addSelect(group, format, value);
+          addSelect(group2, format, value);
         } else {
-          addButton(group, format, value);
+          addButton(group2, format, value);
         }
       }
     });
-    container.appendChild(group);
+    container.appendChild(group2);
   });
 }
 function addSelect(container, format, values2) {
@@ -78317,7 +78499,7 @@ function finitePositive(value, fallback) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
-function clamp$3(value, min, max) {
+function clamp$4(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 function rounded(value) {
@@ -78343,10 +78525,10 @@ function calculateImageResizeRect(start, handle, deltaX, deltaY, shiftKey = fals
   if (!preserveAspect) {
     let width22 = startWidth;
     let height22 = startHeight;
-    if (hasEast) width22 = clamp$3(startWidth + deltaX, minWidth, maxWidth);
-    if (hasWest) width22 = clamp$3(startWidth - deltaX, minWidth, maxWidth);
-    if (hasSouth) height22 = clamp$3(startHeight + deltaY, minHeight, maxHeight);
-    if (hasNorth) height22 = clamp$3(startHeight - deltaY, minHeight, maxHeight);
+    if (hasEast) width22 = clamp$4(startWidth + deltaX, minWidth, maxWidth);
+    if (hasWest) width22 = clamp$4(startWidth - deltaX, minWidth, maxWidth);
+    if (hasSouth) height22 = clamp$4(startHeight + deltaY, minHeight, maxHeight);
+    if (hasNorth) height22 = clamp$4(startHeight - deltaY, minHeight, maxHeight);
     return {
       left: rounded(hasWest ? right - width22 : start.left),
       top: rounded(hasNorth ? bottom - height22 : start.top),
@@ -78359,7 +78541,7 @@ function calculateImageResizeRect(start, handle, deltaX, deltaY, shiftKey = fals
   let scale2 = isCorner ? Math.abs(horizontalScale - 1) >= Math.abs(verticalScale - 1) ? horizontalScale : verticalScale : hasWest || hasEast ? horizontalScale : verticalScale;
   const minScale = Math.max(minWidth / startWidth, minHeight / startHeight);
   const maxScale = Math.min(maxWidth / startWidth, maxHeight / startHeight);
-  scale2 = clamp$3(Number.isFinite(scale2) ? scale2 : 1, minScale, maxScale);
+  scale2 = clamp$4(Number.isFinite(scale2) ? scale2 : 1, minScale, maxScale);
   const width2 = startWidth * scale2;
   const height2 = startHeight * scale2;
   let left = start.left;
@@ -78391,6 +78573,11 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     __publicField(this, "resizeStartRect", null);
     __publicField(this, "resizeCurrentRect", null);
     __publicField(this, "clipartClickTimer", null);
+    __publicField(this, "refreshFrame", null);
+    __publicField(this, "refreshFramesRemaining", 0);
+    __publicField(this, "selectionFollowFrame", null);
+    __publicField(this, "hostResizeObserver", null);
+    __publicField(this, "overlayLayer", null);
     __publicField(this, "selectedAssetKind", "image");
     __publicField(this, "onImageClickBound");
     __publicField(this, "onImageDoubleClickBound");
@@ -78398,6 +78585,7 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     __publicField(this, "onNodeActiveBound");
     __publicField(this, "onCanvasInteractionBound");
     __publicField(this, "onTranslateBound");
+    __publicField(this, "onViewportResizeBound");
     __publicField(this, "onKeydownCaptureBound");
     this.onImageClickBound = this.onImageClick.bind(this);
     this.onImageDoubleClickBound = this.onImageDoubleClick.bind(this);
@@ -78405,8 +78593,10 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     this.onNodeActiveBound = this.onNodeActive.bind(this);
     this.onCanvasInteractionBound = this.onCanvasInteraction.bind(this);
     this.onTranslateBound = this.onTranslate.bind(this);
+    this.onViewportResizeBound = this.onViewportResize.bind(this);
     this.onKeydownCaptureBound = this.onKeydownCapture.bind(this);
     this.bindYeMindEvents();
+    this.observeEditorHost();
   }
   bindYeMindEvents() {
     this.mindMap.on("node_img_click", this.onImageClickBound);
@@ -78414,8 +78604,9 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     this.mindMap.on("node_click", this.onNodeClickBound);
     this.mindMap.on("node_active", this.onNodeActiveBound);
     this.mindMap.on("draw_click", this.onCanvasInteractionBound);
-    this.mindMap.on("svg_mousedown", this.onCanvasInteractionBound);
     this.mindMap.on("translate", this.onTranslateBound);
+    this.mindMap.on("view_data_change", this.onTranslateBound);
+    window.addEventListener("resize", this.onViewportResizeBound);
     window.addEventListener("keydown", this.onKeydownCaptureBound, true);
   }
   unbindYeMindEvents() {
@@ -78424,14 +78615,15 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     this.mindMap.off("node_click", this.onNodeClickBound);
     this.mindMap.off("node_active", this.onNodeActiveBound);
     this.mindMap.off("draw_click", this.onCanvasInteractionBound);
-    this.mindMap.off("svg_mousedown", this.onCanvasInteractionBound);
     this.mindMap.off("translate", this.onTranslateBound);
+    this.mindMap.off("view_data_change", this.onTranslateBound);
+    window.removeEventListener("resize", this.onViewportResizeBound);
     window.removeEventListener("keydown", this.onKeydownCaptureBound, true);
     window.removeEventListener("mousemove", this.onMousemove, true);
     window.removeEventListener("mouseup", this.onMouseup, true);
   }
   onNodeImgMousemove(node, img) {
-    var _a, _b;
+    var _a;
     if (this.isMousedown || this.isAdjusted) return;
     if (this.imageSelected && ((_a = this.node) == null ? void 0 : _a.uid) === (node == null ? void 0 : node.uid)) {
       this.node = node;
@@ -78442,7 +78634,7 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     if (this.imageSelected) return;
     this.node = node;
     this.img = img;
-    this.rect = ((_b = img == null ? void 0 : img.rbox) == null ? void 0 : _b.call(img)) ?? null;
+    this.rect = this.readImageViewportRect(img);
     if (!this.rect) return;
     this.hoverVisible = true;
     this.showHandleEl();
@@ -78454,7 +78646,7 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     this.hideHandleEl();
   }
   onScale() {
-    this.refreshRect();
+    this.scheduleRefreshRect(2);
   }
   onRenderEnd() {
     var _a, _b, _c2, _d2;
@@ -78508,6 +78700,8 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     const handle = document.createElement("div");
     handle.className = "node-img-handle ymz-node-image-frame";
     handle.dataset.mode = "hidden";
+    handle.dataset.toolbarPlacement = "top";
+    handle.style.position = "absolute";
     handle.style.display = "none";
     RESIZE_HANDLES.forEach((direction) => {
       const button = document.createElement("button");
@@ -78561,11 +78755,24 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     });
     handle.appendChild(toolbar);
     this.handleEl = handle;
-    const target = this.mindMap.opt.customInnerElsAppendTo || document.body;
-    target.appendChild(handle);
+    const target = this.resolveOverlayTarget();
+    const overlay = document.createElement("div");
+    overlay.className = "ymz-node-image-overlay-layer";
+    overlay.style.position = "absolute";
+    overlay.style.inset = "0";
+    overlay.style.overflow = "hidden";
+    overlay.style.pointerEvents = "none";
+    overlay.style.zIndex = "14";
+    target.appendChild(overlay);
+    overlay.appendChild(handle);
+    this.overlayLayer = overlay;
   }
   onMousemove(event) {
-    if (!this.isMousedown || !this.resizeStartRect || !this.resizeHandle) return;
+    if (!this.isMousedown) {
+      if (this.imageSelected) this.scheduleRefreshRect();
+      return;
+    }
+    if (!this.resizeStartRect || !this.resizeHandle) return;
     event.preventDefault();
     const limits = this.resizeLimits();
     const rect2 = calculateImageResizeRect(
@@ -78619,22 +78826,34 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     requestAnimationFrame(() => this.refreshRect());
   }
   beforePluginRemove() {
-    var _a, _b;
+    var _a, _b, _c2, _d2;
     if (this.clipartClickTimer !== null) window.clearTimeout(this.clipartClickTimer);
     this.clipartClickTimer = null;
+    this.cancelScheduledRefresh();
+    this.stopSelectionFollow();
+    (_a = this.hostResizeObserver) == null ? void 0 : _a.disconnect();
+    this.hostResizeObserver = null;
     this.unbindYeMindEvents();
     super.beforePluginRemove();
-    (_b = (_a = this.handleEl) == null ? void 0 : _a.remove) == null ? void 0 : _b.call(_a);
+    (_c2 = (_b = this.handleEl) == null ? void 0 : _b.remove) == null ? void 0 : _c2.call(_b);
     this.handleEl = null;
+    (_d2 = this.overlayLayer) == null ? void 0 : _d2.remove();
+    this.overlayLayer = null;
   }
   beforePluginDestroy() {
-    var _a, _b;
+    var _a, _b, _c2, _d2;
     if (this.clipartClickTimer !== null) window.clearTimeout(this.clipartClickTimer);
     this.clipartClickTimer = null;
+    this.cancelScheduledRefresh();
+    this.stopSelectionFollow();
+    (_a = this.hostResizeObserver) == null ? void 0 : _a.disconnect();
+    this.hostResizeObserver = null;
     this.unbindYeMindEvents();
     super.beforePluginDestroy();
-    (_b = (_a = this.handleEl) == null ? void 0 : _a.remove) == null ? void 0 : _b.call(_a);
+    (_c2 = (_b = this.handleEl) == null ? void 0 : _b.remove) == null ? void 0 : _c2.call(_b);
     this.handleEl = null;
+    (_d2 = this.overlayLayer) == null ? void 0 : _d2.remove();
+    this.overlayLayer = null;
   }
   onImageClick(node, img, event) {
     var _a, _b, _c2;
@@ -78656,10 +78875,9 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     this.mindMap.emit("yemind_node_image_selected", node);
   }
   selectImage(node, img, kind) {
-    var _a;
     this.node = node;
     this.img = img;
-    this.rect = ((_a = img.rbox) == null ? void 0 : _a.call(img)) ?? null;
+    this.rect = this.readImageViewportRect(img);
     if (!this.rect) return;
     this.selectedAssetKind = kind;
     this.imageSelected = true;
@@ -78667,6 +78885,7 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     this.showHandleEl();
     if (this.handleEl) this.handleEl.dataset.assetKind = kind;
     this.setMode("selected");
+    this.startSelectionFollow();
   }
   onImageDoubleClick(node, event, img) {
     var _a, _b, _c2;
@@ -78682,30 +78901,42 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     this.closeImageSelection();
   }
   onNodeActive(node) {
-    if (this.imageSelected && node !== this.node) this.closeImageSelection();
+    if (this.imageSelected && node && node !== this.node) this.closeImageSelection();
   }
   onCanvasInteraction() {
     this.closeImageSelection();
   }
   onTranslate() {
-    this.refreshRect();
+    this.scheduleRefreshRect();
+  }
+  onViewportResize() {
+    this.scheduleRefreshRect(12);
+  }
+  observeEditorHost() {
+    const host = this.mindMap.opt.customInnerElsAppendTo;
+    if (!(host instanceof Element) || typeof ResizeObserver === "undefined") return;
+    this.hostResizeObserver = new ResizeObserver(() => {
+      this.scheduleRefreshRect(12);
+    });
+    this.hostResizeObserver.observe(host);
   }
   onKeydownCapture(event) {
-    var _a, _b;
+    var _a, _b, _c2, _d2;
     if (!this.imageSelected || this.mindMap.opt.readonly) return;
+    const editor = (_b = (_a = this.handleEl) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".ymz-editor");
+    if (editor && editor.getClientRects().length === 0) return;
     if (event.key !== "Delete" && event.key !== "Backspace") return;
     if (event.ctrlKey || event.metaKey || event.altKey) return;
     const target = event.target;
-    if ((_a = target == null ? void 0 : target.closest) == null ? void 0 : _a.call(target, 'input,textarea,select,[contenteditable="true"],.ql-editor')) return;
+    if ((_c2 = target == null ? void 0 : target.closest) == null ? void 0 : _c2.call(target, 'input,textarea,select,[contenteditable="true"],.ql-editor')) return;
     event.preventDefault();
     event.stopPropagation();
-    (_b = event.stopImmediatePropagation) == null ? void 0 : _b.call(event);
+    (_d2 = event.stopImmediatePropagation) == null ? void 0 : _d2.call(event);
     void this.deleteSelectedImage();
   }
   startResize(direction, event) {
-    var _a, _b;
     if (!this.imageSelected || this.mindMap.opt.readonly || !this.img || !this.node) return;
-    this.rect = ((_b = (_a = this.img).rbox) == null ? void 0 : _b.call(_a)) ?? this.rect;
+    this.rect = this.readImageViewportRect(this.img) ?? this.rect;
     if (!this.rect) return;
     this.resizeHandle = direction;
     this.resizeStartPoint = { x: event.clientX, y: event.clientY };
@@ -78748,10 +78979,92 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   }
   applyHandleRect(rect2) {
     if (!this.handleEl) return;
-    this.handleEl.style.left = `${rect2.left}px`;
-    this.handleEl.style.top = `${rect2.top}px`;
+    const hostRect = this.readOverlayHostViewportRect();
+    const localLeft = rect2.left - hostRect.left;
+    const localTop = rect2.top - hostRect.top;
+    this.handleEl.style.left = `${localLeft}px`;
+    this.handleEl.style.top = `${localTop}px`;
     this.handleEl.style.width = `${rect2.width}px`;
     this.handleEl.style.height = `${rect2.height}px`;
+    const intersectsViewport = hostRect.width <= 0 || hostRect.height <= 0 || localLeft + rect2.width > 0 && localTop + rect2.height > 0 && localLeft < hostRect.width && localTop < hostRect.height;
+    this.handleEl.style.visibility = intersectsViewport ? "visible" : "hidden";
+    this.positionFloatingImageControls({
+      left: localLeft,
+      top: localTop,
+      width: rect2.width,
+      height: rect2.height
+    }, hostRect);
+  }
+  readOverlayHostViewportRect() {
+    var _a, _b, _c2;
+    const overlay = this.overlayLayer ?? ((_a = this.handleEl) == null ? void 0 : _a.parentElement);
+    const overlayRect = (_b = overlay == null ? void 0 : overlay.getBoundingClientRect) == null ? void 0 : _b.call(overlay);
+    const fallbackHost = (overlay == null ? void 0 : overlay.parentElement) ?? this.mindMap.opt.customInnerElsAppendTo;
+    const fallbackRect = (_c2 = fallbackHost == null ? void 0 : fallbackHost.getBoundingClientRect) == null ? void 0 : _c2.call(fallbackHost);
+    const rect2 = Number(overlayRect == null ? void 0 : overlayRect.width) > 0 && Number(overlayRect == null ? void 0 : overlayRect.height) > 0 ? overlayRect : fallbackRect;
+    const left = Number((rect2 == null ? void 0 : rect2.left) ?? (rect2 == null ? void 0 : rect2.x));
+    const top = Number((rect2 == null ? void 0 : rect2.top) ?? (rect2 == null ? void 0 : rect2.y));
+    const width2 = Number(rect2 == null ? void 0 : rect2.width);
+    const height2 = Number(rect2 == null ? void 0 : rect2.height);
+    return {
+      left: Number.isFinite(left) ? left : 0,
+      top: Number.isFinite(top) ? top : 0,
+      width: Number.isFinite(width2) && width2 > 0 ? width2 : 0,
+      height: Number.isFinite(height2) && height2 > 0 ? height2 : 0
+    };
+  }
+  resolveOverlayTarget() {
+    var _a, _b;
+    const configuredHost = this.mindMap.opt.customInnerElsAppendTo;
+    const editor = ((_a = configuredHost == null ? void 0 : configuredHost.matches) == null ? void 0 : _a.call(configuredHost, ".ymz-editor")) ? configuredHost : (_b = configuredHost == null ? void 0 : configuredHost.closest) == null ? void 0 : _b.call(configuredHost, ".ymz-editor");
+    const canvas = editor == null ? void 0 : editor.querySelector('[data-role="canvas"]');
+    const mapElement = this.mindMap.el;
+    return canvas ?? mapElement ?? configuredHost ?? document.body;
+  }
+  positionFloatingImageControls(image, viewport) {
+    if (!this.handleEl) return;
+    const toolbar = this.handleEl.querySelector(".ymz-node-image-toolbar");
+    const remove2 = this.handleEl.querySelector(".ymz-node-image-delete");
+    const margin = 8;
+    const gap = 6;
+    if (toolbar) {
+      const measured = toolbar.getBoundingClientRect();
+      const toolbarWidth = finitePositive(measured.width, 128);
+      const toolbarHeight = finitePositive(measured.height, 44);
+      const centeredLeft = image.left + image.width / 2 - toolbarWidth / 2;
+      const toolbarLeft = viewport.width > 0 ? clamp$4(centeredLeft, margin, Math.max(margin, viewport.width - toolbarWidth - margin)) : centeredLeft;
+      const above = image.top - toolbarHeight - gap;
+      const below = image.top + image.height + gap;
+      let toolbarTop = above;
+      let placement = "top";
+      if (viewport.height > 0 && above < margin) {
+        if (below + toolbarHeight <= viewport.height - margin) {
+          toolbarTop = below;
+          placement = "bottom";
+        } else {
+          toolbarTop = clamp$4(
+            image.top + (image.height - toolbarHeight) / 2,
+            margin,
+            Math.max(margin, viewport.height - toolbarHeight - margin)
+          );
+          placement = "clamped";
+        }
+      }
+      this.handleEl.dataset.toolbarPlacement = placement;
+      toolbar.style.left = `${toolbarLeft - image.left}px`;
+      toolbar.style.top = `${toolbarTop - image.top}px`;
+      toolbar.style.right = "auto";
+      toolbar.style.bottom = "auto";
+      toolbar.style.transform = "none";
+    }
+    if (remove2 && viewport.width > 0 && viewport.height > 0) {
+      const size2 = finitePositive(remove2.getBoundingClientRect().width, 18);
+      const centerX = clamp$4(image.left + image.width, size2 / 2, viewport.width - size2 / 2);
+      const centerY = clamp$4(image.top, size2 / 2, viewport.height - size2 / 2);
+      remove2.style.left = `${centerX - image.left - size2 / 2}px`;
+      remove2.style.top = `${centerY - image.top - size2 / 2}px`;
+      remove2.style.right = "auto";
+    }
   }
   setMode(mode) {
     if (!this.handleEl) return;
@@ -78761,16 +79074,71 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     var _a, _b;
     if (!this.img || !this.imageSelected && !this.hoverVisible || this.isMousedown) return;
     try {
-      this.rect = this.img.rbox();
+      this.rect = this.readImageViewportRect(this.img);
     } catch {
       const nextImage = (_b = (_a = this.node) == null ? void 0 : _a._imgData) == null ? void 0 : _b.node;
       if (!nextImage) return;
       this.img = nextImage;
-      this.rect = nextImage.rbox();
+      this.rect = this.readImageViewportRect(nextImage);
     }
     if (!this.rect) return;
     this.showHandleEl();
     this.setMode(this.imageSelected ? "selected" : "hover");
+  }
+  readImageViewportRect(img) {
+    var _a;
+    const element = img == null ? void 0 : img.node;
+    if (element && typeof element.getBoundingClientRect === "function") {
+      const live = element.getBoundingClientRect();
+      const width2 = Number(live.width);
+      const height2 = Number(live.height);
+      const x2 = Number(live.x ?? live.left);
+      const y2 = Number(live.y ?? live.top);
+      if (Number.isFinite(x2) && Number.isFinite(y2) && Number.isFinite(width2) && Number.isFinite(height2) && width2 > 0 && height2 > 0) {
+        return {
+          x: x2,
+          y: y2,
+          x2: x2 + width2,
+          y2: y2 + height2,
+          width: width2,
+          height: height2
+        };
+      }
+    }
+    return ((_a = img == null ? void 0 : img.rbox) == null ? void 0 : _a.call(img)) ?? null;
+  }
+  scheduleRefreshRect(frameCount = 1) {
+    this.refreshFramesRemaining = Math.max(
+      this.refreshFramesRemaining,
+      Math.max(1, Math.floor(frameCount))
+    );
+    if (this.refreshFrame !== null) return;
+    this.refreshFrame = window.requestAnimationFrame(() => {
+      this.refreshFrame = null;
+      this.refreshRect();
+      this.refreshFramesRemaining -= 1;
+      if (this.refreshFramesRemaining > 0) this.scheduleRefreshRect(this.refreshFramesRemaining);
+    });
+  }
+  cancelScheduledRefresh() {
+    if (this.refreshFrame !== null) window.cancelAnimationFrame(this.refreshFrame);
+    this.refreshFrame = null;
+    this.refreshFramesRemaining = 0;
+  }
+  startSelectionFollow() {
+    if (this.selectionFollowFrame !== null) return;
+    this.selectionFollowFrame = window.requestAnimationFrame(() => {
+      this.selectionFollowFrame = null;
+      if (!this.imageSelected) return;
+      this.refreshRect();
+      this.startSelectionFollow();
+    });
+  }
+  stopSelectionFollow() {
+    if (this.selectionFollowFrame !== null) {
+      window.cancelAnimationFrame(this.selectionFollowFrame);
+    }
+    this.selectionFollowFrame = null;
   }
   clearSelectionForViewChange() {
     this.isMousedown = false;
@@ -78778,6 +79146,8 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   }
   closeImageSelection() {
     if (this.isMousedown) return;
+    this.cancelScheduledRefresh();
+    this.stopSelectionFollow();
     this.imageSelected = false;
     this.hoverVisible = false;
     this.hideHandleEl(true);
@@ -79607,6 +79977,13 @@ class RichText {
   }
 }
 RichText.instanceName = "richText";
+function editorHorizontalMargin(node, paddingX, textContentMargin, scaleX) {
+  const scaledPadding = Math.max(0, Number(paddingX) || 0) * Math.max(0, Number(scaleX) || 1);
+  const hasPrefix = Boolean(node == null ? void 0 : node._prefixData) || Array.isArray(node == null ? void 0 : node._iconData) && node._iconData.length > 0;
+  if (!hasPrefix) return -scaledPadding;
+  const scaledGap = Math.max(0, Number(textContentMargin) || 0) * Math.max(0, Number(scaleX) || 1);
+  return -Math.min(scaledPadding, scaledGap);
+}
 function finite$2(value) {
   return typeof value === "number" && Number.isFinite(value);
 }
@@ -79649,9 +80026,9 @@ function resolveLiveRenderedNode(mindMap, node, uid2 = renderedNodeUid(node)) {
   const current = (_b = (_a = mindMap == null ? void 0 : mindMap.renderer) == null ? void 0 : _a.findNodeByUid) == null ? void 0 : _b.call(_a, uid2);
   return current ?? node ?? null;
 }
-function numberAttribute(group, name) {
+function numberAttribute(group2, name) {
   var _a;
-  const value = Number((_a = group == null ? void 0 : group.attr) == null ? void 0 : _a.call(group, name));
+  const value = Number((_a = group2 == null ? void 0 : group2.attr) == null ? void 0 : _a.call(group2, name));
   return finite$2(value) && value > 0 ? value : 0;
 }
 function transformPoint(matrix, x2, y2) {
@@ -79662,7 +80039,7 @@ function transformPoint(matrix, x2, y2) {
     y: matrix.b * x2 + matrix.d * y2 + matrix.f
   };
 }
-function rectFromScreenMatrix(element, group) {
+function rectFromScreenMatrix(element, group2) {
   var _a, _b;
   let matrix = null;
   try {
@@ -79681,8 +80058,8 @@ function rectFromScreenMatrix(element, group) {
     box = null;
   }
   if (!box) {
-    const width22 = numberAttribute(group, "data-width");
-    const height22 = numberAttribute(group, "data-height");
+    const width22 = numberAttribute(group2, "data-width");
+    const height22 = numberAttribute(group2, "data-height");
     if (width22 <= 0.5 || height22 <= 0.5) return null;
     box = { x: 0, y: 0, width: width22, height: height22 };
   }
@@ -79706,8 +80083,8 @@ function rectFromScreenMatrix(element, group) {
 }
 function resolveRenderedTextRect(node) {
   var _a, _b;
-  const group = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
-  const element = group == null ? void 0 : group.node;
+  const group2 = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
+  const element = group2 == null ? void 0 : group2.node;
   if (!element) return null;
   const connected = typeof element.isConnected === "boolean" ? element.isConnected : null;
   if (connected !== false) {
@@ -79722,7 +80099,7 @@ function resolveRenderedTextRect(node) {
       }
     } catch {
     }
-    const matrixRect = rectFromScreenMatrix(element, group);
+    const matrixRect = rectFromScreenMatrix(element, group2);
     if (matrixRect) {
       return {
         rect: snapshotRect(matrixRect),
@@ -79833,6 +80210,14 @@ class YeMindRichText extends RichText {
     __publicField(this, "editingUid", "");
     __publicField(this, "lastValidNodeRect", null);
     __publicField(this, "lastRectSource", "none");
+    __publicField(this, "placementFrame", null);
+    __publicField(this, "placementMonitorFrame", null);
+    __publicField(this, "placementTracking", false);
+    __publicField(this, "placementResizeObserver", null);
+    __publicField(this, "handlePlacementInvalidation", () => {
+      if (!this.showTextEdit) return;
+      this.schedulePlacementStabilization();
+    });
   }
   showEditText(params) {
     if (this.showTextEdit) return;
@@ -79853,8 +80238,11 @@ class YeMindRichText extends RichText {
       rect: rect2 ?? (params == null ? void 0 : params.rect)
     });
     this.node = resolveLiveRenderedNode(this.mindMap, this.node ?? liveNode ?? sourceNode, this.editingUid);
+    this.applyEditorHorizontalMargin(this.node, rect2);
     this.normalizeEditorPlacement(rect2);
     this.bindTextEditingKeyboard();
+    this.bindPlacementTracking();
+    this.schedulePlacementStabilization();
     this.emitEditingDiagnostic("opened", {
       liveNodeResolved: Boolean(liveNode && liveNode !== sourceNode),
       rectSource: this.lastRectSource
@@ -79887,6 +80275,8 @@ class YeMindRichText extends RichText {
     });
   }
   hideEditText(nodes) {
+    this.unbindPlacementTracking();
+    this.cancelPlacementStabilization();
     const liveNode = resolveLiveRenderedNode(this.mindMap, this.node, this.editingUid);
     if (liveNode) this.node = liveNode;
     const liveNodes = Array.isArray(nodes) ? nodes.map((node) => resolveLiveRenderedNode(this.mindMap, node)).filter(Boolean) : nodes;
@@ -79899,6 +80289,8 @@ class YeMindRichText extends RichText {
     }
   }
   removeTextEditEl() {
+    this.unbindPlacementTracking();
+    this.cancelPlacementStabilization();
     try {
       super.removeTextEditEl();
     } finally {
@@ -79955,15 +80347,31 @@ class YeMindRichText extends RichText {
     var _a, _b, _c2;
     const host = this.textEditNode;
     if (!host || !isUsableTextRect(rect2)) return;
-    const group = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
-    const width2 = Number((_b = group == null ? void 0 : group.attr) == null ? void 0 : _b.call(group, "data-width"));
-    const height2 = Number((_c2 = group == null ? void 0 : group.attr) == null ? void 0 : _c2.call(group, "data-height"));
+    const group2 = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
+    const width2 = Number((_b = group2 == null ? void 0 : group2.attr) == null ? void 0 : _b.call(group2, "data-width"));
+    const height2 = Number((_c2 = group2 == null ? void 0 : group2.attr) == null ? void 0 : _c2.call(group2, "data-height"));
     const originWidth = Number.isFinite(width2) && width2 > 0 ? width2 : rect2.width;
     const originHeight = Number.isFinite(height2) && height2 > 0 ? height2 : rect2.height;
     host.style.minWidth = `${originWidth + this.textNodePaddingX * 2}px`;
     host.style.minHeight = `${originHeight}px`;
     this.setQuillContainerMinHeight(originHeight);
+    this.applyEditorHorizontalMargin(node, rect2);
     this.normalizeEditorPlacement(rect2);
+  }
+  applyEditorHorizontalMargin(node, rect2) {
+    var _a, _b, _c2, _d2;
+    const host = this.textEditNode;
+    if (!host || !rect2) return;
+    const group2 = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
+    const originWidth = Number((_b = group2 == null ? void 0 : group2.attr) == null ? void 0 : _b.call(group2, "data-width"));
+    const scaleX = Number.isFinite(originWidth) && originWidth > 0 ? Math.ceil(rect2.width) / originWidth : 1;
+    const gap = Number((_d2 = (_c2 = this.mindMap) == null ? void 0 : _c2.opt) == null ? void 0 : _d2.textContentMargin);
+    host.style.marginLeft = `${editorHorizontalMargin(
+      node,
+      this.textNodePaddingX,
+      Number.isFinite(gap) ? gap : 5,
+      scaleX
+    )}px`;
   }
   normalizeEditorPlacement(rect2) {
     var _a, _b;
@@ -79985,6 +80393,71 @@ class YeMindRichText extends RichText {
     host.style.position = "absolute";
     host.style.left = `${nodeRect.left - targetRect.left + target.scrollLeft - target.clientLeft}px`;
     host.style.top = `${nodeRect.top - targetRect.top + target.scrollTop - target.clientTop}px`;
+  }
+  /**
+   * A newly inserted node can emit `node_dblclick` from inside the SVG render
+   * stack before the browser has flushed its final group transform. The first
+   * rectangle can therefore point at the canvas origin even though the node is
+   * painted in the correct place. Re-resolve once on the next frame so the
+   * HTML editor and SVG text always share the same final geometry.
+   */
+  schedulePlacementStabilization() {
+    this.cancelPlacementStabilization();
+    if (typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") return;
+    const uid2 = this.editingUid;
+    this.placementFrame = window.requestAnimationFrame(() => {
+      this.placementFrame = null;
+      if (!this.showTextEdit || this.editingUid !== uid2) return;
+      this.updateTextEditNode();
+    });
+  }
+  bindPlacementTracking() {
+    var _a, _b;
+    if (this.placementTracking) return;
+    this.placementTracking = true;
+    ["resize", "scale", "translate"].forEach((name) => {
+      var _a2, _b2;
+      (_b2 = (_a2 = this.mindMap) == null ? void 0 : _a2.on) == null ? void 0 : _b2.call(_a2, name, this.handlePlacementInvalidation);
+    });
+    window.addEventListener("resize", this.handlePlacementInvalidation, { passive: true });
+    const target = (_b = (_a = this.mindMap) == null ? void 0 : _a.opt) == null ? void 0 : _b.customInnerElsAppendTo;
+    if (typeof ResizeObserver === "function" && target) {
+      this.placementResizeObserver = new ResizeObserver(this.handlePlacementInvalidation);
+      this.placementResizeObserver.observe(target);
+    }
+    this.startPlacementMonitor();
+  }
+  unbindPlacementTracking() {
+    var _a, _b;
+    if (!this.placementTracking) return;
+    this.placementTracking = false;
+    ["resize", "scale", "translate"].forEach((name) => {
+      var _a2, _b2;
+      (_b2 = (_a2 = this.mindMap) == null ? void 0 : _a2.off) == null ? void 0 : _b2.call(_a2, name, this.handlePlacementInvalidation);
+    });
+    window.removeEventListener("resize", this.handlePlacementInvalidation);
+    (_a = this.placementResizeObserver) == null ? void 0 : _a.disconnect();
+    this.placementResizeObserver = null;
+    if (this.placementMonitorFrame !== null) {
+      (_b = window.cancelAnimationFrame) == null ? void 0 : _b.call(window, this.placementMonitorFrame);
+      this.placementMonitorFrame = null;
+    }
+  }
+  startPlacementMonitor() {
+    if (this.placementMonitorFrame !== null || typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") return;
+    const tick = () => {
+      this.placementMonitorFrame = null;
+      if (!this.placementTracking || !this.showTextEdit) return;
+      this.updateTextEditNode();
+      this.placementMonitorFrame = window.requestAnimationFrame(tick);
+    };
+    this.placementMonitorFrame = window.requestAnimationFrame(tick);
+  }
+  cancelPlacementStabilization() {
+    var _a;
+    if (this.placementFrame === null) return;
+    (_a = window.cancelAnimationFrame) == null ? void 0 : _a.call(window, this.placementFrame);
+    this.placementFrame = null;
   }
   bindTextEditingKeyboard() {
     var _a;
@@ -80812,43 +81285,6 @@ function registerMindMapLayouts() {
   });
   registered = true;
 }
-const BLOCKED_ELEMENTS = "script,style,iframe,object,embed,meta,link,base,form,input,button,textarea,select,option";
-function isUnsafeUrl(value, attributeName) {
-  const normalized2 = value.trim().replace(/[\u0000-\u001f\u007f\s]+/g, "").toLowerCase();
-  if (!normalized2) return false;
-  if (normalized2.startsWith("javascript:") || normalized2.startsWith("vbscript:")) return true;
-  if (!normalized2.startsWith("data:")) return false;
-  return attributeName === "src" ? !normalized2.startsWith("data:image/") : true;
-}
-function sanitizeRichHtml(value) {
-  const source = String(value ?? "");
-  if (typeof document === "undefined") {
-    return source.replace(/<(script|style|iframe|object|embed|meta|link|base|form|input|button|textarea|select|option)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "").replace(/<(script|style|iframe|object|embed|meta|link|base|form|input|button|textarea|select|option)\b[^>]*\/?\s*>/gi, "").replace(/\s+on[a-z0-9_-]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "").replace(/\s+(href|src)\s*=\s*(["'])\s*(?:javascript|vbscript):[\s\S]*?\2/gi, "");
-  }
-  const template = document.createElement("template");
-  template.innerHTML = source;
-  template.content.querySelectorAll(BLOCKED_ELEMENTS).forEach((node) => node.remove());
-  template.content.querySelectorAll("*").forEach((node) => {
-    Array.from(node.attributes).forEach((attribute) => {
-      const name = attribute.name.toLowerCase();
-      if (name.startsWith("on") || name === "srcdoc") {
-        node.removeAttribute(attribute.name);
-        return;
-      }
-      if ((name === "href" || name === "src" || name === "xlink:href") && isUnsafeUrl(attribute.value, name === "xlink:href" ? "href" : name)) {
-        node.removeAttribute(attribute.name);
-        return;
-      }
-      if (name === "style" && /(url\s*\(|expression\s*\(|javascript:|vbscript:|@import)/i.test(attribute.value)) {
-        node.removeAttribute(attribute.name);
-      }
-    });
-    if (node.tagName === "A" && node.getAttribute("target") === "_blank") {
-      node.setAttribute("rel", "noopener noreferrer");
-    }
-  });
-  return template.innerHTML;
-}
 function cleanDimension(value) {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? Math.round(number) : void 0;
@@ -81220,6 +81656,8 @@ const registeredMaps = /* @__PURE__ */ new WeakSet();
 const hosts = /* @__PURE__ */ new WeakMap();
 const repairScheduled = /* @__PURE__ */ new WeakSet();
 const fontRepairsRegistered = /* @__PURE__ */ new WeakSet();
+const completedFirstRender = /* @__PURE__ */ new WeakSet();
+const pendingFontRepair = /* @__PURE__ */ new WeakSet();
 function measurementElements(map2) {
   const caches = map2.commonCaches;
   if (!caches) return [];
@@ -81274,6 +81712,13 @@ function moveMeasurementElements(map2, host) {
   measurementElements(map2).forEach((element) => {
     element.dataset.yemindMeasurementOwner = "true";
     element.setAttribute("aria-hidden", "true");
+    Object.assign(element.style, {
+      position: "relative",
+      left: "0px",
+      top: "0px",
+      width: "max-content",
+      height: "auto"
+    });
     if (element.parentElement !== host) {
       host.appendChild(element);
       moved = true;
@@ -81281,14 +81726,21 @@ function moveMeasurementElements(map2, host) {
   });
   return moved;
 }
-function scheduleFullGeometryRepair(map2) {
+function requestFullGeometryRepair(map2, source) {
+  var _a;
+  if (typeof map2.reRender === "function") {
+    map2.reRender(null, source);
+    return;
+  }
+  (_a = map2.render) == null ? void 0 : _a.call(map2, null, "changeTheme");
+}
+function scheduleFullGeometryRepair(map2, source = "yemind-measurement-host") {
   const key = map2;
   if (repairScheduled.has(key)) return;
   repairScheduled.add(key);
   const run = () => {
-    var _a;
     repairScheduled.delete(key);
-    (_a = map2.render) == null ? void 0 : _a.call(map2, null, "yemind-measurement-host");
+    requestFullGeometryRepair(map2, source);
   };
   if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
     window.requestAnimationFrame(run);
@@ -81304,15 +81756,19 @@ function repairAfterFontsReady(map2, editorRoot) {
   if (!ready || typeof ready.then !== "function") return;
   fontRepairsRegistered.add(key);
   void ready.then(() => {
-    var _a2;
     if (!registeredMaps.has(key) || typeof document === "undefined") return;
+    if (!completedFirstRender.has(key)) {
+      pendingFontRepair.add(key);
+      return;
+    }
     const context = editorRoot.closest(".ymz-editor") ?? editorRoot;
     moveMeasurementElements(map2, getHost(map2, context));
-    (_a2 = map2.render) == null ? void 0 : _a2.call(map2, null, "yemind-fonts-ready");
+    scheduleFullGeometryRepair(map2, "yemind-fonts-ready");
   });
 }
 function stabilizeMindMapMeasurementHost(map2, editorRoot = document.body) {
   var _a, _b;
+  const key = map2;
   const context = editorRoot.closest(".ymz-editor") ?? editorRoot;
   const relocate = () => {
     const moved2 = moveMeasurementElements(map2, getHost(map2, context));
@@ -81320,17 +81776,25 @@ function stabilizeMindMapMeasurementHost(map2, editorRoot = document.body) {
     return moved2;
   };
   const moved = relocate();
-  if (!registeredMaps.has(map2)) {
-    registeredMaps.add(map2);
+  if (!registeredMaps.has(key)) {
+    registeredMaps.add(key);
     repairAfterFontsReady(map2, context);
-    (_a = map2.on) == null ? void 0 : _a.call(map2, "node_tree_render_end", relocate);
+    (_a = map2.on) == null ? void 0 : _a.call(map2, "node_tree_render_end", () => {
+      completedFirstRender.add(key);
+      const fontRepair = pendingFontRepair.delete(key);
+      const cachesMoved = moveMeasurementElements(map2, getHost(map2, context));
+      if (fontRepair) scheduleFullGeometryRepair(map2, "yemind-fonts-ready");
+      else if (cachesMoved) scheduleFullGeometryRepair(map2);
+    });
     (_b = map2.on) == null ? void 0 : _b.call(map2, "beforeDestroy", () => {
       var _a2;
-      registeredMaps.delete(map2);
-      fontRepairsRegistered.delete(map2);
-      repairScheduled.delete(map2);
-      (_a2 = hosts.get(map2)) == null ? void 0 : _a2.remove();
-      hosts.delete(map2);
+      registeredMaps.delete(key);
+      fontRepairsRegistered.delete(key);
+      repairScheduled.delete(key);
+      completedFirstRender.delete(key);
+      pendingFontRepair.delete(key);
+      (_a2 = hosts.get(key)) == null ? void 0 : _a2.remove();
+      hosts.delete(key);
     });
     queueMicrotask(relocate);
     if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
@@ -81462,6 +81926,27 @@ function themePaletteColors(preset) {
       branch2.normalText
     ])
   ]);
+}
+const THEME_CHOICE_GROUPS = ["常用", "缤纷", "经典"];
+function toOption(preset, group2) {
+  return {
+    value: preset.id,
+    label: preset.label,
+    group: group2,
+    description: preset.description,
+    previewColor: preset.light.colorAppearance.centerBackground,
+    previewColors: themePaletteColors(preset)
+  };
+}
+function buildThemeChoiceOptions(favoriteThemeIds) {
+  const byId = new Map(YEMIND_THEME_PRESETS.map((preset) => [preset.id, preset]));
+  const favorites = favoriteThemeIds.map((id) => byId.get(id)).filter((preset) => Boolean(preset)).map((preset) => toOption(preset, "常用"));
+  const colorful = YEMIND_THEME_PRESETS.filter((preset) => preset.group === "缤纷").map((preset) => toOption(preset, "缤纷"));
+  const classic = [
+    ...YEMIND_THEME_PRESETS.filter((preset) => preset.group === "基础"),
+    ...YEMIND_THEME_PRESETS.filter((preset) => preset.group === "经典")
+  ].map((preset) => toOption(preset, "经典"));
+  return [...favorites, ...colorful, ...classic];
 }
 const clone$1 = (value) => JSON.parse(JSON.stringify(value));
 function generalizationList(data2) {
@@ -82155,6 +82640,24 @@ function plainTextFromSearchValue(value, richText = false) {
   ).forEach((element) => element.append(document.createTextNode("\n")));
   return host.textContent ?? "";
 }
+function parseZoomPercent(value, min, max) {
+  const normalized2 = String(value ?? "").trim().replace(/%$/, "").trim();
+  if (!normalized2) return null;
+  const parsed = Number(normalized2);
+  if (!Number.isFinite(parsed)) return null;
+  const lower = Math.min(min, max);
+  const upper = Math.max(min, max);
+  return Math.min(upper, Math.max(lower, parsed));
+}
+function steppedZoomPercent(current, direction, min, max, step = 20) {
+  const safeStep = Number.isFinite(step) && step > 0 ? step : 20;
+  const safeCurrent = Number.isFinite(current) ? current : 100;
+  const lower = Number.isFinite(min) ? min : 20;
+  const upper = Number.isFinite(max) && max >= 0 ? Math.max(lower, max) : Number.POSITIVE_INFINITY;
+  const cleanLevel = Math.round(safeCurrent / safeStep) * safeStep;
+  const target = cleanLevel + (direction === "in" ? safeStep : -safeStep);
+  return Math.min(upper, Math.max(lower, target));
+}
 function createCommandAdapter(mindMap) {
   const activeNodes = () => {
     var _a;
@@ -82168,6 +82671,25 @@ function createCommandAdapter(mindMap) {
     );
   };
   const canMutate = () => !isReadonly();
+  const stepZoom = (direction) => {
+    var _a, _b, _c2;
+    const view = mindMap.view;
+    const current = Number(view == null ? void 0 : view.scale) * 100;
+    const min = Number(((_a = mindMap.opt) == null ? void 0 : _a.minZoomRatio) ?? 20);
+    const max = Number(((_b = mindMap.opt) == null ? void 0 : _b.maxZoomRatio) ?? 400);
+    const target = steppedZoomPercent(current, direction, min, max);
+    if (typeof (view == null ? void 0 : view.setScale) === "function") {
+      const width2 = Number(mindMap.width);
+      const height2 = Number(mindMap.height);
+      if (Number.isFinite(width2) && Number.isFinite(height2)) {
+        view.setScale(target / 100, width2 / 2, height2 / 2);
+      } else {
+        view.setScale(target / 100);
+      }
+      return;
+    }
+    (_c2 = view == null ? void 0 : view[direction === "in" ? "enlarge" : "narrow"]) == null ? void 0 : _c2.call(view, void 0, void 0, false);
+  };
   const forEachActive = (callback) => activeNodes().forEach(callback);
   const richText = () => mindMap.richText;
   const richRange = () => {
@@ -82247,7 +82769,8 @@ function createCommandAdapter(mindMap) {
     plugin.searchText = text2;
     plugin.currentIndex = -1;
     (_b = plugin.updateMatchNodeList) == null ? void 0 : _b.call(plugin, matches);
-    (_c2 = plugin.searchNext) == null ? void 0 : _c2.call(plugin);
+    (_c2 = plugin.searchNext) == null ? void 0 : _c2.call(plugin, () => {
+    });
     (_d2 = plugin.emitEvent) == null ? void 0 : _d2.call(plugin);
   };
   const replaceNodeSearchText = (node, query, replacement, options, limit, skip = 0) => {
@@ -82264,10 +82787,21 @@ function createCommandAdapter(mindMap) {
     const matches = Array.isArray(plugin == null ? void 0 : plugin.matchNodeList) ? [...plugin.matchNodeList] : [];
     if (!query || matches.length === 0) return;
     const currentIndex = Math.max(0, Number(plugin.currentIndex ?? 0));
-    const currentNode = matches[currentIndex] ?? matches[0];
-    const targets = replaceAll ? [...new Set(matches)].map((node) => ({ node, skip: 0 })) : [{
+    const latestNode = (node) => {
+      const uid2 = String(searchNodeData(node).uid ?? "");
+      return (uid2 ? findNodeByUid(uid2) : null) ?? node;
+    };
+    const sameSearchNode = (left, right) => {
+      if (left === right) return true;
+      const leftUid = String(searchNodeData(left).uid ?? "");
+      const rightUid = String(searchNodeData(right).uid ?? "");
+      return Boolean(leftUid && rightUid && leftUid === rightUid);
+    };
+    const currentMatch = matches[currentIndex] ?? matches[0];
+    const currentNode = latestNode(currentMatch);
+    const targets = replaceAll ? [...new Set(matches.map(latestNode))].map((node) => ({ node, skip: 0 })) : [{
       node: currentNode,
-      skip: matches.slice(0, currentIndex).filter((node) => node === currentNode).length
+      skip: matches.slice(0, currentIndex).filter((node) => sameSearchNode(node, currentMatch)).length
     }];
     let changed = false;
     targets.forEach(({ node, skip }) => {
@@ -82405,8 +82939,8 @@ function createCommandAdapter(mindMap) {
     resetLayout: () => {
       if (canMutate()) mindMap.execCommand("RESET_LAYOUT");
     },
-    zoomIn: () => mindMap.view.enlarge(void 0, void 0, false),
-    zoomOut: () => mindMap.view.narrow(void 0, void 0, false),
+    zoomIn: () => stepZoom("in"),
+    zoomOut: () => stepZoom("out"),
     edit: () => {
       var _a, _b;
       if (!canMutate()) return;
@@ -82626,6 +83160,30 @@ function createCommandAdapter(mindMap) {
       }
       mindMap.execCommand("INSERT_FORMULA", value);
     },
+    insertSymbol: (symbol) => {
+      if (!canMutate() || !symbol) return false;
+      const node = primaryNode();
+      if (!node) return false;
+      const editor = richText();
+      const quill = editor == null ? void 0 : editor.quill;
+      const range2 = richRange();
+      if (quill && range2) {
+        if (range2.length > 0) quill.deleteText(range2.index, range2.length, "user");
+        quill.insertText(range2.index, symbol, "user");
+        quill.setSelection(range2.index + symbol.length, 0, "silent");
+        return true;
+      }
+      const data2 = searchNodeData(node);
+      const current = String(data2.text ?? "");
+      markNodeTextEdited(node);
+      if (data2.richText) {
+        const next2 = /<\/p>\s*$/i.test(current) ? current.replace(/<\/p>\s*$/i, `${symbol}</p>`) : `${current}${symbol}`;
+        mindMap.execCommand("SET_NODE_TEXT", node, next2, true, false);
+      } else {
+        mindMap.execCommand("SET_NODE_TEXT", node, `${current}${symbol}`, false, true);
+      }
+      return true;
+    },
     addSummary: () => {
       if (canMutate()) addCombinedSummary(mindMap, activeNodes());
     },
@@ -82776,18 +83334,25 @@ function createCommandAdapter(mindMap) {
       else (_b = (_a = mindMap.search) == null ? void 0 : _a.search) == null ? void 0 : _b.call(_a, text2);
     },
     searchNext: () => {
-      var _a;
+      var _a, _b;
       const search = mindMap.search;
       if (!(search == null ? void 0 : search.searchText)) return;
-      if (search.yemindAdvancedOptions) (_a = search.searchNext) == null ? void 0 : _a.call(search);
-      else search.search(search.searchText);
+      if (search.yemindAdvancedOptions) {
+        (_a = search.searchNext) == null ? void 0 : _a.call(search, () => {
+        });
+        (_b = search.emitEvent) == null ? void 0 : _b.call(search);
+      } else {
+        search.search(search.searchText);
+      }
     },
     searchPrevious: () => {
+      var _a;
       const search = mindMap.search;
       const total = Array.isArray(search == null ? void 0 : search.matchNodeList) ? search.matchNodeList.length : 0;
       if (!total) return;
       const current = Number(search.currentIndex ?? 0);
       search.jump((current - 1 + total) % total);
+      (_a = search.emitEvent) == null ? void 0 : _a.call(search);
     },
     replaceSearch: (text2, options) => {
       var _a, _b;
@@ -82914,7 +83479,7 @@ function createCommandAdapter(mindMap) {
     }
   };
 }
-function escapeHtml$b(value) {
+function escapeHtml$c(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function formatCheckpointTime(value) {
@@ -82929,9 +83494,9 @@ function renderCheckpointListHtml(checkpoints, options) {
   return checkpoints.map((checkpoint) => {
     const kind = checkpoint.kind === "recovery-protection" ? "恢复前保护" : "普通检查点";
     const restoreDisabled = options.readonly ? " disabled" : "";
-    return `<article class="ymz-checkpoint-item" data-checkpoint-id="${escapeHtml$b(checkpoint.id)}">
+    return `<article class="ymz-checkpoint-item" data-checkpoint-id="${escapeHtml$c(checkpoint.id)}">
       <div class="ymz-checkpoint-item__main">
-        <strong>${escapeHtml$b(checkpoint.name)}</strong>
+        <strong>${escapeHtml$c(checkpoint.name)}</strong>
         <span>${kind} · ${formatCheckpointTime(checkpoint.createdAt)} · ${checkpoint.nodeCount} 个节点</span>
       </div>
       <div class="ymz-checkpoint-item__actions">
@@ -82952,13 +83517,13 @@ function buildCheckpointDialogContent(checkpoints, readonly) {
     <button class="b3-button b3-button--cancel" data-checkpoint-dialog-action="close">关闭</button>
   </div>`;
 }
-function escapeHtml$a(value) {
+function escapeHtml$b(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function openCheckpointManager(options) {
   var _a, _b;
   const dialog = createYeMindDialog({
-    title: `检查点 · ${escapeHtml$a(options.mapTitle)}`,
+    title: `检查点 · ${escapeHtml$b(options.mapTitle)}`,
     width: "720px",
     content: buildCheckpointDialogContent(options.repository.list(options.mapId), options.readonly)
   });
@@ -83104,7 +83669,7 @@ function buildCommentsListHtml(comments, editingId = null) {
   if (comments.length === 0) return '<div class="ymz-empty-hint">暂无批注</div>';
   return comments.map((comment) => {
     const editing = comment.id === editingId;
-    const body = editing ? `<textarea class="b3-text-field fn__block ymz-comment__editor" rows="3" data-field="edit-comment">${escapeHtml$9(comment.text)}</textarea>` : `<div class="ymz-comment__text">${escapeHtml$9(comment.text).replaceAll("\n", "<br>")}</div>`;
+    const body = editing ? `<textarea class="b3-text-field fn__block ymz-comment__editor" rows="3" data-field="edit-comment">${escapeHtml$a(comment.text)}</textarea>` : `<div class="ymz-comment__text">${escapeHtml$a(comment.text).replaceAll("\n", "<br>")}</div>`;
     const actions = editing ? `<button class="b3-button b3-button--outline" data-action="save-comment">保存</button>
          <button class="b3-button b3-button--cancel" data-action="cancel-edit-comment">取消</button>` : `<button class="b3-button b3-button--outline" data-action="edit-comment">编辑</button>
          <button class="b3-button b3-button--cancel" data-action="delete-comment">删除</button>`;
@@ -83124,11 +83689,11 @@ function requestClearAllComments(confirmHandler, onClear) {
     onClear
   );
 }
-function escapeHtml$9(value) {
+function escapeHtml$a(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function escapeAttribute$2(value) {
-  return escapeHtml$9(value);
+  return escapeHtml$a(value);
 }
 const SUPPORTED_PROTOCOLS = /* @__PURE__ */ new Set(["http:", "https:", "mailto:", "tel:", "siyuan:"]);
 const BARE_DOMAIN = /^(?:localhost(?::\d+)?|(?:[a-z0-9-]+\.)+[a-z]{2,})(?:[/:?#].*)?$/i;
@@ -83240,7 +83805,7 @@ function openFormulaDialog(commands) {
     }
     try {
       const katex2 = window.katex;
-      preview.innerHTML = (katex2 == null ? void 0 : katex2.renderToString) ? katex2.renderToString(value, { throwOnError: false }) : escapeHtml$8(value);
+      preview.innerHTML = (katex2 == null ? void 0 : katex2.renderToString) ? katex2.renderToString(value, { throwOnError: false }) : escapeHtml$9(value);
     } catch {
       preview.textContent = value;
     }
@@ -83502,11 +84067,11 @@ function getImageSize(url) {
     image.src = url;
   });
 }
-function escapeHtml$8(value) {
+function escapeHtml$9(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function escapeAttribute$1(value) {
-  return escapeHtml$8(value);
+  return escapeHtml$9(value);
 }
 function createTodoMenuDescriptor(todo) {
   return getTodoMenuState(todo);
@@ -83536,12 +84101,110 @@ function createNodeMenuAvailability(input) {
     toggleExpand: true
   };
 }
+const MENU_VIEWPORT_MARGIN = 8;
+const MENU_MIN_SCROLL_HEIGHT = 96;
+const guards = /* @__PURE__ */ new WeakMap();
+function setStyle(element, property, value) {
+  if (element.style[property] === value) return;
+  element.style[property] = value;
+}
+function clamp$3(value, minimum, maximum) {
+  return Math.max(minimum, Math.min(value, Math.max(minimum, maximum)));
+}
+function constrainFloatingSurface(surface, viewport, scrollSurface) {
+  const rect2 = surface.getBoundingClientRect();
+  if (!rect2.width || !rect2.height) return;
+  const availableWidth = Math.max(160, viewport.width - MENU_VIEWPORT_MARGIN * 2);
+  const availableHeight = Math.max(MENU_MIN_SCROLL_HEIGHT, viewport.height - MENU_VIEWPORT_MARGIN * 2);
+  setStyle(surface, "maxWidth", `${Math.round(availableWidth)}px`);
+  setStyle(surface, "maxHeight", `${Math.round(availableHeight)}px`);
+  if (scrollSurface) {
+    const scrollRect = scrollSurface.getBoundingClientRect();
+    const chromeHeight = Math.max(0, scrollRect.top - rect2.top) + Math.max(0, rect2.bottom - scrollRect.bottom);
+    setStyle(
+      scrollSurface,
+      "maxHeight",
+      `${Math.round(Math.max(MENU_MIN_SCROLL_HEIGHT, availableHeight - chromeHeight))}px`
+    );
+  }
+  const measured = surface.getBoundingClientRect();
+  const width2 = Math.min(measured.width, availableWidth);
+  const height2 = Math.min(measured.height, availableHeight);
+  const left = clamp$3(measured.left, MENU_VIEWPORT_MARGIN, viewport.width - MENU_VIEWPORT_MARGIN - width2);
+  const top = clamp$3(measured.top, MENU_VIEWPORT_MARGIN, viewport.height - MENU_VIEWPORT_MARGIN - height2);
+  setStyle(surface, "left", `${Math.round(left)}px`);
+  setStyle(surface, "top", `${Math.round(top)}px`);
+}
+function constrainContextMenuToViewport(element, viewport = { width: window.innerWidth, height: window.innerHeight }) {
+  if (!element.isConnected || element.hidden || element.classList.contains("fn__none")) return;
+  constrainFloatingSurface(
+    element,
+    viewport,
+    element.querySelector(":scope > .b3-menu__items, :scope > .ymw-menu__list")
+  );
+  element.querySelectorAll(
+    ":scope > .ymw-submenu:not([hidden]), :scope .b3-menu__submenu:not(.fn__none)"
+  ).forEach((submenu) => {
+    constrainFloatingSurface(
+      submenu,
+      viewport,
+      submenu.matches(".ymw-submenu") ? submenu : submenu.querySelector(":scope > .b3-menu__items")
+    );
+  });
+}
+function attachContextMenuViewportGuard(element) {
+  if (guards.has(element)) return;
+  let frame = 0;
+  let disposed = false;
+  const cleanup = () => {
+    if (disposed) return;
+    disposed = true;
+    window.cancelAnimationFrame(frame);
+    observer.disconnect();
+    resizeObserver == null ? void 0 : resizeObserver.disconnect();
+    window.removeEventListener("resize", schedule);
+    document.removeEventListener("pointerdown", schedule, true);
+    document.removeEventListener("keydown", schedule, true);
+    element.removeEventListener("pointerover", schedule, true);
+    element.removeEventListener("click", schedule, true);
+    guards.delete(element);
+  };
+  const update = () => {
+    frame = 0;
+    if (!element.isConnected) {
+      cleanup();
+      return;
+    }
+    constrainContextMenuToViewport(element);
+  };
+  const schedule = () => {
+    if (disposed || frame) return;
+    frame = window.requestAnimationFrame(update);
+  };
+  const observer = new MutationObserver(schedule);
+  observer.observe(element, {
+    attributes: true,
+    attributeFilter: ["class", "style", "hidden", "aria-expanded"],
+    childList: true,
+    subtree: true
+  });
+  const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
+  resizeObserver == null ? void 0 : resizeObserver.observe(element);
+  window.addEventListener("resize", schedule);
+  document.addEventListener("pointerdown", schedule, true);
+  document.addEventListener("keydown", schedule, true);
+  element.addEventListener("pointerover", schedule, true);
+  element.addEventListener("click", schedule, true);
+  guards.set(element, cleanup);
+  schedule();
+}
 function openCanvasContextMenu(event, commands, options) {
   event.preventDefault();
   event.stopPropagation();
   const menu = new siyuan.Menu("siyuan-yemind-canvas-menu");
   menu.element.classList.add("ymz-context-menu", "ymz-context-menu--canvas");
   menu.element.dataset.appearance = detectAppearance();
+  attachContextMenuViewportGuard(menu.element);
   const run = (action, callback) => () => {
     var _a;
     (_a = options.onAction) == null ? void 0 : _a.call(options, action);
@@ -83584,7 +84247,7 @@ function openCanvasContextMenu(event, commands, options) {
     type: "submenu",
     iconHTML: lineStyleIcon(options.currentLineStyle ?? "curve"),
     label: "线型",
-    submenu: [["curve", "弧线"], ["straight", "圆角折线"], ["direct", "直线"]].map(([id, label]) => ({
+    submenu: [["curve", "曲线"], ["direct", "直线"], ["polyline", "折线"], ["straight", "圆角折线"]].map(([id, label]) => ({
       iconHTML: lineStyleIcon(id),
       label,
       current: id === options.currentLineStyle,
@@ -83600,13 +84263,13 @@ function openCanvasContextMenu(event, commands, options) {
     return (_a = options.onProjectStyle) == null ? void 0 : _a.call(options);
   }) });
   menu.addSeparator();
-  menu.addItem({ icon: "iconRefresh", label: "展开全部节点", click: run("expand-all", () => commands.expandAll()) });
-  menu.addItem({ icon: "iconRefresh", label: "折叠全部节点", click: run("collapse-all", () => commands.collapseAll()) });
+  menu.addItem({ icon: "iconRefresh", label: "展开/折叠全部节点", click: run("toggle-expand-all", () => commands.toggleAllExpand()) });
   menu.addSeparator();
   menu.addItem({ icon: "iconEye", label: options.zen ? "退出禅模式" : "进入禅模式", click: run("toggle-zen", () => options.onZenChange(!options.zen)) });
   menu.addItem({ icon: "iconLock", label: options.readonly ? "退出只读模式" : "进入只读模式", click: run("toggle-readonly", () => options.onReadonlyChange(!options.readonly)) });
   menu.open({ x: event.clientX, y: event.clientY });
 }
+const symbolIcon$1 = () => '<span class="ymz-symbol-menu-icon" aria-hidden="true">Ω</span>';
 function paste(commands, plain2 = false) {
   const operation = plain2 ? commands.pastePlainText() : commands.paste();
   void operation.catch((error2) => {
@@ -83630,6 +84293,7 @@ function openNodeContextMenu(event, commands, options = {}) {
   const menu = new siyuan.Menu("siyuan-yemind-node-menu");
   menu.element.classList.add("ymz-context-menu", "ymz-context-menu--node");
   menu.element.dataset.appearance = detectAppearance();
+  attachContextMenuViewportGuard(menu.element);
   const run = (action, callback) => () => {
     var _a;
     (_a = options.onAction) == null ? void 0 : _a.call(options, action);
@@ -83642,15 +84306,10 @@ function openNodeContextMenu(event, commands, options = {}) {
     }) });
     menu.addItem({ iconHTML: summaryIcon(), label: "{} 添加综合概要", accelerator: "Ctrl+Alt+G", disabled: !availability.summary, click: run("summary-add", () => commands.addSummary()) });
     menu.addItem({ iconHTML: relationIcon(), label: "关联线", accelerator: "Ctrl+Alt+L", disabled: !availability.relation, click: run("relation", () => options.onRelation ? options.onRelation() : commands.startRelation()) });
-    menu.addItem({ icon: "iconRefresh", label: "展开全部下级节点", disabled: false, click: run("expand-subtree", () => {
+    menu.addItem({ icon: "iconRefresh", label: "展开/折叠全部下级节点", disabled: false, click: run("toggle-expand-subtree", () => {
       var _a;
       const uid2 = String(((_a = primary == null ? void 0 : primary.getData) == null ? void 0 : _a.call(primary, "uid")) ?? "");
-      if (uid2) commands.expandBranchDeepByUid(uid2);
-    }) });
-    menu.addItem({ icon: "iconRefresh", label: "折叠全部下级节点", disabled: false, click: run("collapse-subtree", () => {
-      var _a;
-      const uid2 = String(((_a = primary == null ? void 0 : primary.getData) == null ? void 0 : _a.call(primary, "uid")) ?? "");
-      if (uid2) commands.collapseBranchDeepByUid(uid2);
+      if (uid2) commands.toggleBranchExpandByUid(uid2);
     }) });
     menu.addSeparator();
     menu.addItem({ icon: "iconCopy", label: "复制", accelerator: "Ctrl+C", disabled: false, click: run("copy", () => commands.copy()) });
@@ -83682,6 +84341,10 @@ function openNodeContextMenu(event, commands, options = {}) {
       { icon: "iconYeMindNote", label: "备注", disabled: !availability.nodeContent, click: run("note", () => openNoteDialog(commands)) },
       { icon: "iconYeMindComment", label: "批注", disabled: !availability.nodeContent, click: run("comments", () => openCommentsDialog(commands)) },
       { icon: "iconTags", label: "标签", disabled: !availability.nodeContent, click: run("tags", () => openTagsDialog(commands)) },
+      { iconHTML: symbolIcon$1(), label: "符号", disabled: !availability.nodeContent, click: run("symbols", () => {
+        var _a;
+        return (_a = options.onSymbols) == null ? void 0 : _a.call(options);
+      }) },
       { iconHTML: markerIcon(), label: "图标", disabled: !availability.nodeContent, click: run("icons", () => {
         var _a;
         return (_a = options.onMarkers) == null ? void 0 : _a.call(options);
@@ -83700,7 +84363,16 @@ function openNodeContextMenu(event, commands, options = {}) {
       { icon: "iconLink", label: "行内链接", disabled: !availability.inlineLink, click: run("inline-link", () => {
         var _a;
         return (_a = options.onInlineLink) == null ? void 0 : _a.call(options);
-      }) }
+      }) },
+      {
+        iconHTML: primaryViewIcon("cards"),
+        label: options.hasCard ? "编辑当前节点卡片" : "添加当前节点到卡片",
+        disabled: commands.isReadonly(),
+        click: run(options.hasCard ? "card-edit" : "card-create", () => {
+          var _a, _b;
+          return options.hasCard ? (_a = options.onEditCard) == null ? void 0 : _a.call(options) : (_b = options.onCreateCard) == null ? void 0 : _b.call(options);
+        })
+      }
     ]
   });
   menu.addItem({ iconHTML: relationIcon(), label: "关联线", accelerator: "Ctrl+Alt+L", disabled: !availability.relation, click: run("relation", () => options.onRelation ? options.onRelation() : commands.startRelation()) });
@@ -83716,19 +84388,14 @@ function openNodeContextMenu(event, commands, options = {}) {
   menu.addSeparator();
   menu.addItem({ icon: "iconUp", label: "上移节点", accelerator: "Ctrl+↑", disabled: !availability.move, click: run("move-up", () => commands.moveUp()) });
   menu.addItem({ icon: "iconDown", label: "下移节点", accelerator: "Ctrl+↓", disabled: !availability.move, click: run("move-down", () => commands.moveDown()) });
-  menu.addItem({ icon: "iconRefresh", label: "展开全部下级节点", disabled: false, click: run("expand-subtree", () => {
+  menu.addItem({ icon: "iconRefresh", label: "展开/折叠全部下级节点", disabled: false, click: run("toggle-expand-subtree", () => {
     var _a;
     const uid2 = String(((_a = primary == null ? void 0 : primary.getData) == null ? void 0 : _a.call(primary, "uid")) ?? "");
-    if (uid2) commands.expandBranchDeepByUid(uid2);
-  }) });
-  menu.addItem({ icon: "iconRefresh", label: "折叠全部下级节点", disabled: false, click: run("collapse-subtree", () => {
-    var _a;
-    const uid2 = String(((_a = primary == null ? void 0 : primary.getData) == null ? void 0 : _a.call(primary, "uid")) ?? "");
-    if (uid2) commands.collapseBranchDeepByUid(uid2);
+    if (uid2) commands.toggleBranchExpandByUid(uid2);
   }) });
   menu.addSeparator();
   menu.addItem({ icon: "iconTrashcan", label: "删除当前和子节点", accelerator: "Delete", warning: true, disabled: !availability.remove, click: run("remove-subtree", () => commands.remove()) });
-  menu.addItem({ icon: "iconTrashcan", label: "仅删除当前", accelerator: "Shift+Backspace", disabled: !availability.removeOnlyCurrent, click: run("remove-only-current", () => commands.removeOnlyCurrent()) });
+  menu.addItem({ icon: "iconTrashcan", label: "仅删除当前", accelerator: "Shift+Backspace", warning: true, disabled: !availability.removeOnlyCurrent, click: run("remove-only-current", () => commands.removeOnlyCurrent()) });
   menu.open({ x: event.clientX, y: event.clientY });
 }
 function runOutlineAction(options, action, callback) {
@@ -83755,6 +84422,7 @@ function openOutlineContextMenu(event, options) {
   const menu = new siyuan.Menu("siyuan-yemind-outline-menu");
   menu.element.classList.add("ymz-context-menu", "ymz-context-menu--outline");
   menu.element.dataset.appearance = detectAppearance();
+  attachContextMenuViewportGuard(menu.element);
   const disabled = options.readonly;
   const run = (action, callback) => runOutlineAction(options, action, callback);
   menu.addItem({ icon: "iconEdit", label: "编辑节点", disabled, click: run("edit", options.onEdit) });
@@ -83787,6 +84455,10 @@ function openOutlineContextMenu(event, options) {
       { icon: "iconTags", label: "标签", disabled, click: run("tags", () => {
         var _a;
         return (_a = options.onTags) == null ? void 0 : _a.call(options);
+      }) },
+      { iconHTML: symbolIcon$1(), label: "符号", disabled, click: run("symbols", () => {
+        var _a;
+        return (_a = options.onSymbols) == null ? void 0 : _a.call(options);
       }) },
       { iconHTML: markerIcon(), label: "图标", disabled, click: run("icons", () => {
         var _a;
@@ -83826,10 +84498,10 @@ function openOutlineContextMenu(event, options) {
   menu.addSeparator();
   menu.addItem({ icon: "iconUp", label: "上移节点", disabled: disabled || !options.canMoveUp, click: run("move-up", options.onMoveUp) });
   menu.addItem({ icon: "iconDown", label: "下移节点", disabled: disabled || !options.canMoveDown, click: run("move-down", options.onMoveDown) });
-  menu.addItem({ icon: "iconRefresh", label: options.expanded ? "折叠全部下级节点" : "展开全部下级节点", disabled: !options.hasChildren, click: run("toggle-expand", options.onToggleExpand) });
+  menu.addItem({ icon: "iconRefresh", label: "展开/折叠全部下级节点", disabled: !options.hasChildren, click: run("toggle-expand", options.onToggleExpand) });
   menu.addSeparator();
   menu.addItem({ icon: "iconTrashcan", label: "删除当前行和子级", warning: true, disabled: disabled || options.isRoot, click: run("remove-subtree", options.onRemoveSubtree) });
-  menu.addItem({ icon: "iconTrashcan", label: "仅删除当前行", disabled: disabled || options.isRoot, click: run("remove-only-current", options.onRemoveOnlyCurrent) });
+  menu.addItem({ icon: "iconTrashcan", label: "仅删除当前行", warning: true, disabled: disabled || options.isRoot, click: run("remove-only-current", options.onRemoveOnlyCurrent) });
   menu.open({ x: event.clientX, y: event.clientY });
 }
 const OUTLINE_TEXT_INDENT = "    ";
@@ -83948,7 +84620,7 @@ function parseOutlineText(value) {
     implicitRoot: topLevelCount > 1
   };
 }
-const LEGACY_ICON_LABELS = {
+const LEGACY_ICON_LABELS$1 = {
   yemind_star: "★",
   yemind_flag: "⚑",
   yemind_question: "?",
@@ -83962,11 +84634,11 @@ const LEGACY_ICON_LABELS = {
 function escapeAttribute(value) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
-function cssPropertyName(value) {
+function cssPropertyName$1(value) {
   return value.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
 }
-function styleAttribute(style) {
-  return Object.entries(style).map(([key, value]) => `${cssPropertyName(key)}:${value}`).join(";");
+function styleAttribute$1(style) {
+  return Object.entries(style).map(([key, value]) => `${cssPropertyName$1(key)}:${value}`).join(";");
 }
 function normalizeIcons(value) {
   return Array.isArray(value) ? value.map((item) => String(item ?? "").trim()).filter(Boolean) : [];
@@ -84007,10 +84679,10 @@ function outlineAccessoriesFromData(data2) {
 function iconHtml(value, pluginBaseUrl) {
   const marker = markerItemFromValue(value);
   if (marker) {
-    const style = styleAttribute(compactMarkerButtonStyle(pluginBaseUrl, marker));
+    const style = styleAttribute$1(compactMarkerButtonStyle(pluginBaseUrl, marker));
     return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon-action data-outline-icon="${escapeAttribute(value)}" tabindex="-1" title="${escapeAttribute(marker.groupLabel)} ${marker.orderInGroup}" aria-label="修改图标" style="${escapeAttribute(style)}"></button>`;
   }
-  const label = LEGACY_ICON_LABELS[value] ?? "•";
+  const label = LEGACY_ICON_LABELS$1[value] ?? "•";
   return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon-action data-outline-icon="${escapeAttribute(value)}" tabindex="-1" title="${escapeAttribute(value)}" aria-label="修改图标">${escapeAttribute(label)}</button>`;
 }
 function symbolIcon(symbol) {
@@ -84028,7 +84700,7 @@ function outlineMediaChrome(kind) {
 function outlineAccessoriesHtml(accessories, pluginBaseUrl) {
   const hasAny = accessories.icons.length || accessories.image || accessories.todo || accessories.tags.length || accessories.link || accessories.hasNote || accessories.commentCount || accessories.hasOuterFrame;
   if (!hasAny) return "";
-  const todo = accessories.todo ? `<button type="button" class="ymz-outline-accessories__todo${accessories.todo.checked ? " is-checked" : ""}" data-outline-content="todo" tabindex="-1" aria-label="${accessories.todo.checked ? "待办已完成" : "待办未完成"}">${accessories.todo.checked ? "✓" : ""}</button>` : "";
+  const todo = accessories.todo ? `<button type="button" class="ymz-outline-accessories__todo${accessories.todo.checked ? " is-checked" : ""}" data-outline-todo-action tabindex="-1" title="${accessories.todo.checked ? "待办已完成" : "待办未完成"}" aria-label="${accessories.todo.checked ? "待办已完成" : "待办未完成"}">${accessories.todo.checked ? "✓" : ""}</button>` : "";
   const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join("");
   const image = accessories.image ? `<span role="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? " is-clipart" : ""}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? "clipart" : "image"}" tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? "剪贴图：单击选择，双击预览" : "图片：单击选择，双击预览"))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false">${outlineMediaChrome(accessories.image.clipartId ? "clipart" : "image")}</span>` : "";
   const tags = accessories.tags.length ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute(accessories.tags.join("、"))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute(tag)}</span>`).join("")}</span>` : "";
@@ -84047,7 +84719,7 @@ function cloneValue(value) {
   }
   return JSON.parse(JSON.stringify(value));
 }
-function escapeHtml$7(value) {
+function escapeHtml$8(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;").replaceAll("\n", "<br>");
 }
 function structuredOutlineHtmlToText(value) {
@@ -84066,7 +84738,7 @@ function structuredOutlineIsRichHtml(value) {
 }
 function displayHtml(data2) {
   const value = String(data2.text ?? "");
-  return data2.richText ? sanitizeRichHtml(value) : escapeHtml$7(value);
+  return data2.richText ? sanitizeRichHtml(value) : escapeHtml$8(value);
 }
 function summaries(data2) {
   const value = data2.generalization;
@@ -84138,10 +84810,10 @@ function indexExistingData(tree) {
 }
 function normalizedBlockHtml(block) {
   const sanitized = sanitizeRichHtml(String(block.html ?? ""));
-  const text2 = structuredOutlineHtmlToText(sanitized || escapeHtml$7(String(block.text ?? "")));
+  const text2 = structuredOutlineHtmlToText(sanitized || escapeHtml$8(String(block.text ?? "")));
   const richText = structuredOutlineIsRichHtml(sanitized);
   return {
-    html: richText ? sanitized : escapeHtml$7(text2),
+    html: richText ? sanitized : escapeHtml$8(text2),
     text: text2,
     richText
   };
@@ -84562,7 +85234,7 @@ const MODES = [
   ["numbered", "编号大纲"],
   ["plain", "普通多行文本"]
 ];
-function escapeHtml$6(value) {
+function escapeHtml$7(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function previewRowsHtml(result) {
@@ -84570,7 +85242,7 @@ function previewRowsHtml(result) {
     return '<div class="ymz-text-map-dialog__empty">等待粘贴文本…<small>解析后将在此显示移除树形符号后的节点层级。</small></div>';
   }
   return result.lines.map((line) => {
-    const text2 = escapeHtml$6(line.text).replaceAll("\n", "<br>");
+    const text2 = escapeHtml$7(line.text).replaceAll("\n", "<br>");
     return `<div class="ymz-text-map-dialog__preview-row" style="--ymz-import-depth:${Math.max(0, line.depth)}" data-import-depth="${Math.max(0, line.depth)}"><span>${text2}</span></div>`;
   }).join("");
 }
@@ -84640,8 +85312,8 @@ function openTextToMapDialog(options) {
     preview.innerHTML = previewRowsHtml(current);
     status.textContent = source.value.trim() ? resultStatus(current) : "粘贴文本后将自动预览。";
     messages2.innerHTML = [
-      ...current.errors.map((text2) => `<div class="ymz-text-map-dialog__error">${escapeHtml$6(text2)}</div>`),
-      ...current.warnings.map((text2) => `<div class="ymz-text-map-dialog__warning">${escapeHtml$6(text2)}</div>`)
+      ...current.errors.map((text2) => `<div class="ymz-text-map-dialog__error">${escapeHtml$7(text2)}</div>`),
+      ...current.warnings.map((text2) => `<div class="ymz-text-map-dialog__warning">${escapeHtml$7(text2)}</div>`)
     ].join("");
     apply2.disabled = !source.value.trim() || current.lines.length === 0 || current.errors.length > 0;
   };
@@ -84680,7 +85352,7 @@ const CODE_LANGUAGES = [
   ["markdown", "Markdown"],
   ["yaml", "YAML"]
 ];
-function escapeHtml$5(value) {
+function escapeHtml$6(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function openInlineLinkDialog(commands, settings) {
@@ -84696,7 +85368,7 @@ function openInlineLinkDialog(commands, settings) {
     width: "480px",
     content: `<div class="b3-dialog__content ymz-node-dialog">
       <label>选中文字</label>
-      <div class="ymz-selection-preview">${escapeHtml$5(selectedText || "当前链接")}</div>
+      <div class="ymz-selection-preview">${escapeHtml$6(selectedText || "当前链接")}</div>
       <label>链接地址</label>
       <input class="b3-text-field fn__block" data-field="inline-link" placeholder="https://…、example.com 或 siyuan://blocks/…">
       <div class="b3-label__text">支持网页、邮箱、电话和思源块链接。</div>
@@ -84819,20 +85491,25 @@ function calculateEditorStats(tree) {
   walk2(tree);
   return { roots: 1, nodes, words };
 }
+const EXPORT_CATEGORIES = [
+  { id: "all", label: "全部" },
+  { id: "map", label: "导图" },
+  { id: "outline", label: "文字大纲" }
+];
 const EXPORT_FORMATS = [
-  { id: "yemind-svg", label: "YeMind SVG", extension: ".yemind.svg", description: "可预览、可继续编辑的默认格式", mime: "image/svg+xml", default: true },
-  { id: "yemind-package-svg", label: "SVG 包", extension: ".yemind.svg", description: "SVG 预览与完整压缩包", mime: "image/svg+xml" },
-  { id: "svg", label: "SVG", extension: ".svg", description: "通用矢量图片", mime: "image/svg+xml" },
-  { id: "kmindz", label: "KMindz", extension: ".kmindz", description: "KMindZ 兼容 SVG 包", mime: "image/svg+xml" },
-  { id: "yemind-zip", label: "Zip", extension: ".yemind.zip", description: "完整 YeMind 压缩包", mime: "application/zip" },
-  { id: "markdown", label: "Markdown", extension: ".md", description: "Markdown 层级大纲", mime: "text/markdown;charset=utf-8" },
-  { id: "opml", label: "OPML", extension: ".opml", description: "通用大纲交换格式", mime: "text/x-opml;charset=utf-8" },
-  { id: "xmind", label: "XMind", extension: ".xmind", description: "XMind 思维导图", mime: "application/zip" },
-  { id: "png", label: "PNG", extension: ".png", description: "高清图片，内含恢复数据", mime: "image/png" },
-  { id: "text", label: "Text", extension: ".txt", description: "缩进纯文本大纲", mime: "text/plain;charset=utf-8" },
-  { id: "html", label: "HTML 大纲", extension: ".html", description: "可独立打开的网页大纲", mime: "text/html;charset=utf-8" },
-  { id: "html-map", label: "HTML 导图", extension: ".html", description: "可缩放、折叠的独立网页导图", mime: "text/html;charset=utf-8" },
-  { id: "pdf", label: "PDF", extension: ".pdf", description: "单页 PDF 文档", mime: "application/pdf" }
+  { id: "yemind-svg", label: "YeMind SVG", extension: ".yemind.svg", description: "可预览、可继续编辑的默认格式", mime: "image/svg+xml", category: "map", default: true },
+  { id: "yemind-package-svg", label: "SVG 包", extension: ".yemind.svg", description: "SVG 预览与完整压缩包", mime: "image/svg+xml", category: "map" },
+  { id: "svg", label: "SVG", extension: ".svg", description: "通用矢量图片", mime: "image/svg+xml", category: "map" },
+  { id: "kmindz", label: "KMindz", extension: ".kmindz", description: "KMindZ 兼容 SVG 包", mime: "image/svg+xml", category: "map" },
+  { id: "yemind-zip", label: "Zip", extension: ".yemind.zip", description: "完整 YeMind 压缩包", mime: "application/zip", category: "map" },
+  { id: "markdown", label: "Markdown", extension: ".md", description: "Markdown 层级大纲", mime: "text/markdown;charset=utf-8", category: "outline" },
+  { id: "opml", label: "OPML", extension: ".opml", description: "通用大纲交换格式", mime: "text/x-opml;charset=utf-8", category: "outline" },
+  { id: "xmind", label: "XMind", extension: ".xmind", description: "XMind 思维导图", mime: "application/zip", category: "map" },
+  { id: "png", label: "PNG", extension: ".png", description: "高清图片，内含恢复数据", mime: "image/png", category: "map" },
+  { id: "text", label: "Text", extension: ".txt", description: "缩进纯文本大纲", mime: "text/plain;charset=utf-8", category: "outline" },
+  { id: "html", label: "HTML 大纲", extension: ".html", description: "可独立打开的网页大纲", mime: "text/html;charset=utf-8", category: "outline" },
+  { id: "html-map", label: "HTML 导图", extension: ".html", description: "可缩放、折叠的独立网页导图", mime: "text/html;charset=utf-8", category: "map" },
+  { id: "pdf", label: "PDF", extension: ".pdf", description: "单页 PDF 文档", mime: "application/pdf", category: "map" }
 ];
 const IMPORT_EXTENSIONS = [
   ".kmindz",
@@ -84857,12 +85534,12 @@ function exportFormat(id) {
 function safeExportFilename(value) {
   return value.replace(/[<>:"/\\|?*\u0000-\u001f]/g, "-").trim() || "未命名导图";
 }
-function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "curve") {
+function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "curve", pluginBaseUrl, transferCapabilities = {}) {
   return `
-    <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map" data-study-view="none" data-toolbars-pinned="true" data-topbar-visible="true" data-statusbar-visible="true" data-leftbar-visible="true" data-status-overflow-open="false">
+    <div class="ymz-editor" data-zen="false" data-readonly="false" data-view="map" data-study-view="none" data-toolbars-pinned="true" data-topbar-visible="true" data-statusbar-visible="true" data-leftbar-visible="true" data-status-overflow-open="false" data-minimap-visible="false">
       <div class="ymz-canvas-wrap">
         <div class="ymz-floating ymz-topbar" role="toolbar" aria-label="YeMind 工具栏">
-          <span class="ymz-brand" aria-label="YeMind">${brandIcon()}<span class="ymz-brand__name">YeMind</span></span>
+          <span class="ymz-brand" aria-label="YeMind">${brandIcon(pluginBaseUrl)}<span class="ymz-brand__name">YeMind</span></span>
           <span class="ymz-separator"></span>
           <button class="ymz-primary-view is-active" data-primary-view data-action="view-map" title="导图" aria-label="导图">${primaryViewIcon("map")}<span>导图</span></button>
           <button class="ymz-primary-view" data-primary-view data-action="view-outline" title="大纲" aria-label="大纲">${primaryViewIcon("outline")}<span>大纲</span></button>
@@ -84882,9 +85559,10 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
             ${themeOptionsHtml(theme2)}
           </select>
           <select data-action="line-style" aria-label="线型" hidden>
-            <option value="curve"${normalizeLineStyle(lineStyle) === "curve" ? " selected" : ""}>弧线</option>
-            <option value="straight"${normalizeLineStyle(lineStyle) === "straight" ? " selected" : ""}>圆角折线</option>
+            <option value="curve"${normalizeLineStyle(lineStyle) === "curve" ? " selected" : ""}>曲线</option>
             <option value="direct"${normalizeLineStyle(lineStyle) === "direct" ? " selected" : ""}>直线</option>
+            <option value="polyline"${normalizeLineStyle(lineStyle) === "polyline" ? " selected" : ""}>折线</option>
+            <option value="straight"${normalizeLineStyle(lineStyle) === "straight" ? " selected" : ""}>圆角折线</option>
           </select>
           <button class="ymz-project-control ymz-project-button ymz-topbar__desktop-utility" data-action="project-style" title="整图样式">${projectStyleIcon()}<span>样式</span></button>
           <span class="ymz-separator ymz-topbar__desktop-utility"></span>
@@ -84915,34 +85593,71 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
 
         <div class="ymz-search-panel" data-role="search-panel" data-replace-expanded="false" hidden>
           <div class="ymz-search-panel__row ymz-search-panel__row--find">
-            <button class="ymz-search-panel__disclosure" data-search-action="toggle-replace" title="展开替换" aria-label="展开替换" aria-expanded="false">›</button>
-            <input class="b3-text-field" data-role="search-input" placeholder="查找">
-            <span class="ymz-search-panel__options" role="group" aria-label="查找选项">
-              <button type="button" data-search-option="case-sensitive" title="区分大小写" aria-label="区分大小写" aria-pressed="false">Aa</button>
-              <button type="button" data-search-option="whole-word" title="全字匹配" aria-label="全字匹配" aria-pressed="false"><u>ab</u></button>
-              <button type="button" data-search-option="regex" title="使用正则表达式" aria-label="使用正则表达式" aria-pressed="false">.*</button>
-              <button type="button" data-search-option="selection-scope" title="仅在选中节点中查找" aria-label="仅在选中节点中查找" aria-pressed="false">选中</button>
-            </span>
+            <button class="ymz-search-panel__disclosure" data-search-action="toggle-replace" title="展开替换" aria-label="展开替换" aria-expanded="false">${searchPanelIcon("disclosure")}</button>
+            <label class="ymz-search-panel__field ymz-search-panel__field--find">
+              <input data-role="search-input" placeholder="查找" aria-label="查找">
+              <span class="ymz-search-panel__options" role="group" aria-label="查找选项">
+                <button type="button" data-search-option="case-sensitive" title="区分大小写" aria-label="区分大小写" aria-pressed="false">Aa</button>
+                <button type="button" data-search-option="whole-word" title="全字匹配" aria-label="全字匹配" aria-pressed="false"><u>ab</u></button>
+                <button type="button" data-search-option="regex" title="使用正则表达式" aria-label="使用正则表达式" aria-pressed="false">.*</button>
+              </span>
+            </label>
+            <button type="button" class="ymz-search-panel__scope" data-search-option="selection-scope" title="仅在选中节点中查找" aria-label="仅在选中节点中查找" aria-pressed="false">选中节点</button>
             <span data-role="search-info">无结果</span>
-            <button data-search-action="previous" title="上一个" aria-label="上一个">↑</button>
-            <button data-search-action="next" title="下一个" aria-label="下一个">↓</button>
-            <button data-search-action="close" title="关闭" aria-label="关闭">×</button>
+            <span class="ymz-search-panel__nav" role="group" aria-label="搜索导航">
+              <button data-search-action="previous" title="上一个" aria-label="上一个">${searchPanelIcon("previous")}</button>
+              <button data-search-action="next" title="下一个" aria-label="下一个">${searchPanelIcon("next")}</button>
+              <button data-search-action="close" title="关闭" aria-label="关闭">${searchPanelIcon("close")}</button>
+            </span>
           </div>
           <div class="ymz-search-panel__row ymz-search-panel__row--replace" data-role="replace-row" hidden>
             <span class="ymz-search-panel__replace-indent" aria-hidden="true"></span>
-            <input class="b3-text-field" data-role="replace-input" placeholder="替换">
-            <button type="button" data-search-option="preserve-case" title="保留大小写" aria-label="保留大小写" aria-pressed="false">AB</button>
-            <button data-search-action="replace" title="替换当前">替换</button>
-            <button data-search-action="replace-all" title="全部替换">全部</button>
+            <label class="ymz-search-panel__field ymz-search-panel__field--replace">
+              <input data-role="replace-input" placeholder="替换" aria-label="替换">
+              <button type="button" data-search-option="preserve-case" title="保留大小写" aria-label="保留大小写" aria-pressed="false">AB</button>
+            </label>
+            <span class="ymz-search-panel__replace-actions" role="group" aria-label="替换操作">
+              <button data-search-action="replace" title="替换当前">替换</button>
+              <button data-search-action="replace-all" title="全部替换">全部替换</button>
+            </span>
           </div>
           <div class="ymz-search-panel__error" data-role="search-error" role="status" hidden></div>
         </div>
 
         <input type="file" data-role="import-file-input" accept="${IMPORT_ACCEPT}" hidden>
+        <aside class="ymz-transfer-panel ymz-transfer-panel--import" data-role="import-panel" aria-label="导入与恢复" hidden>
+          <header><strong>导入与恢复</strong><button type="button" data-action="close-import-panel" aria-label="关闭导入面板">×</button></header>
+          <div class="ymz-transfer-panel__import-groups">
+            <section${transferCapabilities.fullRestore ? "" : " hidden"}>
+              <h4>恢复完整备份</h4>
+              <p>恢复网页版全部导图、设置和检查点；恢复前会再次确认。</p>
+              <button type="button" data-import-kind="host-backup"><strong>选择完整备份</strong><small>.json · YeMind 网页完整备份</small></button>
+            </section>
+            <section>
+              <h4>恢复可编辑导图</h4>
+              <p>识别 YeMind、KMindZ、XMind 及带恢复数据的 SVG、PNG、ZIP，并创建新的导图副本。</p>
+              <button type="button" data-import-kind="map-backup"><strong>选择导图备份</strong><small>.yemind.svg / .yemind.zip / .kmindz / .xmind</small></button>
+            </section>
+            <section>
+              <h4>从其他格式导入</h4>
+              <p>把 Markdown、OPML、TXT、FreeMind MM 或旧 JSON 转换成可编辑导图。</p>
+              <button type="button" data-import-kind="other"><strong>选择其他文件</strong><small>.md / .opml / .txt / .mm / .json</small></button>
+            </section>
+          </div>
+        </aside>
         <aside class="ymz-transfer-panel" data-role="export-panel" aria-label="导出导图" hidden>
           <header><strong>导出导图</strong><button type="button" data-action="close-export-panel" aria-label="关闭导出面板">×</button></header>
+          <section class="ymz-transfer-panel__backup"${transferCapabilities.fullBackup ? "" : " hidden"}>
+            <h4>完整备份</h4>
+            <p>包含网页版全部导图、设置和检查点，可通过“导入 → 恢复完整备份”恢复。</p>
+            <button type="button" data-export-host-backup><strong>导出完整备份</strong><small>.json</small></button>
+          </section>
+          <p class="ymz-transfer-panel__hint"><strong>.yemind.zip / .yemind.svg</strong> 是当前导图的可恢复备份；SVG、PDF 等用于分享与发布。</p>
+          <nav class="ymz-transfer-panel__categories" aria-label="导出类型">
+            ${EXPORT_CATEGORIES.map((category, index) => `<button type="button" data-export-category="${category.id}" aria-pressed="${index === 0}">${category.label}</button>`).join("")}
+          </nav>
           <div class="ymz-transfer-panel__formats">
-            ${EXPORT_FORMATS.map((format) => `<button type="button" data-export-format="${format.id}"${format.default ? ' data-default="true"' : ""}><span><strong>${format.label}</strong><small>${format.extension}</small></span><em>${format.description}</em></button>`).join("")}
+            ${EXPORT_FORMATS.map((format) => `<button type="button" data-export-format="${format.id}" data-export-category-group="${format.category}"${format.default ? ' data-default="true"' : ""}><span><strong>${format.label}</strong><small>${format.extension}</small></span><em>${format.description}</em></button>`).join("")}
           </div>
         </aside>
 
@@ -84950,7 +85665,7 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
           <div class="ymz-canvas" data-role="canvas"></div>
           <div class="ymz-split-divider" data-role="split-divider" role="separator" aria-orientation="vertical" aria-label="调整导图和大纲宽度" aria-valuemin="25" aria-valuemax="70" aria-valuenow="42" tabindex="0"></div>
           <aside class="ymz-outline" data-role="outline" aria-label="导图大纲">
-            <header class="ymz-outline-panel__header"><div class="ymz-outline-panel__title">${primaryViewIcon("outline")}<span><strong>大纲</strong><small><span data-role="outline-node-count">0</span> 个节点</small></span></div><span><button type="button" data-action="outline-fullscreen" title="切换全屏大纲" aria-label="切换全屏大纲">${fullscreenIcon()}</button><button type="button" data-action="close-side-panel" title="关闭大纲" aria-label="关闭大纲">×</button></span></header>
+            <header class="ymz-outline-panel__header"><div class="ymz-outline-panel__title">${primaryViewIcon("outline")}<span><strong>大纲</strong><small><span data-role="outline-node-count">0</span> 个节点</small></span></div><span><button type="button" data-action="outline-fullscreen" title="切换全屏大纲" aria-label="切换全屏大纲">${fullscreenIcon()}</button><button type="button" data-action="close-side-panel" title="关闭大纲" aria-label="关闭大纲">${panelCloseIcon()}</button></span></header>
             <div class="ymz-outline-panel__tools"><label>${searchIcon()}<input data-role="outline-search" placeholder="搜索大纲" aria-label="搜索大纲"></label><button type="button" data-action="outline-expand-all" title="展开全部" aria-label="展开全部">＋</button><button type="button" data-action="outline-collapse-all" title="折叠全部" aria-label="折叠全部">−</button></div>
             <div class="ymz-outline-tree ymz-structured-outline" data-role="outline-tree" role="tree" aria-label="结构化大纲编辑器" spellcheck="false"></div>
             <footer class="ymz-outline-panel__footer"><span><b data-role="outline-footer-count">0</b> 个节点</span><span>最大 <b data-role="outline-max-depth">1</b> 层</span></footer>
@@ -84979,8 +85694,8 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
         <aside class="ymz-project-style-panel" data-role="project-style-panel" aria-label="整图样式" hidden>
           <header class="ymz-project-style-panel__header"><strong>样式</strong><button type="button" data-project-style-action="close" aria-label="关闭样式">×</button></header>
           <section><h4>密度</h4><div class="ymz-density-options" role="group" aria-label="节点密度"><button type="button" data-project-density="compact"><strong>紧凑</strong></button><button type="button" data-project-density="default"><strong>默认</strong></button><button type="button" data-project-density="comfortable"><strong>舒展</strong></button></div><div class="ymz-custom-spacing" aria-label="自定义节点间距"><label><span>左右</span><input type="number" min="12" max="240" step="1" data-project-spacing="horizontal" aria-label="水平间距"></label><label><span>上下</span><input type="number" min="2" max="100" step="1" data-project-spacing="vertical" aria-label="垂直间距"></label></div></section>
-          <section class="ymz-project-style-panel__rainbow"><h4>彩虹连线</h4><label class="ymz-project-style-panel__switch"><strong>启用</strong><input type="checkbox" data-project-style="rainbowLines"></label><div class="ymz-project-style-panel__palette"><span>配色</span><button type="button" class="ymz-rainbow-trigger" data-rainbow-trigger aria-haspopup="listbox" aria-expanded="false"><span data-rainbow-current-label>彩虹</span><i data-project-rainbow-preview aria-hidden="true"></i><span class="ymz-rainbow-trigger__arrow" aria-hidden="true">⌄</span></button><select data-project-style="rainbowScheme" aria-label="彩虹连线配色" hidden>${rainbowSchemeOptionsHtml("rainbow")}</select><div data-rainbow-picker hidden></div></div></section>
-          <section class="ymz-project-style-panel__lines"><h4>线型</h4><div class="ymz-project-line-options" role="radiogroup" aria-label="导图连线线型"><button type="button" data-project-line-style="curve" role="radio">曲线</button><button type="button" data-project-line-style="direct" role="radio">直线</button><button type="button" data-project-line-style="straight" role="radio">圆角折线</button></div></section>
+          <section class="ymz-project-style-panel__rainbow"><h4>彩虹连线配色</h4><div class="ymz-project-style-panel__rainbow-row"><label class="ymz-project-style-panel__switch"><input type="checkbox" data-project-style="rainbowLines"><strong>启用</strong></label><span class="ymz-project-style-panel__rainbow-separator" aria-hidden="true"></span><button type="button" class="ymz-rainbow-trigger" data-rainbow-trigger aria-haspopup="listbox" aria-expanded="false"><span data-rainbow-current-label>彩虹</span><i data-project-rainbow-preview aria-hidden="true"></i><span class="ymz-rainbow-trigger__arrow" aria-hidden="true">⌄</span></button><select data-project-style="rainbowScheme" aria-label="彩虹连线配色" hidden>${rainbowSchemeOptionsHtml("rainbow")}</select><div data-rainbow-picker hidden></div></div></section>
+          <section class="ymz-project-style-panel__lines"><h4>线型</h4><div class="ymz-project-line-options" role="radiogroup" aria-label="导图连线线型"><button type="button" data-project-line-style="curve" role="radio">曲线</button><button type="button" data-project-line-style="direct" role="radio">直线</button><button type="button" data-project-line-style="polyline" role="radio">折线</button><button type="button" data-project-line-style="straight" role="radio">圆角</button></div></section>
           <section><h4>背景色</h4><div class="ymz-background-options"><button type="button" data-project-background="" title="主题背景">主题</button><button type="button" data-project-background="#ffffff" title="白色"></button><button type="button" data-project-background="#e2e8f0" title="岩灰"></button><button type="button" data-project-background="#ffe7ba" title="暖色"></button><button type="button" data-project-background="#c8f0dc" title="薄荷"></button><button type="button" data-project-background="#d7e8ff" title="天空"></button><button type="button" data-project-background="#f7cbd5" title="玫瑰"></button><button type="button" data-project-background="#0f172a" title="深色"></button></div><label class="ymz-project-style-panel__custom"><span>自定义</span><button type="button" class="ymz-node-color-trigger ymz-project-color-trigger" data-project-color-trigger="backgroundColor"><i data-project-color-swatch="backgroundColor"></i><span data-project-color-label="backgroundColor">默认</span></button></label></section>
           <footer><button type="button" data-project-style-action="reset">恢复主题默认</button></footer>
         </aside>
@@ -85017,7 +85732,7 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
         </div>
 
         <div class="ymz-floating ymz-statusbar" role="toolbar" aria-label="导图状态与视图工具">
-          <button class="ymz-status-title" data-role="title" title="点击重命名">${escapeHtml$4(title)}</button><input class="ymz-status-title-input" data-role="title-input" value="${escapeHtml$4(title)}" aria-label="导图标题" hidden>
+          <button class="ymz-status-title" data-role="title" title="点击重命名">${escapeHtml$5(title)}</button><input class="ymz-status-title-input" data-role="title-input" value="${escapeHtml$5(title)}" aria-label="导图标题" hidden>
           <span class="ymz-stats" data-role="stats">根节点 1 · 节点 0 · 字数 0</span>
           <span class="ymz-selection-count" data-role="selection-count" hidden></span>
           <span class="ymz-statusbar__spacer"></span>
@@ -85041,13 +85756,13 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
             </span>
             <span class="ymz-statusbar__separator" aria-hidden="true"></span>
             <span class="ymz-statusbar__group ymz-statusbar__group--utility">
-              <button class="ymz-icon-button is-active" data-action="toggle-minimap" title="隐藏缩略图" aria-label="隐藏缩略图" aria-pressed="true">${miniMapIcon()}</button>
+              <button class="ymz-icon-button" data-action="toggle-minimap" title="显示缩略图" aria-label="显示缩略图" aria-pressed="false">${miniMapIcon()}</button>
               <button class="ymz-icon-button" data-action="help" title="帮助" aria-label="帮助">${helpIcon()}</button>
             </span>
           </span>
           <button class="ymz-icon-button ymz-statusbar__overflow-trigger" data-action="toggle-status-overflow" title="更多底栏操作" aria-label="更多底栏操作" aria-haspopup="menu" aria-expanded="false">•••</button>
         </div>
-        <aside class="ymz-minimap" data-role="minimap" aria-label="导图缩略图">
+        <aside class="ymz-minimap" data-role="minimap" aria-label="导图缩略图" hidden>
           <div class="ymz-minimap__content" data-role="minimap-content" aria-hidden="true"></div>
           <div class="ymz-minimap__viewport" data-role="minimap-viewport" aria-label="当前可视区域"></div>
           <span class="ymz-minimap__label" aria-hidden="true">MINIMAP</span>
@@ -85058,13 +85773,22 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
       </div>
     </div>`;
 }
-function escapeHtml$4(value) {
+function escapeHtml$5(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+function searchPanelIcon(kind) {
+  const path2 = {
+    disclosure: '<path d="m9 6 6 6-6 6"/>',
+    previous: '<path d="m6 14 6-6 6 6"/>',
+    next: '<path d="m6 10 6 6 6-6"/>',
+    close: '<path d="m7 7 10 10M17 7 7 17"/>'
+  }[kind];
+  return `<svg class="ymz-search-panel__icon ymz-search-panel__icon--${kind}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${path2}</svg>`;
 }
 const OUTLINE_ROW_SPLIT_RATIO = 0.5;
 function outlineVerticalSlot(input) {
   if (!input.sourceUid || !input.targetUid || input.sourceUid === input.targetUid || input.rect.height <= 0) return null;
-  const offset = clamp$4(input.clientY - input.rect.top, 0, input.rect.height);
+  const offset = clamp$5(input.clientY - input.rect.top, 0, input.rect.height);
   return offset < input.rect.height * OUTLINE_ROW_SPLIT_RATIO ? "before" : "after";
 }
 function resolveOutlinePointerDropIntent(input) {
@@ -85083,7 +85807,7 @@ function resolveOutlinePointerDropIntent(input) {
   if (!vertical) return null;
   const baseTextLeft = input.targetTextLeft - input.targetDepth * indent;
   const rawDepth = Math.round((input.clientX - baseTextLeft) / indent);
-  const desiredDepth = clamp$4(rawDepth, 1, Math.max(1, input.targetDepth));
+  const desiredDepth = clamp$5(rawDepth, 1, Math.max(1, input.targetDepth));
   if (desiredDepth < input.targetDepth) {
     const ancestor = [...input.targetAncestors].reverse().find((item) => item.depth === desiredDepth);
     if (!ancestor) return null;
@@ -85124,7 +85848,7 @@ function outlineBranchColorVariable(index) {
 }
 const PLAIN_INDENT = "    ";
 const BLOCK_TAGS = /* @__PURE__ */ new Set(["DIV", "P", "LI", "UL", "OL", "SECTION", "ARTICLE"]);
-function escapeHtml$3(value) {
+function escapeHtml$4(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;").replaceAll("\n", "<br>");
 }
 function textLength(element) {
@@ -85274,7 +85998,7 @@ function blockKey(block) {
   return `${block.kind}:${block.uid}`;
 }
 function richHtmlForText(value) {
-  return escapeHtml$3(value);
+  return escapeHtml$4(value);
 }
 function isImageClipboard(data2) {
   return Array.from((data2 == null ? void 0 : data2.items) ?? []).some((item) => item.kind === "file" && item.type.startsWith("image/"));
@@ -85316,7 +86040,7 @@ class StructuredOutlineEditorController {
       this.markDirty("composition-end");
     });
     __publicField(this, "onClick", (event) => {
-      var _a, _b, _c2, _d2, _e, _f, _g, _h;
+      var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j;
       const target = event.target;
       const row = target.closest("[data-outline-uid]");
       if (!row) return;
@@ -85332,7 +86056,7 @@ class StructuredOutlineEditorController {
           this.options.onActivate(uid2);
           (_b = (_a = this.options).onImageDelete) == null ? void 0 : _b.call(_a, uid2, kind);
         }
-        this.clearOutlineMediaSelection();
+        this.clearMediaSelection();
         return;
       }
       const iconAction = target.closest("[data-outline-icon-action]");
@@ -85358,13 +86082,22 @@ class StructuredOutlineEditorController {
         if (!this.options.isReadonly()) (_f = (_e = this.options).onImageEdit) == null ? void 0 : _f.call(_e, uid2, kind, imageAction);
         return;
       }
+      const todoAction = target.closest("[data-outline-todo-action]");
+      if (todoAction) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.activateUid(uid2, false);
+        if (!this.options.isReadonly()) this.options.onActivate(uid2);
+        (_h = (_g = this.options).onContentAction) == null ? void 0 : _h.call(_g, uid2, "todo");
+        return;
+      }
       const contentAction = target.closest("[data-outline-content]");
       if (contentAction) {
         event.preventDefault();
         event.stopPropagation();
         this.activateUid(uid2, false);
         if (!this.options.isReadonly()) this.options.onActivate(uid2);
-        (_h = (_g = this.options).onContentAction) == null ? void 0 : _h.call(_g, uid2, contentAction.dataset.outlineContent ?? "");
+        (_j = (_i = this.options).onContentAction) == null ? void 0 : _j.call(_i, uid2, contentAction.dataset.outlineContent ?? "");
         return;
       }
       const toggle = target.closest("[data-outline-toggle]");
@@ -85461,7 +86194,7 @@ class StructuredOutlineEditorController {
       const target = event.target;
       const imageAction = target == null ? void 0 : target.closest("[data-outline-image-action]");
       if (!imageAction && !(target == null ? void 0 : target.closest("[data-outline-media-delete]"))) {
-        this.clearOutlineMediaSelection();
+        this.clearMediaSelection();
       }
       this.clearWholeSelection();
       this.pointerSelecting = Boolean((_a = event.target) == null ? void 0 : _a.closest("[data-outline-editor]"));
@@ -85511,11 +86244,11 @@ class StructuredOutlineEditorController {
         event.stopPropagation();
         const { uid: uid2, kind } = this.selectedMedia;
         (_c2 = (_b = this.options).onImageDelete) == null ? void 0 : _c2.call(_b, uid2, kind);
-        this.clearOutlineMediaSelection();
+        this.clearMediaSelection();
         return;
       }
       if (event.key === "Escape" && this.selectedMedia) {
-        this.clearOutlineMediaSelection();
+        this.clearMediaSelection();
         return;
       }
       const command = event.ctrlKey || event.metaKey;
@@ -85653,7 +86386,7 @@ class StructuredOutlineEditorController {
       const whole = this.isWholeSelectionActive((context == null ? void 0 : context.range) ?? null);
       const multiline = /\r|\n/.test(text2);
       if (!whole && context && !context.spansRows && !multiline) {
-        this.insertInlineHtml(html2 ? inlineHtmlFromClipboard(html2) : escapeHtml$3(text2));
+        this.insertInlineHtml(html2 ? inlineHtmlFromClipboard(html2) : escapeHtml$4(text2));
         this.markDirty("paste-inline");
         this.placeSelectionToolbarLater();
         return;
@@ -85903,7 +86636,7 @@ class StructuredOutlineEditorController {
     if (!(selection == null ? void 0 : selection.anchorNode) || !editor.contains(selection.anchorNode)) {
       this.selectEditorRange(editor, textLength(editor), textLength(editor));
     }
-    this.insertInlineHtml(!plainOnly && html2 ? inlineHtmlFromClipboard(html2) : escapeHtml$3(text2));
+    this.insertInlineHtml(!plainOnly && html2 ? inlineHtmlFromClipboard(html2) : escapeHtml$4(text2));
     this.markDirty(plainOnly ? "paste-current-line-plain" : "paste-current-line");
     this.flush(plainOnly ? "paste-current-line-plain" : "paste-current-line");
   }
@@ -85924,7 +86657,7 @@ class StructuredOutlineEditorController {
     var _a;
     this.flush("destroy");
     this.cancelTimer();
-    this.clearOutlineMediaSelection();
+    this.clearMediaSelection();
     if (this.guideFrame !== null) window.cancelAnimationFrame(this.guideFrame);
     this.guideFrame = null;
     (_a = this.guideResizeObserver) == null ? void 0 : _a.disconnect();
@@ -86258,7 +86991,7 @@ class StructuredOutlineEditorController {
       if (!marker || !lastMarker) return;
       const markerRect = marker.getBoundingClientRect();
       const lastRect = lastMarker.getBoundingClientRect();
-      const x2 = Math.round(markerRect.left + markerRect.width / 2 - rootRect.left + root2.scrollLeft) - 1;
+      const x2 = Math.round(markerRect.left + markerRect.width / 2 - rootRect.left + root2.scrollLeft - 0.5);
       const top = Math.round(markerRect.bottom - rootRect.top + root2.scrollTop);
       const end = Math.round(lastRect.top + lastRect.height / 2 - rootRect.top + root2.scrollTop);
       const height2 = Math.max(0, end - top);
@@ -86294,10 +87027,10 @@ class StructuredOutlineEditorController {
     const leaf = !block.hasChildren;
     const draggable = !block.isRoot && block.kind === "node";
     const marker = block.hasChildren ? `<button type="button" class="ymz-outline-row__branch" data-outline-toggle contenteditable="false" tabindex="-1" aria-label="${block.expanded ? "折叠" : "展开"}"><span class="ymz-outline-row__triangle" data-direction="${block.expanded ? "down" : "right"}"></span></button>` : `<span class="ymz-outline-row__branch ymz-outline-row__branch--placeholder" contenteditable="false" aria-hidden="true"><span class="ymz-outline-row__leaf-square"></span></span>`;
-    return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : "false"}" data-outline-uid="${escapeHtml$3(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml$3(block.parentUid ?? "")}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${draggable}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" role="button" tabindex="${draggable ? "0" : "-1"}" aria-label="拖动节点"><span class="ymz-outline-drag-grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></span><span class="ymz-outline-row__drop-indicator" contenteditable="false" aria-hidden="true"></span>${marker}${outlineAccessoriesHtml(block.accessories, this.options.pluginBaseUrl)}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${structuredOutlineIsRichHtml(block.html)}">${block.html}</div></div>`;
+    return `<div class="ymz-outline-row" role="treeitem" aria-level="${block.depth + 1}" aria-expanded="${block.hasChildren ? block.expanded : "false"}" data-outline-uid="${escapeHtml$4(block.uid)}" data-outline-kind="${block.kind}" data-outline-parent-uid="${escapeHtml$4(block.parentUid ?? "")}" data-outline-root="${block.isRoot}" data-outline-hidden="${block.hidden}" data-outline-leaf="${leaf}" data-outline-has-children="${block.hasChildren}" data-outline-expanded="${block.expanded}" data-outline-drag-source="${draggable}" style="--ymz-outline-depth:${block.depth}"><span class="ymz-outline-row__drag" data-outline-drag-handle contenteditable="false" role="button" tabindex="${draggable ? "0" : "-1"}" aria-label="拖动节点"><span class="ymz-outline-drag-grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></span><span class="ymz-outline-row__drop-indicator" contenteditable="false" aria-hidden="true"></span>${marker}${outlineAccessoriesHtml(block.accessories, this.options.pluginBaseUrl)}<div class="ymz-outline-row__editor" data-outline-editor data-placeholder="空节点" data-outline-pristine="${block.pristine}" data-outline-rich-text="${structuredOutlineIsRichHtml(block.html)}">${block.html}</div></div>`;
   }
   selectOutlineMedia(uid2, kind) {
-    this.clearOutlineMediaSelection();
+    this.clearMediaSelection();
     this.selectedMedia = { uid: uid2, kind };
     this.syncOutlineMediaSelection();
   }
@@ -86312,7 +87045,7 @@ class StructuredOutlineEditorController {
     }
     media.classList.add("is-selected");
   }
-  clearOutlineMediaSelection() {
+  clearMediaSelection() {
     this.selectedMedia = null;
     this.options.root.querySelectorAll("[data-outline-image-action].is-selected").forEach((element) => element.classList.remove("is-selected"));
   }
@@ -86690,7 +87423,7 @@ class StructuredOutlineEditorController {
     if (!context) return;
     const parsed = parseOutlineText(value);
     if (!context.spansRows && parsed.lines.length <= 1) {
-      this.insertInlineHtml(escapeHtml$3(((_a = parsed.lines[0]) == null ? void 0 : _a.text) ?? ""));
+      this.insertInlineHtml(escapeHtml$4(((_a = parsed.lines[0]) == null ? void 0 : _a.text) ?? ""));
       this.markDirty(reason);
       this.flush(reason);
       return;
@@ -86907,9 +87640,9 @@ class StructuredOutlineEditorController {
   }
   selectedStructuredHtml(context, plain2, whole = false) {
     if (whole) {
-      return flattenStructuredOutline(this.options.getTree()).filter((block) => block.kind === "node").map((block) => `<div data-yemind-outline-depth="${block.depth}">${escapeHtml$3(PLAIN_INDENT.repeat(block.depth))}${block.html}</div>`).join("");
+      return flattenStructuredOutline(this.options.getTree()).filter((block) => block.kind === "node").map((block) => `<div data-yemind-outline-depth="${block.depth}">${escapeHtml$4(PLAIN_INDENT.repeat(block.depth))}${block.html}</div>`).join("");
     }
-    if (!context) return plain2.split("\n").map((line) => `<div>${escapeHtml$3(line)}</div>`).join("");
+    if (!context) return plain2.split("\n").map((line) => `<div>${escapeHtml$4(line)}</div>`).join("");
     if (!context.spansRows) {
       const fragment = context.range.cloneContents();
       const wrapper = document.createElement("div");
@@ -86929,7 +87662,7 @@ class StructuredOutlineEditorController {
       const depth = Number.parseInt(row.style.getPropertyValue("--ymz-outline-depth") || "0", 10) || 0;
       const start = index === startIndex ? context.start.offset : 0;
       const end = index === endIndex ? context.end.offset : textLength(editor);
-      return `<div data-yemind-outline-depth="${depth}">${escapeHtml$3(PLAIN_INDENT.repeat(depth))}${rangeHtml(editor, start, end)}</div>`;
+      return `<div data-yemind-outline-depth="${depth}">${escapeHtml$4(PLAIN_INDENT.repeat(depth))}${rangeHtml(editor, start, end)}</div>`;
     }).filter(Boolean).join("");
   }
   publishSelection() {
@@ -87195,6 +87928,8 @@ class RichTextToolbar {
     __publicField(this, "target", null);
     __publicField(this, "activeColorKind", "color");
     __publicField(this, "colorSessionOriginal", false);
+    __publicField(this, "anchorFrame", 0);
+    __publicField(this, "lastReportedRect", null);
     __publicField(this, "onDocumentMouseDown", (event) => {
       const node = event.target;
       if (this.element.contains(node) || this.colorPopover.contains(node)) return;
@@ -87289,15 +88024,21 @@ class RichTextToolbar {
     this.formatInfo = formatInfo ?? {};
     this.syncState();
     this.element.hidden = false;
+    this.lastReportedRect = rectInfo;
     this.position(rectInfo);
+    this.trackLiveSelection();
   }
   hide() {
     this.element.hidden = true;
     this.colorPopover.hidden = true;
+    this.lastReportedRect = null;
+    window.cancelAnimationFrame(this.anchorFrame);
+    this.anchorFrame = 0;
   }
   destroy() {
     document.removeEventListener("mousedown", this.onDocumentMouseDown, true);
     window.removeEventListener("mouseup", this.onWindowMouseUp, true);
+    window.cancelAnimationFrame(this.anchorFrame);
     this.element.remove();
     this.colorPopover.remove();
     this.target = null;
@@ -87566,6 +88307,19 @@ class RichTextToolbar {
     if (syncInputs) this.syncColorReadout();
   }
   position(rect2) {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0 && selection.anchorNode && this.root.contains(selection.anchorNode)) {
+      const live = selection.getRangeAt(0).getBoundingClientRect();
+      if (live && (live.width || live.height)) {
+        rect2 = {
+          left: live.left,
+          top: live.top,
+          right: live.right,
+          bottom: live.bottom,
+          width: live.width
+        };
+      }
+    }
     const rootRect = this.root.getBoundingClientRect();
     const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
     const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
@@ -87586,9 +88340,22 @@ class RichTextToolbar {
     const measuredHeight = this.element.offsetHeight || 44;
     const below = localBottom + 8;
     const top = below + measuredHeight < rootHeight ? below : Math.max(8, localTop - measuredHeight - 8);
-    this.element.style.left = `${Math.round(left)}px`;
-    this.element.style.top = `${Math.round(top)}px`;
-    this.element.style.maxWidth = `${Math.max(240, rootWidth - 16)}px`;
+    const nextLeft = `${Math.round(left)}px`;
+    const nextTop = `${Math.round(top)}px`;
+    const nextMaxWidth = `${Math.max(240, rootWidth - 16)}px`;
+    if (this.element.style.left !== nextLeft) this.element.style.left = nextLeft;
+    if (this.element.style.top !== nextTop) this.element.style.top = nextTop;
+    if (this.element.style.maxWidth !== nextMaxWidth) this.element.style.maxWidth = nextMaxWidth;
+  }
+  trackLiveSelection() {
+    if (this.anchorFrame || this.element.hidden || !this.lastReportedRect) return;
+    const update = () => {
+      this.anchorFrame = 0;
+      if (this.element.hidden || !this.lastReportedRect) return;
+      this.position(this.lastReportedRect);
+      this.anchorFrame = window.requestAnimationFrame(update);
+    };
+    this.anchorFrame = window.requestAnimationFrame(update);
   }
 }
 function createSelectionPresentation(rawCount, mode) {
@@ -87821,7 +88588,7 @@ function findRenderedNodeAtClientPoint(mindMap, clientX, clientY) {
   visit2(root2);
   return match2;
 }
-function escapeHtml$2(value) {
+function escapeHtml$3(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function intersects(a, b) {
@@ -87921,21 +88688,21 @@ function buildHoverPreviewHtml(type, value) {
   if (type === "comments") {
     const comments = Array.isArray(value) ? value : [];
     if (!comments.length) return '<div class="ymz-empty-hint">暂无批注</div>';
-    return `<div class="ymz-node-hover-preview__comments">${comments.map((comment) => `<div class="ymz-node-hover-preview__comment"><div class="ymz-node-hover-preview__comment-text">${escapeHtml$2(comment.text).replaceAll("\n", "<br>")}</div><time class="ymz-node-hover-preview__comment-time" datetime="${new Date(comment.createdAt).toISOString()}">${formatCommentTimestamp(comment.createdAt)}</time></div>`).join("")}</div>`;
+    return `<div class="ymz-node-hover-preview__comments">${comments.map((comment) => `<div class="ymz-node-hover-preview__comment"><div class="ymz-node-hover-preview__comment-text">${escapeHtml$3(comment.text).replaceAll("\n", "<br>")}</div><time class="ymz-node-hover-preview__comment-time" datetime="${new Date(comment.createdAt).toISOString()}">${formatCommentTimestamp(comment.createdAt)}</time></div>`).join("")}</div>`;
   }
   if (type === "todo") {
     const todo = value && typeof value === "object" && !Array.isArray(value) ? value : null;
     const label = (todo == null ? void 0 : todo.checked) ? "已完成" : "未完成";
     const text2 = String((todo == null ? void 0 : todo.text) ?? "").trim();
-    return `<div class="ymz-node-hover-preview__summary"><strong>${label}</strong>${text2 ? `<span>${escapeHtml$2(text2)}</span>` : ""}</div>`;
+    return `<div class="ymz-node-hover-preview__summary"><strong>${label}</strong>${text2 ? `<span>${escapeHtml$3(text2)}</span>` : ""}</div>`;
   }
   if (type === "tags") {
     const tags = Array.isArray(value) ? value.map((item) => String(item ?? "").trim()).filter(Boolean) : [];
-    return tags.length ? `<div class="ymz-node-hover-preview__tags">${tags.map((tag) => `<span>${escapeHtml$2(tag)}</span>`).join("")}</div>` : '<div class="ymz-empty-hint">暂无标签</div>';
+    return tags.length ? `<div class="ymz-node-hover-preview__tags">${tags.map((tag) => `<span>${escapeHtml$3(tag)}</span>`).join("")}</div>` : '<div class="ymz-empty-hint">暂无标签</div>';
   }
   if (type === "link") {
     const link = typeof value === "string" ? value.trim() : "";
-    return link ? `<div class="ymz-node-hover-preview__link">${escapeHtml$2(link)}</div>` : '<div class="ymz-empty-hint">暂无链接</div>';
+    return link ? `<div class="ymz-node-hover-preview__link">${escapeHtml$3(link)}</div>` : '<div class="ymz-empty-hint">暂无链接</div>';
   }
   return value ? '<div class="ymz-node-hover-preview__summary"><strong>已有外框</strong><span>单击可编辑或移除</span></div>' : '<div class="ymz-empty-hint">暂无外框</div>';
 }
@@ -88162,11 +88929,58 @@ function isNodeColorKey(value) {
 class NodeStylePanel {
   constructor(root2, commands) {
     __publicField(this, "panel");
+    __publicField(this, "header");
     __publicField(this, "colorPopover");
     __publicField(this, "customColorInput");
     __publicField(this, "current", {});
     __publicField(this, "activeColorKey", "fillColor");
+    __publicField(this, "panelDrag", null);
     __publicField(this, "stopEditorEvent", (event) => event.stopPropagation());
+    __publicField(this, "beginPanelDrag", (event) => {
+      var _a;
+      if (!this.panel || event.button !== 0) return;
+      if ((_a = event.target) == null ? void 0 : _a.closest("button,input,select")) return;
+      const panelRect = this.panel.getBoundingClientRect();
+      this.panelDrag = {
+        pointerId: event.pointerId,
+        offsetX: event.clientX - panelRect.left,
+        offsetY: event.clientY - panelRect.top
+      };
+      window.addEventListener("pointermove", this.onPanelDrag);
+      window.addEventListener("pointerup", this.finishPanelDrag);
+      window.addEventListener("pointercancel", this.finishPanelDrag);
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    __publicField(this, "onPanelDrag", (event) => {
+      if (!this.panel || !this.panelDrag || event.pointerId !== this.panelDrag.pointerId) return;
+      const rootRect = this.root.getBoundingClientRect();
+      const panelRect = this.panel.getBoundingClientRect();
+      const localX = Math.max(
+        8,
+        Math.min(
+          event.clientX - rootRect.left - this.panelDrag.offsetX,
+          rootRect.width - panelRect.width - 8
+        )
+      );
+      const localY = Math.max(
+        8,
+        Math.min(
+          event.clientY - rootRect.top - this.panelDrag.offsetY,
+          rootRect.height - panelRect.height - 8
+        )
+      );
+      this.panel.style.left = `${Math.round(localX)}px`;
+      this.panel.style.top = `${Math.round(localY)}px`;
+      this.panel.style.right = "auto";
+      event.preventDefault();
+    });
+    __publicField(this, "finishPanelDrag", () => {
+      this.panelDrag = null;
+      window.removeEventListener("pointermove", this.onPanelDrag);
+      window.removeEventListener("pointerup", this.finishPanelDrag);
+      window.removeEventListener("pointercancel", this.finishPanelDrag);
+    });
     __publicField(this, "onDocumentMouseDown", (event) => {
       if (!this.panel || this.panel.hidden) return;
       const target = event.target;
@@ -88257,9 +89071,11 @@ class NodeStylePanel {
         this.refresh();
       }
     });
+    var _a, _b;
     this.root = root2;
     this.commands = commands;
     this.panel = root2.querySelector('[data-role="node-style-panel"]');
+    this.header = ((_a = this.panel) == null ? void 0 : _a.querySelector(".ymz-node-style-panel__header")) ?? null;
     this.colorPopover = document.createElement("div");
     this.colorPopover.className = "ymz-color-popover ymz-node-color-popover";
     this.colorPopover.hidden = true;
@@ -88276,10 +89092,11 @@ class NodeStylePanel {
     this.panel.addEventListener("change", this.onChange);
     this.panel.addEventListener("input", this.onInput, true);
     INPUT_EVENTS.forEach((type) => {
-      var _a;
-      return (_a = this.panel) == null ? void 0 : _a.addEventListener(type, this.stopEditorEvent);
+      var _a2;
+      return (_a2 = this.panel) == null ? void 0 : _a2.addEventListener(type, this.stopEditorEvent);
     });
     this.panel.addEventListener("pointerdown", this.stopEditorEvent);
+    (_b = this.header) == null ? void 0 : _b.addEventListener("pointerdown", this.beginPanelDrag);
     this.colorPopover.addEventListener("click", this.onColorPopoverClick);
     this.colorPopover.addEventListener("mousedown", this.onColorPopoverMouseDown);
     INPUT_EVENTS.forEach((type) => this.colorPopover.addEventListener(type, this.stopEditorEvent));
@@ -88289,16 +89106,19 @@ class NodeStylePanel {
     document.addEventListener("mousedown", this.onDocumentMouseDown, true);
   }
   destroy() {
+    var _a;
     if (this.panel) {
       this.panel.removeEventListener("click", this.onClick);
       this.panel.removeEventListener("change", this.onChange);
       this.panel.removeEventListener("input", this.onInput, true);
       INPUT_EVENTS.forEach((type) => {
-        var _a;
-        return (_a = this.panel) == null ? void 0 : _a.removeEventListener(type, this.stopEditorEvent);
+        var _a2;
+        return (_a2 = this.panel) == null ? void 0 : _a2.removeEventListener(type, this.stopEditorEvent);
       });
       this.panel.removeEventListener("pointerdown", this.stopEditorEvent);
     }
+    (_a = this.header) == null ? void 0 : _a.removeEventListener("pointerdown", this.beginPanelDrag);
+    this.finishPanelDrag();
     this.colorPopover.removeEventListener("click", this.onColorPopoverClick);
     this.colorPopover.removeEventListener("mousedown", this.onColorPopoverMouseDown);
     INPUT_EVENTS.forEach((type) => this.colorPopover.removeEventListener(type, this.stopEditorEvent));
@@ -88518,9 +89338,9 @@ class RainbowSchemePicker {
     (_a = this.select) == null ? void 0 : _a.replaceChildren();
     for (const category of ["缤纷", "经典"]) {
       const schemes = YEMIND_COLOR_SCHEMES.filter((scheme) => scheme.category === category);
-      const group = document.createElement("section");
-      group.className = "ymz-rainbow-picker__group";
-      group.dataset.rainbowGroup = category;
+      const group2 = document.createElement("section");
+      group2.className = "ymz-rainbow-picker__group";
+      group2.dataset.rainbowGroup = category;
       const heading = document.createElement("h5");
       heading.textContent = category;
       const grid = document.createElement("div");
@@ -88543,8 +89363,8 @@ class RainbowSchemePicker {
         option2.textContent = scheme.label;
         (_b = this.select) == null ? void 0 : _b.appendChild(option2);
       }
-      group.append(heading, grid);
-      this.panel.appendChild(group);
+      group2.append(heading, grid);
+      this.panel.appendChild(group2);
     }
   }
   sync() {
@@ -88923,14 +89743,14 @@ class LayoutGalleryPanel {
     const body = this.panel.querySelector('[data-role="layout-gallery-body"]');
     if (!body) return;
     body.innerHTML = "";
-    groupLayouts().forEach((group) => {
+    groupLayouts().forEach((group2) => {
       const section = document.createElement("section");
       section.className = "ymz-layout-gallery__group";
       const title = document.createElement("h4");
-      title.textContent = group.label;
+      title.textContent = group2.label;
       const grid = document.createElement("div");
       grid.className = "ymz-layout-gallery__grid";
-      group.items.forEach((item) => {
+      group2.items.forEach((item) => {
         const preset = getLayoutAssetPreset(item.id);
         const button = document.createElement("button");
         button.type = "button";
@@ -88963,6 +89783,9 @@ class ProjectChoicePanel {
     __publicField(this, "panel");
     __publicField(this, "body");
     __publicField(this, "selected");
+    __publicField(this, "committedSelected");
+    __publicField(this, "options");
+    __publicField(this, "favoriteValues");
     __publicField(this, "activeGroup", "");
     __publicField(this, "anchor", null);
     __publicField(this, "onDocumentMouseDown", (event) => {
@@ -88973,15 +89796,24 @@ class ProjectChoicePanel {
       this.hide();
     });
     __publicField(this, "onPanelClick", (event) => {
+      var _a, _b;
       event.stopPropagation();
       const target = event.target;
       const tab = target.closest("[data-project-choice-group]");
       if (tab) {
-        const group = tab.dataset.projectChoiceGroup ?? "";
-        if (group && group !== this.activeGroup) {
-          this.activeGroup = group;
+        const group2 = tab.dataset.projectChoiceGroup ?? "";
+        if (group2 && group2 !== this.activeGroup) {
+          this.activeGroup = group2;
           this.render();
         }
+        return;
+      }
+      const favorite = target.closest("[data-project-choice-favorite]");
+      if (favorite) {
+        const value2 = favorite.dataset.projectChoiceFavorite ?? "";
+        if (!value2 || !this.config.onFavoriteChange) return;
+        const next2 = !this.favoriteValues.includes(value2);
+        void this.config.onFavoriteChange(value2, next2);
         return;
       }
       const apply2 = target.closest("[data-project-choice-apply]");
@@ -88996,6 +89828,7 @@ class ProjectChoicePanel {
       const value = button.dataset.projectChoiceValue ?? "";
       if (!value) return;
       this.selected = value;
+      (_b = (_a = this.config).onPreview) == null ? void 0 : _b.call(_a, value);
       this.render();
       if (!this.config.applyLabel) {
         this.config.onSelect(value);
@@ -89008,6 +89841,9 @@ class ProjectChoicePanel {
     this.panel = root2.querySelector(`[data-role="${config2.role}"]`);
     this.body = this.panel.querySelector("[data-project-choice-body]");
     this.selected = config2.selected;
+    this.committedSelected = config2.selected;
+    this.options = config2.options;
+    this.favoriteValues = config2.favoriteValues ?? [];
     this.activeGroup = this.groupForValue(config2.selected) ?? this.groups()[0] ?? "";
     this.panel.classList.toggle("is-palette", config2.presentation === "palette");
     (_a = this.panel.querySelector('[data-project-choice-action="close"]')) == null ? void 0 : _a.addEventListener("click", () => this.hide());
@@ -89020,7 +89856,13 @@ class ProjectChoicePanel {
   }
   setSelected(value) {
     this.selected = value;
+    this.committedSelected = value;
     this.activeGroup = this.groupForValue(value) ?? this.activeGroup;
+    this.render();
+  }
+  setOptions(options, favoriteValues = this.favoriteValues) {
+    this.options = options;
+    this.favoriteValues = favoriteValues;
     this.render();
   }
   refreshReadonly() {
@@ -89032,6 +89874,7 @@ class ProjectChoicePanel {
   }
   show(anchor) {
     this.anchor = anchor;
+    this.selected = this.committedSelected;
     this.activeGroup = this.groupForValue(this.selected) ?? this.activeGroup;
     this.render();
     this.panel.hidden = false;
@@ -89049,10 +89892,15 @@ class ProjectChoicePanel {
     this.panel.style.top = `${Math.round(top)}px`;
   }
   hide() {
-    var _a, _b;
+    var _a, _b, _c2, _d2;
+    if (this.selected !== this.committedSelected) {
+      this.selected = this.committedSelected;
+      (_b = (_a = this.config).onPreview) == null ? void 0 : _b.call(_a, this.committedSelected);
+      this.render();
+    }
     this.panel.hidden = true;
-    (_a = this.anchor) == null ? void 0 : _a.classList.remove("is-active");
-    (_b = this.anchor) == null ? void 0 : _b.setAttribute("aria-expanded", "false");
+    (_c2 = this.anchor) == null ? void 0 : _c2.classList.remove("is-active");
+    (_d2 = this.anchor) == null ? void 0 : _d2.setAttribute("aria-expanded", "false");
     this.anchor = null;
   }
   destroy() {
@@ -89061,11 +89909,12 @@ class ProjectChoicePanel {
     this.panel.remove();
   }
   groups() {
-    return [...new Set(this.config.options.map((option2) => option2.group ?? "").filter(Boolean))];
+    return this.config.groups ? [...this.config.groups] : [...new Set(this.options.map((option2) => option2.group ?? "").filter(Boolean))];
   }
   groupForValue(value) {
-    var _a;
-    return ((_a = this.config.options.find((option2) => option2.value === value)) == null ? void 0 : _a.group) ?? void 0;
+    var _a, _b;
+    const candidates = this.options.filter((option2) => option2.value === value);
+    return ((_a = candidates.find((option2) => option2.group !== "常用")) == null ? void 0 : _a.group) ?? ((_b = candidates[0]) == null ? void 0 : _b.group) ?? void 0;
   }
   render() {
     this.body.innerHTML = "";
@@ -89073,6 +89922,7 @@ class ProjectChoicePanel {
     else this.renderList();
   }
   renderPalette() {
+    var _a, _b;
     const groups2 = this.groups();
     if (!this.activeGroup || !groups2.includes(this.activeGroup)) {
       this.activeGroup = this.groupForValue(this.selected) ?? groups2[0] ?? "";
@@ -89081,23 +89931,35 @@ class ProjectChoicePanel {
     tabs.className = "ymz-project-choice-panel__tabs";
     tabs.setAttribute("role", "tablist");
     tabs.setAttribute("aria-label", `${this.config.title}分类`);
-    groups2.forEach((group) => {
+    groups2.forEach((group2) => {
       const button = document.createElement("button");
       button.type = "button";
-      button.className = `ymz-project-choice-panel__tab${group === this.activeGroup ? " is-active" : ""}`;
-      button.dataset.projectChoiceGroup = group;
-      button.textContent = group;
+      button.className = `ymz-project-choice-panel__tab${group2 === this.activeGroup ? " is-active" : ""}`;
+      button.dataset.projectChoiceGroup = group2;
+      button.textContent = group2;
       button.setAttribute("role", "tab");
-      button.setAttribute("aria-selected", String(group === this.activeGroup));
+      button.setAttribute("aria-selected", String(group2 === this.activeGroup));
       tabs.appendChild(button);
     });
     const grid = document.createElement("div");
     grid.className = "ymz-project-choice-panel__palette-grid";
     grid.setAttribute("role", "listbox");
     grid.setAttribute("aria-label", `${this.activeGroup || this.config.title}主题`);
-    const options = this.config.options.filter((option2) => (option2.group ?? "") === this.activeGroup);
+    const options = this.options.filter((option2) => (option2.group ?? "") === this.activeGroup);
+    if (options.length === 0) {
+      const message = (_b = (_a = this.config).emptyGroupMessage) == null ? void 0 : _b.call(_a, this.activeGroup);
+      if (message) {
+        const empty = document.createElement("div");
+        empty.className = "ymz-project-choice-panel__empty";
+        empty.dataset.projectChoiceEmpty = "true";
+        empty.textContent = message;
+        grid.appendChild(empty);
+      }
+    }
     options.forEach((option2) => {
       const selected = option2.value === this.selected;
+      const card = document.createElement("div");
+      card.className = "ymz-project-choice-panel__palette-card";
       const button = document.createElement("button");
       button.type = "button";
       button.className = `ymz-project-choice-panel__palette-item${selected ? " is-selected" : ""}`;
@@ -89121,10 +89983,24 @@ class ProjectChoicePanel {
       });
       strip.style.setProperty("--ymz-palette-count", String(Math.max(1, colors.length)));
       button.append(label, strip);
-      grid.appendChild(button);
+      if (this.config.onFavoriteChange) {
+        const favorite = document.createElement("button");
+        favorite.type = "button";
+        favorite.className = "ymz-project-choice-panel__favorite";
+        favorite.dataset.projectChoiceFavorite = option2.value;
+        const active = this.favoriteValues.includes(option2.value);
+        favorite.setAttribute("aria-pressed", String(active));
+        favorite.setAttribute("aria-label", `${active ? "取消收藏" : "收藏"}${option2.label}`);
+        favorite.title = active ? "取消收藏" : "收藏到常用";
+        favorite.textContent = active ? "★" : "☆";
+        card.append(button, favorite);
+      } else {
+        card.appendChild(button);
+      }
+      grid.appendChild(card);
     });
     this.body.append(tabs, grid);
-    const selectedOption = this.config.options.find((option2) => option2.value === this.selected);
+    const selectedOption = this.options.find((option2) => option2.value === this.selected);
     if (this.config.applyLabel && selectedOption) {
       const footer = document.createElement("footer");
       footer.className = "ymz-project-choice-panel__footer";
@@ -89139,18 +90015,18 @@ class ProjectChoicePanel {
   }
   renderList() {
     const groups2 = /* @__PURE__ */ new Map();
-    this.config.options.forEach((option2) => {
+    this.options.forEach((option2) => {
       const key = option2.group ?? "";
       const items2 = groups2.get(key) ?? [];
       items2.push(option2);
       groups2.set(key, items2);
     });
-    groups2.forEach((items2, group) => {
+    groups2.forEach((items2, group2) => {
       const section = document.createElement("section");
       section.className = "ymz-project-choice-panel__group";
-      if (group) {
+      if (group2) {
         const heading = document.createElement("h4");
-        heading.textContent = group;
+        heading.textContent = group2;
         section.appendChild(heading);
       }
       const list = document.createElement("div");
@@ -89189,6 +90065,203 @@ class ProjectChoicePanel {
       section.appendChild(list);
       this.body.appendChild(section);
     });
+  }
+}
+const group = (id, label, symbols2) => ({
+  id,
+  label,
+  symbols: symbols2.filter((symbol) => Boolean(symbol))
+});
+const SYMBOL_SECTIONS = [
+  {
+    id: "arrows",
+    label: "箭头",
+    groups: [
+      group("basic-directions", "基础方向", ["↖", "↑", "↗", "←", null, "→", "↙", "↓", "↘"]),
+      group("curved-directions", "弯曲与长箭头", ["↜", "↟", "↝", "↞", "↔", "↠", "↚", "↡", "↛"]),
+      group("special-arrows", "双向与特殊", ["↢", "↣", "↨", "↭", "↮", "↯", "⇐", "⇔", "⇒"])
+    ]
+  },
+  {
+    id: "shapes",
+    label: "形状",
+    groups: [
+      group("solid-directions", "实心方向", ["▲", "◀", "▶", "▼"]),
+      group("outline-directions", "空心方向", ["△", "◁", "▷", "▽"]),
+      group("small-directions", "小型方向", ["▴", "◂", "▸", "▾"]),
+      group("thin-directions", "细型方向", ["▵", "◃", "▹", "▿"]),
+      group("shape-pairs", "形状成对", ["●", "○", "◆", "◇", "■", "□", "▰", "▱", "◪", "◩", "◻", "◼"])
+    ]
+  },
+  {
+    id: "numbers",
+    label: "数字",
+    groups: [
+      group("circled-numbers", "圆圈数字", ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"]),
+      group("dotted-numbers", "带点数字", ["⒈", "⒉", "⒊", "⒋", "⒌", "⒍", "⒎", "⒏", "⒐", "⒑", "⒒", "⒓", "⒔", "⒕", "⒖", "⒗", "⒘", "⒙", "⒚", "⒛"]),
+      group("parenthesized-numbers", "括号数字", ["⑴", "⑵", "⑶", "⑷", "⑸", "⑹", "⑺", "⑻", "⑼", "⑽", "⑾", "⑿", "⒀", "⒁", "⒂", "⒃", "⒄", "⒅", "⒆", "⒇"]),
+      group("roman-uppercase", "罗马数字 · 大写", ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ", "Ⅸ", "Ⅹ", "Ⅺ", "Ⅻ"]),
+      group("roman-lowercase", "罗马数字 · 小写", ["ⅰ", "ⅱ", "ⅲ", "ⅳ", "ⅴ", "ⅵ", "ⅶ", "ⅷ", "ⅸ", "ⅹ", "ⅺ", "ⅻ"]),
+      group("chinese-numbers", "中文序号", ["㈠", "㈡", "㈢", "㈣", "㈤", "㈥", "㈦", "㈧", "㈨", "㈩"])
+    ]
+  },
+  {
+    id: "brackets",
+    label: "括号",
+    groups: [
+      group("bracket-pairs", "成对括号", ["【", "】", "〔", "〕", "「", "」", "『", "』", "〈", "〉", "《", "》", "（", "）", "［", "］", "｛", "｝"])
+    ]
+  },
+  {
+    id: "cjk",
+    label: "汉字结构",
+    groups: [
+      group("ideographic-basic", "基本结构", ["⿰", "⿱", "⿲", "⿳", "⿴", "⿻"]),
+      group("ideographic-surround", "包围结构", ["⿵", "⿷", "⿴", "⿹", "⿸", "⿻", "⿺", "⿶"]),
+      group("ideographic-extra", "其他结构", ["⿼", "⿽", "⿾", "⿿", "〿", "㊣"])
+    ]
+  },
+  {
+    id: "math",
+    label: "数学",
+    groups: [
+      group("math-common", "常用数学", ["±", "×", "÷", "≠", "≈", "≤", "≥", "∞", "∑", "√", "∅", "Δ", "μ", "Ω", "°", "℃", "％", "‰", "©", "®", "™", "✓", "✕", "•", "·"])
+    ]
+  }
+];
+function searchSymbols(query, sectionId = "") {
+  const normalized2 = query.trim().toLocaleLowerCase();
+  return SYMBOL_SECTIONS.filter((section) => !sectionId || section.id === sectionId).flatMap((section) => section.groups).map((item) => ({
+    ...item,
+    symbols: normalized2 ? item.symbols.filter((symbol) => symbol.toLocaleLowerCase().includes(normalized2)) : item.symbols
+  })).filter((item) => item.symbols.length > 0);
+}
+class SymbolPicker {
+  constructor(root2, options) {
+    __publicField(this, "element");
+    __publicField(this, "search");
+    __publicField(this, "tabs");
+    __publicField(this, "body");
+    __publicField(this, "activeSection", "");
+    __publicField(this, "drag", null);
+    __publicField(this, "onTabClick", (event) => {
+      const button = event.target.closest("[data-symbol-section]");
+      if (!button) return;
+      this.activeSection = button.dataset.symbolSection ?? "";
+      this.renderTabs();
+      this.renderBody();
+    });
+    __publicField(this, "onSymbolClick", (event) => {
+      const button = event.target.closest("[data-symbol-value]");
+      if (!button || button.disabled) return;
+      if (this.options.onInsert(button.dataset.symbolValue ?? "")) {
+        button.classList.add("is-inserted");
+        window.setTimeout(() => button.classList.remove("is-inserted"), 180);
+        this.renderBody();
+      }
+    });
+    __publicField(this, "onPointerDown", (event) => {
+      var _a, _b;
+      if (event.target.closest("button,input")) return;
+      const rect2 = this.element.getBoundingClientRect();
+      this.drag = { pointerId: event.pointerId, dx: event.clientX - rect2.left, dy: event.clientY - rect2.top };
+      (_b = (_a = this.element).setPointerCapture) == null ? void 0 : _b.call(_a, event.pointerId);
+      event.preventDefault();
+    });
+    __publicField(this, "onPointerMove", (event) => {
+      if (!this.drag || this.drag.pointerId !== event.pointerId) return;
+      const rootRect = this.root.getBoundingClientRect();
+      const rect2 = this.element.getBoundingClientRect();
+      const left = Math.min(rootRect.width - rect2.width - 8, Math.max(8, event.clientX - rootRect.left - this.drag.dx));
+      const top = Math.min(rootRect.height - rect2.height - 8, Math.max(8, event.clientY - rootRect.top - this.drag.dy));
+      this.element.style.left = `${Math.round(left)}px`;
+      this.element.style.top = `${Math.round(top)}px`;
+      this.element.style.right = "auto";
+    });
+    __publicField(this, "onPointerUp", (event) => {
+      var _a;
+      if (((_a = this.drag) == null ? void 0 : _a.pointerId) === event.pointerId) this.drag = null;
+    });
+    var _a, _b;
+    this.root = root2;
+    this.options = options;
+    this.element = document.createElement("aside");
+    this.element.className = "ymz-symbol-picker";
+    this.element.hidden = true;
+    this.element.setAttribute("role", "dialog");
+    this.element.setAttribute("aria-label", "符号");
+    this.element.innerHTML = `
+      <header data-symbol-drag-handle><strong><span aria-hidden="true">Ω</span> 符号</strong><button type="button" data-symbol-action="close" aria-label="关闭符号">×</button></header>
+      <label class="ymz-symbol-picker__search"><input type="search" data-symbol-search placeholder="搜索符号或分类" aria-label="搜索符号"></label>
+      <nav class="ymz-symbol-picker__tabs" data-symbol-tabs aria-label="符号分类"></nav>
+      <div class="ymz-symbol-picker__body" data-symbol-body></div>`;
+    this.search = this.element.querySelector("[data-symbol-search]");
+    this.tabs = this.element.querySelector("[data-symbol-tabs]");
+    this.body = this.element.querySelector("[data-symbol-body]");
+    this.root.appendChild(this.element);
+    (_a = this.element.querySelector('[data-symbol-action="close"]')) == null ? void 0 : _a.addEventListener("click", () => this.hide());
+    this.search.addEventListener("input", () => this.renderBody());
+    this.tabs.addEventListener("click", this.onTabClick);
+    this.body.addEventListener("click", this.onSymbolClick);
+    (_b = this.element.querySelector("[data-symbol-drag-handle]")) == null ? void 0 : _b.addEventListener("pointerdown", this.onPointerDown);
+    window.addEventListener("pointermove", this.onPointerMove);
+    window.addEventListener("pointerup", this.onPointerUp);
+    window.addEventListener("pointercancel", this.onPointerUp);
+    this.renderTabs();
+    this.renderBody();
+  }
+  show() {
+    this.element.hidden = false;
+    this.clamp();
+    this.search.focus();
+  }
+  hide() {
+    this.element.hidden = true;
+  }
+  destroy() {
+    window.removeEventListener("pointermove", this.onPointerMove);
+    window.removeEventListener("pointerup", this.onPointerUp);
+    window.removeEventListener("pointercancel", this.onPointerUp);
+    this.element.remove();
+  }
+  renderTabs() {
+    this.tabs.innerHTML = "";
+    [{ id: "", label: "全部" }, ...SYMBOL_SECTIONS].forEach(({ id, label }) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.symbolSection = id;
+      button.className = id === this.activeSection ? "is-active" : "";
+      button.textContent = label;
+      this.tabs.appendChild(button);
+    });
+  }
+  renderBody() {
+    this.body.innerHTML = "";
+    const groups2 = searchSymbols(this.search.value, this.activeSection);
+    groups2.forEach((group2) => {
+      const section = document.createElement("section");
+      const heading = document.createElement("h4");
+      heading.textContent = group2.label;
+      const grid = document.createElement("div");
+      grid.className = "ymz-symbol-picker__grid";
+      group2.symbols.forEach((symbol) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.symbolValue = symbol;
+        button.textContent = symbol;
+        button.title = `插入 ${symbol}`;
+        button.disabled = !this.options.canInsert();
+        grid.appendChild(button);
+      });
+      section.append(heading, grid);
+      this.body.appendChild(section);
+    });
+    if (groups2.length === 0) this.body.textContent = "没有匹配的符号";
+  }
+  clamp() {
+    if (this.element.style.left) return;
+    this.element.style.right = "16px";
+    this.element.style.top = "58px";
   }
 }
 function clamp$1(value, min, max) {
@@ -89297,7 +90370,7 @@ function assetHeader(title) {
 }
 function openMarkerPicker(commands, options = {}) {
   var _a;
-  let activeGroupId = options.initialGroupId && markerCatalog.groups.some((group) => group.id === options.initialGroupId) ? options.initialGroupId : "";
+  let activeGroupId = options.initialGroupId && markerCatalog.groups.some((group2) => group2.id === options.initialGroupId) ? options.initialGroupId : "";
   const dialog = createYeMindDialog({
     title: "图标",
     content: `<div class="b3-dialog__content ymz-local-asset-dialog ymz-marker-dialog">
@@ -89346,14 +90419,14 @@ function openMarkerPicker(commands, options = {}) {
     });
     return button;
   };
-  markerCatalog.groups.forEach((group) => {
+  markerCatalog.groups.forEach((group2) => {
     const section = document.createElement("section");
     section.className = "ymz-marker-group";
-    section.dataset.markerGroupSection = group.id;
-    section.setAttribute("aria-label", group.label);
+    section.dataset.markerGroupSection = group2.id;
+    section.setAttribute("aria-label", group2.label);
     const grid = document.createElement("div");
     grid.className = "ymz-marker-grid";
-    markerCatalog.items.filter((item) => item.groupId === group.id).forEach((item) => grid.appendChild(createOption(item)));
+    markerCatalog.items.filter((item) => item.groupId === group2.id).forEach((item) => grid.appendChild(createOption(item)));
     section.appendChild(grid);
     groups2.appendChild(section);
   });
@@ -89380,7 +90453,7 @@ function openMarkerPicker(commands, options = {}) {
     tabs.appendChild(button);
   };
   addTab("", "全部");
-  markerCatalog.groups.forEach((group) => addTab(group.id, group.label));
+  markerCatalog.groups.forEach((group2) => addTab(group2.id, group2.label));
   (_a = dialog.element.querySelector('[data-action="clear-markers"]')) == null ? void 0 : _a.addEventListener("click", () => {
     var _a2;
     commands.setIcons([]);
@@ -89539,7 +90612,6 @@ function setSearchReplaceExpanded(panel, expanded) {
   if (row) row.hidden = !expanded;
   const button = panel.querySelector('[data-search-action="toggle-replace"]');
   if (!button) return;
-  button.textContent = expanded ? "⌄" : "›";
   button.setAttribute("aria-expanded", String(expanded));
   button.setAttribute("title", expanded ? "收起替换" : "展开替换");
   button.setAttribute("aria-label", expanded ? "收起替换" : "展开替换");
@@ -89792,12 +90864,11 @@ class NodeQuickActionsController {
       if (action === "expand") this.options.onSetExpanded(uid2, true);
       this.setHovered(uid2);
     });
-    var _a;
     this.options = options;
     this.layer = document.createElement("div");
     this.layer.className = "ymz-node-quick-actions-layer";
     this.layer.setAttribute("aria-hidden", "false");
-    (_a = this.options.root.querySelector(".ymz-canvas-wrap")) == null ? void 0 : _a.appendChild(this.layer);
+    this.options.canvas.appendChild(this.layer);
     this.layer.addEventListener("click", this.onClick);
     this.layer.addEventListener("pointerover", this.onActionPointerOver);
     this.layer.addEventListener("pointerout", this.onActionPointerOut);
@@ -89821,15 +90892,17 @@ class NodeQuickActionsController {
     this.frame = requestAnimationFrame(() => this.refresh());
   }
   refresh() {
+    var _a;
     this.frame = 0;
     this.layer.replaceChildren();
     this.nodeElementToUid.clear();
     if (this.options.readonly()) return;
-    const rootRect = this.options.root.getBoundingClientRect();
+    const layerRect = this.layer.getBoundingClientRect();
+    const coordinateRect = layerRect.width > 0 || layerRect.height > 0 ? layerRect : ((_a = this.layer.parentElement) == null ? void 0 : _a.getBoundingClientRect()) ?? layerRect;
     const activeNodes = this.options.getActiveNodes();
     visibleNodeList(this.options.getRendererRoot()).forEach((node) => {
-      var _a, _b, _c2, _d2, _e, _f;
-      if ((node == null ? void 0 : node.isGeneralization) || !((_a = node == null ? void 0 : node.group) == null ? void 0 : _a.node)) return;
+      var _a2, _b, _c2, _d2, _e, _f;
+      if ((node == null ? void 0 : node.isGeneralization) || !((_a2 = node == null ? void 0 : node.group) == null ? void 0 : _a2.node)) return;
       const uid2 = String(((_b = node.getData) == null ? void 0 : _b.call(node, "uid")) ?? "");
       if (!uid2) return;
       const nodeElement = node.group.node;
@@ -89851,8 +90924,8 @@ class NodeQuickActionsController {
       container.dataset.nodeUid = uid2;
       container.dataset.quickHovered = String(hovered);
       const childRects = (Array.isArray(node.children) ? node.children : []).map((child) => {
-        var _a2, _b2, _c3;
-        return (_c3 = (_b2 = (_a2 = child == null ? void 0 : child.group) == null ? void 0 : _a2.node) == null ? void 0 : _b2.getBoundingClientRect) == null ? void 0 : _c3.call(_b2);
+        var _a3, _b2, _c3;
+        return (_c3 = (_b2 = (_a3 = child == null ? void 0 : child.group) == null ? void 0 : _a3.node) == null ? void 0 : _b2.getBoundingClientRect) == null ? void 0 : _c3.call(_b2);
       }).filter((childRect) => Boolean(childRect && (childRect.width > 0 || childRect.height > 0)));
       const layout2 = (_f = (_e = this.options).getLayout) == null ? void 0 : _f.call(_e);
       const geometryDriven = Boolean(layoutGeometryByEngine(layout2));
@@ -89861,8 +90934,8 @@ class NodeQuickActionsController {
       if (geometryDriven || childRects.length > 0) this.lastKnownSideByUid.set(uid2, side);
       const anchor = resolveQuickActionAnchor(rect2, geometryDriven ? [] : childRects, side);
       container.dataset.quickSide = anchor.side;
-      container.style.left = `${anchor.x - rootRect.left}px`;
-      container.style.top = `${anchor.y - rootRect.top}px`;
+      container.style.left = `${anchor.x - coordinateRect.left}px`;
+      container.style.top = `${anchor.y - coordinateRect.top}px`;
       descriptors.forEach((descriptor) => {
         const button = document.createElement("button");
         button.type = "button";
@@ -90077,7 +91150,7 @@ class LiveNodeWidthLayoutController {
         var _a2, _b2, _c2, _d2;
         this.frame = null;
         if (this.destroyed || !hasActiveNodeWidthDrag((_b2 = (_a2 = this.map) == null ? void 0 : _a2.renderer) == null ? void 0 : _b2.root)) return;
-        (_d2 = (_c2 = this.map) == null ? void 0 : _c2.render) == null ? void 0 : _d2.call(_c2);
+        (_d2 = (_c2 = this.map) == null ? void 0 : _c2.render) == null ? void 0 : _d2.call(_c2, () => this.synchronizeEditingSurface());
       });
     });
     this.map = map2;
@@ -90094,6 +91167,16 @@ class LiveNodeWidthLayoutController {
     this.target.removeEventListener("mousemove", this.onMousemove);
     if (this.frame !== null) this.animation.cancel(this.frame);
     this.frame = null;
+  }
+  /**
+   * The rich-text editor is an HTML overlay outside the SVG tree. A full
+   * layout can move its text anchor (especially when a marker/icon precedes
+   * the text), so the overlay must be repositioned after that same layout.
+   */
+  synchronizeEditingSurface() {
+    var _a, _b;
+    const richText = (_a = this.map) == null ? void 0 : _a.richText;
+    if ((richText == null ? void 0 : richText.showTextEdit) === true) (_b = richText.updateTextEditNode) == null ? void 0 : _b.call(richText);
   }
 }
 function scheduleFocusedNodeHighlight(renderer, uid2, options = {}) {
@@ -90353,15 +91436,6 @@ class ToolbarVisibilityController {
     if (target.closest(OWNER_SELECTORS.bottom)) return "bottom";
     return null;
   }
-}
-function parseZoomPercent(value, min, max) {
-  const normalized2 = String(value ?? "").trim().replace(/%$/, "").trim();
-  if (!normalized2) return null;
-  const parsed = Number(normalized2);
-  if (!Number.isFinite(parsed)) return null;
-  const lower = Math.min(min, max);
-  const upper = Math.max(min, max);
-  return Math.min(upper, Math.max(lower, parsed));
 }
 const UNTITLED_MAP_NAME = "未命名导图";
 function normalizeMapTitle(value) {
@@ -91041,7 +92115,7 @@ function normalizeImportedMap(source, title, options) {
     layout: typeof source.layout === "string" ? source.layout : map2.layout,
     layoutPresetId: typeof source.layoutPresetId === "string" ? source.layoutPresetId : void 0,
     theme: typeof source.theme === "string" ? source.theme : map2.theme,
-    lineStyle: source.lineStyle === "straight" || source.lineStyle === "direct" ? source.lineStyle : "curve",
+    lineStyle: source.lineStyle === "straight" || source.lineStyle === "direct" || source.lineStyle === "polyline" ? source.lineStyle : "curve",
     projectStyle: source.projectStyle && typeof source.projectStyle === "object" ? source.projectStyle : map2.projectStyle,
     viewData: source.viewData && typeof source.viewData === "object" ? source.viewData : void 0,
     studyCards: Array.isArray(source.studyCards) ? source.studyCards : map2.studyCards
@@ -91219,6 +92293,74 @@ class AppearanceController {
     }
   }
 }
+const LEGACY_ICON_LABELS = {
+  yemind_star: "★",
+  yemind_flag: "⚑",
+  yemind_question: "?",
+  yemind_idea: "✦",
+  yemind_check: "✓",
+  yemind_warning: "!",
+  priority_1: "1",
+  priority_2: "2",
+  priority_3: "3"
+};
+function escapeHtml$2(value) {
+  return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+function cssPropertyName(value) {
+  return value.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+}
+function styleAttribute(style) {
+  return Object.entries(style).map(([key, value]) => `${cssPropertyName(key)}:${value}`).join(";");
+}
+function renderIcon(value, pluginBaseUrl) {
+  const marker = markerItemFromValue(value);
+  if (marker) {
+    const style = styleAttribute(compactMarkerButtonStyle(pluginBaseUrl, marker, 20));
+    return `<span class="ymz-study-source__icon is-marker" title="${escapeHtml$2(marker.groupLabel)} ${marker.orderInGroup}" style="${escapeHtml$2(style)}"></span>`;
+  }
+  return `<span class="ymz-study-source__icon" title="${escapeHtml$2(value)}">${escapeHtml$2(LEGACY_ICON_LABELS[value] ?? "•")}</span>`;
+}
+function renderImage(source) {
+  if (!source.image) return "";
+  const width2 = source.image.width ? ` width="${source.image.width}"` : "";
+  const height2 = source.image.height ? ` height="${source.image.height}"` : "";
+  return `
+    <button type="button" class="ymz-study-source__image" data-study-action="preview-source-image" data-study-image-src="${escapeHtml$2(source.image.src)}" data-study-image-title="${escapeHtml$2(source.image.title)}" aria-label="预览${source.image.kind === "clipart" ? "剪贴图" : "图片"}：${escapeHtml$2(source.image.title || "未命名")}">
+      <img src="${escapeHtml$2(source.image.src)}" alt="${escapeHtml$2(source.image.title)}" loading="lazy" draggable="false"${width2}${height2}>
+      ${source.image.title ? `<span>${escapeHtml$2(source.image.title)}</span>` : ""}
+    </button>
+  `;
+}
+function renderStudyCardSourceFront(source, pluginBaseUrl) {
+  if (!source) return "";
+  const icons = source.icons.map((icon) => renderIcon(icon, pluginBaseUrl)).join("");
+  const todo = source.todo ? `<span class="ymz-study-source__todo${source.todo.checked ? " is-checked" : ""}"><i>${source.todo.checked ? "✓" : ""}</i>${escapeHtml$2(source.todo.text || (source.todo.checked ? "已完成" : "待办"))}</span>` : "";
+  const tags = source.tags.map((tag) => `<span class="ymz-study-source__tag">${escapeHtml$2(tag)}</span>`).join("");
+  const link = source.hyperlink ? `<a class="ymz-study-source__link" href="${escapeHtml$2(source.hyperlink)}" target="_blank" rel="noopener noreferrer">${escapeHtml$2(source.hyperlinkTitle || source.hyperlink)} ↗</a>` : "";
+  const accessories = icons || todo || tags || link ? `<div class="ymz-study-source__accessories">${icons}${todo}${tags}${link}</div>` : "";
+  return `
+    <section class="ymz-study-source ymz-study-source--front" data-study-source-front>
+      ${accessories}
+      ${source.nodeTextHtml ? `<div class="ymz-study-source__rich-text">${source.nodeTextHtml}</div>` : ""}
+      ${renderImage(source)}
+    </section>
+  `;
+}
+function renderStudyCardSourceBack(source) {
+  if (!source || !source.noteHtml && !source.comments.length) return "";
+  return `
+    <section class="ymz-study-source ymz-study-source--back" data-study-source-back>
+      ${source.noteHtml ? `<div class="ymz-study-source__note"><small>备注</small><div>${source.noteHtml}</div></div>` : ""}
+      ${source.comments.length ? `
+        <div class="ymz-study-source__comments">
+          <small>批注 · ${source.comments.length}</small>
+          ${source.comments.map((comment) => `<article><p>${escapeHtml$2(comment.text)}</p><time>${new Date(comment.updatedAt).toLocaleDateString("zh-CN")}</time></article>`).join("")}
+        </div>
+      ` : ""}
+    </section>
+  `;
+}
 function escapeHtml$1(value) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
@@ -91247,7 +92389,7 @@ class StudyPanelController {
     __publicField(this, "optimisticCards", null);
     __publicField(this, "queuedCards", null);
     __publicField(this, "onClick", (event) => {
-      var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F;
+      var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B;
       const target = event.target;
       const action = (_a = target.closest("[data-study-action]")) == null ? void 0 : _a.dataset.studyAction;
       const filter2 = (_b = target.closest("[data-study-filter]")) == null ? void 0 : _b.dataset.studyFilter;
@@ -91319,21 +92461,7 @@ class StudyPanelController {
         return;
       }
       if (action === "create") {
-        if ((_t = (_s = this.options).readonly) == null ? void 0 : _t.call(_s)) return;
-        const node = this.options.getActiveNode();
-        if (!node) {
-          (_v = (_u = this.options).onMessage) == null ? void 0 : _v.call(_u, "请先选中一个导图节点");
-          return;
-        }
-        const now = ((_x = (_w = this.options).now) == null ? void 0 : _x.call(_w)) ?? Date.now();
-        const card = createStudyCard({
-          id: ((_z = (_y = this.options).id) == null ? void 0 : _z.call(_y)) ?? ((_B = (_A = globalThis.crypto) == null ? void 0 : _A.randomUUID) == null ? void 0 : _B.call(_A)) ?? `card-${now}`,
-          nodeUid: node.uid,
-          front: plainText$1(node.text) || "未命名卡片",
-          back: plainText$1(node.back),
-          now
-        });
-        void this.persist([...this.cards(), card]);
+        void this.createCardFromActiveNode();
         return;
       }
       if (!id) return;
@@ -91343,11 +92471,28 @@ class StudyPanelController {
         this.render();
         return;
       }
+      if (action === "preview-source-image") {
+        const imageButton = target.closest("[data-study-image-src]");
+        const src = String((imageButton == null ? void 0 : imageButton.dataset.studyImageSrc) ?? "");
+        if (src) (_t = (_s = this.options).onPreviewSourceImage) == null ? void 0 : _t.call(_s, src, String((imageButton == null ? void 0 : imageButton.dataset.studyImageTitle) ?? ""));
+        return;
+      }
+      if (action === "sync-source") {
+        if ((_v = (_u = this.options).readonly) == null ? void 0 : _v.call(_u)) return;
+        const card = this.cards().find((item) => item.id === id);
+        const node = card ? (_x = (_w = this.options).getNodeByUid) == null ? void 0 : _x.call(_w, card.nodeUid) : null;
+        if (!card || !(node == null ? void 0 : node.source)) return;
+        void this.persist(this.cards().map((item) => {
+          var _a2, _b2;
+          return item.id === card.id ? { ...item, source: node.source, updatedAt: ((_b2 = (_a2 = this.options).now) == null ? void 0 : _b2.call(_a2)) ?? Date.now() } : item;
+        }));
+        return;
+      }
       if (action === "delete") {
-        if ((_D = (_C = this.options).readonly) == null ? void 0 : _D.call(_C)) return;
+        if ((_z = (_y = this.options).readonly) == null ? void 0 : _z.call(_y)) return;
         void this.persist(this.cards().filter((card) => card.id !== id));
       } else if (action === "star") {
-        if ((_F = (_E = this.options).readonly) == null ? void 0 : _F.call(_E)) return;
+        if ((_B = (_A = this.options).readonly) == null ? void 0 : _B.call(_A)) return;
         void this.persist(this.cards().map((card) => {
           var _a2, _b2;
           return card.id === id ? { ...card, starred: !card.starred, updatedAt: ((_b2 = (_a2 = this.options).now) == null ? void 0 : _b2.call(_a2)) ?? Date.now() } : card;
@@ -91414,6 +92559,33 @@ class StudyPanelController {
   refresh() {
     if (!this.element.hidden) this.render();
   }
+  cardForNode(nodeUid2) {
+    const uid2 = String(nodeUid2 ?? "").trim();
+    if (!uid2) return void 0;
+    return this.cards().find((card) => card.nodeUid === uid2);
+  }
+  async createCardFromActiveNode() {
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j;
+    if ((_b = (_a = this.options).readonly) == null ? void 0 : _b.call(_a)) return null;
+    const node = this.options.getActiveNode();
+    if (!node) {
+      (_d2 = (_c2 = this.options).onMessage) == null ? void 0 : _d2.call(_c2, "请先选中一个导图节点");
+      return null;
+    }
+    const existing = this.cardForNode(node.uid);
+    if (existing) return existing;
+    const now = ((_f = (_e = this.options).now) == null ? void 0 : _f.call(_e)) ?? Date.now();
+    const card = createStudyCard({
+      id: ((_h = (_g = this.options).id) == null ? void 0 : _h.call(_g)) ?? ((_j = (_i = globalThis.crypto) == null ? void 0 : _i.randomUUID) == null ? void 0 : _j.call(_i)) ?? `card-${now}`,
+      nodeUid: node.uid,
+      front: plainText$1(node.text) || "未命名卡片",
+      back: plainText$1(node.back),
+      now,
+      source: node.source
+    });
+    await this.persist([...this.cards(), card]);
+    return card;
+  }
   cards() {
     return this.optimisticCards ?? normalizeStudyCards(this.options.getCards());
   }
@@ -91427,7 +92599,7 @@ class StudyPanelController {
           <small>${cards.length} 张卡片</small>
         </div>
         ${this.mode === "cards" ? `<button type="button" data-study-action="fullscreen" title="${this.fullscreen ? "缩小" : "全屏"}" aria-label="${this.fullscreen ? "缩小" : "全屏"}卡片面板">${fullscreenIcon()}</button>` : ""}
-        <button type="button" data-study-action="close" title="关闭" aria-label="关闭${this.mode === "review" ? "复习" : "卡片"}面板">×</button>
+        <button type="button" data-study-action="close" title="关闭" aria-label="关闭${this.mode === "review" ? "复习" : "卡片"}面板">${panelCloseIcon()}</button>
       </header>
       ${this.mode === "review" ? this.renderReview(cards) : this.renderCards(cards)}
     `;
@@ -91446,7 +92618,8 @@ class StudyPanelController {
       if (!this.search) return true;
       const haystack = `${card.front}
 ${card.back}
-${card.nodeUid}`.toLocaleLowerCase();
+${card.nodeUid}
+${studyCardSourceSearchText(card.source)}`.toLocaleLowerCase();
       return haystack.includes(this.search.toLocaleLowerCase());
     });
     const filters = [
@@ -91480,7 +92653,10 @@ ${card.nodeUid}`.toLocaleLowerCase();
     `;
   }
   renderCard(card, readonly) {
+    var _a, _b;
     const flipped = this.flipped.has(card.id);
+    const sourceNode = (_b = (_a = this.options).getNodeByUid) == null ? void 0 : _b.call(_a, card.nodeUid);
+    const sourceDeleted = Boolean(card.source && this.options.getNodeByUid && !sourceNode);
     const lastReviewed = card.lastReviewedAt ? new Date(card.lastReviewedAt).toLocaleDateString("zh-CN") : "";
     return `
       <article class="ymz-study-card${card.id === this.locatedCardId ? " is-located" : ""}" data-study-card-id="${escapeHtml$1(card.id)}">
@@ -91488,15 +92664,24 @@ ${card.nodeUid}`.toLocaleLowerCase();
           <span><i class="ymz-study-source-dot" aria-hidden="true"></i>${escapeHtml$1(card.nodeUid || "独立卡片")}</span>
           <button type="button" data-study-action="star" aria-pressed="${card.starred}" title="${card.starred ? "取消重点" : "设为重点"}"${readonly ? " disabled" : ""}>${card.starred ? "★" : "☆"}</button>
         </header>
-        <button type="button" class="ymz-study-card__face" data-study-action="flip" data-study-face="${flipped ? "back" : "front"}">
-          <small>${flipped ? "答案" : "问题"}</small>
-          <strong>${escapeHtml$1(flipped ? card.back || "（尚未填写答案）" : card.front)}</strong>
-          <em>点击翻面</em>
-        </button>
+        <div class="ymz-study-card__face" data-study-face="${flipped ? "back" : "front"}">
+          <button type="button" class="ymz-study-card__flip" data-study-action="flip">
+            <small>${flipped ? "答案" : "问题"}</small>
+            <strong>${escapeHtml$1(flipped ? card.back || "（尚未填写答案）" : card.front)}</strong>
+            <em>点击翻面</em>
+          </button>
+          ${flipped ? renderStudyCardSourceBack(card.source) : renderStudyCardSourceFront(card.source, this.options.pluginBaseUrl)}
+        </div>
         <details>
           <summary>编辑卡片</summary>
           <label><span>正面</span><input data-study-field="front" value="${escapeHtml$1(card.front)}" aria-label="卡片正面"${readonly ? " disabled" : ""}></label>
           <label><span>背面</span><textarea data-study-field="back" aria-label="卡片背面" placeholder="输入答案或补充内容"${readonly ? " disabled" : ""}>${escapeHtml$1(card.back)}</textarea></label>
+          ${card.source ? `
+            <div class="ymz-study-card__source-state" data-study-source-state="${sourceDeleted ? "missing" : "available"}">
+              <span>${sourceDeleted ? "来源节点已删除" : "已保存节点完整内容"}</span>
+              <button type="button" data-study-action="sync-source"${readonly || sourceDeleted || !this.options.getNodeByUid ? " disabled" : ""}>从来源节点更新</button>
+            </div>
+          ` : ""}
         </details>
         <div class="ymz-study-card__statuses" role="group" aria-label="卡片状态">
           ${["new", "learning", "mastered"].map((status) => `<button type="button" data-study-status="${status}" class="${card.status === status ? "is-active" : ""}" aria-pressed="${card.status === status}"${readonly ? " disabled" : ""}>${statusLabel(status)}</button>`).join("")}
@@ -91536,7 +92721,11 @@ ${card.nodeUid}`.toLocaleLowerCase();
             <button type="button" data-study-action="open-current-card">查看卡片</button>
           </div>
           <h2>${escapeHtml$1(current.front)}</h2>
-          <div class="ymz-study-review-card__answer" data-role="study-answer"${this.revealed ? "" : " hidden"}>${escapeHtml$1(current.back || "（尚未填写答案）")}</div>
+          ${renderStudyCardSourceFront(current.source, this.options.pluginBaseUrl)}
+          <div class="ymz-study-review-card__answer" data-role="study-answer"${this.revealed ? "" : " hidden"}>
+            <div>${escapeHtml$1(current.back || "（尚未填写答案）")}</div>
+            ${renderStudyCardSourceBack(current.source)}
+          </div>
           <button type="button" class="ymz-study-reveal" data-study-action="reveal"${this.revealed ? " hidden" : ""}>显示答案</button>
           <div class="ymz-study-ratings"${this.revealed ? "" : " hidden"} aria-label="复习评价">
             <button type="button" data-study-rating="again"${readonly ? " disabled" : ""}><strong>再来一次</strong><small>本轮稍后</small></button>
@@ -91636,7 +92825,7 @@ class MiniMapController {
     __publicField(this, "content");
     __publicField(this, "viewport");
     __publicField(this, "frame", null);
-    __publicField(this, "visible", true);
+    __publicField(this, "visible");
     __publicField(this, "draggingViewport", false);
     __publicField(this, "schedule", () => {
       if (!this.visible || this.frame !== null) return;
@@ -91675,6 +92864,8 @@ class MiniMapController {
     this.root = root2;
     this.map = map2;
     this.element = element;
+    this.visible = !element.hidden;
+    this.root.dataset.minimapVisible = String(this.visible);
     this.content = element.querySelector('[data-role="minimap-content"]');
     this.viewport = element.querySelector('[data-role="minimap-viewport"]');
     element.addEventListener("pointerdown", this.onPointerDown);
@@ -91686,7 +92877,7 @@ class MiniMapController {
       return (_a2 = map2.on) == null ? void 0 : _a2.call(map2, event, this.schedule);
     });
     (_a = map2.on) == null ? void 0 : _a.call(map2, "mini_map_view_box_position_change", this.onViewportChange);
-    this.schedule();
+    if (this.visible) this.schedule();
   }
   destroy() {
     var _a, _b;
@@ -91757,6 +92948,9 @@ class RenderLifecycleCoordinator {
   constructor(mindMap, onCommitted, scheduler = browserScheduler) {
     __publicField(this, "revision", 0);
     __publicField(this, "frame", null);
+    __publicField(this, "pending", null);
+    __publicField(this, "geometryRepairInFlight", false);
+    __publicField(this, "geometryRepairFrame", null);
     this.mindMap = mindMap;
     this.onCommitted = onCommitted;
     this.scheduler = scheduler;
@@ -91765,27 +92959,119 @@ class RenderLifecycleCoordinator {
     const uid2 = renderedNodeUid(payload.node);
     if (!uid2) return;
     const revision = ++this.revision;
+    this.pending = { revision, payload };
     if (this.frame !== null) this.scheduler.cancel(this.frame);
     this.frame = this.scheduler.request(() => {
-      var _a, _b, _c2, _d2, _e, _f, _g;
+      var _a;
       this.frame = null;
-      if (revision !== this.revision) return;
-      const node = (_c2 = (_b = (_a = this.mindMap) == null ? void 0 : _a.renderer) == null ? void 0 : _b.findNodeByUid) == null ? void 0 : _c2.call(_b, uid2);
-      if (!node || typeof node.createTextNode !== "function") return;
-      const measurementText = payload.richText ? plainTextFromSearchValue(payload.text, true).trim() : payload.text;
-      node._textData = node.createTextNode(measurementText);
-      const rect2 = (_d2 = node.getNodeRect) == null ? void 0 : _d2.call(node);
-      if (rect2 && Number.isFinite(rect2.width) && Number.isFinite(rect2.height)) {
-        node.width = rect2.width;
-        node.height = rect2.height;
+      if (revision !== this.revision || ((_a = this.pending) == null ? void 0 : _a.revision) !== revision) return;
+      this.pending = null;
+      this.commitTextEdit(payload, revision);
+    });
+  }
+  flushPendingTextEdit() {
+    const pending = this.pending;
+    if (!pending) return false;
+    if (this.frame !== null) this.scheduler.cancel(this.frame);
+    this.frame = null;
+    this.pending = null;
+    const revision = ++this.revision;
+    this.commitTextEdit(pending.payload, revision);
+    return true;
+  }
+  /**
+   * Rich-text measurement can finish before a late theme/font transaction.
+   * In that state the HTML text is taller or wider than its SVG
+   * foreignObject, so the last glyphs are clipped even though the node data is
+   * complete. Recreate only the affected text contents from their current
+   * data, then run one normal layout pass. This is deliberately driven by a
+   * geometry invariant rather than by a specific theme or node label.
+   */
+  reconcileRenderedTextGeometry() {
+    var _a, _b, _c2, _d2;
+    if (this.geometryRepairInFlight) return false;
+    const overflowing = [];
+    const visit2 = (node) => {
+      var _a2, _b2, _c3, _d3, _e;
+      if (!node) return;
+      const foreignObject = (_b2 = (_a2 = node == null ? void 0 : node._textData) == null ? void 0 : _a2.nodeContent) == null ? void 0 : _b2.node;
+      const wrapper = (_c3 = foreignObject == null ? void 0 : foreignObject.querySelector) == null ? void 0 : _c3.call(foreignObject, ".smm-richtext-node-wrap");
+      const foreignRect = (_d3 = foreignObject == null ? void 0 : foreignObject.getBoundingClientRect) == null ? void 0 : _d3.call(foreignObject);
+      const textRect = (_e = wrapper == null ? void 0 : wrapper.getBoundingClientRect) == null ? void 0 : _e.call(wrapper);
+      if (foreignRect && textRect && Number.isFinite(foreignRect.width) && Number.isFinite(foreignRect.height) && Number.isFinite(textRect.width) && Number.isFinite(textRect.height) && foreignRect.width > 0.5 && foreignRect.height > 0.5 && (textRect.width > foreignRect.width + 0.5 || textRect.height > foreignRect.height + 0.5)) {
+        overflowing.push({ node, foreignRect, textRect });
       }
-      (_e = node.layout) == null ? void 0 : _e.call(node);
-      (_g = (_f = this.mindMap).render) == null ? void 0 : _g.call(_f, () => {
-        var _a2, _b2;
-        if (revision !== this.revision) return;
-        (_b2 = (_a2 = this.mindMap.richText) == null ? void 0 : _a2.updateTextEditNode) == null ? void 0 : _b2.call(_a2);
+      if (Array.isArray(node.children)) node.children.forEach(visit2);
+    };
+    visit2((_b = (_a = this.mindMap) == null ? void 0 : _a.renderer) == null ? void 0 : _b.root);
+    if (overflowing.length === 0) return false;
+    this.geometryRepairInFlight = true;
+    const temporaryAutoWidths = [];
+    overflowing.forEach(({ node, foreignRect, textRect }) => {
+      var _a2, _b2, _c3, _d3, _e, _f, _g, _h, _i, _j, _k, _l;
+      const textData = node == null ? void 0 : node._textData;
+      const currentWidth = Number(textData == null ? void 0 : textData.width);
+      const currentHeight = Number(textData == null ? void 0 : textData.height);
+      if (!(currentWidth > 0) || !(currentHeight > 0)) return;
+      const scaleX = foreignRect.width / currentWidth;
+      const scaleY = foreignRect.height / currentHeight;
+      if (!(scaleX > 0) || !(scaleY > 0)) return;
+      const hasCustomWidth = Boolean(((_a2 = node == null ? void 0 : node.hasCustomWidth) == null ? void 0 : _a2.call(node)) || ((_b2 = node == null ? void 0 : node.getData) == null ? void 0 : _b2.call(node, "customTextWidth")));
+      const maxAutoWidth = Number((_d3 = (_c3 = this.mindMap) == null ? void 0 : _c3.opt) == null ? void 0 : _d3.textAutoWrapWidth);
+      const measuredWidth = Math.ceil(textRect.width / scaleX) + 1;
+      const nextWidth = hasCustomWidth ? currentWidth : Math.max(
+        currentWidth,
+        Number.isFinite(maxAutoWidth) && maxAutoWidth > 0 ? Math.min(measuredWidth, maxAutoWidth) : measuredWidth
+      );
+      const nextHeight = Math.max(currentHeight, Math.ceil(textRect.height / scaleY));
+      if (!hasCustomWidth) {
+        const uid2 = String(((_e = node == null ? void 0 : node.getData) == null ? void 0 : _e.call(node, "uid")) ?? "");
+        if (uid2) temporaryAutoWidths.push(uid2);
+        if ((_f = node == null ? void 0 : node.nodeData) == null ? void 0 : _f.data) node.nodeData.data.customTextWidth = nextWidth;
+        node.customTextWidth = nextWidth;
+      }
+      (_g = node.reRender) == null ? void 0 : _g.call(node, ["text"], { ignoreUpdateCustomTextWidth: true });
+      if (Number((_h = node == null ? void 0 : node._textData) == null ? void 0 : _h.height) < nextHeight) {
+        node._textData.height = nextHeight;
+        (_j = (_i = node._textData.node) == null ? void 0 : _i.attr) == null ? void 0 : _j.call(_i, "data-height", nextHeight);
+        (_l = (_k = node._textData.nodeContent) == null ? void 0 : _k.height) == null ? void 0 : _l.call(_k, nextHeight);
+      }
+    });
+    (_d2 = (_c2 = this.mindMap).render) == null ? void 0 : _d2.call(_c2, () => {
+      temporaryAutoWidths.forEach((uid2) => {
+        var _a2, _b2, _c3, _d3;
+        const live = (_c3 = (_b2 = (_a2 = this.mindMap) == null ? void 0 : _a2.renderer) == null ? void 0 : _b2.findNodeByUid) == null ? void 0 : _c3.call(_b2, uid2);
+        if ((_d3 = live == null ? void 0 : live.nodeData) == null ? void 0 : _d3.data) delete live.nodeData.data.customTextWidth;
+        if (live) live.customTextWidth = void 0;
+      });
+      if (this.geometryRepairFrame !== null) this.scheduler.cancel(this.geometryRepairFrame);
+      this.geometryRepairFrame = this.scheduler.request(() => {
+        this.geometryRepairFrame = null;
+        this.geometryRepairInFlight = false;
         this.onCommitted();
       });
+    }, "yemind-richtext-geometry-repair");
+    return true;
+  }
+  commitTextEdit(payload, revision) {
+    var _a, _b, _c2, _d2, _e, _f, _g;
+    const uid2 = renderedNodeUid(payload.node);
+    if (!uid2) return;
+    const node = (_c2 = (_b = (_a = this.mindMap) == null ? void 0 : _a.renderer) == null ? void 0 : _b.findNodeByUid) == null ? void 0 : _c2.call(_b, uid2);
+    if (!node || typeof node.createTextNode !== "function") return;
+    const measurementText = payload.richText ? plainTextFromSearchValue(payload.text, true).trim() : payload.text;
+    node._textData = node.createTextNode(measurementText);
+    const rect2 = (_d2 = node.getNodeRect) == null ? void 0 : _d2.call(node);
+    if (rect2 && Number.isFinite(rect2.width) && Number.isFinite(rect2.height)) {
+      node.width = rect2.width;
+      node.height = rect2.height;
+    }
+    (_e = node.layout) == null ? void 0 : _e.call(node);
+    (_g = (_f = this.mindMap).render) == null ? void 0 : _g.call(_f, () => {
+      var _a2, _b2;
+      if (revision !== this.revision) return;
+      (_b2 = (_a2 = this.mindMap.richText) == null ? void 0 : _a2.updateTextEditNode) == null ? void 0 : _b2.call(_a2);
+      this.onCommitted();
     });
   }
   invalidate() {
@@ -91795,6 +93081,10 @@ class RenderLifecycleCoordinator {
   }
   destroy() {
     this.invalidate();
+    if (this.geometryRepairFrame !== null) this.scheduler.cancel(this.geometryRepairFrame);
+    this.geometryRepairFrame = null;
+    this.geometryRepairInFlight = false;
+    this.pending = null;
   }
 }
 class YeMindEditor {
@@ -91835,6 +93125,7 @@ class YeMindEditor {
     __publicField(this, "projectStylePanel", null);
     __publicField(this, "layoutGalleryPanel", null);
     __publicField(this, "themeChoicePanel", null);
+    __publicField(this, "symbolPicker", null);
     __publicField(this, "nodeQuickActions", null);
     __publicField(this, "toolbarVisibility", null);
     __publicField(this, "resourceActionPopover", null);
@@ -92243,17 +93534,20 @@ class YeMindEditor {
     const panel = (_a = this.rootEl) == null ? void 0 : _a.querySelector('[data-role="export-panel"]');
     if (!panel) return;
     panel.hidden = false;
+    this.setExportCategory(
+      panel.dataset.exportCategory ?? "all"
+    );
     (_b = panel.querySelector('[data-default="true"]')) == null ? void 0 : _b.focus();
   }
   openImportPicker() {
-    var _a;
-    const input = (_a = this.rootEl) == null ? void 0 : _a.querySelector('[data-role="import-file-input"]');
-    if (!input) return;
-    input.value = "";
-    input.click();
+    var _a, _b;
+    const panel = (_a = this.rootEl) == null ? void 0 : _a.querySelector('[data-role="import-panel"]');
+    if (!panel) return;
+    panel.hidden = false;
+    (_b = panel.querySelector("[data-import-kind]:not([hidden])")) == null ? void 0 : _b.focus();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D;
     this.options.diagnostics.record(
       "editor",
       "destroy-started",
@@ -92288,26 +93582,28 @@ class YeMindEditor {
     this.layoutGalleryPanel = null;
     (_n = this.themeChoicePanel) == null ? void 0 : _n.destroy();
     this.themeChoicePanel = null;
-    (_o = this.toolbarVisibility) == null ? void 0 : _o.destroy();
+    (_o = this.symbolPicker) == null ? void 0 : _o.destroy();
+    this.symbolPicker = null;
+    (_p = this.toolbarVisibility) == null ? void 0 : _p.destroy();
     this.toolbarVisibility = null;
-    (_p = this.resourceActionPopover) == null ? void 0 : _p.destroy();
+    (_q = this.resourceActionPopover) == null ? void 0 : _q.destroy();
     this.resourceActionPopover = null;
-    (_q = this.nodeQuickActions) == null ? void 0 : _q.destroy();
+    (_r = this.nodeQuickActions) == null ? void 0 : _r.destroy();
     this.nodeQuickActions = null;
-    (_r = this.canvasRightDrag) == null ? void 0 : _r.destroy();
+    (_s = this.canvasRightDrag) == null ? void 0 : _s.destroy();
     this.canvasRightDrag = null;
-    (_s = this.liveNodeWidthLayout) == null ? void 0 : _s.destroy();
+    (_t = this.liveNodeWidthLayout) == null ? void 0 : _t.destroy();
     this.liveNodeWidthLayout = null;
-    (_t = this.cancelFocusedNodeHighlight) == null ? void 0 : _t.call(this);
+    (_u = this.cancelFocusedNodeHighlight) == null ? void 0 : _u.call(this);
     this.cancelFocusedNodeHighlight = null;
-    (_u = this.rootEl) == null ? void 0 : _u.removeEventListener("keydown", this.onRootKeydown, true);
-    (_v = this.outlinePaneEl) == null ? void 0 : _v.removeEventListener("keydown", this.onOutlineKeydownBubble);
-    (_w = this.rootEl) == null ? void 0 : _w.removeEventListener("paste", this.onImagePaste);
-    (_x = this.canvasEl) == null ? void 0 : _x.removeEventListener("dragover", this.onImageDragOver);
-    (_y = this.canvasEl) == null ? void 0 : _y.removeEventListener("drop", this.onImageDrop);
-    (_z = this.canvasEl) == null ? void 0 : _z.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
-    (_A = this.canvasEl) == null ? void 0 : _A.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
-    (_B = this.outlineEl) == null ? void 0 : _B.removeEventListener(
+    (_v = this.rootEl) == null ? void 0 : _v.removeEventListener("keydown", this.onRootKeydown, true);
+    (_w = this.outlinePaneEl) == null ? void 0 : _w.removeEventListener("keydown", this.onOutlineKeydownBubble);
+    (_x = this.rootEl) == null ? void 0 : _x.removeEventListener("paste", this.onImagePaste);
+    (_y = this.canvasEl) == null ? void 0 : _y.removeEventListener("dragover", this.onImageDragOver);
+    (_z = this.canvasEl) == null ? void 0 : _z.removeEventListener("drop", this.onImageDrop);
+    (_A = this.canvasEl) == null ? void 0 : _A.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
+    (_B = this.canvasEl) == null ? void 0 : _B.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
+    (_C = this.outlineEl) == null ? void 0 : _C.removeEventListener(
       "pointerdown",
       this.onOutlinePointerDown,
       true
@@ -92324,7 +93620,7 @@ class YeMindEditor {
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_C = this.map) == null ? void 0 : _C.destroy();
+    (_D = this.map) == null ? void 0 : _D.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record(
@@ -92388,7 +93684,12 @@ class YeMindEditor {
     this.options.container.innerHTML = createEditorTemplate(
       this.current.title,
       this.current.theme,
-      this.current.lineStyle
+      this.current.lineStyle,
+      this.options.pluginBaseUrl,
+      {
+        fullBackup: Boolean(this.options.onExportBackup),
+        fullRestore: Boolean(this.options.onRestoreBackup)
+      }
     );
     this.rootEl = this.options.container.querySelector(
       ".ymz-editor"
@@ -92508,6 +93809,17 @@ class YeMindEditor {
       pluginBaseUrl: this.options.pluginBaseUrl
     });
     this.commands = createCommandAdapter(this.map);
+    this.symbolPicker = new SymbolPicker(this.rootEl, {
+      canInsert: () => Boolean(
+        this.commands && !this.commands.isReadonly() && this.commands.getPrimaryNode()
+      ),
+      onInsert: (symbol) => {
+        var _a2;
+        const inserted = ((_a2 = this.commands) == null ? void 0 : _a2.insertSymbol(symbol)) ?? false;
+        if (inserted) this.refreshOutlineFromMap();
+        return inserted;
+      }
+    });
     this.renderLifecycle = new RenderLifecycleCoordinator(this.map, () => {
       var _a2, _b;
       (_a2 = this.nodeQuickActions) == null ? void 0 : _a2.scheduleRefresh();
@@ -92529,17 +93841,19 @@ class YeMindEditor {
           return Boolean((_a2 = this.commands) == null ? void 0 : _a2.isReadonly());
         },
         getActiveNode: () => {
-          var _a2, _b, _c2, _d2;
-          const node = (_a2 = this.commands) == null ? void 0 : _a2.getPrimaryNode();
-          const data2 = (_b = node == null ? void 0 : node.getData) == null ? void 0 : _b.call(node);
-          const uid2 = String((data2 == null ? void 0 : data2.uid) ?? ((_c2 = node == null ? void 0 : node.getData) == null ? void 0 : _c2.call(node, "uid")) ?? "").trim();
-          if (!uid2) return null;
-          const note2 = normalizeNodeNote((data2 == null ? void 0 : data2.yemindNote) ?? (data2 == null ? void 0 : data2.note));
-          return {
-            uid: uid2,
-            text: String((data2 == null ? void 0 : data2.text) ?? ((_d2 = node == null ? void 0 : node.getData) == null ? void 0 : _d2.call(node, "text")) ?? ""),
-            back: (note2 == null ? void 0 : note2.html) ?? ""
-          };
+          var _a2;
+          return this.buildActiveStudyNode((_a2 = this.commands) == null ? void 0 : _a2.getPrimaryNode());
+        },
+        getNodeByUid: (uid2) => {
+          var _a2, _b, _c2;
+          return this.buildActiveStudyNode(
+            (_c2 = (_b = (_a2 = this.map) == null ? void 0 : _a2.renderer) == null ? void 0 : _b.findNodeByUid) == null ? void 0 : _c2.call(_b, uid2)
+          );
+        },
+        pluginBaseUrl: this.options.pluginBaseUrl,
+        onPreviewSourceImage: (src, title) => {
+          var _a2;
+          return (_a2 = this.imageLightbox) == null ? void 0 : _a2.show(src, title);
         },
         onChange: async (cards) => {
           const normalizedCards = normalizeStudyCards(cards);
@@ -92594,17 +93908,20 @@ class YeMindEditor {
     this.themeChoicePanel = new ProjectChoicePanel(this.rootEl, {
       role: "theme-choice-panel",
       title: "主题",
-      options: YEMIND_THEME_PRESETS.map((preset) => ({
-        value: preset.id,
-        label: preset.label,
-        group: preset.group,
-        description: preset.description,
-        previewColor: preset.light.colorAppearance.centerBackground,
-        previewColors: themePaletteColors(preset)
-      })),
+      options: buildThemeChoiceOptions(this.settings.favoriteThemeIds),
+      groups: THEME_CHOICE_GROUPS,
       presentation: "palette",
       selected: this.current.theme,
-      applyLabel: (option2) => `应用主题 · ${option2.label}`,
+      favoriteValues: this.settings.favoriteThemeIds,
+      emptyGroupMessage: (group2) => group2 === "常用" ? "还没有常用主题，点击主题卡片右上角的星标收藏。" : "",
+      onFavoriteChange: (value, favorite) => {
+        const current = this.options.settingsStore.get().favoriteThemeIds;
+        const next2 = favorite ? [...current.filter((id) => id !== value), value] : current.filter((id) => id !== value);
+        void this.options.settingsStore.update({ favoriteThemeIds: next2 }).catch((error2) => {
+          console.error("[YeMind] favorite theme save failed", error2);
+          siyuan.showMessage("常用主题保存失败", 4e3, "error");
+        });
+      },
       readonly: () => {
         var _a2;
         return Boolean((_a2 = this.commands) == null ? void 0 : _a2.isReadonly());
@@ -92700,6 +94017,10 @@ class YeMindEditor {
       onContentAction: (uid2, type) => this.runOutlineContentAction(uid2, type),
       onContentHover: (uid2, type, anchor, entering) => {
         if (!this.nodeHoverPreview) return;
+        if (type === "todo") {
+          this.nodeHoverPreview.hide();
+          return;
+        }
         if (!entering) {
           this.nodeHoverPreview.scheduleHide();
           return;
@@ -92732,6 +94053,8 @@ class YeMindEditor {
     this.bindToolbar();
     this.bindMapEvents();
     window.requestAnimationFrame(() => {
+      var _a2;
+      (_a2 = this.renderLifecycle) == null ? void 0 : _a2.reconcileRenderedTextGeometry();
       void this.repairLegacyClipartGeometry();
     });
     this.applyMapAppearance(false);
@@ -92782,6 +94105,22 @@ class YeMindEditor {
     this.rootEl.addEventListener("click", (event) => {
       var _a2, _b2, _c3, _d3, _e2, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s;
       const clickTarget = event.target;
+      const exportPanel = this.rootEl.querySelector('[data-role="export-panel"]');
+      const importPanel = this.rootEl.querySelector('[data-role="import-panel"]');
+      if (clickTarget.closest('[data-action="close-export-panel"]')) {
+        this.closeExportDialog();
+        return;
+      }
+      if (exportPanel && !exportPanel.hidden && !clickTarget.closest('[data-role="export-panel"]') && !clickTarget.closest('[data-action="export-file"]')) {
+        this.closeExportDialog();
+      }
+      if (clickTarget.closest('[data-action="close-import-panel"]')) {
+        this.closeImportDialog();
+        return;
+      }
+      if (importPanel && !importPanel.hidden && !clickTarget.closest('[data-role="import-panel"]') && !clickTarget.closest('[data-action="import-file"]')) {
+        this.closeImportDialog();
+      }
       const overflowMenu = this.rootEl.querySelector(
         '[data-role="top-overflow-menu"]'
       );
@@ -92804,6 +94143,21 @@ class YeMindEditor {
       if (exportButton) {
         const format = exportButton.dataset.exportFormat;
         if (format) void this.exportCurrentMap(format);
+        return;
+      }
+      const exportBackup = event.target.closest("[data-export-host-backup]");
+      if (exportBackup) {
+        void this.exportFullBackup();
+        return;
+      }
+      const importKind = event.target.closest("[data-import-kind]");
+      if (importKind) {
+        this.chooseImportFile(importKind.dataset.importKind ?? "other");
+        return;
+      }
+      const exportCategory = event.target.closest("[data-export-category]");
+      if (exportCategory) {
+        this.setExportCategory(exportCategory.dataset.exportCategory);
         return;
       }
       const searchButton = event.target.closest(
@@ -93094,6 +94448,48 @@ class YeMindEditor {
     const panel = (_a = this.rootEl) == null ? void 0 : _a.querySelector('[data-role="export-panel"]');
     if (panel) panel.hidden = true;
   }
+  closeImportDialog() {
+    var _a;
+    const panel = (_a = this.rootEl) == null ? void 0 : _a.querySelector('[data-role="import-panel"]');
+    if (panel) panel.hidden = true;
+  }
+  chooseImportFile(kind) {
+    var _a;
+    const input = (_a = this.rootEl) == null ? void 0 : _a.querySelector('[data-role="import-file-input"]');
+    if (!input) return;
+    input.dataset.importKind = kind;
+    input.accept = kind === "host-backup" ? ".json,application/json" : kind === "map-backup" ? ".yemind.svg,.yemind.zip,.kmindz,.svg,.png,.zip,.xmind,.kmind,.json,.yemind" : IMPORT_ACCEPT;
+    input.value = "";
+    input.click();
+  }
+  async exportFullBackup() {
+    if (!this.options.onExportBackup) return;
+    const panel = this.rootEl.querySelector('[data-role="export-panel"]');
+    panel == null ? void 0 : panel.setAttribute("aria-busy", "true");
+    try {
+      await this.options.onExportBackup();
+      this.closeExportDialog();
+      siyuan.showMessage("完整备份已导出");
+    } catch (error2) {
+      console.error("[YeMind] full backup export failed", error2);
+      siyuan.showMessage(error2 instanceof Error ? error2.message : "完整备份导出失败", 5e3, "error");
+    } finally {
+      panel == null ? void 0 : panel.removeAttribute("aria-busy");
+    }
+  }
+  setExportCategory(category) {
+    var _a;
+    const panel = (_a = this.rootEl) == null ? void 0 : _a.querySelector('[data-role="export-panel"]');
+    if (!panel) return;
+    const normalized2 = category === "map" || category === "outline" ? category : "all";
+    panel.dataset.exportCategory = normalized2;
+    panel.querySelectorAll("[data-export-category]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.exportCategory === normalized2));
+    });
+    panel.querySelectorAll("[data-export-category-group]").forEach((button) => {
+      button.hidden = normalized2 !== "all" && button.dataset.exportCategoryGroup !== normalized2;
+    });
+  }
   transferSnapshot() {
     var _a, _b;
     if (!this.map) throw new Error("导图画布尚未准备完成");
@@ -93208,6 +94604,12 @@ class YeMindEditor {
     const file = (_a = input.files) == null ? void 0 : _a[0];
     if (!file) return;
     try {
+      if (input.dataset.importKind === "host-backup") {
+        if (!this.options.onRestoreBackup) throw new Error("当前宿主不支持完整备份恢复");
+        await this.options.onRestoreBackup(file);
+        this.closeImportDialog();
+        return;
+      }
       const map2 = await importMindMapBytes({
         name: file.name,
         type: file.type,
@@ -93215,6 +94617,7 @@ class YeMindEditor {
       });
       if (!this.options.onImport) throw new Error("当前宿主没有提供导入目标");
       await this.options.onImport(map2);
+      this.closeImportDialog();
       siyuan.showMessage(`已导入 ${map2.title}`);
     } catch (error2) {
       console.error("[YeMind] import failed", error2);
@@ -93324,7 +94727,7 @@ class YeMindEditor {
     const select = this.rootEl.querySelector('[data-action="theme"]');
     if (select) select.value = this.current.theme;
     (_b = this.themeChoicePanel) == null ? void 0 : _b.setSelected(this.current.theme);
-    this.applyMapAppearance();
+    this.applyMapAppearance(true, true);
     this.options.diagnostics.record("appearance", "theme-changed", this.current.id, { theme: this.current.theme });
     (_c2 = this.nodeQuickActions) == null ? void 0 : _c2.scheduleRefresh();
     this.scheduleSave();
@@ -93371,6 +94774,14 @@ class YeMindEditor {
     this.map.on("node_text_edit_change", (payload) => {
       var _a;
       (_a = this.renderLifecycle) == null ? void 0 : _a.scheduleTextEdit(payload);
+    });
+    this.map.on("hide_text_edit", () => {
+      var _a;
+      (_a = this.renderLifecycle) == null ? void 0 : _a.flushPendingTextEdit();
+    });
+    this.map.on("node_tree_render_end", () => {
+      var _a;
+      (_a = this.renderLifecycle) == null ? void 0 : _a.reconcileRenderedTextGeometry();
     });
     this.map.on("data_change", (data2) => {
       var _a, _b, _c2;
@@ -93642,7 +95053,10 @@ class YeMindEditor {
     });
   }
   openContextMenu(event) {
+    var _a, _b, _c2;
     if (!this.commands) return;
+    const nodeUid2 = String(((_b = (_a = this.commands.getPrimaryNode()) == null ? void 0 : _a.getData) == null ? void 0 : _b.call(_a, "uid")) ?? "").trim();
+    const nodeCard = (_c2 = this.studyPanel) == null ? void 0 : _c2.cardForNode(nodeUid2);
     this.options.diagnostics.record("context-menu", "opened", this.current.id, {
       selectedNodeCount: this.commands.getActiveNodes().length
     });
@@ -93652,16 +95066,30 @@ class YeMindEditor {
       onNodeLink: () => openLinkDialog(this.commands, this.settings.inlineLinkAutoHttps),
       onRelation: () => this.beginRelation(),
       onMarkers: () => openMarkerPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
+      onSymbols: () => {
+        var _a2;
+        return (_a2 = this.symbolPicker) == null ? void 0 : _a2.show();
+      },
       onClipart: () => openClipartPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
       onTextToMap: () => {
-        var _a, _b, _c2;
-        const uid2 = String(((_c2 = (_b = (_a = this.commands) == null ? void 0 : _a.getPrimaryNode()) == null ? void 0 : _b.getData) == null ? void 0 : _c2.call(_b, "uid")) ?? "");
+        var _a2, _b2, _c3;
+        const uid2 = String(((_c3 = (_b2 = (_a2 = this.commands) == null ? void 0 : _a2.getPrimaryNode()) == null ? void 0 : _b2.getData) == null ? void 0 : _c3.call(_b2, "uid")) ?? "");
         if (uid2) this.openTextToMapForUid(uid2);
       },
+      hasCard: Boolean(nodeCard),
+      onCreateCard: () => {
+        var _a2;
+        void ((_a2 = this.studyPanel) == null ? void 0 : _a2.createCardFromActiveNode().then((card) => {
+          if (card) this.setStudyMode("cards", [card.id]);
+        }));
+      },
+      onEditCard: () => {
+        if (nodeCard) this.setStudyMode("cards", [nodeCard.id]);
+      },
       onNodeStyle: () => {
-        var _a, _b;
-        (_a = this.projectStylePanel) == null ? void 0 : _a.hide();
-        (_b = this.nodeStylePanel) == null ? void 0 : _b.show({ x: event.clientX, y: event.clientY });
+        var _a2, _b2;
+        (_a2 = this.projectStylePanel) == null ? void 0 : _a2.hide();
+        (_b2 = this.nodeStylePanel) == null ? void 0 : _b2.show({ x: event.clientX, y: event.clientY });
       },
       onAction: (action) => this.options.diagnostics.record(
         "context-menu",
@@ -93691,7 +95119,10 @@ class YeMindEditor {
       onProjectStyle: () => {
         var _a, _b;
         (_a = this.nodeStylePanel) == null ? void 0 : _a.hide();
-        (_b = this.projectStylePanel) == null ? void 0 : _b.show({ x: event.clientX, y: event.clientY });
+        const styleAnchor = this.rootEl.querySelector(
+          '.ymz-topbar [data-action="project-style"]'
+        );
+        (_b = this.projectStylePanel) == null ? void 0 : _b.show(styleAnchor && styleAnchor.getClientRects().length > 0 ? styleAnchor : void 0);
       },
       onAction: (action) => this.options.diagnostics.record(
         "context-menu",
@@ -93751,15 +95182,19 @@ class YeMindEditor {
     if (this.outerFramePanelEl) this.outerFramePanelEl.hidden = true;
   }
   applySettings(settings) {
-    var _a, _b, _c2, _d2;
+    var _a, _b, _c2, _d2, _e;
     const firstApply = !this.settingsInitialized;
     this.applyingSettings = true;
     this.settings = settings;
-    (_a = this.appearanceController) == null ? void 0 : _a.setMode(settings.appearanceMode);
+    (_a = this.themeChoicePanel) == null ? void 0 : _a.setOptions(
+      buildThemeChoiceOptions(settings.favoriteThemeIds),
+      settings.favoriteThemeIds
+    );
+    (_b = this.appearanceController) == null ? void 0 : _b.setMode(settings.appearanceMode);
     this.updateAppearancePresentation();
-    (_b = this.toolbarVisibility) == null ? void 0 : _b.setPinned(settings.toolbarsPinned);
+    (_c2 = this.toolbarVisibility) == null ? void 0 : _c2.setPinned(settings.toolbarsPinned);
     this.updateToolbarPinPresentation();
-    (_c2 = this.richTextToolbar) == null ? void 0 : _c2.setEnabled(
+    (_d2 = this.richTextToolbar) == null ? void 0 : _d2.setEnabled(
       settings.showRichTextToolbar && this.rootEl.dataset.readonly !== "true"
     );
     configureMindMapPlugins(settings);
@@ -93783,7 +95218,7 @@ class YeMindEditor {
     const behavior = buildDragAndLayoutOptions(settings);
     const relationOptions = buildRelationOptions(settings);
     const outerFrameOptions = buildOuterFrameOptions(settings);
-    (_d2 = this.map) == null ? void 0 : _d2.updateConfig({
+    (_e = this.map) == null ? void 0 : _e.updateConfig({
       useLeftKeySelectionRightKeyDrag: settings.canvasMode === "select",
       mousewheelAction: settings.wheelMode === "zoom" ? "zoom" : "move",
       disableMouseWheelZoom: settings.wheelMode === "none",
@@ -93809,7 +95244,7 @@ class YeMindEditor {
       this.toggleZen(settings.defaultZenMode);
     }
   }
-  applyMapAppearance(render3 = true) {
+  applyMapAppearance(render3 = true, convergeThemeGeometry = false) {
     var _a;
     if (!this.map) return;
     this.current.theme = normalizeThemePresetId(this.current.theme);
@@ -93853,6 +95288,13 @@ class YeMindEditor {
         (_f = (_e = (_d2 = this.map) == null ? void 0 : _d2.outerFrame) == null ? void 0 : _e.renderOuterFrames) == null ? void 0 : _f.call(_e);
         (_g = this.nodeQuickActions) == null ? void 0 : _g.scheduleRefresh();
         this.updateSelectionPresentation();
+        if (convergeThemeGeometry) {
+          const theme2 = this.current.theme;
+          window.requestAnimationFrame(() => {
+            if (this.destroyed || this.current.theme !== theme2) return;
+            this.applyMapAppearance(true, false);
+          });
+        }
       }
     });
     if (!canRender) this.applyingAppearance = false;
@@ -94074,15 +95516,12 @@ class YeMindEditor {
     }
   }
   setViewMode(mode) {
-    var _a, _b, _c2, _d2, _e, _f;
+    var _a, _b, _c2;
     (_a = this.resourceActionPopover) == null ? void 0 : _a.hide();
     if ((mode === "split" || mode === "outline") && this.studyMode) {
       this.studyMode = null;
       this.rootEl.dataset.studyView = "none";
       (_b = this.studyPanel) == null ? void 0 : _b.hide();
-    }
-    if (mode !== "map" || this.viewMode !== "map") {
-      (_e = (_d2 = (_c2 = this.map) == null ? void 0 : _c2.nodeImgAdjust) == null ? void 0 : _d2.clearSelectionForViewChange) == null ? void 0 : _e.call(_d2);
     }
     if (mode === "map" && this.viewMode !== "map") {
       this.claimCanvasInteraction("view-map");
@@ -94097,16 +95536,11 @@ class YeMindEditor {
     );
     this.updateDiagnosticState({ viewMode: mode });
     this.updatePrimaryViewPresentation();
-    if (mode !== "outline") {
-      this.scheduleSafeResize();
-    } else if (this.resizeFrame !== null) {
-      window.cancelAnimationFrame(this.resizeFrame);
-      this.resizeFrame = null;
-    }
+    this.scheduleSafeResize();
     if (mode === "split" || mode === "outline") {
       window.requestAnimationFrame(() => this.revealCurrentOutlineSelection());
     }
-    (_f = this.nodeQuickActions) == null ? void 0 : _f.scheduleRefresh();
+    (_c2 = this.nodeQuickActions) == null ? void 0 : _c2.scheduleRefresh();
   }
   showImageResourceActions(uid2, anchorRect) {
     if (!uid2 || !this.commands || this.commands.isReadonly() || !this.resourceActionPopover) return;
@@ -94129,6 +95563,7 @@ class YeMindEditor {
   }
   setStudyMode(mode, cardIds) {
     var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k;
+    if (mode === this.studyMode) return;
     if (mode && this.viewMode !== "map") this.setViewMode("map");
     (_a = this.resourceActionPopover) == null ? void 0 : _a.hide();
     (_b = this.richTextToolbar) == null ? void 0 : _b.hide();
@@ -94345,8 +95780,10 @@ class YeMindEditor {
     );
   }
   claimCanvasInteraction(reason) {
-    var _a;
-    const outlineApplied = ((_a = this.outlineRichText) == null ? void 0 : _a.flush(`surface-change:${reason}`)) ?? false;
+    var _a, _b, _c2;
+    (_a = this.outlineRichText) == null ? void 0 : _a.clearMediaSelection();
+    (_b = this.resourceActionPopover) == null ? void 0 : _b.hide();
+    const outlineApplied = ((_c2 = this.outlineRichText) == null ? void 0 : _c2.flush(`surface-change:${reason}`)) ?? false;
     const transition = this.editingSurface.claimCanvas();
     if (transition.previousOwner !== "canvas" || outlineApplied) {
       this.options.diagnostics.record(
@@ -94476,6 +95913,11 @@ class YeMindEditor {
         activate();
         if (this.commands) openMarkerPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() });
       },
+      onSymbols: () => {
+        var _a;
+        activate();
+        (_a = this.symbolPicker) == null ? void 0 : _a.show();
+      },
       onClipart: () => {
         activate();
         if (this.commands) openClipartPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() });
@@ -94538,6 +95980,44 @@ class YeMindEditor {
       if (found) return found;
     }
     return null;
+  }
+  buildActiveStudyNode(node) {
+    var _a, _b, _c2, _d2, _e;
+    const data2 = (_a = node == null ? void 0 : node.getData) == null ? void 0 : _a.call(node);
+    const uid2 = String((data2 == null ? void 0 : data2.uid) ?? ((_b = node == null ? void 0 : node.getData) == null ? void 0 : _b.call(node, "uid")) ?? "").trim();
+    if (!uid2 || !data2) return null;
+    const text2 = String(data2.text ?? ((_c2 = node == null ? void 0 : node.getData) == null ? void 0 : _c2.call(node, "text")) ?? "");
+    const note2 = normalizeNodeNote(data2.yemindNote ?? data2.note);
+    const source = normalizeStudyCardSource({
+      capturedAt: Date.now(),
+      nodeTextHtml: text2,
+      nodeTextPlain: this.plainStudyText(text2),
+      icons: Array.isArray(data2.icon) ? data2.icon : data2.icon ? [data2.icon] : [],
+      tags: Array.isArray(data2.tag) ? data2.tag : data2.tag ? [data2.tag] : [],
+      todo: data2.yemindTodo ?? null,
+      hyperlink: data2.hyperlink ?? "",
+      hyperlinkTitle: data2.hyperlinkTitle ?? "",
+      image: typeof data2.image === "string" && data2.image.trim() ? {
+        src: data2.image,
+        title: data2.imageTitle ?? "",
+        kind: data2.yemindClipartId ? "clipart" : "image",
+        width: (_d2 = data2.imageSize) == null ? void 0 : _d2.width,
+        height: (_e = data2.imageSize) == null ? void 0 : _e.height
+      } : null,
+      noteHtml: (note2 == null ? void 0 : note2.html) ?? "",
+      comments: Array.isArray(data2.yemindComments) ? data2.yemindComments : []
+    });
+    return {
+      uid: uid2,
+      text: text2,
+      back: (note2 == null ? void 0 : note2.html) ?? "",
+      ...source ? { source } : {}
+    };
+  }
+  plainStudyText(value) {
+    const holder = document.createElement("div");
+    holder.innerHTML = value;
+    return (holder.textContent ?? "").replace(/\s+/g, " ").trim();
   }
   runOutlineContentAction(uid2, type) {
     var _a;
@@ -94758,7 +96238,7 @@ class YeMindEditor {
     else if (action === "replace-all") this.replaceAllSearch();
     else if (action === "close") this.closeSearchPanel();
   }
-  ensureSearch() {
+  ensureSearch(forceRefresh = false) {
     const text2 = this.searchInputEl.value.trim();
     if (!text2 || !this.commands) return false;
     const built = buildSearchPattern(text2, this.searchOptions);
@@ -94770,7 +96250,7 @@ class YeMindEditor {
       return false;
     }
     this.setSearchError("");
-    if (this.searchText !== text2) {
+    if (forceRefresh || this.searchText !== text2) {
       this.searchText = text2;
       this.commands.search(text2, this.searchOptions);
     }
@@ -94791,7 +96271,7 @@ class YeMindEditor {
   }
   replaceAllSearch() {
     var _a;
-    if (!this.ensureSearch()) return;
+    if (!this.ensureSearch(true)) return;
     (_a = this.commands) == null ? void 0 : _a.replaceSearchAll(this.replaceInputEl.value, this.searchOptions);
   }
   setSearchError(message) {
@@ -95279,20 +96759,34 @@ function deduplicateRestoredMapTabs(opened) {
     var _a;
     const mapId = String(((_a = custom == null ? void 0 : custom.data) == null ? void 0 : _a.mapId) ?? "").trim();
     if (!mapId || !(custom == null ? void 0 : custom.tab)) return;
-    const group = groups2.get(mapId) ?? [];
-    group.push(custom);
-    groups2.set(mapId, group);
+    const group2 = groups2.get(mapId) ?? [];
+    group2.push(custom);
+    groups2.set(mapId, group2);
   });
   let closed = 0;
-  groups2.forEach((group) => {
-    if (group.length < 2) return;
-    const keeper = group.find(isActive) ?? group[0];
-    group.forEach((custom) => {
+  groups2.forEach((group2) => {
+    if (group2.length < 2) return;
+    const keeper = group2.find(isActive) ?? group2[0];
+    group2.forEach((custom) => {
       if (custom === keeper) return;
       if (closeSiYuanTab(custom.tab)) closed += 1;
     });
   });
   return closed;
+}
+function activateRestoredMapTab(restored, mapId) {
+  var _a;
+  const normalizedMapId = String(mapId ?? "").trim();
+  if (!normalizedMapId) return false;
+  const matches = (restored ?? []).filter((custom) => {
+    var _a2, _b, _c2;
+    return String(((_a2 = custom == null ? void 0 : custom.data) == null ? void 0 : _a2.mapId) ?? "").trim() === normalizedMapId && ((_c2 = (_b = custom.tab) == null ? void 0 : _b.headElement) == null ? void 0 : _c2.isConnected) !== false;
+  });
+  const target = matches.find(isActive) ?? matches[0];
+  const head = (_a = target == null ? void 0 : target.tab) == null ? void 0 : _a.headElement;
+  if (!head || typeof head.click !== "function") return false;
+  head.click();
+  return true;
 }
 function lazyCustomData(tab, customModelType) {
   var _a, _b, _c2;
@@ -96461,9 +97955,9 @@ class YeMindPlugin extends siyuan.Plugin {
   onLayoutReady() {
     this.registerTopBar();
     this.restoredTabSweepTimers = [0, 250, 1e3].map((delay) => window.setTimeout(() => {
-      var _a, _b;
+      var _a, _b, _c2, _d2;
       const restored = collectRestoredMapTabsFromLayout(
-        (_b = (_a = window.siyuan) == null ? void 0 : _a.layout) == null ? void 0 : _b.centerLayout,
+        ((_b = (_a = this.app) == null ? void 0 : _a.layout) == null ? void 0 : _b.centerLayout) ?? ((_d2 = (_c2 = window.siyuan) == null ? void 0 : _c2.layout) == null ? void 0 : _d2.centerLayout),
         `${this.name}${TAB_TYPE}`
       );
       const closed = deduplicateRestoredMapTabs({ layout: restored });
@@ -96502,6 +97996,7 @@ class YeMindPlugin extends siyuan.Plugin {
       return;
     }
     const request = runSafeOperation(async () => {
+      var _a, _b, _c2, _d2;
       await this.ready;
       this.diagnostics.record("operation", "open-map-requested", mapId);
       const map2 = this.repository.get(mapId);
@@ -96513,6 +98008,18 @@ class YeMindPlugin extends siyuan.Plugin {
       if (this.tabRegistry.activate(mapId)) {
         this.diagnostics.record("global-search", "map-tab-found-existing", mapId, { activated: true });
         this.diagnostics.updateGlobalSearchState({ lastNavigationStep: "map-tab-found-existing" });
+        return;
+      }
+      const restored = collectRestoredMapTabsFromLayout(
+        ((_b = (_a = this.app) == null ? void 0 : _a.layout) == null ? void 0 : _b.centerLayout) ?? ((_d2 = (_c2 = window.siyuan) == null ? void 0 : _c2.layout) == null ? void 0 : _d2.centerLayout),
+        `${this.name}${TAB_TYPE}`
+      );
+      deduplicateRestoredMapTabs({ layout: restored });
+      if (activateRestoredMapTab(restored, mapId)) {
+        await this.tabRegistry.waitForRegistration(mapId, 600);
+        this.tabRegistry.activate(mapId);
+        this.diagnostics.record("global-search", "map-tab-found-lazy-restored", mapId, { activated: true });
+        this.diagnostics.updateGlobalSearchState({ lastNavigationStep: "map-tab-found-lazy-restored" });
         return;
       }
       if (await this.tabRegistry.waitForRegistration(mapId) && this.tabRegistry.activate(mapId)) {
@@ -96692,15 +98199,6 @@ class YeMindPlugin extends siyuan.Plugin {
     menu.addItem({ icon: "iconAdd", label: "新建导图", click: () => {
       void this.createMap();
     } });
-    const maps = this.repository.list();
-    if (maps.length > 0) {
-      menu.addSeparator();
-      maps.slice(0, 12).forEach((map2) => {
-        menu.addItem({ icon: ICON_ID, label: map2.title, click: () => {
-          void this.openMap(map2.id);
-        } });
-      });
-    }
     menu.addSeparator();
     menu.addItem({ icon: "iconSettings", label: "设置", click: () => openYeMindSettingsDialog(this.settingsStore, { diagnostics: this.diagnostics }) });
     menu.addItem({ icon: "iconInfo", label: "关于 YeMind", click: () => openYeMindAboutDialog({ diagnostics: this.diagnostics }) });

@@ -8,9 +8,17 @@ import {
   restoreBackup,
   validateBackup,
 } from '../src/webFileTransfer';
+import { webShellTemplate } from '../src/webApp';
 import { createMemoryWebStore } from '../src/webStorage';
 
 describe('web file transfer', () => {
+  it('removes duplicate web transfer shortcuts in favor of the editor toolbar', () => {
+    const shell = webShellTemplate();
+    expect(shell).not.toContain('data-web-action="import"');
+    expect(shell).not.toContain('data-web-action="export"');
+    expect(shell).not.toContain('data-web-action="backup"');
+    expect(shell).not.toContain('data-web-action="restore"');
+  });
   const map = createDefaultMap('测试导图', 'source-map', 100);
   const maps = { version: 1 as const, activeMapId: map.id, maps: [map] };
   const checkpoints = { version: 1 as const, checkpoints: [] };

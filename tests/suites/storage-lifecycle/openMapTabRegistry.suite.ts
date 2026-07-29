@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { OpenMapTabRegistry } from '../../../src/plugin/OpenMapTabRegistry';
 import {
+  activateRestoredMapTab,
   collectRestoredMapTabsFromLayout,
   deduplicateRestoredMapTabs,
 } from '../../../src/plugin/siyuanTabLifecycle';
@@ -144,4 +146,29 @@ it('reads lazy custom map ids from SiYuan tab head init data', () => {
   expect(deduplicateRestoredMapTabs({ layout: restored })).toBe(1);
   expect(removeTab).toHaveBeenCalledWith('duplicate');
   expect(removeTab).not.toHaveBeenCalledWith('kmind');
+});
+
+it('activates a matching lazy restored tab instead of creating another tab', () => {
+  const click = vi.fn();
+  const restored = [{
+    data: { mapId: 'map-1' },
+    tab: {
+      id: 'lazy-map-1',
+      headElement: {
+        isConnected: true,
+        click,
+        classList: { contains: () => false },
+      },
+    },
+  }];
+
+  expect(activateRestoredMapTab(restored, 'map-1')).toBe(true);
+  expect(click).toHaveBeenCalledOnce();
+  expect(activateRestoredMapTab(restored, 'map-2')).toBe(false);
+});
+
+it('uses the real Plugin app layout as the restored-tab source', () => {
+  const source = readFileSync('src/plugin/YeMindPlugin.ts', 'utf8');
+  expect(source).toContain('(this.app as any)?.layout?.centerLayout');
+  expect(source).toContain('activateRestoredMapTab(restored, mapId)');
 });

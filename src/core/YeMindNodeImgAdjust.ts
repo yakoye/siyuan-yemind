@@ -128,6 +128,11 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   private resizeStartRect: ImageResizeRect | null = null;
   private resizeCurrentRect: ImageResizeRect | null = null;
   private clipartClickTimer: number | null = null;
+  private refreshFrame: number | null = null;
+  private refreshFramesRemaining = 0;
+  private selectionFollowFrame: number | null = null;
+  private hostResizeObserver: ResizeObserver | null = null;
+  private overlayLayer: HTMLElement | null = null;
   private selectedAssetKind: 'image' | 'clipart' = 'image';
   private onImageClickBound: (node: any, img: any, event: MouseEvent) => void;
   private onImageDoubleClickBound: (node: any, event: MouseEvent, img: any) => void;
@@ -135,6 +140,7 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   private onNodeActiveBound: (node: any) => void;
   private onCanvasInteractionBound: () => void;
   private onTranslateBound: () => void;
+  private onViewportResizeBound: () => void;
   private onKeydownCaptureBound: (event: KeyboardEvent) => void;
 
   constructor(options: any) {
@@ -145,8 +151,10 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     this.onNodeActiveBound = this.onNodeActive.bind(this);
     this.onCanvasInteractionBound = this.onCanvasInteraction.bind(this);
     this.onTranslateBound = this.onTranslate.bind(this);
+    this.onViewportResizeBound = this.onViewportResize.bind(this);
     this.onKeydownCaptureBound = this.onKeydownCapture.bind(this);
     this.bindYeMindEvents();
+    this.observeEditorHost();
   }
 
   private bindYeMindEvents(): void {
@@ -155,8 +163,9 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     this.mindMap.on('node_click', this.onNodeClickBound);
     this.mindMap.on('node_active', this.onNodeActiveBound);
     this.mindMap.on('draw_click', this.onCanvasInteractionBound);
-    this.mindMap.on('svg_mousedown', this.onCanvasInteractionBound);
     this.mindMap.on('translate', this.onTranslateBound);
+    this.mindMap.on('view_data_change', this.onTranslateBound);
+    window.addEventListener('resize', this.onViewportResizeBound);
     window.addEventListener('keydown', this.onKeydownCaptureBound, true);
   }
 
@@ -166,8 +175,9 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     this.mindMap.off('node_click', this.onNodeClickBound);
     this.mindMap.off('node_active', this.onNodeActiveBound);
     this.mindMap.off('draw_click', this.onCanvasInteractionBound);
-    this.mindMap.off('svg_mousedown', this.onCanvasInteractionBound);
     this.mindMap.off('translate', this.onTranslateBound);
+    this.mindMap.off('view_data_change', this.onTranslateBound);
+    window.removeEventListener('resize', this.onViewportResizeBound);
     window.removeEventListener('keydown', this.onKeydownCaptureBound, true);
     window.removeEventListener('mousemove', this.onMousemove, true);
     window.removeEventListener('mouseup', this.onMouseup, true);
@@ -184,7 +194,7 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     if (this.imageSelected) return;
     this.node = node;
     this.img = img;
-    this.rect = img?.rbox?.() ?? null;
+    this.rect = this.readImageViewportRect(img);
     if (!this.rect) return;
     this.hoverVisible = true;
     this.showHandleEl();
@@ -198,7 +208,7 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   }
 
   onScale(): void {
-    this.refreshRect();
+    this.scheduleRefreshRect(2);
   }
 
   onRenderEnd(): void {
@@ -257,6 +267,8 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     const handle = document.createElement('div');
     handle.className = 'node-img-handle ymz-node-image-frame';
     handle.dataset.mode = 'hidden';
+    handle.dataset.toolbarPlacement = 'top';
+    handle.style.position = 'absolute';
     handle.style.display = 'none';
 
     RESIZE_HANDLES.forEach((direction) => {
@@ -313,12 +325,25 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     handle.appendChild(toolbar);
 
     this.handleEl = handle;
-    const target = this.mindMap.opt.customInnerElsAppendTo || document.body;
-    target.appendChild(handle);
+    const target = this.resolveOverlayTarget();
+    const overlay = document.createElement('div');
+    overlay.className = 'ymz-node-image-overlay-layer';
+    overlay.style.position = 'absolute';
+    overlay.style.inset = '0';
+    overlay.style.overflow = 'hidden';
+    overlay.style.pointerEvents = 'none';
+    overlay.style.zIndex = '14';
+    target.appendChild(overlay);
+    overlay.appendChild(handle);
+    this.overlayLayer = overlay;
   }
 
   onMousemove(event: MouseEvent): void {
-    if (!this.isMousedown || !this.resizeStartRect || !this.resizeHandle) return;
+    if (!this.isMousedown) {
+      if (this.imageSelected) this.scheduleRefreshRect();
+      return;
+    }
+    if (!this.resizeStartRect || !this.resizeHandle) return;
     event.preventDefault();
     const limits = this.resizeLimits();
     const rect = calculateImageResizeRect(
@@ -377,19 +402,31 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   beforePluginRemove(): void {
     if (this.clipartClickTimer !== null) window.clearTimeout(this.clipartClickTimer);
     this.clipartClickTimer = null;
+    this.cancelScheduledRefresh();
+    this.stopSelectionFollow();
+    this.hostResizeObserver?.disconnect();
+    this.hostResizeObserver = null;
     this.unbindYeMindEvents();
     super.beforePluginRemove();
     this.handleEl?.remove?.();
     this.handleEl = null;
+    this.overlayLayer?.remove();
+    this.overlayLayer = null;
   }
 
   beforePluginDestroy(): void {
     if (this.clipartClickTimer !== null) window.clearTimeout(this.clipartClickTimer);
     this.clipartClickTimer = null;
+    this.cancelScheduledRefresh();
+    this.stopSelectionFollow();
+    this.hostResizeObserver?.disconnect();
+    this.hostResizeObserver = null;
     this.unbindYeMindEvents();
     super.beforePluginDestroy();
     this.handleEl?.remove?.();
     this.handleEl = null;
+    this.overlayLayer?.remove();
+    this.overlayLayer = null;
   }
 
   private onImageClick(node: any, img: any, event: MouseEvent): void {
@@ -414,7 +451,7 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   private selectImage(node: any, img: any, kind: 'image' | 'clipart'): void {
     this.node = node;
     this.img = img;
-    this.rect = img.rbox?.() ?? null;
+    this.rect = this.readImageViewportRect(img);
     if (!this.rect) return;
     this.selectedAssetKind = kind;
     this.imageSelected = true;
@@ -422,6 +459,7 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     this.showHandleEl();
     if (this.handleEl) this.handleEl.dataset.assetKind = kind;
     this.setMode('selected');
+    this.startSelectionFollow();
   }
 
   private onImageDoubleClick(node: any, event: MouseEvent, img: any): void {
@@ -439,7 +477,7 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   }
 
   private onNodeActive(node: any): void {
-    if (this.imageSelected && node !== this.node) this.closeImageSelection();
+    if (this.imageSelected && node && node !== this.node) this.closeImageSelection();
   }
 
   private onCanvasInteraction(): void {
@@ -447,11 +485,30 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   }
 
   private onTranslate(): void {
-    this.refreshRect();
+    this.scheduleRefreshRect();
+  }
+
+  private onViewportResize(): void {
+    // Window snapping, side-panel changes and host reflow can move the SVG
+    // for several frames after the first resize event. Keep measuring until
+    // the short layout transition settles instead of pinning the overlay to
+    // an intermediate viewport rectangle.
+    this.scheduleRefreshRect(12);
+  }
+
+  private observeEditorHost(): void {
+    const host = this.mindMap.opt.customInnerElsAppendTo;
+    if (!(host instanceof Element) || typeof ResizeObserver === 'undefined') return;
+    this.hostResizeObserver = new ResizeObserver(() => {
+      this.scheduleRefreshRect(12);
+    });
+    this.hostResizeObserver.observe(host);
   }
 
   private onKeydownCapture(event: KeyboardEvent): void {
     if (!this.imageSelected || this.mindMap.opt.readonly) return;
+    const editor = this.handleEl?.closest?.('.ymz-editor') as HTMLElement | null;
+    if (editor && editor.getClientRects().length === 0) return;
     if (event.key !== 'Delete' && event.key !== 'Backspace') return;
     if (event.ctrlKey || event.metaKey || event.altKey) return;
     const target = event.target as HTMLElement | null;
@@ -464,7 +521,7 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
 
   private startResize(direction: ImageResizeHandle, event: MouseEvent): void {
     if (!this.imageSelected || this.mindMap.opt.readonly || !this.img || !this.node) return;
-    this.rect = this.img.rbox?.() ?? this.rect;
+    this.rect = this.readImageViewportRect(this.img) ?? this.rect;
     if (!this.rect) return;
     this.resizeHandle = direction;
     this.resizeStartPoint = { x: event.clientX, y: event.clientY };
@@ -508,10 +565,111 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
 
   private applyHandleRect(rect: ImageResizeRect): void {
     if (!this.handleEl) return;
-    this.handleEl.style.left = `${rect.left}px`;
-    this.handleEl.style.top = `${rect.top}px`;
+    const hostRect = this.readOverlayHostViewportRect();
+    const localLeft = rect.left - hostRect.left;
+    const localTop = rect.top - hostRect.top;
+    this.handleEl.style.left = `${localLeft}px`;
+    this.handleEl.style.top = `${localTop}px`;
     this.handleEl.style.width = `${rect.width}px`;
     this.handleEl.style.height = `${rect.height}px`;
+    const intersectsViewport = hostRect.width <= 0
+      || hostRect.height <= 0
+      || (
+        localLeft + rect.width > 0
+        && localTop + rect.height > 0
+        && localLeft < hostRect.width
+        && localTop < hostRect.height
+      );
+    this.handleEl.style.visibility = intersectsViewport ? 'visible' : 'hidden';
+    this.positionFloatingImageControls({
+      left: localLeft,
+      top: localTop,
+      width: rect.width,
+      height: rect.height,
+    }, hostRect);
+  }
+
+  private readOverlayHostViewportRect(): { left: number; top: number; width: number; height: number } {
+    const overlay = this.overlayLayer ?? this.handleEl?.parentElement;
+    const overlayRect = overlay?.getBoundingClientRect?.();
+    const fallbackHost = overlay?.parentElement ?? this.mindMap.opt.customInnerElsAppendTo;
+    const fallbackRect = fallbackHost?.getBoundingClientRect?.();
+    const rect = Number(overlayRect?.width) > 0 && Number(overlayRect?.height) > 0
+      ? overlayRect
+      : fallbackRect;
+    const left = Number(rect?.left ?? rect?.x);
+    const top = Number(rect?.top ?? rect?.y);
+    const width = Number(rect?.width);
+    const height = Number(rect?.height);
+    return {
+      left: Number.isFinite(left) ? left : 0,
+      top: Number.isFinite(top) ? top : 0,
+      width: Number.isFinite(width) && width > 0 ? width : 0,
+      height: Number.isFinite(height) && height > 0 ? height : 0,
+    };
+  }
+
+  private resolveOverlayTarget(): HTMLElement {
+    const configuredHost = this.mindMap.opt.customInnerElsAppendTo as HTMLElement | null | undefined;
+    const editor = configuredHost?.matches?.('.ymz-editor')
+      ? configuredHost
+      : configuredHost?.closest?.<HTMLElement>('.ymz-editor');
+    const canvas = editor?.querySelector<HTMLElement>('[data-role="canvas"]');
+    const mapElement = this.mindMap.el as HTMLElement | null | undefined;
+    return canvas ?? mapElement ?? configuredHost ?? document.body;
+  }
+
+  private positionFloatingImageControls(
+    image: ImageResizeRect,
+    viewport: { width: number; height: number },
+  ): void {
+    if (!this.handleEl) return;
+    const toolbar = this.handleEl.querySelector('.ymz-node-image-toolbar') as HTMLElement | null;
+    const remove = this.handleEl.querySelector('.ymz-node-image-delete') as HTMLElement | null;
+    const margin = 8;
+    const gap = 6;
+
+    if (toolbar) {
+      const measured = toolbar.getBoundingClientRect();
+      const toolbarWidth = finitePositive(measured.width, 128);
+      const toolbarHeight = finitePositive(measured.height, 44);
+      const centeredLeft = image.left + image.width / 2 - toolbarWidth / 2;
+      const toolbarLeft = viewport.width > 0
+        ? clamp(centeredLeft, margin, Math.max(margin, viewport.width - toolbarWidth - margin))
+        : centeredLeft;
+      const above = image.top - toolbarHeight - gap;
+      const below = image.top + image.height + gap;
+      let toolbarTop = above;
+      let placement: 'top' | 'bottom' | 'clamped' = 'top';
+      if (viewport.height > 0 && above < margin) {
+        if (below + toolbarHeight <= viewport.height - margin) {
+          toolbarTop = below;
+          placement = 'bottom';
+        } else {
+          toolbarTop = clamp(
+            image.top + (image.height - toolbarHeight) / 2,
+            margin,
+            Math.max(margin, viewport.height - toolbarHeight - margin),
+          );
+          placement = 'clamped';
+        }
+      }
+      this.handleEl.dataset.toolbarPlacement = placement;
+      toolbar.style.left = `${toolbarLeft - image.left}px`;
+      toolbar.style.top = `${toolbarTop - image.top}px`;
+      toolbar.style.right = 'auto';
+      toolbar.style.bottom = 'auto';
+      toolbar.style.transform = 'none';
+    }
+
+    if (remove && viewport.width > 0 && viewport.height > 0) {
+      const size = finitePositive(remove.getBoundingClientRect().width, 18);
+      const centerX = clamp(image.left + image.width, size / 2, viewport.width - size / 2);
+      const centerY = clamp(image.top, size / 2, viewport.height - size / 2);
+      remove.style.left = `${centerX - image.left - size / 2}px`;
+      remove.style.top = `${centerY - image.top - size / 2}px`;
+      remove.style.right = 'auto';
+    }
   }
 
   private setMode(mode: 'hidden' | 'hover' | 'selected'): void {
@@ -522,16 +680,82 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   private refreshRect(): void {
     if (!this.img || (!this.imageSelected && !this.hoverVisible) || this.isMousedown) return;
     try {
-      this.rect = this.img.rbox();
+      this.rect = this.readImageViewportRect(this.img);
     } catch {
       const nextImage = this.node?._imgData?.node;
       if (!nextImage) return;
       this.img = nextImage;
-      this.rect = nextImage.rbox();
+      this.rect = this.readImageViewportRect(nextImage);
     }
     if (!this.rect) return;
     this.showHandleEl();
     this.setMode(this.imageSelected ? 'selected' : 'hover');
+  }
+
+  private readImageViewportRect(img: any): any {
+    const element = img?.node;
+    if (element && typeof element.getBoundingClientRect === 'function') {
+      const live = element.getBoundingClientRect();
+      const width = Number(live.width);
+      const height = Number(live.height);
+      const x = Number(live.x ?? live.left);
+      const y = Number(live.y ?? live.top);
+      if (
+        Number.isFinite(x)
+        && Number.isFinite(y)
+        && Number.isFinite(width)
+        && Number.isFinite(height)
+        && width > 0
+        && height > 0
+      ) {
+        return {
+          x,
+          y,
+          x2: x + width,
+          y2: y + height,
+          width,
+          height,
+        };
+      }
+    }
+    return img?.rbox?.() ?? null;
+  }
+
+  private scheduleRefreshRect(frameCount = 1): void {
+    this.refreshFramesRemaining = Math.max(
+      this.refreshFramesRemaining,
+      Math.max(1, Math.floor(frameCount)),
+    );
+    if (this.refreshFrame !== null) return;
+    this.refreshFrame = window.requestAnimationFrame(() => {
+      this.refreshFrame = null;
+      this.refreshRect();
+      this.refreshFramesRemaining -= 1;
+      if (this.refreshFramesRemaining > 0) this.scheduleRefreshRect(this.refreshFramesRemaining);
+    });
+  }
+
+  private cancelScheduledRefresh(): void {
+    if (this.refreshFrame !== null) window.cancelAnimationFrame(this.refreshFrame);
+    this.refreshFrame = null;
+    this.refreshFramesRemaining = 0;
+  }
+
+  private startSelectionFollow(): void {
+    if (this.selectionFollowFrame !== null) return;
+    this.selectionFollowFrame = window.requestAnimationFrame(() => {
+      this.selectionFollowFrame = null;
+      if (!this.imageSelected) return;
+      this.refreshRect();
+      this.startSelectionFollow();
+    });
+  }
+
+  private stopSelectionFollow(): void {
+    if (this.selectionFollowFrame !== null) {
+      window.cancelAnimationFrame(this.selectionFollowFrame);
+    }
+    this.selectionFollowFrame = null;
   }
 
   clearSelectionForViewChange(): void {
@@ -541,6 +765,8 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
 
   private closeImageSelection(): void {
     if (this.isMousedown) return;
+    this.cancelScheduledRefresh();
+    this.stopSelectionFollow();
     this.imageSelected = false;
     this.hoverVisible = false;
     this.hideHandleEl(true);

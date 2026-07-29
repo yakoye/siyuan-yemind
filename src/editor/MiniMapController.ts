@@ -43,7 +43,7 @@ export class MiniMapController {
   private readonly content: HTMLElement;
   private readonly viewport: HTMLElement;
   private frame: number | null = null;
-  private visible = true;
+  private visible: boolean;
   private draggingViewport = false;
 
   constructor(
@@ -51,6 +51,8 @@ export class MiniMapController {
     private readonly map: MindMap,
     private readonly element: HTMLElement,
   ) {
+    this.visible = !element.hidden;
+    this.root.dataset.minimapVisible = String(this.visible);
     this.content = element.querySelector<HTMLElement>('[data-role="minimap-content"]')!;
     this.viewport = element.querySelector<HTMLElement>('[data-role="minimap-viewport"]')!;
     element.addEventListener('pointerdown', this.onPointerDown);
@@ -60,7 +62,7 @@ export class MiniMapController {
     ['node_tree_render_end', 'scale', 'translate', 'data_change', 'layout_change']
       .forEach((event) => (map as any).on?.(event, this.schedule));
     (map as any).on?.('mini_map_view_box_position_change', this.onViewportChange);
-    this.schedule();
+    if (this.visible) this.schedule();
   }
 
   destroy(): void {

@@ -46,6 +46,27 @@ describe('YeMind theme presets', () => {
     expect(result.themeConfig.backgroundColor).toBe('#F8FAFC');
   });
 
+  it('maps the four visible line styles to distinct real engine configurations', () => {
+    const curve = buildThemeConfig({ presetId: 'yemind-default', appearance: 'light', lineStyle: 'curve' });
+    const direct = buildThemeConfig({ presetId: 'yemind-default', appearance: 'light', lineStyle: 'direct' });
+    const polyline = buildThemeConfig({ presetId: 'yemind-default', appearance: 'light', lineStyle: 'polyline' });
+    const rounded = buildThemeConfig({ presetId: 'yemind-default', appearance: 'light', lineStyle: 'straight' });
+
+    expect(normalizeLineStyle('polyline')).toBe('polyline');
+    expect(curve.themeConfig).toMatchObject({ lineStyle: 'curve' });
+    expect(direct.themeConfig).toMatchObject({ lineStyle: 'direct' });
+    expect(polyline.themeConfig).toMatchObject({ lineStyle: 'straight', lineRadius: 0 });
+    expect(rounded.themeConfig.lineStyle).toBe('straight');
+    expect(rounded.themeConfig.lineRadius).toBeGreaterThan(0);
+
+    for (const preset of YEMIND_THEME_PRESETS) {
+      const sharp = buildThemeConfig({ presetId: preset.id, appearance: 'light', lineStyle: 'polyline' });
+      const soft = buildThemeConfig({ presetId: preset.id, appearance: 'light', lineStyle: 'straight' });
+      expect(sharp.themeConfig.lineRadius, preset.id).toBe(0);
+      expect(soft.themeConfig.lineRadius, preset.id).toBeGreaterThan(0);
+    }
+  });
+
   it('provides the six confirmed base themes and all nineteen named themes', () => {
     expect(YEMIND_THEME_PRESETS.map((item) => item.id)).toEqual([
       'yemind-default', 'ink-branch', 'material-3-basic',
@@ -58,7 +79,9 @@ describe('YeMind theme presets', () => {
     expect(YEMIND_THEME_PRESETS.filter((item) => item.group === '经典')).toHaveLength(9);
 
     const options = themeOptionsHtml('scheme-mint');
-    expect(options).toContain('<optgroup label="基础">');
+    expect(options).not.toContain('<optgroup label="基础">');
+    expect(options).toContain('<optgroup label="经典">');
+    expect(options.indexOf('value="yemind-default"')).toBeLessThan(options.indexOf('value="scheme-eternity"'));
     expect(options).toContain('<optgroup label="缤纷">');
     expect(options).toContain('<optgroup label="经典">');
     expect(options).toContain('<option value="scheme-mint" selected>薄荷</option>');

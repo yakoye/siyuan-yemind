@@ -69,7 +69,9 @@ describe('v0.9.2 complete theme color and border definitions', () => {
     expect(YEMIND_THEME_PRESETS.filter((item) => item.group === '缤纷')).toHaveLength(10);
     expect(YEMIND_THEME_PRESETS.filter((item) => item.group === '经典')).toHaveLength(9);
     const html = themeOptionsHtml('scheme-rhythm');
-    expect(html).toContain('<optgroup label="基础">');
+    expect(html).not.toContain('<optgroup label="基础">');
+    expect(html).toContain('<optgroup label="经典">');
+    expect(html.indexOf('value="yemind-default"')).toBeLessThan(html.indexOf('value="scheme-eternity"'));
     expect(html).toContain('<optgroup label="缤纷">');
     expect(html).toContain('<optgroup label="经典">');
     expect(html).toContain('<option value="scheme-rhythm" selected>律动</option>');

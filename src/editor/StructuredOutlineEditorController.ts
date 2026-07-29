@@ -592,7 +592,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
   destroy(): void {
     this.flush('destroy');
     this.cancelTimer();
-    this.clearOutlineMediaSelection();
+    this.clearMediaSelection();
     if (this.guideFrame !== null) window.cancelAnimationFrame(this.guideFrame);
     this.guideFrame = null;
     this.guideResizeObserver?.disconnect();
@@ -857,7 +857,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
         this.options.onActivate(uid);
         this.options.onImageDelete?.(uid, kind);
       }
-      this.clearOutlineMediaSelection();
+      this.clearMediaSelection();
       return;
     }
     const iconAction = target.closest<HTMLElement>('[data-outline-icon-action]');
@@ -881,6 +881,15 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       const kind = imageAction.dataset.outlineImageKind === 'clipart' ? 'clipart' : 'image';
       this.selectOutlineMedia(uid, kind);
       if (!this.options.isReadonly()) this.options.onImageEdit?.(uid, kind, imageAction);
+      return;
+    }
+    const todoAction = target.closest<HTMLElement>('[data-outline-todo-action]');
+    if (todoAction) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.activateUid(uid, false);
+      if (!this.options.isReadonly()) this.options.onActivate(uid);
+      this.options.onContentAction?.(uid, 'todo');
       return;
     }
     const contentAction = target.closest<HTMLElement>('[data-outline-content]');
@@ -986,7 +995,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     const target = event.target as Element | null;
     const imageAction = target?.closest('[data-outline-image-action]');
     if (!imageAction && !target?.closest('[data-outline-media-delete]')) {
-      this.clearOutlineMediaSelection();
+      this.clearMediaSelection();
     }
     this.clearWholeSelection();
     this.pointerSelecting = Boolean((event.target as Element | null)?.closest('[data-outline-editor]'));
@@ -1044,11 +1053,11 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       event.stopPropagation();
       const { uid, kind } = this.selectedMedia;
       this.options.onImageDelete?.(uid, kind);
-      this.clearOutlineMediaSelection();
+      this.clearMediaSelection();
       return;
     }
     if (event.key === 'Escape' && this.selectedMedia) {
-      this.clearOutlineMediaSelection();
+      this.clearMediaSelection();
       return;
     }
     const command = event.ctrlKey || event.metaKey;
@@ -1320,7 +1329,9 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       if (!marker || !lastMarker) return;
       const markerRect = marker.getBoundingClientRect();
       const lastRect = lastMarker.getBoundingClientRect();
-      const x = Math.round(markerRect.left + markerRect.width / 2 - rootRect.left + root.scrollLeft) - 1;
+      // The guide is one physical CSS pixel wide. Position its left edge half
+      // a pixel before the marker center so the two visual centers coincide.
+      const x = Math.round(markerRect.left + markerRect.width / 2 - rootRect.left + root.scrollLeft - 0.5);
       const top = Math.round(markerRect.bottom - rootRect.top + root.scrollTop);
       const end = Math.round(lastRect.top + lastRect.height / 2 - rootRect.top + root.scrollTop);
       const height = Math.max(0, end - top);
@@ -1365,7 +1376,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
   }
 
   private selectOutlineMedia(uid: string, kind: 'image' | 'clipart'): void {
-    this.clearOutlineMediaSelection();
+    this.clearMediaSelection();
     this.selectedMedia = { uid, kind };
     this.syncOutlineMediaSelection();
   }
@@ -1383,7 +1394,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     media.classList.add('is-selected');
   }
 
-  private clearOutlineMediaSelection(): void {
+  clearMediaSelection(): void {
     this.selectedMedia = null;
     this.options.root.querySelectorAll<HTMLElement>('[data-outline-image-action].is-selected')
       .forEach((element) => element.classList.remove('is-selected'));

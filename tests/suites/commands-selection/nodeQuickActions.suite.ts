@@ -87,3 +87,53 @@ it('routes the collapsed count button to an explicit expand command for Root', (
   controller.destroy();
   root.remove();
 });
+
+it('positions quick actions in the canvas layer coordinate system in split view', () => {
+  const root = document.createElement('div');
+  const canvasWrap = document.createElement('div');
+  canvasWrap.className = 'ymz-canvas-wrap';
+  const canvas = document.createElement('div');
+  canvas.className = 'ymz-canvas';
+  canvasWrap.appendChild(canvas);
+  root.appendChild(canvasWrap);
+  document.body.appendChild(root);
+  Object.defineProperty(root, 'getBoundingClientRect', {
+    value: () => ({ left: 20, top: 30, right: 1220, bottom: 830, width: 1200, height: 800, x: 20, y: 30, toJSON() {} }),
+  });
+  Object.defineProperty(canvasWrap, 'getBoundingClientRect', {
+    value: () => ({ left: 20, top: 30, right: 1220, bottom: 830, width: 1200, height: 800, x: 20, y: 30, toJSON() {} }),
+  });
+  Object.defineProperty(canvas, 'getBoundingClientRect', {
+    value: () => ({ left: 180, top: 90, right: 860, bottom: 730, width: 680, height: 640, x: 180, y: 90, toJSON() {} }),
+  });
+  const svgNode = document.createElement('div');
+  Object.defineProperty(svgNode, 'getBoundingClientRect', {
+    value: () => ({ left: 420, top: 250, right: 520, bottom: 290, width: 100, height: 40, x: 420, y: 250, toJSON() {} }),
+  });
+  const rendererRoot: any = {
+    isRoot: true,
+    children: [],
+    nodeData: { children: [] },
+    group: { node: svgNode },
+    getData: (key: string) => ({ uid: 'root', expand: true, isActive: true } as any)[key],
+  };
+  const controller = new NodeQuickActionsController({
+    root,
+    canvas,
+    getRendererRoot: () => rendererRoot,
+    getActiveNodes: () => [rendererRoot],
+    readonly: () => false,
+    onAddChild: vi.fn(),
+    onSetExpanded: vi.fn(),
+  });
+
+  controller.refresh();
+
+  const layer = root.querySelector<HTMLElement>('.ymz-node-quick-actions-layer')!;
+  const actions = layer.querySelector<HTMLElement>('.ymz-node-quick-actions')!;
+  expect(layer.parentElement).toBe(canvas);
+  expect(actions.style.left).toBe('340px');
+  expect(actions.style.top).toBe('180px');
+  controller.destroy();
+  root.remove();
+});

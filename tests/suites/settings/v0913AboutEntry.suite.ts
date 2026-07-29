@@ -25,6 +25,16 @@ describe('v0.9.13 standalone About entry', () => {
     expect(about).toBeGreaterThan(settings);
     expect(diagnostics).toBeGreaterThan(about);
   });
+
+  it('keeps the top-bar menu bounded instead of duplicating the full map list', () => {
+    const menuStart = pluginSource.indexOf('private async openTopBarMenu');
+    const menuEnd = pluginSource.indexOf('private registerCommands', menuStart);
+    const menuSource = pluginSource.slice(menuStart, menuEnd);
+    expect(menuSource).toContain("label: '新建导图'");
+    expect(menuSource).not.toContain('this.repository.list()');
+    expect(menuSource).not.toContain('this.openMap(map.id)');
+  });
+
   it('keeps native settings registration optional during early SiYuan startup', () => {
     const source = readSource('src/settings/settings.ts');
     expect(source).toContain('if (!plugin.setting?.addItem) return');

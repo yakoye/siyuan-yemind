@@ -27,7 +27,13 @@ describe('v0.9.17 user-reported interaction regressions', () => {
 
     const listeners = new Map<string, EventListener>();
     let pending: FrameRequestCallback | null = null;
-    const map = { renderer: { root }, render: vi.fn() };
+    const updateTextEditNode = vi.fn();
+    const render = vi.fn((callback?: () => void) => callback?.());
+    const map = {
+      renderer: { root },
+      richText: { showTextEdit: true, updateTextEditNode },
+      render,
+    };
     const controller = new LiveNodeWidthLayoutController(
       map,
       {
@@ -40,9 +46,37 @@ describe('v0.9.17 user-reported interaction regressions', () => {
       },
     );
     listeners.get('mousemove')?.(new Event('mousemove'));
-    expect(map.render).not.toHaveBeenCalled();
+    expect(render).not.toHaveBeenCalled();
     pending?.(0);
-    expect(map.render).toHaveBeenCalledOnce();
+    expect(render).toHaveBeenCalledOnce();
+    expect(updateTextEditNode).toHaveBeenCalledOnce();
+    controller.destroy();
+  });
+
+  it('does not reposition a hidden rich-text editor during width dragging', () => {
+    const root = { isDragHandleMousedown: true, children: [] };
+    const listeners = new Map<string, EventListener>();
+    let pending: FrameRequestCallback | null = null;
+    const updateTextEditNode = vi.fn();
+    const map = {
+      renderer: { root },
+      richText: { showTextEdit: false, updateTextEditNode },
+      render: vi.fn((callback?: () => void) => callback?.()),
+    };
+    const controller = new LiveNodeWidthLayoutController(
+      map,
+      {
+        addEventListener: (name: string, listener: EventListener) => listeners.set(name, listener),
+        removeEventListener: (name: string) => listeners.delete(name),
+      } as any,
+      {
+        request: (callback) => { pending = callback; return 1; },
+        cancel: vi.fn(),
+      },
+    );
+    listeners.get('mousemove')?.(new Event('mousemove'));
+    pending?.(0);
+    expect(updateTextEditNode).not.toHaveBeenCalled();
     controller.destroy();
   });
 

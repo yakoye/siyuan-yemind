@@ -1,7 +1,7 @@
 import { Menu, showMessage } from 'siyuan';
 import { YEMIND_LAYOUT_PRESETS } from '../core/layoutPresets';
 import { detectAppearance, YEMIND_THEME_PRESETS, type YeMindLineStyle } from '../core/themePresets';
-import { clipartIcon, clipboardIcon, lineStyleIcon, markerIcon, nodeInsertIcon, nodeStyleIcon, outerFrameIcon, projectControlIcon, projectStyleIcon, relationIcon, summaryIcon } from '../editor/projectControls';
+import { clipartIcon, clipboardIcon, lineStyleIcon, markerIcon, nodeInsertIcon, nodeStyleIcon, outerFrameIcon, primaryViewIcon, projectControlIcon, projectStyleIcon, relationIcon, summaryIcon } from '../editor/projectControls';
 import type { YeMindCommands } from '../core/commands';
 import {
   openCommentsDialog,
@@ -12,6 +12,7 @@ import {
   openTagsDialog,
 } from './nodeContentDialogs';
 import { createNodeMenuAvailability, createTodoMenuDescriptor } from './nodeContentMenu';
+import { attachContextMenuViewportGuard } from './contextMenuViewport';
 
 export interface CanvasContextMenuOptions {
   zen: boolean;
@@ -34,6 +35,7 @@ export function openCanvasContextMenu(event: MouseEvent, commands: YeMindCommand
   const menu = new Menu('siyuan-yemind-canvas-menu');
   menu.element.classList.add('ymz-context-menu', 'ymz-context-menu--canvas');
   menu.element.dataset.appearance = detectAppearance();
+  attachContextMenuViewportGuard(menu.element);
   const run = (action: string, callback: () => void): (() => void) => () => {
     options.onAction?.(action);
     callback();
@@ -59,15 +61,14 @@ export function openCanvasContextMenu(event: MouseEvent, commands: YeMindCommand
   });
   menu.addItem({
     type: 'submenu', iconHTML: lineStyleIcon(options.currentLineStyle ?? 'curve'), label: '线型',
-    submenu: ([['curve', '弧线'], ['straight', '圆角折线'], ['direct', '直线']] as const).map(([id, label]) => ({
+    submenu: ([['curve', '曲线'], ['direct', '直线'], ['polyline', '折线'], ['straight', '圆角折线']] as const).map(([id, label]) => ({
       iconHTML: lineStyleIcon(id), label, current: id === options.currentLineStyle, disabled: commands.isReadonly(),
       click: run(`line-style-${id}`, () => options.onLineStyleChange?.(id)),
     })),
   });
   menu.addItem({ iconHTML: projectStyleIcon(), label: '样式', disabled: commands.isReadonly(), click: run('project-style', () => options.onProjectStyle?.()) });
   menu.addSeparator();
-  menu.addItem({ icon: 'iconRefresh', label: '展开全部节点', click: run('expand-all', () => commands.expandAll()) });
-  menu.addItem({ icon: 'iconRefresh', label: '折叠全部节点', click: run('collapse-all', () => commands.collapseAll()) });
+  menu.addItem({ icon: 'iconRefresh', label: '展开/折叠全部节点', click: run('toggle-expand-all', () => commands.toggleAllExpand()) });
   menu.addSeparator();
   menu.addItem({ icon: 'iconEye', label: options.zen ? '退出禅模式' : '进入禅模式', click: run('toggle-zen', () => options.onZenChange(!options.zen)) });
   menu.addItem({ icon: 'iconLock', label: options.readonly ? '退出只读模式' : '进入只读模式', click: run('toggle-readonly', () => options.onReadonlyChange(!options.readonly)) });
@@ -81,10 +82,16 @@ export interface NodeContextMenuOptions {
   onRelation?: () => void;
   onNodeStyle?: () => void;
   onMarkers?: () => void;
+  onSymbols?: () => void;
   onClipart?: () => void;
   onTextToMap?: () => void;
+  hasCard?: boolean;
+  onCreateCard?: () => void;
+  onEditCard?: () => void;
   onAction?: (action: string) => void;
 }
+
+const symbolIcon = (): string => '<span class="ymz-symbol-menu-icon" aria-hidden="true">Ω</span>';
 
 function paste(commands: YeMindCommands, plain = false): void {
   const operation = plain ? commands.pastePlainText() : commands.paste();
@@ -111,6 +118,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   const menu = new Menu('siyuan-yemind-node-menu');
   menu.element.classList.add('ymz-context-menu', 'ymz-context-menu--node');
   menu.element.dataset.appearance = detectAppearance();
+  attachContextMenuViewportGuard(menu.element);
   const run = (action: string, callback: () => void): (() => void) => () => {
     options.onAction?.(action);
     callback();
@@ -120,8 +128,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
     menu.addItem({ iconHTML: nodeStyleIcon(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
     menu.addItem({ iconHTML: summaryIcon(), label: '{} 添加综合概要', accelerator: 'Ctrl+Alt+G', disabled: !availability.summary, click: run('summary-add', () => commands.addSummary()) });
     menu.addItem({ iconHTML: relationIcon(), label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
-    menu.addItem({ icon: 'iconRefresh', label: '展开全部下级节点', disabled: !availability.toggleExpand, click: run('expand-subtree', () => { const uid = String(primary?.getData?.('uid') ?? ''); if (uid) commands.expandBranchDeepByUid(uid); }) });
-    menu.addItem({ icon: 'iconRefresh', label: '折叠全部下级节点', disabled: !availability.toggleExpand, click: run('collapse-subtree', () => { const uid = String(primary?.getData?.('uid') ?? ''); if (uid) commands.collapseBranchDeepByUid(uid); }) });
+    menu.addItem({ icon: 'iconRefresh', label: '展开/折叠全部下级节点', disabled: !availability.toggleExpand, click: run('toggle-expand-subtree', () => { const uid = String(primary?.getData?.('uid') ?? ''); if (uid) commands.toggleBranchExpandByUid(uid); }) });
     menu.addSeparator();
     menu.addItem({ icon: 'iconCopy', label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });
     menu.addItem({ iconHTML: clipboardIcon('cut'), label: '剪切', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) });
@@ -148,6 +155,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
       { icon: 'iconYeMindNote', label: '备注', disabled: !availability.nodeContent, click: run('note', () => openNoteDialog(commands)) },
       { icon: 'iconYeMindComment', label: '批注', disabled: !availability.nodeContent, click: run('comments', () => openCommentsDialog(commands)) },
       { icon: 'iconTags', label: '标签', disabled: !availability.nodeContent, click: run('tags', () => openTagsDialog(commands)) },
+      { iconHTML: symbolIcon(), label: '符号', disabled: !availability.nodeContent, click: run('symbols', () => options.onSymbols?.()) },
       { iconHTML: markerIcon(), label: '图标', disabled: !availability.nodeContent, click: run('icons', () => options.onMarkers?.()) },
       { icon: 'iconLink', label: '链接', disabled: !availability.nodeContent, click: run('node-link', () => options.onNodeLink ? options.onNodeLink() : openLinkDialog(commands)) },
       { iconHTML: clipartIcon(), label: '剪贴图', disabled: !availability.nodeContent, click: run('clipart', () => options.onClipart?.()) },
@@ -155,6 +163,14 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
       { icon: 'iconCode', label: '代码块', disabled: !availability.codeBlock, click: run('code-block', () => options.onCodeBlock?.()) },
       { icon: 'iconMath', label: '公式', disabled: !availability.nodeContent, click: run('formula', () => openFormulaDialog(commands)) },
       { icon: 'iconLink', label: '行内链接', disabled: !availability.inlineLink, click: run('inline-link', () => options.onInlineLink?.()) },
+      {
+        iconHTML: primaryViewIcon('cards'),
+        label: options.hasCard ? '编辑当前节点卡片' : '添加当前节点到卡片',
+        disabled: commands.isReadonly(),
+        click: run(options.hasCard ? 'card-edit' : 'card-create', () => (
+          options.hasCard ? options.onEditCard?.() : options.onCreateCard?.()
+        )),
+      },
     ],
   });
   menu.addItem({ iconHTML: relationIcon(), label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
@@ -167,11 +183,10 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   menu.addSeparator();
   menu.addItem({ icon: 'iconUp', label: '上移节点', accelerator: 'Ctrl+↑', disabled: !availability.move, click: run('move-up', () => commands.moveUp()) });
   menu.addItem({ icon: 'iconDown', label: '下移节点', accelerator: 'Ctrl+↓', disabled: !availability.move, click: run('move-down', () => commands.moveDown()) });
-  menu.addItem({ icon: 'iconRefresh', label: '展开全部下级节点', disabled: !availability.toggleExpand, click: run('expand-subtree', () => { const uid = String(primary?.getData?.('uid') ?? ''); if (uid) commands.expandBranchDeepByUid(uid); }) });
-  menu.addItem({ icon: 'iconRefresh', label: '折叠全部下级节点', disabled: !availability.toggleExpand, click: run('collapse-subtree', () => { const uid = String(primary?.getData?.('uid') ?? ''); if (uid) commands.collapseBranchDeepByUid(uid); }) });
+  menu.addItem({ icon: 'iconRefresh', label: '展开/折叠全部下级节点', disabled: !availability.toggleExpand, click: run('toggle-expand-subtree', () => { const uid = String(primary?.getData?.('uid') ?? ''); if (uid) commands.toggleBranchExpandByUid(uid); }) });
   menu.addSeparator();
   menu.addItem({ icon: 'iconTrashcan', label: '删除当前和子节点', accelerator: 'Delete', warning: true, disabled: !availability.remove, click: run('remove-subtree', () => commands.remove()) });
-  menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前', accelerator: 'Shift+Backspace', disabled: !availability.removeOnlyCurrent, click: run('remove-only-current', () => commands.removeOnlyCurrent()) });
+  menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前', accelerator: 'Shift+Backspace', warning: true, disabled: !availability.removeOnlyCurrent, click: run('remove-only-current', () => commands.removeOnlyCurrent()) });
   menu.open({ x: event.clientX, y: event.clientY });
 }
 
@@ -204,6 +219,7 @@ export interface OutlineContextMenuOptions {
   onFormula?(): void;
   onInlineLink?(): void;
   onMarkers?(): void;
+  onSymbols?(): void;
   onClipart?(): void;
   onImage?(): void;
   onCopyLine(): void | Promise<void>;
@@ -242,6 +258,7 @@ export function openOutlineContextMenu(event: MouseEvent, options: OutlineContex
   const menu = new Menu('siyuan-yemind-outline-menu');
   menu.element.classList.add('ymz-context-menu', 'ymz-context-menu--outline');
   menu.element.dataset.appearance = detectAppearance();
+  attachContextMenuViewportGuard(menu.element);
   const disabled = options.readonly;
   const run = (action: string, callback: () => void | Promise<void>) => runOutlineAction(options, action, callback);
 
@@ -258,6 +275,7 @@ export function openOutlineContextMenu(event: MouseEvent, options: OutlineContex
       { icon: 'iconYeMindNote', label: '备注', disabled, click: run('note', () => options.onNote?.()) },
       { icon: 'iconYeMindComment', label: '批注', disabled, click: run('comments', () => options.onComments?.()) },
       { icon: 'iconTags', label: '标签', disabled, click: run('tags', () => options.onTags?.()) },
+      { iconHTML: symbolIcon(), label: '符号', disabled, click: run('symbols', () => options.onSymbols?.()) },
       { iconHTML: markerIcon(), label: '图标', disabled, click: run('icons', () => options.onMarkers?.()) },
       { icon: 'iconLink', label: '链接', disabled, click: run('node-link', () => options.onNodeLink?.()) },
       { iconHTML: clipartIcon(), label: '剪贴图', disabled, click: run('clipart', () => options.onClipart?.()) },
@@ -275,9 +293,9 @@ export function openOutlineContextMenu(event: MouseEvent, options: OutlineContex
   menu.addSeparator();
   menu.addItem({ icon: 'iconUp', label: '上移节点', disabled: disabled || !options.canMoveUp, click: run('move-up', options.onMoveUp) });
   menu.addItem({ icon: 'iconDown', label: '下移节点', disabled: disabled || !options.canMoveDown, click: run('move-down', options.onMoveDown) });
-  menu.addItem({ icon: 'iconRefresh', label: options.expanded ? '折叠全部下级节点' : '展开全部下级节点', disabled: !options.hasChildren, click: run('toggle-expand', options.onToggleExpand) });
+  menu.addItem({ icon: 'iconRefresh', label: '展开/折叠全部下级节点', disabled: !options.hasChildren, click: run('toggle-expand', options.onToggleExpand) });
   menu.addSeparator();
   menu.addItem({ icon: 'iconTrashcan', label: '删除当前行和子级', warning: true, disabled: disabled || options.isRoot, click: run('remove-subtree', options.onRemoveSubtree) });
-  menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前行', disabled: disabled || options.isRoot, click: run('remove-only-current', options.onRemoveOnlyCurrent) });
+  menu.addItem({ icon: 'iconTrashcan', label: '仅删除当前行', warning: true, disabled: disabled || options.isRoot, click: run('remove-only-current', options.onRemoveOnlyCurrent) });
   menu.open({ x: event.clientX, y: event.clientY });
 }

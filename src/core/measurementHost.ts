@@ -6,6 +6,7 @@ interface MindMapMeasurementCaches {
 interface MindMapMeasurementTarget {
   commonCaches?: MindMapMeasurementCaches;
   render?: (callback?: (() => void) | null, source?: string) => void;
+  reRender?: (callback?: (() => void) | null, source?: string) => void;
   on?: (event: string, callback: () => void) => void;
 }
 
@@ -13,6 +14,8 @@ const registeredMaps = new WeakSet<object>();
 const hosts = new WeakMap<object, HTMLElement>();
 const repairScheduled = new WeakSet<object>();
 const fontRepairsRegistered = new WeakSet<object>();
+const completedFirstRender = new WeakSet<object>();
+const pendingFontRepair = new WeakSet<object>();
 
 function measurementElements(map: MindMapMeasurementTarget): HTMLElement[] {
   const caches = map.commonCaches;
@@ -72,6 +75,18 @@ function moveMeasurementElements(map: MindMapMeasurementTarget, host: HTMLElemen
   measurementElements(map).forEach((element) => {
     element.dataset.yemindMeasurementOwner = 'true';
     element.setAttribute('aria-hidden', 'true');
+    // The upstream cache is created as `position:fixed; left:-999999px`.
+    // Keeping that extreme viewport coordinate after relocation makes Chrome
+    // give nested rich-text blocks an artificially small shrink-to-fit width.
+    // The host is already safely off-screen, so measure at a normal local
+    // coordinate and let the cache width follow its content.
+    Object.assign(element.style, {
+      position: 'relative',
+      left: '0px',
+      top: '0px',
+      width: 'max-content',
+      height: 'auto',
+    });
     if (element.parentElement !== host) {
       host.appendChild(element);
       moved = true;
@@ -80,13 +95,24 @@ function moveMeasurementElements(map: MindMapMeasurementTarget, host: HTMLElemen
   return moved;
 }
 
-function scheduleFullGeometryRepair(map: MindMapMeasurementTarget): void {
+function requestFullGeometryRepair(map: MindMapMeasurementTarget, source: string): void {
+  if (typeof map.reRender === 'function') {
+    map.reRender(null, source);
+    return;
+  }
+  map.render?.(null, 'changeTheme');
+}
+
+function scheduleFullGeometryRepair(
+  map: MindMapMeasurementTarget,
+  source = 'yemind-measurement-host',
+): void {
   const key = map as object;
   if (repairScheduled.has(key)) return;
   repairScheduled.add(key);
   const run = (): void => {
     repairScheduled.delete(key);
-    map.render?.(null, 'yemind-measurement-host');
+    requestFullGeometryRepair(map, source);
   };
   if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
     window.requestAnimationFrame(run);
@@ -103,9 +129,13 @@ function repairAfterFontsReady(map: MindMapMeasurementTarget, editorRoot: HTMLEl
   fontRepairsRegistered.add(key);
   void ready.then(() => {
     if (!registeredMaps.has(key) || typeof document === 'undefined') return;
+    if (!completedFirstRender.has(key)) {
+      pendingFontRepair.add(key);
+      return;
+    }
     const context = editorRoot.closest<HTMLElement>('.ymz-editor') ?? editorRoot;
     moveMeasurementElements(map, getHost(map, context));
-    map.render?.(null, 'yemind-fonts-ready');
+    scheduleFullGeometryRepair(map, 'yemind-fonts-ready');
   });
 }
 
@@ -119,6 +149,7 @@ export function stabilizeMindMapMeasurementHost(
   map: MindMapMeasurementTarget,
   editorRoot: HTMLElement = document.body,
 ): boolean {
+  const key = map as object;
   const context = editorRoot.closest<HTMLElement>('.ymz-editor') ?? editorRoot;
   const relocate = (): boolean => {
     const moved = moveMeasurementElements(map, getHost(map, context));
@@ -127,16 +158,24 @@ export function stabilizeMindMapMeasurementHost(
   };
 
   const moved = relocate();
-  if (!registeredMaps.has(map as object)) {
-    registeredMaps.add(map as object);
+  if (!registeredMaps.has(key)) {
+    registeredMaps.add(key);
     repairAfterFontsReady(map, context);
-    map.on?.('node_tree_render_end', relocate);
+    map.on?.('node_tree_render_end', () => {
+      completedFirstRender.add(key);
+      const fontRepair = pendingFontRepair.delete(key);
+      const cachesMoved = moveMeasurementElements(map, getHost(map, context));
+      if (fontRepair) scheduleFullGeometryRepair(map, 'yemind-fonts-ready');
+      else if (cachesMoved) scheduleFullGeometryRepair(map);
+    });
     map.on?.('beforeDestroy', () => {
-      registeredMaps.delete(map as object);
-      fontRepairsRegistered.delete(map as object);
-      repairScheduled.delete(map as object);
-      hosts.get(map as object)?.remove();
-      hosts.delete(map as object);
+      registeredMaps.delete(key);
+      fontRepairsRegistered.delete(key);
+      repairScheduled.delete(key);
+      completedFirstRender.delete(key);
+      pendingFontRepair.delete(key);
+      hosts.get(key)?.remove();
+      hosts.delete(key);
     });
     queueMicrotask(relocate);
     if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {

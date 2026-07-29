@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const e2ePort = 43917;
+const e2eBaseUrl = `http://127.0.0.1:${e2ePort}`;
+
 export default defineConfig({
   testDir: './tests/e2e',
   outputDir: './output/playwright/test-results',
@@ -8,7 +11,7 @@ export default defineConfig({
   retries: 1,
   reporter: [['list'], ['html', { outputFolder: './output/playwright/report', open: 'never' }]],
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: e2eBaseUrl,
     channel: process.env.CI ? undefined : 'chrome',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
@@ -22,9 +25,9 @@ export default defineConfig({
     use: { ...devices['Pixel 5'], browserName: 'chromium' },
   }],
   webServer: {
-    command: 'npm run dev:web -- --host 127.0.0.1 --port 4173',
-    url: 'http://127.0.0.1:4173',
-    reuseExistingServer: true,
+    command: `npm run dev:web -- --host 127.0.0.1 --port ${e2ePort} --strictPort`,
+    url: e2eBaseUrl,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 });

@@ -16,6 +16,19 @@ export interface ResolvedTextRect {
   elementConnected: boolean | null;
 }
 
+export function editorHorizontalMargin(
+  node: any,
+  paddingX: number,
+  textContentMargin: number,
+  scaleX: number,
+): number {
+  const scaledPadding = Math.max(0, Number(paddingX) || 0) * Math.max(0, Number(scaleX) || 1);
+  const hasPrefix = Boolean(node?._prefixData) || (Array.isArray(node?._iconData) && node._iconData.length > 0);
+  if (!hasPrefix) return -scaledPadding;
+  const scaledGap = Math.max(0, Number(textContentMargin) || 0) * Math.max(0, Number(scaleX) || 1);
+  return -Math.min(scaledPadding, scaledGap);
+}
+
 function finite(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }

@@ -30,7 +30,9 @@ describe('v0.9.26 outline content parity', () => {
       outerFrame: { groupId: 'g1' }, fillColor: '#f00', borderColor: '#0f0',
     });
     const html = outlineAccessoriesHtml(accessories);
-    expect(html).toContain('data-outline-content="todo"');
+    expect(html).toContain('data-outline-todo-action');
+    expect(html).not.toContain('data-outline-content="todo"');
+    expect(html).toContain('title="待办未完成"');
     expect(html).toContain('data-outline-content="tags"');
     expect(html).toContain('data-outline-content="link"');
     expect(html).toContain('data-outline-content="note"');
@@ -38,6 +40,8 @@ describe('v0.9.26 outline content parity', () => {
     expect(html).toContain('data-outline-content="outer-frame"');
     expect(html).not.toContain('#f00');
     expect(html).not.toContain('#0f0');
+    expect(controller).toContain("'[data-outline-todo-action]'");
+    expect(controller).toContain("this.options.onContentAction?.(uid, 'todo')");
   });
 
   it('exposes the complete canvas-equivalent Add submenu in outline', () => {

@@ -52,7 +52,9 @@ function normalizeImportedMap(
     layout: typeof source.layout === 'string' ? source.layout : map.layout,
     layoutPresetId: typeof source.layoutPresetId === 'string' ? source.layoutPresetId : undefined,
     theme: typeof source.theme === 'string' ? source.theme : map.theme,
-    lineStyle: source.lineStyle === 'straight' || source.lineStyle === 'direct' ? source.lineStyle : 'curve',
+    lineStyle: source.lineStyle === 'straight' || source.lineStyle === 'direct' || source.lineStyle === 'polyline'
+      ? source.lineStyle
+      : 'curve',
     projectStyle: source.projectStyle && typeof source.projectStyle === 'object' ? source.projectStyle : map.projectStyle,
     viewData: source.viewData && typeof source.viewData === 'object' ? source.viewData : undefined,
     studyCards: Array.isArray(source.studyCards) ? source.studyCards : map.studyCards,

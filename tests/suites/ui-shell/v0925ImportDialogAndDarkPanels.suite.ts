@@ -23,6 +23,11 @@ describe('v0.9.25 import dialog and dark project panels', () => {
     expect(template).not.toContain('data-action="line-style-gallery"');
     expect(template).not.toContain('data-role="line-style-choice-panel"');
     expect(template).toContain('data-project-line-style="curve"');
+    expect(template).toContain('data-project-line-style="direct"');
+    expect(template).toContain('data-project-line-style="polyline"');
+    expect(template).toContain('data-project-line-style="straight"');
+    expect(template).toContain('ymz-project-style-panel__rainbow-row');
+    expect(template).not.toContain('<span>配色</span>');
     expect(template).toContain('data-action="project-style"');
     expect(editor).toContain('ProjectChoicePanel');
     expect(css).toContain('.ymz-project-choice-panel');
@@ -31,6 +36,8 @@ describe('v0.9.25 import dialog and dark project panels', () => {
     expect(css).toMatch(/\.ymz-editor\[data-appearance="dark"\] \.ymz-rainbow-picker[^}]*background:var\(--ymz-panel-bg/s);
     expect(css).toMatch(/\.ymz-project-choice-panel__item\.is-selected[^}]*background:var\(--ymz-accent-soft-strong/s);
     expect(css).toMatch(/\.ymz-project-choice-panel__item:hover[^}]*background:var\(--ymz-control-hover-bg/s);
+    expect(css).toMatch(/\.ymz-project-style-panel__rainbow-row\{[^}]*grid-template-columns:/s);
+    expect(css).toMatch(/\.ymz-project-line-options\{[^}]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/s);
   });
 
   it('adds outline content actions for icons, clipart and images', () => {

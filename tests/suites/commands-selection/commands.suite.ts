@@ -7,9 +7,13 @@ function fakeMindMap() {
     view: {
       fit: vi.fn(),
       reset: vi.fn(),
+      scale: 0.61,
+      setScale: vi.fn(),
       enlarge: vi.fn(),
       narrow: vi.fn(),
     },
+    width: 800,
+    height: 600,
     renderer: {
       startTextEdit: vi.fn(),
       activeNodeList: [{}],
@@ -19,6 +23,27 @@ function fakeMindMap() {
 }
 
 describe('createCommandAdapter', () => {
+  it('inserts symbols at the rich-text caret and otherwise appends to the active node', () => {
+    const map = fakeMindMap() as any;
+    map.opt = { readonly: false };
+    const plain = { getData: () => ({ text: '节点', richText: false }), nodeData: { data: {} } };
+    map.renderer.activeNodeList = [plain];
+    const commands = createCommandAdapter(map as never);
+
+    expect(commands.insertSymbol('Ω')).toBe(true);
+    expect(map.execCommand).toHaveBeenCalledWith('SET_NODE_TEXT', plain, '节点Ω', false, true);
+
+    const quill = {
+      insertText: vi.fn(),
+      deleteText: vi.fn(),
+      setSelection: vi.fn(),
+    };
+    map.richText = { quill, range: { index: 2, length: 0 } };
+    expect(commands.insertSymbol('→')).toBe(true);
+    expect(quill.insertText).toHaveBeenCalledWith(2, '→', 'user');
+    expect(quill.setSelection).toHaveBeenCalledWith(3, 0, 'silent');
+  });
+
   it('maps node actions to simple-mind-map native commands', () => {
     const map = fakeMindMap();
     const commands = createCommandAdapter(map as never);
@@ -81,8 +106,12 @@ describe('createCommandAdapter', () => {
 
     expect(map.view.fit).toHaveBeenCalledOnce();
     expect(map.view.reset).toHaveBeenCalledOnce();
-    expect(map.view.enlarge).toHaveBeenCalledOnce();
-    expect(map.view.narrow).toHaveBeenCalledOnce();
+    expect(map.view.setScale.mock.calls).toEqual([
+      [0.8, 400, 300],
+      [0.4, 400, 300],
+    ]);
+    expect(map.view.enlarge).not.toHaveBeenCalled();
+    expect(map.view.narrow).not.toHaveBeenCalled();
     expect(map.renderer.startTextEdit).toHaveBeenCalledOnce();
   });
 });

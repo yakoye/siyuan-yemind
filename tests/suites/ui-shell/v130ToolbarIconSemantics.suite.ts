@@ -27,6 +27,10 @@ describe('v1.3.0 toolbar icon semantics', () => {
     expect(appearanceIcon('system')).toContain('ymz-icon-appearance-system');
     expect(appearanceIcon('light')).toContain('ymz-icon-appearance-light');
     expect(appearanceIcon('dark')).toContain('ymz-icon-appearance-dark');
+    expect(appearanceIcon('system')).toContain('href="#iconMode"');
+    expect(appearanceIcon('light')).toContain('href="#iconLight"');
+    expect(appearanceIcon('dark')).toContain('href="#iconDark"');
+    expect(appearanceIcon('system')).toContain('ymz-siyuan-icon-fallback');
 
     const host = document.createElement('div');
     host.innerHTML = createEditorTemplate('状态');
@@ -54,6 +58,19 @@ describe('v1.3.0 toolbar icon semantics', () => {
     }
     expect(host.querySelector('[data-action="import-file"]')?.textContent).toContain('导入');
     expect(host.querySelector('[data-action="export-file"]')?.textContent).toContain('导出');
+  });
+
+  it('matches the confirmed version47 Lucide zoom glyph geometry', () => {
+    const zoomIn = zoomIcon('in');
+    const zoomOut = zoomIcon('out');
+
+    for (const icon of [zoomIn, zoomOut]) {
+      expect(icon).toContain('cx="11" cy="11" r="8"');
+      expect(icon).toContain('x1="21" x2="16.65" y1="21" y2="16.65"');
+      expect(icon).toContain('x1="8" x2="14" y1="11" y2="11"');
+    }
+    expect(zoomIn).toContain('x1="11" x2="11" y1="8" y2="14"');
+    expect(zoomOut).not.toContain('x1="11" x2="11" y1="8" y2="14"');
   });
 
   it('updates current-state icons after settings changes', () => {

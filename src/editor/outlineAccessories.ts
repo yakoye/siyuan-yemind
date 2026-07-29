@@ -140,7 +140,7 @@ export function outlineAccessoriesHtml(accessories: OutlineAccessories, pluginBa
     || accessories.link || accessories.hasNote || accessories.commentCount || accessories.hasOuterFrame;
   if (!hasAny) return '';
   const todo = accessories.todo
-    ? `<button type="button" class="ymz-outline-accessories__todo${accessories.todo.checked ? ' is-checked' : ''}" data-outline-content="todo" tabindex="-1" aria-label="${accessories.todo.checked ? '待办已完成' : '待办未完成'}">${accessories.todo.checked ? '✓' : ''}</button>`
+    ? `<button type="button" class="ymz-outline-accessories__todo${accessories.todo.checked ? ' is-checked' : ''}" data-outline-todo-action tabindex="-1" title="${accessories.todo.checked ? '待办已完成' : '待办未完成'}" aria-label="${accessories.todo.checked ? '待办已完成' : '待办未完成'}">${accessories.todo.checked ? '✓' : ''}</button>`
     : '';
   const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join('');
   const image = accessories.image

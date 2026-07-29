@@ -47,7 +47,17 @@ export class LiveNodeWidthLayoutController {
     this.frame = this.animation.request(() => {
       this.frame = null;
       if (this.destroyed || !hasActiveNodeWidthDrag(this.map?.renderer?.root)) return;
-      this.map?.render?.();
+      this.map?.render?.(() => this.synchronizeEditingSurface());
     });
   };
+
+  /**
+   * The rich-text editor is an HTML overlay outside the SVG tree. A full
+   * layout can move its text anchor (especially when a marker/icon precedes
+   * the text), so the overlay must be repositioned after that same layout.
+   */
+  private synchronizeEditingSurface(): void {
+    const richText = this.map?.richText;
+    if (richText?.showTextEdit === true) richText.updateTextEditNode?.();
+  }
 }

@@ -16,6 +16,7 @@ describe('v0.9.13 hidden-tab rich-text measurement', () => {
     canvas.append(rich, custom);
     document.body.append(canvas);
     const render = vi.fn();
+    const reRender = vi.fn();
     let beforeDestroy: (() => void) | null = null;
     const map = {
       commonCaches: {
@@ -23,6 +24,7 @@ describe('v0.9.13 hidden-tab rich-text measurement', () => {
         measureCustomNodeContentSizeEl: custom,
       },
       render,
+      reRender,
       on: vi.fn((name: string, callback: () => void) => {
         if (name === 'beforeDestroy') beforeDestroy = callback;
       }),
@@ -32,7 +34,8 @@ describe('v0.9.13 hidden-tab rich-text measurement', () => {
     expect(stabilizeMindMapMeasurementHost(map, canvas)).toBe(true);
     expect(rich.parentElement?.dataset.yemindMeasurementHost).toBe('true');
     expect(custom.parentElement).toBe(rich.parentElement);
-    expect(render).toHaveBeenCalledOnce();
+    expect(reRender).toHaveBeenCalledWith(null, 'yemind-measurement-host');
+    expect(render).not.toHaveBeenCalled();
     beforeDestroy?.();
     expect(rich.isConnected).toBe(false);
     expect(custom.isConnected).toBe(false);
@@ -46,6 +49,7 @@ describe('v0.9.13 hidden-tab rich-text measurement', () => {
     const map = {
       commonCaches: {},
       render: vi.fn(),
+      reRender: vi.fn(),
       on: vi.fn((name: string, callback: () => void) => callbacks.set(name, callback)),
     };
 
@@ -58,7 +62,8 @@ describe('v0.9.13 hidden-tab rich-text measurement', () => {
 
     expect(rich.parentElement?.dataset.yemindMeasurementHost).toBe('true');
     expect(rich.dataset.yemindMeasurementOwner).toBe('true');
-    expect(map.render).toHaveBeenCalledOnce();
+    expect(map.reRender).toHaveBeenCalledWith(null, 'yemind-measurement-host');
+    expect(map.render).not.toHaveBeenCalled();
     callbacks.get('beforeDestroy')?.();
     expect(rich.isConnected).toBe(false);
     canvas.remove();
@@ -74,18 +79,62 @@ describe('v0.9.13 hidden-tab rich-text measurement', () => {
     });
     const canvas = document.createElement('div');
     document.body.append(canvas);
+    const callbacks = new Map<string, () => void>();
     const render = vi.fn();
-    const map = { commonCaches: {}, render, on: vi.fn() };
+    const reRender = vi.fn();
+    const map = {
+      commonCaches: {},
+      render,
+      reRender,
+      on: vi.fn((name: string, callback: () => void) => callbacks.set(name, callback)),
+    };
 
     stabilizeMindMapMeasurementHost(map, canvas);
+    callbacks.get('node_tree_render_end')?.();
     resolveFonts();
     await fontsReady;
     await Promise.resolve();
 
-    expect(render).toHaveBeenCalledWith(null, 'yemind-fonts-ready');
+    expect(reRender).toHaveBeenCalledWith(null, 'yemind-fonts-ready');
+    expect(render).not.toHaveBeenCalled();
     if (originalFonts) Object.defineProperty(document, 'fonts', originalFonts);
     else delete (document as Document & { fonts?: FontFaceSet }).fonts;
     canvas.remove();
+  });
+
+  it('waits for the first node render before repairing already-ready web fonts', async () => {
+    let resolveFonts!: () => void;
+    const fontsReady = new Promise<void>((resolve) => { resolveFonts = resolve; });
+    const originalFonts = Object.getOwnPropertyDescriptor(document, 'fonts');
+    Object.defineProperty(document, 'fonts', {
+      configurable: true,
+      value: { ready: fontsReady },
+    });
+    const callbacks = new Map<string, () => void>();
+    const reRender = vi.fn();
+    const map = {
+      commonCaches: {},
+      render: vi.fn(),
+      reRender,
+      on: vi.fn((name: string, callback: () => void) => callbacks.set(name, callback)),
+    };
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      callback(0);
+      return 1;
+    });
+
+    stabilizeMindMapMeasurementHost(map, document.body);
+    resolveFonts();
+    await fontsReady;
+    await Promise.resolve();
+
+    expect(reRender).not.toHaveBeenCalled();
+    callbacks.get('node_tree_render_end')?.();
+    expect(reRender).toHaveBeenCalledWith(null, 'yemind-fonts-ready');
+
+    callbacks.get('beforeDestroy')?.();
+    if (originalFonts) Object.defineProperty(document, 'fonts', originalFonts);
+    else delete (document as Document & { fonts?: FontFaceSet }).fonts;
   });
 
   it('does not remeasure a map destroyed before web fonts finish loading', async () => {

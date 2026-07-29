@@ -20,7 +20,8 @@ describe('v1.5.0 version47 shell visual contract', () => {
     expect(css).not.toContain('.ymz-editor[data-appearance="dark"] .ymz-topbar :is(button,.ymz-project-control,.ymz-save-state){color:var(--b3-theme-on-background');
     expect(css).toContain('.ymz-editor[data-appearance="dark"] :is(.ymz-project-choice-panel,.ymz-layout-gallery,.ymz-project-style-panel,.ymz-node-style-panel){background:var(--ymz-panel-bg)');
     expect(css).not.toContain('.ymz-editor[data-appearance="dark"] :is(.ymz-project-choice-panel,.ymz-layout-gallery,.ymz-project-style-panel,.ymz-node-style-panel){background:var(--b3-theme-surface');
-    expect(css).toMatch(/\.ymz-search-panel \.b3-text-field\{[^}]*background:var\(--ymz-input-bg\)[^}]*color:var\(--ymz-text-80\)/);
+    expect(css).toMatch(/\.ymz-search-panel__field\{[^}]*background:var\(--ymz-input-bg\)/);
+    expect(css).toMatch(/\.ymz-search-panel \.b3-text-field\{[^}]*background:transparent[^}]*color:var\(--ymz-text-80\)/);
     expect(css).toMatch(/\.ymz-search-panel button\{[^}]*color:var\(--ymz-text-60\)/);
   });
 

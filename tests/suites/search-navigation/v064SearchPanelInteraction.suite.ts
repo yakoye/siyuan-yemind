@@ -10,17 +10,20 @@ describe('v0.6.4 search disclosure interaction', () => {
     const find = panel.querySelector<HTMLInputElement>('[data-role="search-input"]')!;
     const replace = panel.querySelector<HTMLElement>('[data-role="replace-row"]')!;
     const toggle = panel.querySelector<HTMLElement>('[data-search-action="toggle-replace"]')!;
+    const disclosureIcon = toggle.querySelector('svg');
 
     setSearchReplaceExpanded(panel, true);
     expect(panel.dataset.replaceExpanded).toBe('true');
     expect(replace.hidden).toBe(false);
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(toggle.querySelector('svg')).toBe(disclosureIcon);
     expect(panel.querySelector('[data-role="search-input"]')).toBe(find);
 
     setSearchReplaceExpanded(panel, false);
     expect(panel.dataset.replaceExpanded).toBe('false');
     expect(replace.hidden).toBe(true);
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(toggle.querySelector('svg')).toBe(disclosureIcon);
     expect(panel.querySelector('[data-role="search-input"]')).toBe(find);
   });
 });

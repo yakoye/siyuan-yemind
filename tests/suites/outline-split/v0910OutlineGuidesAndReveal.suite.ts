@@ -10,6 +10,8 @@ describe('v0.9.10 outline guides and bidirectional reveal', () => {
   it('anchors every guide directly below its expanded parent triangle', () => {
     expect(controller).toContain("row.querySelector<HTMLElement>('.ymz-outline-row__triangle,.ymz-outline-row__leaf-square')");
     expect(controller).toContain('markerRect.left + markerRect.width / 2');
+    expect(controller).toContain('rootRect.left + root.scrollLeft - 0.5);');
+    expect(controller).not.toContain('rootRect.left + root.scrollLeft) - 1');
     expect(controller).toContain('markerRect.bottom - rootRect.top + root.scrollTop');
     expect(controller).toContain('lastRect.top + lastRect.height / 2');
     expect(controller).toContain("row.style.getPropertyValue('--ymz-outline-branch-color')");

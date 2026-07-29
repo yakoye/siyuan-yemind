@@ -2,6 +2,7 @@ import {
   normalizeAppearanceMode,
   type AppearanceMode,
 } from '../core/appearanceMode';
+import { YEMIND_THEME_PRESETS } from '../core/themePresets';
 
 export type YeMindLayout = 'logicalStructure' | 'logicalStructureLeft' | 'mindMap' | 'organizationStructure' | 'catalogOrganization';
 export type CanvasMode = 'pan' | 'select';
@@ -68,6 +69,7 @@ export interface YeMindSettings {
   outerFramePaddingX: number;
   outerFramePaddingY: number;
   toolbarsPinned: boolean;
+  favoriteThemeIds: string[];
   shortcutMap: ShortcutMap;
 }
 
@@ -120,6 +122,7 @@ export const DEFAULT_SETTINGS: YeMindSettings = {
   outerFramePaddingX: 10,
   outerFramePaddingY: 10,
   toolbarsPinned: true,
+  favoriteThemeIds: [],
   shortcutMap: { ...DEFAULT_SHORTCUTS },
 };
 
@@ -130,6 +133,7 @@ const LINK_MODES = new Set<ExternalLinkMode>(['new-window', 'current-window']);
 const CLOZE_MODES = new Set<ClozeMode>(['hidden', 'blur']);
 const VIEW_MODES = new Set<ViewMode>(['map', 'split', 'outline']);
 const SHORTCUT_COMMANDS = Object.keys(DEFAULT_SHORTCUTS) as ShortcutCommand[];
+const THEME_IDS = new Set(YEMIND_THEME_PRESETS.map((preset) => preset.id));
 
 function numberInRange(value: unknown, fallback: number, min: number, max: number): number {
   const number = Number(value);
@@ -166,6 +170,17 @@ function normalizeShortcutMap(value: unknown): ShortcutMap {
     result[key] = typeof current === 'string' ? current.trim() : DEFAULT_SHORTCUTS[key];
     return result;
   }, {} as ShortcutMap);
+}
+
+function normalizeFavoriteThemeIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  return value.reduce<string[]>((result, item) => {
+    if (typeof item !== 'string' || !THEME_IDS.has(item) || seen.has(item)) return result;
+    seen.add(item);
+    result.push(item);
+    return result;
+  }, []);
 }
 
 function normalizeSettings(value: Partial<YeMindSettings>): YeMindSettings {
@@ -214,6 +229,7 @@ function normalizeSettings(value: Partial<YeMindSettings>): YeMindSettings {
     outerFramePaddingX: integerClamped(value.outerFramePaddingX, DEFAULT_SETTINGS.outerFramePaddingX, 0, 80),
     outerFramePaddingY: integerClamped(value.outerFramePaddingY, DEFAULT_SETTINGS.outerFramePaddingY, 0, 80),
     toolbarsPinned: booleanOrDefault(value.toolbarsPinned, DEFAULT_SETTINGS.toolbarsPinned),
+    favoriteThemeIds: normalizeFavoriteThemeIds(value.favoriteThemeIds),
     shortcutMap: normalizeShortcutMap(value.shortcutMap),
   };
 }
@@ -234,13 +250,21 @@ export class SettingsStore {
   }
 
   get(): YeMindSettings {
-    return { ...this.state, shortcutMap: { ...this.state.shortcutMap } };
+    return {
+      ...this.state,
+      favoriteThemeIds: [...this.state.favoriteThemeIds],
+      shortcutMap: { ...this.state.shortcutMap },
+    };
   }
 
   update(patch: Partial<YeMindSettings>): Promise<void> {
     const operation = this.updateQueue.then(async () => {
       const next = normalizeSettings({ ...this.state, ...patch });
-      const snapshot = { ...next, shortcutMap: { ...next.shortcutMap } };
+      const snapshot = {
+        ...next,
+        favoriteThemeIds: [...next.favoriteThemeIds],
+        shortcutMap: { ...next.shortcutMap },
+      };
       await this.storage.save(snapshot);
       this.state = next;
       this.emit();

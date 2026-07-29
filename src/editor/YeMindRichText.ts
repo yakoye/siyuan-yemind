@@ -6,6 +6,7 @@ import { Scope } from 'parchment';
 import { editableTextLength, isPristineNodeTextData, markNodeTextEditedData } from './textEditingPolicy';
 import {
   isUsableTextRect,
+  editorHorizontalMargin,
   renderedNodeUid,
   resolveLiveRenderedNode,
   resolveRenderedTextRect,
@@ -127,6 +128,14 @@ export default class YeMindRichText extends (BaseRichText as any) {
   private editingUid = '';
   private lastValidNodeRect: DOMRect | null = null;
   private lastRectSource: ResolvedTextRect['source'] | 'show-parameter' | 'last-valid' | 'none' = 'none';
+  private placementFrame: number | null = null;
+  private placementMonitorFrame: number | null = null;
+  private placementTracking = false;
+  private placementResizeObserver: ResizeObserver | null = null;
+  private readonly handlePlacementInvalidation = (): void => {
+    if (!this.showTextEdit) return;
+    this.schedulePlacementStabilization();
+  };
 
   showEditText(params: any): void {
     if (this.showTextEdit) return;
@@ -152,8 +161,11 @@ export default class YeMindRichText extends (BaseRichText as any) {
     // The upstream renderer can keep the pre-drag node instance in the event
     // payload. Keep the editor transaction bound to the current renderer node.
     this.node = resolveLiveRenderedNode(this.mindMap, this.node ?? liveNode ?? sourceNode, this.editingUid);
+    this.applyEditorHorizontalMargin(this.node, rect);
     this.normalizeEditorPlacement(rect);
     this.bindTextEditingKeyboard();
+    this.bindPlacementTracking();
+    this.schedulePlacementStabilization();
     this.emitEditingDiagnostic('opened', {
       liveNodeResolved: Boolean(liveNode && liveNode !== sourceNode),
       rectSource: this.lastRectSource,
@@ -190,6 +202,8 @@ export default class YeMindRichText extends (BaseRichText as any) {
   }
 
   hideEditText(nodes?: any[]): void {
+    this.unbindPlacementTracking();
+    this.cancelPlacementStabilization();
     const liveNode = resolveLiveRenderedNode(this.mindMap, this.node, this.editingUid);
     if (liveNode) this.node = liveNode;
     const liveNodes = Array.isArray(nodes)
@@ -205,6 +219,8 @@ export default class YeMindRichText extends (BaseRichText as any) {
   }
 
   removeTextEditEl(): void {
+    this.unbindPlacementTracking();
+    this.cancelPlacementStabilization();
     try {
       super.removeTextEditEl();
     } finally {
@@ -277,7 +293,25 @@ export default class YeMindRichText extends (BaseRichText as any) {
     host.style.minWidth = `${originWidth + this.textNodePaddingX * 2}px`;
     host.style.minHeight = `${originHeight}px`;
     this.setQuillContainerMinHeight(originHeight);
+    this.applyEditorHorizontalMargin(node, rect);
     this.normalizeEditorPlacement(rect);
+  }
+
+  private applyEditorHorizontalMargin(node: any, rect: DOMRect | null): void {
+    const host = this.textEditNode as HTMLElement | null;
+    if (!host || !rect) return;
+    const group = node?._textData?.node;
+    const originWidth = Number(group?.attr?.('data-width'));
+    const scaleX = Number.isFinite(originWidth) && originWidth > 0
+      ? Math.ceil(rect.width) / originWidth
+      : 1;
+    const gap = Number(this.mindMap?.opt?.textContentMargin);
+    host.style.marginLeft = `${editorHorizontalMargin(
+      node,
+      this.textNodePaddingX,
+      Number.isFinite(gap) ? gap : 5,
+      scaleX,
+    )}px`;
   }
 
   private normalizeEditorPlacement(rect?: DOMRect | null): void {
@@ -299,6 +333,74 @@ export default class YeMindRichText extends (BaseRichText as any) {
     host.style.position = 'absolute';
     host.style.left = `${nodeRect.left - targetRect.left + target.scrollLeft - target.clientLeft}px`;
     host.style.top = `${nodeRect.top - targetRect.top + target.scrollTop - target.clientTop}px`;
+  }
+
+  /**
+   * A newly inserted node can emit `node_dblclick` from inside the SVG render
+   * stack before the browser has flushed its final group transform. The first
+   * rectangle can therefore point at the canvas origin even though the node is
+   * painted in the correct place. Re-resolve once on the next frame so the
+   * HTML editor and SVG text always share the same final geometry.
+   */
+  private schedulePlacementStabilization(): void {
+    this.cancelPlacementStabilization();
+    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') return;
+    const uid = this.editingUid;
+    this.placementFrame = window.requestAnimationFrame(() => {
+      this.placementFrame = null;
+      if (!this.showTextEdit || this.editingUid !== uid) return;
+      this.updateTextEditNode();
+    });
+  }
+
+  private bindPlacementTracking(): void {
+    if (this.placementTracking) return;
+    this.placementTracking = true;
+    ['resize', 'scale', 'translate'].forEach((name) => {
+      this.mindMap?.on?.(name, this.handlePlacementInvalidation);
+    });
+    window.addEventListener('resize', this.handlePlacementInvalidation, { passive: true });
+
+    const target = this.mindMap?.opt?.customInnerElsAppendTo as HTMLElement | null | undefined;
+    if (typeof ResizeObserver === 'function' && target) {
+      this.placementResizeObserver = new ResizeObserver(this.handlePlacementInvalidation);
+      this.placementResizeObserver.observe(target);
+    }
+    this.startPlacementMonitor();
+  }
+
+  private unbindPlacementTracking(): void {
+    if (!this.placementTracking) return;
+    this.placementTracking = false;
+    ['resize', 'scale', 'translate'].forEach((name) => {
+      this.mindMap?.off?.(name, this.handlePlacementInvalidation);
+    });
+    window.removeEventListener('resize', this.handlePlacementInvalidation);
+    this.placementResizeObserver?.disconnect();
+    this.placementResizeObserver = null;
+    if (this.placementMonitorFrame !== null) {
+      window.cancelAnimationFrame?.(this.placementMonitorFrame);
+      this.placementMonitorFrame = null;
+    }
+  }
+
+  private startPlacementMonitor(): void {
+    if (this.placementMonitorFrame !== null
+      || typeof window === 'undefined'
+      || typeof window.requestAnimationFrame !== 'function') return;
+    const tick = (): void => {
+      this.placementMonitorFrame = null;
+      if (!this.placementTracking || !this.showTextEdit) return;
+      this.updateTextEditNode();
+      this.placementMonitorFrame = window.requestAnimationFrame(tick);
+    };
+    this.placementMonitorFrame = window.requestAnimationFrame(tick);
+  }
+
+  private cancelPlacementStabilization(): void {
+    if (this.placementFrame === null) return;
+    window.cancelAnimationFrame?.(this.placementFrame);
+    this.placementFrame = null;
   }
 
   private bindTextEditingKeyboard(): void {

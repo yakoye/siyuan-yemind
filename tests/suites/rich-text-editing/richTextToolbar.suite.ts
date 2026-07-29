@@ -189,4 +189,58 @@ describe('RichTextToolbar', () => {
     root.remove();
   });
 
+  it('anchors to the live DOM selection instead of a stale engine rectangle', () => {
+    const root = setup();
+    Object.defineProperties(root, {
+      clientWidth: { configurable: true, value: 900 },
+      clientHeight: { configurable: true, value: 600 },
+    });
+    root.getBoundingClientRect = () => ({
+      left: 100,
+      top: 100,
+      right: 1000,
+      bottom: 700,
+      width: 900,
+      height: 600,
+      x: 100,
+      y: 100,
+      toJSON: () => ({}),
+    });
+    const selected = document.createTextNode('selected');
+    root.appendChild(selected);
+    const liveRect = {
+      left: 220,
+      top: 180,
+      right: 340,
+      bottom: 205,
+      width: 120,
+      height: 25,
+      x: 220,
+      y: 180,
+      toJSON: () => ({}),
+    };
+    const getSelection = vi.spyOn(window, 'getSelection').mockReturnValue({
+      anchorNode: selected,
+      rangeCount: 1,
+      getRangeAt: () => ({ getBoundingClientRect: () => liveRect }),
+    } as any);
+    const toolbar = new RichTextToolbar(root, commands());
+    const element = root.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    Object.defineProperties(element, {
+      scrollWidth: { configurable: true, value: 700 },
+      offsetHeight: { configurable: true, value: 48 },
+    });
+
+    toolbar.update(
+      true,
+      { left: 220, top: 360, right: 340, bottom: 390, width: 120 },
+      {},
+    );
+
+    expect(element.style.top).toBe('113px');
+    getSelection.mockRestore();
+    toolbar.destroy();
+    root.remove();
+  });
+
 });

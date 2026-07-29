@@ -182,7 +182,7 @@ export class NodeQuickActionsController {
     this.layer = document.createElement('div');
     this.layer.className = 'ymz-node-quick-actions-layer';
     this.layer.setAttribute('aria-hidden', 'false');
-    this.options.root.querySelector('.ymz-canvas-wrap')?.appendChild(this.layer);
+    this.options.canvas.appendChild(this.layer);
     this.layer.addEventListener('click', this.onClick);
     this.layer.addEventListener('pointerover', this.onActionPointerOver);
     this.layer.addEventListener('pointerout', this.onActionPointerOut);
@@ -213,7 +213,10 @@ export class NodeQuickActionsController {
     this.layer.replaceChildren();
     this.nodeElementToUid.clear();
     if (this.options.readonly()) return;
-    const rootRect = this.options.root.getBoundingClientRect();
+    const layerRect = this.layer.getBoundingClientRect();
+    const coordinateRect = layerRect.width > 0 || layerRect.height > 0
+      ? layerRect
+      : this.layer.parentElement?.getBoundingClientRect() ?? layerRect;
     const activeNodes = this.options.getActiveNodes();
     visibleNodeList(this.options.getRendererRoot()).forEach((node) => {
       if (node?.isGeneralization || !node?.group?.node) return;
@@ -249,8 +252,8 @@ export class NodeQuickActionsController {
       if (geometryDriven || childRects.length > 0) this.lastKnownSideByUid.set(uid, side);
       const anchor = resolveQuickActionAnchor(rect, geometryDriven ? [] : childRects, side);
       container.dataset.quickSide = anchor.side;
-      container.style.left = `${anchor.x - rootRect.left}px`;
-      container.style.top = `${anchor.y - rootRect.top}px`;
+      container.style.left = `${anchor.x - coordinateRect.left}px`;
+      container.style.top = `${anchor.y - coordinateRect.top}px`;
       descriptors.forEach((descriptor) => {
         const button = document.createElement('button');
         button.type = 'button';

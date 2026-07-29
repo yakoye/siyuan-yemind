@@ -1,3 +1,8 @@
+import {
+  normalizeStudyCardSource,
+  type StudyCardSourceSnapshot,
+} from './studyCardSource';
+
 export type StudyCardStatus = 'new' | 'learning' | 'mastered';
 export type StudyCardRating = 'again' | 'hard' | 'good' | 'easy';
 
@@ -16,6 +21,7 @@ export interface StudyCard {
   lapses: number;
   intervalDays: number;
   easeFactor: number;
+  source?: StudyCardSourceSnapshot;
 }
 
 export interface CreateStudyCardInput {
@@ -24,6 +30,7 @@ export interface CreateStudyCardInput {
   front: string;
   back?: string;
   now?: number;
+  source?: StudyCardSourceSnapshot;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1_000;
@@ -44,6 +51,7 @@ function normalizeStatus(value: unknown): StudyCardStatus {
 
 export function createStudyCard(input: CreateStudyCardInput): StudyCard {
   const now = finiteNumber(input.now, Date.now());
+  const source = normalizeStudyCardSource(input.source);
   return {
     id: String(input.id).trim(),
     nodeUid: String(input.nodeUid).trim(),
@@ -58,6 +66,7 @@ export function createStudyCard(input: CreateStudyCardInput): StudyCard {
     lapses: 0,
     intervalDays: 0,
     easeFactor: 2.5,
+    ...(source ? { source } : {}),
   };
 }
 
@@ -72,6 +81,7 @@ export function normalizeStudyCards(value: unknown): StudyCard[] {
     const createdAt = Math.max(0, finiteNumber(source.createdAt));
     const updatedAt = Math.max(createdAt, finiteNumber(source.updatedAt, createdAt));
     const lastReviewedAt = finiteNumber(source.lastReviewedAt, -1);
+    const cardSource = normalizeStudyCardSource(source.source);
     const card: StudyCard = {
       id,
       nodeUid: String(source.nodeUid ?? '').trim(),
@@ -86,6 +96,7 @@ export function normalizeStudyCards(value: unknown): StudyCard[] {
       lapses: nonNegativeInteger(source.lapses),
       intervalDays: nonNegativeInteger(source.intervalDays),
       easeFactor: Math.min(3, Math.max(1.3, finiteNumber(source.easeFactor, 2.5))),
+      ...(cardSource ? { source: cardSource } : {}),
     };
     if (lastReviewedAt >= 0) card.lastReviewedAt = lastReviewedAt;
     return [card];
@@ -103,6 +114,7 @@ export function rateStudyCard(
     front: source.front,
     back: source.back,
     now: reviewedAt,
+    source: source.source,
   });
   if (rating === 'again') {
     return {

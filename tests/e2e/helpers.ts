@@ -2,12 +2,14 @@ import { expect, type Page } from '@playwright/test';
 
 export async function resetWebApp(page: Page): Promise<void> {
   await page.goto('/');
+  await expect(page).toHaveTitle(/YeMind/);
   await page.evaluate(async () => {
     indexedDB.deleteDatabase('yemind-web');
     localStorage.clear();
     sessionStorage.clear();
   });
   await page.reload();
+  await expect(page).toHaveTitle(/YeMind/);
   await expect(page.locator('.ymw-app')).toBeVisible();
   await expect(page.locator('.ymw-editor > .ymz-editor')).toBeVisible();
 }

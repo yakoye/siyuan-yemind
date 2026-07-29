@@ -24,6 +24,7 @@ import { runSafeOperation } from './operationSafety';
 import { initializePluginStartup } from './pluginStartup';
 import { destroyGlobalSearchIntegrations, mountGlobalSearchResults } from './globalSearch';
 import {
+  activateRestoredMapTab,
   collectRestoredMapTabsFromLayout,
   deduplicateRestoredMapTabs,
 } from './siyuanTabLifecycle';
@@ -136,7 +137,8 @@ export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
     this.registerTopBar();
     this.restoredTabSweepTimers = [0, 250, 1000].map((delay) => window.setTimeout(() => {
       const restored = collectRestoredMapTabsFromLayout(
-        (window as any).siyuan?.layout?.centerLayout,
+        (this.app as any)?.layout?.centerLayout
+          ?? (window as any).siyuan?.layout?.centerLayout,
         `${this.name}${TAB_TYPE}`,
       );
       const closed = deduplicateRestoredMapTabs({ layout: restored });
@@ -188,6 +190,19 @@ export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
       if (this.tabRegistry.activate(mapId)) {
         this.diagnostics.record('global-search', 'map-tab-found-existing', mapId, { activated: true });
         this.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'map-tab-found-existing' });
+        return;
+      }
+      const restored = collectRestoredMapTabsFromLayout(
+        (this.app as any)?.layout?.centerLayout
+          ?? (window as any).siyuan?.layout?.centerLayout,
+        `${this.name}${TAB_TYPE}`,
+      );
+      deduplicateRestoredMapTabs({ layout: restored });
+      if (activateRestoredMapTab(restored, mapId)) {
+        await this.tabRegistry.waitForRegistration(mapId, 600);
+        this.tabRegistry.activate(mapId);
+        this.diagnostics.record('global-search', 'map-tab-found-lazy-restored', mapId, { activated: true });
+        this.diagnostics.updateGlobalSearchState({ lastNavigationStep: 'map-tab-found-lazy-restored' });
         return;
       }
       // A SiYuan workspace restore initializes custom tabs asynchronously.
@@ -398,13 +413,6 @@ export default class YeMindPlugin extends Plugin implements YeMindPluginHost {
     await this.ready;
     const menu = new Menu('siyuan-yemind-top-menu');
     menu.addItem({ icon: 'iconAdd', label: '新建导图', click: () => { void this.createMap(); } });
-    const maps = this.repository.list();
-    if (maps.length > 0) {
-      menu.addSeparator();
-      maps.slice(0, 12).forEach((map) => {
-        menu.addItem({ icon: ICON_ID, label: map.title, click: () => { void this.openMap(map.id); } });
-      });
-    }
     menu.addSeparator();
     menu.addItem({ icon: 'iconSettings', label: '设置', click: () => openYeMindSettingsDialog(this.settingsStore, { diagnostics: this.diagnostics }) });
     menu.addItem({ icon: 'iconInfo', label: '关于 YeMind', click: () => openYeMindAboutDialog({ diagnostics: this.diagnostics }) });

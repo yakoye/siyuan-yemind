@@ -5,7 +5,15 @@ import {
   type StudyCard,
   type StudyCardRating,
 } from '../review/studyCards';
-import { fullscreenIcon } from './projectControls';
+import {
+  studyCardSourceSearchText,
+  type StudyCardSourceSnapshot,
+} from '../review/studyCardSource';
+import { fullscreenIcon, panelCloseIcon } from './projectControls';
+import {
+  renderStudyCardSourceBack,
+  renderStudyCardSourceFront,
+} from './studyCardPresentation';
 
 export type StudyPanelMode = 'cards' | 'review';
 
@@ -13,17 +21,21 @@ export interface ActiveStudyNode {
   uid: string;
   text: string;
   back?: string;
+  source?: StudyCardSourceSnapshot;
 }
 
 export interface StudyPanelOptions {
   panel: HTMLElement;
   getCards(): StudyCard[];
   getActiveNode(): ActiveStudyNode | null;
+  getNodeByUid?(uid: string): ActiveStudyNode | null;
   readonly?(): boolean;
   onChange(cards: StudyCard[]): Promise<void> | void;
   onClose?(): void;
   onNavigate?(mode: StudyPanelMode, cardIds?: string[]): void;
   onMessage?(message: string, kind?: 'info' | 'error'): void;
+  onPreviewSourceImage?(src: string, title: string): void;
+  pluginBaseUrl?: string;
   now?: () => number;
   id?: () => string;
 }
@@ -107,6 +119,34 @@ export class StudyPanelController {
     if (!this.element.hidden) this.render();
   }
 
+  cardForNode(nodeUid: string): StudyCard | undefined {
+    const uid = String(nodeUid ?? '').trim();
+    if (!uid) return undefined;
+    return this.cards().find((card) => card.nodeUid === uid);
+  }
+
+  async createCardFromActiveNode(): Promise<StudyCard | null> {
+    if (this.options.readonly?.()) return null;
+    const node = this.options.getActiveNode();
+    if (!node) {
+      this.options.onMessage?.('请先选中一个导图节点');
+      return null;
+    }
+    const existing = this.cardForNode(node.uid);
+    if (existing) return existing;
+    const now = this.options.now?.() ?? Date.now();
+    const card = createStudyCard({
+      id: this.options.id?.() ?? globalThis.crypto?.randomUUID?.() ?? `card-${now}`,
+      nodeUid: node.uid,
+      front: plainText(node.text) || '未命名卡片',
+      back: plainText(node.back),
+      now,
+      source: node.source,
+    });
+    await this.persist([...this.cards(), card]);
+    return card;
+  }
+
   private cards(): StudyCard[] {
     return this.optimisticCards ?? normalizeStudyCards(this.options.getCards());
   }
@@ -121,7 +161,7 @@ export class StudyPanelController {
           <small>${cards.length} 张卡片</small>
         </div>
         ${this.mode === 'cards' ? `<button type="button" data-study-action="fullscreen" title="${this.fullscreen ? '缩小' : '全屏'}" aria-label="${this.fullscreen ? '缩小' : '全屏'}卡片面板">${fullscreenIcon()}</button>` : ''}
-        <button type="button" data-study-action="close" title="关闭" aria-label="关闭${this.mode === 'review' ? '复习' : '卡片'}面板">×</button>
+        <button type="button" data-study-action="close" title="关闭" aria-label="关闭${this.mode === 'review' ? '复习' : '卡片'}面板">${panelCloseIcon()}</button>
       </header>
       ${this.mode === 'review' ? this.renderReview(cards) : this.renderCards(cards)}
     `;
@@ -141,7 +181,7 @@ export class StudyPanelController {
         && card.status !== this.filter
       ) return false;
       if (!this.search) return true;
-      const haystack = `${card.front}\n${card.back}\n${card.nodeUid}`.toLocaleLowerCase();
+      const haystack = `${card.front}\n${card.back}\n${card.nodeUid}\n${studyCardSourceSearchText(card.source)}`.toLocaleLowerCase();
       return haystack.includes(this.search.toLocaleLowerCase());
     });
     const filters: Array<[typeof this.filter, string]> = [
@@ -177,6 +217,8 @@ export class StudyPanelController {
 
   private renderCard(card: StudyCard, readonly: boolean): string {
     const flipped = this.flipped.has(card.id);
+    const sourceNode = this.options.getNodeByUid?.(card.nodeUid);
+    const sourceDeleted = Boolean(card.source && this.options.getNodeByUid && !sourceNode);
     const lastReviewed = card.lastReviewedAt
       ? new Date(card.lastReviewedAt).toLocaleDateString('zh-CN')
       : '';
@@ -186,15 +228,26 @@ export class StudyPanelController {
           <span><i class="ymz-study-source-dot" aria-hidden="true"></i>${escapeHtml(card.nodeUid || '独立卡片')}</span>
           <button type="button" data-study-action="star" aria-pressed="${card.starred}" title="${card.starred ? '取消重点' : '设为重点'}"${readonly ? ' disabled' : ''}>${card.starred ? '★' : '☆'}</button>
         </header>
-        <button type="button" class="ymz-study-card__face" data-study-action="flip" data-study-face="${flipped ? 'back' : 'front'}">
-          <small>${flipped ? '答案' : '问题'}</small>
-          <strong>${escapeHtml(flipped ? card.back || '（尚未填写答案）' : card.front)}</strong>
-          <em>点击翻面</em>
-        </button>
+        <div class="ymz-study-card__face" data-study-face="${flipped ? 'back' : 'front'}">
+          <button type="button" class="ymz-study-card__flip" data-study-action="flip">
+            <small>${flipped ? '答案' : '问题'}</small>
+            <strong>${escapeHtml(flipped ? card.back || '（尚未填写答案）' : card.front)}</strong>
+            <em>点击翻面</em>
+          </button>
+          ${flipped
+            ? renderStudyCardSourceBack(card.source)
+            : renderStudyCardSourceFront(card.source, this.options.pluginBaseUrl)}
+        </div>
         <details>
           <summary>编辑卡片</summary>
           <label><span>正面</span><input data-study-field="front" value="${escapeHtml(card.front)}" aria-label="卡片正面"${readonly ? ' disabled' : ''}></label>
           <label><span>背面</span><textarea data-study-field="back" aria-label="卡片背面" placeholder="输入答案或补充内容"${readonly ? ' disabled' : ''}>${escapeHtml(card.back)}</textarea></label>
+          ${card.source ? `
+            <div class="ymz-study-card__source-state" data-study-source-state="${sourceDeleted ? 'missing' : 'available'}">
+              <span>${sourceDeleted ? '来源节点已删除' : '已保存节点完整内容'}</span>
+              <button type="button" data-study-action="sync-source"${readonly || sourceDeleted || !this.options.getNodeByUid ? ' disabled' : ''}>从来源节点更新</button>
+            </div>
+          ` : ''}
         </details>
         <div class="ymz-study-card__statuses" role="group" aria-label="卡片状态">
           ${(['new', 'learning', 'mastered'] as const).map((status) => `<button type="button" data-study-status="${status}" class="${card.status === status ? 'is-active' : ''}" aria-pressed="${card.status === status}"${readonly ? ' disabled' : ''}>${statusLabel(status)}</button>`).join('')}
@@ -234,7 +287,11 @@ export class StudyPanelController {
             <button type="button" data-study-action="open-current-card">查看卡片</button>
           </div>
           <h2>${escapeHtml(current.front)}</h2>
-          <div class="ymz-study-review-card__answer" data-role="study-answer"${this.revealed ? '' : ' hidden'}>${escapeHtml(current.back || '（尚未填写答案）')}</div>
+          ${renderStudyCardSourceFront(current.source, this.options.pluginBaseUrl)}
+          <div class="ymz-study-review-card__answer" data-role="study-answer"${this.revealed ? '' : ' hidden'}>
+            <div>${escapeHtml(current.back || '（尚未填写答案）')}</div>
+            ${renderStudyCardSourceBack(current.source)}
+          </div>
           <button type="button" class="ymz-study-reveal" data-study-action="reveal"${this.revealed ? ' hidden' : ''}>显示答案</button>
           <div class="ymz-study-ratings"${this.revealed ? '' : ' hidden'} aria-label="复习评价">
             <button type="button" data-study-rating="again"${readonly ? ' disabled' : ''}><strong>再来一次</strong><small>本轮稍后</small></button>
@@ -345,21 +402,7 @@ export class StudyPanelController {
       return;
     }
     if (action === 'create') {
-      if (this.options.readonly?.()) return;
-      const node = this.options.getActiveNode();
-      if (!node) {
-        this.options.onMessage?.('请先选中一个导图节点');
-        return;
-      }
-      const now = this.options.now?.() ?? Date.now();
-      const card = createStudyCard({
-        id: this.options.id?.() ?? globalThis.crypto?.randomUUID?.() ?? `card-${now}`,
-        nodeUid: node.uid,
-        front: plainText(node.text) || '未命名卡片',
-        back: plainText(node.back),
-        now,
-      });
-      void this.persist([...this.cards(), card]);
+      void this.createCardFromActiveNode();
       return;
     }
     if (!id) return;
@@ -367,6 +410,22 @@ export class StudyPanelController {
       if (this.flipped.has(id)) this.flipped.delete(id);
       else this.flipped.add(id);
       this.render();
+      return;
+    }
+    if (action === 'preview-source-image') {
+      const imageButton = target.closest<HTMLElement>('[data-study-image-src]');
+      const src = String(imageButton?.dataset.studyImageSrc ?? '');
+      if (src) this.options.onPreviewSourceImage?.(src, String(imageButton?.dataset.studyImageTitle ?? ''));
+      return;
+    }
+    if (action === 'sync-source') {
+      if (this.options.readonly?.()) return;
+      const card = this.cards().find((item) => item.id === id);
+      const node = card ? this.options.getNodeByUid?.(card.nodeUid) : null;
+      if (!card || !node?.source) return;
+      void this.persist(this.cards().map((item) => item.id === card.id
+        ? { ...item, source: node.source, updatedAt: this.options.now?.() ?? Date.now() }
+        : item));
       return;
     }
     if (action === 'delete') {

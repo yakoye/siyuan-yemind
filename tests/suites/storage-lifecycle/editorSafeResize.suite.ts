@@ -6,7 +6,12 @@ const source = readFileSync(resolve(process.cwd(), 'src/editor/YeMindEditor.ts')
 
 describe('editor safe resize', () => {
   it('does not resize the mind-map while pure outline mode hides the canvas', () => {
-    expect(source).toMatch(/if \(mode !== ["']outline["']\) \{[\s\S]*?this\.scheduleSafeResize\(\);[\s\S]*?\}/);
+    expect(source).toMatch(
+      /private scheduleSafeResize\(attempt = 0\): void \{[\s\S]*?this\.viewMode === ["']outline["'][\s\S]*?return;/,
+    );
+    expect(source).toMatch(
+      /requestAnimationFrame\(\(\) => \{[\s\S]*?this\.viewMode === ["']outline["'][\s\S]*?return;/,
+    );
     expect(source).not.toContain("window.requestAnimationFrame(() => this.map?.resize())");
   });
 });

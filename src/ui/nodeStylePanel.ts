@@ -16,13 +16,16 @@ function isNodeColorKey(value: string | undefined): value is NodeColorKey {
 
 export class NodeStylePanel {
   private readonly panel: HTMLElement | null;
+  private readonly header: HTMLElement | null;
   private readonly colorPopover: HTMLElement;
   private readonly customColorInput: HTMLInputElement;
   private current: NodeStylePatch = {};
   private activeColorKey: NodeColorKey = 'fillColor';
+  private panelDrag: { pointerId: number; offsetX: number; offsetY: number } | null = null;
 
   constructor(private readonly root: HTMLElement, private readonly commands: YeMindCommands) {
     this.panel = root.querySelector<HTMLElement>('[data-role="node-style-panel"]');
+    this.header = this.panel?.querySelector<HTMLElement>('.ymz-node-style-panel__header') ?? null;
     this.colorPopover = document.createElement('div');
     this.colorPopover.className = 'ymz-color-popover ymz-node-color-popover';
     this.colorPopover.hidden = true;
@@ -40,6 +43,7 @@ export class NodeStylePanel {
     this.panel.addEventListener('input', this.onInput, true);
     INPUT_EVENTS.forEach((type) => this.panel?.addEventListener(type, this.stopEditorEvent));
     this.panel.addEventListener('pointerdown', this.stopEditorEvent);
+    this.header?.addEventListener('pointerdown', this.beginPanelDrag);
     this.colorPopover.addEventListener('click', this.onColorPopoverClick);
     this.colorPopover.addEventListener('mousedown', this.onColorPopoverMouseDown);
     INPUT_EVENTS.forEach((type) => this.colorPopover.addEventListener(type, this.stopEditorEvent));
@@ -57,6 +61,8 @@ export class NodeStylePanel {
       INPUT_EVENTS.forEach((type) => this.panel?.removeEventListener(type, this.stopEditorEvent));
       this.panel.removeEventListener('pointerdown', this.stopEditorEvent);
     }
+    this.header?.removeEventListener('pointerdown', this.beginPanelDrag);
+    this.finishPanelDrag();
     this.colorPopover.removeEventListener('click', this.onColorPopoverClick);
     this.colorPopover.removeEventListener('mousedown', this.onColorPopoverMouseDown);
     INPUT_EVENTS.forEach((type) => this.colorPopover.removeEventListener(type, this.stopEditorEvent));
@@ -131,6 +137,53 @@ export class NodeStylePanel {
   }
 
   private readonly stopEditorEvent = (event: Event): void => event.stopPropagation();
+
+  private readonly beginPanelDrag = (event: PointerEvent): void => {
+    if (!this.panel || event.button !== 0) return;
+    if ((event.target as Element | null)?.closest('button,input,select')) return;
+    const panelRect = this.panel.getBoundingClientRect();
+    this.panelDrag = {
+      pointerId: event.pointerId,
+      offsetX: event.clientX - panelRect.left,
+      offsetY: event.clientY - panelRect.top,
+    };
+    window.addEventListener('pointermove', this.onPanelDrag);
+    window.addEventListener('pointerup', this.finishPanelDrag);
+    window.addEventListener('pointercancel', this.finishPanelDrag);
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  private readonly onPanelDrag = (event: PointerEvent): void => {
+    if (!this.panel || !this.panelDrag || event.pointerId !== this.panelDrag.pointerId) return;
+    const rootRect = this.root.getBoundingClientRect();
+    const panelRect = this.panel.getBoundingClientRect();
+    const localX = Math.max(
+      8,
+      Math.min(
+        event.clientX - rootRect.left - this.panelDrag.offsetX,
+        rootRect.width - panelRect.width - 8,
+      ),
+    );
+    const localY = Math.max(
+      8,
+      Math.min(
+        event.clientY - rootRect.top - this.panelDrag.offsetY,
+        rootRect.height - panelRect.height - 8,
+      ),
+    );
+    this.panel.style.left = `${Math.round(localX)}px`;
+    this.panel.style.top = `${Math.round(localY)}px`;
+    this.panel.style.right = 'auto';
+    event.preventDefault();
+  };
+
+  private readonly finishPanelDrag = (): void => {
+    this.panelDrag = null;
+    window.removeEventListener('pointermove', this.onPanelDrag);
+    window.removeEventListener('pointerup', this.finishPanelDrag);
+    window.removeEventListener('pointercancel', this.finishPanelDrag);
+  };
 
   private readonly onDocumentMouseDown = (event: MouseEvent): void => {
     if (!this.panel || this.panel.hidden) return;

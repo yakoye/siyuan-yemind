@@ -12,8 +12,6 @@ import type { WebServices } from './webServices';
 interface EditorHandle {
   destroy(): void;
   resize(): void;
-  openExportDialog?(): void;
-  openImportPicker?(): void;
 }
 
 interface WebAppOptions {
@@ -24,7 +22,6 @@ export class YeMindWebApp {
   private editor: EditorHandle | null = null;
   private editorHost: HTMLElement | null = null;
   private mapList: HTMLElement | null = null;
-  private fileInput: HTMLInputElement | null = null;
   private unsubscribe: (() => void) | null = null;
   private appearanceUnsubscribe: (() => void) | null = null;
   private appearanceController: AppearanceController | null = null;
@@ -81,7 +78,6 @@ export class YeMindWebApp {
     this.editorHost?.removeEventListener('pointerup', this.cancelLongPress);
     this.editorHost?.removeEventListener('pointercancel', this.cancelLongPress);
     this.cancelLongPress();
-    this.fileInput?.removeEventListener('change', this.onFileChange);
     this.root.innerHTML = '';
   }
 
@@ -132,40 +128,23 @@ export class YeMindWebApp {
         }
         await this.mountMap(created.id);
       },
+      onExportBackup: () => this.exportBackup(),
+      onRestoreBackup: (file) => this.restoreFromBackup(file),
     });
     this.renderMapList();
   }
 
   private renderShell(): void {
-    this.root.innerHTML = `
-      <div class="ymw-app">
-        <aside class="ymw-sidebar" aria-label="导图库">
-          <header class="ymw-sidebar__header">
-            <div class="ymw-brand"><img src="./icon.png" alt=""><span><strong>YeMind</strong><small>本地网页版 · v${PLUGIN_VERSION}</small></span></div>
-            <button type="button" class="ymw-primary" data-web-action="new-map">＋ 新建</button>
-          </header>
-          <div class="ymw-map-list" data-web-map-list></div>
-          <footer class="ymw-sidebar__footer">
-            <button type="button" data-web-action="import">导入</button>
-            <button type="button" data-web-action="export">导出</button>
-            <button type="button" data-web-action="backup">备份</button>
-            <button type="button" data-web-action="restore">恢复</button>
-          </footer>
-        </aside>
-        <main class="ymw-editor" data-web-editor></main>
-        <button type="button" class="ymw-sidebar-toggle" data-web-action="toggle-sidebar" aria-label="打开导图库">☰</button>
-        <input type="file" data-web-file hidden accept=".json,application/json">
-      </div>
-    `;
+    this.root.innerHTML = webShellTemplate();
+    const version = this.root.querySelector<HTMLElement>('[data-web-version]');
+    if (version) version.textContent = `本地网页版 · v${PLUGIN_VERSION}`;
     this.editorHost = this.root.querySelector<HTMLElement>('[data-web-editor]');
     this.mapList = this.root.querySelector<HTMLElement>('[data-web-map-list]');
-    this.fileInput = this.root.querySelector<HTMLInputElement>('[data-web-file]');
     this.root.addEventListener('click', this.onClick);
     this.editorHost?.addEventListener('pointerdown', this.onLongPressStart);
     this.editorHost?.addEventListener('pointermove', this.onLongPressMove);
     this.editorHost?.addEventListener('pointerup', this.cancelLongPress);
     this.editorHost?.addEventListener('pointercancel', this.cancelLongPress);
-    this.fileInput?.addEventListener('change', this.onFileChange);
     window.addEventListener('resize', this.onResize);
     this.renderMapList();
   }
@@ -269,16 +248,6 @@ export class YeMindWebApp {
           }
         }
       }
-      if (action === 'export') this.editor?.openExportDialog?.();
-      if (action === 'backup') this.exportBackup();
-      if (action === 'import') this.editor?.openImportPicker?.();
-      if (action === 'restore') {
-        if (this.fileInput) {
-          this.fileInput.dataset.mode = action;
-          this.fileInput.value = '';
-          this.fileInput.click();
-        }
-      }
       if (action === 'toggle-sidebar') {
         this.root.querySelector('.ymw-app')?.classList.toggle('is-sidebar-open');
       }
@@ -296,22 +265,30 @@ export class YeMindWebApp {
     downloadJson(`yemind-backup-${new Date().toISOString().slice(0, 10)}.json`, backup);
   }
 
-  private readonly onFileChange = async (): Promise<void> => {
-    const file = this.fileInput?.files?.[0];
-    const mode = this.fileInput?.dataset.mode;
-    if (!file || !mode) return;
-    try {
-      const value = JSON.parse(await file.text()) as unknown;
-      if (mode === 'restore') {
-        const accepted = await confirm('恢复备份', '恢复会替换当前网页版导图库，是否继续？');
-        if (!accepted) return;
-        await restoreBackup(this.services.store, value);
-        window.location.reload();
-        return;
-      }
-      throw new Error('请使用导入按钮导入导图文件');
-    } catch (error) {
-      showMessage(error instanceof Error ? error.message : '文件读取失败', 5000, 'error');
-    }
-  };
+  private async restoreFromBackup(file: File): Promise<void> {
+    const value = JSON.parse(await file.text()) as unknown;
+    const accepted = await confirm(
+      '恢复完整备份',
+      '恢复会替换当前网页版全部导图、设置和检查点，是否继续？',
+    );
+    if (!accepted) return;
+    await restoreBackup(this.services.store, value);
+    window.location.reload();
+  }
+}
+
+export function webShellTemplate(): string {
+  return `
+    <div class="ymw-app">
+      <aside class="ymw-sidebar" aria-label="导图库">
+        <header class="ymw-sidebar__header">
+          <div class="ymw-brand"><img src="./icon.png" alt=""><span><strong>YeMind</strong><small data-web-version>本地网页版</small></span></div>
+          <button type="button" class="ymw-primary" data-web-action="new-map">＋ 新建</button>
+        </header>
+        <div class="ymw-map-list" data-web-map-list></div>
+      </aside>
+      <main class="ymw-editor" data-web-editor></main>
+      <button type="button" class="ymw-sidebar-toggle" data-web-action="toggle-sidebar" aria-label="打开导图库">☰</button>
+    </div>
+  `;
 }

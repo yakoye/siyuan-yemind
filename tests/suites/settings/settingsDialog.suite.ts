@@ -35,7 +35,7 @@ describe('custom settings dialog', () => {
 
 it('renders a control for every persisted setting except the shortcut map', () => {
   const html = createSettingsDialogTemplate({ ...DEFAULT_SETTINGS, shortcutMap: { ...DEFAULT_SHORTCUTS } });
-  const keys = Object.keys(DEFAULT_SETTINGS).filter((key) => key !== 'shortcutMap');
+  const keys = Object.keys(DEFAULT_SETTINGS).filter((key) => !['shortcutMap', 'favoriteThemeIds'].includes(key));
   keys.forEach((key) => expect(html, `missing setting control: ${key}`).toContain(`data-setting="${key}"`));
   Object.keys(DEFAULT_SHORTCUTS).forEach((key) => expect(html).toContain(`data-shortcut="${key}"`));
 });

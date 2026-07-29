@@ -101,7 +101,9 @@ function runThemeSmoke(): Record<string, unknown> {
   assert(!Object.prototype.hasOwnProperty.call(tree.children[0].data, 'lineColor'), 'theme line accessor must be removed when project line colors own rendering');
 
   const optionsHtml = themeOptionsHtml('scheme-dawn');
-  assert(optionsHtml.includes('optgroup label="基础"'), 'base optgroup missing');
+  assert(!optionsHtml.includes('optgroup label="基础"'), 'base optgroup must be merged into classic');
+  assert(optionsHtml.includes('optgroup label="经典"'), 'classic optgroup missing');
+  assert(optionsHtml.indexOf('value="yemind-default"') < optionsHtml.indexOf('value="scheme-eternity"'), 'former base themes must lead classic');
   assert(optionsHtml.includes('optgroup label="缤纷"'), 'colorful optgroup missing');
   assert(optionsHtml.includes('optgroup label="经典"'), 'classic optgroup missing');
   assert(optionsHtml.includes('value="scheme-dawn" selected'), 'selected theme option missing');

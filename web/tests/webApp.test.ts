@@ -1,7 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { YeMindWebApp } from '../src/webApp';
 import { createWebServices } from '../src/webServices';
 import { createMemoryWebStore } from '../src/webStorage';
+import type { YeMindEditorOptions } from '../../src/editor/YeMindEditor';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -41,26 +42,25 @@ describe('standalone YeMind workspace', () => {
     app.destroy();
   });
 
-  it('delegates map import and export to the live shared editor', async () => {
+  it('injects complete backup and restore into the shared editor without duplicate shell buttons', async () => {
     const root = document.createElement('div');
     document.body.appendChild(root);
     const services = createWebServices(createMemoryWebStore());
-    const openExportDialog = vi.fn();
-    const openImportPicker = vi.fn();
+    let editorOptions: YeMindEditorOptions | undefined;
     const app = new YeMindWebApp(root, services, {
-      createEditor: () => ({
-        destroy: () => undefined,
-        resize: () => undefined,
-        openExportDialog,
-        openImportPicker,
-      }),
+      createEditor: (options) => {
+        editorOptions = options;
+        return {
+          destroy: () => undefined,
+          resize: () => undefined,
+        };
+      },
     });
     await app.start();
-    root.querySelector<HTMLButtonElement>('[data-web-action="export"]')!.click();
-    root.querySelector<HTMLButtonElement>('[data-web-action="import"]')!.click();
-    await Promise.resolve();
-    expect(openExportDialog).toHaveBeenCalledOnce();
-    expect(openImportPicker).toHaveBeenCalledOnce();
+    expect(editorOptions?.onExportBackup).toBeTypeOf('function');
+    expect(editorOptions?.onRestoreBackup).toBeTypeOf('function');
+    expect(root.querySelector('[data-web-action="export"]')).toBeNull();
+    expect(root.querySelector('[data-web-action="import"]')).toBeNull();
     app.destroy();
   });
 

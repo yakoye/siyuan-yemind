@@ -16,5 +16,6 @@ describe('project controls', () => {
     expect(lineStyleIcon('curve')).toContain('ymz-line-icon--curve');
     expect(lineStyleIcon('straight')).toContain('ymz-line-icon--straight');
     expect(lineStyleIcon('direct')).toContain('ymz-line-icon--direct');
+    expect(lineStyleIcon('polyline')).toContain('ymz-line-icon--polyline');
   });
 });

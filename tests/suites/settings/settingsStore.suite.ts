@@ -62,8 +62,22 @@ describe('SettingsStore', () => {
       outerFramePaddingX: 10,
       outerFramePaddingY: 10,
       toolbarsPinned: true,
+      favoriteThemeIds: [],
       shortcutMap: DEFAULT_SHORTCUTS,
     });
+  });
+
+  it('keeps only unique known favorite theme ids in source order', async () => {
+    const store = new SettingsStore({
+      load: async () => ({
+        favoriteThemeIds: ['ink-branch', 'missing-theme', 'ink-branch', 'scheme-rainbow'],
+      }),
+      save: async () => {},
+    });
+
+    await store.load();
+
+    expect(store.get().favoriteThemeIds).toEqual(['ink-branch', 'scheme-rainbow']);
   });
 
   it('persists typed v0.4 setting updates', async () => {
@@ -106,6 +120,7 @@ describe('SettingsStore', () => {
       defaultOuterFrameText: '重点',
       outerFramePaddingX: 24,
       outerFramePaddingY: 18,
+      favoriteThemeIds: ['ink-branch', 'scheme-rainbow'],
       shortcutMap: { ...DEFAULT_SHORTCUTS, search: 'Ctrl+Shift+f', comments: '' },
     });
 
@@ -141,6 +156,7 @@ describe('SettingsStore', () => {
       defaultOuterFrameText: '重点',
       outerFramePaddingX: 24,
       outerFramePaddingY: 18,
+      favoriteThemeIds: ['ink-branch', 'scheme-rainbow'],
       shortcutMap: { ...DEFAULT_SHORTCUTS, search: 'Ctrl+Shift+f', comments: '' },
     });
   });

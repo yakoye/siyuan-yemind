@@ -51,6 +51,7 @@ describe('v0.6.4 whole-map style persistence', () => {
         <button data-project-style-action="close"></button>
         <button data-project-line-style="curve"></button>
         <button data-project-line-style="direct"></button>
+        <button data-project-line-style="polyline"></button>
         <button data-project-line-style="straight"></button>
       </aside>`;
     const onLineStyleChange = vi.fn();
@@ -66,9 +67,12 @@ describe('v0.6.4 whole-map style persistence', () => {
     host.querySelector<HTMLButtonElement>('[data-project-line-style="direct"]')!.click();
     expect(onLineStyleChange).toHaveBeenLastCalledWith('direct');
     expect(host.querySelector('[data-project-line-style="direct"]')?.classList.contains('is-active')).toBe(true);
+    host.querySelector<HTMLButtonElement>('[data-project-line-style="polyline"]')!.click();
+    expect(onLineStyleChange).toHaveBeenLastCalledWith('polyline');
+    expect(host.querySelector('[data-project-line-style="polyline"]')?.classList.contains('is-active')).toBe(true);
     host.querySelector<HTMLButtonElement>('[data-project-line-style="straight"]')!.click();
     expect(onLineStyleChange).toHaveBeenLastCalledWith('straight');
-    expect(new Set(['curve', 'direct', 'straight']).size).toBe(3);
+    expect(new Set(['curve', 'direct', 'polyline', 'straight']).size).toBe(4);
     panel.destroy();
   });
 });

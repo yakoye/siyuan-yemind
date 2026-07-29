@@ -11,10 +11,9 @@ import {
   detectAppearance,
   normalizeLineStyle,
   normalizeThemePresetId,
-  YEMIND_THEME_PRESETS,
   type YeMindAppearance,
 } from "../core/themePresets";
-import { themePaletteColors } from './themeChoicePresentation';
+import { buildThemeChoiceOptions, THEME_CHOICE_GROUPS } from './themeChoiceGroups';
 import { buildRelationOptions } from "../core/relationConfig";
 import { buildOuterFrameOptions } from "../core/outerFrameConfig";
 import { sanitizeAssociativeLines } from "../core/relationData";
@@ -93,6 +92,7 @@ import { NodeStylePanel } from "../ui/nodeStylePanel";
 import { ProjectStylePanel } from "../ui/projectStylePanel";
 import { LayoutGalleryPanel } from "../ui/layoutGalleryPanel";
 import { ProjectChoicePanel } from "../ui/projectChoicePanel";
+import { SymbolPicker } from '../ui/symbolPicker';
 import { openClipartPicker, openMarkerPicker } from "../ui/localAssetDialogs";
 import { normalizeLayoutAssetId } from "../core/layoutAssetPresets";
 import { stabilizeMindMapMeasurementHost } from "../core/measurementHost";
@@ -125,10 +125,15 @@ import { normalizeMapTitle } from './mapTitle';
 import { ResourceActionPopover } from './resourceActionPopover';
 import { createExportArtifact, downloadExportArtifact } from '../transfer/exporter';
 import { importMindMapBytes } from '../transfer/importer';
-import type { ExportFormatId } from '../transfer/formatCatalog';
+import { IMPORT_ACCEPT, type ExportCategoryId, type ExportFormatId } from '../transfer/formatCatalog';
 import { AppearanceController } from '../ui/AppearanceController';
-import { StudyPanelController, type StudyPanelMode } from './StudyPanelController';
+import {
+  StudyPanelController,
+  type ActiveStudyNode,
+  type StudyPanelMode,
+} from './StudyPanelController';
 import { normalizeStudyCards } from '../review/studyCards';
+import { normalizeStudyCardSource } from '../review/studyCardSource';
 import { MiniMapController } from './MiniMapController';
 import {
   RenderLifecycleCoordinator,
@@ -146,6 +151,8 @@ export interface YeMindEditorOptions {
   onMissing?: () => void;
   onTitleChange?: (title: string) => void;
   onImport?: (map: YeMindMapDocument) => Promise<void> | void;
+  onExportBackup?: () => Promise<void> | void;
+  onRestoreBackup?: (file: File) => Promise<void> | void;
   pluginBaseUrl?: string;
 }
 
@@ -211,6 +218,7 @@ export class YeMindEditor {
   private projectStylePanel: ProjectStylePanel | null = null;
   private layoutGalleryPanel: LayoutGalleryPanel | null = null;
   private themeChoicePanel: ProjectChoicePanel | null = null;
+  private symbolPicker: SymbolPicker | null = null;
   private nodeQuickActions: NodeQuickActionsController | null = null;
   private toolbarVisibility: ToolbarVisibilityController | null = null;
   private resourceActionPopover: ResourceActionPopover | null = null;
@@ -646,14 +654,17 @@ export class YeMindEditor {
     const panel = this.rootEl?.querySelector<HTMLElement>('[data-role="export-panel"]');
     if (!panel) return;
     panel.hidden = false;
+    this.setExportCategory(
+      (panel.dataset.exportCategory as ExportCategoryId | undefined) ?? 'all',
+    );
     panel.querySelector<HTMLButtonElement>('[data-default="true"]')?.focus();
   }
 
   openImportPicker(): void {
-    const input = this.rootEl?.querySelector<HTMLInputElement>('[data-role="import-file-input"]');
-    if (!input) return;
-    input.value = '';
-    input.click();
+    const panel = this.rootEl?.querySelector<HTMLElement>('[data-role="import-panel"]');
+    if (!panel) return;
+    panel.hidden = false;
+    panel.querySelector<HTMLButtonElement>('[data-import-kind]:not([hidden])')?.focus();
   }
 
   destroy(): void {
@@ -691,6 +702,8 @@ export class YeMindEditor {
     this.layoutGalleryPanel = null;
     this.themeChoicePanel?.destroy();
     this.themeChoicePanel = null;
+    this.symbolPicker?.destroy();
+    this.symbolPicker = null;
     this.toolbarVisibility?.destroy();
     this.toolbarVisibility = null;
     this.resourceActionPopover?.destroy();
@@ -794,6 +807,11 @@ export class YeMindEditor {
       this.current.title,
       this.current.theme,
       this.current.lineStyle,
+      this.options.pluginBaseUrl,
+      {
+        fullBackup: Boolean(this.options.onExportBackup),
+        fullRestore: Boolean(this.options.onRestoreBackup),
+      },
     );
     this.rootEl = this.options.container.querySelector(
       ".ymz-editor",
@@ -918,6 +936,18 @@ export class YeMindEditor {
       pluginBaseUrl: this.options.pluginBaseUrl,
     });
     this.commands = createCommandAdapter(this.map);
+    this.symbolPicker = new SymbolPicker(this.rootEl, {
+      canInsert: () => Boolean(
+        this.commands
+        && !this.commands.isReadonly()
+        && this.commands.getPrimaryNode(),
+      ),
+      onInsert: (symbol) => {
+        const inserted = this.commands?.insertSymbol(symbol) ?? false;
+        if (inserted) this.refreshOutlineFromMap();
+        return inserted;
+      },
+    });
     this.renderLifecycle = new RenderLifecycleCoordinator(this.map, () => {
       this.nodeQuickActions?.scheduleRefresh();
       this.miniMapController?.refresh();
@@ -934,18 +964,12 @@ export class YeMindEditor {
         panel: studyPanelElement,
         getCards: () => this.current.studyCards ?? [],
         readonly: () => Boolean(this.commands?.isReadonly()),
-        getActiveNode: () => {
-          const node = this.commands?.getPrimaryNode();
-          const data = node?.getData?.() as Record<string, unknown> | undefined;
-          const uid = String(data?.uid ?? node?.getData?.('uid') ?? '').trim();
-          if (!uid) return null;
-          const note = normalizeNodeNote(data?.yemindNote ?? data?.note);
-          return {
-            uid,
-            text: String(data?.text ?? node?.getData?.('text') ?? ''),
-            back: note?.html ?? '',
-          };
-        },
+        getActiveNode: () => this.buildActiveStudyNode(this.commands?.getPrimaryNode()),
+        getNodeByUid: (uid) => this.buildActiveStudyNode(
+          (this.map as any)?.renderer?.findNodeByUid?.(uid),
+        ),
+        pluginBaseUrl: this.options.pluginBaseUrl,
+        onPreviewSourceImage: (src, title) => this.imageLightbox?.show(src, title),
         onChange: async (cards) => {
           const normalizedCards = normalizeStudyCards(cards);
           await this.options.repository.update(this.current.id, {
@@ -994,17 +1018,24 @@ export class YeMindEditor {
     this.themeChoicePanel = new ProjectChoicePanel(this.rootEl, {
       role: "theme-choice-panel",
       title: "主题",
-      options: YEMIND_THEME_PRESETS.map((preset) => ({
-        value: preset.id,
-        label: preset.label,
-        group: preset.group,
-        description: preset.description,
-        previewColor: preset.light.colorAppearance.centerBackground,
-        previewColors: themePaletteColors(preset),
-      })),
+      options: buildThemeChoiceOptions(this.settings.favoriteThemeIds),
+      groups: THEME_CHOICE_GROUPS,
       presentation: 'palette',
       selected: this.current.theme,
-      applyLabel: (option) => `应用主题 · ${option.label}`,
+      favoriteValues: this.settings.favoriteThemeIds,
+      emptyGroupMessage: (group) => group === '常用'
+        ? '还没有常用主题，点击主题卡片右上角的星标收藏。'
+        : '',
+      onFavoriteChange: (value, favorite) => {
+        const current = this.options.settingsStore.get().favoriteThemeIds;
+        const next = favorite
+          ? [...current.filter((id) => id !== value), value]
+          : current.filter((id) => id !== value);
+        void this.options.settingsStore.update({ favoriteThemeIds: next }).catch((error) => {
+          console.error('[YeMind] favorite theme save failed', error);
+          showMessage('常用主题保存失败', 4000, 'error');
+        });
+      },
       readonly: () => Boolean(this.commands?.isReadonly()),
       onSelect: (value) => this.setTheme(value),
     });
@@ -1082,6 +1113,10 @@ export class YeMindEditor {
       onContentAction: (uid, type) => this.runOutlineContentAction(uid, type),
       onContentHover: (uid, type, anchor, entering) => {
         if (!this.nodeHoverPreview) return;
+        if (type === 'todo') {
+          this.nodeHoverPreview.hide();
+          return;
+        }
         if (!entering) {
           this.nodeHoverPreview.scheduleHide();
           return;
@@ -1119,6 +1154,7 @@ export class YeMindEditor {
     this.bindToolbar();
     this.bindMapEvents();
     window.requestAnimationFrame(() => {
+      this.renderLifecycle?.reconcileRenderedTextGeometry();
       void this.repairLegacyClipartGeometry();
     });
     this.applyMapAppearance(false);
@@ -1167,6 +1203,32 @@ export class YeMindEditor {
   private bindToolbar(): void {
     this.rootEl.addEventListener("click", (event) => {
       const clickTarget = event.target as HTMLElement;
+      const exportPanel = this.rootEl.querySelector<HTMLElement>('[data-role="export-panel"]');
+      const importPanel = this.rootEl.querySelector<HTMLElement>('[data-role="import-panel"]');
+      if (clickTarget.closest('[data-action="close-export-panel"]')) {
+        this.closeExportDialog();
+        return;
+      }
+      if (
+        exportPanel
+        && !exportPanel.hidden
+        && !clickTarget.closest('[data-role="export-panel"]')
+        && !clickTarget.closest('[data-action="export-file"]')
+      ) {
+        this.closeExportDialog();
+      }
+      if (clickTarget.closest('[data-action="close-import-panel"]')) {
+        this.closeImportDialog();
+        return;
+      }
+      if (
+        importPanel
+        && !importPanel.hidden
+        && !clickTarget.closest('[data-role="import-panel"]')
+        && !clickTarget.closest('[data-action="import-file"]')
+      ) {
+        this.closeImportDialog();
+      }
       const overflowMenu = this.rootEl.querySelector<HTMLElement>(
         '[data-role="top-overflow-menu"]',
       );
@@ -1199,6 +1261,21 @@ export class YeMindEditor {
       if (exportButton) {
         const format = exportButton.dataset.exportFormat as ExportFormatId | undefined;
         if (format) void this.exportCurrentMap(format);
+        return;
+      }
+      const exportBackup = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-export-host-backup]');
+      if (exportBackup) {
+        void this.exportFullBackup();
+        return;
+      }
+      const importKind = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-import-kind]');
+      if (importKind) {
+        this.chooseImportFile(importKind.dataset.importKind ?? 'other');
+        return;
+      }
+      const exportCategory = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-export-category]');
+      if (exportCategory) {
+        this.setExportCategory(exportCategory.dataset.exportCategory as ExportCategoryId);
         return;
       }
 
@@ -1517,6 +1594,56 @@ export class YeMindEditor {
     if (panel) panel.hidden = true;
   }
 
+  private closeImportDialog(): void {
+    const panel = this.rootEl?.querySelector<HTMLElement>('[data-role="import-panel"]');
+    if (panel) panel.hidden = true;
+  }
+
+  private chooseImportFile(kind: string): void {
+    const input = this.rootEl?.querySelector<HTMLInputElement>('[data-role="import-file-input"]');
+    if (!input) return;
+    input.dataset.importKind = kind;
+    input.accept = kind === 'host-backup'
+      ? '.json,application/json'
+      : kind === 'map-backup'
+        ? '.yemind.svg,.yemind.zip,.kmindz,.svg,.png,.zip,.xmind,.kmind,.json,.yemind'
+        : IMPORT_ACCEPT;
+    input.value = '';
+    input.click();
+  }
+
+  private async exportFullBackup(): Promise<void> {
+    if (!this.options.onExportBackup) return;
+    const panel = this.rootEl.querySelector<HTMLElement>('[data-role="export-panel"]');
+    panel?.setAttribute('aria-busy', 'true');
+    try {
+      await this.options.onExportBackup();
+      this.closeExportDialog();
+      showMessage('完整备份已导出');
+    } catch (error) {
+      console.error('[YeMind] full backup export failed', error);
+      showMessage(error instanceof Error ? error.message : '完整备份导出失败', 5000, 'error');
+    } finally {
+      panel?.removeAttribute('aria-busy');
+    }
+  }
+
+  private setExportCategory(category: ExportCategoryId): void {
+    const panel = this.rootEl?.querySelector<HTMLElement>('[data-role="export-panel"]');
+    if (!panel) return;
+    const normalized: ExportCategoryId = category === 'map' || category === 'outline'
+      ? category
+      : 'all';
+    panel.dataset.exportCategory = normalized;
+    panel.querySelectorAll<HTMLButtonElement>('[data-export-category]').forEach((button) => {
+      button.setAttribute('aria-pressed', String(button.dataset.exportCategory === normalized));
+    });
+    panel.querySelectorAll<HTMLButtonElement>('[data-export-category-group]').forEach((button) => {
+      button.hidden = normalized !== 'all'
+        && button.dataset.exportCategoryGroup !== normalized;
+    });
+  }
+
   private transferSnapshot(): YeMindMapDocument {
     if (!this.map) throw new Error('导图画布尚未准备完成');
     return {
@@ -1633,6 +1760,12 @@ export class YeMindEditor {
     const file = input.files?.[0];
     if (!file) return;
     try {
+      if (input.dataset.importKind === 'host-backup') {
+        if (!this.options.onRestoreBackup) throw new Error('当前宿主不支持完整备份恢复');
+        await this.options.onRestoreBackup(file);
+        this.closeImportDialog();
+        return;
+      }
       const map = await importMindMapBytes({
         name: file.name,
         type: file.type,
@@ -1640,6 +1773,7 @@ export class YeMindEditor {
       });
       if (!this.options.onImport) throw new Error('当前宿主没有提供导入目标');
       await this.options.onImport(map);
+      this.closeImportDialog();
       showMessage(`已导入 ${map.title}`);
     } catch (error) {
       console.error('[YeMind] import failed', error);
@@ -1750,7 +1884,7 @@ export class YeMindEditor {
     const select = this.rootEl.querySelector<HTMLSelectElement>('[data-action="theme"]');
     if (select) select.value = this.current.theme;
     this.themeChoicePanel?.setSelected(this.current.theme);
-    this.applyMapAppearance();
+    this.applyMapAppearance(true, true);
     this.options.diagnostics.record("appearance", "theme-changed", this.current.id, { theme: this.current.theme });
     this.nodeQuickActions?.scheduleRefresh();
     this.scheduleSave();
@@ -1797,6 +1931,12 @@ export class YeMindEditor {
     });
     this.map.on('node_text_edit_change', (payload: RenderTextEditPayload) => {
       this.renderLifecycle?.scheduleTextEdit(payload);
+    });
+    this.map.on('hide_text_edit', () => {
+      this.renderLifecycle?.flushPendingTextEdit();
+    });
+    this.map.on('node_tree_render_end', () => {
+      this.renderLifecycle?.reconcileRenderedTextGeometry();
     });
     this.map.on("data_change", (data: MindMapTree) => {
       if (this.applyingCheckpoint) return;
@@ -2072,6 +2212,8 @@ export class YeMindEditor {
 
   private openContextMenu(event: MouseEvent): void {
     if (!this.commands) return;
+    const nodeUid = String(this.commands.getPrimaryNode()?.getData?.('uid') ?? '').trim();
+    const nodeCard = this.studyPanel?.cardForNode(nodeUid);
     this.options.diagnostics.record("context-menu", "opened", this.current.id, {
       selectedNodeCount: this.commands.getActiveNodes().length,
     });
@@ -2082,10 +2224,20 @@ export class YeMindEditor {
         openLinkDialog(this.commands!, this.settings.inlineLinkAutoHttps),
       onRelation: () => this.beginRelation(),
       onMarkers: () => openMarkerPicker(this.commands!, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
+      onSymbols: () => this.symbolPicker?.show(),
       onClipart: () => openClipartPicker(this.commands!, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() }),
       onTextToMap: () => {
         const uid = String(this.commands?.getPrimaryNode()?.getData?.('uid') ?? '');
         if (uid) this.openTextToMapForUid(uid);
+      },
+      hasCard: Boolean(nodeCard),
+      onCreateCard: () => {
+        void this.studyPanel?.createCardFromActiveNode().then((card) => {
+          if (card) this.setStudyMode('cards', [card.id]);
+        });
+      },
+      onEditCard: () => {
+        if (nodeCard) this.setStudyMode('cards', [nodeCard.id]);
       },
       onNodeStyle: () => {
         this.projectStylePanel?.hide();
@@ -2120,7 +2272,12 @@ export class YeMindEditor {
       onLineStyleChange: (lineStyle) => this.setLineStyle(lineStyle),
       onProjectStyle: () => {
         this.nodeStylePanel?.hide();
-        this.projectStylePanel?.show({ x: event.clientX, y: event.clientY });
+        const styleAnchor = this.rootEl.querySelector<HTMLElement>(
+          '.ymz-topbar [data-action="project-style"]',
+        );
+        this.projectStylePanel?.show(styleAnchor && styleAnchor.getClientRects().length > 0
+          ? styleAnchor
+          : undefined);
       },
       onAction: (action) =>
         this.options.diagnostics.record(
@@ -2200,6 +2357,10 @@ export class YeMindEditor {
     const firstApply = !this.settingsInitialized;
     this.applyingSettings = true;
     this.settings = settings;
+    this.themeChoicePanel?.setOptions(
+      buildThemeChoiceOptions(settings.favoriteThemeIds),
+      settings.favoriteThemeIds,
+    );
     this.appearanceController?.setMode(settings.appearanceMode);
     this.updateAppearancePresentation();
     this.toolbarVisibility?.setPinned(settings.toolbarsPinned);
@@ -2256,7 +2417,7 @@ export class YeMindEditor {
     }
   }
 
-  private applyMapAppearance(render = true): void {
+  private applyMapAppearance(render = true, convergeThemeGeometry = false): void {
     if (!this.map) return;
     this.current.theme = normalizeThemePresetId(this.current.theme);
     this.current.lineStyle = normalizeLineStyle(this.current.lineStyle);
@@ -2298,6 +2459,13 @@ export class YeMindEditor {
         (this.map as any)?.outerFrame?.renderOuterFrames?.();
         this.nodeQuickActions?.scheduleRefresh();
         this.updateSelectionPresentation();
+        if (convergeThemeGeometry) {
+          const theme = this.current.theme;
+          window.requestAnimationFrame(() => {
+            if (this.destroyed || this.current.theme !== theme) return;
+            this.applyMapAppearance(true, false);
+          });
+        }
       },
     });
     if (!canRender) this.applyingAppearance = false;
@@ -2547,9 +2715,6 @@ export class YeMindEditor {
       this.rootEl.dataset.studyView = 'none';
       this.studyPanel?.hide();
     }
-    if (mode !== 'map' || this.viewMode !== 'map') {
-      (this.map as any)?.nodeImgAdjust?.clearSelectionForViewChange?.();
-    }
     if (mode === "map" && this.viewMode !== "map") {
       this.claimCanvasInteraction("view-map");
     }
@@ -2563,12 +2728,7 @@ export class YeMindEditor {
     );
     this.updateDiagnosticState({ viewMode: mode });
     this.updatePrimaryViewPresentation();
-    if (mode !== "outline") {
-      this.scheduleSafeResize();
-    } else if (this.resizeFrame !== null) {
-      window.cancelAnimationFrame(this.resizeFrame);
-      this.resizeFrame = null;
-    }
+    this.scheduleSafeResize();
     if (mode === "split" || mode === "outline") {
       window.requestAnimationFrame(() => this.revealCurrentOutlineSelection());
     }
@@ -2596,6 +2756,7 @@ export class YeMindEditor {
   }
 
   private setStudyMode(mode: StudyPanelMode | null, cardIds?: string[]): void {
+    if (mode === this.studyMode) return;
     if (mode && this.viewMode !== 'map') this.setViewMode('map');
     this.resourceActionPopover?.hide();
     this.richTextToolbar?.hide();
@@ -2869,6 +3030,8 @@ export class YeMindEditor {
   }
 
   private claimCanvasInteraction(reason: string): void {
+    this.outlineRichText?.clearMediaSelection();
+    this.resourceActionPopover?.hide();
     const outlineApplied = this.outlineRichText?.flush(`surface-change:${reason}`) ?? false;
     const transition = this.editingSurface.claimCanvas();
     if (transition.previousOwner !== "canvas" || outlineApplied) {
@@ -2965,6 +3128,10 @@ export class YeMindEditor {
         activate();
         if (this.commands) openMarkerPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() });
       },
+      onSymbols: () => {
+        activate();
+        this.symbolPicker?.show();
+      },
       onClipart: () => {
         activate();
         if (this.commands) openClipartPicker(this.commands, { pluginBaseUrl: this.options.pluginBaseUrl, onChange: () => this.refreshOutlineFromMap() });
@@ -3008,6 +3175,48 @@ export class YeMindEditor {
       if (found) return found;
     }
     return null;
+  }
+
+  private buildActiveStudyNode(node: any): ActiveStudyNode | null {
+    const data = node?.getData?.() as Record<string, any> | undefined;
+    const uid = String(data?.uid ?? node?.getData?.('uid') ?? '').trim();
+    if (!uid || !data) return null;
+    const text = String(data.text ?? node?.getData?.('text') ?? '');
+    const note = normalizeNodeNote(data.yemindNote ?? data.note);
+    const source = normalizeStudyCardSource({
+      version: 1,
+      capturedAt: Date.now(),
+      nodeTextHtml: text,
+      nodeTextPlain: this.plainStudyText(text),
+      icons: Array.isArray(data.icon) ? data.icon : data.icon ? [data.icon] : [],
+      tags: Array.isArray(data.tag) ? data.tag : data.tag ? [data.tag] : [],
+      todo: data.yemindTodo ?? null,
+      hyperlink: data.hyperlink ?? '',
+      hyperlinkTitle: data.hyperlinkTitle ?? '',
+      image: typeof data.image === 'string' && data.image.trim()
+        ? {
+            src: data.image,
+            title: data.imageTitle ?? '',
+            kind: data.yemindClipartId ? 'clipart' : 'image',
+            width: data.imageSize?.width,
+            height: data.imageSize?.height,
+          }
+        : null,
+      noteHtml: note?.html ?? '',
+      comments: Array.isArray(data.yemindComments) ? data.yemindComments : [],
+    });
+    return {
+      uid,
+      text,
+      back: note?.html ?? '',
+      ...(source ? { source } : {}),
+    };
+  }
+
+  private plainStudyText(value: string): string {
+    const holder = document.createElement('div');
+    holder.innerHTML = value;
+    return (holder.textContent ?? '').replace(/\s+/g, ' ').trim();
   }
 
   private runOutlineContentAction(uid: string, type: string): void {
@@ -3211,7 +3420,7 @@ export class YeMindEditor {
     else if (action === "close") this.closeSearchPanel();
   }
 
-  private ensureSearch(): boolean {
+  private ensureSearch(forceRefresh = false): boolean {
     const text = this.searchInputEl.value.trim();
     if (!text || !this.commands) return false;
     const built = buildSearchPattern(text, this.searchOptions);
@@ -3223,7 +3432,7 @@ export class YeMindEditor {
       return false;
     }
     this.setSearchError('');
-    if (this.searchText !== text) {
+    if (forceRefresh || this.searchText !== text) {
       this.searchText = text;
       this.commands.search(text, this.searchOptions);
     }
@@ -3245,7 +3454,10 @@ export class YeMindEditor {
   }
 
   private replaceAllSearch(): void {
-    if (!this.ensureSearch()) return;
+    // A preceding replacement may still finish an asynchronous map render and
+    // reset the third-party search plugin state. Rebuild it synchronously in
+    // this click turn so "replace all" cannot observe a stale empty query.
+    if (!this.ensureSearch(true)) return;
     this.commands?.replaceSearchAll(this.replaceInputEl.value, this.searchOptions);
   }
 

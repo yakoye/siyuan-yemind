@@ -1,0 +1,18 @@
+{
+  "root": {
+    "data": {
+      "text": "旧版 JSON 根节点",
+      "uid": "legacy-json-root"
+    },
+    "children": [
+      {
+        "data": {
+          "text": "旧版 JSON 子节点",
+          "uid": "legacy-json-child"
+        },
+        "children": []
+      }
+    ]
+  },
+  "layout": "logicalStructure"
+}

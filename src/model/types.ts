@@ -37,7 +37,7 @@ export interface MapCheckpointSnapshot {
   layout: string;
   layoutPresetId?: string;
   theme: string;
-  lineStyle: 'curve' | 'straight' | 'direct';
+  lineStyle: 'curve' | 'direct' | 'polyline' | 'straight';
   projectStyle?: ProjectStyle;
   viewData?: Record<string, unknown>;
 }
@@ -50,7 +50,7 @@ export interface YeMindMapDocument {
   layout: string;
   layoutPresetId?: string;
   theme: string;
-  lineStyle: 'curve' | 'straight' | 'direct';
+  lineStyle: 'curve' | 'direct' | 'polyline' | 'straight';
   projectStyle: ProjectStyle;
   data: MindMapTree;
   viewData?: Record<string, unknown>;

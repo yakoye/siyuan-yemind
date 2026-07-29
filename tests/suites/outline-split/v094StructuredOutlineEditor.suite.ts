@@ -209,4 +209,20 @@ describe('v0.9.4 unified structured outline editor', () => {
     controller.destroy();
     root.remove();
   });
+
+  it('clears a selected outline image when another editing surface takes ownership', () => {
+    const { root, controller, current } = mount();
+    current().children[0].data.image = 'data:image/png;base64,AAAA';
+    controller.syncFromTree(current(), true);
+    const image = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-image-action]')!;
+
+    image.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }));
+    expect(image.classList.contains('is-selected')).toBe(true);
+
+    (controller as any).clearMediaSelection?.();
+
+    expect(image.classList.contains('is-selected')).toBe(false);
+    controller.destroy();
+    root.remove();
+  });
 });

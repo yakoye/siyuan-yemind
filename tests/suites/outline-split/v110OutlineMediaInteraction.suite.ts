@@ -29,7 +29,13 @@ describe('v1.1.0 compact outline drag and media selection', () => {
     expect(html).toContain('aria-label="删除剪贴图"');
     expect(controller).toContain('selectedMedia');
     expect(controller).toContain('selectOutlineMedia');
-    expect(controller).toContain('clearOutlineMediaSelection');
+    expect(controller).toContain('clearMediaSelection');
     expect(controller).toContain('onImageDelete?');
+  });
+
+  it('releases outline media selection when the canvas claims interaction', () => {
+    const editor = readFileSync('src/editor/YeMindEditor.ts', 'utf8');
+    expect(controller).toContain('clearMediaSelection(): void');
+    expect(editor).toMatch(/claimCanvasInteraction[\s\S]{0,260}outlineRichText\?\.clearMediaSelection\(\)/);
   });
 });

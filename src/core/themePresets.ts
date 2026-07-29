@@ -6,7 +6,7 @@ import {
 } from './themeColorData';
 
 export type YeMindAppearance = 'light' | 'dark';
-export type YeMindLineStyle = 'curve' | 'straight' | 'direct';
+export type YeMindLineStyle = 'curve' | 'direct' | 'polyline' | 'straight';
 
 interface NodeLevelStyle {
   fillColor: string;
@@ -324,7 +324,7 @@ const LEGACY_THEME_ALIASES: Record<string, string> = {
   'kmind-midnight-neon': 'scheme-code',
   'kmind-rainbow-breeze': 'scheme-rainbow',
 };
-const LINE_STYLES = new Set<YeMindLineStyle>(['curve', 'straight', 'direct']);
+const LINE_STYLES = new Set<YeMindLineStyle>(['curve', 'direct', 'polyline', 'straight']);
 
 export function normalizeThemePresetId(value: unknown): string {
   if (typeof value === 'string' && LEGACY_THEME_ALIASES[value]) return LEGACY_THEME_ALIASES[value];
@@ -396,6 +396,7 @@ export function buildThemeConfig(options: {
   const variant = options.appearance === 'dark' ? preset.dark : preset.light;
   const spacing = options.spacingConfig ?? {};
   const lineStyle = normalizeLineStyle(options.lineStyle);
+  const engineLineStyle = lineStyle === 'polyline' ? 'straight' : lineStyle;
   const root = { ...cloneLevel(variant.root, 0, 0), ...(spacing.root ?? {}) };
   if (presetId === 'ink-branch') root.fontFamily = FONT_MONO;
   const second = { ...cloneLevel(variant.second, 100, 38), ...(spacing.second ?? {}) };
@@ -414,10 +415,14 @@ export function buildThemeConfig(options: {
       lineWidth: variant.lineWidth ?? 2,
       lineColor: variant.lineColor,
       lineDasharray: variant.lineDasharray ?? 'none',
-      lineStyle,
+      lineStyle: engineLineStyle,
       rootLineKeepSameInCurve: true,
       rootLineStartPositionKeepSameInCurve: false,
-      lineRadius: variant.lineRadius ?? 10,
+      lineRadius: lineStyle === 'polyline'
+        ? 0
+        : lineStyle === 'straight'
+          ? Math.max(8, variant.lineRadius ?? 10)
+          : (variant.lineRadius ?? 10),
       generalizationLineWidth: Math.max(1, (variant.lineWidth ?? 2) - 0.5),
       generalizationLineColor: variant.generalizationLineColor,
       associativeLineWidth: 2,
@@ -438,9 +443,18 @@ export function buildThemeConfig(options: {
 
 export function themeOptionsHtml(selected: unknown): string {
   const value = normalizeThemePresetId(selected);
-  return (['基础', '缤纷', '经典'] as const)
-    .map((group) => `<optgroup label="${group}">${YEMIND_THEME_PRESETS
-      .filter((preset) => preset.group === group)
+  const groups = [
+    { label: '缤纷', presets: YEMIND_THEME_PRESETS.filter((preset) => preset.group === '缤纷') },
+    {
+      label: '经典',
+      presets: [
+        ...YEMIND_THEME_PRESETS.filter((preset) => preset.group === '基础'),
+        ...YEMIND_THEME_PRESETS.filter((preset) => preset.group === '经典'),
+      ],
+    },
+  ];
+  return groups
+    .map(({ label, presets }) => `<optgroup label="${label}">${presets
       .map((preset) => `<option value="${preset.id}"${preset.id === value ? ' selected' : ''}>${preset.label}</option>`)
       .join('')}</optgroup>`)
     .join('');

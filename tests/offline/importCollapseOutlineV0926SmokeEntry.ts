@@ -45,7 +45,7 @@ const accessories = outlineAccessoriesFromData({
   yemindNote: { html: '<p>note</p>' }, yemindComments: [{ id: '1', text: 'comment' }], outerFrame: { groupId: 'g1' },
 } as any);
 const html = outlineAccessoriesHtml(accessories);
-for (const token of ['data-outline-image-action', 'data-outline-content="todo"', 'data-outline-content="tags"', 'data-outline-content="link"', 'data-outline-content="note"', 'data-outline-content="comments"', 'data-outline-content="outer-frame"']) {
+for (const token of ['data-outline-image-action', 'data-outline-todo-action', 'data-outline-content="tags"', 'data-outline-content="link"', 'data-outline-content="note"', 'data-outline-content="comments"', 'data-outline-content="outer-frame"']) {
   assert(html.includes(token), `outline accessory html missing ${token}`);
 }
 

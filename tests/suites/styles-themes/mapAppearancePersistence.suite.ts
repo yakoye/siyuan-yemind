@@ -69,4 +69,20 @@ describe('map appearance persistence', () => {
       lineStyle: 'direct',
     });
   });
+
+  it('persists the new sharp polyline without changing legacy rounded orthogonal values', async () => {
+    const mapStorage = memoryStorage();
+    const checkpointStorage = memoryStorage();
+    const maps = new MapRepository(mapStorage, { id: () => 'map-1', now: () => 100 });
+    const checkpoints = new CheckpointRepository(checkpointStorage, { id: () => 'cp-1', now: () => 200 });
+    await maps.load();
+    await checkpoints.load();
+    await maps.create('Polyline');
+    await maps.update('map-1', { lineStyle: 'polyline' });
+    const checkpoint = await checkpoints.create(maps.get('map-1')!, 'Sharp polyline');
+
+    expect(maps.get('map-1')?.lineStyle).toBe('polyline');
+    expect(checkpoint.snapshot.lineStyle).toBe('polyline');
+    expect((mapStorage.read() as any).maps[0].lineStyle).toBe('polyline');
+  });
 });

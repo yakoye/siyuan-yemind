@@ -15,8 +15,19 @@ assert(!hasActiveNodeWidthDrag({ children: [{ children: [] }] }), 'idle tree mus
 let mousemove: EventListener | null = null;
 let frameCallback: FrameRequestCallback | null = null;
 let renderCount = 0;
+let editorSyncCount = 0;
 const widthController = new LiveNodeWidthLayoutController(
-  { renderer: { root }, render: () => { renderCount += 1; } },
+  {
+    renderer: { root },
+    richText: {
+      showTextEdit: true,
+      updateTextEditNode: () => { editorSyncCount += 1; },
+    },
+    render: (callback?: () => void) => {
+      renderCount += 1;
+      callback?.();
+    },
+  },
   {
     addEventListener: (_name: string, listener: EventListenerOrEventListenerObject) => { mousemove = listener as EventListener; },
     removeEventListener: () => { mousemove = null; },
@@ -30,6 +41,7 @@ mousemove?.({} as Event);
 if (renderCount !== 0 || !frameCallback) throw new Error('full layout must be animation-frame throttled');
 (frameCallback as FrameRequestCallback)(0);
 if (Number(renderCount) !== 1) throw new Error('drag frame must render the complete tree once');
+if (Number(editorSyncCount) !== 1) throw new Error('drag frame must keep the rich-text editor aligned');
 widthController.destroy();
 
 assert(shouldPassivelySyncOutline('canvas'), 'canvas activation must be passive');

@@ -90,4 +90,131 @@ describe('v1.5.1 atomic render lifecycle', () => {
 
     expect(live.createTextNode).toHaveBeenCalledWith('立即显示');
   });
+
+  it('commits the final complete root text when edit close cancels the queued frame', () => {
+    let callback: FrameRequestCallback | null = null;
+    const scheduler: RenderLifecycleScheduler = {
+      request: (next) => {
+        callback = next;
+        return 1;
+      },
+      cancel: vi.fn(),
+    };
+    const live = {
+      createTextNode: vi.fn((text) => ({ text })),
+      getNodeRect: vi.fn(() => ({ width: 132, height: 40 })),
+      layout: vi.fn(),
+    };
+    const mindMap = {
+      renderer: { findNodeByUid: vi.fn(() => live) },
+      richText: { updateTextEditNode: vi.fn() },
+      render: vi.fn((done?: () => void) => done?.()),
+    };
+    const coordinator = new RenderLifecycleCoordinator(mindMap, vi.fn(), scheduler);
+    coordinator.scheduleTextEdit({
+      node: { getData: () => 'root' },
+      text: '<p>未命名导图</p>',
+      richText: true,
+    });
+    coordinator.invalidate();
+    coordinator.flushPendingTextEdit();
+    callback?.(0);
+
+    expect(live.createTextNode).toHaveBeenCalledTimes(1);
+    expect(live.createTextNode).toHaveBeenCalledWith('未命名导图');
+    expect(live.layout).toHaveBeenCalledOnce();
+  });
+
+  it('repairs a rendered rich-text node when its text overflows the SVG foreignObject', () => {
+    let releaseRepair: FrameRequestCallback | null = null;
+    const scheduler: RenderLifecycleScheduler = {
+      request: (next) => {
+        releaseRepair = next;
+        return 2;
+      },
+      cancel: vi.fn(),
+    };
+    const wrapper = {
+      getBoundingClientRect: () => ({ width: 100, height: 60 }),
+    };
+    const foreignObject = {
+      getBoundingClientRect: () => ({ width: 75, height: 22 }),
+      querySelector: vi.fn(() => wrapper),
+    };
+    const nodeContent = {
+      node: foreignObject,
+      width: vi.fn(),
+      height: vi.fn(),
+    };
+    const textGroup = { attr: vi.fn() };
+    const textData = {
+      node: textGroup,
+      nodeContent,
+      width: 75,
+      height: 22,
+    };
+    const node = {
+      _textData: textData,
+      nodeData: { data: { uid: 'root' } },
+      children: [],
+      getData: (key: string) => key === 'uid' ? 'root' : undefined,
+      reRender: vi.fn(() => {
+        textData.width = 101;
+        textData.height = 60;
+      }),
+    };
+    const mindMap = {
+      opt: { textAutoWrapWidth: 500 },
+      renderer: {
+        root: node,
+        findNodeByUid: vi.fn(() => node),
+      },
+      render: vi.fn((done?: () => void) => done?.()),
+    };
+    const committed = vi.fn();
+    const coordinator = new RenderLifecycleCoordinator(mindMap, committed, scheduler);
+
+    expect(coordinator.reconcileRenderedTextGeometry()).toBe(true);
+    expect(node._textData.width).toBe(101);
+    expect(node._textData.height).toBe(60);
+    expect(node.reRender).toHaveBeenCalledWith(
+      ['text'],
+      { ignoreUpdateCustomTextWidth: true },
+    );
+    expect((node.nodeData.data as any).customTextWidth).toBeUndefined();
+    expect((node as any).customTextWidth).toBeUndefined();
+    expect(mindMap.render).toHaveBeenCalledWith(
+      expect.any(Function),
+      'yemind-richtext-geometry-repair',
+    );
+    expect(coordinator.reconcileRenderedTextGeometry()).toBe(false);
+    releaseRepair?.(0);
+    expect(committed).toHaveBeenCalledOnce();
+  });
+
+  it('does not redraw when rendered rich text already fits its SVG foreignObject', () => {
+    const node = {
+      _textData: {
+        nodeContent: {
+          node: {
+            getBoundingClientRect: () => ({ width: 103, height: 30 }),
+            querySelector: () => ({
+              getBoundingClientRect: () => ({ width: 103, height: 30 }),
+            }),
+          },
+        },
+      },
+      children: [],
+      layout: vi.fn(),
+    };
+    const mindMap = {
+      renderer: { root: node },
+      render: vi.fn(),
+    };
+    const coordinator = new RenderLifecycleCoordinator(mindMap, vi.fn());
+
+    expect(coordinator.reconcileRenderedTextGeometry()).toBe(false);
+    expect(node.layout).not.toHaveBeenCalled();
+    expect(mindMap.render).not.toHaveBeenCalled();
+  });
 });

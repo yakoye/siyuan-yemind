@@ -12,10 +12,15 @@ export interface ProjectChoicePanelOptions {
   role: string;
   title: string;
   options: readonly ProjectChoiceOption[];
+  groups?: readonly string[];
   presentation?: 'list' | 'palette';
   selected: string;
+  favoriteValues?: readonly string[];
+  emptyGroupMessage?(group: string): string;
+  onFavoriteChange?(value: string, favorite: boolean): void | Promise<void>;
   applyLabel?(option: ProjectChoiceOption): string;
   readonly(): boolean;
+  onPreview?(value: string): void;
   onSelect(value: string): void;
 }
 
@@ -23,6 +28,9 @@ export class ProjectChoicePanel {
   private readonly panel: HTMLElement;
   private readonly body: HTMLElement;
   private selected: string;
+  private committedSelected: string;
+  private options: readonly ProjectChoiceOption[];
+  private favoriteValues: readonly string[];
   private activeGroup = '';
   private anchor: HTMLElement | null = null;
 
@@ -33,6 +41,9 @@ export class ProjectChoicePanel {
     this.panel = root.querySelector<HTMLElement>(`[data-role="${config.role}"]`)!;
     this.body = this.panel.querySelector<HTMLElement>('[data-project-choice-body]')!;
     this.selected = config.selected;
+    this.committedSelected = config.selected;
+    this.options = config.options;
+    this.favoriteValues = config.favoriteValues ?? [];
     this.activeGroup = this.groupForValue(config.selected) ?? this.groups()[0] ?? '';
     this.panel.classList.toggle('is-palette', config.presentation === 'palette');
     this.panel.querySelector('[data-project-choice-action="close"]')?.addEventListener('click', () => this.hide());
@@ -45,7 +56,14 @@ export class ProjectChoicePanel {
 
   setSelected(value: string): void {
     this.selected = value;
+    this.committedSelected = value;
     this.activeGroup = this.groupForValue(value) ?? this.activeGroup;
+    this.render();
+  }
+
+  setOptions(options: readonly ProjectChoiceOption[], favoriteValues: readonly string[] = this.favoriteValues): void {
+    this.options = options;
+    this.favoriteValues = favoriteValues;
     this.render();
   }
 
@@ -58,6 +76,7 @@ export class ProjectChoicePanel {
 
   show(anchor: HTMLElement): void {
     this.anchor = anchor;
+    this.selected = this.committedSelected;
     this.activeGroup = this.groupForValue(this.selected) ?? this.activeGroup;
     this.render();
     this.panel.hidden = false;
@@ -76,6 +95,11 @@ export class ProjectChoicePanel {
   }
 
   hide(): void {
+    if (this.selected !== this.committedSelected) {
+      this.selected = this.committedSelected;
+      this.config.onPreview?.(this.committedSelected);
+      this.render();
+    }
     this.panel.hidden = true;
     this.anchor?.classList.remove('is-active');
     this.anchor?.setAttribute('aria-expanded', 'false');
@@ -107,6 +131,14 @@ export class ProjectChoicePanel {
       }
       return;
     }
+    const favorite = target.closest<HTMLButtonElement>('[data-project-choice-favorite]');
+    if (favorite) {
+      const value = favorite.dataset.projectChoiceFavorite ?? '';
+      if (!value || !this.config.onFavoriteChange) return;
+      const next = !this.favoriteValues.includes(value);
+      void this.config.onFavoriteChange(value, next);
+      return;
+    }
     const apply = target.closest<HTMLButtonElement>('[data-project-choice-apply]');
     if (apply) {
       if (apply.disabled || this.config.readonly()) return;
@@ -119,6 +151,7 @@ export class ProjectChoicePanel {
     const value = button.dataset.projectChoiceValue ?? '';
     if (!value) return;
     this.selected = value;
+    this.config.onPreview?.(value);
     this.render();
     if (!this.config.applyLabel) {
       this.config.onSelect(value);
@@ -127,11 +160,16 @@ export class ProjectChoicePanel {
   };
 
   private groups(): string[] {
-    return [...new Set(this.config.options.map((option) => option.group ?? '').filter(Boolean))];
+    return this.config.groups
+      ? [...this.config.groups]
+      : [...new Set(this.options.map((option) => option.group ?? '').filter(Boolean))];
   }
 
   private groupForValue(value: string): string | undefined {
-    return this.config.options.find((option) => option.value === value)?.group ?? undefined;
+    const candidates = this.options.filter((option) => option.value === value);
+    return candidates.find((option) => option.group !== '常用')?.group
+      ?? candidates[0]?.group
+      ?? undefined;
   }
 
   private render(): void {
@@ -165,9 +203,21 @@ export class ProjectChoicePanel {
     grid.className = 'ymz-project-choice-panel__palette-grid';
     grid.setAttribute('role', 'listbox');
     grid.setAttribute('aria-label', `${this.activeGroup || this.config.title}主题`);
-    const options = this.config.options.filter((option) => (option.group ?? '') === this.activeGroup);
+    const options = this.options.filter((option) => (option.group ?? '') === this.activeGroup);
+    if (options.length === 0) {
+      const message = this.config.emptyGroupMessage?.(this.activeGroup);
+      if (message) {
+        const empty = document.createElement('div');
+        empty.className = 'ymz-project-choice-panel__empty';
+        empty.dataset.projectChoiceEmpty = 'true';
+        empty.textContent = message;
+        grid.appendChild(empty);
+      }
+    }
     options.forEach((option) => {
       const selected = option.value === this.selected;
+      const card = document.createElement('div');
+      card.className = 'ymz-project-choice-panel__palette-card';
       const button = document.createElement('button');
       button.type = 'button';
       button.className = `ymz-project-choice-panel__palette-item${selected ? ' is-selected' : ''}`;
@@ -193,11 +243,25 @@ export class ProjectChoicePanel {
       });
       strip.style.setProperty('--ymz-palette-count', String(Math.max(1, colors.length)));
       button.append(label, strip);
-      grid.appendChild(button);
+      if (this.config.onFavoriteChange) {
+        const favorite = document.createElement('button');
+        favorite.type = 'button';
+        favorite.className = 'ymz-project-choice-panel__favorite';
+        favorite.dataset.projectChoiceFavorite = option.value;
+        const active = this.favoriteValues.includes(option.value);
+        favorite.setAttribute('aria-pressed', String(active));
+        favorite.setAttribute('aria-label', `${active ? '取消收藏' : '收藏'}${option.label}`);
+        favorite.title = active ? '取消收藏' : '收藏到常用';
+        favorite.textContent = active ? '★' : '☆';
+        card.append(button, favorite);
+      } else {
+        card.appendChild(button);
+      }
+      grid.appendChild(card);
     });
 
     this.body.append(tabs, grid);
-    const selectedOption = this.config.options.find((option) => option.value === this.selected);
+    const selectedOption = this.options.find((option) => option.value === this.selected);
     if (this.config.applyLabel && selectedOption) {
       const footer = document.createElement('footer');
       footer.className = 'ymz-project-choice-panel__footer';
@@ -213,7 +277,7 @@ export class ProjectChoicePanel {
 
   private renderList(): void {
     const groups = new Map<string, ProjectChoiceOption[]>();
-    this.config.options.forEach((option) => {
+    this.options.forEach((option) => {
       const key = option.group ?? '';
       const items = groups.get(key) ?? [];
       items.push(option);
