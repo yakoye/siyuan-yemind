@@ -7673,32 +7673,32 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.5.2";
+const PLUGIN_VERSION = "1.5.3";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "eae7ef6c-dirty-491e5b40",
-  time: "2026-07-29T14:50:36.132Z"
+  id: "8e692b7e-clean",
+  time: "2026-07-30T01:12:30+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-29T14:48:22.345Z",
-  buildId: "yemind-v1.5.2-20260729",
+  buildTime: "2026-07-29T16:29:32.176Z",
+  buildId: "yemind-v1.5.3-20260729",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
   productName: PRODUCT_NAME,
   hostBaseline: "SiYuan 3.7.3",
-  releaseSummary: "对齐 version47 界面并统一插件与网页版，新增卡片复习、完整基础主题和 v1.5.0 传输契约。",
+  releaseSummary: "稳定画布实时编辑几何、节点宽度调整和父子树拖动预览，并统一插件与网页版交互。",
   highlights: [
-    "采用 version47 工具栏、面板、菜单、卡片和明暗视觉，并按编辑器宽度完成桌面与窄屏适配。",
-    "补齐 6 个基础主题、向右组织结构、导图/大纲富文本选区恢复及共享资源交互。",
-    "新增独立卡片数据、掌握进度、收藏筛选、翻面、状态管理和三档复习队列。",
-    "统一 .yemind.svg、.yemind.zip、双 HTML 与旧格式兼容，并继续产出双端可验证发布包。"
+    "双击既有节点不再发生编辑层右移回跳，新建节点仍保留一次性首帧位置校正。",
+    "输入和粘贴按单节点实时事务更新边框、入边与出边，多行选区可用一次 Delete 或 Backspace 删除。",
+    "宽度手柄拖动期间不再触发竞争性几何修复，父节点拖动预览包含完整可见子树且尊重折叠状态。",
+    "扩大加减与数字控件的指针热区，并让大纲多行节点的三角和方块固定在第一行。"
   ]
 };
 function resolveVersionConsistency(manifestVersion) {
@@ -29157,6 +29157,60 @@ function collectSubtreeNodes(root2) {
   visit2(root2);
   return result;
 }
+function collectVisibleSubtreeNodes(root2) {
+  const result = [];
+  const seen = /* @__PURE__ */ new Set();
+  const visit2 = (node) => {
+    var _a;
+    if (!node || seen.has(node)) return;
+    seen.add(node);
+    result.push(node);
+    if (((_a = node == null ? void 0 : node.getData) == null ? void 0 : _a.call(node, "expand")) === false) return;
+    (node.children ?? []).forEach(visit2);
+  };
+  visit2(root2);
+  return result;
+}
+function replaceSingleNodeCloneWithSubtree(plugin) {
+  var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l;
+  const roots = (plugin == null ? void 0 : plugin.beingDragNodeList) ?? [];
+  if (roots.length !== 1 || !plugin.clone) return false;
+  const root2 = roots[0];
+  const nodes = collectVisibleSubtreeNodes(root2);
+  if (nodes.length <= 1) return false;
+  const wrapper = (_c2 = (_b = (_a = plugin.mindMap) == null ? void 0 : _a.otherDraw) == null ? void 0 : _b.group) == null ? void 0 : _c2.call(_b);
+  if (!(wrapper == null ? void 0 : wrapper.add) || !(wrapper == null ? void 0 : wrapper.translate)) return false;
+  const originX = Number(root2 == null ? void 0 : root2.left) || 0;
+  const originY = Number(root2 == null ? void 0 : root2.top) || 0;
+  const addRelativeClone = (source) => {
+    var _a2, _b2, _c3;
+    const clone2 = (_a2 = source == null ? void 0 : source.clone) == null ? void 0 : _a2.call(source);
+    if (!clone2) return;
+    (_b2 = clone2.show) == null ? void 0 : _b2.call(clone2);
+    (_c3 = clone2.translate) == null ? void 0 : _c3.call(clone2, -originX, -originY);
+    wrapper.add(clone2);
+  };
+  const visibleNodes = new Set(nodes);
+  nodes.forEach((node) => {
+    var _a2;
+    if (((_a2 = node == null ? void 0 : node.getData) == null ? void 0 : _a2.call(node, "expand")) === false) return;
+    ((node == null ? void 0 : node.children) ?? []).forEach((child, index) => {
+      var _a3;
+      if (!visibleNodes.has(child)) return;
+      addRelativeClone((_a3 = node == null ? void 0 : node._lines) == null ? void 0 : _a3[index]);
+    });
+  });
+  nodes.forEach((node) => addRelativeClone(node == null ? void 0 : node.group));
+  (_e = (_d2 = plugin.clone).remove) == null ? void 0 : _e.call(_d2);
+  plugin.clone = wrapper;
+  (_f = wrapper.addClass) == null ? void 0 : _f.call(wrapper, "ymz-drag-subtree-preview");
+  (_g = wrapper.attr) == null ? void 0 : _g.call(wrapper, { "data-preview-node-count": String(nodes.length) });
+  wrapper.translate(originX, originY);
+  const opacity = Number((_j = (_i = (_h = plugin.mindMap) == null ? void 0 : _h.opt) == null ? void 0 : _i.dragOpacityConfig) == null ? void 0 : _j.cloneNodeOpacity);
+  (_k = wrapper.opacity) == null ? void 0 : _k.call(wrapper, Number.isFinite(opacity) ? opacity : 0.82);
+  (_l = wrapper.css) == null ? void 0 : _l.call(wrapper, "z-index", 99999);
+  return true;
+}
 function previewGap(plugin, axis) {
   const rects = [];
   (plugin.beingDragNodeList ?? []).forEach((root2) => {
@@ -29221,6 +29275,7 @@ class YeMindDrag extends Drag {
     const hadClone = Boolean(plugin.clone);
     super.createCloneNode();
     if (hadClone || !plugin.clone) return;
+    replaceSingleNodeCloneWithSubtree(plugin);
     const none = emptyOfficialDragCandidate();
     plugin.__ymzCandidateState = createDragCandidateState(none);
     plugin.__ymzRawCandidate = none;
@@ -80691,6 +80746,9 @@ function writeQuillSelectionToClipboard(quill, event, fallbackRange) {
   if (html2) event.clipboardData.setData("text/html", html2);
   return true;
 }
+function shouldStabilizeOpeningPlacement(isInserting) {
+  return isInserting === true;
+}
 function normalizeCanvasTextPayload(html2) {
   const source = String(html2 ?? "");
   const richText = structuredOutlineIsRichHtml(source);
@@ -80794,6 +80852,7 @@ class YeMindRichText extends RichText {
   }
   showEditText(params) {
     if (this.showTextEdit) return;
+    const stabilizeOpening = shouldStabilizeOpeningPlacement(params == null ? void 0 : params.isInserting);
     const sourceNode = (params == null ? void 0 : params.node) ?? null;
     const uid2 = renderedNodeUid$1(sourceNode);
     const liveNode = resolveLiveRenderedNode(this.mindMap, sourceNode, uid2);
@@ -80815,7 +80874,9 @@ class YeMindRichText extends RichText {
     this.normalizeEditorPlacement(rect2);
     this.bindTextEditingKeyboard();
     this.bindPlacementTracking();
-    this.schedulePlacementStabilization();
+    if (stabilizeOpening) {
+      this.schedulePlacementStabilization();
+    }
     this.emitEditingDiagnostic("opened", {
       liveNodeResolved: Boolean(liveNode && liveNode !== sourceNode),
       rectSource: this.lastRectSource
@@ -81022,7 +81083,6 @@ class YeMindRichText extends RichText {
       this.placementResizeObserver = new ResizeObserver(this.handlePlacementInvalidation);
       this.placementResizeObserver.observe(target);
     }
-    this.startPlacementMonitor();
   }
   unbindPlacementTracking() {
     var _a, _b;
@@ -81040,16 +81100,6 @@ class YeMindRichText extends RichText {
       this.placementMonitorFrame = null;
     }
   }
-  startPlacementMonitor() {
-    if (this.placementMonitorFrame !== null || typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") return;
-    const tick = () => {
-      this.placementMonitorFrame = null;
-      if (!this.placementTracking || !this.showTextEdit) return;
-      this.updateTextEditNode();
-      this.placementMonitorFrame = window.requestAnimationFrame(tick);
-    };
-    this.placementMonitorFrame = window.requestAnimationFrame(tick);
-  }
   cancelPlacementStabilization() {
     var _a;
     if (this.placementFrame === null) return;
@@ -81062,6 +81112,25 @@ class YeMindRichText extends RichText {
     if (!root2 || root2.dataset.yemindTextKeyboard === "true") return;
     root2.dataset.yemindTextKeyboard = "true";
     root2.addEventListener("keydown", (event) => {
+      var _a2, _b, _c2, _d2;
+      if ((event.key === "Delete" || event.key === "Backspace") && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        const selected = ((_b = (_a2 = this.quill).getSelection) == null ? void 0 : _b.call(_a2)) ?? this.range ?? null;
+        if (selected && selected.length > 0) {
+          event.preventDefault();
+          event.stopPropagation();
+          this.quill.deleteText(selected.index, selected.length, Quill.sources.USER);
+          this.quill.setSelection(selected.index, 0, Quill.sources.SILENT);
+          this.range = null;
+          this.pasteUseRange = { index: selected.index, length: 0 };
+          (_d2 = (_c2 = this.mindMap) == null ? void 0 : _c2.emit) == null ? void 0 : _d2.call(_c2, "rich_text_selection_change", false, null, null);
+          this.emitEditingDiagnostic("selection-deleted", {
+            key: event.key,
+            index: selected.index,
+            length: selected.length
+          });
+          return;
+        }
+      }
       if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== "a") return;
       event.preventDefault();
       event.stopPropagation();
@@ -91457,7 +91526,10 @@ class NodeQuickActionsController {
         button.dataset.nodeQuickAction = descriptor.action;
         button.title = descriptor.label;
         button.setAttribute("aria-label", descriptor.label);
-        button.textContent = descriptor.text;
+        const visual = document.createElement("span");
+        visual.className = "ymz-node-quick-action__visual";
+        visual.textContent = descriptor.text;
+        button.appendChild(visual);
         container.appendChild(button);
       });
       this.layer.appendChild(container);
@@ -91644,6 +91716,9 @@ class CanvasRightDragController {
     else renderer.activeNodeList = [...snapshot];
     (_c2 = renderer.emitNodeActiveEvent) == null ? void 0 : _c2.call(renderer, snapshot[0] ?? null, [...snapshot]);
   }
+}
+function hasActiveNodeWidthDrag(root2) {
+  return findActiveNodeWidthDrag(root2) !== null;
 }
 function findActiveNodeWidthDrag(root2) {
   if (!root2) return null;
@@ -93521,27 +93596,27 @@ class RenderLifecycleCoordinator {
    * geometry invariant rather than by a specific theme or node label.
    */
   reconcileRenderedTextGeometry() {
-    var _a, _b, _c2, _d2;
-    if (this.geometryRepairInFlight) return false;
+    var _a, _b, _c2, _d2, _e, _f;
+    if (this.geometryRepairInFlight || hasActiveNodeWidthDrag((_b = (_a = this.mindMap) == null ? void 0 : _a.renderer) == null ? void 0 : _b.root)) return false;
     const overflowing = [];
     const visit2 = (node) => {
-      var _a2, _b2, _c3, _d3, _e;
+      var _a2, _b2, _c3, _d3, _e2;
       if (!node) return;
       const foreignObject = (_b2 = (_a2 = node == null ? void 0 : node._textData) == null ? void 0 : _a2.nodeContent) == null ? void 0 : _b2.node;
       const wrapper = (_c3 = foreignObject == null ? void 0 : foreignObject.querySelector) == null ? void 0 : _c3.call(foreignObject, ".smm-richtext-node-wrap");
       const foreignRect = (_d3 = foreignObject == null ? void 0 : foreignObject.getBoundingClientRect) == null ? void 0 : _d3.call(foreignObject);
-      const textRect = (_e = wrapper == null ? void 0 : wrapper.getBoundingClientRect) == null ? void 0 : _e.call(wrapper);
+      const textRect = (_e2 = wrapper == null ? void 0 : wrapper.getBoundingClientRect) == null ? void 0 : _e2.call(wrapper);
       if (foreignRect && textRect && Number.isFinite(foreignRect.width) && Number.isFinite(foreignRect.height) && Number.isFinite(textRect.width) && Number.isFinite(textRect.height) && foreignRect.width > 0.5 && foreignRect.height > 0.5 && (textRect.width > foreignRect.width + 0.5 || textRect.height > foreignRect.height + 0.5)) {
         overflowing.push({ node, foreignRect, textRect });
       }
       if (Array.isArray(node.children)) node.children.forEach(visit2);
     };
-    visit2((_b = (_a = this.mindMap) == null ? void 0 : _a.renderer) == null ? void 0 : _b.root);
+    visit2((_d2 = (_c2 = this.mindMap) == null ? void 0 : _c2.renderer) == null ? void 0 : _d2.root);
     if (overflowing.length === 0) return false;
     this.geometryRepairInFlight = true;
     const temporaryAutoWidths = [];
     overflowing.forEach(({ node, foreignRect, textRect }) => {
-      var _a2, _b2, _c3, _d3, _e, _f, _g, _h, _i, _j, _k, _l;
+      var _a2, _b2, _c3, _d3, _e2, _f2, _g, _h, _i, _j, _k, _l;
       const textData = node == null ? void 0 : node._textData;
       const currentWidth = Number(textData == null ? void 0 : textData.width);
       const currentHeight = Number(textData == null ? void 0 : textData.height);
@@ -93558,9 +93633,9 @@ class RenderLifecycleCoordinator {
       );
       const nextHeight = Math.max(currentHeight, Math.ceil(textRect.height / scaleY));
       if (!hasCustomWidth) {
-        const uid2 = String(((_e = node == null ? void 0 : node.getData) == null ? void 0 : _e.call(node, "uid")) ?? "");
+        const uid2 = String(((_e2 = node == null ? void 0 : node.getData) == null ? void 0 : _e2.call(node, "uid")) ?? "");
         if (uid2) temporaryAutoWidths.push(uid2);
-        if ((_f = node == null ? void 0 : node.nodeData) == null ? void 0 : _f.data) node.nodeData.data.customTextWidth = nextWidth;
+        if ((_f2 = node == null ? void 0 : node.nodeData) == null ? void 0 : _f2.data) node.nodeData.data.customTextWidth = nextWidth;
         node.customTextWidth = nextWidth;
       }
       (_g = node.reRender) == null ? void 0 : _g.call(node, ["text"], { ignoreUpdateCustomTextWidth: true });
@@ -93570,7 +93645,7 @@ class RenderLifecycleCoordinator {
         (_l = (_k = node._textData.nodeContent) == null ? void 0 : _k.height) == null ? void 0 : _l.call(_k, nextHeight);
       }
     });
-    (_d2 = (_c2 = this.mindMap).render) == null ? void 0 : _d2.call(_c2, () => {
+    (_f = (_e = this.mindMap).render) == null ? void 0 : _f.call(_e, () => {
       temporaryAutoWidths.forEach((uid2) => {
         var _a2, _b2, _c3, _d3;
         const live = (_c3 = (_b2 = (_a2 = this.mindMap) == null ? void 0 : _a2.renderer) == null ? void 0 : _b2.findNodeByUid) == null ? void 0 : _c3.call(_b2, uid2);
@@ -93587,7 +93662,7 @@ class RenderLifecycleCoordinator {
     return true;
   }
   commitTextEdit(payload, revision) {
-    var _a, _b, _c2, _d2, _e, _f, _g;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
     const uid2 = renderedNodeUid$1(payload.node);
     if (!uid2) return;
     const node = (_c2 = (_b = (_a = this.mindMap) == null ? void 0 : _a.renderer) == null ? void 0 : _b.findNodeByUid) == null ? void 0 : _c2.call(_b, uid2);
@@ -93600,7 +93675,15 @@ class RenderLifecycleCoordinator {
       node.height = rect2.height;
     }
     (_e = node.layout) == null ? void 0 : _e.call(node);
-    (_g = (_f = this.mindMap).render) == null ? void 0 : _g.call(_f, () => {
+    if (((_g = (_f = this.mindMap) == null ? void 0 : _f.richText) == null ? void 0 : _g.showTextEdit) === true) {
+      (_h = node.update) == null ? void 0 : _h.call(node);
+      (_j = (_i = node.parent) == null ? void 0 : _i.renderLine) == null ? void 0 : _j.call(_i);
+      (_k = node.renderLine) == null ? void 0 : _k.call(node, true);
+      (_m = (_l = this.mindMap.richText) == null ? void 0 : _l.updateTextEditNode) == null ? void 0 : _m.call(_l);
+      if (revision === this.revision) this.onCommitted(uid2);
+      return;
+    }
+    (_o = (_n = this.mindMap).render) == null ? void 0 : _o.call(_n, () => {
       var _a2, _b2;
       if (revision !== this.revision) return;
       (_b2 = (_a2 = this.mindMap.richText) == null ? void 0 : _a2.updateTextEditNode) == null ? void 0 : _b2.call(_a2);
