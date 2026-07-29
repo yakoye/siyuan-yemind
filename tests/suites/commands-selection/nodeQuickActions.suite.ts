@@ -137,3 +137,46 @@ it('positions quick actions in the canvas layer coordinate system in split view'
   controller.destroy();
   root.remove();
 });
+
+it('anchors outline-driven selection to the current rendered node by UID after rerender', () => {
+  const root = document.createElement('div');
+  const canvas = document.createElement('div');
+  root.appendChild(canvas);
+  document.body.appendChild(root);
+  Object.defineProperty(canvas, 'getBoundingClientRect', {
+    value: () => ({ left: 100, top: 80, right: 900, bottom: 680, width: 800, height: 600, x: 100, y: 80, toJSON() {} }),
+  });
+  const liveElement = document.createElement('div');
+  Object.defineProperty(liveElement, 'isConnected', { value: true });
+  Object.defineProperty(liveElement, 'getBoundingClientRect', {
+    value: () => ({ left: 360, top: 260, right: 560, bottom: 300, width: 200, height: 40, x: 360, y: 260, toJSON() {} }),
+  });
+  const liveNode: any = {
+    isRoot: false,
+    children: [],
+    nodeData: { children: [] },
+    group: { node: liveElement },
+    getData: (key: string) => ({ uid: 'a', expand: true, isActive: false } as any)[key],
+  };
+  const staleActiveNode = {
+    getData: (key: string) => key === 'uid' ? 'a' : undefined,
+  };
+  const controller = new NodeQuickActionsController({
+    root,
+    canvas,
+    getRendererRoot: () => liveNode,
+    getActiveNodes: () => [staleActiveNode],
+    readonly: () => false,
+    onAddChild: vi.fn(),
+    onSetExpanded: vi.fn(),
+  });
+
+  controller.refresh();
+
+  const actions = canvas.querySelector<HTMLElement>('[data-node-uid="a"]')!;
+  expect(actions).not.toBeNull();
+  expect(actions.style.left).toBe('460px');
+  expect(actions.style.top).toBe('200px');
+  controller.destroy();
+  root.remove();
+});

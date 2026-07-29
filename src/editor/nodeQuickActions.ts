@@ -218,6 +218,11 @@ export class NodeQuickActionsController {
       ? layerRect
       : this.layer.parentElement?.getBoundingClientRect() ?? layerRect;
     const activeNodes = this.options.getActiveNodes();
+    const activeUids = new Set(
+      activeNodes
+        .map((node) => String(node?.getData?.('uid') ?? node?.nodeData?.data?.uid ?? ''))
+        .filter(Boolean),
+    );
     visibleNodeList(this.options.getRendererRoot()).forEach((node) => {
       if (node?.isGeneralization || !node?.group?.node) return;
       const uid = String(node.getData?.('uid') ?? '');
@@ -226,7 +231,7 @@ export class NodeQuickActionsController {
       this.nodeElementToUid.set(nodeElement, uid);
       const rect = nodeElement.getBoundingClientRect();
       if (!rect.width && !rect.height) return;
-      const selected = activeNodes.includes(node) || node.getData?.('isActive') === true;
+      const selected = activeNodes.includes(node) || activeUids.has(uid) || node.getData?.('isActive') === true;
       const hovered = this.hoveredUid === uid;
       const descriptors = describeNodeQuickActions({
         isRoot: Boolean(node.isRoot),

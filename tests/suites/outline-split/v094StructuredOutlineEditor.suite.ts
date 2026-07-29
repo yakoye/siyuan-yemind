@@ -210,6 +210,87 @@ describe('v0.9.4 unified structured outline editor', () => {
     root.remove();
   });
 
+  it('commits a same-row text edit as a UID patch instead of a whole-tree transaction', () => {
+    const { root, controller, onApply, current } = mount();
+    const editor = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-editor]')!;
+    editor.textContent = 'Alpha updated';
+    editor.dispatchEvent(new InputEvent('input', {
+      bubbles: true,
+      inputType: 'insertText',
+      data: ' updated',
+    }));
+
+    expect(controller.flush('same-row-input')).toBe(true);
+    expect(onApply).toHaveBeenCalledOnce();
+    expect(onApply.mock.calls[0]?.[1]).toMatchObject({
+      transaction: 'text',
+      patches: [{
+        uid: 'a',
+        text: 'Alpha updated',
+        richText: false,
+      }],
+    });
+    expect(current().children[0].data.text).toBe('Alpha updated');
+    controller.destroy();
+    root.remove();
+  });
+
+  it('normalizes a whitespace-only outline row to one stable empty-node patch', () => {
+    const { root, controller, onApply, current } = mount();
+    const editor = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-editor]')!;
+    editor.innerHTML = '&nbsp; ';
+    editor.dispatchEvent(new InputEvent('input', {
+      bubbles: true,
+      inputType: 'insertText',
+      data: ' ',
+    }));
+
+    expect(controller.flush('whitespace-row')).toBe(true);
+    expect(onApply.mock.calls[0]?.[1]).toMatchObject({
+      transaction: 'text',
+      patches: [{ uid: 'a', text: '', richText: false }],
+    });
+    expect(current().children[0].data.text).toBe('');
+    expect(current().children).toHaveLength(3);
+    controller.destroy();
+    root.remove();
+  });
+
+  it('treats browser soft line wraps as one inline paragraph instead of new outline nodes', () => {
+    const { root, controller, current } = mount();
+    select(root, 'a', 5);
+    const paste = clipboardEvent('paste', {
+      'text/plain': ' 对建链、LTSSM、\n配置空间、AER、EQ、Reset 等比较熟悉',
+      'text/html': '<p> 对建链、LTSSM、 配置空间、AER、EQ、Reset 等比较熟悉</p>',
+    });
+    root.dispatchEvent(paste.event);
+    controller.flush('browser-paragraph-paste');
+
+    expect(current().children.map((node) => node.data.text)).toEqual([
+      'Alpha 对建链、LTSSM、 配置空间、AER、EQ、Reset 等比较熟悉',
+      'Beta',
+      'Gamma',
+    ]);
+    expect(current().children[0].children[0].data.uid).toBe('a1');
+    controller.destroy();
+    root.remove();
+  });
+
+  it('restores the last valid outline range so Delete behaves like a text editor after toolbar focus', () => {
+    const { root, controller, current } = mount();
+    select(root, 'a', 1, 'a', 4);
+    document.dispatchEvent(new Event('selectionchange'));
+    window.getSelection()?.removeAllRanges();
+
+    const event = key(root, 'Delete');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(current().children[0].data.text).toBe('Aa');
+    expect(current().children[0].data.uid).toBe('a');
+    controller.destroy();
+    root.remove();
+  });
+
   it('clears a selected outline image when another editing surface takes ownership', () => {
     const { root, controller, current } = mount();
     current().children[0].data.image = 'data:image/png;base64,AAAA';

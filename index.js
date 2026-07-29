@@ -79980,6 +79980,414 @@ class RichText {
   }
 }
 RichText.instanceName = "richText";
+const OUTLINE_TEXT_INDENT = "    ";
+const TAB_WIDTH = 4;
+function cloneData(value) {
+  if (typeof structuredClone === "function") {
+    try {
+      return structuredClone(value);
+    } catch {
+    }
+  }
+  return JSON.parse(JSON.stringify(value));
+}
+function htmlToPlainText(value) {
+  if (typeof document !== "undefined") {
+    const element = document.createElement("div");
+    element.innerHTML = value;
+    return element.textContent ?? "";
+  }
+  return value.replace(/<br\s*\/?\s*>/gi, "\n").replace(/<\/p\s*>/gi, "\n").replace(/<[^>]*>/g, "");
+}
+function outlineNodePlainText(data2) {
+  const source = String(data2.text ?? "");
+  const value = data2.richText ? htmlToPlainText(source) : source;
+  return value.replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n").replace(/[\t ]*\n[\t ]*/g, " ").trim();
+}
+function flattenTree(tree) {
+  const lines = [];
+  const visit2 = (node, depth, path2) => {
+    const uid2 = String(node.data.uid ?? path2);
+    lines.push({
+      uid: uid2,
+      depth,
+      path: path2,
+      text: outlineNodePlainText(node.data),
+      data: cloneData({ ...node.data, uid: uid2 })
+    });
+    const children = Array.isArray(node.children) ? node.children : [];
+    children.forEach((child, index) => visit2(child, depth + 1, `${path2}.${index}`));
+  };
+  visit2(tree, 0, "root");
+  return lines;
+}
+function serializeOutlineText(tree, indent = OUTLINE_TEXT_INDENT) {
+  return flattenTree(tree).map((line) => `${indent.repeat(line.depth)}${line.text}`).join("\n");
+}
+function indentColumns(value) {
+  let columns = 0;
+  for (const char of value) {
+    if (char === "	") columns += TAB_WIDTH;
+    else if (char === " " || char === " ") columns += 1;
+    else break;
+  }
+  return columns;
+}
+function greatestCommonDivisor(a, b) {
+  let left = Math.abs(Math.trunc(a));
+  let right = Math.abs(Math.trunc(b));
+  while (right) [left, right] = [right, left % right];
+  return left;
+}
+function inferIndentWidth(values2) {
+  const positive = [...new Set(values2.filter((value) => value > 0))].sort((a, b) => a - b);
+  if (positive.length === 0) return OUTLINE_TEXT_INDENT.length;
+  const exactCandidate = [4, 2, 3, 8].find((candidate) => positive.every((value) => value % candidate === 0));
+  if (exactCandidate) return exactCandidate;
+  const gcd2 = positive.reduce((result, value) => greatestCommonDivisor(result, value));
+  if (gcd2 > 1) return gcd2;
+  return Math.max(1, positive[0]);
+}
+function unescapeImportedOutlineText(value) {
+  return value.replace(/\\([:;])/g, "$1");
+}
+function parseOutlineText(value) {
+  const source = String(value ?? "").replace(/\r\n?/g, "\n");
+  const rawLines = source.split("\n");
+  while (rawLines.length > 0 && rawLines[0].trim() === "") rawLines.shift();
+  while (rawLines.length > 0 && rawLines[rawLines.length - 1].trim() === "") rawLines.pop();
+  if (rawLines.length === 0) {
+    return { lines: [], indentWidth: OUTLINE_TEXT_INDENT.length, topLevelCount: 0, implicitRoot: false };
+  }
+  const measured = rawLines.map((raw, index) => {
+    var _a;
+    const match2 = ((_a = raw.match(/^[\t \u00a0]*/)) == null ? void 0 : _a[0]) ?? "";
+    return {
+      raw,
+      sourceLine: index + 1,
+      rawIndent: match2,
+      columns: indentColumns(match2),
+      text: unescapeImportedOutlineText(raw.slice(match2.length))
+    };
+  });
+  const nonBlank = measured.filter((line) => line.text.trim().length > 0);
+  const baseIndent = nonBlank.length > 0 ? Math.min(...nonBlank.map((line) => line.columns)) : 0;
+  const normalizedIndents = nonBlank.map((line) => Math.max(0, line.columns - baseIndent));
+  const indentWidth = inferIndentWidth(normalizedIndents);
+  const lines = [];
+  let previousDepth = 0;
+  measured.forEach((line) => {
+    const relative = Math.max(0, line.columns - baseIndent);
+    let depth = line.text.trim().length === 0 && line.rawIndent.length === 0 ? previousDepth : Math.max(0, Math.round(relative / indentWidth));
+    depth = Math.min(depth, previousDepth + 1);
+    lines.push({
+      text: line.text,
+      depth,
+      rawIndent: line.rawIndent,
+      sourceLine: line.sourceLine
+    });
+    previousDepth = depth;
+  });
+  const topLevelCount = lines.filter((line) => line.depth === 0).length;
+  return {
+    lines,
+    indentWidth,
+    topLevelCount,
+    implicitRoot: topLevelCount > 1
+  };
+}
+const LEGACY_ICON_LABELS$1 = {
+  yemind_star: "★",
+  yemind_flag: "⚑",
+  yemind_question: "?",
+  yemind_idea: "✦",
+  yemind_check: "✓",
+  yemind_warning: "!",
+  priority_1: "1",
+  priority_2: "2",
+  priority_3: "3"
+};
+function escapeAttribute$2(value) {
+  return String(value ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+function cssPropertyName$1(value) {
+  return value.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+}
+function styleAttribute$1(style) {
+  return Object.entries(style).map(([key, value]) => `${cssPropertyName$1(key)}:${value}`).join(";");
+}
+function normalizeIcons(value) {
+  return Array.isArray(value) ? value.map((item) => String(item ?? "").trim()).filter(Boolean) : [];
+}
+function normalizeTags(value) {
+  return Array.isArray(value) ? value.map((item) => String(item ?? "").trim()).filter(Boolean) : [];
+}
+function hasMeaningfulNote(value) {
+  if (!value) return false;
+  if (typeof value === "string") return value.replace(/<[^>]*>/g, "").trim().length > 0;
+  if (typeof value === "object") {
+    const html2 = String(value.html ?? "");
+    return html2.replace(/<[^>]*>/g, "").trim().length > 0 || /<img\b/i.test(html2);
+  }
+  return false;
+}
+function outlineAccessoriesFromData(data2) {
+  const image = typeof data2.image === "string" && data2.image.trim() ? {
+    url: data2.image,
+    title: typeof data2.imageTitle === "string" ? data2.imageTitle : "",
+    ...typeof data2.yemindClipartId === "string" && data2.yemindClipartId ? { clipartId: data2.yemindClipartId } : {}
+  } : null;
+  const todoValue = data2.yemindTodo && typeof data2.yemindTodo === "object" ? data2.yemindTodo : null;
+  const todo = todoValue ? { checked: Boolean(todoValue.checked), text: String(todoValue.text ?? "") } : null;
+  const comments = Array.isArray(data2.yemindComments) ? data2.yemindComments : [];
+  const outerFrame = data2.outerFrame && typeof data2.outerFrame === "object" ? String(data2.outerFrame.groupId ?? "") : "";
+  return {
+    icons: normalizeIcons(data2.icon),
+    image,
+    todo,
+    tags: normalizeTags(data2.tag),
+    link: typeof data2.hyperlink === "string" ? data2.hyperlink : "",
+    hasNote: hasMeaningfulNote(data2.yemindNote ?? data2.note),
+    commentCount: comments.length,
+    hasOuterFrame: Boolean(outerFrame)
+  };
+}
+function iconHtml(value, pluginBaseUrl) {
+  const marker = markerItemFromValue(value);
+  if (marker) {
+    const style = styleAttribute$1(compactMarkerButtonStyle(pluginBaseUrl, marker));
+    return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon-action data-outline-icon="${escapeAttribute$2(value)}" tabindex="-1" title="${escapeAttribute$2(marker.groupLabel)} ${marker.orderInGroup}" aria-label="修改图标" style="${escapeAttribute$2(style)}"></button>`;
+  }
+  const label = LEGACY_ICON_LABELS$1[value] ?? "•";
+  return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon-action data-outline-icon="${escapeAttribute$2(value)}" tabindex="-1" title="${escapeAttribute$2(value)}" aria-label="修改图标">${escapeAttribute$2(label)}</button>`;
+}
+function symbolIcon(symbol) {
+  const safe = escapeAttribute$2(symbol);
+  return `<svg aria-hidden="true" focusable="false"><use href="#${safe}" xlink:href="#${safe}"></use></svg>`;
+}
+function statusButton(type, title, label) {
+  return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute$2(type)}" data-outline-content="${escapeAttribute$2(type)}" tabindex="-1" aria-label="${escapeAttribute$2(title)}">${label}</button>`;
+}
+function outlineMediaChrome(kind) {
+  const handles = ["nw", "n", "ne", "e", "se", "s", "sw", "w"].map((direction) => `<span class="ymz-outline-media-handle" data-outline-media-handle="${direction}" aria-hidden="true"></span>`).join("");
+  const title = kind === "clipart" ? "删除剪贴图" : "删除图片";
+  return `${handles}<button type="button" class="ymz-outline-media-delete" data-outline-media-delete tabindex="-1" aria-label="${title}" title="${title}">×</button>`;
+}
+function outlineAccessoriesHtml(accessories, pluginBaseUrl) {
+  const hasAny = accessories.icons.length || accessories.image || accessories.todo || accessories.tags.length || accessories.link || accessories.hasNote || accessories.commentCount || accessories.hasOuterFrame;
+  if (!hasAny) return "";
+  const todo = accessories.todo ? `<button type="button" class="ymz-outline-accessories__todo${accessories.todo.checked ? " is-checked" : ""}" data-outline-todo-action tabindex="-1" title="${accessories.todo.checked ? "待办已完成" : "待办未完成"}" aria-label="${accessories.todo.checked ? "待办已完成" : "待办未完成"}">${accessories.todo.checked ? "✓" : ""}</button>` : "";
+  const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join("");
+  const image = accessories.image ? `<span role="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? " is-clipart" : ""}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? "clipart" : "image"}" tabindex="-1" title="${escapeAttribute$2(accessories.image.title || (accessories.image.clipartId ? "剪贴图：单击选择，双击预览" : "图片：单击选择，双击预览"))}"><img src="${escapeAttribute$2(accessories.image.url)}" alt="" loading="lazy" draggable="false">${outlineMediaChrome(accessories.image.clipartId ? "clipart" : "image")}</span>` : "";
+  const tags = accessories.tags.length ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute$2(accessories.tags.join("、"))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute$2(tag)}</span>`).join("")}</span>` : "";
+  const note2 = accessories.hasNote ? statusButton("note", "备注", symbolIcon("iconYeMindNote")) : "";
+  const comments = accessories.commentCount ? statusButton("comments", `批注 ${accessories.commentCount}`, symbolIcon("iconYeMindComment")) : "";
+  const link = accessories.link ? statusButton("link", accessories.link, "↗") : "";
+  const outerFrame = accessories.hasOuterFrame ? statusButton("outer-frame", "已有外框", "□") : "";
+  return `<span class="ymz-outline-accessories" contenteditable="false" aria-label="节点附加内容">${todo}${icons}${image}${tags}${note2}${comments}${link}${outerFrame}</span>`;
+}
+function cloneValue(value) {
+  if (typeof structuredClone === "function") {
+    try {
+      return structuredClone(value);
+    } catch {
+    }
+  }
+  return JSON.parse(JSON.stringify(value));
+}
+function escapeHtml$c(value) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;").replaceAll("\n", "<br>");
+}
+function structuredOutlineHtmlToText(value) {
+  const source = String(value ?? "");
+  if (typeof document === "undefined") {
+    return source.replace(/<br\s*\/?\s*>/gi, "\n").replace(/<\/p\s*>/gi, "\n").replace(/<\/div\s*>/gi, "\n").replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ").trimEnd();
+  }
+  const element = document.createElement("div");
+  element.innerHTML = sanitizeRichHtml(source);
+  return (element.innerText || element.textContent || "").replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n").trimEnd();
+}
+function structuredOutlineIsRichHtml(value) {
+  const normalized2 = String(value ?? "").trim();
+  if (!normalized2) return false;
+  return /<(?:strong|b|em|i|u|s|strike|code|pre|a|span|mark|sub|sup|img|svg|mjx-container|ql-formula)\b/i.test(normalized2);
+}
+function displayHtml(data2) {
+  const value = String(data2.text ?? "");
+  return data2.richText ? sanitizeRichHtml(value) : escapeHtml$c(value);
+}
+function summaries(data2) {
+  const value = data2.generalization;
+  if (Array.isArray(value)) {
+    return value.filter((item) => Boolean(item && typeof item === "object"));
+  }
+  return value && typeof value === "object" ? [value] : [];
+}
+function flattenStructuredOutline(tree) {
+  const blocks = [];
+  const visit2 = (node, depth, parentUid, hiddenByAncestor, path2) => {
+    const uid2 = String(node.data.uid ?? path2);
+    const children = Array.isArray(node.children) ? node.children : [];
+    const expanded = node.data.expand !== false;
+    const html2 = displayHtml(node.data);
+    blocks.push({
+      uid: uid2,
+      depth,
+      html: html2,
+      text: outlineNodePlainText(node.data),
+      kind: "node",
+      parentUid,
+      hidden: hiddenByAncestor,
+      expanded,
+      hasChildren: children.length > 0,
+      isRoot: depth === 0,
+      pristine: node.data.yemindTextPristine === true && node.data.yemindTextEdited !== true,
+      accessories: outlineAccessoriesFromData(node.data)
+    });
+    const descendantsHidden = hiddenByAncestor || !expanded;
+    children.forEach(
+      (child, index) => visit2(child, depth + 1, uid2, descendantsHidden, `${path2}.${index}`)
+    );
+    summaries(node.data).forEach((summary, index) => {
+      const summaryUid = String(summary.uid ?? `${uid2}.summary.${index}`);
+      blocks.push({
+        uid: summaryUid,
+        depth: depth + 1,
+        html: displayHtml(summary),
+        text: outlineNodePlainText(summary),
+        kind: "summary",
+        parentUid: uid2,
+        hidden: descendantsHidden,
+        expanded: true,
+        hasChildren: false,
+        isRoot: false,
+        pristine: summary.yemindTextPristine === true && summary.yemindTextEdited !== true,
+        accessories: outlineAccessoriesFromData(summary)
+      });
+    });
+  };
+  visit2(tree, 0, null, false, "root");
+  return blocks;
+}
+function indexExistingData(tree) {
+  const nodes = /* @__PURE__ */ new Map();
+  const summaryData = /* @__PURE__ */ new Map();
+  const visit2 = (node, path2) => {
+    const uid2 = String(node.data.uid ?? path2);
+    nodes.set(uid2, cloneValue({ ...node.data, uid: uid2 }));
+    summaries(node.data).forEach((summary, index) => {
+      const summaryUid = String(summary.uid ?? `${uid2}.summary.${index}`);
+      summaryData.set(summaryUid, cloneValue({ ...summary, uid: summaryUid }));
+    });
+    (node.children ?? []).forEach((child, index) => visit2(child, `${path2}.${index}`));
+  };
+  visit2(tree, "root");
+  return { nodes, summaries: summaryData };
+}
+function normalizedBlockHtml(block) {
+  const sanitized = sanitizeRichHtml(String(block.html ?? ""));
+  const text2 = structuredOutlineHtmlToText(sanitized || escapeHtml$c(String(block.text ?? "")));
+  const richText = structuredOutlineIsRichHtml(sanitized);
+  return {
+    html: richText ? sanitized : escapeHtml$c(text2),
+    text: text2,
+    richText
+  };
+}
+function updatedData(base, block) {
+  const value = normalizedBlockHtml(block);
+  const data2 = cloneValue(base ?? { text: "" });
+  data2.uid = block.uid;
+  data2.text = value.richText ? value.html : value.text;
+  data2.richText = value.richText;
+  data2.yemindTextPristine = false;
+  data2.yemindTextEdited = true;
+  if (block.kind === "node") data2.expand = block.expanded;
+  return data2;
+}
+function normalizeStructuredOutlineDepths(blocks) {
+  let previousDepth = 0;
+  return blocks.map((block, index) => {
+    let depth = Math.max(0, Math.trunc(block.depth));
+    if (index === 0) depth = 0;
+    else depth = Math.max(1, Math.min(depth, previousDepth + 1));
+    previousDepth = depth;
+    return { ...block, depth, isRoot: index === 0, parentUid: index === 0 ? null : block.parentUid };
+  });
+}
+function buildTreeFromStructuredOutline(baseTree, inputBlocks) {
+  const normalBlocks = normalizeStructuredOutlineDepths(
+    inputBlocks.filter((block) => block.kind === "node")
+  );
+  if (normalBlocks.length === 0) {
+    normalBlocks.push({
+      uid: String(baseTree.data.uid ?? "root"),
+      depth: 0,
+      html: "",
+      text: "",
+      kind: "node",
+      parentUid: null,
+      hidden: false,
+      expanded: true,
+      hasChildren: false,
+      isRoot: true,
+      pristine: false,
+      accessories: { icons: [], image: null, todo: null, tags: [], link: "", hasNote: false, commentCount: 0, hasOuterFrame: false }
+    });
+  }
+  const existing = indexExistingData(baseTree);
+  let reusedNodeCount = 0;
+  let createdNodeCount = 0;
+  const treeByUid = /* @__PURE__ */ new Map();
+  const stack = [];
+  let root2 = null;
+  normalBlocks.forEach((block, index) => {
+    const normalizedDepth = index === 0 ? 0 : Math.max(1, Math.min(block.depth, stack.length));
+    const base = existing.nodes.get(block.uid);
+    if (base) reusedNodeCount += 1;
+    else createdNodeCount += 1;
+    const node = {
+      data: updatedData(base, { ...block }),
+      children: []
+    };
+    treeByUid.set(block.uid, node);
+    if (index === 0) {
+      root2 = node;
+      stack.length = 0;
+      stack.push(node);
+      return;
+    }
+    const parentDepth = Math.max(0, normalizedDepth - 1);
+    const parent = stack[parentDepth] ?? root2;
+    parent.children.push(node);
+    stack[normalizedDepth] = node;
+    stack.length = normalizedDepth + 1;
+  });
+  const groupedSummaries = /* @__PURE__ */ new Map();
+  inputBlocks.filter((block) => block.kind === "summary" && block.parentUid).forEach((block) => {
+    const base = existing.summaries.get(block.uid);
+    const data2 = updatedData(base, block);
+    const list = groupedSummaries.get(block.parentUid) ?? [];
+    list.push(data2);
+    groupedSummaries.set(block.parentUid, list);
+  });
+  groupedSummaries.forEach((value, parentUid) => {
+    const parent = treeByUid.get(parentUid);
+    if (parent) parent.data.generalization = value.length === 1 ? value[0] : value;
+  });
+  return {
+    tree: root2,
+    nodeCount: normalBlocks.length,
+    reusedNodeCount,
+    createdNodeCount
+  };
+}
+function createStructuredOutlineUid() {
+  var _a, _b;
+  const random = (_b = (_a = globalThis.crypto) == null ? void 0 : _a.randomUUID) == null ? void 0 : _b.call(_a);
+  if (random) return `ym-${random}`;
+  return `ym-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
 function editorHorizontalMargin(node, paddingX, textContentMargin, scaleX) {
   const scaledPadding = Math.max(0, Number(paddingX) || 0) * Math.max(0, Number(scaleX) || 1);
   const hasPrefix = Boolean(node == null ? void 0 : node._prefixData) || Array.isArray(node == null ? void 0 : node._iconData) && node._iconData.length > 0;
@@ -80146,6 +80554,27 @@ const YEMIND_RICH_TEXT_FORMATS = [
   "code-block"
 ];
 let formatsRegistered = false;
+function writeQuillSelectionToClipboard(quill, event, fallbackRange) {
+  var _a, _b;
+  const range2 = ((_a = quill == null ? void 0 : quill.getSelection) == null ? void 0 : _a.call(quill)) ?? fallbackRange ?? null;
+  if (!quill || !event.clipboardData || !range2 || range2.length <= 0) return false;
+  const plain2 = String(quill.getText(range2.index, range2.length) ?? "").replace(/\n$/, "");
+  if (!plain2) return false;
+  const html2 = String(((_b = quill.getSemanticHTML) == null ? void 0 : _b.call(quill, range2.index, range2.length)) ?? "");
+  event.preventDefault();
+  event.clipboardData.setData("text/plain", plain2);
+  if (html2) event.clipboardData.setData("text/html", html2);
+  return true;
+}
+function normalizeCanvasTextPayload(html2) {
+  const source = String(html2 ?? "");
+  const richText = structuredOutlineIsRichHtml(source);
+  const plain2 = richText ? "" : nodeRichTextToTextWithWrap(source.replace(/<br\s*\/?>/gi, "\n")).replace(/\u00a0/g, " ");
+  return {
+    text: richText ? source : plain2.trim().length > 0 ? plain2 : "",
+    richText
+  };
+}
 function sanitizeLink(value) {
   const text2 = String(value ?? "").trim();
   if (/^(https?:|mailto:|tel:|sms:|siyuan:)/i.test(text2)) return text2;
@@ -80278,13 +80707,37 @@ class YeMindRichText extends RichText {
     });
   }
   hideEditText(nodes) {
+    var _a, _b;
     this.unbindPlacementTracking();
     this.cancelPlacementStabilization();
     const liveNode = resolveLiveRenderedNode(this.mindMap, this.node, this.editingUid);
     if (liveNode) this.node = liveNode;
     const liveNodes = Array.isArray(nodes) ? nodes.map((node) => resolveLiveRenderedNode(this.mindMap, node)).filter(Boolean) : nodes;
     try {
-      super.hideEditText(liveNodes);
+      if (!this.showTextEdit) return;
+      const beforeHideRichTextEdit = (_b = (_a = this.mindMap) == null ? void 0 : _a.opt) == null ? void 0 : _b.beforeHideRichTextEdit;
+      if (typeof beforeHideRichTextEdit === "function") beforeHideRichTextEdit(this);
+      const payload = normalizeCanvasTextPayload(this.getEditText());
+      const list = Array.isArray(liveNodes) && liveNodes.length > 0 ? liveNodes : [this.node].filter(Boolean);
+      const editingNode = this.node;
+      this.textEditNode.style.display = "none";
+      this.setIsShowTextEdit(false);
+      this.mindMap.emit("rich_text_selection_change", false);
+      this.node = null;
+      this.isInserting = false;
+      list.forEach((node) => {
+        var _a2, _b2;
+        markNodeTextEditedData(((_a2 = node == null ? void 0 : node.nodeData) == null ? void 0 : _a2.data) ?? ((_b2 = node == null ? void 0 : node.getData) == null ? void 0 : _b2.call(node)));
+        this.mindMap.execCommand(
+          "SET_NODE_TEXT",
+          node,
+          payload.text,
+          payload.richText,
+          !payload.richText
+        );
+      });
+      this.mindMap.render();
+      this.mindMap.emit("hide_text_edit", this.textEditNode, list, editingNode);
     } finally {
       this.editingUid = "";
       this.lastValidNodeRect = null;
@@ -80564,19 +81017,7 @@ class YeMindRichText extends RichText {
       theme: "snow"
     });
     this.quill.root.addEventListener("copy", (event) => {
-      var _a, _b;
-      event.preventDefault();
-      const selection = window.getSelection();
-      const original = (selection == null ? void 0 : selection.toString()) ?? "";
-      try {
-        const range2 = selection == null ? void 0 : selection.getRangeAt(0);
-        if (!range2) throw new Error("No selection");
-        const div = document.createElement("div");
-        div.appendChild(range2.cloneContents());
-        (_a = event.clipboardData) == null ? void 0 : _a.setData("text/plain", nodeRichTextToTextWithWrap(div.innerHTML));
-      } catch {
-        (_b = event.clipboardData) == null ? void 0 : _b.setData("text/plain", original);
-      }
+      writeQuillSelectionToClipboard(this.quill, event, this.range ?? this.lastRange);
     });
     this.quill.on("selection-change", (range2) => {
       if (this.isInserting) {
@@ -83482,7 +83923,7 @@ function createCommandAdapter(mindMap) {
     }
   };
 }
-function escapeHtml$c(value) {
+function escapeHtml$b(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function formatCheckpointTime(value) {
@@ -83497,9 +83938,9 @@ function renderCheckpointListHtml(checkpoints, options) {
   return checkpoints.map((checkpoint) => {
     const kind = checkpoint.kind === "recovery-protection" ? "恢复前保护" : "普通检查点";
     const restoreDisabled = options.readonly ? " disabled" : "";
-    return `<article class="ymz-checkpoint-item" data-checkpoint-id="${escapeHtml$c(checkpoint.id)}">
+    return `<article class="ymz-checkpoint-item" data-checkpoint-id="${escapeHtml$b(checkpoint.id)}">
       <div class="ymz-checkpoint-item__main">
-        <strong>${escapeHtml$c(checkpoint.name)}</strong>
+        <strong>${escapeHtml$b(checkpoint.name)}</strong>
         <span>${kind} · ${formatCheckpointTime(checkpoint.createdAt)} · ${checkpoint.nodeCount} 个节点</span>
       </div>
       <div class="ymz-checkpoint-item__actions">
@@ -83520,13 +83961,13 @@ function buildCheckpointDialogContent(checkpoints, readonly) {
     <button class="b3-button b3-button--cancel" data-checkpoint-dialog-action="close">关闭</button>
   </div>`;
 }
-function escapeHtml$b(value) {
+function escapeHtml$a(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function openCheckpointManager(options) {
   var _a, _b;
   const dialog = createYeMindDialog({
-    title: `检查点 · ${escapeHtml$b(options.mapTitle)}`,
+    title: `检查点 · ${escapeHtml$a(options.mapTitle)}`,
     width: "720px",
     content: buildCheckpointDialogContent(options.repository.list(options.mapId), options.readonly)
   });
@@ -83672,11 +84113,11 @@ function buildCommentsListHtml(comments, editingId = null) {
   if (comments.length === 0) return '<div class="ymz-empty-hint">暂无批注</div>';
   return comments.map((comment) => {
     const editing = comment.id === editingId;
-    const body = editing ? `<textarea class="b3-text-field fn__block ymz-comment__editor" rows="3" data-field="edit-comment">${escapeHtml$a(comment.text)}</textarea>` : `<div class="ymz-comment__text">${escapeHtml$a(comment.text).replaceAll("\n", "<br>")}</div>`;
+    const body = editing ? `<textarea class="b3-text-field fn__block ymz-comment__editor" rows="3" data-field="edit-comment">${escapeHtml$9(comment.text)}</textarea>` : `<div class="ymz-comment__text">${escapeHtml$9(comment.text).replaceAll("\n", "<br>")}</div>`;
     const actions = editing ? `<button class="b3-button b3-button--outline" data-action="save-comment">保存</button>
          <button class="b3-button b3-button--cancel" data-action="cancel-edit-comment">取消</button>` : `<button class="b3-button b3-button--outline" data-action="edit-comment">编辑</button>
          <button class="b3-button b3-button--cancel" data-action="delete-comment">删除</button>`;
-    return `<article class="ymz-comment" data-comment-id="${escapeAttribute$2(comment.id)}">
+    return `<article class="ymz-comment" data-comment-id="${escapeAttribute$1(comment.id)}">
       <div class="ymz-comment__body">${body}</div>
       <div class="ymz-comment__meta">
         <time class="ymz-comment__time" datetime="${new Date(comment.createdAt).toISOString()}">${formatCommentTimestamp(comment.createdAt)}</time>
@@ -83692,11 +84133,11 @@ function requestClearAllComments(confirmHandler, onClear) {
     onClear
   );
 }
-function escapeHtml$a(value) {
+function escapeHtml$9(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
-function escapeAttribute$2(value) {
-  return escapeHtml$a(value);
+function escapeAttribute$1(value) {
+  return escapeHtml$9(value);
 }
 const SUPPORTED_PROTOCOLS = /* @__PURE__ */ new Set(["http:", "https:", "mailto:", "tel:", "siyuan:"]);
 const BARE_DOMAIN = /^(?:localhost(?::\d+)?|(?:[a-z0-9-]+\.)+[a-z]{2,})(?:[/:?#].*)?$/i;
@@ -83808,7 +84249,7 @@ function openFormulaDialog(commands) {
     }
     try {
       const katex2 = window.katex;
-      preview.innerHTML = (katex2 == null ? void 0 : katex2.renderToString) ? katex2.renderToString(value, { throwOnError: false }) : escapeHtml$9(value);
+      preview.innerHTML = (katex2 == null ? void 0 : katex2.renderToString) ? katex2.renderToString(value, { throwOnError: false }) : escapeHtml$8(value);
     } catch {
       preview.textContent = value;
     }
@@ -83847,7 +84288,7 @@ function openImageDialog(commands) {
   const preview = dialog.element.querySelector('[data-role="preview"]');
   url.value = String(data2.image ?? "");
   title.value = String(data2.imageTitle ?? "");
-  if (url.value) preview.innerHTML = `<img src="${escapeAttribute$1(url.value)}" alt="">`;
+  if (url.value) preview.innerHTML = `<img src="${escapeAttribute(url.value)}" alt="">`;
   file.addEventListener("change", async () => {
     var _a2;
     const selected = (_a2 = file.files) == null ? void 0 : _a2[0];
@@ -83868,7 +84309,7 @@ function openImageDialog(commands) {
     }
     fileData = loaded.dataUrl;
     fileSize = loaded.size;
-    preview.innerHTML = `<img src="${escapeAttribute$1(fileData)}" alt="">`;
+    preview.innerHTML = `<img src="${escapeAttribute(fileData)}" alt="">`;
   });
   (_a = dialog.element.querySelector('[data-action="remove-image"]')) == null ? void 0 : _a.addEventListener("click", () => {
     siyuan.confirm(
@@ -83962,7 +84403,7 @@ function openNoteDialog(commands, options = {}) {
     reader.addEventListener("load", () => {
       const source = typeof reader.result === "string" ? reader.result : "";
       if (!source) return;
-      document.execCommand("insertHTML", false, `<img src="${escapeAttribute$1(source)}" alt="">`);
+      document.execCommand("insertHTML", false, `<img src="${escapeAttribute(source)}" alt="">`);
     });
     reader.readAsDataURL(image);
   });
@@ -84070,11 +84511,11 @@ function getImageSize(url) {
     image.src = url;
   });
 }
-function escapeHtml$9(value) {
+function escapeHtml$8(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
-function escapeAttribute$1(value) {
-  return escapeHtml$9(value);
+function escapeAttribute(value) {
+  return escapeHtml$8(value);
 }
 function createTodoMenuDescriptor(todo) {
   return getTodoMenuState(todo);
@@ -84505,414 +84946,6 @@ function openOutlineContextMenu(event, options) {
   menu.addItem({ icon: "iconTrashcan", label: "删除当前行和子级", warning: true, disabled: disabled || options.isRoot, click: run("remove-subtree", options.onRemoveSubtree) });
   menu.addItem({ icon: "iconTrashcan", label: "仅删除当前行", warning: true, disabled: disabled || options.isRoot, click: run("remove-only-current", options.onRemoveOnlyCurrent) });
   menu.open({ x: event.clientX, y: event.clientY });
-}
-const OUTLINE_TEXT_INDENT = "    ";
-const TAB_WIDTH = 4;
-function cloneData(value) {
-  if (typeof structuredClone === "function") {
-    try {
-      return structuredClone(value);
-    } catch {
-    }
-  }
-  return JSON.parse(JSON.stringify(value));
-}
-function htmlToPlainText(value) {
-  if (typeof document !== "undefined") {
-    const element = document.createElement("div");
-    element.innerHTML = value;
-    return element.textContent ?? "";
-  }
-  return value.replace(/<br\s*\/?\s*>/gi, "\n").replace(/<\/p\s*>/gi, "\n").replace(/<[^>]*>/g, "");
-}
-function outlineNodePlainText(data2) {
-  const source = String(data2.text ?? "");
-  const value = data2.richText ? htmlToPlainText(source) : source;
-  return value.replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n").replace(/[\t ]*\n[\t ]*/g, " ").trim();
-}
-function flattenTree(tree) {
-  const lines = [];
-  const visit2 = (node, depth, path2) => {
-    const uid2 = String(node.data.uid ?? path2);
-    lines.push({
-      uid: uid2,
-      depth,
-      path: path2,
-      text: outlineNodePlainText(node.data),
-      data: cloneData({ ...node.data, uid: uid2 })
-    });
-    const children = Array.isArray(node.children) ? node.children : [];
-    children.forEach((child, index) => visit2(child, depth + 1, `${path2}.${index}`));
-  };
-  visit2(tree, 0, "root");
-  return lines;
-}
-function serializeOutlineText(tree, indent = OUTLINE_TEXT_INDENT) {
-  return flattenTree(tree).map((line) => `${indent.repeat(line.depth)}${line.text}`).join("\n");
-}
-function indentColumns(value) {
-  let columns = 0;
-  for (const char of value) {
-    if (char === "	") columns += TAB_WIDTH;
-    else if (char === " " || char === " ") columns += 1;
-    else break;
-  }
-  return columns;
-}
-function greatestCommonDivisor(a, b) {
-  let left = Math.abs(Math.trunc(a));
-  let right = Math.abs(Math.trunc(b));
-  while (right) [left, right] = [right, left % right];
-  return left;
-}
-function inferIndentWidth(values2) {
-  const positive = [...new Set(values2.filter((value) => value > 0))].sort((a, b) => a - b);
-  if (positive.length === 0) return OUTLINE_TEXT_INDENT.length;
-  const exactCandidate = [4, 2, 3, 8].find((candidate) => positive.every((value) => value % candidate === 0));
-  if (exactCandidate) return exactCandidate;
-  const gcd2 = positive.reduce((result, value) => greatestCommonDivisor(result, value));
-  if (gcd2 > 1) return gcd2;
-  return Math.max(1, positive[0]);
-}
-function unescapeImportedOutlineText(value) {
-  return value.replace(/\\([:;])/g, "$1");
-}
-function parseOutlineText(value) {
-  const source = String(value ?? "").replace(/\r\n?/g, "\n");
-  const rawLines = source.split("\n");
-  while (rawLines.length > 0 && rawLines[0].trim() === "") rawLines.shift();
-  while (rawLines.length > 0 && rawLines[rawLines.length - 1].trim() === "") rawLines.pop();
-  if (rawLines.length === 0) {
-    return { lines: [], indentWidth: OUTLINE_TEXT_INDENT.length, topLevelCount: 0, implicitRoot: false };
-  }
-  const measured = rawLines.map((raw, index) => {
-    var _a;
-    const match2 = ((_a = raw.match(/^[\t \u00a0]*/)) == null ? void 0 : _a[0]) ?? "";
-    return {
-      raw,
-      sourceLine: index + 1,
-      rawIndent: match2,
-      columns: indentColumns(match2),
-      text: unescapeImportedOutlineText(raw.slice(match2.length))
-    };
-  });
-  const nonBlank = measured.filter((line) => line.text.trim().length > 0);
-  const baseIndent = nonBlank.length > 0 ? Math.min(...nonBlank.map((line) => line.columns)) : 0;
-  const normalizedIndents = nonBlank.map((line) => Math.max(0, line.columns - baseIndent));
-  const indentWidth = inferIndentWidth(normalizedIndents);
-  const lines = [];
-  let previousDepth = 0;
-  measured.forEach((line) => {
-    const relative = Math.max(0, line.columns - baseIndent);
-    let depth = line.text.trim().length === 0 && line.rawIndent.length === 0 ? previousDepth : Math.max(0, Math.round(relative / indentWidth));
-    depth = Math.min(depth, previousDepth + 1);
-    lines.push({
-      text: line.text,
-      depth,
-      rawIndent: line.rawIndent,
-      sourceLine: line.sourceLine
-    });
-    previousDepth = depth;
-  });
-  const topLevelCount = lines.filter((line) => line.depth === 0).length;
-  return {
-    lines,
-    indentWidth,
-    topLevelCount,
-    implicitRoot: topLevelCount > 1
-  };
-}
-const LEGACY_ICON_LABELS$1 = {
-  yemind_star: "★",
-  yemind_flag: "⚑",
-  yemind_question: "?",
-  yemind_idea: "✦",
-  yemind_check: "✓",
-  yemind_warning: "!",
-  priority_1: "1",
-  priority_2: "2",
-  priority_3: "3"
-};
-function escapeAttribute(value) {
-  return String(value ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-}
-function cssPropertyName$1(value) {
-  return value.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
-}
-function styleAttribute$1(style) {
-  return Object.entries(style).map(([key, value]) => `${cssPropertyName$1(key)}:${value}`).join(";");
-}
-function normalizeIcons(value) {
-  return Array.isArray(value) ? value.map((item) => String(item ?? "").trim()).filter(Boolean) : [];
-}
-function normalizeTags(value) {
-  return Array.isArray(value) ? value.map((item) => String(item ?? "").trim()).filter(Boolean) : [];
-}
-function hasMeaningfulNote(value) {
-  if (!value) return false;
-  if (typeof value === "string") return value.replace(/<[^>]*>/g, "").trim().length > 0;
-  if (typeof value === "object") {
-    const html2 = String(value.html ?? "");
-    return html2.replace(/<[^>]*>/g, "").trim().length > 0 || /<img\b/i.test(html2);
-  }
-  return false;
-}
-function outlineAccessoriesFromData(data2) {
-  const image = typeof data2.image === "string" && data2.image.trim() ? {
-    url: data2.image,
-    title: typeof data2.imageTitle === "string" ? data2.imageTitle : "",
-    ...typeof data2.yemindClipartId === "string" && data2.yemindClipartId ? { clipartId: data2.yemindClipartId } : {}
-  } : null;
-  const todoValue = data2.yemindTodo && typeof data2.yemindTodo === "object" ? data2.yemindTodo : null;
-  const todo = todoValue ? { checked: Boolean(todoValue.checked), text: String(todoValue.text ?? "") } : null;
-  const comments = Array.isArray(data2.yemindComments) ? data2.yemindComments : [];
-  const outerFrame = data2.outerFrame && typeof data2.outerFrame === "object" ? String(data2.outerFrame.groupId ?? "") : "";
-  return {
-    icons: normalizeIcons(data2.icon),
-    image,
-    todo,
-    tags: normalizeTags(data2.tag),
-    link: typeof data2.hyperlink === "string" ? data2.hyperlink : "",
-    hasNote: hasMeaningfulNote(data2.yemindNote ?? data2.note),
-    commentCount: comments.length,
-    hasOuterFrame: Boolean(outerFrame)
-  };
-}
-function iconHtml(value, pluginBaseUrl) {
-  const marker = markerItemFromValue(value);
-  if (marker) {
-    const style = styleAttribute$1(compactMarkerButtonStyle(pluginBaseUrl, marker));
-    return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon-action data-outline-icon="${escapeAttribute(value)}" tabindex="-1" title="${escapeAttribute(marker.groupLabel)} ${marker.orderInGroup}" aria-label="修改图标" style="${escapeAttribute(style)}"></button>`;
-  }
-  const label = LEGACY_ICON_LABELS$1[value] ?? "•";
-  return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon-action data-outline-icon="${escapeAttribute(value)}" tabindex="-1" title="${escapeAttribute(value)}" aria-label="修改图标">${escapeAttribute(label)}</button>`;
-}
-function symbolIcon(symbol) {
-  const safe = escapeAttribute(symbol);
-  return `<svg aria-hidden="true" focusable="false"><use href="#${safe}" xlink:href="#${safe}"></use></svg>`;
-}
-function statusButton(type, title, label) {
-  return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute(type)}" data-outline-content="${escapeAttribute(type)}" tabindex="-1" aria-label="${escapeAttribute(title)}">${label}</button>`;
-}
-function outlineMediaChrome(kind) {
-  const handles = ["nw", "n", "ne", "e", "se", "s", "sw", "w"].map((direction) => `<span class="ymz-outline-media-handle" data-outline-media-handle="${direction}" aria-hidden="true"></span>`).join("");
-  const title = kind === "clipart" ? "删除剪贴图" : "删除图片";
-  return `${handles}<button type="button" class="ymz-outline-media-delete" data-outline-media-delete tabindex="-1" aria-label="${title}" title="${title}">×</button>`;
-}
-function outlineAccessoriesHtml(accessories, pluginBaseUrl) {
-  const hasAny = accessories.icons.length || accessories.image || accessories.todo || accessories.tags.length || accessories.link || accessories.hasNote || accessories.commentCount || accessories.hasOuterFrame;
-  if (!hasAny) return "";
-  const todo = accessories.todo ? `<button type="button" class="ymz-outline-accessories__todo${accessories.todo.checked ? " is-checked" : ""}" data-outline-todo-action tabindex="-1" title="${accessories.todo.checked ? "待办已完成" : "待办未完成"}" aria-label="${accessories.todo.checked ? "待办已完成" : "待办未完成"}">${accessories.todo.checked ? "✓" : ""}</button>` : "";
-  const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join("");
-  const image = accessories.image ? `<span role="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? " is-clipart" : ""}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? "clipart" : "image"}" tabindex="-1" title="${escapeAttribute(accessories.image.title || (accessories.image.clipartId ? "剪贴图：单击选择，双击预览" : "图片：单击选择，双击预览"))}"><img src="${escapeAttribute(accessories.image.url)}" alt="" loading="lazy" draggable="false">${outlineMediaChrome(accessories.image.clipartId ? "clipart" : "image")}</span>` : "";
-  const tags = accessories.tags.length ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute(accessories.tags.join("、"))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute(tag)}</span>`).join("")}</span>` : "";
-  const note2 = accessories.hasNote ? statusButton("note", "备注", symbolIcon("iconYeMindNote")) : "";
-  const comments = accessories.commentCount ? statusButton("comments", `批注 ${accessories.commentCount}`, symbolIcon("iconYeMindComment")) : "";
-  const link = accessories.link ? statusButton("link", accessories.link, "↗") : "";
-  const outerFrame = accessories.hasOuterFrame ? statusButton("outer-frame", "已有外框", "□") : "";
-  return `<span class="ymz-outline-accessories" contenteditable="false" aria-label="节点附加内容">${todo}${icons}${image}${tags}${note2}${comments}${link}${outerFrame}</span>`;
-}
-function cloneValue(value) {
-  if (typeof structuredClone === "function") {
-    try {
-      return structuredClone(value);
-    } catch {
-    }
-  }
-  return JSON.parse(JSON.stringify(value));
-}
-function escapeHtml$8(value) {
-  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;").replaceAll("\n", "<br>");
-}
-function structuredOutlineHtmlToText(value) {
-  const source = String(value ?? "");
-  if (typeof document === "undefined") {
-    return source.replace(/<br\s*\/?\s*>/gi, "\n").replace(/<\/p\s*>/gi, "\n").replace(/<\/div\s*>/gi, "\n").replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ").trimEnd();
-  }
-  const element = document.createElement("div");
-  element.innerHTML = sanitizeRichHtml(source);
-  return (element.innerText || element.textContent || "").replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n").trimEnd();
-}
-function structuredOutlineIsRichHtml(value) {
-  const normalized2 = String(value ?? "").trim();
-  if (!normalized2) return false;
-  return /<(?:strong|b|em|i|u|s|strike|code|pre|a|span|mark|sub|sup|img|svg|mjx-container|ql-formula)\b/i.test(normalized2);
-}
-function displayHtml(data2) {
-  const value = String(data2.text ?? "");
-  return data2.richText ? sanitizeRichHtml(value) : escapeHtml$8(value);
-}
-function summaries(data2) {
-  const value = data2.generalization;
-  if (Array.isArray(value)) {
-    return value.filter((item) => Boolean(item && typeof item === "object"));
-  }
-  return value && typeof value === "object" ? [value] : [];
-}
-function flattenStructuredOutline(tree) {
-  const blocks = [];
-  const visit2 = (node, depth, parentUid, hiddenByAncestor, path2) => {
-    const uid2 = String(node.data.uid ?? path2);
-    const children = Array.isArray(node.children) ? node.children : [];
-    const expanded = node.data.expand !== false;
-    const html2 = displayHtml(node.data);
-    blocks.push({
-      uid: uid2,
-      depth,
-      html: html2,
-      text: outlineNodePlainText(node.data),
-      kind: "node",
-      parentUid,
-      hidden: hiddenByAncestor,
-      expanded,
-      hasChildren: children.length > 0,
-      isRoot: depth === 0,
-      pristine: node.data.yemindTextPristine === true && node.data.yemindTextEdited !== true,
-      accessories: outlineAccessoriesFromData(node.data)
-    });
-    const descendantsHidden = hiddenByAncestor || !expanded;
-    children.forEach(
-      (child, index) => visit2(child, depth + 1, uid2, descendantsHidden, `${path2}.${index}`)
-    );
-    summaries(node.data).forEach((summary, index) => {
-      const summaryUid = String(summary.uid ?? `${uid2}.summary.${index}`);
-      blocks.push({
-        uid: summaryUid,
-        depth: depth + 1,
-        html: displayHtml(summary),
-        text: outlineNodePlainText(summary),
-        kind: "summary",
-        parentUid: uid2,
-        hidden: descendantsHidden,
-        expanded: true,
-        hasChildren: false,
-        isRoot: false,
-        pristine: summary.yemindTextPristine === true && summary.yemindTextEdited !== true,
-        accessories: outlineAccessoriesFromData(summary)
-      });
-    });
-  };
-  visit2(tree, 0, null, false, "root");
-  return blocks;
-}
-function indexExistingData(tree) {
-  const nodes = /* @__PURE__ */ new Map();
-  const summaryData = /* @__PURE__ */ new Map();
-  const visit2 = (node, path2) => {
-    const uid2 = String(node.data.uid ?? path2);
-    nodes.set(uid2, cloneValue({ ...node.data, uid: uid2 }));
-    summaries(node.data).forEach((summary, index) => {
-      const summaryUid = String(summary.uid ?? `${uid2}.summary.${index}`);
-      summaryData.set(summaryUid, cloneValue({ ...summary, uid: summaryUid }));
-    });
-    (node.children ?? []).forEach((child, index) => visit2(child, `${path2}.${index}`));
-  };
-  visit2(tree, "root");
-  return { nodes, summaries: summaryData };
-}
-function normalizedBlockHtml(block) {
-  const sanitized = sanitizeRichHtml(String(block.html ?? ""));
-  const text2 = structuredOutlineHtmlToText(sanitized || escapeHtml$8(String(block.text ?? "")));
-  const richText = structuredOutlineIsRichHtml(sanitized);
-  return {
-    html: richText ? sanitized : escapeHtml$8(text2),
-    text: text2,
-    richText
-  };
-}
-function updatedData(base, block) {
-  const value = normalizedBlockHtml(block);
-  const data2 = cloneValue(base ?? { text: "" });
-  data2.uid = block.uid;
-  data2.text = value.richText ? value.html : value.text;
-  data2.richText = value.richText;
-  data2.yemindTextPristine = false;
-  data2.yemindTextEdited = true;
-  if (block.kind === "node") data2.expand = block.expanded;
-  return data2;
-}
-function normalizeStructuredOutlineDepths(blocks) {
-  let previousDepth = 0;
-  return blocks.map((block, index) => {
-    let depth = Math.max(0, Math.trunc(block.depth));
-    if (index === 0) depth = 0;
-    else depth = Math.max(1, Math.min(depth, previousDepth + 1));
-    previousDepth = depth;
-    return { ...block, depth, isRoot: index === 0, parentUid: index === 0 ? null : block.parentUid };
-  });
-}
-function buildTreeFromStructuredOutline(baseTree, inputBlocks) {
-  const normalBlocks = normalizeStructuredOutlineDepths(
-    inputBlocks.filter((block) => block.kind === "node")
-  );
-  if (normalBlocks.length === 0) {
-    normalBlocks.push({
-      uid: String(baseTree.data.uid ?? "root"),
-      depth: 0,
-      html: "",
-      text: "",
-      kind: "node",
-      parentUid: null,
-      hidden: false,
-      expanded: true,
-      hasChildren: false,
-      isRoot: true,
-      pristine: false,
-      accessories: { icons: [], image: null, todo: null, tags: [], link: "", hasNote: false, commentCount: 0, hasOuterFrame: false }
-    });
-  }
-  const existing = indexExistingData(baseTree);
-  let reusedNodeCount = 0;
-  let createdNodeCount = 0;
-  const treeByUid = /* @__PURE__ */ new Map();
-  const stack = [];
-  let root2 = null;
-  normalBlocks.forEach((block, index) => {
-    const normalizedDepth = index === 0 ? 0 : Math.max(1, Math.min(block.depth, stack.length));
-    const base = existing.nodes.get(block.uid);
-    if (base) reusedNodeCount += 1;
-    else createdNodeCount += 1;
-    const node = {
-      data: updatedData(base, { ...block }),
-      children: []
-    };
-    treeByUid.set(block.uid, node);
-    if (index === 0) {
-      root2 = node;
-      stack.length = 0;
-      stack.push(node);
-      return;
-    }
-    const parentDepth = Math.max(0, normalizedDepth - 1);
-    const parent = stack[parentDepth] ?? root2;
-    parent.children.push(node);
-    stack[normalizedDepth] = node;
-    stack.length = normalizedDepth + 1;
-  });
-  const groupedSummaries = /* @__PURE__ */ new Map();
-  inputBlocks.filter((block) => block.kind === "summary" && block.parentUid).forEach((block) => {
-    const base = existing.summaries.get(block.uid);
-    const data2 = updatedData(base, block);
-    const list = groupedSummaries.get(block.parentUid) ?? [];
-    list.push(data2);
-    groupedSummaries.set(block.parentUid, list);
-  });
-  groupedSummaries.forEach((value, parentUid) => {
-    const parent = treeByUid.get(parentUid);
-    if (parent) parent.data.generalization = value.length === 1 ? value[0] : value;
-  });
-  return {
-    tree: root2,
-    nodeCount: normalBlocks.length,
-    reusedNodeCount,
-    createdNodeCount
-  };
-}
-function createStructuredOutlineUid() {
-  var _a, _b;
-  const random = (_b = (_a = globalThis.crypto) == null ? void 0 : _a.randomUUID) == null ? void 0 : _b.call(_a);
-  if (random) return `ym-${random}`;
-  return `ym-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 const OUTLINE_IMPORT_WRAP_UNITS = 20;
 const OUTLINE_IMPORT_AUTO_WIDTH = 280;
@@ -85960,6 +85993,14 @@ function clipboardRichLines(value, expectedCount) {
   }
   return lines.length === expectedCount ? lines.map((line) => sanitizeRichHtml(line)) : null;
 }
+function clipboardIsOneBrowserParagraph(value) {
+  if (!value) return false;
+  const template = document.createElement("template");
+  template.innerHTML = sanitizeRichHtml(value);
+  if (template.content.querySelector("ul,ol,li,[data-yemind-outline],[data-outline-uid]")) return false;
+  const blocks = template.content.querySelectorAll("div,p,section,article");
+  return blocks.length <= 1;
+}
 function rangeHtml(editor, startOffset, endOffset) {
   const start = domPointAtOffset(editor, Math.max(0, startOffset));
   const end = domPointAtOffset(editor, Math.max(startOffset, endOffset));
@@ -86316,7 +86357,7 @@ class StructuredOutlineEditorController {
       }
       if (event.key === "Backspace" || event.key === "Delete") {
         event.stopPropagation();
-        const context = this.selectionContext();
+        const context = this.selectionContext(true);
         if (!context) return;
         if (!context.collapsed || context.spansRows) {
           event.preventDefault();
@@ -86387,7 +86428,8 @@ class StructuredOutlineEditorController {
       const context = this.selectionContext();
       const whole = this.isWholeSelectionActive((context == null ? void 0 : context.range) ?? null);
       const multiline = /\r|\n/.test(text2);
-      if (!whole && context && !context.spansRows && !multiline) {
+      const oneBrowserParagraph = multiline && clipboardIsOneBrowserParagraph(html2);
+      if (!whole && context && !context.spansRows && (!multiline || oneBrowserParagraph)) {
         this.insertInlineHtml(html2 ? inlineHtmlFromClipboard(html2) : escapeHtml$4(text2));
         this.markDirty("paste-inline");
         this.placeSelectionToolbarLater();
@@ -86525,6 +86567,7 @@ class StructuredOutlineEditorController {
     const bookmark = this.captureSelectionBookmark();
     const blocks = this.collectBlocks();
     const result = buildTreeFromStructuredOutline(this.lastTree, blocks);
+    const transaction = this.describeTransaction(blocks);
     this.applying = true;
     let applied = false;
     let failure = null;
@@ -86533,7 +86576,8 @@ class StructuredOutlineEditorController {
         reason,
         nodeCount: result.nodeCount,
         reusedNodeCount: result.reusedNodeCount,
-        createdNodeCount: result.createdNodeCount
+        createdNodeCount: result.createdNodeCount,
+        ...transaction
       });
     } catch (error2) {
       failure = error2;
@@ -87139,9 +87183,18 @@ class StructuredOutlineEditorController {
   domSignature() {
     return this.collectBlocks().map((block) => `${block.kind}|${block.uid}|${block.depth}|${block.expanded ? 1 : 0}|${block.html}`).join("");
   }
-  selectionContext() {
+  selectionContext(restoreSaved = false) {
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0 || !this.options.root.contains(selection.anchorNode) || !this.options.root.contains(selection.focusNode)) return null;
+    if (!selection) return null;
+    const currentIsValid = selection.rangeCount > 0 && this.options.root.contains(selection.anchorNode) && this.options.root.contains(selection.focusNode);
+    if (!currentIsValid && restoreSaved && this.savedRange) {
+      const saved = this.savedRange.cloneRange();
+      if (saved.startContainer.isConnected && saved.endContainer.isConnected && this.options.root.contains(saved.startContainer) && this.options.root.contains(saved.endContainer)) {
+        selection.removeAllRanges();
+        selection.addRange(saved);
+      }
+    }
+    if (selection.rangeCount === 0 || !this.options.root.contains(selection.anchorNode) || !this.options.root.contains(selection.focusNode)) return null;
     const range2 = selection.getRangeAt(0);
     const startEditor = closestEditor(range2.startContainer);
     const endEditor = closestEditor(range2.endContainer);
@@ -87160,6 +87213,30 @@ class StructuredOutlineEditorController {
       collapsed: range2.collapsed,
       spansRows: startRow !== endRow
     };
+  }
+  describeTransaction(blocks) {
+    const previous = flattenStructuredOutline(this.lastTree);
+    const sameStructure = previous.length === blocks.length && previous.every((block, index) => {
+      const next2 = blocks[index];
+      return Boolean(
+        next2 && blockKey(block) === blockKey(next2) && block.depth === next2.depth && block.parentUid === next2.parentUid && block.expanded === next2.expanded
+      );
+    });
+    if (!sameStructure) return { transaction: "structure", patches: [] };
+    const patches = [];
+    previous.forEach((block, index) => {
+      const next2 = blocks[index];
+      if (!next2 || block.html === next2.html) return;
+      const html2 = sanitizeRichHtml(next2.html);
+      const richText = structuredOutlineIsRichHtml(html2);
+      const text2 = structuredOutlineHtmlToText(html2);
+      patches.push({
+        uid: next2.uid,
+        text: richText ? html2 : text2,
+        richText
+      });
+    });
+    return { transaction: "text", patches };
   }
   captureSelectionBookmark() {
     const selection = window.getSelection();
@@ -90903,6 +90980,12 @@ class NodeQuickActionsController {
     const layerRect = this.layer.getBoundingClientRect();
     const coordinateRect = layerRect.width > 0 || layerRect.height > 0 ? layerRect : ((_a = this.layer.parentElement) == null ? void 0 : _a.getBoundingClientRect()) ?? layerRect;
     const activeNodes = this.options.getActiveNodes();
+    const activeUids = new Set(
+      activeNodes.map((node) => {
+        var _a2, _b, _c2;
+        return String(((_a2 = node == null ? void 0 : node.getData) == null ? void 0 : _a2.call(node, "uid")) ?? ((_c2 = (_b = node == null ? void 0 : node.nodeData) == null ? void 0 : _b.data) == null ? void 0 : _c2.uid) ?? "");
+      }).filter(Boolean)
+    );
     visibleNodeList(this.options.getRendererRoot()).forEach((node) => {
       var _a2, _b, _c2, _d2, _e, _f;
       if ((node == null ? void 0 : node.isGeneralization) || !((_a2 = node == null ? void 0 : node.group) == null ? void 0 : _a2.node)) return;
@@ -90912,7 +90995,7 @@ class NodeQuickActionsController {
       this.nodeElementToUid.set(nodeElement, uid2);
       const rect2 = nodeElement.getBoundingClientRect();
       if (!rect2.width && !rect2.height) return;
-      const selected = activeNodes.includes(node) || ((_c2 = node.getData) == null ? void 0 : _c2.call(node, "isActive")) === true;
+      const selected = activeNodes.includes(node) || activeUids.has(uid2) || ((_c2 = node.getData) == null ? void 0 : _c2.call(node, "isActive")) === true;
       const hovered = this.hoveredUid === uid2;
       const descriptors = describeNodeQuickActions({
         isRoot: Boolean(node.isRoot),
@@ -93987,7 +94070,13 @@ class YeMindEditor {
       },
       onApply: (tree, details) => {
         var _a2;
-        const applied = Boolean((_a2 = this.commands) == null ? void 0 : _a2.replaceTree(tree));
+        const patches = details.transaction === "text" ? details.patches : [];
+        const applied = details.transaction === "text" ? patches.length > 0 && patches.every(
+          (patch) => {
+            var _a3, _b;
+            return patch.richText ? Boolean((_a3 = this.commands) == null ? void 0 : _a3.setNodeRichTextByUid(patch.uid, patch.text)) : Boolean((_b = this.commands) == null ? void 0 : _b.setNodeTextByUid(patch.uid, patch.text));
+          }
+        ) : Boolean((_a2 = this.commands) == null ? void 0 : _a2.replaceTree(tree));
         if (applied) this.current.data = tree;
         this.options.diagnostics.record("outline", "structured-apply", this.current.id, {
           ...details,

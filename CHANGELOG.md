@@ -2,6 +2,10 @@
 
 ## 1.5.0 - 2026-07-28
 
+- Split outline editing into UID text patches and explicit structure transactions, preventing ordinary typing, whitespace and clearing from rebuilding the complete renderer tree.
+- Kept unformatted Quill content on the plain SVG text path while preserving real rich text, eliminating first-edit node size jumps and stabilizing legacy rich-text geometry.
+- Fixed browser soft-wrap paste, saved-range Delete/Backspace, canvas rich-text copy, and UID-based quick-action anchoring after renderer refreshes.
+- Flattened node selection and selected-text toolbar chrome, with real desktop/mobile browser regressions for geometry, clipboard and outline synchronization.
 - Completed the confirmed Version47 follow-up alignment: restored the original network/map symbols, unified fullscreen and appearance icons, removed toolbar separator blocks, flattened context menus, and kept every toolbar/control readable in both appearances.
 - Rebuilt minimap viewport projection, responsive zoom controls, theme-aware two-pixel hidden-edge rails, stable hover reveal, larger root typography, and colored segmented outline guides with matching triangles and leaf squares.
 - Added the full VS Code-style two-row search/replace contract with case sensitivity, whole-word, regular-expression, selected-node scope and preserve-case controls while preserving rich-text markup and navigating every occurrence.

@@ -4,6 +4,7 @@ import Quill from 'quill';
 import Delta from 'quill-delta';
 import { Scope } from 'parchment';
 import { editableTextLength, isPristineNodeTextData, markNodeTextEditedData } from './textEditingPolicy';
+import { structuredOutlineIsRichHtml } from './structuredOutlineDocument';
 import {
   isUsableTextRect,
   editorHorizontalMargin,
@@ -43,6 +44,60 @@ export const YEMIND_RICH_TEXT_FORMATS = [
 ] as const;
 
 let formatsRegistered = false;
+
+interface QuillClipboardRange {
+  index: number;
+  length: number;
+}
+
+interface QuillClipboardSource {
+  getSelection?(): QuillClipboardRange | null;
+  getText(index: number, length: number): string;
+  getSemanticHTML?(index: number, length: number): string;
+}
+
+export function writeQuillSelectionToClipboard(
+  quill: QuillClipboardSource | null | undefined,
+  event: ClipboardEvent,
+  fallbackRange: QuillClipboardRange | null | undefined,
+): boolean {
+  const range = quill?.getSelection?.() ?? fallbackRange ?? null;
+  if (!quill || !event.clipboardData || !range || range.length <= 0) return false;
+  const plain = String(quill.getText(range.index, range.length) ?? '').replace(/\n$/, '');
+  if (!plain) return false;
+  const html = String(quill.getSemanticHTML?.(range.index, range.length) ?? '');
+  event.preventDefault();
+  event.clipboardData.setData('text/plain', plain);
+  if (html) event.clipboardData.setData('text/html', html);
+  return true;
+}
+
+export interface CanvasTextPayload {
+  text: string;
+  richText: boolean;
+}
+
+/**
+ * Quill always serializes even plain text as HTML (`<p>text</p>`). Persisting
+ * that wrapper as rich text changes simple-mind-map's measurement engine after
+ * every first edit, so an unchanged node grows or shrinks when editing closes.
+ * Keep plain content plain and only opt into the rich-text renderer when the
+ * document contains a real inline/block format.
+ */
+export function normalizeCanvasTextPayload(html: unknown): CanvasTextPayload {
+  const source = String(html ?? '');
+  const richText = structuredOutlineIsRichHtml(source);
+  const plain = richText
+    ? ''
+    : nodeRichTextToTextWithWrap(source.replace(/<br\s*\/?>/gi, '\n'))
+        .replace(/\u00a0/g, ' ');
+  return {
+    text: richText
+      ? source
+      : (plain.trim().length > 0 ? plain : ''),
+    richText,
+  };
+}
 
 function sanitizeLink(value: string): string {
   const text = String(value ?? '').trim();
@@ -210,7 +265,31 @@ export default class YeMindRichText extends (BaseRichText as any) {
       ? nodes.map((node) => resolveLiveRenderedNode(this.mindMap, node)).filter(Boolean)
       : nodes;
     try {
-      super.hideEditText(liveNodes);
+      if (!this.showTextEdit) return;
+      const beforeHideRichTextEdit = this.mindMap?.opt?.beforeHideRichTextEdit;
+      if (typeof beforeHideRichTextEdit === 'function') beforeHideRichTextEdit(this);
+      const payload = normalizeCanvasTextPayload(this.getEditText());
+      const list = Array.isArray(liveNodes) && liveNodes.length > 0
+        ? liveNodes
+        : [this.node].filter(Boolean);
+      const editingNode = this.node;
+      this.textEditNode.style.display = 'none';
+      this.setIsShowTextEdit(false);
+      this.mindMap.emit('rich_text_selection_change', false);
+      this.node = null;
+      this.isInserting = false;
+      list.forEach((node) => {
+        markNodeTextEditedData(node?.nodeData?.data ?? node?.getData?.());
+        this.mindMap.execCommand(
+          'SET_NODE_TEXT',
+          node,
+          payload.text,
+          payload.richText,
+          !payload.richText,
+        );
+      });
+      this.mindMap.render();
+      this.mindMap.emit('hide_text_edit', this.textEditNode, list, editingNode);
     } finally {
       this.editingUid = '';
       this.lastValidNodeRect = null;
@@ -506,18 +585,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
     });
 
     this.quill.root.addEventListener('copy', (event: ClipboardEvent) => {
-      event.preventDefault();
-      const selection = window.getSelection();
-      const original = selection?.toString() ?? '';
-      try {
-        const range = selection?.getRangeAt(0);
-        if (!range) throw new Error('No selection');
-        const div = document.createElement('div');
-        div.appendChild(range.cloneContents());
-        event.clipboardData?.setData('text/plain', nodeRichTextToTextWithWrap(div.innerHTML));
-      } catch {
-        event.clipboardData?.setData('text/plain', original);
-      }
+      writeQuillSelectionToClipboard(this.quill, event, this.range ?? this.lastRange);
     });
 
     this.quill.on('selection-change', (range: any) => {

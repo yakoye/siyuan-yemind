@@ -29,26 +29,33 @@ test('opens the outline sidebar and returns to the map without losing the editor
 
 test('keeps every center-topic glyph inside its rendered SVG text box', async ({ page }) => {
   await resetWebApp(page);
-  const editor = page.locator('.ymw-editor > .ymz-editor');
+  let editor = page.locator('.ymw-editor > .ymz-editor');
   const expectCenterTextFits = async (expectedText = '中心主题') => {
-    const centerText = editor.locator('.smm-node .smm-richtext-node-wrap').first();
-    await expect(centerText).toContainText(expectedText);
-    const geometry = await centerText.evaluate((element) => {
-      const foreignObject = element.closest('foreignObject');
+    const centerNode = editor.locator('.smm-node').first();
+    await expect(centerNode).toContainText(expectedText);
+    const richText = centerNode.locator('.smm-richtext-node-wrap');
+    const textElement = await richText.count() > 0
+      ? richText.first()
+      : centerNode.locator('.smm-text-node-wrap').first();
+    await expect(textElement).toBeVisible();
+    const geometry = await textElement.evaluate((element) => {
       const textRect = element.getBoundingClientRect();
+      const foreignObject = element.closest('foreignObject');
       const foreignRect = foreignObject?.getBoundingClientRect();
+      const nodeRect = element.closest('.smm-node')?.getBoundingClientRect();
       return {
+        rich: Boolean(foreignObject),
         textWidth: textRect.width,
         textHeight: textRect.height,
-        foreignWidth: foreignRect?.width ?? 0,
-        foreignHeight: foreignRect?.height ?? 0,
+        containerWidth: foreignRect?.width ?? nodeRect?.width ?? 0,
+        containerHeight: foreignRect?.height ?? nodeRect?.height ?? 0,
         fontSize: Number.parseFloat(getComputedStyle(element).fontSize),
       };
     });
     expect(geometry.fontSize).toBe(25);
-    expect(geometry.foreignWidth).toBeGreaterThan(95);
-    expect(geometry.textWidth).toBeLessThanOrEqual(geometry.foreignWidth + 0.5);
-    expect(geometry.textHeight).toBeLessThanOrEqual(geometry.foreignHeight + 0.5);
+    if (geometry.rich) expect(geometry.containerWidth).toBeGreaterThan(95);
+    expect(geometry.textWidth).toBeLessThanOrEqual(geometry.containerWidth + 0.5);
+    expect(geometry.textHeight).toBeLessThanOrEqual(geometry.containerHeight + 0.5);
   };
 
   const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
@@ -72,7 +79,13 @@ test('keeps every center-topic glyph inside its rendered SVG text box', async ({
   await page.reload();
   await expectCenterTextFits();
 
-  await page.evaluate(async () => {
+  // Stop the live repository before seeding the legacy record; otherwise its
+  // debounced save can race the direct IndexedDB fixture write.
+  const context = page.context();
+  await page.close();
+  const legacyPage = await context.newPage();
+  await legacyPage.goto('/assets/yemind-icon-32.png');
+  await legacyPage.evaluate(async () => {
     const request = indexedDB.open('yemind-web');
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       request.onsuccess = () => resolve(request.result);
@@ -97,7 +110,9 @@ test('keeps every center-topic glyph inside its rendered SVG text box', async ({
     });
     db.close();
   });
-  await page.reload();
+  await legacyPage.goto('/');
+  editor = legacyPage.locator('.ymw-editor > .ymz-editor');
+  await expect(editor).toBeVisible();
   await expectCenterTextFits('G1架构总览');
 });
 

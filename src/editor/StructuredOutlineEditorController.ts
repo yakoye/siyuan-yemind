@@ -34,12 +34,23 @@ export interface StructuredOutlineSelectionState {
   end: number;
 }
 
+export interface StructuredOutlineTextPatch {
+  uid: string;
+  text: string;
+  richText: boolean;
+}
+
+export interface StructuredOutlineApplyDetails extends Record<string, unknown> {
+  transaction: 'text' | 'structure';
+  patches: StructuredOutlineTextPatch[];
+}
+
 export interface StructuredOutlineEditorOptions {
   root: HTMLElement;
   pluginBaseUrl?: string;
   getTree(): MindMapTree;
   isReadonly(): boolean;
-  onApply(tree: MindMapTree, details: Record<string, unknown>): boolean;
+  onApply(tree: MindMapTree, details: StructuredOutlineApplyDetails): boolean;
   onActivate(uid: string): void;
   onToggle(uid: string, expanded: boolean): void;
   onContextMenu?(event: MouseEvent, uid: string): void;
@@ -229,6 +240,15 @@ function clipboardRichLines(value: string, expectedCount: number): string[] | nu
     while (lines.length && !structuredOutlineHtmlToText(lines[lines.length - 1])) lines.pop();
   }
   return lines.length === expectedCount ? lines.map((line) => sanitizeRichHtml(line)) : null;
+}
+
+function clipboardIsOneBrowserParagraph(value: string): boolean {
+  if (!value) return false;
+  const template = document.createElement('template');
+  template.innerHTML = sanitizeRichHtml(value);
+  if (template.content.querySelector('ul,ol,li,[data-yemind-outline],[data-outline-uid]')) return false;
+  const blocks = template.content.querySelectorAll('div,p,section,article');
+  return blocks.length <= 1;
 }
 
 function rangeHtml(editor: HTMLElement, startOffset: number, endOffset: number): string {
@@ -449,6 +469,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     const bookmark = this.captureSelectionBookmark();
     const blocks = this.collectBlocks();
     const result = buildTreeFromStructuredOutline(this.lastTree, blocks);
+    const transaction = this.describeTransaction(blocks);
     this.applying = true;
     let applied = false;
     let failure: unknown = null;
@@ -458,6 +479,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
         nodeCount: result.nodeCount,
         reusedNodeCount: result.reusedNodeCount,
         createdNodeCount: result.createdNodeCount,
+        ...transaction,
       });
     } catch (error) {
       failure = error;
@@ -1121,7 +1143,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     }
     if (event.key === 'Backspace' || event.key === 'Delete') {
       event.stopPropagation();
-      const context = this.selectionContext();
+      const context = this.selectionContext(true);
       if (!context) return;
       if (!context.collapsed || context.spansRows) {
         event.preventDefault();
@@ -1200,7 +1222,8 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     const context = this.selectionContext();
     const whole = this.isWholeSelectionActive(context?.range ?? null);
     const multiline = /\r|\n/.test(text);
-    if (!whole && context && !context.spansRows && !multiline) {
+    const oneBrowserParagraph = multiline && clipboardIsOneBrowserParagraph(html);
+    if (!whole && context && !context.spansRows && (!multiline || oneBrowserParagraph)) {
       this.insertInlineHtml(html ? inlineHtmlFromClipboard(html) : escapeHtml(text));
       this.markDirty('paste-inline');
       this.placeSelectionToolbarLater();
@@ -1491,9 +1514,25 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     return this.collectBlocks().map((block) => `${block.kind}|${block.uid}|${block.depth}|${block.expanded ? 1 : 0}|${block.html}`).join('\u001e');
   }
 
-  private selectionContext(): SelectionContext | null {
+  private selectionContext(restoreSaved = false): SelectionContext | null {
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0 || !this.options.root.contains(selection.anchorNode) || !this.options.root.contains(selection.focusNode)) return null;
+    if (!selection) return null;
+    const currentIsValid = selection.rangeCount > 0
+      && this.options.root.contains(selection.anchorNode)
+      && this.options.root.contains(selection.focusNode);
+    if (!currentIsValid && restoreSaved && this.savedRange) {
+      const saved = this.savedRange.cloneRange();
+      if (
+        saved.startContainer.isConnected
+        && saved.endContainer.isConnected
+        && this.options.root.contains(saved.startContainer)
+        && this.options.root.contains(saved.endContainer)
+      ) {
+        selection.removeAllRanges();
+        selection.addRange(saved);
+      }
+    }
+    if (selection.rangeCount === 0 || !this.options.root.contains(selection.anchorNode) || !this.options.root.contains(selection.focusNode)) return null;
     const range = selection.getRangeAt(0);
     const startEditor = closestEditor(range.startContainer);
     const endEditor = closestEditor(range.endContainer);
@@ -1512,6 +1551,35 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       collapsed: range.collapsed,
       spansRows: startRow !== endRow,
     };
+  }
+
+  private describeTransaction(blocks: readonly StructuredOutlineBlock[]): StructuredOutlineApplyDetails {
+    const previous = flattenStructuredOutline(this.lastTree);
+    const sameStructure = previous.length === blocks.length && previous.every((block, index) => {
+      const next = blocks[index];
+      return Boolean(
+        next
+        && blockKey(block) === blockKey(next)
+        && block.depth === next.depth
+        && block.parentUid === next.parentUid
+        && block.expanded === next.expanded,
+      );
+    });
+    if (!sameStructure) return { transaction: 'structure', patches: [] };
+    const patches: StructuredOutlineTextPatch[] = [];
+    previous.forEach((block, index) => {
+      const next = blocks[index];
+      if (!next || block.html === next.html) return;
+      const html = sanitizeRichHtml(next.html);
+      const richText = structuredOutlineIsRichHtml(html);
+      const text = structuredOutlineHtmlToText(html);
+      patches.push({
+        uid: next.uid,
+        text: richText ? html : text,
+        richText,
+      });
+    });
+    return { transaction: 'text', patches };
   }
 
   private captureSelectionBookmark(): SelectionBookmark | null {

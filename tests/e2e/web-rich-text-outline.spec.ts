@@ -10,6 +10,142 @@ async function addRootChild(page: import('@playwright/test').Page): Promise<void
   await addChild.click();
 }
 
+async function commitCanvasEdit(page: import('@playwright/test').Page): Promise<void> {
+  const canvas = page.locator('.ymw-editor > .ymz-editor [data-role="canvas"]');
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  await canvas.click({
+    position: {
+      x: Math.max(16, box!.width - 24),
+      y: Math.max(80, box!.height - 90),
+    },
+  });
+  await expect(page.locator('.smm-richtext-node-edit-wrap .ql-editor')).toBeHidden();
+}
+
+async function expectQuickActionsAnchored(
+  node: import('@playwright/test').Locator,
+  actions: import('@playwright/test').Locator,
+): Promise<void> {
+  const nodeBox = await node.boundingBox();
+  const actionBox = await actions.boundingBox();
+  expect(nodeBox).not.toBeNull();
+  expect(actionBox).not.toBeNull();
+  const side = await actions.getAttribute('data-quick-side');
+  const nodeCenterX = nodeBox!.x + nodeBox!.width / 2;
+  const nodeCenterY = nodeBox!.y + nodeBox!.height / 2;
+  const actionCenterX = actionBox!.x + actionBox!.width / 2;
+  const actionCenterY = actionBox!.y + actionBox!.height / 2;
+  if (side === 'left') {
+    expect(Math.abs(actionBox!.x + actionBox!.width - nodeBox!.x)).toBeLessThanOrEqual(3);
+    expect(Math.abs(actionCenterY - nodeCenterY)).toBeLessThanOrEqual(3);
+  } else if (side === 'top') {
+    expect(Math.abs(actionBox!.y + actionBox!.height - nodeBox!.y)).toBeLessThanOrEqual(3);
+    expect(Math.abs(actionCenterX - nodeCenterX)).toBeLessThanOrEqual(3);
+  } else if (side === 'bottom') {
+    expect(Math.abs(actionBox!.y - (nodeBox!.y + nodeBox!.height))).toBeLessThanOrEqual(3);
+    expect(Math.abs(actionCenterX - nodeCenterX)).toBeLessThanOrEqual(3);
+  } else {
+    expect(Math.abs(actionBox!.x - (nodeBox!.x + nodeBox!.width))).toBeLessThanOrEqual(3);
+    expect(Math.abs(actionCenterY - nodeCenterY)).toBeLessThanOrEqual(3);
+  }
+}
+
+test('plain canvas editing keeps one measurement path and stable node geometry', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop geometry regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  await rootNode.dblclick();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  await textEditor.fill('中心主题稳定尺寸');
+  await commitCanvasEdit(page);
+  await expect(rootNode).toContainText('中心主题稳定尺寸');
+  const first = await rootNode.boundingBox();
+  expect(first).not.toBeNull();
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeVisible();
+  await expect(textEditor).toContainText('中心主题稳定尺寸');
+  await commitCanvasEdit(page);
+  const second = await rootNode.boundingBox();
+  expect(second).not.toBeNull();
+  expect(Math.abs(second!.width - first!.width)).toBeLessThanOrEqual(1);
+  expect(Math.abs(second!.height - first!.height)).toBeLessThanOrEqual(1);
+});
+
+test('outline text transactions keep node count, canvas geometry and quick-action anchoring stable', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop split-view regression');
+  await resetWebApp(page);
+  await addRootChild(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  await editor.locator('[data-action="view-outline"]').click();
+  const childRow = editor.locator('[data-outline-drag-source="true"]').first();
+  const childUid = await childRow.getAttribute('data-outline-uid');
+  expect(childUid).toBeTruthy();
+  const childText = childRow.locator('[data-outline-editor]');
+  await childText.fill('访问、启动、建链、枚举、传输');
+  await editor.locator('[data-outline-root="true"] [data-outline-editor]').click();
+  await expect(editor.locator('.smm-node')).toHaveCount(2);
+  const canvasChild = editor.locator('.smm-node').filter({ hasText: '访问、启动、建链、枚举、传输' });
+  await expect(canvasChild).toHaveCount(1);
+  const textBox = await canvasChild.boundingBox();
+  expect(textBox).not.toBeNull();
+  expect(textBox!.width).toBeGreaterThan(40);
+  expect(textBox!.width).toBeLessThan(500);
+
+  await childText.click();
+  const actions = editor.locator(`.ymz-node-quick-actions[data-node-uid="${childUid}"]`);
+  await expect(actions).toBeVisible();
+  await expectQuickActionsAnchored(canvasChild, actions);
+
+  await childText.fill('43243');
+  await editor.locator('[data-outline-root="true"] [data-outline-editor]').click();
+  await expect(editor.locator('.smm-node')).toHaveCount(2);
+  await expect(canvasChild).toHaveCount(0);
+  const numericChild = editor.locator('.smm-node').filter({ hasText: '43243' });
+  await expect(numericChild).toHaveCount(1);
+  await childText.click();
+  await expect(actions).toBeVisible();
+  await expectQuickActionsAnchored(numericChild, actions);
+});
+
+test('outline paste treats browser soft wrapping as one node and Delete edits the saved text range', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop split-view regression');
+  await resetWebApp(page);
+  await addRootChild(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  await editor.locator('[data-action="view-outline"]').click();
+  const childText = editor.locator('[data-outline-drag-source="true"]').first().locator('[data-outline-editor]');
+  await childText.fill('准备替换');
+  await childText.click();
+  await childText.evaluate((element) => {
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    const transfer = new DataTransfer();
+    transfer.setData('text/plain', '浏览器软\n换行内容');
+    transfer.setData('text/html', '<p>浏览器软换行内容</p>');
+    element.dispatchEvent(new ClipboardEvent('paste', {
+      bubbles: true,
+      cancelable: true,
+      clipboardData: transfer,
+    }));
+  });
+  await editor.locator('[data-outline-root="true"] [data-outline-editor]').click();
+  await expect(editor.locator('[data-outline-drag-source="true"]')).toHaveCount(1);
+  await expect(childText).toContainText('浏览器软换行内容');
+
+  await childText.click({ clickCount: 3 });
+  await expect(editor.locator('.ymz-rich-toolbar')).toBeVisible();
+  await page.keyboard.press('Delete');
+  await expect(childText).toHaveText('');
+  await editor.locator('[data-outline-root="true"] [data-outline-editor]').click();
+  await expect(editor.locator('.smm-node')).toHaveCount(2);
+});
+
 test('canvas selected text keeps its range while every direct format control runs', async ({ page }) => {
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');

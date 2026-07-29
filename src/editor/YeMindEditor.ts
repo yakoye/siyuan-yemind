@@ -1086,7 +1086,14 @@ export class YeMindEditor {
       getTree: () => this.current.data,
       isReadonly: () => Boolean(this.commands?.isReadonly()),
       onApply: (tree, details) => {
-        const applied = Boolean(this.commands?.replaceTree(tree));
+        const patches = details.transaction === 'text' ? details.patches : [];
+        const applied = details.transaction === 'text'
+          ? patches.length > 0 && patches.every((patch) =>
+              patch.richText
+                ? Boolean(this.commands?.setNodeRichTextByUid(patch.uid, patch.text))
+                : Boolean(this.commands?.setNodeTextByUid(patch.uid, patch.text)),
+            )
+          : Boolean(this.commands?.replaceTree(tree));
         if (applied) this.current.data = tree;
         this.options.diagnostics.record("outline", "structured-apply", this.current.id, {
           ...details,
