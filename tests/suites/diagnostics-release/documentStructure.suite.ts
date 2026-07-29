@@ -24,6 +24,9 @@ import {
 import {
   applyDocumentMigration,
 } from '../../../scripts/docs/applyDocumentMigration.mjs';
+import {
+  checkDocumentation,
+} from '../../../scripts/docs/checkDocumentation.mjs';
 
 describe('documentation naming and classification', () => {
   it('keeps long-lived standards on stable Chinese paths', () => {
@@ -257,6 +260,49 @@ describe('documentation migration execution', () => {
         cwd: root,
         encoding: 'utf8',
       })).toContain(`R  ${oldPath} -> docs/releases/v1.0.0/`);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('documentation quality gate', () => {
+  it('reports broken local links, invalid historical names, and stale migrated paths', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'yemind-doc-check-'));
+    try {
+      mkdirSync(path.join(root, 'docs', 'designs'), { recursive: true });
+      writeFileSync(
+        path.join(root, 'docs', 'designs', 'untimestamped.md'),
+        '# Design\n\n[missing](../missing.md)\n',
+      );
+      writeFileSync(
+        path.join(root, 'README.md'),
+        'See docs/verification-v1.0.0.md\n',
+      );
+      writeFileSync(
+        path.join(root, 'docs', 'document-migration-map.json'),
+        `${JSON.stringify({
+          entries: [{
+            oldPath: 'docs/verification-v1.0.0.md',
+            newPath: 'docs/releases/v1.0.0/2026-07-29-1914-v1.0.0-版本-验证记录.md',
+          }],
+        })}\n`,
+      );
+
+      const errors = checkDocumentation(root);
+
+      expect(errors).toContainEqual(expect.objectContaining({
+        code: 'broken-local-link',
+        path: 'docs/designs/untimestamped.md',
+      }));
+      expect(errors).toContainEqual(expect.objectContaining({
+        code: 'invalid-history-name',
+        path: 'docs/designs/untimestamped.md',
+      }));
+      expect(errors).toContainEqual(expect.objectContaining({
+        code: 'stale-migrated-path',
+        path: 'README.md',
+      }));
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
