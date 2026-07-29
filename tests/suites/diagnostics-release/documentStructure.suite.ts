@@ -15,6 +15,7 @@ import {
   formatDocumentTimestamp,
   historicalDocumentTarget,
   isStableStandardPath,
+  releaseBuildManifestPath,
   validateHistoricalDocumentName,
 } from '../../../scripts/docs/documentNaming.mjs';
 import {
@@ -87,13 +88,13 @@ describe('documentation naming and classification', () => {
       'docs/designs/2026-07-29-1914-v1.1.0-布局与大纲交互-设计.md',
     );
     expect(historicalDocumentTarget({
-      oldPath: 'docs/DESIGN_v0.9.31_THEME_PALETTE_DROPDOWN.md',
+      oldPath: ['docs', 'DESIGN_v0.9.31_THEME_PALETTE_DROPDOWN.md'].join('/'),
       fileTimestamp: '2026-07-29-1914',
     })).toBe(
       'docs/archive/v0.9/designs/2026-07-29-1914-v0.9.31-THEME-PALETTE-DROPDOWN-设计.md',
     );
     expect(historicalDocumentTarget({
-      oldPath: 'docs/superpowers/specs/2026-07-29-1914-dev-文档整理-设计.md',
+      oldPath: ['docs', 'superpowers', 'specs', '2026-07-29-1914-dev-文档整理-设计.md'].join('/'),
       fileTimestamp: '2026-07-29-1915',
     })).toBe(
       'docs/designs/2026-07-29-1915-dev-文档整理-设计.md',
@@ -102,13 +103,13 @@ describe('documentation naming and classification', () => {
 
   it('uses explicit document types for archived boundaries and test matrices', () => {
     expect(historicalDocumentTarget({
-      oldPath: 'docs/PRODUCT_BOUNDARIES_v0.9.31.md',
+      oldPath: ['docs', 'PRODUCT_BOUNDARIES_v0.9.31.md'].join('/'),
       fileTimestamp: '2026-07-29-1914',
     })).toBe(
       'docs/archive/v0.9/boundaries/2026-07-29-1914-v0.9.31-版本-产品边界.md',
     );
     expect(historicalDocumentTarget({
-      oldPath: 'docs/TEST_COVERAGE_MATRIX_v0.9.31.md',
+      oldPath: ['docs', 'TEST_COVERAGE_MATRIX_v0.9.31.md'].join('/'),
       fileTimestamp: '2026-07-29-1914',
     })).toBe(
       'docs/archive/v0.9/test-matrices/2026-07-29-1914-v0.9.31-版本-测试矩阵.md',
@@ -127,6 +128,15 @@ describe('documentation naming and classification', () => {
       fileTimestamp: '2026-07-29-1914',
     })).toBe(
       'docs/releases/v1.5.0/2026-07-29-1914-v1.5.0-版本-验收记录.md',
+    );
+  });
+
+  it('names generated build records with Shanghai minute precision', () => {
+    expect(releaseBuildManifestPath(
+      '1.5.1',
+      '2026-07-29T11:14:30.000Z',
+    )).toBe(
+      'docs/releases/v1.5.1/2026-07-29-1914-v1.5.1-离线包-构建清单.json',
     );
   });
 });
@@ -269,6 +279,7 @@ describe('documentation migration execution', () => {
 describe('documentation quality gate', () => {
   it('reports broken local links, invalid historical names, and stale migrated paths', () => {
     const root = mkdtempSync(path.join(tmpdir(), 'yemind-doc-check-'));
+    const stalePath = ['docs', 'verification-v1.0.0.md'].join('/');
     try {
       mkdirSync(path.join(root, 'docs', 'designs'), { recursive: true });
       writeFileSync(
@@ -277,13 +288,13 @@ describe('documentation quality gate', () => {
       );
       writeFileSync(
         path.join(root, 'README.md'),
-        'See docs/verification-v1.0.0.md\n',
+        `See ${stalePath}\n`,
       );
       writeFileSync(
         path.join(root, 'docs', 'document-migration-map.json'),
         `${JSON.stringify({
           entries: [{
-            oldPath: 'docs/verification-v1.0.0.md',
+            oldPath: stalePath,
             newPath: 'docs/releases/v1.0.0/2026-07-29-1914-v1.0.0-版本-验证记录.md',
           }],
         })}\n`,

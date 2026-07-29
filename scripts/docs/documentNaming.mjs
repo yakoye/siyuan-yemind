@@ -160,6 +160,15 @@ export function formatDocumentTimestamp(isoDate, timeZone = 'Asia/Shanghai') {
   return `${values.year}-${values.month}-${values.day}-${values.hour}${values.minute}`;
 }
 
+export function releaseBuildManifestPath(version, isoDate = new Date()) {
+  const normalizedVersion = String(version ?? '').trim().replace(/^v/i, '');
+  if (!/^\d+\.\d+\.\d+$/.test(normalizedVersion)) {
+    throw new TypeError(`Invalid release version: ${String(version)}`);
+  }
+  const timestamp = formatDocumentTimestamp(isoDate);
+  return `docs/releases/v${normalizedVersion}/${timestamp}-v${normalizedVersion}-离线包-构建清单.json`;
+}
+
 export function historicalDocumentTarget(entry) {
   const oldPath = slash(entry?.oldPath);
   const classification = classifyDocument(oldPath);

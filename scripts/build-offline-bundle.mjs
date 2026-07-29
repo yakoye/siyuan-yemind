@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { releaseBuildManifestPath } from './docs/documentNaming.mjs';
 
 const require = createRequire(import.meta.url);
 let ts;
@@ -179,7 +180,11 @@ const manifest = {
   sourceMapBase: path.basename(mapPath),
   modules: modules.map((module, id) => ({ id, path: module.path })),
 };
-const manifestPath = path.resolve(root, process.env.YEMIND_BUNDLE_MANIFEST ?? `docs/offline-bundle-manifest-v${releaseVersion}.json`);
+const manifestPath = path.resolve(
+  root,
+  process.env.YEMIND_BUNDLE_MANIFEST
+    ?? releaseBuildManifestPath(releaseVersion, new Date()),
+);
 fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
 fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 console.log(`Built ${path.relative(process.cwd(), outputPath)} with ${modules.length} modules.`);
