@@ -84,6 +84,27 @@ describe('v0.7.x about and diagnostics release contract', () => {
     }
   });
 
+  it('keeps local test backups out of the source build fingerprint', () => {
+    const root = mkdtempSync(join(tmpdir(), 'yemind-build-backup-id-'));
+    try {
+      mkdirSync(join(root, 'src'));
+      mkdirSync(join(root, 'build'), { recursive: true });
+      writeFileSync(join(root, 'src', 'entry.ts'), 'export const value = 1;\n');
+      writeFileSync(join(root, 'build', 'buildIdentity.ts'), 'export const buildIdentity = true;\n');
+      execFileSync('git', ['init'], { cwd: root, stdio: 'ignore' });
+      execFileSync('git', ['config', 'user.email', 'test@example.com'], { cwd: root });
+      execFileSync('git', ['config', 'user.name', 'YeMind Test'], { cwd: root });
+      execFileSync('git', ['add', '.'], { cwd: root });
+      execFileSync('git', ['commit', '-m', 'fixture'], { cwd: root, stdio: 'ignore' });
+      const beforeBackup = resolveSourceBuildIdentity(root);
+      mkdirSync(join(root, 'build', 'test-backups'), { recursive: true });
+      writeFileSync(join(root, 'build', 'test-backups', 'maps.json'), '{"private":true}\n');
+      expect(resolveSourceBuildIdentity(root).id).toBe(beforeBackup.id);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('keeps package, lockfile, manifest, runtime metadata and release docs on one identity', () => {
     const packageJson = JSON.parse(readFileSync(resolve(process.cwd(), 'package.json'), 'utf8')) as { version: string };
     const packageLock = JSON.parse(readFileSync(resolve(process.cwd(), 'package-lock.json'), 'utf8')) as { version: string; packages: Record<string, { version?: string }> };

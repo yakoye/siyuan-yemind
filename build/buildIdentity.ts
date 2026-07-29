@@ -13,7 +13,7 @@ const SOURCE_PATHS = [
   'web',
   'assets',
   'vendor',
-  'build',
+  'build/buildIdentity.ts',
   'scripts',
   'package.json',
   'package-lock.json',
