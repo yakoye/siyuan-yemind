@@ -18,6 +18,8 @@ const DOCUMENT_TYPES = [
   '验收记录',
   '回归记录',
   '构建清单',
+  '产品边界',
+  '测试矩阵',
 ];
 
 function slash(value) {
@@ -35,14 +37,18 @@ function versionFromPath(relativePath) {
 }
 
 function cleanTopic(value) {
-  return String(value ?? '')
+  let topic = String(value ?? '')
     .replace(/^\d{4}-\d{2}-\d{2}(?:-\d{4})?-/, '')
-    .replace(/^v?\d+\.\d+\.\d+-?/i, '')
-    .replace(/^(?:DESIGN|PRODUCT_BOUNDARIES|TEST_COVERAGE_MATRIX|verification|offline-bundle-manifest)[_-]?/i, '')
-    .replace(/(?:设计|实施计划|测试用例|版本验证|验证记录|验收记录|回归记录|构建清单)$/u, '')
+    .replace(/^(?:DESIGN|PRODUCT_BOUNDARIES|TEST_COVERAGE_MATRIX|verification|offline-bundle-manifest|设计|实施计划|测试用例|版本验证|验证|验收记录|回归记录)[_-]?/iu, '')
+    .replace(/^v?\d+\.\d+\.\d+[_-]?/i, '');
+  topic = topic
+    .replace(/^(?:DESIGN|PRODUCT_BOUNDARIES|TEST_COVERAGE_MATRIX|verification|offline-bundle-manifest|设计|实施计划|测试用例|版本验证|验证|验收记录|回归记录)[_-]?/iu, '')
+    .replace(/^v?\d+\.\d+\.\d+[_-]?/i, '')
+    .replace(/(?:设计|实施计划|测试用例|版本验证|验证记录|验收记录|回归记录|构建清单|产品边界|测试矩阵)$/u, '')
     .replace(/[_\s]+/g, '-')
     .replace(/-{2,}/g, '-')
     .replace(/^-|-$/g, '');
+  return topic;
 }
 
 function classified(category, targetDirectory, stableName) {
@@ -142,7 +148,23 @@ export function historicalDocumentTarget(entry) {
     : formatDocumentTimestamp(timestamp);
   const version = versionFromPath(oldPath);
   const sourceName = basenameWithoutExtension(oldPath);
-  const topic = cleanTopic(sourceName) || classification.category;
+  const versionOnlyCategories = new Set([
+    'design',
+    'plan',
+    'release-design',
+    'release-test',
+    'release-verification',
+    'release-acceptance',
+    'archive-design',
+    'archive-boundary',
+    'archive-test-matrix',
+    'archive-verification',
+    'archive-manifest',
+  ]);
+  const fallbackTopic = versionOnlyCategories.has(classification.category)
+    ? '版本'
+    : classification.category;
+  const topic = cleanTopic(sourceName) || fallbackTopic;
   const extension = path.posix.extname(oldPath).toLowerCase();
   const type = classification.category === 'design' || classification.category === 'release-design'
     || classification.category === 'archive-design'
@@ -157,7 +179,11 @@ export function historicalDocumentTarget(entry) {
             ? '回归记录'
             : classification.category === 'archive-manifest'
               ? '构建清单'
-              : '验证记录';
+              : classification.category === 'archive-boundary'
+                ? '产品边界'
+                : classification.category === 'archive-test-matrix'
+                  ? '测试矩阵'
+                  : '验证记录';
   return path.posix.join(
     classification.targetDirectory,
     `${prefix}-${version}-${topic}-${type}${extension}`,

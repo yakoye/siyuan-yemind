@@ -1,0 +1,1727 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-29T11:34:51.360Z",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "oldPath": "docs/版本管理.md",
+      "newPath": "docs/standards/版本管理.md",
+      "timestamp": "2026-07-27T11:19:05+08:00",
+      "fileTimestamp": "2026-07-27-1119",
+      "timeSource": "git-first-add",
+      "category": "standard"
+    },
+    {
+      "oldPath": "docs/版本验证-v1.5.0.md",
+      "newPath": "docs/releases/v1.5.0/2026-07-28-1853-v1.5.0-版本-验证记录.md",
+      "timestamp": "2026-07-28T18:53:59+08:00",
+      "fileTimestamp": "2026-07-28-1853",
+      "timeSource": "git-first-add",
+      "category": "release-verification"
+    },
+    {
+      "oldPath": "docs/版本与发布规范.md",
+      "newPath": "docs/standards/版本与发布规范.md",
+      "timestamp": "2026-07-27T14:32:02+08:00",
+      "fileTimestamp": "2026-07-27-1432",
+      "timeSource": "git-first-add",
+      "category": "standard"
+    },
+    {
+      "oldPath": "docs/测试用例-v1.5.0.md",
+      "newPath": "docs/releases/v1.5.0/2026-07-28-1853-v1.5.0-版本-测试用例.md",
+      "timestamp": "2026-07-28T18:53:59+08:00",
+      "fileTimestamp": "2026-07-28-1853",
+      "timeSource": "git-first-add",
+      "category": "release-test"
+    },
+    {
+      "oldPath": "docs/测试用例-v1.5.1.md",
+      "newPath": "docs/releases/v1.5.1/2026-07-29-1533-v1.5.1-版本-测试用例.md",
+      "timestamp": "2026-07-29T15:33:49+08:00",
+      "fileTimestamp": "2026-07-29-1533",
+      "timeSource": "git-first-add",
+      "category": "release-test"
+    },
+    {
+      "oldPath": "docs/测试与验收.md",
+      "newPath": "docs/standards/测试与验收.md",
+      "timestamp": "2026-07-27T13:24:19+08:00",
+      "fileTimestamp": "2026-07-27-1324",
+      "timeSource": "git-first-add",
+      "category": "standard"
+    },
+    {
+      "oldPath": "docs/设计-v1.1.0-布局与大纲交互.md",
+      "newPath": "docs/designs/2026-07-27-1204-v1.1.0-布局与大纲交互-设计.md",
+      "timestamp": "2026-07-27T12:04:59+08:00",
+      "fileTimestamp": "2026-07-27-1204",
+      "timeSource": "git-first-add",
+      "category": "design"
+    },
+    {
+      "oldPath": "docs/设计-v1.1.1-网页版交互修复.md",
+      "newPath": "docs/designs/2026-07-27-1228-v1.1.1-网页版交互修复-设计.md",
+      "timestamp": "2026-07-27T12:28:46+08:00",
+      "fileTimestamp": "2026-07-27-1228",
+      "timeSource": "git-first-add",
+      "category": "design"
+    },
+    {
+      "oldPath": "docs/设计-v1.2.0-多格式导入导出.md",
+      "newPath": "docs/designs/2026-07-27-1251-v1.2.0-多格式导入导出-设计.md",
+      "timestamp": "2026-07-27T12:51:17+08:00",
+      "fileTimestamp": "2026-07-27-1251",
+      "timeSource": "git-first-add",
+      "category": "design"
+    },
+    {
+      "oldPath": "docs/设计-v1.5.0-界面与双端统一.md",
+      "newPath": "docs/designs/2026-07-28-1853-v1.5.0-界面与双端统一-设计.md",
+      "timestamp": "2026-07-28T18:53:59+08:00",
+      "fileTimestamp": "2026-07-28-1853",
+      "timeSource": "git-first-add",
+      "category": "design"
+    },
+    {
+      "oldPath": "docs/实施计划-v1.1.0.md",
+      "newPath": "docs/plans/2026-07-27-1204-v1.1.0-版本-实施计划.md",
+      "timestamp": "2026-07-27T12:04:59+08:00",
+      "fileTimestamp": "2026-07-27-1204",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/实施计划-v1.2.0-多格式导入导出.md",
+      "newPath": "docs/plans/2026-07-27-1251-v1.2.0-多格式导入导出-实施计划.md",
+      "timestamp": "2026-07-27T12:51:17+08:00",
+      "fileTimestamp": "2026-07-27-1251",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/实施计划-v1.5.0.md",
+      "newPath": "docs/plans/2026-07-28-1853-v1.5.0-版本-实施计划.md",
+      "timestamp": "2026-07-28T18:53:59+08:00",
+      "fileTimestamp": "2026-07-28-1853",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/验收记录-v1.3.0.md",
+      "newPath": "docs/releases/v1.3.0/2026-07-27-1443-v1.3.0-版本-验收记录.md",
+      "timestamp": "2026-07-27T14:43:59+08:00",
+      "fileTimestamp": "2026-07-27-1443",
+      "timeSource": "git-first-add",
+      "category": "release-acceptance"
+    },
+    {
+      "oldPath": "docs/验收记录-v1.5.0.md",
+      "newPath": "docs/releases/v1.5.0/2026-07-28-1853-v1.5.0-版本-验收记录.md",
+      "timestamp": "2026-07-28T18:53:59+08:00",
+      "fileTimestamp": "2026-07-28-1853",
+      "timeSource": "git-first-add",
+      "category": "release-acceptance"
+    },
+    {
+      "oldPath": "docs/验收记录-v1.5.1.md",
+      "newPath": "docs/releases/v1.5.1/2026-07-29-1533-v1.5.1-版本-验收记录.md",
+      "timestamp": "2026-07-29T15:33:49+08:00",
+      "fileTimestamp": "2026-07-29-1533",
+      "timeSource": "git-first-add",
+      "category": "release-acceptance"
+    },
+    {
+      "oldPath": "docs/验证-v1.1.0.md",
+      "newPath": "docs/releases/v1.1.0/2026-07-27-1204-v1.1.0-版本-验证记录.md",
+      "timestamp": "2026-07-27T12:04:59+08:00",
+      "fileTimestamp": "2026-07-27-1204",
+      "timeSource": "git-first-add",
+      "category": "release-verification"
+    },
+    {
+      "oldPath": "docs/验证-v1.1.1.md",
+      "newPath": "docs/releases/v1.1.1/2026-07-27-1228-v1.1.1-版本-验证记录.md",
+      "timestamp": "2026-07-27T12:28:46+08:00",
+      "fileTimestamp": "2026-07-27-1228",
+      "timeSource": "git-first-add",
+      "category": "release-verification"
+    },
+    {
+      "oldPath": "docs/验证-v1.2.0-多格式导入导出.md",
+      "newPath": "docs/releases/v1.2.0/2026-07-27-1251-v1.2.0-多格式导入导出-验证记录.md",
+      "timestamp": "2026-07-27T12:51:17+08:00",
+      "fileTimestamp": "2026-07-27-1251",
+      "timeSource": "git-first-add",
+      "category": "release-verification"
+    },
+    {
+      "oldPath": "docs/验证记录-2026-07-29.md",
+      "newPath": "docs/releases/dev/2026-07-29-1055-dev-记录-2026-07-29-验证记录.md",
+      "timestamp": "2026-07-29T10:55:01+08:00",
+      "fileTimestamp": "2026-07-29-1055",
+      "timeSource": "git-first-add",
+      "category": "release-verification"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.10_OUTLINE_GUIDES_AND_REVEAL.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-23-0937-v0.9.10-OUTLINE-GUIDES-AND-REVEAL-设计.md",
+      "timestamp": "2026-07-23T09:37:01+08:00",
+      "fileTimestamp": "2026-07-23-0937",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.11_NODE_ACTIONS_AND_RELATION_EDITING.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-23-1140-v0.9.11-NODE-ACTIONS-AND-RELATION-EDITING-设计.md",
+      "timestamp": "2026-07-23T11:40:31+08:00",
+      "fileTimestamp": "2026-07-23-1140",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.12_LOCAL_ASSETS.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-23-1719-v0.9.12-LOCAL-ASSETS-设计.md",
+      "timestamp": "2026-07-23T17:19:23+08:00",
+      "fileTimestamp": "2026-07-23-1719",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.13_INTERACTION_POLISH.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-23-1719-v0.9.13-INTERACTION-POLISH-设计.md",
+      "timestamp": "2026-07-23T17:19:23+08:00",
+      "fileTimestamp": "2026-07-23-1719",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.14_COMBINED_SUMMARY_AND_GEOMETRY.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-23-1850-v0.9.14-COMBINED-SUMMARY-AND-GEOMETRY-设计.md",
+      "timestamp": "2026-07-23T18:50:16+08:00",
+      "fileTimestamp": "2026-07-23-1850",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.15_CLIPART_GEOMETRY.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-23-2035-v0.9.15-CLIPART-GEOMETRY-设计.md",
+      "timestamp": "2026-07-23T20:35:15+08:00",
+      "fileTimestamp": "2026-07-23-2035",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.16_IMAGE_DIRECT_MANIPULATION.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-23-2329-v0.9.16-IMAGE-DIRECT-MANIPULATION-设计.md",
+      "timestamp": "2026-07-23T23:29:07+08:00",
+      "fileTimestamp": "2026-07-23-2329",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.17_LIVE_WIDTH_MENU_SELECTION.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-24-0717-v0.9.17-LIVE-WIDTH-MENU-SELECTION-设计.md",
+      "timestamp": "2026-07-24T07:17:46+08:00",
+      "fileTimestamp": "2026-07-24-0717",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.18_LAYOUT_DRAG_PARITY.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-24-0947-v0.9.18-LAYOUT-DRAG-PARITY-设计.md",
+      "timestamp": "2026-07-24T09:47:17+08:00",
+      "fileTimestamp": "2026-07-24-0947",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.19_ICONS_ASSET_DIALOGS.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-24-1118-v0.9.19-ICONS-ASSET-DIALOGS-设计.md",
+      "timestamp": "2026-07-24T11:18:30+08:00",
+      "fileTimestamp": "2026-07-24-1118",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.20_ICONS_DIALOGS_CROSS_ROOT_DRAG.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-24-1253-v0.9.20-ICONS-DIALOGS-CROSS-ROOT-DRAG-设计.md",
+      "timestamp": "2026-07-24T12:53:30+08:00",
+      "fileTimestamp": "2026-07-24-1253",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.21_SOURCE_ICONS_AND_SELECTION_TOOLBAR.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-24-1333-v0.9.21-SOURCE-ICONS-AND-SELECTION-TOOLBAR-设计.md",
+      "timestamp": "2026-07-24T13:33:28+08:00",
+      "fileTimestamp": "2026-07-24-1333",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.22_EXACT_SOURCE_ICON_ISOLATION.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-24-1410-v0.9.22-EXACT-SOURCE-ICON-ISOLATION-设计.md",
+      "timestamp": "2026-07-24T14:10:40+08:00",
+      "fileTimestamp": "2026-07-24-1410",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.23_ICON_GRID_DARK_THEME.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-24-1532-v0.9.23-ICON-GRID-DARK-THEME-设计.md",
+      "timestamp": "2026-07-24T15:32:07+08:00",
+      "fileTimestamp": "2026-07-24-1532",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.24_OUTLINE_IMPORT_DARK_THEME.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-24-2052-v0.9.24-OUTLINE-IMPORT-DARK-THEME-设计.md",
+      "timestamp": "2026-07-24T20:52:17+08:00",
+      "fileTimestamp": "2026-07-24-2052",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.25_IMPORT_DARK_OUTLINE_CONTENT.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-24-2303-v0.9.25-IMPORT-DARK-OUTLINE-CONTENT-设计.md",
+      "timestamp": "2026-07-24T23:03:34+08:00",
+      "fileTimestamp": "2026-07-24-2303",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.26_IMPORT_COLLAPSE_OUTLINE_PARITY.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-25-0915-v0.9.26-IMPORT-COLLAPSE-OUTLINE-PARITY-设计.md",
+      "timestamp": "2026-07-25T09:15:46+08:00",
+      "fileTimestamp": "2026-07-25-0915",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.27_OUTLINE_ASSET_DIALOG_PARITY.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-25-1054-v0.9.27-OUTLINE-ASSET-DIALOG-PARITY-设计.md",
+      "timestamp": "2026-07-25T10:54:10+08:00",
+      "fileTimestamp": "2026-07-25-1054",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.28_OUTLINE_DIALOG_CONSISTENCY.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-25-1439-v0.9.28-OUTLINE-DIALOG-CONSISTENCY-设计.md",
+      "timestamp": "2026-07-25T14:39:28+08:00",
+      "fileTimestamp": "2026-07-25-1439",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.29_FLOATING_TOOLBARS_RELATIONS_QUICK_ACTIONS.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-25-1759-v0.9.29-FLOATING-TOOLBARS-RELATIONS-QUICK-ACTIONS-设计.md",
+      "timestamp": "2026-07-25T17:59:01+08:00",
+      "fileTimestamp": "2026-07-25-1759",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.3_OUTLINE_DOCUMENT.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-22-1437-v0.9.3-OUTLINE-DOCUMENT-设计.md",
+      "timestamp": "2026-07-22T14:37:11+08:00",
+      "fileTimestamp": "2026-07-22-1437",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.30_BRANCH_CONTROLS_TOOLBAR_RESOURCE_MENUS.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-26-0015-v0.9.30-BRANCH-CONTROLS-TOOLBAR-RESOURCE-MENUS-设计.md",
+      "timestamp": "2026-07-26T00:15:17+08:00",
+      "fileTimestamp": "2026-07-26-0015",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.31_THEME_PALETTE_DROPDOWN.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-27-0950-v0.9.31-THEME-PALETTE-DROPDOWN-设计.md",
+      "timestamp": "2026-07-27T09:50:22+08:00",
+      "fileTimestamp": "2026-07-27-0950",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.4_STRUCTURED_OUTLINE.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-22-1656-v0.9.4-STRUCTURED-OUTLINE-设计.md",
+      "timestamp": "2026-07-22T16:56:38+08:00",
+      "fileTimestamp": "2026-07-22-1656",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.5_TREE_DRAG.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-22-1916-v0.9.5-TREE-DRAG-设计.md",
+      "timestamp": "2026-07-22T19:16:44+08:00",
+      "fileTimestamp": "2026-07-22-1916",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.6_OUTLINE_AND_RIGHT_LOGICAL_DRAG.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-22-2021-v0.9.6-OUTLINE-AND-RIGHT-LOGICAL-DRAG-设计.md",
+      "timestamp": "2026-07-22T20:21:13+08:00",
+      "fileTimestamp": "2026-07-22-2021",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.7_NEAREST_NODE_LOGICAL_DRAG.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-22-2258-v0.9.7-NEAREST-NODE-LOGICAL-DRAG-设计.md",
+      "timestamp": "2026-07-22T22:58:10+08:00",
+      "fileTimestamp": "2026-07-22-2258",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.8_DRAG_EDGE_CONTINUITY_AND_FLAT_EDITING.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-22-2357-v0.9.8-DRAG-EDGE-CONTINUITY-AND-FLAT-EDITING-设计.md",
+      "timestamp": "2026-07-22T23:57:57+08:00",
+      "fileTimestamp": "2026-07-22-2357",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DESIGN_v0.9.9_OUTLINE_GUIDE_GEOMETRY.md",
+      "newPath": "docs/archive/v0.9/designs/2026-07-23-0046-v0.9.9-OUTLINE-GUIDE-GEOMETRY-设计.md",
+      "timestamp": "2026-07-23T00:46:30+08:00",
+      "fileTimestamp": "2026-07-23-0046",
+      "timeSource": "git-first-add",
+      "category": "archive-design"
+    },
+    {
+      "oldPath": "docs/DIAGNOSTICS_GUIDE.md",
+      "newPath": "docs/standards/诊断指南.md",
+      "timestamp": "2026-07-21T14:44:20+08:00",
+      "fileTimestamp": "2026-07-21-1444",
+      "timeSource": "git-first-add",
+      "category": "standard"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.1.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.1-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.10.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.10-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.11.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.11-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.12.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.12-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.13.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.13-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.14.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.14-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.15.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.15-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.16.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.16-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.17.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.17-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.18.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.18-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.19.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.19-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.2.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.2-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.20.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.20-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.21.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.21-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.22.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.22-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.23.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.23-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.24.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.24-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.25.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.25-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.26.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.26-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.27.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.27-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.28.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.28-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.29.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.29-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.3.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.3-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.30.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.30-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.31.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.31-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.4.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.4-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.5.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.5-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.6.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.6-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.7.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.7-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.8.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.8-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/offline-bundle-manifest-v0.9.9.json",
+      "newPath": "docs/archive/v0.9/manifests/2026-07-22-1145-v0.9.9-版本-构建清单.json",
+      "timestamp": "2026-07-22T11:45:43+08:00",
+      "fileTimestamp": "2026-07-22-1145",
+      "timeSource": "git-first-add",
+      "category": "archive-manifest"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.0.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-22-0722-v0.9.0-版本-产品边界.md",
+      "timestamp": "2026-07-22T07:22:08+08:00",
+      "fileTimestamp": "2026-07-22-0722",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.1.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-22-1135-v0.9.1-版本-产品边界.md",
+      "timestamp": "2026-07-22T11:35:26+08:00",
+      "fileTimestamp": "2026-07-22-1135",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.10.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-23-0937-v0.9.10-版本-产品边界.md",
+      "timestamp": "2026-07-23T09:37:01+08:00",
+      "fileTimestamp": "2026-07-23-0937",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.11.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-23-1140-v0.9.11-版本-产品边界.md",
+      "timestamp": "2026-07-23T11:40:31+08:00",
+      "fileTimestamp": "2026-07-23-1140",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.12.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-23-1719-v0.9.12-版本-产品边界.md",
+      "timestamp": "2026-07-23T17:19:23+08:00",
+      "fileTimestamp": "2026-07-23-1719",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.13.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-23-1719-v0.9.13-版本-产品边界.md",
+      "timestamp": "2026-07-23T17:19:23+08:00",
+      "fileTimestamp": "2026-07-23-1719",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.14.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-23-1850-v0.9.14-版本-产品边界.md",
+      "timestamp": "2026-07-23T18:50:16+08:00",
+      "fileTimestamp": "2026-07-23-1850",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.15.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-23-2035-v0.9.15-版本-产品边界.md",
+      "timestamp": "2026-07-23T20:35:15+08:00",
+      "fileTimestamp": "2026-07-23-2035",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.16.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-23-2329-v0.9.16-版本-产品边界.md",
+      "timestamp": "2026-07-23T23:29:07+08:00",
+      "fileTimestamp": "2026-07-23-2329",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.17.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-24-0717-v0.9.17-版本-产品边界.md",
+      "timestamp": "2026-07-24T07:17:46+08:00",
+      "fileTimestamp": "2026-07-24-0717",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.18.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-24-0947-v0.9.18-版本-产品边界.md",
+      "timestamp": "2026-07-24T09:47:17+08:00",
+      "fileTimestamp": "2026-07-24-0947",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.19.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-24-1118-v0.9.19-版本-产品边界.md",
+      "timestamp": "2026-07-24T11:18:30+08:00",
+      "fileTimestamp": "2026-07-24-1118",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.2.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-22-1310-v0.9.2-版本-产品边界.md",
+      "timestamp": "2026-07-22T13:10:01+08:00",
+      "fileTimestamp": "2026-07-22-1310",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.20.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-24-1253-v0.9.20-版本-产品边界.md",
+      "timestamp": "2026-07-24T12:53:30+08:00",
+      "fileTimestamp": "2026-07-24-1253",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.21.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-24-1333-v0.9.21-版本-产品边界.md",
+      "timestamp": "2026-07-24T13:33:28+08:00",
+      "fileTimestamp": "2026-07-24-1333",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.22.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-24-1410-v0.9.22-版本-产品边界.md",
+      "timestamp": "2026-07-24T14:10:40+08:00",
+      "fileTimestamp": "2026-07-24-1410",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.23.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-24-1532-v0.9.23-版本-产品边界.md",
+      "timestamp": "2026-07-24T15:32:07+08:00",
+      "fileTimestamp": "2026-07-24-1532",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.24.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-24-2052-v0.9.24-版本-产品边界.md",
+      "timestamp": "2026-07-24T20:52:17+08:00",
+      "fileTimestamp": "2026-07-24-2052",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.25.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-24-2303-v0.9.25-版本-产品边界.md",
+      "timestamp": "2026-07-24T23:03:34+08:00",
+      "fileTimestamp": "2026-07-24-2303",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.26.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-25-0915-v0.9.26-版本-产品边界.md",
+      "timestamp": "2026-07-25T09:15:46+08:00",
+      "fileTimestamp": "2026-07-25-0915",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.27.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-25-1054-v0.9.27-版本-产品边界.md",
+      "timestamp": "2026-07-25T10:54:10+08:00",
+      "fileTimestamp": "2026-07-25-1054",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.29.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-25-1759-v0.9.29-版本-产品边界.md",
+      "timestamp": "2026-07-25T17:59:01+08:00",
+      "fileTimestamp": "2026-07-25-1759",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.3.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-22-1437-v0.9.3-版本-产品边界.md",
+      "timestamp": "2026-07-22T14:37:11+08:00",
+      "fileTimestamp": "2026-07-22-1437",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.30.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-26-0015-v0.9.30-版本-产品边界.md",
+      "timestamp": "2026-07-26T00:15:17+08:00",
+      "fileTimestamp": "2026-07-26-0015",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.31.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-27-0950-v0.9.31-版本-产品边界.md",
+      "timestamp": "2026-07-27T09:50:22+08:00",
+      "fileTimestamp": "2026-07-27-0950",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.4.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-22-1656-v0.9.4-版本-产品边界.md",
+      "timestamp": "2026-07-22T16:56:38+08:00",
+      "fileTimestamp": "2026-07-22-1656",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.5.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-22-1916-v0.9.5-版本-产品边界.md",
+      "timestamp": "2026-07-22T19:16:44+08:00",
+      "fileTimestamp": "2026-07-22-1916",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.6.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-22-2021-v0.9.6-版本-产品边界.md",
+      "timestamp": "2026-07-22T20:21:13+08:00",
+      "fileTimestamp": "2026-07-22-2021",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.7.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-22-2258-v0.9.7-版本-产品边界.md",
+      "timestamp": "2026-07-22T22:58:10+08:00",
+      "fileTimestamp": "2026-07-22-2258",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.8.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-22-2357-v0.9.8-版本-产品边界.md",
+      "timestamp": "2026-07-22T23:57:57+08:00",
+      "fileTimestamp": "2026-07-22-2357",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/PRODUCT_BOUNDARIES_v0.9.9.md",
+      "newPath": "docs/archive/v0.9/boundaries/2026-07-23-0046-v0.9.9-版本-产品边界.md",
+      "timestamp": "2026-07-23T00:46:30+08:00",
+      "fileTimestamp": "2026-07-23-0046",
+      "timeSource": "git-first-add",
+      "category": "archive-boundary"
+    },
+    {
+      "oldPath": "docs/REGRESSION_CHECKLIST.md",
+      "newPath": "docs/standards/回归验收清单.md",
+      "timestamp": "2026-07-29T16:04:26+08:00",
+      "fileTimestamp": "2026-07-29-1604",
+      "timeSource": "git-first-add",
+      "category": "standard"
+    },
+    {
+      "oldPath": "docs/regression-runs/2026-07-29-1.5.1-基础编辑事务闭环与符号面板.md",
+      "newPath": "docs/regression-runs/2026-07-29-1622-v1.5.1-基础编辑事务闭环与符号面板-回归记录.md",
+      "timestamp": "2026-07-29T08:22:48.001Z",
+      "fileTimestamp": "2026-07-29-1622",
+      "timeSource": "file-created",
+      "category": "regression-run"
+    },
+    {
+      "oldPath": "docs/superpowers/DEVELOPMENT_REQUIREMENTS.md",
+      "newPath": "docs/standards/开发要求.md",
+      "timestamp": "2026-07-21T14:40:47+08:00",
+      "fileTimestamp": "2026-07-21-1440",
+      "timeSource": "git-first-add",
+      "category": "standard"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-21-v0.9.0-images-palettes-themes.md",
+      "newPath": "docs/plans/2026-07-22-0722-v0.9.0-images-palettes-themes-实施计划.md",
+      "timestamp": "2026-07-22T07:22:08+08:00",
+      "fileTimestamp": "2026-07-22-0722",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-23-v0.9.13-interaction-polish.md",
+      "newPath": "docs/plans/2026-07-23-1719-v0.9.13-interaction-polish-实施计划.md",
+      "timestamp": "2026-07-23T17:19:23+08:00",
+      "fileTimestamp": "2026-07-23-1719",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-23-v0.9.14-summary-geometry-right-drag.md",
+      "newPath": "docs/plans/2026-07-23-1850-v0.9.14-summary-geometry-right-drag-实施计划.md",
+      "timestamp": "2026-07-23T18:50:16+08:00",
+      "fileTimestamp": "2026-07-23-1850",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-24-exact-source-icon-isolation.md",
+      "newPath": "docs/plans/2026-07-24-1410-dev-exact-source-icon-isolation-实施计划.md",
+      "timestamp": "2026-07-24T14:10:40+08:00",
+      "fileTimestamp": "2026-07-24-1410",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-24-icon-grid-dark-theme.md",
+      "newPath": "docs/plans/2026-07-24-1532-dev-icon-grid-dark-theme-实施计划.md",
+      "timestamp": "2026-07-24T15:32:07+08:00",
+      "fileTimestamp": "2026-07-24-1532",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-24-layout-drag-parity.md",
+      "newPath": "docs/plans/2026-07-24-0947-dev-layout-drag-parity-实施计划.md",
+      "timestamp": "2026-07-24T09:47:17+08:00",
+      "fileTimestamp": "2026-07-24-0947",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-24-v0.9.24-outline-import-dark-theme.md",
+      "newPath": "docs/plans/2026-07-24-2052-v0.9.24-outline-import-dark-theme-实施计划.md",
+      "timestamp": "2026-07-24T20:52:17+08:00",
+      "fileTimestamp": "2026-07-24-2052",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-24-v0.9.25-import-dark-outline-content.md",
+      "newPath": "docs/plans/2026-07-24-2303-v0.9.25-import-dark-outline-content-实施计划.md",
+      "timestamp": "2026-07-24T23:03:34+08:00",
+      "fileTimestamp": "2026-07-24-2303",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-24-v0.9.26-import-collapse-outline-parity.md",
+      "newPath": "docs/plans/2026-07-25-0915-v0.9.26-import-collapse-outline-parity-实施计划.md",
+      "timestamp": "2026-07-25T09:15:46+08:00",
+      "fileTimestamp": "2026-07-25-0915",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-25-v0.9.27-outline-assets-dialog-parity.md",
+      "newPath": "docs/plans/2026-07-25-1054-v0.9.27-outline-assets-dialog-parity-实施计划.md",
+      "timestamp": "2026-07-25T10:54:10+08:00",
+      "fileTimestamp": "2026-07-25-1054",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-25-v0.9.28-outline-dialog-consistency.md",
+      "newPath": "docs/plans/2026-07-25-1439-v0.9.28-outline-dialog-consistency-实施计划.md",
+      "timestamp": "2026-07-25T14:39:28+08:00",
+      "fileTimestamp": "2026-07-25-1439",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-25-v0.9.29-floating-toolbars-relations-quick-actions.md",
+      "newPath": "docs/plans/2026-07-25-1759-v0.9.29-floating-toolbars-relations-quick-actions-实施计划.md",
+      "timestamp": "2026-07-25T17:59:01+08:00",
+      "fileTimestamp": "2026-07-25-1759",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-25-v0.9.30-branch-controls-toolbar-resource-menus.md",
+      "newPath": "docs/plans/2026-07-26-0015-v0.9.30-branch-controls-toolbar-resource-menus-实施计划.md",
+      "timestamp": "2026-07-26T00:15:17+08:00",
+      "fileTimestamp": "2026-07-26-0015",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-26-v0.9.31-theme-palette-dropdown.md",
+      "newPath": "docs/plans/2026-07-27-0950-v0.9.31-theme-palette-dropdown-实施计划.md",
+      "timestamp": "2026-07-27T09:50:22+08:00",
+      "fileTimestamp": "2026-07-27-0950",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-27-plugin-ui-and-runtime-cleanup.md",
+      "newPath": "docs/plans/2026-07-27-1026-dev-plugin-ui-and-runtime-cleanup-实施计划.md",
+      "timestamp": "2026-07-27T10:26:14+08:00",
+      "fileTimestamp": "2026-07-27-1026",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-27-standalone-web-app.md",
+      "newPath": "docs/plans/2026-07-27-1026-dev-standalone-web-app-实施计划.md",
+      "timestamp": "2026-07-27T10:26:14+08:00",
+      "fileTimestamp": "2026-07-27-1026",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-27-v1.3.0-双端统一与全功能稳定性实施计划.md",
+      "newPath": "docs/plans/2026-07-27-1321-v1.3.0-双端统一与全功能稳定性-实施计划.md",
+      "timestamp": "2026-07-27T13:21:04+08:00",
+      "fileTimestamp": "2026-07-27-1321",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-28-v1.5.0-Version47界面重构实施计划.md",
+      "newPath": "docs/plans/2026-07-28-1954-v1.5.0-Version47界面重构-实施计划.md",
+      "timestamp": "2026-07-28T19:54:48+08:00",
+      "fileTimestamp": "2026-07-28-1954",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-29-1917-dev-文档分类与时间命名-实施计划.md",
+      "newPath": "docs/plans/2026-07-29-1919-dev-dev-文档分类与时间命名-实施计划.md",
+      "timestamp": "2026-07-29T19:19:20+08:00",
+      "fileTimestamp": "2026-07-29-1919",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-29-待办提示与样式面板修复实施计划.md",
+      "newPath": "docs/plans/2026-07-29-1055-dev-待办提示与样式面板修复-实施计划.md",
+      "timestamp": "2026-07-29T10:55:01+08:00",
+      "fileTimestamp": "2026-07-29-1055",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-29-回归清单治理实施计划.md",
+      "newPath": "docs/plans/2026-07-29-1604-dev-回归清单治理-实施计划.md",
+      "timestamp": "2026-07-29T16:04:26+08:00",
+      "fileTimestamp": "2026-07-29-1604",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-29-基础编辑事务闭环与符号面板重构实施计划.md",
+      "newPath": "docs/plans/2026-07-29-1622-dev-基础编辑事务闭环与符号面板重构-实施计划.md",
+      "timestamp": "2026-07-29T08:22:48.000Z",
+      "fileTimestamp": "2026-07-29-1622",
+      "timeSource": "file-created",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-29-基础编辑事务与剪贴板重构.md",
+      "newPath": "docs/plans/2026-07-29-1317-dev-基础编辑事务与剪贴板重构-实施计划.md",
+      "timestamp": "2026-07-29T13:17:21+08:00",
+      "fileTimestamp": "2026-07-29-1317",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-29-卡片完整节点内容与全功能回归实施计划.md",
+      "newPath": "docs/plans/2026-07-29-1055-dev-卡片完整节点内容与全功能回归-实施计划.md",
+      "timestamp": "2026-07-29T10:55:01+08:00",
+      "fileTimestamp": "2026-07-29-1055",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/plans/2026-07-29-主题常用与传输入口整合实施计划.md",
+      "newPath": "docs/plans/2026-07-29-1055-dev-主题常用与传输入口整合-实施计划.md",
+      "timestamp": "2026-07-29T10:55:01+08:00",
+      "fileTimestamp": "2026-07-29-1055",
+      "timeSource": "git-first-add",
+      "category": "plan"
+    },
+    {
+      "oldPath": "docs/superpowers/specs/2026-07-21-v0.9.0-images-palettes-themes-design.md",
+      "newPath": "docs/designs/2026-07-22-0722-v0.9.0-images-palettes-themes-design-设计.md",
+      "timestamp": "2026-07-22T07:22:08+08:00",
+      "fileTimestamp": "2026-07-22-0722",
+      "timeSource": "git-first-add",
+      "category": "design"
+    },
+    {
+      "oldPath": "docs/superpowers/specs/2026-07-27-plugin-cleanup-and-standalone-web-design.md",
+      "newPath": "docs/designs/2026-07-27-1023-dev-plugin-cleanup-and-standalone-web-design-设计.md",
+      "timestamp": "2026-07-27T10:23:00+08:00",
+      "fileTimestamp": "2026-07-27-1023",
+      "timeSource": "git-first-add",
+      "category": "design"
+    },
+    {
+      "oldPath": "docs/superpowers/specs/2026-07-27-v1.3.0-双端统一发布与全功能稳定性设计.md",
+      "newPath": "docs/designs/2026-07-27-1316-v1.3.0-双端统一发布与全功能稳定性-设计.md",
+      "timestamp": "2026-07-27T13:16:30+08:00",
+      "fileTimestamp": "2026-07-27-1316",
+      "timeSource": "git-first-add",
+      "category": "design"
+    },
+    {
+      "oldPath": "docs/superpowers/specs/2026-07-28-v1.5.0-Version47界面重构设计.md",
+      "newPath": "docs/designs/2026-07-28-1954-v1.5.0-Version47界面重构-设计.md",
+      "timestamp": "2026-07-28T19:54:48+08:00",
+      "fileTimestamp": "2026-07-28-1954",
+      "timeSource": "git-first-add",
+      "category": "design"
+    },
+    {
+      "oldPath": "docs/superpowers/specs/2026-07-29-1914-dev-文档分类与时间命名-设计.md",
+      "newPath": "docs/designs/2026-07-29-1915-dev-dev-文档分类与时间命名-设计.md",
+      "timestamp": "2026-07-29T19:15:38+08:00",
+      "fileTimestamp": "2026-07-29-1915",
+      "timeSource": "git-first-add",
+      "category": "design"
+    },
+    {
+      "oldPath": "docs/superpowers/specs/2026-07-29-待办提示与样式面板修复设计.md",
+      "newPath": "docs/designs/2026-07-29-1055-dev-待办提示与样式面板修复-设计.md",
+      "timestamp": "2026-07-29T10:55:01+08:00",
+      "fileTimestamp": "2026-07-29-1055",
+      "timeSource": "git-first-add",
+      "category": "design"
+    },
+    {
+      "oldPath": "docs/superpowers/specs/2026-07-29-基础编辑事务闭环与符号面板重构设计.md",
+      "newPath": "docs/designs/2026-07-29-1622-dev-基础编辑事务闭环与符号面板重构-设计.md",
+      "timestamp": "2026-07-29T08:22:47.998Z",
+      "fileTimestamp": "2026-07-29-1622",
+      "timeSource": "file-created",
+      "category": "design"
+    },
+    {
+      "oldPath": "docs/superpowers/specs/2026-07-29-卡片完整节点内容与全功能回归设计.md",
+      "newPath": "docs/designs/2026-07-29-1055-dev-卡片完整节点内容与全功能回归-设计.md",
+      "timestamp": "2026-07-29T10:55:01+08:00",
+      "fileTimestamp": "2026-07-29-1055",
+      "timeSource": "git-first-add",
+      "category": "design"
+    },
+    {
+      "oldPath": "docs/superpowers/specs/2026-07-29-主题常用与传输入口整合设计.md",
+      "newPath": "docs/designs/2026-07-29-1055-dev-主题常用与传输入口整合-设计.md",
+      "timestamp": "2026-07-29T10:55:01+08:00",
+      "fileTimestamp": "2026-07-29-1055",
+      "timeSource": "git-first-add",
+      "category": "design"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.0.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-22-0722-v0.9.0-版本-测试矩阵.md",
+      "timestamp": "2026-07-22T07:22:08+08:00",
+      "fileTimestamp": "2026-07-22-0722",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.1.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-22-0722-v0.9.1-版本-测试矩阵.md",
+      "timestamp": "2026-07-22T07:22:08+08:00",
+      "fileTimestamp": "2026-07-22-0722",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.10.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-23-0937-v0.9.10-版本-测试矩阵.md",
+      "timestamp": "2026-07-23T09:37:01+08:00",
+      "fileTimestamp": "2026-07-23-0937",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.11.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-23-1140-v0.9.11-版本-测试矩阵.md",
+      "timestamp": "2026-07-23T11:40:31+08:00",
+      "fileTimestamp": "2026-07-23-1140",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.12.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-23-1719-v0.9.12-版本-测试矩阵.md",
+      "timestamp": "2026-07-23T17:19:23+08:00",
+      "fileTimestamp": "2026-07-23-1719",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.13.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-23-1719-v0.9.13-版本-测试矩阵.md",
+      "timestamp": "2026-07-23T17:19:23+08:00",
+      "fileTimestamp": "2026-07-23-1719",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.14.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-23-1850-v0.9.14-版本-测试矩阵.md",
+      "timestamp": "2026-07-23T18:50:16+08:00",
+      "fileTimestamp": "2026-07-23-1850",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.15.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-23-2035-v0.9.15-版本-测试矩阵.md",
+      "timestamp": "2026-07-23T20:35:15+08:00",
+      "fileTimestamp": "2026-07-23-2035",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.16.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-23-2329-v0.9.16-版本-测试矩阵.md",
+      "timestamp": "2026-07-23T23:29:07+08:00",
+      "fileTimestamp": "2026-07-23-2329",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.17.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-24-0717-v0.9.17-版本-测试矩阵.md",
+      "timestamp": "2026-07-24T07:17:46+08:00",
+      "fileTimestamp": "2026-07-24-0717",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.18.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-24-0947-v0.9.18-版本-测试矩阵.md",
+      "timestamp": "2026-07-24T09:47:17+08:00",
+      "fileTimestamp": "2026-07-24-0947",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.19.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-24-1118-v0.9.19-版本-测试矩阵.md",
+      "timestamp": "2026-07-24T11:18:30+08:00",
+      "fileTimestamp": "2026-07-24-1118",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.2.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-22-1310-v0.9.2-版本-测试矩阵.md",
+      "timestamp": "2026-07-22T13:10:01+08:00",
+      "fileTimestamp": "2026-07-22-1310",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.20.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-24-1253-v0.9.20-版本-测试矩阵.md",
+      "timestamp": "2026-07-24T12:53:30+08:00",
+      "fileTimestamp": "2026-07-24-1253",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.21.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-24-1333-v0.9.21-版本-测试矩阵.md",
+      "timestamp": "2026-07-24T13:33:28+08:00",
+      "fileTimestamp": "2026-07-24-1333",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.22.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-24-1410-v0.9.22-版本-测试矩阵.md",
+      "timestamp": "2026-07-24T14:10:40+08:00",
+      "fileTimestamp": "2026-07-24-1410",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.23.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-24-1532-v0.9.23-版本-测试矩阵.md",
+      "timestamp": "2026-07-24T15:32:07+08:00",
+      "fileTimestamp": "2026-07-24-1532",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.24.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-24-2052-v0.9.24-版本-测试矩阵.md",
+      "timestamp": "2026-07-24T20:52:17+08:00",
+      "fileTimestamp": "2026-07-24-2052",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.25.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-24-2303-v0.9.25-版本-测试矩阵.md",
+      "timestamp": "2026-07-24T23:03:34+08:00",
+      "fileTimestamp": "2026-07-24-2303",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.26.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-25-0915-v0.9.26-版本-测试矩阵.md",
+      "timestamp": "2026-07-25T09:15:46+08:00",
+      "fileTimestamp": "2026-07-25-0915",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.27.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-25-1054-v0.9.27-版本-测试矩阵.md",
+      "timestamp": "2026-07-25T10:54:10+08:00",
+      "fileTimestamp": "2026-07-25-1054",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.29.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-25-1759-v0.9.29-版本-测试矩阵.md",
+      "timestamp": "2026-07-25T17:59:01+08:00",
+      "fileTimestamp": "2026-07-25-1759",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.3.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-22-1437-v0.9.3-版本-测试矩阵.md",
+      "timestamp": "2026-07-22T14:37:11+08:00",
+      "fileTimestamp": "2026-07-22-1437",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.30.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-26-0015-v0.9.30-版本-测试矩阵.md",
+      "timestamp": "2026-07-26T00:15:17+08:00",
+      "fileTimestamp": "2026-07-26-0015",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.31.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-27-0950-v0.9.31-版本-测试矩阵.md",
+      "timestamp": "2026-07-27T09:50:22+08:00",
+      "fileTimestamp": "2026-07-27-0950",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.4.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-22-1656-v0.9.4-版本-测试矩阵.md",
+      "timestamp": "2026-07-22T16:56:38+08:00",
+      "fileTimestamp": "2026-07-22-1656",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.5.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-22-1916-v0.9.5-版本-测试矩阵.md",
+      "timestamp": "2026-07-22T19:16:44+08:00",
+      "fileTimestamp": "2026-07-22-1916",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.6.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-22-2021-v0.9.6-版本-测试矩阵.md",
+      "timestamp": "2026-07-22T20:21:13+08:00",
+      "fileTimestamp": "2026-07-22-2021",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.7.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-22-2258-v0.9.7-版本-测试矩阵.md",
+      "timestamp": "2026-07-22T22:58:10+08:00",
+      "fileTimestamp": "2026-07-22-2258",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.8.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-22-2357-v0.9.8-版本-测试矩阵.md",
+      "timestamp": "2026-07-22T23:57:57+08:00",
+      "fileTimestamp": "2026-07-22-2357",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/TEST_COVERAGE_MATRIX_v0.9.9.md",
+      "newPath": "docs/archive/v0.9/test-matrices/2026-07-23-0046-v0.9.9-版本-测试矩阵.md",
+      "timestamp": "2026-07-23T00:46:30+08:00",
+      "fileTimestamp": "2026-07-23-0046",
+      "timeSource": "git-first-add",
+      "category": "archive-test-matrix"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.0.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-22-0722-v0.9.0-版本-验证记录.md",
+      "timestamp": "2026-07-22T07:22:08+08:00",
+      "fileTimestamp": "2026-07-22-0722",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.1.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-22-1135-v0.9.1-版本-验证记录.md",
+      "timestamp": "2026-07-22T11:35:26+08:00",
+      "fileTimestamp": "2026-07-22-1135",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.10.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-23-0937-v0.9.10-版本-验证记录.md",
+      "timestamp": "2026-07-23T09:37:01+08:00",
+      "fileTimestamp": "2026-07-23-0937",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.11.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-23-1140-v0.9.11-版本-验证记录.md",
+      "timestamp": "2026-07-23T11:40:31+08:00",
+      "fileTimestamp": "2026-07-23-1140",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.12.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-23-1719-v0.9.12-版本-验证记录.md",
+      "timestamp": "2026-07-23T17:19:23+08:00",
+      "fileTimestamp": "2026-07-23-1719",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.13.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-23-1719-v0.9.13-版本-验证记录.md",
+      "timestamp": "2026-07-23T17:19:23+08:00",
+      "fileTimestamp": "2026-07-23-1719",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.14.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-23-1850-v0.9.14-版本-验证记录.md",
+      "timestamp": "2026-07-23T18:50:16+08:00",
+      "fileTimestamp": "2026-07-23-1850",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.15.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-23-2035-v0.9.15-版本-验证记录.md",
+      "timestamp": "2026-07-23T20:35:15+08:00",
+      "fileTimestamp": "2026-07-23-2035",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.16.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-23-2329-v0.9.16-版本-验证记录.md",
+      "timestamp": "2026-07-23T23:29:07+08:00",
+      "fileTimestamp": "2026-07-23-2329",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.17.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-24-0717-v0.9.17-版本-验证记录.md",
+      "timestamp": "2026-07-24T07:17:46+08:00",
+      "fileTimestamp": "2026-07-24-0717",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.18.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-24-0947-v0.9.18-版本-验证记录.md",
+      "timestamp": "2026-07-24T09:47:17+08:00",
+      "fileTimestamp": "2026-07-24-0947",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.19.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-24-1118-v0.9.19-版本-验证记录.md",
+      "timestamp": "2026-07-24T11:18:30+08:00",
+      "fileTimestamp": "2026-07-24-1118",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.2.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-22-1310-v0.9.2-版本-验证记录.md",
+      "timestamp": "2026-07-22T13:10:01+08:00",
+      "fileTimestamp": "2026-07-22-1310",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.20.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-24-1253-v0.9.20-版本-验证记录.md",
+      "timestamp": "2026-07-24T12:53:30+08:00",
+      "fileTimestamp": "2026-07-24-1253",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.21.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-24-1333-v0.9.21-版本-验证记录.md",
+      "timestamp": "2026-07-24T13:33:28+08:00",
+      "fileTimestamp": "2026-07-24-1333",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.22.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-24-1410-v0.9.22-版本-验证记录.md",
+      "timestamp": "2026-07-24T14:10:40+08:00",
+      "fileTimestamp": "2026-07-24-1410",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.23.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-24-1532-v0.9.23-版本-验证记录.md",
+      "timestamp": "2026-07-24T15:32:07+08:00",
+      "fileTimestamp": "2026-07-24-1532",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.24.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-24-2052-v0.9.24-版本-验证记录.md",
+      "timestamp": "2026-07-24T20:52:17+08:00",
+      "fileTimestamp": "2026-07-24-2052",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.25.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-24-2303-v0.9.25-版本-验证记录.md",
+      "timestamp": "2026-07-24T23:03:34+08:00",
+      "fileTimestamp": "2026-07-24-2303",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.27.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-25-1054-v0.9.27-版本-验证记录.md",
+      "timestamp": "2026-07-25T10:54:10+08:00",
+      "fileTimestamp": "2026-07-25-1054",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.28.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-25-1439-v0.9.28-版本-验证记录.md",
+      "timestamp": "2026-07-25T14:39:28+08:00",
+      "fileTimestamp": "2026-07-25-1439",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.29.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-25-1759-v0.9.29-版本-验证记录.md",
+      "timestamp": "2026-07-25T17:59:01+08:00",
+      "fileTimestamp": "2026-07-25-1759",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.3.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-22-1437-v0.9.3-版本-验证记录.md",
+      "timestamp": "2026-07-22T14:37:11+08:00",
+      "fileTimestamp": "2026-07-22-1437",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.30.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-26-0015-v0.9.30-版本-验证记录.md",
+      "timestamp": "2026-07-26T00:15:17+08:00",
+      "fileTimestamp": "2026-07-26-0015",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.31.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-27-0950-v0.9.31-版本-验证记录.md",
+      "timestamp": "2026-07-27T09:50:22+08:00",
+      "fileTimestamp": "2026-07-27-0950",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.4.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-22-1656-v0.9.4-版本-验证记录.md",
+      "timestamp": "2026-07-22T16:56:38+08:00",
+      "fileTimestamp": "2026-07-22-1656",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.5.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-22-1916-v0.9.5-版本-验证记录.md",
+      "timestamp": "2026-07-22T19:16:44+08:00",
+      "fileTimestamp": "2026-07-22-1916",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.6.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-22-2021-v0.9.6-版本-验证记录.md",
+      "timestamp": "2026-07-22T20:21:13+08:00",
+      "fileTimestamp": "2026-07-22-2021",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.7.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-22-2258-v0.9.7-版本-验证记录.md",
+      "timestamp": "2026-07-22T22:58:10+08:00",
+      "fileTimestamp": "2026-07-22-2258",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.8.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-22-2357-v0.9.8-版本-验证记录.md",
+      "timestamp": "2026-07-22T23:57:57+08:00",
+      "fileTimestamp": "2026-07-22-2357",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v0.9.9.md",
+      "newPath": "docs/archive/v0.9/verifications/2026-07-23-0046-v0.9.9-版本-验证记录.md",
+      "timestamp": "2026-07-23T00:46:30+08:00",
+      "fileTimestamp": "2026-07-23-0046",
+      "timeSource": "git-first-add",
+      "category": "archive-verification"
+    },
+    {
+      "oldPath": "docs/verification-v1.0.0.md",
+      "newPath": "docs/releases/v1.0.0/2026-07-27-1110-v1.0.0-版本-验证记录.md",
+      "timestamp": "2026-07-27T11:10:41+08:00",
+      "fileTimestamp": "2026-07-27-1110",
+      "timeSource": "git-first-add",
+      "category": "release-verification"
+    },
+    {
+      "oldPath": "docs/verification-web-v1.md",
+      "newPath": "docs/releases/dev/2026-07-27-1110-dev-web-v1-验证记录.md",
+      "timestamp": "2026-07-27T11:10:41+08:00",
+      "fileTimestamp": "2026-07-27-1110",
+      "timeSource": "git-first-add",
+      "category": "release-verification"
+    },
+    {
+      "oldPath": "docs/VERSIONING.md",
+      "newPath": "docs/standards/版本语义规范.md",
+      "timestamp": "2026-07-21T14:44:20+08:00",
+      "fileTimestamp": "2026-07-21-1444",
+      "timeSource": "git-first-add",
+      "category": "standard"
+    },
+    {
+      "oldPath": "docs/YeMind_v1.5.0界面对齐勾选清单.txt",
+      "newPath": "docs/releases/v1.5.0/2026-07-28-1854-v1.5.0-YeMind-v1.5.0界面对齐勾选清单-设计.txt",
+      "timestamp": "2026-07-28T18:54:13+08:00",
+      "fileTimestamp": "2026-07-28-1854",
+      "timeSource": "git-first-add",
+      "category": "release-design"
+    }
+  ]
+}
