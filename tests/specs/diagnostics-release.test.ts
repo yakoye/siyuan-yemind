@@ -9,3 +9,4 @@ import '../suites/diagnostics-release/v0517Diagnostics.suite';
 import '../suites/diagnostics-release/v070AboutDiagnostics.suite';
 import '../suites/diagnostics-release/runtimeSync.suite';
 import '../suites/diagnostics-release/v130ReleaseArtifacts.suite';
+import '../suites/diagnostics-release/documentStructure.suite';
