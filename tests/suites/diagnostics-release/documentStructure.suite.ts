@@ -266,10 +266,11 @@ describe('documentation migration execution', () => {
       expect(readFileSync(path.join(root, 'docs', '引用者.md'), 'utf8')).toContain(
         'releases/v1.0.0/2026-07-29-1914-v1.0.0-版本-验证记录.md',
       );
-      expect(execFileSync('git', ['status', '--short'], {
+      const status = execFileSync('git', ['status', '--porcelain=v1', '-z'], {
         cwd: root,
         encoding: 'utf8',
-      })).toContain(`R  ${oldPath} -> docs/releases/v1.0.0/`);
+      });
+      expect(status).toContain(`R  ${entries[0].newPath}\0${oldPath}\0`);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
