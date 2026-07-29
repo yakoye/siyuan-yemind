@@ -6090,10 +6090,10 @@ function markerSvg(spriteUrl, item) {
 function createMarkerIconList(pluginBaseUrl) {
   const resolver = createRuntimeAssetResolver(pluginBaseUrl);
   const sprite = resolver.markerSpriteUrl();
-  const groups2 = markerCatalog.groups.map((group2) => ({
-    name: group2.label,
-    type: `yemarker${group2.id}`,
-    list: markerCatalog.items.filter((item) => item.groupId === group2.id).map((item) => ({ name: item.id, icon: markerSvg(sprite, item) }))
+  const groups2 = markerCatalog.groups.map((group) => ({
+    name: group.label,
+    type: `yemarker${group.id}`,
+    list: markerCatalog.items.filter((item) => item.groupId === group.id).map((item) => ({ name: item.id, icon: markerSvg(sprite, item) }))
   }));
   return groups2;
 }
@@ -6124,12 +6124,12 @@ function searchClipart(query, categoryId) {
 function groupLayouts() {
   const output = [];
   for (const item of layoutCatalog.items) {
-    let group2 = output.find((entry) => entry.id === item.groupId);
-    if (!group2) {
-      group2 = { id: item.groupId, label: item.groupLabel, items: [] };
-      output.push(group2);
+    let group = output.find((entry) => entry.id === item.groupId);
+    if (!group) {
+      group = { id: item.groupId, label: item.groupLabel, items: [] };
+      output.push(group);
     }
-    group2.items.push(item);
+    group.items.push(item);
   }
   return output;
 }
@@ -6490,6 +6490,14 @@ function sanitizeRichHtml(value) {
   }
   const template = document.createElement("template");
   template.innerHTML = source;
+  const comments = [];
+  const commentWalker = document.createTreeWalker(template.content, NodeFilter.SHOW_COMMENT);
+  let comment = commentWalker.nextNode();
+  while (comment) {
+    comments.push(comment);
+    comment = commentWalker.nextNode();
+  }
+  comments.forEach((node) => node.remove());
   template.content.querySelectorAll(BLOCKED_ELEMENTS).forEach((node) => node.remove());
   template.content.querySelectorAll("*").forEach((node) => {
     Array.from(node.attributes).forEach((attribute) => {
@@ -6970,11 +6978,7 @@ function trimRichHtmlBoundaryLines(value) {
   if (last2) last2.nodeValue = (last2.nodeValue ?? "").replace(/(?:\n[ \t\u00a0\u3000]*)+$/, "");
   return template.innerHTML;
 }
-function normalizeStructuredOutlineContent(value, richText) {
-  if (!richText) {
-    const text22 = normalizeStructuredOutlineBoundaryText(value);
-    return { html: escapeHtml$h(text22), text: text22, richText: false };
-  }
+function normalizeStructuredOutlineEditorHtml(value) {
   const sanitized = trimRichHtmlBoundaryLines(sanitizeRichHtml(String(value ?? "")));
   const text2 = normalizeStructuredOutlineBoundaryText(structuredOutlineHtmlToText(sanitized));
   const hasEmbeddedContent = typeof document !== "undefined" && (() => {
@@ -6988,6 +6992,13 @@ function normalizeStructuredOutlineContent(value, richText) {
   }
   return { html: sanitized, text: text2, richText: true };
 }
+function normalizeStructuredOutlineContent(value, richText) {
+  if (!richText) {
+    const text2 = normalizeStructuredOutlineBoundaryText(value);
+    return { html: escapeHtml$h(text2), text: text2, richText: false };
+  }
+  return normalizeStructuredOutlineEditorHtml(value);
+}
 function structuredOutlineHtmlToText(value) {
   const source = String(value ?? "");
   if (typeof document === "undefined") {
@@ -6995,15 +7006,56 @@ function structuredOutlineHtmlToText(value) {
   }
   const element = document.createElement("div");
   element.innerHTML = sanitizeRichHtml(source);
-  return (element.innerText || element.textContent || "").replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n").trimEnd();
+  const blocks = /* @__PURE__ */ new Set([
+    "ADDRESS",
+    "ARTICLE",
+    "ASIDE",
+    "BLOCKQUOTE",
+    "DIV",
+    "DL",
+    "FIELDSET",
+    "FIGCAPTION",
+    "FIGURE",
+    "FOOTER",
+    "FORM",
+    "H1",
+    "H2",
+    "H3",
+    "H4",
+    "H5",
+    "H6",
+    "HEADER",
+    "HR",
+    "LI",
+    "MAIN",
+    "NAV",
+    "OL",
+    "P",
+    "PRE",
+    "SECTION",
+    "TABLE",
+    "UL"
+  ]);
+  const read = (node) => {
+    if (node.nodeType === Node.TEXT_NODE) return node.nodeValue ?? "";
+    if (!(node instanceof Element)) return "";
+    if (node.tagName === "BR") return "\n";
+    let result = Array.from(node.childNodes).map(read).join("");
+    if (node !== element && blocks.has(node.tagName) && result && !result.endsWith("\n")) {
+      result += "\n";
+    }
+    return result;
+  };
+  return read(element).replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n").trimEnd();
 }
 function structuredOutlineIsRichHtml(value) {
   const normalized2 = String(value ?? "").trim();
   if (!normalized2) return false;
-  if (/<(?:strong|b|em|i|u|s|strike|code|pre|a|span|mark|sub|sup|img|svg|mjx-container|ql-formula|blockquote|ol|ul|li|h[1-6])\b/i.test(normalized2)) {
+  if (/<[a-z][^>]*\s(?:class|style|data-[\w-]+|dir|align|href|src)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/i.test(normalized2)) {
     return true;
   }
-  return /<(?:p|div)\b[^>]*\s(?:class|style|data-[\w-]+|dir|align)\s*=\s*(?:"[^"]+"|'[^']+'|[^\s>]+)/i.test(normalized2);
+  const withoutPlainEditorWrappers = normalized2.replace(/<\/?(?:p|div)\b[^>]*>/gi, "").replace(/<br\s*\/?\s*>/gi, "");
+  return /<\/?[a-z][^>]*>/i.test(withoutPlainEditorWrappers);
 }
 function displayHtml(data2) {
   return normalizeStructuredOutlineContent(data2.text, Boolean(data2.richText)).html;
@@ -7078,9 +7130,8 @@ function indexExistingData(tree) {
 }
 function normalizedBlockHtml(block) {
   const sanitized = sanitizeRichHtml(String(block.html ?? ""));
-  return normalizeStructuredOutlineContent(
-    sanitized || String(block.text ?? ""),
-    structuredOutlineIsRichHtml(sanitized)
+  return normalizeStructuredOutlineEditorHtml(
+    sanitized || escapeHtml$h(String(block.text ?? ""))
   );
 }
 function updatedData(base, block) {
@@ -7622,16 +7673,24 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.5.1";
+const PLUGIN_VERSION = "1.5.2";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
+(/* @__PURE__ */ new Date()).toISOString();
+const SOURCE_BUILD_INFO = Object.freeze({
+  id: "eae7ef6c-dirty-491e5b40",
+  time: "2026-07-29T14:50:36.132Z"
+});
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-29T07:11:32.254Z",
-  buildId: "yemind-v1.5.1-20260729",
+  buildTime: "2026-07-29T14:48:22.345Z",
+  buildId: "yemind-v1.5.2-20260729",
+  sourceBuildId: SOURCE_BUILD_INFO.id,
+  sourceBuildTime: SOURCE_BUILD_INFO.time,
+  sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
   productName: PRODUCT_NAME,
   hostBaseline: "SiYuan 3.7.3",
   releaseSummary: "对齐 version47 界面并统一插件与网页版，新增卡片复习、完整基础主题和 v1.5.0 传输契约。",
@@ -7684,8 +7743,10 @@ function createAboutDialogTemplate() {
         <div><dt>插件声明版本</dt><dd data-about-version="manifest">正在读取…</dd></div>
         <div><dt>运行时代码版本</dt><dd data-about-version="runtime">${escapeHtml$e(RELEASE_INFO.version)}</dd></div>
         <div><dt>构建版本</dt><dd data-about-version="build">${escapeHtml$e(RELEASE_INFO.buildVersion)}</dd></div>
-        <div><dt>构建标识</dt><dd>${escapeHtml$e(RELEASE_INFO.buildId)}</dd></div>
-        <div><dt>构建时间</dt><dd>${escapeHtml$e(RELEASE_INFO.buildTime)}</dd></div>
+        <div><dt>发布标识</dt><dd>${escapeHtml$e(RELEASE_INFO.buildId)}</dd></div>
+        <div><dt>版本标记时间</dt><dd>${escapeHtml$e(RELEASE_INFO.buildTime)}</dd></div>
+        <div><dt>源码构建</dt><dd>${escapeHtml$e(RELEASE_INFO.sourceBuildId)}</dd></div>
+        <div><dt>源码构建时间</dt><dd>${escapeHtml$e(RELEASE_INFO.sourceBuildTime)}</dd></div>
         <div><dt>思源版本</dt><dd data-about-version="siyuan">正在读取…</dd></div>
         <div><dt>开发基线</dt><dd>${escapeHtml$e(RELEASE_INFO.hostBaseline)}</dd></div>
       </dl>
@@ -7743,8 +7804,10 @@ function openYeMindAboutDialog(options = {}) {
             `插件声明版本: ${consistency.manifest}`,
             `运行时代码版本: ${consistency.runtime}`,
             `构建版本: ${consistency.build}`,
-            `构建标识: ${RELEASE_INFO.buildId}`,
-            `构建时间: ${RELEASE_INFO.buildTime}`,
+            `发布标识: ${RELEASE_INFO.buildId}`,
+            `版本标记时间: ${RELEASE_INFO.buildTime}`,
+            `源码构建: ${RELEASE_INFO.sourceBuildId}`,
+            `源码构建时间: ${RELEASE_INFO.sourceBuildTime}`,
             `思源版本: ${String(environment.appVersion ?? "unknown")}`,
             `开发基线: ${RELEASE_INFO.hostBaseline}`
           ].join("\n"));
@@ -8361,9 +8424,9 @@ function numberRow(title, description, key, value, min, max, step, suffix) {
 function shortcutsHtml(shortcuts) {
   let currentGroup = "";
   return SHORTCUT_ROWS.map((row) => {
-    const group2 = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$d(row.group)}</h3>` : "";
+    const group = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$d(row.group)}</h3>` : "";
     currentGroup = row.group;
-    return `${group2}<div class="ymz-shortcut-row" data-shortcut-row="${row.key}">
+    return `${group}<div class="ymz-shortcut-row" data-shortcut-row="${row.key}">
       <span class="ymz-shortcut-row__label">${escapeHtml$d(row.label)}</span>
       <input class="b3-text-field" data-shortcut="${row.key}" value="${escapeHtml$d(shortcuts[row.key])}" placeholder="未设置">
       <button class="b3-button b3-button--outline" data-shortcut-action="record" data-shortcut-key="${row.key}">录制</button>
@@ -18113,11 +18176,13 @@ function createTextNode(specifyText) {
   const g = new G();
   const fontSize = this.getStyle("fontSize", false);
   const textAlign = this.getStyle("textAlign", false);
+  const hasCustomWidth = this.hasCustomWidth();
   let textArr = [];
   if (!isUndef(text2)) {
     textArr = String(text2).split(/\n/gim);
   }
-  const { textAutoWrapWidth: maxWidth, emptyTextMeasureHeightText } = this.mindMap.opt;
+  const { textAutoWrapWidth, emptyTextMeasureHeightText } = this.mindMap.opt;
+  const maxWidth = hasCustomWidth ? this.customTextWidth : textAutoWrapWidth;
   let isMultiLine = textArr.length > 1;
   textArr.forEach((item, index) => {
     let arr = item.split("");
@@ -18157,6 +18222,15 @@ function createTextNode(specifyText) {
       }[textAlign] || "start"
     );
     this.style.text(node);
+    if (hasCustomWidth) {
+      node.x(
+        {
+          left: 0,
+          center: maxWidth / 2,
+          right: maxWidth
+        }[textAlign] || 0
+      );
+    }
     node.y(
       fontSize * noneRichTextNodeLineHeight * index + (noneRichTextNodeLineHeight - 1) * fontSize / 2
     );
@@ -18169,7 +18243,7 @@ function createTextNode(specifyText) {
     const tmpBbox = tmpNode.bbox();
     height2 = tmpBbox.height;
   }
-  width2 = Math.min(Math.ceil(width2), maxWidth);
+  width2 = hasCustomWidth ? maxWidth : Math.min(Math.ceil(width2), maxWidth);
   height2 = Math.ceil(height2);
   g.attr("data-width", width2);
   g.attr("data-height", height2);
@@ -50106,27 +50180,27 @@ var ESCAPE_LOOKUP = {
 };
 var ESCAPE_REGEX = /[&><"']/g;
 var escape = (text2) => String(text2).replace(ESCAPE_REGEX, (match2) => ESCAPE_LOOKUP[match2]);
-var getBaseElem = (group2) => {
-  if (group2.type === "ordgroup") {
-    if (group2.body.length === 1) {
-      return getBaseElem(group2.body[0]);
+var getBaseElem = (group) => {
+  if (group.type === "ordgroup") {
+    if (group.body.length === 1) {
+      return getBaseElem(group.body[0]);
     } else {
-      return group2;
+      return group;
     }
-  } else if (group2.type === "color") {
-    if (group2.body.length === 1) {
-      return getBaseElem(group2.body[0]);
+  } else if (group.type === "color") {
+    if (group.body.length === 1) {
+      return getBaseElem(group.body[0]);
     } else {
-      return group2;
+      return group;
     }
-  } else if (group2.type === "font") {
-    return getBaseElem(group2.body);
+  } else if (group.type === "font") {
+    return getBaseElem(group.body);
   } else {
-    return group2;
+    return group;
   }
 };
 var characterNodesTypes = /* @__PURE__ */ new Set(["mathord", "textord", "atom"]);
-var isCharacterBox = (group2) => characterNodesTypes.has(getBaseElem(group2).type);
+var isCharacterBox = (group) => characterNodesTypes.has(getBaseElem(group).type);
 var protocolFromUrl = (url) => {
   var protocol = /^[\x00-\x20]*([^\\/#?]*?)(:|&#0*58|&#x0*3a|&colon)/i.exec(url);
   if (!protocol) {
@@ -51146,18 +51220,18 @@ class LineNode {
     return markup;
   }
 }
-function assertSymbolDomNode(group2) {
-  if (group2 instanceof SymbolNode) {
-    return group2;
+function assertSymbolDomNode(group) {
+  if (group instanceof SymbolNode) {
+    return group;
   } else {
-    throw new Error("Expected symbolNode but got " + String(group2) + ".");
+    throw new Error("Expected symbolNode but got " + String(group) + ".");
   }
 }
-function assertSpan(group2) {
-  if (group2 instanceof Span) {
-    return group2;
+function assertSpan(group) {
+  if (group instanceof Span) {
+    return group;
   } else {
-    throw new Error("Expected span<HtmlDomNode> but got " + String(group2) + ".");
+    throw new Error("Expected span<HtmlDomNode> but got " + String(group) + ".");
   }
 }
 var hasHtmlDomChildren = (node) => node instanceof Span || node instanceof Anchor || node instanceof DocumentFragment;
@@ -53447,10 +53521,10 @@ var symbols = {
   "math": {},
   "text": {}
 };
-function defineSymbol(mode, font, group2, replace, name, acceptUnicodeChar) {
+function defineSymbol(mode, font, group, replace, name, acceptUnicodeChar) {
   symbols[mode][name] = {
     font,
-    group: group2,
+    group,
     replace
   };
   if (acceptUnicodeChar && replace) {
@@ -54365,9 +54439,9 @@ var boldSymbol = function boldSymbol2(value, mode, type) {
     };
   }
 };
-var makeOrd = function makeOrd2(group2, options, type) {
-  var mode = group2.mode;
-  var text2 = group2.text;
+var makeOrd = function makeOrd2(group, options, type) {
+  var mode = group.mode;
+  var text2 = group.text;
   var classes2 = ["mord"];
   var {
     font,
@@ -54508,11 +54582,11 @@ var makeFragment = function makeFragment2(children) {
   sizeElementFromChildren(fragment);
   return fragment;
 };
-var wrapFragment = function wrapFragment2(group2, options) {
-  if (group2 instanceof DocumentFragment) {
-    return makeSpan([], [group2], options);
+var wrapFragment = function wrapFragment2(group, options) {
+  if (group instanceof DocumentFragment) {
+    return makeSpan([], [group], options);
   }
-  return group2;
+  return group;
 };
 var getVListChildrenAndDepth = function getVListChildrenAndDepth2(params) {
   if (params.positionType === "individualShift") {
@@ -55030,12 +55104,12 @@ var makeNullDelimiter = function makeNullDelimiter2(options, classes2) {
   var moreClasses = ["nulldelimiter"].concat(options.baseSizingClasses());
   return makeSpan(classes2.concat(moreClasses));
 };
-var buildGroup$1 = function buildGroup(group2, options, baseOptions) {
-  if (!group2) {
+var buildGroup$1 = function buildGroup(group, options, baseOptions) {
+  if (!group) {
     return makeSpan();
   }
-  if (_htmlGroupBuilders[group2.type]) {
-    var groupNode = _htmlGroupBuilders[group2.type](group2, options);
+  if (_htmlGroupBuilders[group.type]) {
+    var groupNode = _htmlGroupBuilders[group.type](group, options);
     if (baseOptions && options.size !== baseOptions.size) {
       groupNode = makeSpan(options.sizingClasses(baseOptions), [groupNode], options);
       var multiplier = options.sizeMultiplier / baseOptions.sizeMultiplier;
@@ -55044,7 +55118,7 @@ var buildGroup$1 = function buildGroup(group2, options, baseOptions) {
     }
     return groupNode;
   } else {
-    throw new ParseError("Got group of unknown type: '" + group2.type + "'");
+    throw new ParseError("Got group of unknown type: '" + group.type + "'");
   }
 };
 function buildHTMLUnbreakable(children, options) {
@@ -55302,7 +55376,7 @@ var makeRow = function makeRow2(body) {
 };
 var mathFontVariants = {
   mathit: "italic",
-  boldsymbol: (group2) => group2.type === "textord" ? "bold" : "bold-italic",
+  boldsymbol: (group) => group.type === "textord" ? "bold" : "bold-italic",
   mathbf: "bold",
   mathbb: "double-struck",
   mathsfit: "sans-serif-italic",
@@ -55312,8 +55386,8 @@ var mathFontVariants = {
   mathsf: "sans-serif",
   mathtt: "monospace"
 };
-var getVariant = (group2, options) => {
-  if (group2.mode === "text") {
+var getVariant = (group, options) => {
+  if (group.mode === "text") {
     if (options.fontFamily === "texttt") {
       return "monospace";
     } else if (options.fontFamily === "textsf") {
@@ -55338,12 +55412,12 @@ var getVariant = (group2, options) => {
   if (!font || font === "mathnormal") {
     return null;
   }
-  var mode = group2.mode;
+  var mode = group.mode;
   var mathVariant = mathFontVariants[font];
   if (mathVariant) {
-    return typeof mathVariant === "function" ? mathVariant(group2) : mathVariant;
+    return typeof mathVariant === "function" ? mathVariant(group) : mathVariant;
   }
-  var text2 = group2.text;
+  var text2 = group.text;
   if (noVariantSymbols.has(text2)) {
     return null;
   }
@@ -55359,15 +55433,15 @@ var getVariant = (group2, options) => {
   }
   return null;
 };
-function isNumberPunctuation(group2) {
-  if (!group2) {
+function isNumberPunctuation(group) {
+  if (!group) {
     return false;
   }
-  if (group2.type === "mi" && group2.children.length === 1) {
-    var child = group2.children[0];
+  if (group.type === "mi" && group.children.length === 1) {
+    var child = group.children[0];
     return child instanceof TextNode && child.text === ".";
-  } else if (group2.type === "mo" && group2.children.length === 1 && group2.getAttribute("separator") === "true" && group2.getAttribute("lspace") === "0em" && group2.getAttribute("rspace") === "0em") {
-    var _child = group2.children[0];
+  } else if (group.type === "mo" && group.children.length === 1 && group.getAttribute("separator") === "true" && group.getAttribute("lspace") === "0em" && group.getAttribute("rspace") === "0em") {
+    var _child = group.children[0];
     return _child instanceof TextNode && _child.text === ",";
   } else {
     return false;
@@ -55375,12 +55449,12 @@ function isNumberPunctuation(group2) {
 }
 var buildExpression2 = function buildExpression3(expression, options, isOrdgroup) {
   if (expression.length === 1) {
-    var group2 = buildGroup2(expression[0], options);
-    if (isOrdgroup && group2 instanceof MathNode && group2.type === "mo") {
-      group2.setAttribute("lspace", "0em");
-      group2.setAttribute("rspace", "0em");
+    var group = buildGroup2(expression[0], options);
+    if (isOrdgroup && group instanceof MathNode && group.type === "mo") {
+      group.setAttribute("lspace", "0em");
+      group.setAttribute("rspace", "0em");
     }
-    return [group2];
+    return [group];
   }
   var groups2 = [];
   var lastGroup;
@@ -55424,14 +55498,14 @@ var buildExpression2 = function buildExpression3(expression, options, isOrdgroup
 var buildExpressionRow = function buildExpressionRow2(expression, options, isOrdgroup) {
   return makeRow(buildExpression2(expression, options, isOrdgroup));
 };
-var buildGroup2 = function buildGroup3(group2, options) {
-  if (!group2) {
+var buildGroup2 = function buildGroup3(group, options) {
+  if (!group) {
     return new MathNode("mrow");
   }
-  if (_mathmlGroupBuilders[group2.type]) {
-    return _mathmlGroupBuilders[group2.type](group2, options);
+  if (_mathmlGroupBuilders[group.type]) {
+    return _mathmlGroupBuilders[group.type](group, options);
   } else {
-    throw new ParseError("Got group of unknown type: '" + group2.type + "'");
+    throw new ParseError("Got group of unknown type: '" + group.type + "'");
   }
 };
 function buildMathML(tree, texExpression, options, isDisplayMode, forMathmlOnly) {
@@ -55863,12 +55937,12 @@ var katexImagesData = {
   xleftequilibrium: [["shortbaraboveleftharpoon", "shortrightharpoonabovebar"], 1.75, 716]
 };
 var wideAccentLabels = /* @__PURE__ */ new Set(["widehat", "widecheck", "widetilde", "utilde"]);
-var stretchySvg = function stretchySvg2(group2, options) {
+var stretchySvg = function stretchySvg2(group, options) {
   function buildSvgSpan_() {
     var viewBoxWidth = 4e5;
-    var label = group2.label.slice(1);
-    if (wideAccentLabels.has(label) && "base" in group2) {
-      var numChars = group2.base.type === "ordgroup" ? group2.base.body.length : 1;
+    var label = group.label.slice(1);
+    if (wideAccentLabels.has(label) && "base" in group) {
+      var numChars = group.base.type === "ordgroup" ? group.base.body.length : 1;
       var viewBoxHeight;
       var pathName;
       var _height;
@@ -56053,48 +56127,48 @@ function checkSymbolNodeType(node) {
   }
   return null;
 }
-var getBaseSymbol = (group2) => {
-  if (group2 instanceof SymbolNode) {
-    return group2;
+var getBaseSymbol = (group) => {
+  if (group instanceof SymbolNode) {
+    return group;
   }
-  if (hasHtmlDomChildren(group2) && group2.children.length === 1) {
-    return getBaseSymbol(group2.children[0]);
+  if (hasHtmlDomChildren(group) && group.children.length === 1) {
+    return getBaseSymbol(group.children[0]);
   }
 };
 var htmlBuilder$a = (grp, options) => {
   var base;
-  var group2;
+  var group;
   var supSubGroup;
   if (grp && grp.type === "supsub") {
-    group2 = assertNodeType(grp.base, "accent");
-    base = group2.base;
+    group = assertNodeType(grp.base, "accent");
+    base = group.base;
     grp.base = base;
     supSubGroup = assertSpan(buildGroup$1(grp, options));
-    grp.base = group2;
+    grp.base = group;
   } else {
-    group2 = assertNodeType(grp, "accent");
-    base = group2.base;
+    group = assertNodeType(grp, "accent");
+    base = group.base;
   }
   var body = buildGroup$1(base, options.havingCrampedStyle());
-  var mustShift = group2.isShifty && isCharacterBox(base);
+  var mustShift = group.isShifty && isCharacterBox(base);
   var skew = 0;
   if (mustShift) {
     var _getBaseSymbol$skew, _getBaseSymbol;
     skew = (_getBaseSymbol$skew = (_getBaseSymbol = getBaseSymbol(body)) == null ? void 0 : _getBaseSymbol.skew) != null ? _getBaseSymbol$skew : 0;
   }
-  var accentBelow = group2.label === "\\c";
+  var accentBelow = group.label === "\\c";
   var clearance = accentBelow ? body.height + body.depth : Math.min(body.height, options.fontMetrics().xHeight);
   var accentBody;
-  if (!group2.isStretchy) {
+  if (!group.isStretchy) {
     var accent2;
     var width2;
-    if (group2.label === "\\vec") {
+    if (group.label === "\\vec") {
       accent2 = staticSvg("vec", options);
       width2 = svgData.vec[1];
     } else {
       accent2 = makeOrd({
-        mode: group2.mode,
-        text: group2.label
+        mode: group.mode,
+        text: group.label
       }, options, "textord");
       accent2 = assertSymbolDomNode(accent2);
       accent2.italic = 0;
@@ -56104,7 +56178,7 @@ var htmlBuilder$a = (grp, options) => {
       }
     }
     accentBody = makeSpan(["accent-body"], [accent2]);
-    var accentFull = group2.label === "\\textcircled";
+    var accentFull = group.label === "\\textcircled";
     if (accentFull) {
       accentBody.classes.push("accent-full");
       clearance = body.height;
@@ -56114,7 +56188,7 @@ var htmlBuilder$a = (grp, options) => {
       left -= width2 / 2;
     }
     accentBody.style.left = makeEm(left);
-    if (group2.label === "\\textcircled") {
+    if (group.label === "\\textcircled") {
       accentBody.style.top = ".2em";
     }
     accentBody = makeVList({
@@ -56131,7 +56205,7 @@ var htmlBuilder$a = (grp, options) => {
       }]
     });
   } else {
-    accentBody = stretchySvg(group2, options);
+    accentBody = stretchySvg(group, options);
     accentBody = makeVList({
       positionType: "firstBaseline",
       children: [{
@@ -56158,9 +56232,9 @@ var htmlBuilder$a = (grp, options) => {
     return accentWrap;
   }
 };
-var mathmlBuilder$9 = (group2, options) => {
-  var accentNode = group2.isStretchy ? stretchyMathML(group2.label) : new MathNode("mo", [makeText(group2.label, group2.mode)]);
-  var node = new MathNode("mover", [buildGroup2(group2.base, options), accentNode]);
+var mathmlBuilder$9 = (group, options) => {
+  var accentNode = group.isStretchy ? stretchyMathML(group.label) : new MathNode("mo", [makeText(group.label, group.mode)]);
+  var node = new MathNode("mover", [buildGroup2(group.base, options), accentNode]);
   node.setAttribute("accent", "true");
   return node;
 };
@@ -56235,10 +56309,10 @@ defineFunction({
       base
     };
   },
-  htmlBuilder: (group2, options) => {
-    var innerGroup = buildGroup$1(group2.base, options);
-    var accentBody = stretchySvg(group2, options);
-    var kern = group2.label === "\\utilde" ? 0.12 : 0;
+  htmlBuilder: (group, options) => {
+    var innerGroup = buildGroup$1(group.base, options);
+    var accentBody = stretchySvg(group, options);
+    var kern = group.label === "\\utilde" ? 0.12 : 0;
     var vlist = makeVList({
       positionType: "top",
       positionData: innerGroup.height,
@@ -56256,15 +56330,15 @@ defineFunction({
     });
     return makeSpan(["mord", "accentunder"], [vlist], options);
   },
-  mathmlBuilder: (group2, options) => {
-    var accentNode = stretchyMathML(group2.label);
-    var node = new MathNode("munder", [buildGroup2(group2.base, options), accentNode]);
+  mathmlBuilder: (group, options) => {
+    var accentNode = stretchyMathML(group.label);
+    var node = new MathNode("munder", [buildGroup2(group.base, options), accentNode]);
     node.setAttribute("accentunder", "true");
     return node;
   }
 });
-var paddedNode = (group2) => {
-  var node = new MathNode("mpadded", group2 ? [group2] : []);
+var paddedNode = (group) => {
+  var node = new MathNode("mpadded", group ? [group] : []);
   node.setAttribute("width", "+0.6em");
   node.setAttribute("lspace", "0.3em");
   return node;
@@ -56318,22 +56392,22 @@ defineFunction({
       below: optArgs[0]
     };
   },
-  htmlBuilder(group2, options) {
+  htmlBuilder(group, options) {
     var style = options.style;
     var newOptions = options.havingStyle(style.sup());
-    var upperGroup = wrapFragment(buildGroup$1(group2.body, newOptions, options), options);
-    var arrowPrefix = group2.label.slice(0, 2) === "\\x" ? "x" : "cd";
+    var upperGroup = wrapFragment(buildGroup$1(group.body, newOptions, options), options);
+    var arrowPrefix = group.label.slice(0, 2) === "\\x" ? "x" : "cd";
     upperGroup.classes.push(arrowPrefix + "-arrow-pad");
     var lowerGroup;
-    if (group2.below) {
+    if (group.below) {
       newOptions = options.havingStyle(style.sub());
-      lowerGroup = wrapFragment(buildGroup$1(group2.below, newOptions, options), options);
+      lowerGroup = wrapFragment(buildGroup$1(group.below, newOptions, options), options);
       lowerGroup.classes.push(arrowPrefix + "-arrow-pad");
     }
-    var arrowBody = stretchySvg(group2, options);
+    var arrowBody = stretchySvg(group, options);
     var arrowShift = -options.fontMetrics().axisHeight + 0.5 * arrowBody.height;
     var upperShift = -options.fontMetrics().axisHeight - 0.5 * arrowBody.height - 0.111;
-    if (upperGroup.depth > 0.25 || group2.label === "\\xleftequilibrium") {
+    if (upperGroup.depth > 0.25 || group.label === "\\xleftequilibrium") {
       upperShift -= upperGroup.depth;
     }
     var vlist;
@@ -56373,20 +56447,20 @@ defineFunction({
     }
     return makeSpan(["mrel", "x-arrow"], [vlist], options);
   },
-  mathmlBuilder(group2, options) {
-    var arrowNode = stretchyMathML(group2.label);
-    arrowNode.setAttribute("minsize", group2.label.charAt(0) === "x" ? "1.75em" : "3.0em");
+  mathmlBuilder(group, options) {
+    var arrowNode = stretchyMathML(group.label);
+    arrowNode.setAttribute("minsize", group.label.charAt(0) === "x" ? "1.75em" : "3.0em");
     var node;
-    if (group2.body) {
-      var upperNode = paddedNode(buildGroup2(group2.body, options));
-      if (group2.below) {
-        var lowerNode = paddedNode(buildGroup2(group2.below, options));
+    if (group.body) {
+      var upperNode = paddedNode(buildGroup2(group.body, options));
+      if (group.below) {
+        var lowerNode = paddedNode(buildGroup2(group.below, options));
         node = new MathNode("munderover", [arrowNode, lowerNode, upperNode]);
       } else {
         node = new MathNode("mover", [arrowNode, upperNode]);
       }
-    } else if (group2.below) {
-      var _lowerNode = paddedNode(buildGroup2(group2.below, options));
+    } else if (group.below) {
+      var _lowerNode = paddedNode(buildGroup2(group.below, options));
       node = new MathNode("munder", [arrowNode, _lowerNode]);
     } else {
       node = paddedNode();
@@ -56395,39 +56469,39 @@ defineFunction({
     return node;
   }
 });
-function htmlBuilder$9(group2, options) {
-  var elements2 = buildExpression$1(group2.body, options, true);
-  return makeSpan([group2.mclass], elements2, options);
+function htmlBuilder$9(group, options) {
+  var elements2 = buildExpression$1(group.body, options, true);
+  return makeSpan([group.mclass], elements2, options);
 }
-function mathmlBuilder$8(group2, options) {
+function mathmlBuilder$8(group, options) {
   var node;
-  var inner2 = buildExpression2(group2.body, options);
-  if (group2.mclass === "minner") {
+  var inner2 = buildExpression2(group.body, options);
+  if (group.mclass === "minner") {
     node = new MathNode("mpadded", inner2);
-  } else if (group2.mclass === "mord") {
-    if (group2.isCharacterBox) {
+  } else if (group.mclass === "mord") {
+    if (group.isCharacterBox) {
       node = inner2[0];
       node.type = "mi";
     } else {
       node = new MathNode("mi", inner2);
     }
   } else {
-    if (group2.isCharacterBox) {
+    if (group.isCharacterBox) {
       node = inner2[0];
       node.type = "mo";
     } else {
       node = new MathNode("mo", inner2);
     }
-    if (group2.mclass === "mbin") {
+    if (group.mclass === "mbin") {
       node.attributes.lspace = "0.22em";
       node.attributes.rspace = "0.22em";
-    } else if (group2.mclass === "mpunct") {
+    } else if (group.mclass === "mpunct") {
       node.attributes.lspace = "0em";
       node.attributes.rspace = "0.17em";
-    } else if (group2.mclass === "mopen" || group2.mclass === "mclose") {
+    } else if (group.mclass === "mopen" || group.mclass === "mclose") {
       node.attributes.lspace = "0em";
       node.attributes.rspace = "0em";
-    } else if (group2.mclass === "minner") {
+    } else if (group.mclass === "minner") {
       node.attributes.lspace = "0.0556em";
       node.attributes.width = "+0.1111em";
     }
@@ -56551,14 +56625,14 @@ defineFunction({
       body: ordargument(args[0])
     };
   },
-  htmlBuilder(group2, options) {
-    var elements2 = buildExpression$1(group2.body, options, true);
-    var node = makeSpan([group2.mclass], elements2, options);
+  htmlBuilder(group, options) {
+    var elements2 = buildExpression$1(group.body, options, true);
+    var node = makeSpan([group.mclass], elements2, options);
     node.style.textShadow = "0.02em 0.01em 0.04px";
     return node;
   },
-  mathmlBuilder(group2, style) {
-    var inner2 = buildExpression2(group2.body, style);
+  mathmlBuilder(group, style) {
+    var inner2 = buildExpression2(group.body, style);
     var node = new MathNode("mstyle", inner2);
     node.setAttribute("style", "text-shadow: 0.02em 0.01em 0.04px");
     return node;
@@ -56757,20 +56831,20 @@ defineFunction({
       label: args[0]
     };
   },
-  htmlBuilder(group2, options) {
+  htmlBuilder(group, options) {
     var newOptions = options.havingStyle(options.style.sup());
-    var label = wrapFragment(buildGroup$1(group2.label, newOptions, options), options);
-    label.classes.push("cd-label-" + group2.side);
+    var label = wrapFragment(buildGroup$1(group.label, newOptions, options), options);
+    label.classes.push("cd-label-" + group.side);
     label.style.bottom = makeEm(0.8 - label.depth);
     label.height = 0;
     label.depth = 0;
     return label;
   },
-  mathmlBuilder(group2, options) {
-    var label = new MathNode("mrow", [buildGroup2(group2.label, options)]);
+  mathmlBuilder(group, options) {
+    var label = new MathNode("mrow", [buildGroup2(group.label, options)]);
     label = new MathNode("mpadded", [label]);
     label.setAttribute("width", "0");
-    if (group2.side === "left") {
+    if (group.side === "left") {
       label.setAttribute("lspace", "-1width");
     }
     label.setAttribute("voffset", "0.7em");
@@ -56796,13 +56870,13 @@ defineFunction({
       fragment: args[0]
     };
   },
-  htmlBuilder(group2, options) {
-    var parent = wrapFragment(buildGroup$1(group2.fragment, options), options);
+  htmlBuilder(group, options) {
+    var parent = wrapFragment(buildGroup$1(group.fragment, options), options);
     parent.classes.push("cd-vert-arrow");
     return parent;
   },
-  mathmlBuilder(group2, options) {
-    return new MathNode("mrow", [buildGroup2(group2.fragment, options)]);
+  mathmlBuilder(group, options) {
+    return new MathNode("mrow", [buildGroup2(group.fragment, options)]);
   }
 });
 defineFunction({
@@ -56817,10 +56891,10 @@ defineFunction({
       parser: parser2
     } = _ref;
     var arg = assertNodeType(args[0], "ordgroup");
-    var group2 = arg.body;
+    var group = arg.body;
     var number = "";
-    for (var i = 0; i < group2.length; i++) {
-      var node = assertNodeType(group2[i], "textord");
+    for (var i = 0; i < group.length; i++) {
+      var node = assertNodeType(group[i], "textord");
       number += node.text;
     }
     var code = parseInt(number);
@@ -56842,14 +56916,14 @@ defineFunction({
     };
   }
 });
-var htmlBuilder$8 = (group2, options) => {
-  var elements2 = buildExpression$1(group2.body, options.withColor(group2.color), false);
+var htmlBuilder$8 = (group, options) => {
+  var elements2 = buildExpression$1(group.body, options.withColor(group.color), false);
   return makeFragment(elements2);
 };
-var mathmlBuilder$7 = (group2, options) => {
-  var inner2 = buildExpression2(group2.body, options.withColor(group2.color));
+var mathmlBuilder$7 = (group, options) => {
+  var inner2 = buildExpression2(group.body, options.withColor(group.color));
   var node = new MathNode("mstyle", inner2);
-  node.setAttribute("mathcolor", group2.color);
+  node.setAttribute("mathcolor", group.color);
   return node;
 };
 defineFunction({
@@ -56925,22 +56999,22 @@ defineFunction({
   },
   // The following builders are called only at the top level,
   // not within tabular/array environments.
-  htmlBuilder(group2, options) {
+  htmlBuilder(group, options) {
     var span = makeSpan(["mspace"], [], options);
-    if (group2.newLine) {
+    if (group.newLine) {
       span.classes.push("newline");
-      if (group2.size) {
-        span.style.marginTop = makeEm(calculateSize(group2.size, options));
+      if (group.size) {
+        span.style.marginTop = makeEm(calculateSize(group.size, options));
       }
     }
     return span;
   },
-  mathmlBuilder(group2, options) {
+  mathmlBuilder(group, options) {
     var node = new MathNode("mspace");
-    if (group2.newLine) {
+    if (group.newLine) {
       node.setAttribute("linebreak", "newline");
-      if (group2.size) {
-        node.setAttribute("height", makeEm(calculateSize(group2.size, options)));
+      if (group.size) {
+        node.setAttribute("height", makeEm(calculateSize(group.size, options)));
       }
     }
     return node;
@@ -57716,32 +57790,32 @@ defineFunction({
       delim: delim.text
     };
   },
-  htmlBuilder: (group2, options) => {
-    if (group2.delim === ".") {
-      return makeSpan([group2.mclass]);
+  htmlBuilder: (group, options) => {
+    if (group.delim === ".") {
+      return makeSpan([group.mclass]);
     }
-    return makeSizedDelim(group2.delim, group2.size, options, group2.mode, [group2.mclass]);
+    return makeSizedDelim(group.delim, group.size, options, group.mode, [group.mclass]);
   },
-  mathmlBuilder: (group2) => {
+  mathmlBuilder: (group) => {
     var children = [];
-    if (group2.delim !== ".") {
-      children.push(makeText(group2.delim, group2.mode));
+    if (group.delim !== ".") {
+      children.push(makeText(group.delim, group.mode));
     }
     var node = new MathNode("mo", children);
-    if (group2.mclass === "mopen" || group2.mclass === "mclose") {
+    if (group.mclass === "mopen" || group.mclass === "mclose") {
       node.setAttribute("fence", "true");
     } else {
       node.setAttribute("fence", "false");
     }
     node.setAttribute("stretchy", "true");
-    var size2 = makeEm(sizeToMaxHeight[group2.size]);
+    var size2 = makeEm(sizeToMaxHeight[group.size]);
     node.setAttribute("minsize", size2);
     node.setAttribute("maxsize", size2);
     return node;
   }
 });
-function assertParsed(group2) {
-  if (!group2.body) {
+function assertParsed(group) {
+  if (!group.body) {
     throw new Error("Bug: The leftright ParseNode wasn't fully parsed.");
   }
 }
@@ -57790,9 +57864,9 @@ defineFunction({
       rightColor: right.color
     };
   },
-  htmlBuilder: (group2, options) => {
-    assertParsed(group2);
-    var inner2 = buildExpression$1(group2.body, options, true, ["mopen", "mclose"]);
+  htmlBuilder: (group, options) => {
+    assertParsed(group);
+    var inner2 = buildExpression$1(group.body, options, true, ["mopen", "mclose"]);
     var innerHeight = 0;
     var innerDepth = 0;
     var hadMiddle = false;
@@ -57808,10 +57882,10 @@ defineFunction({
     innerHeight *= options.sizeMultiplier;
     innerDepth *= options.sizeMultiplier;
     var leftDelim;
-    if (group2.left === ".") {
+    if (group.left === ".") {
       leftDelim = makeNullDelimiter(options, ["mopen"]);
     } else {
-      leftDelim = makeLeftRightDelim(group2.left, innerHeight, innerDepth, options, group2.mode, ["mopen"]);
+      leftDelim = makeLeftRightDelim(group.left, innerHeight, innerDepth, options, group.mode, ["mopen"]);
     }
     inner2.unshift(leftDelim);
     if (hadMiddle) {
@@ -57819,33 +57893,33 @@ defineFunction({
         var middleDelim = inner2[_i];
         if (isMiddleDelimNode(middleDelim)) {
           var isMiddle = middleDelim.isMiddle;
-          inner2[_i] = makeLeftRightDelim(isMiddle.delim, innerHeight, innerDepth, isMiddle.options, group2.mode, []);
+          inner2[_i] = makeLeftRightDelim(isMiddle.delim, innerHeight, innerDepth, isMiddle.options, group.mode, []);
         }
       }
     }
     var rightDelim;
-    if (group2.right === ".") {
+    if (group.right === ".") {
       rightDelim = makeNullDelimiter(options, ["mclose"]);
     } else {
-      var colorOptions = group2.rightColor ? options.withColor(group2.rightColor) : options;
-      rightDelim = makeLeftRightDelim(group2.right, innerHeight, innerDepth, colorOptions, group2.mode, ["mclose"]);
+      var colorOptions = group.rightColor ? options.withColor(group.rightColor) : options;
+      rightDelim = makeLeftRightDelim(group.right, innerHeight, innerDepth, colorOptions, group.mode, ["mclose"]);
     }
     inner2.push(rightDelim);
     return makeSpan(["minner"], inner2, options);
   },
-  mathmlBuilder: (group2, options) => {
-    assertParsed(group2);
-    var inner2 = buildExpression2(group2.body, options);
-    if (group2.left !== ".") {
-      var leftNode = new MathNode("mo", [makeText(group2.left, group2.mode)]);
+  mathmlBuilder: (group, options) => {
+    assertParsed(group);
+    var inner2 = buildExpression2(group.body, options);
+    if (group.left !== ".") {
+      var leftNode = new MathNode("mo", [makeText(group.left, group.mode)]);
       leftNode.setAttribute("fence", "true");
       inner2.unshift(leftNode);
     }
-    if (group2.right !== ".") {
-      var rightNode = new MathNode("mo", [makeText(group2.right, group2.mode)]);
+    if (group.right !== ".") {
+      var rightNode = new MathNode("mo", [makeText(group.right, group.mode)]);
       rightNode.setAttribute("fence", "true");
-      if (group2.rightColor) {
-        rightNode.setAttribute("mathcolor", group2.rightColor);
+      if (group.rightColor) {
+        rightNode.setAttribute("mathcolor", group.rightColor);
       }
       inner2.push(rightNode);
     }
@@ -57870,21 +57944,21 @@ defineFunction({
       delim: delim.text
     };
   },
-  htmlBuilder: (group2, options) => {
+  htmlBuilder: (group, options) => {
     var middleDelim;
-    if (group2.delim === ".") {
+    if (group.delim === ".") {
       middleDelim = makeNullDelimiter(options, []);
     } else {
-      middleDelim = makeSizedDelim(group2.delim, 1, options, group2.mode, []);
+      middleDelim = makeSizedDelim(group.delim, 1, options, group.mode, []);
       middleDelim.isMiddle = {
-        delim: group2.delim,
+        delim: group.delim,
         options
       };
     }
     return middleDelim;
   },
-  mathmlBuilder: (group2, options) => {
-    var textNode = group2.delim === "\\vert" || group2.delim === "|" ? makeText("|", "text") : makeText(group2.delim, group2.mode);
+  mathmlBuilder: (group, options) => {
+    var textNode = group.delim === "\\vert" || group.delim === "|" ? makeText("|", "text") : makeText(group.delim, group.mode);
     var middleNode = new MathNode("mo", [textNode]);
     middleNode.setAttribute("fence", "true");
     middleNode.setAttribute("lspace", "0.05em");
@@ -57892,13 +57966,13 @@ defineFunction({
     return middleNode;
   }
 });
-var htmlBuilder$7 = (group2, options) => {
-  var inner2 = wrapFragment(buildGroup$1(group2.body, options), options);
-  var label = group2.label.slice(1);
+var htmlBuilder$7 = (group, options) => {
+  var inner2 = wrapFragment(buildGroup$1(group.body, options), options);
+  var label = group.label.slice(1);
   var scale2 = options.sizeMultiplier;
   var img;
   var imgShift;
-  var isSingleChar = isCharacterBox(group2.body);
+  var isSingleChar = isCharacterBox(group.body);
   if (label === "sout") {
     img = makeSpan(["stretchy", "sout"]);
     img.height = options.fontMetrics().defaultRuleThickness / scale2;
@@ -57965,15 +58039,15 @@ var htmlBuilder$7 = (group2, options) => {
       img.style.borderRightWidth = makeEm(ruleThickness);
     }
     imgShift = inner2.depth + bottomPad;
-    if (group2.backgroundColor) {
-      img.style.backgroundColor = group2.backgroundColor;
-      if (group2.borderColor) {
-        img.style.borderColor = group2.borderColor;
+    if (group.backgroundColor) {
+      img.style.backgroundColor = group.backgroundColor;
+      if (group.borderColor) {
+        img.style.borderColor = group.borderColor;
       }
     }
   }
   var vlist;
-  if (group2.backgroundColor) {
+  if (group.backgroundColor) {
     vlist = makeVList({
       positionType: "individualShift",
       children: [
@@ -58020,10 +58094,10 @@ var htmlBuilder$7 = (group2, options) => {
     return makeSpan(["mord"], [vlist], options);
   }
 };
-var mathmlBuilder$6 = (group2, options) => {
+var mathmlBuilder$6 = (group, options) => {
   var fboxsep;
-  var node = new MathNode(group2.label.includes("colorbox") ? "mpadded" : "menclose", [buildGroup2(group2.body, options)]);
-  switch (group2.label) {
+  var node = new MathNode(group.label.includes("colorbox") ? "mpadded" : "menclose", [buildGroup2(group.body, options)]);
+  switch (group.label) {
     case "\\cancel":
       node.setAttribute("notation", "updiagonalstrike");
       break;
@@ -58049,21 +58123,21 @@ var mathmlBuilder$6 = (group2, options) => {
       node.setAttribute("height", "+" + 2 * fboxsep + "pt");
       node.setAttribute("lspace", fboxsep + "pt");
       node.setAttribute("voffset", fboxsep + "pt");
-      if (group2.label === "\\fcolorbox") {
+      if (group.label === "\\fcolorbox") {
         var thk = Math.max(
           options.fontMetrics().fboxrule,
           // default
           options.minRuleThickness
         );
-        node.setAttribute("style", "border: " + makeEm(thk) + " solid " + group2.borderColor);
+        node.setAttribute("style", "border: " + makeEm(thk) + " solid " + group.borderColor);
       }
       break;
     case "\\xcancel":
       node.setAttribute("notation", "updiagonalstrike downdiagonalstrike");
       break;
   }
-  if (group2.backgroundColor) {
-    node.setAttribute("mathbackground", group2.backgroundColor);
+  if (group.backgroundColor) {
+    node.setAttribute("mathbackground", group.backgroundColor);
   }
   return node;
 };
@@ -58444,11 +58518,11 @@ function dCellStyle(envName) {
     return "text";
   }
 }
-var htmlBuilder$6 = function htmlBuilder(group2, options) {
+var htmlBuilder$6 = function htmlBuilder(group, options) {
   var r;
   var c;
-  var nr = group2.body.length;
-  var hLinesBeforeRow = group2.hLinesBeforeRow;
+  var nr = group.body.length;
+  var hLinesBeforeRow = group.hLinesBeforeRow;
   var nc = 0;
   var body = new Array(nr);
   var hlines = [];
@@ -58459,16 +58533,16 @@ var htmlBuilder$6 = function htmlBuilder(group2, options) {
   );
   var pt = 1 / options.fontMetrics().ptPerEm;
   var arraycolsep = 5 * pt;
-  if (group2.colSeparationType && group2.colSeparationType === "small") {
+  if (group.colSeparationType && group.colSeparationType === "small") {
     var localMultiplier = options.havingStyle(Style$1.SCRIPT).sizeMultiplier;
     arraycolsep = 0.2778 * (localMultiplier / options.sizeMultiplier);
   }
-  var baselineskip = group2.colSeparationType === "CD" ? calculateSize({
+  var baselineskip = group.colSeparationType === "CD" ? calculateSize({
     number: 3,
     unit: "ex"
   }, options) : 12 * pt;
   var jot = 3 * pt;
-  var arrayskip = group2.arraystretch * baselineskip;
+  var arrayskip = group.arraystretch * baselineskip;
   var arstrutHeight = 0.7 * arrayskip;
   var arstrutDepth = 0.3 * arrayskip;
   var totalHeight = 0;
@@ -58484,8 +58558,8 @@ var htmlBuilder$6 = function htmlBuilder(group2, options) {
     }
   }
   setHLinePos(hLinesBeforeRow[0]);
-  for (r = 0; r < group2.body.length; ++r) {
-    var inrow = group2.body[r];
+  for (r = 0; r < group.body.length; ++r) {
+    var inrow = group.body[r];
     var height2 = arstrutHeight;
     var depth = arstrutDepth;
     if (nc < inrow.length) {
@@ -58507,7 +58581,7 @@ var htmlBuilder$6 = function htmlBuilder(group2, options) {
       }
       outrow.cells[c] = elt;
     }
-    var rowGap = group2.rowGaps[r];
+    var rowGap = group.rowGaps[r];
     var gap = 0;
     if (rowGap) {
       gap = calculateSize(rowGap, options);
@@ -58519,7 +58593,7 @@ var htmlBuilder$6 = function htmlBuilder(group2, options) {
         gap = 0;
       }
     }
-    if (group2.addJot && r < group2.body.length - 1) {
+    if (group.addJot && r < group.body.length - 1) {
       depth += jot;
     }
     outrow.height = height2;
@@ -58531,16 +58605,16 @@ var htmlBuilder$6 = function htmlBuilder(group2, options) {
     setHLinePos(hLinesBeforeRow[r + 1]);
   }
   var offset = totalHeight / 2 + options.fontMetrics().axisHeight;
-  var colDescriptions = group2.cols || [];
+  var colDescriptions = group.cols || [];
   var cols = [];
   var colSep;
   var colDescrNum;
   var tagSpans = [];
-  if (group2.tags && group2.tags.some((tag2) => tag2)) {
+  if (group.tags && group.tags.some((tag2) => tag2)) {
     for (r = 0; r < nr; ++r) {
       var rw = body[r];
       var shift = rw.pos - offset;
-      var tag = group2.tags[r];
+      var tag = group.tags[r];
       var tagSpan = void 0;
       if (tag === true) {
         tagSpan = makeSpan(["eqn-num"], [], options);
@@ -58598,7 +58672,7 @@ var htmlBuilder$6 = function htmlBuilder(group2, options) {
       continue;
     }
     var sepwidth = void 0;
-    if (c > 0 || group2.hskipBeforeAndAfter) {
+    if (c > 0 || group.hskipBeforeAndAfter) {
       var _colDescr$pregap, _colDescr2;
       sepwidth = (_colDescr$pregap = (_colDescr2 = colDescr) == null ? void 0 : _colDescr2.pregap) != null ? _colDescr$pregap : arraycolsep;
       if (sepwidth !== 0) {
@@ -58629,7 +58703,7 @@ var htmlBuilder$6 = function htmlBuilder(group2, options) {
     });
     var colSpan = makeSpan(["col-align-" + (((_colDescr3 = colDescr) == null ? void 0 : _colDescr3.align) || "c")], [colVList]);
     cols.push(colSpan);
-    if (c < nc - 1 || group2.hskipBeforeAndAfter) {
+    if (c < nc - 1 || group.hskipBeforeAndAfter) {
       var _colDescr$postgap, _colDescr4;
       sepwidth = (_colDescr$postgap = (_colDescr4 = colDescr) == null ? void 0 : _colDescr4.postgap) != null ? _colDescr$postgap : arraycolsep;
       if (sepwidth !== 0) {
@@ -58686,20 +58760,20 @@ var alignMap = {
   l: "left ",
   r: "right "
 };
-var mathmlBuilder$5 = function mathmlBuilder(group2, options) {
+var mathmlBuilder$5 = function mathmlBuilder(group, options) {
   var tbl = [];
   var glue = new MathNode("mtd", [], ["mtr-glue"]);
   var tag = new MathNode("mtd", [], ["mml-eqn-num"]);
-  for (var i = 0; i < group2.body.length; i++) {
-    var rw = group2.body[i];
+  for (var i = 0; i < group.body.length; i++) {
+    var rw = group.body[i];
     var row = [];
     for (var j = 0; j < rw.length; j++) {
       row.push(new MathNode("mtd", [buildGroup2(rw[j], options)]));
     }
-    if (group2.tags && group2.tags[i]) {
+    if (group.tags && group.tags[i]) {
       row.unshift(glue);
       row.push(glue);
-      if (group2.leqno) {
+      if (group.leqno) {
         row.unshift(tag);
       } else {
         row.push(tag);
@@ -58708,12 +58782,12 @@ var mathmlBuilder$5 = function mathmlBuilder(group2, options) {
     tbl.push(new MathNode("mtr", row));
   }
   var table = new MathNode("mtable", tbl);
-  var gap = group2.arraystretch === 0.5 ? 0.1 : 0.16 + group2.arraystretch - 1 + (group2.addJot ? 0.09 : 0);
+  var gap = group.arraystretch === 0.5 ? 0.1 : 0.16 + group.arraystretch - 1 + (group.addJot ? 0.09 : 0);
   table.setAttribute("rowspacing", makeEm(gap));
   var menclose = "";
   var align = "";
-  if (group2.cols && group2.cols.length > 0) {
-    var cols = group2.cols;
+  if (group.cols && group.cols.length > 0) {
+    var cols = group.cols;
     var columnLines = "";
     var prevTypeWasAlign = false;
     var iStart = 0;
@@ -58746,24 +58820,24 @@ var mathmlBuilder$5 = function mathmlBuilder(group2, options) {
       table.setAttribute("columnlines", columnLines.trim());
     }
   }
-  if (group2.colSeparationType === "align") {
-    var _cols = group2.cols || [];
+  if (group.colSeparationType === "align") {
+    var _cols = group.cols || [];
     var spacing2 = "";
     for (var _i2 = 1; _i2 < _cols.length; _i2++) {
       spacing2 += _i2 % 2 ? "0em " : "1em ";
     }
     table.setAttribute("columnspacing", spacing2.trim());
-  } else if (group2.colSeparationType === "alignat" || group2.colSeparationType === "gather") {
+  } else if (group.colSeparationType === "alignat" || group.colSeparationType === "gather") {
     table.setAttribute("columnspacing", "0em");
-  } else if (group2.colSeparationType === "small") {
+  } else if (group.colSeparationType === "small") {
     table.setAttribute("columnspacing", "0.2778em");
-  } else if (group2.colSeparationType === "CD") {
+  } else if (group.colSeparationType === "CD") {
     table.setAttribute("columnspacing", "0.5em");
   } else {
     table.setAttribute("columnspacing", "1em");
   }
   var rowLines = "";
-  var hlines = group2.hLinesBeforeRow;
+  var hlines = group.hLinesBeforeRow;
   menclose += hlines[0].length > 0 ? "left " : "";
   menclose += hlines[hlines.length - 1].length > 0 ? "right " : "";
   for (var _i3 = 1; _i3 < hlines.length - 1; _i3++) {
@@ -58776,7 +58850,7 @@ var mathmlBuilder$5 = function mathmlBuilder(group2, options) {
     table = new MathNode("menclose", [table]);
     table.setAttribute("notation", menclose.trim());
   }
-  if (group2.arraystretch && group2.arraystretch < 1) {
+  if (group.arraystretch && group.arraystretch < 1) {
     table = new MathNode("mstyle", [table]);
     table.setAttribute("scriptlevel", "1");
   }
@@ -59190,15 +59264,15 @@ defineFunction({
     };
   }
 });
-var htmlBuilder$5 = (group2, options) => {
-  var font = group2.font;
+var htmlBuilder$5 = (group, options) => {
+  var font = group.font;
   var newOptions = options.withFont(font);
-  return buildGroup$1(group2.body, newOptions);
+  return buildGroup$1(group.body, newOptions);
 };
-var mathmlBuilder$4 = (group2, options) => {
-  var font = group2.font;
+var mathmlBuilder$4 = (group, options) => {
+  var font = group.font;
   var newOptions = options.withFont(font);
-  return buildGroup2(group2.body, newOptions);
+  return buildGroup2(group.body, newOptions);
 };
 var fontAliases = {
   "\\Bbb": "\\mathbb",
@@ -59306,27 +59380,27 @@ defineFunction({
   htmlBuilder: htmlBuilder$5,
   mathmlBuilder: mathmlBuilder$4
 });
-var htmlBuilder$4 = (group2, options) => {
+var htmlBuilder$4 = (group, options) => {
   var style = options.style;
   var nstyle = style.fracNum();
   var dstyle = style.fracDen();
   var newOptions;
   newOptions = options.havingStyle(nstyle);
-  var numerm = buildGroup$1(group2.numer, newOptions, options);
-  if (group2.continued) {
+  var numerm = buildGroup$1(group.numer, newOptions, options);
+  if (group.continued) {
     var hStrut = 8.5 / options.fontMetrics().ptPerEm;
     var dStrut = 3.5 / options.fontMetrics().ptPerEm;
     numerm.height = numerm.height < hStrut ? hStrut : numerm.height;
     numerm.depth = numerm.depth < dStrut ? dStrut : numerm.depth;
   }
   newOptions = options.havingStyle(dstyle);
-  var denomm = buildGroup$1(group2.denom, newOptions, options);
+  var denomm = buildGroup$1(group.denom, newOptions, options);
   var rule;
   var ruleWidth;
   var ruleSpacing;
-  if (group2.hasBarLine) {
-    if (group2.barSize) {
-      ruleWidth = calculateSize(group2.barSize, options);
+  if (group.hasBarLine) {
+    if (group.barSize) {
+      ruleWidth = calculateSize(group.barSize, options);
       rule = makeLineSpan("frac-line", options, ruleWidth);
     } else {
       rule = makeLineSpan("frac-line", options);
@@ -59417,38 +59491,38 @@ var htmlBuilder$4 = (group2, options) => {
   }
   var leftDelim;
   var rightDelim;
-  if (group2.leftDelim == null) {
+  if (group.leftDelim == null) {
     leftDelim = makeNullDelimiter(options, ["mopen"]);
   } else {
-    leftDelim = makeCustomSizedDelim(group2.leftDelim, delimSize, true, options.havingStyle(style), group2.mode, ["mopen"]);
+    leftDelim = makeCustomSizedDelim(group.leftDelim, delimSize, true, options.havingStyle(style), group.mode, ["mopen"]);
   }
-  if (group2.continued) {
+  if (group.continued) {
     rightDelim = makeSpan([]);
-  } else if (group2.rightDelim == null) {
+  } else if (group.rightDelim == null) {
     rightDelim = makeNullDelimiter(options, ["mclose"]);
   } else {
-    rightDelim = makeCustomSizedDelim(group2.rightDelim, delimSize, true, options.havingStyle(style), group2.mode, ["mclose"]);
+    rightDelim = makeCustomSizedDelim(group.rightDelim, delimSize, true, options.havingStyle(style), group.mode, ["mclose"]);
   }
   return makeSpan(["mord"].concat(newOptions.sizingClasses(options)), [leftDelim, makeSpan(["mfrac"], [frac]), rightDelim], options);
 };
-var mathmlBuilder$3 = (group2, options) => {
-  var node = new MathNode("mfrac", [buildGroup2(group2.numer, options), buildGroup2(group2.denom, options)]);
-  if (!group2.hasBarLine) {
+var mathmlBuilder$3 = (group, options) => {
+  var node = new MathNode("mfrac", [buildGroup2(group.numer, options), buildGroup2(group.denom, options)]);
+  if (!group.hasBarLine) {
     node.setAttribute("linethickness", "0px");
-  } else if (group2.barSize) {
-    var ruleWidth = calculateSize(group2.barSize, options);
+  } else if (group.barSize) {
+    var ruleWidth = calculateSize(group.barSize, options);
     node.setAttribute("linethickness", makeEm(ruleWidth));
   }
-  if (group2.leftDelim != null || group2.rightDelim != null) {
+  if (group.leftDelim != null || group.rightDelim != null) {
     var withDelims = [];
-    if (group2.leftDelim != null) {
-      var leftOp = new MathNode("mo", [new TextNode(group2.leftDelim.replace("\\", ""))]);
+    if (group.leftDelim != null) {
+      var leftOp = new MathNode("mo", [new TextNode(group.leftDelim.replace("\\", ""))]);
       leftOp.setAttribute("fence", "true");
       withDelims.push(leftOp);
     }
     withDelims.push(node);
-    if (group2.rightDelim != null) {
-      var rightOp = new MathNode("mo", [new TextNode(group2.rightDelim.replace("\\", ""))]);
+    if (group.rightDelim != null) {
+      var rightOp = new MathNode("mo", [new TextNode(group.rightDelim.replace("\\", ""))]);
       rightOp.setAttribute("fence", "true");
       withDelims.push(rightOp);
     }
@@ -59709,17 +59783,17 @@ defineFunction({
 var htmlBuilder$3 = (grp, options) => {
   var style = options.style;
   var supSubGroup;
-  var group2;
+  var group;
   if (grp.type === "supsub") {
     supSubGroup = grp.sup ? buildGroup$1(grp.sup, options.havingStyle(style.sup()), options) : buildGroup$1(grp.sub, options.havingStyle(style.sub()), options);
-    group2 = assertNodeType(grp.base, "horizBrace");
+    group = assertNodeType(grp.base, "horizBrace");
   } else {
-    group2 = assertNodeType(grp, "horizBrace");
+    group = assertNodeType(grp, "horizBrace");
   }
-  var body = buildGroup$1(group2.base, options.havingBaseStyle(Style$1.DISPLAY));
-  var braceBody = stretchySvg(group2, options);
+  var body = buildGroup$1(group.base, options.havingBaseStyle(Style$1.DISPLAY));
+  var braceBody = stretchySvg(group, options);
   var vlist;
-  if (group2.isOver) {
+  if (group.isOver) {
     vlist = makeVList({
       positionType: "firstBaseline",
       children: [{
@@ -59752,8 +59826,8 @@ var htmlBuilder$3 = (grp, options) => {
     });
   }
   if (supSubGroup) {
-    var vSpan = makeSpan(["minner", group2.isOver ? "mover" : "munder"], [vlist], options);
-    if (group2.isOver) {
+    var vSpan = makeSpan(["minner", group.isOver ? "mover" : "munder"], [vlist], options);
+    if (group.isOver) {
       vlist = makeVList({
         positionType: "firstBaseline",
         children: [{
@@ -59784,11 +59858,11 @@ var htmlBuilder$3 = (grp, options) => {
       });
     }
   }
-  return makeSpan(["minner", group2.isOver ? "mover" : "munder"], [vlist], options);
+  return makeSpan(["minner", group.isOver ? "mover" : "munder"], [vlist], options);
 };
-var mathmlBuilder$2 = (group2, options) => {
-  var accentNode = stretchyMathML(group2.label);
-  return new MathNode(group2.isOver ? "mover" : "munder", [buildGroup2(group2.base, options), accentNode]);
+var mathmlBuilder$2 = (group, options) => {
+  var accentNode = stretchyMathML(group.label);
+  return new MathNode(group.isOver ? "mover" : "munder", [buildGroup2(group.base, options), accentNode]);
 };
 defineFunction({
   type: "horizBrace",
@@ -59839,16 +59913,16 @@ defineFunction({
       body: ordargument(body)
     };
   },
-  htmlBuilder: (group2, options) => {
-    var elements2 = buildExpression$1(group2.body, options, false);
-    return makeAnchor(group2.href, [], elements2, options);
+  htmlBuilder: (group, options) => {
+    var elements2 = buildExpression$1(group.body, options, false);
+    return makeAnchor(group.href, [], elements2, options);
   },
-  mathmlBuilder: (group2, options) => {
-    var math2 = buildExpressionRow(group2.body, options);
+  mathmlBuilder: (group, options) => {
+    var math2 = buildExpressionRow(group.body, options);
     if (!(math2 instanceof MathNode)) {
       math2 = new MathNode("mrow", [math2]);
     }
-    math2.setAttribute("href", group2.href);
+    math2.setAttribute("href", group.href);
     return math2;
   }
 });
@@ -59916,12 +59990,12 @@ defineFunction({
       body: ordargument(args[0])
     };
   },
-  htmlBuilder(group2, options) {
-    var elements2 = buildExpression$1(group2.body, options.withFont(""), false);
+  htmlBuilder(group, options) {
+    var elements2 = buildExpression$1(group.body, options.withFont(""), false);
     return makeFragment(elements2);
   },
-  mathmlBuilder(group2, options) {
-    return new MathNode("mrow", buildExpression2(group2.body, options.withFont("")));
+  mathmlBuilder(group, options) {
+    return new MathNode("mrow", buildExpression2(group.body, options.withFont("")));
   }
 });
 defineFunction({
@@ -59998,22 +60072,22 @@ defineFunction({
       body: ordargument(body)
     };
   },
-  htmlBuilder: (group2, options) => {
-    var elements2 = buildExpression$1(group2.body, options, false);
+  htmlBuilder: (group, options) => {
+    var elements2 = buildExpression$1(group.body, options, false);
     var classes2 = ["enclosing"];
-    if (group2.attributes.class) {
-      classes2.push(...group2.attributes.class.trim().split(/\s+/));
+    if (group.attributes.class) {
+      classes2.push(...group.attributes.class.trim().split(/\s+/));
     }
     var span = makeSpan(classes2, elements2, options);
-    for (var attr2 in group2.attributes) {
-      if (attr2 !== "class" && group2.attributes.hasOwnProperty(attr2)) {
-        span.setAttribute(attr2, group2.attributes[attr2]);
+    for (var attr2 in group.attributes) {
+      if (attr2 !== "class" && group.attributes.hasOwnProperty(attr2)) {
+        span.setAttribute(attr2, group.attributes[attr2]);
       }
     }
     return span;
   },
-  mathmlBuilder: (group2, options) => {
-    return buildExpressionRow(group2.body, options);
+  mathmlBuilder: (group, options) => {
+    return buildExpressionRow(group.body, options);
   }
 });
 defineFunction({
@@ -60035,12 +60109,12 @@ defineFunction({
       mathml: ordargument(args[1])
     };
   },
-  htmlBuilder: (group2, options) => {
-    var elements2 = buildExpression$1(group2.html, options, false);
+  htmlBuilder: (group, options) => {
+    var elements2 = buildExpression$1(group.html, options, false);
     return makeFragment(elements2);
   },
-  mathmlBuilder: (group2, options) => {
-    return buildExpressionRow(group2.mathml, options);
+  mathmlBuilder: (group, options) => {
+    return buildExpressionRow(group.mathml, options);
   }
 });
 var sizeData = function sizeData2(str) {
@@ -60139,15 +60213,15 @@ defineFunction({
       src
     };
   },
-  htmlBuilder: (group2, options) => {
-    var height2 = calculateSize(group2.height, options);
+  htmlBuilder: (group, options) => {
+    var height2 = calculateSize(group.height, options);
     var depth = 0;
-    if (group2.totalheight.number > 0) {
-      depth = calculateSize(group2.totalheight, options) - height2;
+    if (group.totalheight.number > 0) {
+      depth = calculateSize(group.totalheight, options) - height2;
     }
     var width2 = 0;
-    if (group2.width.number > 0) {
-      width2 = calculateSize(group2.width, options);
+    if (group.width.number > 0) {
+      width2 = calculateSize(group.width, options);
     }
     var style = {
       height: makeEm(height2 + depth)
@@ -60158,26 +60232,26 @@ defineFunction({
     if (depth > 0) {
       style.verticalAlign = makeEm(-depth);
     }
-    var node = new Img(group2.src, group2.alt, style);
+    var node = new Img(group.src, group.alt, style);
     node.height = height2;
     node.depth = depth;
     return node;
   },
-  mathmlBuilder: (group2, options) => {
+  mathmlBuilder: (group, options) => {
     var node = new MathNode("mglyph", []);
-    node.setAttribute("alt", group2.alt);
-    var height2 = calculateSize(group2.height, options);
+    node.setAttribute("alt", group.alt);
+    var height2 = calculateSize(group.height, options);
     var depth = 0;
-    if (group2.totalheight.number > 0) {
-      depth = calculateSize(group2.totalheight, options) - height2;
+    if (group.totalheight.number > 0) {
+      depth = calculateSize(group.totalheight, options) - height2;
       node.setAttribute("valign", makeEm(-depth));
     }
     node.setAttribute("height", makeEm(height2 + depth));
-    if (group2.width.number > 0) {
-      var width2 = calculateSize(group2.width, options);
+    if (group.width.number > 0) {
+      var width2 = calculateSize(group.width, options);
       node.setAttribute("width", makeEm(width2));
     }
-    node.setAttribute("src", group2.src);
+    node.setAttribute("src", group.src);
     return node;
   }
 });
@@ -60218,11 +60292,11 @@ defineFunction({
       dimension: size2.value
     };
   },
-  htmlBuilder(group2, options) {
-    return makeGlue(group2.dimension, options);
+  htmlBuilder(group, options) {
+    return makeGlue(group.dimension, options);
   },
-  mathmlBuilder(group2, options) {
-    var dimension = calculateSize(group2.dimension, options);
+  mathmlBuilder(group, options) {
+    var dimension = calculateSize(group.dimension, options);
     return new SpaceNode(dimension);
   }
 });
@@ -60246,16 +60320,16 @@ defineFunction({
       body
     };
   },
-  htmlBuilder: (group2, options) => {
+  htmlBuilder: (group, options) => {
     var inner2;
-    if (group2.alignment === "clap") {
-      inner2 = makeSpan([], [buildGroup$1(group2.body, options)]);
+    if (group.alignment === "clap") {
+      inner2 = makeSpan([], [buildGroup$1(group.body, options)]);
       inner2 = makeSpan(["inner"], [inner2], options);
     } else {
-      inner2 = makeSpan(["inner"], [buildGroup$1(group2.body, options)]);
+      inner2 = makeSpan(["inner"], [buildGroup$1(group.body, options)]);
     }
     var fix = makeSpan(["fix"], []);
-    var node = makeSpan([group2.alignment], [inner2, fix], options);
+    var node = makeSpan([group.alignment], [inner2, fix], options);
     var strut = makeSpan(["strut"]);
     strut.style.height = makeEm(node.height + node.depth);
     if (node.depth) {
@@ -60265,10 +60339,10 @@ defineFunction({
     node = makeSpan(["thinbox"], [node], options);
     return makeSpan(["mord", "vbox"], [node], options);
   },
-  mathmlBuilder: (group2, options) => {
-    var node = new MathNode("mpadded", [buildGroup2(group2.body, options)]);
-    if (group2.alignment !== "rlap") {
-      var offset = group2.alignment === "llap" ? "-1" : "-0.5";
+  mathmlBuilder: (group, options) => {
+    var node = new MathNode("mpadded", [buildGroup2(group.body, options)]);
+    if (group.alignment !== "rlap") {
+      var offset = group.alignment === "llap" ? "-1" : "-0.5";
       node.setAttribute("lspace", offset + "width");
     }
     node.setAttribute("width", "0px");
@@ -60316,18 +60390,18 @@ defineFunction({
     throw new ParseError("Mismatched " + context.funcName);
   }
 });
-var chooseMathStyle = (group2, options) => {
+var chooseMathStyle = (group, options) => {
   switch (options.style.size) {
     case Style$1.DISPLAY.size:
-      return group2.display;
+      return group.display;
     case Style$1.TEXT.size:
-      return group2.text;
+      return group.text;
     case Style$1.SCRIPT.size:
-      return group2.script;
+      return group.script;
     case Style$1.SCRIPTSCRIPT.size:
-      return group2.scriptscript;
+      return group.scriptscript;
     default:
-      return group2.text;
+      return group.text;
   }
 };
 defineFunction({
@@ -60350,13 +60424,13 @@ defineFunction({
       scriptscript: ordargument(args[3])
     };
   },
-  htmlBuilder: (group2, options) => {
-    var body = chooseMathStyle(group2, options);
+  htmlBuilder: (group, options) => {
+    var body = chooseMathStyle(group, options);
     var elements2 = buildExpression$1(body, options, false);
     return makeFragment(elements2);
   },
-  mathmlBuilder: (group2, options) => {
-    var body = chooseMathStyle(group2, options);
+  mathmlBuilder: (group, options) => {
+    var body = chooseMathStyle(group, options);
     return buildExpressionRow(body, options);
   }
 });
@@ -60466,30 +60540,30 @@ var htmlBuilder$2 = (grp, options) => {
   var supGroup;
   var subGroup;
   var hasLimits = false;
-  var group2;
+  var group;
   if (grp.type === "supsub") {
     supGroup = grp.sup;
     subGroup = grp.sub;
-    group2 = assertNodeType(grp.base, "op");
+    group = assertNodeType(grp.base, "op");
     hasLimits = true;
   } else {
-    group2 = assertNodeType(grp, "op");
+    group = assertNodeType(grp, "op");
   }
   var style = options.style;
   var large = false;
-  if (style.size === Style$1.DISPLAY.size && group2.symbol && !noSuccessor.has(group2.name)) {
+  if (style.size === Style$1.DISPLAY.size && group.symbol && !noSuccessor.has(group.name)) {
     large = true;
   }
   var base;
   var symbolItalic;
-  if (group2.symbol) {
+  if (group.symbol) {
     var fontName = large ? "Size2-Regular" : "Size1-Regular";
     var stash = "";
-    if (group2.name === "\\oiint" || group2.name === "\\oiiint") {
-      stash = group2.name.slice(1);
-      group2.name = stash === "oiint" ? "\\iint" : "\\iiint";
+    if (group.name === "\\oiint" || group.name === "\\oiiint") {
+      stash = group.name.slice(1);
+      group.name = stash === "oiint" ? "\\iint" : "\\iiint";
     }
-    base = makeSymbol(group2.name, fontName, "math", options, ["mop", "op-symbol", large ? "large-op" : "small-op"]);
+    base = makeSymbol(group.name, fontName, "math", options, ["mop", "op-symbol", large ? "large-op" : "small-op"]);
     symbolItalic = base.italic;
     if (stash.length > 0) {
       var oval = staticSvg(stash + "Size" + (large ? "2" : "1"), options);
@@ -60505,12 +60579,12 @@ var htmlBuilder$2 = (grp, options) => {
           shift: large ? 0.08 : 0
         }]
       });
-      group2.name = "\\" + stash;
+      group.name = "\\" + stash;
       base.classes.unshift("mop");
       base.italic = symbolItalic;
     }
-  } else if (group2.body) {
-    var inner2 = buildExpression$1(group2.body, options, true);
+  } else if (group.body) {
+    var inner2 = buildExpression$1(group.body, options, true);
     if (inner2.length === 1 && inner2[0] instanceof SymbolNode) {
       base = inner2[0];
       base.classes[0] = "mop";
@@ -60519,14 +60593,14 @@ var htmlBuilder$2 = (grp, options) => {
     }
   } else {
     var output = [];
-    for (var i = 1; i < group2.name.length; i++) {
-      output.push(mathsym(group2.name[i], group2.mode, options));
+    for (var i = 1; i < group.name.length; i++) {
+      output.push(mathsym(group.name[i], group.mode, options));
     }
     base = makeSpan(["mop"], output, options);
   }
   var baseShift = 0;
   var slant = 0;
-  if ((base instanceof SymbolNode || group2.name === "\\oiint" || group2.name === "\\oiiint") && !group2.suppressBaseShift) {
+  if ((base instanceof SymbolNode || group.name === "\\oiint" || group.name === "\\oiiint") && !group.suppressBaseShift) {
     var _base$italic;
     baseShift = (base.height - base.depth) / 2 - options.fontMetrics().axisHeight;
     slant = (_base$italic = base.italic) != null ? _base$italic : 0;
@@ -60541,19 +60615,19 @@ var htmlBuilder$2 = (grp, options) => {
     return base;
   }
 };
-var mathmlBuilder$1 = (group2, options) => {
+var mathmlBuilder$1 = (group, options) => {
   var node;
-  if (group2.symbol) {
-    node = new MathNode("mo", [makeText(group2.name, group2.mode)]);
-    if (noSuccessor.has(group2.name)) {
+  if (group.symbol) {
+    node = new MathNode("mo", [makeText(group.name, group.mode)]);
+    if (noSuccessor.has(group.name)) {
       node.setAttribute("largeop", "false");
     }
-  } else if (group2.body) {
-    node = new MathNode("mo", buildExpression2(group2.body, options));
+  } else if (group.body) {
+    node = new MathNode("mo", buildExpression2(group.body, options));
   } else {
-    node = new MathNode("mi", [new TextNode(group2.name.slice(1))]);
+    node = new MathNode("mi", [new TextNode(group.name.slice(1))]);
     var operator = new MathNode("mo", [makeText("⁡", "text")]);
-    if (group2.parentIsSupSub) {
+    if (group.parentIsSupSub) {
       node = new MathNode("mrow", [node, operator]);
     } else {
       node = newDocumentFragment([node, operator]);
@@ -60712,18 +60786,18 @@ var htmlBuilder$1 = (grp, options) => {
   var supGroup;
   var subGroup;
   var hasLimits = false;
-  var group2;
+  var group;
   if (grp.type === "supsub") {
     supGroup = grp.sup;
     subGroup = grp.sub;
-    group2 = assertNodeType(grp.base, "operatorname");
+    group = assertNodeType(grp.base, "operatorname");
     hasLimits = true;
   } else {
-    group2 = assertNodeType(grp, "operatorname");
+    group = assertNodeType(grp, "operatorname");
   }
   var base;
-  if (group2.body.length > 0) {
-    var body = group2.body.map((child2) => {
+  if (group.body.length > 0) {
+    var body = group.body.map((child2) => {
       var childText = "text" in child2 ? child2.text : void 0;
       if (typeof childText === "string") {
         return {
@@ -60752,8 +60826,8 @@ var htmlBuilder$1 = (grp, options) => {
     return base;
   }
 };
-var mathmlBuilder2 = (group2, options) => {
-  var expression = buildExpression2(group2.body, options.withFont("mathrm"));
+var mathmlBuilder2 = (group, options) => {
+  var expression = buildExpression2(group.body, options.withFont("mathrm"));
   var isAllString = true;
   for (var i = 0; i < expression.length; i++) {
     var node = expression[i];
@@ -60789,7 +60863,7 @@ var mathmlBuilder2 = (group2, options) => {
   var identifier = new MathNode("mi", expression);
   identifier.setAttribute("mathvariant", "normal");
   var operator = new MathNode("mo", [makeText("⁡", "text")]);
-  if (group2.parentIsSupSub) {
+  if (group.parentIsSupSub) {
     return new MathNode("mrow", [identifier, operator]);
   } else {
     return newDocumentFragment([identifier, operator]);
@@ -60822,14 +60896,14 @@ defineFunction({
 defineMacro("\\operatorname", "\\@ifstar\\operatornamewithlimits\\operatorname@");
 defineFunctionBuilders({
   type: "ordgroup",
-  htmlBuilder(group2, options) {
-    if (group2.semisimple) {
-      return makeFragment(buildExpression$1(group2.body, options, false));
+  htmlBuilder(group, options) {
+    if (group.semisimple) {
+      return makeFragment(buildExpression$1(group.body, options, false));
     }
-    return makeSpan(["mord"], buildExpression$1(group2.body, options, true), options);
+    return makeSpan(["mord"], buildExpression$1(group.body, options, true), options);
   },
-  mathmlBuilder(group2, options) {
-    return buildExpressionRow(group2.body, options, true);
+  mathmlBuilder(group, options) {
+    return buildExpressionRow(group.body, options, true);
   }
 });
 defineFunction({
@@ -60849,8 +60923,8 @@ defineFunction({
       body
     };
   },
-  htmlBuilder(group2, options) {
-    var innerGroup = buildGroup$1(group2.body, options.havingCrampedStyle());
+  htmlBuilder(group, options) {
+    var innerGroup = buildGroup$1(group.body, options.havingCrampedStyle());
     var line = makeLineSpan("overline-line", options);
     var defaultRuleThickness = options.fontMetrics().defaultRuleThickness;
     var vlist = makeVList({
@@ -60871,10 +60945,10 @@ defineFunction({
     });
     return makeSpan(["mord", "overline"], [vlist], options);
   },
-  mathmlBuilder(group2, options) {
+  mathmlBuilder(group, options) {
     var operator = new MathNode("mo", [new TextNode("‾")]);
     operator.setAttribute("stretchy", "true");
-    var node = new MathNode("mover", [buildGroup2(group2.body, options), operator]);
+    var node = new MathNode("mover", [buildGroup2(group.body, options), operator]);
     node.setAttribute("accent", "true");
     return node;
   }
@@ -60897,12 +60971,12 @@ defineFunction({
       body: ordargument(body)
     };
   },
-  htmlBuilder: (group2, options) => {
-    var elements2 = buildExpression$1(group2.body, options.withPhantom(), false);
+  htmlBuilder: (group, options) => {
+    var elements2 = buildExpression$1(group.body, options.withPhantom(), false);
     return makeFragment(elements2);
   },
-  mathmlBuilder: (group2, options) => {
-    var inner2 = buildExpression2(group2.body, options);
+  mathmlBuilder: (group, options) => {
+    var inner2 = buildExpression2(group.body, options);
     return new MathNode("mphantom", inner2);
   }
 });
@@ -60925,13 +60999,13 @@ defineFunction({
       body
     };
   },
-  htmlBuilder: (group2, options) => {
-    var inner2 = makeSpan(["inner"], [buildGroup$1(group2.body, options.withPhantom())]);
+  htmlBuilder: (group, options) => {
+    var inner2 = makeSpan(["inner"], [buildGroup$1(group.body, options.withPhantom())]);
     var fix = makeSpan(["fix"], []);
     return makeSpan(["mord", "rlap"], [inner2, fix], options);
   },
-  mathmlBuilder: (group2, options) => {
-    var inner2 = buildExpression2(ordargument(group2.body), options);
+  mathmlBuilder: (group, options) => {
+    var inner2 = buildExpression2(ordargument(group.body), options);
     var phantom = new MathNode("mphantom", inner2);
     var node = new MathNode("mpadded", [phantom]);
     node.setAttribute("width", "0px");
@@ -60959,9 +61033,9 @@ defineFunction({
       body
     };
   },
-  htmlBuilder(group2, options) {
-    var body = buildGroup$1(group2.body, options);
-    var dy2 = calculateSize(group2.dy, options);
+  htmlBuilder(group, options) {
+    var body = buildGroup$1(group.body, options);
+    var dy2 = calculateSize(group.dy, options);
     return makeVList({
       positionType: "shift",
       positionData: -dy2,
@@ -60971,9 +61045,9 @@ defineFunction({
       }]
     });
   },
-  mathmlBuilder(group2, options) {
-    var node = new MathNode("mpadded", [buildGroup2(group2.body, options)]);
-    var dy2 = group2.dy.number + group2.dy.unit;
+  mathmlBuilder(group, options) {
+    var node = new MathNode("mpadded", [buildGroup2(group.body, options)]);
+    var dy2 = group.dy.number + group.dy.unit;
     node.setAttribute("voffset", dy2);
     return node;
   }
@@ -61021,11 +61095,11 @@ defineFunction({
       height: height2.value
     };
   },
-  htmlBuilder(group2, options) {
+  htmlBuilder(group, options) {
     var rule = makeSpan(["mord", "rule"], [], options);
-    var width2 = calculateSize(group2.width, options);
-    var height2 = calculateSize(group2.height, options);
-    var shift = group2.shift ? calculateSize(group2.shift, options) : 0;
+    var width2 = calculateSize(group.width, options);
+    var height2 = calculateSize(group.height, options);
+    var shift = group.shift ? calculateSize(group.shift, options) : 0;
     rule.style.borderRightWidth = makeEm(width2);
     rule.style.borderTopWidth = makeEm(height2);
     rule.style.bottom = makeEm(shift);
@@ -61035,10 +61109,10 @@ defineFunction({
     rule.maxFontSize = height2 * 1.125 * options.sizeMultiplier;
     return rule;
   },
-  mathmlBuilder(group2, options) {
-    var width2 = calculateSize(group2.width, options);
-    var height2 = calculateSize(group2.height, options);
-    var shift = group2.shift ? calculateSize(group2.shift, options) : 0;
+  mathmlBuilder(group, options) {
+    var width2 = calculateSize(group.width, options);
+    var height2 = calculateSize(group.height, options);
+    var shift = group.shift ? calculateSize(group.shift, options) : 0;
     var color2 = options.color && options.getColor() || "black";
     var rule = new MathNode("mspace");
     rule.setAttribute("mathbackground", color2);
@@ -61071,9 +61145,9 @@ function sizingGroup(value, options, baseOptions) {
   return makeFragment(inner2);
 }
 var sizeFuncs = ["\\tiny", "\\sixptsize", "\\scriptsize", "\\footnotesize", "\\small", "\\normalsize", "\\large", "\\Large", "\\LARGE", "\\huge", "\\Huge"];
-var htmlBuilder2 = (group2, options) => {
-  var newOptions = options.havingSize(group2.size);
-  return sizingGroup(group2.body, newOptions, options);
+var htmlBuilder2 = (group, options) => {
+  var newOptions = options.havingSize(group.size);
+  return sizingGroup(group.body, newOptions, options);
 };
 defineFunction({
   type: "sizing",
@@ -61098,9 +61172,9 @@ defineFunction({
     };
   },
   htmlBuilder: htmlBuilder2,
-  mathmlBuilder: (group2, options) => {
-    var newOptions = options.havingSize(group2.size);
-    var inner2 = buildExpression2(group2.body, newOptions);
+  mathmlBuilder: (group, options) => {
+    var newOptions = options.havingSize(group.size);
+    var inner2 = buildExpression2(group.body, newOptions);
     var node = new MathNode("mstyle", inner2);
     node.setAttribute("mathsize", makeEm(newOptions.sizeMultiplier));
     return node;
@@ -61149,26 +61223,26 @@ defineFunction({
       smashDepth
     };
   },
-  htmlBuilder: (group2, options) => {
-    var node = makeSpan([], [buildGroup$1(group2.body, options)]);
-    if (!group2.smashHeight && !group2.smashDepth) {
+  htmlBuilder: (group, options) => {
+    var node = makeSpan([], [buildGroup$1(group.body, options)]);
+    if (!group.smashHeight && !group.smashDepth) {
       return node;
     }
-    if (group2.smashHeight) {
+    if (group.smashHeight) {
       node.height = 0;
     }
-    if (group2.smashDepth) {
+    if (group.smashDepth) {
       node.depth = 0;
     }
-    if (group2.smashHeight && group2.smashDepth) {
+    if (group.smashHeight && group.smashDepth) {
       return makeSpan(["mord", "smash"], [node], options);
     }
     if (node.children) {
       for (var i = 0; i < node.children.length; i++) {
-        if (group2.smashHeight) {
+        if (group.smashHeight) {
           node.children[i].height = 0;
         }
-        if (group2.smashDepth) {
+        if (group.smashDepth) {
           node.children[i].depth = 0;
         }
       }
@@ -61182,12 +61256,12 @@ defineFunction({
     });
     return makeSpan(["mord"], [smashedNode], options);
   },
-  mathmlBuilder: (group2, options) => {
-    var node = new MathNode("mpadded", [buildGroup2(group2.body, options)]);
-    if (group2.smashHeight) {
+  mathmlBuilder: (group, options) => {
+    var node = new MathNode("mpadded", [buildGroup2(group.body, options)]);
+    if (group.smashHeight) {
       node.setAttribute("height", "0px");
     }
-    if (group2.smashDepth) {
+    if (group.smashDepth) {
       node.setAttribute("depth", "0px");
     }
     return node;
@@ -61213,8 +61287,8 @@ defineFunction({
       index
     };
   },
-  htmlBuilder(group2, options) {
-    var inner2 = buildGroup$1(group2.body, options.havingCrampedStyle());
+  htmlBuilder(group, options) {
+    var inner2 = buildGroup$1(group.body, options.havingCrampedStyle());
     if (inner2.height === 0) {
       inner2.height = options.fontMetrics().xHeight;
     }
@@ -61255,11 +61329,11 @@ defineFunction({
         size: ruleWidth
       }]
     });
-    if (!group2.index) {
+    if (!group.index) {
       return makeSpan(["mord", "sqrt"], [body], options);
     } else {
       var newOptions = options.havingStyle(Style$1.SCRIPTSCRIPT);
-      var rootm = buildGroup$1(group2.index, newOptions, options);
+      var rootm = buildGroup$1(group.index, newOptions, options);
       var toShift = 0.6 * (body.height - body.depth);
       var rootVList = makeVList({
         positionType: "shift",
@@ -61273,11 +61347,11 @@ defineFunction({
       return makeSpan(["mord", "sqrt"], [rootVListWrap, body], options);
     }
   },
-  mathmlBuilder(group2, options) {
+  mathmlBuilder(group, options) {
     var {
       body,
       index
-    } = group2;
+    } = group;
     return index ? new MathNode("mroot", [buildGroup2(body, options), buildGroup2(index, options)]) : new MathNode("msqrt", [buildGroup2(body, options)]);
   }
 });
@@ -61318,21 +61392,21 @@ defineFunction({
       body
     };
   },
-  htmlBuilder(group2, options) {
-    var newStyle = styleMap[group2.style];
+  htmlBuilder(group, options) {
+    var newStyle = styleMap[group.style];
     var newOptions = options.havingStyle(newStyle);
-    if (group2.resetFont) {
+    if (group.resetFont) {
       newOptions = newOptions.withFont("");
     }
-    return sizingGroup(group2.body, newOptions, options);
+    return sizingGroup(group.body, newOptions, options);
   },
-  mathmlBuilder(group2, options) {
-    var newStyle = styleMap[group2.style];
+  mathmlBuilder(group, options) {
+    var newStyle = styleMap[group.style];
     var newOptions = options.havingStyle(newStyle);
-    if (group2.resetFont) {
+    if (group.resetFont) {
       newOptions = newOptions.withFont("");
     }
-    var inner2 = buildExpression2(group2.body, newOptions);
+    var inner2 = buildExpression2(group.body, newOptions);
     var node = new MathNode("mstyle", inner2);
     var styleAttributes = {
       "display": ["0", "true"],
@@ -61340,14 +61414,14 @@ defineFunction({
       "script": ["1", "false"],
       "scriptscript": ["2", "false"]
     };
-    var attr2 = styleAttributes[group2.style];
+    var attr2 = styleAttributes[group.style];
     node.setAttribute("scriptlevel", attr2[0]);
     node.setAttribute("displaystyle", attr2[1]);
     return node;
   }
 });
-var htmlBuilderDelegate = function htmlBuilderDelegate2(group2, options) {
-  var base = group2.base;
+var htmlBuilderDelegate = function htmlBuilderDelegate2(group, options) {
+  var base = group.base;
   if (!base) {
     return null;
   } else if (base.type === "op") {
@@ -61359,7 +61433,7 @@ var htmlBuilderDelegate = function htmlBuilderDelegate2(group2, options) {
   } else if (base.type === "accent") {
     return isCharacterBox(base.base) ? htmlBuilder$a : null;
   } else if (base.type === "horizBrace") {
-    var isSup = !group2.sub;
+    var isSup = !group.sub;
     return isSup === base.isOver ? htmlBuilder$3 : null;
   } else {
     return null;
@@ -61367,16 +61441,16 @@ var htmlBuilderDelegate = function htmlBuilderDelegate2(group2, options) {
 };
 defineFunctionBuilders({
   type: "supsub",
-  htmlBuilder(group2, options) {
-    var builderDelegate = htmlBuilderDelegate(group2, options);
+  htmlBuilder(group, options) {
+    var builderDelegate = htmlBuilderDelegate(group, options);
     if (builderDelegate) {
-      return builderDelegate(group2, options);
+      return builderDelegate(group, options);
     }
     var {
       base: valueBase,
       sup: valueSup,
       sub: valueSub
-    } = group2;
+    } = group;
     var base = buildGroup$1(valueBase, options);
     var supm;
     var subm;
@@ -61410,7 +61484,7 @@ defineFunctionBuilders({
     var marginRight = makeEm(0.5 / metrics.ptPerEm / multiplier);
     var marginLeft = null;
     if (subm) {
-      var isOiint = group2.base && group2.base.type === "op" && group2.base.name && (group2.base.name === "\\oiint" || group2.base.name === "\\oiiint");
+      var isOiint = group.base && group.base.type === "op" && group.base.name && (group.base.name === "\\oiint" || group.base.name === "\\oiiint");
       if (base instanceof SymbolNode || isOiint) {
         var _base$italic;
         marginLeft = makeEm(-((_base$italic = base.italic) != null ? _base$italic : 0));
@@ -61476,32 +61550,32 @@ defineFunctionBuilders({
     var mclass = getTypeOfDomTree(base, "right") || "mord";
     return makeSpan([mclass], [base, makeSpan(["msupsub"], [supsub])], options);
   },
-  mathmlBuilder(group2, options) {
+  mathmlBuilder(group, options) {
     var isBrace = false;
     var isOver;
     var isSup;
-    if (group2.base && group2.base.type === "horizBrace") {
-      isSup = !!group2.sup;
-      if (isSup === group2.base.isOver) {
+    if (group.base && group.base.type === "horizBrace") {
+      isSup = !!group.sup;
+      if (isSup === group.base.isOver) {
         isBrace = true;
-        isOver = group2.base.isOver;
+        isOver = group.base.isOver;
       }
     }
-    if (group2.base && (group2.base.type === "op" || group2.base.type === "operatorname")) {
-      group2.base.parentIsSupSub = true;
+    if (group.base && (group.base.type === "op" || group.base.type === "operatorname")) {
+      group.base.parentIsSupSub = true;
     }
-    var children = [buildGroup2(group2.base, options)];
-    if (group2.sub) {
-      children.push(buildGroup2(group2.sub, options));
+    var children = [buildGroup2(group.base, options)];
+    if (group.sub) {
+      children.push(buildGroup2(group.sub, options));
     }
-    if (group2.sup) {
-      children.push(buildGroup2(group2.sup, options));
+    if (group.sup) {
+      children.push(buildGroup2(group.sup, options));
     }
     var nodeType;
     if (isBrace) {
       nodeType = isOver ? "mover" : "munder";
-    } else if (!group2.sub) {
-      var base = group2.base;
+    } else if (!group.sub) {
+      var base = group.base;
       if (base && base.type === "op" && base.limits && (options.style === Style$1.DISPLAY || base.alwaysHandleSupSub)) {
         nodeType = "mover";
       } else if (base && base.type === "operatorname" && base.alwaysHandleSupSub && (base.limits || options.style === Style$1.DISPLAY)) {
@@ -61509,8 +61583,8 @@ defineFunctionBuilders({
       } else {
         nodeType = "msup";
       }
-    } else if (!group2.sup) {
-      var _base = group2.base;
+    } else if (!group.sup) {
+      var _base = group.base;
       if (_base && _base.type === "op" && _base.limits && (options.style === Style$1.DISPLAY || _base.alwaysHandleSupSub)) {
         nodeType = "munder";
       } else if (_base && _base.type === "operatorname" && _base.alwaysHandleSupSub && (_base.limits || options.style === Style$1.DISPLAY)) {
@@ -61519,7 +61593,7 @@ defineFunctionBuilders({
         nodeType = "msub";
       }
     } else {
-      var _base2 = group2.base;
+      var _base2 = group.base;
       if (_base2 && _base2.type === "op" && _base2.limits && options.style === Style$1.DISPLAY) {
         nodeType = "munderover";
       } else if (_base2 && _base2.type === "operatorname" && _base2.alwaysHandleSupSub && (options.style === Style$1.DISPLAY || _base2.limits)) {
@@ -61533,19 +61607,19 @@ defineFunctionBuilders({
 });
 defineFunctionBuilders({
   type: "atom",
-  htmlBuilder(group2, options) {
-    return mathsym(group2.text, group2.mode, options, ["m" + group2.family]);
+  htmlBuilder(group, options) {
+    return mathsym(group.text, group.mode, options, ["m" + group.family]);
   },
-  mathmlBuilder(group2, options) {
-    var node = new MathNode("mo", [makeText(group2.text, group2.mode)]);
-    if (group2.family === "bin") {
-      var variant = getVariant(group2, options);
+  mathmlBuilder(group, options) {
+    var node = new MathNode("mo", [makeText(group.text, group.mode)]);
+    if (group.family === "bin") {
+      var variant = getVariant(group, options);
       if (variant === "bold-italic") {
         node.setAttribute("mathvariant", variant);
       }
-    } else if (group2.family === "punct") {
+    } else if (group.family === "punct") {
       node.setAttribute("separator", "true");
-    } else if (group2.family === "open" || group2.family === "close") {
+    } else if (group.family === "open" || group.family === "close") {
       node.setAttribute("stretchy", "false");
     }
     return node;
@@ -61558,12 +61632,12 @@ var defaultVariant = {
 };
 defineFunctionBuilders({
   type: "mathord",
-  htmlBuilder(group2, options) {
-    return makeOrd(group2, options, "mathord");
+  htmlBuilder(group, options) {
+    return makeOrd(group, options, "mathord");
   },
-  mathmlBuilder(group2, options) {
-    var node = new MathNode("mi", [makeText(group2.text, group2.mode, options)]);
-    var variant = getVariant(group2, options) || "italic";
+  mathmlBuilder(group, options) {
+    var node = new MathNode("mi", [makeText(group.text, group.mode, options)]);
+    var variant = getVariant(group, options) || "italic";
     if (variant !== defaultVariant[node.type]) {
       node.setAttribute("mathvariant", variant);
     }
@@ -61572,18 +61646,18 @@ defineFunctionBuilders({
 });
 defineFunctionBuilders({
   type: "textord",
-  htmlBuilder(group2, options) {
-    return makeOrd(group2, options, "textord");
+  htmlBuilder(group, options) {
+    return makeOrd(group, options, "textord");
   },
-  mathmlBuilder(group2, options) {
-    var text2 = makeText(group2.text, group2.mode, options);
-    var variant = getVariant(group2, options) || "normal";
+  mathmlBuilder(group, options) {
+    var text2 = makeText(group.text, group.mode, options);
+    var variant = getVariant(group, options) || "normal";
     var node;
-    if (group2.mode === "text") {
+    if (group.mode === "text") {
       node = new MathNode("mtext", [text2]);
-    } else if (/[0-9]/.test(group2.text)) {
+    } else if (/[0-9]/.test(group.text)) {
       node = new MathNode("mn", [text2]);
-    } else if (group2.text === "\\prime") {
+    } else if (group.text === "\\prime") {
       node = new MathNode("mo", [text2]);
     } else {
       node = new MathNode("mi", [text2]);
@@ -61611,30 +61685,30 @@ var regularSpace = {
 };
 defineFunctionBuilders({
   type: "spacing",
-  htmlBuilder(group2, options) {
-    if (regularSpace.hasOwnProperty(group2.text)) {
-      var className = regularSpace[group2.text].className || "";
-      if (group2.mode === "text") {
-        var ord = makeOrd(group2, options, "textord");
+  htmlBuilder(group, options) {
+    if (regularSpace.hasOwnProperty(group.text)) {
+      var className = regularSpace[group.text].className || "";
+      if (group.mode === "text") {
+        var ord = makeOrd(group, options, "textord");
         ord.classes.push(className);
         return ord;
       } else {
-        return makeSpan(["mspace", className], [mathsym(group2.text, group2.mode, options)], options);
+        return makeSpan(["mspace", className], [mathsym(group.text, group.mode, options)], options);
       }
-    } else if (cssSpace.hasOwnProperty(group2.text)) {
-      return makeSpan(["mspace", cssSpace[group2.text]], [], options);
+    } else if (cssSpace.hasOwnProperty(group.text)) {
+      return makeSpan(["mspace", cssSpace[group.text]], [], options);
     } else {
-      throw new ParseError('Unknown type of space "' + group2.text + '"');
+      throw new ParseError('Unknown type of space "' + group.text + '"');
     }
   },
-  mathmlBuilder(group2, options) {
+  mathmlBuilder(group, options) {
     var node;
-    if (regularSpace.hasOwnProperty(group2.text)) {
+    if (regularSpace.hasOwnProperty(group.text)) {
       node = new MathNode("mtext", [new TextNode(" ")]);
-    } else if (cssSpace.hasOwnProperty(group2.text)) {
+    } else if (cssSpace.hasOwnProperty(group.text)) {
       return new MathNode("mspace");
     } else {
-      throw new ParseError('Unknown type of space "' + group2.text + '"');
+      throw new ParseError('Unknown type of space "' + group.text + '"');
     }
     return node;
   }
@@ -61646,8 +61720,8 @@ var pad = () => {
 };
 defineFunctionBuilders({
   type: "tag",
-  mathmlBuilder(group2, options) {
-    var table = new MathNode("mtable", [new MathNode("mtr", [pad(), new MathNode("mtd", [buildExpressionRow(group2.body, options)]), pad(), new MathNode("mtd", [buildExpressionRow(group2.tag, options)])])]);
+  mathmlBuilder(group, options) {
+    var table = new MathNode("mtable", [new MathNode("mtr", [pad(), new MathNode("mtd", [buildExpressionRow(group.body, options)]), pad(), new MathNode("mtd", [buildExpressionRow(group.tag, options)])])]);
     table.setAttribute("width", "100%");
     return table;
   }
@@ -61667,8 +61741,8 @@ var textFontShapes = {
   "\\textit": "textit",
   "\\textup": "textup"
 };
-var optionsWithFont = (group2, options) => {
-  var font = group2.font;
+var optionsWithFont = (group, options) => {
+  var font = group.font;
   if (!font) {
     return options;
   } else if (textFontFamilies[font]) {
@@ -61716,14 +61790,14 @@ defineFunction({
       font: funcName
     };
   },
-  htmlBuilder(group2, options) {
-    var newOptions = optionsWithFont(group2, options);
-    var inner2 = buildExpression$1(group2.body, newOptions, true);
+  htmlBuilder(group, options) {
+    var newOptions = optionsWithFont(group, options);
+    var inner2 = buildExpression$1(group.body, newOptions, true);
     return makeSpan(["mord", "text"], inner2, newOptions);
   },
-  mathmlBuilder(group2, options) {
-    var newOptions = optionsWithFont(group2, options);
-    return buildExpressionRow(group2.body, newOptions);
+  mathmlBuilder(group, options) {
+    var newOptions = optionsWithFont(group, options);
+    return buildExpressionRow(group.body, newOptions);
   }
 });
 defineFunction({
@@ -61743,8 +61817,8 @@ defineFunction({
       body: args[0]
     };
   },
-  htmlBuilder(group2, options) {
-    var innerGroup = buildGroup$1(group2.body, options);
+  htmlBuilder(group, options) {
+    var innerGroup = buildGroup$1(group.body, options);
     var line = makeLineSpan("underline-line", options);
     var defaultRuleThickness = options.fontMetrics().defaultRuleThickness;
     var vlist = makeVList({
@@ -61766,10 +61840,10 @@ defineFunction({
     });
     return makeSpan(["mord", "underline"], [vlist], options);
   },
-  mathmlBuilder(group2, options) {
+  mathmlBuilder(group, options) {
     var operator = new MathNode("mo", [new TextNode("‾")]);
     operator.setAttribute("stretchy", "true");
-    var node = new MathNode("munder", [buildGroup2(group2.body, options), operator]);
+    var node = new MathNode("munder", [buildGroup2(group.body, options), operator]);
     node.setAttribute("accentunder", "true");
     return node;
   }
@@ -61793,8 +61867,8 @@ defineFunction({
       body: args[0]
     };
   },
-  htmlBuilder(group2, options) {
-    var body = buildGroup$1(group2.body, options);
+  htmlBuilder(group, options) {
+    var body = buildGroup$1(group.body, options);
     var axisHeight = options.fontMetrics().axisHeight;
     var dy2 = 0.5 * (body.height - axisHeight - (body.depth + axisHeight));
     return makeVList({
@@ -61806,8 +61880,8 @@ defineFunction({
       }]
     });
   },
-  mathmlBuilder(group2, options) {
-    var mpadded = new MathNode("mpadded", [buildGroup2(group2.body, options)], ["vcenter"]);
+  mathmlBuilder(group, options) {
+    var mpadded = new MathNode("mpadded", [buildGroup2(group.body, options)], ["vcenter"]);
     return new MathNode("mrow", [mpadded]);
   }
 });
@@ -61821,8 +61895,8 @@ defineFunction({
   handler(context, args, optArgs) {
     throw new ParseError("\\verb ended by end of line instead of matching delimiter");
   },
-  htmlBuilder(group2, options) {
-    var text2 = makeVerb(group2);
+  htmlBuilder(group, options) {
+    var text2 = makeVerb(group);
     var body = [];
     var newOptions = options.havingStyle(options.style.text());
     for (var i = 0; i < text2.length; i++) {
@@ -61830,18 +61904,18 @@ defineFunction({
       if (c === "~") {
         c = "\\textasciitilde";
       }
-      body.push(makeSymbol(c, "Typewriter-Regular", group2.mode, newOptions, ["mord", "texttt"]));
+      body.push(makeSymbol(c, "Typewriter-Regular", group.mode, newOptions, ["mord", "texttt"]));
     }
     return makeSpan(["mord", "text"].concat(newOptions.sizingClasses(options)), tryCombineChars(body), newOptions);
   },
-  mathmlBuilder(group2, options) {
-    var text2 = new TextNode(makeVerb(group2));
+  mathmlBuilder(group, options) {
+    var text2 = new TextNode(makeVerb(group));
     var node = new MathNode("mtext", [text2]);
     node.setAttribute("mathvariant", "monospace");
     return node;
   }
 });
-var makeVerb = (group2) => group2.body.replace(/ /g, group2.star ? "␣" : " ");
+var makeVerb = (group) => group.body.replace(/ /g, group.star ? "␣" : " ");
 var functions = _functions;
 var spaceRegexString = "[ \r\n	]";
 var controlWordRegexString = "\\\\[a-zA-Z@]+";
@@ -63753,15 +63827,15 @@ class Parser {
     var symbol = symbolToken.text;
     this.consume();
     this.consumeSpaces();
-    var group2;
+    var group;
     do {
       var _group;
-      group2 = this.parseGroup(name);
-    } while (((_group = group2) == null ? void 0 : _group.type) === "internal");
-    if (!group2) {
+      group = this.parseGroup(name);
+    } while (((_group = group) == null ? void 0 : _group.type) === "internal");
+    if (!group) {
       throw new ParseError("Expected group after '" + symbol + "'", symbolToken);
     }
-    return group2;
+    return group;
   }
   /**
    * Converts the textual input of an unsupported command into a text node
@@ -63987,11 +64061,11 @@ class Parser {
       case "text":
         return this.parseArgumentGroup(optional, type);
       case "hbox": {
-        var group2 = this.parseArgumentGroup(optional, "text");
-        return group2 != null ? {
+        var group = this.parseArgumentGroup(optional, "text");
+        return group != null ? {
           type: "styling",
-          mode: group2.mode,
-          body: [group2],
+          mode: group.mode,
+          body: [group],
           style: "text",
           // simulate \textstyle
           resetFont: true
@@ -64226,22 +64300,22 @@ class Parser {
    * characters in its value.  The representation is still ASCII source.
    * The group will be modified in place.
    */
-  formLigatures(group2) {
-    var n = group2.length - 1;
+  formLigatures(group) {
+    var n = group.length - 1;
     for (var i = 0; i < n; ++i) {
-      var a = group2[i];
+      var a = group[i];
       if (a.type !== "textord") {
         continue;
       }
       var v = a.text;
-      var next2 = group2[i + 1];
+      var next2 = group[i + 1];
       if (!next2 || next2.type !== "textord") {
         continue;
       }
       if (v === "-" && next2.text === "-") {
-        var afterNext = group2[i + 2];
+        var afterNext = group[i + 2];
         if (i + 1 < n && afterNext && afterNext.type === "textord" && afterNext.text === "-") {
-          group2.splice(i, 3, {
+          group.splice(i, 3, {
             type: "textord",
             mode: "text",
             loc: SourceLocation.range(a, afterNext),
@@ -64249,7 +64323,7 @@ class Parser {
           });
           n -= 2;
         } else {
-          group2.splice(i, 2, {
+          group.splice(i, 2, {
             type: "textord",
             mode: "text",
             loc: SourceLocation.range(a, next2),
@@ -64259,7 +64333,7 @@ class Parser {
         }
       }
       if ((v === "'" || v === "`") && next2.text === v) {
-        group2.splice(i, 2, {
+        group.splice(i, 2, {
           type: "textord",
           mode: "text",
           loc: SourceLocation.range(a, next2),
@@ -64314,20 +64388,20 @@ class Parser {
       if (this.settings.strict && this.mode === "math" && extraLatin.includes(text2)) {
         this.settings.reportNonstrict("unicodeTextInMathMode", 'Latin-1/Unicode text character "' + text2[0] + '" used in math mode', nucleus);
       }
-      var group2 = symbols[this.mode][text2].group;
+      var group = symbols[this.mode][text2].group;
       var loc = SourceLocation.range(nucleus);
       var s;
-      if (isAtom(group2)) {
+      if (isAtom(group)) {
         s = {
           type: "atom",
           mode: this.mode,
-          family: group2,
+          family: group,
           loc,
           text: text2
         };
       } else {
         s = {
-          type: group2,
+          type: group,
           mode: this.mode,
           loc,
           text: text2
@@ -74450,22 +74524,22 @@ function addControls(container, groups2) {
     groups2 = [groups2];
   }
   groups2.forEach((controls) => {
-    const group2 = document.createElement("span");
-    group2.classList.add("ql-formats");
+    const group = document.createElement("span");
+    group.classList.add("ql-formats");
     controls.forEach((control) => {
       if (typeof control === "string") {
-        addButton(group2, control);
+        addButton(group, control);
       } else {
         const format = Object.keys(control)[0];
         const value = control[format];
         if (Array.isArray(value)) {
-          addSelect(group2, format, value);
+          addSelect(group, format, value);
         } else {
-          addButton(group2, format, value);
+          addButton(group, format, value);
         }
       }
     });
-    container.appendChild(group2);
+    container.appendChild(group);
   });
 }
 function addSelect(container, format, values2) {
@@ -80488,9 +80562,9 @@ function resolveLiveRenderedNode(mindMap, node, uid2 = renderedNodeUid$1(node)) 
   const current = (_b = (_a = mindMap == null ? void 0 : mindMap.renderer) == null ? void 0 : _a.findNodeByUid) == null ? void 0 : _b.call(_a, uid2);
   return current ?? node ?? null;
 }
-function numberAttribute(group2, name) {
+function numberAttribute(group, name) {
   var _a;
-  const value = Number((_a = group2 == null ? void 0 : group2.attr) == null ? void 0 : _a.call(group2, name));
+  const value = Number((_a = group == null ? void 0 : group.attr) == null ? void 0 : _a.call(group, name));
   return finite$2(value) && value > 0 ? value : 0;
 }
 function transformPoint(matrix, x2, y2) {
@@ -80501,7 +80575,7 @@ function transformPoint(matrix, x2, y2) {
     y: matrix.b * x2 + matrix.d * y2 + matrix.f
   };
 }
-function rectFromScreenMatrix(element, group2) {
+function rectFromScreenMatrix(element, group) {
   var _a, _b;
   let matrix = null;
   try {
@@ -80520,8 +80594,8 @@ function rectFromScreenMatrix(element, group2) {
     box = null;
   }
   if (!box) {
-    const width22 = numberAttribute(group2, "data-width");
-    const height22 = numberAttribute(group2, "data-height");
+    const width22 = numberAttribute(group, "data-width");
+    const height22 = numberAttribute(group, "data-height");
     if (width22 <= 0.5 || height22 <= 0.5) return null;
     box = { x: 0, y: 0, width: width22, height: height22 };
   }
@@ -80545,8 +80619,8 @@ function rectFromScreenMatrix(element, group2) {
 }
 function resolveRenderedTextRect(node) {
   var _a, _b;
-  const group2 = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
-  const element = group2 == null ? void 0 : group2.node;
+  const group = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
+  const element = group == null ? void 0 : group.node;
   if (!element) return null;
   const connected = typeof element.isConnected === "boolean" ? element.isConnected : null;
   if (connected !== false) {
@@ -80561,7 +80635,7 @@ function resolveRenderedTextRect(node) {
       }
     } catch {
     }
-    const matrixRect = rectFromScreenMatrix(element, group2);
+    const matrixRect = rectFromScreenMatrix(element, group);
     if (matrixRect) {
       return {
         rect: snapshotRect(matrixRect),
@@ -80620,7 +80694,7 @@ function writeQuillSelectionToClipboard(quill, event, fallbackRange) {
 function normalizeCanvasTextPayload(html2) {
   const source = String(html2 ?? "");
   const richText = structuredOutlineIsRichHtml(source);
-  const plain2 = richText ? "" : nodeRichTextToTextWithWrap(source.replace(/<br\s*\/?>/gi, "\n")).replace(/\u00a0/g, " ");
+  const plain2 = richText ? "" : nodeRichTextToTextWithWrap(source.replace(/<br\s*\/?>/gi, "\n")).replace(/\u00a0/g, " ").replace(/^(?:[ \t]*\n)+/, "").replace(/(?:\n[ \t]*)+$/, "");
   return {
     text: richText ? source : plain2.trim().length > 0 ? plain2 : "",
     richText
@@ -80702,6 +80776,21 @@ class YeMindRichText extends RichText {
       if (!this.showTextEdit) return;
       this.schedulePlacementStabilization();
     });
+  }
+  /**
+   * The upstream RichText plugin migrates every plain node to `richText: true`
+   * when it is constructed and whenever a new tree is installed. YeMind keeps
+   * plain and formatted nodes in one canonical model, so that implicit
+   * migration destroys native line breaks and changes node measurement after
+   * a collapse, reload, or first edit.
+   *
+   * Rich text is enabled only by an actual formatting edit. Loading or
+   * replacing a tree must be identity-preserving.
+   */
+  handleDataToRichTextOnInit() {
+  }
+  handleSetData(data2) {
+    return data2;
   }
   showEditText(params) {
     if (this.showTextEdit) return;
@@ -80855,9 +80944,9 @@ class YeMindRichText extends RichText {
     var _a, _b, _c2;
     const host = this.textEditNode;
     if (!host || !isUsableTextRect(rect2)) return;
-    const group2 = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
-    const width2 = Number((_b = group2 == null ? void 0 : group2.attr) == null ? void 0 : _b.call(group2, "data-width"));
-    const height2 = Number((_c2 = group2 == null ? void 0 : group2.attr) == null ? void 0 : _c2.call(group2, "data-height"));
+    const group = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
+    const width2 = Number((_b = group == null ? void 0 : group.attr) == null ? void 0 : _b.call(group, "data-width"));
+    const height2 = Number((_c2 = group == null ? void 0 : group.attr) == null ? void 0 : _c2.call(group, "data-height"));
     const originWidth = Number.isFinite(width2) && width2 > 0 ? width2 : rect2.width;
     const originHeight = Number.isFinite(height2) && height2 > 0 ? height2 : rect2.height;
     host.style.minWidth = `${originWidth + this.textNodePaddingX * 2}px`;
@@ -80870,8 +80959,8 @@ class YeMindRichText extends RichText {
     var _a, _b, _c2, _d2;
     const host = this.textEditNode;
     if (!host || !rect2) return;
-    const group2 = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
-    const originWidth = Number((_b = group2 == null ? void 0 : group2.attr) == null ? void 0 : _b.call(group2, "data-width"));
+    const group = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
+    const originWidth = Number((_b = group == null ? void 0 : group.attr) == null ? void 0 : _b.call(group, "data-width"));
     const scaleX = Number.isFinite(originWidth) && originWidth > 0 ? Math.ceil(rect2.width) / originWidth : 1;
     const gap = Number((_d2 = (_c2 = this.mindMap) == null ? void 0 : _c2.opt) == null ? void 0 : _d2.textContentMargin);
     host.style.marginLeft = `${editorHorizontalMargin(
@@ -82432,11 +82521,11 @@ function themePaletteColors(preset) {
   ]);
 }
 const THEME_CHOICE_GROUPS = ["常用", "缤纷", "经典"];
-function toOption(preset, group2) {
+function toOption(preset, group) {
   return {
     value: preset.id,
     label: preset.label,
-    group: group2,
+    group,
     description: preset.description,
     previewColor: preset.light.colorAppearance.centerBackground,
     previewColors: themePaletteColors(preset)
@@ -86044,10 +86133,7 @@ function inlineHtmlFromClipboard(value) {
     block.replaceWith(fragment);
   });
   const inline = template.innerHTML;
-  return normalizeStructuredOutlineContent(
-    inline,
-    structuredOutlineIsRichHtml(inline)
-  ).html;
+  return normalizeStructuredOutlineEditorHtml(inline).html;
 }
 function stripLeadingClipboardIndent(value) {
   const template = document.createElement("template");
@@ -86602,7 +86688,8 @@ class StructuredOutlineEditorController {
     });
     if (readonly) this.cancelTimer();
   }
-  syncFromTree(tree, force = false) {
+  syncFromTree(tree, options = false) {
+    const force = typeof options === "boolean" ? options : options.force === true || options.source === "history";
     this.lastTree = tree;
     if (this.applying) return;
     const blocks = flattenStructuredOutline(tree);
@@ -86611,8 +86698,12 @@ class StructuredOutlineEditorController {
       this.scheduleGuideRender();
       return;
     }
+    if (force) {
+      this.cancelTimer();
+      this.dirty = false;
+    }
     const bookmark = this.captureSelectionBookmark();
-    this.patchBlocks(blocks, bookmark);
+    this.patchBlocks(blocks, bookmark, force);
     this.scheduleGuideRender();
     this.lastAppliedSignature = this.domSignature();
     this.dirty = false;
@@ -87090,7 +87181,7 @@ class StructuredOutlineEditorController {
     });
     this.syncOutlineMediaSelection();
   }
-  patchBlocks(blocks, bookmark) {
+  patchBlocks(blocks, bookmark, forceText = false) {
     var _a, _b;
     const root2 = this.options.root;
     const existing = /* @__PURE__ */ new Map();
@@ -87104,7 +87195,7 @@ class StructuredOutlineEditorController {
       const key = blockKey(block);
       let row = existing.get(key);
       if (!row) row = this.createRow(block);
-      else this.patchRow(row, block, selectionUids.has(block.uid));
+      else this.patchRow(row, block, selectionUids.has(block.uid) && !forceText);
       row.style.setProperty(
         "--ymz-outline-branch-color",
         outlineBranchColorVariable(branchColors.get(block.uid) ?? 0)
@@ -87291,10 +87382,7 @@ class StructuredOutlineEditorController {
       const kind = row.dataset.outlineKind === "summary" ? "summary" : "node";
       const editor = row.querySelector("[data-outline-editor]");
       const rawHtml = editor && editorIsSemanticallyEmpty(editor) ? "" : sanitizeRichHtml((editor == null ? void 0 : editor.innerHTML) ?? "");
-      const content = normalizeStructuredOutlineContent(
-        rawHtml,
-        structuredOutlineIsRichHtml(rawHtml)
-      );
+      const content = normalizeStructuredOutlineEditorHtml(rawHtml);
       const html2 = content.html;
       const previous = existing.get(`${kind}:${uid2}`);
       return {
@@ -87368,10 +87456,7 @@ class StructuredOutlineEditorController {
     previous.forEach((block, index) => {
       const next2 = blocks[index];
       if (!next2 || block.html === next2.html) return;
-      const content = normalizeStructuredOutlineContent(
-        next2.html,
-        structuredOutlineIsRichHtml(next2.html)
-      );
+      const content = normalizeStructuredOutlineEditorHtml(next2.html);
       patches.push({
         uid: next2.uid,
         text: content.richText ? content.html : content.text,
@@ -89564,13 +89649,13 @@ class RainbowSchemePicker {
     (_a = this.select) == null ? void 0 : _a.replaceChildren();
     for (const category of ["缤纷", "经典"]) {
       const schemes = YEMIND_COLOR_SCHEMES.filter((scheme) => scheme.category === category);
-      const group2 = document.createElement("section");
-      group2.className = "ymz-rainbow-picker__group";
-      group2.dataset.rainbowGroup = category;
+      const group = document.createElement("section");
+      group.className = "ymz-rainbow-picker__group";
+      group.dataset.rainbowGroup = category;
       const heading = document.createElement("h5");
       heading.textContent = category;
-      const grid = document.createElement("div");
-      grid.className = "ymz-rainbow-picker__grid";
+      const grid2 = document.createElement("div");
+      grid2.className = "ymz-rainbow-picker__grid";
       for (const scheme of schemes) {
         const button = document.createElement("button");
         button.type = "button";
@@ -89583,14 +89668,14 @@ class RainbowSchemePicker {
         colors.setAttribute("aria-hidden", "true");
         colors.style.background = `linear-gradient(90deg, ${scheme.colors.join(",")})`;
         button.append(name, colors);
-        grid.appendChild(button);
+        grid2.appendChild(button);
         const option2 = document.createElement("option");
         option2.value = scheme.id;
         option2.textContent = scheme.label;
         (_b = this.select) == null ? void 0 : _b.appendChild(option2);
       }
-      group2.append(heading, grid);
-      this.panel.appendChild(group2);
+      group.append(heading, grid2);
+      this.panel.appendChild(group);
     }
   }
   sync() {
@@ -89969,14 +90054,14 @@ class LayoutGalleryPanel {
     const body = this.panel.querySelector('[data-role="layout-gallery-body"]');
     if (!body) return;
     body.innerHTML = "";
-    groupLayouts().forEach((group2) => {
+    groupLayouts().forEach((group) => {
       const section = document.createElement("section");
       section.className = "ymz-layout-gallery__group";
       const title = document.createElement("h4");
-      title.textContent = group2.label;
-      const grid = document.createElement("div");
-      grid.className = "ymz-layout-gallery__grid";
-      group2.items.forEach((item) => {
+      title.textContent = group.label;
+      const grid2 = document.createElement("div");
+      grid2.className = "ymz-layout-gallery__grid";
+      group.items.forEach((item) => {
         const preset = getLayoutAssetPreset(item.id);
         const button = document.createElement("button");
         button.type = "button";
@@ -89997,9 +90082,9 @@ class LayoutGalleryPanel {
           this.render();
           this.hide();
         });
-        grid.appendChild(button);
+        grid2.appendChild(button);
       });
-      section.append(title, grid);
+      section.append(title, grid2);
       body.appendChild(section);
     });
   }
@@ -90027,9 +90112,9 @@ class ProjectChoicePanel {
       const target = event.target;
       const tab = target.closest("[data-project-choice-group]");
       if (tab) {
-        const group2 = tab.dataset.projectChoiceGroup ?? "";
-        if (group2 && group2 !== this.activeGroup) {
-          this.activeGroup = group2;
+        const group = tab.dataset.projectChoiceGroup ?? "";
+        if (group && group !== this.activeGroup) {
+          this.activeGroup = group;
           this.render();
         }
         return;
@@ -90157,20 +90242,20 @@ class ProjectChoicePanel {
     tabs.className = "ymz-project-choice-panel__tabs";
     tabs.setAttribute("role", "tablist");
     tabs.setAttribute("aria-label", `${this.config.title}分类`);
-    groups2.forEach((group2) => {
+    groups2.forEach((group) => {
       const button = document.createElement("button");
       button.type = "button";
-      button.className = `ymz-project-choice-panel__tab${group2 === this.activeGroup ? " is-active" : ""}`;
-      button.dataset.projectChoiceGroup = group2;
-      button.textContent = group2;
+      button.className = `ymz-project-choice-panel__tab${group === this.activeGroup ? " is-active" : ""}`;
+      button.dataset.projectChoiceGroup = group;
+      button.textContent = group;
       button.setAttribute("role", "tab");
-      button.setAttribute("aria-selected", String(group2 === this.activeGroup));
+      button.setAttribute("aria-selected", String(group === this.activeGroup));
       tabs.appendChild(button);
     });
-    const grid = document.createElement("div");
-    grid.className = "ymz-project-choice-panel__palette-grid";
-    grid.setAttribute("role", "listbox");
-    grid.setAttribute("aria-label", `${this.activeGroup || this.config.title}主题`);
+    const grid2 = document.createElement("div");
+    grid2.className = "ymz-project-choice-panel__palette-grid";
+    grid2.setAttribute("role", "listbox");
+    grid2.setAttribute("aria-label", `${this.activeGroup || this.config.title}主题`);
     const options = this.options.filter((option2) => (option2.group ?? "") === this.activeGroup);
     if (options.length === 0) {
       const message = (_b = (_a = this.config).emptyGroupMessage) == null ? void 0 : _b.call(_a, this.activeGroup);
@@ -90179,7 +90264,7 @@ class ProjectChoicePanel {
         empty.className = "ymz-project-choice-panel__empty";
         empty.dataset.projectChoiceEmpty = "true";
         empty.textContent = message;
-        grid.appendChild(empty);
+        grid2.appendChild(empty);
       }
     }
     options.forEach((option2) => {
@@ -90223,9 +90308,9 @@ class ProjectChoicePanel {
       } else {
         card.appendChild(button);
       }
-      grid.appendChild(card);
+      grid2.appendChild(card);
     });
-    this.body.append(tabs, grid);
+    this.body.append(tabs, grid2);
     const selectedOption = this.options.find((option2) => option2.value === this.selected);
     if (this.config.applyLabel && selectedOption) {
       const footer = document.createElement("footer");
@@ -90247,12 +90332,12 @@ class ProjectChoicePanel {
       items2.push(option2);
       groups2.set(key, items2);
     });
-    groups2.forEach((items2, group2) => {
+    groups2.forEach((items2, group) => {
       const section = document.createElement("section");
       section.className = "ymz-project-choice-panel__group";
-      if (group2) {
+      if (group) {
         const heading = document.createElement("h4");
-        heading.textContent = group2;
+        heading.textContent = group;
         section.appendChild(heading);
       }
       const list = document.createElement("div");
@@ -90293,74 +90378,235 @@ class ProjectChoicePanel {
     });
   }
 }
-const group = (id, label, symbols2) => ({
-  id,
-  label,
-  symbols: symbols2.filter((symbol) => Boolean(symbol))
-});
+const grid = (id, label, rows, options = {}) => {
+  const columns = options.columns ?? rows.reduce((maximum, row) => Math.max(maximum, row.length), 1);
+  const cells = rows.flatMap((row) => [
+    ...row,
+    ...Array.from({ length: Math.max(0, columns - row.length) }, () => null)
+  ]);
+  return {
+    id,
+    label,
+    layout: options.layout,
+    columns,
+    cells,
+    symbols: cells.filter((symbol) => Boolean(symbol)),
+    aliases: options.aliases,
+    labels: options.labels
+  };
+};
 const SYMBOL_SECTIONS = [
   {
     id: "arrows",
     label: "箭头",
     groups: [
-      group("basic-directions", "基础方向", ["↖", "↑", "↗", "←", null, "→", "↙", "↓", "↘"]),
-      group("curved-directions", "弯曲与长箭头", ["↜", "↟", "↝", "↞", "↔", "↠", "↚", "↡", "↛"]),
-      group("special-arrows", "双向与特殊", ["↢", "↣", "↨", "↭", "↮", "↯", "⇐", "⇔", "⇒"])
+      grid("basic-directions", "基础方向", [
+        ["↖", "↑", "↗"],
+        ["←", null, "→"],
+        ["↙", "↓", "↘"]
+      ], {
+        layout: "spatial",
+        columns: 3,
+        aliases: ["方向", "箭头", "上下左右"],
+        labels: {
+          "↖": "左上",
+          "↑": "上",
+          "↗": "右上",
+          "←": "左",
+          "→": "右",
+          "↙": "左下",
+          "↓": "下",
+          "↘": "右下"
+        }
+      }),
+      grid("curved-directions", "弯曲与长箭头", [
+        ["↜", "↟", "↝"],
+        ["↞", "↔", "↠"],
+        ["↚", "↡", "↛"]
+      ], { layout: "spatial", columns: 3 }),
+      grid("special-arrows", "双向与特殊", [
+        ["↢", "↣", "↨"],
+        ["↭", "↮", "↯"],
+        ["⇐", "⇔", "⇒"]
+      ], { columns: 3 })
     ]
   },
   {
     id: "shapes",
     label: "形状",
     groups: [
-      group("solid-directions", "实心方向", ["▲", "◀", "▶", "▼"]),
-      group("outline-directions", "空心方向", ["△", "◁", "▷", "▽"]),
-      group("small-directions", "小型方向", ["▴", "◂", "▸", "▾"]),
-      group("thin-directions", "细型方向", ["▵", "◃", "▹", "▿"]),
-      group("shape-pairs", "形状成对", ["●", "○", "◆", "◇", "■", "□", "▰", "▱", "◪", "◩", "◻", "◼"])
+      grid("solid-directions", "实心方向", [
+        [null, "▲", null],
+        ["◀", null, "▶"],
+        [null, "▼", null]
+      ], { layout: "spatial", columns: 3 }),
+      grid("outline-directions", "空心方向", [
+        [null, "△", null],
+        ["◁", null, "▷"],
+        [null, "▽", null]
+      ], { layout: "spatial", columns: 3 }),
+      grid("small-directions", "小型方向", [
+        [null, "▴", null],
+        ["◂", null, "▸"],
+        [null, "▾", null]
+      ], { layout: "spatial", columns: 3 }),
+      grid("thin-directions", "细型方向", [
+        [null, "▵", null],
+        ["◃", null, "▹"],
+        [null, "▿", null]
+      ], { layout: "spatial", columns: 3 }),
+      grid("shape-pairs", "形状成对", [
+        ["●", "○"],
+        ["◆", "◇"],
+        ["■", "□"],
+        ["▰", "▱"],
+        ["◪", "◩"],
+        ["◻", "◼"]
+      ], { layout: "pairs", columns: 2 })
     ]
   },
   {
     id: "numbers",
     label: "数字",
     groups: [
-      group("circled-numbers", "圆圈数字", ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"]),
-      group("dotted-numbers", "带点数字", ["⒈", "⒉", "⒊", "⒋", "⒌", "⒍", "⒎", "⒏", "⒐", "⒑", "⒒", "⒓", "⒔", "⒕", "⒖", "⒗", "⒘", "⒙", "⒚", "⒛"]),
-      group("parenthesized-numbers", "括号数字", ["⑴", "⑵", "⑶", "⑷", "⑸", "⑹", "⑺", "⑻", "⑼", "⑽", "⑾", "⑿", "⒀", "⒁", "⒂", "⒃", "⒄", "⒅", "⒆", "⒇"]),
-      group("roman-uppercase", "罗马数字 · 大写", ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ", "Ⅸ", "Ⅹ", "Ⅺ", "Ⅻ"]),
-      group("roman-lowercase", "罗马数字 · 小写", ["ⅰ", "ⅱ", "ⅲ", "ⅳ", "ⅴ", "ⅵ", "ⅶ", "ⅷ", "ⅸ", "ⅹ", "ⅺ", "ⅻ"]),
-      group("chinese-numbers", "中文序号", ["㈠", "㈡", "㈢", "㈣", "㈤", "㈥", "㈦", "㈧", "㈨", "㈩"])
+      grid("circled-numbers", "圆圈数字", [
+        ["①", "②", "③"],
+        ["④", "⑤", "⑥"],
+        ["⑦", "⑧", "⑨"],
+        [null, "⑩", null]
+      ], { layout: "number-pad", columns: 3 }),
+      grid("dotted-numbers", "带点数字", [
+        ["⒈", "⒉", "⒊"],
+        ["⒋", "⒌", "⒍"],
+        ["⒎", "⒏", "⒐"],
+        [null, "⒑", null],
+        ["⒒", "⒓", "⒔"],
+        ["⒕", "⒖", "⒗"],
+        ["⒘", "⒙", "⒚"],
+        [null, "⒛", null]
+      ], { layout: "number-pad", columns: 3 }),
+      grid("parenthesized-numbers", "括号数字", [
+        ["⑴", "⑵", "⑶"],
+        ["⑷", "⑸", "⑹"],
+        ["⑺", "⑻", "⑼"],
+        [null, "⑽", null],
+        ["⑾", "⑿", "⒀"],
+        ["⒁", "⒂", "⒃"],
+        ["⒄", "⒅", "⒆"],
+        [null, "⒇", null]
+      ], { layout: "number-pad", columns: 3 }),
+      grid("roman-uppercase", "罗马数字 · 大写", [
+        ["Ⅰ", "Ⅱ", "Ⅲ"],
+        ["Ⅳ", "Ⅴ", "Ⅵ"],
+        ["Ⅶ", "Ⅷ", "Ⅸ"],
+        ["Ⅹ", "Ⅺ", "Ⅻ"]
+      ], { layout: "number-pad", columns: 3 }),
+      grid("roman-lowercase", "罗马数字 · 小写", [
+        ["ⅰ", "ⅱ", "ⅲ"],
+        ["ⅳ", "ⅴ", "ⅵ"],
+        ["ⅶ", "ⅷ", "ⅸ"],
+        ["ⅹ", "ⅺ", "ⅻ"]
+      ], { layout: "number-pad", columns: 3 }),
+      grid("chinese-numbers", "中文序号", [
+        ["㈠", "㈡", "㈢", "㈣", "㈤"],
+        ["㈥", "㈦", "㈧", "㈨", "㈩"]
+      ], { columns: 5 })
     ]
   },
   {
     id: "brackets",
     label: "括号",
     groups: [
-      group("bracket-pairs", "成对括号", ["【", "】", "〔", "〕", "「", "」", "『", "』", "〈", "〉", "《", "》", "（", "）", "［", "］", "｛", "｝"])
+      grid("bracket-pairs", "成对括号", [
+        ["【", "】"],
+        ["〔", "〕"],
+        ["「", "」"],
+        ["『", "』"],
+        ["〈", "〉"],
+        ["《", "》"],
+        ["（", "）"],
+        ["［", "］"],
+        ["｛", "｝"]
+      ], { layout: "pairs", columns: 2 })
     ]
   },
   {
     id: "cjk",
     label: "汉字结构",
     groups: [
-      group("ideographic-basic", "基本结构", ["⿰", "⿱", "⿲", "⿳", "⿴", "⿻"]),
-      group("ideographic-surround", "包围结构", ["⿵", "⿷", "⿴", "⿹", "⿸", "⿻", "⿺", "⿶"]),
-      group("ideographic-extra", "其他结构", ["⿼", "⿽", "⿾", "⿿", "〿", "㊣"])
+      grid("ideographic-basic", "基本结构", [
+        ["⿰", "⿱"],
+        ["⿲", "⿳"],
+        ["⿴", "⿻"]
+      ], {
+        layout: "labeled",
+        columns: 2,
+        labels: {
+          "⿰": "左右",
+          "⿱": "上下",
+          "⿲": "左中右",
+          "⿳": "上中下",
+          "⿴": "全包围",
+          "⿻": "重叠"
+        }
+      }),
+      grid("ideographic-surround", "包围结构", [
+        [null, "⿵", null],
+        ["⿷", "⿴", "⿹"],
+        ["⿸", "⿻", "⿺"],
+        [null, "⿶", null]
+      ], {
+        layout: "spatial-labeled",
+        columns: 3,
+        labels: {
+          "⿵": "上包围",
+          "⿶": "下包围",
+          "⿷": "左包围",
+          "⿸": "左上包围",
+          "⿹": "右上包围",
+          "⿺": "左下包围",
+          "⿴": "全包围",
+          "⿻": "重叠"
+        }
+      }),
+      grid("ideographic-extra", "其他结构", [
+        ["⿼", "⿽"],
+        ["⿾", "⿿"],
+        ["〿", "㊣"]
+      ], { layout: "pairs", columns: 2 })
     ]
   },
   {
     id: "math",
     label: "数学",
     groups: [
-      group("math-common", "常用数学", ["±", "×", "÷", "≠", "≈", "≤", "≥", "∞", "∑", "√", "∅", "Δ", "μ", "Ω", "°", "℃", "％", "‰", "©", "®", "™", "✓", "✕", "•", "·"])
+      grid("math-common", "常用数学", [
+        ["±", "×", "÷", "≠", "≈"],
+        ["≤", "≥", "∞", "∑", "√"],
+        ["∅", "Δ", "μ", "Ω", "°"],
+        ["℃", "％", "‰", "©", "®"],
+        ["™", "✓", "✕", "•", "·"]
+      ], { columns: 5 })
     ]
   }
 ];
 function searchSymbols(query, sectionId = "") {
   const normalized2 = query.trim().toLocaleLowerCase();
-  return SYMBOL_SECTIONS.filter((section) => !sectionId || section.id === sectionId).flatMap((section) => section.groups).map((item) => ({
-    ...item,
-    symbols: normalized2 ? item.symbols.filter((symbol) => symbol.toLocaleLowerCase().includes(normalized2)) : item.symbols
-  })).filter((item) => item.symbols.length > 0);
+  return SYMBOL_SECTIONS.filter((section) => !sectionId || section.id === sectionId).flatMap((section) => section.groups).map((item) => {
+    if (!normalized2) return item;
+    const groupMatches = [item.label, ...item.aliases ?? []].some((value) => value.toLocaleLowerCase().includes(normalized2));
+    const cells = item.cells.map((symbol) => {
+      var _a;
+      if (!symbol || groupMatches) return symbol;
+      const label = ((_a = item.labels) == null ? void 0 : _a[symbol]) ?? "";
+      return symbol.toLocaleLowerCase().includes(normalized2) || label.toLocaleLowerCase().includes(normalized2) ? symbol : null;
+    });
+    return {
+      ...item,
+      cells,
+      symbols: cells.filter((symbol) => Boolean(symbol))
+    };
+  }).filter((item) => item.symbols.length > 0);
 }
 class SymbolPicker {
   constructor(root2, options) {
@@ -90465,22 +90711,38 @@ class SymbolPicker {
   renderBody() {
     this.body.innerHTML = "";
     const groups2 = searchSymbols(this.search.value, this.activeSection);
-    groups2.forEach((group2) => {
+    groups2.forEach((group) => {
       const section = document.createElement("section");
+      section.className = "ymz-symbol-picker__card";
       const heading = document.createElement("h4");
-      heading.textContent = group2.label;
-      const grid = document.createElement("div");
-      grid.className = "ymz-symbol-picker__grid";
-      group2.symbols.forEach((symbol) => {
+      heading.textContent = group.label;
+      const grid2 = document.createElement("div");
+      grid2.dataset.symbolGroup = group.id;
+      grid2.className = [
+        "ymz-symbol-picker__grid",
+        group.layout ? `ymz-symbol-picker__grid--${group.layout}` : ""
+      ].filter(Boolean).join(" ");
+      grid2.style.setProperty("--ymz-symbol-columns", String(group.columns));
+      group.cells.forEach((symbol) => {
+        var _a;
+        if (!symbol) {
+          const empty = document.createElement("span");
+          empty.className = "ymz-symbol-picker__cell--empty";
+          empty.setAttribute("aria-hidden", "true");
+          grid2.appendChild(empty);
+          return;
+        }
         const button = document.createElement("button");
         button.type = "button";
         button.dataset.symbolValue = symbol;
-        button.textContent = symbol;
-        button.title = `插入 ${symbol}`;
+        button.setAttribute("aria-label", symbol);
+        const label = (_a = group.labels) == null ? void 0 : _a[symbol];
+        button.innerHTML = label ? `<span class="ymz-symbol-picker__glyph">${symbol}</span><small>${label}</small>` : `<span class="ymz-symbol-picker__glyph">${symbol}</span>`;
+        button.title = label ? `插入 ${symbol}（${label}）` : `插入 ${symbol}`;
         button.disabled = !this.options.canInsert();
-        grid.appendChild(button);
+        grid2.appendChild(button);
       });
-      section.append(heading, grid);
+      section.append(heading, grid2);
       this.body.appendChild(section);
     });
     if (groups2.length === 0) this.body.textContent = "没有匹配的符号";
@@ -90597,7 +90859,7 @@ function assetHeader(title) {
 }
 function openMarkerPicker(commands, options = {}) {
   var _a;
-  let activeGroupId = options.initialGroupId && markerCatalog.groups.some((group2) => group2.id === options.initialGroupId) ? options.initialGroupId : "";
+  let activeGroupId = options.initialGroupId && markerCatalog.groups.some((group) => group.id === options.initialGroupId) ? options.initialGroupId : "";
   const dialog = createYeMindDialog({
     title: "图标",
     content: `<div class="b3-dialog__content ymz-local-asset-dialog ymz-marker-dialog">
@@ -90646,15 +90908,15 @@ function openMarkerPicker(commands, options = {}) {
     });
     return button;
   };
-  markerCatalog.groups.forEach((group2) => {
+  markerCatalog.groups.forEach((group) => {
     const section = document.createElement("section");
     section.className = "ymz-marker-group";
-    section.dataset.markerGroupSection = group2.id;
-    section.setAttribute("aria-label", group2.label);
-    const grid = document.createElement("div");
-    grid.className = "ymz-marker-grid";
-    markerCatalog.items.filter((item) => item.groupId === group2.id).forEach((item) => grid.appendChild(createOption(item)));
-    section.appendChild(grid);
+    section.dataset.markerGroupSection = group.id;
+    section.setAttribute("aria-label", group.label);
+    const grid2 = document.createElement("div");
+    grid2.className = "ymz-marker-grid";
+    markerCatalog.items.filter((item) => item.groupId === group.id).forEach((item) => grid2.appendChild(createOption(item)));
+    section.appendChild(grid2);
     groups2.appendChild(section);
   });
   const selectTab = (id, scrollToGroup = true) => {
@@ -90680,7 +90942,7 @@ function openMarkerPicker(commands, options = {}) {
     tabs.appendChild(button);
   };
   addTab("", "全部");
-  markerCatalog.groups.forEach((group2) => addTab(group2.id, group2.label));
+  markerCatalog.groups.forEach((group) => addTab(group.id, group.label));
   (_a = dialog.element.querySelector('[data-action="clear-markers"]')) == null ? void 0 : _a.addEventListener("click", () => {
     var _a2;
     commands.setIcons([]);
@@ -90709,7 +90971,7 @@ function openClipartPicker(commands, options = {}) {
   prepareAssetDialog(dialog, options.anchorRect);
   const search = dialog.element.querySelector('[data-role="clipart-search"]');
   const tabs = dialog.element.querySelector('[data-role="clipart-tabs"]');
-  const grid = dialog.element.querySelector('[data-role="clipart-grid"]');
+  const grid2 = dialog.element.querySelector('[data-role="clipart-grid"]');
   const count = dialog.element.querySelector('[data-role="clipart-count"]');
   const render3 = () => {
     tabs.innerHTML = "";
@@ -90728,7 +90990,7 @@ function openClipartPicker(commands, options = {}) {
     clipartCatalog.categories.forEach((category) => addTab(category.id, category.label));
     const matches = searchClipart(query, categoryId || void 0);
     count.textContent = `${matches.length} 个`;
-    grid.innerHTML = "";
+    grid2.innerHTML = "";
     matches.forEach((item) => {
       const button = document.createElement("button");
       button.type = "button";
@@ -90759,7 +91021,7 @@ function openClipartPicker(commands, options = {}) {
         (_a = options.onChange) == null ? void 0 : _a.call(options);
         dialog.destroy();
       });
-      grid.appendChild(button);
+      grid2.appendChild(button);
     });
   };
   search.addEventListener("input", () => {
@@ -90769,16 +91031,26 @@ function openClipartPicker(commands, options = {}) {
   render3();
   search.focus();
 }
+const hiddenStaticText = /* @__PURE__ */ new WeakMap();
+function restoreStaticText(map2) {
+  const previous = hiddenStaticText.get(map2) ?? [];
+  previous.forEach((element) => {
+    element.hidden = false;
+    element.removeAttribute("aria-hidden");
+  });
+  hiddenStaticText.delete(map2);
+}
 function cssColor(value, fallback) {
   const text2 = typeof value === "string" ? value.trim() : "";
   return text2 || fallback;
 }
 function synchronizeCanvasRichTextVisibility(map2) {
-  var _a, _b, _c2, _d2, _e;
+  var _a, _b, _c2, _d2, _e, _f, _g;
   const runtime = map2 == null ? void 0 : map2.richText;
   const wrapper = runtime == null ? void 0 : runtime.textEditNode;
   const node = runtime == null ? void 0 : runtime.node;
   if (!wrapper || !node) return false;
+  restoreStaticText(map2);
   const textColor = cssColor((_b = (_a = node.style) == null ? void 0 : _a.merge) == null ? void 0 : _b.call(_a, "color"), "#1f2937");
   const safeBackground = cssColor((_e = (_d2 = (_c2 = map2 == null ? void 0 : map2.renderer) == null ? void 0 : _c2.textEdit) == null ? void 0 : _d2.getBackground) == null ? void 0 : _e.call(_d2, node), "var(--b3-theme-background, #ffffff)");
   wrapper.style.setProperty("color", textColor, "important");
@@ -90797,6 +91069,15 @@ function synchronizeCanvasRichTextVisibility(map2) {
     element.style.setProperty("box-shadow", "none", "important");
     element.style.setProperty("background", "transparent", "important");
   });
+  if (runtime.showTextEdit === true && wrapper.style.display !== "none") {
+    const content = (_g = (_f = node._textData) == null ? void 0 : _f.nodeContent) == null ? void 0 : _g.node;
+    const staticElements = content ? Array.from(content.querySelectorAll(".smm-richtext-node-wrap")) : [];
+    staticElements.forEach((element) => {
+      element.hidden = true;
+      element.setAttribute("aria-hidden", "true");
+    });
+    if (staticElements.length > 0) hiddenStaticText.set(map2, staticElements);
+  }
   return true;
 }
 const DEFAULT_SEARCH_OPTIONS = {
@@ -91364,11 +91645,15 @@ class CanvasRightDragController {
     (_c2 = renderer.emitNodeActiveEvent) == null ? void 0 : _c2.call(renderer, snapshot[0] ?? null, [...snapshot]);
   }
 }
-function hasActiveNodeWidthDrag(root2) {
-  if (!root2) return false;
-  if (root2.isDragHandleMousedown === true) return true;
+function findActiveNodeWidthDrag(root2) {
+  if (!root2) return null;
+  if (root2.isDragHandleMousedown === true) return root2;
   const children = Array.isArray(root2.children) ? root2.children : [];
-  return children.some(hasActiveNodeWidthDrag);
+  for (const child of children) {
+    const active = findActiveNodeWidthDrag(child);
+    if (active) return active;
+  }
+  return null;
 }
 class LiveNodeWidthLayoutController {
   constructor(map2, target = window, animation) {
@@ -91378,12 +91663,14 @@ class LiveNodeWidthLayoutController {
     __publicField(this, "onMousemove", () => {
       var _a, _b;
       if (this.destroyed || this.frame !== null) return;
-      if (!hasActiveNodeWidthDrag((_b = (_a = this.map) == null ? void 0 : _a.renderer) == null ? void 0 : _b.root)) return;
+      if (!findActiveNodeWidthDrag((_b = (_a = this.map) == null ? void 0 : _a.renderer) == null ? void 0 : _b.root)) return;
       this.frame = this.animation.request(() => {
-        var _a2, _b2, _c2, _d2;
+        var _a2, _b2;
         this.frame = null;
-        if (this.destroyed || !hasActiveNodeWidthDrag((_b2 = (_a2 = this.map) == null ? void 0 : _a2.renderer) == null ? void 0 : _b2.root)) return;
-        (_d2 = (_c2 = this.map) == null ? void 0 : _c2.render) == null ? void 0 : _d2.call(_c2, () => this.synchronizeEditingSurface());
+        if (this.destroyed) return;
+        const active = findActiveNodeWidthDrag((_b2 = (_a2 = this.map) == null ? void 0 : _a2.renderer) == null ? void 0 : _b2.root);
+        if (!active) return;
+        this.synchronizeEditingSurface();
       });
     });
     this.map = map2;
@@ -91402,9 +91689,8 @@ class LiveNodeWidthLayoutController {
     this.frame = null;
   }
   /**
-   * The rich-text editor is an HTML overlay outside the SVG tree. A full
-   * layout can move its text anchor (especially when a marker/icon precedes
-   * the text), so the overlay must be repositioned after that same layout.
+   * The rich-text editor is an HTML overlay outside the SVG tree, so it must
+   * follow the node's local draft geometry without changing the map model.
    */
   synchronizeEditingSurface() {
     var _a, _b;
@@ -93318,7 +93604,7 @@ class RenderLifecycleCoordinator {
       var _a2, _b2;
       if (revision !== this.revision) return;
       (_b2 = (_a2 = this.mindMap.richText) == null ? void 0 : _a2.updateTextEditNode) == null ? void 0 : _b2.call(_a2);
-      this.onCommitted();
+      this.onCommitted(uid2);
     });
   }
   invalidate() {
@@ -94077,6 +94363,7 @@ class YeMindEditor {
     });
     this.renderLifecycle = new RenderLifecycleCoordinator(this.map, () => {
       var _a2, _b;
+      synchronizeCanvasRichTextVisibility(this.map);
       (_a2 = this.nodeQuickActions) == null ? void 0 : _a2.scheduleRefresh();
       (_b = this.miniMapController) == null ? void 0 : _b.refresh();
     });
@@ -94168,7 +94455,7 @@ class YeMindEditor {
       presentation: "palette",
       selected: this.current.theme,
       favoriteValues: this.settings.favoriteThemeIds,
-      emptyGroupMessage: (group2) => group2 === "常用" ? "还没有常用主题，点击主题卡片右上角的星标收藏。" : "",
+      emptyGroupMessage: (group) => group === "常用" ? "还没有常用主题，点击主题卡片右上角的星标收藏。" : "",
       onFavoriteChange: (value, favorite) => {
         const current = this.options.settingsStore.get().favoriteThemeIds;
         const next2 = favorite ? [...current.filter((id) => id !== value), value] : current.filter((id) => id !== value);
@@ -94293,11 +94580,13 @@ class YeMindEditor {
       },
       onUndo: () => {
         var _a2;
-        return (_a2 = this.commands) == null ? void 0 : _a2.undo();
+        (_a2 = this.commands) == null ? void 0 : _a2.undo();
+        this.refreshOutlineFromMap(true);
       },
       onRedo: () => {
         var _a2;
-        return (_a2 = this.commands) == null ? void 0 : _a2.redo();
+        (_a2 = this.commands) == null ? void 0 : _a2.redo();
+        this.refreshOutlineFromMap(true);
       },
       onDiagnostic: (action, details) => this.options.diagnostics.record("outline", action, this.current.id, details),
       onSelectionChange: (hasRange, rect2, format, target) => {
@@ -96208,11 +96497,11 @@ class YeMindEditor {
       onAction: (action) => this.options.diagnostics.record("outline-menu", action, this.current.id, { uid: uid2 })
     });
   }
-  refreshOutlineFromMap() {
+  refreshOutlineFromMap(force = false) {
     if (!this.map || this.destroyed) return;
     const tree = this.map.getData(false);
     this.current.data = tree;
-    this.renderOutline(tree);
+    this.renderOutline(tree, force);
   }
   activateNodeByUid(uid2) {
     var _a, _b, _c2;
@@ -96380,12 +96669,12 @@ class YeMindEditor {
     };
     requestAnimationFrame(() => requestAnimationFrame(redraw));
   }
-  renderOutline(data2) {
+  renderOutline(data2, force = false) {
     var _a, _b, _c2, _d2;
     const readonly = this.rootEl.dataset.readonly === "true";
     this.outlinePaneEl.setAttribute("aria-readonly", String(readonly));
     this.outlineEl.setAttribute("aria-readonly", String(readonly));
-    (_a = this.outlineRichText) == null ? void 0 : _a.syncFromTree(data2);
+    (_a = this.outlineRichText) == null ? void 0 : _a.syncFromTree(data2, force);
     this.updateOutlineMetadata(data2);
     this.applyOutlineSearch();
     const selectedUid = String(
@@ -97015,15 +97304,15 @@ function deduplicateRestoredMapTabs(opened) {
     var _a;
     const mapId = String(((_a = custom == null ? void 0 : custom.data) == null ? void 0 : _a.mapId) ?? "").trim();
     if (!mapId || !(custom == null ? void 0 : custom.tab)) return;
-    const group2 = groups2.get(mapId) ?? [];
-    group2.push(custom);
-    groups2.set(mapId, group2);
+    const group = groups2.get(mapId) ?? [];
+    group.push(custom);
+    groups2.set(mapId, group);
   });
   let closed = 0;
-  groups2.forEach((group2) => {
-    if (group2.length < 2) return;
-    const keeper = group2.find(isActive) ?? group2[0];
-    group2.forEach((custom) => {
+  groups2.forEach((group) => {
+    if (group.length < 2) return;
+    const keeper = group.find(isActive) ?? group[0];
+    group.forEach((custom) => {
       if (custom === keeper) return;
       if (closeSiYuanTab(custom.tab)) closed += 1;
     });

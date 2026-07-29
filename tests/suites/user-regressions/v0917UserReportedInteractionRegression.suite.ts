@@ -20,7 +20,7 @@ function position(label: string): number {
 }
 
 describe('v0.9.17 user-reported interaction regressions', () => {
-  it('reflows the complete tree during node-width dragging', () => {
+  it('keeps node-width dragging local until the upstream mouseup commit', () => {
     const child = { isDragHandleMousedown: true, children: [] };
     const root = { children: [{ children: [child] }] };
     expect(hasActiveNodeWidthDrag(root)).toBe(true);
@@ -48,7 +48,7 @@ describe('v0.9.17 user-reported interaction regressions', () => {
     listeners.get('mousemove')?.(new Event('mousemove'));
     expect(render).not.toHaveBeenCalled();
     pending?.(0);
-    expect(render).toHaveBeenCalledOnce();
+    expect(render).not.toHaveBeenCalled();
     expect(updateTextEditNode).toHaveBeenCalledOnce();
     controller.destroy();
   });
@@ -77,6 +77,45 @@ describe('v0.9.17 user-reported interaction regressions', () => {
     listeners.get('mousemove')?.(new Event('mousemove'));
     pending?.(0);
     expect(updateTextEditNode).not.toHaveBeenCalled();
+    controller.destroy();
+  });
+
+  it('does not overwrite the upstream width draft or restore stale data during repeated moves', () => {
+    const child = {
+      isDragHandleMousedown: true,
+      customTextWidth: 260,
+      nodeData: { data: { uid: 'resized-node', customTextWidth: 180 } },
+      children: [],
+    };
+    const listeners = new Map<string, EventListener>();
+    let pending: FrameRequestCallback | null = null;
+    const target = {
+      addEventListener: (name: string, listener: EventListener) => listeners.set(name, listener),
+      removeEventListener: (name: string) => listeners.delete(name),
+    } as any;
+    const map = {
+      renderer: { root: { children: [child] } },
+      render: vi.fn(),
+    };
+    const controller = new LiveNodeWidthLayoutController(map, target, {
+      request: vi.fn((callback) => { pending = callback; return 1; }),
+      cancel: vi.fn(),
+    });
+
+    listeners.get('mousemove')?.(new Event('mousemove'));
+    pending?.(0);
+    expect(child.nodeData.data.customTextWidth).toBe(180);
+    expect(map.render).not.toHaveBeenCalled();
+
+    child.customTextWidth = 320;
+    listeners.get('mousemove')?.(new Event('mousemove'));
+    pending?.(16);
+    expect(child.nodeData.data.customTextWidth).toBe(180);
+    expect(map.render).not.toHaveBeenCalled();
+
+    child.nodeData.data.customTextWidth = child.customTextWidth;
+    listeners.get('mouseup')?.(new Event('mouseup'));
+    expect(child.nodeData.data.customTextWidth).toBe(320);
     controller.destroy();
   });
 

@@ -71,6 +71,36 @@ describe('v0.9.30 context menu contracts', () => {
     root.remove();
   });
 
+  it('keeps semantic empty cells and renders symbol groups as layout cards', () => {
+    const basicDirections = SYMBOL_SECTIONS
+      .flatMap((section) => section.groups)
+      .find((group) => group.id === 'basic-directions');
+    const circledNumbers = SYMBOL_SECTIONS
+      .flatMap((section) => section.groups)
+      .find((group) => group.id === 'circled-numbers');
+    expect(basicDirections).toMatchObject({ layout: 'spatial', columns: 3 });
+    expect(basicDirections?.cells).toHaveLength(9);
+    expect(basicDirections?.cells[4]).toBeNull();
+    expect(circledNumbers).toMatchObject({ layout: 'number-pad', columns: 3 });
+    expect(circledNumbers?.cells).toHaveLength(12);
+
+    const root = document.createElement('div');
+    document.body.append(root);
+    const picker = new SymbolPicker(root, { canInsert: () => true, onInsert: () => true });
+    picker.show();
+    const dialog = root.querySelector<HTMLElement>('.ymz-symbol-picker')!;
+    expect(dialog.querySelectorAll('.ymz-symbol-picker__card').length).toBeGreaterThan(1);
+    expect(dialog.querySelector('[data-symbol-group="basic-directions"]')
+      ?.classList.contains('ymz-symbol-picker__grid--spatial')).toBe(true);
+    expect(dialog.querySelectorAll('[data-symbol-group="basic-directions"] .ymz-symbol-picker__cell--empty'))
+      .toHaveLength(1);
+    const rightArrow = dialog.querySelector<HTMLButtonElement>('[data-symbol-value="→"]');
+    expect(rightArrow?.getAttribute('aria-label')).toBe('→');
+    expect(rightArrow?.querySelector('small')?.textContent).toBe('右');
+    picker.destroy();
+    root.remove();
+  });
+
   it('locks symbol insertion to the node that opened the persistent dialog', () => {
     expect(editor).toContain('private symbolTargetUid');
     expect(editor).toContain('this.commands?.insertSymbol(symbol, this.symbolTargetUid)');

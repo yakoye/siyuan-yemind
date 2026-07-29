@@ -277,6 +277,34 @@ describe('v0.9.4 unified structured outline editor', () => {
     root.remove();
   });
 
+  it('commits Shift+Enter as one plain-text patch without changing sibling nodes', () => {
+    const initial = tree();
+    initial.children[0].data.text = 'Detect ↓ Polling ↓ Configuration ↓ Recovery ↓ L0';
+    const { root, controller, onApply, current } = mount(true, false, initial);
+    select(root, 'a', 7);
+
+    const event = key(root, 'Enter', { shiftKey: true });
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(onApply).toHaveBeenCalledOnce();
+    expect(onApply.mock.calls[0]?.[1]).toMatchObject({
+      transaction: 'text',
+      patches: [{
+        uid: 'a',
+        text: 'Detect \n↓ Polling ↓ Configuration ↓ Recovery ↓ L0',
+        richText: false,
+      }],
+    });
+    expect(current().children[0].data.text).toBe(
+      'Detect \n↓ Polling ↓ Configuration ↓ Recovery ↓ L0',
+    );
+    expect(String(current().children[0].data.text)).not.toContain('<br>');
+    expect(current().children[1].data).toMatchObject({ uid: 'b', text: 'Beta' });
+    expect(current().children[2].data).toMatchObject({ uid: 'c', text: 'Gamma' });
+    controller.destroy();
+    root.remove();
+  });
+
   it('normalizes a whitespace-only outline row to one stable empty-node patch', () => {
     const { root, controller, onApply, current } = mount();
     const editor = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-editor]')!;
@@ -333,6 +361,45 @@ describe('v0.9.4 unified structured outline editor', () => {
       richText: false,
     });
     expect(current().children).toHaveLength(3);
+    controller.destroy();
+    root.remove();
+  });
+
+  it('removes ChatGPT StartFragment comments before inline paste is stored or rendered', () => {
+    const { root, controller, current } = mount();
+    select(root, 'a', 0, 'a', 5);
+    const paste = clipboardEvent('paste', {
+      'text/plain': '梳理 PCIe Bring-up checklist 和 test plan',
+      'text/html': '<!--StartFragment--><p>梳理 PCIe Bring-up checklist 和 test plan</p><!--EndFragment-->',
+    });
+    root.dispatchEvent(paste.event);
+    controller.flush('chatgpt-fragment-paste');
+
+    const editor = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-editor]')!;
+    expect(editor.textContent).toBe('梳理 PCIe Bring-up checklist 和 test plan');
+    expect(editor.innerHTML).not.toContain('StartFragment');
+    expect(editor.innerHTML).not.toContain('EndFragment');
+    expect(String(current().children[0].data.text)).not.toContain('Fragment');
+    controller.destroy();
+    root.remove();
+  });
+
+  it('forces a history projection over dirty focused DOM after Undo restores the model', () => {
+    const { root, controller } = mount();
+    const editor = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-editor]')!;
+    editor.textContent = '';
+    editor.dispatchEvent(new InputEvent('input', {
+      bubbles: true,
+      inputType: 'deleteContentBackward',
+    }));
+    expect(controller.isDirty).toBe(true);
+
+    const restored = tree();
+    restored.children[0].data.text = 'Alpha restored by undo';
+    controller.syncFromTree(restored, { source: 'history' });
+
+    expect(editor.textContent).toBe('Alpha restored by undo');
+    expect(controller.isDirty).toBe(false);
     controller.destroy();
     root.remove();
   });
@@ -411,6 +478,39 @@ describe('v0.9.4 unified structured outline editor', () => {
 
     expect(event.defaultPrevented).toBe(true);
     expect(current().children[0].data.text).toBe('');
+    controller.destroy();
+    root.remove();
+  });
+
+  it.each([
+    ['leaf square', 'a1', '.ymz-outline-row__leaf-square'],
+    ['rainbow branch marker', 'a', '.ymz-outline-row__branch'],
+    ['six-dot drag handle', 'a', '[data-outline-drag-handle]'],
+  ])('deletes a reverse text selection whose pointer ends over the %s', (_label, uid, selector) => {
+    const { root, controller, current } = mount();
+    const editor = root.querySelector<HTMLElement>(`[data-outline-uid="${uid}"] [data-outline-editor]`)!;
+    const target = root.querySelector<HTMLElement>(`[data-outline-uid="${uid}"] ${selector}`)!;
+    editor.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+
+    const [textNode, textOffset] = pointAt(editor, editor.textContent?.length ?? 0);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    if (typeof selection.setBaseAndExtent === 'function') {
+      selection.setBaseAndExtent(textNode, textOffset, target.parentNode ?? target, 0);
+    } else {
+      const range = document.createRange();
+      range.setStartBefore(target);
+      range.setEnd(textNode, textOffset);
+      selection.addRange(range);
+    }
+    document.dispatchEvent(new Event('selectionchange'));
+    target.dispatchEvent(new Event('pointerup', { bubbles: true }));
+
+    const event = key(root, 'Backspace');
+
+    expect(event.defaultPrevented).toBe(true);
+    const edited = uid === 'a1' ? current().children[0].children[0] : current().children[0];
+    expect(edited.data.text).toBe('');
     controller.destroy();
     root.remove();
   });

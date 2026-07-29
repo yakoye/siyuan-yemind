@@ -67,6 +67,37 @@ describe('v1.5.1 atomic render lifecycle', () => {
     expect(coordinator.flushPendingTextEdit()).toBe(false);
   });
 
+  it('reports the committed live UID so every render can restore the single visible edit layer', () => {
+    const committed = vi.fn();
+    const live = {
+      createTextNode: vi.fn((text) => ({ text })),
+      getNodeRect: vi.fn(() => ({ width: 180, height: 34 })),
+      layout: vi.fn(),
+    };
+    const mindMap = {
+      renderer: { findNodeByUid: vi.fn(() => live) },
+      richText: { updateTextEditNode: vi.fn() },
+      render: vi.fn((done?: () => void) => done?.()),
+    };
+    const coordinator = new RenderLifecycleCoordinator(mindMap, committed, {
+      request: (callback) => {
+        callback(0);
+        return 1;
+      },
+      cancel: vi.fn(),
+    });
+
+    coordinator.scheduleTextEdit({
+      node: { getData: () => 'active-edit-uid' },
+      text: '<p>持续输入不重影</p>',
+      richText: true,
+      reason: 'input',
+    });
+
+    expect(committed).toHaveBeenCalledOnce();
+    expect(committed).toHaveBeenCalledWith('active-edit-uid');
+  });
+
   it('V151-21/V151-22 discards a queued edit after structure mutation or deletion', () => {
     let callback: FrameRequestCallback | null = null;
     const scheduler: RenderLifecycleScheduler = {

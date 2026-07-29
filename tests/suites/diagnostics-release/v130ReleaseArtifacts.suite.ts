@@ -22,7 +22,7 @@ afterEach(async () => {
 describe('v1.5.0 unified release artifacts', () => {
   it('reads one version contract across every release marker', async () => {
     const contract = await readVersionContract(path.resolve('.'));
-    expect(contract.expected).toBe('1.5.1');
+    expect(contract.expected).toBe('1.5.2');
     expect(Object.keys(contract.versions)).toHaveLength(VERSION_MARKER_COUNT);
     expect(() => assertVersionContract(contract)).not.toThrow();
   });

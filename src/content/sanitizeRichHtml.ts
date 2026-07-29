@@ -25,6 +25,14 @@ export function sanitizeRichHtml(value: string): string {
 
   const template = document.createElement('template');
   template.innerHTML = source;
+  const comments: Comment[] = [];
+  const commentWalker = document.createTreeWalker(template.content, NodeFilter.SHOW_COMMENT);
+  let comment = commentWalker.nextNode();
+  while (comment) {
+    comments.push(comment as Comment);
+    comment = commentWalker.nextNode();
+  }
+  comments.forEach((node) => node.remove());
   template.content.querySelectorAll(BLOCKED_ELEMENTS).forEach((node) => node.remove());
   template.content.querySelectorAll<HTMLElement>('*').forEach((node) => {
     Array.from(node.attributes).forEach((attribute) => {

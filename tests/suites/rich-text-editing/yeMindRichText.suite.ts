@@ -65,6 +65,12 @@ describe('YeMindRichText', () => {
       text: '',
       richText: false,
     });
+    expect(normalizeCanvasTextPayload(
+      '<p>Gen1/2/3/4/5 逐级升速；</p><p>Gen5 Equalization；</p><p><br></p>',
+    )).toEqual({
+      text: 'Gen1/2/3/4/5 逐级升速；\nGen5 Equalization；',
+      richText: false,
+    });
   });
 
   it('uses rich-text measurement only when a real format exists', () => {

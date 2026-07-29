@@ -1,5 +1,5 @@
 import { YeMindEditor, type YeMindEditorOptions } from '../../src/editor/YeMindEditor';
-import { PLUGIN_VERSION } from '../../src/plugin/constants';
+import { RELEASE_INFO } from '../../src/releaseInfo';
 import { AppearanceController } from '../../src/ui/AppearanceController';
 import { confirm, showMessage } from './siyuanAdapter';
 import {
@@ -137,7 +137,10 @@ export class YeMindWebApp {
   private renderShell(): void {
     this.root.innerHTML = webShellTemplate();
     const version = this.root.querySelector<HTMLElement>('[data-web-version]');
-    if (version) version.textContent = `本地网页版 · v${PLUGIN_VERSION}`;
+    if (version) {
+      version.textContent = `本地网页版 · ${RELEASE_INFO.sourceBuildLabel}`;
+      version.title = `源码构建时间：${RELEASE_INFO.sourceBuildTime}`;
+    }
     this.editorHost = this.root.querySelector<HTMLElement>('[data-web-editor]');
     this.mapList = this.root.querySelector<HTMLElement>('[data-web-map-list]');
     this.root.addEventListener('click', this.onClick);

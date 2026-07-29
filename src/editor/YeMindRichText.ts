@@ -90,7 +90,9 @@ export function normalizeCanvasTextPayload(html: unknown): CanvasTextPayload {
   const plain = richText
     ? ''
     : nodeRichTextToTextWithWrap(source.replace(/<br\s*\/?>/gi, '\n'))
-        .replace(/\u00a0/g, ' ');
+        .replace(/\u00a0/g, ' ')
+        .replace(/^(?:[ \t]*\n)+/, '')
+        .replace(/(?:\n[ \t]*)+$/, '');
   return {
     text: richText
       ? source
@@ -192,6 +194,24 @@ export default class YeMindRichText extends (BaseRichText as any) {
     if (!this.showTextEdit) return;
     this.schedulePlacementStabilization();
   };
+
+  /**
+   * The upstream RichText plugin migrates every plain node to `richText: true`
+   * when it is constructed and whenever a new tree is installed. YeMind keeps
+   * plain and formatted nodes in one canonical model, so that implicit
+   * migration destroys native line breaks and changes node measurement after
+   * a collapse, reload, or first edit.
+   *
+   * Rich text is enabled only by an actual formatting edit. Loading or
+   * replacing a tree must be identity-preserving.
+   */
+  handleDataToRichTextOnInit(): void {
+    // Intentionally keep the repository model unchanged.
+  }
+
+  handleSetData<T>(data: T): T {
+    return data;
+  }
 
   showEditText(params: any): void {
     if (this.showTextEdit) return;

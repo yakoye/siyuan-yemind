@@ -32,7 +32,7 @@ export class RenderLifecycleCoordinator {
 
   constructor(
     private readonly mindMap: any,
-    private readonly onCommitted: () => void,
+    private readonly onCommitted: (uid?: string) => void,
     private readonly scheduler: RenderLifecycleScheduler = browserScheduler,
   ) {}
 
@@ -181,7 +181,7 @@ export class RenderLifecycleCoordinator {
       this.mindMap.render?.(() => {
         if (revision !== this.revision) return;
         this.mindMap.richText?.updateTextEditNode?.();
-        this.onCommitted();
+        this.onCommitted(uid);
       });
   }
 

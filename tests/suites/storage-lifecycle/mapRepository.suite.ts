@@ -119,6 +119,82 @@ describe('MapRepository', () => {
     expect((storage.read() as any).maps[0].data.children[0].data.text).toBe('Pages 部署均通过');
   });
 
+  it('preserves explicit internal line breaks across collapse persistence and reload', async () => {
+    const multiline = '配置空间读写\n↓\nBAR 寄存器读写\n↓\nDMA 双向传输';
+    const storage = memoryStorage({
+      version: 1,
+      activeMapId: 'multiline',
+      maps: [{
+        id: 'multiline',
+        title: '多行节点',
+        createdAt: 1,
+        updatedAt: 1,
+        layout: 'logicalStructure',
+        theme: 'default',
+        data: {
+          data: { uid: 'root', text: 'Root', richText: false, expand: true },
+          children: [{
+            data: { uid: 'flow', text: multiline, richText: false, expand: false },
+            children: [{ data: { uid: 'leaf', text: 'Leaf' }, children: [] }],
+          }],
+        },
+      }],
+    });
+    const first = new MapRepository(storage);
+    await first.load();
+    expect(first.get('multiline')?.data.children[0].data.text).toBe(multiline);
+
+    const reopened = new MapRepository(storage);
+    await reopened.load();
+    expect(reopened.get('multiline')?.data.children[0].data).toMatchObject({
+      uid: 'flow',
+      text: multiline,
+      richText: false,
+      expand: false,
+    });
+  });
+
+  it('migrates legacy rich-text paragraphs with raw internal newlines to plain multiline text', async () => {
+    const multiline = '配置空间读写\n↓\nBAR 寄存器读写\n↓\nDMA 双向传输';
+    const storage = memoryStorage({
+      version: 1,
+      activeMapId: 'legacy-raw-newlines',
+      maps: [{
+        id: 'legacy-raw-newlines',
+        title: '旧多行节点',
+        createdAt: 1,
+        updatedAt: 1,
+        layout: 'logicalStructure',
+        theme: 'default',
+        data: {
+          data: { uid: 'root', text: 'Root', richText: false },
+          children: [{
+            data: {
+              uid: 'flow',
+              text: `<p>${multiline}</p>`,
+              richText: true,
+              expand: false,
+            },
+            children: [],
+          }],
+        },
+      }],
+    });
+
+    const repo = new MapRepository(storage);
+    await repo.load();
+
+    expect(repo.get('legacy-raw-newlines')?.data.children[0].data).toMatchObject({
+      text: multiline,
+      richText: false,
+      expand: false,
+    });
+    expect((storage.read() as any).maps[0].data.children[0].data).toMatchObject({
+      text: multiline,
+      richText: false,
+    });
+  });
+
   it('does not discard supported block rich-text formats while migrating existing maps', async () => {
     const storage = memoryStorage({
       version: 1,

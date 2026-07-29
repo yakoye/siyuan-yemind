@@ -24,6 +24,35 @@ describe('v0.6.5 canvas rich-text visibility regression', () => {
     expect(['0', '0px']).toContain(editor.style.outline);
     expect(editor.style.boxShadow).toBe('none');
   });
+
+  it('hides only the active node static text while its Quill editor is visible', () => {
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'block';
+    wrapper.innerHTML = '<div class="ql-container"><div class="ql-editor">唯一编辑层</div></div>';
+    const staticText = document.createElement('div');
+    staticText.className = 'smm-richtext-node-wrap';
+    staticText.textContent = '不应叠在编辑器下面';
+    const foreignObject = document.createElement('foreignObject');
+    foreignObject.append(staticText);
+    const node = {
+      getData: (key: string) => key === 'uid' ? 'active-uid' : undefined,
+      style: { merge: () => '#1f2937' },
+      _textData: { nodeContent: { node: foreignObject } },
+    };
+    const map = {
+      richText: { textEditNode: wrapper, node, showTextEdit: true },
+      renderer: { textEdit: { getBackground: () => '#ffffff' } },
+    };
+
+    expect(synchronizeCanvasRichTextVisibility(map as any)).toBe(true);
+    expect(staticText.hidden).toBe(true);
+    expect(staticText.getAttribute('aria-hidden')).toBe('true');
+
+    map.richText.showTextEdit = false;
+    expect(synchronizeCanvasRichTextVisibility(map as any)).toBe(true);
+    expect(staticText.hidden).toBe(false);
+    expect(staticText.hasAttribute('aria-hidden')).toBe(false);
+  });
 });
 
 import { createMindMap } from '../../../src/core/createMindMap';

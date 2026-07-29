@@ -1,8 +1,10 @@
 import { readFile, stat } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
+import { createSourceBuildDefines, resolveSourceBuildIdentity } from './build/buildIdentity';
 
 const assetRoot = resolve(__dirname, 'assets');
+const sourceBuild = resolveSourceBuildIdentity(__dirname);
 const rootFiles = new Map([
   ['/icon.png', resolve(__dirname, 'icon.png')],
 ]);
@@ -63,6 +65,7 @@ function serveWorkspaceAssets(): Plugin {
 export default defineConfig({
   root: resolve(__dirname, 'web'),
   base: './',
+  define: createSourceBuildDefines(sourceBuild),
   plugins: [serveWorkspaceAssets()],
   resolve: {
     alias: {

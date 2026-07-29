@@ -11,7 +11,7 @@ import {
   flattenStructuredOutline,
   normalizeStructuredOutlineDepths,
   normalizeStructuredOutlineBoundaryText,
-  normalizeStructuredOutlineContent,
+  normalizeStructuredOutlineEditorHtml,
   structuredOutlineHtmlToText,
   structuredOutlineIsRichHtml,
   type StructuredOutlineBlock,
@@ -125,6 +125,11 @@ function editorIsSemanticallyEmpty(element: HTMLElement): boolean {
     .trim().length === 0;
 }
 
+export interface StructuredOutlineSyncOptions {
+  force?: boolean;
+  source?: 'external' | 'history';
+}
+
 function isClozeElement(element: Element | null): element is HTMLElement {
   if (!(element instanceof HTMLElement)) return false;
   if (element.hasAttribute('data-yemind-cloze')) return true;
@@ -235,10 +240,7 @@ function inlineHtmlFromClipboard(value: string): string {
     block.replaceWith(fragment);
   });
   const inline = template.innerHTML;
-  return normalizeStructuredOutlineContent(
-    inline,
-    structuredOutlineIsRichHtml(inline),
-  ).html;
+  return normalizeStructuredOutlineEditorHtml(inline).html;
 }
 
 function stripLeadingClipboardIndent(value: string): string {
@@ -452,7 +454,13 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     if (readonly) this.cancelTimer();
   }
 
-  syncFromTree(tree: MindMapTree, force = false): void {
+  syncFromTree(
+    tree: MindMapTree,
+    options: boolean | StructuredOutlineSyncOptions = false,
+  ): void {
+    const force = typeof options === 'boolean'
+      ? options
+      : options.force === true || options.source === 'history';
     this.lastTree = tree;
     if (this.applying) return;
     const blocks = flattenStructuredOutline(tree);
@@ -461,8 +469,12 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       this.scheduleGuideRender();
       return;
     }
+    if (force) {
+      this.cancelTimer();
+      this.dirty = false;
+    }
     const bookmark = this.captureSelectionBookmark();
-    this.patchBlocks(blocks, bookmark);
+    this.patchBlocks(blocks, bookmark, force);
     this.scheduleGuideRender();
     this.lastAppliedSignature = this.domSignature();
     this.dirty = false;
@@ -1357,7 +1369,11 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     this.syncOutlineMediaSelection();
   }
 
-  private patchBlocks(blocks: StructuredOutlineBlock[], bookmark: SelectionBookmark | null): void {
+  private patchBlocks(
+    blocks: StructuredOutlineBlock[],
+    bookmark: SelectionBookmark | null,
+    forceText = false,
+  ): void {
     const root = this.options.root;
     const existing = new Map<string, HTMLElement>();
     root.querySelectorAll<HTMLElement>(':scope > [data-outline-uid]').forEach((row) => {
@@ -1370,7 +1386,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       const key = blockKey(block);
       let row = existing.get(key);
       if (!row) row = this.createRow(block);
-      else this.patchRow(row, block, selectionUids.has(block.uid));
+      else this.patchRow(row, block, selectionUids.has(block.uid) && !forceText);
       row.style.setProperty(
         '--ymz-outline-branch-color',
         outlineBranchColorVariable(branchColors.get(block.uid) ?? 0),
@@ -1576,10 +1592,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       const rawHtml = editor && editorIsSemanticallyEmpty(editor)
         ? ''
         : sanitizeRichHtml(editor?.innerHTML ?? '');
-      const content = normalizeStructuredOutlineContent(
-        rawHtml,
-        structuredOutlineIsRichHtml(rawHtml),
-      );
+      const content = normalizeStructuredOutlineEditorHtml(rawHtml);
       const html = content.html;
       const previous = existing.get(`${kind}:${uid}`);
       return {
@@ -1672,10 +1685,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     previous.forEach((block, index) => {
       const next = blocks[index];
       if (!next || block.html === next.html) return;
-      const content = normalizeStructuredOutlineContent(
-        next.html,
-        structuredOutlineIsRichHtml(next.html),
-      );
+      const content = normalizeStructuredOutlineEditorHtml(next.html);
       patches.push({
         uid: next.uid,
         text: content.richText ? content.html : content.text,

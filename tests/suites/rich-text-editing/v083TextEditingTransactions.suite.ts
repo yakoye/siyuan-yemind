@@ -18,6 +18,14 @@ async function nextFrame(): Promise<void> {
   await new Promise<void>((resolve) => setTimeout(resolve, 0));
 }
 
+async function waitForMapRender(map: any): Promise<void> {
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    if (map.renderer.root) return;
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  }
+  throw new Error('mind-map render did not finish');
+}
+
 function prepareSvgRect(value: DOMRect): void {
   const proto: any = (globalThis as any).SVGElement?.prototype;
   if (!proto) return;
@@ -42,6 +50,87 @@ function mountMap(data: any) {
 }
 
 describe('v0.8.3 canvas text editing transactions', () => {
+  it('keeps canonical plain multiline data plain when the rich-text plugin initializes', () => {
+    const multiline = 'Detect\n↓\nPolling\n↓\nConfiguration\n↓\nRecovery\n↓\nL0';
+    const { root, map } = mountMap({
+      data: {
+        text: multiline,
+        uid: 'root',
+        richText: false,
+        yemindTextEdited: true,
+      },
+      children: [],
+    });
+
+    expect(map.getData(false).data).toMatchObject({
+      uid: 'root',
+      text: multiline,
+      richText: false,
+    });
+
+    map.destroy();
+    root.remove();
+  });
+
+  it('does not rewrite plain nodes when another canonical tree is installed', () => {
+    const { root, map } = mountMap({
+      data: { text: 'Root', uid: 'root', richText: false },
+      children: [],
+    });
+    const multiline = '配置空间读写\n↓\nBAR 寄存器读写\n↓\nDMA 双向传输';
+
+    map.setData({
+      data: { text: 'Next', uid: 'next-root', richText: false },
+      children: [{
+        data: { text: multiline, uid: 'flow', richText: false },
+        children: [],
+      }],
+    });
+
+    expect(map.getData(false).children[0].data).toMatchObject({
+      uid: 'flow',
+      text: multiline,
+      richText: false,
+    });
+
+    map.destroy();
+    root.remove();
+  });
+
+  it('uses customTextWidth when rendering a canonical plain-text node', async () => {
+    const { root, map } = mountMap({
+      data: {
+        text: 'LTSSM 状态读取及历史记录；当前 Link Speed、Link Width；Lane 状态和 PHY PLL/CDR 状态',
+        uid: 'plain-width',
+        richText: false,
+        customTextWidth: 45,
+      },
+      children: [],
+    });
+
+    await waitForMapRender(map);
+
+    expect(map.renderer.root.customTextWidth).toBe(45);
+    expect(map.renderer.root._textData.width).toBe(45);
+
+    const rendered = new Promise<void>((resolve) => {
+      const onRenderEnd = () => {
+        map.off('node_tree_render_end', onRenderEnd);
+        resolve();
+      };
+      map.on('node_tree_render_end', onRenderEnd);
+    });
+    map.renderer.root.setData({ customTextWidth: 90 });
+    map.render();
+    await rendered;
+
+    expect(map.renderer.root.nodeData.data.customTextWidth).toBe(90);
+    expect(map.renderer.root._textData.width).toBe(90);
+
+    map.destroy();
+    root.remove();
+  });
+
   it.skip('positions the local editor over the node instead of using viewport coordinates inside the editor root', async () => {
     const { root, map } = mountMap({ data: { text: 'AXI 内存事务语义', uid: 'root', yemindTextEdited: true }, children: [] });
     await new Promise((resolve) => setTimeout(resolve, 40));

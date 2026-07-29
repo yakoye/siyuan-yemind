@@ -247,13 +247,14 @@ function createTextNode(specifyText) {
   const g = new G()
   const fontSize = this.getStyle('fontSize', false)
   const textAlign = this.getStyle('textAlign', false)
+  const hasCustomWidth = this.hasCustomWidth()
   // 文本超长自动换行
   let textArr = []
   if (!isUndef(text)) {
     textArr = String(text).split(/\n/gim)
   }
-  const { textAutoWrapWidth: maxWidth, emptyTextMeasureHeightText } =
-    this.mindMap.opt
+  const { textAutoWrapWidth, emptyTextMeasureHeightText } = this.mindMap.opt
+  const maxWidth = hasCustomWidth ? this.customTextWidth : textAutoWrapWidth
   let isMultiLine = textArr.length > 1
   textArr.forEach((item, index) => {
     let arr = item.split('')
@@ -295,6 +296,15 @@ function createTextNode(specifyText) {
       }[textAlign] || 'start'
     )
     this.style.text(node)
+    if (hasCustomWidth) {
+      node.x(
+        {
+          left: 0,
+          center: maxWidth / 2,
+          right: maxWidth
+        }[textAlign] || 0
+      )
+    }
     node.y(
       fontSize * noneRichTextNodeLineHeight * index +
         ((noneRichTextNodeLineHeight - 1) * fontSize) / 2
@@ -309,7 +319,7 @@ function createTextNode(specifyText) {
     const tmpBbox = tmpNode.bbox()
     height = tmpBbox.height
   }
-  width = Math.min(Math.ceil(width), maxWidth)
+  width = hasCustomWidth ? maxWidth : Math.min(Math.ceil(width), maxWidth)
   height = Math.ceil(height)
   g.attr('data-width', width)
   g.attr('data-height', height)

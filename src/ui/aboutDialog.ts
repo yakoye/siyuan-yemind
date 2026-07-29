@@ -47,8 +47,10 @@ export function createAboutDialogTemplate(): string {
         <div><dt>插件声明版本</dt><dd data-about-version="manifest">正在读取…</dd></div>
         <div><dt>运行时代码版本</dt><dd data-about-version="runtime">${escapeHtml(RELEASE_INFO.version)}</dd></div>
         <div><dt>构建版本</dt><dd data-about-version="build">${escapeHtml(RELEASE_INFO.buildVersion)}</dd></div>
-        <div><dt>构建标识</dt><dd>${escapeHtml(RELEASE_INFO.buildId)}</dd></div>
-        <div><dt>构建时间</dt><dd>${escapeHtml(RELEASE_INFO.buildTime)}</dd></div>
+        <div><dt>发布标识</dt><dd>${escapeHtml(RELEASE_INFO.buildId)}</dd></div>
+        <div><dt>版本标记时间</dt><dd>${escapeHtml(RELEASE_INFO.buildTime)}</dd></div>
+        <div><dt>源码构建</dt><dd>${escapeHtml(RELEASE_INFO.sourceBuildId)}</dd></div>
+        <div><dt>源码构建时间</dt><dd>${escapeHtml(RELEASE_INFO.sourceBuildTime)}</dd></div>
         <div><dt>思源版本</dt><dd data-about-version="siyuan">正在读取…</dd></div>
         <div><dt>开发基线</dt><dd>${escapeHtml(RELEASE_INFO.hostBaseline)}</dd></div>
       </dl>
@@ -113,8 +115,10 @@ export function openYeMindAboutDialog(options: AboutDialogOptions = {}): void {
             `插件声明版本: ${consistency.manifest}`,
             `运行时代码版本: ${consistency.runtime}`,
             `构建版本: ${consistency.build}`,
-            `构建标识: ${RELEASE_INFO.buildId}`,
-            `构建时间: ${RELEASE_INFO.buildTime}`,
+            `发布标识: ${RELEASE_INFO.buildId}`,
+            `版本标记时间: ${RELEASE_INFO.buildTime}`,
+            `源码构建: ${RELEASE_INFO.sourceBuildId}`,
+            `源码构建时间: ${RELEASE_INFO.sourceBuildTime}`,
             `思源版本: ${String(environment.appVersion ?? 'unknown')}`,
             `开发基线: ${RELEASE_INFO.hostBaseline}`,
           ].join('\n'));

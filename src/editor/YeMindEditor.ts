@@ -962,6 +962,7 @@ export class YeMindEditor {
       },
     });
     this.renderLifecycle = new RenderLifecycleCoordinator(this.map, () => {
+      synchronizeCanvasRichTextVisibility(this.map as any);
       this.nodeQuickActions?.scheduleRefresh();
       this.miniMapController?.refresh();
     });
@@ -1156,8 +1157,14 @@ export class YeMindEditor {
                   : Boolean(data.outerFrame);
         this.nodeHoverPreview.show(type as any, value as any, anchor);
       },
-      onUndo: () => this.commands?.undo(),
-      onRedo: () => this.commands?.redo(),
+      onUndo: () => {
+        this.commands?.undo();
+        this.refreshOutlineFromMap(true);
+      },
+      onRedo: () => {
+        this.commands?.redo();
+        this.refreshOutlineFromMap(true);
+      },
       onDiagnostic: (action, details) =>
         this.options.diagnostics.record("outline", action, this.current.id, details),
       onSelectionChange: (hasRange, rect, format, target) => {
@@ -3165,11 +3172,11 @@ export class YeMindEditor {
     });
   }
 
-  private refreshOutlineFromMap(): void {
+  private refreshOutlineFromMap(force = false): void {
     if (!this.map || this.destroyed) return;
     const tree = this.map.getData(false) as MindMapTree;
     this.current.data = tree;
-    this.renderOutline(tree);
+    this.renderOutline(tree, force);
   }
 
   private activateNodeByUid(uid: string): void {
@@ -3323,11 +3330,11 @@ export class YeMindEditor {
     requestAnimationFrame(() => requestAnimationFrame(redraw));
   }
 
-  private renderOutline(data: MindMapTree): void {
+  private renderOutline(data: MindMapTree, force = false): void {
     const readonly = this.rootEl.dataset.readonly === "true";
     this.outlinePaneEl.setAttribute("aria-readonly", String(readonly));
     this.outlineEl.setAttribute("aria-readonly", String(readonly));
-    this.outlineRichText?.syncFromTree(data);
+    this.outlineRichText?.syncFromTree(data, force);
     this.updateOutlineMetadata(data);
     this.applyOutlineSearch();
     const selectedUid = String(

@@ -25,6 +25,20 @@ describe('v0.9.30 expansion scopes', () => {
     expect(collapsed.children![0].children![0].data.expand).toBe(false);
   });
 
+  it('changes only expansion state and preserves explicit multiline node text', () => {
+    const source = tree();
+    const multiline = '配置空间读写\n↓\nBAR 寄存器读写\n↓\nDMA 双向传输';
+    source.children![0].data.text = multiline;
+    source.children![0].data.richText = false;
+
+    const collapsed = collapseBranchDeep(source, 'a').tree;
+    const expanded = expandBranchDeep(collapsed, 'a').tree;
+
+    expect(collapsed.children![0].data.text).toBe(multiline);
+    expect(expanded.children![0].data.text).toBe(multiline);
+    expect(expanded.children![0].data.richText).toBe(false);
+  });
+
   it('keeps quick expansion limited to one level', () => {
     const expanded = expandBranchOneLevel(tree(), 'a').tree;
     expect(expanded.children![0].data.expand).toBe(true);

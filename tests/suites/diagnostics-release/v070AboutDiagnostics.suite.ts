@@ -1,7 +1,11 @@
 import JSZip from 'jszip';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { resolveSourceBuildIdentity } from '../../../build/buildIdentity';
 import { RELEASE_INFO, resolveVersionConsistency } from '../../../src/releaseInfo';
 import { createSettingsDialogTemplate } from '../../../src/settings/settingsDialogTemplate';
 import { DEFAULT_SETTINGS } from '../../../src/settings/SettingsStore';
@@ -38,11 +42,46 @@ describe('v0.7.x about and diagnostics release contract', () => {
     expect(aboutSource).toContain('data-about-action="export-diagnostics"');
     expect(aboutSource).toContain('data-about-version="manifest"');
     expect(aboutSource).toContain('RELEASE_INFO.hostBaseline');
+    expect(aboutSource).toContain('RELEASE_INFO.sourceBuildId');
+    expect(aboutSource).toContain('RELEASE_INFO.sourceBuildTime');
   });
 
   it('uses the current semantic version consistently', () => {
-    expect(RELEASE_INFO.version).toBe('1.5.1');
-    expect(resolveVersionConsistency('1.5.1')).toEqual({ manifest: '1.5.1', runtime: '1.5.1', build: '1.5.1', consistent: true });
+    expect(RELEASE_INFO.version).toBe('1.5.2');
+    expect(resolveVersionConsistency('1.5.2')).toEqual({ manifest: '1.5.2', runtime: '1.5.2', build: '1.5.2', consistent: true });
+  });
+
+  it('exposes a source build identity without changing the semantic version', () => {
+    expect(RELEASE_INFO.version).toBe('1.5.2');
+    expect(RELEASE_INFO.sourceBuildId).toMatch(/^(?:[0-9a-f]{7,12}|local)(?:-(?:clean|dirty))?$/);
+    expect(RELEASE_INFO.sourceBuildTime).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(RELEASE_INFO.sourceBuildLabel).toContain('v1.5.2');
+    expect(RELEASE_INFO.sourceBuildLabel).toContain(RELEASE_INFO.sourceBuildId);
+  });
+
+  it('shows the same source build identity in the web shell', () => {
+    const webSource = readFileSync(resolve(process.cwd(), 'web/src/webApp.ts'), 'utf8');
+    expect(webSource).toContain('RELEASE_INFO.sourceBuildLabel');
+  });
+
+  it('keeps generated root bundles out of the source build fingerprint', () => {
+    const root = mkdtempSync(join(tmpdir(), 'yemind-build-id-'));
+    try {
+      mkdirSync(join(root, 'src'));
+      writeFileSync(join(root, 'src', 'entry.ts'), 'export const value = 1;\n');
+      writeFileSync(join(root, 'index.js'), 'generated-one\n');
+      execFileSync('git', ['init'], { cwd: root, stdio: 'ignore' });
+      execFileSync('git', ['config', 'user.email', 'test@example.com'], { cwd: root });
+      execFileSync('git', ['config', 'user.name', 'YeMind Test'], { cwd: root });
+      execFileSync('git', ['add', '.'], { cwd: root });
+      execFileSync('git', ['commit', '-m', 'fixture'], { cwd: root, stdio: 'ignore' });
+      writeFileSync(join(root, 'src', 'entry.ts'), 'export const value = 2;\n');
+      const beforeBundle = resolveSourceBuildIdentity(root);
+      writeFileSync(join(root, 'index.js'), 'generated-two\n');
+      expect(resolveSourceBuildIdentity(root).id).toBe(beforeBundle.id);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it('keeps package, lockfile, manifest, runtime metadata and release docs on one identity', () => {
@@ -52,10 +91,10 @@ describe('v0.7.x about and diagnostics release contract', () => {
     const readme = readFileSync(resolve(process.cwd(), 'README_zh_CN.md'), 'utf8');
     const changelog = readFileSync(resolve(process.cwd(), 'CHANGELOG.md'), 'utf8');
     for (const version of [packageJson.version, packageLock.version, packageLock.packages[''].version, manifest.version, RELEASE_INFO.version, RELEASE_INFO.buildVersion]) {
-      expect(version).toBe('1.5.1');
+      expect(version).toBe('1.5.2');
     }
-    expect(readme).toContain('当前版本：`1.5.1`');
-    expect(changelog).toContain('## 1.5.1');
+    expect(readme).toContain('当前版本：`1.5.2`');
+    expect(changelog).toContain('## 1.5.2');
   });
 
   it('exports structured diagnostics files for direct analysis', async () => {

@@ -75,16 +75,33 @@ export class SymbolPicker {
     const groups = searchSymbols(this.search.value, this.activeSection);
     groups.forEach((group) => {
       const section = document.createElement('section');
+      section.className = 'ymz-symbol-picker__card';
       const heading = document.createElement('h4');
       heading.textContent = group.label;
       const grid = document.createElement('div');
-      grid.className = 'ymz-symbol-picker__grid';
-      group.symbols.forEach((symbol) => {
+      grid.dataset.symbolGroup = group.id;
+      grid.className = [
+        'ymz-symbol-picker__grid',
+        group.layout ? `ymz-symbol-picker__grid--${group.layout}` : '',
+      ].filter(Boolean).join(' ');
+      grid.style.setProperty('--ymz-symbol-columns', String(group.columns));
+      group.cells.forEach((symbol) => {
+        if (!symbol) {
+          const empty = document.createElement('span');
+          empty.className = 'ymz-symbol-picker__cell--empty';
+          empty.setAttribute('aria-hidden', 'true');
+          grid.appendChild(empty);
+          return;
+        }
         const button = document.createElement('button');
         button.type = 'button';
         button.dataset.symbolValue = symbol;
-        button.textContent = symbol;
-        button.title = `插入 ${symbol}`;
+        button.setAttribute('aria-label', symbol);
+        const label = group.labels?.[symbol];
+        button.innerHTML = label
+          ? `<span class="ymz-symbol-picker__glyph">${symbol}</span><small>${label}</small>`
+          : `<span class="ymz-symbol-picker__glyph">${symbol}</span>`;
+        button.title = label ? `插入 ${symbol}（${label}）` : `插入 ${symbol}`;
         button.disabled = !this.options.canInsert();
         grid.appendChild(button);
       });

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildTreeFromStructuredOutline,
   flattenStructuredOutline,
+  normalizeStructuredOutlineEditorHtml,
   normalizeStructuredOutlineDepths,
   parseStructuredOutlinePaste,
   serializeStructuredOutlineBlocks,
@@ -56,11 +57,46 @@ describe('v0.9.4 structured outline document', () => {
     expect(structuredOutlineIsRichHtml('<a href="https://example.com">Link</a>')).toBe(true);
   });
 
+  it('decodes an editor hard break into one plain-text node instead of storing a literal br tag', () => {
+    const normalized = normalizeStructuredOutlineEditorHtml(
+      'Detect<br>↓ Polling ↓ Configuration ↓ Recovery ↓ L0',
+    );
+
+    expect(normalized).toEqual({
+      html: 'Detect<br>↓ Polling ↓ Configuration ↓ Recovery ↓ L0',
+      text: 'Detect\n↓ Polling ↓ Configuration ↓ Recovery ↓ L0',
+      richText: false,
+    });
+
+    const blocks = flattenStructuredOutline(baseTree).map((block) =>
+      block.uid === 'a'
+        ? { ...block, html: normalized.html, text: normalized.text }
+        : block,
+    );
+    const result = buildTreeFromStructuredOutline(baseTree, blocks);
+    expect(result.tree.children[0].data).toMatchObject({
+      uid: 'a',
+      text: 'Detect\n↓ Polling ↓ Configuration ↓ Recovery ↓ L0',
+      richText: false,
+    });
+    expect(String(result.tree.children[0].data.text)).not.toContain('<br>');
+    expect(result.tree.children[1].data).toMatchObject({ uid: 'b', text: 'B' });
+  });
+
   it('preserves supported block-level Quill semantics while flattening plain wrappers', () => {
     expect(structuredOutlineIsRichHtml('<p class="ql-align-center">Centered</p>')).toBe(true);
     expect(structuredOutlineIsRichHtml('<p class="ql-indent-2">Indented</p>')).toBe(true);
     expect(structuredOutlineIsRichHtml('<ol><li data-list="bullet">Listed</li></ol>')).toBe(true);
     expect(structuredOutlineIsRichHtml('<blockquote>Quoted</blockquote>')).toBe(true);
+  });
+
+  it('treats unknown structured markup as rich text instead of destructively flattening it', () => {
+    expect(structuredOutlineIsRichHtml(
+      '<table><tbody><tr><td>Lane</td><td>Status</td></tr></tbody></table>',
+    )).toBe(true);
+    expect(structuredOutlineIsRichHtml(
+      '<section data-source="external"><p>Preserve me</p></section>',
+    )).toBe(true);
   });
 
   it('normalizes illegal depth jumps and parses external indentation', () => {

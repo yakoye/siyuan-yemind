@@ -40,7 +40,7 @@ const widthController = new LiveNodeWidthLayoutController(
 mousemove?.({} as Event);
 if (renderCount !== 0 || !frameCallback) throw new Error('full layout must be animation-frame throttled');
 (frameCallback as FrameRequestCallback)(0);
-if (Number(renderCount) !== 1) throw new Error('drag frame must render the complete tree once');
+if (Number(renderCount) !== 0) throw new Error('drag frame must preserve the upstream local width draft without a full tree render');
 if (Number(editorSyncCount) !== 1) throw new Error('drag frame must keep the rich-text editor aligned');
 widthController.destroy();
 
@@ -59,7 +59,7 @@ assert(nodeStyleIcon().includes('ymz-menu-icon') && nodeStyleIcon().includes('ym
 
 export default {
   liveWidthDragDetected: true,
-  liveWidthTreeRender: true,
+  liveWidthLocalDraft: true,
   passiveCanvasOutlineSync: true,
   markerHitAreaClipped: true,
   insertionIcons: true,

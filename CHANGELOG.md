@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.2 - 2026-07-29
+
+- Stabilized live canvas editing so typing, pasting, clearing and width dragging update the editor, SVG node border and layout in one transaction without duplicate layers, jumps or stale geometry.
+- Preserved multiline plain text and structural hard breaks through outline editing, collapse/expand, undo/redo, repository migration and full SiYuan restarts without escaped `<br>` markup or trailing blank lines.
+- Made fast reverse outline selections survive overshooting the marker and rainbow guide, keeping Delete and Backspace bound to the real saved text range.
+- Protected legacy Quill block formats during automatic migration and unified reversible cloze recognition between canvas and outline representations.
+- Rebuilt the persistent symbol picker as padded layout cards with spatial groups, labels, keyboard-accessible names and continuous insertion into the original node.
+- Added source build identity, expanded regression coverage, synchronized the shared plugin/web build, and documented the KMind transaction and geometry comparison.
+
 ## 1.5.1 - 2026-07-29
 
 - Reworked canvas and outline editing into stable UID text transactions, preserving node geometry, viewport state, clipboard selections, and immediate paste bounds without duplicate render frames.
