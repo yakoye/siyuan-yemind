@@ -36,7 +36,7 @@ npm run release:build
 npm run release:verify
 ```
 
-详细规则见 [回归验收清单](docs/REGRESSION_CHECKLIST.md)、[版本与发布规范](docs/版本与发布规范.md)、[测试与验收](docs/测试与验收.md) 和 [v1.5.0 设计说明](docs/设计-v1.5.0-界面与双端统一.md)。版本更新历史统一放在 [CHANGELOG.md](CHANGELOG.md)。
+详细规则见 [回归验收清单](docs/standards/回归验收清单.md)、[版本与发布规范](docs/standards/版本与发布规范.md)、[测试与验收](docs/standards/测试与验收.md) 和 [v1.5.0 设计说明](docs/designs/2026-07-28-1853-v1.5.0-界面与双端统一-设计.md)。版本更新历史统一放在 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可证
 

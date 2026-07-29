@@ -4,7 +4,7 @@
 
 ## 使用方法
 
-1. 以 [`../REGRESSION_CHECKLIST.md`](../REGRESSION_CHECKLIST.md) 为唯一规则基线。
+1. 以 [`../standards/回归验收清单.md`](../standards/回归验收清单.md) 为唯一规则基线。
 2. 新建 `YYYY-MM-DD-版本或候选版本-主题.md`。
 3. 记录基线清单版本、基线提交 SHA、候选提交 SHA、执行档位和影响域。
 4. 只复制本次适用的用例编号和证据；不得直接修改永久基线中的勾选状态。

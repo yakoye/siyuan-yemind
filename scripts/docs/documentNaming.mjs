@@ -1,13 +1,13 @@
 import path from 'node:path';
 
 const STANDARD_DOCUMENTS = new Map([
-  ['docs/REGRESSION_CHECKLIST.md', '回归验收清单.md'],
-  ['docs/superpowers/DEVELOPMENT_REQUIREMENTS.md', '开发要求.md'],
-  ['docs/测试与验收.md', '测试与验收.md'],
-  ['docs/版本管理.md', '版本管理.md'],
-  ['docs/版本与发布规范.md', '版本与发布规范.md'],
-  ['docs/VERSIONING.md', '版本语义规范.md'],
-  ['docs/DIAGNOSTICS_GUIDE.md', '诊断指南.md'],
+  ['docs/standards/回归验收清单.md', '回归验收清单.md'],
+  ['docs/standards/开发要求.md', '开发要求.md'],
+  ['docs/standards/测试与验收.md', '测试与验收.md'],
+  ['docs/standards/版本管理.md', '版本管理.md'],
+  ['docs/standards/版本与发布规范.md', '版本与发布规范.md'],
+  ['docs/standards/版本语义规范.md', '版本语义规范.md'],
+  ['docs/standards/诊断指南.md', '诊断指南.md'],
 ]);
 
 const DOCUMENT_TYPES = [
@@ -40,10 +40,10 @@ function cleanTopic(value) {
   let topic = String(value ?? '')
     .replace(/^\d{4}-\d{2}-\d{2}(?:-\d{4})?-/, '')
     .replace(/^(?:DESIGN|PRODUCT_BOUNDARIES|TEST_COVERAGE_MATRIX|verification|offline-bundle-manifest|设计|实施计划|测试用例|版本验证|验证|验收记录|回归记录)[_-]?/iu, '')
-    .replace(/^v?\d+\.\d+\.\d+[_-]?/i, '');
+    .replace(/^(?:v?\d+\.\d+\.\d+|dev)[_-]?/i, '');
   topic = topic
     .replace(/^(?:DESIGN|PRODUCT_BOUNDARIES|TEST_COVERAGE_MATRIX|verification|offline-bundle-manifest|设计|实施计划|测试用例|版本验证|验证|验收记录|回归记录)[_-]?/iu, '')
-    .replace(/^v?\d+\.\d+\.\d+[_-]?/i, '')
+    .replace(/^(?:v?\d+\.\d+\.\d+|dev)[_-]?/i, '')
     .replace(/(?:设计|实施计划|测试用例|版本验证|验证记录|验收记录|回归记录|构建清单|产品边界|测试矩阵)$/u, '')
     .replace(/[_\s]+/g, '-')
     .replace(/-{2,}/g, '-')
@@ -63,29 +63,49 @@ export function classifyDocument(inputPath) {
   const relativePath = slash(inputPath);
   const standardName = STANDARD_DOCUMENTS.get(relativePath);
   if (standardName) return classified('standard', 'docs/standards', standardName);
+  if (/^docs\/standards\/[^/]+\.(?:md|txt)$/iu.test(relativePath)) {
+    return classified('standard', 'docs/standards', path.posix.basename(relativePath));
+  }
 
   if (/^docs\/DESIGN_v0\.9\./i.test(relativePath)) {
+    return classified('archive-design', 'docs/archive/v0.9/designs');
+  }
+  if (/^docs\/archive\/v0\.9\/designs\//i.test(relativePath)) {
     return classified('archive-design', 'docs/archive/v0.9/designs');
   }
   if (/^docs\/PRODUCT_BOUNDARIES_v0\.9\./i.test(relativePath)) {
     return classified('archive-boundary', 'docs/archive/v0.9/boundaries');
   }
+  if (/^docs\/archive\/v0\.9\/boundaries\//i.test(relativePath)) {
+    return classified('archive-boundary', 'docs/archive/v0.9/boundaries');
+  }
   if (/^docs\/TEST_COVERAGE_MATRIX_v0\.9\./i.test(relativePath)) {
+    return classified('archive-test-matrix', 'docs/archive/v0.9/test-matrices');
+  }
+  if (/^docs\/archive\/v0\.9\/test-matrices\//i.test(relativePath)) {
     return classified('archive-test-matrix', 'docs/archive/v0.9/test-matrices');
   }
   if (/^docs\/verification-v0\.9\./i.test(relativePath)) {
     return classified('archive-verification', 'docs/archive/v0.9/verifications');
   }
+  if (/^docs\/archive\/v0\.9\/verifications\//i.test(relativePath)) {
+    return classified('archive-verification', 'docs/archive/v0.9/verifications');
+  }
   if (/^docs\/offline-bundle-manifest-v0\.9\./i.test(relativePath)) {
+    return classified('archive-manifest', 'docs/archive/v0.9/manifests');
+  }
+  if (/^docs\/archive\/v0\.9\/manifests\//i.test(relativePath)) {
     return classified('archive-manifest', 'docs/archive/v0.9/manifests');
   }
 
   if (/^docs\/superpowers\/specs\//i.test(relativePath)
-    || /^docs\/设计-/u.test(relativePath)) {
+    || /^docs\/设计-/u.test(relativePath)
+    || /^docs\/designs\//i.test(relativePath)) {
     return classified('design', 'docs/designs');
   }
   if (/^docs\/superpowers\/plans\//i.test(relativePath)
-    || /^docs\/实施计划-/u.test(relativePath)) {
+    || /^docs\/实施计划-/u.test(relativePath)
+    || /^docs\/plans\//i.test(relativePath)) {
     return classified('plan', 'docs/plans');
   }
   if (/^docs\/regression-runs\/README\.md$/i.test(relativePath)) {
@@ -97,14 +117,23 @@ export function classifyDocument(inputPath) {
   if (/^docs\/测试用例-/u.test(relativePath)) {
     return classified('release-test', `docs/releases/${versionFromPath(relativePath)}`);
   }
+  if (/^docs\/releases\/[^/]+\/.+-测试用例\.(?:md|txt)$/iu.test(relativePath)) {
+    return classified('release-test', path.posix.dirname(relativePath));
+  }
   if (/^docs\/(?:版本验证|验证)-/u.test(relativePath)
     || /^docs\/verification-v(?:1|2|3|4|5|6|7|8|9)\./i.test(relativePath)
     || /^docs\/verification-web-/i.test(relativePath)
     || /^docs\/验证记录-/u.test(relativePath)) {
     return classified('release-verification', `docs/releases/${versionFromPath(relativePath)}`);
   }
+  if (/^docs\/releases\/[^/]+\/.+-验证记录\.(?:md|txt)$/iu.test(relativePath)) {
+    return classified('release-verification', path.posix.dirname(relativePath));
+  }
   if (/^docs\/验收记录-/u.test(relativePath)) {
     return classified('release-acceptance', `docs/releases/${versionFromPath(relativePath)}`);
+  }
+  if (/^docs\/releases\/[^/]+\/.+-验收记录\.(?:md|txt)$/iu.test(relativePath)) {
+    return classified('release-acceptance', path.posix.dirname(relativePath));
   }
   if (/^docs\/YeMind_v\d+\.\d+\.\d+.*(?:清单|设计).*\.(?:md|txt)$/iu.test(relativePath)) {
     return classified('release-design', `docs/releases/${versionFromPath(relativePath)}`);

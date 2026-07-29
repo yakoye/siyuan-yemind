@@ -125,9 +125,9 @@ describe('YeMind plugin identity and install layout', () => {
       'README.md', 'README_zh_CN.md', 'CHANGELOG.md', 'DEVELOPMENT_PLAN.md',
       'FEATURE_MATRIX.md', 'MIGRATION_STATUS.md', 'AGENTS.md', 'ARCHITECTURE.md',
       ...Array.from(new Set([
-        'docs/DIAGNOSTICS_GUIDE.md', 'docs/VERSIONING.md',
-        'docs/TEST_COVERAGE_MATRIX_v0.9.30.md', 'docs/verification-v0.9.30.md',
-        'docs/PRODUCT_BOUNDARIES_v0.9.30.md',
+        'docs/standards/诊断指南.md', 'docs/standards/版本语义规范.md',
+        'docs/archive/v0.9/test-matrices/2026-07-26-0015-v0.9.30-版本-测试矩阵.md', 'docs/archive/v0.9/verifications/2026-07-26-0015-v0.9.30-版本-验证记录.md',
+        'docs/archive/v0.9/boundaries/2026-07-26-0015-v0.9.30-版本-产品边界.md',
       ])),
     ].map((file) => readFileSync(resolve(file), 'utf8')).join('\n');
     expect(publicDocs).not.toMatch(/KMind Zen|siyuan-kmind-zen/i);

@@ -41,7 +41,7 @@ npm run release:build
 npm run release:verify
 ```
 
-See [回归验收清单](docs/REGRESSION_CHECKLIST.md), [版本与发布规范](docs/版本与发布规范.md), [测试与验收](docs/测试与验收.md), and [v1.5.0 design](docs/设计-v1.5.0-界面与双端统一.md). Release history is maintained in [CHANGELOG.md](CHANGELOG.md).
+See [回归验收清单](docs/standards/回归验收清单.md), [版本与发布规范](docs/standards/版本与发布规范.md), [测试与验收](docs/standards/测试与验收.md), and [v1.5.0 design](docs/designs/2026-07-28-1853-v1.5.0-界面与双端统一-设计.md). Release history is maintained in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
