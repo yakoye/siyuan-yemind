@@ -27,6 +27,7 @@ export function nextToggleFormat(
 
 export function isClozeFormat(formatInfo: Record<string, unknown> | null | undefined): boolean {
   if (!formatInfo) return false;
+  if (formatInfo.cloze === true) return true;
   const color = String(formatInfo.color ?? '').toLowerCase().replaceAll(' ', '');
   const background = String(formatInfo.background ?? '').toLowerCase().replaceAll(' ', '');
   return color === 'transparent'

@@ -78,6 +78,10 @@ export function primaryViewIcon(kind: 'map' | 'outline' | 'cards' | 'review'): s
   return `<svg class="ymz-toolbar-icon ymz-primary-view-icon ymz-primary-view-icon--${kind}" viewBox="0 0 24 24" aria-hidden="true">${paths[kind]}</svg>`;
 }
 
+export function cardMenuIcon(): string {
+  return iconSlot(primaryViewIcon('cards'), 'ymz-icon-slot--menu');
+}
+
 export function shareIcon(): string {
   return '<svg class="ymz-toolbar-icon ymz-icon-share" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="6" cy="12" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="19" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 }

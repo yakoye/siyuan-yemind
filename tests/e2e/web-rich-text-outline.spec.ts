@@ -74,6 +74,40 @@ test('plain canvas editing keeps one measurement path and stable node geometry',
   expect(Math.abs(second!.height - first!.height)).toBeLessThanOrEqual(1);
 });
 
+test('canvas paste keeps the live node border aligned with the growing text editor', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop edit-geometry regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  await rootNode.dblclick();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  await textEditor.fill('编辑态');
+  await textEditor.press('End');
+  await textEditor.evaluate((element) => {
+    const transfer = new DataTransfer();
+    transfer.setData('text/plain', '、静态和大纲态统一使用归一化结果。');
+    element.dispatchEvent(new ClipboardEvent('paste', {
+      bubbles: true,
+      cancelable: true,
+      clipboardData: transfer,
+    }));
+  });
+  await expect(textEditor).toContainText('编辑态、静态和大纲态统一使用归一化结果。');
+
+  const editBox = await editor.locator('.smm-richtext-node-edit-wrap').boundingBox();
+  const borderBox = await rootNode.locator('.smm-hover-node').boundingBox();
+  expect(editBox).not.toBeNull();
+  expect(borderBox).not.toBeNull();
+  const editCenterX = editBox!.x + editBox!.width / 2;
+  const borderCenterX = borderBox!.x + borderBox!.width / 2;
+  expect(Math.abs(borderCenterX - editCenterX)).toBeLessThanOrEqual(2);
+  expect(borderBox!.x).toBeLessThanOrEqual(editBox!.x + 2);
+  expect(borderBox!.x + borderBox!.width).toBeGreaterThanOrEqual(editBox!.x + editBox!.width - 2);
+  expect(borderBox!.width - editBox!.width).toBeLessThanOrEqual(24);
+  expect(borderBox!.height - editBox!.height).toBeGreaterThanOrEqual(-2);
+  expect(borderBox!.height - editBox!.height).toBeLessThanOrEqual(16);
+});
+
 test('outline text transactions keep node count, canvas geometry and quick-action anchoring stable', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop split-view regression');
   await resetWebApp(page);
@@ -110,7 +144,7 @@ test('outline text transactions keep node count, canvas geometry and quick-actio
   await expectQuickActionsAnchored(numericChild, actions);
 });
 
-test('outline paste treats browser soft wrapping as one node and Delete edits the saved text range', async ({ page, isMobile }) => {
+test('outline paste trims browser boundary blank lines and Delete removes the pasted text completely', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop split-view regression');
   await resetWebApp(page);
   await addRootChild(page);
@@ -126,8 +160,8 @@ test('outline paste treats browser soft wrapping as one node and Delete edits th
     selection?.removeAllRanges();
     selection?.addRange(range);
     const transfer = new DataTransfer();
-    transfer.setData('text/plain', '浏览器软\n换行内容');
-    transfer.setData('text/html', '<p>浏览器软换行内容</p>');
+    transfer.setData('text/plain', '\n\n这表示该计划范围已落地，但不等于 YeMind 后续不会再\n\n');
+    transfer.setData('text/html', '<p>\n\n这表示该计划范围已落地，但不等于 YeMind 后续不会再</p>');
     element.dispatchEvent(new ClipboardEvent('paste', {
       bubbles: true,
       cancelable: true,
@@ -136,14 +170,44 @@ test('outline paste treats browser soft wrapping as one node and Delete edits th
   });
   await editor.locator('[data-outline-root="true"] [data-outline-editor]').click();
   await expect(editor.locator('[data-outline-drag-source="true"]')).toHaveCount(1);
-  await expect(childText).toContainText('浏览器软换行内容');
+  await expect(childText).toHaveText('这表示该计划范围已落地，但不等于 YeMind 后续不会再');
+  expect(await childText.evaluate((element) => element.textContent?.includes('\n') ?? false)).toBe(false);
 
   await childText.click({ clickCount: 3 });
-  await expect(editor.locator('.ymz-rich-toolbar')).toBeVisible();
+  const toolbar = editor.locator('.ymz-rich-toolbar');
+  await expect(toolbar).toBeVisible();
+  await expect(toolbar).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await expect(toolbar).toHaveCSS('box-shadow', 'none');
   await page.keyboard.press('Delete');
   await expect(childText).toHaveText('');
   await editor.locator('[data-outline-root="true"] [data-outline-editor]').click();
   await expect(editor.locator('.smm-node')).toHaveCount(2);
+});
+
+test('fast reverse outline selection can overshoot the left grip and still Delete the selected text', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop pointer-selection regression');
+  await resetWebApp(page);
+  await addRootChild(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  await editor.locator('[data-action="view-outline"]').click();
+  const childRow = editor.locator('[data-outline-drag-source="true"]').first();
+  const childText = childRow.locator('[data-outline-editor]');
+  const grip = childRow.locator('[data-outline-drag-handle]');
+  const textBox = await childText.boundingBox();
+  const gripBox = await grip.boundingBox();
+  expect(textBox).not.toBeNull();
+  expect(gripBox).not.toBeNull();
+
+  const y = textBox!.y + textBox!.height / 2;
+  await page.mouse.move(textBox!.x + textBox!.width - 2, y);
+  await page.mouse.down();
+  await page.mouse.move(gripBox!.x + gripBox!.width / 2, y, { steps: 1 });
+  await page.mouse.up();
+  await expect.poll(() => page.evaluate(() => window.getSelection()?.toString() ?? ''))
+    .not.toBe('');
+
+  await page.keyboard.press('Delete');
+  await expect(childText).toHaveText('');
 });
 
 test('canvas selected text keeps its range while every direct format control runs', async ({ page }) => {

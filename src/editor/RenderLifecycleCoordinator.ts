@@ -5,6 +5,7 @@ export interface RenderTextEditPayload {
   node: any;
   text: string;
   richText?: boolean;
+  reason?: 'paste' | 'input';
 }
 
 export interface RenderLifecycleScheduler {
@@ -39,8 +40,14 @@ export class RenderLifecycleCoordinator {
     const uid = renderedNodeUid(payload.node);
     if (!uid) return;
     const revision = ++this.revision;
-    this.pending = { revision, payload };
     if (this.frame !== null) this.scheduler.cancel(this.frame);
+    this.frame = null;
+    if (payload.reason === 'paste') {
+      this.pending = null;
+      this.commitTextEdit(payload, revision);
+      return;
+    }
+    this.pending = { revision, payload };
     this.frame = this.scheduler.request(() => {
       this.frame = null;
       if (revision !== this.revision || this.pending?.revision !== revision) return;

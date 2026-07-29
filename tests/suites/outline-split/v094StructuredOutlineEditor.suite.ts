@@ -62,10 +62,10 @@ function clipboardEvent(type: 'copy' | 'paste', values: Record<string, string>):
   return { event, values: store };
 }
 
-function mount(apply = true, readonly = false) {
+function mount(apply = true, readonly = false, initialTree: MindMapTree = tree()) {
   const root = document.createElement('div');
   document.body.appendChild(root);
-  let current = tree();
+  let current = structuredClone(initialTree);
   const onApply = vi.fn((next: MindMapTree) => {
     if (apply) current = next;
     return apply;
@@ -195,6 +195,48 @@ describe('v0.9.4 unified structured outline editor', () => {
     root.remove();
   });
 
+  it('reports cloze as active when a browser full-row selection includes the editor boundary', () => {
+    const { root, controller } = mount();
+    select(root, 'a', 0, 'a', 5);
+    controller.setCloze(true);
+
+    const editor = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-editor]')!;
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    expect((controller as unknown as { currentFormat(): Record<string, unknown> }).currentFormat())
+      .toMatchObject({ cloze: true });
+    controller.destroy();
+    root.remove();
+  });
+
+  it('recognizes and removes a canvas-created style cloze after switching to the outline', () => {
+    const initial = tree();
+    initial.children[0].data.text = '<span style="background-color: rgb(245, 223, 160); color: transparent;">Alpha</span>';
+    initial.children[0].data.richText = true;
+    const { root, controller, current } = mount(true, false, initial);
+    const editor = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-editor]')!;
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    editor.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+
+    expect((controller as unknown as { currentFormat(): Record<string, unknown> }).currentFormat())
+      .toMatchObject({ cloze: true });
+    controller.setCloze(false);
+
+    expect(editor.textContent).toBe('Alpha');
+    expect(editor.innerHTML).not.toContain('transparent');
+    expect(String(current().children[0].data.text)).not.toContain('transparent');
+    controller.destroy();
+    root.remove();
+  });
+
   it('defers reconciliation during IME composition', () => {
     const { root, controller, onApply } = mount();
     const editor = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-editor]')!;
@@ -276,6 +318,47 @@ describe('v0.9.4 unified structured outline editor', () => {
     root.remove();
   });
 
+  it('trims clipboard boundary blank lines before committing a browser paragraph', () => {
+    const { root, controller, current } = mount();
+    select(root, 'a', 0, 'a', 5);
+    const paste = clipboardEvent('paste', {
+      'text/plain': '\n\n这表示该计划范围已落地，但不等于 YeMind 后续不会再\n\n',
+      'text/html': '<p>\n\n这表示该计划范围已落地，但不等于 YeMind 后续不会再</p>',
+    });
+    root.dispatchEvent(paste.event);
+    controller.flush('browser-boundary-blank-lines');
+
+    expect(current().children[0].data).toMatchObject({
+      text: '这表示该计划范围已落地，但不等于 YeMind 后续不会再',
+      richText: false,
+    });
+    expect(current().children).toHaveLength(3);
+    controller.destroy();
+    root.remove();
+  });
+
+  it('deletes selected pasted text without retaining hidden paragraph whitespace', () => {
+    const { root, controller, current } = mount();
+    select(root, 'a', 0, 'a', 5);
+    const paste = clipboardEvent('paste', {
+      'text/plain': '\n\nPages 部署均通过',
+      'text/html': '<p>\n\nPages 部署均通过</p>',
+    });
+    root.dispatchEvent(paste.event);
+    controller.flush('paste-before-delete');
+
+    const editor = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-editor]')!;
+    select(root, 'a', 0, 'a', editor.textContent?.length ?? 0);
+    document.dispatchEvent(new Event('selectionchange'));
+    const event = key(root, 'Delete');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(current().children[0].data).toMatchObject({ text: '', richText: false });
+    expect(editor.innerHTML).toBe('');
+    controller.destroy();
+    root.remove();
+  });
+
   it('restores the last valid outline range so Delete behaves like a text editor after toolbar focus', () => {
     const { root, controller, current } = mount();
     select(root, 'a', 1, 'a', 4);
@@ -287,6 +370,47 @@ describe('v0.9.4 unified structured outline editor', () => {
     expect(event.defaultPrevented).toBe(true);
     expect(current().children[0].data.text).toBe('Aa');
     expect(current().children[0].data.uid).toBe('a');
+    controller.destroy();
+    root.remove();
+  });
+
+  it('deletes a right-to-left text range saved while the pointer still ends inside text', () => {
+    const { root, controller, current } = mount();
+    const editor = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-editor]')!;
+    editor.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    select(root, 'a', 1, 'a', 5);
+    document.dispatchEvent(new Event('selectionchange'));
+    editor.dispatchEvent(new Event('pointerup', { bubbles: true }));
+    window.getSelection()?.removeAllRanges();
+
+    const event = key(root, 'Delete');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(current().children[0].data.text).toBe('A');
+    controller.destroy();
+    root.remove();
+  });
+
+  it('deletes a saved text range when a fast reverse drag ends over the left outline grip', () => {
+    const { root, controller, current } = mount();
+    const editor = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-editor]')!;
+    const grip = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-drag-handle]')!;
+    editor.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+
+    const [endNode, endOffset] = pointAt(editor, 5);
+    const range = document.createRange();
+    range.setStartBefore(grip);
+    range.setEnd(endNode, endOffset);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.dispatchEvent(new Event('selectionchange'));
+    grip.dispatchEvent(new Event('pointerup', { bubbles: true }));
+
+    const event = key(root, 'Delete');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(current().children[0].data.text).toBe('');
     controller.destroy();
     root.remove();
   });

@@ -56,6 +56,13 @@ describe('v0.9.4 structured outline document', () => {
     expect(structuredOutlineIsRichHtml('<a href="https://example.com">Link</a>')).toBe(true);
   });
 
+  it('preserves supported block-level Quill semantics while flattening plain wrappers', () => {
+    expect(structuredOutlineIsRichHtml('<p class="ql-align-center">Centered</p>')).toBe(true);
+    expect(structuredOutlineIsRichHtml('<p class="ql-indent-2">Indented</p>')).toBe(true);
+    expect(structuredOutlineIsRichHtml('<ol><li data-list="bullet">Listed</li></ol>')).toBe(true);
+    expect(structuredOutlineIsRichHtml('<blockquote>Quoted</blockquote>')).toBe(true);
+  });
+
   it('normalizes illegal depth jumps and parses external indentation', () => {
     const parsed = parseStructuredOutlinePaste('Root\n        Too deep\n    Sibling');
     expect(parsed.map((line) => [line.text, line.depth])).toEqual([

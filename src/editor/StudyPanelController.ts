@@ -147,6 +147,14 @@ export class StudyPanelController {
     return card;
   }
 
+  async deleteCardForNode(nodeUid: string): Promise<boolean> {
+    if (this.options.readonly?.()) return false;
+    const uid = String(nodeUid ?? '').trim();
+    if (!uid || !this.cardForNode(uid)) return false;
+    await this.persist(this.cards().filter((card) => card.nodeUid !== uid));
+    return true;
+  }
+
   private cards(): StudyCard[] {
     return this.optimisticCards ?? normalizeStudyCards(this.options.getCards());
   }

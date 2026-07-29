@@ -6728,6 +6728,455 @@ function rateStudyCard(source, rating, reviewedAt = Date.now()) {
     updatedAt: reviewedAt
   };
 }
+const OUTLINE_TEXT_INDENT = "    ";
+const TAB_WIDTH = 4;
+function cloneData(value) {
+  if (typeof structuredClone === "function") {
+    try {
+      return structuredClone(value);
+    } catch {
+    }
+  }
+  return JSON.parse(JSON.stringify(value));
+}
+function htmlToPlainText(value) {
+  if (typeof document !== "undefined") {
+    const element = document.createElement("div");
+    element.innerHTML = value;
+    return element.textContent ?? "";
+  }
+  return value.replace(/<br\s*\/?\s*>/gi, "\n").replace(/<\/p\s*>/gi, "\n").replace(/<[^>]*>/g, "");
+}
+function outlineNodePlainText(data2) {
+  const source = String(data2.text ?? "");
+  const value = data2.richText ? htmlToPlainText(source) : source;
+  return value.replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n").replace(/[\t ]*\n[\t ]*/g, " ").trim();
+}
+function flattenTree(tree) {
+  const lines = [];
+  const visit2 = (node, depth, path2) => {
+    const uid2 = String(node.data.uid ?? path2);
+    lines.push({
+      uid: uid2,
+      depth,
+      path: path2,
+      text: outlineNodePlainText(node.data),
+      data: cloneData({ ...node.data, uid: uid2 })
+    });
+    const children = Array.isArray(node.children) ? node.children : [];
+    children.forEach((child, index) => visit2(child, depth + 1, `${path2}.${index}`));
+  };
+  visit2(tree, 0, "root");
+  return lines;
+}
+function serializeOutlineText(tree, indent = OUTLINE_TEXT_INDENT) {
+  return flattenTree(tree).map((line) => `${indent.repeat(line.depth)}${line.text}`).join("\n");
+}
+function indentColumns(value) {
+  let columns = 0;
+  for (const char of value) {
+    if (char === "	") columns += TAB_WIDTH;
+    else if (char === " " || char === " ") columns += 1;
+    else break;
+  }
+  return columns;
+}
+function greatestCommonDivisor(a, b) {
+  let left = Math.abs(Math.trunc(a));
+  let right = Math.abs(Math.trunc(b));
+  while (right) [left, right] = [right, left % right];
+  return left;
+}
+function inferIndentWidth(values2) {
+  const positive = [...new Set(values2.filter((value) => value > 0))].sort((a, b) => a - b);
+  if (positive.length === 0) return OUTLINE_TEXT_INDENT.length;
+  const exactCandidate = [4, 2, 3, 8].find((candidate) => positive.every((value) => value % candidate === 0));
+  if (exactCandidate) return exactCandidate;
+  const gcd2 = positive.reduce((result, value) => greatestCommonDivisor(result, value));
+  if (gcd2 > 1) return gcd2;
+  return Math.max(1, positive[0]);
+}
+function unescapeImportedOutlineText(value) {
+  return value.replace(/\\([:;])/g, "$1");
+}
+function parseOutlineText(value) {
+  const source = String(value ?? "").replace(/\r\n?/g, "\n");
+  const rawLines = source.split("\n");
+  while (rawLines.length > 0 && rawLines[0].trim() === "") rawLines.shift();
+  while (rawLines.length > 0 && rawLines[rawLines.length - 1].trim() === "") rawLines.pop();
+  if (rawLines.length === 0) {
+    return { lines: [], indentWidth: OUTLINE_TEXT_INDENT.length, topLevelCount: 0, implicitRoot: false };
+  }
+  const measured = rawLines.map((raw, index) => {
+    var _a;
+    const match2 = ((_a = raw.match(/^[\t \u00a0]*/)) == null ? void 0 : _a[0]) ?? "";
+    return {
+      raw,
+      sourceLine: index + 1,
+      rawIndent: match2,
+      columns: indentColumns(match2),
+      text: unescapeImportedOutlineText(raw.slice(match2.length))
+    };
+  });
+  const nonBlank = measured.filter((line) => line.text.trim().length > 0);
+  const baseIndent = nonBlank.length > 0 ? Math.min(...nonBlank.map((line) => line.columns)) : 0;
+  const normalizedIndents = nonBlank.map((line) => Math.max(0, line.columns - baseIndent));
+  const indentWidth = inferIndentWidth(normalizedIndents);
+  const lines = [];
+  let previousDepth = 0;
+  measured.forEach((line) => {
+    const relative = Math.max(0, line.columns - baseIndent);
+    let depth = line.text.trim().length === 0 && line.rawIndent.length === 0 ? previousDepth : Math.max(0, Math.round(relative / indentWidth));
+    depth = Math.min(depth, previousDepth + 1);
+    lines.push({
+      text: line.text,
+      depth,
+      rawIndent: line.rawIndent,
+      sourceLine: line.sourceLine
+    });
+    previousDepth = depth;
+  });
+  const topLevelCount = lines.filter((line) => line.depth === 0).length;
+  return {
+    lines,
+    indentWidth,
+    topLevelCount,
+    implicitRoot: topLevelCount > 1
+  };
+}
+const LEGACY_ICON_LABELS$1 = {
+  yemind_star: "★",
+  yemind_flag: "⚑",
+  yemind_question: "?",
+  yemind_idea: "✦",
+  yemind_check: "✓",
+  yemind_warning: "!",
+  priority_1: "1",
+  priority_2: "2",
+  priority_3: "3"
+};
+function escapeAttribute$2(value) {
+  return String(value ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+function cssPropertyName$1(value) {
+  return value.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+}
+function styleAttribute$1(style) {
+  return Object.entries(style).map(([key, value]) => `${cssPropertyName$1(key)}:${value}`).join(";");
+}
+function normalizeIcons(value) {
+  return Array.isArray(value) ? value.map((item) => String(item ?? "").trim()).filter(Boolean) : [];
+}
+function normalizeTags(value) {
+  return Array.isArray(value) ? value.map((item) => String(item ?? "").trim()).filter(Boolean) : [];
+}
+function hasMeaningfulNote(value) {
+  if (!value) return false;
+  if (typeof value === "string") return value.replace(/<[^>]*>/g, "").trim().length > 0;
+  if (typeof value === "object") {
+    const html2 = String(value.html ?? "");
+    return html2.replace(/<[^>]*>/g, "").trim().length > 0 || /<img\b/i.test(html2);
+  }
+  return false;
+}
+function outlineAccessoriesFromData(data2) {
+  const image = typeof data2.image === "string" && data2.image.trim() ? {
+    url: data2.image,
+    title: typeof data2.imageTitle === "string" ? data2.imageTitle : "",
+    ...typeof data2.yemindClipartId === "string" && data2.yemindClipartId ? { clipartId: data2.yemindClipartId } : {}
+  } : null;
+  const todoValue = data2.yemindTodo && typeof data2.yemindTodo === "object" ? data2.yemindTodo : null;
+  const todo = todoValue ? { checked: Boolean(todoValue.checked), text: String(todoValue.text ?? "") } : null;
+  const comments = Array.isArray(data2.yemindComments) ? data2.yemindComments : [];
+  const outerFrame = data2.outerFrame && typeof data2.outerFrame === "object" ? String(data2.outerFrame.groupId ?? "") : "";
+  return {
+    icons: normalizeIcons(data2.icon),
+    image,
+    todo,
+    tags: normalizeTags(data2.tag),
+    link: typeof data2.hyperlink === "string" ? data2.hyperlink : "",
+    hasNote: hasMeaningfulNote(data2.yemindNote ?? data2.note),
+    commentCount: comments.length,
+    hasOuterFrame: Boolean(outerFrame)
+  };
+}
+function iconHtml(value, pluginBaseUrl) {
+  const marker = markerItemFromValue(value);
+  if (marker) {
+    const style = styleAttribute$1(compactMarkerButtonStyle(pluginBaseUrl, marker));
+    return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon-action data-outline-icon="${escapeAttribute$2(value)}" tabindex="-1" title="${escapeAttribute$2(marker.groupLabel)} ${marker.orderInGroup}" aria-label="修改图标" style="${escapeAttribute$2(style)}"></button>`;
+  }
+  const label = LEGACY_ICON_LABELS$1[value] ?? "•";
+  return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon-action data-outline-icon="${escapeAttribute$2(value)}" tabindex="-1" title="${escapeAttribute$2(value)}" aria-label="修改图标">${escapeAttribute$2(label)}</button>`;
+}
+function symbolIcon$1(symbol) {
+  const safe = escapeAttribute$2(symbol);
+  return `<svg aria-hidden="true" focusable="false"><use href="#${safe}" xlink:href="#${safe}"></use></svg>`;
+}
+function statusButton(type, title, label) {
+  return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute$2(type)}" data-outline-content="${escapeAttribute$2(type)}" tabindex="-1" aria-label="${escapeAttribute$2(title)}">${label}</button>`;
+}
+function outlineMediaChrome(kind) {
+  const handles = ["nw", "n", "ne", "e", "se", "s", "sw", "w"].map((direction) => `<span class="ymz-outline-media-handle" data-outline-media-handle="${direction}" aria-hidden="true"></span>`).join("");
+  const title = kind === "clipart" ? "删除剪贴图" : "删除图片";
+  return `${handles}<button type="button" class="ymz-outline-media-delete" data-outline-media-delete tabindex="-1" aria-label="${title}" title="${title}">×</button>`;
+}
+function outlineAccessoriesHtml(accessories, pluginBaseUrl) {
+  const hasAny = accessories.icons.length || accessories.image || accessories.todo || accessories.tags.length || accessories.link || accessories.hasNote || accessories.commentCount || accessories.hasOuterFrame;
+  if (!hasAny) return "";
+  const todo = accessories.todo ? `<button type="button" class="ymz-outline-accessories__todo${accessories.todo.checked ? " is-checked" : ""}" data-outline-todo-action tabindex="-1" title="${accessories.todo.checked ? "待办已完成" : "待办未完成"}" aria-label="${accessories.todo.checked ? "待办已完成" : "待办未完成"}">${accessories.todo.checked ? "✓" : ""}</button>` : "";
+  const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join("");
+  const image = accessories.image ? `<span role="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? " is-clipart" : ""}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? "clipart" : "image"}" tabindex="-1" title="${escapeAttribute$2(accessories.image.title || (accessories.image.clipartId ? "剪贴图：单击选择，双击预览" : "图片：单击选择，双击预览"))}"><img src="${escapeAttribute$2(accessories.image.url)}" alt="" loading="lazy" draggable="false">${outlineMediaChrome(accessories.image.clipartId ? "clipart" : "image")}</span>` : "";
+  const tags = accessories.tags.length ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute$2(accessories.tags.join("、"))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute$2(tag)}</span>`).join("")}</span>` : "";
+  const note2 = accessories.hasNote ? statusButton("note", "备注", symbolIcon$1("iconYeMindNote")) : "";
+  const comments = accessories.commentCount ? statusButton("comments", `批注 ${accessories.commentCount}`, symbolIcon$1("iconYeMindComment")) : "";
+  const link = accessories.link ? statusButton("link", accessories.link, "↗") : "";
+  const outerFrame = accessories.hasOuterFrame ? statusButton("outer-frame", "已有外框", "□") : "";
+  return `<span class="ymz-outline-accessories" contenteditable="false" aria-label="节点附加内容">${todo}${icons}${image}${tags}${note2}${comments}${link}${outerFrame}</span>`;
+}
+function cloneValue(value) {
+  if (typeof structuredClone === "function") {
+    try {
+      return structuredClone(value);
+    } catch {
+    }
+  }
+  return JSON.parse(JSON.stringify(value));
+}
+function escapeHtml$h(value) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;").replaceAll("\n", "<br>");
+}
+function normalizeStructuredOutlineBoundaryText(value) {
+  const normalized2 = String(value ?? "").replace(/\r\n?/g, "\n").replace(/[\u200b\ufeff]/g, "");
+  const withoutBoundaryLines = normalized2.replace(/^(?:[ \t\u00a0\u3000]*\n)+/, "").replace(/(?:\n[ \t\u00a0\u3000]*)+$/, "");
+  return withoutBoundaryLines.trim().length > 0 ? withoutBoundaryLines : "";
+}
+function trimRichHtmlBoundaryLines(value) {
+  if (typeof document === "undefined") {
+    return value.replace(/^((?:<(?:p|div|span|strong|b|em|i|u|s|strike|code|mark|sub|sup)\b[^>]*>)*)[\r\n]+/i, "$1").replace(/[\r\n]+((?:<\/(?:p|div|span|strong|b|em|i|u|s|strike|code|mark|sub|sup)>)*)$/i, "$1");
+  }
+  const template = document.createElement("template");
+  template.innerHTML = value;
+  const textNodes = [];
+  const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_TEXT);
+  let current = walker.nextNode();
+  while (current) {
+    textNodes.push(current);
+    current = walker.nextNode();
+  }
+  const first = textNodes[0];
+  const last2 = textNodes[textNodes.length - 1];
+  if (first) first.nodeValue = (first.nodeValue ?? "").replace(/^(?:[ \t\u00a0\u3000]*\n)+/, "");
+  if (last2) last2.nodeValue = (last2.nodeValue ?? "").replace(/(?:\n[ \t\u00a0\u3000]*)+$/, "");
+  return template.innerHTML;
+}
+function normalizeStructuredOutlineContent(value, richText) {
+  if (!richText) {
+    const text22 = normalizeStructuredOutlineBoundaryText(value);
+    return { html: escapeHtml$h(text22), text: text22, richText: false };
+  }
+  const sanitized = trimRichHtmlBoundaryLines(sanitizeRichHtml(String(value ?? "")));
+  const text2 = normalizeStructuredOutlineBoundaryText(structuredOutlineHtmlToText(sanitized));
+  const hasEmbeddedContent = typeof document !== "undefined" && (() => {
+    const template = document.createElement("template");
+    template.innerHTML = sanitized;
+    return Boolean(template.content.querySelector("img,svg,mjx-container,.ql-formula,[data-formula],iframe,video,audio"));
+  })();
+  if (!text2 && !hasEmbeddedContent) return { html: "", text: "", richText: false };
+  if (!structuredOutlineIsRichHtml(sanitized)) {
+    return { html: escapeHtml$h(text2), text: text2, richText: false };
+  }
+  return { html: sanitized, text: text2, richText: true };
+}
+function structuredOutlineHtmlToText(value) {
+  const source = String(value ?? "");
+  if (typeof document === "undefined") {
+    return source.replace(/<br\s*\/?\s*>/gi, "\n").replace(/<\/p\s*>/gi, "\n").replace(/<\/div\s*>/gi, "\n").replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ").trimEnd();
+  }
+  const element = document.createElement("div");
+  element.innerHTML = sanitizeRichHtml(source);
+  return (element.innerText || element.textContent || "").replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n").trimEnd();
+}
+function structuredOutlineIsRichHtml(value) {
+  const normalized2 = String(value ?? "").trim();
+  if (!normalized2) return false;
+  if (/<(?:strong|b|em|i|u|s|strike|code|pre|a|span|mark|sub|sup|img|svg|mjx-container|ql-formula|blockquote|ol|ul|li|h[1-6])\b/i.test(normalized2)) {
+    return true;
+  }
+  return /<(?:p|div)\b[^>]*\s(?:class|style|data-[\w-]+|dir|align)\s*=\s*(?:"[^"]+"|'[^']+'|[^\s>]+)/i.test(normalized2);
+}
+function displayHtml(data2) {
+  return normalizeStructuredOutlineContent(data2.text, Boolean(data2.richText)).html;
+}
+function summaries(data2) {
+  const value = data2.generalization;
+  if (Array.isArray(value)) {
+    return value.filter((item) => Boolean(item && typeof item === "object"));
+  }
+  return value && typeof value === "object" ? [value] : [];
+}
+function flattenStructuredOutline(tree) {
+  const blocks = [];
+  const visit2 = (node, depth, parentUid, hiddenByAncestor, path2) => {
+    const uid2 = String(node.data.uid ?? path2);
+    const children = Array.isArray(node.children) ? node.children : [];
+    const expanded = node.data.expand !== false;
+    const html2 = displayHtml(node.data);
+    blocks.push({
+      uid: uid2,
+      depth,
+      html: html2,
+      text: outlineNodePlainText(node.data),
+      kind: "node",
+      parentUid,
+      hidden: hiddenByAncestor,
+      expanded,
+      hasChildren: children.length > 0,
+      isRoot: depth === 0,
+      pristine: node.data.yemindTextPristine === true && node.data.yemindTextEdited !== true,
+      accessories: outlineAccessoriesFromData(node.data)
+    });
+    const descendantsHidden = hiddenByAncestor || !expanded;
+    children.forEach(
+      (child, index) => visit2(child, depth + 1, uid2, descendantsHidden, `${path2}.${index}`)
+    );
+    summaries(node.data).forEach((summary, index) => {
+      const summaryUid = String(summary.uid ?? `${uid2}.summary.${index}`);
+      blocks.push({
+        uid: summaryUid,
+        depth: depth + 1,
+        html: displayHtml(summary),
+        text: outlineNodePlainText(summary),
+        kind: "summary",
+        parentUid: uid2,
+        hidden: descendantsHidden,
+        expanded: true,
+        hasChildren: false,
+        isRoot: false,
+        pristine: summary.yemindTextPristine === true && summary.yemindTextEdited !== true,
+        accessories: outlineAccessoriesFromData(summary)
+      });
+    });
+  };
+  visit2(tree, 0, null, false, "root");
+  return blocks;
+}
+function indexExistingData(tree) {
+  const nodes = /* @__PURE__ */ new Map();
+  const summaryData = /* @__PURE__ */ new Map();
+  const visit2 = (node, path2) => {
+    const uid2 = String(node.data.uid ?? path2);
+    nodes.set(uid2, cloneValue({ ...node.data, uid: uid2 }));
+    summaries(node.data).forEach((summary, index) => {
+      const summaryUid = String(summary.uid ?? `${uid2}.summary.${index}`);
+      summaryData.set(summaryUid, cloneValue({ ...summary, uid: summaryUid }));
+    });
+    (node.children ?? []).forEach((child, index) => visit2(child, `${path2}.${index}`));
+  };
+  visit2(tree, "root");
+  return { nodes, summaries: summaryData };
+}
+function normalizedBlockHtml(block) {
+  const sanitized = sanitizeRichHtml(String(block.html ?? ""));
+  return normalizeStructuredOutlineContent(
+    sanitized || String(block.text ?? ""),
+    structuredOutlineIsRichHtml(sanitized)
+  );
+}
+function updatedData(base, block) {
+  const value = normalizedBlockHtml(block);
+  const data2 = cloneValue(base ?? { text: "" });
+  data2.uid = block.uid;
+  data2.text = value.richText ? value.html : value.text;
+  data2.richText = value.richText;
+  data2.yemindTextPristine = false;
+  data2.yemindTextEdited = true;
+  if (block.kind === "node") data2.expand = block.expanded;
+  return data2;
+}
+function normalizeStructuredOutlineDepths(blocks) {
+  let previousDepth = 0;
+  return blocks.map((block, index) => {
+    let depth = Math.max(0, Math.trunc(block.depth));
+    if (index === 0) depth = 0;
+    else depth = Math.max(1, Math.min(depth, previousDepth + 1));
+    previousDepth = depth;
+    return { ...block, depth, isRoot: index === 0, parentUid: index === 0 ? null : block.parentUid };
+  });
+}
+function buildTreeFromStructuredOutline(baseTree, inputBlocks) {
+  const normalBlocks = normalizeStructuredOutlineDepths(
+    inputBlocks.filter((block) => block.kind === "node")
+  );
+  if (normalBlocks.length === 0) {
+    normalBlocks.push({
+      uid: String(baseTree.data.uid ?? "root"),
+      depth: 0,
+      html: "",
+      text: "",
+      kind: "node",
+      parentUid: null,
+      hidden: false,
+      expanded: true,
+      hasChildren: false,
+      isRoot: true,
+      pristine: false,
+      accessories: { icons: [], image: null, todo: null, tags: [], link: "", hasNote: false, commentCount: 0, hasOuterFrame: false }
+    });
+  }
+  const existing = indexExistingData(baseTree);
+  let reusedNodeCount = 0;
+  let createdNodeCount = 0;
+  const treeByUid = /* @__PURE__ */ new Map();
+  const stack = [];
+  let root2 = null;
+  normalBlocks.forEach((block, index) => {
+    const normalizedDepth = index === 0 ? 0 : Math.max(1, Math.min(block.depth, stack.length));
+    const base = existing.nodes.get(block.uid);
+    if (base) reusedNodeCount += 1;
+    else createdNodeCount += 1;
+    const node = {
+      data: updatedData(base, { ...block }),
+      children: []
+    };
+    treeByUid.set(block.uid, node);
+    if (index === 0) {
+      root2 = node;
+      stack.length = 0;
+      stack.push(node);
+      return;
+    }
+    const parentDepth = Math.max(0, normalizedDepth - 1);
+    const parent = stack[parentDepth] ?? root2;
+    parent.children.push(node);
+    stack[normalizedDepth] = node;
+    stack.length = normalizedDepth + 1;
+  });
+  const groupedSummaries = /* @__PURE__ */ new Map();
+  inputBlocks.filter((block) => block.kind === "summary" && block.parentUid).forEach((block) => {
+    const base = existing.summaries.get(block.uid);
+    const data2 = updatedData(base, block);
+    const list = groupedSummaries.get(block.parentUid) ?? [];
+    list.push(data2);
+    groupedSummaries.set(block.parentUid, list);
+  });
+  groupedSummaries.forEach((value, parentUid) => {
+    const parent = treeByUid.get(parentUid);
+    if (parent) parent.data.generalization = value.length === 1 ? value[0] : value;
+  });
+  return {
+    tree: root2,
+    nodeCount: normalBlocks.length,
+    reusedNodeCount,
+    createdNodeCount
+  };
+}
+function createStructuredOutlineUid() {
+  var _a, _b;
+  const random = (_b = (_a = globalThis.crypto) == null ? void 0 : _a.randomUUID) == null ? void 0 : _b.call(_a);
+  if (random) return `ym-${random}`;
+  return `ym-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
 const clone$3 = (value) => JSON.parse(JSON.stringify(value));
 function normalizeMap(value) {
   var _a;
@@ -6758,6 +7207,13 @@ function normalizeMap(value) {
 function normalizeLegacyTree(tree, fallbackTime, path2 = "root") {
   let changed = false;
   const data2 = { ...tree.data };
+  const normalizedContent = normalizeStructuredOutlineContent(data2.text, Boolean(data2.richText));
+  const normalizedText = normalizedContent.richText ? normalizedContent.html : normalizedContent.text;
+  if (normalizedText !== String(data2.text ?? "") || normalizedContent.richText !== Boolean(data2.richText)) {
+    data2.text = normalizedText;
+    data2.richText = normalizedContent.richText;
+    changed = true;
+  }
   const note2 = typeof data2.note === "string" ? data2.note.trim() : "";
   if (note2) {
     const comments = Array.isArray(data2.yemindComments) ? [...data2.yemindComments] : [];
@@ -6992,7 +7448,7 @@ function applyDialogChrome(dialog) {
 function createYeMindDialog(options) {
   return applyDialogChrome(new siyuan.Dialog(options));
 }
-function escapeHtml$h(value) {
+function escapeHtml$g(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function promptText(title, initialValue, placeholder = "") {
@@ -7001,7 +7457,7 @@ function promptText(title, initialValue, placeholder = "") {
     const dialog = createYeMindDialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$h(initialValue)}" placeholder="${escapeHtml$h(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
+      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$g(initialValue)}" placeholder="${escapeHtml$g(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
       destroyCallback: () => resolve(null)
     });
     const element = dialog.element;
@@ -7033,7 +7489,7 @@ function confirmAction(title, message, confirmText = "确定") {
     const dialog = createYeMindDialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><p>${escapeHtml$h(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$h(confirmText)}</button></div>`,
+      content: `<div class="b3-dialog__content"><p>${escapeHtml$g(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$g(confirmText)}</button></div>`,
       destroyCallback: () => resolve(false)
     });
     let completed = false;
@@ -7047,7 +7503,7 @@ function confirmAction(title, message, confirmText = "确定") {
     (_b = dialog.element.querySelector(".b3-button--text")) == null ? void 0 : _b.addEventListener("click", () => finish(true));
   });
 }
-function escapeHtml$g(value) {
+function escapeHtml$f(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function renderReport(report) {
@@ -7058,7 +7514,7 @@ function renderReport(report) {
   </div>
   <div class="ymz-diagnostics-list">${report.items.map((item) => `<div class="ymz-diagnostics-check" data-status="${item.status}">
     <span class="ymz-diagnostics-check__mark">${item.status === "pass" ? "✓" : item.status === "warning" ? "!" : "×"}</span>
-    <div><b>${escapeHtml$g(item.id)}</b><p>${escapeHtml$g(item.summary)}</p></div>
+    <div><b>${escapeHtml$f(item.id)}</b><p>${escapeHtml$f(item.summary)}</p></div>
   </div>`).join("")}</div>`;
 }
 function renderSearchState(service) {
@@ -7069,10 +7525,10 @@ function renderSearchState(service) {
     <dl>
       <div><dt>思源 / YeMind 结果</dt><dd>${state.nativeResultCount} / ${state.yemindResultCount}</dd></div>
       <div><dt>列表 / 预览</dt><dd>${state.listMounted ? "已挂载" : "未挂载"} / ${state.previewVisible ? "可见" : "不可见"}</dd></div>
-      <div><dt>最后步骤</dt><dd>${escapeHtml$g(state.lastNavigationStep)}</dd></div>
+      <div><dt>最后步骤</dt><dd>${escapeHtml$f(state.lastNavigationStep)}</dd></div>
       <div><dt>导航结果</dt><dd>${navigation}</dd></div>
     </dl>
-    ${state.lastFailure ? `<p>${escapeHtml$g(state.lastFailure)}</p>` : ""}
+    ${state.lastFailure ? `<p>${escapeHtml$f(state.lastFailure)}</p>` : ""}
   </div>`;
 }
 function openDiagnosticsDialog(service) {
@@ -7166,7 +7622,7 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.5.0";
+const PLUGIN_VERSION = "1.5.1";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
@@ -7174,8 +7630,8 @@ const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-28T09:04:26.333Z",
-  buildId: "yemind-v1.5.0-20260728",
+  buildTime: "2026-07-29T07:11:32.254Z",
+  buildId: "yemind-v1.5.1-20260729",
   productName: PRODUCT_NAME,
   hostBaseline: "SiYuan 3.7.3",
   releaseSummary: "对齐 version47 界面并统一插件与网页版，新增卡片复习、完整基础主题和 v1.5.0 传输契约。",
@@ -7197,7 +7653,7 @@ function resolveVersionConsistency(manifestVersion) {
     consistent: manifest !== "unknown" && manifest === runtime && runtime === build2
   };
 }
-function escapeHtml$f(value) {
+function escapeHtml$e(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 async function writeClipboard(text2) {
@@ -7219,25 +7675,25 @@ function createAboutDialogTemplate() {
   return `<div class="ymz-about-dialog">
     <div class="ymz-about-hero">
       <img src="${ROOT_ICON_URL}" alt="YeMind">
-      <div><h3>${escapeHtml$f(RELEASE_INFO.productName)}</h3><p>${escapeHtml$f(RELEASE_INFO.releaseSummary)}</p></div>
+      <div><h3>${escapeHtml$e(RELEASE_INFO.productName)}</h3><p>${escapeHtml$e(RELEASE_INFO.releaseSummary)}</p></div>
     </div>
     <div class="ymz-settings-group ymz-about-version-card">
       <h3>版本信息</h3>
       <dl class="ymz-about-version-grid">
-        <div><dt>当前版本</dt><dd>${escapeHtml$f(RELEASE_INFO.version)}</dd></div>
+        <div><dt>当前版本</dt><dd>${escapeHtml$e(RELEASE_INFO.version)}</dd></div>
         <div><dt>插件声明版本</dt><dd data-about-version="manifest">正在读取…</dd></div>
-        <div><dt>运行时代码版本</dt><dd data-about-version="runtime">${escapeHtml$f(RELEASE_INFO.version)}</dd></div>
-        <div><dt>构建版本</dt><dd data-about-version="build">${escapeHtml$f(RELEASE_INFO.buildVersion)}</dd></div>
-        <div><dt>构建标识</dt><dd>${escapeHtml$f(RELEASE_INFO.buildId)}</dd></div>
-        <div><dt>构建时间</dt><dd>${escapeHtml$f(RELEASE_INFO.buildTime)}</dd></div>
+        <div><dt>运行时代码版本</dt><dd data-about-version="runtime">${escapeHtml$e(RELEASE_INFO.version)}</dd></div>
+        <div><dt>构建版本</dt><dd data-about-version="build">${escapeHtml$e(RELEASE_INFO.buildVersion)}</dd></div>
+        <div><dt>构建标识</dt><dd>${escapeHtml$e(RELEASE_INFO.buildId)}</dd></div>
+        <div><dt>构建时间</dt><dd>${escapeHtml$e(RELEASE_INFO.buildTime)}</dd></div>
         <div><dt>思源版本</dt><dd data-about-version="siyuan">正在读取…</dd></div>
-        <div><dt>开发基线</dt><dd>${escapeHtml$f(RELEASE_INFO.hostBaseline)}</dd></div>
+        <div><dt>开发基线</dt><dd>${escapeHtml$e(RELEASE_INFO.hostBaseline)}</dd></div>
       </dl>
       <div class="ymz-about-consistency" data-about-consistency="pending">正在检查版本一致性…</div>
     </div>
     <div class="ymz-settings-group ymz-about-highlights">
       <h3>本版更新</h3>
-      <ul>${RELEASE_INFO.highlights.map((item) => `<li>${escapeHtml$f(item)}</li>`).join("")}</ul>
+      <ul>${RELEASE_INFO.highlights.map((item) => `<li>${escapeHtml$e(item)}</li>`).join("")}</ul>
     </div>
     <div class="ymz-about-actions">
       <button class="b3-button b3-button--outline" data-about-action="copy-version">复制版本信息</button>
@@ -7748,6 +8204,9 @@ function primaryViewIcon(kind) {
   };
   return `<svg class="ymz-toolbar-icon ymz-primary-view-icon ymz-primary-view-icon--${kind}" viewBox="0 0 24 24" aria-hidden="true">${paths[kind]}</svg>`;
 }
+function cardMenuIcon() {
+  return iconSlot(primaryViewIcon("cards"), "ymz-icon-slot--menu");
+}
 function shareIcon() {
   return '<svg class="ymz-toolbar-icon ymz-icon-share" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="6" cy="12" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="19" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 }
@@ -7812,7 +8271,7 @@ function clipartIcon() {
 function markerIcon() {
   return suppliedIcon("marker");
 }
-function symbolIcon$1() {
+function symbolIcon() {
   return iconSlot('<svg class="ymz-menu-icon ymz-icon-symbol" viewBox="0 0 20 20" aria-hidden="true"><text x="10" y="14.25" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="15" font-weight="700" fill="currentColor">Ω</text></svg>', "ymz-icon-slot--menu");
 }
 function outerFrameIcon() {
@@ -7852,24 +8311,24 @@ const SHORTCUT_ROWS = [
   { key: "summary", label: "概要", group: "节点命令" },
   { key: "relation", label: "关联线", group: "节点命令" }
 ];
-function escapeHtml$e(value) {
+function escapeHtml$d(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function checked(value) {
   return value ? " checked" : "";
 }
 function option$1(value, label, current) {
-  return `<option value="${escapeHtml$e(value)}"${value === current ? " selected" : ""}>${escapeHtml$e(label)}</option>`;
+  return `<option value="${escapeHtml$d(value)}"${value === current ? " selected" : ""}>${escapeHtml$d(label)}</option>`;
 }
 function switchRow(title, description, key, value) {
   return `<label class="ymz-settings-row ymz-settings-row--switch">
-    <span><b>${escapeHtml$e(title)}</b><small>${escapeHtml$e(description)}</small></span>
+    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
     <input class="b3-switch" type="checkbox" data-setting="${String(key)}"${checked(value)}>
   </label>`;
 }
 function selectRow(title, description, key, options) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$e(title)}</b><small>${escapeHtml$e(description)}</small></span>
+    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
     <select class="b3-select fn__size200" data-setting="${String(key)}">${options}</select>
   </label>`;
 }
@@ -7889,24 +8348,24 @@ function canvasModeRow(settings) {
 }
 function textRow(title, description, key, value) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$e(title)}</b><small>${escapeHtml$e(description)}</small></span>
-    <input class="b3-text-field fn__size200" type="text" data-setting="${String(key)}" value="${escapeHtml$e(value)}">
+    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
+    <input class="b3-text-field fn__size200" type="text" data-setting="${String(key)}" value="${escapeHtml$d(value)}">
   </label>`;
 }
 function numberRow(title, description, key, value, min, max, step, suffix) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$e(title)}</b><small>${escapeHtml$e(description)}</small></span>
-    <span class="ymz-settings-number"><input class="b3-text-field" type="number" data-setting="${String(key)}" value="${value}" min="${min}" max="${max}" step="${step}"><em>${escapeHtml$e(suffix)}</em></span>
+    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
+    <span class="ymz-settings-number"><input class="b3-text-field" type="number" data-setting="${String(key)}" value="${value}" min="${min}" max="${max}" step="${step}"><em>${escapeHtml$d(suffix)}</em></span>
   </label>`;
 }
 function shortcutsHtml(shortcuts) {
   let currentGroup = "";
   return SHORTCUT_ROWS.map((row) => {
-    const group2 = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$e(row.group)}</h3>` : "";
+    const group2 = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$d(row.group)}</h3>` : "";
     currentGroup = row.group;
     return `${group2}<div class="ymz-shortcut-row" data-shortcut-row="${row.key}">
-      <span class="ymz-shortcut-row__label">${escapeHtml$e(row.label)}</span>
-      <input class="b3-text-field" data-shortcut="${row.key}" value="${escapeHtml$e(shortcuts[row.key])}" placeholder="未设置">
+      <span class="ymz-shortcut-row__label">${escapeHtml$d(row.label)}</span>
+      <input class="b3-text-field" data-shortcut="${row.key}" value="${escapeHtml$d(shortcuts[row.key])}" placeholder="未设置">
       <button class="b3-button b3-button--outline" data-shortcut-action="record" data-shortcut-key="${row.key}">录制</button>
       <button class="b3-button b3-button--cancel" data-shortcut-action="disable" data-shortcut-key="${row.key}">禁用</button>
       <button class="b3-button b3-button--outline" data-shortcut-action="restore" data-shortcut-key="${row.key}">恢复默认</button>
@@ -8261,7 +8720,7 @@ class YeMindDockView {
         const row = document.createElement("div");
         row.className = `ymz-dock__item${map2.id === activeId ? " is-active" : ""}`;
         row.dataset.mapId = map2.id;
-        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$d(map2.title)}">${escapeHtml$d(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
+        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$c(map2.title)}">${escapeHtml$c(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
         body.appendChild(row);
       });
     }
@@ -8310,7 +8769,7 @@ function registerYeMindDock(plugin, host) {
     }
   });
 }
-function escapeHtml$d(value) {
+function escapeHtml$c(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 const CONSTANTS = {
@@ -79980,414 +80439,6 @@ class RichText {
   }
 }
 RichText.instanceName = "richText";
-const OUTLINE_TEXT_INDENT = "    ";
-const TAB_WIDTH = 4;
-function cloneData(value) {
-  if (typeof structuredClone === "function") {
-    try {
-      return structuredClone(value);
-    } catch {
-    }
-  }
-  return JSON.parse(JSON.stringify(value));
-}
-function htmlToPlainText(value) {
-  if (typeof document !== "undefined") {
-    const element = document.createElement("div");
-    element.innerHTML = value;
-    return element.textContent ?? "";
-  }
-  return value.replace(/<br\s*\/?\s*>/gi, "\n").replace(/<\/p\s*>/gi, "\n").replace(/<[^>]*>/g, "");
-}
-function outlineNodePlainText(data2) {
-  const source = String(data2.text ?? "");
-  const value = data2.richText ? htmlToPlainText(source) : source;
-  return value.replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n").replace(/[\t ]*\n[\t ]*/g, " ").trim();
-}
-function flattenTree(tree) {
-  const lines = [];
-  const visit2 = (node, depth, path2) => {
-    const uid2 = String(node.data.uid ?? path2);
-    lines.push({
-      uid: uid2,
-      depth,
-      path: path2,
-      text: outlineNodePlainText(node.data),
-      data: cloneData({ ...node.data, uid: uid2 })
-    });
-    const children = Array.isArray(node.children) ? node.children : [];
-    children.forEach((child, index) => visit2(child, depth + 1, `${path2}.${index}`));
-  };
-  visit2(tree, 0, "root");
-  return lines;
-}
-function serializeOutlineText(tree, indent = OUTLINE_TEXT_INDENT) {
-  return flattenTree(tree).map((line) => `${indent.repeat(line.depth)}${line.text}`).join("\n");
-}
-function indentColumns(value) {
-  let columns = 0;
-  for (const char of value) {
-    if (char === "	") columns += TAB_WIDTH;
-    else if (char === " " || char === " ") columns += 1;
-    else break;
-  }
-  return columns;
-}
-function greatestCommonDivisor(a, b) {
-  let left = Math.abs(Math.trunc(a));
-  let right = Math.abs(Math.trunc(b));
-  while (right) [left, right] = [right, left % right];
-  return left;
-}
-function inferIndentWidth(values2) {
-  const positive = [...new Set(values2.filter((value) => value > 0))].sort((a, b) => a - b);
-  if (positive.length === 0) return OUTLINE_TEXT_INDENT.length;
-  const exactCandidate = [4, 2, 3, 8].find((candidate) => positive.every((value) => value % candidate === 0));
-  if (exactCandidate) return exactCandidate;
-  const gcd2 = positive.reduce((result, value) => greatestCommonDivisor(result, value));
-  if (gcd2 > 1) return gcd2;
-  return Math.max(1, positive[0]);
-}
-function unescapeImportedOutlineText(value) {
-  return value.replace(/\\([:;])/g, "$1");
-}
-function parseOutlineText(value) {
-  const source = String(value ?? "").replace(/\r\n?/g, "\n");
-  const rawLines = source.split("\n");
-  while (rawLines.length > 0 && rawLines[0].trim() === "") rawLines.shift();
-  while (rawLines.length > 0 && rawLines[rawLines.length - 1].trim() === "") rawLines.pop();
-  if (rawLines.length === 0) {
-    return { lines: [], indentWidth: OUTLINE_TEXT_INDENT.length, topLevelCount: 0, implicitRoot: false };
-  }
-  const measured = rawLines.map((raw, index) => {
-    var _a;
-    const match2 = ((_a = raw.match(/^[\t \u00a0]*/)) == null ? void 0 : _a[0]) ?? "";
-    return {
-      raw,
-      sourceLine: index + 1,
-      rawIndent: match2,
-      columns: indentColumns(match2),
-      text: unescapeImportedOutlineText(raw.slice(match2.length))
-    };
-  });
-  const nonBlank = measured.filter((line) => line.text.trim().length > 0);
-  const baseIndent = nonBlank.length > 0 ? Math.min(...nonBlank.map((line) => line.columns)) : 0;
-  const normalizedIndents = nonBlank.map((line) => Math.max(0, line.columns - baseIndent));
-  const indentWidth = inferIndentWidth(normalizedIndents);
-  const lines = [];
-  let previousDepth = 0;
-  measured.forEach((line) => {
-    const relative = Math.max(0, line.columns - baseIndent);
-    let depth = line.text.trim().length === 0 && line.rawIndent.length === 0 ? previousDepth : Math.max(0, Math.round(relative / indentWidth));
-    depth = Math.min(depth, previousDepth + 1);
-    lines.push({
-      text: line.text,
-      depth,
-      rawIndent: line.rawIndent,
-      sourceLine: line.sourceLine
-    });
-    previousDepth = depth;
-  });
-  const topLevelCount = lines.filter((line) => line.depth === 0).length;
-  return {
-    lines,
-    indentWidth,
-    topLevelCount,
-    implicitRoot: topLevelCount > 1
-  };
-}
-const LEGACY_ICON_LABELS$1 = {
-  yemind_star: "★",
-  yemind_flag: "⚑",
-  yemind_question: "?",
-  yemind_idea: "✦",
-  yemind_check: "✓",
-  yemind_warning: "!",
-  priority_1: "1",
-  priority_2: "2",
-  priority_3: "3"
-};
-function escapeAttribute$2(value) {
-  return String(value ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-}
-function cssPropertyName$1(value) {
-  return value.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
-}
-function styleAttribute$1(style) {
-  return Object.entries(style).map(([key, value]) => `${cssPropertyName$1(key)}:${value}`).join(";");
-}
-function normalizeIcons(value) {
-  return Array.isArray(value) ? value.map((item) => String(item ?? "").trim()).filter(Boolean) : [];
-}
-function normalizeTags(value) {
-  return Array.isArray(value) ? value.map((item) => String(item ?? "").trim()).filter(Boolean) : [];
-}
-function hasMeaningfulNote(value) {
-  if (!value) return false;
-  if (typeof value === "string") return value.replace(/<[^>]*>/g, "").trim().length > 0;
-  if (typeof value === "object") {
-    const html2 = String(value.html ?? "");
-    return html2.replace(/<[^>]*>/g, "").trim().length > 0 || /<img\b/i.test(html2);
-  }
-  return false;
-}
-function outlineAccessoriesFromData(data2) {
-  const image = typeof data2.image === "string" && data2.image.trim() ? {
-    url: data2.image,
-    title: typeof data2.imageTitle === "string" ? data2.imageTitle : "",
-    ...typeof data2.yemindClipartId === "string" && data2.yemindClipartId ? { clipartId: data2.yemindClipartId } : {}
-  } : null;
-  const todoValue = data2.yemindTodo && typeof data2.yemindTodo === "object" ? data2.yemindTodo : null;
-  const todo = todoValue ? { checked: Boolean(todoValue.checked), text: String(todoValue.text ?? "") } : null;
-  const comments = Array.isArray(data2.yemindComments) ? data2.yemindComments : [];
-  const outerFrame = data2.outerFrame && typeof data2.outerFrame === "object" ? String(data2.outerFrame.groupId ?? "") : "";
-  return {
-    icons: normalizeIcons(data2.icon),
-    image,
-    todo,
-    tags: normalizeTags(data2.tag),
-    link: typeof data2.hyperlink === "string" ? data2.hyperlink : "",
-    hasNote: hasMeaningfulNote(data2.yemindNote ?? data2.note),
-    commentCount: comments.length,
-    hasOuterFrame: Boolean(outerFrame)
-  };
-}
-function iconHtml(value, pluginBaseUrl) {
-  const marker = markerItemFromValue(value);
-  if (marker) {
-    const style = styleAttribute$1(compactMarkerButtonStyle(pluginBaseUrl, marker));
-    return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon-action data-outline-icon="${escapeAttribute$2(value)}" tabindex="-1" title="${escapeAttribute$2(marker.groupLabel)} ${marker.orderInGroup}" aria-label="修改图标" style="${escapeAttribute$2(style)}"></button>`;
-  }
-  const label = LEGACY_ICON_LABELS$1[value] ?? "•";
-  return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon-action data-outline-icon="${escapeAttribute$2(value)}" tabindex="-1" title="${escapeAttribute$2(value)}" aria-label="修改图标">${escapeAttribute$2(label)}</button>`;
-}
-function symbolIcon(symbol) {
-  const safe = escapeAttribute$2(symbol);
-  return `<svg aria-hidden="true" focusable="false"><use href="#${safe}" xlink:href="#${safe}"></use></svg>`;
-}
-function statusButton(type, title, label) {
-  return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute$2(type)}" data-outline-content="${escapeAttribute$2(type)}" tabindex="-1" aria-label="${escapeAttribute$2(title)}">${label}</button>`;
-}
-function outlineMediaChrome(kind) {
-  const handles = ["nw", "n", "ne", "e", "se", "s", "sw", "w"].map((direction) => `<span class="ymz-outline-media-handle" data-outline-media-handle="${direction}" aria-hidden="true"></span>`).join("");
-  const title = kind === "clipart" ? "删除剪贴图" : "删除图片";
-  return `${handles}<button type="button" class="ymz-outline-media-delete" data-outline-media-delete tabindex="-1" aria-label="${title}" title="${title}">×</button>`;
-}
-function outlineAccessoriesHtml(accessories, pluginBaseUrl) {
-  const hasAny = accessories.icons.length || accessories.image || accessories.todo || accessories.tags.length || accessories.link || accessories.hasNote || accessories.commentCount || accessories.hasOuterFrame;
-  if (!hasAny) return "";
-  const todo = accessories.todo ? `<button type="button" class="ymz-outline-accessories__todo${accessories.todo.checked ? " is-checked" : ""}" data-outline-todo-action tabindex="-1" title="${accessories.todo.checked ? "待办已完成" : "待办未完成"}" aria-label="${accessories.todo.checked ? "待办已完成" : "待办未完成"}">${accessories.todo.checked ? "✓" : ""}</button>` : "";
-  const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join("");
-  const image = accessories.image ? `<span role="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? " is-clipart" : ""}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? "clipart" : "image"}" tabindex="-1" title="${escapeAttribute$2(accessories.image.title || (accessories.image.clipartId ? "剪贴图：单击选择，双击预览" : "图片：单击选择，双击预览"))}"><img src="${escapeAttribute$2(accessories.image.url)}" alt="" loading="lazy" draggable="false">${outlineMediaChrome(accessories.image.clipartId ? "clipart" : "image")}</span>` : "";
-  const tags = accessories.tags.length ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute$2(accessories.tags.join("、"))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute$2(tag)}</span>`).join("")}</span>` : "";
-  const note2 = accessories.hasNote ? statusButton("note", "备注", symbolIcon("iconYeMindNote")) : "";
-  const comments = accessories.commentCount ? statusButton("comments", `批注 ${accessories.commentCount}`, symbolIcon("iconYeMindComment")) : "";
-  const link = accessories.link ? statusButton("link", accessories.link, "↗") : "";
-  const outerFrame = accessories.hasOuterFrame ? statusButton("outer-frame", "已有外框", "□") : "";
-  return `<span class="ymz-outline-accessories" contenteditable="false" aria-label="节点附加内容">${todo}${icons}${image}${tags}${note2}${comments}${link}${outerFrame}</span>`;
-}
-function cloneValue(value) {
-  if (typeof structuredClone === "function") {
-    try {
-      return structuredClone(value);
-    } catch {
-    }
-  }
-  return JSON.parse(JSON.stringify(value));
-}
-function escapeHtml$c(value) {
-  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;").replaceAll("\n", "<br>");
-}
-function structuredOutlineHtmlToText(value) {
-  const source = String(value ?? "");
-  if (typeof document === "undefined") {
-    return source.replace(/<br\s*\/?\s*>/gi, "\n").replace(/<\/p\s*>/gi, "\n").replace(/<\/div\s*>/gi, "\n").replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ").trimEnd();
-  }
-  const element = document.createElement("div");
-  element.innerHTML = sanitizeRichHtml(source);
-  return (element.innerText || element.textContent || "").replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n").trimEnd();
-}
-function structuredOutlineIsRichHtml(value) {
-  const normalized2 = String(value ?? "").trim();
-  if (!normalized2) return false;
-  return /<(?:strong|b|em|i|u|s|strike|code|pre|a|span|mark|sub|sup|img|svg|mjx-container|ql-formula)\b/i.test(normalized2);
-}
-function displayHtml(data2) {
-  const value = String(data2.text ?? "");
-  return data2.richText ? sanitizeRichHtml(value) : escapeHtml$c(value);
-}
-function summaries(data2) {
-  const value = data2.generalization;
-  if (Array.isArray(value)) {
-    return value.filter((item) => Boolean(item && typeof item === "object"));
-  }
-  return value && typeof value === "object" ? [value] : [];
-}
-function flattenStructuredOutline(tree) {
-  const blocks = [];
-  const visit2 = (node, depth, parentUid, hiddenByAncestor, path2) => {
-    const uid2 = String(node.data.uid ?? path2);
-    const children = Array.isArray(node.children) ? node.children : [];
-    const expanded = node.data.expand !== false;
-    const html2 = displayHtml(node.data);
-    blocks.push({
-      uid: uid2,
-      depth,
-      html: html2,
-      text: outlineNodePlainText(node.data),
-      kind: "node",
-      parentUid,
-      hidden: hiddenByAncestor,
-      expanded,
-      hasChildren: children.length > 0,
-      isRoot: depth === 0,
-      pristine: node.data.yemindTextPristine === true && node.data.yemindTextEdited !== true,
-      accessories: outlineAccessoriesFromData(node.data)
-    });
-    const descendantsHidden = hiddenByAncestor || !expanded;
-    children.forEach(
-      (child, index) => visit2(child, depth + 1, uid2, descendantsHidden, `${path2}.${index}`)
-    );
-    summaries(node.data).forEach((summary, index) => {
-      const summaryUid = String(summary.uid ?? `${uid2}.summary.${index}`);
-      blocks.push({
-        uid: summaryUid,
-        depth: depth + 1,
-        html: displayHtml(summary),
-        text: outlineNodePlainText(summary),
-        kind: "summary",
-        parentUid: uid2,
-        hidden: descendantsHidden,
-        expanded: true,
-        hasChildren: false,
-        isRoot: false,
-        pristine: summary.yemindTextPristine === true && summary.yemindTextEdited !== true,
-        accessories: outlineAccessoriesFromData(summary)
-      });
-    });
-  };
-  visit2(tree, 0, null, false, "root");
-  return blocks;
-}
-function indexExistingData(tree) {
-  const nodes = /* @__PURE__ */ new Map();
-  const summaryData = /* @__PURE__ */ new Map();
-  const visit2 = (node, path2) => {
-    const uid2 = String(node.data.uid ?? path2);
-    nodes.set(uid2, cloneValue({ ...node.data, uid: uid2 }));
-    summaries(node.data).forEach((summary, index) => {
-      const summaryUid = String(summary.uid ?? `${uid2}.summary.${index}`);
-      summaryData.set(summaryUid, cloneValue({ ...summary, uid: summaryUid }));
-    });
-    (node.children ?? []).forEach((child, index) => visit2(child, `${path2}.${index}`));
-  };
-  visit2(tree, "root");
-  return { nodes, summaries: summaryData };
-}
-function normalizedBlockHtml(block) {
-  const sanitized = sanitizeRichHtml(String(block.html ?? ""));
-  const text2 = structuredOutlineHtmlToText(sanitized || escapeHtml$c(String(block.text ?? "")));
-  const richText = structuredOutlineIsRichHtml(sanitized);
-  return {
-    html: richText ? sanitized : escapeHtml$c(text2),
-    text: text2,
-    richText
-  };
-}
-function updatedData(base, block) {
-  const value = normalizedBlockHtml(block);
-  const data2 = cloneValue(base ?? { text: "" });
-  data2.uid = block.uid;
-  data2.text = value.richText ? value.html : value.text;
-  data2.richText = value.richText;
-  data2.yemindTextPristine = false;
-  data2.yemindTextEdited = true;
-  if (block.kind === "node") data2.expand = block.expanded;
-  return data2;
-}
-function normalizeStructuredOutlineDepths(blocks) {
-  let previousDepth = 0;
-  return blocks.map((block, index) => {
-    let depth = Math.max(0, Math.trunc(block.depth));
-    if (index === 0) depth = 0;
-    else depth = Math.max(1, Math.min(depth, previousDepth + 1));
-    previousDepth = depth;
-    return { ...block, depth, isRoot: index === 0, parentUid: index === 0 ? null : block.parentUid };
-  });
-}
-function buildTreeFromStructuredOutline(baseTree, inputBlocks) {
-  const normalBlocks = normalizeStructuredOutlineDepths(
-    inputBlocks.filter((block) => block.kind === "node")
-  );
-  if (normalBlocks.length === 0) {
-    normalBlocks.push({
-      uid: String(baseTree.data.uid ?? "root"),
-      depth: 0,
-      html: "",
-      text: "",
-      kind: "node",
-      parentUid: null,
-      hidden: false,
-      expanded: true,
-      hasChildren: false,
-      isRoot: true,
-      pristine: false,
-      accessories: { icons: [], image: null, todo: null, tags: [], link: "", hasNote: false, commentCount: 0, hasOuterFrame: false }
-    });
-  }
-  const existing = indexExistingData(baseTree);
-  let reusedNodeCount = 0;
-  let createdNodeCount = 0;
-  const treeByUid = /* @__PURE__ */ new Map();
-  const stack = [];
-  let root2 = null;
-  normalBlocks.forEach((block, index) => {
-    const normalizedDepth = index === 0 ? 0 : Math.max(1, Math.min(block.depth, stack.length));
-    const base = existing.nodes.get(block.uid);
-    if (base) reusedNodeCount += 1;
-    else createdNodeCount += 1;
-    const node = {
-      data: updatedData(base, { ...block }),
-      children: []
-    };
-    treeByUid.set(block.uid, node);
-    if (index === 0) {
-      root2 = node;
-      stack.length = 0;
-      stack.push(node);
-      return;
-    }
-    const parentDepth = Math.max(0, normalizedDepth - 1);
-    const parent = stack[parentDepth] ?? root2;
-    parent.children.push(node);
-    stack[normalizedDepth] = node;
-    stack.length = normalizedDepth + 1;
-  });
-  const groupedSummaries = /* @__PURE__ */ new Map();
-  inputBlocks.filter((block) => block.kind === "summary" && block.parentUid).forEach((block) => {
-    const base = existing.summaries.get(block.uid);
-    const data2 = updatedData(base, block);
-    const list = groupedSummaries.get(block.parentUid) ?? [];
-    list.push(data2);
-    groupedSummaries.set(block.parentUid, list);
-  });
-  groupedSummaries.forEach((value, parentUid) => {
-    const parent = treeByUid.get(parentUid);
-    if (parent) parent.data.generalization = value.length === 1 ? value[0] : value;
-  });
-  return {
-    tree: root2,
-    nodeCount: normalBlocks.length,
-    reusedNodeCount,
-    createdNodeCount
-  };
-}
-function createStructuredOutlineUid() {
-  var _a, _b;
-  const random = (_b = (_a = globalThis.crypto) == null ? void 0 : _a.randomUUID) == null ? void 0 : _b.call(_a);
-  if (random) return `ym-${random}`;
-  return `ym-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
 function editorHorizontalMargin(node, paddingX, textContentMargin, scaleX) {
   const scaledPadding = Math.max(0, Number(paddingX) || 0) * Math.max(0, Number(scaleX) || 1);
   const hasPrefix = Boolean(node == null ? void 0 : node._prefixData) || Array.isArray(node == null ? void 0 : node._iconData) && node._iconData.length > 0;
@@ -80646,6 +80697,7 @@ class YeMindRichText extends RichText {
     __publicField(this, "placementMonitorFrame", null);
     __publicField(this, "placementTracking", false);
     __publicField(this, "placementResizeObserver", null);
+    __publicField(this, "pasteTransactionPending", false);
     __publicField(this, "handlePlacementInvalidation", () => {
       if (!this.showTextEdit) return;
       this.schedulePlacementStabilization();
@@ -81050,11 +81102,7 @@ class YeMindRichText extends RichText {
       if (source === Quill.sources.USER) {
         markNodeTextEditedData(((_b = (_a = this.node) == null ? void 0 : _a.nodeData) == null ? void 0 : _b.data) ?? ((_d2 = (_c2 = this.node) == null ? void 0 : _c2.getData) == null ? void 0 : _d2.call(_c2)));
       }
-      this.mindMap.emit("node_text_edit_change", {
-        node: this.node,
-        text: this.getEditText(),
-        richText: true
-      });
+      this.emitLiveTextEditChange(this.pasteTransactionPending ? "paste" : "input");
     });
     this.quill.clipboard.addMatcher(Node.ELEMENT_NODE, (_node, delta) => {
       const ops = [];
@@ -81069,8 +81117,20 @@ class YeMindRichText extends RichText {
     });
     this.quill.root.addEventListener("paste", (event) => {
       var _a, _b;
+      this.pasteTransactionPending = true;
       if ((_b = (_a = event.clipboardData) == null ? void 0 : _a.files) == null ? void 0 : _b.length) event.preventDefault();
+      queueMicrotask(() => {
+        this.pasteTransactionPending = false;
+      });
     }, true);
+  }
+  emitLiveTextEditChange(reason) {
+    this.mindMap.emit("node_text_edit_change", {
+      node: this.node,
+      text: this.getEditText(),
+      richText: true,
+      reason
+    });
   }
   bindCanvasInteractionIsolation() {
     const host = this.textEditNode;
@@ -84780,12 +84840,13 @@ function openNodeContextMenu(event, commands, options = {}) {
     label: "添加",
     submenu: [
       {
-        iconHTML: primaryViewIcon("cards"),
-        label: options.hasCard ? "编辑卡片" : "添加到卡片",
+        iconHTML: cardMenuIcon(),
+        label: options.hasCard ? "删除卡片" : "添加到卡片",
+        warning: Boolean(options.hasCard),
         disabled: commands.isReadonly(),
-        click: run(options.hasCard ? "card-edit" : "card-create", () => {
+        click: run(options.hasCard ? "card-delete" : "card-create", () => {
           var _a, _b;
-          return options.hasCard ? (_a = options.onEditCard) == null ? void 0 : _a.call(options) : (_b = options.onCreateCard) == null ? void 0 : _b.call(options);
+          return options.hasCard ? (_a = options.onDeleteCard) == null ? void 0 : _a.call(options) : (_b = options.onCreateCard) == null ? void 0 : _b.call(options);
         })
       },
       { icon: "iconCheck", label: todoAction.label, warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? "todo-remove" : "todo-add", () => commands.setTodo(todoAction.next)) },
@@ -84793,7 +84854,7 @@ function openNodeContextMenu(event, commands, options = {}) {
       { icon: "iconYeMindNote", label: "备注", disabled: !availability.nodeContent, click: run("note", () => openNoteDialog(commands)) },
       { icon: "iconYeMindComment", label: "批注", disabled: !availability.nodeContent, click: run("comments", () => openCommentsDialog(commands)) },
       { icon: "iconTags", label: "标签", disabled: !availability.nodeContent, click: run("tags", () => openTagsDialog(commands)) },
-      { iconHTML: symbolIcon$1(), label: "符号", disabled: !availability.nodeContent, click: run("symbols", () => {
+      { iconHTML: symbolIcon(), label: "符号", disabled: !availability.nodeContent, click: run("symbols", () => {
         var _a;
         return (_a = options.onSymbols) == null ? void 0 : _a.call(options);
       }) },
@@ -84899,7 +84960,7 @@ function openOutlineContextMenu(event, options) {
         var _a;
         return (_a = options.onTags) == null ? void 0 : _a.call(options);
       }) },
-      { iconHTML: symbolIcon$1(), label: "符号", disabled, click: run("symbols", () => {
+      { iconHTML: symbolIcon(), label: "符号", disabled, click: run("symbols", () => {
         var _a;
         return (_a = options.onSymbols) == null ? void 0 : _a.call(options);
       }) },
@@ -85892,6 +85953,34 @@ function textLength(element) {
 function editorIsSemanticallyEmpty(element) {
   return (element.textContent ?? "").replace(/[\u00a0\u200b\ufeff]/g, "").trim().length === 0;
 }
+function isClozeElement(element) {
+  if (!(element instanceof HTMLElement)) return false;
+  if (element.hasAttribute("data-yemind-cloze")) return true;
+  const color2 = element.style.color.replace(/\s+/g, "").toLowerCase();
+  return color2 === "transparent" || /^rgba\([^)]*,0(?:\.0+)?\)$/.test(color2) || /^hsla\([^)]*,0(?:\.0+)?\)$/.test(color2);
+}
+function closestClozeElement(node) {
+  let element = closestElement(node);
+  while (element) {
+    if (isClozeElement(element)) return element;
+    element = element.parentElement;
+  }
+  return null;
+}
+function rangeIsFullyClozed(range2) {
+  const wrapper = document.createElement("div");
+  wrapper.append(range2.cloneContents());
+  const walker = document.createTreeWalker(wrapper, NodeFilter.SHOW_TEXT);
+  const selectedTextNodes = [];
+  let node = walker.nextNode();
+  while (node) {
+    if ((node.nodeValue ?? "").replace(/[\u00a0\u200b\ufeff]/g, "").length > 0) {
+      selectedTextNodes.push(node);
+    }
+    node = walker.nextNode();
+  }
+  return selectedTextNodes.length > 0 && selectedTextNodes.every((textNode) => Boolean(closestClozeElement(textNode)));
+}
 function offsetWithin(root2, node, offset) {
   if (!root2.contains(node) && root2 !== node) return 0;
   const range2 = document.createRange();
@@ -85954,7 +86043,11 @@ function inlineHtmlFromClipboard(value) {
     if (block.nextSibling) fragment.append(document.createElement("br"));
     block.replaceWith(fragment);
   });
-  return template.innerHTML;
+  const inline = template.innerHTML;
+  return normalizeStructuredOutlineContent(
+    inline,
+    structuredOutlineIsRichHtml(inline)
+  ).html;
 }
 function stripLeadingClipboardIndent(value) {
   const template = document.createElement("template");
@@ -86022,6 +86115,35 @@ function selectionRect(range2) {
     bottom: rect2.bottom,
     width: rect2.width
   };
+}
+function rangeIntersectsElement(range2, element) {
+  try {
+    return range2.intersectsNode(element);
+  } catch {
+    return false;
+  }
+}
+function clampRangeToOutlineEditors(range2, root2) {
+  const editors = Array.from(root2.querySelectorAll("[data-outline-editor]")).filter((editor) => rangeIntersectsElement(range2, editor));
+  const firstEditor = editors[0];
+  const lastEditor = editors[editors.length - 1];
+  if (!firstEditor || !lastEditor) return null;
+  const firstEditorRange = document.createRange();
+  firstEditorRange.selectNodeContents(firstEditor);
+  const lastEditorRange = document.createRange();
+  lastEditorRange.selectNodeContents(lastEditor);
+  const next2 = range2.cloneRange();
+  try {
+    if (!closestEditor(next2.startContainer)) {
+      next2.setStart(firstEditorRange.startContainer, firstEditorRange.startOffset);
+    }
+    if (!closestEditor(next2.endContainer)) {
+      next2.setEnd(lastEditorRange.endContainer, lastEditorRange.endOffset);
+    }
+  } catch {
+    return null;
+  }
+  return next2.collapsed || !closestEditor(next2.startContainer) || !closestEditor(next2.endContainer) ? null : next2;
 }
 function commandState(name) {
   try {
@@ -86275,8 +86397,9 @@ class StructuredOutlineEditorController {
       if (selection.isCollapsed) {
         this.clearWholeSelection();
         this.options.onSelectionChange(false, null, null, this);
-      } else if (!this.pointerSelecting) {
-        this.savedRange = (currentRange == null ? void 0 : currentRange.cloneRange()) ?? null;
+      } else if (currentRange) {
+        const textRange = clampRangeToOutlineEditors(currentRange, this.options.root);
+        if (textRange || !this.pointerSelecting) this.savedRange = textRange ?? currentRange.cloneRange();
       }
     });
     __publicField(this, "onKeyDown", (event) => {
@@ -86420,7 +86543,7 @@ class StructuredOutlineEditorController {
     });
     __publicField(this, "onPaste", (event) => {
       if (this.options.isReadonly() || !event.clipboardData || isImageClipboard(event.clipboardData)) return;
-      const text2 = event.clipboardData.getData("text/plain");
+      const text2 = normalizeStructuredOutlineBoundaryText(event.clipboardData.getData("text/plain"));
       const html2 = this.forcePlainPaste ? "" : event.clipboardData.getData("text/html");
       if (!text2 && !html2) return;
       event.preventDefault();
@@ -86677,6 +86800,7 @@ class StructuredOutlineEditorController {
     } else {
       text2 = await ((_b = clipboard == null ? void 0 : clipboard.readText) == null ? void 0 : _b.call(clipboard)) ?? "";
     }
+    text2 = normalizeStructuredOutlineBoundaryText(text2);
     if (!text2 && !html2) return;
     const selection = window.getSelection();
     if (!(selection == null ? void 0 : selection.anchorNode) || !editor.contains(selection.anchorNode)) {
@@ -86869,14 +86993,18 @@ class StructuredOutlineEditorController {
       if (cloze) cloze.dataset.yemindCloze = "true";
     } else {
       const bookmark = this.captureSelectionBookmark();
-      Array.from(
-        this.options.root.querySelectorAll("[data-yemind-cloze]")
-      ).forEach((cloze) => {
+      Array.from(this.options.root.querySelectorAll("[data-yemind-cloze], [style]")).filter(isClozeElement).forEach((cloze) => {
         if (!range2.intersectsNode(cloze)) return;
-        const parent = cloze.parentNode;
-        if (!parent) return;
-        while (cloze.firstChild) parent.insertBefore(cloze.firstChild, cloze);
-        cloze.remove();
+        cloze.removeAttribute("data-yemind-cloze");
+        cloze.style.removeProperty("color");
+        cloze.style.removeProperty("background");
+        cloze.style.removeProperty("background-color");
+        if (cloze.tagName === "SPAN" && cloze.attributes.length === 0) {
+          const parent = cloze.parentNode;
+          if (!parent) return;
+          while (cloze.firstChild) parent.insertBefore(cloze.firstChild, cloze);
+          cloze.remove();
+        }
       });
       if (bookmark) this.restoreSelectionBookmark(bookmark);
     }
@@ -87162,14 +87290,19 @@ class StructuredOutlineEditorController {
       const uid2 = row.dataset.outlineUid || createStructuredOutlineUid();
       const kind = row.dataset.outlineKind === "summary" ? "summary" : "node";
       const editor = row.querySelector("[data-outline-editor]");
-      const html2 = sanitizeRichHtml((editor == null ? void 0 : editor.innerHTML) ?? "");
+      const rawHtml = editor && editorIsSemanticallyEmpty(editor) ? "" : sanitizeRichHtml((editor == null ? void 0 : editor.innerHTML) ?? "");
+      const content = normalizeStructuredOutlineContent(
+        rawHtml,
+        structuredOutlineIsRichHtml(rawHtml)
+      );
+      const html2 = content.html;
       const previous = existing.get(`${kind}:${uid2}`);
       return {
         uid: uid2,
         kind,
         depth: Math.max(0, Number.parseInt(row.style.getPropertyValue("--ymz-outline-depth") || "0", 10) || 0),
         html: html2,
-        text: structuredOutlineHtmlToText(html2),
+        text: content.text,
         parentUid: row.dataset.outlineParentUid || (previous == null ? void 0 : previous.parentUid) || null,
         hidden: row.dataset.outlineHidden === "true",
         expanded: row.dataset.outlineExpanded !== "false",
@@ -87198,6 +87331,14 @@ class StructuredOutlineEditorController {
     const range2 = selection.getRangeAt(0);
     const startEditor = closestEditor(range2.startContainer);
     const endEditor = closestEditor(range2.endContainer);
+    if ((!startEditor || !endEditor) && restoreSaved && this.savedRange) {
+      const saved = this.savedRange.cloneRange();
+      if (saved.startContainer.isConnected && saved.endContainer.isConnected && this.options.root.contains(saved.startContainer) && this.options.root.contains(saved.endContainer)) {
+        selection.removeAllRanges();
+        selection.addRange(saved);
+        return this.selectionContext(false);
+      }
+    }
     const startRow = startEditor == null ? void 0 : startEditor.closest("[data-outline-uid]");
     const endRow = endEditor == null ? void 0 : endEditor.closest("[data-outline-uid]");
     if (!startEditor || !endEditor || !startRow || !endRow) return null;
@@ -87227,13 +87368,14 @@ class StructuredOutlineEditorController {
     previous.forEach((block, index) => {
       const next2 = blocks[index];
       if (!next2 || block.html === next2.html) return;
-      const html2 = sanitizeRichHtml(next2.html);
-      const richText = structuredOutlineIsRichHtml(html2);
-      const text2 = structuredOutlineHtmlToText(html2);
+      const content = normalizeStructuredOutlineContent(
+        next2.html,
+        structuredOutlineIsRichHtml(next2.html)
+      );
       patches.push({
         uid: next2.uid,
-        text: richText ? html2 : text2,
-        richText
+        text: content.richText ? content.html : content.text,
+        richText: content.richText
       });
     });
     return { transaction: "text", patches };
@@ -87647,6 +87789,7 @@ class StructuredOutlineEditorController {
   insertInlineHtml(html2) {
     const range2 = this.currentRange();
     if (!range2) return;
+    const editor = closestEditor(range2.startContainer);
     range2.deleteContents();
     const template = document.createElement("template");
     template.innerHTML = sanitizeRichHtml(html2);
@@ -87654,6 +87797,7 @@ class StructuredOutlineEditorController {
     const last2 = fragment.lastChild;
     range2.insertNode(fragment);
     if (last2) this.placeCaretAfter(last2);
+    if (editor && editorIsSemanticallyEmpty(editor)) editor.replaceChildren();
     this.clearWholeSelection();
   }
   adjustSelectedDepth(delta) {
@@ -87764,6 +87908,7 @@ class StructuredOutlineEditorController {
     const range2 = this.currentRange();
     const element = range2 ? closestElement(range2.commonAncestorContainer) : null;
     const style = element ? getComputedStyle(element) : null;
+    const cloze = Boolean(closestClozeElement(element)) || Boolean(range2 && rangeIsFullyClozed(range2));
     return {
       bold: commandState("bold") || Number.parseInt((style == null ? void 0 : style.fontWeight) ?? "400", 10) >= 600,
       italic: commandState("italic") || (style == null ? void 0 : style.fontStyle) === "italic",
@@ -87774,7 +87919,8 @@ class StructuredOutlineEditorController {
       color: commandValue("foreColor") || (style == null ? void 0 : style.color),
       background: commandValue("hiliteColor") || (style == null ? void 0 : style.backgroundColor),
       font: commandValue("fontName") || (style == null ? void 0 : style.fontFamily),
-      size: style == null ? void 0 : style.fontSize
+      size: style == null ? void 0 : style.fontSize,
+      cloze
     };
   }
   afterFormatting(reason) {
@@ -87857,6 +88003,7 @@ function nextToggleFormat(name, formatInfo) {
 }
 function isClozeFormat(formatInfo) {
   if (!formatInfo) return false;
+  if (formatInfo.cloze === true) return true;
   const color2 = String(formatInfo.color ?? "").toLowerCase().replaceAll(" ", "");
   const background = String(formatInfo.background ?? "").toLowerCase().replaceAll(" ", "");
   return color2 === "transparent" || color2 === "rgba(0,0,0,0)" || background === CLOZE_BACKGROUND;
@@ -92672,6 +92819,14 @@ class StudyPanelController {
     await this.persist([...this.cards(), card]);
     return card;
   }
+  async deleteCardForNode(nodeUid2) {
+    var _a, _b;
+    if ((_b = (_a = this.options).readonly) == null ? void 0 : _b.call(_a)) return false;
+    const uid2 = String(nodeUid2 ?? "").trim();
+    if (!uid2 || !this.cardForNode(uid2)) return false;
+    await this.persist(this.cards().filter((card) => card.nodeUid !== uid2));
+    return true;
+  }
   cards() {
     return this.optimisticCards ?? normalizeStudyCards(this.options.getCards());
   }
@@ -93045,8 +93200,14 @@ class RenderLifecycleCoordinator {
     const uid2 = renderedNodeUid$1(payload.node);
     if (!uid2) return;
     const revision = ++this.revision;
-    this.pending = { revision, payload };
     if (this.frame !== null) this.scheduler.cancel(this.frame);
+    this.frame = null;
+    if (payload.reason === "paste") {
+      this.pending = null;
+      this.commitTextEdit(payload, revision);
+      return;
+    }
+    this.pending = { revision, payload };
     this.frame = this.scheduler.request(() => {
       var _a;
       this.frame = null;
@@ -95180,8 +95341,9 @@ class YeMindEditor {
           if (card) this.setStudyMode("cards", [card.id]);
         }));
       },
-      onEditCard: () => {
-        if (nodeCard) this.setStudyMode("cards", [nodeCard.id]);
+      onDeleteCard: () => {
+        var _a2;
+        if (nodeCard) void ((_a2 = this.studyPanel) == null ? void 0 : _a2.deleteCardForNode(nodeUid2));
       },
       onNodeStyle: () => {
         var _a2, _b;

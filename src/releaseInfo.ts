@@ -3,8 +3,8 @@ import { PLUGIN_VERSION, PRODUCT_NAME, PROJECT_PACKAGE_NAME } from './plugin/con
 export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: '2026-07-28T09:04:26.333Z',
-  buildId: 'yemind-v1.5.0-20260728',
+  buildTime: '2026-07-29T07:11:32.254Z',
+  buildId: 'yemind-v1.5.1-20260729',
   productName: PRODUCT_NAME,
   projectName: PROJECT_PACKAGE_NAME,
   tagline: '思源笔记中的思维导图、统一结构化大纲与知识整理插件。',

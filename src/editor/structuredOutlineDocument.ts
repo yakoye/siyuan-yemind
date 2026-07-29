@@ -53,6 +53,67 @@ function escapeHtml(value: string): string {
     .replaceAll('\n', '<br>');
 }
 
+export function normalizeStructuredOutlineBoundaryText(value: unknown): string {
+  const normalized = String(value ?? '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\u200b\ufeff]/g, '');
+  const withoutBoundaryLines = normalized
+    .replace(/^(?:[ \t\u00a0\u3000]*\n)+/, '')
+    .replace(/(?:\n[ \t\u00a0\u3000]*)+$/, '');
+  return withoutBoundaryLines.trim().length > 0 ? withoutBoundaryLines : '';
+}
+
+function trimRichHtmlBoundaryLines(value: string): string {
+  if (typeof document === 'undefined') {
+    return value
+      .replace(/^((?:<(?:p|div|span|strong|b|em|i|u|s|strike|code|mark|sub|sup)\b[^>]*>)*)[\r\n]+/i, '$1')
+      .replace(/[\r\n]+((?:<\/(?:p|div|span|strong|b|em|i|u|s|strike|code|mark|sub|sup)>)*)$/i, '$1');
+  }
+  const template = document.createElement('template');
+  template.innerHTML = value;
+  const textNodes: Text[] = [];
+  const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_TEXT);
+  let current = walker.nextNode();
+  while (current) {
+    textNodes.push(current as Text);
+    current = walker.nextNode();
+  }
+  const first = textNodes[0];
+  const last = textNodes[textNodes.length - 1];
+  if (first) first.nodeValue = (first.nodeValue ?? '').replace(/^(?:[ \t\u00a0\u3000]*\n)+/, '');
+  if (last) last.nodeValue = (last.nodeValue ?? '').replace(/(?:\n[ \t\u00a0\u3000]*)+$/, '');
+  return template.innerHTML;
+}
+
+export interface NormalizedStructuredOutlineContent {
+  html: string;
+  text: string;
+  richText: boolean;
+}
+
+export function normalizeStructuredOutlineContent(
+  value: unknown,
+  richText: boolean,
+): NormalizedStructuredOutlineContent {
+  if (!richText) {
+    const text = normalizeStructuredOutlineBoundaryText(value);
+    return { html: escapeHtml(text), text, richText: false };
+  }
+  const sanitized = trimRichHtmlBoundaryLines(sanitizeRichHtml(String(value ?? '')));
+  const text = normalizeStructuredOutlineBoundaryText(structuredOutlineHtmlToText(sanitized));
+  const hasEmbeddedContent = typeof document !== 'undefined'
+    && (() => {
+      const template = document.createElement('template');
+      template.innerHTML = sanitized;
+      return Boolean(template.content.querySelector('img,svg,mjx-container,.ql-formula,[data-formula],iframe,video,audio'));
+    })();
+  if (!text && !hasEmbeddedContent) return { html: '', text: '', richText: false };
+  if (!structuredOutlineIsRichHtml(sanitized)) {
+    return { html: escapeHtml(text), text, richText: false };
+  }
+  return { html: sanitized, text, richText: true };
+}
+
 export function structuredOutlineHtmlToText(value: string): string {
   const source = String(value ?? '');
   if (typeof document === 'undefined') {
@@ -75,12 +136,18 @@ export function structuredOutlineHtmlToText(value: string): string {
 export function structuredOutlineIsRichHtml(value: string): boolean {
   const normalized = String(value ?? '').trim();
   if (!normalized) return false;
-  return /<(?:strong|b|em|i|u|s|strike|code|pre|a|span|mark|sub|sup|img|svg|mjx-container|ql-formula)\b/i.test(normalized);
+  if (/<(?:strong|b|em|i|u|s|strike|code|pre|a|span|mark|sub|sup|img|svg|mjx-container|ql-formula|blockquote|ol|ul|li|h[1-6])\b/i.test(normalized)) {
+    return true;
+  }
+  // Plain browser wrappers such as <p>Text</p> are intentionally flattened,
+  // but attributes on a block carry formatting that must survive migration
+  // (for example Quill's ql-align-* and ql-indent-* classes).
+  return /<(?:p|div)\b[^>]*\s(?:class|style|data-[\w-]+|dir|align)\s*=\s*(?:"[^"]+"|'[^']+'|[^\s>]+)/i
+    .test(normalized);
 }
 
 function displayHtml(data: MindMapNodeData): string {
-  const value = String(data.text ?? '');
-  return data.richText ? sanitizeRichHtml(value) : escapeHtml(value);
+  return normalizeStructuredOutlineContent(data.text, Boolean(data.richText)).html;
 }
 
 function summaries(data: MindMapNodeData): MindMapNodeData[] {
@@ -169,13 +236,10 @@ function normalizedBlockHtml(block: Pick<StructuredOutlineBlock, 'html' | 'text'
   richText: boolean;
 } {
   const sanitized = sanitizeRichHtml(String(block.html ?? ''));
-  const text = structuredOutlineHtmlToText(sanitized || escapeHtml(String(block.text ?? '')));
-  const richText = structuredOutlineIsRichHtml(sanitized);
-  return {
-    html: richText ? sanitized : escapeHtml(text),
-    text,
-    richText,
-  };
+  return normalizeStructuredOutlineContent(
+    sanitized || String(block.text ?? ''),
+    structuredOutlineIsRichHtml(sanitized),
+  );
 }
 
 function updatedData(

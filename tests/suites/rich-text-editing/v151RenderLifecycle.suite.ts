@@ -36,6 +36,37 @@ describe('v1.5.1 atomic render lifecycle', () => {
     expect(committed).toHaveBeenCalledOnce();
   });
 
+  it('commits one paste transaction immediately without leaving a duplicate animation-frame render', () => {
+    const scheduler: RenderLifecycleScheduler = {
+      request: vi.fn(() => 1),
+      cancel: vi.fn(),
+    };
+    const live = {
+      createTextNode: vi.fn((text) => ({ text })),
+      getNodeRect: vi.fn(() => ({ width: 240, height: 36 })),
+      layout: vi.fn(),
+    };
+    const mindMap = {
+      renderer: { findNodeByUid: vi.fn(() => live) },
+      richText: { updateTextEditNode: vi.fn() },
+      render: vi.fn((done?: () => void) => done?.()),
+    };
+    const coordinator = new RenderLifecycleCoordinator(mindMap, vi.fn(), scheduler);
+
+    coordinator.scheduleTextEdit({
+      node: { getData: () => 'paste-node' },
+      text: '<p>粘贴后边框立即跟随</p>',
+      richText: true,
+      reason: 'paste',
+    });
+
+    expect(live.createTextNode).toHaveBeenCalledOnce();
+    expect(live.createTextNode).toHaveBeenCalledWith('粘贴后边框立即跟随');
+    expect(mindMap.render).toHaveBeenCalledOnce();
+    expect(scheduler.request).not.toHaveBeenCalled();
+    expect(coordinator.flushPendingTextEdit()).toBe(false);
+  });
+
   it('V151-21/V151-22 discards a queued edit after structure mutation or deletion', () => {
     let callback: FrameRequestCallback | null = null;
     const scheduler: RenderLifecycleScheduler = {

@@ -83,6 +83,86 @@ describe('MapRepository', () => {
     expect(data?.yemindComments).toEqual([expect.objectContaining({ text: '旧备注' })]);
   });
 
+  it('migrates clipboard boundary blank lines from existing plain and rich-text nodes', async () => {
+    const storage = memoryStorage({
+      version: 1,
+      activeMapId: 'legacy-whitespace',
+      maps: [{
+        id: 'legacy-whitespace',
+        title: '旧剪贴板数据',
+        createdAt: 1,
+        updatedAt: 1,
+        layout: 'logicalStructure',
+        theme: 'default',
+        data: {
+          data: { uid: 'root', text: '\n\n中心主题\n\n', richText: false },
+          children: [{
+            data: {
+              uid: 'child',
+              text: '<p>\n\nPages 部署均通过</p>',
+              richText: true,
+            },
+            children: [],
+          }],
+        },
+      }],
+    });
+    const repo = new MapRepository(storage);
+    await repo.load();
+
+    const tree = repo.get('legacy-whitespace')?.data;
+    expect(tree?.data).toMatchObject({ text: '中心主题', richText: false });
+    expect(tree?.children[0].data).toMatchObject({
+      text: 'Pages 部署均通过',
+      richText: false,
+    });
+    expect((storage.read() as any).maps[0].data.children[0].data.text).toBe('Pages 部署均通过');
+  });
+
+  it('does not discard supported block rich-text formats while migrating existing maps', async () => {
+    const storage = memoryStorage({
+      version: 1,
+      activeMapId: 'legacy-rich-blocks',
+      maps: [{
+        id: 'legacy-rich-blocks',
+        title: '旧富文本',
+        createdAt: 1,
+        updatedAt: 1,
+        layout: 'logicalStructure',
+        theme: 'default',
+        data: {
+          data: {
+            uid: 'root',
+            text: '<p class="ql-align-center">Centered</p>',
+            richText: true,
+          },
+          children: [{
+            data: {
+              uid: 'child',
+              text: '<ol><li data-list="bullet">Listed</li></ol>',
+              richText: true,
+            },
+            children: [],
+          }],
+        },
+      }],
+    });
+    const repo = new MapRepository(storage);
+    await repo.load();
+
+    const tree = repo.get('legacy-rich-blocks')?.data;
+    expect(tree?.data).toMatchObject({
+      text: '<p class="ql-align-center">Centered</p>',
+      richText: true,
+    });
+    expect(tree?.children[0].data).toMatchObject({
+      text: '<ol><li data-list="bullet">Listed</li></ol>',
+      richText: true,
+    });
+    expect((storage.read() as any).maps[0].data.data.text)
+      .toBe('<p class="ql-align-center">Centered</p>');
+  });
+
 
 
   it('keeps maps with an empty title and names them 未命名导图', async () => {

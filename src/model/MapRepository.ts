@@ -5,6 +5,7 @@ import { normalizeLayoutId } from '../core/layoutPresets';
 import { normalizeLayoutAssetId } from '../core/layoutAssetPresets';
 import { normalizeProjectStyle } from '../editor/projectStyle';
 import { normalizeStudyCards } from '../review/studyCards';
+import { normalizeStructuredOutlineContent } from '../editor/structuredOutlineDocument';
 
 interface RepositoryOptions {
   now?: () => number;
@@ -59,6 +60,13 @@ function normalizeMap(value: unknown): NormalizedMapResult {
 function normalizeLegacyTree(tree: YeMindMapDocument['data'], fallbackTime: number, path = 'root'): { tree: YeMindMapDocument['data']; changed: boolean } {
   let changed = false;
   const data = { ...tree.data };
+  const normalizedContent = normalizeStructuredOutlineContent(data.text, Boolean(data.richText));
+  const normalizedText = normalizedContent.richText ? normalizedContent.html : normalizedContent.text;
+  if (normalizedText !== String(data.text ?? '') || normalizedContent.richText !== Boolean(data.richText)) {
+    data.text = normalizedText;
+    data.richText = normalizedContent.richText;
+    changed = true;
+  }
   const note = typeof data.note === 'string' ? data.note.trim() : '';
   if (note) {
     const comments = Array.isArray(data.yemindComments) ? [...data.yemindComments] : [];

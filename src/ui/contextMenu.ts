@@ -1,7 +1,7 @@
 import { Menu, showMessage } from 'siyuan';
 import { YEMIND_LAYOUT_PRESETS } from '../core/layoutPresets';
 import { detectAppearance, YEMIND_THEME_PRESETS, type YeMindLineStyle } from '../core/themePresets';
-import { clipartIcon, clipboardIcon, lineStyleIcon, markerIcon, nodeInsertIcon, nodeStyleIcon, outerFrameIcon, primaryViewIcon, projectControlIcon, projectStyleIcon, relationIcon, summaryIcon, symbolIcon } from '../editor/projectControls';
+import { cardMenuIcon, clipartIcon, clipboardIcon, lineStyleIcon, markerIcon, nodeInsertIcon, nodeStyleIcon, outerFrameIcon, projectControlIcon, projectStyleIcon, relationIcon, summaryIcon, symbolIcon } from '../editor/projectControls';
 import type { YeMindCommands } from '../core/commands';
 import {
   openCommentsDialog,
@@ -87,7 +87,7 @@ export interface NodeContextMenuOptions {
   onTextToMap?: () => void;
   hasCard?: boolean;
   onCreateCard?: () => void;
-  onEditCard?: () => void;
+  onDeleteCard?: () => void;
   onAction?: (action: string) => void;
 }
 
@@ -149,11 +149,12 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
     type: 'submenu', icon: 'iconAdd', label: '添加',
     submenu: [
       {
-        iconHTML: primaryViewIcon('cards'),
-        label: options.hasCard ? '编辑卡片' : '添加到卡片',
+        iconHTML: cardMenuIcon(),
+        label: options.hasCard ? '删除卡片' : '添加到卡片',
+        warning: Boolean(options.hasCard),
         disabled: commands.isReadonly(),
-        click: run(options.hasCard ? 'card-edit' : 'card-create', () => (
-          options.hasCard ? options.onEditCard?.() : options.onCreateCard?.()
+        click: run(options.hasCard ? 'card-delete' : 'card-create', () => (
+          options.hasCard ? options.onDeleteCard?.() : options.onCreateCard?.()
         )),
       },
       { icon: 'iconCheck', label: todoAction.label, warning: todoAction.warning, disabled: !availability.nodeContent, click: run(todoAction.next === null ? 'todo-remove' : 'todo-add', () => commands.setTodo(todoAction.next)) },

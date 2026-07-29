@@ -26,12 +26,13 @@ describe('v0.9.30 context menu contracts', () => {
     expect(contextMenu).toContain('commands.toggleAllExpand()');
   });
 
-  it('keeps the card action inside 添加 without a duplicated plus prefix', () => {
-    expect(contextMenu).toContain("label: options.hasCard ? '编辑卡片' : '添加到卡片'");
-    expect(contextMenu).toContain("iconHTML: primaryViewIcon('cards')");
+  it('keeps the stateful card action inside 添加 without a duplicated plus prefix', () => {
+    expect(contextMenu).toContain("label: options.hasCard ? '删除卡片' : '添加到卡片'");
+    expect(contextMenu).toContain('iconHTML: cardMenuIcon()');
+    expect(contextMenu).toContain('warning: Boolean(options.hasCard)');
     expect(contextMenu).not.toContain("type: 'submenu', icon: 'iconGrid', label: '卡片'");
     expect(contextMenu).not.toContain("label: '＋ 当前节点'");
-    expect(contextMenu.indexOf("label: options.hasCard ? '编辑卡片' : '添加到卡片'"))
+    expect(contextMenu.indexOf("label: options.hasCard ? '删除卡片' : '添加到卡片'"))
       .toBeLessThan(contextMenu.indexOf('label: todoAction.label'));
   });
 

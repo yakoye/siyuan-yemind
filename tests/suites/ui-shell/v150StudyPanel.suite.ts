@@ -271,14 +271,33 @@ describe('v1.5.0 cards and review shell', () => {
     expect(controller.cardForNode('node-1')?.front).toBe('节点卡片');
   });
 
-  it('wires create and edit card actions into the node right-click menu', () => {
+  it('wires add and delete card actions into the node right-click menu with the shared menu icon slot', () => {
     const menuSource = readFileSync('src/ui/contextMenu.ts', 'utf8');
     const editorSource = readFileSync('src/editor/YeMindEditor.ts', 'utf8');
-    expect(menuSource).toContain("label: options.hasCard ? '编辑卡片' : '添加到卡片'");
-    expect(menuSource).toContain("iconHTML: primaryViewIcon('cards')");
+    expect(menuSource).toContain("label: options.hasCard ? '删除卡片' : '添加到卡片'");
+    expect(menuSource).toContain('iconHTML: cardMenuIcon()');
+    expect(menuSource).toContain('warning: Boolean(options.hasCard)');
     expect(menuSource).not.toContain("label: '＋ 当前节点'");
     expect(editorSource).toContain('onCreateCard:');
-    expect(editorSource).toContain('onEditCard:');
+    expect(editorSource).toContain('onDeleteCard:');
+  });
+
+  it('deletes exactly the card attached to the requested node', async () => {
+    const panel = document.createElement('aside');
+    let cards = [
+      createStudyCard({ id: 'card-a', nodeUid: 'node-a', front: 'A', back: '', now: 1 }),
+      createStudyCard({ id: 'card-b', nodeUid: 'node-b', front: 'B', back: '', now: 1 }),
+    ];
+    const controller = new StudyPanelController({
+      panel,
+      getCards: () => cards,
+      getActiveNode: () => null,
+      onChange: async (next) => { cards = next; },
+    });
+
+    expect(await controller.deleteCardForNode('node-a')).toBe(true);
+    expect(cards.map((card) => card.id)).toEqual(['card-b']);
+    expect(await controller.deleteCardForNode('missing-node')).toBe(false);
   });
 
   it('reveals an answer before rating and persists the review schedule', async () => {

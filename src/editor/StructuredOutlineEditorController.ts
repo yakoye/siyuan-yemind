@@ -10,6 +10,8 @@ import {
   createStructuredOutlineUid,
   flattenStructuredOutline,
   normalizeStructuredOutlineDepths,
+  normalizeStructuredOutlineBoundaryText,
+  normalizeStructuredOutlineContent,
   structuredOutlineHtmlToText,
   structuredOutlineIsRichHtml,
   type StructuredOutlineBlock,
@@ -123,6 +125,40 @@ function editorIsSemanticallyEmpty(element: HTMLElement): boolean {
     .trim().length === 0;
 }
 
+function isClozeElement(element: Element | null): element is HTMLElement {
+  if (!(element instanceof HTMLElement)) return false;
+  if (element.hasAttribute('data-yemind-cloze')) return true;
+  const color = element.style.color.replace(/\s+/g, '').toLowerCase();
+  return color === 'transparent'
+    || /^rgba\([^)]*,0(?:\.0+)?\)$/.test(color)
+    || /^hsla\([^)]*,0(?:\.0+)?\)$/.test(color);
+}
+
+function closestClozeElement(node: Node | null): HTMLElement | null {
+  let element = closestElement(node);
+  while (element) {
+    if (isClozeElement(element)) return element;
+    element = element.parentElement;
+  }
+  return null;
+}
+
+function rangeIsFullyClozed(range: Range): boolean {
+  const wrapper = document.createElement('div');
+  wrapper.append(range.cloneContents());
+  const walker = document.createTreeWalker(wrapper, NodeFilter.SHOW_TEXT);
+  const selectedTextNodes: Node[] = [];
+  let node = walker.nextNode();
+  while (node) {
+    if ((node.nodeValue ?? '').replace(/[\u00a0\u200b\ufeff]/g, '').length > 0) {
+      selectedTextNodes.push(node);
+    }
+    node = walker.nextNode();
+  }
+  return selectedTextNodes.length > 0 && selectedTextNodes.every((textNode) =>
+    Boolean(closestClozeElement(textNode)));
+}
+
 function nodeTextLength(node: Node): number {
   if (node.nodeType === Node.TEXT_NODE) return node.nodeValue?.length ?? 0;
   if (node instanceof HTMLBRElement) return 1;
@@ -198,7 +234,11 @@ function inlineHtmlFromClipboard(value: string): string {
     if (block.nextSibling) fragment.append(document.createElement('br'));
     block.replaceWith(fragment);
   });
-  return template.innerHTML;
+  const inline = template.innerHTML;
+  return normalizeStructuredOutlineContent(
+    inline,
+    structuredOutlineIsRichHtml(inline),
+  ).html;
 }
 
 function stripLeadingClipboardIndent(value: string): string {
@@ -273,6 +313,40 @@ function selectionRect(range: Range): RichTextSelectionRect | null {
     bottom: rect.bottom,
     width: rect.width,
   };
+}
+
+function rangeIntersectsElement(range: Range, element: HTMLElement): boolean {
+  try {
+    return range.intersectsNode(element);
+  } catch {
+    return false;
+  }
+}
+
+function clampRangeToOutlineEditors(range: Range, root: HTMLElement): Range | null {
+  const editors = Array.from(root.querySelectorAll<HTMLElement>('[data-outline-editor]'))
+    .filter((editor) => rangeIntersectsElement(range, editor));
+  const firstEditor = editors[0];
+  const lastEditor = editors[editors.length - 1];
+  if (!firstEditor || !lastEditor) return null;
+  const firstEditorRange = document.createRange();
+  firstEditorRange.selectNodeContents(firstEditor);
+  const lastEditorRange = document.createRange();
+  lastEditorRange.selectNodeContents(lastEditor);
+  const next = range.cloneRange();
+  try {
+    if (!closestEditor(next.startContainer)) {
+      next.setStart(firstEditorRange.startContainer, firstEditorRange.startOffset);
+    }
+    if (!closestEditor(next.endContainer)) {
+      next.setEnd(lastEditorRange.endContainer, lastEditorRange.endOffset);
+    }
+  } catch {
+    return null;
+  }
+  return next.collapsed || !closestEditor(next.startContainer) || !closestEditor(next.endContainer)
+    ? null
+    : next;
 }
 
 function commandState(name: string): boolean {
@@ -585,6 +659,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     } else {
       text = await clipboard?.readText?.() ?? '';
     }
+    text = normalizeStructuredOutlineBoundaryText(text);
     if (!text && !html) return;
     const selection = window.getSelection();
     if (!selection?.anchorNode || !editor.contains(selection.anchorNode)) {
@@ -788,14 +863,20 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       if (cloze) cloze.dataset.yemindCloze = 'true';
     } else {
       const bookmark = this.captureSelectionBookmark();
-      Array.from(
-        this.options.root.querySelectorAll<HTMLElement>('[data-yemind-cloze]'),
-      ).forEach((cloze) => {
+      Array.from(this.options.root.querySelectorAll<HTMLElement>('[data-yemind-cloze], [style]'))
+        .filter(isClozeElement)
+        .forEach((cloze) => {
         if (!range.intersectsNode(cloze)) return;
-        const parent = cloze.parentNode;
-        if (!parent) return;
-        while (cloze.firstChild) parent.insertBefore(cloze.firstChild, cloze);
-        cloze.remove();
+        cloze.removeAttribute('data-yemind-cloze');
+        cloze.style.removeProperty('color');
+        cloze.style.removeProperty('background');
+        cloze.style.removeProperty('background-color');
+        if (cloze.tagName === 'SPAN' && cloze.attributes.length === 0) {
+          const parent = cloze.parentNode;
+          if (!parent) return;
+          while (cloze.firstChild) parent.insertBefore(cloze.firstChild, cloze);
+          cloze.remove();
+        }
       });
       if (bookmark) this.restoreSelectionBookmark(bookmark);
     }
@@ -1058,8 +1139,9 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     if (selection.isCollapsed) {
       this.clearWholeSelection();
       this.options.onSelectionChange(false, null, null, this);
-    } else if (!this.pointerSelecting) {
-      this.savedRange = currentRange?.cloneRange() ?? null;
+    } else if (currentRange) {
+      const textRange = clampRangeToOutlineEditors(currentRange, this.options.root);
+      if (textRange || !this.pointerSelecting) this.savedRange = textRange ?? currentRange.cloneRange();
     }
   };
 
@@ -1214,7 +1296,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
 
   private readonly onPaste = (event: ClipboardEvent): void => {
     if (this.options.isReadonly() || !event.clipboardData || isImageClipboard(event.clipboardData)) return;
-    const text = event.clipboardData.getData('text/plain');
+    const text = normalizeStructuredOutlineBoundaryText(event.clipboardData.getData('text/plain'));
     const html = this.forcePlainPaste ? '' : event.clipboardData.getData('text/html');
     if (!text && !html) return;
     event.preventDefault();
@@ -1491,14 +1573,21 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       const uid = row.dataset.outlineUid || createStructuredOutlineUid();
       const kind = row.dataset.outlineKind === 'summary' ? 'summary' : 'node';
       const editor = row.querySelector<HTMLElement>('[data-outline-editor]');
-      const html = sanitizeRichHtml(editor?.innerHTML ?? '');
+      const rawHtml = editor && editorIsSemanticallyEmpty(editor)
+        ? ''
+        : sanitizeRichHtml(editor?.innerHTML ?? '');
+      const content = normalizeStructuredOutlineContent(
+        rawHtml,
+        structuredOutlineIsRichHtml(rawHtml),
+      );
+      const html = content.html;
       const previous = existing.get(`${kind}:${uid}`);
       return {
         uid,
         kind,
         depth: Math.max(0, Number.parseInt(row.style.getPropertyValue('--ymz-outline-depth') || '0', 10) || 0),
         html,
-        text: structuredOutlineHtmlToText(html),
+        text: content.text,
         parentUid: row.dataset.outlineParentUid || previous?.parentUid || null,
         hidden: row.dataset.outlineHidden === 'true',
         expanded: row.dataset.outlineExpanded !== 'false',
@@ -1536,6 +1625,19 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     const range = selection.getRangeAt(0);
     const startEditor = closestEditor(range.startContainer);
     const endEditor = closestEditor(range.endContainer);
+    if ((!startEditor || !endEditor) && restoreSaved && this.savedRange) {
+      const saved = this.savedRange.cloneRange();
+      if (
+        saved.startContainer.isConnected
+        && saved.endContainer.isConnected
+        && this.options.root.contains(saved.startContainer)
+        && this.options.root.contains(saved.endContainer)
+      ) {
+        selection.removeAllRanges();
+        selection.addRange(saved);
+        return this.selectionContext(false);
+      }
+    }
     const startRow = startEditor?.closest<HTMLElement>('[data-outline-uid]');
     const endRow = endEditor?.closest<HTMLElement>('[data-outline-uid]');
     if (!startEditor || !endEditor || !startRow || !endRow) return null;
@@ -1570,13 +1672,14 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     previous.forEach((block, index) => {
       const next = blocks[index];
       if (!next || block.html === next.html) return;
-      const html = sanitizeRichHtml(next.html);
-      const richText = structuredOutlineIsRichHtml(html);
-      const text = structuredOutlineHtmlToText(html);
+      const content = normalizeStructuredOutlineContent(
+        next.html,
+        structuredOutlineIsRichHtml(next.html),
+      );
       patches.push({
         uid: next.uid,
-        text: richText ? html : text,
-        richText,
+        text: content.richText ? content.html : content.text,
+        richText: content.richText,
       });
     });
     return { transaction: 'text', patches };
@@ -2024,6 +2127,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
   private insertInlineHtml(html: string): void {
     const range = this.currentRange();
     if (!range) return;
+    const editor = closestEditor(range.startContainer);
     range.deleteContents();
     const template = document.createElement('template');
     template.innerHTML = sanitizeRichHtml(html);
@@ -2031,6 +2135,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     const last = fragment.lastChild;
     range.insertNode(fragment);
     if (last) this.placeCaretAfter(last);
+    if (editor && editorIsSemanticallyEmpty(editor)) editor.replaceChildren();
     this.clearWholeSelection();
   }
 
@@ -2152,6 +2257,8 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     const range = this.currentRange();
     const element = range ? closestElement(range.commonAncestorContainer) : null;
     const style = element ? getComputedStyle(element) : null;
+    const cloze = Boolean(closestClozeElement(element))
+      || Boolean(range && rangeIsFullyClozed(range));
     return {
       bold: commandState('bold') || Number.parseInt(style?.fontWeight ?? '400', 10) >= 600,
       italic: commandState('italic') || style?.fontStyle === 'italic',
@@ -2163,6 +2270,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       background: commandValue('hiliteColor') || style?.backgroundColor,
       font: commandValue('fontName') || style?.fontFamily,
       size: style?.fontSize,
+      cloze,
     };
   }
 

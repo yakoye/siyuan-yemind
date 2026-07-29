@@ -20,4 +20,9 @@ describe('standalone web appearance styles', () => {
     expect(css).toMatch(/\.ymw-sidebar-toggle\{[^}]*background:var\(--b3-theme-surface\)/s);
     expect(css).toMatch(/@media\(max-width:760px\)[\s\S]*\.ymw-sidebar-toggle\{[^}]*z-index:90/s);
   });
+
+  it('keeps the web sidebar boundary lightweight without casting into the editor', () => {
+    expect(css).toMatch(/\.ymw-sidebar\{[^}]*border-right:1px solid var\(--b3-border-color\)[^}]*box-shadow:none/s);
+    expect(css).toMatch(/\.ymw-sidebar-toggle\{[^}]*border:1px solid var\(--b3-border-color\)[^}]*box-shadow:none/s);
+  });
 });

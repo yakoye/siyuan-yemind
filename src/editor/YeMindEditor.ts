@@ -2256,8 +2256,8 @@ export class YeMindEditor {
           if (card) this.setStudyMode('cards', [card.id]);
         });
       },
-      onEditCard: () => {
-        if (nodeCard) this.setStudyMode('cards', [nodeCard.id]);
+      onDeleteCard: () => {
+        if (nodeCard) void this.studyPanel?.deleteCardForNode(nodeUid);
       },
       onNodeStyle: () => {
         this.projectStylePanel?.hide();

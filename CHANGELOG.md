@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.1 - 2026-07-29
+
+- Reworked canvas and outline editing into stable UID text transactions, preserving node geometry, viewport state, clipboard selections, and immediate paste bounds without duplicate render frames.
+- Normalized clipboard boundary whitespace without losing Quill alignment, indentation, list, quote, or other supported block rich-text semantics in existing maps.
+- Fixed fast right-to-left outline selection across the drag gutter so Delete and Backspace follow the real saved text range.
+- Unified cloze detection and removal across canvas and outline representations, and made the selected-text toolbar opaque, flat, and readable over map content.
+- Added context-menu card creation/removal parity and removed the standalone web sidebar's heavy shadows.
+- Added repeated browser and migration regressions for geometry, clipboard, selection, rich-text preservation, cloze interoperability, menu state, and light/dark appearance.
+
 ## 1.5.0 - 2026-07-28
 
 - Split outline editing into UID text patches and explicit structure transactions, preventing ordinary typing, whitespace and clearing from rebuilding the complete renderer tree.
