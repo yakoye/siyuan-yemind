@@ -223,6 +223,10 @@ function applyCandidate(plugin: any, candidate: DragCandidate): void {
   plugin.overlapNode = candidate.overlapNode;
   plugin.prevNode = candidate.prevNode;
   plugin.nextNode = candidate.nextNode;
+  plugin.clone?.attr?.({
+    'data-drop-kind': candidate.kind,
+    'data-drop-target-uid': nodeUid(candidate.targetNode ?? candidate.parentNode),
+  });
 }
 
 function animationNow(): number {
