@@ -289,3 +289,68 @@ it('tracks every viewport transform with one non-starving refresh per animation 
   cancelFrame.mockRestore();
   root.remove();
 });
+
+it('tracks the rendered SVG transform when the host does not emit viewport events', async () => {
+  const root = document.createElement('div');
+  const canvas = document.createElement('div');
+  const transformedViewport = document.createElement('div');
+  const liveElement = document.createElement('div');
+  transformedViewport.appendChild(liveElement);
+  canvas.appendChild(transformedViewport);
+  root.appendChild(canvas);
+  document.body.appendChild(root);
+  Object.defineProperty(canvas, 'getBoundingClientRect', {
+    value: () => ({ left: 100, top: 80, right: 900, bottom: 680, width: 800, height: 600, x: 100, y: 80, toJSON() {} }),
+  });
+  let nodeLeft = 360;
+  Object.defineProperty(liveElement, 'getBoundingClientRect', {
+    value: () => ({
+      left: nodeLeft,
+      top: 260,
+      right: nodeLeft + 100,
+      bottom: 300,
+      width: 100,
+      height: 40,
+      x: nodeLeft,
+      y: 260,
+      toJSON() {},
+    }),
+  });
+  const liveNode: any = {
+    isRoot: false,
+    children: [],
+    nodeData: { children: [] },
+    group: { node: liveElement },
+    getData: (key: string) => ({ uid: 'a', expand: true, isActive: true } as any)[key],
+  };
+  const frames: FrameRequestCallback[] = [];
+  const requestFrame = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+    frames.push(callback);
+    return frames.length;
+  });
+  const cancelFrame = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
+  const controller = new NodeQuickActionsController({
+    root,
+    canvas,
+    getRendererRoot: () => liveNode,
+    getActiveNodes: () => [liveNode],
+    readonly: () => false,
+    onAddChild: vi.fn(),
+    onSetExpanded: vi.fn(),
+  });
+  controller.refresh();
+  expect(canvas.querySelector<HTMLElement>('[data-node-uid="a"]')?.style.left).toBe('360px');
+
+  nodeLeft = 220;
+  transformedViewport.setAttribute('transform', 'translate(-140 0)');
+  await Promise.resolve();
+
+  expect(requestFrame).toHaveBeenCalledTimes(1);
+  frames.shift()?.(performance.now());
+  expect(canvas.querySelector<HTMLElement>('[data-node-uid="a"]')?.style.left).toBe('220px');
+
+  controller.destroy();
+  requestFrame.mockRestore();
+  cancelFrame.mockRestore();
+  root.remove();
+});

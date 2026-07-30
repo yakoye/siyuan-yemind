@@ -186,6 +186,7 @@ export interface NodeQuickActionsControllerOptions {
 export class NodeQuickActionsController {
   private readonly layer: HTMLElement;
   private frame: number | null = null;
+  private renderedViewportObserver: MutationObserver | null = null;
   private hideTimer: number | null = null;
   private hoveredUid: string | null = null;
   private readonly nodeElementToUid = new Map<Element, string>();
@@ -202,12 +203,14 @@ export class NodeQuickActionsController {
     this.options.canvas.addEventListener('pointerover', this.onCanvasPointerOver);
     this.options.canvas.addEventListener('pointerout', this.onCanvasPointerOut);
     this.bindViewportTracking();
+    this.bindRenderedViewportTracking();
   }
 
   destroy(): void {
     if (this.frame !== null) cancelAnimationFrame(this.frame);
     this.frame = null;
     this.unbindViewportTracking();
+    this.unbindRenderedViewportTracking();
     this.cancelHide();
     this.layer.removeEventListener('click', this.onClick);
     this.layer.removeEventListener('pointerover', this.onActionPointerOver);
@@ -310,6 +313,25 @@ export class NodeQuickActionsController {
   private readonly onViewportChange = (): void => {
     this.scheduleRefresh();
   };
+
+  private bindRenderedViewportTracking(): void {
+    if (typeof MutationObserver === 'undefined') return;
+    this.renderedViewportObserver = new MutationObserver((mutations) => {
+      if (mutations.some((mutation) => mutation.type === 'attributes' && mutation.attributeName === 'transform')) {
+        this.scheduleRefresh();
+      }
+    });
+    this.renderedViewportObserver.observe(this.options.canvas, {
+      attributes: true,
+      attributeFilter: ['transform'],
+      subtree: true,
+    });
+  }
+
+  private unbindRenderedViewportTracking(): void {
+    this.renderedViewportObserver?.disconnect();
+    this.renderedViewportObserver = null;
+  }
 
   private eventNodeUid(event: PointerEvent): string | null {
     for (const item of event.composedPath()) {

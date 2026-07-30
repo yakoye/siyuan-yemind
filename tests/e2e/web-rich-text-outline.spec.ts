@@ -1026,6 +1026,14 @@ test('node quick actions follow wheel and horizontal canvas panning on every pai
     await expectQuickActionsAnchored(node, actions);
   }
 
+  let previousX = (await node.boundingBox())!.x;
+  for (let index = 0; index < 4; index += 1) {
+    await page.mouse.wheel(45, 0);
+    await expect.poll(async () => (await node.boundingBox())?.x).not.toBe(previousX);
+    previousX = (await node.boundingBox())!.x;
+    await expectQuickActionsAnchored(node, actions);
+  }
+
   const beforeDrag = await node.boundingBox();
   const dragStartX = canvasBox!.x + canvasBox!.width * 0.72;
   const dragY = canvasBox!.y + canvasBox!.height * 0.72;
