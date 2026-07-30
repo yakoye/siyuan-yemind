@@ -1,3 +1,5 @@
+import { afterEach, vi } from 'vitest';
+
 class ResizeObserverStub {
   observe(): void {}
   unobserve(): void {}
@@ -22,3 +24,8 @@ if (!globalThis.PointerEvent) {
     configurable: true,
   });
 }
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});

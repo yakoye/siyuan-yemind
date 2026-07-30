@@ -70,6 +70,10 @@ describe('v0.9.13 hidden-tab rich-text measurement', () => {
   });
 
   it('remeasures node geometry after web fonts finish loading', async () => {
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      callback(0);
+      return 1;
+    });
     let resolveFonts!: () => void;
     const fontsReady = new Promise<void>((resolve) => { resolveFonts = resolve; });
     const originalFonts = Object.getOwnPropertyDescriptor(document, 'fonts');
