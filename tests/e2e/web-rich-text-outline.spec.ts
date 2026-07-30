@@ -783,13 +783,17 @@ test('width-handle drag grows the live node monotonically without disappearing o
   expect(before).not.toBeNull();
   await rootNode.evaluate((element) => {
     const text = element.querySelector('g[data-width][data-height]');
+    const paintedContent = text?.firstElementChild;
     if (!text) throw new Error('rendered text container is missing before width drag');
     (window as any).__yemindWidthDragTextContainer = text;
+    (window as any).__yemindWidthDragPaintedContent = paintedContent;
   });
   await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
   await page.mouse.down();
   const widths = [before!.width];
   const tops = [before!.y];
+  const textLefts: number[] = [];
+  const textTops: number[] = [];
   for (let step = 1; step <= 5; step += 1) {
     await page.mouse.move(
       handleBox!.x + handleBox!.width / 2 + step * 24,
@@ -803,26 +807,34 @@ test('width-handle drag grows the live node monotonically without disappearing o
     tops.push(box!.y);
     const painted = await rootNode.evaluate((element) => {
       const text = element.querySelector<SVGGElement>('g[data-width][data-height]');
+      const paintedContent = text?.firstElementChild as SVGGraphicsElement | HTMLElement | null;
       const shape = element.querySelector<SVGGraphicsElement>('.smm-node-shape');
-      if (!text || !shape) return null;
+      if (!text || !paintedContent || !shape) return null;
       const textRect = text.getBoundingClientRect();
+      const paintedContentRect = paintedContent.getBoundingClientRect();
       const shapeRect = shape.getBoundingClientRect();
       return {
         sameTextContainer: text === (window as any).__yemindWidthDragTextContainer,
+        samePaintedContent: paintedContent === (window as any).__yemindWidthDragPaintedContent,
         content: text.textContent ?? '',
         textWidth: textRect.width,
         textHeight: textRect.height,
+        textLeft: paintedContentRect.left,
+        textTop: paintedContentRect.top,
         shapeWidth: shapeRect.width,
         shapeHeight: shapeRect.height,
       };
     });
     expect(painted).not.toBeNull();
     expect(painted!.sameTextContainer).toBe(true);
+    expect(painted!.samePaintedContent).toBe(true);
     expect(painted!.content).toContain('LTSSM 状态读取及历史记录');
     expect(painted!.textWidth).toBeGreaterThan(0);
     expect(painted!.textHeight).toBeGreaterThan(0);
     expect(painted!.shapeWidth).toBeGreaterThanOrEqual(painted!.textWidth);
     expect(painted!.shapeHeight).toBeGreaterThanOrEqual(painted!.textHeight);
+    textLefts.push(painted!.textLeft);
+    textTops.push(painted!.textTop);
   }
   await page.mouse.up();
   for (let index = 1; index < widths.length; index += 1) {
@@ -830,6 +842,8 @@ test('width-handle drag grows the live node monotonically without disappearing o
   }
   expect(widths.at(-1)!).toBeGreaterThan(widths[0] + 80);
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(2);
+  expect(Math.max(...textLefts) - Math.min(...textLefts)).toBeLessThanOrEqual(2);
+  expect(Math.max(...textTops) - Math.min(...textTops)).toBeLessThanOrEqual(2);
   await expect(rootNode).toBeVisible();
 });
 

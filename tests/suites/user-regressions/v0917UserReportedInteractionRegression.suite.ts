@@ -25,13 +25,14 @@ describe('v0.9.17 user-reported interaction regressions', () => {
     const oldOuterDom = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     const oldForeignDom = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
     oldForeignDom.setAttribute('width', '180');
-    oldForeignDom.innerHTML = '<div class="smm-richtext-node-wrap">旧布局</div>';
+    oldForeignDom.innerHTML = '<div class="smm-richtext-node-wrap" style="width: 180px; max-width: 180px">稳定文本</div>';
+    const oldContentDom = oldForeignDom.firstElementChild;
     oldOuterDom.appendChild(oldForeignDom);
     const nextOuterDom = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     const nextForeignDom = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
     nextForeignDom.setAttribute('width', '260');
     nextForeignDom.setAttribute('height', '64');
-    nextForeignDom.innerHTML = '<div class="smm-richtext-node-wrap">新的多行布局</div>';
+    nextForeignDom.innerHTML = '<div class="smm-richtext-node-wrap" style="width: 260px; max-width: 260px">稳定文本</div>';
     nextOuterDom.appendChild(nextForeignDom);
 
     const oldOuter = { node: oldOuterDom, attr: vi.fn() };
@@ -58,7 +59,10 @@ describe('v0.9.17 user-reported interaction regressions', () => {
     expect(preserved.nodeContent).toBe(oldForeign);
     expect(oldForeignDom.getAttribute('width')).toBe('260');
     expect(oldForeignDom.getAttribute('height')).toBe('64');
-    expect(oldForeignDom.textContent).toBe('新的多行布局');
+    expect(oldForeignDom.firstElementChild).toBe(oldContentDom);
+    expect((oldContentDom as HTMLElement).style.width).toBe('260px');
+    expect((oldContentDom as HTMLElement).style.maxWidth).toBe('260px');
+    expect(oldForeignDom.textContent).toBe('稳定文本');
     expect(preserved.width).toBe(260);
     expect(preserved.height).toBe(64);
   });

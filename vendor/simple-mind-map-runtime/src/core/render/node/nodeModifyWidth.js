@@ -11,6 +11,45 @@ function copyDomAttributes(target, source) {
   })
 }
 
+function canReuseDomNode(target, source) {
+  return Boolean(
+    target &&
+      source &&
+      target.nodeType === source.nodeType &&
+      (target.nodeType !== 1 || target.nodeName === source.nodeName)
+  )
+}
+
+/**
+ * Reconcile a freshly measured text tree into the already painted tree.
+ * Width dragging changes geometry and may change the amount of SVG text lines,
+ * but it must not replace reusable DOM nodes: replacing either a foreignObject
+ * child or an SVG text line leaves Chromium with a one-frame blank/ghost.
+ */
+function reconcilePaintedDom(target, source) {
+  if (!canReuseDomNode(target, source)) return false
+  if (target.nodeType === 3) {
+    target.nodeValue = source.nodeValue
+    return true
+  }
+  if (target.nodeType !== 1) return true
+
+  copyDomAttributes(target, source)
+  const targetChildren = Array.from(target.childNodes)
+  const sourceChildren = Array.from(source.childNodes)
+  sourceChildren.forEach((sourceChild, index) => {
+    const targetChild = targetChildren[index]
+    if (reconcilePaintedDom(targetChild, sourceChild)) return
+    const replacement = sourceChild.cloneNode(true)
+    if (targetChild) target.replaceChild(replacement, targetChild)
+    else target.appendChild(replacement)
+  })
+  for (let index = targetChildren.length - 1; index >= sourceChildren.length; index--) {
+    targetChildren[index].remove()
+  }
+  return true
+}
+
 /**
  * Width dragging must not replace the painted text container on every
  * mousemove. Chromium can paint a newly-created foreignObject one frame later,
@@ -24,19 +63,7 @@ export function preserveLiveTextData(previous, next) {
   const nextOuter = next.node.node
   if (!previousOuter || !nextOuter) return next
 
-  const previousForeign = previous.nodeContent && previous.nodeContent.node
-  const nextForeign = next.nodeContent && next.nodeContent.node
-  if (previousForeign && nextForeign) {
-    copyDomAttributes(previousForeign, nextForeign)
-    previousForeign.innerHTML = nextForeign.innerHTML
-    copyDomAttributes(previousOuter, nextOuter)
-    if (previousForeign.parentNode !== previousOuter) {
-      previousOuter.replaceChildren(previousForeign)
-    }
-  } else {
-    copyDomAttributes(previousOuter, nextOuter)
-    previousOuter.replaceChildren(...Array.from(nextOuter.childNodes))
-  }
+  reconcilePaintedDom(previousOuter, nextOuter)
 
   previous.width = next.width
   previous.height = next.height
