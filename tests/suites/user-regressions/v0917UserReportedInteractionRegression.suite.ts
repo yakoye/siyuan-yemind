@@ -126,6 +126,10 @@ describe('v0.9.17 user-reported interaction regressions', () => {
     expect(css).toMatch(
       /\.ymz-node-quick-action__visual\{[^}]*min-width:15px;[^}]*height:15px/s,
     );
+    expect(css).toContain('.ymz-node-quick-actions{gap:0!important}');
+    expect(css).toContain('.ymz-node-quick-action + .ymz-node-quick-action{margin-left:-6px!important}');
+    expect(css).toContain('.ymz-node-quick-actions[data-quick-side="right"] { transform: translate(-1px, -50%); }');
+    expect(css).toContain('.ymz-node-quick-actions[data-quick-side="left"] { transform: translate(calc(-100% + 1px), -50%); }');
   });
 
   it('anchors outline disclosure markers to the first text line', () => {

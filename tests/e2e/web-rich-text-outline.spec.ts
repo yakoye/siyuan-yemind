@@ -945,6 +945,49 @@ test('outline text transactions keep node count, canvas geometry and quick-actio
   await expectQuickActionsAnchored(numericChild, actions);
 });
 
+test('node quick actions follow wheel and horizontal canvas panning on every painted frame', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop viewport tracking regression');
+  await resetWebApp(page);
+  await addRootChild(page);
+  await commitCanvasEdit(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const canvas = editor.locator('[data-role="canvas"]');
+  const node = editor.locator('.smm-node').last();
+  await node.click();
+  const actions = editor.locator('.ymz-node-quick-actions').first();
+  await expect(actions).toBeVisible();
+  await expectQuickActionsAnchored(node, actions);
+  await editor.locator('[data-action="toggle-selection-mode"]').click();
+  await expect(editor).toHaveAttribute('data-selection-mode', 'pan');
+
+  const canvasBox = await canvas.boundingBox();
+  const initialNodeBox = await node.boundingBox();
+  expect(canvasBox).not.toBeNull();
+  expect(initialNodeBox).not.toBeNull();
+  await page.mouse.move(canvasBox!.x + canvasBox!.width * 0.72, canvasBox!.y + canvasBox!.height * 0.72);
+  let previousY = initialNodeBox!.y;
+  for (let index = 0; index < 4; index += 1) {
+    await page.mouse.wheel(0, 45);
+    await expect.poll(async () => (await node.boundingBox())?.y).not.toBe(previousY);
+    previousY = (await node.boundingBox())!.y;
+    await expectQuickActionsAnchored(node, actions);
+  }
+
+  const beforeDrag = await node.boundingBox();
+  const dragStartX = canvasBox!.x + canvasBox!.width * 0.72;
+  const dragY = canvasBox!.y + canvasBox!.height * 0.72;
+  await page.mouse.move(dragStartX, dragY);
+  await page.mouse.down({ button: 'right' });
+  for (let index = 1; index <= 6; index += 1) {
+    await page.mouse.move(dragStartX - index * 14, dragY);
+    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+    await expectQuickActionsAnchored(node, actions);
+  }
+  await page.mouse.up({ button: 'right' });
+  await expect.poll(async () => (await node.boundingBox())?.x).not.toBe(beforeDrag!.x);
+  await expectQuickActionsAnchored(node, actions);
+});
+
 test('outline paste trims browser boundary blank lines and Delete removes the pasted text completely', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop split-view regression');
   await resetWebApp(page);

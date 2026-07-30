@@ -180,3 +180,78 @@ it('anchors outline-driven selection to the current rendered node by UID after r
   controller.destroy();
   root.remove();
 });
+
+it('tracks every viewport transform with one non-starving refresh per animation frame', () => {
+  const root = document.createElement('div');
+  const canvas = document.createElement('div');
+  root.appendChild(canvas);
+  document.body.appendChild(root);
+  Object.defineProperty(canvas, 'getBoundingClientRect', {
+    value: () => ({ left: 100, top: 80, right: 900, bottom: 680, width: 800, height: 600, x: 100, y: 80, toJSON() {} }),
+  });
+  let nodeLeft = 360;
+  const liveElement = document.createElement('div');
+  Object.defineProperty(liveElement, 'getBoundingClientRect', {
+    value: () => ({
+      left: nodeLeft,
+      top: 260,
+      right: nodeLeft + 200,
+      bottom: 300,
+      width: 200,
+      height: 40,
+      x: nodeLeft,
+      y: 260,
+      toJSON() {},
+    }),
+  });
+  const liveNode: any = {
+    isRoot: false,
+    children: [],
+    nodeData: { children: [] },
+    group: { node: liveElement },
+    getData: (key: string) => ({ uid: 'a', expand: true, isActive: true } as any)[key],
+  };
+  const listeners = new Map<string, Set<(...args: any[]) => void>>();
+  const viewportEventSource = {
+    on: vi.fn((name: string, listener: (...args: any[]) => void) => {
+      if (!listeners.has(name)) listeners.set(name, new Set());
+      listeners.get(name)!.add(listener);
+    }),
+    off: vi.fn((name: string, listener: (...args: any[]) => void) => {
+      listeners.get(name)?.delete(listener);
+    }),
+  };
+  const frames: FrameRequestCallback[] = [];
+  const requestFrame = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+    frames.push(callback);
+    return frames.length;
+  });
+  const cancelFrame = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
+  const controller = new NodeQuickActionsController({
+    root,
+    canvas,
+    viewportEventSource,
+    getRendererRoot: () => liveNode,
+    getActiveNodes: () => [liveNode],
+    readonly: () => false,
+    onAddChild: vi.fn(),
+    onSetExpanded: vi.fn(),
+  });
+  controller.refresh();
+  expect(canvas.querySelector<HTMLElement>('[data-node-uid="a"]')?.style.left).toBe('460px');
+  expect([...listeners.keys()]).toEqual(expect.arrayContaining(['translate', 'scale', 'resize', 'view_data_change']));
+
+  nodeLeft = 240;
+  listeners.get('translate')?.forEach((listener) => listener());
+  listeners.get('view_data_change')?.forEach((listener) => listener());
+  expect(requestFrame).toHaveBeenCalledTimes(1);
+  expect(cancelFrame).not.toHaveBeenCalled();
+  frames.shift()?.(performance.now());
+  expect(canvas.querySelector<HTMLElement>('[data-node-uid="a"]')?.style.left).toBe('340px');
+
+  controller.destroy();
+  expect(viewportEventSource.off).toHaveBeenCalledTimes(4);
+  requestFrame.mockRestore();
+  cancelFrame.mockRestore();
+  root.remove();
+});

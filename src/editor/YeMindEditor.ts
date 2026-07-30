@@ -1111,6 +1111,7 @@ export class YeMindEditor {
     this.nodeQuickActions = new NodeQuickActionsController({
       root: this.rootEl,
       canvas: this.canvasEl,
+      viewportEventSource: this.map,
       getRendererRoot: () => (this.map as any)?.renderer?.root,
       getActiveNodes: () => this.commands?.getActiveNodes() ?? [],
       getLayout: () => this.current.layout,
@@ -2074,7 +2075,6 @@ export class YeMindEditor {
         { zoom: Number((this.map?.view as any)?.scale ?? 1) },
       );
       this.updateDiagnosticState();
-      this.nodeQuickActions?.scheduleRefresh();
       this.scheduleSave();
     });
     this.map.on("node_contextmenu", (event: MouseEvent, node: any) => {
@@ -2260,7 +2260,6 @@ export class YeMindEditor {
     );
     this.map.on("scale", () => {
       this.updateZoom();
-      this.nodeQuickActions?.scheduleRefresh();
     });
     this.map.on("node_tree_render_end", () => this.nodeQuickActions?.scheduleRefresh());
   }

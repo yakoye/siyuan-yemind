@@ -156,6 +156,10 @@ function visibleNodeList(root: any): any[] {
 export interface NodeQuickActionsControllerOptions {
   root: HTMLElement;
   canvas: HTMLElement;
+  viewportEventSource?: {
+    on?(name: string, listener: (...args: any[]) => void): void;
+    off?(name: string, listener: (...args: any[]) => void): void;
+  };
   getRendererRoot(): any;
   getActiveNodes(): any[];
   getLayout?(): unknown;
@@ -172,7 +176,7 @@ export interface NodeQuickActionsControllerOptions {
  */
 export class NodeQuickActionsController {
   private readonly layer: HTMLElement;
-  private frame = 0;
+  private frame: number | null = null;
   private hideTimer: number | null = null;
   private hoveredUid: string | null = null;
   private readonly nodeElementToUid = new Map<Element, string>();
@@ -188,10 +192,13 @@ export class NodeQuickActionsController {
     this.layer.addEventListener('pointerout', this.onActionPointerOut);
     this.options.canvas.addEventListener('pointerover', this.onCanvasPointerOver);
     this.options.canvas.addEventListener('pointerout', this.onCanvasPointerOut);
+    this.bindViewportTracking();
   }
 
   destroy(): void {
-    cancelAnimationFrame(this.frame);
+    if (this.frame !== null) cancelAnimationFrame(this.frame);
+    this.frame = null;
+    this.unbindViewportTracking();
     this.cancelHide();
     this.layer.removeEventListener('click', this.onClick);
     this.layer.removeEventListener('pointerover', this.onActionPointerOver);
@@ -204,12 +211,15 @@ export class NodeQuickActionsController {
   }
 
   scheduleRefresh(): void {
-    cancelAnimationFrame(this.frame);
+    // Coalesce continuous wheel/drag events into the next paint. Cancelling and
+    // rescheduling the pending frame on every input event can starve the HTML
+    // controls while the SVG viewport continues moving at a higher event rate.
+    if (this.frame !== null) return;
     this.frame = requestAnimationFrame(() => this.refresh());
   }
 
   refresh(): void {
-    this.frame = 0;
+    this.frame = null;
     this.layer.replaceChildren();
     this.nodeElementToUid.clear();
     if (this.options.readonly()) return;
@@ -275,6 +285,22 @@ export class NodeQuickActionsController {
       this.layer.appendChild(container);
     });
   }
+
+  private bindViewportTracking(): void {
+    ['translate', 'scale', 'resize', 'view_data_change'].forEach((name) => {
+      this.options.viewportEventSource?.on?.(name, this.onViewportChange);
+    });
+  }
+
+  private unbindViewportTracking(): void {
+    ['translate', 'scale', 'resize', 'view_data_change'].forEach((name) => {
+      this.options.viewportEventSource?.off?.(name, this.onViewportChange);
+    });
+  }
+
+  private readonly onViewportChange = (): void => {
+    this.scheduleRefresh();
+  };
 
   private eventNodeUid(event: PointerEvent): string | null {
     for (const item of event.composedPath()) {
