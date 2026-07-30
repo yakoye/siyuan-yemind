@@ -6,6 +6,7 @@
 
 - [开发要求](standards/开发要求.md)
 - [回归验收清单](standards/回归验收清单.md)
+- [日常高频操作测试用例](standards/日常高频操作测试用例.md)
 - [测试与验收](standards/测试与验收.md)
 - [版本与发布规范](standards/版本与发布规范.md)
 - [版本管理](standards/版本管理.md)
