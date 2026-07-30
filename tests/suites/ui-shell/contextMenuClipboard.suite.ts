@@ -16,4 +16,9 @@ describe('node clipboard menu', () => {
     expect(source).toContain("accelerator: 'Ctrl+Shift+V'");
     expect(source).not.toContain("label: '跨导图粘贴'");
   });
+
+  it('lets a frozen resource copy action override generic node copy', () => {
+    expect(source).toContain('onCopy?: () => void | Promise<void>');
+    expect(source).toContain('options.onCopy ? options.onCopy() : commands.copy()');
+  });
 });

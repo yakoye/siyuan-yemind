@@ -143,6 +143,11 @@ import {
   RenderLifecycleCoordinator,
   type RenderTextEditPayload,
 } from './RenderLifecycleCoordinator';
+import {
+  writeImageResourceToClipboard,
+  type ClipboardImageResource,
+} from './clipboardCopyIntent';
+import { clearNodeClipboard } from './nodeClipboard';
 
 export interface YeMindEditorOptions {
   container: HTMLElement;
@@ -242,6 +247,7 @@ export class YeMindEditor {
   private canvasRightDrag: CanvasRightDragController | null = null;
   private liveNodeWidthLayout: LiveNodeWidthLayoutController | null = null;
   private contextMenuSelectionSnapshot: { nodes: any[]; target: any } | null = null;
+  private contextMenuResourceSnapshot: ClipboardImageResource | null = null;
   private cancelFocusedNodeHighlight: (() => void) | null = null;
   private outlineRichText: StructuredOutlineEditorController | null = null;
   private settingsInitialized = false;
@@ -295,10 +301,16 @@ export class YeMindEditor {
 
   private readonly onCanvasContextMenuCapture = (event: MouseEvent): void => {
     this.contextMenuSelectionSnapshot = null;
+    this.contextMenuResourceSnapshot = null;
     if (!this.map || !this.commands) return;
+    const target = findRenderedNodeAtClientPoint(this.map, event.clientX, event.clientY);
+    const imageAdjust = (this.map as any).nodeImgAdjust;
+    this.contextMenuResourceSnapshot = imageAdjust?.getClipboardResourceForTarget?.(
+      event.target,
+      target,
+    ) ?? null;
     const nodes = this.commands.getActiveNodes();
     if (nodes.length < 2) return;
-    const target = findRenderedNodeAtClientPoint(this.map, event.clientX, event.clientY);
     if (target && nodes.includes(target)) this.contextMenuSelectionSnapshot = { nodes: [...nodes], target };
   };
 
@@ -1259,6 +1271,7 @@ export class YeMindEditor {
         this.commands?.undo();
         this.refreshOutlineFromMap(true);
       },
+      onCopyResource: (resource) => this.copyImageResource(resource),
       onRedo: () => {
         this.commands?.redo();
         this.refreshOutlineFromMap(true);
@@ -2135,6 +2148,7 @@ export class YeMindEditor {
     });
     this.map.on("contextmenu", (event: MouseEvent) => {
       this.contextMenuSelectionSnapshot = null;
+      this.contextMenuResourceSnapshot = null;
       if (this.canvasRightDrag?.consumeContextMenu()) {
         event.preventDefault();
         event.stopPropagation();
@@ -2353,12 +2367,15 @@ export class YeMindEditor {
 
   private openContextMenu(event: MouseEvent): void {
     if (!this.commands) return;
+    const resource = this.contextMenuResourceSnapshot;
+    this.contextMenuResourceSnapshot = null;
     const nodeUid = renderedNodeUid(this.commands.getPrimaryNode());
     const nodeCard = this.studyPanel?.cardForNode(nodeUid);
     this.options.diagnostics.record("context-menu", "opened", this.current.id, {
       selectedNodeCount: this.commands.getActiveNodes().length,
     });
     openNodeContextMenu(event, this.commands, {
+      ...(resource ? { onCopy: () => this.copyImageResource(resource) } : {}),
       onInlineLink: () => openInlineLinkDialog(this.commands!, this.settings),
       onCodeBlock: () => openCodeBlockDialog(this.commands!, this.settings),
       onNodeLink: () =>
@@ -3220,6 +3237,7 @@ export class YeMindEditor {
     this.claimOutlineInteraction('outline-context-menu');
     this.activateNodeByUid(uid);
     const state = this.outlineRichText.getLineState(uid);
+    const resource = this.outlineRichText.getSelectedClipboardResource();
     const readonly = this.commands.isReadonly();
     const activate = (): void => this.activateNodeByUid(uid);
     openOutlineContextMenu(event, {
@@ -3273,7 +3291,10 @@ export class YeMindEditor {
         activate();
         if (this.commands) openImageDialog(this.commands);
       },
-      onCopyLine: () => this.outlineRichText!.copyCurrentLine(uid),
+      copyLabel: resource ? (resource.kind === 'clipart' ? '复制剪贴图' : '复制图片') : undefined,
+      onCopyLine: () => resource
+        ? this.copyImageResource(resource)
+        : this.outlineRichText!.copyCurrentLine(uid),
       onCutLine: () => this.outlineRichText!.cutCurrentLine(uid),
       onPasteAtCaret: () => this.outlineRichText!.pasteCurrentLine(uid, false),
       onPastePlain: () => this.outlineRichText!.pasteCurrentLine(uid, true),
@@ -3308,6 +3329,18 @@ export class YeMindEditor {
       if (found) return found;
     }
     return null;
+  }
+
+  private async copyImageResource(resource: ClipboardImageResource): Promise<void> {
+    clearNodeClipboard();
+    const result = await writeImageResourceToClipboard(resource);
+    this.options.diagnostics.record('clipboard', 'copy-resource', this.current.id, {
+      kind: resource.kind,
+      result,
+    });
+    if (result === 'none') {
+      showMessage('当前环境无法写入图片剪贴板', 3000, 'error');
+    }
   }
 
   private openSymbolPickerForUid(uid: string): void {

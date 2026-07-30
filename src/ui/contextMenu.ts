@@ -76,6 +76,7 @@ export function openCanvasContextMenu(event: MouseEvent, commands: YeMindCommand
 }
 
 export interface NodeContextMenuOptions {
+  onCopy?: () => void | Promise<void>;
   onInlineLink?: () => void;
   onCodeBlock?: () => void;
   onNodeLink?: () => void;
@@ -128,7 +129,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
     menu.addItem({ iconHTML: relationIcon(), label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
     menu.addItem({ icon: 'iconRefresh', label: '展开/折叠全部下级节点', disabled: !availability.toggleExpand, click: run('toggle-expand-subtree', () => { const uid = String(primary?.getData?.('uid') ?? ''); if (uid) commands.toggleBranchExpandByUid(uid); }) });
     menu.addSeparator();
-    menu.addItem({ icon: 'iconCopy', label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });
+    menu.addItem({ icon: 'iconCopy', label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => { void (options.onCopy ? options.onCopy() : commands.copy()); }) });
     menu.addItem({ iconHTML: clipboardIcon('cut'), label: '剪切', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) });
     menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴', accelerator: 'Ctrl+V', disabled: !availability.paste, click: run('paste', () => paste(commands)) });
     menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴（纯文本）', accelerator: 'Ctrl+Shift+V', disabled: !availability.paste, click: run('paste-plain', () => paste(commands, true)) });
@@ -175,7 +176,7 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   menu.addItem({ iconHTML: relationIcon(), label: '关联线', accelerator: 'Ctrl+Alt+L', disabled: !availability.relation, click: run('relation', () => options.onRelation ? options.onRelation() : commands.startRelation()) });
   menu.addItem({ iconHTML: nodeStyleIcon(), label: '节点样式', disabled: !availability.nodeContent, click: run('node-style', () => options.onNodeStyle?.()) });
   menu.addSeparator();
-  menu.addItem({ icon: 'iconCopy', label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => commands.copy()) });
+  menu.addItem({ icon: 'iconCopy', label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => { void (options.onCopy ? options.onCopy() : commands.copy()); }) });
   menu.addItem({ iconHTML: clipboardIcon('cut'), label: '剪切', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) });
   menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴', accelerator: 'Ctrl+V', disabled: !availability.paste, click: run('paste', () => paste(commands)) });
   menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴（纯文本）', accelerator: 'Ctrl+Shift+V', disabled: !availability.paste, click: run('paste-plain', () => paste(commands, true)) });
@@ -221,6 +222,7 @@ export interface OutlineContextMenuOptions {
   onSymbols?(): void;
   onClipart?(): void;
   onImage?(): void;
+  copyLabel?: string;
   onCopyLine(): void | Promise<void>;
   onCutLine(): void | Promise<void>;
   onPasteAtCaret(): void | Promise<void>;
@@ -285,7 +287,7 @@ export function openOutlineContextMenu(event: MouseEvent, options: OutlineContex
     ],
   });
   menu.addSeparator();
-  menu.addItem({ icon: 'iconCopy', label: '复制（当前行）', click: run('copy-line', options.onCopyLine) });
+  menu.addItem({ icon: 'iconCopy', label: options.copyLabel ?? '复制（当前行）', click: run('copy-line', options.onCopyLine) });
   menu.addItem({ iconHTML: clipboardIcon('cut'), label: '剪切（当前行）', disabled, click: run('cut-line', options.onCutLine) });
   menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴（当前光标处）', disabled, click: run('paste-caret', options.onPasteAtCaret) });
   menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴（纯文本）', disabled, click: run('paste-plain', options.onPastePlain) });

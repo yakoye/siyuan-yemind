@@ -1,5 +1,10 @@
 import NodeImgAdjust from 'simple-mind-map/src/plugins/NodeImgAdjust';
 import { resourceActionIcon } from '../ui/resourceActionIcons';
+import {
+  writeImageResourceToClipboard,
+  type ClipboardImageResource,
+} from '../editor/clipboardCopyIntent';
+import { clearNodeClipboard } from '../editor/nodeClipboard';
 
 export type ImageResizeHandle = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 
@@ -480,6 +485,45 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     if (this.imageSelected && node && node !== this.node) this.closeImageSelection();
   }
 
+  private clipboardResourceForNode(node: any): ClipboardImageResource | null {
+    if (!node) return null;
+    const source = String(node.getData?.('image') ?? '').trim();
+    if (!source) return null;
+    return {
+      kind: node.getData?.('yemindClipartId') ? 'clipart' : 'image',
+      source,
+      title: String(node.getData?.('imageTitle') ?? '').trim(),
+    };
+  }
+
+  getSelectedClipboardResource(): ClipboardImageResource | null {
+    return this.imageSelected ? this.clipboardResourceForNode(this.node) : null;
+  }
+
+  getClipboardResourceForTarget(
+    target: EventTarget | null,
+    node: any = this.node,
+  ): ClipboardImageResource | null {
+    if (!node || !target) return null;
+    const element = target instanceof Element ? target : null;
+    const nodeImage = node?._imgData?.node?.node;
+    const renderedImage = nodeImage instanceof Element
+      ? nodeImage
+      : node === this.node && this.img?.node instanceof Element
+        ? this.img.node
+        : null;
+    const frame = node === this.node ? this.handleEl : null;
+    const directlyTargetsImage = Boolean(
+      renderedImage && element && (element === renderedImage || renderedImage.contains(element)),
+    );
+    const directlyTargetsFrame = Boolean(
+      frame && element && (element === frame || frame.contains(element)),
+    );
+    return directlyTargetsImage || directlyTargetsFrame
+      ? this.clipboardResourceForNode(node)
+      : null;
+  }
+
   private onCanvasInteraction(): void {
     this.closeImageSelection();
   }
@@ -507,12 +551,26 @@ export default class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
 
   private onKeydownCapture(event: KeyboardEvent): void {
     if (!this.imageSelected || this.mindMap.opt.readonly) return;
+    const host = this.mindMap.opt.customInnerElsAppendTo;
+    if (host instanceof Element && !host.isConnected) return;
     const editor = this.handleEl?.closest?.('.ymz-editor') as HTMLElement | null;
     if (editor && editor.getClientRects().length === 0) return;
+    const target = event.target as HTMLElement | null;
+    const editableTarget = Boolean(target?.closest?.('input,textarea,select,[contenteditable="true"],.ql-editor'));
+    const command = event.ctrlKey || event.metaKey;
+    if (command && !event.altKey && event.key.toLowerCase() === 'c' && !editableTarget) {
+      const resource = this.getSelectedClipboardResource();
+      if (!resource) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+      clearNodeClipboard();
+      void writeImageResourceToClipboard(resource);
+      return;
+    }
     if (event.key !== 'Delete' && event.key !== 'Backspace') return;
     if (event.ctrlKey || event.metaKey || event.altKey) return;
-    const target = event.target as HTMLElement | null;
-    if (target?.closest?.('input,textarea,select,[contenteditable="true"],.ql-editor')) return;
+    if (editableTarget) return;
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation?.();

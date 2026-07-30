@@ -28,6 +28,11 @@ import {
   publishNodeClipboard,
   readNodeClipboard,
 } from './nodeClipboard';
+import {
+  writeImageResourceToClipboard,
+  writeImageResourceToTransfer,
+  type ClipboardImageResource,
+} from './clipboardCopyIntent';
 
 export type StructuredOutlineFocusPlacement = 'start' | 'end' | 'select-all' | 'range';
 
@@ -70,6 +75,7 @@ export interface StructuredOutlineEditorOptions {
   onImageEdit?(uid: string, kind: 'image' | 'clipart', anchor: HTMLElement): void;
   onImageDelete?(uid: string, kind: 'image' | 'clipart'): void;
   onImagePreview?(uid: string, kind: 'image' | 'clipart'): void;
+  onCopyResource?(resource: ClipboardImageResource): void | Promise<void>;
   onContentAction?(uid: string, type: string): void;
   onContentHover?(uid: string, type: string, anchor: HTMLElement, entering: boolean): void;
   onUndo(): void;
@@ -461,6 +467,11 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
 
   get isDirty(): boolean {
     return this.dirty;
+  }
+
+  getSelectedClipboardResource(): ClipboardImageResource | null {
+    if (!this.selectedMedia) return null;
+    return this.clipboardResourceForMedia(this.selectedMedia.uid, this.selectedMedia.kind);
   }
 
   setReadonly(readonly: boolean): void {
@@ -1096,6 +1107,17 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     if (!row || !this.options.root.contains(row)) return;
     const uid = row.dataset.outlineUid ?? '';
     if (!uid) return;
+    const imageAction = target.closest<HTMLElement>('[data-outline-image-action]');
+    if (imageAction) {
+      event.preventDefault();
+      event.stopPropagation();
+      const kind = imageAction.dataset.outlineImageKind === 'clipart' ? 'clipart' : 'image';
+      this.selectOutlineMedia(uid, kind);
+      this.activateUid(uid, false);
+      if (!this.options.isReadonly()) this.options.onActivate(uid);
+      this.options.onContextMenu?.(event, uid);
+      return;
+    }
     const editor = row.querySelector<HTMLElement>('[data-outline-editor]');
     this.activeEditor = editor;
     this.activateUid(uid, false);
@@ -1196,6 +1218,15 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       return;
     }
     const command = event.ctrlKey || event.metaKey;
+    if (command && !event.altKey && event.key.toLowerCase() === 'c') {
+      const context = this.selectionContext();
+      if (this.selectedMedia && (!context || context.collapsed)) {
+        event.preventDefault();
+        event.stopPropagation();
+        void this.copySelectedMedia();
+        return;
+      }
+    }
     if (command && !event.altKey && event.key.toLowerCase() === 'a') {
       event.preventDefault();
       event.stopPropagation();
@@ -1302,6 +1333,17 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
   private readonly onCopy = (event: ClipboardEvent): void => {
     if (!event.clipboardData) return;
     const context = this.selectionContext();
+    const resource = (!context || context.collapsed)
+      ? this.getSelectedClipboardResource()
+      : null;
+    if (resource) {
+      event.preventDefault();
+      event.stopPropagation();
+      writeImageResourceToTransfer(resource, event.clipboardData);
+      clearNodeClipboard();
+      void this.copyResource(resource);
+      return;
+    }
     const whole = this.isWholeSelectionActive(context?.range ?? null);
     if (!context && !whole) return;
     const nodeTrees = this.selectedNodeTrees(context, whole);
@@ -1587,6 +1629,35 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     this.selectedMedia = null;
     this.options.root.querySelectorAll<HTMLElement>('[data-outline-image-action].is-selected')
       .forEach((element) => element.classList.remove('is-selected'));
+  }
+
+  private clipboardResourceForMedia(
+    uid: string,
+    kind: 'image' | 'clipart',
+  ): ClipboardImageResource | null {
+    const data = findTreeByUid(this.options.getTree(), uid)?.data;
+    const source = String(data?.image ?? '').trim();
+    if (!source) return null;
+    return {
+      kind,
+      source,
+      title: String(data?.imageTitle ?? '').trim(),
+    };
+  }
+
+  private async copyResource(resource: ClipboardImageResource): Promise<void> {
+    clearNodeClipboard();
+    if (this.options.onCopyResource) {
+      await this.options.onCopyResource(resource);
+      return;
+    }
+    await writeImageResourceToClipboard(resource);
+  }
+
+  private async copySelectedMedia(): Promise<void> {
+    const resource = this.getSelectedClipboardResource();
+    if (!resource) return;
+    await this.copyResource(resource);
   }
 
   private patchRow(row: HTMLElement, block: StructuredOutlineBlock, selectionProtected: boolean): void {

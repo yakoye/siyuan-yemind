@@ -49,6 +49,42 @@ function createHarness() {
 }
 
 describe('v0.9.16 direct image editing', () => {
+  it('exposes the selected canvas image as one stable clipboard resource', () => {
+    const { host, adjust, node, img } = createHarness();
+    img.node = document.createElement('img');
+    (adjust as any).onImageClick(node, img, new MouseEvent('click'));
+
+    expect(adjust.getSelectedClipboardResource()).toEqual({
+      kind: 'image',
+      source: 'data:image/svg+xml;base64,AAAA',
+      title: 'Clipart',
+    });
+    expect(adjust.getClipboardResourceForTarget(img.node)).toEqual(
+      adjust.getSelectedClipboardResource(),
+    );
+
+    (adjust as any).closeImageSelection();
+    expect(adjust.getSelectedClipboardResource()).toBeNull();
+    host.remove();
+  });
+
+  it('only treats the rendered node image as a direct resource target', () => {
+    const { host, adjust, node, img } = createHarness();
+    const renderedImage = document.createElement('img');
+    const unrelated = document.createElement('span');
+    img.node = renderedImage;
+    host.append(renderedImage, unrelated);
+    (adjust as any).onImageClick(node, img, new MouseEvent('click'));
+
+    expect(adjust.getClipboardResourceForTarget(renderedImage)).toEqual({
+      kind: 'image',
+      source: 'data:image/svg+xml;base64,AAAA',
+      title: 'Clipart',
+    });
+    expect(adjust.getClipboardResourceForTarget(unrelated)).toBeNull();
+    host.remove();
+  });
+
   it('shows a border on hover and full controls only after clicking the image', () => {
     const { host, adjust, node, img } = createHarness();
     adjust.onNodeImgMousemove(node, img);

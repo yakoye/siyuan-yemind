@@ -75,6 +75,7 @@ function mount(
   initialTree: MindMapTree = tree(),
   documentId = 'doc-a',
   onPasteNodes?: (targetUid: string, nodes: MindMapTree[]) => boolean,
+  onCopyResource = vi.fn(async () => undefined),
 ) {
   const root = document.createElement('div');
   document.body.appendChild(root);
@@ -89,6 +90,7 @@ function mount(
     getTree: () => current,
     isReadonly: () => readonly,
     onPasteNodes,
+    onCopyResource,
     onApply,
     onActivate: vi.fn(),
     onToggle: vi.fn(),
@@ -97,7 +99,7 @@ function mount(
     onSelectionChange: vi.fn(),
     debounceMs: 10_000,
   });
-  return { root, controller, onApply, current: () => current };
+  return { root, controller, onApply, onCopyResource, current: () => current };
 }
 
 describe('v0.9.4 unified structured outline editor', () => {
@@ -668,6 +670,47 @@ describe('v0.9.4 unified structured outline editor', () => {
     (controller as any).clearMediaSelection?.();
 
     expect(image.classList.contains('is-selected')).toBe(false);
+    controller.destroy();
+    root.remove();
+  });
+
+  it('copies a selected outline image instead of the owning node on Ctrl+C', () => {
+    const { root, controller, current, onCopyResource } = mount();
+    current().children[0].data.image = 'data:image/png;base64,AAAA';
+    current().children[0].data.imageTitle = '流程图片';
+    controller.syncFromTree(current(), true);
+    const image = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-image-action]')!;
+
+    image.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }));
+    const copy = key(root, 'c', { ctrlKey: true });
+
+    expect(copy.defaultPrevented).toBe(true);
+    expect(onCopyResource).toHaveBeenCalledWith({
+      kind: 'image',
+      source: 'data:image/png;base64,AAAA',
+      title: '流程图片',
+    });
+    controller.destroy();
+    root.remove();
+  });
+
+  it('freezes a directly right-clicked outline image for the context menu copy action', () => {
+    const onContextMenu = vi.fn();
+    const { root, controller, current } = mount();
+    (controller as any).options.onContextMenu = onContextMenu;
+    current().children[0].data.image = 'data:image/png;base64,AAAA';
+    current().children[0].data.imageTitle = '流程图片';
+    controller.syncFromTree(current(), true);
+    const image = root.querySelector<HTMLElement>('[data-outline-uid="a"] [data-outline-image-action]')!;
+
+    image.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+
+    expect(controller.getSelectedClipboardResource()).toEqual({
+      kind: 'image',
+      source: 'data:image/png;base64,AAAA',
+      title: '流程图片',
+    });
+    expect(onContextMenu).toHaveBeenCalled();
     controller.destroy();
     root.remove();
   });
