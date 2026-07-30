@@ -677,6 +677,32 @@ export class YeMindEditor {
       return;
     }
     if (!this.commands || outlineEditing || isEditableTarget(event.target)) return;
+    const clipboardCommand = event.ctrlKey || event.metaKey;
+    if (
+      clipboardCommand
+      && !event.altKey
+      && !event.shiftKey
+      && ['c', 'x', 'v'].includes(event.key.toLowerCase())
+    ) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const key = event.key.toLowerCase();
+      if (key === 'c') {
+        void Promise.resolve(this.commands.copy()).catch((error) => {
+          console.error('[YeMind] canvas node copy failed', error);
+        });
+      } else if (key === 'x') {
+        this.commands.cut();
+      } else {
+        void this.pasteActiveNodeImageFromClipboard()
+          .then((handled) => handled ? undefined : this.commands?.paste())
+          .catch((error) => {
+            console.error('[YeMind] canvas node paste failed', error);
+            showMessage('节点粘贴失败，请重试', 4000, 'error');
+          });
+      }
+      return;
+    }
     if (
       (event.key === "Backspace" || event.key === "Delete") &&
       !event.ctrlKey &&

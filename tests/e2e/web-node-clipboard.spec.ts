@@ -264,8 +264,14 @@ async function commitCanvasEdit(page: Page): Promise<void> {
 }
 
 async function copyCanvasNode(page: Page, text = SOURCE_ONE): Promise<void> {
-  await canvasNode(page, text).click();
+  const node = canvasNode(page, text);
+  const textLayer = node.locator('.smm-richtext-node-wrap,.smm-text-node-wrap').last();
+  await expect(textLayer).toBeVisible();
+  // A node may also contain an independently selectable image. Click the
+  // text projection so this scenario explicitly exercises whole-node copy.
+  await textLayer.click({ position: { x: 4, y: 4 } });
   await page.keyboard.press('Control+C');
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain(text);
 }
 
 async function copyCanvasText(page: Page, text = SOURCE_TWO): Promise<void> {
@@ -278,8 +284,9 @@ async function copyCanvasText(page: Page, text = SOURCE_TWO): Promise<void> {
 
 async function copyOutlineNodeAtCaret(page: Page, text = SOURCE_ONE): Promise<void> {
   const editor = outlineEditor(page, text);
-  await editor.click();
+  await editor.click({ position: { x: 4, y: 4 } });
   await page.keyboard.press('Control+C');
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain(text);
 }
 
 async function copyOutlinePartialText(page: Page, text = SOURCE_TWO): Promise<string> {
