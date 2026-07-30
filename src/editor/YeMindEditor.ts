@@ -884,6 +884,7 @@ export class YeMindEditor {
     this.splitDragPointerId = null;
     this.unbindCanvasNodeClipboard?.();
     this.unbindCanvasNodeClipboard = null;
+    (this.map as any)?.command?.yemindCancelHistory?.();
     this.map?.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);

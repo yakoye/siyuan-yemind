@@ -21,4 +21,12 @@ describe('editor save lifecycle', () => {
     expect(flushBody).toContain('this.saveRevisions.isDirty()');
     expect(flushBody).not.toContain('this.saveTimer === null ||');
   });
+
+  it('cancels a delayed history snapshot before destroying the mind-map instance', () => {
+    const destroyStart = source.indexOf('destroy(): void');
+    const destroyEnd = source.indexOf('private mount()', destroyStart);
+    const destroyBody = source.slice(destroyStart, destroyEnd);
+    expect(destroyBody).toContain('yemindCancelHistory');
+    expect(destroyBody.indexOf('yemindCancelHistory')).toBeLessThan(destroyBody.indexOf('this.map?.destroy()'));
+  });
 });
