@@ -7,6 +7,7 @@ import { shouldStabilizeOpeningPlacement } from '../../../src/editor/YeMindRichT
 import {
   editorContentRectAligned,
   editorHorizontalMargin,
+  resolveRenderedTextRect,
 } from '../../../src/editor/richTextGeometry';
 
 describe('v0.9.14 stable node measurement geometry', () => {
@@ -125,6 +126,37 @@ describe('v0.9.14 stable node measurement geometry', () => {
       { left: 326, top: 80 },
       { left: 989, top: 395 },
     )).toBe(false);
+  });
+
+  it('uses the real text child instead of a padded prefix group as the editor anchor', () => {
+    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.classList.add('smm-text-node-wrap');
+    group.append(text);
+    document.body.append(group);
+    vi.spyOn(group, 'getBoundingClientRect').mockReturnValue(
+      new DOMRect(1026, 429.5, 83, 26),
+    );
+    vi.spyOn(text, 'getBoundingClientRect').mockReturnValue(
+      new DOMRect(1028, 433.5, 71, 18),
+    );
+    const node = {
+      _prefixData: { width: 18 },
+      _textData: {
+        node: {
+          node: group,
+          attr: (name: string) => name === 'data-width' ? 71 : 18,
+        },
+      },
+      getStyle: () => 'left',
+    };
+
+    const resolved = resolveRenderedTextRect(node);
+
+    expect(resolved?.rect.left).toBe(1028);
+    expect(resolved?.rect.top).toBe(433.5);
+    expect(resolved?.rect.width).toBe(71);
+    expect(resolved?.rect.height).toBe(18);
   });
 
   it('drops a stale placement frame after editing moved to another node', () => {

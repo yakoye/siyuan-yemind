@@ -604,6 +604,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.setQuillContainerMinHeight(originHeight);
     this.applyEditorHorizontalMargin(node, rect);
     this.normalizeEditorPlacement(rect);
+    this.alignEditorContentToTarget(rect);
   }
 
   private applyEditorHorizontalMargin(node: any, rect: DOMRect | null): void {
@@ -642,6 +643,40 @@ export default class YeMindRichText extends (BaseRichText as any) {
     host.style.position = 'absolute';
     host.style.left = `${nodeRect.left - targetRect.left + target.scrollLeft - target.clientLeft}px`;
     host.style.top = `${nodeRect.top - targetRect.top + target.scrollTop - target.clientTop}px`;
+  }
+
+  /**
+   * `normalizeEditorPlacement` establishes the overlay in the correct viewport
+   * coordinate system. Quill still has its own content padding, and prefix
+   * nodes can add a renderer-specific margin before the real text layer. Align
+   * the live content box, not the outer overlay box, to the canonical SVG text
+   * rectangle before the editor is allowed to paint.
+   */
+  private alignEditorContentToTarget(targetRect: DOMRect): void {
+    const host = this.textEditNode as HTMLElement | null;
+    const editor = host?.querySelector<HTMLElement>('.ql-editor') ?? null;
+    if (!host || !editor) return;
+    const editorRect = editor.getBoundingClientRect();
+    const deltaX = targetRect.left - editorRect.left;
+    const deltaY = targetRect.top - editorRect.top;
+    if (!Number.isFinite(deltaX) || !Number.isFinite(deltaY)) return;
+    if (Math.abs(deltaX) <= 0.05 && Math.abs(deltaY) <= 0.05) return;
+
+    const left = Number.parseFloat(host.style.left);
+    const top = Number.parseFloat(host.style.top);
+    if (!Number.isFinite(left) || !Number.isFinite(top)) return;
+
+    const target = this.mindMap?.opt?.customInnerElsAppendTo as HTMLElement | null | undefined;
+    if (!target || target === document.body || host.parentElement === document.body) {
+      host.style.left = `${left + deltaX}px`;
+      host.style.top = `${top + deltaY}px`;
+      return;
+    }
+    const containerRect = target.getBoundingClientRect();
+    const scaleX = target.offsetWidth > 0 ? containerRect.width / target.offsetWidth : 1;
+    const scaleY = target.offsetHeight > 0 ? containerRect.height / target.offsetHeight : 1;
+    host.style.left = `${left + deltaX / (Number.isFinite(scaleX) && scaleX > 0 ? scaleX : 1)}px`;
+    host.style.top = `${top + deltaY / (Number.isFinite(scaleY) && scaleY > 0 ? scaleY : 1)}px`;
   }
 
   private commitOpeningPlacement(sessionId: number, targetRect: DOMRect): boolean {

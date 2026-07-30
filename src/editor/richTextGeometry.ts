@@ -224,14 +224,27 @@ export function resolveRenderedTextRect(node: any): ResolvedTextRect | null {
   const group = node?._textData?.node;
   const element = group?.node as SVGGraphicsElement | null | undefined;
   if (!element) return null;
-  const connected = typeof element.isConnected === 'boolean' ? element.isConnected : null;
+  const content = element.querySelector?.<SVGGraphicsElement>(
+    '.smm-richtext-node-wrap,.smm-text-node-wrap',
+  ) ?? null;
+  // A node with an icon/todo/priority prefix wraps its real text element in a
+  // padded SVG group. The HTML editor replaces only the text content, so its
+  // anchor must come from that inner layer. Comparing against the outer group
+  // leaves a permanent 4px offset and the atomic opening gate never reveals
+  // the editor. Keep the outer group as a fallback for renderers that do not
+  // expose a dedicated content element.
+  const candidates = content && content !== element
+    ? [content, element]
+    : [element];
 
-  if (connected !== false) {
+  for (const candidate of candidates) {
+    const connected = typeof candidate.isConnected === 'boolean' ? candidate.isConnected : null;
+    if (connected === false) continue;
     try {
-      const rect = element.getBoundingClientRect?.();
+      const rect = candidate.getBoundingClientRect?.();
       if (isUsableTextRect(rect)) {
         return {
-          rect: logicalTextRect(node, group, element, rect),
+          rect: logicalTextRect(node, group, candidate, rect),
           source: 'bounding-client-rect',
           elementConnected: connected,
         };
@@ -240,7 +253,7 @@ export function resolveRenderedTextRect(node: any): ResolvedTextRect | null {
       // Continue with the transform-matrix fallback.
     }
 
-    const matrixRect = rectFromScreenMatrix(element, group);
+    const matrixRect = rectFromScreenMatrix(candidate, group);
     if (matrixRect) {
       return {
         rect: snapshotRect(matrixRect),
