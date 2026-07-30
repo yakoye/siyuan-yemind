@@ -2386,6 +2386,13 @@ export class YeMindEditor {
     });
     openNodeContextMenu(event, this.commands, {
       ...(resource ? { onCopy: () => this.copyImageResource(resource) } : {}),
+      onPaste: async () => {
+        if (await this.pasteActiveNodeImageFromClipboard()) return;
+        await this.commands?.paste();
+      },
+      onPastePlain: async () => {
+        await this.commands?.pastePlainText();
+      },
       onInlineLink: () => openInlineLinkDialog(this.commands!, this.settings),
       onCodeBlock: () => openCodeBlockDialog(this.commands!, this.settings),
       onNodeLink: () =>
@@ -3844,6 +3851,43 @@ export class YeMindEditor {
       width: loaded.size.width,
       height: loaded.size.height,
     });
+  }
+
+  private async pasteActiveNodeImageFromClipboard(): Promise<boolean> {
+    if (!this.commands || this.commands.isReadonly()) return false;
+    const node = this.commands.getPrimaryNode();
+    const clipboard = navigator.clipboard;
+    if (!node || typeof clipboard?.read !== "function") return false;
+    try {
+      const items = await clipboard.read();
+      for (const item of items) {
+        if (item.types.includes("text/html")) {
+          const html = await (await item.getType("text/html")).text();
+          const resource = readImageResourceFromTransfer({
+            getData: (type) => type === "text/html" ? html : "",
+          });
+          if (resource) {
+            await this.applyNodeImageResource(resource, node, "paste");
+            return true;
+          }
+        }
+        const imageType = item.types.find((type) => type.startsWith("image/"));
+        if (!imageType) continue;
+        const blob = await item.getType(imageType);
+        const extension = imageType.split("/")[1]?.replace(/[^a-z0-9.+-]/gi, "") || "png";
+        const file = new File([blob], `image.${extension}`, { type: imageType });
+        await this.applyNodeImageFile(file, node, "paste");
+        return true;
+      }
+    } catch (error) {
+      this.options.diagnostics.record(
+        "clipboard",
+        "image-read-fallback",
+        this.current.id,
+        { message: error instanceof Error ? error.message : String(error) },
+      );
+    }
+    return false;
   }
 
   private async applyNodeImageResource(

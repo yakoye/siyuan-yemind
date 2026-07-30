@@ -744,3 +744,22 @@ test('copies a selected outline image as an image resource and pastes it into ca
   await page.keyboard.press('Control+V');
   await expectImageByUid(page, 'clipboard-destination', 'cross-target');
 });
+
+test('pastes a copied image resource through the node context menu', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop context-menu clipboard routing');
+  const errors = recordPageErrors(page);
+  await seedClipboardMaps(page);
+  const sourceNode = canvasNode(page, SOURCE_ONE);
+  await sourceNode.locator('image').first().click();
+  await page.keyboard.press('Control+C');
+  await expectClipboardImage(page);
+
+  await openMap(page, 'clipboard-destination');
+  const target = canvasNode(page, CROSS_TARGET);
+  await target.click({ button: 'right', position: { x: 8, y: 8 } });
+  const menu = page.locator('.ymz-context-menu--node');
+  await expect(menu).toBeVisible();
+  await menu.getByText('粘贴', { exact: true }).click();
+  await expectImageByUid(page, 'clipboard-destination', 'cross-target');
+  expect(errors).toEqual([]);
+});

@@ -77,6 +77,8 @@ export function openCanvasContextMenu(event: MouseEvent, commands: YeMindCommand
 
 export interface NodeContextMenuOptions {
   onCopy?: () => void | Promise<void>;
+  onPaste?: () => void | Promise<void>;
+  onPastePlain?: () => void | Promise<void>;
   onInlineLink?: () => void;
   onCodeBlock?: () => void;
   onNodeLink?: () => void;
@@ -92,8 +94,16 @@ export interface NodeContextMenuOptions {
   onAction?: (action: string) => void;
 }
 
-function paste(commands: YeMindCommands, plain = false): void {
-  const operation = plain ? commands.pastePlainText() : commands.paste();
+function paste(
+  commands: YeMindCommands,
+  plain = false,
+  override?: () => void | Promise<void>,
+): void {
+  const operation = override
+    ? Promise.resolve(override())
+    : plain
+      ? commands.pastePlainText()
+      : commands.paste();
   void operation.catch((error) => {
     console.error('[YeMind] node paste failed', error);
     showMessage('节点粘贴失败，请重试', 4000, 'error');
@@ -131,8 +141,8 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
     menu.addSeparator();
     menu.addItem({ icon: 'iconCopy', label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => { void (options.onCopy ? options.onCopy() : commands.copy()); }) });
     menu.addItem({ iconHTML: clipboardIcon('cut'), label: '剪切', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) });
-    menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴', accelerator: 'Ctrl+V', disabled: !availability.paste, click: run('paste', () => paste(commands)) });
-    menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴（纯文本）', accelerator: 'Ctrl+Shift+V', disabled: !availability.paste, click: run('paste-plain', () => paste(commands, true)) });
+    menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴', accelerator: 'Ctrl+V', disabled: !availability.paste, click: run('paste', () => paste(commands, false, options.onPaste)) });
+    menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴（纯文本）', accelerator: 'Ctrl+Shift+V', disabled: !availability.paste, click: run('paste-plain', () => paste(commands, true, options.onPastePlain)) });
     menu.addSeparator();
     menu.addItem({ icon: 'iconTrashcan', label: '删除选中节点', accelerator: 'Shift+Backspace', warning: true, disabled: !availability.remove, click: run('remove-selected', () => commands.remove()) });
     menu.open({ x: event.clientX, y: event.clientY });
@@ -178,8 +188,8 @@ export function openNodeContextMenu(event: MouseEvent, commands: YeMindCommands,
   menu.addSeparator();
   menu.addItem({ icon: 'iconCopy', label: '复制', accelerator: 'Ctrl+C', disabled: !availability.copy, click: run('copy', () => { void (options.onCopy ? options.onCopy() : commands.copy()); }) });
   menu.addItem({ iconHTML: clipboardIcon('cut'), label: '剪切', accelerator: 'Ctrl+X', disabled: !availability.cut, click: run('cut', () => commands.cut()) });
-  menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴', accelerator: 'Ctrl+V', disabled: !availability.paste, click: run('paste', () => paste(commands)) });
-  menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴（纯文本）', accelerator: 'Ctrl+Shift+V', disabled: !availability.paste, click: run('paste-plain', () => paste(commands, true)) });
+  menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴', accelerator: 'Ctrl+V', disabled: !availability.paste, click: run('paste', () => paste(commands, false, options.onPaste)) });
+  menu.addItem({ iconHTML: clipboardIcon('paste'), label: '粘贴（纯文本）', accelerator: 'Ctrl+Shift+V', disabled: !availability.paste, click: run('paste-plain', () => paste(commands, true, options.onPastePlain)) });
   menu.addSeparator();
   menu.addItem({ icon: 'iconUp', label: '上移节点', accelerator: 'Ctrl+↑', disabled: !availability.move, click: run('move-up', () => commands.moveUp()) });
   menu.addItem({ icon: 'iconDown', label: '下移节点', accelerator: 'Ctrl+↓', disabled: !availability.move, click: run('move-down', () => commands.moveDown()) });
