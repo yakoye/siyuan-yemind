@@ -167,4 +167,25 @@ describe('v0.8.4 rich-text rectangle validation', () => {
     });
     element.remove();
   });
+
+  it('reconstructs the full custom-width text box instead of scaling to the visible glyph ink', () => {
+    const element = document.createElementNS('http://www.w3.org/2000/svg', 'g') as SVGGraphicsElement;
+    document.body.appendChild(element);
+    const group = {
+      node: element,
+      attr: (name: string) => name === 'data-width' ? 388 : name === 'data-height' ? 153 : undefined,
+    };
+    const node = {
+      _textData: { node: group },
+      getStyle: (name: string) => name === 'textAlign' ? 'center' : '',
+    };
+    element.getBoundingClientRect = () => new DOMRect(900, 392, 240, 153);
+    element.getScreenCTM = () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0, inverse() { return this; } } as any);
+
+    expect(resolveRenderedTextRect(node)).toMatchObject({
+      source: 'bounding-client-rect',
+      rect: { left: 826, top: 392, width: 388, height: 153 },
+    });
+    element.remove();
+  });
 });

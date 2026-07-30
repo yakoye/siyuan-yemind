@@ -135,6 +135,7 @@ import {
 import { normalizeStudyCards } from '../review/studyCards';
 import { normalizeStudyCardSource } from '../review/studyCardSource';
 import { MiniMapController } from './MiniMapController';
+import { bindCanvasNodeClipboard } from './nodeClipboard';
 import {
   RenderLifecycleCoordinator,
   type RenderTextEditPayload,
@@ -262,6 +263,7 @@ export class YeMindEditor {
   private studyPanel: StudyPanelController | null = null;
   private miniMapController: MiniMapController | null = null;
   private renderLifecycle: RenderLifecycleCoordinator | null = null;
+  private unbindCanvasNodeClipboard: (() => void) | null = null;
   private studyMode: StudyPanelMode | null = null;
   private presentationState: {
     readonly: boolean;
@@ -753,6 +755,8 @@ export class YeMindEditor {
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
+    this.unbindCanvasNodeClipboard?.();
+    this.unbindCanvasNodeClipboard = null;
     this.map?.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
@@ -948,6 +952,10 @@ export class YeMindEditor {
       onConfirmDeleteImage: () => this.confirmDeleteNodeImage(),
       pluginBaseUrl: this.options.pluginBaseUrl,
     });
+    this.unbindCanvasNodeClipboard = bindCanvasNodeClipboard(
+      (this.map as any).renderer,
+      () => this.current.id,
+    );
     this.commands = createCommandAdapter(this.map);
     this.symbolPicker = new SymbolPicker(this.rootEl, {
       canInsert: () => Boolean(
@@ -1084,8 +1092,17 @@ export class YeMindEditor {
     this.outlineRichText = new StructuredOutlineEditorController({
       root: this.outlineEl,
       pluginBaseUrl: this.options.pluginBaseUrl,
+      getDocumentId: () => this.current.id,
       getTree: () => this.current.data,
       isReadonly: () => Boolean(this.commands?.isReadonly()),
+      onPasteNodes: (targetUid, nodes) => {
+        const applied = Boolean(this.commands?.pasteNodeTreesByUid(targetUid, nodes));
+        if (applied) {
+          this.refreshOutlineFromMap(true);
+          this.activateOutlineUid(targetUid, false);
+        }
+        return applied;
+      },
       onApply: (tree, details) => {
         const patches = details.transaction === 'text' ? details.patches : [];
         const applied = details.transaction === 'text'

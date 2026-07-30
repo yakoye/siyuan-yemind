@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { StructuredOutlineEditorController } from '../../../src/editor/StructuredOutlineEditorController';
+import {
+  clearNodeClipboard,
+  createNodeClipboardPayload,
+  nodeClipboardToOutline,
+  publishNodeClipboard,
+  readNodeClipboard,
+} from '../../../src/editor/nodeClipboard';
 import type { MindMapTree } from '../../../src/model/types';
 
 function tree(): MindMapTree {
@@ -62,7 +69,13 @@ function clipboardEvent(type: 'copy' | 'paste', values: Record<string, string>):
   return { event, values: store };
 }
 
-function mount(apply = true, readonly = false, initialTree: MindMapTree = tree()) {
+function mount(
+  apply = true,
+  readonly = false,
+  initialTree: MindMapTree = tree(),
+  documentId = 'doc-a',
+  onPasteNodes?: (targetUid: string, nodes: MindMapTree[]) => boolean,
+) {
   const root = document.createElement('div');
   document.body.appendChild(root);
   let current = structuredClone(initialTree);
@@ -72,8 +85,10 @@ function mount(apply = true, readonly = false, initialTree: MindMapTree = tree()
   });
   const controller = new StructuredOutlineEditorController({
     root,
+    getDocumentId: () => documentId,
     getTree: () => current,
     isReadonly: () => readonly,
+    onPasteNodes,
     onApply,
     onActivate: vi.fn(),
     onToggle: vi.fn(),
@@ -382,6 +397,132 @@ describe('v0.9.4 unified structured outline editor', () => {
     expect(String(current().children[0].data.text)).not.toContain('Fragment');
     controller.destroy();
     root.remove();
+  });
+
+  it('drops cross-document presentation styles while preserving semantic formatting', () => {
+    const sourceTree = tree();
+    sourceTree.children[0].data.text = '<p><span style="background-color: rgb(187, 247, 208); color: rgb(21, 128, 61); font-size: 22px"><b>Alpha</b></span></p>';
+    sourceTree.children[0].data.richText = true;
+    const source = mount(true, false, sourceTree, 'doc-a');
+    select(source.root, 'a', 0, 'a', 5);
+    const copied = clipboardEvent('copy', {});
+    source.root.dispatchEvent(copied.event);
+
+    const destination = mount(true, false, tree(), 'doc-b');
+    select(destination.root, 'a', 0, 'a', 5);
+    const pasted = clipboardEvent('paste', copied.values);
+    destination.root.dispatchEvent(pasted.event);
+    destination.controller.flush('cross-document-node-paste');
+
+    const stored = String(destination.current().children[0].data.text);
+    expect(stored).toContain('<b>Alpha</b>');
+    expect(stored).not.toContain('background');
+    expect(stored).not.toContain('color:');
+    expect(stored).not.toContain('font-size');
+    expect(destination.current().children[0].data.richText).toBe(true);
+
+    source.controller.destroy();
+    destination.controller.destroy();
+    source.root.remove();
+    destination.root.remove();
+  });
+
+  it('accepts a hierarchical canvas clipboard in another file without canvas presentation styles', () => {
+    clearNodeClipboard();
+    const sourceTree = tree().children[0];
+    sourceTree.data.fillColor = '#ef4444';
+    const payload = createNodeClipboardPayload({
+      sourceDocumentId: 'canvas-doc',
+      sourceSurface: 'canvas',
+      nodes: [sourceTree],
+    });
+    publishNodeClipboard(payload);
+    const plain = nodeClipboardToOutline(payload).text;
+
+    const destinationTree = tree();
+    destinationTree.children[0].children = [];
+    const destination = mount(true, false, destinationTree, 'outline-doc');
+    select(destination.root, 'a', 0, 'a', 5);
+    const pasted = clipboardEvent('paste', { 'text/plain': plain });
+    destination.root.dispatchEvent(pasted.event);
+    destination.controller.flush('canvas-to-outline-cross-document');
+
+    expect(destination.current().children[0].data.text).toBe('Alpha');
+    expect(destination.current().children[0].data).not.toHaveProperty('fillColor');
+    expect(destination.current().children[0].children[0].data.text).toBe('Old child');
+    destination.controller.destroy();
+    destination.root.remove();
+  });
+
+  it('commits node clipboard payloads through one native tree transaction at the caret target', () => {
+    clearNodeClipboard();
+    const sourceTree = tree().children[0];
+    sourceTree.data.fillColor = '#ef4444';
+    sourceTree.data.yemindNote = { html: '<p>完整备注</p>', createdAt: 1, updatedAt: 1 };
+    const payload = createNodeClipboardPayload({
+      sourceDocumentId: 'canvas-doc',
+      sourceSurface: 'canvas',
+      nodes: [sourceTree],
+    });
+    publishNodeClipboard(payload);
+    const plain = nodeClipboardToOutline(payload).text;
+    const onPasteNodes = vi.fn(() => true);
+
+    const destination = mount(true, false, tree(), 'outline-doc', onPasteNodes);
+    select(destination.root, 'b', 2);
+    const pasted = clipboardEvent('paste', { 'text/plain': plain });
+    destination.root.dispatchEvent(pasted.event);
+
+    expect(onPasteNodes).toHaveBeenCalledOnce();
+    const [targetUid, pastedNodes] = onPasteNodes.mock.calls[0];
+    expect(targetUid).toBe('b');
+    expect(pastedNodes[0].data).not.toHaveProperty('uid');
+    expect(pastedNodes[0].data).not.toHaveProperty('fillColor');
+    expect(pastedNodes[0].data.yemindNote).toMatchObject({ html: '<p>完整备注</p>' });
+    expect(pastedNodes[0].children[0].data.text).toBe('Old child');
+    expect(destination.onApply).not.toHaveBeenCalled();
+
+    destination.controller.destroy();
+    destination.root.remove();
+  });
+
+  it('copies the active outline block structurally when the caret is collapsed', () => {
+    clearNodeClipboard();
+    const source = mount(true, false, tree(), 'outline-source');
+    select(source.root, 'a', 2);
+    const copied = clipboardEvent('copy', {});
+
+    source.root.dispatchEvent(copied.event);
+
+    expect(copied.event.defaultPrevented).toBe(true);
+    expect(copied.values['text/plain']).toContain('Alpha');
+    const payload = readNodeClipboard();
+    expect(payload?.sourceSurface).toBe('outline');
+    expect(payload?.nodes).toHaveLength(1);
+    expect(payload?.nodes[0].data.text).toBe('Alpha');
+    expect(payload?.nodes[0].children[0].data.text).toBe('Old child');
+
+    source.controller.destroy();
+    source.root.remove();
+  });
+
+  it('clears a previous node payload when copy comes from a partial outline text selection', () => {
+    clearNodeClipboard();
+    publishNodeClipboard(createNodeClipboardPayload({
+      sourceDocumentId: 'old-map',
+      sourceSurface: 'canvas',
+      nodes: [{ data: { uid: 'old-node', text: 'Al' }, children: [] }],
+    }));
+    const source = mount(true, false, tree(), 'outline-map');
+    select(source.root, 'a', 0, 'a', 2);
+    const copied = clipboardEvent('copy', {});
+
+    source.root.dispatchEvent(copied.event);
+
+    expect(copied.values['text/plain']).toBe('Al');
+    expect(readNodeClipboard()).toBeNull();
+    source.controller.destroy();
+    source.root.remove();
   });
 
   it('forces a history projection over dirty focused DOM after Undo restores the model', () => {

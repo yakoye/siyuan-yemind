@@ -4,6 +4,12 @@ import {
   YEMIND_RICH_TEXT_FORMATS,
   writeQuillSelectionToClipboard,
 } from '../../../src/editor/YeMindRichText';
+import {
+  clearNodeClipboard,
+  createNodeClipboardPayload,
+  publishNodeClipboard,
+  readNodeClipboard,
+} from '../../../src/editor/nodeClipboard';
 
 describe('YeMindRichText', () => {
   it('enables the upstream rich formats plus inline links and code formats', () => {
@@ -35,6 +41,27 @@ describe('YeMindRichText', () => {
       'text/plain': '节点文字',
       'text/html': '<strong>节点文字</strong>',
     });
+  });
+
+  it('clears a previous node payload when copy comes from a real canvas text selection', () => {
+    clearNodeClipboard();
+    publishNodeClipboard(createNodeClipboardPayload({
+      sourceDocumentId: 'source-map',
+      sourceSurface: 'canvas',
+      nodes: [{ data: { uid: 'old-node', text: '节点文字' }, children: [] }],
+    }));
+    const event = {
+      clipboardData: { setData: vi.fn() },
+      preventDefault: vi.fn(),
+    } as unknown as ClipboardEvent;
+    const quill = {
+      getSelection: () => ({ index: 0, length: 4 }),
+      getText: () => '节点文字',
+      getSemanticHTML: () => '<p>节点文字</p>',
+    };
+
+    expect(writeQuillSelectionToClipboard(quill, event, null)).toBe(true);
+    expect(readNodeClipboard()).toBeNull();
   });
 
   it('leaves native copy untouched when there is no real text range', () => {

@@ -103,6 +103,168 @@ test('opening a multiline canvas editor does not jump between stale and live pla
   expect(spread('height')).toBeLessThanOrEqual(1);
 });
 
+test('opening a custom-width multiline node is aligned from its first visible frame', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop first-paint geometry regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  await rootNode.dblclick();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  await textEditor.fill([
+    'Power Good',
+    '↓',
+    'Reference Clock (100MHz)',
+    '↓',
+    'PLL Lock',
+    '↓',
+    'Controller Reset Release',
+  ].join('\n'));
+  await commitCanvasEdit(page);
+  await rootNode.click();
+
+  const rightHandle = rootNode.locator('rect[style*="ew-resize"]').last();
+  const handleBox = await rightHandle.boundingBox();
+  expect(handleBox).not.toBeNull();
+  await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handleBox!.x + 150, handleBox!.y + handleBox!.height / 2, { steps: 6 });
+  await page.mouse.up();
+
+  await rootNode.evaluate((element) => element.setAttribute('data-edit-geometry-target', 'true'));
+  await page.evaluate(() => {
+    const records: Array<{
+      visible: boolean;
+      hostX: number;
+      hostY: number;
+      hostWidth: number;
+      nodeX: number;
+      nodeY: number;
+      nodeWidth: number;
+      transform: string;
+    }> = [];
+    (window as any).__yemindOpeningGeometry = records;
+    let remaining = 0;
+    const capture = (): void => {
+      const host = document.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
+      const target = document.querySelector<HTMLElement>('.ymw-editor > .ymz-editor .smm-node');
+      if (host && target) {
+        const hostRect = host.getBoundingClientRect();
+        const nodeRect = target.getBoundingClientRect();
+        records.push({
+          visible: host.style.display !== 'none' && hostRect.width > 0 && hostRect.height > 0,
+          hostX: hostRect.x,
+          hostY: hostRect.y,
+          hostWidth: hostRect.width,
+          nodeX: nodeRect.x,
+          nodeY: nodeRect.y,
+          nodeWidth: nodeRect.width,
+          transform: host.style.transform,
+        });
+      }
+      remaining -= 1;
+      if (remaining > 0) requestAnimationFrame(capture);
+    };
+    document.addEventListener('dblclick', () => {
+      remaining = 40;
+      requestAnimationFrame(capture);
+    }, { capture: true, once: true });
+  });
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeVisible();
+  await page.waitForTimeout(260);
+  const records = await page.evaluate(() => (window as any).__yemindOpeningGeometry as Array<{
+    visible: boolean;
+    hostX: number;
+    hostY: number;
+    hostWidth: number;
+    nodeX: number;
+    nodeY: number;
+    nodeWidth: number;
+    transform: string;
+  }>);
+  const visible = records.filter((record) => record.visible);
+  expect(visible.length).toBeGreaterThan(2);
+  visible.forEach((record) => {
+    const hostCenter = record.hostX + record.hostWidth / 2;
+    const nodeCenter = record.nodeX + record.nodeWidth / 2;
+    expect(Math.abs(hostCenter - nodeCenter)).toBeLessThanOrEqual(3);
+    expect(Math.abs(record.hostY - record.nodeY)).toBeLessThanOrEqual(8);
+    // The HTML edit surface covers the declared content box; the SVG node
+    // includes 9px shape/padding on both sides.
+    expect(Math.abs(record.hostWidth - record.nodeWidth)).toBeLessThanOrEqual(20);
+  });
+});
+
+test('the rich-text host stays hidden until its first geometry transaction is ready', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop first-mount geometry regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+
+  await page.evaluate(() => {
+    const records: Array<{
+      ready: string | null;
+      visibility: string;
+      display: string;
+      width: number;
+      left: number;
+    }> = [];
+    const capture = (element: HTMLElement): void => {
+      const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      records.push({
+        ready: element.dataset.yemindGeometryReady ?? null,
+        visibility: style.visibility,
+        display: style.display,
+        width: rect.width,
+        left: rect.left,
+      });
+    };
+    (window as any).__yemindFirstMountGeometry = records;
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.target instanceof HTMLElement
+          && mutation.target.classList.contains('smm-richtext-node-edit-wrap')) {
+          capture(mutation.target);
+        }
+        mutation.addedNodes.forEach((node) => {
+          if (node instanceof HTMLElement
+            && node.classList.contains('smm-richtext-node-edit-wrap')) {
+            capture(node);
+          }
+        });
+      });
+    });
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['style', 'data-yemind-geometry-ready'],
+    });
+    (window as any).__yemindFirstMountObserver = observer;
+  });
+
+  await rootNode.dblclick();
+  await expect(editor.locator('.smm-richtext-node-edit-wrap .ql-editor')).toBeVisible();
+  const records = await page.evaluate(() => {
+    (window as any).__yemindFirstMountObserver?.disconnect();
+    return (window as any).__yemindFirstMountGeometry as Array<{
+      ready: string | null;
+      visibility: string;
+      display: string;
+      width: number;
+      left: number;
+    }>;
+  });
+  const visibleBeforeReady = records.filter((record) =>
+    record.ready !== 'true'
+    && record.visibility !== 'hidden'
+    && record.display !== 'none'
+    && record.width > 0);
+  expect(visibleBeforeReady).toEqual([]);
+});
+
 test('a newly inserted child receives one stable final editor placement', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop inserted-node placement regression');
   await resetWebApp(page);

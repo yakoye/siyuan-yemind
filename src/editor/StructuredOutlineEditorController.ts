@@ -20,6 +20,14 @@ import {
   outlineBranchColorIndexes,
   outlineBranchColorVariable,
 } from './outlinePresentation';
+import {
+  clearNodeClipboard,
+  createNodeClipboardPayload,
+  nodeClipboardToOutline,
+  prepareNodeClipboardForDestination,
+  publishNodeClipboard,
+  readNodeClipboard,
+} from './nodeClipboard';
 
 export type StructuredOutlineFocusPlacement = 'start' | 'end' | 'select-all' | 'range';
 
@@ -50,8 +58,10 @@ export interface StructuredOutlineApplyDetails extends Record<string, unknown> {
 export interface StructuredOutlineEditorOptions {
   root: HTMLElement;
   pluginBaseUrl?: string;
+  getDocumentId?(): string;
   getTree(): MindMapTree;
   isReadonly(): boolean;
+  onPasteNodes?(targetUid: string, nodes: MindMapTree[]): boolean;
   onApply(tree: MindMapTree, details: StructuredOutlineApplyDetails): boolean;
   onActivate(uid: string): void;
   onToggle(uid: string, expanded: boolean): void;
@@ -123,6 +133,15 @@ function editorIsSemanticallyEmpty(element: HTMLElement): boolean {
   return (element.textContent ?? '')
     .replace(/[\u00a0\u200b\ufeff]/g, '')
     .trim().length === 0;
+}
+
+function findTreeByUid(tree: MindMapTree, uid: string): MindMapTree | null {
+  if (String(tree.data?.uid ?? '') === uid) return tree;
+  for (const child of tree.children ?? []) {
+    const found = findTreeByUid(child, uid);
+    if (found) return found;
+  }
+  return null;
 }
 
 export interface StructuredOutlineSyncOptions {
@@ -1285,12 +1304,29 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
     const context = this.selectionContext();
     const whole = this.isWholeSelectionActive(context?.range ?? null);
     if (!context && !whole) return;
+    const nodeTrees = this.selectedNodeTrees(context, whole);
+    const collapsedBlock = Boolean(context?.collapsed && !whole && nodeTrees.length > 0);
     event.preventDefault();
-    const plain = whole
+    const plain = collapsedBlock
+      ? nodeTrees.map((node) => serializeOutlineText(node)).join('\n')
+      : whole
       ? serializeOutlineText(this.options.getTree())
       : this.selectedStructuredPlainText(context!);
     event.clipboardData.setData('text/plain', plain);
-    event.clipboardData.setData('text/html', this.selectedStructuredHtml(context, plain, whole));
+    event.clipboardData.setData(
+      'text/html',
+      collapsedBlock
+        ? plain.split('\n').map((line) => `<div>${escapeHtml(line)}</div>`).join('')
+        : this.selectedStructuredHtml(context, plain, whole),
+    );
+    clearNodeClipboard();
+    if (nodeTrees.length > 0) {
+      publishNodeClipboard(createNodeClipboardPayload({
+        sourceDocumentId: this.options.getDocumentId?.() ?? '',
+        sourceSurface: 'outline',
+        nodes: nodeTrees,
+      }), event.clipboardData);
+    }
     this.options.onDiagnostic?.('copy', {
       whole,
       textLength: plain.length,
@@ -1308,6 +1344,38 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
 
   private readonly onPaste = (event: ClipboardEvent): void => {
     if (this.options.isReadonly() || !event.clipboardData || isImageClipboard(event.clipboardData)) return;
+    const nodePayload = readNodeClipboard(event.clipboardData, true);
+    if (nodePayload) {
+      event.preventDefault();
+      event.stopPropagation();
+      const prepared = prepareNodeClipboardForDestination(
+        nodePayload,
+        this.options.getDocumentId?.() ?? '',
+        'outline',
+      );
+      const context = this.selectionContext();
+      if (
+        context
+        && this.options.onPasteNodes?.(context.start.uid, prepared.nodes)
+      ) {
+        this.wholeOutlineSelected = false;
+        this.savedRange = null;
+        this.options.onDiagnostic?.('paste-nodes', {
+          targetUid: context.start.uid,
+          nodeCount: prepared.nodes.length,
+          sourceSurface: prepared.sourceSurface,
+          crossDocument: prepared.sourceDocumentId !== (this.options.getDocumentId?.() ?? ''),
+        });
+        return;
+      }
+      const outline = nodeClipboardToOutline(prepared);
+      this.replaceSelectionWithText(
+        outline.text,
+        'paste-nodes',
+        outline.lines.map((line) => line.html),
+      );
+      return;
+    }
     const text = normalizeStructuredOutlineBoundaryText(event.clipboardData.getData('text/plain'));
     const html = this.forcePlainPaste ? '' : event.clipboardData.getData('text/html');
     if (!text && !html) return;
@@ -2282,6 +2350,37 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       size: style?.fontSize,
       cloze,
     };
+  }
+
+  private selectedNodeTrees(context: SelectionContext | null, whole: boolean): MindMapTree[] {
+    const tree = this.options.getTree();
+    if (whole) return [tree];
+    if (!context) return [];
+    if (context.collapsed) {
+      const active = findTreeByUid(tree, context.start.uid);
+      return active ? [active] : [];
+    }
+
+    const rows = Array.from(this.options.root.querySelectorAll<HTMLElement>(':scope > [data-outline-uid]'));
+    const startIndex = rows.indexOf(context.startRow);
+    const endIndex = rows.indexOf(context.endRow);
+    if (startIndex < 0 || endIndex < 0) return [];
+    const low = Math.min(startIndex, endIndex);
+    const high = Math.max(startIndex, endIndex);
+    const selectedRows = rows.slice(low, high + 1).filter((row) =>
+      row.dataset.outlineKind === 'node' && row.dataset.outlineHidden !== 'true');
+    if (selectedRows.length === 0) return [];
+
+    const startEditorLength = textLength(context.startEditor);
+    const endEditorLength = textLength(context.endEditor);
+    if (context.start.offset !== 0 || context.end.offset !== endEditorLength) return [];
+    if (!context.spansRows && context.end.offset !== startEditorLength) return [];
+
+    const selectedUids = new Set(selectedRows.map((row) => row.dataset.outlineUid ?? '').filter(Boolean));
+    return selectedRows
+      .filter((row) => !selectedUids.has(row.dataset.outlineParentUid ?? ''))
+      .map((row) => findTreeByUid(tree, row.dataset.outlineUid ?? ''))
+      .filter((node): node is MindMapTree => Boolean(node));
   }
 
   private afterFormatting(reason: string): void {

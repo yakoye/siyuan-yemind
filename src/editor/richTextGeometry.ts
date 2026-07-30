@@ -86,6 +86,47 @@ function numberAttribute(group: any, name: string): number {
   return finite(value) && value > 0 ? value : 0;
 }
 
+function screenScale(element: SVGGraphicsElement): { x: number; y: number } | null {
+  let matrix: DOMMatrix | SVGMatrix | null = null;
+  try {
+    matrix = element.getScreenCTM?.() ?? null;
+  } catch {
+    matrix = null;
+  }
+  if (!matrix) return null;
+  const x = Math.hypot(Number(matrix.a), Number(matrix.b));
+  const y = Math.hypot(Number(matrix.c), Number(matrix.d));
+  if (!finite(x) || !finite(y) || x <= 0 || y <= 0) return null;
+  return { x, y };
+}
+
+function logicalTextRect(node: any, group: any, element: SVGGraphicsElement, raw: DOMRect): DOMRect {
+  const width = numberAttribute(group, 'data-width');
+  const height = numberAttribute(group, 'data-height');
+  if (width <= 0.5 || height <= 0.5) return snapshotRect(raw);
+
+  const scale = screenScale(element);
+  const fallbackScaleY = raw.height / height;
+  const scaleX = scale?.x ?? (finite(fallbackScaleY) && fallbackScaleY > 0 ? fallbackScaleY : 1);
+  const scaleY = scale?.y ?? (finite(fallbackScaleY) && fallbackScaleY > 0 ? fallbackScaleY : 1);
+  const logicalWidth = width * scaleX;
+  const logicalHeight = height * scaleY;
+  if (!finite(logicalWidth) || !finite(logicalHeight) || logicalWidth <= 0.5 || logicalHeight <= 0.5) {
+    return snapshotRect(raw);
+  }
+
+  // SVG getBoundingClientRect() returns the painted glyph ink for a plain-text
+  // group. A custom-width node stores its real editable box in data-width, so
+  // using the ink width makes the upstream HTML editor apply a false scaleX
+  // and visibly jump/compress on the first edit frame.
+  const align = String(node?.getStyle?.('textAlign', false) ?? node?.getStyle?.('textAlign') ?? '').toLowerCase();
+  let left = raw.left;
+  if (align === 'right' || align === 'end') left = raw.right - logicalWidth;
+  else if (align === 'center' || align === 'middle') left = raw.left + (raw.width - logicalWidth) / 2;
+
+  return new DOMRect(left, raw.top, logicalWidth, logicalHeight);
+}
+
 function transformPoint(matrix: any, x: number, y: number): { x: number; y: number } | null {
   const values = [matrix?.a, matrix?.b, matrix?.c, matrix?.d, matrix?.e, matrix?.f];
   if (!values.every(finite)) return null;
@@ -156,7 +197,7 @@ export function resolveRenderedTextRect(node: any): ResolvedTextRect | null {
       const rect = element.getBoundingClientRect?.();
       if (isUsableTextRect(rect)) {
         return {
-          rect: snapshotRect(rect),
+          rect: logicalTextRect(node, group, element, rect),
           source: 'bounding-client-rect',
           elementConnected: connected,
         };

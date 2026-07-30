@@ -117,6 +117,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   insertSiblingByUid(uid: string, newUid: string): boolean;
   insertChildByUid(uid: string, newUid: string): boolean;
   addChildByUid(uid: string): boolean;
+  pasteNodeTreesByUid(uid: string, nodes: readonly MindMapTree[]): boolean;
   removeNodeByUid(uid: string): boolean;
   indentNodeByUid(uid: string): boolean;
   outdentNodeByUid(uid: string): boolean;
@@ -775,6 +776,13 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       const node = findNodeByUid(uid);
       if (!node || node.isGeneralization) return false;
       mindMap.execCommand('INSERT_CHILD_NODE', true, [node], { yemindTextPristine: true, yemindTextEdited: false });
+      return true;
+    },
+    pasteNodeTreesByUid: (uid, nodes) => {
+      if (!canMutate() || nodes.length === 0) return false;
+      const node = findNodeByUid(uid);
+      if (!node || node.isGeneralization) return false;
+      mindMap.execCommand('INSERT_MULTI_CHILD_NODE', [node], structuredClone(nodes));
       return true;
     },
     removeNodeByUid: (uid) => {

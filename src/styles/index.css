@@ -329,6 +329,7 @@
 
 /* The upstream editor is mounted inside .ymz-editor instead of document.body. */
 .ymz-editor .smm-richtext-node-edit-wrap{z-index:55!important;caret-color:currentColor;-webkit-text-fill-color:currentColor}
+.ymz-editor .smm-richtext-node-edit-wrap:not([data-yemind-geometry-ready="true"]){visibility:hidden!important}
 .ymz-editor .smm-richtext-node-edit-wrap .ql-container,.ymz-editor .smm-richtext-node-edit-wrap .ql-editor{color:inherit!important;caret-color:currentColor!important;-webkit-text-fill-color:currentColor!important}
 .ymz-editor .smm-richtext-node-edit-wrap .ql-editor *{-webkit-text-fill-color:currentColor}
 .ymz-editor .smm-richtext-node-edit-wrap .ql-editor::selection,.ymz-editor .smm-richtext-node-edit-wrap .ql-editor *::selection{background:color-mix(in srgb,var(--b3-theme-primary) 30%,transparent);color:inherit;-webkit-text-fill-color:currentColor}

@@ -6760,7 +6760,7 @@ function outlineNodePlainText(data2) {
   const value = data2.richText ? htmlToPlainText(source) : source;
   return value.replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n").replace(/[\t ]*\n[\t ]*/g, " ").trim();
 }
-function flattenTree(tree) {
+function flattenTree$1(tree) {
   const lines = [];
   const visit2 = (node, depth, path2) => {
     const uid2 = String(node.data.uid ?? path2);
@@ -6778,7 +6778,7 @@ function flattenTree(tree) {
   return lines;
 }
 function serializeOutlineText(tree, indent = OUTLINE_TEXT_INDENT) {
-  return flattenTree(tree).map((line) => `${indent.repeat(line.depth)}${line.text}`).join("\n");
+  return flattenTree$1(tree).map((line) => `${indent.repeat(line.depth)}${line.text}`).join("\n");
 }
 function indentColumns(value) {
   let columns = 0;
@@ -7680,8 +7680,8 @@ const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "8e692b7e-clean",
-  time: "2026-07-30T01:12:30+08:00"
+  id: "d2d47d84-dirty-b4076c43",
+  time: "2026-07-30T01:27:18.374Z"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
@@ -19148,26 +19148,28 @@ function layout() {
   });
   this.group.add(textContentNested);
   const { width: bboxWidth, height: bboxHeight } = textContentNested.bbox();
+  const layoutContentWidth = Math.max(bboxWidth, textContentWidth);
+  const layoutContentHeight = Math.max(bboxHeight, textContentHeightWithTag);
   let translateX = 0;
   let translateY = 0;
   switch (imgPlacement) {
     case IMG_PLACEMENT.TOP:
-      translateX = width2 / 2 - bboxWidth / 2;
+      translateX = width2 / 2 - layoutContentWidth / 2;
       translateY = paddingY + // 内边距
       imgHeight + // 图片高度
       this.getImgTextMarin("v", 0, 0, imgHeight, textContentHeightWithTag);
       break;
     case IMG_PLACEMENT.BOTTOM:
-      translateX = width2 / 2 - bboxWidth / 2;
+      translateX = width2 / 2 - layoutContentWidth / 2;
       translateY = paddingY;
       break;
     case IMG_PLACEMENT.LEFT:
       translateX = imgWidth + paddingX + this.getImgTextMarin("h", imgWidth, textContentWidth);
-      translateY = height2 / 2 - bboxHeight / 2;
+      translateY = height2 / 2 - layoutContentHeight / 2;
       break;
     case IMG_PLACEMENT.RIGHT:
       translateX = paddingX;
-      translateY = height2 / 2 - bboxHeight / 2;
+      translateY = height2 / 2 - layoutContentHeight / 2;
       break;
   }
   textContentNested.translate(translateX, translateY);
@@ -80568,6 +80570,240 @@ class RichText {
   }
 }
 RichText.instanceName = "richText";
+const YEMIND_NODE_CLIPBOARD_MIME = "application/x-yemind-nodes+json";
+const PRESENTATION_DATA_KEYS = /* @__PURE__ */ new Set([
+  "backgroundColor",
+  "borderColor",
+  "borderDasharray",
+  "borderRadius",
+  "borderWidth",
+  "color",
+  "customTextWidth",
+  "fillColor",
+  "fontFamily",
+  "fontSize",
+  "fontStyle",
+  "fontWeight",
+  "gradientStyle",
+  "height",
+  "lineColor",
+  "lineDasharray",
+  "lineFlow",
+  "lineStyle",
+  "lineWidth",
+  "opacity",
+  "shadow",
+  "shape",
+  "textAlign",
+  "textDecoration",
+  "width",
+  "yemindImportedAutoWidth"
+]);
+const PRESENTATION_STYLE_PROPERTIES = [
+  "background",
+  "background-color",
+  "border",
+  "border-color",
+  "border-radius",
+  "border-style",
+  "border-width",
+  "box-shadow",
+  "color",
+  "font-family",
+  "font-size",
+  "letter-spacing",
+  "line-height",
+  "opacity",
+  "text-shadow",
+  "text-align"
+];
+let sharedPayload = null;
+function semanticClasses(value) {
+  return value.split(/\s+/).filter(Boolean).filter((name) => !/^ql-(?:align|background|color|font|size)-/.test(name)).join(" ");
+}
+function comparableClipboardText(value) {
+  return value.replace(/\r\n?/g, "\n").replace(/[\t \u00a0]+$/gm, "").replace(/\n+$/, "");
+}
+function cloneTree$2(tree, removeIdentity = false) {
+  const data2 = structuredClone(tree.data);
+  if (removeIdentity) {
+    delete data2.uid;
+    delete data2.isActive;
+    delete data2.inserting;
+  }
+  return {
+    data: data2,
+    children: (tree.children ?? []).map((child) => cloneTree$2(child, removeIdentity))
+  };
+}
+function isSurface(value) {
+  return value === "canvas" || value === "outline";
+}
+function validTree(value) {
+  if (!value || typeof value !== "object") return false;
+  const tree = value;
+  return Boolean(tree.data && typeof tree.data === "object" && Array.isArray(tree.children));
+}
+function parsePayload(value) {
+  if (!value || typeof value !== "object") return null;
+  const payload = value;
+  if (payload.version !== 1 || typeof payload.sourceDocumentId !== "string" || !isSurface(payload.sourceSurface) || !Array.isArray(payload.nodes) || !payload.nodes.every(validTree)) return null;
+  return {
+    version: 1,
+    sourceDocumentId: payload.sourceDocumentId,
+    sourceSurface: payload.sourceSurface,
+    createdAt: Number.isFinite(payload.createdAt) ? Number(payload.createdAt) : Date.now(),
+    nodes: payload.nodes.map((tree) => cloneTree$2(tree))
+  };
+}
+function semanticHtmlWithoutPresentation(value) {
+  const source = sanitizeRichHtml(String(value ?? ""));
+  if (!source || typeof document === "undefined") {
+    return source.replace(/\s+style=(?:"[^"]*"|'[^']*')/gi, "").replace(/\s+class=(["'])(.*?)\1/gi, (_match, quote, classes2) => {
+      const kept = semanticClasses(classes2);
+      return kept ? ` class=${quote}${kept}${quote}` : "";
+    });
+  }
+  const template = document.createElement("template");
+  template.innerHTML = source;
+  template.content.querySelectorAll("*").forEach((element) => {
+    var _a;
+    PRESENTATION_STYLE_PROPERTIES.forEach((property) => element.style.removeProperty(property));
+    if (!((_a = element.getAttribute("style")) == null ? void 0 : _a.trim())) element.removeAttribute("style");
+    const classes2 = semanticClasses(element.className);
+    if (classes2) element.className = classes2;
+    else element.removeAttribute("class");
+  });
+  return template.innerHTML;
+}
+function stripTreePresentation(tree) {
+  const data2 = structuredClone(tree.data);
+  PRESENTATION_DATA_KEYS.forEach((key) => delete data2[key]);
+  if (data2.richText === true) data2.text = semanticHtmlWithoutPresentation(data2.text);
+  return {
+    data: data2,
+    children: (tree.children ?? []).map(stripTreePresentation)
+  };
+}
+function plainNodeText(tree) {
+  var _a, _b;
+  const source = String(((_a = tree.data) == null ? void 0 : _a.text) ?? "");
+  return ((_b = tree.data) == null ? void 0 : _b.richText) === true ? structuredOutlineHtmlToText(source) : source;
+}
+function flattenTree(tree, depth, lines) {
+  var _a;
+  const text2 = plainNodeText(tree);
+  const html2 = ((_a = tree.data) == null ? void 0 : _a.richText) === true ? sanitizeRichHtml(String(tree.data.text ?? "")) : text2.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br>");
+  lines.push({ depth, text: text2, html: html2 });
+  (tree.children ?? []).forEach((child) => flattenTree(child, depth + 1, lines));
+}
+function createNodeClipboardPayload(options) {
+  return {
+    version: 1,
+    sourceDocumentId: String(options.sourceDocumentId ?? ""),
+    sourceSurface: options.sourceSurface,
+    createdAt: Date.now(),
+    nodes: options.nodes.map((tree) => cloneTree$2(tree, true))
+  };
+}
+function prepareNodeClipboardForDestination(payload, destinationDocumentId, _destinationSurface) {
+  const sameDocument = payload.sourceDocumentId === String(destinationDocumentId ?? "");
+  return {
+    ...payload,
+    nodes: payload.nodes.map((tree) => sameDocument ? cloneTree$2(tree) : stripTreePresentation(tree))
+  };
+}
+function nodeClipboardToOutline(payload) {
+  const lines = [];
+  payload.nodes.forEach((tree) => flattenTree(tree, 0, lines));
+  return {
+    text: lines.map((line) => `${"    ".repeat(line.depth)}${line.text}`).join("\n"),
+    lines
+  };
+}
+function publishNodeClipboard(payload, transfer) {
+  var _a;
+  sharedPayload = parsePayload(payload);
+  (_a = transfer == null ? void 0 : transfer.setData) == null ? void 0 : _a.call(transfer, YEMIND_NODE_CLIPBOARD_MIME, JSON.stringify(payload));
+}
+function readNodeClipboard(transfer, allowSharedFallback = true) {
+  var _a;
+  const serialized = ((_a = transfer == null ? void 0 : transfer.getData) == null ? void 0 : _a.call(transfer, YEMIND_NODE_CLIPBOARD_MIME)) ?? "";
+  if (serialized) {
+    try {
+      const parsed2 = parsePayload(JSON.parse(serialized));
+      if (parsed2) {
+        sharedPayload = parsed2;
+        return parsed2;
+      }
+    } catch {
+    }
+  }
+  if (!allowSharedFallback || !sharedPayload) return null;
+  const parsed = parsePayload(sharedPayload);
+  if (!parsed) return null;
+  if (transfer) {
+    const plain2 = transfer.getData("text/plain");
+    if (!plain2 || comparableClipboardText(plain2) !== comparableClipboardText(nodeClipboardToOutline(parsed).text)) return null;
+  }
+  return parsed;
+}
+function clearNodeClipboard() {
+  sharedPayload = null;
+}
+function bindCanvasNodeClipboard(renderer, getDocumentId) {
+  if (!renderer || renderer.__yemindNodeClipboardBound === true) return () => void 0;
+  const originalCopy = typeof renderer.copy === "function" ? renderer.copy.bind(renderer) : null;
+  const originalCut = typeof renderer.cut === "function" ? renderer.cut.bind(renderer) : null;
+  const originalPaste = typeof renderer.paste === "function" ? renderer.paste.bind(renderer) : null;
+  renderer.__yemindNodeClipboardBound = true;
+  const publishCurrent = () => {
+    var _a, _b;
+    const nodes = Array.isArray(renderer.beingCopyData) ? renderer.beingCopyData : [];
+    if (nodes.length === 0) return;
+    const payload = createNodeClipboardPayload({
+      sourceDocumentId: getDocumentId(),
+      sourceSurface: "canvas",
+      nodes
+    });
+    publishNodeClipboard(payload);
+    const plain2 = nodeClipboardToOutline(payload).text;
+    const write = typeof navigator !== "undefined" ? (_b = (_a = navigator.clipboard) == null ? void 0 : _a.writeText) == null ? void 0 : _b.call(_a, plain2) : null;
+    if (write && typeof write.catch === "function") {
+      void write.catch(() => void 0);
+    }
+  };
+  if (originalCopy) {
+    renderer.copy = (...args) => {
+      const result = originalCopy(...args);
+      publishCurrent();
+      return result;
+    };
+  }
+  if (originalCut) {
+    renderer.cut = (...args) => {
+      const result = originalCut(...args);
+      publishCurrent();
+      return result;
+    };
+  }
+  if (originalPaste) {
+    renderer.paste = async (...args) => {
+      const payload = readNodeClipboard();
+      if (payload == null ? void 0 : payload.nodes.length) {
+        const prepared = prepareNodeClipboardForDestination(payload, getDocumentId());
+        renderer.beingCopyData = prepared.nodes;
+      }
+      return originalPaste(...args);
+    };
+  }
+  return () => {
+    if (originalCopy) renderer.copy = originalCopy;
+    if (originalCut) renderer.cut = originalCut;
+    if (originalPaste) renderer.paste = originalPaste;
+    delete renderer.__yemindNodeClipboardBound;
+  };
+}
 function editorHorizontalMargin(node, paddingX, textContentMargin, scaleX) {
   const scaledPadding = Math.max(0, Number(paddingX) || 0) * Math.max(0, Number(scaleX) || 1);
   const hasPrefix = Boolean(node == null ? void 0 : node._prefixData) || Array.isArray(node == null ? void 0 : node._iconData) && node._iconData.length > 0;
@@ -80621,6 +80857,40 @@ function numberAttribute(group, name) {
   var _a;
   const value = Number((_a = group == null ? void 0 : group.attr) == null ? void 0 : _a.call(group, name));
   return finite$2(value) && value > 0 ? value : 0;
+}
+function screenScale(element) {
+  var _a;
+  let matrix = null;
+  try {
+    matrix = ((_a = element.getScreenCTM) == null ? void 0 : _a.call(element)) ?? null;
+  } catch {
+    matrix = null;
+  }
+  if (!matrix) return null;
+  const x2 = Math.hypot(Number(matrix.a), Number(matrix.b));
+  const y2 = Math.hypot(Number(matrix.c), Number(matrix.d));
+  if (!finite$2(x2) || !finite$2(y2) || x2 <= 0 || y2 <= 0) return null;
+  return { x: x2, y: y2 };
+}
+function logicalTextRect(node, group, element, raw) {
+  var _a, _b;
+  const width2 = numberAttribute(group, "data-width");
+  const height2 = numberAttribute(group, "data-height");
+  if (width2 <= 0.5 || height2 <= 0.5) return snapshotRect(raw);
+  const scale2 = screenScale(element);
+  const fallbackScaleY = raw.height / height2;
+  const scaleX = (scale2 == null ? void 0 : scale2.x) ?? (finite$2(fallbackScaleY) && fallbackScaleY > 0 ? fallbackScaleY : 1);
+  const scaleY = (scale2 == null ? void 0 : scale2.y) ?? (finite$2(fallbackScaleY) && fallbackScaleY > 0 ? fallbackScaleY : 1);
+  const logicalWidth = width2 * scaleX;
+  const logicalHeight = height2 * scaleY;
+  if (!finite$2(logicalWidth) || !finite$2(logicalHeight) || logicalWidth <= 0.5 || logicalHeight <= 0.5) {
+    return snapshotRect(raw);
+  }
+  const align = String(((_a = node == null ? void 0 : node.getStyle) == null ? void 0 : _a.call(node, "textAlign", false)) ?? ((_b = node == null ? void 0 : node.getStyle) == null ? void 0 : _b.call(node, "textAlign")) ?? "").toLowerCase();
+  let left = raw.left;
+  if (align === "right" || align === "end") left = raw.right - logicalWidth;
+  else if (align === "center" || align === "middle") left = raw.left + (raw.width - logicalWidth) / 2;
+  return new DOMRect(left, raw.top, logicalWidth, logicalHeight);
 }
 function transformPoint(matrix, x2, y2) {
   const values2 = [matrix == null ? void 0 : matrix.a, matrix == null ? void 0 : matrix.b, matrix == null ? void 0 : matrix.c, matrix == null ? void 0 : matrix.d, matrix == null ? void 0 : matrix.e, matrix == null ? void 0 : matrix.f];
@@ -80683,7 +80953,7 @@ function resolveRenderedTextRect(node) {
       const rect2 = (_b = element.getBoundingClientRect) == null ? void 0 : _b.call(element);
       if (isUsableTextRect(rect2)) {
         return {
-          rect: snapshotRect(rect2),
+          rect: logicalTextRect(node, group, element, rect2),
           source: "bounding-client-rect",
           elementConnected: connected
         };
@@ -80741,6 +81011,7 @@ function writeQuillSelectionToClipboard(quill, event, fallbackRange) {
   const plain2 = String(quill.getText(range2.index, range2.length) ?? "").replace(/\n$/, "");
   if (!plain2) return false;
   const html2 = String(((_b = quill.getSemanticHTML) == null ? void 0 : _b.call(quill, range2.index, range2.length)) ?? "");
+  clearNodeClipboard();
   event.preventDefault();
   event.clipboardData.setData("text/plain", plain2);
   if (html2) event.clipboardData.setData("text/html", html2);
@@ -80852,6 +81123,8 @@ class YeMindRichText extends RichText {
   }
   showEditText(params) {
     if (this.showTextEdit) return;
+    const pendingHost = this.textEditNode;
+    if (pendingHost) pendingHost.dataset.yemindGeometryReady = "false";
     const stabilizeOpening = shouldStabilizeOpeningPlacement(params == null ? void 0 : params.isInserting);
     const sourceNode = (params == null ? void 0 : params.node) ?? null;
     const uid2 = renderedNodeUid$1(sourceNode);
@@ -80872,6 +81145,8 @@ class YeMindRichText extends RichText {
     this.node = resolveLiveRenderedNode(this.mindMap, this.node ?? liveNode ?? sourceNode, this.editingUid);
     this.applyEditorHorizontalMargin(this.node, rect2);
     this.normalizeEditorPlacement(rect2);
+    const readyHost = this.textEditNode;
+    if (readyHost) readyHost.dataset.yemindGeometryReady = "true";
     this.bindTextEditingKeyboard();
     this.bindPlacementTracking();
     if (stabilizeOpening) {
@@ -80941,6 +81216,8 @@ class YeMindRichText extends RichText {
       this.mindMap.render();
       this.mindMap.emit("hide_text_edit", this.textEditNode, list, editingNode);
     } finally {
+      const host = this.textEditNode;
+      if (host) host.dataset.yemindGeometryReady = "false";
       this.editingUid = "";
       this.lastValidNodeRect = null;
       this.lastRectSource = "none";
@@ -80952,6 +81229,8 @@ class YeMindRichText extends RichText {
     try {
       super.removeTextEditEl();
     } finally {
+      const host = this.textEditNode;
+      if (host) host.dataset.yemindGeometryReady = "false";
       this.editingUid = "";
       this.lastValidNodeRect = null;
       this.lastRectSource = "none";
@@ -84070,6 +84349,13 @@ function createCommandAdapter(mindMap) {
       mindMap.execCommand("INSERT_CHILD_NODE", true, [node], { yemindTextPristine: true, yemindTextEdited: false });
       return true;
     },
+    pasteNodeTreesByUid: (uid2, nodes) => {
+      if (!canMutate() || nodes.length === 0) return false;
+      const node = findNodeByUid(uid2);
+      if (!node || node.isGeneralization) return false;
+      mindMap.execCommand("INSERT_MULTI_CHILD_NODE", [node], structuredClone(nodes));
+      return true;
+    },
     removeNodeByUid: (uid2) => {
       if (!canMutate()) return false;
       const node = findNodeByUid(uid2);
@@ -86111,6 +86397,15 @@ function textLength(element) {
 function editorIsSemanticallyEmpty(element) {
   return (element.textContent ?? "").replace(/[\u00a0\u200b\ufeff]/g, "").trim().length === 0;
 }
+function findTreeByUid(tree, uid2) {
+  var _a;
+  if (String(((_a = tree.data) == null ? void 0 : _a.uid) ?? "") === uid2) return tree;
+  for (const child of tree.children ?? []) {
+    const found = findTreeByUid(child, uid2);
+    if (found) return found;
+  }
+  return null;
+}
 function isClozeElement(element) {
   if (!(element instanceof HTMLElement)) return false;
   if (element.hasAttribute("data-yemind-cloze")) return true;
@@ -86674,16 +86969,29 @@ class StructuredOutlineEditorController {
       }
     });
     __publicField(this, "onCopy", (event) => {
-      var _a, _b;
+      var _a, _b, _c2, _d2;
       if (!event.clipboardData) return;
       const context = this.selectionContext();
       const whole = this.isWholeSelectionActive((context == null ? void 0 : context.range) ?? null);
       if (!context && !whole) return;
+      const nodeTrees = this.selectedNodeTrees(context, whole);
+      const collapsedBlock = Boolean((context == null ? void 0 : context.collapsed) && !whole && nodeTrees.length > 0);
       event.preventDefault();
-      const plain2 = whole ? serializeOutlineText(this.options.getTree()) : this.selectedStructuredPlainText(context);
+      const plain2 = collapsedBlock ? nodeTrees.map((node) => serializeOutlineText(node)).join("\n") : whole ? serializeOutlineText(this.options.getTree()) : this.selectedStructuredPlainText(context);
       event.clipboardData.setData("text/plain", plain2);
-      event.clipboardData.setData("text/html", this.selectedStructuredHtml(context, plain2, whole));
-      (_b = (_a = this.options).onDiagnostic) == null ? void 0 : _b.call(_a, "copy", {
+      event.clipboardData.setData(
+        "text/html",
+        collapsedBlock ? plain2.split("\n").map((line) => `<div>${escapeHtml$4(line)}</div>`).join("") : this.selectedStructuredHtml(context, plain2, whole)
+      );
+      clearNodeClipboard();
+      if (nodeTrees.length > 0) {
+        publishNodeClipboard(createNodeClipboardPayload({
+          sourceDocumentId: ((_b = (_a = this.options).getDocumentId) == null ? void 0 : _b.call(_a)) ?? "",
+          sourceSurface: "outline",
+          nodes: nodeTrees
+        }), event.clipboardData);
+      }
+      (_d2 = (_c2 = this.options).onDiagnostic) == null ? void 0 : _d2.call(_c2, "copy", {
         whole,
         textLength: plain2.length
       });
@@ -86697,7 +87005,36 @@ class StructuredOutlineEditorController {
       if (event.defaultPrevented) this.replaceSelectionWithText("", "cut");
     });
     __publicField(this, "onPaste", (event) => {
+      var _a, _b, _c2, _d2, _e, _f, _g, _h;
       if (this.options.isReadonly() || !event.clipboardData || isImageClipboard(event.clipboardData)) return;
+      const nodePayload = readNodeClipboard(event.clipboardData, true);
+      if (nodePayload) {
+        event.preventDefault();
+        event.stopPropagation();
+        const prepared = prepareNodeClipboardForDestination(
+          nodePayload,
+          ((_b = (_a = this.options).getDocumentId) == null ? void 0 : _b.call(_a)) ?? ""
+        );
+        const context2 = this.selectionContext();
+        if (context2 && ((_d2 = (_c2 = this.options).onPasteNodes) == null ? void 0 : _d2.call(_c2, context2.start.uid, prepared.nodes))) {
+          this.wholeOutlineSelected = false;
+          this.savedRange = null;
+          (_h = (_g = this.options).onDiagnostic) == null ? void 0 : _h.call(_g, "paste-nodes", {
+            targetUid: context2.start.uid,
+            nodeCount: prepared.nodes.length,
+            sourceSurface: prepared.sourceSurface,
+            crossDocument: prepared.sourceDocumentId !== (((_f = (_e = this.options).getDocumentId) == null ? void 0 : _f.call(_e)) ?? "")
+          });
+          return;
+        }
+        const outline = nodeClipboardToOutline(prepared);
+        this.replaceSelectionWithText(
+          outline.text,
+          "paste-nodes",
+          outline.lines.map((line) => line.html)
+        );
+        return;
+      }
       const text2 = normalizeStructuredOutlineBoundaryText(event.clipboardData.getData("text/plain"));
       const html2 = this.forcePlainPaste ? "" : event.clipboardData.getData("text/html");
       if (!text2 && !html2) return;
@@ -88076,6 +88413,29 @@ class StructuredOutlineEditorController {
       size: style == null ? void 0 : style.fontSize,
       cloze
     };
+  }
+  selectedNodeTrees(context, whole) {
+    const tree = this.options.getTree();
+    if (whole) return [tree];
+    if (!context) return [];
+    if (context.collapsed) {
+      const active = findTreeByUid(tree, context.start.uid);
+      return active ? [active] : [];
+    }
+    const rows = Array.from(this.options.root.querySelectorAll(":scope > [data-outline-uid]"));
+    const startIndex = rows.indexOf(context.startRow);
+    const endIndex = rows.indexOf(context.endRow);
+    if (startIndex < 0 || endIndex < 0) return [];
+    const low = Math.min(startIndex, endIndex);
+    const high = Math.max(startIndex, endIndex);
+    const selectedRows = rows.slice(low, high + 1).filter((row) => row.dataset.outlineKind === "node" && row.dataset.outlineHidden !== "true");
+    if (selectedRows.length === 0) return [];
+    const startEditorLength = textLength(context.startEditor);
+    const endEditorLength = textLength(context.endEditor);
+    if (context.start.offset !== 0 || context.end.offset !== endEditorLength) return [];
+    if (!context.spansRows && context.end.offset !== startEditorLength) return [];
+    const selectedUids = new Set(selectedRows.map((row) => row.dataset.outlineUid ?? "").filter(Boolean));
+    return selectedRows.filter((row) => !selectedUids.has(row.dataset.outlineParentUid ?? "")).map((row) => findTreeByUid(tree, row.dataset.outlineUid ?? "")).filter((node) => Boolean(node));
   }
   afterFormatting(reason) {
     this.markDirty(`format:${reason}`);
@@ -93780,6 +94140,7 @@ class YeMindEditor {
     __publicField(this, "studyPanel", null);
     __publicField(this, "miniMapController", null);
     __publicField(this, "renderLifecycle", null);
+    __publicField(this, "unbindCanvasNodeClipboard", null);
     __publicField(this, "studyMode", null);
     __publicField(this, "presentationState", null);
     __publicField(this, "appearanceMode", null);
@@ -94171,7 +94532,7 @@ class YeMindEditor {
     (_b = panel.querySelector("[data-import-kind]:not([hidden])")) == null ? void 0 : _b.focus();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E;
     this.options.diagnostics.record(
       "editor",
       "destroy-started",
@@ -94244,7 +94605,9 @@ class YeMindEditor {
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_D = this.map) == null ? void 0 : _D.destroy();
+    (_D = this.unbindCanvasNodeClipboard) == null ? void 0 : _D.call(this);
+    this.unbindCanvasNodeClipboard = null;
+    (_E = this.map) == null ? void 0 : _E.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record(
@@ -94432,6 +94795,10 @@ class YeMindEditor {
       onConfirmDeleteImage: () => this.confirmDeleteNodeImage(),
       pluginBaseUrl: this.options.pluginBaseUrl
     });
+    this.unbindCanvasNodeClipboard = bindCanvasNodeClipboard(
+      this.map.renderer,
+      () => this.current.id
+    );
     this.commands = createCommandAdapter(this.map);
     this.symbolPicker = new SymbolPicker(this.rootEl, {
       canInsert: () => Boolean(
@@ -94594,10 +94961,20 @@ class YeMindEditor {
     this.outlineRichText = new StructuredOutlineEditorController({
       root: this.outlineEl,
       pluginBaseUrl: this.options.pluginBaseUrl,
+      getDocumentId: () => this.current.id,
       getTree: () => this.current.data,
       isReadonly: () => {
         var _a2;
         return Boolean((_a2 = this.commands) == null ? void 0 : _a2.isReadonly());
+      },
+      onPasteNodes: (targetUid, nodes) => {
+        var _a2;
+        const applied = Boolean((_a2 = this.commands) == null ? void 0 : _a2.pasteNodeTreesByUid(targetUid, nodes));
+        if (applied) {
+          this.refreshOutlineFromMap(true);
+          this.activateOutlineUid(targetUid, false);
+        }
+        return applied;
       },
       onApply: (tree, details) => {
         var _a2;

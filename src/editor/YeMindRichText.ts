@@ -5,6 +5,7 @@ import Delta from 'quill-delta';
 import { Scope } from 'parchment';
 import { editableTextLength, isPristineNodeTextData, markNodeTextEditedData } from './textEditingPolicy';
 import { structuredOutlineIsRichHtml } from './structuredOutlineDocument';
+import { clearNodeClipboard } from './nodeClipboard';
 import {
   isUsableTextRect,
   editorHorizontalMargin,
@@ -66,6 +67,7 @@ export function writeQuillSelectionToClipboard(
   const plain = String(quill.getText(range.index, range.length) ?? '').replace(/\n$/, '');
   if (!plain) return false;
   const html = String(quill.getSemanticHTML?.(range.index, range.length) ?? '');
+  clearNodeClipboard();
   event.preventDefault();
   event.clipboardData.setData('text/plain', plain);
   if (html) event.clipboardData.setData('text/html', html);
@@ -219,6 +221,8 @@ export default class YeMindRichText extends (BaseRichText as any) {
 
   showEditText(params: any): void {
     if (this.showTextEdit) return;
+    const pendingHost = this.textEditNode as HTMLElement | null;
+    if (pendingHost) pendingHost.dataset.yemindGeometryReady = 'false';
     const stabilizeOpening = shouldStabilizeOpeningPlacement(params?.isInserting);
     const sourceNode = params?.node ?? null;
     const uid = renderedNodeUid(sourceNode);
@@ -244,6 +248,8 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.node = resolveLiveRenderedNode(this.mindMap, this.node ?? liveNode ?? sourceNode, this.editingUid);
     this.applyEditorHorizontalMargin(this.node, rect);
     this.normalizeEditorPlacement(rect);
+    const readyHost = this.textEditNode as HTMLElement | null;
+    if (readyHost) readyHost.dataset.yemindGeometryReady = 'true';
     this.bindTextEditingKeyboard();
     this.bindPlacementTracking();
     // Existing nodes already have final SVG geometry; scheduling another
@@ -323,6 +329,8 @@ export default class YeMindRichText extends (BaseRichText as any) {
       this.mindMap.render();
       this.mindMap.emit('hide_text_edit', this.textEditNode, list, editingNode);
     } finally {
+      const host = this.textEditNode as HTMLElement | null;
+      if (host) host.dataset.yemindGeometryReady = 'false';
       this.editingUid = '';
       this.lastValidNodeRect = null;
       this.lastRectSource = 'none';
@@ -335,6 +343,8 @@ export default class YeMindRichText extends (BaseRichText as any) {
     try {
       super.removeTextEditEl();
     } finally {
+      const host = this.textEditNode as HTMLElement | null;
+      if (host) host.dataset.yemindGeometryReady = 'false';
       this.editingUid = '';
       this.lastValidNodeRect = null;
       this.lastRectSource = 'none';
