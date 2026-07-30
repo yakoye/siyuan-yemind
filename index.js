@@ -7680,8 +7680,8 @@ const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "5c0ece44-clean",
-  time: "2026-07-31T02:33:33+08:00"
+  id: "a5dea18d-clean",
+  time: "2026-07-31T04:51:28+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
@@ -28217,7 +28217,7 @@ function finiteRect(rect2) {
     rect2 && [rect2.x, rect2.y, rect2.width, rect2.height].every(Number.isFinite) && rect2.width > 0 && rect2.height > 0
   );
 }
-function nodeUid$1(node) {
+function nodeUid$2(node) {
   if (!node) return "";
   const value = typeof node.getData === "function" ? node.getData("uid") : node.uid;
   return String(value ?? "");
@@ -28378,7 +28378,7 @@ function orderedSiblings(layout2, parent, available, pointer, getRect, branchDir
     const aRect = getRect(a);
     const bRect = getRect(b);
     const delta = axis === "x" ? rectCenter(aRect).x - rectCenter(bRect).x : rectCenter(aRect).y - rectCenter(bRect).y;
-    return Math.abs(delta) > 0.5 ? delta : nodeUid$1(a).localeCompare(nodeUid$1(b));
+    return Math.abs(delta) > 0.5 ? delta : nodeUid$2(a).localeCompare(nodeUid$2(b));
   });
 }
 function resolveSiblingSlot(options, pointer) {
@@ -28471,7 +28471,7 @@ function slotCandidate(slot, kind = slot.kind, branchDirection) {
   const nextNode = slot.nativeIndex < slot.nativeSiblings.length ? slot.nativeSiblings[slot.nativeIndex] ?? null : null;
   const prevNode = slot.nativeIndex > 0 ? slot.nativeSiblings[slot.nativeIndex - 1] ?? null : null;
   return {
-    key: `${branchDirection ?? "auto"}:${kind}:${nodeUid$1(slot.parent)}:${slot.nativeIndex}`,
+    key: `${branchDirection ?? "auto"}:${kind}:${nodeUid$2(slot.parent)}:${slot.nativeIndex}`,
     kind,
     target: slot.targetNode,
     parent: slot.parent,
@@ -28492,7 +28492,7 @@ function childCandidate(options, pointer, child) {
   const children = orderedSiblings(options.layout, child.node, available, pointer, options.getRect, options.branchDirection);
   if (children.length === 0) {
     return {
-      key: `${options.branchDirection ?? "auto"}:child:${nodeUid$1(child.node)}:0`,
+      key: `${options.branchDirection ?? "auto"}:child:${nodeUid$2(child.node)}:0`,
       kind: "child",
       target: child.node,
       parent: child.node,
@@ -28522,7 +28522,7 @@ function childCandidate(options, pointer, child) {
   const nextNode = nativeIndex < nativeChildren.length ? nativeChildren[nativeIndex] ?? null : null;
   const prevNode = nativeIndex > 0 ? nativeChildren[nativeIndex - 1] ?? null : null;
   return {
-    key: `${options.branchDirection ?? "auto"}:child:${nodeUid$1(child.node)}:${nativeIndex}`,
+    key: `${options.branchDirection ?? "auto"}:child:${nodeUid$2(child.node)}:${nativeIndex}`,
     kind: "child",
     target: child.node,
     parent: child.node,
@@ -28643,7 +28643,7 @@ function resolveRightLogicalCandidate(options, pointer, candidateNodes = options
   intents.sort((a, b) => {
     if (a.strong !== b.strong) return a.strong ? -1 : 1;
     if (Math.abs(a.score - b.score) > 0.5) return a.score - b.score;
-    return nodeUid$1(a.node).localeCompare(nodeUid$1(b.node));
+    return nodeUid$2(a.node).localeCompare(nodeUid$2(b.node));
   });
   const best = intents[0];
   const current = currentLogicalTarget(options, pointer);
@@ -28766,7 +28766,7 @@ function resolveSameAxisLocalCandidate(options, pointer, candidateNodes) {
   intents.sort((a, b) => {
     if (a.strong !== b.strong) return a.strong ? -1 : 1;
     if (Math.abs(a.score - b.score) > 0.5) return a.score - b.score;
-    return nodeUid$1(a.node).localeCompare(nodeUid$1(b.node));
+    return nodeUid$2(a.node).localeCompare(nodeUid$2(b.node));
   });
   const best = intents[0];
   const current = currentSameAxisTarget(options, pointer);
@@ -29072,7 +29072,7 @@ function normalizeRect(rect2) {
   if (![x2, y2, width2, height2].every(Number.isFinite) || width2 <= 0 || height2 <= 0) return null;
   return { x: x2, y: y2, width: width2, height: height2 };
 }
-function nodeUid(node) {
+function nodeUid$1(node) {
   if (!node) return "";
   const value = typeof node.getData === "function" ? node.getData("uid") : node.uid;
   return String(value ?? "");
@@ -29091,7 +29091,7 @@ function candidateFromPlugin(plugin) {
   if (plugin.overlapNode) {
     const parent = plugin.overlapNode;
     return {
-      key: `child:${nodeUid(parent)}`,
+      key: `child:${nodeUid$1(parent)}`,
       kind: "child",
       target: parent,
       parent,
@@ -29108,7 +29108,7 @@ function candidateFromPlugin(plugin) {
     const parent = plugin.prevNode.parent ?? null;
     const index = Array.isArray(parent == null ? void 0 : parent.children) ? parent.children.indexOf(plugin.prevNode) + 1 : -1;
     return {
-      key: `after:${nodeUid(plugin.prevNode)}`,
+      key: `after:${nodeUid$1(plugin.prevNode)}`,
       kind: "after",
       target: plugin.prevNode,
       parent,
@@ -29125,7 +29125,7 @@ function candidateFromPlugin(plugin) {
     const parent = plugin.nextNode.parent ?? null;
     const index = Array.isArray(parent == null ? void 0 : parent.children) ? parent.children.indexOf(plugin.nextNode) : -1;
     return {
-      key: `before:${nodeUid(plugin.nextNode)}`,
+      key: `before:${nodeUid$1(plugin.nextNode)}`,
       kind: "before",
       target: plugin.nextNode,
       parent,
@@ -29147,7 +29147,7 @@ function applyCandidate(plugin, candidate) {
   plugin.nextNode = candidate.nextNode;
   (_b = (_a = plugin.clone) == null ? void 0 : _a.attr) == null ? void 0 : _b.call(_a, {
     "data-drop-kind": candidate.kind,
-    "data-drop-target-uid": nodeUid(candidate.targetNode ?? candidate.parentNode)
+    "data-drop-target-uid": nodeUid$1(candidate.targetNode ?? candidate.parentNode)
   });
 }
 function animationNow() {
@@ -29159,7 +29159,7 @@ function requestFrame(callback) {
   }
   return setTimeout(() => callback(animationNow()), 16);
 }
-function cancelFrame(id) {
+function cancelFrame$1(id) {
   if (typeof window !== "undefined" && typeof window.cancelAnimationFrame === "function") {
     window.cancelAnimationFrame(id);
     return;
@@ -29421,7 +29421,7 @@ class YeMindDrag extends Drag {
   flushOfficialCandidateCheck() {
     const plugin = this;
     if (plugin.__ymzOverlapFrame !== null) {
-      cancelFrame(plugin.__ymzOverlapFrame);
+      cancelFrame$1(plugin.__ymzOverlapFrame);
       plugin.__ymzOverlapFrame = null;
     }
     this.runOfficialCandidateCheck(animationNow());
@@ -29670,7 +29670,7 @@ class YeMindDrag extends Drag {
   cancelCandidateFrame() {
     const plugin = this;
     if (plugin.__ymzOverlapFrame !== null && plugin.__ymzOverlapFrame !== void 0) {
-      cancelFrame(plugin.__ymzOverlapFrame);
+      cancelFrame$1(plugin.__ymzOverlapFrame);
     }
     plugin.__ymzOverlapFrame = null;
   }
@@ -80988,6 +80988,18 @@ class RichText {
   }
 }
 RichText.instanceName = "richText";
+function editorOverlayPosition(target, containingBlock, box) {
+  const scaleX = containingBlock.offsetWidth > 0 ? containingBlock.width / containingBlock.offsetWidth : 1;
+  const scaleY = containingBlock.offsetHeight > 0 ? containingBlock.height / containingBlock.offsetHeight : 1;
+  const safeScaleX = Number.isFinite(scaleX) && scaleX > 0 ? scaleX : 1;
+  const safeScaleY = Number.isFinite(scaleY) && scaleY > 0 ? scaleY : 1;
+  const borderLeft = Number(box.borderLeft) || 0;
+  const borderTop = Number(box.borderTop) || 0;
+  return {
+    left: (target.left - containingBlock.left - containingBlock.clientLeft) / safeScaleX + containingBlock.scrollLeft - (Number(box.marginLeft) || 0) - borderLeft - (Number(box.paddingLeft) || 0),
+    top: (target.top - containingBlock.top - containingBlock.clientTop) / safeScaleY + containingBlock.scrollTop - (Number(box.marginTop) || 0) - borderTop - (Number(box.paddingTop) || 0)
+  };
+}
 function editorContentRectAligned(editorRect, targetRect, tolerance = 1.5) {
   if (!editorRect || !targetRect) return false;
   const values2 = [
@@ -81728,7 +81740,6 @@ class YeMindRichText extends RichText {
     this.setQuillContainerMinHeight(originHeight);
     this.applyEditorHorizontalMargin(node, rect2);
     this.normalizeEditorPlacement(rect2);
-    this.alignEditorContentToTarget(rect2);
   }
   applyEditorHorizontalMargin(node, rect2) {
     var _a, _b, _c2, _d2;
@@ -81755,48 +81766,43 @@ class YeMindRichText extends RichText {
     if (!nodeRect || !isUsableTextRect(nodeRect)) return;
     this.lastValidNodeRect = snapshotRect(nodeRect);
     if (geometry) this.lastRectSource = geometry.source;
+    const style = window.getComputedStyle(host);
+    const marginLeft = Number.parseFloat(style.marginLeft) || 0;
+    const marginTop = Number.parseFloat(style.marginTop) || 0;
+    const paddingLeft = Number.parseFloat(style.paddingLeft) || 0;
+    const paddingTop = Number.parseFloat(style.paddingTop) || 0;
+    const borderLeft = Number.parseFloat(style.borderLeftWidth) || 0;
+    const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
     if (!target || target === document.body || host.parentElement === document.body) {
       host.style.position = "fixed";
-      host.style.left = `${nodeRect.left}px`;
-      host.style.top = `${nodeRect.top}px`;
+      host.style.left = `${nodeRect.left - marginLeft - borderLeft - paddingLeft}px`;
+      host.style.top = `${nodeRect.top - marginTop - borderTop - paddingTop}px`;
       return;
     }
-    const targetRect = target.getBoundingClientRect();
+    const containingBlock = host.offsetParent instanceof HTMLElement ? host.offsetParent : target;
+    const blockRect = containingBlock.getBoundingClientRect();
+    const position2 = editorOverlayPosition(nodeRect, {
+      left: blockRect.left,
+      top: blockRect.top,
+      width: blockRect.width,
+      height: blockRect.height,
+      offsetWidth: containingBlock.offsetWidth,
+      offsetHeight: containingBlock.offsetHeight,
+      clientLeft: containingBlock.clientLeft,
+      clientTop: containingBlock.clientTop,
+      scrollLeft: containingBlock.scrollLeft,
+      scrollTop: containingBlock.scrollTop
+    }, {
+      marginLeft,
+      marginTop,
+      paddingLeft,
+      paddingTop,
+      borderLeft,
+      borderTop
+    });
     host.style.position = "absolute";
-    host.style.left = `${nodeRect.left - targetRect.left + target.scrollLeft - target.clientLeft}px`;
-    host.style.top = `${nodeRect.top - targetRect.top + target.scrollTop - target.clientTop}px`;
-  }
-  /**
-   * `normalizeEditorPlacement` establishes the overlay in the correct viewport
-   * coordinate system. Quill still has its own content padding, and prefix
-   * nodes can add a renderer-specific margin before the real text layer. Align
-   * the live content box, not the outer overlay box, to the canonical SVG text
-   * rectangle before the editor is allowed to paint.
-   */
-  alignEditorContentToTarget(targetRect) {
-    var _a, _b;
-    const host = this.textEditNode;
-    const editor = (host == null ? void 0 : host.querySelector(".ql-editor")) ?? null;
-    if (!host || !editor) return;
-    const editorRect = editor.getBoundingClientRect();
-    const deltaX = targetRect.left - editorRect.left;
-    const deltaY = targetRect.top - editorRect.top;
-    if (!Number.isFinite(deltaX) || !Number.isFinite(deltaY)) return;
-    if (Math.abs(deltaX) <= 0.05 && Math.abs(deltaY) <= 0.05) return;
-    const left = Number.parseFloat(host.style.left);
-    const top = Number.parseFloat(host.style.top);
-    if (!Number.isFinite(left) || !Number.isFinite(top)) return;
-    const target = (_b = (_a = this.mindMap) == null ? void 0 : _a.opt) == null ? void 0 : _b.customInnerElsAppendTo;
-    if (!target || target === document.body || host.parentElement === document.body) {
-      host.style.left = `${left + deltaX}px`;
-      host.style.top = `${top + deltaY}px`;
-      return;
-    }
-    const containerRect = target.getBoundingClientRect();
-    const scaleX = target.offsetWidth > 0 ? containerRect.width / target.offsetWidth : 1;
-    const scaleY = target.offsetHeight > 0 ? containerRect.height / target.offsetHeight : 1;
-    host.style.left = `${left + deltaX / (Number.isFinite(scaleX) && scaleX > 0 ? scaleX : 1)}px`;
-    host.style.top = `${top + deltaY / (Number.isFinite(scaleY) && scaleY > 0 ? scaleY : 1)}px`;
+    host.style.left = `${position2.left}px`;
+    host.style.top = `${position2.top}px`;
   }
   commitOpeningPlacement(sessionId, targetRect) {
     var _a, _b, _c2, _d2, _e, _f;
@@ -83100,6 +83106,11 @@ const READONLY_ALLOWED_SHORTCUTS = /* @__PURE__ */ new Set([
   "Right"
 ]);
 const DELETE_SHORTCUTS = /* @__PURE__ */ new Set(["Del", "Delete", "Backspace", "Shift+Backspace"]);
+function disableUpstreamStructuralInsertShortcuts(keyCommand) {
+  var _a, _b;
+  (_a = keyCommand == null ? void 0 : keyCommand.removeShortcut) == null ? void 0 : _a.call(keyCommand, "Tab");
+  (_b = keyCommand == null ? void 0 : keyCommand.removeShortcut) == null ? void 0 : _b.call(keyCommand, "Enter");
+}
 function resolveUpstreamShortcutAction(shortcut, nodes, readonly) {
   if (readonly && !READONLY_ALLOWED_SHORTCUTS.has(shortcut)) return "block";
   if (!DELETE_SHORTCUTS.has(shortcut)) return "allow";
@@ -83539,6 +83550,7 @@ function createMindMap(options) {
     },
     errorHandler: (_code, error2) => console.error("[YeMind]", error2)
   });
+  disableUpstreamStructuralInsertShortcuts(mindMap.keyCommand);
   installHistoryTransactionCoordinator(mindMap, { seed: true });
   stabilizeMindMapMeasurementHost(mindMap, editorRoot);
   installThemeColorRuntime(mindMap);
@@ -84310,7 +84322,141 @@ function steppedZoomPercent(current, direction, min, max, step = 20) {
   const target = cleanLevel + (direction === "in" ? safeStep : -safeStep);
   return Math.min(upper, Math.max(lower, target));
 }
+function nodeUid(node) {
+  var _a, _b, _c2;
+  return String(((_a = node == null ? void 0 : node.getData) == null ? void 0 : _a.call(node, "uid")) ?? ((_c2 = (_b = node == null ? void 0 : node.nodeData) == null ? void 0 : _b.data) == null ? void 0 : _c2.uid) ?? "");
+}
+function scheduleFrame(callback) {
+  if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+    return window.requestAnimationFrame(callback);
+  }
+  return setTimeout(() => callback(Date.now()), 16);
+}
+function cancelFrame(handle) {
+  if (handle === null) return;
+  if (typeof window !== "undefined" && typeof window.cancelAnimationFrame === "function") {
+    window.cancelAnimationFrame(handle);
+    return;
+  }
+  clearTimeout(handle);
+}
+class InsertedNodeEditCoordinator {
+  constructor(mindMap) {
+    __publicField(this, "generation", 0);
+    __publicField(this, "frame", null);
+    __publicField(this, "renderListener", null);
+    __publicField(this, "readyListener", null);
+    __publicField(this, "attempts", 0);
+    this.mindMap = mindMap;
+  }
+  run(uid2, insert) {
+    var _a, _b, _c2, _d2;
+    if (!uid2) {
+      insert();
+      return;
+    }
+    this.cancel();
+    const generation = ++this.generation;
+    this.attempts = 0;
+    this.renderListener = () => this.scheduleAttempt(uid2, generation);
+    this.readyListener = (...args) => {
+      const payload = args[0];
+      if (String((payload == null ? void 0 : payload.uid) ?? "") !== uid2) return;
+      this.focusExistingEditor(uid2, generation);
+    };
+    (_b = (_a = this.mindMap).on) == null ? void 0 : _b.call(_a, "node_tree_render_end", this.renderListener);
+    (_d2 = (_c2 = this.mindMap).on) == null ? void 0 : _d2.call(_c2, "yemind_text_edit_ready", this.readyListener);
+    try {
+      insert();
+    } catch (error2) {
+      this.cancel();
+      throw error2;
+    }
+    this.scheduleAttempt(uid2, generation);
+  }
+  cancel() {
+    this.generation += 1;
+    cancelFrame(this.frame);
+    this.frame = null;
+    this.detachListeners();
+    this.attempts = 0;
+  }
+  scheduleAttempt(uid2, generation) {
+    if (generation !== this.generation || this.frame !== null) return;
+    this.frame = scheduleFrame(() => {
+      this.frame = null;
+      this.tryOpen(uid2, generation);
+    });
+  }
+  tryOpen(uid2, generation) {
+    var _a, _b, _c2, _d2, _e, _f, _g, _h;
+    if (generation !== this.generation) return;
+    const node = ((_b = (_a = this.mindMap.renderer) == null ? void 0 : _a.findNodeByUid) == null ? void 0 : _b.call(_a, uid2)) ?? null;
+    if (!node) {
+      this.attempts += 1;
+      if (this.attempts < 12) this.scheduleAttempt(uid2, generation);
+      else this.detachListeners();
+      return;
+    }
+    if (this.isEditingUid(uid2)) {
+      this.focusExistingEditor(uid2, generation);
+      return;
+    }
+    this.detachListeners();
+    (_c2 = node.active) == null ? void 0 : _c2.call(node);
+    const show2 = (_e = (_d2 = this.mindMap.renderer) == null ? void 0 : _d2.textEdit) == null ? void 0 : _e.show;
+    const opening = typeof show2 === "function" ? show2.call((_f = this.mindMap.renderer) == null ? void 0 : _f.textEdit, {
+      node,
+      isInserting: true,
+      isFromKeyDown: false
+    }) : (_h = (_g = this.mindMap).emit) == null ? void 0 : _h.call(_g, "node_dblclick", node, null, true);
+    Promise.resolve(opening).then(() => {
+      if (generation !== this.generation) return;
+      this.frame = scheduleFrame(() => {
+        var _a2;
+        this.frame = null;
+        if (generation !== this.generation) return;
+        const richText = this.mindMap.richText;
+        const editingUid = nodeUid(richText == null ? void 0 : richText.node);
+        if ((richText == null ? void 0 : richText.showTextEdit) === false) return;
+        if (editingUid && editingUid !== uid2) return;
+        (_a2 = richText == null ? void 0 : richText.focus) == null ? void 0 : _a2.call(richText, 0);
+      });
+    });
+  }
+  isEditingUid(uid2) {
+    const richText = this.mindMap.richText;
+    return (richText == null ? void 0 : richText.showTextEdit) === true && nodeUid(richText.node) === uid2;
+  }
+  focusExistingEditor(uid2, generation) {
+    if (generation !== this.generation || !this.isEditingUid(uid2)) return;
+    this.detachListeners();
+    cancelFrame(this.frame);
+    this.frame = scheduleFrame(() => {
+      var _a, _b;
+      this.frame = null;
+      if (generation !== this.generation || !this.isEditingUid(uid2)) return;
+      (_b = (_a = this.mindMap.richText) == null ? void 0 : _a.focus) == null ? void 0 : _b.call(_a, 0);
+    });
+  }
+  detachListeners() {
+    var _a, _b, _c2, _d2;
+    if (this.renderListener) {
+      (_b = (_a = this.mindMap).off) == null ? void 0 : _b.call(_a, "node_tree_render_end", this.renderListener);
+      this.renderListener = null;
+    }
+    if (this.readyListener) {
+      (_d2 = (_c2 = this.mindMap).off) == null ? void 0 : _d2.call(_c2, "yemind_text_edit_ready", this.readyListener);
+      this.readyListener = null;
+    }
+  }
+}
+function createInsertedNodeUid() {
+  var _a, _b;
+  return ((_b = (_a = globalThis.crypto) == null ? void 0 : _a.randomUUID) == null ? void 0 : _b.call(_a)) ?? `node-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
 function createCommandAdapter(mindMap) {
+  const insertedNodeEditor = new InsertedNodeEditCoordinator(mindMap);
   const activeNodes = () => {
     var _a;
     return Array.isArray((_a = mindMap.renderer) == null ? void 0 : _a.activeNodeList) ? mindMap.renderer.activeNodeList : [];
@@ -84546,6 +84692,16 @@ function createCommandAdapter(mindMap) {
     updateData.call(mindMap, result.tree);
     return true;
   };
+  const insertAndEdit = (command, appointNodes = []) => {
+    const uid2 = createInsertedNodeUid();
+    insertedNodeEditor.run(uid2, () => {
+      mindMap.execCommand(command, true, appointNodes, {
+        uid: uid2,
+        yemindTextPristine: true,
+        yemindTextEdited: false
+      });
+    });
+  };
   return {
     isReadonly,
     hasRichTextSelection,
@@ -84559,13 +84715,13 @@ function createCommandAdapter(mindMap) {
       editor.quill.setSelection(range2.index, range2.length, "silent");
     },
     addChild: () => {
-      if (canMutate() && primaryIsRegular()) mindMap.execCommand("INSERT_CHILD_NODE", true, [], { yemindTextPristine: true, yemindTextEdited: false });
+      if (canMutate() && primaryIsRegular()) insertAndEdit("INSERT_CHILD_NODE");
     },
     addSibling: () => {
-      if (canMutate() && primaryIsMovable()) mindMap.execCommand("INSERT_NODE", true, [], { yemindTextPristine: true, yemindTextEdited: false });
+      if (canMutate() && primaryIsMovable()) insertAndEdit("INSERT_NODE");
     },
     addParent: () => {
-      if (canMutate() && primaryIsMovable()) mindMap.execCommand("INSERT_PARENT_NODE", true, [], { yemindTextPristine: true, yemindTextEdited: false });
+      if (canMutate() && primaryIsMovable()) insertAndEdit("INSERT_PARENT_NODE");
     },
     moveUp: () => {
       if (canMutate() && primaryIsMovable()) mindMap.execCommand("UP_NODE");
@@ -85093,7 +85249,7 @@ function createCommandAdapter(mindMap) {
       if (!canMutate()) return false;
       const node = findNodeByUid(uid2);
       if (!node || node.isGeneralization) return false;
-      mindMap.execCommand("INSERT_CHILD_NODE", true, [node], { yemindTextPristine: true, yemindTextEdited: false });
+      insertAndEdit("INSERT_CHILD_NODE", [node]);
       return true;
     },
     pasteNodeTreesByUid: (uid2, nodes) => {
@@ -93089,7 +93245,7 @@ class LiveNodeWidthLayoutController {
 function scheduleFocusedNodeHighlight(renderer, uid2, options = {}) {
   const maxAttempts = Math.max(1, options.attempts ?? 20);
   const duration = Math.max(0, options.duration ?? 1500);
-  const scheduleFrame = options.scheduleFrame ?? ((callback) => window.requestAnimationFrame(callback));
+  const scheduleFrame2 = options.scheduleFrame ?? ((callback) => window.requestAnimationFrame(callback));
   const cancelFrame2 = options.cancelFrame ?? ((id) => window.cancelAnimationFrame(id));
   const scheduleTimer = options.scheduleTimer ?? ((callback, delay) => window.setTimeout(callback, delay));
   const cancelTimer = options.cancelTimer ?? ((id) => window.clearTimeout(id));
@@ -93107,7 +93263,7 @@ function scheduleFocusedNodeHighlight(renderer, uid2, options = {}) {
     }
   };
   const attempt = (remaining) => {
-    frameId = scheduleFrame(() => {
+    frameId = scheduleFrame2(() => {
       var _a, _b, _c2, _d2, _e;
       frameId = null;
       if (cancelled) return;
