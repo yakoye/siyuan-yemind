@@ -7680,8 +7680,8 @@ const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "b8c91cea-dirty-a9bf9a52",
-  time: "2026-07-30T17:57:31.585Z"
+  id: "5c0ece44-clean",
+  time: "2026-07-31T02:33:33+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
@@ -81139,24 +81139,30 @@ function rectFromScreenMatrix(element, group) {
   return isUsableTextRect(result) ? result : null;
 }
 function resolveRenderedTextRect(node) {
-  var _a, _b;
+  var _a, _b, _c2;
   const group = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
   const element = group == null ? void 0 : group.node;
   if (!element) return null;
-  const connected = typeof element.isConnected === "boolean" ? element.isConnected : null;
-  if (connected !== false) {
+  const content = ((_b = element.querySelector) == null ? void 0 : _b.call(
+    element,
+    ".smm-richtext-node-wrap,.smm-text-node-wrap"
+  )) ?? null;
+  const candidates = content && content !== element ? [content, element] : [element];
+  for (const candidate of candidates) {
+    const connected = typeof candidate.isConnected === "boolean" ? candidate.isConnected : null;
+    if (connected === false) continue;
     try {
-      const rect2 = (_b = element.getBoundingClientRect) == null ? void 0 : _b.call(element);
+      const rect2 = (_c2 = candidate.getBoundingClientRect) == null ? void 0 : _c2.call(candidate);
       if (isUsableTextRect(rect2)) {
         return {
-          rect: logicalTextRect(node, group, element, rect2),
+          rect: logicalTextRect(node, group, candidate, rect2),
           source: "bounding-client-rect",
           elementConnected: connected
         };
       }
     } catch {
     }
-    const matrixRect = rectFromScreenMatrix(element, group);
+    const matrixRect = rectFromScreenMatrix(candidate, group);
     if (matrixRect) {
       return {
         rect: snapshotRect(matrixRect),
@@ -81722,6 +81728,7 @@ class YeMindRichText extends RichText {
     this.setQuillContainerMinHeight(originHeight);
     this.applyEditorHorizontalMargin(node, rect2);
     this.normalizeEditorPlacement(rect2);
+    this.alignEditorContentToTarget(rect2);
   }
   applyEditorHorizontalMargin(node, rect2) {
     var _a, _b, _c2, _d2;
@@ -81758,6 +81765,38 @@ class YeMindRichText extends RichText {
     host.style.position = "absolute";
     host.style.left = `${nodeRect.left - targetRect.left + target.scrollLeft - target.clientLeft}px`;
     host.style.top = `${nodeRect.top - targetRect.top + target.scrollTop - target.clientTop}px`;
+  }
+  /**
+   * `normalizeEditorPlacement` establishes the overlay in the correct viewport
+   * coordinate system. Quill still has its own content padding, and prefix
+   * nodes can add a renderer-specific margin before the real text layer. Align
+   * the live content box, not the outer overlay box, to the canonical SVG text
+   * rectangle before the editor is allowed to paint.
+   */
+  alignEditorContentToTarget(targetRect) {
+    var _a, _b;
+    const host = this.textEditNode;
+    const editor = (host == null ? void 0 : host.querySelector(".ql-editor")) ?? null;
+    if (!host || !editor) return;
+    const editorRect = editor.getBoundingClientRect();
+    const deltaX = targetRect.left - editorRect.left;
+    const deltaY = targetRect.top - editorRect.top;
+    if (!Number.isFinite(deltaX) || !Number.isFinite(deltaY)) return;
+    if (Math.abs(deltaX) <= 0.05 && Math.abs(deltaY) <= 0.05) return;
+    const left = Number.parseFloat(host.style.left);
+    const top = Number.parseFloat(host.style.top);
+    if (!Number.isFinite(left) || !Number.isFinite(top)) return;
+    const target = (_b = (_a = this.mindMap) == null ? void 0 : _a.opt) == null ? void 0 : _b.customInnerElsAppendTo;
+    if (!target || target === document.body || host.parentElement === document.body) {
+      host.style.left = `${left + deltaX}px`;
+      host.style.top = `${top + deltaY}px`;
+      return;
+    }
+    const containerRect = target.getBoundingClientRect();
+    const scaleX = target.offsetWidth > 0 ? containerRect.width / target.offsetWidth : 1;
+    const scaleY = target.offsetHeight > 0 ? containerRect.height / target.offsetHeight : 1;
+    host.style.left = `${left + deltaX / (Number.isFinite(scaleX) && scaleX > 0 ? scaleX : 1)}px`;
+    host.style.top = `${top + deltaY / (Number.isFinite(scaleY) && scaleY > 0 ? scaleY : 1)}px`;
   }
   commitOpeningPlacement(sessionId, targetRect) {
     var _a, _b, _c2, _d2, _e, _f;
