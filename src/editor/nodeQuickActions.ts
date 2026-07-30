@@ -204,6 +204,7 @@ export class NodeQuickActionsController {
     this.options.canvas.addEventListener('pointerout', this.onCanvasPointerOut);
     this.bindViewportTracking();
     this.bindRenderedViewportTracking();
+    this.bindHostScrollTracking();
   }
 
   destroy(): void {
@@ -211,6 +212,7 @@ export class NodeQuickActionsController {
     this.frame = null;
     this.unbindViewportTracking();
     this.unbindRenderedViewportTracking();
+    this.unbindHostScrollTracking();
     this.cancelHide();
     this.layer.removeEventListener('click', this.onClick);
     this.layer.removeEventListener('pointerover', this.onActionPointerOver);
@@ -332,6 +334,22 @@ export class NodeQuickActionsController {
     this.renderedViewportObserver?.disconnect();
     this.renderedViewportObserver = null;
   }
+
+  private bindHostScrollTracking(): void {
+    // In SiYuan, a wheel gesture can scroll an ancestor WebView container
+    // without changing the mind-map SVG transform or emitting renderer
+    // viewport events. Capture every descendant/ancestor scroll at the window
+    // boundary so the HTML action layer follows the painted node rectangle.
+    window.addEventListener('scroll', this.onHostScroll, true);
+  }
+
+  private unbindHostScrollTracking(): void {
+    window.removeEventListener('scroll', this.onHostScroll, true);
+  }
+
+  private readonly onHostScroll = (): void => {
+    this.scheduleRefresh();
+  };
 
   private eventNodeUid(event: PointerEvent): string | null {
     for (const item of event.composedPath()) {
