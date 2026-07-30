@@ -191,6 +191,11 @@ it('tracks every viewport transform with one non-starving refresh per animation 
   });
   let nodeLeft = 360;
   const liveElement = document.createElement('div');
+  const descendantGroup = document.createElement('div');
+  const descendantHoverRect = document.createElement('div');
+  descendantHoverRect.className = 'smm-hover-node';
+  descendantGroup.appendChild(descendantHoverRect);
+  liveElement.appendChild(descendantGroup);
   const liveHoverRect = document.createElement('div');
   liveHoverRect.className = 'smm-hover-node';
   liveElement.appendChild(liveHoverRect);
@@ -216,6 +221,19 @@ it('tracks every viewport transform with one non-starving refresh per animation 
       width: 210,
       height: 50,
       x: nodeLeft - 5,
+      y: 255,
+      toJSON() {},
+    }),
+  });
+  Object.defineProperty(descendantHoverRect, 'getBoundingClientRect', {
+    value: () => ({
+      left: nodeLeft + 300,
+      top: 255,
+      right: nodeLeft + 500,
+      bottom: 305,
+      width: 200,
+      height: 50,
+      x: nodeLeft + 300,
       y: 255,
       toJSON() {},
     }),

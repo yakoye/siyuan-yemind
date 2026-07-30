@@ -156,7 +156,8 @@ function visibleNodeList(root: any): any[] {
 function visibleNodeRect(node: any): DOMRect | null {
   const groupElement = node?.group?.node as Element | undefined;
   if (!groupElement?.getBoundingClientRect) return null;
-  const activeBorder = groupElement.querySelector?.('.smm-hover-node') as Element | null;
+  const activeBorder = Array.from(groupElement.children ?? [])
+    .find((child) => child.classList?.contains('smm-hover-node')) ?? null;
   const rect = (activeBorder ?? groupElement).getBoundingClientRect();
   return rect.width > 0 || rect.height > 0 ? rect : null;
 }
