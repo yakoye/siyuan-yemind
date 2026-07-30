@@ -63,10 +63,12 @@
     "v130AppearanceController.suite.ts",
     "v151AppearanceContrast.suite.ts"
   ],
-  "commands-selection": [
-    "commands.suite.ts",
-    "editorClipboardShortcuts.suite.ts",
-    "nativeClipboardCommands.suite.ts",
+    "commands-selection": [
+      "commands.suite.ts",
+      "clipboardCopyIntent.suite.ts",
+      "editorClipboardShortcuts.suite.ts",
+      "historyTransactionCoordinator.suite.ts",
+      "nativeClipboardCommands.suite.ts",
     "nodeQuickActions.suite.ts",
     "selectionPrimary.suite.ts",
     "shortcutSafety.suite.ts",
