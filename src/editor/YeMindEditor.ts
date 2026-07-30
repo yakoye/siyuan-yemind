@@ -508,16 +508,49 @@ export class YeMindEditor {
   };
 
   private readonly onWindowTextSelectionKeydown = (event: KeyboardEvent): void => {
+    const root = this.rootEl;
+    if (!root?.isConnected) return;
+    const rect = root.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+
+    const isStructuralInsert = (
+      (event.key === "Tab" || event.key === "Enter")
+      && !event.shiftKey
+      && !event.ctrlKey
+      && !event.metaKey
+      && !event.altKey
+    );
+    if (isStructuralInsert) {
+      const target = event.target instanceof HTMLElement
+        ? event.target
+        : document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+      const isInteractiveControl = Boolean(target?.closest(
+        'button, a, input, textarea, select, [role="button"], [role="menuitem"], [role="option"]',
+      ));
+      if (
+        this.viewMode !== "outline"
+        && this.commands
+        && !this.commands.isReadonly()
+        && this.commands.getPrimaryNode()
+        && !isEditableTarget(target)
+        && !isInteractiveControl
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (event.key === "Tab") this.commands.addChild();
+        else this.commands.addSibling();
+      }
+      return;
+    }
+
     if (
       (event.key !== "Backspace" && event.key !== "Delete")
       || event.ctrlKey
       || event.metaKey
       || event.altKey
     ) return;
-    const root = this.rootEl;
-    if (!root?.isConnected) return;
-    const rect = root.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return;
     const activeOutlineEditor = this.outlineRichText?.activeHost;
     const activeElement = document.activeElement;
     if (activeOutlineEditor && activeElement && activeOutlineEditor.contains(activeElement)) return;

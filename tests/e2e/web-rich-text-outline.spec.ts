@@ -649,6 +649,81 @@ test('a newly inserted child receives one stable final editor placement', async 
     .toBeLessThanOrEqual(1);
 });
 
+test('Tab-created child shows its default text on every visible editor frame', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop inserted-node first-paint regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  await addRootChild(page);
+  await commitCanvasEdit(page);
+  const parent = editor.locator('.smm-node').last();
+  await expect(parent).toContainText('新节点');
+  await parent.click();
+  await page.keyboard.press('Tab');
+
+  const frames = await editor.evaluate(async (root) => {
+    const result: Array<{
+      visible: boolean;
+      text: string;
+      html: string;
+      geometryReady: string | null;
+    }> = [];
+    for (let index = 0; index < 6; index += 1) {
+      const host = root.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
+      const textEditor = host?.querySelector<HTMLElement>('.ql-editor') ?? null;
+      const style = host ? getComputedStyle(host) : null;
+      result.push({
+        visible: Boolean(host && style?.display !== 'none' && host.getBoundingClientRect().width > 0),
+        text: textEditor?.innerText.trim() ?? '',
+        html: textEditor?.innerHTML ?? '',
+        geometryReady: host?.dataset.yemindGeometryReady ?? null,
+      });
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    }
+    return result;
+  });
+
+  expect(frames.some((frame) => frame.visible)).toBe(true);
+  frames.filter((frame) => frame.visible).forEach((frame) => {
+    expect(frame.text).toBe('新节点');
+    expect(frame.html).not.toBe('<p><br></p>');
+    expect(frame.geometryReady).toBe('true');
+  });
+});
+
+for (const shortcut of ['Tab', 'Enter'] as const) {
+  test(`${shortcut} insertion is claimed before a host window shortcut can blank the editor`, async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'desktop host-keyboard ownership regression');
+    await resetWebApp(page);
+    const editor = page.locator('.ymw-editor > .ymz-editor');
+    await editor.locator('[data-action="view-map"]').click();
+    await addRootChild(page);
+    await commitCanvasEdit(page);
+    await editor.locator('.smm-node').last().click();
+    await page.evaluate((key) => {
+      (window as any).__yemindHostShortcutSeen = false;
+      window.addEventListener('keydown', (event) => {
+        if (event.key !== key) return;
+        (window as any).__yemindHostShortcutSeen = true;
+        const host = document.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
+        if (host) host.dataset.yemindGeometryReady = 'false';
+      });
+    }, shortcut);
+
+    await page.keyboard.press(shortcut);
+    const host = editor.locator('.smm-richtext-node-edit-wrap');
+    const textEditor = host.locator('.ql-editor');
+    await expect(host).toBeVisible();
+    await expect(textEditor).toHaveText('新节点');
+    await expect.poll(
+      () => page.evaluate(() => (window as any).__yemindHostShortcutSeen),
+    ).toBe(false);
+    await expect(host).toHaveAttribute('data-yemind-geometry-ready', 'true');
+  });
+}
+
 test('one Delete or Backspace removes a selected multiline canvas range', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop keyboard-selection regression');
   await resetWebApp(page);
