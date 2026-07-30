@@ -7,7 +7,10 @@ import { createNodePrefixContent, createNodePostfixContent, createYemindIconList
 import { buildDragAndLayoutOptions, normalizePersistedViewData } from './dragBehavior';
 import { buildRelationOptions } from './relationConfig';
 import { buildOuterFrameOptions } from './outerFrameConfig';
-import { resolveUpstreamShortcutAction } from '../editor/shortcutSafety';
+import {
+  disableUpstreamStructuralInsertShortcuts,
+  resolveUpstreamShortcutAction,
+} from '../editor/shortcutSafety';
 import { buildThemeConfig, detectAppearance, type YeMindLineStyle } from './themePresets';
 import { configureThemeColorRuntime, installThemeColorRuntime } from './themeColorRuntime';
 import { stabilizeMindMapMeasurementHost } from './measurementHost';
@@ -119,6 +122,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     },
     errorHandler: (_code: unknown, error: unknown) => console.error('[YeMind]', error),
   } as any);
+  disableUpstreamStructuralInsertShortcuts((mindMap as any).keyCommand);
   installHistoryTransactionCoordinator(mindMap as any, { seed: true });
   stabilizeMindMapMeasurementHost(mindMap as any, editorRoot);
   installThemeColorRuntime(mindMap);

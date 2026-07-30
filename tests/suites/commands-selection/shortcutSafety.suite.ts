@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest';
-import { resolveUpstreamShortcutAction, shouldBlockUpstreamShortcut } from '../../../src/editor/shortcutSafety';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  disableUpstreamStructuralInsertShortcuts,
+  resolveUpstreamShortcutAction,
+  shouldBlockUpstreamShortcut,
+} from '../../../src/editor/shortcutSafety';
 
 describe('upstream shortcut safety', () => {
   it('blocks mutation shortcuts in readonly mode but keeps copy and view commands', () => {
@@ -23,5 +27,16 @@ describe('upstream shortcut safety', () => {
     expect(shouldBlockUpstreamShortcut('Backspace', [{ isRoot: true }], false)).toBe(true);
     expect(shouldBlockUpstreamShortcut('Backspace', [{ isRoot: false }], false)).toBe(true);
     expect(shouldBlockUpstreamShortcut('Control+c', [{ isRoot: false }], false)).toBe(false);
+  });
+
+  it('removes upstream Tab and Enter insertion so YeMind owns one focus transaction', () => {
+    const removeShortcut = vi.fn();
+
+    disableUpstreamStructuralInsertShortcuts({ removeShortcut });
+
+    expect(removeShortcut.mock.calls).toEqual([
+      ['Tab'],
+      ['Enter'],
+    ]);
   });
 });

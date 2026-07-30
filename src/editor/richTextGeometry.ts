@@ -23,6 +23,72 @@ export interface ComparableRect {
   height?: number;
 }
 
+export interface OverlayContainingBlock {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  offsetWidth: number;
+  offsetHeight: number;
+  clientLeft: number;
+  clientTop: number;
+  scrollLeft: number;
+  scrollTop: number;
+}
+
+export interface OverlayBoxMetrics {
+  marginLeft: number;
+  marginTop: number;
+  paddingLeft: number;
+  paddingTop: number;
+  borderLeft?: number;
+  borderTop?: number;
+}
+
+/**
+ * Convert a viewport text position into one stable CSS position for an
+ * absolutely positioned editor overlay. The result is derived exclusively
+ * from the canonical SVG target and the real containing block; it never reads
+ * the overlay's previous painted position, so repeated calls cannot create a
+ * correction feedback loop.
+ */
+export function editorOverlayPosition(
+  target: Pick<ComparableRect, 'left' | 'top'>,
+  containingBlock: OverlayContainingBlock,
+  box: OverlayBoxMetrics,
+): { left: number; top: number } {
+  const scaleX = containingBlock.offsetWidth > 0
+    ? containingBlock.width / containingBlock.offsetWidth
+    : 1;
+  const scaleY = containingBlock.offsetHeight > 0
+    ? containingBlock.height / containingBlock.offsetHeight
+    : 1;
+  const safeScaleX = Number.isFinite(scaleX) && scaleX > 0 ? scaleX : 1;
+  const safeScaleY = Number.isFinite(scaleY) && scaleY > 0 ? scaleY : 1;
+  const borderLeft = Number(box.borderLeft) || 0;
+  const borderTop = Number(box.borderTop) || 0;
+  return {
+    left: (
+      target.left
+      - containingBlock.left
+      - containingBlock.clientLeft
+    ) / safeScaleX
+      + containingBlock.scrollLeft
+      - (Number(box.marginLeft) || 0)
+      - borderLeft
+      - (Number(box.paddingLeft) || 0),
+    top: (
+      target.top
+      - containingBlock.top
+      - containingBlock.clientTop
+    ) / safeScaleY
+      + containingBlock.scrollTop
+      - (Number(box.marginTop) || 0)
+      - borderTop
+      - (Number(box.paddingTop) || 0),
+  };
+}
+
 /**
  * The editable Quill content is the HTML replacement for the SVG text group.
  * Their top-left coordinates must therefore agree before the replacement is

@@ -89,9 +89,9 @@ describe('createCommandAdapter', () => {
     expect((map as any).command.yemindBeginHistoryReplay).toHaveBeenCalledTimes(2);
     expect((map as any).command.yemindEndHistoryReplay).toHaveBeenCalledTimes(2);
     expect(map.execCommand.mock.calls).toEqual([
-      ['INSERT_CHILD_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }],
-      ['INSERT_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }],
-      ['INSERT_PARENT_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }],
+      ['INSERT_CHILD_NODE', true, [], expect.objectContaining({ uid: expect.any(String), yemindTextPristine: true, yemindTextEdited: false })],
+      ['INSERT_NODE', true, [], expect.objectContaining({ uid: expect.any(String), yemindTextPristine: true, yemindTextEdited: false })],
+      ['INSERT_PARENT_NODE', true, [], expect.objectContaining({ uid: expect.any(String), yemindTextPristine: true, yemindTextEdited: false })],
       ['UP_NODE'],
       ['DOWN_NODE'],
       ['REMOVE_NODE', [map.renderer.activeNodeList[0]]],
@@ -100,6 +100,103 @@ describe('createCommandAdapter', () => {
       ['FORWARD'],
       ['RESET_LAYOUT'],
     ]);
+  });
+
+  it('opens and reclaims the inserted node editor after the rendered node exists', async () => {
+    const callbacks = new Map<string, Set<(...args: unknown[]) => void>>();
+    const frames: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+
+    const inserted = {
+      active: vi.fn(),
+      getData: (key?: string) => key === 'uid' ? insertedUid : { uid: insertedUid },
+    };
+    let insertedUid = '';
+    const map = fakeMindMap() as any;
+    map.opt = { readonly: false };
+    map.on = vi.fn((name: string, callback: (...args: unknown[]) => void) => {
+      const bucket = callbacks.get(name) ?? new Set();
+      bucket.add(callback);
+      callbacks.set(name, bucket);
+    });
+    map.off = vi.fn((name: string, callback: (...args: unknown[]) => void) => {
+      callbacks.get(name)?.delete(callback);
+    });
+    map.renderer.findNodeByUid = vi.fn((uid: string) => uid === insertedUid ? inserted : null);
+    map.renderer.textEdit = { show: vi.fn(async () => { map.richText.node = inserted; }) };
+    map.richText = { focus: vi.fn(), showTextEdit: true, node: null };
+    map.execCommand.mockImplementation((name: string, openEdit: boolean, _nodes: unknown[], data: Record<string, unknown>) => {
+      if (name !== 'INSERT_CHILD_NODE') return;
+      expect(openEdit).toBe(true);
+      insertedUid = String(data.uid);
+      callbacks.get('node_tree_render_end')?.forEach((callback) => callback());
+    });
+
+    const commands = createCommandAdapter(map as never);
+    commands.addChild();
+
+    expect(insertedUid).not.toBe('');
+    expect(map.renderer.textEdit.show).not.toHaveBeenCalled();
+    frames.shift()?.(0);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(inserted.active).toHaveBeenCalledOnce();
+    expect(map.renderer.textEdit.show).toHaveBeenCalledWith({
+      node: inserted,
+      isInserting: true,
+      isFromKeyDown: false,
+    });
+
+    frames.shift()?.(16);
+    expect(map.richText.focus).toHaveBeenCalledWith(0);
+  });
+
+  it('does not reopen an inserted editor that the upstream inserting transaction already opened', async () => {
+    const callbacks = new Map<string, Set<(...args: unknown[]) => void>>();
+    const frames: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+
+    let insertedUid = '';
+    const inserted = {
+      active: vi.fn(),
+      getData: (key?: string) => key === 'uid' ? insertedUid : { uid: insertedUid },
+    };
+    const map = fakeMindMap() as any;
+    map.opt = { readonly: false };
+    map.on = vi.fn((name: string, callback: (...args: unknown[]) => void) => {
+      const bucket = callbacks.get(name) ?? new Set();
+      bucket.add(callback);
+      callbacks.set(name, bucket);
+    });
+    map.off = vi.fn((name: string, callback: (...args: unknown[]) => void) => {
+      callbacks.get(name)?.delete(callback);
+    });
+    map.renderer.findNodeByUid = vi.fn((uid: string) => uid === insertedUid ? inserted : null);
+    map.renderer.textEdit = { show: vi.fn() };
+    map.richText = { focus: vi.fn(), showTextEdit: false, node: null };
+    map.execCommand.mockImplementation((name: string, openEdit: boolean, _nodes: unknown[], data: Record<string, unknown>) => {
+      if (name !== 'INSERT_CHILD_NODE') return;
+      expect(openEdit).toBe(true);
+      insertedUid = String(data.uid);
+      map.richText.showTextEdit = true;
+      map.richText.node = inserted;
+      callbacks.get('yemind_text_edit_ready')?.forEach((callback) => callback({ uid: insertedUid }));
+      callbacks.get('node_tree_render_end')?.forEach((callback) => callback());
+    });
+
+    createCommandAdapter(map as never).addChild();
+    frames.shift()?.(0);
+    await Promise.resolve();
+
+    expect(map.renderer.textEdit.show).not.toHaveBeenCalled();
+    expect(map.richText.focus).toHaveBeenCalledWith(0);
   });
 
 
@@ -307,7 +404,12 @@ describe('node style command bridge', () => {
     const commands = createCommandAdapter(map as never);
 
     expect(commands.addChildByUid('node-1')).toBe(true);
-    expect(map.execCommand).toHaveBeenCalledWith('INSERT_CHILD_NODE', true, [node], { yemindTextPristine: true, yemindTextEdited: false });
+    expect(map.execCommand).toHaveBeenCalledWith(
+      'INSERT_CHILD_NODE',
+      true,
+      [node],
+      expect.objectContaining({ uid: expect.any(String), yemindTextPristine: true, yemindTextEdited: false }),
+    );
   });
 
   it('allows Root to use the native expand command when it has children', () => {

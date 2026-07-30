@@ -16,6 +16,7 @@ import {
   type SearchOptions,
 } from '../editor/searchEngine';
 import { steppedZoomPercent } from '../editor/zoomPercent';
+import { createInsertedNodeUid, InsertedNodeEditCoordinator } from '../editor/InsertedNodeEditCoordinator';
 
 export interface NodeImageInput {
   url: string | null;
@@ -127,6 +128,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
 }
 
 export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
+  const insertedNodeEditor = new InsertedNodeEditCoordinator(mindMap as any);
   const activeNodes = (): any[] => Array.isArray((mindMap.renderer as any)?.activeNodeList)
     ? (mindMap.renderer as any).activeNodeList
     : [];
@@ -353,6 +355,19 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     updateData.call(mindMap, result.tree);
     return true;
   };
+  const insertAndEdit = (
+    command: 'INSERT_CHILD_NODE' | 'INSERT_NODE' | 'INSERT_PARENT_NODE',
+    appointNodes: any[] = [],
+  ): void => {
+    const uid = createInsertedNodeUid();
+    insertedNodeEditor.run(uid, () => {
+      mindMap.execCommand(command, true, appointNodes, {
+        uid,
+        yemindTextPristine: true,
+        yemindTextEdited: false,
+      });
+    });
+  };
 
   return {
     isReadonly,
@@ -365,9 +380,9 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       editor.pasteUseRange = editor.range;
       editor.quill.setSelection(range.index, range.length, 'silent');
     },
-    addChild: () => { if (canMutate() && primaryIsRegular()) mindMap.execCommand('INSERT_CHILD_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }); },
-    addSibling: () => { if (canMutate() && primaryIsMovable()) mindMap.execCommand('INSERT_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }); },
-    addParent: () => { if (canMutate() && primaryIsMovable()) mindMap.execCommand('INSERT_PARENT_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }); },
+    addChild: () => { if (canMutate() && primaryIsRegular()) insertAndEdit('INSERT_CHILD_NODE'); },
+    addSibling: () => { if (canMutate() && primaryIsMovable()) insertAndEdit('INSERT_NODE'); },
+    addParent: () => { if (canMutate() && primaryIsMovable()) insertAndEdit('INSERT_PARENT_NODE'); },
     moveUp: () => { if (canMutate() && primaryIsMovable()) mindMap.execCommand('UP_NODE'); },
     moveDown: () => { if (canMutate() && primaryIsMovable()) mindMap.execCommand('DOWN_NODE'); },
     toggleExpand: () => {
@@ -816,7 +831,7 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       if (!canMutate()) return false;
       const node = findNodeByUid(uid);
       if (!node || node.isGeneralization) return false;
-      mindMap.execCommand('INSERT_CHILD_NODE', true, [node], { yemindTextPristine: true, yemindTextEdited: false });
+      insertAndEdit('INSERT_CHILD_NODE', [node]);
       return true;
     },
     pasteNodeTreesByUid: (uid, nodes) => {

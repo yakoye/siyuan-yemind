@@ -10,6 +10,7 @@ import {
   isUsableTextRect,
   editorContentRectAligned,
   editorHorizontalMargin,
+  editorOverlayPosition,
   renderedNodeUid,
   resolveLiveRenderedNode,
   resolveRenderedTextRect,
@@ -604,7 +605,6 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.setQuillContainerMinHeight(originHeight);
     this.applyEditorHorizontalMargin(node, rect);
     this.normalizeEditorPlacement(rect);
-    this.alignEditorContentToTarget(rect);
   }
 
   private applyEditorHorizontalMargin(node: any, rect: DOMRect | null): void {
@@ -633,50 +633,45 @@ export default class YeMindRichText extends (BaseRichText as any) {
     if (!nodeRect || !isUsableTextRect(nodeRect)) return;
     this.lastValidNodeRect = snapshotRect(nodeRect);
     if (geometry) this.lastRectSource = geometry.source;
+    const style = window.getComputedStyle(host);
+    const marginLeft = Number.parseFloat(style.marginLeft) || 0;
+    const marginTop = Number.parseFloat(style.marginTop) || 0;
+    const paddingLeft = Number.parseFloat(style.paddingLeft) || 0;
+    const paddingTop = Number.parseFloat(style.paddingTop) || 0;
+    const borderLeft = Number.parseFloat(style.borderLeftWidth) || 0;
+    const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
     if (!target || target === document.body || host.parentElement === document.body) {
       host.style.position = 'fixed';
-      host.style.left = `${nodeRect.left}px`;
-      host.style.top = `${nodeRect.top}px`;
+      host.style.left = `${nodeRect.left - marginLeft - borderLeft - paddingLeft}px`;
+      host.style.top = `${nodeRect.top - marginTop - borderTop - paddingTop}px`;
       return;
     }
-    const targetRect = target.getBoundingClientRect();
+    const containingBlock = host.offsetParent instanceof HTMLElement
+      ? host.offsetParent
+      : target;
+    const blockRect = containingBlock.getBoundingClientRect();
+    const position = editorOverlayPosition(nodeRect, {
+      left: blockRect.left,
+      top: blockRect.top,
+      width: blockRect.width,
+      height: blockRect.height,
+      offsetWidth: containingBlock.offsetWidth,
+      offsetHeight: containingBlock.offsetHeight,
+      clientLeft: containingBlock.clientLeft,
+      clientTop: containingBlock.clientTop,
+      scrollLeft: containingBlock.scrollLeft,
+      scrollTop: containingBlock.scrollTop,
+    }, {
+      marginLeft,
+      marginTop,
+      paddingLeft,
+      paddingTop,
+      borderLeft,
+      borderTop,
+    });
     host.style.position = 'absolute';
-    host.style.left = `${nodeRect.left - targetRect.left + target.scrollLeft - target.clientLeft}px`;
-    host.style.top = `${nodeRect.top - targetRect.top + target.scrollTop - target.clientTop}px`;
-  }
-
-  /**
-   * `normalizeEditorPlacement` establishes the overlay in the correct viewport
-   * coordinate system. Quill still has its own content padding, and prefix
-   * nodes can add a renderer-specific margin before the real text layer. Align
-   * the live content box, not the outer overlay box, to the canonical SVG text
-   * rectangle before the editor is allowed to paint.
-   */
-  private alignEditorContentToTarget(targetRect: DOMRect): void {
-    const host = this.textEditNode as HTMLElement | null;
-    const editor = host?.querySelector<HTMLElement>('.ql-editor') ?? null;
-    if (!host || !editor) return;
-    const editorRect = editor.getBoundingClientRect();
-    const deltaX = targetRect.left - editorRect.left;
-    const deltaY = targetRect.top - editorRect.top;
-    if (!Number.isFinite(deltaX) || !Number.isFinite(deltaY)) return;
-    if (Math.abs(deltaX) <= 0.05 && Math.abs(deltaY) <= 0.05) return;
-
-    const left = Number.parseFloat(host.style.left);
-    const top = Number.parseFloat(host.style.top);
-    if (!Number.isFinite(left) || !Number.isFinite(top)) return;
-
-    const target = this.mindMap?.opt?.customInnerElsAppendTo as HTMLElement | null | undefined;
-    if (!target || target === document.body || host.parentElement === document.body) {
-      host.style.left = `${left + deltaX}px`;
-      host.style.top = `${top + deltaY}px`;
-      return;
-    }
-    const containerRect = target.getBoundingClientRect();
-    const scaleX = target.offsetWidth > 0 ? containerRect.width / target.offsetWidth : 1;
-    const scaleY = target.offsetHeight > 0 ? containerRect.height / target.offsetHeight : 1;
-    host.style.left = `${left + deltaX / (Number.isFinite(scaleX) && scaleX > 0 ? scaleX : 1)}px`;
-    host.style.top = `${top + deltaY / (Number.isFinite(scaleY) && scaleY > 0 ? scaleY : 1)}px`;
+    host.style.left = `${position.left}px`;
+    host.style.top = `${position.top}px`;
   }
 
   private commitOpeningPlacement(sessionId: number, targetRect: DOMRect): boolean {

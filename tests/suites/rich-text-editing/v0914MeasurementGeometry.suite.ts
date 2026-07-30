@@ -7,6 +7,7 @@ import { shouldStabilizeOpeningPlacement } from '../../../src/editor/YeMindRichT
 import {
   editorContentRectAligned,
   editorHorizontalMargin,
+  editorOverlayPosition,
   resolveRenderedTextRect,
 } from '../../../src/editor/richTextGeometry';
 
@@ -126,6 +127,33 @@ describe('v0.9.14 stable node measurement geometry', () => {
       { left: 326, top: 80 },
       { left: 989, top: 395 },
     )).toBe(false);
+  });
+
+  it('derives one stable overlay position from the actual containing block without feedback correction', () => {
+    expect(editorOverlayPosition(
+      { left: 992.4, top: 430 },
+      {
+        left: 326,
+        top: 73.8,
+        width: 890.4,
+        height: 293.4,
+        offsetWidth: 890,
+        offsetHeight: 293,
+        clientLeft: 0,
+        clientTop: 0,
+        scrollLeft: 0,
+        scrollTop: 0,
+      },
+      {
+        marginLeft: -6,
+        marginTop: -4,
+        paddingLeft: 6,
+        paddingTop: 4,
+      },
+    )).toEqual({
+      left: expect.closeTo(666.1007, 3),
+      top: expect.closeTo(355.7147, 3),
+    });
   });
 
   it('uses the real text child instead of a padded prefix group as the editor anchor', () => {
