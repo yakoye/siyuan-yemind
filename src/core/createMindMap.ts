@@ -11,6 +11,7 @@ import { resolveUpstreamShortcutAction } from '../editor/shortcutSafety';
 import { buildThemeConfig, detectAppearance, type YeMindLineStyle } from './themePresets';
 import { configureThemeColorRuntime, installThemeColorRuntime } from './themeColorRuntime';
 import { stabilizeMindMapMeasurementHost } from './measurementHost';
+import { installHistoryTransactionCoordinator } from './historyTransactionCoordinator';
 
 export interface CreateMindMapOptions {
   el: HTMLElement;
@@ -93,7 +94,9 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     isShowCreateChildBtnIcon: false,
     notShowExpandBtn: true,
     fit: Boolean(settings?.autoFitOnOpen ?? true) && !viewData,
-    addHistoryOnInit: true,
+    // Install YeMind's flushable history transaction after construction.
+    // The upstream opaque timer cannot be committed atomically before undo.
+    addHistoryOnInit: false,
     defaultInsertSecondLevelNodeText: '新节点',
     defaultInsertBelowSecondLevelNodeText: '新节点',
     iconList: createYemindIconList(options.pluginBaseUrl),
@@ -116,6 +119,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     },
     errorHandler: (_code: unknown, error: unknown) => console.error('[YeMind]', error),
   } as any);
+  installHistoryTransactionCoordinator(mindMap as any, { seed: true });
   stabilizeMindMapMeasurementHost(mindMap as any, editorRoot);
   installThemeColorRuntime(mindMap);
   configureThemeColorRuntime(mindMap, {

@@ -2,6 +2,7 @@
 import '../suites/commands-selection/commands.suite';
 import '../suites/commands-selection/clipboardCopyIntent.suite';
 import '../suites/commands-selection/editorClipboardShortcuts.suite';
+import '../suites/commands-selection/historyTransactionCoordinator.suite';
 import '../suites/commands-selection/nativeClipboardCommands.suite';
 import '../suites/commands-selection/nodeQuickActions.suite';
 import '../suites/commands-selection/selectionPrimary.suite';

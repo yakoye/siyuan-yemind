@@ -358,8 +358,16 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       const nodes = removableNodes();
       if (nodes.length) mindMap.execCommand('REMOVE_CURRENT_NODE', nodes);
     },
-    undo: () => { if (canMutate()) mindMap.execCommand('BACK'); },
-    redo: () => { if (canMutate()) mindMap.execCommand('FORWARD'); },
+    undo: () => {
+      if (!canMutate()) return;
+      (mindMap as any).command?.yemindFlushHistory?.();
+      mindMap.execCommand('BACK');
+    },
+    redo: () => {
+      if (!canMutate()) return;
+      (mindMap as any).command?.yemindFlushHistory?.();
+      mindMap.execCommand('FORWARD');
+    },
     fit: () => (mindMap.view as any).fit(),
     centerRoot: () => (mindMap.renderer as any).setRootNodeCenter?.(),
     expandAll: () => { if (!applyExpansionTransform(expandAllBranches)) mindMap.execCommand('EXPAND_ALL'); },

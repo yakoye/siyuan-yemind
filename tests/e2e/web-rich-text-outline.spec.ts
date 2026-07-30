@@ -836,6 +836,8 @@ test('deleting a full canvas text selection remains one undoable text transactio
 
   await editor.locator('[data-action="undo"]').click();
   await expect(rootNode).toContainText(original);
+  await editor.locator('[data-action="redo"]').click();
+  await expect(rootNode).not.toContainText(original);
 });
 
 test('width-handle drag grows the live node monotonically without disappearing or jumping', async ({ page, isMobile }) => {
