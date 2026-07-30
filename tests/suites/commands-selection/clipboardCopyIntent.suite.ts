@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  readImageResourceFromTransfer,
   resolveClipboardCopyIntent,
   writeImageResourceToClipboard,
   writeImageResourceToTransfer,
@@ -120,5 +121,37 @@ describe('clipboard image resource payloads', () => {
 
     expect(result).toBe('text');
     expect(writeText).toHaveBeenCalledWith('流程图片');
+  });
+
+  it('round-trips YeMind image metadata from HTML before a browser-reencoded file fallback', () => {
+    expect(readImageResourceFromTransfer({
+      getData: (type) => type === 'text/html'
+        ? '<img src="data:image/png;base64,ORIGINAL" alt="流程图片" data-yemind-resource-kind="image">'
+        : '',
+    })).toEqual({
+      kind: 'image',
+      source: 'data:image/png;base64,ORIGINAL',
+      title: '流程图片',
+    });
+  });
+
+  it('accepts a third-party HTML image without trusting arbitrary resource kinds', () => {
+    expect(readImageResourceFromTransfer({
+      getData: (type) => type === 'text/html'
+        ? '<p><img src="https://example.com/diagram.png" alt="第三方图" data-yemind-resource-kind="script"></p>'
+        : '',
+    })).toEqual({
+      kind: 'image',
+      source: 'https://example.com/diagram.png',
+      title: '第三方图',
+    });
+  });
+
+  it('rejects unsafe HTML image sources', () => {
+    expect(readImageResourceFromTransfer({
+      getData: (type) => type === 'text/html'
+        ? '<img src="javascript:alert(1)" alt="危险">'
+        : '',
+    })).toBeNull();
   });
 });

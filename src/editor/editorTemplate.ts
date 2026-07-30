@@ -137,7 +137,7 @@ export function createEditorTemplate(
         </aside>
 
         <div class="ymz-workspace">
-          <div class="ymz-canvas" data-role="canvas"></div>
+          <div class="ymz-canvas" data-role="canvas" tabindex="0" aria-label="导图画布"></div>
           <div class="ymz-split-divider" data-role="split-divider" role="separator" aria-orientation="vertical" aria-label="调整导图和大纲宽度" aria-valuemin="25" aria-valuemax="70" aria-valuenow="42" tabindex="0"></div>
           <aside class="ymz-outline" data-role="outline" aria-label="导图大纲">
             <header class="ymz-outline-panel__header"><div class="ymz-outline-panel__title">${primaryViewIcon('outline')}<span><strong>大纲</strong><small><span data-role="outline-node-count">0</span> 个节点</small></span></div><span><button type="button" data-action="outline-fullscreen" title="切换全屏大纲" aria-label="切换全屏大纲">${fullscreenIcon()}</button><button type="button" data-action="close-side-panel" title="关闭大纲" aria-label="关闭大纲">${panelCloseIcon()}</button></span></header>

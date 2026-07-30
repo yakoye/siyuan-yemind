@@ -24,6 +24,10 @@ export interface ClipboardTransferWriter {
   setData(type: string, value: string): void;
 }
 
+export interface ClipboardTransferReader {
+  getData(type: string): string;
+}
+
 export interface ClipboardImageWriteOptions {
   clipboard?: Pick<Clipboard, 'write' | 'writeText'> | null;
   ClipboardItemCtor?: typeof ClipboardItem | null;
@@ -58,6 +62,20 @@ function resourceHtml(resource: ClipboardImageResource): string {
   return `<img src="${source}" alt="${title}" data-yemind-resource-kind="${resource.kind}">`;
 }
 
+function isSafeImageSource(value: string): boolean {
+  const source = value.trim();
+  if (!source) return false;
+  if (/^data:image\//i.test(source) || /^blob:/i.test(source)) return true;
+  try {
+    const url = new URL(source, typeof document === 'undefined'
+      ? 'https://yemind.invalid/'
+      : document.baseURI);
+    return url.protocol === 'http:' || url.protocol === 'https:' || url.protocol === 'file:';
+  } catch {
+    return false;
+  }
+}
+
 async function defaultFetchBlob(source: string): Promise<Blob> {
   const response = await fetch(source);
   if (!response.ok) throw new Error(`Image clipboard request failed: ${response.status}`);
@@ -85,6 +103,23 @@ export function writeImageResourceToTransfer(
   const resource = normalizedResource(input);
   transfer.setData('text/plain', resourcePlainText(resource));
   transfer.setData('text/html', resourceHtml(resource));
+}
+
+export function readImageResourceFromTransfer(
+  transfer: ClipboardTransferReader | null | undefined,
+): ClipboardImageResource | null {
+  const html = String(transfer?.getData('text/html') ?? '').trim();
+  if (!html) return null;
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  const image = template.content.querySelector<HTMLImageElement>('img[src]');
+  const source = String(image?.getAttribute('src') ?? '').trim();
+  if (!image || !isSafeImageSource(source)) return null;
+  return {
+    kind: image.dataset.yemindResourceKind === 'clipart' ? 'clipart' : 'image',
+    source,
+    title: String(image.getAttribute('alt') ?? image.getAttribute('title') ?? '').trim(),
+  };
 }
 
 export async function writeImageResourceToClipboard(

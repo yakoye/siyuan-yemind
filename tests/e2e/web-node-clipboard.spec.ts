@@ -6,6 +6,8 @@ const SOURCE_CHILD = '来源子节点';
 const SOURCE_TWO = '来源节点二';
 const SAME_TARGET = '同文件目标';
 const CROSS_TARGET = '跨文件目标';
+const SOURCE_IMAGE_TITLE = '跨文件流程图';
+const SOURCE_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 
 async function seedClipboardMaps(page: Page): Promise<void> {
   await resetWebApp(page);
@@ -15,7 +17,13 @@ async function seedClipboardMaps(page: Page): Promise<void> {
   // bootstrap state.
   await page.route('**/favicon.ico', (route) => route.fulfill({ status: 204 }));
   await page.goto('/assets/yemind-icon-32.png');
-  await page.evaluate(async ({ sourceOne, sourceChild, sourceTwo }) => {
+  await page.evaluate(async ({
+    sourceOne,
+    sourceChild,
+    sourceTwo,
+    sourceImage,
+    sourceImageTitle,
+  }) => {
     const request = indexedDB.open('yemind-web');
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       request.onsuccess = () => resolve(request.result);
@@ -45,8 +53,8 @@ async function seedClipboardMaps(page: Page): Promise<void> {
           fillColor: '#ef4444',
           borderColor: '#dc2626',
           yemindNote: { html: '<p>跨表面备注</p>', createdAt: 1, updatedAt: 1 },
-          image: 'data:image/png;base64,AAAA',
-          imageTitle: '跨文件流程图',
+          image: sourceImage,
+          imageTitle: sourceImageTitle,
           imageSize: { width: 96, height: 64, custom: true },
           yemindTodo: { checked: true, text: '完成跨文件验证' },
           tag: ['PCIe', '重点'],
@@ -87,7 +95,13 @@ async function seedClipboardMaps(page: Page): Promise<void> {
       transaction.onerror = () => reject(transaction.error);
     });
     db.close();
-  }, { sourceOne: SOURCE_ONE, sourceChild: SOURCE_CHILD, sourceTwo: SOURCE_TWO });
+  }, {
+    sourceOne: SOURCE_ONE,
+    sourceChild: SOURCE_CHILD,
+    sourceTwo: SOURCE_TWO,
+    sourceImage: SOURCE_IMAGE,
+    sourceImageTitle: SOURCE_IMAGE_TITLE,
+  });
   await page.goto('/');
   await expect(page.locator('[data-web-map-id]')).toHaveCount(2);
   await expect(page.locator('[data-web-map-id="clipboard-source"]')).toHaveClass(/is-active/);
@@ -154,7 +168,13 @@ async function pasteAtOutlineRoot(page: Page): Promise<void> {
 }
 
 async function expectDestinationClipboardData(page: Page): Promise<void> {
-  await expect.poll(async () => page.evaluate(async ({ sourceOne, sourceChild, sourceTwo }) => {
+  await expect.poll(async () => page.evaluate(async ({
+    sourceOne,
+    sourceChild,
+    sourceTwo,
+    sourceImage,
+    sourceImageTitle,
+  }) => {
     const request = indexedDB.open('yemind-web');
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       request.onsuccess = () => resolve(request.result);
@@ -189,8 +209,8 @@ async function expectDestinationClipboardData(page: Page): Promise<void> {
       ),
       semanticBoldPreserved: /<strong>/.test(String(first?.data?.text ?? '')),
       notePreserved: first?.data?.yemindNote?.html === '<p>跨表面备注</p>',
-      imagePreserved: first?.data?.image === 'data:image/png;base64,AAAA'
-        && first?.data?.imageTitle === '跨文件流程图'
+      imagePreserved: first?.data?.image === sourceImage
+        && first?.data?.imageTitle === sourceImageTitle
         && first?.data?.imageSize?.width === 96
         && first?.data?.imageSize?.height === 64,
       todoPreserved: first?.data?.yemindTodo?.checked === true
@@ -199,7 +219,13 @@ async function expectDestinationClipboardData(page: Page): Promise<void> {
         && first.data.tag.join('|') === 'PCIe|重点',
       hyperlinkPreserved: first?.data?.hyperlink === 'https://example.com/spec',
     };
-  }, { sourceOne: SOURCE_ONE, sourceChild: SOURCE_CHILD, sourceTwo: SOURCE_TWO }), {
+  }, {
+    sourceOne: SOURCE_ONE,
+    sourceChild: SOURCE_CHILD,
+    sourceTwo: SOURCE_TWO,
+    sourceImage: SOURCE_IMAGE,
+    sourceImageTitle: SOURCE_IMAGE_TITLE,
+  }), {
     timeout: 10_000,
   }).toEqual({
     firstFound: true,
@@ -402,6 +428,65 @@ async function expectUidTextAndChildCount(
       && (target.children ?? []).length === childCount,
     );
   }, { mapId, uid, text, childCount }), { timeout: 10_000 }).toBe(true);
+}
+
+async function expectClipboardImage(page: Page): Promise<void> {
+  await expect.poll(async () => page.evaluate(async () => {
+    const items = await navigator.clipboard.read();
+    return items.flatMap((item) => item.types).sort();
+  }), { timeout: 10_000 }).toEqual(expect.arrayContaining([
+    'image/png',
+    'text/html',
+    'text/plain',
+  ]));
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText()), {
+    timeout: 10_000,
+  }).toBe(SOURCE_IMAGE_TITLE);
+  await expect.poll(async () => page.evaluate(async () => {
+    const items = await navigator.clipboard.read();
+    const item = items.find((candidate) => candidate.types.includes('text/html'));
+    if (!item) return '';
+    return (await item.getType('text/html')).text();
+  }), { timeout: 10_000 }).toContain('data-yemind-resource-kind="image"');
+}
+
+async function expectImageByUid(
+  page: Page,
+  mapId: 'clipboard-source' | 'clipboard-destination',
+  uid: 'same-target' | 'cross-target',
+): Promise<void> {
+  await expect.poll(async () => page.evaluate(async ({ mapId, uid }) => {
+    const request = indexedDB.open('yemind-web');
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const transaction = db.transaction('documents', 'readonly');
+    const store = transaction.objectStore('documents');
+    const maps = await new Promise<any>((resolve, reject) => {
+      const get = store.get('maps');
+      get.onsuccess = () => resolve(get.result);
+      get.onerror = () => reject(get.error);
+    });
+    db.close();
+    const map = maps.maps.find((item: any) => item.id === mapId);
+    const find = (tree: any): any => {
+      if (tree?.data?.uid === uid) return tree;
+      for (const child of tree?.children ?? []) {
+        const found = find(child);
+        if (found) return found;
+      }
+      return null;
+    };
+    const target = find(map?.data);
+    return {
+      image: String(target?.data?.image ?? ''),
+      title: String(target?.data?.imageTitle ?? ''),
+    };
+  }, { mapId, uid }), { timeout: 10_000 }).toEqual({
+    image: SOURCE_IMAGE,
+    title: SOURCE_IMAGE_TITLE,
+  });
 }
 
 test.beforeEach(async ({ context }) => {
@@ -625,4 +710,37 @@ test('keeps node versus text routing stable before and after creating a new canv
   await canvasNode(page, '新建锚点').click();
   await page.keyboard.press('Control+V');
   await expectTreeRelation(page, 'clipboard-source', '新建锚点', SOURCE_ONE);
+});
+
+test('copies a selected canvas image as an image resource and pastes it across files', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop image selection clipboard routing');
+  await seedClipboardMaps(page);
+  const sourceNode = canvasNode(page, SOURCE_ONE);
+  const image = sourceNode.locator('image').first();
+  await expect(image).toBeVisible();
+  await image.click();
+  await page.keyboard.press('Control+C');
+  await expectClipboardImage(page);
+
+  await openMap(page, 'clipboard-destination');
+  await canvasNode(page, CROSS_TARGET).click();
+  await page.keyboard.press('Control+V');
+  await expectImageByUid(page, 'clipboard-destination', 'cross-target');
+});
+
+test('copies a selected outline image as an image resource and pastes it into canvas', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop outline image clipboard routing');
+  await seedClipboardMaps(page);
+  await openOutline(page);
+  const row = page.locator('[data-outline-uid="source-one"]');
+  const image = row.locator('[data-outline-image-action]');
+  await expect(image).toBeVisible();
+  await image.click();
+  await page.keyboard.press('Control+C');
+  await expectClipboardImage(page);
+
+  await openMap(page, 'clipboard-destination');
+  await canvasNode(page, CROSS_TARGET).click();
+  await page.keyboard.press('Control+V');
+  await expectImageByUid(page, 'clipboard-destination', 'cross-target');
 });

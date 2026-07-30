@@ -144,6 +144,7 @@ import {
   type RenderTextEditPayload,
 } from './RenderLifecycleCoordinator';
 import {
+  readImageResourceFromTransfer,
   writeImageResourceToClipboard,
   type ClipboardImageResource,
 } from './clipboardCopyIntent';
@@ -474,9 +475,17 @@ export class YeMindEditor {
 
   private readonly onImagePaste = (event: ClipboardEvent): void => {
     if (!this.map || !this.commands || this.commands.isReadonly()) return;
-    const file = extractImageFile(event.clipboardData);
     const node = this.commands.getPrimaryNode();
-    if (!file || !node) return;
+    if (!node) return;
+    const resource = readImageResourceFromTransfer(event.clipboardData);
+    if (resource) {
+      event.preventDefault();
+      event.stopPropagation();
+      void this.applyNodeImageResource(resource, node, 'paste');
+      return;
+    }
+    const file = extractImageFile(event.clipboardData);
+    if (!file) return;
     event.preventDefault();
     event.stopPropagation();
     void this.applyNodeImageFile(file, node, "paste");
@@ -2284,9 +2293,10 @@ export class YeMindEditor {
       this.hideOuterFramePresentation(),
     );
     this.map.on("outer_frame_delete", () => this.hideOuterFramePresentation());
-    this.map.on("node_click", () =>
-      window.setTimeout(() => this.updateRelationPresentation(), 0),
-    );
+    this.map.on("node_click", () => {
+      this.canvasEl.focus({ preventScroll: true });
+      window.setTimeout(() => this.updateRelationPresentation(), 0);
+    });
     this.map.on("node_icon_click", (node: any, iconValue: string, event: MouseEvent) => {
       event?.preventDefault?.();
       event?.stopPropagation?.();
@@ -3833,6 +3843,37 @@ export class YeMindEditor {
       name: file.name,
       width: loaded.size.width,
       height: loaded.size.height,
+    });
+  }
+
+  private async applyNodeImageResource(
+    resource: ClipboardImageResource,
+    node: any,
+    source: 'paste',
+  ): Promise<void> {
+    if (!this.commands || this.commands.isReadonly() || !resource.source) return;
+    const size = await new Promise<{ width: number; height: number }>((resolve) => {
+      const image = new Image();
+      image.onload = () => resolve({
+        width: image.naturalWidth || 240,
+        height: image.naturalHeight || 160,
+      });
+      image.onerror = () => resolve({ width: 240, height: 160 });
+      image.src = resource.source;
+    });
+    if (this.destroyed || !this.map || !this.commands) return;
+    this.activateOnlyNode(node);
+    this.commands.setImage({
+      url: resource.source,
+      title: resource.title || 'image.png',
+      width: size.width,
+      height: size.height,
+      custom: false,
+    });
+    this.options.diagnostics.record('node-image', `${source}-resource`, this.current.id, {
+      kind: resource.kind,
+      width: size.width,
+      height: size.height,
     });
   }
 
