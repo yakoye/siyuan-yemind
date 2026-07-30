@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.3 - 2026-07-30
+
+- Kept node quick actions anchored to the active node's own visible selection border during wheel, pan, zoom, resize and renderer refreshes, including complex nodes that contain nested descendant borders.
+- Tightened the visible `−`, child-count and `+` controls while retaining their larger pointer hit areas.
+- Reconciled the live SVG text tree in place during width dragging instead of replacing its HTML on every pointer frame, preserving the painted text nodes and preventing blank, ghosted or jumping frames.
+- Added repeated browser and command regressions for viewport-following controls, direct-node border selection, monotonic width resizing, stable text DOM identity and bounded geometry drift.
+
 ## 1.6.2 - 2026-07-30
 
 - Made the active DOM text range authoritative for selected-text toolbar placement, including transformed and scaled editor roots, so the toolbar stays beside the current selection instead of using a stale Quill rectangle.

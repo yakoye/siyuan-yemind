@@ -7673,21 +7673,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.6.2";
+const PLUGIN_VERSION = "1.6.3";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "fd76ff2e-clean",
-  time: "2026-07-30T17:13:09+08:00"
+  id: "f0205fb5-dirty-b27bacf3",
+  time: "2026-07-30T10:47:27.131Z"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-30T05:43:49.839Z",
-  buildId: "yemind-v1.6.2-20260730",
+  buildTime: "2026-07-30T10:46:06.323Z",
+  buildId: "yemind-v1.6.3-20260730",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -18533,6 +18533,53 @@ const nodeExpandBtnPlaceholderRectMethods = {
   clearExpandBtnPlaceholderRect,
   updateExpandBtnPlaceholderRect
 };
+function copyDomAttributes(target, source) {
+  if (!target || !source || !target.getAttributeNames) return;
+  const nextNames = new Set(source.getAttributeNames());
+  target.getAttributeNames().forEach((name) => {
+    if (!nextNames.has(name)) target.removeAttribute(name);
+  });
+  nextNames.forEach((name) => {
+    target.setAttribute(name, source.getAttribute(name));
+  });
+}
+function canReuseDomNode(target, source) {
+  return Boolean(
+    target && source && target.nodeType === source.nodeType && (target.nodeType !== 1 || target.nodeName === source.nodeName)
+  );
+}
+function reconcilePaintedDom(target, source) {
+  if (!canReuseDomNode(target, source)) return false;
+  if (target.nodeType === 3) {
+    target.nodeValue = source.nodeValue;
+    return true;
+  }
+  if (target.nodeType !== 1) return true;
+  copyDomAttributes(target, source);
+  const targetChildren = Array.from(target.childNodes);
+  const sourceChildren = Array.from(source.childNodes);
+  sourceChildren.forEach((sourceChild, index) => {
+    const targetChild = targetChildren[index];
+    if (reconcilePaintedDom(targetChild, sourceChild)) return;
+    const replacement = sourceChild.cloneNode(true);
+    if (targetChild) target.replaceChild(replacement, targetChild);
+    else target.appendChild(replacement);
+  });
+  for (let index = targetChildren.length - 1; index >= sourceChildren.length; index--) {
+    targetChildren[index].remove();
+  }
+  return true;
+}
+function preserveLiveTextData(previous, next2) {
+  if (!previous || !next2 || !previous.node || !next2.node) return next2;
+  const previousOuter = previous.node.node;
+  const nextOuter = next2.node.node;
+  if (!previousOuter || !nextOuter) return next2;
+  reconcilePaintedDom(previousOuter, nextOuter);
+  previous.width = next2.width;
+  previous.height = next2.height;
+  return previous;
+}
 function initDragHandle() {
   if (!this.checkEnableDragModifyNodeWidth()) {
     return;
@@ -18583,9 +18630,19 @@ function onDragMousemoveHandle(e) {
   if (this.dragHandleIndex === 0) {
     this.left = this.dragHandleMousedownLeft + ox / scaleX;
   }
-  this.reRender(useCustomContent ? [] : ["text"], {
-    ignoreUpdateCustomTextWidth: true
-  });
+  if (useCustomContent) {
+    this.reRender([], {
+      ignoreUpdateCustomTextWidth: true
+    });
+  } else {
+    const previousTextData = this._textData;
+    this.getSize(["text"], {
+      ignoreUpdateCustomTextWidth: true
+    });
+    this._textData = preserveLiveTextData(previousTextData, this._textData);
+    this.layout();
+    this.update();
+  }
 }
 function onDragMouseupHandle() {
   if (!this.isDragHandleMousedown) return;
@@ -92125,14 +92182,48 @@ function visibleNodeList(root2) {
   visit2(root2);
   return list;
 }
+function visibleNodeRect(node) {
+  var _a;
+  const groupElement = (_a = node == null ? void 0 : node.group) == null ? void 0 : _a.node;
+  if (!(groupElement == null ? void 0 : groupElement.getBoundingClientRect)) return null;
+  const activeBorder = Array.from(groupElement.children ?? []).find((child) => {
+    var _a2;
+    return (_a2 = child.classList) == null ? void 0 : _a2.contains("smm-hover-node");
+  }) ?? null;
+  const rect2 = (activeBorder ?? groupElement).getBoundingClientRect();
+  return rect2.width > 0 || rect2.height > 0 ? rect2 : null;
+}
 class NodeQuickActionsController {
   constructor(options) {
     __publicField(this, "layer");
-    __publicField(this, "frame", 0);
+    __publicField(this, "frame", null);
+    __publicField(this, "geometryFrame", null);
     __publicField(this, "hideTimer", null);
     __publicField(this, "hoveredUid", null);
     __publicField(this, "nodeElementToUid", /* @__PURE__ */ new Map());
+    __publicField(this, "renderedActionTargets", /* @__PURE__ */ new Map());
     __publicField(this, "lastKnownSideByUid", /* @__PURE__ */ new Map());
+    __publicField(this, "onViewportChange", () => {
+      this.startGeometryTracking();
+    });
+    __publicField(this, "trackRenderedGeometry", () => {
+      var _a;
+      this.geometryFrame = null;
+      if (this.renderedActionTargets.size === 0) return;
+      const layerRect = this.layer.getBoundingClientRect();
+      const coordinateRect = layerRect.width > 0 || layerRect.height > 0 ? layerRect : ((_a = this.layer.parentElement) == null ? void 0 : _a.getBoundingClientRect()) ?? layerRect;
+      for (const target of this.renderedActionTargets.values()) {
+        if (!target.element.isConnected) continue;
+        const rect2 = visibleNodeRect(target.node);
+        if (!rect2) continue;
+        const anchor = resolveQuickActionAnchor(rect2, [], target.side);
+        const left = `${anchor.x - coordinateRect.left}px`;
+        const top = `${anchor.y - coordinateRect.top}px`;
+        if (target.element.style.left !== left) target.element.style.left = left;
+        if (target.element.style.top !== top) target.element.style.top = top;
+      }
+      this.startGeometryTracking();
+    });
     __publicField(this, "onCanvasPointerOver", (event) => {
       const uid2 = this.eventNodeUid(event);
       if (uid2) this.setHovered(uid2);
@@ -92185,9 +92276,13 @@ class NodeQuickActionsController {
     this.layer.addEventListener("pointerout", this.onActionPointerOut);
     this.options.canvas.addEventListener("pointerover", this.onCanvasPointerOver);
     this.options.canvas.addEventListener("pointerout", this.onCanvasPointerOut);
+    this.bindViewportTracking();
   }
   destroy() {
-    cancelAnimationFrame(this.frame);
+    if (this.frame !== null) cancelAnimationFrame(this.frame);
+    this.frame = null;
+    this.stopGeometryTracking();
+    this.unbindViewportTracking();
     this.cancelHide();
     this.layer.removeEventListener("click", this.onClick);
     this.layer.removeEventListener("pointerover", this.onActionPointerOver);
@@ -92196,17 +92291,20 @@ class NodeQuickActionsController {
     this.options.canvas.removeEventListener("pointerout", this.onCanvasPointerOut);
     this.layer.remove();
     this.nodeElementToUid.clear();
+    this.renderedActionTargets.clear();
     this.lastKnownSideByUid.clear();
   }
   scheduleRefresh() {
-    cancelAnimationFrame(this.frame);
+    if (this.frame !== null) return;
     this.frame = requestAnimationFrame(() => this.refresh());
   }
   refresh() {
     var _a;
-    this.frame = 0;
+    this.frame = null;
+    this.stopGeometryTracking();
     this.layer.replaceChildren();
     this.nodeElementToUid.clear();
+    this.renderedActionTargets.clear();
     if (this.options.readonly()) return;
     const layerRect = this.layer.getBoundingClientRect();
     const coordinateRect = layerRect.width > 0 || layerRect.height > 0 ? layerRect : ((_a = this.layer.parentElement) == null ? void 0 : _a.getBoundingClientRect()) ?? layerRect;
@@ -92224,8 +92322,8 @@ class NodeQuickActionsController {
       if (!uid2) return;
       const nodeElement = node.group.node;
       this.nodeElementToUid.set(nodeElement, uid2);
-      const rect2 = nodeElement.getBoundingClientRect();
-      if (!rect2.width && !rect2.height) return;
+      const rect2 = visibleNodeRect(node);
+      if (!rect2) return;
       const selected = activeNodes.includes(node) || activeUids.has(uid2) || ((_c2 = node.getData) == null ? void 0 : _c2.call(node, "isActive")) === true;
       const hovered = this.hoveredUid === uid2;
       const descriptors = describeNodeQuickActions({
@@ -92240,10 +92338,7 @@ class NodeQuickActionsController {
       container.className = "ymz-node-quick-actions";
       container.dataset.nodeUid = uid2;
       container.dataset.quickHovered = String(hovered);
-      const childRects = (Array.isArray(node.children) ? node.children : []).map((child) => {
-        var _a3, _b2, _c3;
-        return (_c3 = (_b2 = (_a3 = child == null ? void 0 : child.group) == null ? void 0 : _a3.node) == null ? void 0 : _b2.getBoundingClientRect) == null ? void 0 : _c3.call(_b2);
-      }).filter((childRect) => Boolean(childRect && (childRect.width > 0 || childRect.height > 0)));
+      const childRects = (Array.isArray(node.children) ? node.children : []).map((child) => visibleNodeRect(child)).filter((childRect) => childRect !== null);
       const layout2 = (_f = (_e = this.options).getLayout) == null ? void 0 : _f.call(_e);
       const geometryDriven = Boolean(layoutGeometryByEngine(layout2));
       const resolvedSide = resolveNodeQuickActionSide(layout2, node, rect2, childRects);
@@ -92267,7 +92362,29 @@ class NodeQuickActionsController {
         container.appendChild(button);
       });
       this.layer.appendChild(container);
+      this.renderedActionTargets.set(uid2, { element: container, node, side: anchor.side });
     });
+    this.startGeometryTracking();
+  }
+  bindViewportTracking() {
+    ["translate", "scale", "resize", "view_data_change"].forEach((name) => {
+      var _a, _b;
+      (_b = (_a = this.options.viewportEventSource) == null ? void 0 : _a.on) == null ? void 0 : _b.call(_a, name, this.onViewportChange);
+    });
+  }
+  unbindViewportTracking() {
+    ["translate", "scale", "resize", "view_data_change"].forEach((name) => {
+      var _a, _b;
+      (_b = (_a = this.options.viewportEventSource) == null ? void 0 : _a.off) == null ? void 0 : _b.call(_a, name, this.onViewportChange);
+    });
+  }
+  startGeometryTracking() {
+    if (this.geometryFrame !== null || this.renderedActionTargets.size === 0) return;
+    this.geometryFrame = requestAnimationFrame(this.trackRenderedGeometry);
+  }
+  stopGeometryTracking() {
+    if (this.geometryFrame !== null) cancelAnimationFrame(this.geometryFrame);
+    this.geometryFrame = null;
   }
   eventNodeUid(event) {
     for (const item of event.composedPath()) {
@@ -95326,6 +95443,7 @@ class YeMindEditor {
     this.nodeQuickActions = new NodeQuickActionsController({
       root: this.rootEl,
       canvas: this.canvasEl,
+      viewportEventSource: this.map,
       getRendererRoot: () => {
         var _a2, _b;
         return (_b = (_a2 = this.map) == null ? void 0 : _a2.renderer) == null ? void 0 : _b.root;
@@ -96222,7 +96340,7 @@ class YeMindEditor {
       this.scheduleSave();
     });
     this.map.on("view_data_change", (viewData) => {
-      var _a, _b, _c2;
+      var _a, _b;
       if (this.applyingCheckpoint || this.applyingAppearance || this.applyingImportLayout) return;
       this.updateZoom();
       const normalized2 = normalizePersistedViewData(viewData);
@@ -96235,7 +96353,6 @@ class YeMindEditor {
         { zoom: Number(((_b = (_a = this.map) == null ? void 0 : _a.view) == null ? void 0 : _b.scale) ?? 1) }
       );
       this.updateDiagnosticState();
-      (_c2 = this.nodeQuickActions) == null ? void 0 : _c2.scheduleRefresh();
       this.scheduleSave();
     });
     this.map.on("node_contextmenu", (event, node) => {
@@ -96414,9 +96531,7 @@ class YeMindEditor {
       (info) => this.updateSearchInfo(info)
     );
     this.map.on("scale", () => {
-      var _a;
       this.updateZoom();
-      (_a = this.nodeQuickActions) == null ? void 0 : _a.scheduleRefresh();
     });
     this.map.on("node_tree_render_end", () => {
       var _a;
