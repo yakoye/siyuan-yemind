@@ -100,6 +100,47 @@ describe('node content commands', () => {
     expect(map.execCommand).not.toHaveBeenCalledWith('INSERT_FORMULA', 'e=mc^2');
   });
 
+  it('removes an enclosing code-block format before replacing its text with a formula', () => {
+    const map = fakeMindMap() as any;
+    const codeLine = {
+      offset: vi.fn(() => 0),
+      length: vi.fn(() => 6),
+      formats: vi.fn(() => ({ 'code-block': 'plain' })),
+    };
+    map.richText = {
+      range: { index: 0, length: 5 },
+      lastRange: null,
+      quill: {
+        scroll: {},
+        getLines: vi.fn(() => [codeLine]),
+        getText: vi.fn(() => 'code\n'),
+        formatLine: vi.fn(),
+        deleteText: vi.fn(),
+        insertEmbed: vi.fn(),
+        setSelection: vi.fn(),
+      },
+      formatText: vi.fn(),
+    };
+    const commands = createCommandAdapter(map as never);
+
+    commands.insertFormula('e=mc^2');
+
+    expect(map.richText.quill.formatLine).toHaveBeenCalledWith(
+      0,
+      6,
+      'code-block',
+      false,
+      'user',
+    );
+    expect(map.richText.quill.deleteText).toHaveBeenCalledWith(0, 5);
+    expect(map.richText.quill.insertEmbed).toHaveBeenCalledWith(
+      0,
+      'formula',
+      'e=mc^2',
+      'user',
+    );
+  });
+
   it('places a block formula on its own rich-text line', () => {
     const map = fakeMindMap() as any;
     map.richText = {

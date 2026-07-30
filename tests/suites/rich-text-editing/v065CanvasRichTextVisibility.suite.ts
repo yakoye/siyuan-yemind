@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { synchronizeCanvasRichTextVisibility } from '../../../src/editor/canvasRichTextVisibility';
 
 describe('v0.6.5 canvas rich-text visibility regression', () => {
-  it('uses the actual node text color and a safe edit background', () => {
+  it('uses the actual node text color and lets the SVG node own the edit background', () => {
     const wrapper = document.createElement('div');
     wrapper.className = 'smm-richtext-node-edit-wrap';
     wrapper.innerHTML = '<div class="ql-container"><div class="ql-editor">Visible text</div></div>';
@@ -14,7 +14,7 @@ describe('v0.6.5 canvas rich-text visibility regression', () => {
     expect(synchronizeCanvasRichTextVisibility(map as any)).toBe(true);
     expect(wrapper.style.getPropertyValue('color')).toBe('rgb(30, 41, 59)');
     expect(wrapper.style.getPropertyPriority('color')).toBe('important');
-    expect(wrapper.style.background).toBe('rgb(255, 255, 255)');
+    expect(wrapper.style.background).toBe('transparent');
     expect(['0', '0px']).toContain(wrapper.style.border);
     expect(['0', '0px']).toContain(wrapper.style.outline);
     expect(wrapper.style.boxShadow).toBe('none');
@@ -51,6 +51,37 @@ describe('v0.6.5 canvas rich-text visibility regression', () => {
 
     map.richText.showTextEdit = false;
     expect(synchronizeCanvasRichTextVisibility(map as any)).toBe(true);
+    expect(staticText.style.visibility).toBe('');
+    expect(staticText.hasAttribute('aria-hidden')).toBe(false);
+  });
+
+  it('restores the static text after edit teardown has already cleared the active node', () => {
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'block';
+    wrapper.dataset.yemindGeometryReady = 'true';
+    wrapper.innerHTML = '<div class="ql-container"><div class="ql-editor">退出编辑后仍应可见</div></div>';
+    const staticText = document.createElement('div');
+    staticText.className = 'smm-richtext-node-wrap';
+    staticText.textContent = '退出编辑后仍应可见';
+    const foreignObject = document.createElement('foreignObject');
+    foreignObject.append(staticText);
+    const node = {
+      getData: (key: string) => key === 'text' ? '退出编辑后仍应可见' : undefined,
+      style: { merge: () => '#1f2937' },
+      _textData: { nodeContent: { node: foreignObject } },
+    };
+    const map = {
+      richText: { textEditNode: wrapper, node, showTextEdit: true },
+      renderer: { textEdit: { getBackground: () => '#ffffff' } },
+    };
+
+    synchronizeCanvasRichTextVisibility(map as any);
+    expect(staticText.style.visibility).toBe('hidden');
+
+    map.richText.showTextEdit = false;
+    map.richText.node = null;
+    wrapper.style.display = 'none';
+    expect(synchronizeCanvasRichTextVisibility(map as any)).toBe(false);
     expect(staticText.style.visibility).toBe('');
     expect(staticText.hasAttribute('aria-hidden')).toBe(false);
   });
@@ -158,7 +189,7 @@ it('keeps real double-click editing visible and shows formatting tools for a par
     await new Promise((resolve) => setTimeout(resolve, 0));
     const editWrap = wrapper.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap')!;
     expect(editWrap.style.getPropertyValue('color')).toBe('rgb(30, 41, 59)');
-    expect(editWrap.style.background).toBe('rgb(255, 255, 255)');
+    expect(editWrap.style.background).toBe('transparent');
 
     map.richText.quill.setSelection(0, 7, 'user');
     await new Promise((resolve) => setTimeout(resolve, 0));

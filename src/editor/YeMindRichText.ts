@@ -20,6 +20,7 @@ import {
   type CanvasEditSessionSnapshot,
   type CanvasSelectionSession,
 } from './CanvasEditSessionCoordinator';
+import { shouldActivateRichTextLink } from './linkNavigation';
 
 export const YEMIND_FONT_VALUES = [
   'sans-serif',
@@ -62,12 +63,22 @@ interface QuillClipboardSource {
   getSemanticHTML?(index: number, length: number): string;
 }
 
+export function resolveNonCollapsedQuillRange(
+  quill: Pick<QuillClipboardSource, 'getSelection'> | null | undefined,
+  fallbackRange: QuillClipboardRange | null | undefined,
+): QuillClipboardRange | null {
+  const live = quill?.getSelection?.() ?? null;
+  if (live && live.length > 0) return live;
+  if (fallbackRange && fallbackRange.length > 0) return fallbackRange;
+  return null;
+}
+
 export function writeQuillSelectionToClipboard(
   quill: QuillClipboardSource | null | undefined,
   event: ClipboardEvent,
   fallbackRange: QuillClipboardRange | null | undefined,
 ): boolean {
-  const range = quill?.getSelection?.() ?? fallbackRange ?? null;
+  const range = resolveNonCollapsedQuillRange(quill, fallbackRange);
   if (!quill || !event.clipboardData || !range || range.length <= 0) return false;
   const plain = String(quill.getText(range.index, range.length) ?? '').replace(/\n$/, '');
   if (!plain) return false;
@@ -84,8 +95,56 @@ export interface CanvasTextPayload {
   richText: boolean;
 }
 
+export function canvasTextPayloadMatchesNode(
+  payload: CanvasTextPayload,
+  nodeData: { text?: unknown; richText?: unknown } | null | undefined,
+): boolean {
+  return (
+    String(nodeData?.text ?? '') === payload.text
+    && Boolean(nodeData?.richText) === payload.richText
+  );
+}
+
 export function shouldStabilizeOpeningPlacement(isInserting: unknown): boolean {
   return isInserting === true;
+}
+
+function trimCanvasRichTextBoundaryBlocks(value: string): string {
+  if (typeof document === 'undefined') {
+    const emptyBlock = String.raw`<(?:p|div)\b[^>]*>(?:\s|&nbsp;|<br\s*\/?>)*<\/(?:p|div)>`;
+    return value
+      .replace(new RegExp(String.raw`^(?:\s*${emptyBlock}\s*)+`, 'i'), '')
+      .replace(new RegExp(String.raw`(?:\s*${emptyBlock}\s*)+$`, 'i'), '')
+      .trim();
+  }
+  const template = document.createElement('template');
+  template.innerHTML = value;
+  const discardBoundaryWhitespace = (): void => {
+    while (
+      template.content.firstChild?.nodeType === Node.TEXT_NODE
+      && !(template.content.firstChild.textContent ?? '').trim()
+    ) template.content.firstChild.remove();
+    while (
+      template.content.lastChild?.nodeType === Node.TEXT_NODE
+      && !(template.content.lastChild.textContent ?? '').trim()
+    ) template.content.lastChild.remove();
+  };
+  const isEmptyBoundaryBlock = (node: ChildNode | null): node is HTMLElement => (
+    node instanceof HTMLElement
+    && (node.tagName === 'P' || node.tagName === 'DIV')
+    && !(node.textContent ?? '').replace(/\u00a0/g, ' ').trim()
+    && !node.querySelector('img,svg,mjx-container,.ql-formula,[data-formula],iframe,video,audio')
+  );
+  discardBoundaryWhitespace();
+  while (isEmptyBoundaryBlock(template.content.firstChild)) {
+    template.content.firstChild.remove();
+    discardBoundaryWhitespace();
+  }
+  while (isEmptyBoundaryBlock(template.content.lastChild)) {
+    template.content.lastChild.remove();
+    discardBoundaryWhitespace();
+  }
+  return template.innerHTML.trim();
 }
 
 /**
@@ -96,7 +155,7 @@ export function shouldStabilizeOpeningPlacement(isInserting: unknown): boolean {
  * document contains a real inline/block format.
  */
 export function normalizeCanvasTextPayload(html: unknown): CanvasTextPayload {
-  const source = String(html ?? '');
+  const source = trimCanvasRichTextBoundaryBlocks(String(html ?? ''));
   const richText = structuredOutlineIsRichHtml(source);
   const plain = richText
     ? ''
@@ -386,8 +445,12 @@ export default class YeMindRichText extends (BaseRichText as any) {
       this.mindMap.emit('rich_text_selection_change', false);
       this.node = null;
       this.isInserting = false;
+      let changed = false;
       list.forEach((node) => {
-        markNodeTextEditedData(node?.nodeData?.data ?? node?.getData?.());
+        const nodeData = node?.nodeData?.data ?? node?.getData?.() ?? {};
+        if (canvasTextPayloadMatchesNode(payload, nodeData)) return;
+        changed = true;
+        markNodeTextEditedData(nodeData);
         this.mindMap.execCommand(
           'SET_NODE_TEXT',
           node,
@@ -396,7 +459,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
           !payload.richText,
         );
       });
-      this.mindMap.render();
+      if (changed) this.mindMap.render();
       this.mindMap.emit('hide_text_edit', this.textEditNode, list, editingNode);
     } finally {
       const host = this.textEditNode as HTMLElement | null;
@@ -456,17 +519,10 @@ export default class YeMindRichText extends (BaseRichText as any) {
 
   private emitCurrentSelectionChange(): void {
     if (!this.showTextEdit || !this.quill || !this.textEditNode) return;
-    const range = this.quill.getSelection() ?? this.range;
+    const range = resolveNonCollapsedQuillRange(this.quill, this.range);
     if (!range || range.length <= 0) return;
     const bounds = this.quill.getBounds(range.index, range.length);
-    const rect = this.textEditNode.getBoundingClientRect();
-    const rectInfo = {
-      left: bounds.left + rect.left,
-      top: bounds.top + rect.top,
-      right: bounds.right + rect.left,
-      bottom: bounds.bottom + rect.top,
-      width: bounds.width,
-    };
+    const rectInfo = this.selectionViewportRect(bounds);
     const formatInfo = this.quill.getFormat(range.index, range.length);
     const selectionSession = this.acceptCurrentSelection();
     if (!selectionSession) return;
@@ -483,6 +539,49 @@ export default class YeMindRichText extends (BaseRichText as any) {
       index: range.index,
       length: range.length,
     });
+  }
+
+  private selectionViewportRect(bounds: {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+    width: number;
+  }): {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+    width: number;
+  } {
+    const host = this.textEditNode as HTMLElement;
+    const selection = window.getSelection();
+    if (
+      selection
+      && !selection.isCollapsed
+      && selection.rangeCount > 0
+      && selection.anchorNode
+      && host.contains(selection.anchorNode)
+    ) {
+      const live = selection.getRangeAt(0).getBoundingClientRect();
+      if (live.width > 0 || live.height > 0) {
+        return {
+          left: live.left,
+          top: live.top,
+          right: live.right,
+          bottom: live.bottom,
+          width: live.width,
+        };
+      }
+    }
+    const rect = host.getBoundingClientRect();
+    return {
+      left: bounds.left + rect.left,
+      top: bounds.top + rect.top,
+      right: bounds.right + rect.left,
+      bottom: bounds.bottom + rect.top,
+      width: bounds.width,
+    };
   }
 
   private applyEditorGeometry(node: any, rect: DOMRect): void {
@@ -603,20 +702,9 @@ export default class YeMindRichText extends (BaseRichText as any) {
         && !event.metaKey
         && !event.altKey
       ) {
-        const selected = this.quill.getSelection?.() ?? this.range ?? null;
-        if (selected && selected.length > 0) {
+        if (this.deleteCurrentSelection(event.key)) {
           event.preventDefault();
           event.stopPropagation();
-          this.quill.deleteText(selected.index, selected.length, Quill.sources.USER);
-          this.quill.setSelection(selected.index, 0, Quill.sources.SILENT);
-          this.range = null;
-          this.pasteUseRange = { index: selected.index, length: 0 };
-          this.mindMap?.emit?.('rich_text_selection_change', false, null, null);
-          this.emitEditingDiagnostic('selection-deleted', {
-            key: event.key,
-            index: selected.index,
-            length: selected.length,
-          });
           return;
         }
       }
@@ -629,6 +717,35 @@ export default class YeMindRichText extends (BaseRichText as any) {
       this.pasteUseRange = this.range;
       this.emitEditingDiagnostic('select-all-shortcut', { length });
     }, true);
+  }
+
+  /**
+   * Delete the active canvas text selection as one edit transaction.
+   *
+   * SiYuan can return DOM focus to the plugin host while leaving Quill's
+   * native selection visible. Keeping this operation on the rich-text runtime
+   * lets the editor-level keyboard router use the saved Quill range before a
+   * host shortcut can reinterpret Delete as structural node deletion.
+   */
+  deleteCurrentSelection(key: 'Delete' | 'Backspace' = 'Delete'): boolean {
+    if (!this.showTextEdit || !this.quill) return false;
+    const selected = resolveNonCollapsedQuillRange(
+      this.quill,
+      this.range ?? this.lastRange,
+    );
+    if (!selected || selected.length <= 0) return false;
+    this.quill.deleteText(selected.index, selected.length, Quill.sources.USER);
+    this.quill.setSelection(selected.index, 0, Quill.sources.SILENT);
+    this.range = null;
+    this.lastRange = null;
+    this.pasteUseRange = { index: selected.index, length: 0 };
+    this.mindMap?.emit?.('rich_text_selection_change', false, null, null);
+    this.emitEditingDiagnostic('selection-deleted', {
+      key,
+      index: selected.index,
+      length: selected.length,
+    });
+    return true;
   }
 
   private emitEditingDiagnostic(action: string, details: Record<string, unknown> = {}): void {
@@ -722,6 +839,39 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.quill.root.addEventListener('copy', (event: ClipboardEvent) => {
       writeQuillSelectionToClipboard(this.quill, event, this.range ?? this.lastRange);
     });
+    this.quill.root.addEventListener('cut', (event: ClipboardEvent) => {
+      const selected = resolveNonCollapsedQuillRange(
+        this.quill,
+        this.range ?? this.lastRange,
+      );
+      if (
+        !selected
+        || !writeQuillSelectionToClipboard(this.quill, event, selected)
+      ) return;
+      this.quill.deleteText(
+        selected.index,
+        selected.length,
+        Quill.sources.USER,
+      );
+      this.quill.setSelection(
+        selected.index,
+        0,
+        Quill.sources.SILENT,
+      );
+      this.range = null;
+      this.lastRange = null;
+      this.pasteUseRange = { index: selected.index, length: 0 };
+      this.mindMap?.emit?.(
+        'rich_text_selection_change',
+        false,
+        null,
+        null,
+      );
+      this.emitEditingDiagnostic('selection-cut', {
+        index: selected.index,
+        length: selected.length,
+      });
+    });
 
     this.quill.on('selection-change', (range: any) => {
       if (
@@ -737,14 +887,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
       if (range) {
         this.pasteUseRange = range;
         const bounds = this.quill.getBounds(range.index, range.length);
-        const rect = this.textEditNode.getBoundingClientRect();
-        const rectInfo = {
-          left: bounds.left + rect.left,
-          top: bounds.top + rect.top,
-          right: bounds.right + rect.left,
-          bottom: bounds.bottom + rect.top,
-          width: bounds.width,
-        };
+        const rectInfo = this.selectionViewportRect(bounds);
         const formatInfo = this.quill.getFormat(range.index, range.length);
         const hasRange = range.length > 0;
         if (hasRange) this.range = range;
@@ -809,7 +952,20 @@ export default class YeMindRichText extends (BaseRichText as any) {
     const host = this.textEditNode as HTMLElement | null;
     if (!host || host.dataset.yemindInteractionIsolation === 'true') return;
     host.dataset.yemindInteractionIsolation = 'true';
-    const stopCanvasGesture = (event: Event): void => event.stopPropagation();
+    const stopCanvasGesture = (event: Event): void => {
+      if (event.type === 'click' && event instanceof MouseEvent) {
+        const anchor = event.target instanceof Element
+          ? event.target.closest<HTMLAnchorElement>('a[data-yemind-link="true"]')
+          : null;
+        if (anchor) {
+          event.preventDefault();
+          // Explicit modifier gestures continue to the editor-level navigator;
+          // ordinary clicks stay inside the editable text transaction.
+          if (shouldActivateRichTextLink(event)) return;
+        }
+      }
+      event.stopPropagation();
+    };
     [
       'pointerdown',
       'pointermove',

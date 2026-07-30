@@ -75,17 +75,23 @@ function staticTextLayers(node: RichTextRuntime['node']): Array<HTMLElement | SV
 }
 
 export function synchronizeCanvasRichTextVisibility(map: MindMapRuntime | null | undefined): boolean {
+  if (!map) return false;
+  // Teardown clears richText.node before consumers receive hide_text_edit.
+  // Restore the previously hidden SVG layer before checking whether an active
+  // editor still exists, otherwise an unchanged edit can leave the node blank.
+  restoreStaticText(map);
   const runtime = map?.richText;
   const wrapper = runtime?.textEditNode;
   const node = runtime?.node;
   if (!wrapper || !node) return false;
-  restoreStaticText(map as MindMapRuntime);
   const textColor = cssColor(node.style?.merge?.('color'), '#1f2937');
-  const safeBackground = cssColor(map?.renderer?.textEdit?.getBackground?.(node), 'var(--b3-theme-background, #ffffff)');
   wrapper.style.setProperty('color', textColor, 'important');
   wrapper.style.setProperty('caret-color', textColor, 'important');
   wrapper.style.setProperty('-webkit-text-fill-color', 'currentColor', 'important');
-  wrapper.style.setProperty('background', safeBackground, 'important');
+  // The SVG node owns the visual shape and background. The HTML editor is
+  // only its live text layer; painting a second opaque rectangle here exposes
+  // the intentional text/node padding as a visibly mismatched inner box.
+  wrapper.style.setProperty('background', 'transparent', 'important');
   wrapper.style.setProperty('border', '0', 'important');
   wrapper.style.setProperty('outline', '0', 'important');
   wrapper.style.setProperty('box-shadow', 'none', 'important');

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { resolveLinkNavigation } from '../../../src/editor/linkNavigation';
+import {
+  resolveLinkNavigation,
+  shouldActivateRichTextLink,
+} from '../../../src/editor/linkNavigation';
 
 describe('node and inline link navigation', () => {
   it('uses SiYuan routing and the configured external-link target', () => {
@@ -18,5 +21,36 @@ describe('node and inline link navigation', () => {
   it('blocks unsafe or malformed stored links', () => {
     expect(resolveLinkNavigation('javascript:alert(1)', 'new-window')).toBeNull();
     expect(resolveLinkNavigation('not a url', 'new-window')).toBeNull();
+  });
+
+  it('keeps ordinary pointer gestures inside the rich-text editor and opens links explicitly', () => {
+    expect(shouldActivateRichTextLink({
+      button: 0,
+      ctrlKey: false,
+      metaKey: false,
+      shiftKey: false,
+      altKey: false,
+    })).toBe(false);
+    expect(shouldActivateRichTextLink({
+      button: 0,
+      ctrlKey: true,
+      metaKey: false,
+      shiftKey: false,
+      altKey: false,
+    })).toBe(true);
+    expect(shouldActivateRichTextLink({
+      button: 0,
+      ctrlKey: false,
+      metaKey: true,
+      shiftKey: false,
+      altKey: false,
+    })).toBe(true);
+    expect(shouldActivateRichTextLink({
+      button: 1,
+      ctrlKey: false,
+      metaKey: false,
+      shiftKey: false,
+      altKey: false,
+    })).toBe(true);
   });
 });

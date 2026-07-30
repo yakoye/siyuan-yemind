@@ -78,7 +78,10 @@ import {
   hexToRgba,
 } from "./outerFramePresentation";
 import { createToolbarAvailability } from "./toolbarAvailability";
-import { resolveLinkNavigation } from "./linkNavigation";
+import {
+  resolveLinkNavigation,
+  shouldActivateRichTextLink,
+} from "./linkNavigation";
 import { hasNonZeroSize } from "../plugin/visibleElement";
 import { loadImageFileSelection } from "../ui/imageFileLoading";
 import {
@@ -277,6 +280,17 @@ export class YeMindEditor {
   private readonly onCanvasPointerDown = (event: PointerEvent): void => {
     if (event.button !== 0) return;
     this.claimCanvasInteraction("canvas-pointerdown");
+  };
+
+  private readonly onCanvasLinkClickCapture = (event: MouseEvent): void => {
+    const anchor = event.target instanceof Element
+      ? event.target.closest<HTMLAnchorElement>("a[href]")
+      : null;
+    if (!anchor || !this.canvasEl.contains(anchor)) return;
+    event.preventDefault();
+    if (!shouldActivateRichTextLink(event)) return;
+    event.stopPropagation();
+    this.openLink(anchor.href || anchor.getAttribute("href") || "");
   };
 
   private readonly onCanvasContextMenuCapture = (event: MouseEvent): void => {
@@ -493,6 +507,25 @@ export class YeMindEditor {
     }
   };
 
+  private readonly onWindowTextSelectionKeydown = (event: KeyboardEvent): void => {
+    if (
+      (event.key !== "Backspace" && event.key !== "Delete")
+      || event.ctrlKey
+      || event.metaKey
+      || event.altKey
+    ) return;
+    const root = this.rootEl;
+    if (!root?.isConnected) return;
+    const rect = root.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const activeOutlineEditor = this.outlineRichText?.activeHost;
+    const activeElement = document.activeElement;
+    if (activeOutlineEditor && activeElement && activeOutlineEditor.contains(activeElement)) return;
+    if (!(this.map as any)?.richText?.deleteCurrentSelection?.(event.key)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  };
+
   private readonly onRootKeydown = (event: KeyboardEvent): void => {
     const overflowMenu = this.rootEl?.querySelector<HTMLElement>(
       '[data-role="top-overflow-menu"]',
@@ -577,6 +610,18 @@ export class YeMindEditor {
         ((eventTarget && activeOutlineEditor.contains(eventTarget)) ||
           (activeElement && activeOutlineEditor.contains(activeElement))),
     );
+    if (
+      !outlineEditing
+      && (event.key === "Backspace" || event.key === "Delete")
+      && !event.ctrlKey
+      && !event.metaKey
+      && !event.altKey
+      && (this.map as any)?.richText?.deleteCurrentSelection?.(event.key)
+    ) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
     if (!this.commands || outlineEditing || isEditableTarget(event.target)) return;
     if (
       (event.key === "Backspace" || event.key === "Delete") &&
@@ -732,11 +777,13 @@ export class YeMindEditor {
     this.cancelFocusedNodeHighlight?.();
     this.cancelFocusedNodeHighlight = null;
     this.rootEl?.removeEventListener("keydown", this.onRootKeydown, true);
+    window.removeEventListener("keydown", this.onWindowTextSelectionKeydown, true);
     this.outlinePaneEl?.removeEventListener("keydown", this.onOutlineKeydownBubble);
     this.rootEl?.removeEventListener("paste", this.onImagePaste);
     this.canvasEl?.removeEventListener("dragover", this.onImageDragOver);
     this.canvasEl?.removeEventListener("drop", this.onImageDrop);
     this.canvasEl?.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
+    this.canvasEl?.removeEventListener("click", this.onCanvasLinkClickCapture, true);
     this.canvasEl?.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
     this.outlineEl?.removeEventListener(
       "pointerdown",
@@ -1188,11 +1235,13 @@ export class YeMindEditor {
         this.richTextToolbar?.update(hasRange, rect, format, target);
       },
     });
+    window.addEventListener("keydown", this.onWindowTextSelectionKeydown, true);
     this.rootEl.addEventListener("keydown", this.onRootKeydown, true);
     this.rootEl.addEventListener("paste", this.onImagePaste);
     this.canvasEl.addEventListener("dragover", this.onImageDragOver);
     this.canvasEl.addEventListener("drop", this.onImageDrop);
     this.canvasEl.addEventListener("pointerdown", this.onCanvasPointerDown, true);
+    this.canvasEl.addEventListener("click", this.onCanvasLinkClickCapture, true);
     this.canvasEl.addEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
 
     this.bindToolbar();
@@ -1297,6 +1346,15 @@ export class YeMindEditor {
       if (anchor && this.rootEl.contains(anchor)) {
         event.preventDefault();
         event.stopPropagation();
+        const richTextLink = anchor.dataset.yemindLink === "true"
+          || this.canvasEl.contains(anchor)
+          || this.outlineEl.contains(anchor);
+        if (
+          richTextLink
+          && !shouldActivateRichTextLink(event)
+        ) {
+          return;
+        }
         this.openLink(anchor.href || anchor.getAttribute("href") || "");
         return;
       }
@@ -1979,6 +2037,10 @@ export class YeMindEditor {
     });
     this.map.on('hide_text_edit', () => {
       this.renderLifecycle?.flushPendingTextEdit();
+      // Closing an unchanged edit intentionally skips a map render. Restore
+      // the static SVG text layer explicitly so switching nodes does not need
+      // a redundant SET_NODE_TEXT transaction merely to repaint the old node.
+      synchronizeCanvasRichTextVisibility(this.map as any);
     });
     this.map.on('node_tree_render_end', () => {
       this.renderLifecycle?.reconcileRenderedTextGeometry();

@@ -62,12 +62,24 @@ export class RichTextToolbar {
   private activeColorKind: ColorKind = "color";
   private colorSessionOriginal: string | false = false;
   private anchorFrame = 0;
+  private revealFrame = 0;
+  private visibilityEpoch = 0;
   private lastReportedRect: RichTextSelectionRect | null = null;
   private selectionSessionId = 0;
+  private pointerSelectionMayPublish = false;
+  private pointerSessionAtDown = 0;
   private readonly onDocumentMouseDown = (event: MouseEvent): void => {
     const node = event.target as Node;
     if (this.element.contains(node) || this.colorPopover.contains(node)) return;
     this.selecting = this.root.contains(node);
+    const targetElement = node instanceof Element ? node : node.parentElement;
+    this.pointerSelectionMayPublish = Boolean(
+      targetElement?.closest(
+        '.ql-editor,[data-outline-editor],[data-role="outline-text-editor"],[contenteditable="true"]',
+      ),
+    );
+    this.pointerSessionAtDown = this.selectionSessionId;
+    this.pendingSelection = null;
     this.hide();
   };
   private readonly onWindowMouseUp = (): void => {
@@ -76,7 +88,11 @@ export class RichTextToolbar {
       const pending = this.pendingSelection;
       this.selecting = false;
       this.pendingSelection = null;
-      if (pending) {
+      const belongsToNewSession = Boolean(
+        pending?.session
+        && pending.session.sessionId !== this.pointerSessionAtDown,
+      );
+      if (pending && (this.pointerSelectionMayPublish || belongsToNewSession)) {
         this.applyUpdate(
           pending.hasRange,
           pending.rectInfo,
@@ -85,6 +101,7 @@ export class RichTextToolbar {
           pending.session,
         );
       }
+      this.pointerSelectionMayPublish = false;
     }, 0);
   };
 
@@ -97,6 +114,7 @@ export class RichTextToolbar {
     this.element = document.createElement("div");
     this.element.className = "ymz-rich-toolbar";
     this.element.hidden = true;
+    this.element.style.visibility = "hidden";
     this.element.innerHTML = `
       <button type="button" data-rich-action="bold" title="加粗"><b>B</b></button>
       <button type="button" data-rich-action="italic" title="斜体"><i>I</i></button>
@@ -194,17 +212,25 @@ export class RichTextToolbar {
     this.syncState();
     this.lastReportedRect = rectInfo;
     const wasHidden = this.element.hidden;
-    const previousVisibility = this.element.style.visibility;
     if (wasHidden) {
       this.element.style.visibility = "hidden";
       this.element.hidden = false;
+      // The host WebView can paint a newly unhidden container one frame before
+      // its native controls and final geometry. Measure it off-screen from the
+      // user's perspective, then reveal the complete toolbar atomically.
+      this.position(rectInfo, false);
+      this.scheduleReveal();
+      return;
     }
-    this.position(rectInfo, false);
-    if (wasHidden) this.element.style.visibility = previousVisibility;
+    this.position(rectInfo, true);
     this.trackLiveSelection();
   }
 
   hide(): void {
+    this.visibilityEpoch += 1;
+    window.cancelAnimationFrame(this.revealFrame);
+    this.revealFrame = 0;
+    this.element.style.visibility = "hidden";
     this.element.hidden = true;
     this.colorPopover.hidden = true;
     this.lastReportedRect = null;
@@ -216,6 +242,7 @@ export class RichTextToolbar {
     document.removeEventListener("mousedown", this.onDocumentMouseDown, true);
     window.removeEventListener("mouseup", this.onWindowMouseUp, true);
     window.cancelAnimationFrame(this.anchorFrame);
+    window.cancelAnimationFrame(this.revealFrame);
     this.element.remove();
     this.colorPopover.remove();
     this.target = null;
@@ -549,23 +576,24 @@ export class RichTextToolbar {
     const selection = window.getSelection();
     if (
       selection &&
+      !selection.isCollapsed &&
       selection.rangeCount > 0 &&
       selection.anchorNode &&
       this.root.contains(selection.anchorNode)
     ) {
+      const anchorElement = selection.anchorNode instanceof Element
+        ? selection.anchorNode
+        : selection.anchorNode.parentElement;
+      const activeTextEditor = anchorElement?.closest(
+        '.ql-editor,[data-outline-editor],[data-role="outline-text-editor"]',
+      );
       const live = selection.getRangeAt(0).getBoundingClientRect();
-      const reportedCenterX = rect.left + (rect.width ?? rect.right - rect.left) / 2;
-      const reportedCenterY = rect.top + (rect.bottom - rect.top) / 2;
-      const liveCenterX = live.left + live.width / 2;
-      const liveCenterY = live.top + live.height / 2;
-      const relatedToleranceX = Math.max(48, live.width, rect.width ?? 0);
-      const relatedToleranceY = Math.max(48, live.height, rect.bottom - rect.top);
       if (
         allowLiveSelection
+        && activeTextEditor
+        && this.root.contains(activeTextEditor)
         && live
         && (live.width || live.height)
-        && Math.abs(liveCenterX - reportedCenterX) <= relatedToleranceX
-        && Math.abs(liveCenterY - reportedCenterY) <= relatedToleranceY
       ) {
         rect = {
           left: live.left,
@@ -581,26 +609,34 @@ export class RichTextToolbar {
       this.root.clientWidth || rootRect.width || window.innerWidth;
     const rootHeight =
       this.root.clientHeight || rootRect.height || window.innerHeight;
+    const scaleX = rootRect.width > 0 && rootWidth > 0
+      ? rootRect.width / rootWidth
+      : 1;
+    const scaleY = rootRect.height > 0 && rootHeight > 0
+      ? rootRect.height / rootHeight
+      : 1;
     const width = Math.min(
       this.element.scrollWidth || 820,
       Math.max(240, rootWidth - 16),
     );
-    const localLeft = rect.left - rootRect.left;
-    const localTop = rect.top - rootRect.top;
-    const localBottom = rect.bottom - rootRect.top;
+    const localLeft = (rect.left - rootRect.left) / scaleX;
+    const localTop = (rect.top - rootRect.top) / scaleY;
+    const localBottom = (rect.bottom - rootRect.top) / scaleY;
+    const localWidth = (rect.width ?? rect.right - rect.left) / scaleX;
     const left = Math.max(
       8,
       Math.min(
-        localLeft + (rect.width ?? 0) / 2 - width / 2,
+        localLeft + localWidth / 2 - width / 2,
         rootWidth - width - 8,
       ),
     );
     const measuredHeight = this.element.offsetHeight || 44;
+    const above = localTop - measuredHeight - 8;
     const below = localBottom + 8;
     const top =
-      below + measuredHeight < rootHeight
+      below + measuredHeight <= rootHeight - 8
         ? below
-        : Math.max(8, localTop - measuredHeight - 8);
+        : Math.max(8, above);
     const nextLeft = `${Math.round(left)}px`;
     const nextTop = `${Math.round(top)}px`;
     const nextMaxWidth = `${Math.max(240, rootWidth - 16)}px`;
@@ -610,7 +646,12 @@ export class RichTextToolbar {
   }
 
   private trackLiveSelection(): void {
-    if (this.anchorFrame || this.element.hidden || !this.lastReportedRect) return;
+    if (
+      this.anchorFrame
+      || this.element.hidden
+      || this.element.style.visibility === "hidden"
+      || !this.lastReportedRect
+    ) return;
     const update = (): void => {
       this.anchorFrame = 0;
       if (this.element.hidden || !this.lastReportedRect) return;
@@ -618,5 +659,35 @@ export class RichTextToolbar {
       this.anchorFrame = window.requestAnimationFrame(update);
     };
     this.anchorFrame = window.requestAnimationFrame(update);
+  }
+
+  private scheduleReveal(): void {
+    window.cancelAnimationFrame(this.revealFrame);
+    const epoch = ++this.visibilityEpoch;
+    this.revealFrame = window.requestAnimationFrame(() => {
+      if (
+        epoch !== this.visibilityEpoch
+        || this.element.hidden
+        || !this.lastReportedRect
+      ) {
+        this.revealFrame = 0;
+        return;
+      }
+      this.position(this.lastReportedRect, true);
+      // Chromium/WebView2 may paint a flex container before the native
+      // <select> controls in that same frame. A second committed frame keeps
+      // the empty shell entirely invisible.
+      this.revealFrame = window.requestAnimationFrame(() => {
+        this.revealFrame = 0;
+        if (
+          epoch !== this.visibilityEpoch
+          || this.element.hidden
+          || !this.lastReportedRect
+        ) return;
+        this.position(this.lastReportedRect, true);
+        this.element.style.visibility = "";
+        this.trackLiveSelection();
+      });
+    });
   }
 }

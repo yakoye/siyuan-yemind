@@ -9,6 +9,12 @@ const CROSS_TARGET = '跨文件目标';
 
 async function seedClipboardMaps(page: Page): Promise<void> {
   await resetWebApp(page);
+  // Stop the live repository before replacing its IndexedDB snapshot.
+  // Otherwise the editor's debounced initial save can finish after this
+  // fixture transaction and overwrite the two seeded maps with its one-map
+  // bootstrap state.
+  await page.route('**/favicon.ico', (route) => route.fulfill({ status: 204 }));
+  await page.goto('/assets/yemind-icon-32.png');
   await page.evaluate(async ({ sourceOne, sourceChild, sourceTwo }) => {
     const request = indexedDB.open('yemind-web');
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -82,7 +88,7 @@ async function seedClipboardMaps(page: Page): Promise<void> {
     });
     db.close();
   }, { sourceOne: SOURCE_ONE, sourceChild: SOURCE_CHILD, sourceTwo: SOURCE_TWO });
-  await page.reload();
+  await page.goto('/');
   await expect(page.locator('[data-web-map-id]')).toHaveCount(2);
   await expect(page.locator('[data-web-map-id="clipboard-source"]')).toHaveClass(/is-active/);
   await expect(page.locator('.ymw-editor > .ymz-editor')).toContainText(SOURCE_ONE);

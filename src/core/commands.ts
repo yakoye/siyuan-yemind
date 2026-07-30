@@ -553,6 +553,10 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       const range = richRange();
       const value = mode === 'block' ? `\\displaystyle{${formula}}` : formula;
       if (quill && range) {
+        const codeBlock = typeof quill.getLines === 'function'
+          ? findCurrentCodeBlock(quill, range)
+          : null;
+        if (codeBlock) removeCodeBlockFormat(quill, codeBlock);
         if (range.length > 0) quill.deleteText(range.index, range.length);
         if (mode === 'block') {
           quill.insertText(range.index, '\n', 'user');

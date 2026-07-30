@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.2 - 2026-07-30
+
+- Made the active DOM text range authoritative for selected-text toolbar placement, including transformed and scaled editor roots, so the toolbar stays beside the current selection instead of using a stale Quill rectangle.
+- Hid the previous selected-text toolbar as soon as a new pointer selection begins, then measured and populated the replacement off-screen for two committed frames before revealing it atomically below the current range; it only flips above when the lower space is insufficient.
+- Avoided issuing `SET_NODE_TEXT` and a full map render when leaving an unchanged node, preventing the previous node text from jumping while another node enters editing.
+- Unified copy, cut, Delete and Backspace around the last valid non-collapsed editor range, preventing a transient collapsed caret from disabling a visibly selected range.
+- Kept the SVG node as the single owner of node shape and background while the live HTML editor remains a transparent text layer, removing the mismatched inner frame after creating or pasting into a node.
+- Kept ordinary rich-text link clicks inside the editing transaction and removed an inherited code-block format before inserting an inline formula, avoiding accidental navigation and empty code-block remnants.
+- Added unit and real-browser regressions for stale-range positioning, single-transaction cut/delete, selection distance and first-frame editor/SVG geometry.
+
 ## 1.6.1 - 2026-07-30
 
 - Replaced independent SVG, Quill, geometry and toolbar transient flags with one monotonic canvas edit-session coordinator.

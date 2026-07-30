@@ -74,6 +74,33 @@ test('plain canvas editing keeps one measurement path and stable node geometry',
   expect(Math.abs(second!.height - first!.height)).toBeLessThanOrEqual(1);
 });
 
+test('single-line canvas text keeps the same content rectangle before and during editing', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop text-line alignment regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  await rootNode.dblclick();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  await textEditor.fill('1.1 Event Counter 事件计数器');
+  await commitCanvasEdit(page);
+
+  const staticRect = await rootNode.locator('g[data-width][data-height]').evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom };
+  });
+  await rootNode.dblclick();
+  await expect(textEditor).toBeVisible();
+  const liveRect = await textEditor.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom };
+  });
+
+  expect(Math.abs(liveRect.left - staticRect.left)).toBeLessThanOrEqual(1);
+  expect(Math.abs(liveRect.top - staticRect.top)).toBeLessThanOrEqual(1);
+  expect(Math.abs(liveRect.right - staticRect.right)).toBeLessThanOrEqual(1);
+  expect(Math.abs(liveRect.bottom - staticRect.bottom)).toBeLessThanOrEqual(1);
+});
+
 test('opening a multiline canvas editor does not jump between stale and live placement', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop edit-placement regression');
   await resetWebApp(page);
@@ -353,6 +380,241 @@ test('opening plain multiline text paints exactly one aligned text layer on ever
   });
 });
 
+test('switching canvas editors keeps the previous node text fixed on every animation frame', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop editor-switch frame regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const firstText = '1. RAS D.E.S. Debug / Statistics / Error Injection 调试 / 统计 / 错误注入';
+  const secondText = '2. RAS DP Data Protection 数据保护';
+
+  await addRootChild(page);
+  await textEditor.fill(firstText);
+  await commitCanvasEdit(page);
+  await addRootChild(page);
+  await textEditor.fill(secondText);
+  await commitCanvasEdit(page);
+
+  const nodes = editor.locator('.smm-node');
+  const firstNode = nodes.nth(1);
+  const secondNode = nodes.nth(2);
+  await firstNode.evaluate((element) => element.setAttribute('data-switch-source', 'true'));
+  await secondNode.evaluate((element) => element.setAttribute('data-switch-target', 'true'));
+  await firstNode.dblclick();
+  await expect(textEditor).toContainText(firstText);
+
+  await page.evaluate((sourceText) => {
+    type Frame = {
+      sourceLayers: number;
+      left: number;
+      top: number;
+      width: number;
+      height: number;
+    };
+    const frames: Frame[] = [];
+    let remaining = 0;
+    const painted = (element: Element | null): element is Element => {
+      if (!element) return false;
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return style.display !== 'none'
+        && style.visibility !== 'hidden'
+        && Number(style.opacity || 1) > 0
+        && rect.width > 0
+        && rect.height > 0;
+    };
+    const readFrame = (): Frame => {
+      const sourceNode = document.querySelector<HTMLElement>('[data-switch-source="true"]');
+      const staticWrap = sourceNode?.querySelector<HTMLElement>('.smm-text-node-wrap,.smm-richtext-node-wrap') ?? null;
+      const staticLayer = staticWrap?.parentElement ?? staticWrap;
+      const editorHost = document.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
+      const editorText = editorHost?.querySelector<HTMLElement>('.ql-editor') ?? null;
+      const layers: Element[] = [];
+      if (painted(staticLayer) && staticLayer.textContent?.includes(sourceText)) layers.push(staticLayer);
+      if (painted(editorHost) && painted(editorText) && editorText.textContent?.includes(sourceText)) {
+        layers.push(editorText);
+      }
+      const rect = layers[0]?.getBoundingClientRect() ?? new DOMRect();
+      return {
+        sourceLayers: layers.length,
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      };
+    };
+    const capture = (): void => {
+      frames.push(readFrame());
+      remaining -= 1;
+      if (remaining > 0) requestAnimationFrame(capture);
+    };
+    // Include the final editor geometry before the pointer transaction. A
+    // switch that jumps before the next rAF must still fail this regression.
+    frames.push(readFrame());
+    (window as any).__yemindEditorSwitchFrames = frames;
+    document.addEventListener('mousedown', () => {
+      remaining = 50;
+      requestAnimationFrame(capture);
+    }, { capture: true, once: true });
+  }, firstText);
+
+  await editor.locator('.ymz-rich-toolbar').evaluate((element) => {
+    (element as HTMLElement).style.pointerEvents = 'none';
+  });
+  await secondNode.dblclick();
+  await expect(textEditor).toContainText(secondText);
+  await page.waitForTimeout(360);
+  const frames = await page.evaluate(() => (window as any).__yemindEditorSwitchFrames as Array<{
+    sourceLayers: number;
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  }>);
+  expect(frames.length).toBeGreaterThan(5);
+  const visible = frames.filter((frame) => frame.sourceLayers > 0);
+  expect(visible.length).toBeGreaterThan(2);
+  visible.forEach((frame) => expect(frame.sourceLayers).toBe(1));
+  const spread = (key: 'left' | 'top' | 'width' | 'height') =>
+    Math.max(...visible.map((frame) => frame[key])) - Math.min(...visible.map((frame) => frame[key]));
+  expect(spread('left')).toBeLessThanOrEqual(1);
+  expect(spread('top')).toBeLessThanOrEqual(1);
+  expect(spread('width')).toBeLessThanOrEqual(1);
+  expect(spread('height')).toBeLessThanOrEqual(1);
+});
+
+test('closing an unchanged canvas edit restores the static text layer immediately', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop edit teardown regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const expectedText = '退出编辑后静态文字仍然可见';
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+
+  await rootNode.dblclick();
+  await textEditor.fill(expectedText);
+  await commitCanvasEdit(page);
+  await rootNode.dblclick();
+  await expect(textEditor).toContainText(expectedText);
+  await commitCanvasEdit(page);
+
+  const paintedLayers = await rootNode.evaluate((node, text) => {
+    const painted = (element: Element): boolean => {
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return style.display !== 'none'
+        && style.visibility !== 'hidden'
+        && Number(style.opacity || 1) > 0
+        && rect.width > 0
+        && rect.height > 0;
+    };
+    return Array.from(
+      node.querySelectorAll<HTMLElement>('.smm-text-node-wrap,.smm-richtext-node-wrap'),
+    ).filter((element) => element.textContent?.includes(String(text)) && painted(element)).length;
+  }, expectedText);
+
+  expect(paintedLayers).toBe(1);
+  await expect(rootNode).toContainText(expectedText);
+});
+
+test('selection toolbar is complete and anchored on its first visible frame after switching nodes', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop toolbar first-paint regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  await addRootChild(page);
+  await textEditor.fill('1. RAS D.E.S. Debug / Statistics / Error Injection 调试 / 统计 / 错误注入');
+  await commitCanvasEdit(page);
+  await addRootChild(page);
+  await textEditor.fill('2. RAS DP Data Protection 数据保护');
+  await commitCanvasEdit(page);
+  const nodes = editor.locator('.smm-node');
+  await nodes.nth(1).dblclick();
+  await expect(editor.locator('.ymz-rich-toolbar')).toBeVisible();
+  await nodes.nth(2).evaluate((element) => element.setAttribute('data-toolbar-switch-target', 'true'));
+
+  await page.evaluate(() => {
+    type Frame = {
+      visible: boolean;
+      buttonCount: number;
+      width: number;
+      height: number;
+      verticalGap: number;
+      belowSelection: boolean;
+    };
+    const frames: Frame[] = [];
+    let remaining = 0;
+    const capture = (): void => {
+      const toolbar = document.querySelector<HTMLElement>('.ymz-rich-toolbar');
+      const selection = window.getSelection();
+      const toolbarRect = toolbar?.getBoundingClientRect() ?? new DOMRect();
+      const selectionRect = selection?.rangeCount
+        ? selection.getRangeAt(0).getBoundingClientRect()
+        : new DOMRect();
+      const targetRect = document
+        .querySelector<HTMLElement>('[data-toolbar-switch-target="true"]')
+        ?.getBoundingClientRect() ?? selectionRect;
+      const anchorRect = selectionRect.width > 0 || selectionRect.height > 0
+        ? selectionRect
+        : targetRect;
+      const style = toolbar ? getComputedStyle(toolbar) : null;
+      const visible = Boolean(toolbar
+        && !toolbar.hidden
+        && style?.display !== 'none'
+        && style?.visibility !== 'hidden'
+        && toolbarRect.width > 0
+        && toolbarRect.height > 0);
+      frames.push({
+        visible,
+        buttonCount: toolbar?.querySelectorAll('button[data-rich-action]').length ?? 0,
+        width: toolbarRect.width,
+        height: toolbarRect.height,
+        belowSelection: toolbarRect.top >= anchorRect.bottom - 1,
+        verticalGap: Math.min(
+          Math.abs(toolbarRect.top - anchorRect.bottom),
+          Math.abs(anchorRect.top - toolbarRect.bottom),
+        ),
+      });
+      remaining -= 1;
+      if (remaining > 0) requestAnimationFrame(capture);
+    };
+    (window as any).__yemindToolbarSwitchFrames = frames;
+    document.addEventListener('mousedown', () => {
+      remaining = 50;
+      requestAnimationFrame(capture);
+    }, { capture: true, once: true });
+  });
+
+  // This regression records the toolbar's paint/placement frames rather than
+  // testing pointer occlusion between two deliberately tightly packed fixture
+  // nodes. Real layout keeps the toolbar below the selection; let the pointer
+  // reach the switch target so the frame recorder can exercise that path.
+  await editor.locator('.ymz-rich-toolbar').evaluate((element) => {
+    (element as HTMLElement).style.pointerEvents = 'none';
+  });
+  await nodes.nth(2).dblclick();
+  await expect(editor.locator('.ymz-rich-toolbar')).toBeVisible();
+  await page.waitForTimeout(360);
+  const frames = await page.evaluate(() => (window as any).__yemindToolbarSwitchFrames as Array<{
+    visible: boolean;
+    buttonCount: number;
+    width: number;
+    height: number;
+    verticalGap: number;
+    belowSelection: boolean;
+  }>);
+  const visible = frames.filter((frame) => frame.visible);
+  expect(frames[0]?.visible).toBe(false);
+  expect(visible.length).toBeGreaterThan(2);
+  visible.forEach((frame) => {
+    expect(frame.buttonCount).toBeGreaterThanOrEqual(12);
+    expect(frame.width).toBeGreaterThan(300);
+    expect(frame.height).toBeGreaterThan(30);
+    expect(frame.belowSelection).toBe(true);
+    expect(frame.verticalGap).toBeLessThanOrEqual(12);
+  });
+});
+
 test('a newly inserted child receives one stable final editor placement', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop inserted-node placement regression');
   await resetWebApp(page);
@@ -392,6 +654,102 @@ test('one Delete or Backspace removes a selected multiline canvas range', async 
     await textEditor.fill(`下一轮-${key}`);
     await commitCanvasEdit(page);
   }
+});
+
+test('canvas partial selection cuts in one Ctrl+X transaction and keeps the toolbar beside the selection', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop native-selection regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  await rootNode.dblclick();
+  await textEditor.fill('Event Counter 事件计数器');
+  await commitCanvasEdit(page);
+  await rootNode.dblclick();
+  await textEditor.dblclick();
+  const toolbar = editor.locator('.ymz-rich-toolbar');
+  await expect(toolbar).toBeVisible();
+  const geometry = await page.evaluate(() => {
+    const selection = window.getSelection();
+    const toolbar = document.querySelector<HTMLElement>('.ymz-rich-toolbar');
+    if (!selection?.rangeCount || !toolbar) return null;
+    const selectionRect = selection.getRangeAt(0).getBoundingClientRect();
+    const toolbarRect = toolbar.getBoundingClientRect();
+    return {
+      selectionText: selection.toString(),
+      verticalGap: Math.min(
+        Math.abs(toolbarRect.top - selectionRect.bottom),
+        Math.abs(selectionRect.top - toolbarRect.bottom),
+      ),
+    };
+  });
+  expect(geometry).not.toBeNull();
+  expect(geometry!.selectionText.length).toBeGreaterThan(0);
+  expect(geometry!.verticalGap).toBeLessThanOrEqual(12);
+  const selectedText = geometry!.selectionText;
+  await page.keyboard.press('Control+X');
+  await expect(textEditor).not.toContainText(selectedText);
+
+  for (const key of ['Delete', 'Backspace']) {
+    await textEditor.fill(`Event Counter ${key} 事件计数器`);
+    await commitCanvasEdit(page);
+    await rootNode.dblclick();
+    await textEditor.dblclick();
+    const rangeText = await page.evaluate(() => window.getSelection()?.toString() ?? '');
+    expect(rangeText.length).toBeGreaterThan(0);
+    await page.keyboard.press(key);
+    await expect(textEditor).not.toContainText(rangeText);
+  }
+});
+
+test('canvas Delete routes to the saved text selection after the host steals DOM focus', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop host-focus regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  await rootNode.dblclick();
+  await textEditor.fill('Event Counter 事件计数器');
+  await commitCanvasEdit(page);
+  await rootNode.dblclick();
+  await textEditor.dblclick();
+  const selectedText = await page.evaluate(() => window.getSelection()?.toString() ?? '');
+  expect(selectedText.length).toBeGreaterThan(0);
+
+  // SiYuan can move keyboard focus back to the plugin host while the native
+  // text selection remains visible. Delete must still operate on that saved
+  // selection instead of being reinterpreted as structural node deletion.
+  await page.evaluate(() => {
+    document.body.tabIndex = -1;
+    document.body.focus({ preventScroll: true });
+  });
+  await page.keyboard.press('Delete');
+  await expect(textEditor).not.toContainText(selectedText);
+  await expect(rootNode).toBeVisible();
+});
+
+test('deleting a full canvas text selection remains one undoable text transaction', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop text-undo regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const original = '撤销必须恢复的节点文字';
+
+  await rootNode.dblclick();
+  await textEditor.fill(original);
+  await commitCanvasEdit(page);
+  // simple-mind-map coalesces adjacent text commands into one history entry;
+  // model a pre-existing node rather than two keystroke bursts in one entry.
+  await page.waitForTimeout(320);
+  await rootNode.dblclick();
+  await textEditor.press('Control+A');
+  await page.keyboard.press('Delete');
+  await expect(textEditor).toHaveText('');
+  await commitCanvasEdit(page);
+
+  await editor.locator('[data-action="undo"]').click();
+  await expect(rootNode).toContainText(original);
 });
 
 test('width-handle drag grows the live node monotonically without disappearing or jumping', async ({ page, isMobile }) => {
@@ -493,6 +851,62 @@ test('canvas paste keeps the live node border aligned with the growing text edit
   expect(borderBox!.width - editBox!.width).toBeLessThanOrEqual(24);
   expect(borderBox!.height - editBox!.height).toBeGreaterThanOrEqual(-2);
   expect(borderBox!.height - editBox!.height).toBeLessThanOrEqual(16);
+});
+
+test('new child paste commits editor, SVG text and node geometry in the first rendered frame', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop inserted-node paste geometry regression');
+  await resetWebApp(page);
+  await addRootChild(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  await textEditor.press('Control+A');
+  await textEditor.evaluate((element) => {
+    const transfer = new DataTransfer();
+    transfer.setData('text/plain', 'excel数据再帮我更新一下，节点编辑层和背后节点框必须同步扩大');
+    element.dispatchEvent(new ClipboardEvent('paste', {
+      bubbles: true,
+      cancelable: true,
+      clipboardData: transfer,
+    }));
+  });
+  await expect(textEditor).toContainText('节点编辑层和背后节点框必须同步扩大');
+  const geometry = await editor.evaluate(async (root) => {
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    const host = root.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
+    const activeNode = Array.from(root.querySelectorAll<SVGGElement>('.smm-node'))
+      .find((node) => node.textContent?.includes('excel数据再帮我更新一下'));
+    const svgText = activeNode?.querySelector<SVGGraphicsElement>(
+      'foreignObject,.smm-text-node-wrap',
+    );
+    if (!host || !activeNode || !svgText) return null;
+    const hostRect = host.getBoundingClientRect();
+    const nodeRect = activeNode.getBoundingClientRect();
+    const textRect = svgText.getBoundingClientRect();
+    const hostBackground = getComputedStyle(host).backgroundColor;
+    return {
+      hostLeft: hostRect.left,
+      hostRight: hostRect.right,
+      hostTop: hostRect.top,
+      hostBottom: hostRect.bottom,
+      nodeLeft: nodeRect.left,
+      nodeRight: nodeRect.right,
+      nodeTop: nodeRect.top,
+      nodeBottom: nodeRect.bottom,
+      textLeft: textRect.left,
+      textRight: textRect.right,
+      textTop: textRect.top,
+      textBottom: textRect.bottom,
+      hostBackground,
+    };
+  });
+  expect(geometry).not.toBeNull();
+  expect(Math.abs(geometry!.hostLeft + 6 - geometry!.textLeft)).toBeLessThanOrEqual(1);
+  expect(Math.abs(geometry!.hostRight - 6 - geometry!.textRight)).toBeLessThanOrEqual(1);
+  expect(Math.abs(geometry!.hostTop + 4 - geometry!.textTop)).toBeLessThanOrEqual(1);
+  expect(Math.abs(geometry!.hostBottom - 4 - geometry!.textBottom)).toBeLessThanOrEqual(1);
+  expect(geometry!.nodeLeft).toBeLessThan(geometry!.hostLeft);
+  expect(geometry!.nodeRight).toBeGreaterThan(geometry!.hostRight);
+  expect(geometry!.hostBackground).toBe('rgba(0, 0, 0, 0)');
 });
 
 test('outline text transactions keep node count, canvas geometry and quick-action anchoring stable', async ({ page, isMobile }) => {
@@ -735,6 +1149,7 @@ test('outline selection toolbar formats text and its context menu edits and dele
 
 test('canvas link, code-block and formula dialogs commit against the saved text range', async ({ page }) => {
   await resetWebApp(page);
+  const editorUrl = page.url();
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
   const toolbar = editor.locator('.ymz-rich-toolbar');
@@ -747,8 +1162,11 @@ test('canvas link, code-block and formula dialogs commit against the saved text 
   await dialog.locator('[data-field="inline-link"]').fill('example.com');
   await dialog.locator('[data-action="save"]').click();
   await expect(textEditor.locator('a')).toHaveAttribute('href', /https:\/\/example\.com/);
+  await expect(textEditor.locator('a')).toHaveAttribute('data-yemind-link', 'true');
 
   await editor.locator('.smm-node').first().dblclick();
+  await expect(page).toHaveURL(editorUrl);
+  expect(page.context().pages()).toHaveLength(1);
   await textEditor.selectText();
   await toolbar.locator('[data-rich-action="code-block"]').click();
   dialog = page.locator('.b3-dialog');

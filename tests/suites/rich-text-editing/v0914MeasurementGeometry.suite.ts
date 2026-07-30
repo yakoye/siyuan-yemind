@@ -188,6 +188,7 @@ describe('v0.9.14 stable node measurement geometry', () => {
       deleteText,
       setSelection,
     };
+    richText.showTextEdit = true;
     richText.range = { index: 0, length: 12 };
     richText.pasteUseRange = richText.range;
     richText.emitEditingDiagnostic = vi.fn();

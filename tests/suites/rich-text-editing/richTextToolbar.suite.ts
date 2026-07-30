@@ -158,8 +158,11 @@ describe('RichTextToolbar', () => {
   });
   it('waits until pointer selection finishes before showing the shared toolbar', async () => {
     const root = setup();
+    const editor = document.createElement('div');
+    editor.className = 'ql-editor';
+    root.appendChild(editor);
     const toolbar = new RichTextToolbar(root, commands());
-    root.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    editor.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     toolbar.update(
       true,
       { left: 30, top: 30, right: 90, bottom: 50, width: 60 },
@@ -185,6 +188,52 @@ describe('RichTextToolbar', () => {
     expect(root.querySelector<HTMLSelectElement>('[data-rich-field="size"]')?.value).toBe('');
     expect(root.querySelector<HTMLSelectElement>('[data-rich-field="font"]')?.selectedOptions[0]?.textContent).toBe('默认字体');
     expect(root.querySelector<HTMLSelectElement>('[data-rich-field="size"]')?.selectedOptions[0]?.textContent).toBe('自动');
+    toolbar.destroy();
+    root.remove();
+  });
+
+  it('does not republish the previous selection after pressing a different static node', async () => {
+    const root = setup();
+    const oldEditor = document.createElement('div');
+    oldEditor.className = 'ql-editor';
+    const nextNode = document.createElement('div');
+    nextNode.className = 'smm-node';
+    root.append(oldEditor, nextNode);
+    const toolbar = new RichTextToolbar(root, commands());
+    const element = root.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    const oldSession = { sessionId: 1, uid: 'old', selectionEpoch: 1 };
+    toolbar.update(
+      true,
+      { left: 30, top: 30, right: 90, bottom: 50, width: 60 },
+      {},
+      null,
+      oldSession,
+    );
+    expect(element.hidden).toBe(false);
+
+    nextNode.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    toolbar.update(
+      true,
+      { left: 30, top: 30, right: 90, bottom: 50, width: 60 },
+      {},
+      null,
+      oldSession,
+    );
+    window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    await new Promise((resolve) => window.setTimeout(resolve, 1));
+
+    expect(element.hidden).toBe(true);
+
+    toolbar.update(
+      true,
+      { left: 230, top: 230, right: 290, bottom: 250, width: 60 },
+      {},
+      null,
+      { sessionId: 2, uid: 'next', selectionEpoch: 1 },
+    );
+    expect(element.hidden).toBe(false);
+    expect(element.style.visibility).toBe('hidden');
+
     toolbar.destroy();
     root.remove();
   });
@@ -243,6 +292,99 @@ describe('RichTextToolbar', () => {
     root.remove();
   });
 
+  it('uses the reported current anchor while the newly opened toolbar is still hidden', () => {
+    const root = setup();
+    Object.defineProperties(root, {
+      clientWidth: { configurable: true, value: 900 },
+      clientHeight: { configurable: true, value: 600 },
+    });
+    root.getBoundingClientRect = () => ({
+      left: 100,
+      top: 100,
+      right: 1000,
+      bottom: 700,
+      width: 900,
+      height: 600,
+      x: 100,
+      y: 100,
+      toJSON: () => ({}),
+    });
+    const editor = document.createElement('div');
+    editor.className = 'ql-editor';
+    const selected = document.createTextNode('selected');
+    editor.appendChild(selected);
+    root.appendChild(editor);
+    const liveRect = {
+      left: 220,
+      top: 180,
+      right: 340,
+      bottom: 205,
+      width: 120,
+      height: 25,
+      x: 220,
+      y: 180,
+      toJSON: () => ({}),
+    };
+    const getSelection = vi.spyOn(window, 'getSelection').mockReturnValue({
+      anchorNode: selected,
+      isCollapsed: false,
+      rangeCount: 1,
+      getRangeAt: () => ({ getBoundingClientRect: () => liveRect }),
+    } as any);
+    const toolbar = new RichTextToolbar(root, commands());
+    const element = root.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    Object.defineProperties(element, {
+      scrollWidth: { configurable: true, value: 700 },
+      offsetHeight: { configurable: true, value: 48 },
+    });
+
+    toolbar.update(
+      true,
+      { left: 220, top: 360, right: 340, bottom: 390, width: 120 },
+      {},
+    );
+
+    expect(element.style.top).toBe('298px');
+    getSelection.mockRestore();
+    toolbar.destroy();
+    root.remove();
+  });
+
+  it('keeps the established below-selection placement when there is enough room', () => {
+    const root = setup();
+    Object.defineProperties(root, {
+      clientWidth: { configurable: true, value: 900 },
+      clientHeight: { configurable: true, value: 600 },
+    });
+    root.getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      right: 900,
+      bottom: 600,
+      width: 900,
+      height: 600,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    const toolbar = new RichTextToolbar(root, commands());
+    const element = root.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    Object.defineProperties(element, {
+      scrollWidth: { configurable: true, value: 700 },
+      offsetHeight: { configurable: true, value: 48 },
+    });
+
+    toolbar.update(
+      true,
+      { left: 220, top: 360, right: 340, bottom: 390, width: 120 },
+      {},
+    );
+
+    expect(element.style.top).toBe('398px');
+    toolbar.destroy();
+    root.remove();
+  });
+
   it('positions a hidden toolbar at the new anchor before making it visible', async () => {
     const root = setup();
     Object.defineProperties(root, {
@@ -296,6 +438,59 @@ describe('RichTextToolbar', () => {
       top: element.style.top,
     });
     toolbar.destroy();
+    root.remove();
+  });
+
+  it('keeps a newly opened toolbar visually hidden until its measured frame is committed', () => {
+    const root = setup();
+    Object.defineProperties(root, {
+      clientWidth: { configurable: true, value: 900 },
+      clientHeight: { configurable: true, value: 600 },
+    });
+    root.getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      right: 900,
+      bottom: 600,
+      width: 900,
+      height: 600,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    const frames: FrameRequestCallback[] = [];
+    const requestFrame = vi.spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback) => {
+        frames.push(callback);
+        return frames.length;
+      });
+    const cancelFrame = vi.spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation(() => undefined);
+    const toolbar = new RichTextToolbar(root, commands());
+    const element = root.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    Object.defineProperties(element, {
+      scrollWidth: { configurable: true, value: 700 },
+      offsetHeight: { configurable: true, value: 48 },
+    });
+
+    toolbar.update(
+      true,
+      { left: 220, top: 360, right: 340, bottom: 390, width: 120 },
+      {},
+    );
+
+    expect(element.hidden).toBe(false);
+    expect(element.style.visibility).toBe('hidden');
+    expect(frames).toHaveLength(1);
+    frames.shift()!(0);
+    expect(element.style.visibility).toBe('hidden');
+    expect(frames).toHaveLength(1);
+    frames.shift()!(16);
+    expect(element.style.visibility).toBe('');
+
+    toolbar.destroy();
+    requestFrame.mockRestore();
+    cancelFrame.mockRestore();
     root.remove();
   });
 
