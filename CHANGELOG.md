@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1 - 2026-07-30
+
+- Replaced independent SVG, Quill, geometry and toolbar transient flags with one monotonic canvas edit-session coordinator.
+- Kept the static SVG text visible until the replacement editor has both final geometry and meaningful content, then performed one atomic text-layer handoff.
+- Rejected stale animation-frame, Quill selection and toolbar callbacks from previous node-editing sessions.
+- Positioned the selected-text toolbar while hidden and ignored unrelated previous DOM ranges, eliminating the old-position flash before the current toolbar appears.
+- Added state-machine unit coverage and a 50-frame browser regression requiring exactly one visible text layer on every animation frame.
+
 ## 1.6.0 - 2026-07-30
 
 - Rebuilt canvas text editing around one geometry-ready transaction, removing the first-frame duplicate/shifted text layer and keeping multiline nodes stable while typing, pasting and resizing.

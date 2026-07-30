@@ -189,7 +189,7 @@ describe('RichTextToolbar', () => {
     root.remove();
   });
 
-  it('anchors to the live DOM selection instead of a stale engine rectangle', () => {
+  it('does not reuse a far-away DOM range from the previous selection session', () => {
     const root = setup();
     Object.defineProperties(root, {
       clientWidth: { configurable: true, value: 900 },
@@ -237,8 +237,64 @@ describe('RichTextToolbar', () => {
       {},
     );
 
-    expect(element.style.top).toBe('113px');
+    expect(element.style.top).toBe('298px');
     getSelection.mockRestore();
+    toolbar.destroy();
+    root.remove();
+  });
+
+  it('positions a hidden toolbar at the new anchor before making it visible', async () => {
+    const root = setup();
+    Object.defineProperties(root, {
+      clientWidth: { configurable: true, value: 900 },
+      clientHeight: { configurable: true, value: 600 },
+    });
+    root.getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      right: 900,
+      bottom: 600,
+      width: 900,
+      height: 600,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    const toolbar = new RichTextToolbar(root, commands());
+    const element = root.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    Object.defineProperties(element, {
+      scrollWidth: { configurable: true, value: 300 },
+      offsetHeight: { configurable: true, value: 44 },
+    });
+    element.style.left = '700px';
+    element.style.top = '500px';
+    const visibleSnapshots: Array<{ left: string; top: string }> = [];
+    const observer = new MutationObserver(() => {
+      if (!element.hidden) {
+        visibleSnapshots.push({
+          left: element.style.left,
+          top: element.style.top,
+        });
+      }
+    });
+    observer.observe(element, {
+      attributes: true,
+      attributeFilter: ['hidden', 'style'],
+    });
+
+    toolbar.update(
+      true,
+      { left: 100, top: 100, right: 160, bottom: 120, width: 60 },
+      {},
+    );
+    await Promise.resolve();
+    observer.disconnect();
+
+    expect(visibleSnapshots.length).toBeGreaterThan(0);
+    expect(visibleSnapshots[0]).toEqual({
+      left: element.style.left,
+      top: element.style.top,
+    });
     toolbar.destroy();
     root.remove();
   });

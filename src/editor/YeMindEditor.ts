@@ -1960,6 +1960,7 @@ export class YeMindEditor {
   private bindMapEvents(): void {
     if (!this.map) return;
     this.map.on("before_show_text_edit", () => {
+      this.richTextToolbar?.hide();
       this.claimCanvasInteraction("canvas-text-edit");
       this.canvasRightDrag?.cancel();
       queueMicrotask(() => synchronizeCanvasRichTextVisibility(this.map as any));
@@ -2052,12 +2053,14 @@ export class YeMindEditor {
         hasRange: boolean,
         rectInfo: Record<string, number> | null,
         formatInfo: Record<string, unknown> | null,
+        selectionSession: import("./CanvasEditSessionCoordinator").CanvasSelectionSession | null,
       ) => {
         this.richTextToolbar?.update(
           hasRange,
           rectInfo as any,
           formatInfo,
           this.commands,
+          selectionSession,
         );
       },
     );

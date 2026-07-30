@@ -265,6 +265,94 @@ test('the rich-text host stays hidden until its first geometry transaction is re
   expect(visibleBeforeReady).toEqual([]);
 });
 
+test('opening plain multiline text paints exactly one aligned text layer on every animation frame', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop atomic editor handoff regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  await rootNode.dblclick();
+  await textEditor.fill('电源、参考时钟、PERST#\n↓\nPCIe 子系统时钟和复位释放\n↓\n内部 PLL Lock');
+  await commitCanvasEdit(page);
+  await rootNode.evaluate((element) => element.setAttribute('data-atomic-edit-target', 'true'));
+
+  await page.evaluate(() => {
+    type Frame = {
+      staticVisible: boolean;
+      editorVisible: boolean;
+      editorReady: string | null;
+      editorText: string;
+      staticLeft: number;
+      editorLeft: number;
+      staticTop: number;
+      editorTop: number;
+    };
+    const frames: Frame[] = [];
+    let remaining = 0;
+    const painted = (element: Element | null): boolean => {
+      if (!(element instanceof Element)) return false;
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return style.display !== 'none'
+        && style.visibility !== 'hidden'
+        && Number(style.opacity || 1) > 0
+        && rect.width > 0
+        && rect.height > 0;
+    };
+    const capture = (): void => {
+      const target = document.querySelector<SVGGraphicsElement>('[data-atomic-edit-target="true"]');
+      const staticLayers = target
+        ? Array.from(target.querySelectorAll<Element>('.smm-text-node-wrap,.smm-richtext-node-wrap'))
+        : [];
+      const staticGroup = staticLayers[0]?.parentElement ?? null;
+      const host = document.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
+      const quill = host?.querySelector<HTMLElement>('.ql-editor') ?? null;
+      const staticRect = staticGroup?.getBoundingClientRect() ?? new DOMRect();
+      const editorRect = host?.getBoundingClientRect() ?? new DOMRect();
+      frames.push({
+        staticVisible: staticLayers.some((element) => painted(element)),
+        editorVisible: painted(host) && painted(quill) && Boolean(quill?.textContent),
+        editorReady: host?.dataset.yemindGeometryReady ?? null,
+        editorText: quill?.textContent ?? '',
+        staticLeft: staticRect.left,
+        editorLeft: editorRect.left,
+        staticTop: staticRect.top,
+        editorTop: editorRect.top,
+      });
+      remaining -= 1;
+      if (remaining > 0) requestAnimationFrame(capture);
+    };
+    (window as any).__yemindAtomicEditFrames = frames;
+    document.addEventListener('mousedown', () => {
+      remaining = 50;
+      requestAnimationFrame(capture);
+    }, { capture: true, once: true });
+  });
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeVisible();
+  await page.waitForTimeout(360);
+  const frames = await page.evaluate(() => (window as any).__yemindAtomicEditFrames as Array<{
+    staticVisible: boolean;
+    editorVisible: boolean;
+    editorReady: string | null;
+    editorText: string;
+    staticLeft: number;
+    editorLeft: number;
+    staticTop: number;
+    editorTop: number;
+  }>);
+  expect(frames.length).toBeGreaterThan(5);
+  frames.forEach((frame) => {
+    expect(Number(frame.staticVisible) + Number(frame.editorVisible)).toBe(1);
+    if (frame.editorVisible) {
+      expect(frame.editorText).toContain('电源、参考时钟、PERST#');
+      expect(Math.abs(frame.editorLeft - frame.staticLeft)).toBeLessThanOrEqual(8);
+      expect(Math.abs(frame.editorTop - frame.staticTop)).toBeLessThanOrEqual(8);
+    }
+  });
+});
+
 test('a newly inserted child receives one stable final editor placement', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop inserted-node placement regression');
   await resetWebApp(page);

@@ -1,10 +1,19 @@
 interface RichTextRuntime {
   textEditNode?: HTMLElement | null;
   node?: {
+    getData?: (key: string) => unknown;
     style?: { merge?: (key: string) => unknown };
-    _textData?: { nodeContent?: { node?: Element | null } };
+    _textData?: {
+      node?: { node?: Element | null };
+      nodeContent?: { node?: Element | null };
+    };
   } | null;
   showTextEdit?: boolean;
+  getEditSessionSnapshot?: () => {
+    phase?: string;
+    geometryReady?: boolean;
+    contentReady?: boolean;
+  };
 }
 
 interface MindMapRuntime {
@@ -12,13 +21,29 @@ interface MindMapRuntime {
   renderer?: { textEdit?: { getBackground?: (node: unknown) => unknown } } | null;
 }
 
-const hiddenStaticText = new WeakMap<object, HTMLElement[]>();
+interface HiddenStaticText {
+  element: HTMLElement | SVGElement;
+  visibility: string;
+  visibilityPriority: string;
+  ariaHidden: string | null;
+}
+
+const hiddenStaticText = new WeakMap<object, HiddenStaticText[]>();
 
 function restoreStaticText(map: MindMapRuntime): void {
   const previous = hiddenStaticText.get(map as object) ?? [];
-  previous.forEach((element) => {
-    element.hidden = false;
-    element.removeAttribute('aria-hidden');
+  previous.forEach((entry) => {
+    if (entry.visibility) {
+      entry.element.style.setProperty(
+        'visibility',
+        entry.visibility,
+        entry.visibilityPriority,
+      );
+    } else {
+      entry.element.style.removeProperty('visibility');
+    }
+    if (entry.ariaHidden === null) entry.element.removeAttribute('aria-hidden');
+    else entry.element.setAttribute('aria-hidden', entry.ariaHidden);
   });
   hiddenStaticText.delete(map as object);
 }
@@ -26,6 +51,27 @@ function restoreStaticText(map: MindMapRuntime): void {
 function cssColor(value: unknown, fallback: string): string {
   const text = typeof value === 'string' ? value.trim() : '';
   return text || fallback;
+}
+
+function replacementEditorReady(wrapper: HTMLElement, node: RichTextRuntime['node']): boolean {
+  if (wrapper.dataset.yemindGeometryReady !== 'true') return false;
+  if (wrapper.style.display === 'none') return false;
+  const editor = wrapper.querySelector<HTMLElement>('.ql-editor');
+  if (!editor) return false;
+  const sourceText = String(node?.getData?.('text') ?? '').trim();
+  if (!sourceText) return true;
+  if (String(editor.textContent ?? '').trim()) return true;
+  return Boolean(editor.querySelector('img,svg,.ql-formula,[data-yemind-formula]'));
+}
+
+function staticTextLayers(node: RichTextRuntime['node']): Array<HTMLElement | SVGElement> {
+  const group = node?._textData?.node?.node;
+  if (group instanceof HTMLElement || group instanceof SVGElement) return [group];
+  const content = node?._textData?.nodeContent?.node;
+  if (!content) return [];
+  return Array.from(
+    content.querySelectorAll<HTMLElement>('.smm-richtext-node-wrap'),
+  );
 }
 
 export function synchronizeCanvasRichTextVisibility(map: MindMapRuntime | null | undefined): boolean {
@@ -52,16 +98,29 @@ export function synchronizeCanvasRichTextVisibility(map: MindMapRuntime | null |
     element.style.setProperty('box-shadow', 'none', 'important');
     element.style.setProperty('background', 'transparent', 'important');
   });
-  if (runtime.showTextEdit === true && wrapper.style.display !== 'none') {
-    const content = node._textData?.nodeContent?.node;
-    const staticElements = content
-      ? Array.from(content.querySelectorAll<HTMLElement>('.smm-richtext-node-wrap'))
-      : [];
+  const session = runtime.getEditSessionSnapshot?.();
+  const sessionReady = !session || (
+    session.phase === 'active'
+    && session.geometryReady === true
+    && session.contentReady === true
+  );
+  if (
+    runtime.showTextEdit === true
+    && sessionReady
+    && replacementEditorReady(wrapper, node)
+  ) {
+    const staticElements = staticTextLayers(node);
+    const snapshots = staticElements.map((element) => ({
+      element,
+      visibility: element.style.getPropertyValue('visibility'),
+      visibilityPriority: element.style.getPropertyPriority('visibility'),
+      ariaHidden: element.getAttribute('aria-hidden'),
+    }));
     staticElements.forEach((element) => {
-      element.hidden = true;
+      element.style.setProperty('visibility', 'hidden', 'important');
       element.setAttribute('aria-hidden', 'true');
     });
-    if (staticElements.length > 0) hiddenStaticText.set(map as object, staticElements);
+    if (snapshots.length > 0) hiddenStaticText.set(map as object, snapshots);
   }
   return true;
 }

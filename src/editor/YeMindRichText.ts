@@ -15,6 +15,11 @@ import {
   snapshotRect,
   type ResolvedTextRect,
 } from './richTextGeometry';
+import {
+  CanvasEditSessionCoordinator,
+  type CanvasEditSessionSnapshot,
+  type CanvasSelectionSession,
+} from './CanvasEditSessionCoordinator';
 
 export const YEMIND_FONT_VALUES = [
   'sans-serif',
@@ -188,7 +193,7 @@ export function registerYeMindFormats(): void {
 export default class YeMindRichText extends (BaseRichText as any) {
   static instanceName = 'richText';
 
-  private editingUid = '';
+  private editSessions?: CanvasEditSessionCoordinator;
   private lastValidNodeRect: DOMRect | null = null;
   private lastRectSource: ResolvedTextRect['source'] | 'show-parameter' | 'last-valid' | 'none' = 'none';
   private placementFrame: number | null = null;
@@ -200,6 +205,64 @@ export default class YeMindRichText extends (BaseRichText as any) {
     if (!this.showTextEdit) return;
     this.schedulePlacementStabilization();
   };
+
+  private sessionCoordinator(): CanvasEditSessionCoordinator {
+    this.editSessions ??= new CanvasEditSessionCoordinator();
+    return this.editSessions;
+  }
+
+  private get editingUid(): string {
+    return this.sessionCoordinator().snapshot().uid;
+  }
+
+  private set editingUid(uid: string) {
+    const sessions = this.sessionCoordinator();
+    const current = sessions.snapshot();
+    const next = String(uid ?? '');
+    if (!next) {
+      if (current.phase !== 'idle') sessions.close(current.id);
+      return;
+    }
+    if (current.uid !== next || current.phase === 'idle') sessions.begin(next);
+  }
+
+  getEditSessionSnapshot(): Readonly<CanvasEditSessionSnapshot> {
+    return this.sessionCoordinator().snapshot();
+  }
+
+  private editorContentReady(): boolean {
+    const editor = (this.textEditNode as HTMLElement | null)
+      ?.querySelector<HTMLElement>('.ql-editor');
+    if (!editor) return false;
+    const sourceText = String(this.node?.getData?.('text') ?? '').trim();
+    if (!sourceText) return true;
+    return Boolean(
+      String(editor.textContent ?? '').trim()
+      || editor.querySelector('img,svg,.ql-formula,[data-yemind-formula]'),
+    );
+  }
+
+  private markCurrentEditorReady(): Readonly<CanvasEditSessionSnapshot> | null {
+    const sessions = this.sessionCoordinator();
+    const current = sessions.snapshot();
+    const host = this.textEditNode as HTMLElement | null;
+    const rect = host?.getBoundingClientRect?.();
+    return sessions.markEditorReady(current.id, {
+      geometryReady: Boolean(
+        host
+        && host.dataset.yemindGeometryReady === 'true'
+        && rect
+        && rect.width > 0.5
+        && rect.height > 0.5,
+      ),
+      contentReady: this.editorContentReady(),
+    });
+  }
+
+  private acceptCurrentSelection(): CanvasSelectionSession | null {
+    const sessions = this.sessionCoordinator();
+    return sessions.acceptSelection(sessions.snapshot().id);
+  }
 
   /**
    * The upstream RichText plugin migrates every plain node to `richText: true`
@@ -232,6 +295,8 @@ export default class YeMindRichText extends (BaseRichText as any) {
     const rect = liveGeometry?.rect ?? parameterRect ?? this.lastValidNodeRect;
 
     this.editingUid = uid || renderedNodeUid(liveNode);
+    const sessionId = this.sessionCoordinator().snapshot().id;
+    if (pendingHost) pendingHost.dataset.yemindEditSession = String(sessionId);
     if (rect) {
       this.lastValidNodeRect = snapshotRect(rect);
       this.lastRectSource = liveGeometry?.source ?? (parameterRect ? 'show-parameter' : 'last-valid');
@@ -249,7 +314,11 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.applyEditorHorizontalMargin(this.node, rect);
     this.normalizeEditorPlacement(rect);
     const readyHost = this.textEditNode as HTMLElement | null;
-    if (readyHost) readyHost.dataset.yemindGeometryReady = 'true';
+    if (readyHost) {
+      readyHost.dataset.yemindEditSession = String(sessionId);
+      readyHost.dataset.yemindGeometryReady = 'true';
+    }
+    this.markCurrentEditorReady();
     this.bindTextEditingKeyboard();
     this.bindPlacementTracking();
     // Existing nodes already have final SVG geometry; scheduling another
@@ -288,6 +357,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
       this.lastRectSource = 'last-valid';
     }
     this.applyEditorGeometry(liveNode, rect);
+    this.markCurrentEditorReady();
     this.emitEditingDiagnostic(geometry ? 'repositioned' : 'repositioned-from-anchor', {
       liveNodeResolved: Boolean(liveNode && liveNode !== previousNode),
       rectSource: this.lastRectSource,
@@ -376,7 +446,11 @@ export default class YeMindRichText extends (BaseRichText as any) {
     // settled. Newly inserted nodes keep the old behavior and do not show the
     // toolbar immediately.
     if (selectAll && length > 0 && !this.isInserting) {
-      window.requestAnimationFrame(() => this.emitCurrentSelectionChange());
+      const sessionId = this.sessionCoordinator().snapshot().id;
+      window.requestAnimationFrame(() => {
+        if (!this.sessionCoordinator().isCurrent(sessionId)) return;
+        this.emitCurrentSelectionChange();
+      });
     }
   }
 
@@ -394,9 +468,17 @@ export default class YeMindRichText extends (BaseRichText as any) {
       width: bounds.width,
     };
     const formatInfo = this.quill.getFormat(range.index, range.length);
+    const selectionSession = this.acceptCurrentSelection();
+    if (!selectionSession) return;
     this.range = range;
     this.pasteUseRange = range;
-    this.mindMap.emit('rich_text_selection_change', true, rectInfo, formatInfo);
+    this.mindMap.emit(
+      'rich_text_selection_change',
+      true,
+      rectInfo,
+      formatInfo,
+      selectionSession,
+    );
     this.emitEditingDiagnostic('initial-selection-toolbar', {
       index: range.index,
       length: range.length,
@@ -634,12 +716,18 @@ export default class YeMindRichText extends (BaseRichText as any) {
       formats: [...YEMIND_RICH_TEXT_FORMATS],
       theme: 'snow',
     });
+    const quillInstance = this.quill;
+    const quillSessionId = this.sessionCoordinator().snapshot().id;
 
     this.quill.root.addEventListener('copy', (event: ClipboardEvent) => {
       writeQuillSelectionToClipboard(this.quill, event, this.range ?? this.lastRange);
     });
 
     this.quill.on('selection-change', (range: any) => {
+      if (
+        this.quill !== quillInstance
+        || !this.sessionCoordinator().isCurrent(quillSessionId)
+      ) return;
       if (this.isInserting) {
         this.isInserting = false;
         return;
@@ -660,7 +748,16 @@ export default class YeMindRichText extends (BaseRichText as any) {
         const formatInfo = this.quill.getFormat(range.index, range.length);
         const hasRange = range.length > 0;
         if (hasRange) this.range = range;
-        this.mindMap.emit('rich_text_selection_change', hasRange, rectInfo, formatInfo);
+        const selectionSession = hasRange
+          ? this.sessionCoordinator().acceptSelection(quillSessionId)
+          : null;
+        this.mindMap.emit(
+          'rich_text_selection_change',
+          hasRange,
+          rectInfo,
+          formatInfo,
+          selectionSession,
+        );
       } else {
         this.mindMap.emit('rich_text_selection_change', false, null, null);
       }
@@ -670,6 +767,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
       if (source === Quill.sources.USER) {
         markNodeTextEditedData(this.node?.nodeData?.data ?? this.node?.getData?.());
       }
+      this.sessionCoordinator().advanceRevision(quillSessionId);
       this.emitLiveTextEditChange(this.pasteTransactionPending ? 'paste' : 'input');
     });
 

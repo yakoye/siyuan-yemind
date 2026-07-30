@@ -28,6 +28,7 @@ describe('v0.6.5 canvas rich-text visibility regression', () => {
   it('hides only the active node static text while its Quill editor is visible', () => {
     const wrapper = document.createElement('div');
     wrapper.style.display = 'block';
+    wrapper.dataset.yemindGeometryReady = 'true';
     wrapper.innerHTML = '<div class="ql-container"><div class="ql-editor">唯一编辑层</div></div>';
     const staticText = document.createElement('div');
     staticText.className = 'smm-richtext-node-wrap';
@@ -45,13 +46,68 @@ describe('v0.6.5 canvas rich-text visibility regression', () => {
     };
 
     expect(synchronizeCanvasRichTextVisibility(map as any)).toBe(true);
-    expect(staticText.hidden).toBe(true);
+    expect(staticText.style.visibility).toBe('hidden');
     expect(staticText.getAttribute('aria-hidden')).toBe('true');
 
     map.richText.showTextEdit = false;
     expect(synchronizeCanvasRichTextVisibility(map as any)).toBe(true);
-    expect(staticText.hidden).toBe(false);
+    expect(staticText.style.visibility).toBe('');
     expect(staticText.hasAttribute('aria-hidden')).toBe(false);
+  });
+
+  it('keeps the static text painted until the replacement editor has geometry and content', () => {
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'block';
+    wrapper.dataset.yemindGeometryReady = 'false';
+    wrapper.innerHTML = '<div class="ql-container"><div class="ql-editor"></div></div>';
+    const staticText = document.createElement('div');
+    staticText.className = 'smm-richtext-node-wrap';
+    staticText.textContent = '交接期间不能出现空白帧';
+    const foreignObject = document.createElement('foreignObject');
+    foreignObject.append(staticText);
+    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    group.append(foreignObject);
+    const node = {
+      style: { merge: () => '#1f2937' },
+      _textData: {
+        node: { node: group },
+        nodeContent: { node: foreignObject },
+      },
+    };
+    const map = {
+      richText: { textEditNode: wrapper, node, showTextEdit: true },
+      renderer: { textEdit: { getBackground: () => '#ffffff' } },
+    };
+
+    synchronizeCanvasRichTextVisibility(map as any);
+
+    expect(group.style.visibility).not.toBe('hidden');
+    expect(staticText.hidden).toBe(false);
+  });
+
+  it('hides the complete plain SVG text group after the replacement editor is ready', () => {
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'block';
+    wrapper.dataset.yemindGeometryReady = 'true';
+    wrapper.innerHTML = '<div class="ql-container"><div class="ql-editor">唯一编辑层</div></div>';
+    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const staticLine = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    staticLine.classList.add('smm-text-node-wrap');
+    staticLine.textContent = '不能与编辑器重影';
+    group.append(staticLine);
+    const node = {
+      style: { merge: () => '#1f2937' },
+      _textData: { node: { node: group } },
+    };
+    const map = {
+      richText: { textEditNode: wrapper, node, showTextEdit: true },
+      renderer: { textEdit: { getBackground: () => '#ffffff' } },
+    };
+
+    synchronizeCanvasRichTextVisibility(map as any);
+
+    expect(group.style.visibility).toBe('hidden');
+    expect(group.getAttribute('aria-hidden')).toBe('true');
   });
 });
 

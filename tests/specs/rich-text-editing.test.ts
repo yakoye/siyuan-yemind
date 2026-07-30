@@ -15,3 +15,4 @@ import '../suites/rich-text-editing/v0913MeasurementHost.suite';
 import '../suites/rich-text-editing/v0914MeasurementGeometry.suite';
 import '../suites/rich-text-editing/v0924FormulaIcon.suite';
 import '../suites/rich-text-editing/v151RenderLifecycle.suite';
+import '../suites/rich-text-editing/v160CanvasEditSession.suite';

@@ -7,6 +7,7 @@ import {
 import type { RichTextFormattingTarget } from "./richTextTarget";
 import { parseEditableColor, presentColor } from "./colorPresentation";
 import { colorPaletteInnerHtml } from "./colorPalette";
+import type { CanvasSelectionSession } from "./CanvasEditSessionCoordinator";
 
 export interface RichTextSelectionRect {
   left: number;
@@ -55,12 +56,14 @@ export class RichTextToolbar {
     rectInfo: RichTextSelectionRect | null;
     formatInfo: Record<string, unknown> | null;
     target: RichTextFormattingTarget | null;
+    session: CanvasSelectionSession | null;
   } | null = null;
   private target: RichTextFormattingTarget | null = null;
   private activeColorKind: ColorKind = "color";
   private colorSessionOriginal: string | false = false;
   private anchorFrame = 0;
   private lastReportedRect: RichTextSelectionRect | null = null;
+  private selectionSessionId = 0;
   private readonly onDocumentMouseDown = (event: MouseEvent): void => {
     const node = event.target as Node;
     if (this.element.contains(node) || this.colorPopover.contains(node)) return;
@@ -79,6 +82,7 @@ export class RichTextToolbar {
           pending.rectInfo,
           pending.formatInfo,
           pending.target,
+          pending.session,
         );
       }
     }, 0);
@@ -144,6 +148,7 @@ export class RichTextToolbar {
     rectInfo?: RichTextSelectionRect | null,
     formatInfo?: Record<string, unknown> | null,
     target?: RichTextFormattingTarget | null,
+    session?: CanvasSelectionSession | null,
   ): void {
     if (target) this.target = target;
     if (this.selecting && !this.interacting) {
@@ -152,10 +157,17 @@ export class RichTextToolbar {
         rectInfo: rectInfo ?? null,
         formatInfo: formatInfo ?? null,
         target: target ?? this.target,
+        session: session ?? null,
       };
       return;
     }
-    this.applyUpdate(hasRange, rectInfo ?? null, formatInfo ?? null, target ?? null);
+    this.applyUpdate(
+      hasRange,
+      rectInfo ?? null,
+      formatInfo ?? null,
+      target ?? null,
+      session ?? null,
+    );
   }
 
   private applyUpdate(
@@ -163,7 +175,12 @@ export class RichTextToolbar {
     rectInfo: RichTextSelectionRect | null,
     formatInfo: Record<string, unknown> | null,
     target: RichTextFormattingTarget | null,
+    session: CanvasSelectionSession | null,
   ): void {
+    if (session && session.sessionId !== this.selectionSessionId) {
+      this.hide();
+      this.selectionSessionId = session.sessionId;
+    }
     if (target) this.target = target;
     if (!this.enabled) {
       this.hide();
@@ -175,9 +192,15 @@ export class RichTextToolbar {
     }
     this.formatInfo = formatInfo ?? {};
     this.syncState();
-    this.element.hidden = false;
     this.lastReportedRect = rectInfo;
-    this.position(rectInfo);
+    const wasHidden = this.element.hidden;
+    const previousVisibility = this.element.style.visibility;
+    if (wasHidden) {
+      this.element.style.visibility = "hidden";
+      this.element.hidden = false;
+    }
+    this.position(rectInfo, false);
+    if (wasHidden) this.element.style.visibility = previousVisibility;
     this.trackLiveSelection();
   }
 
@@ -196,6 +219,7 @@ export class RichTextToolbar {
     this.element.remove();
     this.colorPopover.remove();
     this.target = null;
+    this.selectionSessionId = 0;
   }
 
   private bind(): void {
@@ -521,7 +545,7 @@ export class RichTextToolbar {
     if (syncInputs) this.syncColorReadout();
   }
 
-  private position(rect: RichTextSelectionRect): void {
+  private position(rect: RichTextSelectionRect, allowLiveSelection = true): void {
     const selection = window.getSelection();
     if (
       selection &&
@@ -530,7 +554,19 @@ export class RichTextToolbar {
       this.root.contains(selection.anchorNode)
     ) {
       const live = selection.getRangeAt(0).getBoundingClientRect();
-      if (live && (live.width || live.height)) {
+      const reportedCenterX = rect.left + (rect.width ?? rect.right - rect.left) / 2;
+      const reportedCenterY = rect.top + (rect.bottom - rect.top) / 2;
+      const liveCenterX = live.left + live.width / 2;
+      const liveCenterY = live.top + live.height / 2;
+      const relatedToleranceX = Math.max(48, live.width, rect.width ?? 0);
+      const relatedToleranceY = Math.max(48, live.height, rect.bottom - rect.top);
+      if (
+        allowLiveSelection
+        && live
+        && (live.width || live.height)
+        && Math.abs(liveCenterX - reportedCenterX) <= relatedToleranceX
+        && Math.abs(liveCenterY - reportedCenterY) <= relatedToleranceY
+      ) {
         rect = {
           left: live.left,
           top: live.top,
@@ -578,7 +614,7 @@ export class RichTextToolbar {
     const update = (): void => {
       this.anchorFrame = 0;
       if (this.element.hidden || !this.lastReportedRect) return;
-      this.position(this.lastReportedRect);
+      this.position(this.lastReportedRect, true);
       this.anchorFrame = window.requestAnimationFrame(update);
     };
     this.anchorFrame = window.requestAnimationFrame(update);
