@@ -6863,7 +6863,7 @@ const LEGACY_ICON_LABELS$1 = {
   priority_2: "2",
   priority_3: "3"
 };
-function escapeAttribute$2(value) {
+function escapeAttribute$3(value) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 function cssPropertyName$1(value) {
@@ -6912,17 +6912,17 @@ function iconHtml(value, pluginBaseUrl) {
   const marker = markerItemFromValue(value);
   if (marker) {
     const style = styleAttribute$1(compactMarkerButtonStyle(pluginBaseUrl, marker));
-    return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon-action data-outline-icon="${escapeAttribute$2(value)}" tabindex="-1" title="${escapeAttribute$2(marker.groupLabel)} ${marker.orderInGroup}" aria-label="修改图标" style="${escapeAttribute$2(style)}"></button>`;
+    return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--marker" data-outline-icon-action data-outline-icon="${escapeAttribute$3(value)}" tabindex="-1" title="${escapeAttribute$3(marker.groupLabel)} ${marker.orderInGroup}" aria-label="修改图标" style="${escapeAttribute$3(style)}"></button>`;
   }
   const label = LEGACY_ICON_LABELS$1[value] ?? "•";
-  return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon-action data-outline-icon="${escapeAttribute$2(value)}" tabindex="-1" title="${escapeAttribute$2(value)}" aria-label="修改图标">${escapeAttribute$2(label)}</button>`;
+  return `<button type="button" class="ymz-outline-accessories__icon ymz-outline-accessories__icon--legacy" data-outline-icon-action data-outline-icon="${escapeAttribute$3(value)}" tabindex="-1" title="${escapeAttribute$3(value)}" aria-label="修改图标">${escapeAttribute$3(label)}</button>`;
 }
 function symbolIcon$1(symbol) {
-  const safe = escapeAttribute$2(symbol);
+  const safe = escapeAttribute$3(symbol);
   return `<svg aria-hidden="true" focusable="false"><use href="#${safe}" xlink:href="#${safe}"></use></svg>`;
 }
 function statusButton(type, title, label) {
-  return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute$2(type)}" data-outline-content="${escapeAttribute$2(type)}" tabindex="-1" aria-label="${escapeAttribute$2(title)}">${label}</button>`;
+  return `<button type="button" class="ymz-outline-accessories__status ymz-outline-accessories__status--${escapeAttribute$3(type)}" data-outline-content="${escapeAttribute$3(type)}" tabindex="-1" aria-label="${escapeAttribute$3(title)}">${label}</button>`;
 }
 function outlineMediaChrome(kind) {
   const handles = ["nw", "n", "ne", "e", "se", "s", "sw", "w"].map((direction) => `<span class="ymz-outline-media-handle" data-outline-media-handle="${direction}" aria-hidden="true"></span>`).join("");
@@ -6934,8 +6934,8 @@ function outlineAccessoriesHtml(accessories, pluginBaseUrl) {
   if (!hasAny) return "";
   const todo = accessories.todo ? `<button type="button" class="ymz-outline-accessories__todo${accessories.todo.checked ? " is-checked" : ""}" data-outline-todo-action tabindex="-1" title="${accessories.todo.checked ? "待办已完成" : "待办未完成"}" aria-label="${accessories.todo.checked ? "待办已完成" : "待办未完成"}">${accessories.todo.checked ? "✓" : ""}</button>` : "";
   const icons = accessories.icons.map((value) => iconHtml(value, pluginBaseUrl)).join("");
-  const image = accessories.image ? `<span role="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? " is-clipart" : ""}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? "clipart" : "image"}" tabindex="-1" title="${escapeAttribute$2(accessories.image.title || (accessories.image.clipartId ? "剪贴图：单击选择，双击预览" : "图片：单击选择，双击预览"))}"><img src="${escapeAttribute$2(accessories.image.url)}" alt="" loading="lazy" draggable="false">${outlineMediaChrome(accessories.image.clipartId ? "clipart" : "image")}</span>` : "";
-  const tags = accessories.tags.length ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute$2(accessories.tags.join("、"))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute$2(tag)}</span>`).join("")}</span>` : "";
+  const image = accessories.image ? `<span role="button" class="ymz-outline-accessories__image${accessories.image.clipartId ? " is-clipart" : ""}" data-outline-image-action data-outline-image-kind="${accessories.image.clipartId ? "clipart" : "image"}" tabindex="-1" title="${escapeAttribute$3(accessories.image.title || (accessories.image.clipartId ? "剪贴图：单击选择，双击预览" : "图片：单击选择，双击预览"))}"><img src="${escapeAttribute$3(accessories.image.url)}" alt="" loading="lazy" draggable="false">${outlineMediaChrome(accessories.image.clipartId ? "clipart" : "image")}</span>` : "";
+  const tags = accessories.tags.length ? `<span class="ymz-outline-accessories__tags" data-outline-content="tags" aria-label="标签：${escapeAttribute$3(accessories.tags.join("、"))}">${accessories.tags.slice(0, 2).map((tag) => `<span>${escapeAttribute$3(tag)}</span>`).join("")}</span>` : "";
   const note2 = accessories.hasNote ? statusButton("note", "备注", symbolIcon$1("iconYeMindNote")) : "";
   const comments = accessories.commentCount ? statusButton("comments", `批注 ${accessories.commentCount}`, symbolIcon$1("iconYeMindComment")) : "";
   const link = accessories.link ? statusButton("link", accessories.link, "↗") : "";
@@ -7673,21 +7673,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.6.3";
+const PLUGIN_VERSION = "1.7.0";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "d81b62fe-clean",
-  time: "2026-07-30T20:47:52+08:00"
+  id: "55918498-clean",
+  time: "2026-07-31T00:51:43+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-30T10:46:06.323Z",
-  buildId: "yemind-v1.6.3-20260730",
+  buildTime: "2026-07-30T16:49:40.105Z",
+  buildId: "yemind-v1.7.0-20260730",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -29141,9 +29141,14 @@ function candidateFromPlugin(plugin) {
   return emptyOfficialDragCandidate();
 }
 function applyCandidate(plugin, candidate) {
+  var _a, _b;
   plugin.overlapNode = candidate.overlapNode;
   plugin.prevNode = candidate.prevNode;
   plugin.nextNode = candidate.nextNode;
+  (_b = (_a = plugin.clone) == null ? void 0 : _a.attr) == null ? void 0 : _b.call(_a, {
+    "data-drop-kind": candidate.kind,
+    "data-drop-target-uid": nodeUid(candidate.targetNode ?? candidate.parentNode)
+  });
 }
 function animationNow() {
   return typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
@@ -79142,6 +79147,319 @@ const ICONS = {
 function resourceActionIcon(name) {
   return ICONS[name];
 }
+function escapeAttribute$2(value) {
+  return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+function normalizedResource(resource) {
+  return {
+    kind: resource.kind === "clipart" ? "clipart" : "image",
+    source: String(resource.source ?? "").trim(),
+    title: String(resource.title ?? "").trim()
+  };
+}
+function resourcePlainText(resource) {
+  return resource.title || resource.source;
+}
+function resourceHtml(resource) {
+  const source = escapeAttribute$2(resource.source);
+  const title = escapeAttribute$2(resource.title);
+  return `<img src="${source}" alt="${title}" data-yemind-resource-kind="${resource.kind}">`;
+}
+function isSafeImageSource(value) {
+  const source = value.trim();
+  if (!source) return false;
+  if (/^data:image\//i.test(source) || /^blob:/i.test(source)) return true;
+  try {
+    const url = new URL(source, typeof document === "undefined" ? "https://yemind.invalid/" : document.baseURI);
+    return url.protocol === "http:" || url.protocol === "https:" || url.protocol === "file:";
+  } catch {
+    return false;
+  }
+}
+async function defaultFetchBlob(source) {
+  const response = await fetch(source);
+  if (!response.ok) throw new Error(`Image clipboard request failed: ${response.status}`);
+  return response.blob();
+}
+function writeImageResourceToTransfer(input, transfer) {
+  const resource = normalizedResource(input);
+  transfer.setData("text/plain", resourcePlainText(resource));
+  transfer.setData("text/html", resourceHtml(resource));
+}
+function readImageResourceFromTransfer(transfer) {
+  const html2 = String((transfer == null ? void 0 : transfer.getData("text/html")) ?? "").trim();
+  if (!html2) return null;
+  const template = document.createElement("template");
+  template.innerHTML = html2;
+  const image = template.content.querySelector("img[src]");
+  const source = String((image == null ? void 0 : image.getAttribute("src")) ?? "").trim();
+  if (!image || !isSafeImageSource(source)) return null;
+  return {
+    kind: image.dataset.yemindResourceKind === "clipart" ? "clipart" : "image",
+    source,
+    title: String(image.getAttribute("alt") ?? image.getAttribute("title") ?? "").trim()
+  };
+}
+async function writeImageResourceToClipboard(input, options = {}) {
+  const resource = normalizedResource(input);
+  const clipboard = options.clipboard ?? (typeof navigator !== "undefined" ? navigator.clipboard : null);
+  const ClipboardItemCtor = options.ClipboardItemCtor ?? (typeof ClipboardItem === "function" ? ClipboardItem : null);
+  const fetchBlob = options.fetchBlob ?? defaultFetchBlob;
+  const plain2 = resourcePlainText(resource);
+  const html2 = resourceHtml(resource);
+  if (resource.source && (clipboard == null ? void 0 : clipboard.write) && ClipboardItemCtor) {
+    try {
+      const image = await fetchBlob(resource.source);
+      const imageType = image.type.startsWith("image/") ? image.type : "image/png";
+      await clipboard.write([new ClipboardItemCtor({
+        [imageType]: image,
+        "text/html": new Blob([html2], { type: "text/html" }),
+        "text/plain": new Blob([plain2], { type: "text/plain" })
+      })]);
+      return "binary";
+    } catch {
+    }
+  }
+  if (clipboard == null ? void 0 : clipboard.writeText) {
+    await clipboard.writeText(plain2);
+    return "text";
+  }
+  return "none";
+}
+const YEMIND_NODE_CLIPBOARD_MIME = "application/x-yemind-nodes+json";
+const PRESENTATION_DATA_KEYS = /* @__PURE__ */ new Set([
+  "backgroundColor",
+  "borderColor",
+  "borderDasharray",
+  "borderRadius",
+  "borderWidth",
+  "color",
+  "customTextWidth",
+  "fillColor",
+  "fontFamily",
+  "fontSize",
+  "fontStyle",
+  "fontWeight",
+  "gradientStyle",
+  "height",
+  "lineColor",
+  "lineDasharray",
+  "lineFlow",
+  "lineStyle",
+  "lineWidth",
+  "opacity",
+  "shadow",
+  "shape",
+  "textAlign",
+  "textDecoration",
+  "width",
+  "yemindImportedAutoWidth"
+]);
+const PRESENTATION_STYLE_PROPERTIES = [
+  "background",
+  "background-color",
+  "border",
+  "border-color",
+  "border-radius",
+  "border-style",
+  "border-width",
+  "box-shadow",
+  "color",
+  "font-family",
+  "font-size",
+  "letter-spacing",
+  "line-height",
+  "opacity",
+  "text-shadow",
+  "text-align"
+];
+let sharedPayload = null;
+function semanticClasses(value) {
+  return value.split(/\s+/).filter(Boolean).filter((name) => !/^ql-(?:align|background|color|font|size)-/.test(name)).join(" ");
+}
+function comparableClipboardText(value) {
+  return value.replace(/\r\n?/g, "\n").replace(/[\t \u00a0]+$/gm, "").replace(/\n+$/, "");
+}
+function cloneTree$2(tree, removeIdentity = false) {
+  const data2 = structuredClone(tree.data);
+  if (removeIdentity) {
+    delete data2.uid;
+    delete data2.isActive;
+    delete data2.inserting;
+  }
+  return {
+    data: data2,
+    children: (tree.children ?? []).map((child) => cloneTree$2(child, removeIdentity))
+  };
+}
+function isSurface(value) {
+  return value === "canvas" || value === "outline";
+}
+function validTree(value) {
+  if (!value || typeof value !== "object") return false;
+  const tree = value;
+  return Boolean(tree.data && typeof tree.data === "object" && Array.isArray(tree.children));
+}
+function parsePayload(value) {
+  if (!value || typeof value !== "object") return null;
+  const payload = value;
+  if (payload.version !== 1 || typeof payload.sourceDocumentId !== "string" || !isSurface(payload.sourceSurface) || !Array.isArray(payload.nodes) || !payload.nodes.every(validTree)) return null;
+  return {
+    version: 1,
+    sourceDocumentId: payload.sourceDocumentId,
+    sourceSurface: payload.sourceSurface,
+    createdAt: Number.isFinite(payload.createdAt) ? Number(payload.createdAt) : Date.now(),
+    nodes: payload.nodes.map((tree) => cloneTree$2(tree))
+  };
+}
+function semanticHtmlWithoutPresentation(value) {
+  const source = sanitizeRichHtml(String(value ?? ""));
+  if (!source || typeof document === "undefined") {
+    return source.replace(/\s+style=(?:"[^"]*"|'[^']*')/gi, "").replace(/\s+class=(["'])(.*?)\1/gi, (_match, quote, classes2) => {
+      const kept = semanticClasses(classes2);
+      return kept ? ` class=${quote}${kept}${quote}` : "";
+    });
+  }
+  const template = document.createElement("template");
+  template.innerHTML = source;
+  template.content.querySelectorAll("*").forEach((element) => {
+    var _a;
+    PRESENTATION_STYLE_PROPERTIES.forEach((property) => element.style.removeProperty(property));
+    if (!((_a = element.getAttribute("style")) == null ? void 0 : _a.trim())) element.removeAttribute("style");
+    const classes2 = semanticClasses(element.className);
+    if (classes2) element.className = classes2;
+    else element.removeAttribute("class");
+  });
+  return template.innerHTML;
+}
+function stripTreePresentation(tree) {
+  const data2 = structuredClone(tree.data);
+  PRESENTATION_DATA_KEYS.forEach((key) => delete data2[key]);
+  if (data2.richText === true) data2.text = semanticHtmlWithoutPresentation(data2.text);
+  return {
+    data: data2,
+    children: (tree.children ?? []).map(stripTreePresentation)
+  };
+}
+function plainNodeText(tree) {
+  var _a, _b;
+  const source = String(((_a = tree.data) == null ? void 0 : _a.text) ?? "");
+  return ((_b = tree.data) == null ? void 0 : _b.richText) === true ? structuredOutlineHtmlToText(source) : source;
+}
+function flattenTree(tree, depth, lines) {
+  var _a;
+  const text2 = plainNodeText(tree);
+  const html2 = ((_a = tree.data) == null ? void 0 : _a.richText) === true ? sanitizeRichHtml(String(tree.data.text ?? "")) : text2.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br>");
+  lines.push({ depth, text: text2, html: html2 });
+  (tree.children ?? []).forEach((child) => flattenTree(child, depth + 1, lines));
+}
+function createNodeClipboardPayload(options) {
+  return {
+    version: 1,
+    sourceDocumentId: String(options.sourceDocumentId ?? ""),
+    sourceSurface: options.sourceSurface,
+    createdAt: Date.now(),
+    nodes: options.nodes.map((tree) => cloneTree$2(tree, true))
+  };
+}
+function prepareNodeClipboardForDestination(payload, destinationDocumentId, _destinationSurface) {
+  const sameDocument = payload.sourceDocumentId === String(destinationDocumentId ?? "");
+  return {
+    ...payload,
+    nodes: payload.nodes.map((tree) => sameDocument ? cloneTree$2(tree) : stripTreePresentation(tree))
+  };
+}
+function nodeClipboardToOutline(payload) {
+  const lines = [];
+  payload.nodes.forEach((tree) => flattenTree(tree, 0, lines));
+  return {
+    text: lines.map((line) => `${"    ".repeat(line.depth)}${line.text}`).join("\n"),
+    lines
+  };
+}
+function publishNodeClipboard(payload, transfer) {
+  var _a;
+  sharedPayload = parsePayload(payload);
+  (_a = transfer == null ? void 0 : transfer.setData) == null ? void 0 : _a.call(transfer, YEMIND_NODE_CLIPBOARD_MIME, JSON.stringify(payload));
+}
+function readNodeClipboard(transfer, allowSharedFallback = true) {
+  var _a;
+  const serialized = ((_a = transfer == null ? void 0 : transfer.getData) == null ? void 0 : _a.call(transfer, YEMIND_NODE_CLIPBOARD_MIME)) ?? "";
+  if (serialized) {
+    try {
+      const parsed2 = parsePayload(JSON.parse(serialized));
+      if (parsed2) {
+        sharedPayload = parsed2;
+        return parsed2;
+      }
+    } catch {
+    }
+  }
+  if (!allowSharedFallback || !sharedPayload) return null;
+  const parsed = parsePayload(sharedPayload);
+  if (!parsed) return null;
+  if (transfer) {
+    const plain2 = transfer.getData("text/plain");
+    if (!plain2 || comparableClipboardText(plain2) !== comparableClipboardText(nodeClipboardToOutline(parsed).text)) return null;
+  }
+  return parsed;
+}
+function clearNodeClipboard() {
+  sharedPayload = null;
+}
+function bindCanvasNodeClipboard(renderer, getDocumentId) {
+  if (!renderer || renderer.__yemindNodeClipboardBound === true) return () => void 0;
+  const originalCopy = typeof renderer.copy === "function" ? renderer.copy.bind(renderer) : null;
+  const originalCut = typeof renderer.cut === "function" ? renderer.cut.bind(renderer) : null;
+  const originalPaste = typeof renderer.paste === "function" ? renderer.paste.bind(renderer) : null;
+  renderer.__yemindNodeClipboardBound = true;
+  const publishCurrent = () => {
+    var _a, _b;
+    const nodes = Array.isArray(renderer.beingCopyData) ? renderer.beingCopyData : [];
+    if (nodes.length === 0) return;
+    const payload = createNodeClipboardPayload({
+      sourceDocumentId: getDocumentId(),
+      sourceSurface: "canvas",
+      nodes
+    });
+    publishNodeClipboard(payload);
+    const plain2 = nodeClipboardToOutline(payload).text;
+    const write = typeof navigator !== "undefined" ? (_b = (_a = navigator.clipboard) == null ? void 0 : _a.writeText) == null ? void 0 : _b.call(_a, plain2) : null;
+    if (write && typeof write.catch === "function") {
+      void write.catch(() => void 0);
+    }
+  };
+  if (originalCopy) {
+    renderer.copy = (...args) => {
+      const result = originalCopy(...args);
+      publishCurrent();
+      return result;
+    };
+  }
+  if (originalCut) {
+    renderer.cut = (...args) => {
+      const result = originalCut(...args);
+      publishCurrent();
+      return result;
+    };
+  }
+  if (originalPaste) {
+    renderer.paste = async (...args) => {
+      const payload = readNodeClipboard();
+      if (payload == null ? void 0 : payload.nodes.length) {
+        const prepared = prepareNodeClipboardForDestination(payload, getDocumentId());
+        renderer.beingCopyData = prepared.nodes;
+      }
+      return originalPaste(...args);
+    };
+  }
+  return () => {
+    if (originalCopy) renderer.copy = originalCopy;
+    if (originalCut) renderer.cut = originalCut;
+    if (originalPaste) renderer.paste = originalPaste;
+    delete renderer.__yemindNodeClipboardBound;
+  };
+}
 const RESIZE_HANDLES = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
 const CLIPART_SINGLE_CLICK_DELAY = 380;
 const BaseNodeImgAdjust = NodeImgAdjust;
@@ -79553,6 +79871,35 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
   onNodeActive(node) {
     if (this.imageSelected && node && node !== this.node) this.closeImageSelection();
   }
+  clipboardResourceForNode(node) {
+    var _a, _b, _c2;
+    if (!node) return null;
+    const source = String(((_a = node.getData) == null ? void 0 : _a.call(node, "image")) ?? "").trim();
+    if (!source) return null;
+    return {
+      kind: ((_b = node.getData) == null ? void 0 : _b.call(node, "yemindClipartId")) ? "clipart" : "image",
+      source,
+      title: String(((_c2 = node.getData) == null ? void 0 : _c2.call(node, "imageTitle")) ?? "").trim()
+    };
+  }
+  getSelectedClipboardResource() {
+    return this.imageSelected ? this.clipboardResourceForNode(this.node) : null;
+  }
+  getClipboardResourceForTarget(target, node = this.node) {
+    var _a, _b, _c2;
+    if (!node || !target) return null;
+    const element = target instanceof Element ? target : null;
+    const nodeImage = (_b = (_a = node == null ? void 0 : node._imgData) == null ? void 0 : _a.node) == null ? void 0 : _b.node;
+    const renderedImage = nodeImage instanceof Element ? nodeImage : node === this.node && ((_c2 = this.img) == null ? void 0 : _c2.node) instanceof Element ? this.img.node : null;
+    const frame = node === this.node ? this.handleEl : null;
+    const directlyTargetsImage = Boolean(
+      renderedImage && element && (element === renderedImage || renderedImage.contains(element))
+    );
+    const directlyTargetsFrame = Boolean(
+      frame && element && (element === frame || frame.contains(element))
+    );
+    return directlyTargetsImage || directlyTargetsFrame ? this.clipboardResourceForNode(node) : null;
+  }
   onCanvasInteraction() {
     this.closeImageSelection();
   }
@@ -79571,17 +79918,31 @@ class YeMindNodeImgAdjust extends BaseNodeImgAdjust {
     this.hostResizeObserver.observe(host);
   }
   onKeydownCapture(event) {
-    var _a, _b, _c2, _d2;
+    var _a, _b, _c2, _d2, _e;
     if (!this.imageSelected || this.mindMap.opt.readonly) return;
+    const host = this.mindMap.opt.customInnerElsAppendTo;
+    if (host instanceof Element && !host.isConnected) return;
     const editor = (_b = (_a = this.handleEl) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".ymz-editor");
     if (editor && editor.getClientRects().length === 0) return;
+    const target = event.target;
+    const editableTarget = Boolean((_c2 = target == null ? void 0 : target.closest) == null ? void 0 : _c2.call(target, 'input,textarea,select,[contenteditable="true"],.ql-editor'));
+    const command = event.ctrlKey || event.metaKey;
+    if (command && !event.altKey && event.key.toLowerCase() === "c" && !editableTarget) {
+      const resource = this.getSelectedClipboardResource();
+      if (!resource) return;
+      event.preventDefault();
+      event.stopPropagation();
+      (_d2 = event.stopImmediatePropagation) == null ? void 0 : _d2.call(event);
+      clearNodeClipboard();
+      void writeImageResourceToClipboard(resource);
+      return;
+    }
     if (event.key !== "Delete" && event.key !== "Backspace") return;
     if (event.ctrlKey || event.metaKey || event.altKey) return;
-    const target = event.target;
-    if ((_c2 = target == null ? void 0 : target.closest) == null ? void 0 : _c2.call(target, 'input,textarea,select,[contenteditable="true"],.ql-editor')) return;
+    if (editableTarget) return;
     event.preventDefault();
     event.stopPropagation();
-    (_d2 = event.stopImmediatePropagation) == null ? void 0 : _d2.call(event);
+    (_e = event.stopImmediatePropagation) == null ? void 0 : _e.call(event);
     void this.deleteSelectedImage();
   }
   startResize(direction, event) {
@@ -80627,240 +80988,6 @@ class RichText {
   }
 }
 RichText.instanceName = "richText";
-const YEMIND_NODE_CLIPBOARD_MIME = "application/x-yemind-nodes+json";
-const PRESENTATION_DATA_KEYS = /* @__PURE__ */ new Set([
-  "backgroundColor",
-  "borderColor",
-  "borderDasharray",
-  "borderRadius",
-  "borderWidth",
-  "color",
-  "customTextWidth",
-  "fillColor",
-  "fontFamily",
-  "fontSize",
-  "fontStyle",
-  "fontWeight",
-  "gradientStyle",
-  "height",
-  "lineColor",
-  "lineDasharray",
-  "lineFlow",
-  "lineStyle",
-  "lineWidth",
-  "opacity",
-  "shadow",
-  "shape",
-  "textAlign",
-  "textDecoration",
-  "width",
-  "yemindImportedAutoWidth"
-]);
-const PRESENTATION_STYLE_PROPERTIES = [
-  "background",
-  "background-color",
-  "border",
-  "border-color",
-  "border-radius",
-  "border-style",
-  "border-width",
-  "box-shadow",
-  "color",
-  "font-family",
-  "font-size",
-  "letter-spacing",
-  "line-height",
-  "opacity",
-  "text-shadow",
-  "text-align"
-];
-let sharedPayload = null;
-function semanticClasses(value) {
-  return value.split(/\s+/).filter(Boolean).filter((name) => !/^ql-(?:align|background|color|font|size)-/.test(name)).join(" ");
-}
-function comparableClipboardText(value) {
-  return value.replace(/\r\n?/g, "\n").replace(/[\t \u00a0]+$/gm, "").replace(/\n+$/, "");
-}
-function cloneTree$2(tree, removeIdentity = false) {
-  const data2 = structuredClone(tree.data);
-  if (removeIdentity) {
-    delete data2.uid;
-    delete data2.isActive;
-    delete data2.inserting;
-  }
-  return {
-    data: data2,
-    children: (tree.children ?? []).map((child) => cloneTree$2(child, removeIdentity))
-  };
-}
-function isSurface(value) {
-  return value === "canvas" || value === "outline";
-}
-function validTree(value) {
-  if (!value || typeof value !== "object") return false;
-  const tree = value;
-  return Boolean(tree.data && typeof tree.data === "object" && Array.isArray(tree.children));
-}
-function parsePayload(value) {
-  if (!value || typeof value !== "object") return null;
-  const payload = value;
-  if (payload.version !== 1 || typeof payload.sourceDocumentId !== "string" || !isSurface(payload.sourceSurface) || !Array.isArray(payload.nodes) || !payload.nodes.every(validTree)) return null;
-  return {
-    version: 1,
-    sourceDocumentId: payload.sourceDocumentId,
-    sourceSurface: payload.sourceSurface,
-    createdAt: Number.isFinite(payload.createdAt) ? Number(payload.createdAt) : Date.now(),
-    nodes: payload.nodes.map((tree) => cloneTree$2(tree))
-  };
-}
-function semanticHtmlWithoutPresentation(value) {
-  const source = sanitizeRichHtml(String(value ?? ""));
-  if (!source || typeof document === "undefined") {
-    return source.replace(/\s+style=(?:"[^"]*"|'[^']*')/gi, "").replace(/\s+class=(["'])(.*?)\1/gi, (_match, quote, classes2) => {
-      const kept = semanticClasses(classes2);
-      return kept ? ` class=${quote}${kept}${quote}` : "";
-    });
-  }
-  const template = document.createElement("template");
-  template.innerHTML = source;
-  template.content.querySelectorAll("*").forEach((element) => {
-    var _a;
-    PRESENTATION_STYLE_PROPERTIES.forEach((property) => element.style.removeProperty(property));
-    if (!((_a = element.getAttribute("style")) == null ? void 0 : _a.trim())) element.removeAttribute("style");
-    const classes2 = semanticClasses(element.className);
-    if (classes2) element.className = classes2;
-    else element.removeAttribute("class");
-  });
-  return template.innerHTML;
-}
-function stripTreePresentation(tree) {
-  const data2 = structuredClone(tree.data);
-  PRESENTATION_DATA_KEYS.forEach((key) => delete data2[key]);
-  if (data2.richText === true) data2.text = semanticHtmlWithoutPresentation(data2.text);
-  return {
-    data: data2,
-    children: (tree.children ?? []).map(stripTreePresentation)
-  };
-}
-function plainNodeText(tree) {
-  var _a, _b;
-  const source = String(((_a = tree.data) == null ? void 0 : _a.text) ?? "");
-  return ((_b = tree.data) == null ? void 0 : _b.richText) === true ? structuredOutlineHtmlToText(source) : source;
-}
-function flattenTree(tree, depth, lines) {
-  var _a;
-  const text2 = plainNodeText(tree);
-  const html2 = ((_a = tree.data) == null ? void 0 : _a.richText) === true ? sanitizeRichHtml(String(tree.data.text ?? "")) : text2.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br>");
-  lines.push({ depth, text: text2, html: html2 });
-  (tree.children ?? []).forEach((child) => flattenTree(child, depth + 1, lines));
-}
-function createNodeClipboardPayload(options) {
-  return {
-    version: 1,
-    sourceDocumentId: String(options.sourceDocumentId ?? ""),
-    sourceSurface: options.sourceSurface,
-    createdAt: Date.now(),
-    nodes: options.nodes.map((tree) => cloneTree$2(tree, true))
-  };
-}
-function prepareNodeClipboardForDestination(payload, destinationDocumentId, _destinationSurface) {
-  const sameDocument = payload.sourceDocumentId === String(destinationDocumentId ?? "");
-  return {
-    ...payload,
-    nodes: payload.nodes.map((tree) => sameDocument ? cloneTree$2(tree) : stripTreePresentation(tree))
-  };
-}
-function nodeClipboardToOutline(payload) {
-  const lines = [];
-  payload.nodes.forEach((tree) => flattenTree(tree, 0, lines));
-  return {
-    text: lines.map((line) => `${"    ".repeat(line.depth)}${line.text}`).join("\n"),
-    lines
-  };
-}
-function publishNodeClipboard(payload, transfer) {
-  var _a;
-  sharedPayload = parsePayload(payload);
-  (_a = transfer == null ? void 0 : transfer.setData) == null ? void 0 : _a.call(transfer, YEMIND_NODE_CLIPBOARD_MIME, JSON.stringify(payload));
-}
-function readNodeClipboard(transfer, allowSharedFallback = true) {
-  var _a;
-  const serialized = ((_a = transfer == null ? void 0 : transfer.getData) == null ? void 0 : _a.call(transfer, YEMIND_NODE_CLIPBOARD_MIME)) ?? "";
-  if (serialized) {
-    try {
-      const parsed2 = parsePayload(JSON.parse(serialized));
-      if (parsed2) {
-        sharedPayload = parsed2;
-        return parsed2;
-      }
-    } catch {
-    }
-  }
-  if (!allowSharedFallback || !sharedPayload) return null;
-  const parsed = parsePayload(sharedPayload);
-  if (!parsed) return null;
-  if (transfer) {
-    const plain2 = transfer.getData("text/plain");
-    if (!plain2 || comparableClipboardText(plain2) !== comparableClipboardText(nodeClipboardToOutline(parsed).text)) return null;
-  }
-  return parsed;
-}
-function clearNodeClipboard() {
-  sharedPayload = null;
-}
-function bindCanvasNodeClipboard(renderer, getDocumentId) {
-  if (!renderer || renderer.__yemindNodeClipboardBound === true) return () => void 0;
-  const originalCopy = typeof renderer.copy === "function" ? renderer.copy.bind(renderer) : null;
-  const originalCut = typeof renderer.cut === "function" ? renderer.cut.bind(renderer) : null;
-  const originalPaste = typeof renderer.paste === "function" ? renderer.paste.bind(renderer) : null;
-  renderer.__yemindNodeClipboardBound = true;
-  const publishCurrent = () => {
-    var _a, _b;
-    const nodes = Array.isArray(renderer.beingCopyData) ? renderer.beingCopyData : [];
-    if (nodes.length === 0) return;
-    const payload = createNodeClipboardPayload({
-      sourceDocumentId: getDocumentId(),
-      sourceSurface: "canvas",
-      nodes
-    });
-    publishNodeClipboard(payload);
-    const plain2 = nodeClipboardToOutline(payload).text;
-    const write = typeof navigator !== "undefined" ? (_b = (_a = navigator.clipboard) == null ? void 0 : _a.writeText) == null ? void 0 : _b.call(_a, plain2) : null;
-    if (write && typeof write.catch === "function") {
-      void write.catch(() => void 0);
-    }
-  };
-  if (originalCopy) {
-    renderer.copy = (...args) => {
-      const result = originalCopy(...args);
-      publishCurrent();
-      return result;
-    };
-  }
-  if (originalCut) {
-    renderer.cut = (...args) => {
-      const result = originalCut(...args);
-      publishCurrent();
-      return result;
-    };
-  }
-  if (originalPaste) {
-    renderer.paste = async (...args) => {
-      const payload = readNodeClipboard();
-      if (payload == null ? void 0 : payload.nodes.length) {
-        const prepared = prepareNodeClipboardForDestination(payload, getDocumentId());
-        renderer.beingCopyData = prepared.nodes;
-      }
-      return originalPaste(...args);
-    };
-  }
-  return () => {
-    if (originalCopy) renderer.copy = originalCopy;
-    if (originalCut) renderer.cut = originalCut;
-    if (originalPaste) renderer.paste = originalPaste;
-    delete renderer.__yemindNodeClipboardBound;
-  };
-}
 function editorHorizontalMargin(node, paddingX, textContentMargin, scaleX) {
   const scaledPadding = Math.max(0, Number(paddingX) || 0) * Math.max(0, Number(scaleX) || 1);
   const hasPrefix = Boolean(node == null ? void 0 : node._prefixData) || Array.isArray(node == null ? void 0 : node._iconData) && node._iconData.length > 0;
@@ -83088,6 +83215,67 @@ function stabilizeMindMapMeasurementHost(map2, editorRoot = document.body) {
   }
   return moved;
 }
+class HistoryTransactionCoordinator {
+  constructor(commit, delay) {
+    __publicField(this, "timer", null);
+    __publicField(this, "replayDepth", 0);
+    this.commit = commit;
+    this.delay = delay;
+  }
+  schedule() {
+    if (this.replayDepth > 0) return;
+    if (this.timer !== null) return;
+    this.timer = setTimeout(() => {
+      this.timer = null;
+      this.commit();
+    }, Math.max(0, this.delay));
+  }
+  flush() {
+    if (this.timer === null) return false;
+    clearTimeout(this.timer);
+    this.timer = null;
+    this.commit();
+    return true;
+  }
+  cancel() {
+    if (this.timer === null) return false;
+    clearTimeout(this.timer);
+    this.timer = null;
+    return true;
+  }
+  commitNow() {
+    this.cancel();
+    this.commit();
+  }
+  beginReplay() {
+    this.cancel();
+    this.replayDepth += 1;
+  }
+  endReplay() {
+    if (this.replayDepth > 0) this.replayDepth -= 1;
+    if (this.replayDepth === 0) this.cancel();
+  }
+}
+function installHistoryTransactionCoordinator(mindMap, options = {}) {
+  var _a;
+  const command = mindMap.command;
+  if (!command) throw new Error("mind-map history command is unavailable");
+  const existing = command.yemindHistoryCoordinator;
+  if (existing) return existing;
+  const commit = typeof command.originAddHistory === "function" ? command.originAddHistory.bind(command) : command.addHistory.bind(command);
+  const coordinator = new HistoryTransactionCoordinator(
+    commit,
+    Number(((_a = mindMap.opt) == null ? void 0 : _a.addHistoryTime) ?? 100)
+  );
+  command.addHistory = () => coordinator.schedule();
+  command.yemindFlushHistory = () => coordinator.flush();
+  command.yemindCancelHistory = () => coordinator.cancel();
+  command.yemindBeginHistoryReplay = () => coordinator.beginReplay();
+  command.yemindEndHistoryReplay = () => coordinator.endReplay();
+  command.yemindHistoryCoordinator = coordinator;
+  if (options.seed) coordinator.commitNow();
+  return coordinator;
+}
 function createImageDeleteGuard(confirmDelete) {
   return async (node) => {
     if (!confirmDelete) return false;
@@ -83146,7 +83334,9 @@ function createMindMap(options) {
     isShowCreateChildBtnIcon: false,
     notShowExpandBtn: true,
     fit: Boolean((settings == null ? void 0 : settings.autoFitOnOpen) ?? true) && !viewData,
-    addHistoryOnInit: true,
+    // Install YeMind's flushable history transaction after construction.
+    // The upstream opaque timer cannot be committed atomically before undo.
+    addHistoryOnInit: false,
     defaultInsertSecondLevelNodeText: "新节点",
     defaultInsertBelowSecondLevelNodeText: "新节点",
     iconList: createYemindIconList(options.pluginBaseUrl),
@@ -83173,6 +83363,7 @@ function createMindMap(options) {
     },
     errorHandler: (_code, error2) => console.error("[YeMind]", error2)
   });
+  installHistoryTransactionCoordinator(mindMap, { seed: true });
   stabilizeMindMapMeasurementHost(mindMap, editorRoot);
   installThemeColorRuntime(mindMap);
   configureThemeColorRuntime(mindMap, {
@@ -83956,6 +84147,38 @@ function createCommandAdapter(mindMap) {
     );
   };
   const canMutate = () => !isReadonly();
+  const replayHistory = (name) => {
+    var _a, _b;
+    const map2 = mindMap;
+    const command = map2.command;
+    (_a = command == null ? void 0 : command.yemindFlushHistory) == null ? void 0 : _a.call(command);
+    (_b = command == null ? void 0 : command.yemindBeginHistoryReplay) == null ? void 0 : _b.call(command);
+    let completed = false;
+    let fallback = null;
+    const finish = () => {
+      var _a2, _b2, _c2;
+      if (completed) return;
+      completed = true;
+      if (fallback !== null) clearTimeout(fallback);
+      (_a2 = map2.off) == null ? void 0 : _a2.call(map2, "node_tree_render_end", onRenderEnd);
+      (_b2 = command == null ? void 0 : command.yemindCancelHistory) == null ? void 0 : _b2.call(command);
+      (_c2 = command == null ? void 0 : command.yemindEndHistoryReplay) == null ? void 0 : _c2.call(command);
+    };
+    const onRenderEnd = () => {
+      var _a2;
+      (_a2 = map2.off) == null ? void 0 : _a2.call(map2, "node_tree_render_end", onRenderEnd);
+      setTimeout(finish, 0);
+    };
+    if (typeof map2.on === "function" && typeof map2.off === "function") {
+      map2.on("node_tree_render_end", onRenderEnd);
+      fallback = setTimeout(finish, 1e3);
+    }
+    try {
+      mindMap.execCommand(name);
+    } finally {
+      if (typeof map2.on !== "function" || typeof map2.off !== "function") finish();
+    }
+  };
   const stepZoom = (direction) => {
     var _a, _b, _c2;
     const view = mindMap.view;
@@ -84195,10 +84418,12 @@ function createCommandAdapter(mindMap) {
       if (nodes.length) mindMap.execCommand("REMOVE_CURRENT_NODE", nodes);
     },
     undo: () => {
-      if (canMutate()) mindMap.execCommand("BACK");
+      if (!canMutate()) return;
+      replayHistory("BACK");
     },
     redo: () => {
-      if (canMutate()) mindMap.execCommand("FORWARD");
+      if (!canMutate()) return;
+      replayHistory("FORWARD");
     },
     fit: () => mindMap.view.fit(),
     centerRoot: () => {
@@ -85550,8 +85775,8 @@ function openCanvasContextMenu(event, commands, options) {
   menu.addItem({ icon: "iconLock", label: options.readonly ? "退出只读模式" : "进入只读模式", click: run("toggle-readonly", () => options.onReadonlyChange(!options.readonly)) });
   menu.open({ x: event.clientX, y: event.clientY });
 }
-function paste(commands, plain2 = false) {
-  const operation = plain2 ? commands.pastePlainText() : commands.paste();
+function paste(commands, plain2 = false, override) {
+  const operation = override ? Promise.resolve(override()) : plain2 ? commands.pastePlainText() : commands.paste();
   void operation.catch((error2) => {
     console.error("[YeMind] node paste failed", error2);
     siyuan.showMessage("节点粘贴失败，请重试", 4e3, "error");
@@ -85592,10 +85817,12 @@ function openNodeContextMenu(event, commands, options = {}) {
       if (uid2) commands.toggleBranchExpandByUid(uid2);
     }) });
     menu.addSeparator();
-    menu.addItem({ icon: "iconCopy", label: "复制", accelerator: "Ctrl+C", disabled: false, click: run("copy", () => commands.copy()) });
+    menu.addItem({ icon: "iconCopy", label: "复制", accelerator: "Ctrl+C", disabled: false, click: run("copy", () => {
+      void (options.onCopy ? options.onCopy() : commands.copy());
+    }) });
     menu.addItem({ iconHTML: clipboardIcon("cut"), label: "剪切", accelerator: "Ctrl+X", disabled: !availability.cut, click: run("cut", () => commands.cut()) });
-    menu.addItem({ iconHTML: clipboardIcon("paste"), label: "粘贴", accelerator: "Ctrl+V", disabled: !availability.paste, click: run("paste", () => paste(commands)) });
-    menu.addItem({ iconHTML: clipboardIcon("paste"), label: "粘贴（纯文本）", accelerator: "Ctrl+Shift+V", disabled: !availability.paste, click: run("paste-plain", () => paste(commands, true)) });
+    menu.addItem({ iconHTML: clipboardIcon("paste"), label: "粘贴", accelerator: "Ctrl+V", disabled: !availability.paste, click: run("paste", () => paste(commands, false, options.onPaste)) });
+    menu.addItem({ iconHTML: clipboardIcon("paste"), label: "粘贴（纯文本）", accelerator: "Ctrl+Shift+V", disabled: !availability.paste, click: run("paste-plain", () => paste(commands, true, options.onPastePlain)) });
     menu.addSeparator();
     menu.addItem({ icon: "iconTrashcan", label: "删除选中节点", accelerator: "Shift+Backspace", warning: true, disabled: !availability.remove, click: run("remove-selected", () => commands.remove()) });
     menu.open({ x: event.clientX, y: event.clientY });
@@ -85662,10 +85889,12 @@ function openNodeContextMenu(event, commands, options = {}) {
     return (_a = options.onNodeStyle) == null ? void 0 : _a.call(options);
   }) });
   menu.addSeparator();
-  menu.addItem({ icon: "iconCopy", label: "复制", accelerator: "Ctrl+C", disabled: false, click: run("copy", () => commands.copy()) });
+  menu.addItem({ icon: "iconCopy", label: "复制", accelerator: "Ctrl+C", disabled: false, click: run("copy", () => {
+    void (options.onCopy ? options.onCopy() : commands.copy());
+  }) });
   menu.addItem({ iconHTML: clipboardIcon("cut"), label: "剪切", accelerator: "Ctrl+X", disabled: !availability.cut, click: run("cut", () => commands.cut()) });
-  menu.addItem({ iconHTML: clipboardIcon("paste"), label: "粘贴", accelerator: "Ctrl+V", disabled: !availability.paste, click: run("paste", () => paste(commands)) });
-  menu.addItem({ iconHTML: clipboardIcon("paste"), label: "粘贴（纯文本）", accelerator: "Ctrl+Shift+V", disabled: !availability.paste, click: run("paste-plain", () => paste(commands, true)) });
+  menu.addItem({ iconHTML: clipboardIcon("paste"), label: "粘贴", accelerator: "Ctrl+V", disabled: !availability.paste, click: run("paste", () => paste(commands, false, options.onPaste)) });
+  menu.addItem({ iconHTML: clipboardIcon("paste"), label: "粘贴（纯文本）", accelerator: "Ctrl+Shift+V", disabled: !availability.paste, click: run("paste-plain", () => paste(commands, true, options.onPastePlain)) });
   menu.addSeparator();
   menu.addItem({ icon: "iconUp", label: "上移节点", accelerator: "Ctrl+↑", disabled: !availability.move, click: run("move-up", () => commands.moveUp()) });
   menu.addItem({ icon: "iconDown", label: "下移节点", accelerator: "Ctrl+↓", disabled: !availability.move, click: run("move-down", () => commands.moveDown()) });
@@ -85772,7 +86001,7 @@ function openOutlineContextMenu(event, options) {
     ]
   });
   menu.addSeparator();
-  menu.addItem({ icon: "iconCopy", label: "复制（当前行）", click: run("copy-line", options.onCopyLine) });
+  menu.addItem({ icon: "iconCopy", label: options.copyLabel ?? "复制（当前行）", click: run("copy-line", options.onCopyLine) });
   menu.addItem({ iconHTML: clipboardIcon("cut"), label: "剪切（当前行）", disabled, click: run("cut-line", options.onCutLine) });
   menu.addItem({ iconHTML: clipboardIcon("paste"), label: "粘贴（当前光标处）", disabled, click: run("paste-caret", options.onPasteAtCaret) });
   menu.addItem({ iconHTML: clipboardIcon("paste"), label: "粘贴（纯文本）", disabled, click: run("paste-plain", options.onPastePlain) });
@@ -86535,7 +86764,7 @@ function createEditorTemplate(title, theme2 = "yemind-default", lineStyle = "cur
         </aside>
 
         <div class="ymz-workspace">
-          <div class="ymz-canvas" data-role="canvas"></div>
+          <div class="ymz-canvas" data-role="canvas" tabindex="0" aria-label="导图画布"></div>
           <div class="ymz-split-divider" data-role="split-divider" role="separator" aria-orientation="vertical" aria-label="调整导图和大纲宽度" aria-valuemin="25" aria-valuemax="70" aria-valuenow="42" tabindex="0"></div>
           <aside class="ymz-outline" data-role="outline" aria-label="导图大纲">
             <header class="ymz-outline-panel__header"><div class="ymz-outline-panel__title">${primaryViewIcon("outline")}<span><strong>大纲</strong><small><span data-role="outline-node-count">0</span> 个节点</small></span></div><span><button type="button" data-action="outline-fullscreen" title="切换全屏大纲" aria-label="切换全屏大纲">${fullscreenIcon()}</button><button type="button" data-action="close-side-panel" title="关闭大纲" aria-label="关闭大纲">${panelCloseIcon()}</button></span></header>
@@ -87105,12 +87334,23 @@ class StructuredOutlineEditorController {
       (_b = (_a = this.options).onImagePreview) == null ? void 0 : _b.call(_a, uid2, kind);
     });
     __publicField(this, "onContextMenu", (event) => {
-      var _a, _b;
+      var _a, _b, _c2, _d2;
       const target = event.target;
       const row = target.closest("[data-outline-uid]");
       if (!row || !this.options.root.contains(row)) return;
       const uid2 = row.dataset.outlineUid ?? "";
       if (!uid2) return;
+      const imageAction = target.closest("[data-outline-image-action]");
+      if (imageAction) {
+        event.preventDefault();
+        event.stopPropagation();
+        const kind = imageAction.dataset.outlineImageKind === "clipart" ? "clipart" : "image";
+        this.selectOutlineMedia(uid2, kind);
+        this.activateUid(uid2, false);
+        if (!this.options.isReadonly()) this.options.onActivate(uid2);
+        (_b = (_a = this.options).onContextMenu) == null ? void 0 : _b.call(_a, event, uid2);
+        return;
+      }
       const editor = row.querySelector("[data-outline-editor]");
       this.activeEditor = editor;
       this.activateUid(uid2, false);
@@ -87121,7 +87361,7 @@ class StructuredOutlineEditorController {
           this.selectEditorRange(editor, textLength(editor), textLength(editor));
         }
       }
-      (_b = (_a = this.options).onContextMenu) == null ? void 0 : _b.call(_a, event, uid2);
+      (_d2 = (_c2 = this.options).onContextMenu) == null ? void 0 : _d2.call(_c2, event, uid2);
     });
     __publicField(this, "onFocusIn", (event) => {
       const editor = closestEditor(event.target);
@@ -87201,6 +87441,15 @@ class StructuredOutlineEditorController {
         return;
       }
       const command = event.ctrlKey || event.metaKey;
+      if (command && !event.altKey && event.key.toLowerCase() === "c") {
+        const context = this.selectionContext();
+        if (this.selectedMedia && (!context || context.collapsed)) {
+          event.preventDefault();
+          event.stopPropagation();
+          void this.copySelectedMedia();
+          return;
+        }
+      }
       if (command && !event.altKey && event.key.toLowerCase() === "a") {
         event.preventDefault();
         event.stopPropagation();
@@ -87305,6 +87554,15 @@ class StructuredOutlineEditorController {
       var _a, _b, _c2, _d2;
       if (!event.clipboardData) return;
       const context = this.selectionContext();
+      const resource = !context || context.collapsed ? this.getSelectedClipboardResource() : null;
+      if (resource) {
+        event.preventDefault();
+        event.stopPropagation();
+        writeImageResourceToTransfer(resource, event.clipboardData);
+        clearNodeClipboard();
+        void this.copyResource(resource);
+        return;
+      }
       const whole = this.isWholeSelectionActive((context == null ? void 0 : context.range) ?? null);
       if (!context && !whole) return;
       const nodeTrees = this.selectedNodeTrees(context, whole);
@@ -87417,6 +87675,10 @@ class StructuredOutlineEditorController {
   }
   get isDirty() {
     return this.dirty;
+  }
+  getSelectedClipboardResource() {
+    if (!this.selectedMedia) return null;
+    return this.clipboardResourceForMedia(this.selectedMedia.uid, this.selectedMedia.kind);
   }
   setReadonly(readonly) {
     this.options.root.contentEditable = String(!readonly);
@@ -88052,6 +88314,30 @@ class StructuredOutlineEditorController {
   clearMediaSelection() {
     this.selectedMedia = null;
     this.options.root.querySelectorAll("[data-outline-image-action].is-selected").forEach((element) => element.classList.remove("is-selected"));
+  }
+  clipboardResourceForMedia(uid2, kind) {
+    var _a;
+    const data2 = (_a = findTreeByUid(this.options.getTree(), uid2)) == null ? void 0 : _a.data;
+    const source = String((data2 == null ? void 0 : data2.image) ?? "").trim();
+    if (!source) return null;
+    return {
+      kind,
+      source,
+      title: String((data2 == null ? void 0 : data2.imageTitle) ?? "").trim()
+    };
+  }
+  async copyResource(resource) {
+    clearNodeClipboard();
+    if (this.options.onCopyResource) {
+      await this.options.onCopyResource(resource);
+      return;
+    }
+    await writeImageResourceToClipboard(resource);
+  }
+  async copySelectedMedia() {
+    const resource = this.getSelectedClipboardResource();
+    if (!resource) return;
+    await this.copyResource(resource);
   }
   patchRow(row, block, selectionProtected) {
     row.setAttribute("aria-level", String(block.depth + 1));
@@ -94607,6 +94893,7 @@ class YeMindEditor {
     __publicField(this, "canvasRightDrag", null);
     __publicField(this, "liveNodeWidthLayout", null);
     __publicField(this, "contextMenuSelectionSnapshot", null);
+    __publicField(this, "contextMenuResourceSnapshot", null);
     __publicField(this, "cancelFocusedNodeHighlight", null);
     __publicField(this, "outlineRichText", null);
     __publicField(this, "settingsInitialized", false);
@@ -94649,11 +94936,19 @@ class YeMindEditor {
       this.openLink(anchor.href || anchor.getAttribute("href") || "");
     });
     __publicField(this, "onCanvasContextMenuCapture", (event) => {
+      var _a;
       this.contextMenuSelectionSnapshot = null;
+      this.contextMenuResourceSnapshot = null;
       if (!this.map || !this.commands) return;
+      const target = findRenderedNodeAtClientPoint(this.map, event.clientX, event.clientY);
+      const imageAdjust = this.map.nodeImgAdjust;
+      this.contextMenuResourceSnapshot = ((_a = imageAdjust == null ? void 0 : imageAdjust.getClipboardResourceForTarget) == null ? void 0 : _a.call(
+        imageAdjust,
+        event.target,
+        target
+      )) ?? null;
       const nodes = this.commands.getActiveNodes();
       if (nodes.length < 2) return;
-      const target = findRenderedNodeAtClientPoint(this.map, event.clientX, event.clientY);
       if (target && nodes.includes(target)) this.contextMenuSelectionSnapshot = { nodes: [...nodes], target };
     });
     __publicField(this, "onOutlinePointerDown", (event) => {
@@ -94806,9 +95101,17 @@ class YeMindEditor {
     });
     __publicField(this, "onImagePaste", (event) => {
       if (!this.map || !this.commands || this.commands.isReadonly()) return;
-      const file = extractImageFile(event.clipboardData);
       const node = this.commands.getPrimaryNode();
-      if (!file || !node) return;
+      if (!node) return;
+      const resource = readImageResourceFromTransfer(event.clipboardData);
+      if (resource) {
+        event.preventDefault();
+        event.stopPropagation();
+        void this.applyNodeImageResource(resource, node, "paste");
+        return;
+      }
+      const file = extractImageFile(event.clipboardData);
+      if (!file) return;
       event.preventDefault();
       event.stopPropagation();
       void this.applyNodeImageFile(file, node, "paste");
@@ -94842,11 +95145,25 @@ class YeMindEditor {
     });
     __publicField(this, "onWindowTextSelectionKeydown", (event) => {
       var _a, _b, _c2, _d2;
-      if (event.key !== "Backspace" && event.key !== "Delete" || event.ctrlKey || event.metaKey || event.altKey) return;
       const root2 = this.rootEl;
       if (!(root2 == null ? void 0 : root2.isConnected)) return;
       const rect2 = root2.getBoundingClientRect();
       if (rect2.width <= 0 || rect2.height <= 0) return;
+      const isStructuralInsert = (event.key === "Tab" || event.key === "Enter") && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey;
+      if (isStructuralInsert) {
+        const target = event.target instanceof HTMLElement ? event.target : document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        const isInteractiveControl = Boolean(target == null ? void 0 : target.closest(
+          'button, a, input, textarea, select, [role="button"], [role="menuitem"], [role="option"]'
+        ));
+        if (this.viewMode !== "outline" && this.commands && !this.commands.isReadonly() && this.commands.getPrimaryNode() && !isEditableTarget(target) && !isInteractiveControl) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          if (event.key === "Tab") this.commands.addChild();
+          else this.commands.addSibling();
+        }
+        return;
+      }
+      if (event.key !== "Backspace" && event.key !== "Delete" || event.ctrlKey || event.metaKey || event.altKey) return;
       const activeOutlineEditor = (_a = this.outlineRichText) == null ? void 0 : _a.activeHost;
       const activeElement = document.activeElement;
       if (activeOutlineEditor && activeElement && activeOutlineEditor.contains(activeElement)) return;
@@ -94923,6 +95240,28 @@ class YeMindEditor {
         return;
       }
       if (!this.commands || outlineEditing || isEditableTarget(event.target)) return;
+      const clipboardCommand = event.ctrlKey || event.metaKey;
+      if (clipboardCommand && !event.altKey && !event.shiftKey && ["c", "x", "v"].includes(event.key.toLowerCase())) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const key = event.key.toLowerCase();
+        if (key === "c") {
+          void Promise.resolve(this.commands.copy()).catch((error2) => {
+            console.error("[YeMind] canvas node copy failed", error2);
+          });
+        } else if (key === "x") {
+          this.commands.cut();
+        } else {
+          void this.pasteActiveNodeImageFromClipboard().then((handled) => {
+            var _a2;
+            return handled ? void 0 : (_a2 = this.commands) == null ? void 0 : _a2.paste();
+          }).catch((error2) => {
+            console.error("[YeMind] canvas node paste failed", error2);
+            siyuan.showMessage("节点粘贴失败，请重试", 4e3, "error");
+          });
+        }
+        return;
+      }
       if ((event.key === "Backspace" || event.key === "Delete") && !event.ctrlKey && !event.metaKey && !event.altKey) {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -95050,7 +95389,7 @@ class YeMindEditor {
     (_b = panel.querySelector("[data-import-kind]:not([hidden])")) == null ? void 0 : _b.focus();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I;
     this.options.diagnostics.record(
       "editor",
       "destroy-started",
@@ -95127,7 +95466,8 @@ class YeMindEditor {
     this.splitDragPointerId = null;
     (_E = this.unbindCanvasNodeClipboard) == null ? void 0 : _E.call(this);
     this.unbindCanvasNodeClipboard = null;
-    (_F = this.map) == null ? void 0 : _F.destroy();
+    (_H = (_G = (_F = this.map) == null ? void 0 : _F.command) == null ? void 0 : _G.yemindCancelHistory) == null ? void 0 : _H.call(_G);
+    (_I = this.map) == null ? void 0 : _I.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record(
@@ -95562,12 +95902,11 @@ class YeMindEditor {
       onUndo: () => {
         var _a2;
         (_a2 = this.commands) == null ? void 0 : _a2.undo();
-        this.refreshOutlineFromMap(true);
       },
+      onCopyResource: (resource) => this.copyImageResource(resource),
       onRedo: () => {
         var _a2;
         (_a2 = this.commands) == null ? void 0 : _a2.redo();
-        this.refreshOutlineFromMap(true);
       },
       onDiagnostic: (action, details) => this.options.diagnostics.record("outline", action, this.current.id, details),
       onSelectionChange: (hasRange, rect2, format, target) => {
@@ -96339,6 +96678,20 @@ class YeMindEditor {
       (_c2 = this.nodeQuickActions) == null ? void 0 : _c2.scheduleRefresh();
       this.scheduleSave();
     });
+    this.map.on("back_forward", (activeIndex, historyLength) => {
+      var _a, _b, _c2;
+      this.rootEl.dataset.historyIndex = String(Number(activeIndex) || 0);
+      this.rootEl.dataset.historyCount = String(Number(historyLength) || 0);
+      const activeSnapshot = (_c2 = (_b = (_a = this.map) == null ? void 0 : _a.command) == null ? void 0 : _b.history) == null ? void 0 : _c2[activeIndex];
+      if (typeof activeSnapshot === "string") {
+        try {
+          const tree = JSON.parse(activeSnapshot);
+          this.rootEl.dataset.historyActiveNodeCount = String(calculateEditorStats(tree).nodes);
+        } catch {
+          delete this.rootEl.dataset.historyActiveNodeCount;
+        }
+      }
+    });
     this.map.on("view_data_change", (viewData) => {
       var _a, _b;
       if (this.applyingCheckpoint || this.applyingAppearance || this.applyingImportLayout) return;
@@ -96378,6 +96731,7 @@ class YeMindEditor {
     this.map.on("contextmenu", (event) => {
       var _a;
       this.contextMenuSelectionSnapshot = null;
+      this.contextMenuResourceSnapshot = null;
       if ((_a = this.canvasRightDrag) == null ? void 0 : _a.consumeContextMenu()) {
         event.preventDefault();
         event.stopPropagation();
@@ -96508,10 +96862,10 @@ class YeMindEditor {
       () => this.hideOuterFramePresentation()
     );
     this.map.on("outer_frame_delete", () => this.hideOuterFramePresentation());
-    this.map.on(
-      "node_click",
-      () => window.setTimeout(() => this.updateRelationPresentation(), 0)
-    );
+    this.map.on("node_click", () => {
+      this.canvasEl.focus({ preventScroll: true });
+      window.setTimeout(() => this.updateRelationPresentation(), 0);
+    });
     this.map.on("node_icon_click", (node, iconValue, event) => {
       var _a, _b, _c2, _d2;
       (_a = event == null ? void 0 : event.preventDefault) == null ? void 0 : _a.call(event);
@@ -96592,12 +96946,24 @@ class YeMindEditor {
   openContextMenu(event) {
     var _a;
     if (!this.commands) return;
+    const resource = this.contextMenuResourceSnapshot;
+    this.contextMenuResourceSnapshot = null;
     const nodeUid2 = renderedNodeUid(this.commands.getPrimaryNode());
     const nodeCard = (_a = this.studyPanel) == null ? void 0 : _a.cardForNode(nodeUid2);
     this.options.diagnostics.record("context-menu", "opened", this.current.id, {
       selectedNodeCount: this.commands.getActiveNodes().length
     });
     openNodeContextMenu(event, this.commands, {
+      ...resource ? { onCopy: () => this.copyImageResource(resource) } : {},
+      onPaste: async () => {
+        var _a2;
+        if (await this.pasteActiveNodeImageFromClipboard()) return;
+        await ((_a2 = this.commands) == null ? void 0 : _a2.paste());
+      },
+      onPastePlain: async () => {
+        var _a2;
+        await ((_a2 = this.commands) == null ? void 0 : _a2.pastePlainText());
+      },
       onInlineLink: () => openInlineLinkDialog(this.commands, this.settings),
       onCodeBlock: () => openCodeBlockDialog(this.commands, this.settings),
       onNodeLink: () => openLinkDialog(this.commands, this.settings.inlineLinkAutoHttps),
@@ -97364,6 +97730,7 @@ class YeMindEditor {
     this.claimOutlineInteraction("outline-context-menu");
     this.activateNodeByUid(uid2);
     const state = this.outlineRichText.getLineState(uid2);
+    const resource = this.outlineRichText.getSelectedClipboardResource();
     const readonly = this.commands.isReadonly();
     const activate = () => this.activateNodeByUid(uid2);
     openOutlineContextMenu(event, {
@@ -97452,7 +97819,8 @@ class YeMindEditor {
         activate();
         if (this.commands) openImageDialog(this.commands);
       },
-      onCopyLine: () => this.outlineRichText.copyCurrentLine(uid2),
+      copyLabel: resource ? resource.kind === "clipart" ? "复制剪贴图" : "复制图片" : void 0,
+      onCopyLine: () => resource ? this.copyImageResource(resource) : this.outlineRichText.copyCurrentLine(uid2),
       onCutLine: () => this.outlineRichText.cutCurrentLine(uid2),
       onPasteAtCaret: () => this.outlineRichText.pasteCurrentLine(uid2, false),
       onPastePlain: () => this.outlineRichText.pasteCurrentLine(uid2, true),
@@ -97506,6 +97874,17 @@ class YeMindEditor {
       if (found) return found;
     }
     return null;
+  }
+  async copyImageResource(resource) {
+    clearNodeClipboard();
+    const result = await writeImageResourceToClipboard(resource);
+    this.options.diagnostics.record("clipboard", "copy-resource", this.current.id, {
+      kind: resource.kind,
+      result
+    });
+    if (result === "none") {
+      siyuan.showMessage("当前环境无法写入图片剪贴板", 3e3, "error");
+    }
   }
   openSymbolPickerForUid(uid2) {
     var _a;
@@ -97981,6 +98360,69 @@ class YeMindEditor {
       name: file.name,
       width: loaded.size.width,
       height: loaded.size.height
+    });
+  }
+  async pasteActiveNodeImageFromClipboard() {
+    var _a;
+    if (!this.commands || this.commands.isReadonly()) return false;
+    const node = this.commands.getPrimaryNode();
+    const clipboard = navigator.clipboard;
+    if (!node || typeof (clipboard == null ? void 0 : clipboard.read) !== "function") return false;
+    try {
+      const items2 = await clipboard.read();
+      for (const item of items2) {
+        if (item.types.includes("text/html")) {
+          const html2 = await (await item.getType("text/html")).text();
+          const resource = readImageResourceFromTransfer({
+            getData: (type) => type === "text/html" ? html2 : ""
+          });
+          if (resource) {
+            await this.applyNodeImageResource(resource, node, "paste");
+            return true;
+          }
+        }
+        const imageType = item.types.find((type) => type.startsWith("image/"));
+        if (!imageType) continue;
+        const blob = await item.getType(imageType);
+        const extension = ((_a = imageType.split("/")[1]) == null ? void 0 : _a.replace(/[^a-z0-9.+-]/gi, "")) || "png";
+        const file = new File([blob], `image.${extension}`, { type: imageType });
+        await this.applyNodeImageFile(file, node, "paste");
+        return true;
+      }
+    } catch (error2) {
+      this.options.diagnostics.record(
+        "clipboard",
+        "image-read-fallback",
+        this.current.id,
+        { message: error2 instanceof Error ? error2.message : String(error2) }
+      );
+    }
+    return false;
+  }
+  async applyNodeImageResource(resource, node, source) {
+    if (!this.commands || this.commands.isReadonly() || !resource.source) return;
+    const size2 = await new Promise((resolve) => {
+      const image = new Image();
+      image.onload = () => resolve({
+        width: image.naturalWidth || 240,
+        height: image.naturalHeight || 160
+      });
+      image.onerror = () => resolve({ width: 240, height: 160 });
+      image.src = resource.source;
+    });
+    if (this.destroyed || !this.map || !this.commands) return;
+    this.activateOnlyNode(node);
+    this.commands.setImage({
+      url: resource.source,
+      title: resource.title || "image.png",
+      width: size2.width,
+      height: size2.height,
+      custom: false
+    });
+    this.options.diagnostics.record("node-image", `${source}-resource`, this.current.id, {
+      kind: resource.kind,
+      width: size2.width,
+      height: size2.height
     });
   }
   scheduleSave() {
