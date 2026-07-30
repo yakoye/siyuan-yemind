@@ -153,6 +153,14 @@ function visibleNodeList(root: any): any[] {
   return list;
 }
 
+function visibleNodeRect(node: any): DOMRect | null {
+  const groupElement = node?.group?.node as Element | undefined;
+  if (!groupElement?.getBoundingClientRect) return null;
+  const activeBorder = groupElement.querySelector?.('.smm-hover-node') as Element | null;
+  const rect = (activeBorder ?? groupElement).getBoundingClientRect();
+  return rect.width > 0 || rect.height > 0 ? rect : null;
+}
+
 export interface NodeQuickActionsControllerOptions {
   root: HTMLElement;
   canvas: HTMLElement;
@@ -239,8 +247,8 @@ export class NodeQuickActionsController {
       if (!uid) return;
       const nodeElement = node.group.node as SVGGraphicsElement;
       this.nodeElementToUid.set(nodeElement, uid);
-      const rect = nodeElement.getBoundingClientRect();
-      if (!rect.width && !rect.height) return;
+      const rect = visibleNodeRect(node);
+      if (!rect) return;
       const selected = activeNodes.includes(node) || activeUids.has(uid) || node.getData?.('isActive') === true;
       const hovered = this.hoveredUid === uid;
       const descriptors = describeNodeQuickActions({
@@ -256,8 +264,8 @@ export class NodeQuickActionsController {
       container.dataset.nodeUid = uid;
       container.dataset.quickHovered = String(hovered);
       const childRects = (Array.isArray(node.children) ? node.children : [])
-        .map((child: any) => child?.group?.node?.getBoundingClientRect?.())
-        .filter((childRect: DOMRect | undefined): childRect is DOMRect => Boolean(childRect && (childRect.width > 0 || childRect.height > 0)));
+        .map((child: any) => visibleNodeRect(child))
+        .filter((childRect: DOMRect | null): childRect is DOMRect => childRect !== null);
       const layout = this.options.getLayout?.();
       const geometryDriven = Boolean(layoutGeometryByEngine(layout));
       const resolvedSide = resolveNodeQuickActionSide(layout, node, rect, childRects);

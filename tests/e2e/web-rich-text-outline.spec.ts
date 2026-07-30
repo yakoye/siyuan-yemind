@@ -27,7 +27,7 @@ async function expectQuickActionsAnchored(
   node: import('@playwright/test').Locator,
   actions: import('@playwright/test').Locator,
 ): Promise<void> {
-  const nodeBox = await node.boundingBox();
+  const nodeBox = await node.locator('.smm-hover-node').first().boundingBox();
   const visuals = actions.locator('.ymz-node-quick-action__visual');
   const actionBox = await visuals.first().boundingBox();
   expect(nodeBox).not.toBeNull();

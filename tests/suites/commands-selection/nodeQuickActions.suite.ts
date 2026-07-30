@@ -191,16 +191,32 @@ it('tracks every viewport transform with one non-starving refresh per animation 
   });
   let nodeLeft = 360;
   const liveElement = document.createElement('div');
+  const liveHoverRect = document.createElement('div');
+  liveHoverRect.className = 'smm-hover-node';
+  liveElement.appendChild(liveHoverRect);
   Object.defineProperty(liveElement, 'getBoundingClientRect', {
     value: () => ({
       left: nodeLeft,
       top: 260,
-      right: nodeLeft + 200,
+      right: nodeLeft + 100,
       bottom: 300,
-      width: 200,
+      width: 100,
       height: 40,
       x: nodeLeft,
       y: 260,
+      toJSON() {},
+    }),
+  });
+  Object.defineProperty(liveHoverRect, 'getBoundingClientRect', {
+    value: () => ({
+      left: nodeLeft - 5,
+      top: 255,
+      right: nodeLeft + 205,
+      bottom: 305,
+      width: 210,
+      height: 50,
+      x: nodeLeft - 5,
+      y: 255,
       toJSON() {},
     }),
   });
@@ -238,7 +254,7 @@ it('tracks every viewport transform with one non-starving refresh per animation 
     onSetExpanded: vi.fn(),
   });
   controller.refresh();
-  expect(canvas.querySelector<HTMLElement>('[data-node-uid="a"]')?.style.left).toBe('460px');
+  expect(canvas.querySelector<HTMLElement>('[data-node-uid="a"]')?.style.left).toBe('465px');
   expect([...listeners.keys()]).toEqual(expect.arrayContaining(['translate', 'scale', 'resize', 'view_data_change']));
 
   nodeLeft = 240;
@@ -247,7 +263,7 @@ it('tracks every viewport transform with one non-starving refresh per animation 
   expect(requestFrame).toHaveBeenCalledTimes(1);
   expect(cancelFrame).not.toHaveBeenCalled();
   frames.shift()?.(performance.now());
-  expect(canvas.querySelector<HTMLElement>('[data-node-uid="a"]')?.style.left).toBe('340px');
+  expect(canvas.querySelector<HTMLElement>('[data-node-uid="a"]')?.style.left).toBe('345px');
 
   controller.destroy();
   expect(viewportEventSource.off).toHaveBeenCalledTimes(4);
