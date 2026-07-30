@@ -7680,8 +7680,8 @@ const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "8333fcd5-dirty-c67f3695",
-  time: "2026-07-30T08:50:56.222Z"
+  id: "fd76ff2e-clean",
+  time: "2026-07-30T17:13:09+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
