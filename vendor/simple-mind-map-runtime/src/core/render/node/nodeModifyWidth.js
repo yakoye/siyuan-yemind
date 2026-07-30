@@ -1,5 +1,48 @@
 import { Rect } from '@svgdotjs/svg.js'
 
+function copyDomAttributes(target, source) {
+  if (!target || !source || !target.getAttributeNames) return
+  const nextNames = new Set(source.getAttributeNames())
+  target.getAttributeNames().forEach(name => {
+    if (!nextNames.has(name)) target.removeAttribute(name)
+  })
+  nextNames.forEach(name => {
+    target.setAttribute(name, source.getAttribute(name))
+  })
+}
+
+/**
+ * Width dragging must not replace the painted text container on every
+ * mousemove. Chromium can paint a newly-created foreignObject one frame later,
+ * leaving a blank/ghost frame even though the synchronous SVG layout is
+ * correct. Preserve the outer SVG text group (and the foreignObject itself for
+ * rich text), and only replace its measured contents and geometry.
+ */
+export function preserveLiveTextData(previous, next) {
+  if (!previous || !next || !previous.node || !next.node) return next
+  const previousOuter = previous.node.node
+  const nextOuter = next.node.node
+  if (!previousOuter || !nextOuter) return next
+
+  const previousForeign = previous.nodeContent && previous.nodeContent.node
+  const nextForeign = next.nodeContent && next.nodeContent.node
+  if (previousForeign && nextForeign) {
+    copyDomAttributes(previousForeign, nextForeign)
+    previousForeign.innerHTML = nextForeign.innerHTML
+    copyDomAttributes(previousOuter, nextOuter)
+    if (previousForeign.parentNode !== previousOuter) {
+      previousOuter.replaceChildren(previousForeign)
+    }
+  } else {
+    copyDomAttributes(previousOuter, nextOuter)
+    previousOuter.replaceChildren(...Array.from(nextOuter.childNodes))
+  }
+
+  previous.width = next.width
+  previous.height = next.height
+  return previous
+}
+
 // 初始化拖拽
 function initDragHandle() {
   if (!this.checkEnableDragModifyNodeWidth()) {
@@ -71,9 +114,19 @@ function onDragMousemoveHandle(e) {
     this.left = this.dragHandleMousedownLeft + ox / scaleX
   }
   // 自定义内容不重新渲染，交给开发者
-  this.reRender(useCustomContent ? [] : ['text'], {
-    ignoreUpdateCustomTextWidth: true
-  })
+  if (useCustomContent) {
+    this.reRender([], {
+      ignoreUpdateCustomTextWidth: true
+    })
+  } else {
+    const previousTextData = this._textData
+    this.getSize(['text'], {
+      ignoreUpdateCustomTextWidth: true
+    })
+    this._textData = preserveLiveTextData(previousTextData, this._textData)
+    this.layout()
+    this.update()
+  }
 }
 
 // 鼠标松开事件

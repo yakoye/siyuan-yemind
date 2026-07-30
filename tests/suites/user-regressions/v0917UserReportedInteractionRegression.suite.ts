@@ -7,6 +7,7 @@ import { hasActiveNodeWidthDrag, LiveNodeWidthLayoutController } from '../../../
 import { shouldPassivelySyncOutline } from '../../../src/editor/editingSurfaceCoordinator';
 import { markerCatalog, markerSvg } from '../../../src/core/localAssetCatalogs';
 import { nodeInsertIcon, nodeStyleIcon } from '../../../src/editor/projectControls';
+import { preserveLiveTextData } from '../../../vendor/simple-mind-map-runtime/src/core/render/node/nodeModifyWidth';
 
 const menuSource = readFileSync(resolve(process.cwd(), 'src/ui/contextMenu.ts'), 'utf8');
 const editorSource = readFileSync(resolve(process.cwd(), 'src/editor/YeMindEditor.ts'), 'utf8');
@@ -20,6 +21,48 @@ function position(label: string): number {
 }
 
 describe('v0.9.17 user-reported interaction regressions', () => {
+  it('preserves the painted text container while a width drag reflows its contents', () => {
+    const oldOuterDom = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const oldForeignDom = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+    oldForeignDom.setAttribute('width', '180');
+    oldForeignDom.innerHTML = '<div class="smm-richtext-node-wrap">旧布局</div>';
+    oldOuterDom.appendChild(oldForeignDom);
+    const nextOuterDom = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const nextForeignDom = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+    nextForeignDom.setAttribute('width', '260');
+    nextForeignDom.setAttribute('height', '64');
+    nextForeignDom.innerHTML = '<div class="smm-richtext-node-wrap">新的多行布局</div>';
+    nextOuterDom.appendChild(nextForeignDom);
+
+    const oldOuter = { node: oldOuterDom, attr: vi.fn() };
+    const oldForeign = { node: oldForeignDom };
+    const nextOuter = { node: nextOuterDom, attr: vi.fn(() => ({ 'data-width': 260, 'data-height': 64 })) };
+    const nextForeign = { node: nextForeignDom };
+    const oldData = {
+      node: oldOuter,
+      nodeContent: oldForeign,
+      width: 180,
+      height: 28,
+    };
+    const nextData = {
+      node: nextOuter,
+      nodeContent: nextForeign,
+      width: 260,
+      height: 64,
+    };
+
+    const preserved = preserveLiveTextData(oldData, nextData);
+
+    expect(preserved).toBe(oldData);
+    expect(preserved.node).toBe(oldOuter);
+    expect(preserved.nodeContent).toBe(oldForeign);
+    expect(oldForeignDom.getAttribute('width')).toBe('260');
+    expect(oldForeignDom.getAttribute('height')).toBe('64');
+    expect(oldForeignDom.textContent).toBe('新的多行布局');
+    expect(preserved.width).toBe(260);
+    expect(preserved.height).toBe(64);
+  });
+
   it('keeps node-width dragging local until the upstream mouseup commit', () => {
     const child = { isDragHandleMousedown: true, children: [] };
     const root = { children: [{ children: [child] }] };

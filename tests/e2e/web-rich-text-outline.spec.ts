@@ -770,6 +770,11 @@ test('width-handle drag grows the live node monotonically without disappearing o
   const before = await rootNode.boundingBox();
   expect(handleBox).not.toBeNull();
   expect(before).not.toBeNull();
+  await rootNode.evaluate((element) => {
+    const text = element.querySelector('g[data-width][data-height]');
+    if (!text) throw new Error('rendered text container is missing before width drag');
+    (window as any).__yemindWidthDragTextContainer = text;
+  });
   await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
   await page.mouse.down();
   const widths = [before!.width];
@@ -780,10 +785,33 @@ test('width-handle drag grows the live node monotonically without disappearing o
       handleBox!.y + handleBox!.height / 2,
       { steps: 1 },
     );
+    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
     const box = await rootNode.boundingBox();
     expect(box).not.toBeNull();
     widths.push(box!.width);
     tops.push(box!.y);
+    const painted = await rootNode.evaluate((element) => {
+      const text = element.querySelector<SVGGElement>('g[data-width][data-height]');
+      const shape = element.querySelector<SVGGraphicsElement>('.smm-node-shape');
+      if (!text || !shape) return null;
+      const textRect = text.getBoundingClientRect();
+      const shapeRect = shape.getBoundingClientRect();
+      return {
+        sameTextContainer: text === (window as any).__yemindWidthDragTextContainer,
+        content: text.textContent ?? '',
+        textWidth: textRect.width,
+        textHeight: textRect.height,
+        shapeWidth: shapeRect.width,
+        shapeHeight: shapeRect.height,
+      };
+    });
+    expect(painted).not.toBeNull();
+    expect(painted!.sameTextContainer).toBe(true);
+    expect(painted!.content).toContain('LTSSM 状态读取及历史记录');
+    expect(painted!.textWidth).toBeGreaterThan(0);
+    expect(painted!.textHeight).toBeGreaterThan(0);
+    expect(painted!.shapeWidth).toBeGreaterThanOrEqual(painted!.textWidth);
+    expect(painted!.shapeHeight).toBeGreaterThanOrEqual(painted!.textHeight);
   }
   await page.mouse.up();
   for (let index = 1; index < widths.length; index += 1) {
