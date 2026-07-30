@@ -63,7 +63,12 @@ describe('createCommandAdapter', () => {
 
   it('maps node actions to simple-mind-map native commands', () => {
     const map = fakeMindMap();
-    (map as any).command = { yemindFlushHistory: vi.fn() };
+    (map as any).command = {
+      yemindFlushHistory: vi.fn(),
+      yemindCancelHistory: vi.fn(),
+      yemindBeginHistoryReplay: vi.fn(),
+      yemindEndHistoryReplay: vi.fn(),
+    };
     const commands = createCommandAdapter(map as never);
 
     commands.addChild();
@@ -80,6 +85,9 @@ describe('createCommandAdapter', () => {
 
     expect(map.renderer.toggleActiveExpand).toHaveBeenCalledOnce();
     expect((map as any).command.yemindFlushHistory).toHaveBeenCalledTimes(2);
+    expect((map as any).command.yemindCancelHistory).toHaveBeenCalledTimes(2);
+    expect((map as any).command.yemindBeginHistoryReplay).toHaveBeenCalledTimes(2);
+    expect((map as any).command.yemindEndHistoryReplay).toHaveBeenCalledTimes(2);
     expect(map.execCommand.mock.calls).toEqual([
       ['INSERT_CHILD_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }],
       ['INSERT_NODE', true, [], { yemindTextPristine: true, yemindTextEdited: false }],

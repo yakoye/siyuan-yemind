@@ -1305,12 +1305,10 @@ export class YeMindEditor {
       },
       onUndo: () => {
         this.commands?.undo();
-        this.refreshOutlineFromMap(true);
       },
       onCopyResource: (resource) => this.copyImageResource(resource),
       onRedo: () => {
         this.commands?.redo();
-        this.refreshOutlineFromMap(true);
       },
       onDiagnostic: (action, details) =>
         this.options.diagnostics.record("outline", action, this.current.id, details),
@@ -2143,6 +2141,19 @@ export class YeMindEditor {
       this.nodeStylePanel?.refresh();
       this.nodeQuickActions?.scheduleRefresh();
       this.scheduleSave();
+    });
+    this.map.on("back_forward", (activeIndex: number, historyLength: number) => {
+      this.rootEl.dataset.historyIndex = String(Number(activeIndex) || 0);
+      this.rootEl.dataset.historyCount = String(Number(historyLength) || 0);
+      const activeSnapshot = (this.map as any)?.command?.history?.[activeIndex];
+      if (typeof activeSnapshot === "string") {
+        try {
+          const tree = JSON.parse(activeSnapshot) as MindMapTree;
+          this.rootEl.dataset.historyActiveNodeCount = String(calculateEditorStats(tree).nodes);
+        } catch {
+          delete this.rootEl.dataset.historyActiveNodeCount;
+        }
+      }
     });
     this.map.on("view_data_change", (viewData: Record<string, unknown>) => {
       if (this.applyingCheckpoint || this.applyingAppearance || this.applyingImportLayout) return;

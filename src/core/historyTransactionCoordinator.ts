@@ -3,6 +3,8 @@ type HistoryCommand = {
   originAddHistory?: () => void;
   yemindFlushHistory?: () => boolean;
   yemindCancelHistory?: () => boolean;
+  yemindBeginHistoryReplay?: () => void;
+  yemindEndHistoryReplay?: () => void;
 };
 
 type HistoryMindMap = {
@@ -20,6 +22,7 @@ type HistoryMindMap = {
  */
 export class HistoryTransactionCoordinator {
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private replayDepth = 0;
 
   constructor(
     private readonly commit: () => void,
@@ -27,6 +30,7 @@ export class HistoryTransactionCoordinator {
   ) {}
 
   schedule(): void {
+    if (this.replayDepth > 0) return;
     if (this.timer !== null) return;
     this.timer = setTimeout(() => {
       this.timer = null;
@@ -53,6 +57,16 @@ export class HistoryTransactionCoordinator {
     this.cancel();
     this.commit();
   }
+
+  beginReplay(): void {
+    this.cancel();
+    this.replayDepth += 1;
+  }
+
+  endReplay(): void {
+    if (this.replayDepth > 0) this.replayDepth -= 1;
+    if (this.replayDepth === 0) this.cancel();
+  }
 }
 
 export function installHistoryTransactionCoordinator(
@@ -76,6 +90,8 @@ export function installHistoryTransactionCoordinator(
   command.addHistory = () => coordinator.schedule();
   command.yemindFlushHistory = () => coordinator.flush();
   command.yemindCancelHistory = () => coordinator.cancel();
+  command.yemindBeginHistoryReplay = () => coordinator.beginReplay();
+  command.yemindEndHistoryReplay = () => coordinator.endReplay();
   (command as HistoryCommand & {
     yemindHistoryCoordinator?: HistoryTransactionCoordinator;
   }).yemindHistoryCoordinator = coordinator;
@@ -85,4 +101,13 @@ export function installHistoryTransactionCoordinator(
 
 export function flushMindMapHistory(mindMap: HistoryMindMap): boolean {
   return Boolean(mindMap.command?.yemindFlushHistory?.());
+}
+
+/**
+ * Discards history callbacks scheduled as a side effect of replaying an
+ * existing snapshot. BACK/FORWARD already point at a committed snapshot, so a
+ * trailing callback must not append that replayed state and truncate redo.
+ */
+export function cancelMindMapHistory(mindMap: HistoryMindMap): boolean {
+  return Boolean(mindMap.command?.yemindCancelHistory?.());
 }

@@ -555,9 +555,15 @@ test('copies multiple hierarchical outline nodes to another file outline', async
   await openOutline(page);
   await pasteAtOutlineRoot(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
+  const historyAfterPaste = Number(await editor.getAttribute('data-history-index'));
+  expect(historyAfterPaste).toBeGreaterThan(0);
+  await expect(editor).toHaveAttribute('data-history-active-node-count', '5');
   await page.keyboard.press('Control+Z');
   await expect(editor.locator('[data-outline-editor]').filter({ hasText: SOURCE_ONE })).toHaveCount(0);
+  await expect(editor).toHaveAttribute('data-history-index', String(historyAfterPaste - 1));
   await page.keyboard.press('Control+Y');
+  await expect(editor).toHaveAttribute('data-history-index', String(historyAfterPaste));
+  await expect(editor).toHaveAttribute('data-history-active-node-count', '5');
   await expect(editor.locator('[data-outline-editor]').filter({ hasText: SOURCE_ONE })).toBeVisible();
   await expectDestinationClipboardData(page);
   await page.reload();

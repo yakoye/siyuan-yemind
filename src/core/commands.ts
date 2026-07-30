@@ -135,6 +135,37 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     (mindMap as any).getConfig?.('readonly') ?? (mindMap as any).opt?.readonly,
   );
   const canMutate = (): boolean => !isReadonly();
+  const replayHistory = (name: 'BACK' | 'FORWARD'): void => {
+    const map = mindMap as any;
+    const command = map.command;
+    command?.yemindFlushHistory?.();
+    command?.yemindBeginHistoryReplay?.();
+
+    let completed = false;
+    let fallback: ReturnType<typeof setTimeout> | null = null;
+    const finish = () => {
+      if (completed) return;
+      completed = true;
+      if (fallback !== null) clearTimeout(fallback);
+      map.off?.('node_tree_render_end', onRenderEnd);
+      command?.yemindCancelHistory?.();
+      command?.yemindEndHistoryReplay?.();
+    };
+    const onRenderEnd = () => {
+      map.off?.('node_tree_render_end', onRenderEnd);
+      setTimeout(finish, 0);
+    };
+
+    if (typeof map.on === 'function' && typeof map.off === 'function') {
+      map.on('node_tree_render_end', onRenderEnd);
+      fallback = setTimeout(finish, 1000);
+    }
+    try {
+      mindMap.execCommand(name);
+    } finally {
+      if (typeof map.on !== 'function' || typeof map.off !== 'function') finish();
+    }
+  };
   const stepZoom = (direction: 'in' | 'out'): void => {
     const view = (mindMap as any).view;
     const current = Number(view?.scale) * 100;
@@ -360,13 +391,11 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     },
     undo: () => {
       if (!canMutate()) return;
-      (mindMap as any).command?.yemindFlushHistory?.();
-      mindMap.execCommand('BACK');
+      replayHistory('BACK');
     },
     redo: () => {
       if (!canMutate()) return;
-      (mindMap as any).command?.yemindFlushHistory?.();
-      mindMap.execCommand('FORWARD');
+      replayHistory('FORWARD');
     },
     fit: () => (mindMap.view as any).fit(),
     centerRoot: () => (mindMap.renderer as any).setRootNodeCenter?.(),
