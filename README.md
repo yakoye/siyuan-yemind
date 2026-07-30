@@ -2,13 +2,14 @@
 
 YeMind is a local-first mind-map workspace for SiYuan and the web. One shared TypeScript codebase powers both hosts, so maps, outlines, cards, themes, import/export, and interaction behavior stay compatible.
 
-Current version: `1.6.3`
+Current version: `1.7.0`
 SiYuan baseline: `3.7.3`
 
 ## Highlights
 
 - 28 real map structures covering directional mind maps, trees, timelines, organization charts, fishbones, tree tables, radial diagrams, bubbles, and bracket diagrams.
 - Editable canvas and structured outline with synchronized selection, rich text, drag-and-drop, images, clipart, markers, notes, comments, relations, and outer frames.
+- Transaction-safe clipboard routing for text, images and complete node structures across canvas, outline and multiple files, with atomic undo/redo.
 - Cards and focused review with persistent status, favorites, progress, scheduling, and node linkage.
 - Light, dark, and system/host appearance plus 25 project themes and responsive, discoverable toolbars.
 - Shared import/export for editable YeMind SVG/ZIP, SVG, KMindz, XMind, Markdown, OPML, PNG, Text, outline/interactive HTML, and PDF.

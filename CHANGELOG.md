@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.0 - 2026-07-31
+
+- Unified canvas and outline copy intent for text, image resources and complete node structures across editing/non-editing states, newly created nodes, same-file targets and cross-file targets.
+- Added image-resource clipboard payloads with binary image, safe HTML and plain-text fallbacks; direct image context actions now copy the image while clicks outside the image continue to copy the node.
+- Rebuilt undo/redo as an explicit history-replay transaction so asynchronous renderer callbacks cannot truncate the redo branch after outline or cross-file paste.
+- Kept cross-file node paste free of source UIDs and whole-node presentation styling while preserving hierarchy, semantic rich text, images, clipart, markers, notes, comments, tags, links and attachments.
+- Added a durable daily-operation matrix and release-blocking browser coverage for CRUD, Tab/Enter insertion, paste geometry, selection toolbar frames, Delete/Backspace/Ctrl+X, width drag, subtree drag, expansion, image operations and all canvas/outline clipboard routes.
+
 ## 1.6.3 - 2026-07-30
 
 - Kept node quick actions anchored to the active node's own visible selection border during wheel, pan, zoom, resize and renderer refreshes, including complex nodes that contain nested descendant borders.
