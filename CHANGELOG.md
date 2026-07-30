@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0 - 2026-07-30
+
+- Rebuilt canvas text editing around one geometry-ready transaction, removing the first-frame duplicate/shifted text layer and keeping multiline nodes stable while typing, pasting and resizing.
+- Added a semantic node clipboard shared by canvas and outline, covering edit and non-edit modes, new-node anchors, same-file and cross-file copy/paste without leaking source presentation styles.
+- Made outline paste a native UID-based structural transaction with one-step undo/redo, stable multiline hard breaks, new UIDs and consistent persistence after reload.
+- Added deterministic browser and SiYuan regressions for double-click frame stability, monotonic width dragging, clipboard routing, cross-file style isolation and outline/canvas synchronization.
+- Promoted this release to Minor because it delivers a compatible clipboard capability and a major editing-geometry subsystem refactor without changing the persisted map format.
+
 ## 1.5.3 - 2026-07-30
 
 - Kept active canvas editing on one local render transaction so double-click, typing and paste no longer replace the complete SVG tree or flicker between stale and live text placement.

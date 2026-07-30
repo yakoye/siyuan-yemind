@@ -3,12 +3,15 @@ import { expect, type Page } from '@playwright/test';
 export async function resetWebApp(page: Page): Promise<void> {
   await page.goto('/');
   await expect(page).toHaveTitle(/YeMind/);
-  await page.evaluate(async () => {
-    indexedDB.deleteDatabase('yemind-web');
-    localStorage.clear();
-    sessionStorage.clear();
+  const origin = new URL(page.url()).origin;
+  await page.goto('about:blank');
+  const session = await page.context().newCDPSession(page);
+  await session.send('Storage.clearDataForOrigin', {
+    origin,
+    storageTypes: 'indexeddb,local_storage',
   });
-  await page.reload();
+  await session.detach();
+  await page.goto('/');
   await expect(page).toHaveTitle(/YeMind/);
   await expect(page.locator('.ymw-app')).toBeVisible();
   await expect(page.locator('.ymw-editor > .ymz-editor')).toBeVisible();
