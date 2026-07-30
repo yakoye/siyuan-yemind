@@ -1154,7 +1154,10 @@
 /* v0.9.11 anchored style panels and flush node quick actions */
 .ymz-node-quick-actions{gap:0!important}
 .ymz-node-quick-action{margin-left:0!important}
-.ymz-node-quick-action + .ymz-node-quick-action{margin-left:-6px!important}
+.ymz-node-quick-action + .ymz-node-quick-action{margin-left:-12px!important}
+.ymz-node-quick-actions[data-quick-side="right"] .ymz-node-quick-action{justify-items:start}
+.ymz-node-quick-actions[data-quick-side="left"]{flex-direction:row-reverse}
+.ymz-node-quick-actions[data-quick-side="left"] .ymz-node-quick-action{justify-items:end}
 
 /* v0.9.11 unified relation interaction */
 .ymz-relation-panel[data-mode="active"] [data-role="relation-hint"]{

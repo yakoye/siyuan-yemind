@@ -170,7 +170,10 @@ describe('v0.9.17 user-reported interaction regressions', () => {
       /\.ymz-node-quick-action__visual\{[^}]*min-width:15px;[^}]*height:15px/s,
     );
     expect(css).toContain('.ymz-node-quick-actions{gap:0!important}');
-    expect(css).toContain('.ymz-node-quick-action + .ymz-node-quick-action{margin-left:-6px!important}');
+    expect(css).toContain('.ymz-node-quick-action + .ymz-node-quick-action{margin-left:-12px!important}');
+    expect(css).toContain('.ymz-node-quick-actions[data-quick-side="right"] .ymz-node-quick-action{justify-items:start}');
+    expect(css).toContain('.ymz-node-quick-actions[data-quick-side="left"]{flex-direction:row-reverse}');
+    expect(css).toContain('.ymz-node-quick-actions[data-quick-side="left"] .ymz-node-quick-action{justify-items:end}');
     expect(css).toContain('.ymz-node-quick-actions[data-quick-side="right"] { transform: translate(-1px, -50%); }');
     expect(css).toContain('.ymz-node-quick-actions[data-quick-side="left"] { transform: translate(calc(-100% + 1px), -50%); }');
   });

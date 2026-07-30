@@ -28,7 +28,8 @@ async function expectQuickActionsAnchored(
   actions: import('@playwright/test').Locator,
 ): Promise<void> {
   const nodeBox = await node.boundingBox();
-  const actionBox = await actions.boundingBox();
+  const visuals = actions.locator('.ymz-node-quick-action__visual');
+  const actionBox = await visuals.first().boundingBox();
   expect(nodeBox).not.toBeNull();
   expect(actionBox).not.toBeNull();
   const side = await actions.getAttribute('data-quick-side');
@@ -48,6 +49,16 @@ async function expectQuickActionsAnchored(
   } else {
     expect(Math.abs(actionBox!.x - (nodeBox!.x + nodeBox!.width))).toBeLessThanOrEqual(3);
     expect(Math.abs(actionCenterY - nodeCenterY)).toBeLessThanOrEqual(3);
+  }
+  if (await visuals.count() > 1) {
+    const nextBox = await visuals.nth(1).boundingBox();
+    expect(nextBox).not.toBeNull();
+    const horizontalGap = Math.max(
+      0,
+      Math.max(actionBox!.x, nextBox!.x)
+        - Math.min(actionBox!.x + actionBox!.width, nextBox!.x + nextBox!.width),
+    );
+    expect(horizontalGap).toBeLessThanOrEqual(3);
   }
 }
 
