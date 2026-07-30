@@ -186,10 +186,15 @@ export interface NodeQuickActionsControllerOptions {
 export class NodeQuickActionsController {
   private readonly layer: HTMLElement;
   private frame: number | null = null;
-  private renderedViewportObserver: MutationObserver | null = null;
+  private geometryFrame: number | null = null;
   private hideTimer: number | null = null;
   private hoveredUid: string | null = null;
   private readonly nodeElementToUid = new Map<Element, string>();
+  private readonly renderedActionTargets = new Map<string, {
+    element: HTMLElement;
+    node: any;
+    side: QuickActionSide;
+  }>();
   private readonly lastKnownSideByUid = new Map<string, QuickActionSide>();
 
   constructor(private readonly options: NodeQuickActionsControllerOptions) {
@@ -203,16 +208,13 @@ export class NodeQuickActionsController {
     this.options.canvas.addEventListener('pointerover', this.onCanvasPointerOver);
     this.options.canvas.addEventListener('pointerout', this.onCanvasPointerOut);
     this.bindViewportTracking();
-    this.bindRenderedViewportTracking();
-    this.bindHostScrollTracking();
   }
 
   destroy(): void {
     if (this.frame !== null) cancelAnimationFrame(this.frame);
     this.frame = null;
+    this.stopGeometryTracking();
     this.unbindViewportTracking();
-    this.unbindRenderedViewportTracking();
-    this.unbindHostScrollTracking();
     this.cancelHide();
     this.layer.removeEventListener('click', this.onClick);
     this.layer.removeEventListener('pointerover', this.onActionPointerOver);
@@ -221,6 +223,7 @@ export class NodeQuickActionsController {
     this.options.canvas.removeEventListener('pointerout', this.onCanvasPointerOut);
     this.layer.remove();
     this.nodeElementToUid.clear();
+    this.renderedActionTargets.clear();
     this.lastKnownSideByUid.clear();
   }
 
@@ -234,8 +237,10 @@ export class NodeQuickActionsController {
 
   refresh(): void {
     this.frame = null;
+    this.stopGeometryTracking();
     this.layer.replaceChildren();
     this.nodeElementToUid.clear();
+    this.renderedActionTargets.clear();
     if (this.options.readonly()) return;
     const layerRect = this.layer.getBoundingClientRect();
     const coordinateRect = layerRect.width > 0 || layerRect.height > 0
@@ -297,7 +302,9 @@ export class NodeQuickActionsController {
         container.appendChild(button);
       });
       this.layer.appendChild(container);
+      this.renderedActionTargets.set(uid, { element: container, node, side: anchor.side });
     });
+    this.startGeometryTracking();
   }
 
   private bindViewportTracking(): void {
@@ -313,42 +320,37 @@ export class NodeQuickActionsController {
   }
 
   private readonly onViewportChange = (): void => {
-    this.scheduleRefresh();
+    this.startGeometryTracking();
   };
 
-  private bindRenderedViewportTracking(): void {
-    if (typeof MutationObserver === 'undefined') return;
-    this.renderedViewportObserver = new MutationObserver((mutations) => {
-      if (mutations.some((mutation) => mutation.type === 'attributes' && mutation.attributeName === 'transform')) {
-        this.scheduleRefresh();
-      }
-    });
-    this.renderedViewportObserver.observe(this.options.canvas, {
-      attributes: true,
-      attributeFilter: ['transform'],
-      subtree: true,
-    });
+  private startGeometryTracking(): void {
+    if (this.geometryFrame !== null || this.renderedActionTargets.size === 0) return;
+    this.geometryFrame = requestAnimationFrame(this.trackRenderedGeometry);
   }
 
-  private unbindRenderedViewportTracking(): void {
-    this.renderedViewportObserver?.disconnect();
-    this.renderedViewportObserver = null;
+  private stopGeometryTracking(): void {
+    if (this.geometryFrame !== null) cancelAnimationFrame(this.geometryFrame);
+    this.geometryFrame = null;
   }
 
-  private bindHostScrollTracking(): void {
-    // In SiYuan, a wheel gesture can scroll an ancestor WebView container
-    // without changing the mind-map SVG transform or emitting renderer
-    // viewport events. Capture every descendant/ancestor scroll at the window
-    // boundary so the HTML action layer follows the painted node rectangle.
-    window.addEventListener('scroll', this.onHostScroll, true);
-  }
-
-  private unbindHostScrollTracking(): void {
-    window.removeEventListener('scroll', this.onHostScroll, true);
-  }
-
-  private readonly onHostScroll = (): void => {
-    this.scheduleRefresh();
+  private readonly trackRenderedGeometry = (): void => {
+    this.geometryFrame = null;
+    if (this.renderedActionTargets.size === 0) return;
+    const layerRect = this.layer.getBoundingClientRect();
+    const coordinateRect = layerRect.width > 0 || layerRect.height > 0
+      ? layerRect
+      : this.layer.parentElement?.getBoundingClientRect() ?? layerRect;
+    for (const target of this.renderedActionTargets.values()) {
+      if (!target.element.isConnected) continue;
+      const rect = visibleNodeRect(target.node);
+      if (!rect) continue;
+      const anchor = resolveQuickActionAnchor(rect, [], target.side);
+      const left = `${anchor.x - coordinateRect.left}px`;
+      const top = `${anchor.y - coordinateRect.top}px`;
+      if (target.element.style.left !== left) target.element.style.left = left;
+      if (target.element.style.top !== top) target.element.style.top = top;
+    }
+    this.startGeometryTracking();
   };
 
   private eventNodeUid(event: PointerEvent): string | null {

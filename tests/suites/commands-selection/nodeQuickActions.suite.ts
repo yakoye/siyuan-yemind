@@ -419,3 +419,66 @@ it('tracks host ancestor scrolling when the canvas transform does not change', (
   cancelFrame.mockRestore();
   scrollHost.remove();
 });
+
+it('tracks painted node geometry continuously without renderer or host events', () => {
+  const root = document.createElement('div');
+  const canvas = document.createElement('div');
+  const liveElement = document.createElement('div');
+  canvas.appendChild(liveElement);
+  root.appendChild(canvas);
+  document.body.appendChild(root);
+  Object.defineProperty(canvas, 'getBoundingClientRect', {
+    value: () => ({ left: 100, top: 80, right: 900, bottom: 680, width: 800, height: 600, x: 100, y: 80, toJSON() {} }),
+  });
+  let nodeTop = 260;
+  Object.defineProperty(liveElement, 'getBoundingClientRect', {
+    value: () => ({
+      left: 360,
+      top: nodeTop,
+      right: 460,
+      bottom: nodeTop + 40,
+      width: 100,
+      height: 40,
+      x: 360,
+      y: nodeTop,
+      toJSON() {},
+    }),
+  });
+  const liveNode: any = {
+    isRoot: false,
+    children: [],
+    nodeData: { children: [] },
+    group: { node: liveElement },
+    getData: (key: string) => ({ uid: 'a', expand: true, isActive: true } as any)[key],
+  };
+  const frames: FrameRequestCallback[] = [];
+  const requestFrame = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+    frames.push(callback);
+    return frames.length;
+  });
+  const cancelFrame = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
+  const controller = new NodeQuickActionsController({
+    root,
+    canvas,
+    getRendererRoot: () => liveNode,
+    getActiveNodes: () => [liveNode],
+    readonly: () => false,
+    onAddChild: vi.fn(),
+    onSetExpanded: vi.fn(),
+  });
+
+  controller.refresh();
+  const initialTop = canvas.querySelector<HTMLElement>('[data-node-uid="a"]')!.style.top;
+  expect(frames).toHaveLength(1);
+
+  nodeTop = 150;
+  frames.shift()?.(performance.now());
+
+  expect(canvas.querySelector<HTMLElement>('[data-node-uid="a"]')!.style.top).not.toBe(initialTop);
+  expect(frames).toHaveLength(1);
+
+  controller.destroy();
+  requestFrame.mockRestore();
+  cancelFrame.mockRestore();
+  root.remove();
+});
