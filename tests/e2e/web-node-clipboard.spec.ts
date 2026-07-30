@@ -496,6 +496,38 @@ async function expectImageByUid(
   });
 }
 
+async function expectNoImageByUid(
+  page: Page,
+  mapId: 'clipboard-source' | 'clipboard-destination',
+  uid: 'same-target' | 'cross-target',
+): Promise<void> {
+  await expect.poll(async () => page.evaluate(async ({ mapId, uid }) => {
+    const request = indexedDB.open('yemind-web');
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const transaction = db.transaction('documents', 'readonly');
+    const store = transaction.objectStore('documents');
+    const maps = await new Promise<any>((resolve, reject) => {
+      const get = store.get('maps');
+      get.onsuccess = () => resolve(get.result);
+      get.onerror = () => reject(get.error);
+    });
+    db.close();
+    const map = maps.maps.find((item: any) => item.id === mapId);
+    const find = (tree: any): any => {
+      if (tree?.data?.uid === uid) return tree;
+      for (const child of tree?.children ?? []) {
+        const found = find(child);
+        if (found) return found;
+      }
+      return null;
+    };
+    return !String(find(map?.data)?.data?.image ?? '');
+  }, { mapId, uid }), { timeout: 10_000 }).toBe(true);
+}
+
 test.beforeEach(async ({ context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 });
@@ -767,6 +799,52 @@ test('pastes a copied image resource through the node context menu', async ({ pa
   const menu = page.locator('.ymz-context-menu--node');
   await expect(menu).toBeVisible();
   await menu.getByText('粘贴', { exact: true }).click();
+  await expectImageByUid(page, 'clipboard-destination', 'cross-target');
+  expect(errors).toEqual([]);
+});
+
+test('copies the direct canvas image from its context menu but copies the node outside the image', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop context-menu copy intent');
+  await seedClipboardMaps(page);
+  const source = canvasNode(page, SOURCE_ONE);
+  await source.locator('image').first().click({ button: 'right' });
+  let menu = page.locator('.ymz-context-menu--node');
+  await expect(menu).toBeVisible();
+  await menu.getByText('复制', { exact: true }).click();
+  await expectClipboardImage(page);
+
+  const textLayer = source.locator('.smm-richtext-node-wrap,.smm-text-node-wrap').last();
+  await textLayer.click({ button: 'right', position: { x: 4, y: 4 } });
+  menu = page.locator('.ymz-context-menu--node');
+  await expect(menu).toBeVisible();
+  await menu.getByText('复制', { exact: true }).click();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain(SOURCE_ONE);
+
+  await openMap(page, 'clipboard-destination');
+  await pasteCanvasStructure(page, CROSS_TARGET);
+  await expectTreeRelation(page, 'clipboard-destination', CROSS_TARGET, SOURCE_ONE);
+});
+
+test('pastes an image while canvas text editing and keeps the image operation undoable', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop image paste and history routing');
+  const errors = recordPageErrors(page);
+  await seedClipboardMaps(page);
+  await canvasNode(page, SOURCE_ONE).locator('image').first().click();
+  await page.keyboard.press('Control+C');
+  await expectClipboardImage(page);
+
+  await openMap(page, 'clipboard-destination');
+  await canvasNode(page, CROSS_TARGET).dblclick();
+  const textEditor = page.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  await expect(textEditor).toBeVisible();
+  await textEditor.press('Control+V');
+  await expectImageByUid(page, 'clipboard-destination', 'cross-target');
+  await commitCanvasEdit(page);
+
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  await editor.locator('[data-action="undo"]').click();
+  await expectNoImageByUid(page, 'clipboard-destination', 'cross-target');
+  await editor.locator('[data-action="redo"]').click();
   await expectImageByUid(page, 'clipboard-destination', 'cross-target');
   expect(errors).toEqual([]);
 });
