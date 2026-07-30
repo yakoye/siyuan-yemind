@@ -4,7 +4,10 @@ import { resolve } from 'node:path';
 import { stabilizeMindMapMeasurementHost } from '../../../src/core/measurementHost';
 import YeMindRichText from '../../../src/editor/YeMindRichText';
 import { shouldStabilizeOpeningPlacement } from '../../../src/editor/YeMindRichText';
-import { editorHorizontalMargin } from '../../../src/editor/richTextGeometry';
+import {
+  editorContentRectAligned,
+  editorHorizontalMargin,
+} from '../../../src/editor/richTextGeometry';
 
 describe('v0.9.14 stable node measurement geometry', () => {
   afterEach(() => {
@@ -103,17 +106,25 @@ describe('v0.9.14 stable node measurement geometry', () => {
     expect(richText.placementFrame).toBeNull();
   });
 
-  it('keeps one opening-frame correction only for a newly inserted node', () => {
+  it('keeps the legacy insertion classifier while all edit sessions use the geometry monitor', () => {
     expect(shouldStabilizeOpeningPlacement(true)).toBe(true);
     expect(shouldStabilizeOpeningPlacement(false)).toBe(false);
     expect(shouldStabilizeOpeningPlacement(undefined)).toBe(false);
     const source = readFileSync(resolve(process.cwd(), 'src/editor/YeMindRichText.ts'), 'utf8');
-    const capture = source.indexOf('const stabilizeOpening = shouldStabilizeOpeningPlacement(params?.isInserting);');
-    const upstreamShow = source.indexOf('super.showEditText({', capture);
-    const schedule = source.indexOf('if (stabilizeOpening)', upstreamShow);
-    expect(capture).toBeGreaterThanOrEqual(0);
-    expect(capture).toBeLessThan(upstreamShow);
-    expect(schedule).toBeGreaterThan(upstreamShow);
+    expect(source).toContain('this.reconcileEditorPlacement(sessionId);');
+    expect(source).toContain('this.startPlacementMonitor(sessionId);');
+    expect(source).not.toContain('if (stabilizeOpening)');
+  });
+
+  it('reveals an editor only when its Quill content and SVG text anchors agree', () => {
+    expect(editorContentRectAligned(
+      { left: 982.4, top: 390.8 },
+      { left: 983, top: 391 },
+    )).toBe(true);
+    expect(editorContentRectAligned(
+      { left: 326, top: 80 },
+      { left: 989, top: 395 },
+    )).toBe(false);
   });
 
   it('drops a stale placement frame after editing moved to another node', () => {
@@ -159,7 +170,13 @@ describe('v0.9.14 stable node measurement geometry', () => {
     };
 
     richText.bindPlacementTracking();
-    expect([...listeners.keys()]).toEqual(expect.arrayContaining(['resize', 'scale', 'translate']));
+    expect([...listeners.keys()]).toEqual(expect.arrayContaining([
+      'resize',
+      'scale',
+      'translate',
+      'node_tree_render_end',
+      'view_data_change',
+    ]));
     expect(richText.placementMonitorFrame).toBeNull();
     expect(window.requestAnimationFrame).not.toHaveBeenCalled();
     listeners.get('resize')?.();

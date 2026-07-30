@@ -7680,8 +7680,8 @@ const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "55918498-clean",
-  time: "2026-07-31T00:51:43+08:00"
+  id: "b8c91cea-dirty-a9bf9a52",
+  time: "2026-07-30T17:57:31.585Z"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
@@ -80988,6 +80988,18 @@ class RichText {
   }
 }
 RichText.instanceName = "richText";
+function editorContentRectAligned(editorRect, targetRect, tolerance = 1.5) {
+  if (!editorRect || !targetRect) return false;
+  const values2 = [
+    editorRect.left,
+    editorRect.top,
+    targetRect.left,
+    targetRect.top
+  ];
+  if (!values2.every((value) => Number.isFinite(value))) return false;
+  const limit = Math.max(0, Number(tolerance) || 0);
+  return Math.abs(editorRect.left - targetRect.left) <= limit && Math.abs(editorRect.top - targetRect.top) <= limit;
+}
 function editorHorizontalMargin(node, paddingX, textContentMargin, scaleX) {
   const scaledPadding = Math.max(0, Number(paddingX) || 0) * Math.max(0, Number(scaleX) || 1);
   const hasPrefix = Boolean(node == null ? void 0 : node._prefixData) || Array.isArray(node == null ? void 0 : node._iconData) && node._iconData.length > 0;
@@ -81315,9 +81327,6 @@ function writeQuillSelectionToClipboard(quill, event, fallbackRange) {
 function canvasTextPayloadMatchesNode(payload, nodeData) {
   return String((nodeData == null ? void 0 : nodeData.text) ?? "") === payload.text && Boolean(nodeData == null ? void 0 : nodeData.richText) === payload.richText;
 }
-function shouldStabilizeOpeningPlacement(isInserting) {
-  return isInserting === true;
-}
 function trimCanvasRichTextBoundaryBlocks(value) {
   if (typeof document === "undefined") {
     const emptyBlock = String.raw`<(?:p|div)\b[^>]*>(?:\s|&nbsp;|<br\s*\/?>)*<\/(?:p|div)>`;
@@ -81422,10 +81431,20 @@ class YeMindRichText extends RichText {
     __publicField(this, "placementMonitorFrame", null);
     __publicField(this, "placementTracking", false);
     __publicField(this, "placementResizeObserver", null);
+    __publicField(this, "lastAlignedSessionId", 0);
+    __publicField(this, "openingFocusFrame", null);
+    __publicField(this, "openingFocusSessionId", 0);
+    __publicField(this, "openingFocusAttempts", 0);
     __publicField(this, "pasteTransactionPending", false);
     __publicField(this, "handlePlacementInvalidation", () => {
       if (!this.showTextEdit) return;
       this.schedulePlacementStabilization();
+    });
+    __publicField(this, "handleOpeningFocusPointerDown", (event) => {
+      const host = this.textEditNode;
+      const target = event.target;
+      if (host && target instanceof Node && host.contains(target)) return;
+      this.cancelOpeningFocusClaim();
     });
   }
   sessionCoordinator() {
@@ -81494,7 +81513,6 @@ class YeMindRichText extends RichText {
     if (this.showTextEdit) return;
     const pendingHost = this.textEditNode;
     if (pendingHost) pendingHost.dataset.yemindGeometryReady = "false";
-    const stabilizeOpening = shouldStabilizeOpeningPlacement(params == null ? void 0 : params.isInserting);
     const sourceNode = (params == null ? void 0 : params.node) ?? null;
     const uid2 = renderedNodeUid$1(sourceNode);
     const liveNode = resolveLiveRenderedNode(this.mindMap, sourceNode, uid2);
@@ -81514,19 +81532,16 @@ class YeMindRichText extends RichText {
       rect: rect2 ?? (params == null ? void 0 : params.rect)
     });
     this.node = resolveLiveRenderedNode(this.mindMap, this.node ?? liveNode ?? sourceNode, this.editingUid);
-    this.applyEditorHorizontalMargin(this.node, rect2);
-    this.normalizeEditorPlacement(rect2);
     const readyHost = this.textEditNode;
     if (readyHost) {
       readyHost.dataset.yemindEditSession = String(sessionId);
-      readyHost.dataset.yemindGeometryReady = "true";
+      readyHost.dataset.yemindGeometryReady = "false";
     }
-    this.markCurrentEditorReady();
+    if (rect2) this.applyEditorGeometry(this.node, rect2);
     this.bindTextEditingKeyboard();
     this.bindPlacementTracking();
-    if (stabilizeOpening) {
-      this.schedulePlacementStabilization();
-    }
+    this.reconcileEditorPlacement(sessionId);
+    this.startPlacementMonitor(sessionId);
     this.emitEditingDiagnostic("opened", {
       liveNodeResolved: Boolean(liveNode && liveNode !== sourceNode),
       rectSource: this.lastRectSource
@@ -81553,7 +81568,7 @@ class YeMindRichText extends RichText {
       this.lastRectSource = "last-valid";
     }
     this.applyEditorGeometry(liveNode, rect2);
-    this.markCurrentEditorReady();
+    this.commitOpeningPlacement(this.sessionCoordinator().snapshot().id, rect2);
     this.emitEditingDiagnostic(geometry ? "repositioned" : "repositioned-from-anchor", {
       liveNodeResolved: Boolean(liveNode && liveNode !== previousNode),
       rectSource: this.lastRectSource
@@ -81563,6 +81578,7 @@ class YeMindRichText extends RichText {
     var _a, _b;
     this.unbindPlacementTracking();
     this.cancelPlacementStabilization();
+    this.cancelOpeningFocusClaim();
     const liveNode = resolveLiveRenderedNode(this.mindMap, this.node, this.editingUid);
     if (liveNode) this.node = liveNode;
     const liveNodes = Array.isArray(nodes) ? nodes.map((node) => resolveLiveRenderedNode(this.mindMap, node)).filter(Boolean) : nodes;
@@ -81598,6 +81614,7 @@ class YeMindRichText extends RichText {
     } finally {
       const host = this.textEditNode;
       if (host) host.dataset.yemindGeometryReady = "false";
+      this.lastAlignedSessionId = 0;
       this.editingUid = "";
       this.lastValidNodeRect = null;
       this.lastRectSource = "none";
@@ -81606,11 +81623,13 @@ class YeMindRichText extends RichText {
   removeTextEditEl() {
     this.unbindPlacementTracking();
     this.cancelPlacementStabilization();
+    this.cancelOpeningFocusClaim();
     try {
       super.removeTextEditEl();
     } finally {
       const host = this.textEditNode;
       if (host) host.dataset.yemindGeometryReady = "false";
+      this.lastAlignedSessionId = 0;
       this.editingUid = "";
       this.lastValidNodeRect = null;
       this.lastRectSource = "none";
@@ -81740,6 +81759,124 @@ class YeMindRichText extends RichText {
     host.style.left = `${nodeRect.left - targetRect.left + target.scrollLeft - target.clientLeft}px`;
     host.style.top = `${nodeRect.top - targetRect.top + target.scrollTop - target.clientTop}px`;
   }
+  commitOpeningPlacement(sessionId, targetRect) {
+    var _a, _b, _c2, _d2, _e, _f;
+    const sessions = this.sessionCoordinator();
+    if (!sessions.isCurrent(sessionId)) return false;
+    const host = this.textEditNode;
+    const editor = (host == null ? void 0 : host.querySelector(".ql-editor")) ?? null;
+    const aligned = editorContentRectAligned(
+      (_a = editor == null ? void 0 : editor.getBoundingClientRect) == null ? void 0 : _a.call(editor),
+      targetRect
+    );
+    if (!host) return false;
+    const previousPhase = sessions.snapshot().phase;
+    host.dataset.yemindEditSession = String(sessionId);
+    host.dataset.yemindGeometryReady = aligned ? "true" : "false";
+    const snapshot = this.markCurrentEditorReady();
+    if (aligned && (snapshot == null ? void 0 : snapshot.phase) === "active" && previousPhase !== "active" && this.lastAlignedSessionId !== sessionId) {
+      this.lastAlignedSessionId = sessionId;
+      (_d2 = (_c2 = (_b = this.quill) == null ? void 0 : _b.root) == null ? void 0 : _c2.focus) == null ? void 0 : _d2.call(_c2, { preventScroll: true });
+      this.scheduleOpeningFocusClaim(sessionId);
+      (_f = (_e = this.mindMap) == null ? void 0 : _e.emit) == null ? void 0 : _f.call(_e, "yemind_text_edit_ready", {
+        sessionId,
+        uid: this.editingUid
+      });
+      if (!this.isInserting) {
+        window.requestAnimationFrame(() => {
+          if (this.sessionCoordinator().isCurrent(sessionId)) {
+            this.emitCurrentSelectionChange();
+          }
+        });
+      }
+    }
+    return aligned;
+  }
+  /**
+   * SiYuan's host can restore focus to its RootWebArea after the keyboard
+   * handler which inserted a node has returned. Keep the opening transaction
+   * alive for at most three painted frames and reclaim the Quill surface until
+   * it actually owns focus. A real pointer action outside the editor cancels
+   * the claim immediately so an intentional click is never stolen back.
+   */
+  scheduleOpeningFocusClaim(sessionId) {
+    if (typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") return;
+    this.cancelOpeningFocusClaim();
+    this.openingFocusSessionId = sessionId;
+    this.openingFocusAttempts = 0;
+    window.addEventListener("pointerdown", this.handleOpeningFocusPointerDown, true);
+    const tick = () => {
+      var _a;
+      this.openingFocusFrame = null;
+      if (!this.showTextEdit || !this.sessionCoordinator().isCurrent(sessionId) || this.openingFocusSessionId !== sessionId) {
+        this.cancelOpeningFocusClaim();
+        return;
+      }
+      const root2 = (_a = this.quill) == null ? void 0 : _a.root;
+      if (!root2) {
+        this.cancelOpeningFocusClaim();
+        return;
+      }
+      if (document.activeElement !== root2) {
+        root2.focus({ preventScroll: true });
+        const range2 = this.range ?? this.pasteUseRange;
+        if (range2) {
+          this.quill.setSelection(range2.index, range2.length, Quill.sources.SILENT);
+        }
+      }
+      this.openingFocusAttempts += 1;
+      if (document.activeElement === root2 || this.openingFocusAttempts >= 3) {
+        this.cancelOpeningFocusClaim();
+        return;
+      }
+      this.openingFocusFrame = window.requestAnimationFrame(tick);
+    };
+    this.openingFocusFrame = window.requestAnimationFrame(tick);
+  }
+  cancelOpeningFocusClaim() {
+    var _a, _b;
+    if (this.openingFocusFrame !== null) {
+      (_a = window.cancelAnimationFrame) == null ? void 0 : _a.call(window, this.openingFocusFrame);
+      this.openingFocusFrame = null;
+    }
+    this.openingFocusSessionId = 0;
+    this.openingFocusAttempts = 0;
+    (_b = window.removeEventListener) == null ? void 0 : _b.call(window, "pointerdown", this.handleOpeningFocusPointerDown, true);
+  }
+  reconcileEditorPlacement(sessionId) {
+    if (!this.showTextEdit || !this.sessionCoordinator().isCurrent(sessionId)) return false;
+    const previousNode = this.node;
+    const liveNode = resolveLiveRenderedNode(this.mindMap, previousNode, this.editingUid);
+    if (liveNode) this.node = liveNode;
+    const geometry = resolveRenderedTextRect(liveNode);
+    if (!geometry) return false;
+    this.lastValidNodeRect = snapshotRect(geometry.rect);
+    this.lastRectSource = geometry.source;
+    this.applyEditorGeometry(liveNode, geometry.rect);
+    return this.commitOpeningPlacement(sessionId, geometry.rect);
+  }
+  /**
+   * SVG layout and the detached HTML editor are painted by different runtime
+   * layers. A render, fit, host resize or width draft can settle after the
+   * event which opened the editor. Keep one session-scoped geometry monitor
+   * alive while editing so every painted HTML frame remains anchored to the
+   * current renderer node; stale callbacks from an earlier node are rejected
+   * by the monotonically increasing session id.
+   */
+  startPlacementMonitor(sessionId) {
+    if (typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") return;
+    if (this.placementMonitorFrame !== null) {
+      window.cancelAnimationFrame(this.placementMonitorFrame);
+      this.placementMonitorFrame = null;
+    }
+    const tick = () => {
+      this.placementMonitorFrame = null;
+      if (!this.showTextEdit || !this.sessionCoordinator().isCurrent(sessionId)) return;
+      this.reconcileEditorPlacement(sessionId);
+      this.placementMonitorFrame = window.requestAnimationFrame(tick);
+    };
+    this.placementMonitorFrame = window.requestAnimationFrame(tick);
+  }
   /**
    * A newly inserted node can emit `node_dblclick` from inside the SVG render
    * stack before the browser has flushed its final group transform. The first
@@ -81761,7 +81898,7 @@ class YeMindRichText extends RichText {
     var _a, _b;
     if (this.placementTracking) return;
     this.placementTracking = true;
-    ["resize", "scale", "translate"].forEach((name) => {
+    ["resize", "scale", "translate", "node_tree_render_end", "view_data_change"].forEach((name) => {
       var _a2, _b2;
       (_b2 = (_a2 = this.mindMap) == null ? void 0 : _a2.on) == null ? void 0 : _b2.call(_a2, name, this.handlePlacementInvalidation);
     });
@@ -81776,7 +81913,7 @@ class YeMindRichText extends RichText {
     var _a, _b;
     if (!this.placementTracking) return;
     this.placementTracking = false;
-    ["resize", "scale", "translate"].forEach((name) => {
+    ["resize", "scale", "translate", "node_tree_render_end", "view_data_change"].forEach((name) => {
       var _a2, _b2;
       (_b2 = (_a2 = this.mindMap) == null ? void 0 : _a2.off) == null ? void 0 : _b2.call(_a2, name, this.handlePlacementInvalidation);
     });
@@ -96647,6 +96784,9 @@ class YeMindEditor {
         this.current.id,
         (payload == null ? void 0 : payload.details) ?? {}
       );
+    });
+    this.map.on("yemind_text_edit_ready", () => {
+      synchronizeCanvasRichTextVisibility(this.map);
     });
     this.map.on("node_text_edit_change", (payload) => {
       var _a;

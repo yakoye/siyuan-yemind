@@ -16,6 +16,40 @@ export interface ResolvedTextRect {
   elementConnected: boolean | null;
 }
 
+export interface ComparableRect {
+  left: number;
+  top: number;
+  width?: number;
+  height?: number;
+}
+
+/**
+ * The editable Quill content is the HTML replacement for the SVG text group.
+ * Their top-left coordinates must therefore agree before the replacement is
+ * allowed to become visible. Width and height intentionally remain outside
+ * this predicate: while the user types they may lead the next SVG render by
+ * one transaction without making the editor incorrectly anchored.
+ */
+export function editorContentRectAligned(
+  editorRect: ComparableRect | null | undefined,
+  targetRect: ComparableRect | null | undefined,
+  tolerance = 1.5,
+): boolean {
+  if (!editorRect || !targetRect) return false;
+  const values = [
+    editorRect.left,
+    editorRect.top,
+    targetRect.left,
+    targetRect.top,
+  ];
+  if (!values.every((value) => Number.isFinite(value))) return false;
+  const limit = Math.max(0, Number(tolerance) || 0);
+  return (
+    Math.abs(editorRect.left - targetRect.left) <= limit
+    && Math.abs(editorRect.top - targetRect.top) <= limit
+  );
+}
+
 export function editorHorizontalMargin(
   node: any,
   paddingX: number,

@@ -8,6 +8,7 @@ import { structuredOutlineIsRichHtml } from './structuredOutlineDocument';
 import { clearNodeClipboard } from './nodeClipboard';
 import {
   isUsableTextRect,
+  editorContentRectAligned,
   editorHorizontalMargin,
   renderedNodeUid,
   resolveLiveRenderedNode,
@@ -259,10 +260,20 @@ export default class YeMindRichText extends (BaseRichText as any) {
   private placementMonitorFrame: number | null = null;
   private placementTracking = false;
   private placementResizeObserver: ResizeObserver | null = null;
+  private lastAlignedSessionId = 0;
+  private openingFocusFrame: number | null = null;
+  private openingFocusSessionId = 0;
+  private openingFocusAttempts = 0;
   private pasteTransactionPending = false;
   private readonly handlePlacementInvalidation = (): void => {
     if (!this.showTextEdit) return;
     this.schedulePlacementStabilization();
+  };
+  private readonly handleOpeningFocusPointerDown = (event: PointerEvent): void => {
+    const host = this.textEditNode as HTMLElement | null;
+    const target = event.target;
+    if (host && target instanceof Node && host.contains(target)) return;
+    this.cancelOpeningFocusClaim();
   };
 
   private sessionCoordinator(): CanvasEditSessionCoordinator {
@@ -345,7 +356,6 @@ export default class YeMindRichText extends (BaseRichText as any) {
     if (this.showTextEdit) return;
     const pendingHost = this.textEditNode as HTMLElement | null;
     if (pendingHost) pendingHost.dataset.yemindGeometryReady = 'false';
-    const stabilizeOpening = shouldStabilizeOpeningPlacement(params?.isInserting);
     const sourceNode = params?.node ?? null;
     const uid = renderedNodeUid(sourceNode);
     const liveNode = resolveLiveRenderedNode(this.mindMap, sourceNode, uid);
@@ -370,23 +380,16 @@ export default class YeMindRichText extends (BaseRichText as any) {
     // The upstream renderer can keep the pre-drag node instance in the event
     // payload. Keep the editor transaction bound to the current renderer node.
     this.node = resolveLiveRenderedNode(this.mindMap, this.node ?? liveNode ?? sourceNode, this.editingUid);
-    this.applyEditorHorizontalMargin(this.node, rect);
-    this.normalizeEditorPlacement(rect);
     const readyHost = this.textEditNode as HTMLElement | null;
     if (readyHost) {
       readyHost.dataset.yemindEditSession = String(sessionId);
-      readyHost.dataset.yemindGeometryReady = 'true';
+      readyHost.dataset.yemindGeometryReady = 'false';
     }
-    this.markCurrentEditorReady();
+    if (rect) this.applyEditorGeometry(this.node, rect);
     this.bindTextEditingKeyboard();
     this.bindPlacementTracking();
-    // Existing nodes already have final SVG geometry; scheduling another
-    // opening frame makes their editor jump to a transient rectangle and back.
-    // A newly inserted node is the one exception because its dblclick can occur
-    // inside the SVG render stack before the final group transform is flushed.
-    if (stabilizeOpening) {
-      this.schedulePlacementStabilization();
-    }
+    this.reconcileEditorPlacement(sessionId);
+    this.startPlacementMonitor(sessionId);
     this.emitEditingDiagnostic('opened', {
       liveNodeResolved: Boolean(liveNode && liveNode !== sourceNode),
       rectSource: this.lastRectSource,
@@ -416,7 +419,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
       this.lastRectSource = 'last-valid';
     }
     this.applyEditorGeometry(liveNode, rect);
-    this.markCurrentEditorReady();
+    this.commitOpeningPlacement(this.sessionCoordinator().snapshot().id, rect);
     this.emitEditingDiagnostic(geometry ? 'repositioned' : 'repositioned-from-anchor', {
       liveNodeResolved: Boolean(liveNode && liveNode !== previousNode),
       rectSource: this.lastRectSource,
@@ -426,6 +429,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
   hideEditText(nodes?: any[]): void {
     this.unbindPlacementTracking();
     this.cancelPlacementStabilization();
+    this.cancelOpeningFocusClaim();
     const liveNode = resolveLiveRenderedNode(this.mindMap, this.node, this.editingUid);
     if (liveNode) this.node = liveNode;
     const liveNodes = Array.isArray(nodes)
@@ -464,6 +468,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
     } finally {
       const host = this.textEditNode as HTMLElement | null;
       if (host) host.dataset.yemindGeometryReady = 'false';
+      this.lastAlignedSessionId = 0;
       this.editingUid = '';
       this.lastValidNodeRect = null;
       this.lastRectSource = 'none';
@@ -473,11 +478,13 @@ export default class YeMindRichText extends (BaseRichText as any) {
   removeTextEditEl(): void {
     this.unbindPlacementTracking();
     this.cancelPlacementStabilization();
+    this.cancelOpeningFocusClaim();
     try {
       super.removeTextEditEl();
     } finally {
       const host = this.textEditNode as HTMLElement | null;
       if (host) host.dataset.yemindGeometryReady = 'false';
+      this.lastAlignedSessionId = 0;
       this.editingUid = '';
       this.lastValidNodeRect = null;
       this.lastRectSource = 'none';
@@ -637,6 +644,139 @@ export default class YeMindRichText extends (BaseRichText as any) {
     host.style.top = `${nodeRect.top - targetRect.top + target.scrollTop - target.clientTop}px`;
   }
 
+  private commitOpeningPlacement(sessionId: number, targetRect: DOMRect): boolean {
+    const sessions = this.sessionCoordinator();
+    if (!sessions.isCurrent(sessionId)) return false;
+    const host = this.textEditNode as HTMLElement | null;
+    const editor = host?.querySelector<HTMLElement>('.ql-editor') ?? null;
+    const aligned = editorContentRectAligned(
+      editor?.getBoundingClientRect?.(),
+      targetRect,
+    );
+    if (!host) return false;
+    const previousPhase = sessions.snapshot().phase;
+    host.dataset.yemindEditSession = String(sessionId);
+    host.dataset.yemindGeometryReady = aligned ? 'true' : 'false';
+    const snapshot = this.markCurrentEditorReady();
+    if (
+      aligned
+      && snapshot?.phase === 'active'
+      && previousPhase !== 'active'
+      && this.lastAlignedSessionId !== sessionId
+    ) {
+      this.lastAlignedSessionId = sessionId;
+      // The edit host stays CSS-hidden until geometry and content are ready.
+      // Chromium refuses to retain focus on an element that was hidden when
+      // the upstream RichText plugin called focus(), so claim focus again as
+      // part of the same opening transaction that makes the editor visible.
+      this.quill?.root?.focus?.({ preventScroll: true });
+      this.scheduleOpeningFocusClaim(sessionId);
+      this.mindMap?.emit?.('yemind_text_edit_ready', {
+        sessionId,
+        uid: this.editingUid,
+      });
+      if (!this.isInserting) {
+        window.requestAnimationFrame(() => {
+          if (this.sessionCoordinator().isCurrent(sessionId)) {
+            this.emitCurrentSelectionChange();
+          }
+        });
+      }
+    }
+    return aligned;
+  }
+
+  /**
+   * SiYuan's host can restore focus to its RootWebArea after the keyboard
+   * handler which inserted a node has returned. Keep the opening transaction
+   * alive for at most three painted frames and reclaim the Quill surface until
+   * it actually owns focus. A real pointer action outside the editor cancels
+   * the claim immediately so an intentional click is never stolen back.
+   */
+  private scheduleOpeningFocusClaim(sessionId: number): void {
+    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') return;
+    this.cancelOpeningFocusClaim();
+    this.openingFocusSessionId = sessionId;
+    this.openingFocusAttempts = 0;
+    window.addEventListener('pointerdown', this.handleOpeningFocusPointerDown, true);
+    const tick = (): void => {
+      this.openingFocusFrame = null;
+      if (
+        !this.showTextEdit
+        || !this.sessionCoordinator().isCurrent(sessionId)
+        || this.openingFocusSessionId !== sessionId
+      ) {
+        this.cancelOpeningFocusClaim();
+        return;
+      }
+      const root = this.quill?.root as HTMLElement | null;
+      if (!root) {
+        this.cancelOpeningFocusClaim();
+        return;
+      }
+      if (document.activeElement !== root) {
+        root.focus({ preventScroll: true });
+        const range = this.range ?? this.pasteUseRange;
+        if (range) {
+          this.quill.setSelection(range.index, range.length, Quill.sources.SILENT);
+        }
+      }
+      this.openingFocusAttempts += 1;
+      if (document.activeElement === root || this.openingFocusAttempts >= 3) {
+        this.cancelOpeningFocusClaim();
+        return;
+      }
+      this.openingFocusFrame = window.requestAnimationFrame(tick);
+    };
+    this.openingFocusFrame = window.requestAnimationFrame(tick);
+  }
+
+  private cancelOpeningFocusClaim(): void {
+    if (this.openingFocusFrame !== null) {
+      window.cancelAnimationFrame?.(this.openingFocusFrame);
+      this.openingFocusFrame = null;
+    }
+    this.openingFocusSessionId = 0;
+    this.openingFocusAttempts = 0;
+    window.removeEventListener?.('pointerdown', this.handleOpeningFocusPointerDown, true);
+  }
+
+  private reconcileEditorPlacement(sessionId: number): boolean {
+    if (!this.showTextEdit || !this.sessionCoordinator().isCurrent(sessionId)) return false;
+    const previousNode = this.node;
+    const liveNode = resolveLiveRenderedNode(this.mindMap, previousNode, this.editingUid);
+    if (liveNode) this.node = liveNode;
+    const geometry = resolveRenderedTextRect(liveNode);
+    if (!geometry) return false;
+    this.lastValidNodeRect = snapshotRect(geometry.rect);
+    this.lastRectSource = geometry.source;
+    this.applyEditorGeometry(liveNode, geometry.rect);
+    return this.commitOpeningPlacement(sessionId, geometry.rect);
+  }
+
+  /**
+   * SVG layout and the detached HTML editor are painted by different runtime
+   * layers. A render, fit, host resize or width draft can settle after the
+   * event which opened the editor. Keep one session-scoped geometry monitor
+   * alive while editing so every painted HTML frame remains anchored to the
+   * current renderer node; stale callbacks from an earlier node are rejected
+   * by the monotonically increasing session id.
+   */
+  private startPlacementMonitor(sessionId: number): void {
+    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') return;
+    if (this.placementMonitorFrame !== null) {
+      window.cancelAnimationFrame(this.placementMonitorFrame);
+      this.placementMonitorFrame = null;
+    }
+    const tick = (): void => {
+      this.placementMonitorFrame = null;
+      if (!this.showTextEdit || !this.sessionCoordinator().isCurrent(sessionId)) return;
+      this.reconcileEditorPlacement(sessionId);
+      this.placementMonitorFrame = window.requestAnimationFrame(tick);
+    };
+    this.placementMonitorFrame = window.requestAnimationFrame(tick);
+  }
+
   /**
    * A newly inserted node can emit `node_dblclick` from inside the SVG render
    * stack before the browser has flushed its final group transform. The first
@@ -658,7 +798,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
   private bindPlacementTracking(): void {
     if (this.placementTracking) return;
     this.placementTracking = true;
-    ['resize', 'scale', 'translate'].forEach((name) => {
+    ['resize', 'scale', 'translate', 'node_tree_render_end', 'view_data_change'].forEach((name) => {
       this.mindMap?.on?.(name, this.handlePlacementInvalidation);
     });
     window.addEventListener('resize', this.handlePlacementInvalidation, { passive: true });
@@ -673,7 +813,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
   private unbindPlacementTracking(): void {
     if (!this.placementTracking) return;
     this.placementTracking = false;
-    ['resize', 'scale', 'translate'].forEach((name) => {
+    ['resize', 'scale', 'translate', 'node_tree_render_end', 'view_data_change'].forEach((name) => {
       this.mindMap?.off?.(name, this.handlePlacementInvalidation);
     });
     window.removeEventListener('resize', this.handlePlacementInvalidation);

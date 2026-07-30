@@ -649,6 +649,67 @@ test('a newly inserted child receives one stable final editor placement', async 
     .toBeLessThanOrEqual(1);
 });
 
+test('an inserted editor follows a post-open SVG layout settlement before the next visible frame', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'desktop inserted-node layout-settlement regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  await editor.locator('[data-action="view-map"]').click();
+  await editor.locator('.smm-node').first().click();
+  await page.keyboard.press('Tab');
+
+  const host = editor.locator('.smm-richtext-node-edit-wrap');
+  const textEditor = host.locator('.ql-editor');
+  await expect(host).toBeVisible();
+  await expect(textEditor).toHaveText('新节点');
+  const insertedNode = editor.locator('.smm-node').last();
+  const originalTransform = await insertedNode.getAttribute('transform');
+  expect(originalTransform).toBeTruthy();
+
+  await insertedNode.evaluate((element) => {
+    const current = element.getAttribute('transform') ?? '';
+    element.setAttribute('transform', `${current} translate(84 36)`);
+  });
+
+  const frames = await editor.evaluate(async (root) => {
+    const result: Array<{
+      ready: string | null;
+      visible: boolean;
+      leftError: number;
+      topError: number;
+    }> = [];
+    for (let index = 0; index < 5; index += 1) {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const liveHost = root.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
+      const liveEditor = liveHost?.querySelector<HTMLElement>('.ql-editor') ?? null;
+      const target = root.querySelector<SVGGraphicsElement>('.smm-node:last-of-type g[data-width][data-height]');
+      const hostStyle = liveHost ? getComputedStyle(liveHost) : null;
+      const liveRect = liveEditor?.getBoundingClientRect();
+      const targetRect = target?.getBoundingClientRect();
+      result.push({
+        ready: liveHost?.dataset.yemindGeometryReady ?? null,
+        visible: Boolean(
+          liveHost
+          && hostStyle?.visibility !== 'hidden'
+          && hostStyle?.display !== 'none',
+        ),
+        leftError: liveRect && targetRect ? Math.abs(liveRect.left - targetRect.left) : 999,
+        topError: liveRect && targetRect ? Math.abs(liveRect.top - targetRect.top) : 999,
+      });
+    }
+    return result;
+  });
+
+  expect(frames.some((frame) => frame.visible)).toBe(true);
+  frames.filter((frame) => frame.visible).forEach((frame) => {
+    expect(frame.ready).toBe('true');
+    expect(frame.leftError).toBeLessThanOrEqual(1.5);
+    expect(frame.topError).toBeLessThanOrEqual(1.5);
+  });
+});
+
 test('Tab-created child shows its default text on every visible editor frame', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop inserted-node first-paint regression');
   await resetWebApp(page);
@@ -704,6 +765,18 @@ for (const shortcut of ['Tab', 'Enter'] as const) {
     await editor.locator('.smm-node').last().click();
     await page.evaluate((key) => {
       (window as any).__yemindHostShortcutSeen = false;
+      (window as any).__yemindHostFocusStolen = false;
+      document.addEventListener('focusin', (event) => {
+        const target = event.target;
+        if (
+          (window as any).__yemindHostFocusStolen
+          || !(target instanceof HTMLElement)
+          || !target.matches('.smm-richtext-node-edit-wrap .ql-editor')
+        ) return;
+        (window as any).__yemindHostFocusStolen = true;
+        document.body.tabIndex = -1;
+        document.body.focus({ preventScroll: true });
+      }, true);
       window.addEventListener('keydown', (event) => {
         if (event.key !== key) return;
         (window as any).__yemindHostShortcutSeen = true;
@@ -720,7 +793,11 @@ for (const shortcut of ['Tab', 'Enter'] as const) {
     await expect.poll(
       () => page.evaluate(() => (window as any).__yemindHostShortcutSeen),
     ).toBe(false);
+    await expect.poll(
+      () => page.evaluate(() => (window as any).__yemindHostFocusStolen),
+    ).toBe(true);
     await expect(host).toHaveAttribute('data-yemind-geometry-ready', 'true');
+    await expect(textEditor).toBeFocused();
   });
 }
 

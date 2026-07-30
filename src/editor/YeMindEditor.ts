@@ -2113,6 +2113,9 @@ export class YeMindEditor {
         payload?.details ?? {},
       );
     });
+    this.map.on("yemind_text_edit_ready", () => {
+      synchronizeCanvasRichTextVisibility(this.map as any);
+    });
     this.map.on('node_text_edit_change', (payload: RenderTextEditPayload) => {
       this.renderLifecycle?.scheduleTextEdit(payload);
     });
