@@ -482,3 +482,70 @@ it('tracks painted node geometry continuously without renderer or host events', 
   cancelFrame.mockRestore();
   root.remove();
 });
+
+it('keeps the quick actions layer hidden after a drag on another node ends while text editing is still suppressing it', () => {
+  // Regression: text editing on node A calls suppress() to hide the layer. If a
+  // concurrent drag gesture starts and ends on a *different* node B while A is
+  // still being edited, node_dragend must not blindly restore visibility --
+  // vendor node dragging and text-edit suppression are independent event
+  // streams and dragend has no way to know editing finished first.
+  const root = document.createElement('div');
+  const canvas = document.createElement('div');
+  root.appendChild(canvas);
+  document.body.appendChild(root);
+  Object.defineProperty(canvas, 'getBoundingClientRect', {
+    value: () => ({ left: 100, top: 80, right: 900, bottom: 680, width: 800, height: 600, x: 100, y: 80, toJSON() {} }),
+  });
+  const liveElement = document.createElement('div');
+  Object.defineProperty(liveElement, 'getBoundingClientRect', {
+    value: () => ({ left: 360, top: 260, right: 460, bottom: 300, width: 100, height: 40, x: 360, y: 260, toJSON() {} }),
+  });
+  const liveNode: any = {
+    isRoot: false,
+    children: [],
+    nodeData: { children: [] },
+    group: { node: liveElement },
+    getData: (key: string) => ({ uid: 'a', expand: true, isActive: true } as any)[key],
+  };
+  const listeners = new Map<string, Set<(...args: any[]) => void>>();
+  const viewportEventSource = {
+    on: vi.fn((name: string, listener: (...args: any[]) => void) => {
+      if (!listeners.has(name)) listeners.set(name, new Set());
+      listeners.get(name)!.add(listener);
+    }),
+    off: vi.fn((name: string, listener: (...args: any[]) => void) => {
+      listeners.get(name)?.delete(listener);
+    }),
+  };
+  const controller = new NodeQuickActionsController({
+    root,
+    canvas,
+    viewportEventSource,
+    getRendererRoot: () => liveNode,
+    getActiveNodes: () => [liveNode],
+    readonly: () => false,
+    onAddChild: vi.fn(),
+    onSetExpanded: vi.fn(),
+  });
+  controller.refresh();
+
+  const layer = canvas.querySelector<HTMLElement>('.ymz-node-quick-actions-layer')!;
+
+  // Node A enters text editing: the editor suppresses the quick-actions layer.
+  controller.suppress();
+  expect(layer.style.visibility).toBe('hidden');
+
+  // Node B (a different node) is dragged concurrently while A is still being edited.
+  listeners.get('node_dragging')?.forEach((listener) => listener());
+  listeners.get('node_dragend')?.forEach((listener) => listener());
+
+  // The layer must remain hidden: text editing on node A has not ended.
+  expect(layer.style.visibility).toBe('hidden');
+
+  // Once editing genuinely ends, resume() restores visibility as normal.
+  controller.resume();
+  expect(layer.style.visibility).toBe('');
+
+  controller.destroy();
+  root.remove();
+});

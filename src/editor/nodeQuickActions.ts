@@ -187,6 +187,7 @@ export class NodeQuickActionsController {
   private readonly layer: HTMLElement;
   private frame: number | null = null;
   private geometryFrame: number | null = null;
+  private editSuppressed = false;
   private hideTimer: number | null = null;
   private hoveredUid: string | null = null;
   private readonly nodeElementToUid = new Map<Element, string>();
@@ -230,11 +231,13 @@ export class NodeQuickActionsController {
   }
 
   suppress(): void {
+    this.editSuppressed = true;
     this.layer.style.visibility = 'hidden';
     this.stopGeometryTracking();
   }
 
   resume(): void {
+    this.editSuppressed = false;
     this.layer.style.visibility = '';
     this.scheduleRefresh();
   }
@@ -338,12 +341,13 @@ export class NodeQuickActionsController {
   };
 
   private readonly onNodeDraggingStart = (): void => {
-    if (this.layer.style.visibility === 'hidden') return;
+    if (this.editSuppressed) return;
     this.layer.style.visibility = 'hidden';
     this.stopGeometryTracking();
   };
 
   private readonly onNodeDragEnd = (): void => {
+    if (this.editSuppressed) return;
     this.layer.style.visibility = '';
     this.scheduleRefresh();
   };
