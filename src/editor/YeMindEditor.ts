@@ -2101,6 +2101,7 @@ export class YeMindEditor {
       this.canvasRightDrag?.cancel();
       queueMicrotask(() => synchronizeCanvasRichTextVisibility(this.map as any));
       window.requestAnimationFrame(() => synchronizeCanvasRichTextVisibility(this.map as any));
+      this.nodeQuickActions?.suppress();
     });
     this.map.on("yemind_text_edit_diagnostic", (payload: { action?: string; details?: Record<string, unknown> }) => {
       this.options.diagnostics.record(
@@ -2121,6 +2122,7 @@ export class YeMindEditor {
       // the static SVG text layer explicitly so switching nodes does not need
       // a redundant SET_NODE_TEXT transaction merely to repaint the old node.
       synchronizeCanvasRichTextVisibility(this.map as any);
+      this.nodeQuickActions?.resume();
     });
     this.map.on('node_tree_render_end', () => {
       this.renderLifecycle?.reconcileRenderedTextGeometry();

@@ -208,6 +208,8 @@ export class NodeQuickActionsController {
     this.options.canvas.addEventListener('pointerover', this.onCanvasPointerOver);
     this.options.canvas.addEventListener('pointerout', this.onCanvasPointerOut);
     this.bindViewportTracking();
+    this.options.viewportEventSource?.on?.('node_dragging', this.onNodeDraggingStart);
+    this.options.viewportEventSource?.on?.('node_dragend', this.onNodeDragEnd);
   }
 
   destroy(): void {
@@ -225,6 +227,16 @@ export class NodeQuickActionsController {
     this.nodeElementToUid.clear();
     this.renderedActionTargets.clear();
     this.lastKnownSideByUid.clear();
+  }
+
+  suppress(): void {
+    this.layer.style.visibility = 'hidden';
+    this.stopGeometryTracking();
+  }
+
+  resume(): void {
+    this.layer.style.visibility = '';
+    this.scheduleRefresh();
   }
 
   scheduleRefresh(): void {
@@ -317,10 +329,23 @@ export class NodeQuickActionsController {
     ['translate', 'scale', 'resize', 'view_data_change'].forEach((name) => {
       this.options.viewportEventSource?.off?.(name, this.onViewportChange);
     });
+    this.options.viewportEventSource?.off?.('node_dragging', this.onNodeDraggingStart);
+    this.options.viewportEventSource?.off?.('node_dragend', this.onNodeDragEnd);
   }
 
   private readonly onViewportChange = (): void => {
     this.startGeometryTracking();
+  };
+
+  private readonly onNodeDraggingStart = (): void => {
+    if (this.layer.style.visibility === 'hidden') return;
+    this.layer.style.visibility = 'hidden';
+    this.stopGeometryTracking();
+  };
+
+  private readonly onNodeDragEnd = (): void => {
+    this.layer.style.visibility = '';
+    this.scheduleRefresh();
   };
 
   private startGeometryTracking(): void {
@@ -350,7 +375,6 @@ export class NodeQuickActionsController {
       if (target.element.style.left !== left) target.element.style.left = left;
       if (target.element.style.top !== top) target.element.style.top = top;
     }
-    this.startGeometryTracking();
   };
 
   private eventNodeUid(event: PointerEvent): string | null {
