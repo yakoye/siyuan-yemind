@@ -130,10 +130,10 @@ export class RenderedTextGeometryRepair {
   invalidate(): void {
     if (this.geometryRepairFrame !== null) this.scheduler.cancel(this.geometryRepairFrame);
     this.geometryRepairFrame = null;
+    this.geometryRepairInFlight = false;
   }
 
   destroy(): void {
     this.invalidate();
-    this.geometryRepairInFlight = false;
   }
 }
