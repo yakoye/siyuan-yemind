@@ -284,7 +284,7 @@ it('tracks every viewport transform with one non-starving refresh per animation 
   expect(canvas.querySelector<HTMLElement>('[data-node-uid="a"]')?.style.left).toBe('345px');
 
   controller.destroy();
-  expect(viewportEventSource.off).toHaveBeenCalledTimes(4);
+  expect(viewportEventSource.off).toHaveBeenCalledTimes(6);
   requestFrame.mockRestore();
   cancelFrame.mockRestore();
   root.remove();
@@ -420,7 +420,7 @@ it('tracks host ancestor scrolling when the canvas transform does not change', (
   scrollHost.remove();
 });
 
-it('tracks painted node geometry continuously without renderer or host events', () => {
+it('tracks painted node geometry once per external trigger, not continuously', () => {
   const root = document.createElement('div');
   const canvas = document.createElement('div');
   const liveElement = document.createElement('div');
@@ -474,8 +474,12 @@ it('tracks painted node geometry continuously without renderer or host events', 
   nodeTop = 150;
   frames.shift()?.(performance.now());
 
+  // The one-shot geometry sync updates the painted position from the new
+  // getBoundingClientRect() reading...
   expect(canvas.querySelector<HTMLElement>('[data-node-uid="a"]')!.style.top).not.toBe(initialTop);
-  expect(frames).toHaveLength(1);
+  // ...but must not reschedule itself. Only an external trigger (a viewport
+  // event, drag event, or another refresh()) should queue the next frame.
+  expect(frames).toHaveLength(0);
 
   controller.destroy();
   requestFrame.mockRestore();
