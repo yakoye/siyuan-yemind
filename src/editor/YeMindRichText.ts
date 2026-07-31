@@ -265,7 +265,6 @@ export default class YeMindRichText extends (BaseRichText as any) {
   private openingFocusFrame: number | null = null;
   private openingFocusSessionId = 0;
   private openingFocusAttempts = 0;
-  private pasteTransactionPending = false;
   private readonly handlePlacementInvalidation = (): void => {
     if (!this.showTextEdit) return;
     this.schedulePlacementStabilization();
@@ -1128,7 +1127,6 @@ export default class YeMindRichText extends (BaseRichText as any) {
         this.lastRange = null;
       }
       this.sessionCoordinator().advanceRevision(quillSessionId);
-      this.emitLiveTextEditChange(this.pasteTransactionPending ? 'paste' : 'input');
     });
 
     this.quill.clipboard.addMatcher(Node.ELEMENT_NODE, (_node: Node, delta: any) => {
@@ -1144,26 +1142,9 @@ export default class YeMindRichText extends (BaseRichText as any) {
     });
 
     this.quill.root.addEventListener('paste', (event: ClipboardEvent) => {
-      this.pasteTransactionPending = true;
       if (event.clipboardData?.files?.length) event.preventDefault();
-      // Quill handles the same event synchronously in its bubble listener and
-      // emits `text-change` before this task ends. Keep the marker alive for
-      // that one transaction, then clear it without scheduling a second render.
-      queueMicrotask(() => {
-        this.pasteTransactionPending = false;
-      });
     }, true);
   }
-
-  private emitLiveTextEditChange(reason: 'paste' | 'input'): void {
-    this.mindMap.emit('node_text_edit_change', {
-      node: this.node,
-      text: this.getEditText(),
-      richText: true,
-      reason,
-    });
-  }
-
 
   private bindCanvasInteractionIsolation(): void {
     const host = this.textEditNode as HTMLElement | null;
