@@ -3,7 +3,6 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { stabilizeMindMapMeasurementHost } from '../../../src/core/measurementHost';
 import YeMindRichText from '../../../src/editor/YeMindRichText';
-import { shouldStabilizeOpeningPlacement } from '../../../src/editor/YeMindRichText';
 import {
   editorContentRectAligned,
   editorHorizontalMargin,
@@ -108,16 +107,6 @@ describe('v0.9.14 stable node measurement geometry', () => {
     expect(richText.placementFrame).toBeNull();
   });
 
-  it('keeps the legacy insertion classifier while all edit sessions use the geometry monitor', () => {
-    expect(shouldStabilizeOpeningPlacement(true)).toBe(true);
-    expect(shouldStabilizeOpeningPlacement(false)).toBe(false);
-    expect(shouldStabilizeOpeningPlacement(undefined)).toBe(false);
-    const source = readFileSync(resolve(process.cwd(), 'src/editor/YeMindRichText.ts'), 'utf8');
-    expect(source).toContain('this.reconcileEditorPlacement(sessionId);');
-    expect(source).toContain('this.startPlacementMonitor(sessionId);');
-    expect(source).not.toContain('if (stabilizeOpening)');
-  });
-
   it('reveals an editor only when its Quill content and SVG text anchors agree', () => {
     expect(editorContentRectAligned(
       { left: 982.4, top: 390.8 },
@@ -216,7 +205,6 @@ describe('v0.9.14 stable node measurement geometry', () => {
     const updateTextEditNode = vi.fn();
     const richText = Object.create(YeMindRichText.prototype) as any;
     richText.placementFrame = null;
-    richText.placementMonitorFrame = null;
     richText.placementTracking = false;
     richText.placementResizeObserver = null;
     richText.editingUid = 'resizing-node';
@@ -237,7 +225,6 @@ describe('v0.9.14 stable node measurement geometry', () => {
       'node_tree_render_end',
       'view_data_change',
     ]));
-    expect(richText.placementMonitorFrame).toBeNull();
     expect(window.requestAnimationFrame).not.toHaveBeenCalled();
     listeners.get('resize')?.();
     expect(updateTextEditNode).not.toHaveBeenCalled();

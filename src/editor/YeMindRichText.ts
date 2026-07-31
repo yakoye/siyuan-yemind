@@ -258,7 +258,6 @@ export default class YeMindRichText extends (BaseRichText as any) {
   private lastValidNodeRect: DOMRect | null = null;
   private lastRectSource: ResolvedTextRect['source'] | 'show-parameter' | 'last-valid' | 'none' = 'none';
   private placementFrame: number | null = null;
-  private placementMonitorFrame: number | null = null;
   private placementTracking = false;
   private placementResizeObserver: ResizeObserver | null = null;
   private lastAlignedSessionId = 0;
@@ -389,7 +388,14 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.bindTextEditingKeyboard();
     this.bindPlacementTracking();
     this.reconcileEditorPlacement(sessionId);
-    this.startPlacementMonitor(sessionId);
+    // A newly inserted node can emit node_dblclick before the browser flushes
+    // its final group transform (see schedulePlacementStabilization's own
+    // comment). One synchronous pass above plus one more scheduled frame here
+    // covers that without a permanent per-frame monitor: every other geometry
+    // change is already covered by bindPlacementTracking's event subscriptions
+    // (resize/scale/translate/node_tree_render_end/view_data_change) and by the
+    // width-drag frame loop in liveNodeWidthLayout.ts.
+    this.schedulePlacementStabilization();
     this.emitEditingDiagnostic('opened', {
       liveNodeResolved: Boolean(liveNode && liveNode !== sourceNode),
       rectSource: this.lastRectSource,
@@ -819,29 +825,6 @@ export default class YeMindRichText extends (BaseRichText as any) {
   }
 
   /**
-   * SVG layout and the detached HTML editor are painted by different runtime
-   * layers. A render, fit, host resize or width draft can settle after the
-   * event which opened the editor. Keep one session-scoped geometry monitor
-   * alive while editing so every painted HTML frame remains anchored to the
-   * current renderer node; stale callbacks from an earlier node are rejected
-   * by the monotonically increasing session id.
-   */
-  private startPlacementMonitor(sessionId: number): void {
-    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') return;
-    if (this.placementMonitorFrame !== null) {
-      window.cancelAnimationFrame(this.placementMonitorFrame);
-      this.placementMonitorFrame = null;
-    }
-    const tick = (): void => {
-      this.placementMonitorFrame = null;
-      if (!this.showTextEdit || !this.sessionCoordinator().isCurrent(sessionId)) return;
-      this.reconcileEditorPlacement(sessionId);
-      this.placementMonitorFrame = window.requestAnimationFrame(tick);
-    };
-    this.placementMonitorFrame = window.requestAnimationFrame(tick);
-  }
-
-  /**
    * A newly inserted node can emit `node_dblclick` from inside the SVG render
    * stack before the browser has flushed its final group transform. The first
    * rectangle can therefore point at the canvas origin even though the node is
@@ -883,10 +866,6 @@ export default class YeMindRichText extends (BaseRichText as any) {
     window.removeEventListener('resize', this.handlePlacementInvalidation);
     this.placementResizeObserver?.disconnect();
     this.placementResizeObserver = null;
-    if (this.placementMonitorFrame !== null) {
-      window.cancelAnimationFrame?.(this.placementMonitorFrame);
-      this.placementMonitorFrame = null;
-    }
   }
 
   private cancelPlacementStabilization(): void {
