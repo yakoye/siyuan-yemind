@@ -178,6 +178,7 @@ describe('v0.8.4 rich-text rectangle validation', () => {
     const node = {
       _textData: { node: group },
       getStyle: (name: string) => name === 'textAlign' ? 'center' : '',
+      hasCustomWidth: () => true,
     };
     element.getBoundingClientRect = () => new DOMRect(900, 392, 240, 153);
     element.getScreenCTM = () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0, inverse() { return this; } } as any);

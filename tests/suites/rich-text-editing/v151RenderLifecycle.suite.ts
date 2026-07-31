@@ -2,7 +2,19 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   RenderLifecycleCoordinator,
   type RenderLifecycleScheduler,
+  type RenderLifecycleTimer,
 } from '../../../src/editor/RenderLifecycleCoordinator';
+
+// Runs the debounce callback synchronously, preserving the pre-debounce single-frame
+// timing these existing tests were written against. Dedicated tests further down use a
+// manually-triggered timer to verify the actual debounce/coalescing behavior.
+const syncTimer: RenderLifecycleTimer = {
+  request: (callback) => {
+    callback();
+    return 1;
+  },
+  cancel: vi.fn(),
+};
 
 describe('v1.5.1 atomic render lifecycle', () => {
   it('V151-20 renders the newest typed text against the current live node', () => {
@@ -26,7 +38,7 @@ describe('v1.5.1 atomic render lifecycle', () => {
       richText: { updateTextEditNode: vi.fn() },
       render: vi.fn((done: () => void) => done()),
     };
-    const coordinator = new RenderLifecycleCoordinator(mindMap, committed, scheduler);
+    const coordinator = new RenderLifecycleCoordinator(mindMap, committed, scheduler, syncTimer);
     coordinator.scheduleTextEdit({ node: stale, text: '立即显示' });
     callback?.(0);
 
@@ -90,7 +102,7 @@ describe('v1.5.1 atomic render lifecycle', () => {
         return 1;
       },
       cancel: vi.fn(),
-    });
+    }, syncTimer);
 
     coordinator.scheduleTextEdit({
       node: { getData: () => 'editing-node' },
@@ -102,10 +114,156 @@ describe('v1.5.1 atomic render lifecycle', () => {
     expect(live.layout).toHaveBeenCalledOnce();
     expect(live.update).toHaveBeenCalledOnce();
     expect(renderIncomingLine).toHaveBeenCalledOnce();
-    expect(renderOutgoingLines).toHaveBeenCalledWith(true);
+    expect(renderOutgoingLines).toHaveBeenCalledWith();
     expect(mindMap.render).not.toHaveBeenCalled();
     expect(mindMap.richText.updateTextEditNode).toHaveBeenCalledOnce();
     expect(committed).toHaveBeenCalledWith('editing-node');
+  });
+
+  it('does not cascade renderLine into the edited node\'s descendants on every keystroke (real-trace regression: 371 forced layouts / 180ms main-thread block on one keystroke for a node with a large subtree)', () => {
+    // A performance trace captured on the user's real document (Trace-20260731T195122.json.gz)
+    // showed a single keydown triggering a 184ms RunTask containing 371 forced synchronous
+    // Layout passes, all attributed to this coordinator's commitTextEdit -> node.renderLine(true).
+    // renderLine(deep) only redraws *this* node's own outgoing connector lines regardless of
+    // the deep flag; deep=true additionally walks every descendant's renderLine, even though
+    // this live-edit fast path never repositions descendants (layout() only rebuilds the
+    // edited node's own SVG content, it does not re-run the layout algorithm on children).
+    // That recursion is therefore pure waste that scales with subtree size and explains the
+    // "type one character -> whole subtree flickers/jumps then recovers" report.
+    // renderLine mocks mirror the real MindMapNode.js contract: they always redraw this
+    // node's own outgoing lines, and only recurse into children when called with deep=true.
+    const grandchildRenderLine = vi.fn();
+    const grandchild = { renderLine: grandchildRenderLine, children: [] };
+    const childRenderLine = vi.fn((deep?: boolean) => {
+      if (deep) grandchild.renderLine(deep);
+    });
+    const child = { renderLine: childRenderLine, children: [grandchild] };
+    const liveRenderLine = vi.fn((deep?: boolean) => {
+      if (deep) child.renderLine(deep);
+    });
+    const live = {
+      createTextNode: vi.fn((text) => ({ text })),
+      getNodeRect: vi.fn(() => ({ width: 240, height: 52 })),
+      layout: vi.fn(),
+      update: vi.fn(),
+      renderLine: liveRenderLine,
+      parent: { renderLine: vi.fn() },
+      children: [child],
+    };
+    const mindMap = {
+      renderer: { findNodeByUid: vi.fn(() => live) },
+      richText: { showTextEdit: true, updateTextEditNode: vi.fn() },
+      render: vi.fn(),
+    };
+    const coordinator = new RenderLifecycleCoordinator(mindMap, vi.fn(), {
+      request: (callback) => {
+        callback(0);
+        return 1;
+      },
+      cancel: vi.fn(),
+    }, syncTimer);
+
+    coordinator.scheduleTextEdit({
+      node: { getData: () => 'editing-node-with-subtree' },
+      text: '<p>D</p>',
+      richText: true,
+      reason: 'input',
+    });
+
+    expect(liveRenderLine).toHaveBeenCalledOnce();
+    expect(childRenderLine).not.toHaveBeenCalled();
+    expect(grandchildRenderLine).not.toHaveBeenCalled();
+  });
+
+  it('coalesces a burst of rapid keystrokes / IME composition updates into one commit after the debounce window, instead of paying createTextNode()\'s cost on every character', () => {
+    // Two real Chrome performance traces (Trace-20260731T195122.json.gz and
+    // Trace-20260731T203417.json.gz), the second captured on a map with a single
+    // node and no children, both showed node.createTextNode()'s plain-text
+    // word-wrap loop (svg.js measureText() -> new SVG <text> element -> native
+    // getBBox(), forced once per character while probing where to wrap) costing
+    // 180-380ms for a single commit. CPU-sample counts across both traces put the
+    // overwhelming majority of that time in createTextNode/measureText, not in
+    // renderLine. The v1.7.5 renderLine(deep) fix was a real but secondary
+    // optimization; the dominant cost is paid again on every commit, including
+    // every IME compositionupdate a CJK candidate change fires. Debounce the
+    // commit itself so a fast burst pays that cost once, after it goes quiet,
+    // instead of once per character.
+    let armedRafCallback: FrameRequestCallback | null = null;
+    const scheduler: RenderLifecycleScheduler = {
+      request: (next) => {
+        armedRafCallback = next;
+        return 1;
+      },
+      cancel: vi.fn(),
+    };
+    let armedTimerCallback: (() => void) | null = null;
+    const timer: RenderLifecycleTimer = {
+      request: (callback) => {
+        armedTimerCallback = callback;
+        return 1;
+      },
+      cancel: vi.fn(() => {
+        armedTimerCallback = null;
+      }),
+    };
+    const live = {
+      createTextNode: vi.fn((text) => ({ text })),
+      getNodeRect: vi.fn(() => ({ width: 240, height: 52 })),
+      layout: vi.fn(),
+      update: vi.fn(),
+      renderLine: vi.fn(),
+      parent: { renderLine: vi.fn() },
+    };
+    const mindMap = {
+      renderer: { findNodeByUid: vi.fn(() => live) },
+      richText: { showTextEdit: true, updateTextEditNode: vi.fn() },
+      render: vi.fn(),
+    };
+    const coordinator = new RenderLifecycleCoordinator(mindMap, vi.fn(), scheduler, timer);
+    const node = { getData: () => 'composing-node' };
+
+    coordinator.scheduleTextEdit({ node, text: 'P', richText: true, reason: 'input' });
+    coordinator.scheduleTextEdit({ node, text: 'PC', richText: true, reason: 'input' });
+    coordinator.scheduleTextEdit({ node, text: 'PCI', richText: true, reason: 'input' });
+    coordinator.scheduleTextEdit({ node, text: 'PCIe', richText: true, reason: 'input' });
+
+    expect(live.createTextNode).not.toHaveBeenCalled();
+
+    armedTimerCallback?.();
+    armedRafCallback?.(0);
+
+    expect(live.createTextNode).toHaveBeenCalledOnce();
+    expect(live.createTextNode).toHaveBeenCalledWith('PCIe');
+  });
+
+  it('flushes the latest edit immediately when the editor closes mid-debounce, without waiting for the debounce window', () => {
+    const timer: RenderLifecycleTimer = {
+      request: vi.fn(() => 1),
+      cancel: vi.fn(),
+    };
+    const scheduler: RenderLifecycleScheduler = { request: vi.fn(() => 1), cancel: vi.fn() };
+    const live = {
+      createTextNode: vi.fn((text) => ({ text })),
+      getNodeRect: vi.fn(() => ({ width: 200, height: 40 })),
+      layout: vi.fn(),
+    };
+    const mindMap = {
+      renderer: { findNodeByUid: vi.fn(() => live) },
+      richText: { updateTextEditNode: vi.fn() },
+      render: vi.fn((done?: () => void) => done?.()),
+    };
+    const coordinator = new RenderLifecycleCoordinator(mindMap, vi.fn(), scheduler, timer);
+
+    coordinator.scheduleTextEdit({
+      node: { getData: () => 'closing-node' },
+      text: '<p>关闭前的最后文字</p>',
+      richText: true,
+      reason: 'input',
+    });
+
+    expect(live.createTextNode).not.toHaveBeenCalled();
+    expect(coordinator.flushPendingTextEdit()).toBe(true);
+    expect(live.createTextNode).toHaveBeenCalledWith('关闭前的最后文字');
   });
 
   it('reports the committed live UID so every render can restore the single visible edit layer', () => {
@@ -126,7 +284,7 @@ describe('v1.5.1 atomic render lifecycle', () => {
         return 1;
       },
       cancel: vi.fn(),
-    });
+    }, syncTimer);
 
     coordinator.scheduleTextEdit({
       node: { getData: () => 'active-edit-uid' },
@@ -152,7 +310,7 @@ describe('v1.5.1 atomic render lifecycle', () => {
       renderer: { findNodeByUid: vi.fn() },
       render: vi.fn(),
     };
-    const coordinator = new RenderLifecycleCoordinator(mindMap, vi.fn(), scheduler);
+    const coordinator = new RenderLifecycleCoordinator(mindMap, vi.fn(), scheduler, syncTimer);
     coordinator.scheduleTextEdit({
       node: { getData: () => 'deleted-node' },
       text: '过期文字',
@@ -182,7 +340,7 @@ describe('v1.5.1 atomic render lifecycle', () => {
       richText: { updateTextEditNode: vi.fn() },
       render: vi.fn((done: () => void) => done()),
     };
-    const coordinator = new RenderLifecycleCoordinator(mindMap, vi.fn(), scheduler);
+    const coordinator = new RenderLifecycleCoordinator(mindMap, vi.fn(), scheduler, syncTimer);
 
     coordinator.scheduleTextEdit({
       node: { getData: () => 'rich-node' },
@@ -213,7 +371,7 @@ describe('v1.5.1 atomic render lifecycle', () => {
       richText: { updateTextEditNode: vi.fn() },
       render: vi.fn((done?: () => void) => done?.()),
     };
-    const coordinator = new RenderLifecycleCoordinator(mindMap, vi.fn(), scheduler);
+    const coordinator = new RenderLifecycleCoordinator(mindMap, vi.fn(), scheduler, syncTimer);
     coordinator.scheduleTextEdit({
       node: { getData: () => 'root' },
       text: '<p>未命名导图</p>',

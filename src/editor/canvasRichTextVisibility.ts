@@ -3,6 +3,7 @@ interface RichTextRuntime {
   node?: {
     getData?: (key: string) => unknown;
     style?: { merge?: (key: string) => unknown };
+    group?: { node?: Element | null } | null;
     _textData?: {
       node?: { node?: Element | null };
       nodeContent?: { node?: Element | null };
@@ -74,6 +75,34 @@ function staticTextLayers(node: RichTextRuntime['node']): Array<HTMLElement | SV
   );
 }
 
+/**
+ * Upstream's width-drag DOM reconciliation (nodeModifyWidth.js#preserveLiveTextData)
+ * is meant to always reuse the same outer text group, but a live-edit commit
+ * (RenderLifecycleCoordinator) rebuilding `_textData` in the same window can
+ * race it into creating a second outer group instead of reusing the first.
+ * `node._textData` only ever points at the newest one, so the older sibling
+ * is orphaned: never hidden by synchronizeCanvasRichTextVisibility(), never
+ * removed by anything, and stays permanently visible next to the live text
+ * as a second, duplicate node label. Sweep for any wrap element under the
+ * node's own SVG group that is not part of the currently tracked layer(s)
+ * and drop it — it can only ever be stale duplicate paint, never legitimate
+ * content, since real multi-line content stays nested under the one tracked
+ * outer group.
+ */
+function removeOrphanedStaticTextLayers(
+  node: RichTextRuntime['node'],
+  current: Array<HTMLElement | SVGElement>,
+): void {
+  const root = node?.group?.node;
+  if (!root) return;
+  const allWraps = root.querySelectorAll<HTMLElement>('.smm-text-node-wrap,.smm-richtext-node-wrap');
+  if (allWraps.length === 0) return;
+  allWraps.forEach((wrap) => {
+    if (current.some((owner) => owner === wrap || owner.contains(wrap))) return;
+    wrap.remove();
+  });
+}
+
 export function synchronizeCanvasRichTextVisibility(map: MindMapRuntime | null | undefined): boolean {
   if (!map) return false;
   // Teardown clears richText.node before consumers receive hide_text_edit.
@@ -84,6 +113,7 @@ export function synchronizeCanvasRichTextVisibility(map: MindMapRuntime | null |
   const wrapper = runtime?.textEditNode;
   const node = runtime?.node;
   if (!wrapper || !node) return false;
+  removeOrphanedStaticTextLayers(node, staticTextLayers(node));
   const textColor = cssColor(node.style?.merge?.('color'), '#1f2937');
   wrapper.style.setProperty('color', textColor, 'important');
   wrapper.style.setProperty('caret-color', textColor, 'important');

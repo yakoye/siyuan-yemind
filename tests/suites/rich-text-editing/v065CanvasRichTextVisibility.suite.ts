@@ -140,6 +140,50 @@ describe('v0.6.5 canvas rich-text visibility regression', () => {
     expect(group.style.visibility).toBe('hidden');
     expect(group.getAttribute('aria-hidden')).toBe('true');
   });
+
+  it('removes an orphaned duplicate static text layer left behind by a DOM reconciliation race', () => {
+    // A concurrent live-edit commit (RenderLifecycleCoordinator) rebuilding
+    // `_textData` can race a width-drag's own DOM reconciliation into
+    // creating a second outer text group instead of reusing the first.
+    // `node._textData` only ever points at the newest one, so the older
+    // sibling is orphaned: never hidden, never removed, and stays visible
+    // next to the live text as a second, duplicate node label. The node's
+    // own top-level SVG group is stable across the node's lifetime, so a
+    // sweep rooted there must find and drop that orphan.
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'block';
+    wrapper.dataset.yemindGeometryReady = 'true';
+    wrapper.innerHTML = '<div class="ql-container"><div class="ql-editor">当前文字</div></div>';
+    const nodeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const currentGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const currentLine = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    currentLine.classList.add('smm-text-node-wrap');
+    currentLine.textContent = '当前文字';
+    currentGroup.append(currentLine);
+    const orphanGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const orphanLine = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    orphanLine.classList.add('smm-text-node-wrap');
+    orphanLine.textContent = '过时的重复文字';
+    orphanGroup.append(orphanLine);
+    nodeGroup.append(currentGroup, orphanGroup);
+    document.body.append(nodeGroup);
+    const node = {
+      style: { merge: () => '#1f2937' },
+      _textData: { node: { node: currentGroup } },
+      group: { node: nodeGroup },
+    };
+    const map = {
+      richText: { textEditNode: wrapper, node, showTextEdit: true },
+      renderer: { textEdit: { getBackground: () => '#ffffff' } },
+    };
+
+    expect(orphanLine.isConnected).toBe(true);
+    synchronizeCanvasRichTextVisibility(map as any);
+
+    expect(orphanLine.isConnected).toBe(false);
+    expect(currentGroup.style.visibility).toBe('hidden');
+    nodeGroup.remove();
+  });
 });
 
 import { createMindMap } from '../../../src/core/createMindMap';

@@ -4,7 +4,7 @@
 
 - Product: YeMind
 - Package and plugin ID: `siyuan-yemind`
-- Current version: `0.9.31`
+- Current version: `1.7.6` (see `VERSION` / `package.json`; not part of the automated 10-marker `npm run check:version` contract, so update this line by hand on release)
 - Host baseline: SiYuan `3.7.3`
 - Release archive: `siyuan-yemind-vX.Y.Z.zip`
 

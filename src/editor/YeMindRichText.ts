@@ -602,6 +602,24 @@ export default class YeMindRichText extends (BaseRichText as any) {
     const originHeight = Number.isFinite(height) && height > 0 ? height : rect.height;
     host.style.minWidth = `${originWidth + this.textNodePaddingX * 2}px`;
     host.style.minHeight = `${originHeight}px`;
+    // The upstream plugin only sets max-width once, at the moment editing
+    // opens (RichText.js#showEditText). If the node's wrap boundary changes
+    // while editing stays open — most commonly a width-drag performed on an
+    // already-selected/editing node — that stale max-width is never
+    // refreshed. Quill then keeps wrapping the live text at the OLD width
+    // while the static SVG text (which recomputes on every commit) wraps at
+    // the CURRENT, narrower one, so the two layers can show completely
+    // different line breaks stacked on top of each other. Keep max-width
+    // live on every geometry sync, not just at open.
+    const hasCustomWidth = Boolean(node?.hasCustomWidth?.());
+    const customTextWidth = Number(node?.customTextWidth);
+    const defaultWrapWidth = Number(this.mindMap?.opt?.textAutoWrapWidth);
+    const wrapWidth = hasCustomWidth && Number.isFinite(customTextWidth) && customTextWidth > 0
+      ? customTextWidth
+      : (Number.isFinite(defaultWrapWidth) && defaultWrapWidth > 0 ? defaultWrapWidth : null);
+    if (wrapWidth !== null) {
+      host.style.maxWidth = `${wrapWidth + this.textNodePaddingX * 2}px`;
+    }
     this.setQuillContainerMinHeight(originHeight);
     this.applyEditorHorizontalMargin(node, rect);
     this.normalizeEditorPlacement(rect);
@@ -685,8 +703,16 @@ export default class YeMindRichText extends (BaseRichText as any) {
     );
     if (!host) return false;
     const previousPhase = sessions.snapshot().phase;
+    const wasAlreadyActive = previousPhase === 'active';
     host.dataset.yemindEditSession = String(sessionId);
-    host.dataset.yemindGeometryReady = aligned ? 'true' : 'false';
+    // Once the one-time live-text handoff has happened (the session reached
+    // 'active'), a later per-keystroke miss must not flip this back to
+    // 'false': that attribute drives the CSS rule that hides (and, in
+    // Chromium, unfocuses) the edit host, which would silently swallow every
+    // keystroke typed after the miss. Position still keeps updating via
+    // applyEditorGeometry/normalizeEditorPlacement on every commit; only the
+    // visibility/focus gate becomes sticky once active.
+    host.dataset.yemindGeometryReady = (aligned || wasAlreadyActive) ? 'true' : 'false';
     const snapshot = this.markCurrentEditorReady();
     if (
       aligned
@@ -712,6 +738,15 @@ export default class YeMindRichText extends (BaseRichText as any) {
           }
         });
       }
+      // `isInserting` has now served its only purpose: deciding whether this
+      // one opening transaction should auto-show the toolbar. The initial
+      // selection above was applied with Quill.sources.SILENT, so Quill's own
+      // 'selection-change' listener never actually fires for it and its
+      // one-shot "swallow the first event" guard would otherwise eat the
+      // user's real first selection on this newly inserted node instead,
+      // leaving the formatting toolbar permanently unreachable until a
+      // second selection attempt.
+      this.isInserting = false;
     }
     return aligned;
   }
@@ -1079,6 +1114,18 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.quill.on('text-change', (_delta: unknown, _oldDelta: unknown, source: string) => {
       if (source === Quill.sources.USER) {
         markNodeTextEditedData(this.node?.nodeData?.data ?? this.node?.getData?.());
+        // Quill's Selection#update() deliberately emits the caret move that
+        // follows typing with Emitter.sources.SILENT and skips the public
+        // 'selection-change' event for it (node_modules/quill/core/selection.js).
+        // `this.range`/`this.lastRange` are only refreshed from that event, so
+        // without this they keep whatever was selected *before* the user
+        // started typing (e.g. the initial double-click select-all, or an
+        // earlier real click). Delete/Backspace/copy/cut below fall back to
+        // that stale, often much larger range instead of acting at the real
+        // caret, which can silently delete most of the node's text. Any
+        // user-driven text change invalidates the cached selection.
+        this.range = null;
+        this.lastRange = null;
       }
       this.sessionCoordinator().advanceRevision(quillSessionId);
       this.emitLiveTextEditChange(this.pasteTransactionPending ? 'paste' : 'input');

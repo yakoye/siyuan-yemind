@@ -60,6 +60,15 @@ export class CanvasEditSessionCoordinator {
     readiness: { geometryReady: boolean; contentReady: boolean },
   ): Readonly<CanvasEditSessionSnapshot> | null {
     if (!this.isCurrent(id) || this.current.phase === 'closing') return null;
+    // The live text handoff (hide the static SVG text, reveal + focus Quill)
+    // happens once, atomically, when the session first reaches 'active'. A
+    // later per-keystroke geometry recheck can miss by a hair (font-metric
+    // drift, zoom, a custom-width node) without meaning the editor stopped
+    // being the correct live surface. Regressing phase back to 'opening'
+    // here would re-hide (CSS visibility) and unfocus an editor the user is
+    // still typing into, dropping every keystroke after the miss. Once
+    // active, stay active until the session closes.
+    if (this.current.phase === 'active') return this.current;
     const geometryReady = Boolean(readiness.geometryReady);
     const contentReady = Boolean(readiness.contentReady);
     this.current = freezeSnapshot({

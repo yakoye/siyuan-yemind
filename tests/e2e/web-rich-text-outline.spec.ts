@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { resetWebApp } from './helpers';
+import { recordPageErrors, resetWebApp } from './helpers';
 
 async function addRootChild(page: import('@playwright/test').Page): Promise<void> {
   const editor = page.locator('.ymw-editor > .ymz-editor');
@@ -1474,4 +1474,409 @@ test('outline link, code-block and formula dialogs commit against the saved text
   await dialog.locator('[data-field="formula"]').fill('e=mc^2');
   await dialog.locator('[data-dialog-action="save"]').click();
   await expect(childText.locator('.ql-formula')).toHaveAttribute('data-value', 'e=mc^2');
+});
+
+// YM-P0-CORE-003 regression: `.fill()` sets the whole editor value in one
+// programmatic operation and never proves that real per-character keystrokes
+// keep the Quill editor focused and readable. The tests below drive the
+// canvas rich-text editor the same way a physical keyboard and IME would:
+// individual keydown/input events, and native compositionstart/update/end for
+// CJK input.
+
+async function startFrameCapture(page: import('@playwright/test').Page): Promise<void> {
+  await page.evaluate(() => {
+    const frames: Array<{ staticVisible: boolean; editorVisible: boolean; focused: boolean; editorReady: string | null }> = [];
+    const painted = (element: Element | null): boolean => {
+      if (!(element instanceof Element)) return false;
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return style.display !== 'none'
+        && style.visibility !== 'hidden'
+        && Number(style.opacity || 1) > 0
+        && rect.width > 0
+        && rect.height > 0;
+    };
+    (window as any).__yemindTypingStop = false;
+    const capture = (): void => {
+      const nodeGroup = document.querySelector('.smm-node.active') ?? document.querySelector('.smm-node');
+      const staticLayers = nodeGroup
+        ? Array.from(nodeGroup.querySelectorAll<Element>('.smm-text-node-wrap,.smm-richtext-node-wrap'))
+        : [];
+      const host = document.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
+      const quillEditor = host?.querySelector<HTMLElement>('.ql-editor') ?? null;
+      frames.push({
+        staticVisible: staticLayers.some((element) => painted(element)),
+        editorVisible: painted(host) && painted(quillEditor),
+        focused: document.activeElement === quillEditor,
+        editorReady: host?.dataset.yemindGeometryReady ?? null,
+      });
+      if (!(window as any).__yemindTypingStop) requestAnimationFrame(capture);
+    };
+    (window as any).__yemindTypingFrames = frames;
+    requestAnimationFrame(capture);
+  });
+}
+
+async function stopFrameCapture(page: import('@playwright/test').Page): Promise<Array<{
+  staticVisible: boolean;
+  editorVisible: boolean;
+  focused: boolean;
+  editorReady: string | null;
+}>> {
+  return page.evaluate(async () => {
+    (window as any).__yemindTypingStop = true;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    return (window as any).__yemindTypingFrames;
+  });
+}
+
+test('canvas text edit accepts real sequential English and digit keystrokes without losing focus or ghosting', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop sequential-keystroke regression');
+  const errors = recordPageErrors(page);
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeVisible();
+  await expect(textEditor).toBeFocused();
+
+  await startFrameCapture(page);
+  await textEditor.pressSequentially('abcdef123456', { delay: 70 });
+  await page.waitForTimeout(150);
+  const frames = await stopFrameCapture(page);
+
+  expect(frames.length).toBeGreaterThan(15);
+  // Exactly one text layer (the live Quill editor XOR the static SVG text)
+  // may be visible on any painted frame; both-visible means a ghosted double
+  // layer, neither-visible means the user sees no text at all.
+  const badLayerFrames = frames.filter((frame) => Number(frame.staticVisible) + Number(frame.editorVisible) !== 1);
+  expect(badLayerFrames).toEqual([]);
+  // Once the editor is the visible layer it must also hold real DOM focus,
+  // otherwise keystrokes stop reaching Quill even though nothing looks wrong.
+  const unfocusedVisibleFrames = frames.filter((frame) => frame.editorVisible && !frame.focused);
+  expect(unfocusedVisibleFrames).toEqual([]);
+
+  await expect(textEditor).toHaveText('abcdef123456');
+  await expect(textEditor).toBeFocused();
+  await expect(page.locator('.smm-richtext-node-edit-wrap')).toHaveAttribute('data-yemind-geometry-ready', 'true');
+  expect(errors).toEqual([]);
+
+  await commitCanvasEdit(page);
+  await expect(rootNode).toContainText('abcdef123456');
+});
+
+test('canvas text edit keeps IME composition uncommitted until compositionend and does not trigger structural shortcuts mid-composition', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop IME composition regression');
+  const errors = recordPageErrors(page);
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeFocused();
+  const nodeCountBefore = await editor.locator('.smm-node').count();
+
+  const result = await page.evaluate(async () => {
+    const host = document.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
+    const quillEditor = host?.querySelector<HTMLElement>('.ql-editor');
+    if (!quillEditor) return { ok: false, structuralTriggered: false, composingHtmlSnapshot: '' };
+    let structuralTriggered = false;
+    const guard = (event: KeyboardEvent): void => {
+      if (event.key === 'Enter' || event.key === 'Tab') structuralTriggered = true;
+    };
+    window.addEventListener('keydown', guard, true);
+    quillEditor.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true, data: '' }));
+    const stages = ['P', 'PC', 'PCI', 'PCIe', 'PCIe中', 'PCIe中文', 'PCIe中文输', 'PCIe中文输入', 'PCIe中文输入测', 'PCIe中文输入测试'];
+    for (const stage of stages) {
+      quillEditor.dispatchEvent(new CompositionEvent('compositionupdate', { bubbles: true, data: stage }));
+      quillEditor.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true, inputType: 'insertCompositionText', data: stage, composed: true }));
+      await new Promise((resolve) => setTimeout(resolve, 8));
+    }
+    const composingHtmlSnapshot = quillEditor.innerHTML;
+    quillEditor.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: 'PCIe中文输入测试' }));
+    document.execCommand('insertText', false, 'PCIe中文输入测试');
+    window.removeEventListener('keydown', guard, true);
+    return { ok: true, structuralTriggered, composingHtmlSnapshot };
+  });
+
+  expect(result.ok).toBe(true);
+  expect(result.structuralTriggered).toBe(false);
+  await expect(textEditor).toContainText('PCIe中文输入测试');
+  await expect(textEditor).toBeFocused();
+  await expect(editor.locator('.smm-node')).toHaveCount(nodeCountBefore);
+  expect(errors).toEqual([]);
+
+  await commitCanvasEdit(page);
+  await expect(rootNode).toContainText('PCIe中文输入测试');
+});
+
+test('a second canvas edit session on a different node accepts continuous typing after switching from the first node', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop multi-session regression');
+  const errors = recordPageErrors(page);
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const toolbar = editor.locator('.ymz-rich-toolbar');
+
+  await addRootChild(page);
+  await textEditor.pressSequentially('nodeAtext', { delay: 40 });
+  await expect(textEditor).toBeFocused();
+  await expect(textEditor).toHaveText('nodeAtext');
+  await commitCanvasEdit(page);
+
+  await addRootChild(page);
+  await expect(textEditor).toBeFocused();
+  await textEditor.pressSequentially('nodeBtext', { delay: 40 });
+  await expect(textEditor).toBeFocused();
+  await expect(textEditor).toHaveText('nodeBtext');
+  // The formatting toolbar must still respond for the new session; a stale
+  // captured session id from the first node would silently drop this.
+  await textEditor.dblclick();
+  await expect(toolbar).toBeVisible();
+  await commitCanvasEdit(page);
+
+  const nodes = editor.locator('.smm-node');
+  await expect(nodes.filter({ hasText: 'nodeAtext' })).toHaveCount(1);
+  await expect(nodes.filter({ hasText: 'nodeBtext' })).toHaveCount(1);
+  expect(errors).toEqual([]);
+});
+
+test('an existing text node accepts continuous retyping after real selection and deletion', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop existing-node retype regression');
+  const errors = recordPageErrors(page);
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+
+  await rootNode.dblclick();
+  await textEditor.fill('已有文字节点原始内容');
+  await commitCanvasEdit(page);
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeFocused();
+  await textEditor.press('Control+A');
+  await page.keyboard.press('Delete');
+  await expect(textEditor).toHaveText('');
+  await expect(textEditor).toBeFocused();
+
+  await startFrameCapture(page);
+  await textEditor.pressSequentially('替换后的新内容abc', { delay: 60 });
+  await page.waitForTimeout(150);
+  const frames = await stopFrameCapture(page);
+  const badLayerFrames = frames.filter((frame) => Number(frame.staticVisible) + Number(frame.editorVisible) !== 1);
+  expect(badLayerFrames).toEqual([]);
+  const unfocusedVisibleFrames = frames.filter((frame) => frame.editorVisible && !frame.focused);
+  expect(unfocusedVisibleFrames).toEqual([]);
+
+  await expect(textEditor).toHaveText('替换后的新内容abc');
+  await expect(textEditor).toBeFocused();
+  expect(errors).toEqual([]);
+
+  await commitCanvasEdit(page);
+  await expect(rootNode).toContainText('替换后的新内容abc');
+});
+
+test('clicking mid-text to place a caret, typing, then pressing Backspace once only removes one character', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop caret-click-then-backspace regression');
+  // Root cause: Quill's Selection#update() suppresses its own public
+  // 'selection-change' event (Emitter.sources.SILENT) for the caret move that
+  // naturally follows typing — see node_modules/quill/core/selection.js,
+  // `this.update(triggeredByTyping ? Emitter.sources.SILENT : source)` and
+  // `if (source !== Emitter.sources.SILENT) { this.emitter.emit(...) }`.
+  // YeMindRichText only refreshes its own `this.range`/`this.lastRange`
+  // "last known selection" cache from that event, so after a real click
+  // (which does fire 'selection-change', caching whatever was selected
+  // *before* the click — e.g. the initial double-click select-all) followed
+  // by typing new characters, the cache never learns the caret collapsed.
+  // Backspace/Delete's saved-selection fallback (`deleteCurrentSelection`)
+  // then deletes that stale, much larger range instead of one character.
+  const errors = recordPageErrors(page);
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const original = '这是一段用于测试的原始较长文字内容ABCDEFGHIJKLMNOPQRSTUVWXYZ再补充一些额外的内容让节点足够宽';
+
+  await rootNode.dblclick();
+  await textEditor.fill(original);
+  await commitCanvasEdit(page);
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeFocused();
+
+  // A real pointer click near the middle of the rendered text places a
+  // collapsed caret there, matching how a user repositions the cursor in an
+  // existing node (not select-all, not keyboard Home/Arrow navigation).
+  const box = await textEditor.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  await page.waitForTimeout(80);
+  const caretOffset = await page.evaluate(() => {
+    const editorEl = document.querySelector('.smm-richtext-node-edit-wrap .ql-editor')!;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return -1;
+    const pre = document.createRange();
+    pre.selectNodeContents(editorEl);
+    pre.setEnd(sel.getRangeAt(0).startContainer, sel.getRangeAt(0).startOffset);
+    return pre.toString().length;
+  });
+  expect(caretOffset).toBeGreaterThan(0);
+  expect(caretOffset).toBeLessThan(original.length);
+
+  await page.keyboard.type('XYZ', { delay: 60 });
+  const afterType = await textEditor.textContent();
+  const expectedAfterType = `${original.slice(0, caretOffset)}XYZ${original.slice(caretOffset)}`;
+  expect(afterType).toBe(expectedAfterType);
+
+  await page.keyboard.press('Backspace');
+  const afterBackspace = await textEditor.textContent();
+  // One Backspace after typing must remove exactly the character just
+  // typed ('Z', at the real caret position), never fall back to a stale
+  // multi-character selection from before the click.
+  const expectedAfterBackspace = `${original.slice(0, caretOffset)}XY${original.slice(caretOffset)}`;
+  expect(afterBackspace).toBe(expectedAfterBackspace);
+  expect(afterBackspace?.length).toBe(original.length + 2);
+  await expect(textEditor).toBeFocused();
+  expect(errors).toEqual([]);
+
+  await commitCanvasEdit(page);
+  await expect(rootNode).toContainText(afterBackspace!);
+});
+
+test('real per-character canvas typing commits exactly once and undo/redo restore it in one step', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop typed-history regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const original = await rootNode.textContent();
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeFocused();
+  await textEditor.press('Control+A');
+  await textEditor.pressSequentially('逐字符输入的新标题123', { delay: 60 });
+  await expect(textEditor).toHaveText('逐字符输入的新标题123');
+  await commitCanvasEdit(page);
+  await expect(rootNode).toContainText('逐字符输入的新标题123');
+
+  await editor.locator('[data-action="undo"]').click();
+  await expect(rootNode).not.toContainText('逐字符输入的新标题123');
+  if (original) await expect(rootNode).toContainText(original);
+  await editor.locator('[data-action="redo"]').click();
+  await expect(rootNode).toContainText('逐字符输入的新标题123');
+
+  // Reopening after save/reload-equivalent navigation must show the same
+  // committed text, not a partially-applied keystroke.
+  await rootNode.dblclick();
+  await expect(textEditor).toContainText('逐字符输入的新标题123');
+  await commitCanvasEdit(page);
+});
+
+test('a transient editor/target geometry mismatch during typing must not hide or unfocus an already-active canvas editor', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop geometry-regression sticky-active regression');
+  // Root cause: RenderLifecycleCoordinator.commitTextEdit() rebuilds the
+  // node's SVG text on every keystroke, and YeMindRichText.commitOpeningPlacement()
+  // unconditionally recomputes editorContentRectAligned() against the fresh
+  // SVG rect and writes host.dataset.yemindGeometryReady on every commit.
+  // `.smm-richtext-node-edit-wrap:not([data-yemind-geometry-ready="true"])`
+  // is CSS `visibility:hidden!important`, and Chromium cannot keep DOM focus
+  // on a `visibility:hidden` element, so any keystroke-triggered realignment
+  // miss (e.g. a font-metric or zoom mismatch between the off-screen SVG
+  // measurement and the live Quill box) re-hides and unfocuses an editor
+  // that was already actively being typed into. This reproduces the reported
+  // "second character cannot be typed / ghosted first character" defect
+  // without relying on a specific font or theme to drift by chance.
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const host = editor.locator('.smm-richtext-node-edit-wrap');
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeFocused();
+  await expect(host).toHaveAttribute('data-yemind-geometry-ready', 'true');
+
+  // Force every future alignment check to miss by 5px, simulating a
+  // persistent measurement/render mismatch that the atomic-handoff gate must
+  // survive once editing is already active.
+  await page.evaluate(() => {
+    const liveEditor = document.querySelector('.smm-richtext-node-edit-wrap .ql-editor')!;
+    const original = liveEditor.getBoundingClientRect.bind(liveEditor);
+    (liveEditor as unknown as { getBoundingClientRect: () => DOMRect }).getBoundingClientRect = () => {
+      const rect = original();
+      return new DOMRect(rect.left + 5, rect.top + 5, rect.width, rect.height);
+    };
+  });
+
+  await textEditor.press('Control+A');
+  await textEditor.pressSequentially('abcdef', { delay: 60 });
+
+  // The active editor must stay visible and keep DOM focus for the rest of
+  // the session even though every post-keystroke realignment now misses.
+  await expect(host).toHaveAttribute('data-yemind-geometry-ready', 'true');
+  await expect(host).toHaveCSS('visibility', 'visible');
+  await expect(textEditor).toBeFocused();
+  await expect(textEditor).toHaveText('abcdef');
+
+  await commitCanvasEdit(page);
+  await expect(rootNode).toContainText('abcdef');
+});
+
+test('the live Quill editor rewraps to the node\'s current width after a width-drag performed while text is selected and editing', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop live-rewrap regression');
+  // Root cause: RichText.js#showEditText only sets the editor host's
+  // `max-width` once, at the moment editing opens. YeMindRichText's own
+  // per-commit/per-drag-frame geometry sync (applyEditorGeometry) refreshes
+  // min-width/min-height/margin every time but never refreshed max-width.
+  // Dragging a node's width handle while its text is already selected and
+  // being edited (a real, common sequence — select all, then narrow the
+  // node) changes `node.customTextWidth`, and the static SVG text re-wraps
+  // to it on every commit, but the live Quill editor kept wrapping at the
+  // width captured when editing first opened. The two layers can end up
+  // showing completely different line breaks for the same text stacked on
+  // top of each other.
+  const errors = recordPageErrors(page);
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const host = editor.locator('.smm-richtext-node-edit-wrap');
+
+  await rootNode.dblclick();
+  await textEditor.fill('PCIe RAS Reliability / Availability / Serviceability 可靠性 / 可用性 / 可维护性');
+  await commitCanvasEdit(page);
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeFocused();
+  await textEditor.press('Control+A');
+
+  const maxWidthBefore = await host.evaluate((element) => parseFloat(getComputedStyle(element).maxWidth));
+  expect(maxWidthBefore).toBeGreaterThan(0);
+
+  const handles = rootNode.locator('rect[style*="ew-resize"]');
+  await expect(handles).toHaveCount(2);
+  const handle = handles.last();
+  const handleBox = await handle.boundingBox();
+  expect(handleBox).not.toBeNull();
+  await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
+  await page.mouse.down();
+  // Drag sharply narrower than the text's natural width.
+  await page.mouse.move(handleBox!.x - 260, handleBox!.y + handleBox!.height / 2, { steps: 8 });
+  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+  await page.mouse.up();
+  await page.waitForTimeout(150);
+
+  const maxWidthAfter = await host.evaluate((element) => parseFloat(getComputedStyle(element).maxWidth));
+  expect(maxWidthAfter).toBeLessThan(maxWidthBefore - 50);
+
+  await expect(textEditor).toBeFocused();
+  await expect(textEditor).toHaveText('PCIe RAS Reliability / Availability / Serviceability 可靠性 / 可用性 / 可维护性');
+  expect(errors).toEqual([]);
+
+  await commitCanvasEdit(page);
+  await expect(rootNode).toContainText('PCIe RAS Reliability');
 });

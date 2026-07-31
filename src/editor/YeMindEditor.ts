@@ -2120,7 +2120,15 @@ export class YeMindEditor {
       this.renderLifecycle?.scheduleTextEdit(payload);
     });
     this.map.on('hide_text_edit', () => {
-      this.renderLifecycle?.flushPendingTextEdit();
+      // hideEditText() already read the editor's current text and committed it
+      // authoritatively (SET_NODE_TEXT + a full render when it actually
+      // changed) before emitting this event. A debounced live-edit commit can
+      // still be in flight at that point (see RenderLifecycleCoordinator's
+      // commit debounce) and can hold an older snapshot of the text than what
+      // hideEditText() just committed -- flushing it here would replay that
+      // stale snapshot over the authoritative one. Discard it instead of
+      // flushing it.
+      this.renderLifecycle?.invalidate();
       // Closing an unchanged edit intentionally skips a map render. Restore
       // the static SVG text layer explicitly so switching nodes does not need
       // a redundant SET_NODE_TEXT transaction merely to repaint the old node.

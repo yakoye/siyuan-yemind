@@ -8,6 +8,7 @@ import { shouldPassivelySyncOutline } from '../../../src/editor/editingSurfaceCo
 import { markerCatalog, markerSvg } from '../../../src/core/localAssetCatalogs';
 import { nodeInsertIcon, nodeStyleIcon } from '../../../src/editor/projectControls';
 import { preserveLiveTextData } from '../../../vendor/simple-mind-map-runtime/src/core/render/node/nodeModifyWidth';
+import { synchronizeCanvasRichTextVisibility } from '../../../src/editor/canvasRichTextVisibility';
 
 const menuSource = readFileSync(resolve(process.cwd(), 'src/ui/contextMenu.ts'), 'utf8');
 const editorSource = readFileSync(resolve(process.cwd(), 'src/editor/YeMindEditor.ts'), 'utf8');
@@ -97,6 +98,65 @@ describe('v0.9.17 user-reported interaction regressions', () => {
     pending?.(0);
     expect(render).not.toHaveBeenCalled();
     expect(updateTextEditNode).toHaveBeenCalledOnce();
+    controller.destroy();
+  });
+
+  it('re-hides the static SVG text on every width-drag frame even after upstream reconciliation clears its style attribute', () => {
+    // Upstream's nodeModifyWidth.js#preserveLiveTextData reuses the painted
+    // static-text DOM node during a width drag (to avoid a blank/ghost
+    // frame), but its copyDomAttributes() copies the freshly measured node's
+    // whole `style` attribute onto that reused element, silently clearing
+    // the `visibility:hidden!important` YeMind applies while its live Quill
+    // overlay is the visible text layer. Simulate exactly that: the static
+    // element starts hidden, a drag frame clobbers its style attribute (as
+    // the real reconciliation does), and the controller must re-assert the
+    // hidden state on that same frame.
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'block';
+    wrapper.dataset.yemindGeometryReady = 'true';
+    wrapper.innerHTML = '<div class="ql-container"><div class="ql-editor">拖动中的实时文字</div></div>';
+    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const staticLine = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    staticLine.classList.add('smm-text-node-wrap');
+    staticLine.textContent = '不能与编辑器重影';
+    group.append(staticLine);
+    const node = {
+      style: { merge: () => '#1f2937' },
+      _textData: { node: { node: group } },
+      group: { node: group },
+    };
+    const dragRoot = { isDragHandleMousedown: true, children: [] };
+    const map: any = {
+      renderer: { root: dragRoot, textEdit: { getBackground: () => '#ffffff' } },
+      richText: { showTextEdit: true, node, textEditNode: wrapper, updateTextEditNode: vi.fn() },
+      render: vi.fn((callback?: () => void) => callback?.()),
+    };
+
+    synchronizeCanvasRichTextVisibility(map);
+    expect(group.style.visibility).toBe('hidden');
+
+    // A drag frame's upstream reconciliation clobbers the style attribute.
+    group.setAttribute('style', '');
+    expect(group.style.visibility).not.toBe('hidden');
+
+    const listeners = new Map<string, EventListener>();
+    let pending: FrameRequestCallback | null = null;
+    const controller = new LiveNodeWidthLayoutController(
+      map,
+      {
+        addEventListener: (name: string, listener: EventListener) => listeners.set(name, listener),
+        removeEventListener: (name: string) => listeners.delete(name),
+      } as any,
+      {
+        request: (callback) => { pending = callback; return 1; },
+        cancel: vi.fn(),
+      },
+    );
+    listeners.get('mousemove')?.(new Event('mousemove'));
+    pending?.(0);
+
+    expect(group.style.visibility).toBe('hidden');
+    expect(group.getAttribute('aria-hidden')).toBe('true');
     controller.destroy();
   });
 

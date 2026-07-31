@@ -7673,21 +7673,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.7.0";
+const PLUGIN_VERSION = "1.7.6";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "a5dea18d-clean",
-  time: "2026-07-31T04:51:28+08:00"
+  id: "00750aef-dirty-0fbdc289",
+  time: "2026-07-31T14:34:44.620Z"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-30T16:49:40.105Z",
-  buildId: "yemind-v1.7.0-20260730",
+  buildTime: "2026-07-31T14:24:10.651Z",
+  buildId: "yemind-v1.7.6-20260731",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -81215,6 +81215,7 @@ class CanvasEditSessionCoordinator {
   }
   markEditorReady(id, readiness) {
     if (!this.isCurrent(id) || this.current.phase === "closing") return null;
+    if (this.current.phase === "active") return this.current;
     const geometryReady = Boolean(readiness.geometryReady);
     const contentReady = Boolean(readiness.contentReady);
     this.current = freezeSnapshot({
@@ -81727,7 +81728,7 @@ class YeMindRichText extends RichText {
     };
   }
   applyEditorGeometry(node, rect2) {
-    var _a, _b, _c2;
+    var _a, _b, _c2, _d2, _e, _f;
     const host = this.textEditNode;
     if (!host || !isUsableTextRect(rect2)) return;
     const group = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
@@ -81737,6 +81738,13 @@ class YeMindRichText extends RichText {
     const originHeight = Number.isFinite(height2) && height2 > 0 ? height2 : rect2.height;
     host.style.minWidth = `${originWidth + this.textNodePaddingX * 2}px`;
     host.style.minHeight = `${originHeight}px`;
+    const hasCustomWidth = Boolean((_d2 = node == null ? void 0 : node.hasCustomWidth) == null ? void 0 : _d2.call(node));
+    const customTextWidth = Number(node == null ? void 0 : node.customTextWidth);
+    const defaultWrapWidth = Number((_f = (_e = this.mindMap) == null ? void 0 : _e.opt) == null ? void 0 : _f.textAutoWrapWidth);
+    const wrapWidth = hasCustomWidth && Number.isFinite(customTextWidth) && customTextWidth > 0 ? customTextWidth : Number.isFinite(defaultWrapWidth) && defaultWrapWidth > 0 ? defaultWrapWidth : null;
+    if (wrapWidth !== null) {
+      host.style.maxWidth = `${wrapWidth + this.textNodePaddingX * 2}px`;
+    }
     this.setQuillContainerMinHeight(originHeight);
     this.applyEditorHorizontalMargin(node, rect2);
     this.normalizeEditorPlacement(rect2);
@@ -81816,8 +81824,9 @@ class YeMindRichText extends RichText {
     );
     if (!host) return false;
     const previousPhase = sessions.snapshot().phase;
+    const wasAlreadyActive = previousPhase === "active";
     host.dataset.yemindEditSession = String(sessionId);
-    host.dataset.yemindGeometryReady = aligned ? "true" : "false";
+    host.dataset.yemindGeometryReady = aligned || wasAlreadyActive ? "true" : "false";
     const snapshot = this.markCurrentEditorReady();
     if (aligned && (snapshot == null ? void 0 : snapshot.phase) === "active" && previousPhase !== "active" && this.lastAlignedSessionId !== sessionId) {
       this.lastAlignedSessionId = sessionId;
@@ -81834,6 +81843,7 @@ class YeMindRichText extends RichText {
           }
         });
       }
+      this.isInserting = false;
     }
     return aligned;
   }
@@ -82181,6 +82191,8 @@ class YeMindRichText extends RichText {
       var _a, _b, _c2, _d2;
       if (source === Quill.sources.USER) {
         markNodeTextEditedData(((_b = (_a = this.node) == null ? void 0 : _a.nodeData) == null ? void 0 : _b.data) ?? ((_d2 = (_c2 = this.node) == null ? void 0 : _c2.getData) == null ? void 0 : _d2.call(_c2)));
+        this.range = null;
+        this.lastRange = null;
       }
       this.sessionCoordinator().advanceRevision(quillSessionId);
       this.emitLiveTextEditChange(this.pasteTransactionPending ? "paste" : "input");
@@ -92515,6 +92527,17 @@ function staticTextLayers(node) {
     content.querySelectorAll(".smm-richtext-node-wrap")
   );
 }
+function removeOrphanedStaticTextLayers(node, current) {
+  var _a;
+  const root2 = (_a = node == null ? void 0 : node.group) == null ? void 0 : _a.node;
+  if (!root2) return;
+  const allWraps = root2.querySelectorAll(".smm-text-node-wrap,.smm-richtext-node-wrap");
+  if (allWraps.length === 0) return;
+  allWraps.forEach((wrap) => {
+    if (current.some((owner) => owner === wrap || owner.contains(wrap))) return;
+    wrap.remove();
+  });
+}
 function synchronizeCanvasRichTextVisibility(map2) {
   var _a, _b, _c2;
   if (!map2) return false;
@@ -92523,6 +92546,7 @@ function synchronizeCanvasRichTextVisibility(map2) {
   const wrapper = runtime == null ? void 0 : runtime.textEditNode;
   const node = runtime == null ? void 0 : runtime.node;
   if (!wrapper || !node) return false;
+  removeOrphanedStaticTextLayers(node, staticTextLayers(node));
   const textColor = cssColor((_b = (_a = node.style) == null ? void 0 : _a.merge) == null ? void 0 : _b.call(_a, "color"), "#1f2937");
   wrapper.style.setProperty("color", textColor, "important");
   wrapper.style.setProperty("caret-color", textColor, "important");
@@ -93235,11 +93259,24 @@ class LiveNodeWidthLayoutController {
   /**
    * The rich-text editor is an HTML overlay outside the SVG tree, so it must
    * follow the node's local draft geometry without changing the map model.
+   *
+   * Upstream's width-drag reconciliation (nodeModifyWidth.js#preserveLiveTextData)
+   * deliberately reuses the painted static-text DOM node instead of replacing
+   * it, to avoid a blank/ghost frame. But its copyDomAttributes() copies the
+   * freshly measured node's `style` attribute onto that reused element too,
+   * which silently clears the `visibility:hidden!important` YeMind applies
+   * to keep the static SVG text hidden while its live Quill overlay is the
+   * visible text layer. Every drag frame during an active edit session must
+   * therefore re-assert that hidden state, or the static text and the Quill
+   * overlay both become visible at once (two overlapping text layers).
    */
   synchronizeEditingSurface() {
     var _a, _b;
     const richText = (_a = this.map) == null ? void 0 : _a.richText;
-    if ((richText == null ? void 0 : richText.showTextEdit) === true) (_b = richText.updateTextEditNode) == null ? void 0 : _b.call(richText);
+    if ((richText == null ? void 0 : richText.showTextEdit) === true) {
+      (_b = richText.updateTextEditNode) == null ? void 0 : _b.call(richText);
+      synchronizeCanvasRichTextVisibility(this.map);
+    }
   }
 }
 function scheduleFocusedNodeHighlight(renderer, uid2, options = {}) {
@@ -95015,42 +95052,59 @@ const browserScheduler = {
   request: (callback) => window.requestAnimationFrame(callback),
   cancel: (id) => window.cancelAnimationFrame(id)
 };
+const browserTimer = {
+  request: (callback, delayMs) => window.setTimeout(callback, delayMs),
+  cancel: (id) => window.clearTimeout(id)
+};
+const DEFAULT_COMMIT_DEBOUNCE_MS = 160;
 class RenderLifecycleCoordinator {
-  constructor(mindMap, onCommitted, scheduler = browserScheduler) {
+  constructor(mindMap, onCommitted, scheduler = browserScheduler, timer = browserTimer, commitDebounceMs = DEFAULT_COMMIT_DEBOUNCE_MS) {
     __publicField(this, "revision", 0);
     __publicField(this, "frame", null);
+    __publicField(this, "debounceTimer", null);
     __publicField(this, "pending", null);
     __publicField(this, "geometryRepairInFlight", false);
     __publicField(this, "geometryRepairFrame", null);
     this.mindMap = mindMap;
     this.onCommitted = onCommitted;
     this.scheduler = scheduler;
+    this.timer = timer;
+    this.commitDebounceMs = commitDebounceMs;
+  }
+  cancelScheduled() {
+    if (this.debounceTimer !== null) this.timer.cancel(this.debounceTimer);
+    this.debounceTimer = null;
+    if (this.frame !== null) this.scheduler.cancel(this.frame);
+    this.frame = null;
   }
   scheduleTextEdit(payload) {
     const uid2 = renderedNodeUid$1(payload.node);
     if (!uid2) return;
     const revision = ++this.revision;
-    if (this.frame !== null) this.scheduler.cancel(this.frame);
-    this.frame = null;
+    this.cancelScheduled();
     if (payload.reason === "paste") {
       this.pending = null;
       this.commitTextEdit(payload, revision);
       return;
     }
     this.pending = { revision, payload };
-    this.frame = this.scheduler.request(() => {
+    this.debounceTimer = this.timer.request(() => {
       var _a;
-      this.frame = null;
+      this.debounceTimer = null;
       if (revision !== this.revision || ((_a = this.pending) == null ? void 0 : _a.revision) !== revision) return;
-      this.pending = null;
-      this.commitTextEdit(payload, revision);
-    });
+      this.frame = this.scheduler.request(() => {
+        var _a2;
+        this.frame = null;
+        if (revision !== this.revision || ((_a2 = this.pending) == null ? void 0 : _a2.revision) !== revision) return;
+        this.pending = null;
+        this.commitTextEdit(payload, revision);
+      });
+    }, this.commitDebounceMs);
   }
   flushPendingTextEdit() {
     const pending = this.pending;
     if (!pending) return false;
-    if (this.frame !== null) this.scheduler.cancel(this.frame);
-    this.frame = null;
+    this.cancelScheduled();
     this.pending = null;
     const revision = ++this.revision;
     this.commitTextEdit(pending.payload, revision);
@@ -95147,7 +95201,7 @@ class RenderLifecycleCoordinator {
     if (((_g = (_f = this.mindMap) == null ? void 0 : _f.richText) == null ? void 0 : _g.showTextEdit) === true) {
       (_h = node.update) == null ? void 0 : _h.call(node);
       (_j = (_i = node.parent) == null ? void 0 : _i.renderLine) == null ? void 0 : _j.call(_i);
-      (_k = node.renderLine) == null ? void 0 : _k.call(node, true);
+      (_k = node.renderLine) == null ? void 0 : _k.call(node);
       (_m = (_l = this.mindMap.richText) == null ? void 0 : _l.updateTextEditNode) == null ? void 0 : _m.call(_l);
       if (revision === this.revision) this.onCommitted(uid2);
       return;
@@ -95161,8 +95215,7 @@ class RenderLifecycleCoordinator {
   }
   invalidate() {
     this.revision += 1;
-    if (this.frame !== null) this.scheduler.cancel(this.frame);
-    this.frame = null;
+    this.cancelScheduled();
   }
   destroy() {
     this.invalidate();
@@ -96989,7 +97042,7 @@ class YeMindEditor {
     });
     this.map.on("hide_text_edit", () => {
       var _a;
-      (_a = this.renderLifecycle) == null ? void 0 : _a.flushPendingTextEdit();
+      (_a = this.renderLifecycle) == null ? void 0 : _a.invalidate();
       synchronizeCanvasRichTextVisibility(this.map);
     });
     this.map.on("node_tree_render_end", () => {

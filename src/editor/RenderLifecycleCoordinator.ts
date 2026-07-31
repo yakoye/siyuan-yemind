@@ -19,6 +19,27 @@ const browserScheduler: RenderLifecycleScheduler = {
   cancel: (id) => window.cancelAnimationFrame(id),
 };
 
+export interface RenderLifecycleTimer {
+  request(callback: () => void, delayMs: number): number;
+  cancel(id: number): void;
+}
+
+const browserTimer: RenderLifecycleTimer = {
+  request: (callback, delayMs) => window.setTimeout(callback, delayMs) as unknown as number,
+  cancel: (id) => window.clearTimeout(id),
+};
+
+// vendor's plain-text createTextNode() re-measures the whole string one character at a
+// time (svg.js measureText() -> new SVG <text> element -> native getBBox(), which forces
+// a synchronous layout, repeated for every character while probing where to wrap). A real
+// Chrome performance trace on the user's own document showed this costing 180-380ms for a
+// SINGLE commit on ordinary node text -- independent of how many descendants the node has.
+// Committing on every keystroke (or every IME compositionupdate, which can fire many times
+// per candidate) pays that full cost each time. Debouncing coalesces a typing/composition
+// burst into one commit shortly after it pauses, instead of blocking the main thread on
+// every character.
+const DEFAULT_COMMIT_DEBOUNCE_MS = 160;
+
 /**
  * Owns live edit rendering as one revisioned transaction. This replaces
  * simple-mind-map's trailing debounce, which could run after a node was moved
@@ -27,6 +48,7 @@ const browserScheduler: RenderLifecycleScheduler = {
 export class RenderLifecycleCoordinator {
   private revision = 0;
   private frame: number | null = null;
+  private debounceTimer: number | null = null;
   private pending: { revision: number; payload: RenderTextEditPayload } | null = null;
   private geometryRepairInFlight = false;
   private geometryRepairFrame: number | null = null;
@@ -35,33 +57,44 @@ export class RenderLifecycleCoordinator {
     private readonly mindMap: any,
     private readonly onCommitted: (uid?: string) => void,
     private readonly scheduler: RenderLifecycleScheduler = browserScheduler,
+    private readonly timer: RenderLifecycleTimer = browserTimer,
+    private readonly commitDebounceMs: number = DEFAULT_COMMIT_DEBOUNCE_MS,
   ) {}
+
+  private cancelScheduled(): void {
+    if (this.debounceTimer !== null) this.timer.cancel(this.debounceTimer);
+    this.debounceTimer = null;
+    if (this.frame !== null) this.scheduler.cancel(this.frame);
+    this.frame = null;
+  }
 
   scheduleTextEdit(payload: RenderTextEditPayload): void {
     const uid = renderedNodeUid(payload.node);
     if (!uid) return;
     const revision = ++this.revision;
-    if (this.frame !== null) this.scheduler.cancel(this.frame);
-    this.frame = null;
+    this.cancelScheduled();
     if (payload.reason === 'paste') {
       this.pending = null;
       this.commitTextEdit(payload, revision);
       return;
     }
     this.pending = { revision, payload };
-    this.frame = this.scheduler.request(() => {
-      this.frame = null;
+    this.debounceTimer = this.timer.request(() => {
+      this.debounceTimer = null;
       if (revision !== this.revision || this.pending?.revision !== revision) return;
-      this.pending = null;
-      this.commitTextEdit(payload, revision);
-    });
+      this.frame = this.scheduler.request(() => {
+        this.frame = null;
+        if (revision !== this.revision || this.pending?.revision !== revision) return;
+        this.pending = null;
+        this.commitTextEdit(payload, revision);
+      });
+    }, this.commitDebounceMs);
   }
 
   flushPendingTextEdit(): boolean {
     const pending = this.pending;
     if (!pending) return false;
-    if (this.frame !== null) this.scheduler.cancel(this.frame);
-    this.frame = null;
+    this.cancelScheduled();
     this.pending = null;
     const revision = ++this.revision;
     this.commitTextEdit(pending.payload, revision);
@@ -187,10 +220,15 @@ export class RenderLifecycleCoordinator {
       // between the old and new SVG instances for one or more frames.
       if (this.mindMap?.richText?.showTextEdit === true) {
         node.update?.();
-        // The incoming connector is owned by the parent, while renderLine on
-        // the edited node only redraws its outgoing subtree.
+        // The incoming connector is owned by the parent. renderLine(deep) on the edited
+        // node always redraws its own outgoing lines regardless of the deep flag; deep
+        // only controls whether it also recurses into every descendant's renderLine.
+        // This live-edit fast path never repositions descendants (layout() only rebuilds
+        // the edited node's own SVG content), so passing deep=true here was pure waste
+        // that scales with subtree size -- a real trace showed one keystroke on a node
+        // with a non-trivial subtree causing 371 forced synchronous layouts in ~184ms.
         node.parent?.renderLine?.();
-        node.renderLine?.(true);
+        node.renderLine?.();
         this.mindMap.richText?.updateTextEditNode?.();
         if (revision === this.revision) this.onCommitted(uid);
         return;
@@ -204,8 +242,7 @@ export class RenderLifecycleCoordinator {
 
   invalidate(): void {
     this.revision += 1;
-    if (this.frame !== null) this.scheduler.cancel(this.frame);
-    this.frame = null;
+    this.cancelScheduled();
   }
 
   destroy(): void {
