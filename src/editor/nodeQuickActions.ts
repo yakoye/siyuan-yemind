@@ -236,6 +236,14 @@ export class NodeQuickActionsController {
     this.stopGeometryTracking();
   }
 
+  // resume() does not check whether a node drag is in progress before
+  // unconditionally restoring visibility. This relies on an implicit
+  // assumption: the hide_text_edit event that triggers resume() and the
+  // mousemove-past-threshold gesture that triggers node_dragging do not
+  // overlap in the current interaction timelines. If that ever stops holding
+  // -- e.g. a future interaction path can close text editing mid-drag -- this
+  // needs to be revisited (mirror the editSuppressed guard used by
+  // onNodeDraggingStart/onNodeDragEnd, or track drag state explicitly here).
   resume(): void {
     this.editSuppressed = false;
     this.layer.style.visibility = '';
