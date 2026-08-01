@@ -263,7 +263,17 @@ export default class YeMindRichText extends (BaseRichText as any) {
   private lastAlignedSessionId = 0;
   private openingFocusFrame: number | null = null;
   private openingFocusSessionId = 0;
-  private openingFocusAttempts = 0;
+  /**
+   * True once the current opening transaction has committed a determinate
+   * width/height for the edit host. `focus()` is called synchronously by the
+   * upstream base class before that has happened; while this is false, focus
+   * intent is only recorded (see `pendingFocusIntent`), never applied, so
+   * Quill cannot claim focus/selection on a host the CSS gate still hides.
+   */
+  private openingGeometryReady = false;
+  private pendingFocusIntent: { selectAll: boolean } | null = null;
+  private hostContentWidth = 0;
+  private hostContentHeight = 0;
   private readonly handlePlacementInvalidation = (): void => {
     if (!this.showTextEdit) return;
     this.schedulePlacementStabilization();
@@ -315,15 +325,13 @@ export default class YeMindRichText extends (BaseRichText as any) {
     const sessions = this.sessionCoordinator();
     const current = sessions.snapshot();
     const host = this.textEditNode as HTMLElement | null;
-    const rect = host?.getBoundingClientRect?.();
+    // `host.dataset.yemindGeometryReady` is set by the caller from the same
+    // structural check (editorStructurallyReady) immediately before this
+    // runs. Re-measuring a live getBoundingClientRect() here duplicated that
+    // gate with the browser's own paint, which can lag or never converge for
+    // some node shapes — the exact "double-click and no cursor appears" bug.
     return sessions.markEditorReady(current.id, {
-      geometryReady: Boolean(
-        host
-        && host.dataset.yemindGeometryReady === 'true'
-        && rect
-        && rect.width > 0.5
-        && rect.height > 0.5,
-      ),
+      geometryReady: Boolean(host && host.dataset.yemindGeometryReady === 'true'),
       contentReady: this.editorContentReady(),
     });
   }
@@ -352,11 +360,30 @@ export default class YeMindRichText extends (BaseRichText as any) {
   }
 
   showEditText(params: any): void {
-    if (this.showTextEdit) return;
+    const sourceNode = params?.node ?? null;
+    const requestedUid = renderedNodeUid(sourceNode)
+      || renderedNodeUid(resolveLiveRenderedNode(this.mindMap, sourceNode));
+    if (this.showTextEdit) {
+      const session = this.sessionCoordinator().snapshot();
+      const sameNode = Boolean(requestedUid) && session.uid === requestedUid;
+      if (sameNode && session.phase === 'active') {
+        // Already editing this exact node: reclaim focus instead of tearing
+        // the transaction down and losing in-progress geometry/content.
+        this.focus();
+        return;
+      }
+      if (!sameNode) return;
+      // Same node, but the previous opening transaction never reached
+      // 'active' (stuck half-open: invisible/unfocusable host, dblclick
+      // otherwise silently ignored forever). Discard it without committing
+      // any text or history, then fall through to open a fresh session.
+      this.abortOpeningSession('reopen-half-open-session');
+    }
+    this.openingGeometryReady = false;
+    this.pendingFocusIntent = null;
     const pendingHost = this.textEditNode as HTMLElement | null;
     if (pendingHost) pendingHost.dataset.yemindGeometryReady = 'false';
-    const sourceNode = params?.node ?? null;
-    const uid = renderedNodeUid(sourceNode);
+    const uid = requestedUid;
     const liveNode = resolveLiveRenderedNode(this.mindMap, sourceNode, uid);
     const liveGeometry = resolveRenderedTextRect(liveNode);
     const parameterRect = isUsableTextRect(params?.rect) ? snapshotRect(params.rect) : null;
@@ -478,7 +505,36 @@ export default class YeMindRichText extends (BaseRichText as any) {
       this.editingUid = '';
       this.lastValidNodeRect = null;
       this.lastRectSource = 'none';
+      this.openingGeometryReady = false;
+      this.pendingFocusIntent = null;
     }
+  }
+
+  /**
+   * Recover from a previous opening transaction that never became active
+   * (host stayed CSS-hidden and unfocusable). Only discards in-flight
+   * open-session state; never commits text and never touches undo history.
+   */
+  private abortOpeningSession(_reason: string): void {
+    this.unbindPlacementTracking();
+    this.cancelPlacementStabilization();
+    this.cancelOpeningFocusClaim();
+    const host = this.textEditNode as HTMLElement | null;
+    if (host) {
+      host.style.display = 'none';
+      host.dataset.yemindGeometryReady = 'false';
+    }
+    this.setIsShowTextEdit(false);
+    this.node = null;
+    this.range = null;
+    this.lastRange = null;
+    this.lastAlignedSessionId = 0;
+    this.openingGeometryReady = false;
+    this.pendingFocusIntent = null;
+    this.lastValidNodeRect = null;
+    this.lastRectSource = 'none';
+    const sessions = this.sessionCoordinator();
+    sessions.close(sessions.snapshot().id);
   }
 
   removeTextEditEl(): void {
@@ -494,6 +550,8 @@ export default class YeMindRichText extends (BaseRichText as any) {
       this.editingUid = '';
       this.lastValidNodeRect = null;
       this.lastRectSource = 'none';
+      this.openingGeometryReady = false;
+      this.pendingFocusIntent = null;
     }
   }
 
@@ -502,13 +560,34 @@ export default class YeMindRichText extends (BaseRichText as any) {
     if (editor) editor.style.minHeight = `${Math.max(0, Number(minHeight) || 0)}px`;
   }
 
-  focus(start?: number): void {
+  /**
+   * The upstream base class calls `this.focus(start)` synchronously while
+   * still inside `showEditText`, before the opening transaction has a
+   * determinate width/height (see `openingGeometryReady`). Record the edit
+   * intent now — using the already-reliable `isInserting` flag rather than
+   * inferring "select all" from `start === 0` (upstream only ever passes 0
+   * for that same isInserting case once selectTextOnEnterEditText is false,
+   * but branching on the literal number instead of the real flag is fragile
+   * and easy to misread as "place caret at position 0") — and only touch the
+   * DOM once geometry has actually committed, so Quill never claims focus or
+   * a visible selection on a host the CSS gate still hides.
+   */
+  focus(_start?: number): void {
     if (!this.quill) return;
     const liveNode = resolveLiveRenderedNode(this.mindMap, this.node, this.editingUid);
     if (liveNode) this.node = liveNode;
-    const length = editableTextLength(this.quill);
     const data = this.node?.nodeData?.data ?? this.node?.getData?.() ?? null;
-    const selectAll = start === 0 || isPristineNodeTextData(data);
+    const selectAll = this.isInserting || isPristineNodeTextData(data);
+    this.pendingFocusIntent = { selectAll };
+    if (!this.openingGeometryReady) return;
+    this.applyPendingFocusIntent();
+  }
+
+  private applyPendingFocusIntent(): void {
+    if (!this.pendingFocusIntent || !this.quill) return;
+    const { selectAll } = this.pendingFocusIntent;
+    this.pendingFocusIntent = null;
+    const length = editableTextLength(this.quill);
     this.quill.root.focus({ preventScroll: true });
     this.quill.setSelection(selectAll ? 0 : length, selectAll ? length : 0, Quill.sources.SILENT);
     this.range = selectAll ? { index: 0, length } : { index: length, length: 0 };
@@ -605,8 +684,20 @@ export default class YeMindRichText extends (BaseRichText as any) {
     const height = Number(group?.attr?.('data-height'));
     const originWidth = Number.isFinite(width) && width > 0 ? width : rect.width;
     const originHeight = Number.isFinite(height) && height > 0 ? height : rect.height;
-    host.style.minWidth = `${originWidth + this.textNodePaddingX * 2}px`;
+    // An absolutely/fixed-positioned block with only min/max-width still
+    // resolves `width: auto` by shrink-to-fit, which can round the content
+    // box to a hair narrower or wider than the static SVG text's own layout
+    // width. That divergence is enough to move the last word of a line
+    // across the wrap boundary the moment editing opens, even though nothing
+    // was typed. Writing the exact same content width to `width` removes
+    // that ambiguity: the host box is deterministic before Quill's own
+    // layout ever has a chance to disagree with the static text.
+    const hostWidth = originWidth + this.textNodePaddingX * 2;
+    host.style.width = `${hostWidth}px`;
+    host.style.minWidth = `${hostWidth}px`;
     host.style.minHeight = `${originHeight}px`;
+    this.hostContentWidth = hostWidth;
+    this.hostContentHeight = originHeight;
     // The upstream plugin only sets max-width once, at the moment editing
     // opens (RichText.js#showEditText). If the node's wrap boundary changes
     // while editing stays open — most commonly a width-drag performed on an
@@ -697,18 +788,37 @@ export default class YeMindRichText extends (BaseRichText as any) {
     host.style.top = `${position.top}px`;
   }
 
+  /**
+   * Structural readiness replaces the old pixel-alignment gate. Two
+   * independent HTML/SVG layout engines can legitimately disagree by a
+   * sub-pixel amount forever for some node shapes (custom width, icon/todo
+   * prefixes, certain zoom levels) without that meaning the editor is the
+   * wrong live surface — that was a real bug: some nodes' editor rect never
+   * converged with the target rect, so `data-yemind-geometry-ready` stayed
+   * 'false' forever and the CSS gate kept the host permanently invisible and
+   * (in Chromium) unfocusable, i.e. "double-click and nothing happens".
+   * Readiness now depends only on facts we already know synchronously from
+   * the geometry we ourselves computed and wrote in `applyEditorGeometry`,
+   * not on a fresh, possibly-never-matching browser measurement.
+   */
+  private editorStructurallyReady(host: HTMLElement, editor: HTMLElement | null): boolean {
+    if (!host.isConnected || !editor || !editor.isConnected) return false;
+    if (!(this.hostContentWidth > 0.5) || !(this.hostContentHeight > 0.5)) return false;
+    return this.editorContentReady();
+  }
+
   private commitOpeningPlacement(sessionId: number, targetRect: DOMRect): boolean {
     const sessions = this.sessionCoordinator();
     if (!sessions.isCurrent(sessionId)) return false;
     const host = this.textEditNode as HTMLElement | null;
-    const editor = host?.querySelector<HTMLElement>('.ql-editor') ?? null;
-    const aligned = editorContentRectAligned(
-      editor?.getBoundingClientRect?.(),
-      targetRect,
-    );
     if (!host) return false;
+    const editor = host.querySelector<HTMLElement>('.ql-editor') ?? null;
+    // Diagnostic-only from here on (see yemind_text_edit_diagnostic below):
+    // never used to gate visibility, focus or the active phase.
+    const aligned = editorContentRectAligned(editor?.getBoundingClientRect?.(), targetRect);
     const previousPhase = sessions.snapshot().phase;
     const wasAlreadyActive = previousPhase === 'active';
+    const structurallyReady = wasAlreadyActive || this.editorStructurallyReady(host, editor);
     host.dataset.yemindEditSession = String(sessionId);
     // Once the one-time live-text handoff has happened (the session reached
     // 'active'), a later per-keystroke miss must not flip this back to
@@ -717,59 +827,54 @@ export default class YeMindRichText extends (BaseRichText as any) {
     // keystroke typed after the miss. Position still keeps updating via
     // applyEditorGeometry/normalizeEditorPlacement on every commit; only the
     // visibility/focus gate becomes sticky once active.
-    host.dataset.yemindGeometryReady = (aligned || wasAlreadyActive) ? 'true' : 'false';
+    host.dataset.yemindGeometryReady = structurallyReady ? 'true' : 'false';
     const snapshot = this.markCurrentEditorReady();
     if (
-      aligned
+      structurallyReady
       && snapshot?.phase === 'active'
       && previousPhase !== 'active'
       && this.lastAlignedSessionId !== sessionId
     ) {
       this.lastAlignedSessionId = sessionId;
+      this.openingGeometryReady = true;
       // The edit host stays CSS-hidden until geometry and content are ready.
-      // Chromium refuses to retain focus on an element that was hidden when
-      // the upstream RichText plugin called focus(), so claim focus again as
-      // part of the same opening transaction that makes the editor visible.
-      this.quill?.root?.focus?.({ preventScroll: true });
+      // Apply the focus/selection intent `focus()` recorded earlier as part
+      // of the same opening transaction that makes the editor visible — the
+      // one authoritative focus claim for this transaction.
+      this.applyPendingFocusIntent();
+      // Chromium can still drop a focus claimed while the host was hidden.
+      // scheduleOpeningFocusClaim below is a single, bounded fallback check
+      // on the next frame, never a repeated retry loop.
       this.scheduleOpeningFocusClaim(sessionId);
       this.mindMap?.emit?.('yemind_text_edit_ready', {
         sessionId,
         uid: this.editingUid,
+        aligned,
       });
-      if (!this.isInserting) {
-        window.requestAnimationFrame(() => {
-          if (this.sessionCoordinator().isCurrent(sessionId)) {
-            this.emitCurrentSelectionChange();
-          }
-        });
-      }
-      // `isInserting` has now served its only purpose: deciding whether this
-      // one opening transaction should auto-show the toolbar. The initial
-      // selection above was applied with Quill.sources.SILENT, so Quill's own
-      // 'selection-change' listener never actually fires for it and its
-      // one-shot "swallow the first event" guard would otherwise eat the
-      // user's real first selection on this newly inserted node instead,
-      // leaving the formatting toolbar permanently unreachable until a
-      // second selection attempt.
+      // `isInserting` has now served its only purpose: deciding (inside
+      // focus()/applyPendingFocusIntent) whether this one opening
+      // transaction should auto-show the toolbar and select all text.
       this.isInserting = false;
     }
-    return aligned;
+    return structurallyReady;
   }
 
   /**
    * SiYuan's host can restore focus to its RootWebArea after the keyboard
-   * handler which inserted a node has returned. Keep the opening transaction
-   * alive for at most three painted frames and reclaim the Quill surface until
-   * it actually owns focus. A real pointer action outside the editor cancels
-   * the claim immediately so an intentional click is never stolen back.
+   * handler which inserted a node has returned, or Chromium can drop a focus
+   * claim made while the host was still CSS-hidden. Recheck once, on the
+   * very next painted frame, and reclaim the Quill surface if it lost focus.
+   * This is the transaction's one allowed fallback focus call — never a
+   * repeated/self-rescheduling loop. A real pointer action outside the
+   * editor cancels the claim immediately so an intentional click is never
+   * stolen back.
    */
   private scheduleOpeningFocusClaim(sessionId: number): void {
     if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') return;
     this.cancelOpeningFocusClaim();
     this.openingFocusSessionId = sessionId;
-    this.openingFocusAttempts = 0;
     window.addEventListener('pointerdown', this.handleOpeningFocusPointerDown, true);
-    const tick = (): void => {
+    this.openingFocusFrame = window.requestAnimationFrame(() => {
       this.openingFocusFrame = null;
       if (
         !this.showTextEdit
@@ -780,25 +885,13 @@ export default class YeMindRichText extends (BaseRichText as any) {
         return;
       }
       const root = this.quill?.root as HTMLElement | null;
-      if (!root) {
-        this.cancelOpeningFocusClaim();
-        return;
-      }
-      if (document.activeElement !== root) {
+      if (root && document.activeElement !== root) {
         root.focus({ preventScroll: true });
         const range = this.range ?? this.pasteUseRange;
-        if (range) {
-          this.quill.setSelection(range.index, range.length, Quill.sources.SILENT);
-        }
+        if (range) this.quill.setSelection(range.index, range.length, Quill.sources.SILENT);
       }
-      this.openingFocusAttempts += 1;
-      if (document.activeElement === root || this.openingFocusAttempts >= 3) {
-        this.cancelOpeningFocusClaim();
-        return;
-      }
-      this.openingFocusFrame = window.requestAnimationFrame(tick);
-    };
-    this.openingFocusFrame = window.requestAnimationFrame(tick);
+      this.cancelOpeningFocusClaim();
+    });
   }
 
   private cancelOpeningFocusClaim(): void {
@@ -807,7 +900,6 @@ export default class YeMindRichText extends (BaseRichText as any) {
       this.openingFocusFrame = null;
     }
     this.openingFocusSessionId = 0;
-    this.openingFocusAttempts = 0;
     window.removeEventListener?.('pointerdown', this.handleOpeningFocusPointerDown, true);
   }
 

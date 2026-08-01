@@ -62,6 +62,58 @@ async function expectQuickActionsAnchored(
   }
 }
 
+type VisualLineSnapshot = {
+  lines: string[];
+  width: number;
+  height: number;
+};
+
+async function readVisualLines(
+  locator: import('@playwright/test').Locator,
+): Promise<VisualLineSnapshot> {
+  return locator.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const tspans = Array.from(element.querySelectorAll('tspan'));
+    if (tspans.length > 0) {
+      return {
+        lines: tspans
+          .map((item) => String(item.textContent ?? ''))
+          .filter((line) => line.length > 0),
+        width: rect.width,
+        height: rect.height,
+      };
+    }
+
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    const lineGroups: Array<{ top: number; text: string }> = [];
+    let textNode = walker.nextNode() as Text | null;
+    while (textNode) {
+      const value = String(textNode.data ?? '');
+      for (let offset = 0; offset < value.length;) {
+        const codePoint = value.codePointAt(offset);
+        const length = codePoint !== undefined && codePoint > 0xffff ? 2 : 1;
+        const range = document.createRange();
+        range.setStart(textNode, offset);
+        range.setEnd(textNode, offset + length);
+        const charRect = range.getBoundingClientRect();
+        const char = value.slice(offset, offset + length);
+        offset += length;
+        if (!charRect.width && !charRect.height) continue;
+        const existing = lineGroups.find((line) => Math.abs(line.top - charRect.top) <= 0.5);
+        if (existing) existing.text += char;
+        else lineGroups.push({ top: charRect.top, text: char });
+      }
+      textNode = walker.nextNode() as Text | null;
+    }
+    lineGroups.sort((left, right) => left.top - right.top);
+    return {
+      lines: lineGroups.map((line) => line.text),
+      width: rect.width,
+      height: rect.height,
+    };
+  });
+}
+
 test('plain canvas editing keeps one measurement path and stable node geometry', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop geometry regression');
   await resetWebApp(page);
@@ -178,13 +230,17 @@ test('opening a custom-width multiline node is aligned from its first visible fr
       nodeX: number;
       nodeY: number;
       nodeWidth: number;
+      editorContentWidth: number | null;
+      contentWidth: number | null;
       transform: string;
     }> = [];
     (window as any).__yemindOpeningGeometry = records;
     let remaining = 0;
     const capture = (): void => {
       const host = document.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
+      const editorEl = host?.querySelector<HTMLElement>('.ql-editor') ?? null;
       const target = document.querySelector<HTMLElement>('.ymw-editor > .ymz-editor .smm-node');
+      const contentGroup = target?.querySelector<SVGGraphicsElement>('g[data-width][data-height]') ?? null;
       if (host && target) {
         const hostRect = host.getBoundingClientRect();
         const nodeRect = target.getBoundingClientRect();
@@ -196,6 +252,13 @@ test('opening a custom-width multiline node is aligned from its first visible fr
           nodeX: nodeRect.x,
           nodeY: nodeRect.y,
           nodeWidth: nodeRect.width,
+          // .ql-editor has zero padding/border and fills exactly the host's
+          // content box (see applyEditorGeometry/index.css), so its own rect
+          // is the one directly comparable to the node's logical data-width
+          // -- the host's own rect additionally includes the host's own
+          // horizontal padding on both sides.
+          editorContentWidth: editorEl ? editorEl.getBoundingClientRect().width : null,
+          contentWidth: contentGroup ? Number(contentGroup.getAttribute('data-width')) : null,
           transform: host.style.transform,
         });
       }
@@ -219,6 +282,8 @@ test('opening a custom-width multiline node is aligned from its first visible fr
     nodeX: number;
     nodeY: number;
     nodeWidth: number;
+    editorContentWidth: number | null;
+    contentWidth: number | null;
     transform: string;
   }>);
   const visible = records.filter((record) => record.visible);
@@ -228,9 +293,16 @@ test('opening a custom-width multiline node is aligned from its first visible fr
     const nodeCenter = record.nodeX + record.nodeWidth / 2;
     expect(Math.abs(hostCenter - nodeCenter)).toBeLessThanOrEqual(3);
     expect(Math.abs(record.hostY - record.nodeY)).toBeLessThanOrEqual(8);
-    // The HTML edit surface covers the declared content box; the SVG node
-    // includes 9px shape/padding on both sides.
-    expect(Math.abs(record.hostWidth - record.nodeWidth)).toBeLessThanOrEqual(20);
+    // Comparing the HTML edit surface against the SVG node's whole outer
+    // shape conflated two different boxes (the shape includes ~9px of
+    // padding per side plus any icon/todo prefix), which is why this used
+    // to need a coarse 20px tolerance -- that tolerance could not actually
+    // catch a wrap-relevant width mismatch. Both sides must instead share
+    // the exact same logical content width the app already treats as
+    // canonical (see applyEditorGeometry / data-width).
+    expect(record.contentWidth).not.toBeNull();
+    expect(record.editorContentWidth).not.toBeNull();
+    expect(Math.abs((record.editorContentWidth as number) - (record.contentWidth as number))).toBeLessThanOrEqual(0.5);
   });
 });
 
@@ -1889,6 +1961,64 @@ test('the line a character sits on before entering edit matches the line it sits
   const editorIsMultiline = editorLineCount > 1;
   expect(editorIsMultiline).toBe(staticIsMultiline);
   await commitCanvasEdit(page);
+});
+
+test('atomic canvas edit opening preserves the exact visual line distribution', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop exact-wrap opening regression');
+  const errors = recordPageErrors(page);
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const host = editor.locator('.smm-richtext-node-edit-wrap');
+  const criticalText = 'PCIe RAS Reliability / Availability / Serviceability 可靠性 / 可用性 / 可维护性与错误注入完整性验证';
+
+  await rootNode.dblclick();
+  await textEditor.fill(criticalText);
+  await commitCanvasEdit(page);
+  await rootNode.click();
+
+  const rightHandle = rootNode.locator('rect[style*="ew-resize"]').last();
+  const handleBox = await rightHandle.boundingBox();
+  expect(handleBox).not.toBeNull();
+  await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handleBox!.x - 170, handleBox!.y + handleBox!.height / 2, { steps: 8 });
+  await page.mouse.up();
+  const staticTextGroup = rootNode.locator('g[data-width][data-height]').first();
+  await expect(staticTextGroup).toBeVisible();
+
+  const staticSnapshot = await readVisualLines(staticTextGroup);
+  expect(staticSnapshot.lines.length).toBeGreaterThan(1);
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeVisible();
+  await expect(textEditor).toBeFocused();
+  const liveSnapshot = await readVisualLines(textEditor);
+  const session = await host.evaluate((element) => ({
+    ready: element.dataset.yemindGeometryReady,
+    visibility: getComputedStyle(element).visibility,
+  }));
+
+  expect(session).toEqual({ ready: 'true', visibility: 'visible' });
+  expect(liveSnapshot.lines).toEqual(staticSnapshot.lines);
+  // Comparing the live editor against the static SVG group's raw
+  // getBoundingClientRect() compares two different quantities: a canvas
+  // measureText()-based *ink* bounding box (which a mixed CJK/Latin string
+  // can under-report by roughly half a pixel versus its own declared layout
+  // width) against the *logical* content width the editor deterministically
+  // adopts (see applyEditorGeometry). That gap is a pre-existing property of
+  // the static measurement pipeline, not something opening the editor can
+  // introduce or fix, and it is not what "editing didn't move the text"
+  // means -- `liveSnapshot.lines` above already proves that exactly. Compare
+  // both sides against the one logical content width this app already
+  // treats as canonical everywhere else (positioning, host sizing, wrap
+  // decisions) instead of a second, ink-based definition of "width".
+  const canonicalContentWidth = await staticTextGroup.evaluate((element) => (
+    Number(element.getAttribute('data-width'))
+  ));
+  expect(Math.abs(liveSnapshot.width - canonicalContentWidth)).toBeLessThanOrEqual(0.5);
+  expect(errors).toEqual([]);
 });
 
 test('exactly one text layer (SVG or Quill) is visible on every sampled frame while typing', async ({ page, isMobile }) => {

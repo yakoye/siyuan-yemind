@@ -1156,6 +1156,13 @@
   margin:0;
   padding:0;
   line-height:inherit;
+  /* The host now carries the one determinate content width (see
+     applyEditorGeometry). Quill's own container/editor must fill exactly
+     that box instead of applying any separate min/max-width constraint of
+     their own, or the two engines can still disagree on the wrap boundary. */
+  width:100%;
+  min-width:0;
+  max-width:none;
 }
 
 /* v0.9.11 anchored style panels and flush node quick actions */
