@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test.describe('official simple-mind-map rich-text baseline', () => {
   test('opens an immediately focused editor without a blank text frame', async ({ page }) => {
     await page.goto('/upstream-baseline.html');
-    const canvas = page.locator('[data-upstream-rich-text-baseline]');
+    const canvas = page.locator('#upstream-baseline');
     const node = canvas.locator('.smm-node').first();
 
     await expect(canvas).toBeVisible();
@@ -33,6 +33,10 @@ test.describe('official simple-mind-map rich-text baseline', () => {
     await expect(editor).toBeVisible();
     await expect(editor).toBeFocused();
     await expect(editor).toContainText('PCIe RAS 与 LTSSM 状态分析');
+    await expect.poll(() => editor.evaluate((element) => {
+      const selection = window.getSelection();
+      return Boolean(selection?.rangeCount && element.contains(selection.anchorNode));
+    })).toBe(true);
     await page.waitForTimeout(550);
 
     const samples = await page.evaluate(() => (window as any).__UPSTREAM_FRAME_SAMPLES__ as Array<{
@@ -45,7 +49,7 @@ test.describe('official simple-mind-map rich-text baseline', () => {
 
   test('keeps multiline wrapping stable while typing and closing', async ({ page }) => {
     await page.goto('/upstream-baseline.html');
-    const node = page.locator('[data-upstream-rich-text-baseline] .smm-node').first();
+    const node = page.locator('#upstream-baseline .smm-node').first();
     const before = await node.boundingBox();
 
     await node.dblclick();
@@ -54,7 +58,7 @@ test.describe('official simple-mind-map rich-text baseline', () => {
     await editor.type('，错误注入与恢复');
     await expect(editor).toContainText('错误注入与恢复');
 
-    await page.locator('[data-upstream-rich-text-baseline]').click({ position: { x: 20, y: 20 } });
+    await page.locator('#upstream-baseline').click({ position: { x: 20, y: 20 } });
     await expect(editor).toBeHidden();
     await expect(node).toContainText('错误注入与恢复');
     const after = await node.boundingBox();

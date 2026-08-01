@@ -41,6 +41,10 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
     await expect(editor).toBeVisible();
     await expect(editor).toBeFocused();
     await expect(editor).toContainText(originalText);
+    await expect.poll(() => editor.evaluate((element) => {
+      const selection = window.getSelection();
+      return Boolean(selection?.rangeCount && element.contains(selection.anchorNode));
+    })).toBe(true);
     await page.waitForTimeout(700);
 
     const frames = await page.evaluate(() => (window as any).__yemindUpstreamFrames as Array<{
@@ -75,6 +79,10 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
     await node.dblclick();
     await expect(editor).toBeFocused();
     await expect(editor).toHaveText('上游生命周期连续输入123');
+    await expect.poll(() => editor.evaluate((element) => {
+      const selection = window.getSelection();
+      return Boolean(selection?.rangeCount && element.contains(selection.anchorNode));
+    })).toBe(true);
     expect(errors).toEqual([]);
   });
 
