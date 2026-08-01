@@ -704,6 +704,41 @@ test('selection toolbar is complete and anchored on its first visible frame afte
   });
 });
 
+test('YM-TEXT-028 double-click owns focus after the host restores RootWebArea focus and needs no third click', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop SiYuan focus handoff regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+
+  // SiYuan can restore focus to its RootWebArea after the node dblclick
+  // handler has already opened and focused Quill. A delayed host claim must
+  // therefore be treated as an unexpected focus loss owned by the same edit
+  // opening transaction, not as user intent to leave the editor.
+  await page.evaluate(() => {
+    const host = document.createElement('div');
+    host.tabIndex = -1;
+    host.dataset.siyuanRootFocusProxy = 'true';
+    document.body.appendChild(host);
+    document.addEventListener('dblclick', () => {
+      window.setTimeout(() => {
+        host.focus({ preventScroll: true });
+        document.documentElement.dataset.siyuanHostFocusRestored = 'true';
+      }, 80);
+    }, { once: true, capture: true });
+  });
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeVisible();
+  await page.waitForFunction(() => (
+    document.documentElement.dataset.siyuanHostFocusRestored === 'true'
+  ));
+  await expect(textEditor).toBeFocused({ timeout: 500 });
+
+  await page.keyboard.type('X');
+  await expect(textEditor).toContainText('X');
+});
+
 test('a newly inserted child receives one stable final editor placement', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop inserted-node placement regression');
   await resetWebApp(page);

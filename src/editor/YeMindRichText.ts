@@ -263,6 +263,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
   private lastAlignedSessionId = 0;
   private openingFocusFrame: number | null = null;
   private openingFocusSessionId = 0;
+  private openingFocusRoot: HTMLElement | null = null;
   /**
    * True once the current opening transaction has committed a determinate
    * width/height for the edit host. `focus()` is called synchronously by the
@@ -278,11 +279,23 @@ export default class YeMindRichText extends (BaseRichText as any) {
     if (!this.showTextEdit) return;
     this.schedulePlacementStabilization();
   };
-  private readonly handleOpeningFocusPointerDown = (event: PointerEvent): void => {
-    const host = this.textEditNode as HTMLElement | null;
-    const target = event.target;
-    if (host && target instanceof Node && host.contains(target)) return;
+  private readonly handleOpeningFocusPointerDown = (_event: PointerEvent): void => {
+    // Any real pointer action is user intent. Inside the editor the browser
+    // focuses Quill itself; outside it YeMind must not steal focus back.
     this.cancelOpeningFocusClaim();
+  };
+  private readonly handleOpeningFocusWindowBlur = (): void => {
+    // Never fight an OS-level application/window switch.
+    this.cancelOpeningFocusClaim();
+  };
+  private readonly handleOpeningFocusOut = (): void => {
+    const sessionId = this.openingFocusSessionId;
+    if (
+      !sessionId
+      || !this.showTextEdit
+      || !this.sessionCoordinator().isCurrent(sessionId)
+    ) return;
+    this.scheduleOpeningFocusReclaim(sessionId);
   };
 
   private sessionCoordinator(): CanvasEditSessionCoordinator {
@@ -860,20 +873,26 @@ export default class YeMindRichText extends (BaseRichText as any) {
   }
 
   /**
-   * SiYuan's host can restore focus to its RootWebArea after the keyboard
-   * handler which inserted a node has returned, or Chromium can drop a focus
-   * claim made while the host was still CSS-hidden. Recheck once, on the
-   * very next painted frame, and reclaim the Quill surface if it lost focus.
-   * This is the transaction's one allowed fallback focus call — never a
-   * repeated/self-rescheduling loop. A real pointer action outside the
-   * editor cancels the claim immediately so an intentional click is never
-   * stolen back.
+   * Start a focus-ownership lease for the opening edit transaction. SiYuan
+   * can restore its RootWebArea focus after YeMind's first painted frame, so
+   * a one-frame retry is not a sufficient handoff contract. The lease reacts
+   * to actual focus loss and ends on the first explicit pointer/key action.
    */
   private scheduleOpeningFocusClaim(sessionId: number): void {
     if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') return;
     this.cancelOpeningFocusClaim();
     this.openingFocusSessionId = sessionId;
+    this.openingFocusRoot = this.quill?.root as HTMLElement | null;
     window.addEventListener('pointerdown', this.handleOpeningFocusPointerDown, true);
+    window.addEventListener('blur', this.handleOpeningFocusWindowBlur);
+    this.openingFocusRoot?.addEventListener('focusout', this.handleOpeningFocusOut);
+    this.scheduleOpeningFocusReclaim(sessionId);
+  }
+
+  private scheduleOpeningFocusReclaim(sessionId: number): void {
+    if (this.openingFocusFrame !== null) {
+      window.cancelAnimationFrame?.(this.openingFocusFrame);
+    }
     this.openingFocusFrame = window.requestAnimationFrame(() => {
       this.openingFocusFrame = null;
       if (
@@ -885,12 +904,15 @@ export default class YeMindRichText extends (BaseRichText as any) {
         return;
       }
       const root = this.quill?.root as HTMLElement | null;
-      if (root && document.activeElement !== root) {
+      if (!root || !root.isConnected) {
+        this.cancelOpeningFocusClaim();
+        return;
+      }
+      if (document.activeElement !== root) {
         root.focus({ preventScroll: true });
         const range = this.range ?? this.pasteUseRange;
         if (range) this.quill.setSelection(range.index, range.length, Quill.sources.SILENT);
       }
-      this.cancelOpeningFocusClaim();
     });
   }
 
@@ -900,7 +922,10 @@ export default class YeMindRichText extends (BaseRichText as any) {
       this.openingFocusFrame = null;
     }
     this.openingFocusSessionId = 0;
+    this.openingFocusRoot?.removeEventListener('focusout', this.handleOpeningFocusOut);
+    this.openingFocusRoot = null;
     window.removeEventListener?.('pointerdown', this.handleOpeningFocusPointerDown, true);
+    window.removeEventListener?.('blur', this.handleOpeningFocusWindowBlur);
   }
 
   private reconcileEditorPlacement(sessionId: number): boolean {
@@ -971,6 +996,9 @@ export default class YeMindRichText extends (BaseRichText as any) {
     if (!root || root.dataset.yemindTextKeyboard === 'true') return;
     root.dataset.yemindTextKeyboard = 'true';
     root.addEventListener('keydown', (event: KeyboardEvent) => {
+      // A key reaching Quill proves the opening focus handoff succeeded.
+      // From this point normal browser/user focus rules take over.
+      this.cancelOpeningFocusClaim();
       if (
         (event.key === 'Delete' || event.key === 'Backspace')
         && !event.ctrlKey
