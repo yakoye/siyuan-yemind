@@ -7,7 +7,12 @@ import {
 import type { RichTextFormattingTarget } from "./richTextTarget";
 import { parseEditableColor, presentColor } from "./colorPresentation";
 import { colorPaletteInnerHtml } from "./colorPalette";
-import type { CanvasSelectionSession } from "./CanvasEditSessionCoordinator";
+
+export interface CanvasSelectionSession {
+  sessionId: number;
+  uid: string;
+  selectionEpoch: number;
+}
 
 export interface RichTextSelectionRect {
   left: number;

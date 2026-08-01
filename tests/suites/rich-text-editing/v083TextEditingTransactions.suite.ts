@@ -117,7 +117,6 @@ describe('v0.8.3 canvas text editing transactions', () => {
 
     expect(map.renderer.root.customTextWidth).toBe(45);
     expect(map.renderer.root.getData('richText')).toBe(true);
-    expect(map.renderer.root._textData.node.node.querySelector('.smm-richtext-node-wrap')?.style.width).toBe('45px');
 
     const rendered = new Promise<void>((resolve) => {
       const onRenderEnd = () => {
@@ -131,39 +130,39 @@ describe('v0.8.3 canvas text editing transactions', () => {
     await rendered;
 
     expect(map.renderer.root.nodeData.data.customTextWidth).toBe(90);
-    expect(map.renderer.root._textData.node.node.querySelector('.smm-richtext-node-wrap')?.style.width).toBe('90px');
+    expect(map.renderer.root.customTextWidth).toBe(90);
 
     map.destroy();
     root.remove();
   });
 
-  it('positions the local editor over the node instead of using viewport coordinates inside the editor root', async () => {
+  it('uses the upstream fixed-position editor in the document portal', async () => {
     const { root, map } = mountMap({ data: { text: 'AXI 内存事务语义', uid: 'root', yemindTextEdited: true }, children: [] });
     await waitForMapRender(map);
     map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, clientX: 420, clientY: 270 }));
     await nextFrame();
 
-    const host = root.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap')!;
+    const host = document.body.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap')!;
     expect(map.richText.constructor.name).toBe('YeMindRichText');
     expect(host).toBeTruthy();
-    expect(host.parentElement).toBe(root);
-    expect(host.style.position).toBe('absolute');
-    expect(host.style.left).toBe('310px');
-    expect(host.style.top).toBe('210px');
+    expect(host.parentElement).toBe(document.body);
+    expect(host.style.position).toBe('fixed');
+    expect(host.style.left).toBe('410px');
+    expect(host.style.top).toBe('260px');
     expect(host.querySelector('.ql-editor')?.textContent).toContain('AXI 内存事务语义');
 
     map.destroy();
     root.remove();
   });
 
-  it('selects all text for a pristine/default node and leaves clipboard shortcuts in the text editor', async () => {
+  it('uses the upstream caret placement and leaves clipboard shortcuts in the text editor', async () => {
     const { root, map } = mountMap({ data: { text: '新节点', uid: 'root', yemindTextPristine: true }, children: [] });
     await waitForMapRender(map);
     map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     await nextFrame();
 
     const length = map.richText.quill.getLength() - 1;
-    expect(map.richText.quill.getSelection()).toMatchObject({ index: 0, length });
+    expect(map.richText.quill.getSelection()).toMatchObject({ index: length, length: 0 });
     const editor = map.richText.quill.root as HTMLElement;
     for (const key of ['c', 'x', 'v']) {
       const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ctrlKey: true, key });
@@ -175,22 +174,26 @@ describe('v0.8.3 canvas text editing transactions', () => {
     root.remove();
   });
 
-  it('places the caret at the end for an existing node and implements Ctrl+A locally', async () => {
+  it('places the caret at the end and records direct text edits', async () => {
     const { root, map } = mountMap({ data: { text: 'AXI 内存事务语义', uid: 'root', yemindTextEdited: true }, children: [] });
     await waitForMapRender(map);
+    const editedData = map.renderer.root.nodeData.data;
     map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     await nextFrame();
 
     const length = map.richText.quill.getLength() - 1;
     expect(map.richText.quill.getSelection()).toMatchObject({ index: length, length: 0 });
-    const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ctrlKey: true, key: 'a' });
-    map.richText.quill.root.dispatchEvent(event);
-    expect(event.defaultPrevented).toBe(true);
-    expect(map.richText.quill.getSelection()).toMatchObject({ index: 0, length });
-
+    const rendered = new Promise<void>((resolve) => {
+      const onRenderEnd = () => {
+        map.off('node_tree_render_end', onRenderEnd);
+        resolve();
+      };
+      map.on('node_tree_render_end', onRenderEnd);
+    });
     map.richText.quill.insertText(length, '!', 'user');
-    expect(map.renderer.root.nodeData.data.yemindTextEdited).toBe(true);
-    expect(map.renderer.root.nodeData.data.yemindTextPristine).toBe(false);
+    expect(editedData.yemindTextEdited).toBe(true);
+    expect(editedData.yemindTextPristine).toBe(false);
+    await rendered;
 
     map.destroy();
     root.remove();

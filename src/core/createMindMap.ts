@@ -65,7 +65,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
 
   const mindMap = new MindMap({
     el: options.el,
-    customInnerElsAppendTo: editorRoot,
+    customInnerElsAppendTo: null,
     data: runtimeData,
     viewData,
     theme: 'default',
@@ -107,9 +107,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     iconList: createYemindIconList(options.pluginBaseUrl),
     createNodePrefixContent,
     createNodePostfixContent,
-    // YeMind owns the revisioned live-edit render transaction so a trailing
-    // upstream debounce cannot repaint a node after it was moved or deleted.
-    openRealtimeRenderOnNodeTextEdit: false,
+    openRealtimeRenderOnNodeTextEdit: true,
     enableEditFormulaInRichTextEdit: true,
     customHyperlinkJump: (href: string) => options.onHyperlink?.(href),
     beforeDeleteNodeImg: createImageDeleteGuard(options.onConfirmDeleteImage),

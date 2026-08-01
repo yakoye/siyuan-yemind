@@ -99,7 +99,6 @@ import { SymbolPicker } from '../ui/symbolPicker';
 import { openClipartPicker, openMarkerPicker } from "../ui/localAssetDialogs";
 import { normalizeLayoutAssetId } from "../core/layoutAssetPresets";
 import { stabilizeMindMapMeasurementHost } from "../core/measurementHost";
-import { synchronizeCanvasRichTextVisibility } from "./canvasRichTextVisibility";
 import {
   DEFAULT_SEARCH_OPTIONS,
   setSearchReplaceExpanded,
@@ -139,7 +138,6 @@ import { normalizeStudyCards } from '../review/studyCards';
 import { normalizeStudyCardSource } from '../review/studyCardSource';
 import { MiniMapController } from './MiniMapController';
 import { bindCanvasNodeClipboard } from './nodeClipboard';
-import { RenderedTextGeometryRepair } from './RenderedTextGeometryRepair';
 import {
   readImageResourceFromTransfer,
   writeImageResourceToClipboard,
@@ -269,7 +267,6 @@ export class YeMindEditor {
   private appearanceController: AppearanceController | null = null;
   private studyPanel: StudyPanelController | null = null;
   private miniMapController: MiniMapController | null = null;
-  private renderLifecycle: RenderedTextGeometryRepair | null = null;
   private unbindCanvasNodeClipboard: (() => void) | null = null;
   private studyMode: StudyPanelMode | null = null;
   private presentationState: {
@@ -823,8 +820,6 @@ export class YeMindEditor {
     this.studyPanel = null;
     this.miniMapController?.destroy();
     this.miniMapController = null;
-    this.renderLifecycle?.destroy();
-    this.renderLifecycle = null;
     this.richTextToolbar?.destroy();
     this.richTextToolbar = null;
     this.nodeHoverPreview?.destroy();
@@ -1094,11 +1089,6 @@ export class YeMindEditor {
         return inserted;
       },
     });
-    this.renderLifecycle = new RenderedTextGeometryRepair(this.map, () => {
-      synchronizeCanvasRichTextVisibility(this.map as any);
-      this.nodeQuickActions?.scheduleRefresh();
-      this.miniMapController?.refresh();
-    });
     const miniMapElement = this.options.container.querySelector<HTMLElement>('[data-role="minimap"]');
     if (miniMapElement) {
       this.miniMapController = new MiniMapController(this.rootEl, this.map, miniMapElement);
@@ -1325,7 +1315,6 @@ export class YeMindEditor {
     this.bindToolbar();
     this.bindMapEvents();
     window.requestAnimationFrame(() => {
-      this.renderLifecycle?.reconcileRenderedTextGeometry();
       void this.repairLegacyClipartGeometry();
     });
     this.applyMapAppearance(false);
@@ -2099,8 +2088,6 @@ export class YeMindEditor {
       this.richTextToolbar?.hide();
       this.claimCanvasInteraction("canvas-text-edit");
       this.canvasRightDrag?.cancel();
-      queueMicrotask(() => synchronizeCanvasRichTextVisibility(this.map as any));
-      window.requestAnimationFrame(() => synchronizeCanvasRichTextVisibility(this.map as any));
       this.nodeQuickActions?.suppress();
     });
     this.map.on("yemind_text_edit_diagnostic", (payload: { action?: string; details?: Record<string, unknown> }) => {
@@ -2111,25 +2098,11 @@ export class YeMindEditor {
         payload?.details ?? {},
       );
     });
-    this.map.on("yemind_text_edit_ready", () => {
-      synchronizeCanvasRichTextVisibility(this.map as any);
-    });
     this.map.on('hide_text_edit', () => {
-      // The live-edit commit path (and everything it could leave pending) was
-      // removed; hideEditText() already committed the final text authoritatively
-      // via SET_NODE_TEXT before this event fired. Nothing to invalidate here.
-      // Closing an unchanged edit intentionally skips a map render. Restore
-      // the static SVG text layer explicitly so switching nodes does not need
-      // a redundant SET_NODE_TEXT transaction merely to repaint the old node.
-      synchronizeCanvasRichTextVisibility(this.map as any);
       this.nodeQuickActions?.resume();
-    });
-    this.map.on('node_tree_render_end', () => {
-      this.renderLifecycle?.reconcileRenderedTextGeometry();
     });
     this.map.on("data_change", (data: MindMapTree) => {
       if (this.applyingCheckpoint) return;
-      this.renderLifecycle?.invalidate();
       this.current.data = data;
       this.options.diagnostics.record(
         "editor",
@@ -2210,7 +2183,7 @@ export class YeMindEditor {
         hasRange: boolean,
         rectInfo: Record<string, number> | null,
         formatInfo: Record<string, unknown> | null,
-        selectionSession: import("./CanvasEditSessionCoordinator").CanvasSelectionSession | null,
+        selectionSession: import("./RichTextToolbar").CanvasSelectionSession | null,
       ) => {
         this.richTextToolbar?.update(
           hasRange,
@@ -2332,10 +2305,6 @@ export class YeMindEditor {
       this.hideOuterFramePresentation(),
     );
     this.map.on("outer_frame_delete", () => this.hideOuterFramePresentation());
-    this.map.on("node_click", () => {
-      this.canvasEl.focus({ preventScroll: true });
-      window.setTimeout(() => this.updateRelationPresentation(), 0);
-    });
     this.map.on("node_icon_click", (node: any, iconValue: string, event: MouseEvent) => {
       event?.preventDefault?.();
       event?.stopPropagation?.();

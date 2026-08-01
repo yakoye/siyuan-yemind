@@ -1,5 +1,3 @@
-import { synchronizeCanvasRichTextVisibility } from './canvasRichTextVisibility';
-
 export interface AnimationFrameDriver {
   request(callback: FrameRequestCallback): number;
   cancel(handle: number): void;
@@ -67,25 +65,9 @@ export class LiveNodeWidthLayoutController {
     });
   };
 
-  /**
-   * The rich-text editor is an HTML overlay outside the SVG tree, so it must
-   * follow the node's local draft geometry without changing the map model.
-   *
-   * Upstream's width-drag reconciliation (nodeModifyWidth.js#preserveLiveTextData)
-   * deliberately reuses the painted static-text DOM node instead of replacing
-   * it, to avoid a blank/ghost frame. But its copyDomAttributes() copies the
-   * freshly measured node's `style` attribute onto that reused element too,
-   * which silently clears the `visibility:hidden!important` YeMind applies
-   * to keep the static SVG text hidden while its live Quill overlay is the
-   * visible text layer. Every drag frame during an active edit session must
-   * therefore re-assert that hidden state, or the static text and the Quill
-   * overlay both become visible at once (two overlapping text layers).
-   */
+  /** Keep the upstream HTML editor aligned with the node's draft geometry. */
   private synchronizeEditingSurface(): void {
     const richText = this.map?.richText;
-    if (richText?.showTextEdit === true) {
-      richText.updateTextEditNode?.();
-      synchronizeCanvasRichTextVisibility(this.map);
-    }
+    if (richText?.showTextEdit === true) richText.updateTextEditNode?.();
   }
 }

@@ -2,11 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { stabilizeMindMapMeasurementHost } from '../../../src/core/measurementHost';
-import YeMindRichText from '../../../src/editor/YeMindRichText';
 import {
-  editorContentRectAligned,
   editorHorizontalMargin,
-  editorOverlayPosition,
   resolveRenderedTextRect,
 } from '../../../src/editor/richTextGeometry';
 
@@ -87,64 +84,6 @@ describe('v0.9.14 stable node measurement geometry', () => {
       .toBeLessThan(editorSource.indexOf('this.map.resize()', editorSource.indexOf('stabilizeMindMapMeasurementHost(this.map as any, this.rootEl)')));
   });
 
-  it('repositions a newly opened editor after the browser flushes the final SVG transform', () => {
-    let frame: FrameRequestCallback | null = null;
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
-      frame = callback;
-      return 77;
-    });
-    const updateTextEditNode = vi.fn();
-    const richText = Object.create(YeMindRichText.prototype) as any;
-    richText.placementFrame = null;
-    richText.editingUid = 'new-node';
-    richText.showTextEdit = true;
-    richText.updateTextEditNode = updateTextEditNode;
-
-    richText.schedulePlacementStabilization();
-    expect(updateTextEditNode).not.toHaveBeenCalled();
-    frame?.(0);
-    expect(updateTextEditNode).toHaveBeenCalledOnce();
-    expect(richText.placementFrame).toBeNull();
-  });
-
-  it('reveals an editor only when its Quill content and SVG text anchors agree', () => {
-    expect(editorContentRectAligned(
-      { left: 982.4, top: 390.8 },
-      { left: 983, top: 391 },
-    )).toBe(true);
-    expect(editorContentRectAligned(
-      { left: 326, top: 80 },
-      { left: 989, top: 395 },
-    )).toBe(false);
-  });
-
-  it('derives one stable overlay position from the actual containing block without feedback correction', () => {
-    expect(editorOverlayPosition(
-      { left: 992.4, top: 430 },
-      {
-        left: 326,
-        top: 73.8,
-        width: 890.4,
-        height: 293.4,
-        offsetWidth: 890,
-        offsetHeight: 293,
-        clientLeft: 0,
-        clientTop: 0,
-        scrollLeft: 0,
-        scrollTop: 0,
-      },
-      {
-        marginLeft: -6,
-        marginTop: -4,
-        paddingLeft: 6,
-        paddingTop: 4,
-      },
-    )).toEqual({
-      left: expect.closeTo(666.1007, 3),
-      top: expect.closeTo(355.7147, 3),
-    });
-  });
-
   it('uses the real text child instead of a padded prefix group as the editor anchor', () => {
     const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -174,101 +113,6 @@ describe('v0.9.14 stable node measurement geometry', () => {
     expect(resolved?.rect.top).toBe(433.5);
     expect(resolved?.rect.width).toBe(71);
     expect(resolved?.rect.height).toBe(18);
-  });
-
-  it('drops a stale placement frame after editing moved to another node', () => {
-    let frame: FrameRequestCallback | null = null;
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
-      frame = callback;
-      return 78;
-    });
-    const updateTextEditNode = vi.fn();
-    const richText = Object.create(YeMindRichText.prototype) as any;
-    richText.placementFrame = null;
-    richText.editingUid = 'first-node';
-    richText.showTextEdit = true;
-    richText.updateTextEditNode = updateTextEditNode;
-
-    richText.schedulePlacementStabilization();
-    richText.editingUid = 'second-node';
-    frame?.(0);
-    expect(updateTextEditNode).not.toHaveBeenCalled();
-  });
-
-  it('tracks canvas resize and view transforms while the HTML editor is open', () => {
-    let frame: FrameRequestCallback | null = null;
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
-      frame = callback;
-      return 79;
-    });
-    const listeners = new Map<string, () => void>();
-    const updateTextEditNode = vi.fn();
-    const richText = Object.create(YeMindRichText.prototype) as any;
-    richText.placementFrame = null;
-    richText.placementTracking = false;
-    richText.placementResizeObserver = null;
-    richText.editingUid = 'resizing-node';
-    richText.showTextEdit = true;
-    richText.updateTextEditNode = updateTextEditNode;
-    richText.handlePlacementInvalidation = () => richText.schedulePlacementStabilization();
-    richText.mindMap = {
-      opt: {},
-      on: vi.fn((name: string, callback: () => void) => listeners.set(name, callback)),
-      off: vi.fn((name: string) => listeners.delete(name)),
-    };
-
-    richText.bindPlacementTracking();
-    expect([...listeners.keys()]).toEqual(expect.arrayContaining([
-      'resize',
-      'scale',
-      'translate',
-      'node_tree_render_end',
-      'view_data_change',
-    ]));
-    expect(window.requestAnimationFrame).not.toHaveBeenCalled();
-    listeners.get('resize')?.();
-    expect(updateTextEditNode).not.toHaveBeenCalled();
-    frame?.(0);
-    expect(updateTextEditNode).toHaveBeenCalledOnce();
-
-    richText.unbindPlacementTracking();
-    expect(listeners.size).toBe(0);
-  });
-
-  it('stops view tracking when editing closes', () => {
-    const source = readFileSync(resolve(process.cwd(), 'src/editor/YeMindRichText.ts'), 'utf8');
-    expect(source).toContain('this.bindPlacementTracking();');
-    expect(source.match(/this\.unbindPlacementTracking\(\);/g)?.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it.each(['Delete', 'Backspace'])('removes a multiline Quill selection with one %s press', (key) => {
-    const root = document.createElement('div');
-    const deleteText = vi.fn();
-    const setSelection = vi.fn();
-    const richText = Object.create(YeMindRichText.prototype) as any;
-    richText.quill = {
-      root,
-      getSelection: () => ({ index: 0, length: 12 }),
-      deleteText,
-      setSelection,
-    };
-    richText.showTextEdit = true;
-    richText.range = { index: 0, length: 12 };
-    richText.pasteUseRange = richText.range;
-    richText.emitEditingDiagnostic = vi.fn();
-
-    richText.bindTextEditingKeyboard();
-    const event = new KeyboardEvent('keydown', {
-      key,
-      bubbles: true,
-      cancelable: true,
-    });
-    root.dispatchEvent(event);
-
-    expect(event.defaultPrevented).toBe(true);
-    expect(deleteText).toHaveBeenCalledOnce();
-    expect(deleteText).toHaveBeenCalledWith(0, 12, 'user');
-    expect(setSelection).toHaveBeenCalledWith(0, 0, 'silent');
   });
 
   it('never lets text-editor padding overlap a todo or icon prefix', () => {

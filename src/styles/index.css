@@ -327,9 +327,8 @@
 .ymz-rich-color i{display:inline-block;width:12px;height:12px;border:1px solid color-mix(in srgb,var(--b3-theme-on-surface) 28%,transparent);border-radius:2px;background:var(--ymz-current-color,transparent);box-sizing:border-box}
 .ymz-rich-color[data-rich-action="color-menu"] i{border-bottom:3px solid var(--ymz-current-color,currentColor);background:transparent}
 
-/* The upstream editor is mounted inside .ymz-editor instead of document.body. */
+/* Canvas text editing follows the upstream body portal lifecycle. */
 .ymz-editor .smm-richtext-node-edit-wrap{z-index:55!important;caret-color:currentColor;-webkit-text-fill-color:currentColor}
-.ymz-editor .smm-richtext-node-edit-wrap:not([data-yemind-geometry-ready="true"]){visibility:hidden!important}
 .ymz-editor .smm-richtext-node-edit-wrap .ql-container,.ymz-editor .smm-richtext-node-edit-wrap .ql-editor{color:inherit!important;caret-color:currentColor!important;-webkit-text-fill-color:currentColor!important}
 .ymz-editor .smm-richtext-node-edit-wrap .ql-editor *{-webkit-text-fill-color:currentColor}
 .ymz-editor .smm-richtext-node-edit-wrap .ql-editor::selection,.ymz-editor .smm-richtext-node-edit-wrap .ql-editor *::selection{background:color-mix(in srgb,var(--b3-theme-primary) 30%,transparent);color:inherit;-webkit-text-fill-color:currentColor}
