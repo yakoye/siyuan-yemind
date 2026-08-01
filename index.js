@@ -7673,21 +7673,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.7.6";
+const PLUGIN_VERSION = "1.8.0";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "00750aef-dirty-0fbdc289",
-  time: "2026-07-31T14:34:44.620Z"
+  id: "f44e865f-dirty-d655329e",
+  time: "2026-08-01T02:56:37.372Z"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-07-31T14:24:10.651Z",
-  buildId: "yemind-v1.7.6-20260731",
+  buildTime: "2026-08-01T02:56:37.362Z",
+  buildId: "yemind-v1.8.0-20260801",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -81447,14 +81447,12 @@ class YeMindRichText extends RichText {
     __publicField(this, "lastValidNodeRect", null);
     __publicField(this, "lastRectSource", "none");
     __publicField(this, "placementFrame", null);
-    __publicField(this, "placementMonitorFrame", null);
     __publicField(this, "placementTracking", false);
     __publicField(this, "placementResizeObserver", null);
     __publicField(this, "lastAlignedSessionId", 0);
     __publicField(this, "openingFocusFrame", null);
     __publicField(this, "openingFocusSessionId", 0);
     __publicField(this, "openingFocusAttempts", 0);
-    __publicField(this, "pasteTransactionPending", false);
     __publicField(this, "handlePlacementInvalidation", () => {
       if (!this.showTextEdit) return;
       this.schedulePlacementStabilization();
@@ -81560,7 +81558,7 @@ class YeMindRichText extends RichText {
     this.bindTextEditingKeyboard();
     this.bindPlacementTracking();
     this.reconcileEditorPlacement(sessionId);
-    this.startPlacementMonitor(sessionId);
+    this.schedulePlacementStabilization();
     this.emitEditingDiagnostic("opened", {
       liveNodeResolved: Boolean(liveNode && liveNode !== sourceNode),
       rectSource: this.lastRectSource
@@ -81911,28 +81909,6 @@ class YeMindRichText extends RichText {
     return this.commitOpeningPlacement(sessionId, geometry.rect);
   }
   /**
-   * SVG layout and the detached HTML editor are painted by different runtime
-   * layers. A render, fit, host resize or width draft can settle after the
-   * event which opened the editor. Keep one session-scoped geometry monitor
-   * alive while editing so every painted HTML frame remains anchored to the
-   * current renderer node; stale callbacks from an earlier node are rejected
-   * by the monotonically increasing session id.
-   */
-  startPlacementMonitor(sessionId) {
-    if (typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") return;
-    if (this.placementMonitorFrame !== null) {
-      window.cancelAnimationFrame(this.placementMonitorFrame);
-      this.placementMonitorFrame = null;
-    }
-    const tick = () => {
-      this.placementMonitorFrame = null;
-      if (!this.showTextEdit || !this.sessionCoordinator().isCurrent(sessionId)) return;
-      this.reconcileEditorPlacement(sessionId);
-      this.placementMonitorFrame = window.requestAnimationFrame(tick);
-    };
-    this.placementMonitorFrame = window.requestAnimationFrame(tick);
-  }
-  /**
    * A newly inserted node can emit `node_dblclick` from inside the SVG render
    * stack before the browser has flushed its final group transform. The first
    * rectangle can therefore point at the canvas origin even though the node is
@@ -81965,20 +81941,16 @@ class YeMindRichText extends RichText {
     }
   }
   unbindPlacementTracking() {
-    var _a, _b;
+    var _a;
     if (!this.placementTracking) return;
     this.placementTracking = false;
     ["resize", "scale", "translate", "node_tree_render_end", "view_data_change"].forEach((name) => {
-      var _a2, _b2;
-      (_b2 = (_a2 = this.mindMap) == null ? void 0 : _a2.off) == null ? void 0 : _b2.call(_a2, name, this.handlePlacementInvalidation);
+      var _a2, _b;
+      (_b = (_a2 = this.mindMap) == null ? void 0 : _a2.off) == null ? void 0 : _b.call(_a2, name, this.handlePlacementInvalidation);
     });
     window.removeEventListener("resize", this.handlePlacementInvalidation);
     (_a = this.placementResizeObserver) == null ? void 0 : _a.disconnect();
     this.placementResizeObserver = null;
-    if (this.placementMonitorFrame !== null) {
-      (_b = window.cancelAnimationFrame) == null ? void 0 : _b.call(window, this.placementMonitorFrame);
-      this.placementMonitorFrame = null;
-    }
   }
   cancelPlacementStabilization() {
     var _a;
@@ -82195,7 +82167,6 @@ class YeMindRichText extends RichText {
         this.lastRange = null;
       }
       this.sessionCoordinator().advanceRevision(quillSessionId);
-      this.emitLiveTextEditChange(this.pasteTransactionPending ? "paste" : "input");
     });
     this.quill.clipboard.addMatcher(Node.ELEMENT_NODE, (_node, delta) => {
       const ops = [];
@@ -82210,20 +82181,8 @@ class YeMindRichText extends RichText {
     });
     this.quill.root.addEventListener("paste", (event) => {
       var _a, _b;
-      this.pasteTransactionPending = true;
       if ((_b = (_a = event.clipboardData) == null ? void 0 : _a.files) == null ? void 0 : _b.length) event.preventDefault();
-      queueMicrotask(() => {
-        this.pasteTransactionPending = false;
-      });
     }, true);
-  }
-  emitLiveTextEditChange(reason) {
-    this.mindMap.emit("node_text_edit_change", {
-      node: this.node,
-      text: this.getEditText(),
-      richText: true,
-      reason
-    });
   }
   bindCanvasInteractionIsolation() {
     const host = this.textEditNode;
@@ -83527,7 +83486,7 @@ function createMindMap(options) {
     mousewheelAction: (settings == null ? void 0 : settings.wheelMode) === "zoom" ? "zoom" : "move",
     disableMouseWheelZoom: (settings == null ? void 0 : settings.wheelMode) === "none",
     mousewheelMoveStep: 60,
-    selectTextOnEnterEditText: true,
+    selectTextOnEnterEditText: false,
     isEndNodeTextEditOnClickOuter: true,
     enableDragModifyNodeWidth: true,
     isShowCreateChildBtnIcon: false,
@@ -92527,17 +92486,6 @@ function staticTextLayers(node) {
     content.querySelectorAll(".smm-richtext-node-wrap")
   );
 }
-function removeOrphanedStaticTextLayers(node, current) {
-  var _a;
-  const root2 = (_a = node == null ? void 0 : node.group) == null ? void 0 : _a.node;
-  if (!root2) return;
-  const allWraps = root2.querySelectorAll(".smm-text-node-wrap,.smm-richtext-node-wrap");
-  if (allWraps.length === 0) return;
-  allWraps.forEach((wrap) => {
-    if (current.some((owner) => owner === wrap || owner.contains(wrap))) return;
-    wrap.remove();
-  });
-}
 function synchronizeCanvasRichTextVisibility(map2) {
   var _a, _b, _c2;
   if (!map2) return false;
@@ -92546,7 +92494,6 @@ function synchronizeCanvasRichTextVisibility(map2) {
   const wrapper = runtime == null ? void 0 : runtime.textEditNode;
   const node = runtime == null ? void 0 : runtime.node;
   if (!wrapper || !node) return false;
-  removeOrphanedStaticTextLayers(node, staticTextLayers(node));
   const textColor = cssColor((_b = (_a = node.style) == null ? void 0 : _a.merge) == null ? void 0 : _b.call(_a, "color"), "#1f2937");
   wrapper.style.setProperty("color", textColor, "important");
   wrapper.style.setProperty("caret-color", textColor, "important");
@@ -92840,6 +92787,7 @@ class NodeQuickActionsController {
     __publicField(this, "layer");
     __publicField(this, "frame", null);
     __publicField(this, "geometryFrame", null);
+    __publicField(this, "editSuppressed", false);
     __publicField(this, "hideTimer", null);
     __publicField(this, "hoveredUid", null);
     __publicField(this, "nodeElementToUid", /* @__PURE__ */ new Map());
@@ -92847,6 +92795,16 @@ class NodeQuickActionsController {
     __publicField(this, "lastKnownSideByUid", /* @__PURE__ */ new Map());
     __publicField(this, "onViewportChange", () => {
       this.startGeometryTracking();
+    });
+    __publicField(this, "onNodeDraggingStart", () => {
+      if (this.editSuppressed) return;
+      this.layer.style.visibility = "hidden";
+      this.stopGeometryTracking();
+    });
+    __publicField(this, "onNodeDragEnd", () => {
+      if (this.editSuppressed) return;
+      this.layer.style.visibility = "";
+      this.scheduleRefresh();
     });
     __publicField(this, "trackRenderedGeometry", () => {
       var _a;
@@ -92864,7 +92822,6 @@ class NodeQuickActionsController {
         if (target.element.style.left !== left) target.element.style.left = left;
         if (target.element.style.top !== top) target.element.style.top = top;
       }
-      this.startGeometryTracking();
     });
     __publicField(this, "onCanvasPointerOver", (event) => {
       const uid2 = this.eventNodeUid(event);
@@ -92908,6 +92865,7 @@ class NodeQuickActionsController {
       if (action === "expand") this.options.onSetExpanded(uid2, true);
       this.setHovered(uid2);
     });
+    var _a, _b, _c2, _d2;
     this.options = options;
     this.layer = document.createElement("div");
     this.layer.className = "ymz-node-quick-actions-layer";
@@ -92919,6 +92877,8 @@ class NodeQuickActionsController {
     this.options.canvas.addEventListener("pointerover", this.onCanvasPointerOver);
     this.options.canvas.addEventListener("pointerout", this.onCanvasPointerOut);
     this.bindViewportTracking();
+    (_b = (_a = this.options.viewportEventSource) == null ? void 0 : _a.on) == null ? void 0 : _b.call(_a, "node_dragging", this.onNodeDraggingStart);
+    (_d2 = (_c2 = this.options.viewportEventSource) == null ? void 0 : _c2.on) == null ? void 0 : _d2.call(_c2, "node_dragend", this.onNodeDragEnd);
   }
   destroy() {
     if (this.frame !== null) cancelAnimationFrame(this.frame);
@@ -92935,6 +92895,24 @@ class NodeQuickActionsController {
     this.nodeElementToUid.clear();
     this.renderedActionTargets.clear();
     this.lastKnownSideByUid.clear();
+  }
+  suppress() {
+    this.editSuppressed = true;
+    this.layer.style.visibility = "hidden";
+    this.stopGeometryTracking();
+  }
+  // resume() does not check whether a node drag is in progress before
+  // unconditionally restoring visibility. This relies on an implicit
+  // assumption: the hide_text_edit event that triggers resume() and the
+  // mousemove-past-threshold gesture that triggers node_dragging do not
+  // overlap in the current interaction timelines. If that ever stops holding
+  // -- e.g. a future interaction path can close text editing mid-drag -- this
+  // needs to be revisited (mirror the editSuppressed guard used by
+  // onNodeDraggingStart/onNodeDragEnd, or track drag state explicitly here).
+  resume() {
+    this.editSuppressed = false;
+    this.layer.style.visibility = "";
+    this.scheduleRefresh();
   }
   scheduleRefresh() {
     if (this.frame !== null) return;
@@ -93015,10 +92993,13 @@ class NodeQuickActionsController {
     });
   }
   unbindViewportTracking() {
+    var _a, _b, _c2, _d2;
     ["translate", "scale", "resize", "view_data_change"].forEach((name) => {
-      var _a, _b;
-      (_b = (_a = this.options.viewportEventSource) == null ? void 0 : _a.off) == null ? void 0 : _b.call(_a, name, this.onViewportChange);
+      var _a2, _b2;
+      (_b2 = (_a2 = this.options.viewportEventSource) == null ? void 0 : _a2.off) == null ? void 0 : _b2.call(_a2, name, this.onViewportChange);
     });
+    (_b = (_a = this.options.viewportEventSource) == null ? void 0 : _a.off) == null ? void 0 : _b.call(_a, "node_dragging", this.onNodeDraggingStart);
+    (_d2 = (_c2 = this.options.viewportEventSource) == null ? void 0 : _c2.off) == null ? void 0 : _d2.call(_c2, "node_dragend", this.onNodeDragEnd);
   }
   startGeometryTracking() {
     if (this.geometryFrame !== null || this.renderedActionTargets.size === 0) return;
@@ -95052,63 +95033,13 @@ const browserScheduler = {
   request: (callback) => window.requestAnimationFrame(callback),
   cancel: (id) => window.cancelAnimationFrame(id)
 };
-const browserTimer = {
-  request: (callback, delayMs) => window.setTimeout(callback, delayMs),
-  cancel: (id) => window.clearTimeout(id)
-};
-const DEFAULT_COMMIT_DEBOUNCE_MS = 160;
-class RenderLifecycleCoordinator {
-  constructor(mindMap, onCommitted, scheduler = browserScheduler, timer = browserTimer, commitDebounceMs = DEFAULT_COMMIT_DEBOUNCE_MS) {
-    __publicField(this, "revision", 0);
-    __publicField(this, "frame", null);
-    __publicField(this, "debounceTimer", null);
-    __publicField(this, "pending", null);
+class RenderedTextGeometryRepair {
+  constructor(mindMap, onCommitted, scheduler = browserScheduler) {
     __publicField(this, "geometryRepairInFlight", false);
     __publicField(this, "geometryRepairFrame", null);
     this.mindMap = mindMap;
     this.onCommitted = onCommitted;
     this.scheduler = scheduler;
-    this.timer = timer;
-    this.commitDebounceMs = commitDebounceMs;
-  }
-  cancelScheduled() {
-    if (this.debounceTimer !== null) this.timer.cancel(this.debounceTimer);
-    this.debounceTimer = null;
-    if (this.frame !== null) this.scheduler.cancel(this.frame);
-    this.frame = null;
-  }
-  scheduleTextEdit(payload) {
-    const uid2 = renderedNodeUid$1(payload.node);
-    if (!uid2) return;
-    const revision = ++this.revision;
-    this.cancelScheduled();
-    if (payload.reason === "paste") {
-      this.pending = null;
-      this.commitTextEdit(payload, revision);
-      return;
-    }
-    this.pending = { revision, payload };
-    this.debounceTimer = this.timer.request(() => {
-      var _a;
-      this.debounceTimer = null;
-      if (revision !== this.revision || ((_a = this.pending) == null ? void 0 : _a.revision) !== revision) return;
-      this.frame = this.scheduler.request(() => {
-        var _a2;
-        this.frame = null;
-        if (revision !== this.revision || ((_a2 = this.pending) == null ? void 0 : _a2.revision) !== revision) return;
-        this.pending = null;
-        this.commitTextEdit(payload, revision);
-      });
-    }, this.commitDebounceMs);
-  }
-  flushPendingTextEdit() {
-    const pending = this.pending;
-    if (!pending) return false;
-    this.cancelScheduled();
-    this.pending = null;
-    const revision = ++this.revision;
-    this.commitTextEdit(pending.payload, revision);
-    return true;
   }
   /**
    * Rich-text measurement can finish before a late theme/font transaction.
@@ -95184,45 +95115,13 @@ class RenderLifecycleCoordinator {
     }, "yemind-richtext-geometry-repair");
     return true;
   }
-  commitTextEdit(payload, revision) {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
-    const uid2 = renderedNodeUid$1(payload.node);
-    if (!uid2) return;
-    const node = (_c2 = (_b = (_a = this.mindMap) == null ? void 0 : _a.renderer) == null ? void 0 : _b.findNodeByUid) == null ? void 0 : _c2.call(_b, uid2);
-    if (!node || typeof node.createTextNode !== "function") return;
-    const measurementText = payload.richText ? plainTextFromSearchValue(payload.text, true).trim() : payload.text;
-    node._textData = node.createTextNode(measurementText);
-    const rect2 = (_d2 = node.getNodeRect) == null ? void 0 : _d2.call(node);
-    if (rect2 && Number.isFinite(rect2.width) && Number.isFinite(rect2.height)) {
-      node.width = rect2.width;
-      node.height = rect2.height;
-    }
-    (_e = node.layout) == null ? void 0 : _e.call(node);
-    if (((_g = (_f = this.mindMap) == null ? void 0 : _f.richText) == null ? void 0 : _g.showTextEdit) === true) {
-      (_h = node.update) == null ? void 0 : _h.call(node);
-      (_j = (_i = node.parent) == null ? void 0 : _i.renderLine) == null ? void 0 : _j.call(_i);
-      (_k = node.renderLine) == null ? void 0 : _k.call(node);
-      (_m = (_l = this.mindMap.richText) == null ? void 0 : _l.updateTextEditNode) == null ? void 0 : _m.call(_l);
-      if (revision === this.revision) this.onCommitted(uid2);
-      return;
-    }
-    (_o = (_n = this.mindMap).render) == null ? void 0 : _o.call(_n, () => {
-      var _a2, _b2;
-      if (revision !== this.revision) return;
-      (_b2 = (_a2 = this.mindMap.richText) == null ? void 0 : _a2.updateTextEditNode) == null ? void 0 : _b2.call(_a2);
-      this.onCommitted(uid2);
-    });
-  }
   invalidate() {
-    this.revision += 1;
-    this.cancelScheduled();
-  }
-  destroy() {
-    this.invalidate();
     if (this.geometryRepairFrame !== null) this.scheduler.cancel(this.geometryRepairFrame);
     this.geometryRepairFrame = null;
     this.geometryRepairInFlight = false;
-    this.pending = null;
+  }
+  destroy() {
+    this.invalidate();
   }
 }
 function renderedNodeUid(node) {
@@ -96056,7 +95955,7 @@ class YeMindEditor {
         return inserted;
       }
     });
-    this.renderLifecycle = new RenderLifecycleCoordinator(this.map, () => {
+    this.renderLifecycle = new RenderedTextGeometryRepair(this.map, () => {
       var _a2, _b;
       synchronizeCanvasRichTextVisibility(this.map);
       (_a2 = this.nodeQuickActions) == null ? void 0 : _a2.scheduleRefresh();
@@ -97018,12 +96917,13 @@ class YeMindEditor {
   bindMapEvents() {
     if (!this.map) return;
     this.map.on("before_show_text_edit", () => {
-      var _a, _b;
+      var _a, _b, _c2;
       (_a = this.richTextToolbar) == null ? void 0 : _a.hide();
       this.claimCanvasInteraction("canvas-text-edit");
       (_b = this.canvasRightDrag) == null ? void 0 : _b.cancel();
       queueMicrotask(() => synchronizeCanvasRichTextVisibility(this.map));
       window.requestAnimationFrame(() => synchronizeCanvasRichTextVisibility(this.map));
+      (_c2 = this.nodeQuickActions) == null ? void 0 : _c2.suppress();
     });
     this.map.on("yemind_text_edit_diagnostic", (payload) => {
       this.options.diagnostics.record(
@@ -97036,14 +96936,10 @@ class YeMindEditor {
     this.map.on("yemind_text_edit_ready", () => {
       synchronizeCanvasRichTextVisibility(this.map);
     });
-    this.map.on("node_text_edit_change", (payload) => {
-      var _a;
-      (_a = this.renderLifecycle) == null ? void 0 : _a.scheduleTextEdit(payload);
-    });
     this.map.on("hide_text_edit", () => {
       var _a;
-      (_a = this.renderLifecycle) == null ? void 0 : _a.invalidate();
       synchronizeCanvasRichTextVisibility(this.map);
+      (_a = this.nodeQuickActions) == null ? void 0 : _a.resume();
     });
     this.map.on("node_tree_render_end", () => {
       var _a;
