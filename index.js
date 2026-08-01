@@ -7680,8 +7680,8 @@ const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "70f84dbd-dirty-09b9b006",
-  time: "2026-08-01T09:52:53.840Z"
+  id: "e75eebc2-clean",
+  time: "2026-08-01T18:25:04+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
@@ -81245,19 +81245,6 @@ class CanvasEditSessionCoordinator {
       uid: this.current.uid,
       selectionEpoch: this.current.selectionEpoch
     };
-  }
-  abortOpening(id) {
-    if (!this.isCurrent(id) || this.current.phase !== "opening") return false;
-    this.current = freezeSnapshot({
-      id: this.current.id,
-      uid: "",
-      phase: "idle",
-      revision: this.current.revision,
-      geometryReady: false,
-      contentReady: false,
-      selectionEpoch: 0
-    });
-    return true;
   }
   close(id) {
     if (!this.isCurrent(id)) return false;
