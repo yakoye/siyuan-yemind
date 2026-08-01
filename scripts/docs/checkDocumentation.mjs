@@ -15,7 +15,7 @@ const TEXT_EXTENSIONS = new Set([
   '.ts', '.tsx', '.txt', '.yaml', '.yml',
 ]);
 const SKIPPED_DIRECTORIES = new Set([
-  '.agents', '.git', '.worktrees', 'build', 'dist', 'node_modules', 'release', 'web-dist',
+  '.agents', '.claude', '.git', '.worktrees', 'build', 'dist', 'node_modules', 'release', 'web-dist',
 ]);
 const STALE_PATH_EXCLUSIONS = new Set([
   'docs/document-migration-map.json',

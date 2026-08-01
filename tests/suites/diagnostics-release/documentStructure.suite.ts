@@ -319,4 +319,34 @@ describe('documentation quality gate', () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it('ignores nested Claude worktrees outside the current repository document set', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'yemind-doc-check-'));
+    const stalePath = ['docs', 'verification-v1.0.0.md'].join('/');
+    try {
+      mkdirSync(path.join(root, 'docs'), { recursive: true });
+      mkdirSync(path.join(root, '.claude', 'worktrees', 'stale-copy'), { recursive: true });
+      writeFileSync(path.join(root, 'README.md'), '# Current repository\n');
+      writeFileSync(
+        path.join(root, '.claude', 'worktrees', 'stale-copy', 'README.md'),
+        `Legacy reference: ${stalePath}\n`,
+      );
+      writeFileSync(
+        path.join(root, 'docs', 'document-migration-map.json'),
+        `${JSON.stringify({
+          entries: [{
+            oldPath: stalePath,
+            newPath: 'docs/releases/v1.0.0/2026-07-29-1914-v1.0.0-版本-验证记录.md',
+          }],
+        })}\n`,
+      );
+
+      const errors = checkDocumentation(root);
+
+      expect(errors.some((error) => error.path.startsWith('.claude/'))).toBe(false);
+      expect(errors).toEqual([]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
