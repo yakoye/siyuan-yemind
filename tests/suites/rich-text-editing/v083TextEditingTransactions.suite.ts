@@ -132,9 +132,9 @@ describe('v0.8.3 canvas text editing transactions', () => {
     root.remove();
   });
 
-  it.skip('positions the local editor over the node instead of using viewport coordinates inside the editor root', async () => {
+  it('positions the local editor over the node instead of using viewport coordinates inside the editor root', async () => {
     const { root, map } = mountMap({ data: { text: 'AXI 内存事务语义', uid: 'root', yemindTextEdited: true }, children: [] });
-    await new Promise((resolve) => setTimeout(resolve, 40));
+    await waitForMapRender(map);
     map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, clientX: 420, clientY: 270 }));
     await nextFrame();
 
@@ -151,9 +151,9 @@ describe('v0.8.3 canvas text editing transactions', () => {
     root.remove();
   });
 
-  it.skip('selects all text for a pristine/default node and leaves clipboard shortcuts in the text editor', async () => {
+  it('selects all text for a pristine/default node and leaves clipboard shortcuts in the text editor', async () => {
     const { root, map } = mountMap({ data: { text: '新节点', uid: 'root', yemindTextPristine: true }, children: [] });
-    await new Promise((resolve) => setTimeout(resolve, 40));
+    await waitForMapRender(map);
     map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     await nextFrame();
 
@@ -170,9 +170,9 @@ describe('v0.8.3 canvas text editing transactions', () => {
     root.remove();
   });
 
-  it.skip('places the caret at the end for an existing node and implements Ctrl+A locally', async () => {
+  it('places the caret at the end for an existing node and implements Ctrl+A locally', async () => {
     const { root, map } = mountMap({ data: { text: 'AXI 内存事务语义', uid: 'root', yemindTextEdited: true }, children: [] });
-    await new Promise((resolve) => setTimeout(resolve, 40));
+    await waitForMapRender(map);
     map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     await nextFrame();
 
