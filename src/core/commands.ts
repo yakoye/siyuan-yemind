@@ -16,7 +16,6 @@ import {
   type SearchOptions,
 } from '../editor/searchEngine';
 import { steppedZoomPercent } from '../editor/zoomPercent';
-import { createInsertedNodeUid, InsertedNodeEditCoordinator } from '../editor/InsertedNodeEditCoordinator';
 
 export interface NodeImageInput {
   url: string | null;
@@ -128,7 +127,6 @@ export interface YeMindCommands extends RichTextFormattingTarget {
 }
 
 export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
-  const insertedNodeEditor = new InsertedNodeEditCoordinator(mindMap as any);
   const activeNodes = (): any[] => Array.isArray((mindMap.renderer as any)?.activeNodeList)
     ? (mindMap.renderer as any).activeNodeList
     : [];
@@ -359,13 +357,9 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     command: 'INSERT_CHILD_NODE' | 'INSERT_NODE' | 'INSERT_PARENT_NODE',
     appointNodes: any[] = [],
   ): void => {
-    const uid = createInsertedNodeUid();
-    insertedNodeEditor.run(uid, () => {
-      mindMap.execCommand(command, true, appointNodes, {
-        uid,
-        yemindTextPristine: true,
-        yemindTextEdited: false,
-      });
+    mindMap.execCommand(command, true, appointNodes, {
+      yemindTextPristine: true,
+      yemindTextEdited: false,
     });
   };
 
