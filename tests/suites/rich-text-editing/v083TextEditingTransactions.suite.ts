@@ -113,6 +113,14 @@ describe('v0.8.3 canvas text editing transactions', () => {
 
     expect(map.renderer.root.customTextWidth).toBe(45);
     expect(map.renderer.root._textData.width).toBe(45);
+    expect(map.renderer.root._textData.wrapWidth).toBe(45);
+    expect(map.renderer.root._textData.contentWidth).toBe(45);
+    expect(map.renderer.root._textData.node.attr()).toMatchObject({
+      'data-width': 45,
+      'data-wrap-width': 45,
+      'data-content-width': 45,
+      'data-auto-wrapped': 'true',
+    });
 
     const rendered = new Promise<void>((resolve) => {
       const onRenderEnd = () => {
@@ -127,6 +135,8 @@ describe('v0.8.3 canvas text editing transactions', () => {
 
     expect(map.renderer.root.nodeData.data.customTextWidth).toBe(90);
     expect(map.renderer.root._textData.width).toBe(90);
+    expect(map.renderer.root._textData.wrapWidth).toBe(90);
+    expect(map.renderer.root._textData.contentWidth).toBe(90);
 
     map.destroy();
     root.remove();

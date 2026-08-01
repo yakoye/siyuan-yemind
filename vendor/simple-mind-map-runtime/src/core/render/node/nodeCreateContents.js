@@ -12,6 +12,10 @@ import {
 import { Image as SVGImage, SVG, A, G, Rect, Text } from '@svgdotjs/svg.js'
 import iconsSvg from '../../../svg/icons'
 import { noneRichTextNodeLineHeight } from '../../../constants/constant'
+import {
+  applyPlainTextLayoutAttributes,
+  createPlainTextLayoutResult
+} from './plainTextLayout'
 
 // 测量svg文本宽高
 const measureText = (text, style) => {
@@ -253,9 +257,11 @@ function createTextNode(specifyText) {
   if (!isUndef(text)) {
     textArr = String(text).split(/\n/gim)
   }
+  const hardLines = [...textArr]
   const { textAutoWrapWidth, emptyTextMeasureHeightText } = this.mindMap.opt
   const maxWidth = hasCustomWidth ? this.customTextWidth : textAutoWrapWidth
   let isMultiLine = textArr.length > 1
+  let autoWrapped = false
   textArr.forEach((item, index) => {
     let arr = item.split('')
     let lines = []
@@ -275,6 +281,7 @@ function createTextNode(specifyText) {
     }
     if (lines.length > 1) {
       isMultiLine = true
+      autoWrapped = true
     }
     textArr[index] = lines.join('\n')
   })
@@ -312,6 +319,7 @@ function createTextNode(specifyText) {
     g.add(node)
   })
   let { width, height } = g.bbox()
+  const inkWidth = Math.max(0, Number(width) || 0)
   // 如果文本为空，那么需要计算一个默认高度
   if (height <= 0) {
     const tmpNode = new Text().text(emptyTextMeasureHeightText)
@@ -321,14 +329,19 @@ function createTextNode(specifyText) {
   }
   width = hasCustomWidth ? maxWidth : Math.min(Math.ceil(width), maxWidth)
   height = Math.ceil(height)
-  g.attr('data-width', width)
-  g.attr('data-height', height)
-  g.attr('data-ismultiLine', isMultiLine || textArr.length > 1)
-  return {
+  const layout = createPlainTextLayoutResult({
     node: g,
-    width,
-    height
-  }
+    inkWidth,
+    wrapWidth: maxWidth,
+    contentWidth: width,
+    height,
+    hardLines,
+    visualLines: textArr,
+    autoWrapped
+  })
+  applyPlainTextLayoutAttributes(g, layout)
+  g.attr('data-ismultiLine', isMultiLine || textArr.length > 1)
+  return layout
 }
 
 //  创建超链接节点

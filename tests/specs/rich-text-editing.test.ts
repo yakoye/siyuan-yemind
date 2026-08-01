@@ -17,3 +17,4 @@ import '../suites/rich-text-editing/v0924FormulaIcon.suite';
 import '../suites/rich-text-editing/v151RenderLifecycle.suite';
 import '../suites/rich-text-editing/v160CanvasEditSession.suite';
 import '../suites/rich-text-editing/v181AtomicCanvasEditorOpening.suite';
+import '../suites/rich-text-editing/v190PlainTextLayoutContract.suite';
