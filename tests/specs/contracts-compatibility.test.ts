@@ -2,6 +2,7 @@
 import '../suites/contracts-compatibility/buildOutput.suite';
 import '../suites/contracts-compatibility/pluginUrl.suite';
 import '../suites/contracts-compatibility/registerPlugins.suite';
+import '../suites/contracts-compatibility/upstreamRuntimeBaseline.suite';
 import '../suites/contracts-compatibility/v081CurrentPluginId.suite';
 import '../suites/contracts-compatibility/v081PluginIdentity.suite';
 import '../suites/contracts-compatibility/v120TransferFormats.suite';

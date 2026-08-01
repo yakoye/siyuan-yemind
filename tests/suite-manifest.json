@@ -3,6 +3,7 @@
     "buildOutput.suite.ts",
     "pluginUrl.suite.ts",
     "registerPlugins.suite.ts",
+    "upstreamRuntimeBaseline.suite.ts",
     "v081CurrentPluginId.suite.ts",
     "v081PluginIdentity.suite.ts",
     "v120TransferFormats.suite.ts",
@@ -36,6 +37,7 @@
     "v151RenderLifecycle.suite.ts",
     "v160CanvasEditSession.suite.ts",
     "v181AtomicCanvasEditorOpening.suite.ts"
+    ,"v190PlainTextLayoutContract.suite.ts"
   ],
   "styles-themes": [
     "colorPresentation.suite.ts",

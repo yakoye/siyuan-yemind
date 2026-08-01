@@ -1,0 +1,75 @@
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { join, relative, resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+interface UpstreamRuntimeBaseline {
+  upstream: {
+    repository: string;
+    commit: string;
+    packageVersion: string;
+  };
+  sourceHashes: Record<string, string>;
+  allowedModifiedFiles: string[];
+  allowedAddedFiles: string[];
+}
+
+const runtimeRoot = resolve(process.cwd(), 'vendor/simple-mind-map-runtime');
+const baselinePath = join(runtimeRoot, 'UPSTREAM_BASELINE.json');
+
+function sourceFiles(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true })
+    .flatMap((entry) => {
+      const absolute = join(directory, entry.name);
+      return entry.isDirectory() ? sourceFiles(absolute) : [absolute];
+    })
+    .filter((file) => file.endsWith('.js'))
+    .sort();
+}
+
+function normalizedSha256(file: string): string {
+  const normalized = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+  return createHash('sha256').update(normalized).digest('hex');
+}
+
+describe('vendored simple-mind-map upstream baseline', () => {
+  it('records the exact official revision used by the runtime', () => {
+    expect(existsSync(baselinePath), `${baselinePath} must exist`).toBe(true);
+    const baseline = JSON.parse(readFileSync(baselinePath, 'utf8')) as UpstreamRuntimeBaseline;
+    const packageJson = JSON.parse(readFileSync(join(runtimeRoot, 'package.json'), 'utf8')) as { version: string };
+
+    expect(baseline.upstream).toEqual({
+      repository: 'https://github.com/wanglin2/mind-map',
+      commit: 'e8e5ef9c41bc13ca7b13084e078123adff002242',
+      packageVersion: '0.14.0-fix.3',
+    });
+    expect(packageJson.version).toBe(baseline.upstream.packageVersion);
+  });
+
+  it('keeps every unlisted runtime source byte-equivalent to upstream', () => {
+    const baseline = JSON.parse(readFileSync(baselinePath, 'utf8')) as UpstreamRuntimeBaseline;
+    const current = sourceFiles(join(runtimeRoot, 'src'))
+      .map((file) => relative(runtimeRoot, file).replace(/\\/g, '/'));
+    const upstreamFiles = Object.keys(baseline.sourceHashes).sort();
+    const allowedModified = new Set(baseline.allowedModifiedFiles);
+    const allowedAdded = new Set(baseline.allowedAddedFiles);
+
+    expect(current.filter((file) => !upstreamFiles.includes(file)).sort())
+      .toEqual([...allowedAdded].sort());
+
+    upstreamFiles.forEach((file) => {
+      expect(current, `${file} must remain present`).toContain(file);
+      if (allowedModified.has(file)) return;
+      expect(normalizedSha256(join(runtimeRoot, file)), `${file} diverged from upstream`)
+        .toBe(baseline.sourceHashes[file]);
+    });
+  });
+
+  it('does not fork the upstream RichText lifecycle', () => {
+    const baseline = JSON.parse(readFileSync(baselinePath, 'utf8')) as UpstreamRuntimeBaseline;
+    const richTextPath = 'src/plugins/RichText.js';
+
+    expect(baseline.allowedModifiedFiles).not.toContain(richTextPath);
+    expect(normalizedSha256(join(runtimeRoot, richTextPath))).toBe(baseline.sourceHashes[richTextPath]);
+  });
+});
