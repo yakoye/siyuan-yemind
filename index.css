@@ -327,9 +327,8 @@
 .ymz-rich-color i{display:inline-block;width:12px;height:12px;border:1px solid color-mix(in srgb,var(--b3-theme-on-surface) 28%,transparent);border-radius:2px;background:var(--ymz-current-color,transparent);box-sizing:border-box}
 .ymz-rich-color[data-rich-action="color-menu"] i{border-bottom:3px solid var(--ymz-current-color,currentColor);background:transparent}
 
-/* The upstream editor is mounted inside .ymz-editor instead of document.body. */
+/* Canvas text editing follows the upstream body portal lifecycle. */
 .ymz-editor .smm-richtext-node-edit-wrap{z-index:55!important;caret-color:currentColor;-webkit-text-fill-color:currentColor}
-.ymz-editor .smm-richtext-node-edit-wrap:not([data-yemind-geometry-ready="true"]){visibility:hidden!important}
 .ymz-editor .smm-richtext-node-edit-wrap .ql-container,.ymz-editor .smm-richtext-node-edit-wrap .ql-editor{color:inherit!important;caret-color:currentColor!important;-webkit-text-fill-color:currentColor!important}
 .ymz-editor .smm-richtext-node-edit-wrap .ql-editor *{-webkit-text-fill-color:currentColor}
 .ymz-editor .smm-richtext-node-edit-wrap .ql-editor::selection,.ymz-editor .smm-richtext-node-edit-wrap .ql-editor *::selection{background:color-mix(in srgb,var(--b3-theme-primary) 30%,transparent);color:inherit;-webkit-text-fill-color:currentColor}
@@ -1232,19 +1231,9 @@
 .ymz-node-style-panel footer{padding-top:8px;border-top:1px solid var(--ymz-border)}
 .ymz-about-dialog{height:100%;overflow:auto;padding:2px 4px 12px;box-sizing:border-box}
 
-/* v0.9.14 keep rich-text measurement and rendered node geometry identical */
-.ymz-editor .smm-richtext-node-wrap{
-  display:inline-block;
-  width:max-content;
-  box-sizing:border-box;
-  margin:0;
-  /* Keep the off-screen measurement and the rendered foreignObject equal,
-     while reserving one pixel per side for bold/CJK glyph overhang. */
-  padding-block:0;
-  padding-inline:1px;
-  overflow-wrap:anywhere;
-  word-break:break-word;
-}
+/* Keep block spacing deterministic without replacing simple-mind-map's
+   canonical rich-text wrapping rules. Static and live text must use the same
+   upstream word-break contract. */
 .ymz-editor .smm-richtext-node-wrap :is(p,h1,h2,h3,h4,h5,h6,blockquote,pre,ul,ol){
   margin-block-start:0;
   margin-block-end:0;

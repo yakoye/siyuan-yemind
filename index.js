@@ -6418,26 +6418,6 @@ class CheckpointRepository {
     return operation;
   }
 }
-const LEGACY_DEFAULT_NODE_TEXTS = /* @__PURE__ */ new Set([
-  "新节点",
-  "中心主题",
-  "主要主题",
-  "另一个主题",
-  "未命名导图"
-]);
-function plainText$4(value) {
-  const text2 = String(value ?? "");
-  if (!/[<&]/.test(text2)) return text2.replace(/\u00a0/g, " ").trim();
-  const host = document.createElement("div");
-  host.innerHTML = text2;
-  return (host.textContent ?? "").replace(/\u00a0/g, " ").trim();
-}
-function isPristineNodeTextData(data2) {
-  if (!data2) return false;
-  if (data2.yemindTextEdited === true) return false;
-  if (data2.yemindTextPristine === true) return true;
-  return LEGACY_DEFAULT_NODE_TEXTS.has(plainText$4(data2.text));
-}
 function markNodeTextEditedData(data2) {
   if (!data2) return;
   data2.yemindTextPristine = false;
@@ -6449,10 +6429,6 @@ function pristineNodeData(data2) {
     yemindTextPristine: true,
     yemindTextEdited: false
   };
-}
-function editableTextLength(quill) {
-  var _a;
-  return Math.max(0, Number(((_a = quill.getLength) == null ? void 0 : _a.call(quill)) ?? 0) - 1);
 }
 function createDefaultTree(_title = "未命名导图") {
   return {
@@ -6951,7 +6927,7 @@ function cloneValue(value) {
   }
   return JSON.parse(JSON.stringify(value));
 }
-function escapeHtml$h(value) {
+function escapeHtml$i(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;").replaceAll("\n", "<br>");
 }
 function normalizeStructuredOutlineBoundaryText(value) {
@@ -6988,14 +6964,14 @@ function normalizeStructuredOutlineEditorHtml(value) {
   })();
   if (!text2 && !hasEmbeddedContent) return { html: "", text: "", richText: false };
   if (!structuredOutlineIsRichHtml(sanitized)) {
-    return { html: escapeHtml$h(text2), text: text2, richText: false };
+    return { html: escapeHtml$i(text2), text: text2, richText: false };
   }
   return { html: sanitized, text: text2, richText: true };
 }
 function normalizeStructuredOutlineContent(value, richText) {
   if (!richText) {
     const text2 = normalizeStructuredOutlineBoundaryText(value);
-    return { html: escapeHtml$h(text2), text: text2, richText: false };
+    return { html: escapeHtml$i(text2), text: text2, richText: false };
   }
   return normalizeStructuredOutlineEditorHtml(value);
 }
@@ -7131,7 +7107,7 @@ function indexExistingData(tree) {
 function normalizedBlockHtml(block) {
   const sanitized = sanitizeRichHtml(String(block.html ?? ""));
   return normalizeStructuredOutlineEditorHtml(
-    sanitized || escapeHtml$h(String(block.text ?? ""))
+    sanitized || escapeHtml$i(String(block.text ?? ""))
   );
 }
 function updatedData(base, block) {
@@ -7499,7 +7475,7 @@ function applyDialogChrome(dialog) {
 function createYeMindDialog(options) {
   return applyDialogChrome(new siyuan.Dialog(options));
 }
-function escapeHtml$g(value) {
+function escapeHtml$h(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function promptText(title, initialValue, placeholder = "") {
@@ -7508,7 +7484,7 @@ function promptText(title, initialValue, placeholder = "") {
     const dialog = createYeMindDialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$g(initialValue)}" placeholder="${escapeHtml$g(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
+      content: `<div class="b3-dialog__content"><input id="${inputId}" class="b3-text-field fn__block" value="${escapeHtml$h(initialValue)}" placeholder="${escapeHtml$h(placeholder)}"></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">确定</button></div>`,
       destroyCallback: () => resolve(null)
     });
     const element = dialog.element;
@@ -7540,7 +7516,7 @@ function confirmAction(title, message, confirmText = "确定") {
     const dialog = createYeMindDialog({
       title,
       width: "440px",
-      content: `<div class="b3-dialog__content"><p>${escapeHtml$g(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$g(confirmText)}</button></div>`,
+      content: `<div class="b3-dialog__content"><p>${escapeHtml$h(message)}</p></div><div class="b3-dialog__action"><button class="b3-button b3-button--cancel">取消</button><button class="b3-button b3-button--text">${escapeHtml$h(confirmText)}</button></div>`,
       destroyCallback: () => resolve(false)
     });
     let completed = false;
@@ -7554,7 +7530,7 @@ function confirmAction(title, message, confirmText = "确定") {
     (_b = dialog.element.querySelector(".b3-button--text")) == null ? void 0 : _b.addEventListener("click", () => finish(true));
   });
 }
-function escapeHtml$f(value) {
+function escapeHtml$g(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function renderReport(report) {
@@ -7565,7 +7541,7 @@ function renderReport(report) {
   </div>
   <div class="ymz-diagnostics-list">${report.items.map((item) => `<div class="ymz-diagnostics-check" data-status="${item.status}">
     <span class="ymz-diagnostics-check__mark">${item.status === "pass" ? "✓" : item.status === "warning" ? "!" : "×"}</span>
-    <div><b>${escapeHtml$f(item.id)}</b><p>${escapeHtml$f(item.summary)}</p></div>
+    <div><b>${escapeHtml$g(item.id)}</b><p>${escapeHtml$g(item.summary)}</p></div>
   </div>`).join("")}</div>`;
 }
 function renderSearchState(service) {
@@ -7576,10 +7552,10 @@ function renderSearchState(service) {
     <dl>
       <div><dt>思源 / YeMind 结果</dt><dd>${state.nativeResultCount} / ${state.yemindResultCount}</dd></div>
       <div><dt>列表 / 预览</dt><dd>${state.listMounted ? "已挂载" : "未挂载"} / ${state.previewVisible ? "可见" : "不可见"}</dd></div>
-      <div><dt>最后步骤</dt><dd>${escapeHtml$f(state.lastNavigationStep)}</dd></div>
+      <div><dt>最后步骤</dt><dd>${escapeHtml$g(state.lastNavigationStep)}</dd></div>
       <div><dt>导航结果</dt><dd>${navigation}</dd></div>
     </dl>
-    ${state.lastFailure ? `<p>${escapeHtml$f(state.lastFailure)}</p>` : ""}
+    ${state.lastFailure ? `<p>${escapeHtml$g(state.lastFailure)}</p>` : ""}
   </div>`;
 }
 function openDiagnosticsDialog(service) {
@@ -7673,21 +7649,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.8.1";
+const PLUGIN_VERSION = "1.9.0";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "e75eebc2-clean",
-  time: "2026-08-01T18:25:04+08:00"
+  id: "5d5054a7-clean",
+  time: "2026-08-02T00:39:00+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-01T09:52:53.833Z",
-  buildId: "yemind-v1.8.1-20260801",
+  buildTime: "2026-08-01T16:38:00.537Z",
+  buildId: "yemind-v1.9.0-20260801",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -7712,7 +7688,7 @@ function resolveVersionConsistency(manifestVersion) {
     consistent: manifest !== "unknown" && manifest === runtime && runtime === build2
   };
 }
-function escapeHtml$e(value) {
+function escapeHtml$f(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 async function writeClipboard(text2) {
@@ -7734,27 +7710,27 @@ function createAboutDialogTemplate() {
   return `<div class="ymz-about-dialog">
     <div class="ymz-about-hero">
       <img src="${ROOT_ICON_URL}" alt="YeMind">
-      <div><h3>${escapeHtml$e(RELEASE_INFO.productName)}</h3><p>${escapeHtml$e(RELEASE_INFO.releaseSummary)}</p></div>
+      <div><h3>${escapeHtml$f(RELEASE_INFO.productName)}</h3><p>${escapeHtml$f(RELEASE_INFO.releaseSummary)}</p></div>
     </div>
     <div class="ymz-settings-group ymz-about-version-card">
       <h3>版本信息</h3>
       <dl class="ymz-about-version-grid">
-        <div><dt>当前版本</dt><dd>${escapeHtml$e(RELEASE_INFO.version)}</dd></div>
+        <div><dt>当前版本</dt><dd>${escapeHtml$f(RELEASE_INFO.version)}</dd></div>
         <div><dt>插件声明版本</dt><dd data-about-version="manifest">正在读取…</dd></div>
-        <div><dt>运行时代码版本</dt><dd data-about-version="runtime">${escapeHtml$e(RELEASE_INFO.version)}</dd></div>
-        <div><dt>构建版本</dt><dd data-about-version="build">${escapeHtml$e(RELEASE_INFO.buildVersion)}</dd></div>
-        <div><dt>发布标识</dt><dd>${escapeHtml$e(RELEASE_INFO.buildId)}</dd></div>
-        <div><dt>版本标记时间</dt><dd>${escapeHtml$e(RELEASE_INFO.buildTime)}</dd></div>
-        <div><dt>源码构建</dt><dd>${escapeHtml$e(RELEASE_INFO.sourceBuildId)}</dd></div>
-        <div><dt>源码构建时间</dt><dd>${escapeHtml$e(RELEASE_INFO.sourceBuildTime)}</dd></div>
+        <div><dt>运行时代码版本</dt><dd data-about-version="runtime">${escapeHtml$f(RELEASE_INFO.version)}</dd></div>
+        <div><dt>构建版本</dt><dd data-about-version="build">${escapeHtml$f(RELEASE_INFO.buildVersion)}</dd></div>
+        <div><dt>发布标识</dt><dd>${escapeHtml$f(RELEASE_INFO.buildId)}</dd></div>
+        <div><dt>版本标记时间</dt><dd>${escapeHtml$f(RELEASE_INFO.buildTime)}</dd></div>
+        <div><dt>源码构建</dt><dd>${escapeHtml$f(RELEASE_INFO.sourceBuildId)}</dd></div>
+        <div><dt>源码构建时间</dt><dd>${escapeHtml$f(RELEASE_INFO.sourceBuildTime)}</dd></div>
         <div><dt>思源版本</dt><dd data-about-version="siyuan">正在读取…</dd></div>
-        <div><dt>开发基线</dt><dd>${escapeHtml$e(RELEASE_INFO.hostBaseline)}</dd></div>
+        <div><dt>开发基线</dt><dd>${escapeHtml$f(RELEASE_INFO.hostBaseline)}</dd></div>
       </dl>
       <div class="ymz-about-consistency" data-about-consistency="pending">正在检查版本一致性…</div>
     </div>
     <div class="ymz-settings-group ymz-about-highlights">
       <h3>本版更新</h3>
-      <ul>${RELEASE_INFO.highlights.map((item) => `<li>${escapeHtml$e(item)}</li>`).join("")}</ul>
+      <ul>${RELEASE_INFO.highlights.map((item) => `<li>${escapeHtml$f(item)}</li>`).join("")}</ul>
     </div>
     <div class="ymz-about-actions">
       <button class="b3-button b3-button--outline" data-about-action="copy-version">复制版本信息</button>
@@ -8374,24 +8350,24 @@ const SHORTCUT_ROWS = [
   { key: "summary", label: "概要", group: "节点命令" },
   { key: "relation", label: "关联线", group: "节点命令" }
 ];
-function escapeHtml$d(value) {
+function escapeHtml$e(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 function checked(value) {
   return value ? " checked" : "";
 }
 function option$1(value, label, current) {
-  return `<option value="${escapeHtml$d(value)}"${value === current ? " selected" : ""}>${escapeHtml$d(label)}</option>`;
+  return `<option value="${escapeHtml$e(value)}"${value === current ? " selected" : ""}>${escapeHtml$e(label)}</option>`;
 }
 function switchRow(title, description, key, value) {
   return `<label class="ymz-settings-row ymz-settings-row--switch">
-    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
+    <span><b>${escapeHtml$e(title)}</b><small>${escapeHtml$e(description)}</small></span>
     <input class="b3-switch" type="checkbox" data-setting="${String(key)}"${checked(value)}>
   </label>`;
 }
 function selectRow(title, description, key, options) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
+    <span><b>${escapeHtml$e(title)}</b><small>${escapeHtml$e(description)}</small></span>
     <select class="b3-select fn__size200" data-setting="${String(key)}">${options}</select>
   </label>`;
 }
@@ -8411,24 +8387,24 @@ function canvasModeRow(settings) {
 }
 function textRow(title, description, key, value) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
-    <input class="b3-text-field fn__size200" type="text" data-setting="${String(key)}" value="${escapeHtml$d(value)}">
+    <span><b>${escapeHtml$e(title)}</b><small>${escapeHtml$e(description)}</small></span>
+    <input class="b3-text-field fn__size200" type="text" data-setting="${String(key)}" value="${escapeHtml$e(value)}">
   </label>`;
 }
 function numberRow(title, description, key, value, min, max, step, suffix) {
   return `<label class="ymz-settings-row">
-    <span><b>${escapeHtml$d(title)}</b><small>${escapeHtml$d(description)}</small></span>
-    <span class="ymz-settings-number"><input class="b3-text-field" type="number" data-setting="${String(key)}" value="${value}" min="${min}" max="${max}" step="${step}"><em>${escapeHtml$d(suffix)}</em></span>
+    <span><b>${escapeHtml$e(title)}</b><small>${escapeHtml$e(description)}</small></span>
+    <span class="ymz-settings-number"><input class="b3-text-field" type="number" data-setting="${String(key)}" value="${value}" min="${min}" max="${max}" step="${step}"><em>${escapeHtml$e(suffix)}</em></span>
   </label>`;
 }
 function shortcutsHtml(shortcuts) {
   let currentGroup = "";
   return SHORTCUT_ROWS.map((row) => {
-    const group = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$d(row.group)}</h3>` : "";
+    const group = row.group !== currentGroup ? `<h3 class="ymz-settings-shortcuts__group">${escapeHtml$e(row.group)}</h3>` : "";
     currentGroup = row.group;
     return `${group}<div class="ymz-shortcut-row" data-shortcut-row="${row.key}">
-      <span class="ymz-shortcut-row__label">${escapeHtml$d(row.label)}</span>
-      <input class="b3-text-field" data-shortcut="${row.key}" value="${escapeHtml$d(shortcuts[row.key])}" placeholder="未设置">
+      <span class="ymz-shortcut-row__label">${escapeHtml$e(row.label)}</span>
+      <input class="b3-text-field" data-shortcut="${row.key}" value="${escapeHtml$e(shortcuts[row.key])}" placeholder="未设置">
       <button class="b3-button b3-button--outline" data-shortcut-action="record" data-shortcut-key="${row.key}">录制</button>
       <button class="b3-button b3-button--cancel" data-shortcut-action="disable" data-shortcut-key="${row.key}">禁用</button>
       <button class="b3-button b3-button--outline" data-shortcut-action="restore" data-shortcut-key="${row.key}">恢复默认</button>
@@ -8783,7 +8759,7 @@ class YeMindDockView {
         const row = document.createElement("div");
         row.className = `ymz-dock__item${map2.id === activeId ? " is-active" : ""}`;
         row.dataset.mapId = map2.id;
-        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$c(map2.title)}">${escapeHtml$c(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
+        row.innerHTML = `<button class="ymz-dock__title" data-action="open" title="${escapeHtml$d(map2.title)}">${escapeHtml$d(map2.title)}</button><button class="ymz-dock__action" data-action="copy" title="复制链接"><svg><use xlink:href="#iconCopy"></use></svg></button><button class="ymz-dock__action" data-action="rename" title="重命名"><svg><use xlink:href="#iconEdit"></use></svg></button><button class="ymz-dock__action" data-action="delete" title="删除"><svg><use xlink:href="#iconTrashcan"></use></svg></button>`;
         body.appendChild(row);
       });
     }
@@ -8832,7 +8808,7 @@ function registerYeMindDock(plugin, host) {
     }
   });
 }
-function escapeHtml$c(value) {
+function escapeHtml$d(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 const CONSTANTS = {
@@ -18176,13 +18152,11 @@ function createTextNode(specifyText) {
   const g = new G();
   const fontSize = this.getStyle("fontSize", false);
   const textAlign = this.getStyle("textAlign", false);
-  const hasCustomWidth = this.hasCustomWidth();
   let textArr = [];
   if (!isUndef(text2)) {
     textArr = String(text2).split(/\n/gim);
   }
-  const { textAutoWrapWidth, emptyTextMeasureHeightText } = this.mindMap.opt;
-  const maxWidth = hasCustomWidth ? this.customTextWidth : textAutoWrapWidth;
+  const { textAutoWrapWidth: maxWidth, emptyTextMeasureHeightText } = this.mindMap.opt;
   let isMultiLine = textArr.length > 1;
   textArr.forEach((item, index) => {
     let arr = item.split("");
@@ -18222,15 +18196,6 @@ function createTextNode(specifyText) {
       }[textAlign] || "start"
     );
     this.style.text(node);
-    if (hasCustomWidth) {
-      node.x(
-        {
-          left: 0,
-          center: maxWidth / 2,
-          right: maxWidth
-        }[textAlign] || 0
-      );
-    }
     node.y(
       fontSize * noneRichTextNodeLineHeight * index + (noneRichTextNodeLineHeight - 1) * fontSize / 2
     );
@@ -18243,7 +18208,7 @@ function createTextNode(specifyText) {
     const tmpBbox = tmpNode.bbox();
     height2 = tmpBbox.height;
   }
-  width2 = hasCustomWidth ? maxWidth : Math.min(Math.ceil(width2), maxWidth);
+  width2 = Math.min(Math.ceil(width2), maxWidth);
   height2 = Math.ceil(height2);
   g.attr("data-width", width2);
   g.attr("data-height", height2);
@@ -18533,53 +18498,6 @@ const nodeExpandBtnPlaceholderRectMethods = {
   clearExpandBtnPlaceholderRect,
   updateExpandBtnPlaceholderRect
 };
-function copyDomAttributes(target, source) {
-  if (!target || !source || !target.getAttributeNames) return;
-  const nextNames = new Set(source.getAttributeNames());
-  target.getAttributeNames().forEach((name) => {
-    if (!nextNames.has(name)) target.removeAttribute(name);
-  });
-  nextNames.forEach((name) => {
-    target.setAttribute(name, source.getAttribute(name));
-  });
-}
-function canReuseDomNode(target, source) {
-  return Boolean(
-    target && source && target.nodeType === source.nodeType && (target.nodeType !== 1 || target.nodeName === source.nodeName)
-  );
-}
-function reconcilePaintedDom(target, source) {
-  if (!canReuseDomNode(target, source)) return false;
-  if (target.nodeType === 3) {
-    target.nodeValue = source.nodeValue;
-    return true;
-  }
-  if (target.nodeType !== 1) return true;
-  copyDomAttributes(target, source);
-  const targetChildren = Array.from(target.childNodes);
-  const sourceChildren = Array.from(source.childNodes);
-  sourceChildren.forEach((sourceChild, index) => {
-    const targetChild = targetChildren[index];
-    if (reconcilePaintedDom(targetChild, sourceChild)) return;
-    const replacement = sourceChild.cloneNode(true);
-    if (targetChild) target.replaceChild(replacement, targetChild);
-    else target.appendChild(replacement);
-  });
-  for (let index = targetChildren.length - 1; index >= sourceChildren.length; index--) {
-    targetChildren[index].remove();
-  }
-  return true;
-}
-function preserveLiveTextData(previous, next2) {
-  if (!previous || !next2 || !previous.node || !next2.node) return next2;
-  const previousOuter = previous.node.node;
-  const nextOuter = next2.node.node;
-  if (!previousOuter || !nextOuter) return next2;
-  reconcilePaintedDom(previousOuter, nextOuter);
-  previous.width = next2.width;
-  previous.height = next2.height;
-  return previous;
-}
 function initDragHandle() {
   if (!this.checkEnableDragModifyNodeWidth()) {
     return;
@@ -18630,19 +18548,9 @@ function onDragMousemoveHandle(e) {
   if (this.dragHandleIndex === 0) {
     this.left = this.dragHandleMousedownLeft + ox / scaleX;
   }
-  if (useCustomContent) {
-    this.reRender([], {
-      ignoreUpdateCustomTextWidth: true
-    });
-  } else {
-    const previousTextData = this._textData;
-    this.getSize(["text"], {
-      ignoreUpdateCustomTextWidth: true
-    });
-    this._textData = preserveLiveTextData(previousTextData, this._textData);
-    this.layout();
-    this.update();
-  }
+  this.reRender(useCustomContent ? [] : ["text"], {
+    ignoreUpdateCustomTextWidth: true
+  });
 }
 function onDragMouseupHandle() {
   if (!this.isDragHandleMousedown) return;
@@ -19205,28 +19113,26 @@ function layout() {
   });
   this.group.add(textContentNested);
   const { width: bboxWidth, height: bboxHeight } = textContentNested.bbox();
-  const layoutContentWidth = Math.max(bboxWidth, textContentWidth);
-  const layoutContentHeight = Math.max(bboxHeight, textContentHeightWithTag);
   let translateX = 0;
   let translateY = 0;
   switch (imgPlacement) {
     case IMG_PLACEMENT.TOP:
-      translateX = width2 / 2 - layoutContentWidth / 2;
+      translateX = width2 / 2 - bboxWidth / 2;
       translateY = paddingY + // 内边距
       imgHeight + // 图片高度
       this.getImgTextMarin("v", 0, 0, imgHeight, textContentHeightWithTag);
       break;
     case IMG_PLACEMENT.BOTTOM:
-      translateX = width2 / 2 - layoutContentWidth / 2;
+      translateX = width2 / 2 - bboxWidth / 2;
       translateY = paddingY;
       break;
     case IMG_PLACEMENT.LEFT:
       translateX = imgWidth + paddingX + this.getImgTextMarin("h", imgWidth, textContentWidth);
-      translateY = height2 / 2 - layoutContentHeight / 2;
+      translateY = height2 / 2 - bboxHeight / 2;
       break;
     case IMG_PLACEMENT.RIGHT:
       translateX = paddingX;
-      translateY = height2 / 2 - layoutContentHeight / 2;
+      translateY = height2 / 2 - bboxHeight / 2;
       break;
   }
   textContentNested.translate(translateX, translateY);
@@ -28217,7 +28123,7 @@ function finiteRect(rect2) {
     rect2 && [rect2.x, rect2.y, rect2.width, rect2.height].every(Number.isFinite) && rect2.width > 0 && rect2.height > 0
   );
 }
-function nodeUid$2(node) {
+function nodeUid$1(node) {
   if (!node) return "";
   const value = typeof node.getData === "function" ? node.getData("uid") : node.uid;
   return String(value ?? "");
@@ -28378,7 +28284,7 @@ function orderedSiblings(layout2, parent, available, pointer, getRect, branchDir
     const aRect = getRect(a);
     const bRect = getRect(b);
     const delta = axis === "x" ? rectCenter(aRect).x - rectCenter(bRect).x : rectCenter(aRect).y - rectCenter(bRect).y;
-    return Math.abs(delta) > 0.5 ? delta : nodeUid$2(a).localeCompare(nodeUid$2(b));
+    return Math.abs(delta) > 0.5 ? delta : nodeUid$1(a).localeCompare(nodeUid$1(b));
   });
 }
 function resolveSiblingSlot(options, pointer) {
@@ -28471,7 +28377,7 @@ function slotCandidate(slot, kind = slot.kind, branchDirection) {
   const nextNode = slot.nativeIndex < slot.nativeSiblings.length ? slot.nativeSiblings[slot.nativeIndex] ?? null : null;
   const prevNode = slot.nativeIndex > 0 ? slot.nativeSiblings[slot.nativeIndex - 1] ?? null : null;
   return {
-    key: `${branchDirection ?? "auto"}:${kind}:${nodeUid$2(slot.parent)}:${slot.nativeIndex}`,
+    key: `${branchDirection ?? "auto"}:${kind}:${nodeUid$1(slot.parent)}:${slot.nativeIndex}`,
     kind,
     target: slot.targetNode,
     parent: slot.parent,
@@ -28492,7 +28398,7 @@ function childCandidate(options, pointer, child) {
   const children = orderedSiblings(options.layout, child.node, available, pointer, options.getRect, options.branchDirection);
   if (children.length === 0) {
     return {
-      key: `${options.branchDirection ?? "auto"}:child:${nodeUid$2(child.node)}:0`,
+      key: `${options.branchDirection ?? "auto"}:child:${nodeUid$1(child.node)}:0`,
       kind: "child",
       target: child.node,
       parent: child.node,
@@ -28522,7 +28428,7 @@ function childCandidate(options, pointer, child) {
   const nextNode = nativeIndex < nativeChildren.length ? nativeChildren[nativeIndex] ?? null : null;
   const prevNode = nativeIndex > 0 ? nativeChildren[nativeIndex - 1] ?? null : null;
   return {
-    key: `${options.branchDirection ?? "auto"}:child:${nodeUid$2(child.node)}:${nativeIndex}`,
+    key: `${options.branchDirection ?? "auto"}:child:${nodeUid$1(child.node)}:${nativeIndex}`,
     kind: "child",
     target: child.node,
     parent: child.node,
@@ -28643,7 +28549,7 @@ function resolveRightLogicalCandidate(options, pointer, candidateNodes = options
   intents.sort((a, b) => {
     if (a.strong !== b.strong) return a.strong ? -1 : 1;
     if (Math.abs(a.score - b.score) > 0.5) return a.score - b.score;
-    return nodeUid$2(a.node).localeCompare(nodeUid$2(b.node));
+    return nodeUid$1(a.node).localeCompare(nodeUid$1(b.node));
   });
   const best = intents[0];
   const current = currentLogicalTarget(options, pointer);
@@ -28766,7 +28672,7 @@ function resolveSameAxisLocalCandidate(options, pointer, candidateNodes) {
   intents.sort((a, b) => {
     if (a.strong !== b.strong) return a.strong ? -1 : 1;
     if (Math.abs(a.score - b.score) > 0.5) return a.score - b.score;
-    return nodeUid$2(a.node).localeCompare(nodeUid$2(b.node));
+    return nodeUid$1(a.node).localeCompare(nodeUid$1(b.node));
   });
   const best = intents[0];
   const current = currentSameAxisTarget(options, pointer);
@@ -29072,7 +28978,7 @@ function normalizeRect(rect2) {
   if (![x2, y2, width2, height2].every(Number.isFinite) || width2 <= 0 || height2 <= 0) return null;
   return { x: x2, y: y2, width: width2, height: height2 };
 }
-function nodeUid$1(node) {
+function nodeUid(node) {
   if (!node) return "";
   const value = typeof node.getData === "function" ? node.getData("uid") : node.uid;
   return String(value ?? "");
@@ -29091,7 +28997,7 @@ function candidateFromPlugin(plugin) {
   if (plugin.overlapNode) {
     const parent = plugin.overlapNode;
     return {
-      key: `child:${nodeUid$1(parent)}`,
+      key: `child:${nodeUid(parent)}`,
       kind: "child",
       target: parent,
       parent,
@@ -29108,7 +29014,7 @@ function candidateFromPlugin(plugin) {
     const parent = plugin.prevNode.parent ?? null;
     const index = Array.isArray(parent == null ? void 0 : parent.children) ? parent.children.indexOf(plugin.prevNode) + 1 : -1;
     return {
-      key: `after:${nodeUid$1(plugin.prevNode)}`,
+      key: `after:${nodeUid(plugin.prevNode)}`,
       kind: "after",
       target: plugin.prevNode,
       parent,
@@ -29125,7 +29031,7 @@ function candidateFromPlugin(plugin) {
     const parent = plugin.nextNode.parent ?? null;
     const index = Array.isArray(parent == null ? void 0 : parent.children) ? parent.children.indexOf(plugin.nextNode) : -1;
     return {
-      key: `before:${nodeUid$1(plugin.nextNode)}`,
+      key: `before:${nodeUid(plugin.nextNode)}`,
       kind: "before",
       target: plugin.nextNode,
       parent,
@@ -29147,7 +29053,7 @@ function applyCandidate(plugin, candidate) {
   plugin.nextNode = candidate.nextNode;
   (_b = (_a = plugin.clone) == null ? void 0 : _a.attr) == null ? void 0 : _b.call(_a, {
     "data-drop-kind": candidate.kind,
-    "data-drop-target-uid": nodeUid$1(candidate.targetNode ?? candidate.parentNode)
+    "data-drop-target-uid": nodeUid(candidate.targetNode ?? candidate.parentNode)
   });
 }
 function animationNow() {
@@ -29159,7 +29065,7 @@ function requestFrame(callback) {
   }
   return setTimeout(() => callback(animationNow()), 16);
 }
-function cancelFrame$1(id) {
+function cancelFrame(id) {
   if (typeof window !== "undefined" && typeof window.cancelAnimationFrame === "function") {
     window.cancelAnimationFrame(id);
     return;
@@ -29421,7 +29327,7 @@ class YeMindDrag extends Drag {
   flushOfficialCandidateCheck() {
     const plugin = this;
     if (plugin.__ymzOverlapFrame !== null) {
-      cancelFrame$1(plugin.__ymzOverlapFrame);
+      cancelFrame(plugin.__ymzOverlapFrame);
       plugin.__ymzOverlapFrame = null;
     }
     this.runOfficialCandidateCheck(animationNow());
@@ -29670,7 +29576,7 @@ class YeMindDrag extends Drag {
   cancelCandidateFrame() {
     const plugin = this;
     if (plugin.__ymzOverlapFrame !== null && plugin.__ymzOverlapFrame !== void 0) {
-      cancelFrame$1(plugin.__ymzOverlapFrame);
+      cancelFrame(plugin.__ymzOverlapFrame);
     }
     plugin.__ymzOverlapFrame = null;
   }
@@ -79278,9 +79184,16 @@ function semanticClasses(value) {
   return value.split(/\s+/).filter(Boolean).filter((name) => !/^ql-(?:align|background|color|font|size)-/.test(name)).join(" ");
 }
 function comparableClipboardText(value) {
-  return value.replace(/\r\n?/g, "\n").replace(/[\t \u00a0]+$/gm, "").replace(/\n+$/, "");
+  const normalized2 = value.replace(/\r\n?/g, "\n").replace(/[\t \u00a0]+$/gm, "").replace(/\n+$/, "");
+  const lines = normalized2.split("\n");
+  const indentation = lines.filter((line) => line.trim().length > 0).map((line) => {
+    var _a;
+    return ((_a = line.match(/^[\t \u00a0]*/)) == null ? void 0 : _a[0].length) ?? 0;
+  });
+  const commonIndent = indentation.length > 0 ? Math.min(...indentation) : 0;
+  return commonIndent > 0 ? lines.map((line) => line.slice(Math.min(commonIndent, line.length))).join("\n") : normalized2;
 }
-function cloneTree$2(tree, removeIdentity = false) {
+function cloneTree$3(tree, removeIdentity = false) {
   const data2 = structuredClone(tree.data);
   if (removeIdentity) {
     delete data2.uid;
@@ -79289,7 +79202,7 @@ function cloneTree$2(tree, removeIdentity = false) {
   }
   return {
     data: data2,
-    children: (tree.children ?? []).map((child) => cloneTree$2(child, removeIdentity))
+    children: (tree.children ?? []).map((child) => cloneTree$3(child, removeIdentity))
   };
 }
 function isSurface(value) {
@@ -79309,7 +79222,7 @@ function parsePayload(value) {
     sourceDocumentId: payload.sourceDocumentId,
     sourceSurface: payload.sourceSurface,
     createdAt: Number.isFinite(payload.createdAt) ? Number(payload.createdAt) : Date.now(),
-    nodes: payload.nodes.map((tree) => cloneTree$2(tree))
+    nodes: payload.nodes.map((tree) => cloneTree$3(tree))
   };
 }
 function semanticHtmlWithoutPresentation(value) {
@@ -79359,14 +79272,14 @@ function createNodeClipboardPayload(options) {
     sourceDocumentId: String(options.sourceDocumentId ?? ""),
     sourceSurface: options.sourceSurface,
     createdAt: Date.now(),
-    nodes: options.nodes.map((tree) => cloneTree$2(tree, true))
+    nodes: options.nodes.map((tree) => cloneTree$3(tree, true))
   };
 }
 function prepareNodeClipboardForDestination(payload, destinationDocumentId, _destinationSurface) {
   const sameDocument = payload.sourceDocumentId === String(destinationDocumentId ?? "");
   return {
     ...payload,
-    nodes: payload.nodes.map((tree) => sameDocument ? cloneTree$2(tree) : stripTreePresentation(tree))
+    nodes: payload.nodes.map((tree) => sameDocument ? cloneTree$3(tree) : stripTreePresentation(tree))
   };
 }
 function nodeClipboardToOutline(payload) {
@@ -79407,6 +79320,19 @@ function readNodeClipboard(transfer, allowSharedFallback = true) {
 function clearNodeClipboard() {
   sharedPayload = null;
 }
+async function readMatchingSystemNodeClipboard() {
+  var _a, _b;
+  const readText = typeof navigator !== "undefined" ? (_b = (_a = navigator.clipboard) == null ? void 0 : _a.readText) == null ? void 0 : _b.bind(navigator.clipboard) : null;
+  if (!readText) return readNodeClipboard();
+  try {
+    const plain2 = await readText();
+    return readNodeClipboard({
+      getData: (type) => type === "text/plain" ? plain2 : ""
+    });
+  } catch {
+    return null;
+  }
+}
 function bindCanvasNodeClipboard(renderer, getDocumentId) {
   if (!renderer || renderer.__yemindNodeClipboardBound === true) return () => void 0;
   const originalCopy = typeof renderer.copy === "function" ? renderer.copy.bind(renderer) : null;
@@ -79445,10 +79371,14 @@ function bindCanvasNodeClipboard(renderer, getDocumentId) {
   }
   if (originalPaste) {
     renderer.paste = async (...args) => {
-      const payload = readNodeClipboard();
+      var _a;
+      const payload = await readMatchingSystemNodeClipboard();
       if (payload == null ? void 0 : payload.nodes.length) {
         const prepared = prepareNodeClipboardForDestination(payload, getDocumentId());
         renderer.beingCopyData = prepared.nodes;
+        if (typeof ((_a = renderer.mindMap) == null ? void 0 : _a.execCommand) === "function") {
+          return renderer.mindMap.execCommand("PASTE_NODE", prepared.nodes);
+        }
       }
       return originalPaste(...args);
     };
@@ -80988,307 +80918,39 @@ class RichText {
   }
 }
 RichText.instanceName = "richText";
-function editorOverlayPosition(target, containingBlock, box) {
-  const scaleX = containingBlock.offsetWidth > 0 ? containingBlock.width / containingBlock.offsetWidth : 1;
-  const scaleY = containingBlock.offsetHeight > 0 ? containingBlock.height / containingBlock.offsetHeight : 1;
-  const safeScaleX = Number.isFinite(scaleX) && scaleX > 0 ? scaleX : 1;
-  const safeScaleY = Number.isFinite(scaleY) && scaleY > 0 ? scaleY : 1;
-  const borderLeft = Number(box.borderLeft) || 0;
-  const borderTop = Number(box.borderTop) || 0;
-  return {
-    left: (target.left - containingBlock.left - containingBlock.clientLeft) / safeScaleX + containingBlock.scrollLeft - (Number(box.marginLeft) || 0) - borderLeft - (Number(box.paddingLeft) || 0),
-    top: (target.top - containingBlock.top - containingBlock.clientTop) / safeScaleY + containingBlock.scrollTop - (Number(box.marginTop) || 0) - borderTop - (Number(box.paddingTop) || 0)
+function cloneTree$2(value) {
+  if (typeof structuredClone === "function") return structuredClone(value);
+  return JSON.parse(JSON.stringify(value));
+}
+function escapeHtml$c(value) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+function plainTextToRichHtml(value) {
+  return String(value ?? "").replace(/\r\n?/g, "\n").split("\n").map((line) => `<p>${line ? escapeHtml$c(line) : "<br>"}</p>`).join("");
+}
+function normalizeNodeData(data2) {
+  if (!data2.richText) data2.text = plainTextToRichHtml(data2.text);
+  data2.richText = true;
+  const generalization = data2.generalization;
+  if (Array.isArray(generalization)) {
+    generalization.forEach((item) => {
+      if (item && typeof item === "object") normalizeNodeData(item);
+    });
+  } else if (generalization && typeof generalization === "object") {
+    normalizeNodeData(generalization);
+  }
+}
+function normalizeTreeForUpstreamRichTextInPlace(tree) {
+  const visit2 = (node) => {
+    normalizeNodeData(node.data);
+    (node.children ?? []).forEach(visit2);
   };
+  visit2(tree);
+  return tree;
 }
-function editorContentRectAligned(editorRect, targetRect, tolerance = 1.5) {
-  if (!editorRect || !targetRect) return false;
-  const values2 = [
-    editorRect.left,
-    editorRect.top,
-    targetRect.left,
-    targetRect.top
-  ];
-  if (!values2.every((value) => Number.isFinite(value))) return false;
-  const limit = Math.max(0, Number(tolerance) || 0);
-  return Math.abs(editorRect.left - targetRect.left) <= limit && Math.abs(editorRect.top - targetRect.top) <= limit;
-}
-function editorHorizontalMargin(node, paddingX, textContentMargin, scaleX) {
-  const scaledPadding = Math.max(0, Number(paddingX) || 0) * Math.max(0, Number(scaleX) || 1);
-  const hasPrefix = Boolean(node == null ? void 0 : node._prefixData) || Array.isArray(node == null ? void 0 : node._iconData) && node._iconData.length > 0;
-  if (!hasPrefix) return -scaledPadding;
-  const scaledGap = Math.max(0, Number(textContentMargin) || 0) * Math.max(0, Number(scaleX) || 1);
-  return -Math.min(scaledPadding, scaledGap);
-}
-function finite$2(value) {
-  return typeof value === "number" && Number.isFinite(value);
-}
-function isUsableTextRect(value) {
-  if (!value || typeof value !== "object") return false;
-  const rect2 = value;
-  return finite$2(rect2.left) && finite$2(rect2.top) && finite$2(rect2.width) && finite$2(rect2.height) && rect2.width > 0.5 && rect2.height > 0.5;
-}
-function snapshotRect(value) {
-  const left = Number(value.left);
-  const top = Number(value.top);
-  const width2 = Number(value.width);
-  const height2 = Number(value.height);
-  const right = finite$2(value.right) ? Number(value.right) : left + width2;
-  const bottom = finite$2(value.bottom) ? Number(value.bottom) : top + height2;
-  const x2 = finite$2(value.x) ? Number(value.x) : left;
-  const y2 = finite$2(value.y) ? Number(value.y) : top;
-  if (typeof DOMRect === "function") return new DOMRect(left, top, width2, height2);
-  return {
-    x: x2,
-    y: y2,
-    left,
-    top,
-    right,
-    bottom,
-    width: width2,
-    height: height2,
-    toJSON: () => ({ x: x2, y: y2, left, top, right, bottom, width: width2, height: height2 })
-  };
-}
-function renderedNodeUid$1(node) {
-  var _a, _b;
-  if (!node) return "";
-  const value = typeof node.getData === "function" ? node.getData("uid") : ((_b = (_a = node == null ? void 0 : node.nodeData) == null ? void 0 : _a.data) == null ? void 0 : _b.uid) ?? (node == null ? void 0 : node.uid);
-  return String(value ?? "");
-}
-function resolveLiveRenderedNode(mindMap, node, uid2 = renderedNodeUid$1(node)) {
-  var _a, _b;
-  if (!uid2) return node ?? null;
-  const current = (_b = (_a = mindMap == null ? void 0 : mindMap.renderer) == null ? void 0 : _a.findNodeByUid) == null ? void 0 : _b.call(_a, uid2);
-  return current ?? node ?? null;
-}
-function numberAttribute(group, name) {
-  var _a;
-  const value = Number((_a = group == null ? void 0 : group.attr) == null ? void 0 : _a.call(group, name));
-  return finite$2(value) && value > 0 ? value : 0;
-}
-function screenScale(element) {
-  var _a;
-  let matrix = null;
-  try {
-    matrix = ((_a = element.getScreenCTM) == null ? void 0 : _a.call(element)) ?? null;
-  } catch {
-    matrix = null;
-  }
-  if (!matrix) return null;
-  const x2 = Math.hypot(Number(matrix.a), Number(matrix.b));
-  const y2 = Math.hypot(Number(matrix.c), Number(matrix.d));
-  if (!finite$2(x2) || !finite$2(y2) || x2 <= 0 || y2 <= 0) return null;
-  return { x: x2, y: y2 };
-}
-function logicalTextRect(node, group, element, raw) {
-  var _a, _b;
-  const width2 = numberAttribute(group, "data-width");
-  const height2 = numberAttribute(group, "data-height");
-  if (width2 <= 0.5 || height2 <= 0.5) return snapshotRect(raw);
-  const scale2 = screenScale(element);
-  const fallbackScaleY = raw.height / height2;
-  const scaleX = (scale2 == null ? void 0 : scale2.x) ?? (finite$2(fallbackScaleY) && fallbackScaleY > 0 ? fallbackScaleY : 1);
-  const scaleY = (scale2 == null ? void 0 : scale2.y) ?? (finite$2(fallbackScaleY) && fallbackScaleY > 0 ? fallbackScaleY : 1);
-  const logicalWidth = width2 * scaleX;
-  const logicalHeight = height2 * scaleY;
-  if (!finite$2(logicalWidth) || !finite$2(logicalHeight) || logicalWidth <= 0.5 || logicalHeight <= 0.5) {
-    return snapshotRect(raw);
-  }
-  const align = String(((_a = node == null ? void 0 : node.getStyle) == null ? void 0 : _a.call(node, "textAlign", false)) ?? ((_b = node == null ? void 0 : node.getStyle) == null ? void 0 : _b.call(node, "textAlign")) ?? "").toLowerCase();
-  let left = raw.left;
-  if (align === "right" || align === "end") left = raw.right - logicalWidth;
-  else if (align === "center" || align === "middle") left = raw.left + (raw.width - logicalWidth) / 2;
-  return new DOMRect(left, raw.top, logicalWidth, logicalHeight);
-}
-function transformPoint(matrix, x2, y2) {
-  const values2 = [matrix == null ? void 0 : matrix.a, matrix == null ? void 0 : matrix.b, matrix == null ? void 0 : matrix.c, matrix == null ? void 0 : matrix.d, matrix == null ? void 0 : matrix.e, matrix == null ? void 0 : matrix.f];
-  if (!values2.every(finite$2)) return null;
-  return {
-    x: matrix.a * x2 + matrix.c * y2 + matrix.e,
-    y: matrix.b * x2 + matrix.d * y2 + matrix.f
-  };
-}
-function rectFromScreenMatrix(element, group) {
-  var _a, _b;
-  let matrix = null;
-  try {
-    matrix = ((_a = element.getScreenCTM) == null ? void 0 : _a.call(element)) ?? null;
-  } catch {
-    matrix = null;
-  }
-  if (!matrix) return null;
-  let box = null;
-  try {
-    const candidate = (_b = element.getBBox) == null ? void 0 : _b.call(element);
-    if (candidate && finite$2(candidate.x) && finite$2(candidate.y) && finite$2(candidate.width) && finite$2(candidate.height) && candidate.width > 0.5 && candidate.height > 0.5) {
-      box = candidate;
-    }
-  } catch {
-    box = null;
-  }
-  if (!box) {
-    const width22 = numberAttribute(group, "data-width");
-    const height22 = numberAttribute(group, "data-height");
-    if (width22 <= 0.5 || height22 <= 0.5) return null;
-    box = { x: 0, y: 0, width: width22, height: height22 };
-  }
-  const points = [
-    transformPoint(matrix, box.x, box.y),
-    transformPoint(matrix, box.x + box.width, box.y),
-    transformPoint(matrix, box.x, box.y + box.height),
-    transformPoint(matrix, box.x + box.width, box.y + box.height)
-  ];
-  if (points.some((point2) => !point2)) return null;
-  const xs = points.map((point2) => point2.x);
-  const ys = points.map((point2) => point2.y);
-  const left = Math.min(...xs);
-  const right = Math.max(...xs);
-  const top = Math.min(...ys);
-  const bottom = Math.max(...ys);
-  const width2 = right - left;
-  const height2 = bottom - top;
-  const result = new DOMRect(left, top, width2, height2);
-  return isUsableTextRect(result) ? result : null;
-}
-function resolveRenderedTextRect(node) {
-  var _a, _b, _c2;
-  const group = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
-  const element = group == null ? void 0 : group.node;
-  if (!element) return null;
-  const content = ((_b = element.querySelector) == null ? void 0 : _b.call(
-    element,
-    ".smm-richtext-node-wrap,.smm-text-node-wrap"
-  )) ?? null;
-  const candidates = content && content !== element ? [content, element] : [element];
-  for (const candidate of candidates) {
-    const connected = typeof candidate.isConnected === "boolean" ? candidate.isConnected : null;
-    if (connected === false) continue;
-    try {
-      const rect2 = (_c2 = candidate.getBoundingClientRect) == null ? void 0 : _c2.call(candidate);
-      if (isUsableTextRect(rect2)) {
-        return {
-          rect: logicalTextRect(node, group, candidate, rect2),
-          source: "bounding-client-rect",
-          elementConnected: connected
-        };
-      }
-    } catch {
-    }
-    const matrixRect = rectFromScreenMatrix(candidate, group);
-    if (matrixRect) {
-      return {
-        rect: snapshotRect(matrixRect),
-        source: "screen-ctm",
-        elementConnected: connected
-      };
-    }
-  }
-  return null;
-}
-function freezeSnapshot(value) {
-  return Object.freeze({ ...value });
-}
-class CanvasEditSessionCoordinator {
-  constructor() {
-    __publicField(this, "nextId", 0);
-    __publicField(this, "current", freezeSnapshot({
-      id: 0,
-      uid: "",
-      phase: "idle",
-      revision: 0,
-      geometryReady: false,
-      contentReady: false,
-      selectionEpoch: 0
-    }));
-  }
-  begin(uid2) {
-    this.current = freezeSnapshot({
-      id: ++this.nextId,
-      uid: String(uid2 ?? ""),
-      phase: "opening",
-      revision: 0,
-      geometryReady: false,
-      contentReady: false,
-      selectionEpoch: 0
-    });
-    return this.current;
-  }
-  markEditorReady(id, readiness) {
-    if (!this.isCurrent(id) || this.current.phase === "closing") return null;
-    if (this.current.phase === "active") return this.current;
-    const geometryReady = Boolean(readiness.geometryReady);
-    const contentReady = Boolean(readiness.contentReady);
-    this.current = freezeSnapshot({
-      ...this.current,
-      phase: geometryReady && contentReady ? "active" : "opening",
-      geometryReady,
-      contentReady
-    });
-    return this.current;
-  }
-  advanceRevision(id) {
-    if (!this.isCurrent(id) || this.current.phase === "idle") return null;
-    this.current = freezeSnapshot({
-      ...this.current,
-      revision: this.current.revision + 1
-    });
-    return this.current;
-  }
-  acceptSelection(id) {
-    if (!this.isCurrent(id) || this.current.phase !== "active") return null;
-    this.current = freezeSnapshot({
-      ...this.current,
-      selectionEpoch: this.current.selectionEpoch + 1
-    });
-    return {
-      sessionId: this.current.id,
-      uid: this.current.uid,
-      selectionEpoch: this.current.selectionEpoch
-    };
-  }
-  close(id) {
-    if (!this.isCurrent(id)) return false;
-    this.current = freezeSnapshot({
-      id: this.current.id,
-      uid: "",
-      phase: "idle",
-      revision: this.current.revision,
-      geometryReady: false,
-      contentReady: false,
-      selectionEpoch: 0
-    });
-    return true;
-  }
-  isCurrent(id) {
-    return id > 0 && this.current.id === id && this.current.phase !== "idle";
-  }
-  snapshot() {
-    return this.current;
-  }
-}
-const SUPPORTED_PROTOCOLS = /* @__PURE__ */ new Set(["http:", "https:", "mailto:", "tel:", "siyuan:"]);
-const BARE_DOMAIN = /^(?:localhost(?::\d+)?|(?:[a-z0-9-]+\.)+[a-z]{2,})(?:[/:?#].*)?$/i;
-function normalizeInlineLink(value, autoHttps = true) {
-  const input = value.trim();
-  if (!input) return null;
-  const candidate = !/^[a-z][a-z0-9+.-]*:/i.test(input) && autoHttps && BARE_DOMAIN.test(input) ? `https://${input}` : input;
-  try {
-    const url = new URL(candidate);
-    return SUPPORTED_PROTOCOLS.has(url.protocol) ? candidate : null;
-  } catch {
-    return null;
-  }
-}
-function shouldActivateRichTextLink(gesture) {
-  return gesture.button === 1 || gesture.ctrlKey || gesture.metaKey;
-}
-function resolveLinkNavigation(value, externalMode) {
-  const href = normalizeInlineLink(value, true);
-  if (!href) return null;
-  return {
-    href,
-    target: href.toLowerCase().startsWith("siyuan://") ? "siyuan" : externalMode
-  };
+function normalizeTreeForUpstreamRichText(tree) {
+  const runtime = cloneTree$2(tree);
+  return normalizeTreeForUpstreamRichTextInPlace(runtime);
 }
 const YEMIND_FONT_VALUES = [
   "sans-serif",
@@ -81343,42 +81005,6 @@ function writeQuillSelectionToClipboard(quill, event, fallbackRange) {
   if (html2) event.clipboardData.setData("text/html", html2);
   return true;
 }
-function canvasTextPayloadMatchesNode(payload, nodeData) {
-  return String((nodeData == null ? void 0 : nodeData.text) ?? "") === payload.text && Boolean(nodeData == null ? void 0 : nodeData.richText) === payload.richText;
-}
-function trimCanvasRichTextBoundaryBlocks(value) {
-  if (typeof document === "undefined") {
-    const emptyBlock = String.raw`<(?:p|div)\b[^>]*>(?:\s|&nbsp;|<br\s*\/?>)*<\/(?:p|div)>`;
-    return value.replace(new RegExp(String.raw`^(?:\s*${emptyBlock}\s*)+`, "i"), "").replace(new RegExp(String.raw`(?:\s*${emptyBlock}\s*)+$`, "i"), "").trim();
-  }
-  const template = document.createElement("template");
-  template.innerHTML = value;
-  const discardBoundaryWhitespace = () => {
-    var _a, _b;
-    while (((_a = template.content.firstChild) == null ? void 0 : _a.nodeType) === Node.TEXT_NODE && !(template.content.firstChild.textContent ?? "").trim()) template.content.firstChild.remove();
-    while (((_b = template.content.lastChild) == null ? void 0 : _b.nodeType) === Node.TEXT_NODE && !(template.content.lastChild.textContent ?? "").trim()) template.content.lastChild.remove();
-  };
-  const isEmptyBoundaryBlock = (node) => node instanceof HTMLElement && (node.tagName === "P" || node.tagName === "DIV") && !(node.textContent ?? "").replace(/\u00a0/g, " ").trim() && !node.querySelector("img,svg,mjx-container,.ql-formula,[data-formula],iframe,video,audio");
-  discardBoundaryWhitespace();
-  while (isEmptyBoundaryBlock(template.content.firstChild)) {
-    template.content.firstChild.remove();
-    discardBoundaryWhitespace();
-  }
-  while (isEmptyBoundaryBlock(template.content.lastChild)) {
-    template.content.lastChild.remove();
-    discardBoundaryWhitespace();
-  }
-  return template.innerHTML.trim();
-}
-function normalizeCanvasTextPayload(html2) {
-  const source = trimCanvasRichTextBoundaryBlocks(String(html2 ?? ""));
-  const richText = structuredOutlineIsRichHtml(source);
-  const plain2 = richText ? "" : nodeRichTextToTextWithWrap(source.replace(/<br\s*\/?>/gi, "\n")).replace(/\u00a0/g, " ").replace(/^(?:[ \t]*\n)+/, "").replace(/(?:\n[ \t]*)+$/, "");
-  return {
-    text: richText ? source : plain2.trim().length > 0 ? plain2 : "",
-    richText
-  };
-}
 function sanitizeLink(value) {
   const text2 = String(value ?? "").trim();
   if (/^(https?:|mailto:|tel:|sms:|siyuan:)/i.test(text2)) return text2;
@@ -81419,8 +81045,7 @@ function registerYeMindFormats() {
   class YeMindCodeBlock extends BaseCodeBlock {
     static create(value) {
       const node = super.create(value);
-      const language = typeof value === "string" && value.trim() ? value.trim() : "plain";
-      node.setAttribute("data-language", language);
+      node.setAttribute("data-language", typeof value === "string" && value.trim() ? value.trim() : "plain");
       return node;
     }
     static formats(node) {
@@ -81443,682 +81068,63 @@ function registerYeMindFormats() {
 class YeMindRichText extends RichText {
   constructor() {
     super(...arguments);
-    __publicField(this, "editSessions");
-    __publicField(this, "lastValidNodeRect", null);
-    __publicField(this, "lastRectSource", "none");
-    __publicField(this, "placementFrame", null);
-    __publicField(this, "placementTracking", false);
-    __publicField(this, "placementResizeObserver", null);
-    __publicField(this, "lastAlignedSessionId", 0);
-    __publicField(this, "openingFocusFrame", null);
-    __publicField(this, "openingFocusSessionId", 0);
-    /**
-     * True once the current opening transaction has committed a determinate
-     * width/height for the edit host. `focus()` is called synchronously by the
-     * upstream base class before that has happened; while this is false, focus
-     * intent is only recorded (see `pendingFocusIntent`), never applied, so
-     * Quill cannot claim focus/selection on a host the CSS gate still hides.
-     */
-    __publicField(this, "openingGeometryReady", false);
-    __publicField(this, "pendingFocusIntent", null);
-    __publicField(this, "hostContentWidth", 0);
-    __publicField(this, "hostContentHeight", 0);
-    __publicField(this, "handlePlacementInvalidation", () => {
-      if (!this.showTextEdit) return;
-      this.schedulePlacementStabilization();
-    });
-    __publicField(this, "handleOpeningFocusPointerDown", (event) => {
-      const host = this.textEditNode;
-      const target = event.target;
-      if (host && target instanceof Node && host.contains(target)) return;
-      this.cancelOpeningFocusClaim();
-    });
+    __publicField(this, "ownsEditFocus", false);
   }
-  sessionCoordinator() {
-    this.editSessions ?? (this.editSessions = new CanvasEditSessionCoordinator());
-    return this.editSessions;
+  bindEvent() {
+    super.bindEvent();
+    this.beginEditFocusOwnership = this.beginEditFocusOwnership.bind(this);
+    this.releaseEditFocusOwnership = this.releaseEditFocusOwnership.bind(this);
+    this.handleHostFocusIn = this.handleHostFocusIn.bind(this);
+    this.handleFocusOwnershipPointerDown = this.handleFocusOwnershipPointerDown.bind(this);
+    this.mindMap.on("before_show_text_edit", this.beginEditFocusOwnership);
+    this.mindMap.on("hide_text_edit", this.releaseEditFocusOwnership);
+    document.addEventListener("focusin", this.handleHostFocusIn, true);
+    window.addEventListener("pointerdown", this.handleFocusOwnershipPointerDown, true);
   }
-  get editingUid() {
-    return this.sessionCoordinator().snapshot().uid;
+  unbindEvent() {
+    super.unbindEvent();
+    this.releaseEditFocusOwnership();
+    this.mindMap.off("before_show_text_edit", this.beginEditFocusOwnership);
+    this.mindMap.off("hide_text_edit", this.releaseEditFocusOwnership);
+    document.removeEventListener("focusin", this.handleHostFocusIn, true);
+    window.removeEventListener("pointerdown", this.handleFocusOwnershipPointerDown, true);
   }
-  set editingUid(uid2) {
-    const sessions = this.sessionCoordinator();
-    const current = sessions.snapshot();
-    const next2 = String(uid2 ?? "");
-    if (!next2) {
-      if (current.phase !== "idle") sessions.close(current.id);
-      return;
-    }
-    if (current.uid !== next2 || current.phase === "idle") sessions.begin(next2);
+  beginEditFocusOwnership() {
+    this.ownsEditFocus = true;
   }
-  getEditSessionSnapshot() {
-    return this.sessionCoordinator().snapshot();
+  releaseEditFocusOwnership() {
+    this.ownsEditFocus = false;
   }
-  editorContentReady() {
+  handleFocusOwnershipPointerDown(event) {
+    var _a;
+    if (!this.ownsEditFocus) return;
+    const root2 = (_a = this.quill) == null ? void 0 : _a.root;
+    const target = event.target;
+    if (root2 && target instanceof Node && root2.contains(target)) return;
+    this.releaseEditFocusOwnership();
+  }
+  handleHostFocusIn(event) {
     var _a, _b, _c2;
-    const editor = (_a = this.textEditNode) == null ? void 0 : _a.querySelector(".ql-editor");
-    if (!editor) return false;
-    const sourceText = String(((_c2 = (_b = this.node) == null ? void 0 : _b.getData) == null ? void 0 : _c2.call(_b, "text")) ?? "").trim();
-    if (!sourceText) return true;
-    return Boolean(
-      String(editor.textContent ?? "").trim() || editor.querySelector("img,svg,.ql-formula,[data-yemind-formula]")
-    );
+    if (!this.showTextEdit || !this.ownsEditFocus) return;
+    const root2 = (_a = this.quill) == null ? void 0 : _a.root;
+    const target = event.target;
+    if (!root2 || target instanceof Node && root2.contains(target)) return;
+    const range2 = this.range ?? this.pasteUseRange ?? ((_c2 = (_b = this.quill) == null ? void 0 : _b.getSelection) == null ? void 0 : _c2.call(_b));
+    root2.focus({ preventScroll: true });
+    if (range2) this.quill.setSelection(range2.index, range2.length, Quill.sources.SILENT);
+    else this.quill.setSelection(this.quill.getLength(), 0, Quill.sources.SILENT);
   }
-  markCurrentEditorReady() {
-    const sessions = this.sessionCoordinator();
-    const current = sessions.snapshot();
-    const host = this.textEditNode;
-    return sessions.markEditorReady(current.id, {
-      geometryReady: Boolean(host && host.dataset.yemindGeometryReady === "true"),
-      contentReady: this.editorContentReady()
-    });
-  }
-  acceptCurrentSelection() {
-    const sessions = this.sessionCoordinator();
-    return sessions.acceptSelection(sessions.snapshot().id);
-  }
-  /**
-   * The upstream RichText plugin migrates every plain node to `richText: true`
-   * when it is constructed and whenever a new tree is installed. YeMind keeps
-   * plain and formatted nodes in one canonical model, so that implicit
-   * migration destroys native line breaks and changes node measurement after
-   * a collapse, reload, or first edit.
-   *
-   * Rich text is enabled only by an actual formatting edit. Loading or
-   * replacing a tree must be identity-preserving.
-   */
   handleDataToRichTextOnInit() {
+    const tree = this.mindMap.renderer.renderTree ?? this.mindMap.opt.data;
+    if (tree) normalizeTreeForUpstreamRichTextInPlace(tree);
   }
   handleSetData(data2) {
+    if (data2 && typeof data2 === "object") normalizeTreeForUpstreamRichTextInPlace(data2);
     return data2;
-  }
-  showEditText(params) {
-    const sourceNode = (params == null ? void 0 : params.node) ?? null;
-    const requestedUid = renderedNodeUid$1(sourceNode) || renderedNodeUid$1(resolveLiveRenderedNode(this.mindMap, sourceNode));
-    if (this.showTextEdit) {
-      const session = this.sessionCoordinator().snapshot();
-      const sameNode = Boolean(requestedUid) && session.uid === requestedUid;
-      if (sameNode && session.phase === "active") {
-        this.focus();
-        return;
-      }
-      if (!sameNode) return;
-      this.abortOpeningSession("reopen-half-open-session");
-    }
-    this.openingGeometryReady = false;
-    this.pendingFocusIntent = null;
-    const pendingHost = this.textEditNode;
-    if (pendingHost) pendingHost.dataset.yemindGeometryReady = "false";
-    const uid2 = requestedUid;
-    const liveNode = resolveLiveRenderedNode(this.mindMap, sourceNode, uid2);
-    const liveGeometry = resolveRenderedTextRect(liveNode);
-    const parameterRect = isUsableTextRect(params == null ? void 0 : params.rect) ? snapshotRect(params.rect) : null;
-    const rect2 = (liveGeometry == null ? void 0 : liveGeometry.rect) ?? parameterRect ?? this.lastValidNodeRect;
-    this.editingUid = uid2 || renderedNodeUid$1(liveNode);
-    const sessionId = this.sessionCoordinator().snapshot().id;
-    if (pendingHost) pendingHost.dataset.yemindEditSession = String(sessionId);
-    if (rect2) {
-      this.lastValidNodeRect = snapshotRect(rect2);
-      this.lastRectSource = (liveGeometry == null ? void 0 : liveGeometry.source) ?? (parameterRect ? "show-parameter" : "last-valid");
-    }
-    super.showEditText({
-      ...params,
-      node: liveNode ?? sourceNode,
-      rect: rect2 ?? (params == null ? void 0 : params.rect)
-    });
-    this.node = resolveLiveRenderedNode(this.mindMap, this.node ?? liveNode ?? sourceNode, this.editingUid);
-    const readyHost = this.textEditNode;
-    if (readyHost) {
-      readyHost.dataset.yemindEditSession = String(sessionId);
-      readyHost.dataset.yemindGeometryReady = "false";
-    }
-    if (rect2) this.applyEditorGeometry(this.node, rect2);
-    this.bindTextEditingKeyboard();
-    this.bindPlacementTracking();
-    this.reconcileEditorPlacement(sessionId);
-    this.schedulePlacementStabilization();
-    this.emitEditingDiagnostic("opened", {
-      liveNodeResolved: Boolean(liveNode && liveNode !== sourceNode),
-      rectSource: this.lastRectSource
-    });
-  }
-  updateTextEditNode() {
-    if (!this.showTextEdit || !this.textEditNode) return;
-    const previousNode = this.node;
-    const liveNode = resolveLiveRenderedNode(this.mindMap, previousNode, this.editingUid);
-    if (liveNode) this.node = liveNode;
-    const geometry = resolveRenderedTextRect(liveNode);
-    const rect2 = (geometry == null ? void 0 : geometry.rect) ?? this.lastValidNodeRect;
-    if (!rect2) {
-      this.emitEditingDiagnostic("reposition-skipped-invalid-target", {
-        liveNodeResolved: Boolean(liveNode && liveNode !== previousNode),
-        rectSource: "none"
-      });
-      return;
-    }
-    if (geometry) {
-      this.lastValidNodeRect = snapshotRect(geometry.rect);
-      this.lastRectSource = geometry.source;
-    } else {
-      this.lastRectSource = "last-valid";
-    }
-    this.applyEditorGeometry(liveNode, rect2);
-    this.commitOpeningPlacement(this.sessionCoordinator().snapshot().id, rect2);
-    this.emitEditingDiagnostic(geometry ? "repositioned" : "repositioned-from-anchor", {
-      liveNodeResolved: Boolean(liveNode && liveNode !== previousNode),
-      rectSource: this.lastRectSource
-    });
-  }
-  hideEditText(nodes) {
-    var _a, _b;
-    this.unbindPlacementTracking();
-    this.cancelPlacementStabilization();
-    this.cancelOpeningFocusClaim();
-    const liveNode = resolveLiveRenderedNode(this.mindMap, this.node, this.editingUid);
-    if (liveNode) this.node = liveNode;
-    const liveNodes = Array.isArray(nodes) ? nodes.map((node) => resolveLiveRenderedNode(this.mindMap, node)).filter(Boolean) : nodes;
-    try {
-      if (!this.showTextEdit) return;
-      const beforeHideRichTextEdit = (_b = (_a = this.mindMap) == null ? void 0 : _a.opt) == null ? void 0 : _b.beforeHideRichTextEdit;
-      if (typeof beforeHideRichTextEdit === "function") beforeHideRichTextEdit(this);
-      const payload = normalizeCanvasTextPayload(this.getEditText());
-      const list = Array.isArray(liveNodes) && liveNodes.length > 0 ? liveNodes : [this.node].filter(Boolean);
-      const editingNode = this.node;
-      this.textEditNode.style.display = "none";
-      this.setIsShowTextEdit(false);
-      this.mindMap.emit("rich_text_selection_change", false);
-      this.node = null;
-      this.isInserting = false;
-      let changed = false;
-      list.forEach((node) => {
-        var _a2, _b2;
-        const nodeData = ((_a2 = node == null ? void 0 : node.nodeData) == null ? void 0 : _a2.data) ?? ((_b2 = node == null ? void 0 : node.getData) == null ? void 0 : _b2.call(node)) ?? {};
-        if (canvasTextPayloadMatchesNode(payload, nodeData)) return;
-        changed = true;
-        markNodeTextEditedData(nodeData);
-        this.mindMap.execCommand(
-          "SET_NODE_TEXT",
-          node,
-          payload.text,
-          payload.richText,
-          !payload.richText
-        );
-      });
-      if (changed) this.mindMap.render();
-      this.mindMap.emit("hide_text_edit", this.textEditNode, list, editingNode);
-    } finally {
-      const host = this.textEditNode;
-      if (host) host.dataset.yemindGeometryReady = "false";
-      this.lastAlignedSessionId = 0;
-      this.editingUid = "";
-      this.lastValidNodeRect = null;
-      this.lastRectSource = "none";
-      this.openingGeometryReady = false;
-      this.pendingFocusIntent = null;
-    }
-  }
-  /**
-   * Recover from a previous opening transaction that never became active
-   * (host stayed CSS-hidden and unfocusable). Only discards in-flight
-   * open-session state; never commits text and never touches undo history.
-   */
-  abortOpeningSession(_reason) {
-    this.unbindPlacementTracking();
-    this.cancelPlacementStabilization();
-    this.cancelOpeningFocusClaim();
-    const host = this.textEditNode;
-    if (host) {
-      host.style.display = "none";
-      host.dataset.yemindGeometryReady = "false";
-    }
-    this.setIsShowTextEdit(false);
-    this.node = null;
-    this.range = null;
-    this.lastRange = null;
-    this.lastAlignedSessionId = 0;
-    this.openingGeometryReady = false;
-    this.pendingFocusIntent = null;
-    this.lastValidNodeRect = null;
-    this.lastRectSource = "none";
-    const sessions = this.sessionCoordinator();
-    sessions.close(sessions.snapshot().id);
-  }
-  removeTextEditEl() {
-    this.unbindPlacementTracking();
-    this.cancelPlacementStabilization();
-    this.cancelOpeningFocusClaim();
-    try {
-      super.removeTextEditEl();
-    } finally {
-      const host = this.textEditNode;
-      if (host) host.dataset.yemindGeometryReady = "false";
-      this.lastAlignedSessionId = 0;
-      this.editingUid = "";
-      this.lastValidNodeRect = null;
-      this.lastRectSource = "none";
-      this.openingGeometryReady = false;
-      this.pendingFocusIntent = null;
-    }
-  }
-  setQuillContainerMinHeight(minHeight) {
-    var _a;
-    const editor = (_a = this.textEditNode) == null ? void 0 : _a.querySelector(".ql-editor");
-    if (editor) editor.style.minHeight = `${Math.max(0, Number(minHeight) || 0)}px`;
-  }
-  /**
-   * The upstream base class calls `this.focus(start)` synchronously while
-   * still inside `showEditText`, before the opening transaction has a
-   * determinate width/height (see `openingGeometryReady`). Record the edit
-   * intent now — using the already-reliable `isInserting` flag rather than
-   * inferring "select all" from `start === 0` (upstream only ever passes 0
-   * for that same isInserting case once selectTextOnEnterEditText is false,
-   * but branching on the literal number instead of the real flag is fragile
-   * and easy to misread as "place caret at position 0") — and only touch the
-   * DOM once geometry has actually committed, so Quill never claims focus or
-   * a visible selection on a host the CSS gate still hides.
-   */
-  focus(_start) {
-    var _a, _b, _c2, _d2;
-    if (!this.quill) return;
-    const liveNode = resolveLiveRenderedNode(this.mindMap, this.node, this.editingUid);
-    if (liveNode) this.node = liveNode;
-    const data2 = ((_b = (_a = this.node) == null ? void 0 : _a.nodeData) == null ? void 0 : _b.data) ?? ((_d2 = (_c2 = this.node) == null ? void 0 : _c2.getData) == null ? void 0 : _d2.call(_c2)) ?? null;
-    const selectAll = this.isInserting || isPristineNodeTextData(data2);
-    this.pendingFocusIntent = { selectAll };
-    if (!this.openingGeometryReady) return;
-    this.applyPendingFocusIntent();
-  }
-  applyPendingFocusIntent() {
-    if (!this.pendingFocusIntent || !this.quill) return;
-    const { selectAll } = this.pendingFocusIntent;
-    this.pendingFocusIntent = null;
-    const length2 = editableTextLength(this.quill);
-    this.quill.root.focus({ preventScroll: true });
-    this.quill.setSelection(selectAll ? 0 : length2, selectAll ? length2 : 0, Quill.sources.SILENT);
-    this.range = selectAll ? { index: 0, length: length2 } : { index: length2, length: 0 };
-    this.pasteUseRange = this.range;
-    this.emitEditingDiagnostic(selectAll ? "initial-select-all" : "initial-caret-end", { length: length2 });
-    if (selectAll && length2 > 0 && !this.isInserting) {
-      const sessionId = this.sessionCoordinator().snapshot().id;
-      window.requestAnimationFrame(() => {
-        if (!this.sessionCoordinator().isCurrent(sessionId)) return;
-        this.emitCurrentSelectionChange();
-      });
-    }
-  }
-  emitCurrentSelectionChange() {
-    if (!this.showTextEdit || !this.quill || !this.textEditNode) return;
-    const range2 = resolveNonCollapsedQuillRange(this.quill, this.range);
-    if (!range2 || range2.length <= 0) return;
-    const bounds = this.quill.getBounds(range2.index, range2.length);
-    const rectInfo = this.selectionViewportRect(bounds);
-    const formatInfo = this.quill.getFormat(range2.index, range2.length);
-    const selectionSession = this.acceptCurrentSelection();
-    if (!selectionSession) return;
-    this.range = range2;
-    this.pasteUseRange = range2;
-    this.mindMap.emit(
-      "rich_text_selection_change",
-      true,
-      rectInfo,
-      formatInfo,
-      selectionSession
-    );
-    this.emitEditingDiagnostic("initial-selection-toolbar", {
-      index: range2.index,
-      length: range2.length
-    });
-  }
-  selectionViewportRect(bounds) {
-    const host = this.textEditNode;
-    const selection = window.getSelection();
-    if (selection && !selection.isCollapsed && selection.rangeCount > 0 && selection.anchorNode && host.contains(selection.anchorNode)) {
-      const live = selection.getRangeAt(0).getBoundingClientRect();
-      if (live.width > 0 || live.height > 0) {
-        return {
-          left: live.left,
-          top: live.top,
-          right: live.right,
-          bottom: live.bottom,
-          width: live.width
-        };
-      }
-    }
-    const rect2 = host.getBoundingClientRect();
-    return {
-      left: bounds.left + rect2.left,
-      top: bounds.top + rect2.top,
-      right: bounds.right + rect2.left,
-      bottom: bounds.bottom + rect2.top,
-      width: bounds.width
-    };
-  }
-  applyEditorGeometry(node, rect2) {
-    var _a, _b, _c2, _d2, _e, _f;
-    const host = this.textEditNode;
-    if (!host || !isUsableTextRect(rect2)) return;
-    const group = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
-    const width2 = Number((_b = group == null ? void 0 : group.attr) == null ? void 0 : _b.call(group, "data-width"));
-    const height2 = Number((_c2 = group == null ? void 0 : group.attr) == null ? void 0 : _c2.call(group, "data-height"));
-    const originWidth = Number.isFinite(width2) && width2 > 0 ? width2 : rect2.width;
-    const originHeight = Number.isFinite(height2) && height2 > 0 ? height2 : rect2.height;
-    const hostWidth = originWidth + this.textNodePaddingX * 2;
-    host.style.width = `${hostWidth}px`;
-    host.style.minWidth = `${hostWidth}px`;
-    host.style.minHeight = `${originHeight}px`;
-    this.hostContentWidth = hostWidth;
-    this.hostContentHeight = originHeight;
-    const hasCustomWidth = Boolean((_d2 = node == null ? void 0 : node.hasCustomWidth) == null ? void 0 : _d2.call(node));
-    const customTextWidth = Number(node == null ? void 0 : node.customTextWidth);
-    const defaultWrapWidth = Number((_f = (_e = this.mindMap) == null ? void 0 : _e.opt) == null ? void 0 : _f.textAutoWrapWidth);
-    const wrapWidth = hasCustomWidth && Number.isFinite(customTextWidth) && customTextWidth > 0 ? customTextWidth : Number.isFinite(defaultWrapWidth) && defaultWrapWidth > 0 ? defaultWrapWidth : null;
-    if (wrapWidth !== null) {
-      host.style.maxWidth = `${wrapWidth + this.textNodePaddingX * 2}px`;
-    }
-    this.setQuillContainerMinHeight(originHeight);
-    this.applyEditorHorizontalMargin(node, rect2);
-    this.normalizeEditorPlacement(rect2);
-  }
-  applyEditorHorizontalMargin(node, rect2) {
-    var _a, _b, _c2, _d2;
-    const host = this.textEditNode;
-    if (!host || !rect2) return;
-    const group = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node;
-    const originWidth = Number((_b = group == null ? void 0 : group.attr) == null ? void 0 : _b.call(group, "data-width"));
-    const scaleX = Number.isFinite(originWidth) && originWidth > 0 ? Math.ceil(rect2.width) / originWidth : 1;
-    const gap = Number((_d2 = (_c2 = this.mindMap) == null ? void 0 : _c2.opt) == null ? void 0 : _d2.textContentMargin);
-    host.style.marginLeft = `${editorHorizontalMargin(
-      node,
-      this.textNodePaddingX,
-      Number.isFinite(gap) ? gap : 5,
-      scaleX
-    )}px`;
-  }
-  normalizeEditorPlacement(rect2) {
-    var _a, _b;
-    const host = this.textEditNode;
-    if (!host) return;
-    const target = (_b = (_a = this.mindMap) == null ? void 0 : _a.opt) == null ? void 0 : _b.customInnerElsAppendTo;
-    const geometry = rect2 ? null : resolveRenderedTextRect(resolveLiveRenderedNode(this.mindMap, this.node, this.editingUid));
-    const nodeRect = rect2 ?? (geometry == null ? void 0 : geometry.rect) ?? this.lastValidNodeRect;
-    if (!nodeRect || !isUsableTextRect(nodeRect)) return;
-    this.lastValidNodeRect = snapshotRect(nodeRect);
-    if (geometry) this.lastRectSource = geometry.source;
-    const style = window.getComputedStyle(host);
-    const marginLeft = Number.parseFloat(style.marginLeft) || 0;
-    const marginTop = Number.parseFloat(style.marginTop) || 0;
-    const paddingLeft = Number.parseFloat(style.paddingLeft) || 0;
-    const paddingTop = Number.parseFloat(style.paddingTop) || 0;
-    const borderLeft = Number.parseFloat(style.borderLeftWidth) || 0;
-    const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
-    if (!target || target === document.body || host.parentElement === document.body) {
-      host.style.position = "fixed";
-      host.style.left = `${nodeRect.left - marginLeft - borderLeft - paddingLeft}px`;
-      host.style.top = `${nodeRect.top - marginTop - borderTop - paddingTop}px`;
-      return;
-    }
-    const containingBlock = host.offsetParent instanceof HTMLElement ? host.offsetParent : target;
-    const blockRect = containingBlock.getBoundingClientRect();
-    const position2 = editorOverlayPosition(nodeRect, {
-      left: blockRect.left,
-      top: blockRect.top,
-      width: blockRect.width,
-      height: blockRect.height,
-      offsetWidth: containingBlock.offsetWidth,
-      offsetHeight: containingBlock.offsetHeight,
-      clientLeft: containingBlock.clientLeft,
-      clientTop: containingBlock.clientTop,
-      scrollLeft: containingBlock.scrollLeft,
-      scrollTop: containingBlock.scrollTop
-    }, {
-      marginLeft,
-      marginTop,
-      paddingLeft,
-      paddingTop,
-      borderLeft,
-      borderTop
-    });
-    host.style.position = "absolute";
-    host.style.left = `${position2.left}px`;
-    host.style.top = `${position2.top}px`;
-  }
-  /**
-   * Structural readiness replaces the old pixel-alignment gate. Two
-   * independent HTML/SVG layout engines can legitimately disagree by a
-   * sub-pixel amount forever for some node shapes (custom width, icon/todo
-   * prefixes, certain zoom levels) without that meaning the editor is the
-   * wrong live surface — that was a real bug: some nodes' editor rect never
-   * converged with the target rect, so `data-yemind-geometry-ready` stayed
-   * 'false' forever and the CSS gate kept the host permanently invisible and
-   * (in Chromium) unfocusable, i.e. "double-click and nothing happens".
-   * Readiness now depends only on facts we already know synchronously from
-   * the geometry we ourselves computed and wrote in `applyEditorGeometry`,
-   * not on a fresh, possibly-never-matching browser measurement.
-   */
-  editorStructurallyReady(host, editor) {
-    if (!host.isConnected || !editor || !editor.isConnected) return false;
-    if (!(this.hostContentWidth > 0.5) || !(this.hostContentHeight > 0.5)) return false;
-    return this.editorContentReady();
-  }
-  commitOpeningPlacement(sessionId, targetRect) {
-    var _a, _b, _c2;
-    const sessions = this.sessionCoordinator();
-    if (!sessions.isCurrent(sessionId)) return false;
-    const host = this.textEditNode;
-    if (!host) return false;
-    const editor = host.querySelector(".ql-editor") ?? null;
-    const aligned = editorContentRectAligned((_a = editor == null ? void 0 : editor.getBoundingClientRect) == null ? void 0 : _a.call(editor), targetRect);
-    const previousPhase = sessions.snapshot().phase;
-    const wasAlreadyActive = previousPhase === "active";
-    const structurallyReady = wasAlreadyActive || this.editorStructurallyReady(host, editor);
-    host.dataset.yemindEditSession = String(sessionId);
-    host.dataset.yemindGeometryReady = structurallyReady ? "true" : "false";
-    const snapshot = this.markCurrentEditorReady();
-    if (structurallyReady && (snapshot == null ? void 0 : snapshot.phase) === "active" && previousPhase !== "active" && this.lastAlignedSessionId !== sessionId) {
-      this.lastAlignedSessionId = sessionId;
-      this.openingGeometryReady = true;
-      this.applyPendingFocusIntent();
-      this.scheduleOpeningFocusClaim(sessionId);
-      (_c2 = (_b = this.mindMap) == null ? void 0 : _b.emit) == null ? void 0 : _c2.call(_b, "yemind_text_edit_ready", {
-        sessionId,
-        uid: this.editingUid,
-        aligned
-      });
-      this.isInserting = false;
-    }
-    return structurallyReady;
-  }
-  /**
-   * SiYuan's host can restore focus to its RootWebArea after the keyboard
-   * handler which inserted a node has returned, or Chromium can drop a focus
-   * claim made while the host was still CSS-hidden. Recheck once, on the
-   * very next painted frame, and reclaim the Quill surface if it lost focus.
-   * This is the transaction's one allowed fallback focus call — never a
-   * repeated/self-rescheduling loop. A real pointer action outside the
-   * editor cancels the claim immediately so an intentional click is never
-   * stolen back.
-   */
-  scheduleOpeningFocusClaim(sessionId) {
-    if (typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") return;
-    this.cancelOpeningFocusClaim();
-    this.openingFocusSessionId = sessionId;
-    window.addEventListener("pointerdown", this.handleOpeningFocusPointerDown, true);
-    this.openingFocusFrame = window.requestAnimationFrame(() => {
-      var _a;
-      this.openingFocusFrame = null;
-      if (!this.showTextEdit || !this.sessionCoordinator().isCurrent(sessionId) || this.openingFocusSessionId !== sessionId) {
-        this.cancelOpeningFocusClaim();
-        return;
-      }
-      const root2 = (_a = this.quill) == null ? void 0 : _a.root;
-      if (root2 && document.activeElement !== root2) {
-        root2.focus({ preventScroll: true });
-        const range2 = this.range ?? this.pasteUseRange;
-        if (range2) this.quill.setSelection(range2.index, range2.length, Quill.sources.SILENT);
-      }
-      this.cancelOpeningFocusClaim();
-    });
-  }
-  cancelOpeningFocusClaim() {
-    var _a, _b;
-    if (this.openingFocusFrame !== null) {
-      (_a = window.cancelAnimationFrame) == null ? void 0 : _a.call(window, this.openingFocusFrame);
-      this.openingFocusFrame = null;
-    }
-    this.openingFocusSessionId = 0;
-    (_b = window.removeEventListener) == null ? void 0 : _b.call(window, "pointerdown", this.handleOpeningFocusPointerDown, true);
-  }
-  reconcileEditorPlacement(sessionId) {
-    if (!this.showTextEdit || !this.sessionCoordinator().isCurrent(sessionId)) return false;
-    const previousNode = this.node;
-    const liveNode = resolveLiveRenderedNode(this.mindMap, previousNode, this.editingUid);
-    if (liveNode) this.node = liveNode;
-    const geometry = resolveRenderedTextRect(liveNode);
-    if (!geometry) return false;
-    this.lastValidNodeRect = snapshotRect(geometry.rect);
-    this.lastRectSource = geometry.source;
-    this.applyEditorGeometry(liveNode, geometry.rect);
-    return this.commitOpeningPlacement(sessionId, geometry.rect);
-  }
-  /**
-   * A newly inserted node can emit `node_dblclick` from inside the SVG render
-   * stack before the browser has flushed its final group transform. The first
-   * rectangle can therefore point at the canvas origin even though the node is
-   * painted in the correct place. Re-resolve once on the next frame so the
-   * HTML editor and SVG text always share the same final geometry.
-   */
-  schedulePlacementStabilization() {
-    this.cancelPlacementStabilization();
-    if (typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") return;
-    const uid2 = this.editingUid;
-    this.placementFrame = window.requestAnimationFrame(() => {
-      this.placementFrame = null;
-      if (!this.showTextEdit || this.editingUid !== uid2) return;
-      this.updateTextEditNode();
-    });
-  }
-  bindPlacementTracking() {
-    var _a, _b;
-    if (this.placementTracking) return;
-    this.placementTracking = true;
-    ["resize", "scale", "translate", "node_tree_render_end", "view_data_change"].forEach((name) => {
-      var _a2, _b2;
-      (_b2 = (_a2 = this.mindMap) == null ? void 0 : _a2.on) == null ? void 0 : _b2.call(_a2, name, this.handlePlacementInvalidation);
-    });
-    window.addEventListener("resize", this.handlePlacementInvalidation, { passive: true });
-    const target = (_b = (_a = this.mindMap) == null ? void 0 : _a.opt) == null ? void 0 : _b.customInnerElsAppendTo;
-    if (typeof ResizeObserver === "function" && target) {
-      this.placementResizeObserver = new ResizeObserver(this.handlePlacementInvalidation);
-      this.placementResizeObserver.observe(target);
-    }
-  }
-  unbindPlacementTracking() {
-    var _a;
-    if (!this.placementTracking) return;
-    this.placementTracking = false;
-    ["resize", "scale", "translate", "node_tree_render_end", "view_data_change"].forEach((name) => {
-      var _a2, _b;
-      (_b = (_a2 = this.mindMap) == null ? void 0 : _a2.off) == null ? void 0 : _b.call(_a2, name, this.handlePlacementInvalidation);
-    });
-    window.removeEventListener("resize", this.handlePlacementInvalidation);
-    (_a = this.placementResizeObserver) == null ? void 0 : _a.disconnect();
-    this.placementResizeObserver = null;
-  }
-  cancelPlacementStabilization() {
-    var _a;
-    if (this.placementFrame === null) return;
-    (_a = window.cancelAnimationFrame) == null ? void 0 : _a.call(window, this.placementFrame);
-    this.placementFrame = null;
-  }
-  bindTextEditingKeyboard() {
-    var _a;
-    const root2 = (_a = this.quill) == null ? void 0 : _a.root;
-    if (!root2 || root2.dataset.yemindTextKeyboard === "true") return;
-    root2.dataset.yemindTextKeyboard = "true";
-    root2.addEventListener("keydown", (event) => {
-      if ((event.key === "Delete" || event.key === "Backspace") && !event.ctrlKey && !event.metaKey && !event.altKey) {
-        if (this.deleteCurrentSelection(event.key)) {
-          event.preventDefault();
-          event.stopPropagation();
-          return;
-        }
-      }
-      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== "a") return;
-      event.preventDefault();
-      event.stopPropagation();
-      const length2 = editableTextLength(this.quill);
-      this.quill.setSelection(0, length2, Quill.sources.USER);
-      this.range = { index: 0, length: length2 };
-      this.pasteUseRange = this.range;
-      this.emitEditingDiagnostic("select-all-shortcut", { length: length2 });
-    }, true);
-  }
-  /**
-   * Delete the active canvas text selection as one edit transaction.
-   *
-   * SiYuan can return DOM focus to the plugin host while leaving Quill's
-   * native selection visible. Keeping this operation on the rich-text runtime
-   * lets the editor-level keyboard router use the saved Quill range before a
-   * host shortcut can reinterpret Delete as structural node deletion.
-   */
-  deleteCurrentSelection(key = "Delete") {
-    var _a, _b;
-    if (!this.showTextEdit || !this.quill) return false;
-    const selected = resolveNonCollapsedQuillRange(
-      this.quill,
-      this.range ?? this.lastRange
-    );
-    if (!selected || selected.length <= 0) return false;
-    this.quill.deleteText(selected.index, selected.length, Quill.sources.USER);
-    this.quill.setSelection(selected.index, 0, Quill.sources.SILENT);
-    this.range = null;
-    this.lastRange = null;
-    this.pasteUseRange = { index: selected.index, length: 0 };
-    (_b = (_a = this.mindMap) == null ? void 0 : _a.emit) == null ? void 0 : _b.call(_a, "rich_text_selection_change", false, null, null);
-    this.emitEditingDiagnostic("selection-deleted", {
-      key,
-      index: selected.index,
-      length: selected.length
-    });
-    return true;
-  }
-  emitEditingDiagnostic(action, details = {}) {
-    var _a, _b, _c2, _d2, _e, _f, _g;
-    const host = this.textEditNode;
-    const rawNodeElement = (_c2 = (_b = (_a = this.node) == null ? void 0 : _a._textData) == null ? void 0 : _b.node) == null ? void 0 : _c2.node;
-    let rawNodeRect = null;
-    try {
-      rawNodeRect = ((_d2 = rawNodeElement == null ? void 0 : rawNodeElement.getBoundingClientRect) == null ? void 0 : _d2.call(rawNodeElement)) ?? null;
-    } catch {
-      rawNodeRect = null;
-    }
-    const hostRect = (_e = host == null ? void 0 : host.getBoundingClientRect) == null ? void 0 : _e.call(host);
-    const anchor = this.lastValidNodeRect;
-    (_g = (_f = this.mindMap) == null ? void 0 : _f.emit) == null ? void 0 : _g.call(_f, "yemind_text_edit_diagnostic", {
-      action,
-      details: {
-        ...details,
-        position: (host == null ? void 0 : host.style.position) ?? "",
-        hostLeft: hostRect ? Math.round(hostRect.left) : null,
-        hostTop: hostRect ? Math.round(hostRect.top) : null,
-        rawNodeLeft: rawNodeRect ? Math.round(rawNodeRect.left) : null,
-        rawNodeTop: rawNodeRect ? Math.round(rawNodeRect.top) : null,
-        rawNodeWidth: rawNodeRect ? Math.round(rawNodeRect.width) : null,
-        rawNodeHeight: rawNodeRect ? Math.round(rawNodeRect.height) : null,
-        anchorLeft: anchor ? Math.round(anchor.left) : null,
-        anchorTop: anchor ? Math.round(anchor.top) : null,
-        anchorWidth: anchor ? Math.round(anchor.width) : null,
-        anchorHeight: anchor ? Math.round(anchor.height) : null,
-        textElementConnected: typeof (rawNodeElement == null ? void 0 : rawNodeElement.isConnected) === "boolean" ? rawNodeElement.isConnected : null,
-        editingUidLength: this.editingUid.length,
-        rectSource: this.lastRectSource
-      }
-    });
   }
   initQuillEditor() {
     registerYeMindFormats();
     const plugin = this;
-    this.bindCanvasInteractionIsolation();
     this.quill = new Quill(this.textEditNode, {
       modules: {
         toolbar: false,
@@ -82143,10 +81149,6 @@ class YeMindRichText extends RichText {
                 this.quill.updateContents(delta, Quill.sources.USER);
                 this.quill.setSelection(range2.index + 1, Quill.sources.SILENT);
                 this.quill.focus();
-                Object.keys(context.format).forEach((name) => {
-                  if (lineFormats[name] != null || Array.isArray(context.format[name]) || name === "code" || name === "link") return;
-                  this.quill.format(name, context.format[name], Quill.sources.USER);
-                });
               }
             },
             tab: {
@@ -82154,8 +81156,7 @@ class YeMindRichText extends RichText {
               handler(range2, context) {
                 var _a, _b;
                 if (!((_a = context.format) == null ? void 0 : _a["code-block"])) return false;
-                const width2 = Number((_b = plugin.pluginOpt) == null ? void 0 : _b.codeBlockTabSize) === 4 ? 4 : 2;
-                const spaces = " ".repeat(width2);
+                const spaces = " ".repeat(Number((_b = plugin.pluginOpt) == null ? void 0 : _b.codeBlockTabSize) === 4 ? 4 : 2);
                 this.quill.insertText(range2.index, spaces, Quill.sources.USER);
                 this.quill.setSelection(range2.index + spaces.length, 0, Quill.sources.SILENT);
                 return false;
@@ -82167,69 +81168,48 @@ class YeMindRichText extends RichText {
       formats: [...YEMIND_RICH_TEXT_FORMATS],
       theme: "snow"
     });
-    const quillInstance = this.quill;
-    const quillSessionId = this.sessionCoordinator().snapshot().id;
     this.quill.root.addEventListener("copy", (event) => {
       writeQuillSelectionToClipboard(this.quill, event, this.range ?? this.lastRange);
     });
     this.quill.root.addEventListener("cut", (event) => {
-      var _a, _b;
-      const selected = resolveNonCollapsedQuillRange(
-        this.quill,
-        this.range ?? this.lastRange
-      );
+      const selected = resolveNonCollapsedQuillRange(this.quill, this.range ?? this.lastRange);
       if (!selected || !writeQuillSelectionToClipboard(this.quill, event, selected)) return;
-      this.quill.deleteText(
-        selected.index,
-        selected.length,
-        Quill.sources.USER
-      );
-      this.quill.setSelection(
-        selected.index,
-        0,
-        Quill.sources.SILENT
-      );
+      this.quill.deleteText(selected.index, selected.length, Quill.sources.USER);
+      this.quill.setSelection(selected.index, 0, Quill.sources.SILENT);
       this.range = null;
       this.lastRange = null;
       this.pasteUseRange = { index: selected.index, length: 0 };
-      (_b = (_a = this.mindMap) == null ? void 0 : _a.emit) == null ? void 0 : _b.call(
-        _a,
-        "rich_text_selection_change",
-        false,
-        null,
-        null
-      );
-      this.emitEditingDiagnostic("selection-cut", {
-        index: selected.index,
-        length: selected.length
-      });
+      this.mindMap.emit("rich_text_selection_change", false, null, null);
     });
     this.quill.on("selection-change", (range2) => {
-      if (this.quill !== quillInstance || !this.sessionCoordinator().isCurrent(quillSessionId)) return;
       if (this.isInserting) {
         this.isInserting = false;
         return;
       }
       this.lastRange = this.range;
       this.range = null;
-      if (range2) {
-        this.pasteUseRange = range2;
-        const bounds = this.quill.getBounds(range2.index, range2.length);
-        const rectInfo = this.selectionViewportRect(bounds);
-        const formatInfo = this.quill.getFormat(range2.index, range2.length);
-        const hasRange = range2.length > 0;
-        if (hasRange) this.range = range2;
-        const selectionSession = hasRange ? this.sessionCoordinator().acceptSelection(quillSessionId) : null;
-        this.mindMap.emit(
-          "rich_text_selection_change",
-          hasRange,
-          rectInfo,
-          formatInfo,
-          selectionSession
-        );
-      } else {
+      if (!range2) {
         this.mindMap.emit("rich_text_selection_change", false, null, null);
+        return;
       }
+      this.pasteUseRange = range2;
+      const bounds = this.quill.getBounds(range2.index, range2.length);
+      const rect2 = this.textEditNode.getBoundingClientRect();
+      const rectInfo = {
+        left: bounds.left + rect2.left,
+        top: bounds.top + rect2.top,
+        right: bounds.right + rect2.left,
+        bottom: bounds.bottom + rect2.top,
+        width: bounds.width
+      };
+      const hasRange = range2.length > 0;
+      if (hasRange) this.range = range2;
+      this.mindMap.emit(
+        "rich_text_selection_change",
+        hasRange,
+        rectInfo,
+        this.quill.getFormat(range2.index, range2.length)
+      );
     });
     this.quill.on("text-change", (_delta, _oldDelta, source) => {
       var _a, _b, _c2, _d2;
@@ -82238,49 +81218,21 @@ class YeMindRichText extends RichText {
         this.range = null;
         this.lastRange = null;
       }
-      this.sessionCoordinator().advanceRevision(quillSessionId);
+      this.mindMap.emit("node_text_edit_change", {
+        node: this.node,
+        text: this.getEditText(),
+        richText: true
+      });
     });
     this.quill.clipboard.addMatcher(Node.ELEMENT_NODE, (_node, delta) => {
-      const ops = [];
       const style = this.getPasteTextStyle();
-      delta.ops.forEach((op2) => {
-        if (op2.insert && typeof op2.insert === "string") {
-          ops.push({ attributes: { ...style }, insert: this.formatPasteText(op2.insert) });
-        }
-      });
-      delta.ops = ops;
+      delta.ops = delta.ops.flatMap((op2) => op2.insert && typeof op2.insert === "string" ? [{ attributes: { ...style }, insert: this.formatPasteText(op2.insert) }] : []);
       return delta;
     });
     this.quill.root.addEventListener("paste", (event) => {
       var _a, _b;
       if ((_b = (_a = event.clipboardData) == null ? void 0 : _a.files) == null ? void 0 : _b.length) event.preventDefault();
     }, true);
-  }
-  bindCanvasInteractionIsolation() {
-    const host = this.textEditNode;
-    if (!host || host.dataset.yemindInteractionIsolation === "true") return;
-    host.dataset.yemindInteractionIsolation = "true";
-    const stopCanvasGesture = (event) => {
-      if (event.type === "click" && event instanceof MouseEvent) {
-        const anchor = event.target instanceof Element ? event.target.closest('a[data-yemind-link="true"]') : null;
-        if (anchor) {
-          event.preventDefault();
-          if (shouldActivateRichTextLink(event)) return;
-        }
-      }
-      event.stopPropagation();
-    };
-    [
-      "pointerdown",
-      "pointermove",
-      "pointerup",
-      "pointercancel",
-      "mousedown",
-      "mouseup",
-      "click",
-      "dblclick",
-      "contextmenu"
-    ].forEach((type) => host.addEventListener(type, stopCanvasGesture));
   }
   formatPasteText(text2) {
     var _a;
@@ -83294,157 +82246,6 @@ function configureThemeColorRuntime(mindMap, config2) {
   runtime == null ? void 0 : runtime.configure(config2);
   runtime == null ? void 0 : runtime.prepareTree((_a = mindMap == null ? void 0 : mindMap.renderer) == null ? void 0 : _a.renderTree);
 }
-const registeredMaps = /* @__PURE__ */ new WeakSet();
-const hosts = /* @__PURE__ */ new WeakMap();
-const repairScheduled = /* @__PURE__ */ new WeakSet();
-const fontRepairsRegistered = /* @__PURE__ */ new WeakSet();
-const completedFirstRender = /* @__PURE__ */ new WeakSet();
-const pendingFontRepair = /* @__PURE__ */ new WeakSet();
-function measurementElements(map2) {
-  const caches = map2.commonCaches;
-  if (!caches) return [];
-  return [caches.measureRichtextNodeTextSizeEl, caches.measureCustomNodeContentSizeEl].filter((element) => element instanceof HTMLElement);
-}
-function copyMeasurementContext(host, editorRoot) {
-  host.className = `${editorRoot.className} ymz-measurement-host`.trim();
-  for (const attribute of Array.from(editorRoot.attributes)) {
-    if (attribute.name.startsWith("data-")) host.setAttribute(attribute.name, attribute.value);
-  }
-  const computed = getComputedStyle(editorRoot);
-  host.style.fontFamily = computed.fontFamily;
-  host.style.fontSize = computed.fontSize;
-  host.style.fontWeight = computed.fontWeight;
-  host.style.lineHeight = computed.lineHeight;
-  for (let index = 0; index < computed.length; index += 1) {
-    const property = computed[index];
-    if (property.startsWith("--")) host.style.setProperty(property, computed.getPropertyValue(property));
-  }
-}
-function getHost(map2, editorRoot) {
-  const key = map2;
-  const existing = hosts.get(key);
-  if (existing == null ? void 0 : existing.isConnected) {
-    copyMeasurementContext(existing, editorRoot);
-    return existing;
-  }
-  const host = document.createElement("div");
-  host.dataset.yemindMeasurementHost = "true";
-  host.setAttribute("aria-hidden", "true");
-  Object.assign(host.style, {
-    position: "fixed",
-    left: "-100000px",
-    top: "0",
-    display: "block",
-    width: "10000px",
-    height: "auto",
-    minWidth: "0",
-    minHeight: "0",
-    overflow: "visible",
-    visibility: "hidden",
-    pointerEvents: "none",
-    zIndex: "-1"
-  });
-  copyMeasurementContext(host, editorRoot);
-  document.body.appendChild(host);
-  hosts.set(key, host);
-  return host;
-}
-function moveMeasurementElements(map2, host) {
-  let moved = false;
-  measurementElements(map2).forEach((element) => {
-    element.dataset.yemindMeasurementOwner = "true";
-    element.setAttribute("aria-hidden", "true");
-    Object.assign(element.style, {
-      position: "relative",
-      left: "0px",
-      top: "0px",
-      width: "max-content",
-      height: "auto"
-    });
-    if (element.parentElement !== host) {
-      host.appendChild(element);
-      moved = true;
-    }
-  });
-  return moved;
-}
-function requestFullGeometryRepair(map2, source) {
-  var _a;
-  if (typeof map2.reRender === "function") {
-    map2.reRender(null, source);
-    return;
-  }
-  (_a = map2.render) == null ? void 0 : _a.call(map2, null, "changeTheme");
-}
-function scheduleFullGeometryRepair(map2, source = "yemind-measurement-host") {
-  const key = map2;
-  if (repairScheduled.has(key)) return;
-  repairScheduled.add(key);
-  const run = () => {
-    repairScheduled.delete(key);
-    requestFullGeometryRepair(map2, source);
-  };
-  if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
-    window.requestAnimationFrame(run);
-  } else {
-    queueMicrotask(run);
-  }
-}
-function repairAfterFontsReady(map2, editorRoot) {
-  var _a;
-  const key = map2;
-  if (fontRepairsRegistered.has(key)) return;
-  const ready = typeof document !== "undefined" ? (_a = document.fonts) == null ? void 0 : _a.ready : void 0;
-  if (!ready || typeof ready.then !== "function") return;
-  fontRepairsRegistered.add(key);
-  void ready.then(() => {
-    if (!registeredMaps.has(key) || typeof document === "undefined") return;
-    if (!completedFirstRender.has(key)) {
-      pendingFontRepair.add(key);
-      return;
-    }
-    const context = editorRoot.closest(".ymz-editor") ?? editorRoot;
-    moveMeasurementElements(map2, getHost(map2, context));
-    scheduleFullGeometryRepair(map2, "yemind-fonts-ready");
-  });
-}
-function stabilizeMindMapMeasurementHost(map2, editorRoot = document.body) {
-  var _a, _b;
-  const key = map2;
-  const context = editorRoot.closest(".ymz-editor") ?? editorRoot;
-  const relocate = () => {
-    const moved2 = moveMeasurementElements(map2, getHost(map2, context));
-    if (moved2) scheduleFullGeometryRepair(map2);
-    return moved2;
-  };
-  const moved = relocate();
-  if (!registeredMaps.has(key)) {
-    registeredMaps.add(key);
-    repairAfterFontsReady(map2, context);
-    (_a = map2.on) == null ? void 0 : _a.call(map2, "node_tree_render_end", () => {
-      completedFirstRender.add(key);
-      const fontRepair = pendingFontRepair.delete(key);
-      const cachesMoved = moveMeasurementElements(map2, getHost(map2, context));
-      if (fontRepair) scheduleFullGeometryRepair(map2, "yemind-fonts-ready");
-      else if (cachesMoved) scheduleFullGeometryRepair(map2);
-    });
-    (_b = map2.on) == null ? void 0 : _b.call(map2, "beforeDestroy", () => {
-      var _a2;
-      registeredMaps.delete(key);
-      fontRepairsRegistered.delete(key);
-      repairScheduled.delete(key);
-      completedFirstRender.delete(key);
-      pendingFontRepair.delete(key);
-      (_a2 = hosts.get(key)) == null ? void 0 : _a2.remove();
-      hosts.delete(key);
-    });
-    queueMicrotask(relocate);
-    if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
-      window.requestAnimationFrame(relocate);
-    }
-  }
-  return moved;
-}
 class HistoryTransactionCoordinator {
   constructor(commit, delay) {
     __publicField(this, "timer", null);
@@ -83527,11 +82328,12 @@ function createMindMap(options) {
     spacingConfig: behavior == null ? void 0 : behavior.themeConfig
   });
   const viewData = (settings == null ? void 0 : settings.restoreSavedView) === false ? void 0 : normalizePersistedViewData(options.viewData);
+  const runtimeData = normalizeTreeForUpstreamRichText(options.data);
   const editorRoot = options.el.closest(".ymz-editor") ?? options.el;
   const mindMap = new MindMap2({
     el: options.el,
     customInnerElsAppendTo: editorRoot,
-    data: options.data,
+    data: runtimeData,
     viewData,
     theme: "default",
     themeConfig: appearance.themeConfig,
@@ -83572,9 +82374,7 @@ function createMindMap(options) {
     iconList: createYemindIconList(options.pluginBaseUrl),
     createNodePrefixContent,
     createNodePostfixContent,
-    // YeMind owns the revisioned live-edit render transaction so a trailing
-    // upstream debounce cannot repaint a node after it was moved or deleted.
-    openRealtimeRenderOnNodeTextEdit: false,
+    openRealtimeRenderOnNodeTextEdit: true,
     enableEditFormulaInRichTextEdit: true,
     customHyperlinkJump: (href) => {
       var _a;
@@ -83595,7 +82395,6 @@ function createMindMap(options) {
   });
   disableUpstreamStructuralInsertShortcuts(mindMap.keyCommand);
   installHistoryTransactionCoordinator(mindMap, { seed: true });
-  stabilizeMindMapMeasurementHost(mindMap, editorRoot);
   installThemeColorRuntime(mindMap);
   configureThemeColorRuntime(mindMap, {
     appearance: appearance.colorAppearance,
@@ -84365,141 +83164,7 @@ function steppedZoomPercent(current, direction, min, max, step = 20) {
   const target = cleanLevel + (direction === "in" ? safeStep : -safeStep);
   return Math.min(upper, Math.max(lower, target));
 }
-function nodeUid(node) {
-  var _a, _b, _c2;
-  return String(((_a = node == null ? void 0 : node.getData) == null ? void 0 : _a.call(node, "uid")) ?? ((_c2 = (_b = node == null ? void 0 : node.nodeData) == null ? void 0 : _b.data) == null ? void 0 : _c2.uid) ?? "");
-}
-function scheduleFrame(callback) {
-  if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
-    return window.requestAnimationFrame(callback);
-  }
-  return setTimeout(() => callback(Date.now()), 16);
-}
-function cancelFrame(handle) {
-  if (handle === null) return;
-  if (typeof window !== "undefined" && typeof window.cancelAnimationFrame === "function") {
-    window.cancelAnimationFrame(handle);
-    return;
-  }
-  clearTimeout(handle);
-}
-class InsertedNodeEditCoordinator {
-  constructor(mindMap) {
-    __publicField(this, "generation", 0);
-    __publicField(this, "frame", null);
-    __publicField(this, "renderListener", null);
-    __publicField(this, "readyListener", null);
-    __publicField(this, "attempts", 0);
-    this.mindMap = mindMap;
-  }
-  run(uid2, insert) {
-    var _a, _b, _c2, _d2;
-    if (!uid2) {
-      insert();
-      return;
-    }
-    this.cancel();
-    const generation = ++this.generation;
-    this.attempts = 0;
-    this.renderListener = () => this.scheduleAttempt(uid2, generation);
-    this.readyListener = (...args) => {
-      const payload = args[0];
-      if (String((payload == null ? void 0 : payload.uid) ?? "") !== uid2) return;
-      this.focusExistingEditor(uid2, generation);
-    };
-    (_b = (_a = this.mindMap).on) == null ? void 0 : _b.call(_a, "node_tree_render_end", this.renderListener);
-    (_d2 = (_c2 = this.mindMap).on) == null ? void 0 : _d2.call(_c2, "yemind_text_edit_ready", this.readyListener);
-    try {
-      insert();
-    } catch (error2) {
-      this.cancel();
-      throw error2;
-    }
-    this.scheduleAttempt(uid2, generation);
-  }
-  cancel() {
-    this.generation += 1;
-    cancelFrame(this.frame);
-    this.frame = null;
-    this.detachListeners();
-    this.attempts = 0;
-  }
-  scheduleAttempt(uid2, generation) {
-    if (generation !== this.generation || this.frame !== null) return;
-    this.frame = scheduleFrame(() => {
-      this.frame = null;
-      this.tryOpen(uid2, generation);
-    });
-  }
-  tryOpen(uid2, generation) {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h;
-    if (generation !== this.generation) return;
-    const node = ((_b = (_a = this.mindMap.renderer) == null ? void 0 : _a.findNodeByUid) == null ? void 0 : _b.call(_a, uid2)) ?? null;
-    if (!node) {
-      this.attempts += 1;
-      if (this.attempts < 12) this.scheduleAttempt(uid2, generation);
-      else this.detachListeners();
-      return;
-    }
-    if (this.isEditingUid(uid2)) {
-      this.focusExistingEditor(uid2, generation);
-      return;
-    }
-    this.detachListeners();
-    (_c2 = node.active) == null ? void 0 : _c2.call(node);
-    const show2 = (_e = (_d2 = this.mindMap.renderer) == null ? void 0 : _d2.textEdit) == null ? void 0 : _e.show;
-    const opening = typeof show2 === "function" ? show2.call((_f = this.mindMap.renderer) == null ? void 0 : _f.textEdit, {
-      node,
-      isInserting: true,
-      isFromKeyDown: false
-    }) : (_h = (_g = this.mindMap).emit) == null ? void 0 : _h.call(_g, "node_dblclick", node, null, true);
-    Promise.resolve(opening).then(() => {
-      if (generation !== this.generation) return;
-      this.frame = scheduleFrame(() => {
-        var _a2;
-        this.frame = null;
-        if (generation !== this.generation) return;
-        const richText = this.mindMap.richText;
-        const editingUid = nodeUid(richText == null ? void 0 : richText.node);
-        if ((richText == null ? void 0 : richText.showTextEdit) === false) return;
-        if (editingUid && editingUid !== uid2) return;
-        (_a2 = richText == null ? void 0 : richText.focus) == null ? void 0 : _a2.call(richText, 0);
-      });
-    });
-  }
-  isEditingUid(uid2) {
-    const richText = this.mindMap.richText;
-    return (richText == null ? void 0 : richText.showTextEdit) === true && nodeUid(richText.node) === uid2;
-  }
-  focusExistingEditor(uid2, generation) {
-    if (generation !== this.generation || !this.isEditingUid(uid2)) return;
-    this.detachListeners();
-    cancelFrame(this.frame);
-    this.frame = scheduleFrame(() => {
-      var _a, _b;
-      this.frame = null;
-      if (generation !== this.generation || !this.isEditingUid(uid2)) return;
-      (_b = (_a = this.mindMap.richText) == null ? void 0 : _a.focus) == null ? void 0 : _b.call(_a, 0);
-    });
-  }
-  detachListeners() {
-    var _a, _b, _c2, _d2;
-    if (this.renderListener) {
-      (_b = (_a = this.mindMap).off) == null ? void 0 : _b.call(_a, "node_tree_render_end", this.renderListener);
-      this.renderListener = null;
-    }
-    if (this.readyListener) {
-      (_d2 = (_c2 = this.mindMap).off) == null ? void 0 : _d2.call(_c2, "yemind_text_edit_ready", this.readyListener);
-      this.readyListener = null;
-    }
-  }
-}
-function createInsertedNodeUid() {
-  var _a, _b;
-  return ((_b = (_a = globalThis.crypto) == null ? void 0 : _a.randomUUID) == null ? void 0 : _b.call(_a)) ?? `node-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
 function createCommandAdapter(mindMap) {
-  const insertedNodeEditor = new InsertedNodeEditCoordinator(mindMap);
   const activeNodes = () => {
     var _a;
     return Array.isArray((_a = mindMap.renderer) == null ? void 0 : _a.activeNodeList) ? mindMap.renderer.activeNodeList : [];
@@ -84736,13 +83401,9 @@ function createCommandAdapter(mindMap) {
     return true;
   };
   const insertAndEdit = (command, appointNodes = []) => {
-    const uid2 = createInsertedNodeUid();
-    insertedNodeEditor.run(uid2, () => {
-      mindMap.execCommand(command, true, appointNodes, {
-        uid: uid2,
-        yemindTextPristine: true,
-        yemindTextEdited: false
-      });
+    mindMap.execCommand(command, true, appointNodes, {
+      yemindTextPristine: true,
+      yemindTextEdited: false
     });
   };
   return {
@@ -85588,6 +84249,19 @@ function escapeHtml$9(value) {
 }
 function escapeAttribute$1(value) {
   return escapeHtml$9(value);
+}
+const SUPPORTED_PROTOCOLS = /* @__PURE__ */ new Set(["http:", "https:", "mailto:", "tel:", "siyuan:"]);
+const BARE_DOMAIN = /^(?:localhost(?::\d+)?|(?:[a-z0-9-]+\.)+[a-z]{2,})(?:[/:?#].*)?$/i;
+function normalizeInlineLink(value, autoHttps = true) {
+  const input = value.trim();
+  if (!input) return null;
+  const candidate = !/^[a-z][a-z0-9+.-]*:/i.test(input) && autoHttps && BARE_DOMAIN.test(input) ? `https://${input}` : input;
+  try {
+    const url = new URL(candidate);
+    return SUPPORTED_PROTOCOLS.has(url.protocol) ? candidate : null;
+  } catch {
+    return null;
+  }
 }
 function activeData(commands) {
   return commands.getPrimaryNodeData() ?? {};
@@ -90288,6 +88962,17 @@ function createToolbarAvailability(input) {
     layout: editable
   };
 }
+function shouldActivateRichTextLink(gesture) {
+  return gesture.button === 1 || gesture.ctrlKey || gesture.metaKey;
+}
+function resolveLinkNavigation(value, externalMode) {
+  const href = normalizeInlineLink(value, true);
+  if (!href) return null;
+  return {
+    href,
+    target: href.toLowerCase().startsWith("siyuan://") ? "siyuan" : externalMode
+  };
+}
 function hasNonZeroSize(element) {
   const rect2 = element.getBoundingClientRect();
   const width2 = Number(rect2.width || element.clientWidth || 0);
@@ -92515,92 +91200,6 @@ function openClipartPicker(commands, options = {}) {
   render3();
   search.focus();
 }
-const hiddenStaticText = /* @__PURE__ */ new WeakMap();
-function restoreStaticText(map2) {
-  const previous = hiddenStaticText.get(map2) ?? [];
-  previous.forEach((entry) => {
-    if (entry.visibility) {
-      entry.element.style.setProperty(
-        "visibility",
-        entry.visibility,
-        entry.visibilityPriority
-      );
-    } else {
-      entry.element.style.removeProperty("visibility");
-    }
-    if (entry.ariaHidden === null) entry.element.removeAttribute("aria-hidden");
-    else entry.element.setAttribute("aria-hidden", entry.ariaHidden);
-  });
-  hiddenStaticText.delete(map2);
-}
-function cssColor(value, fallback) {
-  const text2 = typeof value === "string" ? value.trim() : "";
-  return text2 || fallback;
-}
-function replacementEditorReady(wrapper, node) {
-  var _a;
-  if (wrapper.dataset.yemindGeometryReady !== "true") return false;
-  if (wrapper.style.display === "none") return false;
-  const editor = wrapper.querySelector(".ql-editor");
-  if (!editor) return false;
-  const sourceText = String(((_a = node == null ? void 0 : node.getData) == null ? void 0 : _a.call(node, "text")) ?? "").trim();
-  if (!sourceText) return true;
-  if (String(editor.textContent ?? "").trim()) return true;
-  return Boolean(editor.querySelector("img,svg,.ql-formula,[data-yemind-formula]"));
-}
-function staticTextLayers(node) {
-  var _a, _b, _c2, _d2;
-  const group = (_b = (_a = node == null ? void 0 : node._textData) == null ? void 0 : _a.node) == null ? void 0 : _b.node;
-  if (group instanceof HTMLElement || group instanceof SVGElement) return [group];
-  const content = (_d2 = (_c2 = node == null ? void 0 : node._textData) == null ? void 0 : _c2.nodeContent) == null ? void 0 : _d2.node;
-  if (!content) return [];
-  return Array.from(
-    content.querySelectorAll(".smm-richtext-node-wrap")
-  );
-}
-function synchronizeCanvasRichTextVisibility(map2) {
-  var _a, _b, _c2;
-  if (!map2) return false;
-  restoreStaticText(map2);
-  const runtime = map2 == null ? void 0 : map2.richText;
-  const wrapper = runtime == null ? void 0 : runtime.textEditNode;
-  const node = runtime == null ? void 0 : runtime.node;
-  if (!wrapper || !node) return false;
-  const textColor = cssColor((_b = (_a = node.style) == null ? void 0 : _a.merge) == null ? void 0 : _b.call(_a, "color"), "#1f2937");
-  wrapper.style.setProperty("color", textColor, "important");
-  wrapper.style.setProperty("caret-color", textColor, "important");
-  wrapper.style.setProperty("-webkit-text-fill-color", "currentColor", "important");
-  wrapper.style.setProperty("background", "transparent", "important");
-  wrapper.style.setProperty("border", "0", "important");
-  wrapper.style.setProperty("outline", "0", "important");
-  wrapper.style.setProperty("box-shadow", "none", "important");
-  wrapper.querySelectorAll(".ql-container,.ql-editor").forEach((element) => {
-    element.style.setProperty("color", "inherit", "important");
-    element.style.setProperty("caret-color", "currentColor", "important");
-    element.style.setProperty("-webkit-text-fill-color", "currentColor", "important");
-    element.style.setProperty("border", "0", "important");
-    element.style.setProperty("outline", "0", "important");
-    element.style.setProperty("box-shadow", "none", "important");
-    element.style.setProperty("background", "transparent", "important");
-  });
-  const session = (_c2 = runtime.getEditSessionSnapshot) == null ? void 0 : _c2.call(runtime);
-  const sessionReady = !session || session.phase === "active" && session.geometryReady === true && session.contentReady === true;
-  if (runtime.showTextEdit === true && sessionReady && replacementEditorReady(wrapper, node)) {
-    const staticElements = staticTextLayers(node);
-    const snapshots = staticElements.map((element) => ({
-      element,
-      visibility: element.style.getPropertyValue("visibility"),
-      visibilityPriority: element.style.getPropertyPriority("visibility"),
-      ariaHidden: element.getAttribute("aria-hidden")
-    }));
-    staticElements.forEach((element) => {
-      element.style.setProperty("visibility", "hidden", "important");
-      element.setAttribute("aria-hidden", "true");
-    });
-    if (snapshots.length > 0) hiddenStaticText.set(map2, snapshots);
-  }
-  return true;
-}
 const DEFAULT_SEARCH_OPTIONS = {
   caseSensitive: false,
   wholeWord: false,
@@ -93263,79 +91862,10 @@ class CanvasRightDragController {
     (_c2 = renderer.emitNodeActiveEvent) == null ? void 0 : _c2.call(renderer, snapshot[0] ?? null, [...snapshot]);
   }
 }
-function hasActiveNodeWidthDrag(root2) {
-  return findActiveNodeWidthDrag(root2) !== null;
-}
-function findActiveNodeWidthDrag(root2) {
-  if (!root2) return null;
-  if (root2.isDragHandleMousedown === true) return root2;
-  const children = Array.isArray(root2.children) ? root2.children : [];
-  for (const child of children) {
-    const active = findActiveNodeWidthDrag(child);
-    if (active) return active;
-  }
-  return null;
-}
-class LiveNodeWidthLayoutController {
-  constructor(map2, target = window, animation) {
-    __publicField(this, "frame", null);
-    __publicField(this, "destroyed", false);
-    __publicField(this, "animation");
-    __publicField(this, "onMousemove", () => {
-      var _a, _b;
-      if (this.destroyed || this.frame !== null) return;
-      if (!findActiveNodeWidthDrag((_b = (_a = this.map) == null ? void 0 : _a.renderer) == null ? void 0 : _b.root)) return;
-      this.frame = this.animation.request(() => {
-        var _a2, _b2;
-        this.frame = null;
-        if (this.destroyed) return;
-        const active = findActiveNodeWidthDrag((_b2 = (_a2 = this.map) == null ? void 0 : _a2.renderer) == null ? void 0 : _b2.root);
-        if (!active) return;
-        this.synchronizeEditingSurface();
-      });
-    });
-    this.map = map2;
-    this.target = target;
-    this.animation = animation ?? {
-      request: (callback) => window.requestAnimationFrame(callback),
-      cancel: (handle) => window.cancelAnimationFrame(handle)
-    };
-    this.target.addEventListener("mousemove", this.onMousemove);
-  }
-  destroy() {
-    if (this.destroyed) return;
-    this.destroyed = true;
-    this.target.removeEventListener("mousemove", this.onMousemove);
-    if (this.frame !== null) this.animation.cancel(this.frame);
-    this.frame = null;
-  }
-  /**
-   * The rich-text editor is an HTML overlay outside the SVG tree, so it must
-   * follow the node's local draft geometry without changing the map model.
-   *
-   * Upstream's width-drag reconciliation (nodeModifyWidth.js#preserveLiveTextData)
-   * deliberately reuses the painted static-text DOM node instead of replacing
-   * it, to avoid a blank/ghost frame. But its copyDomAttributes() copies the
-   * freshly measured node's `style` attribute onto that reused element too,
-   * which silently clears the `visibility:hidden!important` YeMind applies
-   * to keep the static SVG text hidden while its live Quill overlay is the
-   * visible text layer. Every drag frame during an active edit session must
-   * therefore re-assert that hidden state, or the static text and the Quill
-   * overlay both become visible at once (two overlapping text layers).
-   */
-  synchronizeEditingSurface() {
-    var _a, _b;
-    const richText = (_a = this.map) == null ? void 0 : _a.richText;
-    if ((richText == null ? void 0 : richText.showTextEdit) === true) {
-      (_b = richText.updateTextEditNode) == null ? void 0 : _b.call(richText);
-      synchronizeCanvasRichTextVisibility(this.map);
-    }
-  }
-}
 function scheduleFocusedNodeHighlight(renderer, uid2, options = {}) {
   const maxAttempts = Math.max(1, options.attempts ?? 20);
   const duration = Math.max(0, options.duration ?? 1500);
-  const scheduleFrame2 = options.scheduleFrame ?? ((callback) => window.requestAnimationFrame(callback));
+  const scheduleFrame = options.scheduleFrame ?? ((callback) => window.requestAnimationFrame(callback));
   const cancelFrame2 = options.cancelFrame ?? ((id) => window.cancelAnimationFrame(id));
   const scheduleTimer = options.scheduleTimer ?? ((callback, delay) => window.setTimeout(callback, delay));
   const cancelTimer = options.cancelTimer ?? ((id) => window.clearTimeout(id));
@@ -93353,7 +91883,7 @@ function scheduleFocusedNodeHighlight(renderer, uid2, options = {}) {
     }
   };
   const attempt = (remaining) => {
-    frameId = scheduleFrame2(() => {
+    frameId = scheduleFrame(() => {
       var _a, _b, _c2, _d2, _e;
       frameId = null;
       if (cancelled) return;
@@ -95101,101 +93631,6 @@ class MiniMapController {
     return normalized2;
   }
 }
-const browserScheduler = {
-  request: (callback) => window.requestAnimationFrame(callback),
-  cancel: (id) => window.cancelAnimationFrame(id)
-};
-class RenderedTextGeometryRepair {
-  constructor(mindMap, onCommitted, scheduler = browserScheduler) {
-    __publicField(this, "geometryRepairInFlight", false);
-    __publicField(this, "geometryRepairFrame", null);
-    this.mindMap = mindMap;
-    this.onCommitted = onCommitted;
-    this.scheduler = scheduler;
-  }
-  /**
-   * Rich-text measurement can finish before a late theme/font transaction.
-   * In that state the HTML text is taller or wider than its SVG
-   * foreignObject, so the last glyphs are clipped even though the node data is
-   * complete. Recreate only the affected text contents from their current
-   * data, then run one normal layout pass. This is deliberately driven by a
-   * geometry invariant rather than by a specific theme or node label.
-   */
-  reconcileRenderedTextGeometry() {
-    var _a, _b, _c2, _d2, _e, _f;
-    if (this.geometryRepairInFlight || hasActiveNodeWidthDrag((_b = (_a = this.mindMap) == null ? void 0 : _a.renderer) == null ? void 0 : _b.root)) return false;
-    const overflowing = [];
-    const visit2 = (node) => {
-      var _a2, _b2, _c3, _d3, _e2;
-      if (!node) return;
-      const foreignObject = (_b2 = (_a2 = node == null ? void 0 : node._textData) == null ? void 0 : _a2.nodeContent) == null ? void 0 : _b2.node;
-      const wrapper = (_c3 = foreignObject == null ? void 0 : foreignObject.querySelector) == null ? void 0 : _c3.call(foreignObject, ".smm-richtext-node-wrap");
-      const foreignRect = (_d3 = foreignObject == null ? void 0 : foreignObject.getBoundingClientRect) == null ? void 0 : _d3.call(foreignObject);
-      const textRect = (_e2 = wrapper == null ? void 0 : wrapper.getBoundingClientRect) == null ? void 0 : _e2.call(wrapper);
-      if (foreignRect && textRect && Number.isFinite(foreignRect.width) && Number.isFinite(foreignRect.height) && Number.isFinite(textRect.width) && Number.isFinite(textRect.height) && foreignRect.width > 0.5 && foreignRect.height > 0.5 && (textRect.width > foreignRect.width + 0.5 || textRect.height > foreignRect.height + 0.5)) {
-        overflowing.push({ node, foreignRect, textRect });
-      }
-      if (Array.isArray(node.children)) node.children.forEach(visit2);
-    };
-    visit2((_d2 = (_c2 = this.mindMap) == null ? void 0 : _c2.renderer) == null ? void 0 : _d2.root);
-    if (overflowing.length === 0) return false;
-    this.geometryRepairInFlight = true;
-    const temporaryAutoWidths = [];
-    overflowing.forEach(({ node, foreignRect, textRect }) => {
-      var _a2, _b2, _c3, _d3, _e2, _f2, _g, _h, _i, _j, _k, _l;
-      const textData = node == null ? void 0 : node._textData;
-      const currentWidth = Number(textData == null ? void 0 : textData.width);
-      const currentHeight = Number(textData == null ? void 0 : textData.height);
-      if (!(currentWidth > 0) || !(currentHeight > 0)) return;
-      const scaleX = foreignRect.width / currentWidth;
-      const scaleY = foreignRect.height / currentHeight;
-      if (!(scaleX > 0) || !(scaleY > 0)) return;
-      const hasCustomWidth = Boolean(((_a2 = node == null ? void 0 : node.hasCustomWidth) == null ? void 0 : _a2.call(node)) || ((_b2 = node == null ? void 0 : node.getData) == null ? void 0 : _b2.call(node, "customTextWidth")));
-      const maxAutoWidth = Number((_d3 = (_c3 = this.mindMap) == null ? void 0 : _c3.opt) == null ? void 0 : _d3.textAutoWrapWidth);
-      const measuredWidth = Math.ceil(textRect.width / scaleX) + 1;
-      const nextWidth = hasCustomWidth ? currentWidth : Math.max(
-        currentWidth,
-        Number.isFinite(maxAutoWidth) && maxAutoWidth > 0 ? Math.min(measuredWidth, maxAutoWidth) : measuredWidth
-      );
-      const nextHeight = Math.max(currentHeight, Math.ceil(textRect.height / scaleY));
-      if (!hasCustomWidth) {
-        const uid2 = String(((_e2 = node == null ? void 0 : node.getData) == null ? void 0 : _e2.call(node, "uid")) ?? "");
-        if (uid2) temporaryAutoWidths.push(uid2);
-        if ((_f2 = node == null ? void 0 : node.nodeData) == null ? void 0 : _f2.data) node.nodeData.data.customTextWidth = nextWidth;
-        node.customTextWidth = nextWidth;
-      }
-      (_g = node.reRender) == null ? void 0 : _g.call(node, ["text"], { ignoreUpdateCustomTextWidth: true });
-      if (Number((_h = node == null ? void 0 : node._textData) == null ? void 0 : _h.height) < nextHeight) {
-        node._textData.height = nextHeight;
-        (_j = (_i = node._textData.node) == null ? void 0 : _i.attr) == null ? void 0 : _j.call(_i, "data-height", nextHeight);
-        (_l = (_k = node._textData.nodeContent) == null ? void 0 : _k.height) == null ? void 0 : _l.call(_k, nextHeight);
-      }
-    });
-    (_f = (_e = this.mindMap).render) == null ? void 0 : _f.call(_e, () => {
-      temporaryAutoWidths.forEach((uid2) => {
-        var _a2, _b2, _c3, _d3;
-        const live = (_c3 = (_b2 = (_a2 = this.mindMap) == null ? void 0 : _a2.renderer) == null ? void 0 : _b2.findNodeByUid) == null ? void 0 : _c3.call(_b2, uid2);
-        if ((_d3 = live == null ? void 0 : live.nodeData) == null ? void 0 : _d3.data) delete live.nodeData.data.customTextWidth;
-        if (live) live.customTextWidth = void 0;
-      });
-      if (this.geometryRepairFrame !== null) this.scheduler.cancel(this.geometryRepairFrame);
-      this.geometryRepairFrame = this.scheduler.request(() => {
-        this.geometryRepairFrame = null;
-        this.geometryRepairInFlight = false;
-        this.onCommitted();
-      });
-    }, "yemind-richtext-geometry-repair");
-    return true;
-  }
-  invalidate() {
-    if (this.geometryRepairFrame !== null) this.scheduler.cancel(this.geometryRepairFrame);
-    this.geometryRepairFrame = null;
-    this.geometryRepairInFlight = false;
-  }
-  destroy() {
-    this.invalidate();
-  }
-}
 function renderedNodeUid(node) {
   var _a, _b, _c2, _d2, _e;
   const data2 = (_a = node == null ? void 0 : node.getData) == null ? void 0 : _a.call(node);
@@ -95247,7 +93682,6 @@ class YeMindEditor {
     __publicField(this, "toolbarVisibility", null);
     __publicField(this, "resourceActionPopover", null);
     __publicField(this, "canvasRightDrag", null);
-    __publicField(this, "liveNodeWidthLayout", null);
     __publicField(this, "contextMenuSelectionSnapshot", null);
     __publicField(this, "contextMenuResourceSnapshot", null);
     __publicField(this, "cancelFocusedNodeHighlight", null);
@@ -95273,7 +93707,6 @@ class YeMindEditor {
     __publicField(this, "appearanceController", null);
     __publicField(this, "studyPanel", null);
     __publicField(this, "miniMapController", null);
-    __publicField(this, "renderLifecycle", null);
     __publicField(this, "unbindCanvasNodeClipboard", null);
     __publicField(this, "studyMode", null);
     __publicField(this, "presentationState", null);
@@ -95456,7 +93889,12 @@ class YeMindEditor {
       this.cleanupOutlinePointerDrag();
     });
     __publicField(this, "onImagePaste", (event) => {
+      var _a, _b;
       if (!this.map || !this.commands || this.commands.isReadonly()) return;
+      const target = event.target;
+      const editHost = (_b = (_a = this.map) == null ? void 0 : _a.richText) == null ? void 0 : _b.textEditNode;
+      const ownsPasteTarget = target instanceof Node && (this.rootEl.contains(target) || Boolean(editHost == null ? void 0 : editHost.contains(target)));
+      if (!ownsPasteTarget) return;
       const node = this.commands.getPrimaryNode();
       if (!node) return;
       const resource = readImageResourceFromTransfer(event.clipboardData);
@@ -95745,7 +94183,7 @@ class YeMindEditor {
     (_b = panel.querySelector("[data-import-kind]:not([hidden])")) == null ? void 0 : _b.focus();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F;
     this.options.diagnostics.record(
       "editor",
       "destroy-started",
@@ -95764,46 +94202,42 @@ class YeMindEditor {
     this.studyPanel = null;
     (_f = this.miniMapController) == null ? void 0 : _f.destroy();
     this.miniMapController = null;
-    (_g = this.renderLifecycle) == null ? void 0 : _g.destroy();
-    this.renderLifecycle = null;
-    (_h = this.richTextToolbar) == null ? void 0 : _h.destroy();
+    (_g = this.richTextToolbar) == null ? void 0 : _g.destroy();
     this.richTextToolbar = null;
-    (_i = this.nodeHoverPreview) == null ? void 0 : _i.destroy();
+    (_h = this.nodeHoverPreview) == null ? void 0 : _h.destroy();
     this.nodeHoverPreview = null;
-    (_j = this.imageLightbox) == null ? void 0 : _j.destroy();
+    (_i = this.imageLightbox) == null ? void 0 : _i.destroy();
     this.imageLightbox = null;
-    (_k = this.nodeStylePanel) == null ? void 0 : _k.destroy();
+    (_j = this.nodeStylePanel) == null ? void 0 : _j.destroy();
     this.nodeStylePanel = null;
-    (_l = this.projectStylePanel) == null ? void 0 : _l.destroy();
+    (_k = this.projectStylePanel) == null ? void 0 : _k.destroy();
     this.projectStylePanel = null;
-    (_m = this.layoutGalleryPanel) == null ? void 0 : _m.destroy();
+    (_l = this.layoutGalleryPanel) == null ? void 0 : _l.destroy();
     this.layoutGalleryPanel = null;
-    (_n = this.themeChoicePanel) == null ? void 0 : _n.destroy();
+    (_m = this.themeChoicePanel) == null ? void 0 : _m.destroy();
     this.themeChoicePanel = null;
-    (_o = this.symbolPicker) == null ? void 0 : _o.destroy();
+    (_n = this.symbolPicker) == null ? void 0 : _n.destroy();
     this.symbolPicker = null;
-    (_p = this.toolbarVisibility) == null ? void 0 : _p.destroy();
+    (_o = this.toolbarVisibility) == null ? void 0 : _o.destroy();
     this.toolbarVisibility = null;
-    (_q = this.resourceActionPopover) == null ? void 0 : _q.destroy();
+    (_p = this.resourceActionPopover) == null ? void 0 : _p.destroy();
     this.resourceActionPopover = null;
-    (_r = this.nodeQuickActions) == null ? void 0 : _r.destroy();
+    (_q = this.nodeQuickActions) == null ? void 0 : _q.destroy();
     this.nodeQuickActions = null;
-    (_s = this.canvasRightDrag) == null ? void 0 : _s.destroy();
+    (_r = this.canvasRightDrag) == null ? void 0 : _r.destroy();
     this.canvasRightDrag = null;
-    (_t = this.liveNodeWidthLayout) == null ? void 0 : _t.destroy();
-    this.liveNodeWidthLayout = null;
-    (_u = this.cancelFocusedNodeHighlight) == null ? void 0 : _u.call(this);
+    (_s = this.cancelFocusedNodeHighlight) == null ? void 0 : _s.call(this);
     this.cancelFocusedNodeHighlight = null;
-    (_v = this.rootEl) == null ? void 0 : _v.removeEventListener("keydown", this.onRootKeydown, true);
+    (_t = this.rootEl) == null ? void 0 : _t.removeEventListener("keydown", this.onRootKeydown, true);
     window.removeEventListener("keydown", this.onWindowTextSelectionKeydown, true);
-    (_w = this.outlinePaneEl) == null ? void 0 : _w.removeEventListener("keydown", this.onOutlineKeydownBubble);
-    (_x = this.rootEl) == null ? void 0 : _x.removeEventListener("paste", this.onImagePaste);
-    (_y = this.canvasEl) == null ? void 0 : _y.removeEventListener("dragover", this.onImageDragOver);
-    (_z = this.canvasEl) == null ? void 0 : _z.removeEventListener("drop", this.onImageDrop);
-    (_A = this.canvasEl) == null ? void 0 : _A.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
-    (_B = this.canvasEl) == null ? void 0 : _B.removeEventListener("click", this.onCanvasLinkClickCapture, true);
-    (_C = this.canvasEl) == null ? void 0 : _C.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
-    (_D = this.outlineEl) == null ? void 0 : _D.removeEventListener(
+    (_u = this.outlinePaneEl) == null ? void 0 : _u.removeEventListener("keydown", this.onOutlineKeydownBubble);
+    document.removeEventListener("paste", this.onImagePaste, true);
+    (_v = this.canvasEl) == null ? void 0 : _v.removeEventListener("dragover", this.onImageDragOver);
+    (_w = this.canvasEl) == null ? void 0 : _w.removeEventListener("drop", this.onImageDrop);
+    (_x = this.canvasEl) == null ? void 0 : _x.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
+    (_y = this.canvasEl) == null ? void 0 : _y.removeEventListener("click", this.onCanvasLinkClickCapture, true);
+    (_z = this.canvasEl) == null ? void 0 : _z.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
+    (_A = this.outlineEl) == null ? void 0 : _A.removeEventListener(
       "pointerdown",
       this.onOutlinePointerDown,
       true
@@ -95820,10 +94254,10 @@ class YeMindEditor {
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_E = this.unbindCanvasNodeClipboard) == null ? void 0 : _E.call(this);
+    (_B = this.unbindCanvasNodeClipboard) == null ? void 0 : _B.call(this);
     this.unbindCanvasNodeClipboard = null;
-    (_H = (_G = (_F = this.map) == null ? void 0 : _F.command) == null ? void 0 : _G.yemindCancelHistory) == null ? void 0 : _H.call(_G);
-    (_I = this.map) == null ? void 0 : _I.destroy();
+    (_E = (_D = (_C = this.map) == null ? void 0 : _C.command) == null ? void 0 : _D.yemindCancelHistory) == null ? void 0 : _E.call(_D);
+    (_F = this.map) == null ? void 0 : _F.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record(
@@ -96027,12 +94461,6 @@ class YeMindEditor {
         return inserted;
       }
     });
-    this.renderLifecycle = new RenderedTextGeometryRepair(this.map, () => {
-      var _a2, _b;
-      synchronizeCanvasRichTextVisibility(this.map);
-      (_a2 = this.nodeQuickActions) == null ? void 0 : _a2.scheduleRefresh();
-      (_b = this.miniMapController) == null ? void 0 : _b.refresh();
-    });
     const miniMapElement = this.options.container.querySelector('[data-role="minimap"]');
     if (miniMapElement) {
       this.miniMapController = new MiniMapController(this.rootEl, this.map, miniMapElement);
@@ -96080,7 +94508,6 @@ class YeMindEditor {
         )
       });
     }
-    this.liveNodeWidthLayout = new LiveNodeWidthLayoutController(this.map);
     this.canvasRightDrag = new CanvasRightDragController({
       root: this.rootEl,
       map: this.map,
@@ -96272,7 +94699,7 @@ class YeMindEditor {
     });
     window.addEventListener("keydown", this.onWindowTextSelectionKeydown, true);
     this.rootEl.addEventListener("keydown", this.onRootKeydown, true);
-    this.rootEl.addEventListener("paste", this.onImagePaste);
+    document.addEventListener("paste", this.onImagePaste, true);
     this.canvasEl.addEventListener("dragover", this.onImageDragOver);
     this.canvasEl.addEventListener("drop", this.onImageDrop);
     this.canvasEl.addEventListener("pointerdown", this.onCanvasPointerDown, true);
@@ -96281,8 +94708,6 @@ class YeMindEditor {
     this.bindToolbar();
     this.bindMapEvents();
     window.requestAnimationFrame(() => {
-      var _a2;
-      (_a2 = this.renderLifecycle) == null ? void 0 : _a2.reconcileRenderedTextGeometry();
       void this.repairLegacyClipartGeometry();
     });
     this.applyMapAppearance(false);
@@ -96993,34 +95418,15 @@ class YeMindEditor {
       (_a = this.richTextToolbar) == null ? void 0 : _a.hide();
       this.claimCanvasInteraction("canvas-text-edit");
       (_b = this.canvasRightDrag) == null ? void 0 : _b.cancel();
-      queueMicrotask(() => synchronizeCanvasRichTextVisibility(this.map));
-      window.requestAnimationFrame(() => synchronizeCanvasRichTextVisibility(this.map));
       (_c2 = this.nodeQuickActions) == null ? void 0 : _c2.suppress();
-    });
-    this.map.on("yemind_text_edit_diagnostic", (payload) => {
-      this.options.diagnostics.record(
-        "rich-text",
-        (payload == null ? void 0 : payload.action) ?? "unknown",
-        this.current.id,
-        (payload == null ? void 0 : payload.details) ?? {}
-      );
-    });
-    this.map.on("yemind_text_edit_ready", () => {
-      synchronizeCanvasRichTextVisibility(this.map);
     });
     this.map.on("hide_text_edit", () => {
       var _a;
-      synchronizeCanvasRichTextVisibility(this.map);
       (_a = this.nodeQuickActions) == null ? void 0 : _a.resume();
     });
-    this.map.on("node_tree_render_end", () => {
-      var _a;
-      (_a = this.renderLifecycle) == null ? void 0 : _a.reconcileRenderedTextGeometry();
-    });
     this.map.on("data_change", (data2) => {
-      var _a, _b, _c2;
+      var _a, _b;
       if (this.applyingCheckpoint) return;
-      (_a = this.renderLifecycle) == null ? void 0 : _a.invalidate();
       this.current.data = data2;
       this.options.diagnostics.record(
         "editor",
@@ -97030,8 +95436,8 @@ class YeMindEditor {
       );
       this.updateStats(data2);
       this.renderOutline(data2);
-      (_b = this.nodeStylePanel) == null ? void 0 : _b.refresh();
-      (_c2 = this.nodeQuickActions) == null ? void 0 : _c2.scheduleRefresh();
+      (_a = this.nodeStylePanel) == null ? void 0 : _a.refresh();
+      (_b = this.nodeQuickActions) == null ? void 0 : _b.scheduleRefresh();
       this.scheduleSave();
     });
     this.map.on("back_forward", (activeIndex, historyLength) => {
@@ -97218,10 +95624,6 @@ class YeMindEditor {
       () => this.hideOuterFramePresentation()
     );
     this.map.on("outer_frame_delete", () => this.hideOuterFramePresentation());
-    this.map.on("node_click", () => {
-      this.canvasEl.focus({ preventScroll: true });
-      window.setTimeout(() => this.updateRelationPresentation(), 0);
-    });
     this.map.on("node_icon_click", (node, iconValue, event) => {
       var _a, _b, _c2, _d2;
       (_a = event == null ? void 0 : event.preventDefault) == null ? void 0 : _a.call(event);
@@ -97879,7 +96281,6 @@ class YeMindEditor {
         return;
       }
       try {
-        stabilizeMindMapMeasurementHost(this.map, this.rootEl);
         this.map.resize();
         if (this.pendingAppearanceRefresh) this.applyMapAppearance(true);
         const pendingImport = this.pendingImportLayout;
@@ -98376,7 +96777,6 @@ class YeMindEditor {
         this.applyingImportLayout = false;
         return;
       }
-      stabilizeMindMapMeasurementHost(map2, this.rootEl);
       if (typeof map2.reRender === "function") {
         map2.reRender(() => {
           restore();
