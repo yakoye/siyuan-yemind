@@ -746,7 +746,7 @@ test('keeps node versus text routing stable before and after creating a new canv
 
   await canvasNode(page, SAME_TARGET).click();
   await editor.locator('[data-node-quick-action="add-child"]').first().click();
-  const textEditor = page.locator('body > .smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = page.locator('.ymw-editor > .ymz-editor .smm-richtext-node-edit-wrap .ql-editor');
   await expect(textEditor).toBeVisible();
   await textEditor.press('Control+A');
   await textEditor.press('Control+V');

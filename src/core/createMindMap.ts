@@ -59,10 +59,11 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     ? undefined
     : normalizePersistedViewData(options.viewData);
   const runtimeData = normalizeTreeForUpstreamRichText(options.data);
+  const editorRoot = options.el.closest<HTMLElement>('.ymz-editor') ?? options.el;
 
   const mindMap = new MindMap({
     el: options.el,
-    customInnerElsAppendTo: null,
+    customInnerElsAppendTo: editorRoot,
     data: runtimeData,
     viewData,
     theme: 'default',

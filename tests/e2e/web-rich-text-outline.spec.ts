@@ -11,11 +11,11 @@ async function addRootChild(page: import('@playwright/test').Page): Promise<void
 }
 
 function canvasTextEditor(page: import('@playwright/test').Page): import('@playwright/test').Locator {
-  return page.locator('body > .smm-richtext-node-edit-wrap .ql-editor');
+  return page.locator('.ymw-editor > .ymz-editor .smm-richtext-node-edit-wrap .ql-editor');
 }
 
 function canvasTextEditHost(page: import('@playwright/test').Page): import('@playwright/test').Locator {
-  return page.locator('body > .smm-richtext-node-edit-wrap');
+  return page.locator('.ymw-editor > .ymz-editor .smm-richtext-node-edit-wrap');
 }
 
 async function commitCanvasEdit(page: import('@playwright/test').Page): Promise<void> {
@@ -780,7 +780,7 @@ test('YM-TEXT-029 active canvas editing rejects a programmatic host focus claim 
     document.body.appendChild(focusProxy);
     focusProxy.focus({ preventScroll: true });
     const editorRoot = document.querySelector<HTMLElement>(
-      'body > .smm-richtext-node-edit-wrap .ql-editor',
+      '.ymw-editor > .ymz-editor .smm-richtext-node-edit-wrap .ql-editor',
     );
     return document.activeElement === editorRoot;
   });
@@ -810,7 +810,7 @@ test('YM-TEXT-030 canvas editing owns focus until an intentional outside pointer
     document.body.appendChild(focusProxy);
     focusProxy.focus({ preventScroll: true });
     const editorRoot = document.querySelector<HTMLElement>(
-      'body > .smm-richtext-node-edit-wrap .ql-editor',
+      '.ymw-editor > .ymz-editor .smm-richtext-node-edit-wrap .ql-editor',
     );
     return document.activeElement === editorRoot;
   });
@@ -860,7 +860,7 @@ test('Tab-created child shows its default text on every visible editor frame', a
       html: string;
     }> = [];
     for (let index = 0; index < 6; index += 1) {
-      const host = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap');
+      const host = document.querySelector<HTMLElement>('.ymw-editor > .ymz-editor .smm-richtext-node-edit-wrap');
       const textEditor = host?.querySelector<HTMLElement>('.ql-editor') ?? null;
       const style = host ? getComputedStyle(host) : null;
       result.push({

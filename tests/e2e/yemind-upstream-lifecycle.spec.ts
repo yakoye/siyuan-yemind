@@ -2,11 +2,11 @@ import { expect, test } from '@playwright/test';
 import { recordPageErrors, resetWebApp } from './helpers';
 
 const canvasEditor = (page: import('@playwright/test').Page) => (
-  page.locator('body > .smm-richtext-node-edit-wrap .ql-editor')
+  page.locator('.ymw-editor > .ymz-editor .smm-richtext-node-edit-wrap .ql-editor')
 );
 
 test.describe('YeMind upstream-owned canvas text lifecycle', () => {
-  test('opens the body-portal editor focused without a blank text frame', async ({ page, isMobile }) => {
+  test('opens the upstream editor in its configured host without a blank text frame', async ({ page, isMobile }) => {
     test.skip(isMobile, 'desktop canvas text lifecycle');
     const errors = recordPageErrors(page);
     await resetWebApp(page);
@@ -18,7 +18,7 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
       let remaining = 40;
       const capture = (): void => {
         const node = document.querySelector('.ymw-editor > .ymz-editor .smm-node');
-        const editor = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap .ql-editor');
+        const editor = document.querySelector<HTMLElement>('.ymw-editor > .ymz-editor .smm-richtext-node-edit-wrap .ql-editor');
         const editorStyle = editor ? getComputedStyle(editor) : null;
         const editorVisible = Boolean(editor
           && editorStyle?.display !== 'none'
