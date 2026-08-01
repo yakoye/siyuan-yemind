@@ -25,6 +25,9 @@ describe('v1.9.0 upstream rich-text lifecycle ownership', () => {
       'src/editor/canvasRichTextVisibility.ts',
       'src/editor/CanvasEditSessionCoordinator.ts',
       'src/editor/RenderedTextGeometryRepair.ts',
+      'src/editor/InsertedNodeEditCoordinator.ts',
+      'src/editor/richTextGeometry.ts',
+      'src/core/measurementHost.ts',
     ];
     removed.forEach((file) => expect(existsSync(resolve(process.cwd(), file)), file).toBe(false));
 

@@ -2089,14 +2089,6 @@ export class YeMindEditor {
       this.canvasRightDrag?.cancel();
       this.nodeQuickActions?.suppress();
     });
-    this.map.on("yemind_text_edit_diagnostic", (payload: { action?: string; details?: Record<string, unknown> }) => {
-      this.options.diagnostics.record(
-        "rich-text",
-        payload?.action ?? "unknown",
-        this.current.id,
-        payload?.details ?? {},
-      );
-    });
     this.map.on('hide_text_edit', () => {
       this.nodeQuickActions?.resume();
     });
