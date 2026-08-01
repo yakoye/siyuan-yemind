@@ -1900,6 +1900,17 @@ test('exactly one text layer (SVG or Quill) is visible on every sampled frame wh
   const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
   await expect(textEditor).toBeFocused();
 
+  // The regression this test guards against ("both layers visible") can only
+  // happen at the instant a keystroke is processed, so the 60-frame rAF
+  // sampling loop must run *while* real keys are being pressed, not before or
+  // after. Kick off pressSequentially without awaiting it so it fires
+  // concurrently with the page.evaluate() sampling loop below -- a short
+  // per-character delay mimics fast real typing and spreads the keystrokes
+  // across the ~1s (60 frame @ 60fps) sampling window so the two overlap for
+  // the whole duration, not just a sliver of it.
+  const typingText = 'the quick brown fox jumps over';
+  const typingPromise = textEditor.pressSequentially(typingText, { delay: 30 });
+
   const samples = await page.evaluate(async () => {
     const host = document.querySelector('.ymw-editor > .ymz-editor .smm-node');
     const results: Array<{ svgVisible: boolean; quillVisible: boolean }> = [];
@@ -1913,6 +1924,12 @@ test('exactly one text layer (SVG or Quill) is visible on every sampled frame wh
     }
     return results;
   });
+
+  // Make sure the concurrently-dispatched keystrokes actually landed (and
+  // finished) before asserting on the samples collected while they were in
+  // flight.
+  await typingPromise;
+  await expect(textEditor).toHaveText(typingText);
 
   const bothVisibleFrames = samples.filter((s) => s.svgVisible && s.quillVisible).length;
   expect(bothVisibleFrames).toBe(0);
