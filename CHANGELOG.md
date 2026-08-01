@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.9.0 - 2026-08-02
+
+This release replaces the accumulated canvas text-editing patch stack with the official `wanglin2/mind-map` rich-text lifecycle and width behavior. It is a compatible Minor release: persisted map data and transfer formats remain unchanged, while the shared plugin/web editing runtime is substantially simplified.
+
+- Restored the official runtime implementations for text creation, layout, width modification and rich-text opening/closing. Removed YeMind's parallel live-width layout, measurement host, custom plain-text layout contract, duplicate geometry reconciliation and the tests that encoded those obsolete paths. The principal simplification commit deletes 941 lines and adds 220.
+- Normalizes runtime node text into the upstream rich-text representation without mutating the canonical persisted tree, preserving hard line breaks, rich HTML, children and summaries.
+- Uses the upstream `customInnerElsAppendTo` option to keep the official editor inside the current YeMind tab's overlay host. This preserves upstream geometry while preventing a body-level editor from escaping the tab's style and stacking context.
+- Keeps one small SiYuan host integration: an active edit session owns Quill focus until a real outside pointer action, so a host `RootWebArea` focus claim cannot force a third click before the caret appears. No fixed delay, continuous animation-frame poll or replacement editor lifecycle is introduced.
+- Keeps canvas/outline clipboard intent explicit across editing and non-editing states, newly inserted nodes, images and same-file/cross-file targets, preventing a stale node payload from replacing a later text paste.
+- Full verification before the release build: 972 unit tests passed (39 intentionally skipped), 22 web tests passed, offline smoke suite passed, and 108 Playwright scenarios passed (68 mobile/non-applicable scenarios skipped by project policy) with zero failures.
+
 ## 1.8.1 - 2026-08-01
 
 Fixes two real regressions surfaced against the 1.8.0 canvas text edit kernel: (1) double-clicking into an unmodified node could shift its own line wrapping (e.g. a 5-character last line becoming 6 characters) even though nothing was edited, and (2) double-clicking some nodes never produced a visible caret at all. Both traced back to the editor-opening transaction, not to anything typed. Root causes and fixes below; no live-edit behavior removed in 1.8.0 (no `node_text_edit_change`, no `RenderLifecycleCoordinator`, no per-keystroke `createTextNode`/`layout`/`renderLine`, no permanent `requestAnimationFrame` polling, no mid-edit static SVG rebuild) was reintroduced.
