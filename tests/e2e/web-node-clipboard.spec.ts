@@ -198,8 +198,12 @@ async function expectDestinationClipboardData(page: Page): Promise<void> {
     const first = flat.find((tree) => String(tree.data?.text ?? '').includes(sourceOne));
     return {
       firstFound: Boolean(first),
-      childFound: flat.some((tree) => tree.data?.text === sourceChild),
-      secondFound: flat.some((tree) => tree.data?.text === sourceTwo),
+      childFound: (first?.children ?? []).some(
+        (tree: any) => String(tree.data?.text ?? '').includes(sourceChild),
+      ),
+      secondFound: (destination.data?.children ?? []).some(
+        (tree: any) => String(tree.data?.text ?? '').includes(sourceTwo),
+      ),
       freshIdentity: Boolean(first?.data?.uid && first.data.uid !== 'source-one'),
       visualStyleRemoved: Boolean(
         first
@@ -538,6 +542,9 @@ test('copies multiple hierarchical canvas nodes to another file canvas', async (
   await seedClipboardMaps(page);
   await selectCanvasSourceNodes(page);
   await page.keyboard.press('Control+C');
+  await expect.poll(async () => (await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n?/g, '\n')).toBe(
+    `${SOURCE_ONE}\n    ${SOURCE_CHILD}\n${SOURCE_TWO}`,
+  );
   await openMap(page, 'clipboard-destination');
   await pasteAtCanvasRoot(page);
   await expectDestinationClipboardData(page);

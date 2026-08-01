@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createCommandAdapter } from '../../../src/core/commands';
 import {
   YEMIND_NODE_CLIPBOARD_MIME,
@@ -10,6 +10,8 @@ import {
   publishNodeClipboard,
   readNodeClipboard,
 } from '../../../src/editor/nodeClipboard';
+
+afterEach(() => vi.unstubAllGlobals());
 
 function fakeMindMap() {
   const map: any = {
@@ -245,5 +247,40 @@ describe('shared node clipboard transactions', () => {
     expect(destination.beingCopyData[0].data).not.toHaveProperty('fillColor');
     expect(destination.beingCopyData[0].children[0].data.text).toBe('Alpha child');
     unbind();
+  });
+
+  it('pastes a matching shared tree through the native PASTE_NODE command instead of reparsing outline text', async () => {
+    clearNodeClipboard();
+    let systemText = '';
+    vi.stubGlobal('navigator', {
+      clipboard: {
+        readText: vi.fn(async () => systemText),
+        writeText: vi.fn(async (value: string) => { systemText = value; }),
+      },
+    });
+    const source: any = {
+      beingCopyData: nodes(),
+      copy: vi.fn(),
+    };
+    const execCommand = vi.fn();
+    const nativePaste = vi.fn(async () => undefined);
+    const destination: any = {
+      beingCopyData: null,
+      mindMap: { execCommand },
+      paste: nativePaste,
+    };
+    const unbindSource = bindCanvasNodeClipboard(source, () => 'doc-a');
+    const unbindDestination = bindCanvasNodeClipboard(destination, () => 'doc-b');
+
+    source.copy();
+    await destination.paste();
+
+    expect(execCommand).toHaveBeenCalledOnce();
+    expect(execCommand.mock.calls[0][0]).toBe('PASTE_NODE');
+    expect(execCommand.mock.calls[0][1]).toHaveLength(2);
+    expect(execCommand.mock.calls[0][1][0].children[0].data.text).toBe('Alpha child');
+    expect(nativePaste).not.toHaveBeenCalled();
+    unbindSource();
+    unbindDestination();
   });
 });

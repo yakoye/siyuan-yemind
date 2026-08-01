@@ -269,6 +269,21 @@ export function clearNodeClipboard(): void {
   sharedPayload = null;
 }
 
+async function readMatchingSystemNodeClipboard(): Promise<NodeClipboardPayload | null> {
+  const readText = typeof navigator !== 'undefined'
+    ? navigator.clipboard?.readText?.bind(navigator.clipboard)
+    : null;
+  if (!readText) return readNodeClipboard();
+  try {
+    const plain = await readText();
+    return readNodeClipboard({
+      getData: (type: string) => type === 'text/plain' ? plain : '',
+    });
+  } catch {
+    return null;
+  }
+}
+
 export function bindCanvasNodeClipboard(
   renderer: any,
   getDocumentId: () => string,
@@ -311,10 +326,13 @@ export function bindCanvasNodeClipboard(
   }
   if (originalPaste) {
     renderer.paste = async (...args: unknown[]) => {
-      const payload = readNodeClipboard();
+      const payload = await readMatchingSystemNodeClipboard();
       if (payload?.nodes.length) {
         const prepared = prepareNodeClipboardForDestination(payload, getDocumentId(), 'canvas');
         renderer.beingCopyData = prepared.nodes;
+        if (typeof renderer.mindMap?.execCommand === 'function') {
+          return renderer.mindMap.execCommand('PASTE_NODE', prepared.nodes);
+        }
       }
       return originalPaste(...args);
     };
