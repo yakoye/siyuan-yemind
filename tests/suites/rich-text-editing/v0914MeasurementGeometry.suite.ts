@@ -3,15 +3,13 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 describe('v0.9.14 stable node measurement geometry', () => {
-  it('reserves a symmetric glyph safety gutter so bold root text is never clipped', () => {
+  it('does not add a static-only glyph gutter outside the upstream text box', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/styles/index.css'), 'utf8');
-    expect(css).toMatch(/\.ymz-editor \.smm-richtext-node-wrap\{[^}]*box-sizing:border-box;[^}]*padding-inline:1px;/s);
+    expect(css).not.toMatch(/\.ymz-editor \.smm-richtext-node-wrap\{[^}]*padding-inline/s);
   });
 
-  it('measures rich HTML from its intrinsic content width unless the user set a width', () => {
+  it('does not replace the upstream rich-text wrapping contract', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/styles/index.css'), 'utf8');
-    expect(css).toMatch(
-      /\.ymz-editor \.smm-richtext-node-wrap\{[^}]*display:inline-block;[^}]*width:max-content;/s,
-    );
+    expect(css).not.toMatch(/\.ymz-editor \.smm-richtext-node-wrap\{[^}]*(?:width|max-content|word-break|overflow-wrap)/s);
   });
 });

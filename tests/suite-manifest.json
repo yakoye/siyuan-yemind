@@ -29,12 +29,10 @@
     "v0523CanvasRichTextRegression.suite.ts",
     "v083TextEditingTransactions.suite.ts",
     "yeMindRichText.suite.ts",
-    "v0913MeasurementHost.suite.ts",
     "v0914MeasurementGeometry.suite.ts",
     "v0924FormulaIcon.suite.ts",
-    "v190PlainTextLayoutContract.suite.ts"
-    ,"v190UpstreamRuntimeTextData.suite.ts"
-    ,"v190UpstreamLifecycleOwnership.suite.ts"
+    "v190UpstreamRuntimeTextData.suite.ts",
+    "v190UpstreamLifecycleOwnership.suite.ts"
   ],
   "styles-themes": [
     "colorPresentation.suite.ts",

@@ -28,6 +28,7 @@ describe('v1.9.0 upstream rich-text lifecycle ownership', () => {
       'src/editor/InsertedNodeEditCoordinator.ts',
       'src/editor/richTextGeometry.ts',
       'src/core/measurementHost.ts',
+      'src/editor/liveNodeWidthLayout.ts',
     ];
     removed.forEach((file) => expect(existsSync(resolve(process.cwd(), file)), file).toBe(false));
 
@@ -36,7 +37,6 @@ describe('v1.9.0 upstream rich-text lifecycle ownership', () => {
       'src/editor/YeMindEditor.ts',
       'src/editor/YeMindRichText.ts',
       'src/editor/RichTextToolbar.ts',
-      'src/editor/liveNodeWidthLayout.ts',
     ].map((file) => readFileSync(resolve(process.cwd(), file), 'utf8')).join('\n');
     expect(production).not.toContain('canvasRichTextVisibility');
     expect(production).not.toContain('CanvasEditSessionCoordinator');

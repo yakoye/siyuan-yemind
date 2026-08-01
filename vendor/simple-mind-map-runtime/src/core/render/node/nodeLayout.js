@@ -459,24 +459,18 @@ function layout() {
   this.group.add(textContentNested)
   // 文字内容整体
   const { width: bboxWidth, height: bboxHeight } = textContentNested.bbox()
-  // bbox only describes painted glyph ink. A custom-width node already
-  // declares its editable content geometry through textContentWidth. Using
-  // the shorter ink bbox here makes the text group shift whenever content or
-  // width changes, which also disconnects the live editor from the node.
-  const layoutContentWidth = Math.max(bboxWidth, textContentWidth)
-  const layoutContentHeight = Math.max(bboxHeight, textContentHeightWithTag)
   let translateX = 0
   let translateY = 0
   switch (imgPlacement) {
     case IMG_PLACEMENT.TOP:
-      translateX = width / 2 - layoutContentWidth / 2
+      translateX = width / 2 - bboxWidth / 2
       translateY =
         paddingY + // 内边距
         imgHeight + // 图片高度
         this.getImgTextMarin('v', 0, 0, imgHeight, textContentHeightWithTag) // 和图片的间距
       break
     case IMG_PLACEMENT.BOTTOM:
-      translateX = width / 2 - layoutContentWidth / 2
+      translateX = width / 2 - bboxWidth / 2
       translateY = paddingY
       break
     case IMG_PLACEMENT.LEFT:
@@ -484,11 +478,11 @@ function layout() {
         imgWidth +
         paddingX +
         this.getImgTextMarin('h', imgWidth, textContentWidth)
-      translateY = height / 2 - layoutContentHeight / 2
+      translateY = height / 2 - bboxHeight / 2
       break
     case IMG_PLACEMENT.RIGHT:
       translateX = paddingX
-      translateY = height / 2 - layoutContentHeight / 2
+      translateY = height / 2 - bboxHeight / 2
       break
   }
   textContentNested.translate(translateX, translateY)

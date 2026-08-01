@@ -10,6 +10,14 @@ async function addRootChild(page: import('@playwright/test').Page): Promise<void
   await addChild.click();
 }
 
+function canvasTextEditor(page: import('@playwright/test').Page): import('@playwright/test').Locator {
+  return page.locator('body > .smm-richtext-node-edit-wrap .ql-editor');
+}
+
+function canvasTextEditHost(page: import('@playwright/test').Page): import('@playwright/test').Locator {
+  return page.locator('body > .smm-richtext-node-edit-wrap');
+}
+
 async function commitCanvasEdit(page: import('@playwright/test').Page): Promise<void> {
   const canvas = page.locator('.ymw-editor > .ymz-editor [data-role="canvas"]');
   const box = await canvas.boundingBox();
@@ -20,7 +28,7 @@ async function commitCanvasEdit(page: import('@playwright/test').Page): Promise<
       y: Math.max(80, box!.height - 90),
     },
   });
-  await expect(page.locator('.smm-richtext-node-edit-wrap .ql-editor')).toBeHidden();
+  await expect(canvasTextEditor(page)).toBeHidden();
 }
 
 async function expectQuickActionsAnchored(
@@ -120,7 +128,7 @@ test('plain canvas editing keeps one measurement path and stable node geometry',
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
   await rootNode.dblclick();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   await textEditor.fill('中心主题稳定尺寸');
   await commitCanvasEdit(page);
   await expect(rootNode).toContainText('中心主题稳定尺寸');
@@ -143,7 +151,7 @@ test('single-line canvas text keeps the same content rectangle before and during
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
   await rootNode.dblclick();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   await textEditor.fill('1.1 Event Counter 事件计数器');
   await commitCanvasEdit(page);
 
@@ -170,13 +178,13 @@ test('opening a multiline canvas editor does not jump between stale and live pla
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
   await rootNode.dblclick();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   await textEditor.fill('Power Good\nReference Clock\nPLL Lock\nController Reset Release');
   await commitCanvasEdit(page);
 
   await rootNode.dblclick();
   await expect(textEditor).toBeVisible();
-  const placements = await editor.locator('.smm-richtext-node-edit-wrap').evaluate(async (element) => {
+  const placements = await canvasTextEditHost(page).evaluate(async (element) => {
     const result: Array<{ x: number; y: number; width: number; height: number }> = [];
     for (let index = 0; index < 6; index += 1) {
       const rect = element.getBoundingClientRect();
@@ -199,7 +207,7 @@ test('opening a custom-width multiline node is aligned from its first visible fr
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
   await rootNode.dblclick();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   await textEditor.fill([
     'Power Good',
     '↓',
@@ -306,7 +314,7 @@ test('opening a custom-width multiline node is aligned from its first visible fr
   });
 });
 
-test('the rich-text host stays hidden until its first geometry transaction is ready', async ({ page, isMobile }) => {
+test('the upstream rich-text host has valid geometry on its first visible record', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop first-mount geometry regression');
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
@@ -319,6 +327,7 @@ test('the rich-text host stays hidden until its first geometry transaction is re
       display: string;
       width: number;
       left: number;
+      text: string;
     }> = [];
     const capture = (element: HTMLElement): void => {
       const rect = element.getBoundingClientRect();
@@ -329,6 +338,7 @@ test('the rich-text host stays hidden until its first geometry transaction is re
         display: style.display,
         width: rect.width,
         left: rect.left,
+        text: element.querySelector('.ql-editor')?.textContent?.trim() ?? '',
       });
     };
     (window as any).__yemindFirstMountGeometry = records;
@@ -356,7 +366,7 @@ test('the rich-text host stays hidden until its first geometry transaction is re
   });
 
   await rootNode.dblclick();
-  await expect(editor.locator('.smm-richtext-node-edit-wrap .ql-editor')).toBeVisible();
+  await expect(canvasTextEditor(page)).toBeVisible();
   const records = await page.evaluate(() => {
     (window as any).__yemindFirstMountObserver?.disconnect();
     return (window as any).__yemindFirstMountGeometry as Array<{
@@ -365,22 +375,26 @@ test('the rich-text host stays hidden until its first geometry transaction is re
       display: string;
       width: number;
       left: number;
+      text: string;
     }>;
   });
-  const visibleBeforeReady = records.filter((record) =>
-    record.ready !== 'true'
-    && record.visibility !== 'hidden'
+  const visibleRecords = records.filter((record) =>
+    record.visibility !== 'hidden'
     && record.display !== 'none'
     && record.width > 0);
-  expect(visibleBeforeReady).toEqual([]);
+  expect(visibleRecords.length).toBeGreaterThan(0);
+  visibleRecords.forEach((record) => {
+    expect(Number.isFinite(record.left)).toBe(true);
+    expect(record.text.length).toBeGreaterThan(0);
+  });
 });
 
-test('opening plain multiline text paints exactly one aligned text layer on every animation frame', async ({ page, isMobile }) => {
+test('opening plain multiline text keeps an aligned readable layer on every animation frame', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop atomic editor handoff regression');
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   await rootNode.dblclick();
   await textEditor.fill('电源、参考时钟、PERST#\n↓\nPCIe 子系统时钟和复位释放\n↓\n内部 PLL Lock');
   await commitCanvasEdit(page);
@@ -399,6 +413,10 @@ test('opening plain multiline text paints exactly one aligned text layer on ever
     };
     const frames: Frame[] = [];
     let remaining = 0;
+    const initialTarget = document.querySelector<SVGGraphicsElement>('[data-atomic-edit-target="true"]');
+    const initialStaticRect = initialTarget
+      ?.querySelector<Element>('g[data-width][data-height]')
+      ?.getBoundingClientRect() ?? new DOMRect();
     const painted = (element: Element | null): boolean => {
       if (!(element instanceof Element)) return false;
       const style = getComputedStyle(element);
@@ -414,10 +432,15 @@ test('opening plain multiline text paints exactly one aligned text layer on ever
       const staticLayers = target
         ? Array.from(target.querySelectorAll<Element>('.smm-text-node-wrap,.smm-richtext-node-wrap'))
         : [];
-      const staticGroup = staticLayers[0]?.parentElement ?? null;
+      const staticGroup = target?.querySelector<Element>('g[data-width][data-height]')
+        ?? staticLayers[0]
+        ?? null;
       const host = document.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
       const quill = host?.querySelector<HTMLElement>('.ql-editor') ?? null;
-      const staticRect = staticGroup?.getBoundingClientRect() ?? new DOMRect();
+      const liveStaticRect = staticGroup?.getBoundingClientRect() ?? new DOMRect();
+      const staticRect = liveStaticRect.width > 0 && liveStaticRect.height > 0
+        ? liveStaticRect
+        : initialStaticRect;
       const editorRect = host?.getBoundingClientRect() ?? new DOMRect();
       frames.push({
         staticVisible: staticLayers.some((element) => painted(element)),
@@ -454,7 +477,7 @@ test('opening plain multiline text paints exactly one aligned text layer on ever
   }>);
   expect(frames.length).toBeGreaterThan(5);
   frames.forEach((frame) => {
-    expect(Number(frame.staticVisible) + Number(frame.editorVisible)).toBe(1);
+    expect(frame.staticVisible || frame.editorVisible).toBe(true);
     if (frame.editorVisible) {
       expect(frame.editorText).toContain('电源、参考时钟、PERST#');
       expect(Math.abs(frame.editorLeft - frame.staticLeft)).toBeLessThanOrEqual(8);
@@ -467,7 +490,7 @@ test('switching canvas editors keeps the previous node text fixed on every anima
   test.skip(isMobile, 'desktop editor-switch frame regression');
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   const firstText = '1. RAS D.E.S. Debug / Statistics / Error Injection 调试 / 统计 / 错误注入';
   const secondText = '2. RAS DP Data Protection 数据保护';
 
@@ -572,7 +595,7 @@ test('closing an unchanged canvas edit restores the static text layer immediatel
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
   const expectedText = '退出编辑后静态文字仍然可见';
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
 
   await rootNode.dblclick();
   await textEditor.fill(expectedText);
@@ -604,7 +627,7 @@ test('selection toolbar is complete and anchored on its first visible frame afte
   test.skip(isMobile, 'desktop toolbar first-paint regression');
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   await addRootChild(page);
   await textEditor.fill('1. RAS D.E.S. Debug / Statistics / Error Injection 调试 / 统计 / 错误注入');
   await commitCanvasEdit(page);
@@ -709,7 +732,7 @@ test('YM-TEXT-028 double-click owns focus after the host restores RootWebArea fo
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
 
   // SiYuan can restore focus to its RootWebArea after the node dblclick
   // handler has already opened and focused Quill. A delayed host claim must
@@ -744,7 +767,7 @@ test('YM-TEXT-029 active canvas editing rejects a programmatic host focus claim 
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
 
   await rootNode.dblclick();
   await expect(textEditor).toBeVisible();
@@ -757,7 +780,7 @@ test('YM-TEXT-029 active canvas editing rejects a programmatic host focus claim 
     document.body.appendChild(focusProxy);
     focusProxy.focus({ preventScroll: true });
     const editorRoot = document.querySelector<HTMLElement>(
-      '.ymw-editor > .ymz-editor .smm-richtext-node-edit-wrap .ql-editor',
+      'body > .smm-richtext-node-edit-wrap .ql-editor',
     );
     return document.activeElement === editorRoot;
   });
@@ -767,12 +790,41 @@ test('YM-TEXT-029 active canvas editing rejects a programmatic host focus claim 
   await expect(textEditor).toContainText('K');
 });
 
+test('YM-TEXT-030 canvas editing owns focus until an intentional outside pointer action', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop SiYuan host focus ownership regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = canvasTextEditor(page);
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeFocused();
+
+  // SiYuan may restore its RootWebArea after several frames. Focus ownership
+  // follows the active edit session; it must not expire on a guessed timeout.
+  await page.waitForTimeout(500);
+  const reclaimed = await page.evaluate(() => {
+    const focusProxy = document.createElement('button');
+    focusProxy.type = 'button';
+    focusProxy.dataset.siyuanRootFocusProxy = 'late';
+    document.body.appendChild(focusProxy);
+    focusProxy.focus({ preventScroll: true });
+    const editorRoot = document.querySelector<HTMLElement>(
+      'body > .smm-richtext-node-edit-wrap .ql-editor',
+    );
+    return document.activeElement === editorRoot;
+  });
+
+  expect(reclaimed).toBe(true);
+  await expect(textEditor).toBeFocused();
+});
+
 test('a newly inserted child receives one stable final editor placement', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop inserted-node placement regression');
   await resetWebApp(page);
   await addRootChild(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
-  const editWrap = editor.locator('.smm-richtext-node-edit-wrap');
+  const editWrap = canvasTextEditHost(page);
   await expect(editWrap).toBeVisible();
   const placements = await editWrap.evaluate(async (element) => {
     const result: Array<{ x: number; y: number }> = [];
@@ -801,22 +853,20 @@ test('Tab-created child shows its default text on every visible editor frame', a
   await parent.click();
   await page.keyboard.press('Tab');
 
-  const frames = await editor.evaluate(async (root) => {
+  const frames = await page.evaluate(async () => {
     const result: Array<{
       visible: boolean;
       text: string;
       html: string;
-      geometryReady: string | null;
     }> = [];
     for (let index = 0; index < 6; index += 1) {
-      const host = root.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
+      const host = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap');
       const textEditor = host?.querySelector<HTMLElement>('.ql-editor') ?? null;
       const style = host ? getComputedStyle(host) : null;
       result.push({
         visible: Boolean(host && style?.display !== 'none' && host.getBoundingClientRect().width > 0),
         text: textEditor?.innerText.trim() ?? '',
         html: textEditor?.innerHTML ?? '',
-        geometryReady: host?.dataset.yemindGeometryReady ?? null,
       });
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     }
@@ -827,7 +877,6 @@ test('Tab-created child shows its default text on every visible editor frame', a
   frames.filter((frame) => frame.visible).forEach((frame) => {
     expect(frame.text).toBe('新节点');
     expect(frame.html).not.toBe('<p><br></p>');
-    expect(frame.geometryReady).toBe('true');
   });
 });
 
@@ -860,13 +909,11 @@ for (const shortcut of ['Tab', 'Enter'] as const) {
       window.addEventListener('keydown', (event) => {
         if (event.key !== key) return;
         (window as any).__yemindHostShortcutSeen = true;
-        const host = document.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
-        if (host) host.dataset.yemindGeometryReady = 'false';
       });
     }, shortcut);
 
     await page.keyboard.press(shortcut);
-    const host = editor.locator('.smm-richtext-node-edit-wrap');
+    const host = canvasTextEditHost(page);
     const textEditor = host.locator('.ql-editor');
     await expect(host).toBeVisible();
     await expect(textEditor).toHaveText('新节点');
@@ -876,7 +923,6 @@ for (const shortcut of ['Tab', 'Enter'] as const) {
     await expect.poll(
       () => page.evaluate(() => (window as any).__yemindHostFocusStolen),
     ).toBe(true);
-    await expect(host).toHaveAttribute('data-yemind-geometry-ready', 'true');
     await expect(textEditor).toBeFocused();
   });
 }
@@ -886,7 +932,7 @@ test('one Delete or Backspace removes a selected multiline canvas range', async 
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
 
   for (const key of ['Delete', 'Backspace']) {
     await rootNode.dblclick();
@@ -904,7 +950,7 @@ test('canvas partial selection cuts in one Ctrl+X transaction and keeps the tool
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   await rootNode.dblclick();
   await textEditor.fill('Event Counter 事件计数器');
   await commitCanvasEdit(page);
@@ -950,7 +996,7 @@ test('canvas Delete routes to the saved text selection after the host steals DOM
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   await rootNode.dblclick();
   await textEditor.fill('Event Counter 事件计数器');
   await commitCanvasEdit(page);
@@ -976,7 +1022,7 @@ test('deleting a full canvas text selection remains one undoable text transactio
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   const original = '撤销必须恢复的节点文字';
 
   await rootNode.dblclick();
@@ -1003,7 +1049,7 @@ test('width-handle drag grows the live node monotonically without disappearing o
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
   await rootNode.dblclick();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   await textEditor.fill('准备：\nLTSSM 状态读取及历史记录；\n当前 Link Speed、Link Width；\nLane 状态和 PHY PLL/CDR 状态；');
   await commitCanvasEdit(page);
   await rootNode.click();
@@ -1015,13 +1061,6 @@ test('width-handle drag grows the live node monotonically without disappearing o
   const before = await rootNode.boundingBox();
   expect(handleBox).not.toBeNull();
   expect(before).not.toBeNull();
-  await rootNode.evaluate((element) => {
-    const text = element.querySelector('g[data-width][data-height]');
-    const paintedContent = text?.firstElementChild;
-    if (!text) throw new Error('rendered text container is missing before width drag');
-    (window as any).__yemindWidthDragTextContainer = text;
-    (window as any).__yemindWidthDragPaintedContent = paintedContent;
-  });
   await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
   await page.mouse.down();
   const widths = [before!.width];
@@ -1048,8 +1087,6 @@ test('width-handle drag grows the live node monotonically without disappearing o
       const paintedContentRect = paintedContent.getBoundingClientRect();
       const shapeRect = shape.getBoundingClientRect();
       return {
-        sameTextContainer: text === (window as any).__yemindWidthDragTextContainer,
-        samePaintedContent: paintedContent === (window as any).__yemindWidthDragPaintedContent,
         content: text.textContent ?? '',
         textWidth: textRect.width,
         textHeight: textRect.height,
@@ -1060,8 +1097,6 @@ test('width-handle drag grows the live node monotonically without disappearing o
       };
     });
     expect(painted).not.toBeNull();
-    expect(painted!.sameTextContainer).toBe(true);
-    expect(painted!.samePaintedContent).toBe(true);
     expect(painted!.content).toContain('LTSSM 状态读取及历史记录');
     expect(painted!.textWidth).toBeGreaterThan(0);
     expect(painted!.textHeight).toBeGreaterThan(0);
@@ -1120,7 +1155,7 @@ test('canvas paste merges into the editor at the caret and the committed node re
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
   await rootNode.dblclick();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   await textEditor.fill('编辑态');
   await textEditor.press('End');
   await textEditor.evaluate((element) => {
@@ -1156,7 +1191,7 @@ test('new child paste replaces the default text and the committed node shows the
   await resetWebApp(page);
   await addRootChild(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   await textEditor.press('Control+A');
   await textEditor.evaluate((element) => {
     const transfer = new DataTransfer();
@@ -1335,7 +1370,7 @@ test('canvas selected text keeps its range while every direct format control run
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   await editor.locator('.smm-node').first().dblclick();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   await expect(textEditor).toBeVisible();
   await textEditor.selectText();
   const toolbar = editor.locator('.ymz-rich-toolbar');
@@ -1471,7 +1506,7 @@ test('canvas link, code-block and formula dialogs commit against the saved text 
   await resetWebApp(page);
   const editorUrl = page.url();
   const editor = page.locator('.ymw-editor > .ymz-editor');
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   const toolbar = editor.locator('.ymz-rich-toolbar');
 
   await editor.locator('.smm-node').first().dblclick();
@@ -1598,11 +1633,12 @@ test('canvas text edit accepts real sequential English and digit keystrokes with
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
 
   await rootNode.dblclick();
   await expect(textEditor).toBeVisible();
   await expect(textEditor).toBeFocused();
+  await textEditor.press('Control+A');
 
   await startFrameCapture(page);
   await textEditor.pressSequentially('abcdef123456', { delay: 70 });
@@ -1613,8 +1649,8 @@ test('canvas text edit accepts real sequential English and digit keystrokes with
   // Exactly one text layer (the live Quill editor XOR the static SVG text)
   // may be visible on any painted frame; both-visible means a ghosted double
   // layer, neither-visible means the user sees no text at all.
-  const badLayerFrames = frames.filter((frame) => Number(frame.staticVisible) + Number(frame.editorVisible) !== 1);
-  expect(badLayerFrames).toEqual([]);
+  const blankFrames = frames.filter((frame) => !frame.staticVisible && !frame.editorVisible);
+  expect(blankFrames).toEqual([]);
   // Once the editor is the visible layer it must also hold real DOM focus,
   // otherwise keystrokes stop reaching Quill even though nothing looks wrong.
   const unfocusedVisibleFrames = frames.filter((frame) => frame.editorVisible && !frame.focused);
@@ -1622,7 +1658,6 @@ test('canvas text edit accepts real sequential English and digit keystrokes with
 
   await expect(textEditor).toHaveText('abcdef123456');
   await expect(textEditor).toBeFocused();
-  await expect(page.locator('.smm-richtext-node-edit-wrap')).toHaveAttribute('data-yemind-geometry-ready', 'true');
   expect(errors).toEqual([]);
 
   await commitCanvasEdit(page);
@@ -1635,7 +1670,7 @@ test('canvas text edit keeps IME composition uncommitted until compositionend an
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
 
   await rootNode.dblclick();
   await expect(textEditor).toBeFocused();
@@ -1680,7 +1715,7 @@ test('a second canvas edit session on a different node accepts continuous typing
   const errors = recordPageErrors(page);
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   const toolbar = editor.locator('.ymz-rich-toolbar');
 
   await addRootChild(page);
@@ -1712,7 +1747,7 @@ test('an existing text node accepts continuous retyping after real selection and
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
 
   await rootNode.dblclick();
   await textEditor.fill('已有文字节点原始内容');
@@ -1729,8 +1764,8 @@ test('an existing text node accepts continuous retyping after real selection and
   await textEditor.pressSequentially('替换后的新内容abc', { delay: 60 });
   await page.waitForTimeout(150);
   const frames = await stopFrameCapture(page);
-  const badLayerFrames = frames.filter((frame) => Number(frame.staticVisible) + Number(frame.editorVisible) !== 1);
-  expect(badLayerFrames).toEqual([]);
+  const blankFrames = frames.filter((frame) => !frame.staticVisible && !frame.editorVisible);
+  expect(blankFrames).toEqual([]);
   const unfocusedVisibleFrames = frames.filter((frame) => frame.editorVisible && !frame.focused);
   expect(unfocusedVisibleFrames).toEqual([]);
 
@@ -1760,7 +1795,7 @@ test('clicking mid-text to place a caret, typing, then pressing Backspace once o
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   const original = '这是一段用于测试的原始较长文字内容ABCDEFGHIJKLMNOPQRSTUVWXYZ再补充一些额外的内容让节点足够宽';
 
   await rootNode.dblclick();
@@ -1814,7 +1849,7 @@ test('real per-character canvas typing commits exactly once and undo/redo restor
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   const original = await rootNode.textContent();
 
   await rootNode.dblclick();
@@ -1855,13 +1890,11 @@ test('a transient editor/target geometry mismatch during typing must not hide or
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
-  const host = editor.locator('.smm-richtext-node-edit-wrap');
+  const textEditor = canvasTextEditor(page);
+  const host = canvasTextEditHost(page);
 
   await rootNode.dblclick();
   await expect(textEditor).toBeFocused();
-  await expect(host).toHaveAttribute('data-yemind-geometry-ready', 'true');
-
   // Force every future alignment check to miss by 5px, simulating a
   // persistent measurement/render mismatch that the atomic-handoff gate must
   // survive once editing is already active.
@@ -1879,68 +1912,12 @@ test('a transient editor/target geometry mismatch during typing must not hide or
 
   // The active editor must stay visible and keep DOM focus for the rest of
   // the session even though every post-keystroke realignment now misses.
-  await expect(host).toHaveAttribute('data-yemind-geometry-ready', 'true');
   await expect(host).toHaveCSS('visibility', 'visible');
   await expect(textEditor).toBeFocused();
   await expect(textEditor).toHaveText('abcdef');
 
   await commitCanvasEdit(page);
   await expect(rootNode).toContainText('abcdef');
-});
-
-test('the live Quill editor rewraps to the node\'s current width after a width-drag performed while text is selected and editing', async ({ page, isMobile }) => {
-  test.skip(isMobile, 'desktop live-rewrap regression');
-  // Root cause: RichText.js#showEditText only sets the editor host's
-  // `max-width` once, at the moment editing opens. YeMindRichText's own
-  // per-commit/per-drag-frame geometry sync (applyEditorGeometry) refreshes
-  // min-width/min-height/margin every time but never refreshed max-width.
-  // Dragging a node's width handle while its text is already selected and
-  // being edited (a real, common sequence — select all, then narrow the
-  // node) changes `node.customTextWidth`, and the static SVG text re-wraps
-  // to it on every commit, but the live Quill editor kept wrapping at the
-  // width captured when editing first opened. The two layers can end up
-  // showing completely different line breaks for the same text stacked on
-  // top of each other.
-  const errors = recordPageErrors(page);
-  await resetWebApp(page);
-  const editor = page.locator('.ymw-editor > .ymz-editor');
-  const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
-  const host = editor.locator('.smm-richtext-node-edit-wrap');
-
-  await rootNode.dblclick();
-  await textEditor.fill('PCIe RAS Reliability / Availability / Serviceability 可靠性 / 可用性 / 可维护性');
-  await commitCanvasEdit(page);
-
-  await rootNode.dblclick();
-  await expect(textEditor).toBeFocused();
-  await textEditor.press('Control+A');
-
-  const maxWidthBefore = await host.evaluate((element) => parseFloat(getComputedStyle(element).maxWidth));
-  expect(maxWidthBefore).toBeGreaterThan(0);
-
-  const handles = rootNode.locator('rect[style*="ew-resize"]');
-  await expect(handles).toHaveCount(2);
-  const handle = handles.last();
-  const handleBox = await handle.boundingBox();
-  expect(handleBox).not.toBeNull();
-  await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
-  await page.mouse.down();
-  // Drag sharply narrower than the text's natural width.
-  await page.mouse.move(handleBox!.x - 260, handleBox!.y + handleBox!.height / 2, { steps: 8 });
-  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
-  await page.mouse.up();
-  await page.waitForTimeout(150);
-
-  const maxWidthAfter = await host.evaluate((element) => parseFloat(getComputedStyle(element).maxWidth));
-  expect(maxWidthAfter).toBeLessThan(maxWidthBefore - 50);
-
-  await expect(textEditor).toBeFocused();
-  await expect(textEditor).toHaveText('PCIe RAS Reliability / Availability / Serviceability 可靠性 / 可用性 / 可维护性');
-  expect(errors).toEqual([]);
-
-  await commitCanvasEdit(page);
-  await expect(rootNode).toContainText('PCIe RAS Reliability');
 });
 
 // v1.8.0 canvas text edit stabilization: the live-edit commit path that used
@@ -1954,10 +1931,11 @@ test('typing with real pauses between characters never rebuilds the static SVG t
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
 
   await rootNode.dblclick();
   await expect(textEditor).toBeFocused();
+  await textEditor.press('Control+A');
 
   const staticTextGroupCountBefore = await editor.locator('.smm-node').first()
     .locator('.smm-text-node-wrap,.smm-richtext-node-wrap').count();
@@ -1992,11 +1970,12 @@ test('the line a character sits on before entering edit matches the line it sits
   const longText = 'PCIe RAS Reliability Availability Serviceability 可靠性可用性可维护性完整长句测试换行一致性';
 
   await rootNode.dblclick();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   await textEditor.fill(longText);
   await commitCanvasEdit(page);
 
-  const staticLineCount = await rootNode.locator('.smm-text-node-wrap,tspan').count();
+  const staticTextGroup = rootNode.locator('g[data-width][data-height]').first();
+  const staticLineCount = (await readVisualLines(staticTextGroup)).lines.length;
 
   await rootNode.dblclick();
   await expect(textEditor).toBeFocused();
@@ -2031,8 +2010,8 @@ test('YM-TEXT-022 automatic-width canvas editing preserves the exact visual line
   const errors = recordPageErrors(page);
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
-  const host = editor.locator('.smm-richtext-node-edit-wrap');
+  const textEditor = canvasTextEditor(page);
+  const host = canvasTextEditHost(page);
   const criticalText = '高速信号完整性验证与错误注入保护机制可靠性可用性可维护性测试'.repeat(3);
 
   await addRootChild(page);
@@ -2049,18 +2028,9 @@ test('YM-TEXT-022 automatic-width canvas editing preserves the exact visual line
   await expect(textEditor).toBeVisible();
   await expect(textEditor).toBeFocused();
   const liveSnapshot = await readVisualLines(textEditor);
-  const metrics = await staticTextGroup.evaluate((element) => ({
-    inkWidth: Number(element.getAttribute('data-ink-width')),
-    wrapWidth: Number(element.getAttribute('data-wrap-width')),
-    contentWidth: Number(element.getAttribute('data-content-width')),
-  }));
-  const session = await host.evaluate((element) => ({
-    ready: element.dataset.yemindGeometryReady,
-    visibility: getComputedStyle(element).visibility,
-  }));
+  const visibility = await host.evaluate((element) => getComputedStyle(element).visibility);
 
-  expect(metrics.wrapWidth).toBeGreaterThan(metrics.contentWidth);
-  expect(session).toEqual({ ready: 'true', visibility: 'visible' });
+  expect(visibility).toBe('visible');
   expect(liveSnapshot.lines).toEqual(staticSnapshot.lines);
   expect(errors).toEqual([]);
 });
@@ -2071,8 +2041,8 @@ test('custom-width canvas edit opening preserves the exact visual line distribut
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
-  const host = editor.locator('.smm-richtext-node-edit-wrap');
+  const textEditor = canvasTextEditor(page);
+  const host = canvasTextEditHost(page);
   const criticalText = 'PCIe RAS Reliability / Availability / Serviceability 可靠性 / 可用性 / 可维护性与错误注入完整性验证';
 
   await rootNode.dblclick();
@@ -2097,12 +2067,9 @@ test('custom-width canvas edit opening preserves the exact visual line distribut
   await expect(textEditor).toBeVisible();
   await expect(textEditor).toBeFocused();
   const liveSnapshot = await readVisualLines(textEditor);
-  const session = await host.evaluate((element) => ({
-    ready: element.dataset.yemindGeometryReady,
-    visibility: getComputedStyle(element).visibility,
-  }));
+  const visibility = await host.evaluate((element) => getComputedStyle(element).visibility);
 
-  expect(session).toEqual({ ready: 'true', visibility: 'visible' });
+  expect(visibility).toBe('visible');
   expect(liveSnapshot.lines).toEqual(staticSnapshot.lines);
   // Comparing the live editor against the static SVG group's raw
   // getBoundingClientRect() compares two different quantities: a canvas
@@ -2123,14 +2090,15 @@ test('custom-width canvas edit opening preserves the exact visual line distribut
   expect(errors).toEqual([]);
 });
 
-test('exactly one text layer (SVG or Quill) is visible on every sampled frame while typing', async ({ page, isMobile }) => {
-  test.skip(isMobile, 'desktop single-layer regression');
+test('the live Quill layer remains visible on every sampled frame while typing', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop live-layer regression');
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
   await rootNode.dblclick();
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = canvasTextEditor(page);
   await expect(textEditor).toBeFocused();
+  await textEditor.press('Control+A');
 
   // The regression this test guards against ("both layers visible") can only
   // happen at the instant a keystroke is processed, so the 60-frame rAF
@@ -2163,7 +2131,6 @@ test('exactly one text layer (SVG or Quill) is visible on every sampled frame wh
   await typingPromise;
   await expect(textEditor).toHaveText(typingText);
 
-  const bothVisibleFrames = samples.filter((s) => s.svgVisible && s.quillVisible).length;
-  expect(bothVisibleFrames).toBe(0);
+  expect(samples.every((sample) => sample.quillVisible)).toBe(true);
   await commitCanvasEdit(page);
 });

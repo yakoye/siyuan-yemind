@@ -1231,19 +1231,9 @@
 .ymz-node-style-panel footer{padding-top:8px;border-top:1px solid var(--ymz-border)}
 .ymz-about-dialog{height:100%;overflow:auto;padding:2px 4px 12px;box-sizing:border-box}
 
-/* v0.9.14 keep rich-text measurement and rendered node geometry identical */
-.ymz-editor .smm-richtext-node-wrap{
-  display:inline-block;
-  width:max-content;
-  box-sizing:border-box;
-  margin:0;
-  /* Keep the off-screen measurement and the rendered foreignObject equal,
-     while reserving one pixel per side for bold/CJK glyph overhang. */
-  padding-block:0;
-  padding-inline:1px;
-  overflow-wrap:anywhere;
-  word-break:break-word;
-}
+/* Keep block spacing deterministic without replacing simple-mind-map's
+   canonical rich-text wrapping rules. Static and live text must use the same
+   upstream word-break contract. */
 .ymz-editor .smm-richtext-node-wrap :is(p,h1,h2,h3,h4,h5,h6,blockquote,pre,ul,ol){
   margin-block-start:0;
   margin-block-end:0;

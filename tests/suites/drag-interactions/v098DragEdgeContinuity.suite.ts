@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { createShiftedIncomingLineOverlays } from '../../../src/core/dragPreviewEdges';
-import { synchronizeCanvasRichTextVisibility } from '../../../src/editor/canvasRichTextVisibility';
 
 function fakePath() {
   return {
@@ -66,26 +65,4 @@ describe('v0.9.8 drag edge continuity and flat canvas editing', () => {
     expect(snapshots.every((item) => item.overlay.shown)).toBe(true);
   });
 
-  it('removes every extra editor focus frame while keeping the editable text visible', () => {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'smm-richtext-node-edit-wrap ql-container';
-    wrapper.innerHTML = '<div class="ql-editor">Editable</div>';
-    const map = {
-      richText: {
-        textEditNode: wrapper,
-        node: { style: { merge: (key: string) => key === 'color' ? '#0f172a' : '#ffffff' } },
-      },
-      renderer: { textEdit: { getBackground: () => '#ffffff' } },
-    };
-
-    expect(synchronizeCanvasRichTextVisibility(map as any)).toBe(true);
-    const editor = wrapper.querySelector<HTMLElement>('.ql-editor')!;
-    [wrapper, editor].forEach((element) => {
-      expect(['0', '0px']).toContain(element.style.border);
-      expect(['0', '0px']).toContain(element.style.outline);
-      expect(element.style.boxShadow).toBe('none');
-    });
-    expect(wrapper.style.color).toBe('rgb(15, 23, 42)');
-    expect(editor.style.background).toBe('transparent');
-  });
 });

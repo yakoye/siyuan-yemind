@@ -218,6 +218,56 @@ export function registerYeMindFormats(): void {
 export default class YeMindRichText extends (BaseRichText as any) {
   static instanceName = 'richText';
 
+  private ownsEditFocus = false;
+
+  bindEvent(): void {
+    super.bindEvent();
+    this.beginEditFocusOwnership = this.beginEditFocusOwnership.bind(this);
+    this.releaseEditFocusOwnership = this.releaseEditFocusOwnership.bind(this);
+    this.handleHostFocusIn = this.handleHostFocusIn.bind(this);
+    this.handleFocusOwnershipPointerDown = this.handleFocusOwnershipPointerDown.bind(this);
+    this.mindMap.on('before_show_text_edit', this.beginEditFocusOwnership);
+    this.mindMap.on('hide_text_edit', this.releaseEditFocusOwnership);
+    document.addEventListener('focusin', this.handleHostFocusIn, true);
+    window.addEventListener('pointerdown', this.handleFocusOwnershipPointerDown, true);
+  }
+
+  unbindEvent(): void {
+    super.unbindEvent();
+    this.releaseEditFocusOwnership();
+    this.mindMap.off('before_show_text_edit', this.beginEditFocusOwnership);
+    this.mindMap.off('hide_text_edit', this.releaseEditFocusOwnership);
+    document.removeEventListener('focusin', this.handleHostFocusIn, true);
+    window.removeEventListener('pointerdown', this.handleFocusOwnershipPointerDown, true);
+  }
+
+  private beginEditFocusOwnership(): void {
+    this.ownsEditFocus = true;
+  }
+
+  private releaseEditFocusOwnership(): void {
+    this.ownsEditFocus = false;
+  }
+
+  private handleFocusOwnershipPointerDown(event: PointerEvent): void {
+    if (!this.ownsEditFocus) return;
+    const root = this.quill?.root as HTMLElement | null | undefined;
+    const target = event.target;
+    if (root && target instanceof Node && root.contains(target)) return;
+    this.releaseEditFocusOwnership();
+  }
+
+  private handleHostFocusIn(event: FocusEvent): void {
+    if (!this.showTextEdit || !this.ownsEditFocus) return;
+    const root = this.quill?.root as HTMLElement | null | undefined;
+    const target = event.target;
+    if (!root || (target instanceof Node && root.contains(target))) return;
+    const range = this.range ?? this.pasteUseRange ?? this.quill?.getSelection?.();
+    root.focus({ preventScroll: true });
+    if (range) this.quill.setSelection(range.index, range.length, Quill.sources.SILENT);
+    else this.quill.setSelection(this.quill.getLength(), 0, Quill.sources.SILENT);
+  }
+
   handleDataToRichTextOnInit(): void {
     const tree = this.mindMap.renderer.renderTree ?? this.mindMap.opt.data;
     if (tree) normalizeTreeForUpstreamRichTextInPlace(tree);

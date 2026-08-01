@@ -111,7 +111,6 @@ import { appearanceIcon, canvasModeIcon, lockIcon, pinIcon } from "./projectCont
 import { normalizeNodeNote } from "../content/nodeNoteState";
 import { createTodoMenuDescriptor } from "../ui/nodeContentMenu";
 import { CanvasRightDragController } from "./canvasRightDrag";
-import { LiveNodeWidthLayoutController } from "./liveNodeWidthLayout";
 import { scheduleFocusedNodeHighlight } from "./focusHighlight";
 import { EditingSurfaceCoordinator, shouldPassivelySyncOutline } from "./editingSurfaceCoordinator";
 import {
@@ -240,7 +239,6 @@ export class YeMindEditor {
   private toolbarVisibility: ToolbarVisibilityController | null = null;
   private resourceActionPopover: ResourceActionPopover | null = null;
   private canvasRightDrag: CanvasRightDragController | null = null;
-  private liveNodeWidthLayout: LiveNodeWidthLayoutController | null = null;
   private contextMenuSelectionSnapshot: { nodes: any[]; target: any } | null = null;
   private contextMenuResourceSnapshot: ClipboardImageResource | null = null;
   private cancelFocusedNodeHighlight: (() => void) | null = null;
@@ -848,8 +846,6 @@ export class YeMindEditor {
     this.nodeQuickActions = null;
     this.canvasRightDrag?.destroy();
     this.canvasRightDrag = null;
-    this.liveNodeWidthLayout?.destroy();
-    this.liveNodeWidthLayout = null;
     this.cancelFocusedNodeHighlight?.();
     this.cancelFocusedNodeHighlight = null;
     this.rootEl?.removeEventListener("keydown", this.onRootKeydown, true);
@@ -1129,7 +1125,6 @@ export class YeMindEditor {
           ),
       });
     }
-    this.liveNodeWidthLayout = new LiveNodeWidthLayoutController(this.map);
     this.canvasRightDrag = new CanvasRightDragController({
       root: this.rootEl,
       map: this.map,

@@ -12,11 +12,6 @@ import {
 import { Image as SVGImage, SVG, A, G, Rect, Text } from '@svgdotjs/svg.js'
 import iconsSvg from '../../../svg/icons'
 import { noneRichTextNodeLineHeight } from '../../../constants/constant'
-import {
-  applyPlainTextLayoutAttributes,
-  createPlainTextLayoutResult
-} from './plainTextLayout'
-import { createNodeMeasurementCache } from './nodeMeasurementHost'
 
 // 测量svg文本宽高
 const measureText = (text, style) => {
@@ -172,7 +167,15 @@ function createRichTextNode(specifyText) {
   })
   // 测量文本大小
   if (!this.mindMap.commonCaches.measureRichtextNodeTextSizeEl) {
-    createNodeMeasurementCache(this.mindMap, 'richtext')
+    this.mindMap.commonCaches.measureRichtextNodeTextSizeEl =
+      document.createElement('div')
+    this.mindMap.commonCaches.measureRichtextNodeTextSizeEl.style.position =
+      'fixed'
+    this.mindMap.commonCaches.measureRichtextNodeTextSizeEl.style.left =
+      '-999999px'
+    this.mindMap.el.appendChild(
+      this.mindMap.commonCaches.measureRichtextNodeTextSizeEl
+    )
   }
   const div = this.mindMap.commonCaches.measureRichtextNodeTextSizeEl
   // 应用节点的文本样式
@@ -244,17 +247,14 @@ function createTextNode(specifyText) {
   const g = new G()
   const fontSize = this.getStyle('fontSize', false)
   const textAlign = this.getStyle('textAlign', false)
-  const hasCustomWidth = this.hasCustomWidth()
   // 文本超长自动换行
   let textArr = []
   if (!isUndef(text)) {
     textArr = String(text).split(/\n/gim)
   }
-  const hardLines = [...textArr]
-  const { textAutoWrapWidth, emptyTextMeasureHeightText } = this.mindMap.opt
-  const maxWidth = hasCustomWidth ? this.customTextWidth : textAutoWrapWidth
+  const { textAutoWrapWidth: maxWidth, emptyTextMeasureHeightText } =
+    this.mindMap.opt
   let isMultiLine = textArr.length > 1
-  let autoWrapped = false
   textArr.forEach((item, index) => {
     let arr = item.split('')
     let lines = []
@@ -274,7 +274,6 @@ function createTextNode(specifyText) {
     }
     if (lines.length > 1) {
       isMultiLine = true
-      autoWrapped = true
     }
     textArr[index] = lines.join('\n')
   })
@@ -296,15 +295,6 @@ function createTextNode(specifyText) {
       }[textAlign] || 'start'
     )
     this.style.text(node)
-    if (hasCustomWidth) {
-      node.x(
-        {
-          left: 0,
-          center: maxWidth / 2,
-          right: maxWidth
-        }[textAlign] || 0
-      )
-    }
     node.y(
       fontSize * noneRichTextNodeLineHeight * index +
         ((noneRichTextNodeLineHeight - 1) * fontSize) / 2
@@ -312,7 +302,6 @@ function createTextNode(specifyText) {
     g.add(node)
   })
   let { width, height } = g.bbox()
-  const inkWidth = Math.max(0, Number(width) || 0)
   // 如果文本为空，那么需要计算一个默认高度
   if (height <= 0) {
     const tmpNode = new Text().text(emptyTextMeasureHeightText)
@@ -320,21 +309,16 @@ function createTextNode(specifyText) {
     const tmpBbox = tmpNode.bbox()
     height = tmpBbox.height
   }
-  width = hasCustomWidth ? maxWidth : Math.min(Math.ceil(width), maxWidth)
+  width = Math.min(Math.ceil(width), maxWidth)
   height = Math.ceil(height)
-  const layout = createPlainTextLayoutResult({
-    node: g,
-    inkWidth,
-    wrapWidth: maxWidth,
-    contentWidth: width,
-    height,
-    hardLines,
-    visualLines: textArr,
-    autoWrapped
-  })
-  applyPlainTextLayoutAttributes(g, layout)
+  g.attr('data-width', width)
+  g.attr('data-height', height)
   g.attr('data-ismultiLine', isMultiLine || textArr.length > 1)
-  return layout
+  return {
+    node: g,
+    width,
+    height
+  }
 }
 
 //  创建超链接节点
@@ -566,7 +550,16 @@ function getNoteContentPosition() {
 // 测量自定义节点内容元素的宽高
 function measureCustomNodeContentSize(content) {
   if (!this.mindMap.commonCaches.measureCustomNodeContentSizeEl) {
-    createNodeMeasurementCache(this.mindMap, 'custom')
+    this.mindMap.commonCaches.measureCustomNodeContentSizeEl =
+      document.createElement('div')
+    this.mindMap.commonCaches.measureCustomNodeContentSizeEl.style.cssText = `
+      position: fixed;
+      left: -99999px;
+      top: -99999px;
+    `
+    this.mindMap.el.appendChild(
+      this.mindMap.commonCaches.measureCustomNodeContentSizeEl
+    )
   }
   this.mindMap.commonCaches.measureCustomNodeContentSizeEl.innerHTML = ''
   this.mindMap.commonCaches.measureCustomNodeContentSizeEl.appendChild(content)

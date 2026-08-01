@@ -1,4 +1,3 @@
-import { hasActiveNodeWidthDrag, LiveNodeWidthLayoutController } from '../../src/editor/liveNodeWidthLayout';
 import { shouldPassivelySyncOutline } from '../../src/editor/editingSurfaceCoordinator';
 import { markerCatalog, markerSvg } from '../../src/core/localAssetCatalogs';
 import { nodeInsertIcon, nodeStyleIcon } from '../../src/editor/projectControls';
@@ -6,43 +5,6 @@ import { nodeInsertIcon, nodeStyleIcon } from '../../src/editor/projectControls'
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
-
-const draggingChild = { isDragHandleMousedown: true, children: [] };
-const root = { isDragHandleMousedown: false, children: [{ isDragHandleMousedown: false, children: [draggingChild] }] };
-assert(hasActiveNodeWidthDrag(root), 'descendant width drag must trigger live layout');
-assert(!hasActiveNodeWidthDrag({ children: [{ children: [] }] }), 'idle tree must not trigger live layout');
-
-let mousemove: EventListener | null = null;
-let frameCallback: FrameRequestCallback | null = null;
-let renderCount = 0;
-let editorSyncCount = 0;
-const widthController = new LiveNodeWidthLayoutController(
-  {
-    renderer: { root },
-    richText: {
-      showTextEdit: true,
-      updateTextEditNode: () => { editorSyncCount += 1; },
-    },
-    render: (callback?: () => void) => {
-      renderCount += 1;
-      callback?.();
-    },
-  },
-  {
-    addEventListener: (_name: string, listener: EventListenerOrEventListenerObject) => { mousemove = listener as EventListener; },
-    removeEventListener: () => { mousemove = null; },
-  } as any,
-  {
-    request: (callback) => { frameCallback = callback; return 1; },
-    cancel: () => undefined,
-  },
-);
-mousemove?.({} as Event);
-if (renderCount !== 0 || !frameCallback) throw new Error('full layout must be animation-frame throttled');
-(frameCallback as FrameRequestCallback)(0);
-if (Number(renderCount) !== 0) throw new Error('drag frame must preserve the upstream local width draft without a full tree render');
-if (Number(editorSyncCount) !== 1) throw new Error('drag frame must keep the rich-text editor aligned');
-widthController.destroy();
 
 assert(shouldPassivelySyncOutline('canvas'), 'canvas activation must be passive');
 assert(shouldPassivelySyncOutline('none'), 'initial map activation must be passive');
@@ -58,8 +20,6 @@ assert(nodeInsertIcon('parent').includes('ymz-icon-insert-parent'), 'parent inse
 assert(nodeStyleIcon().includes('ymz-menu-icon') && nodeStyleIcon().includes('ymz-icon-node-style'), 'node style icon must use menu geometry');
 
 export default {
-  liveWidthDragDetected: true,
-  liveWidthLocalDraft: true,
   passiveCanvasOutlineSync: true,
   markerHitAreaClipped: true,
   insertionIcons: true,

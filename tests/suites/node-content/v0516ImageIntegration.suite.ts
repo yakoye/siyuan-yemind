@@ -7,7 +7,7 @@ const upstreamAdjust = readFileSync(resolve(process.cwd(), 'node_modules/simple-
 
 describe('v0.5.16 node image integration', () => {
   it('intercepts only image paste/drop and applies natural dimensions to the target node', () => {
-    expect(editor).toMatch(/addEventListener\(["']paste["'],\s*this\.onImagePaste\)/);
+    expect(editor).toMatch(/addEventListener\(["']paste["'],\s*this\.onImagePaste,\s*true\)/);
     expect(editor).toMatch(/addEventListener\(["']drop["'],\s*this\.onImageDrop\)/);
     expect(editor).toContain('loadImageFileSelection');
     expect(editor).toContain('findRenderedNodeAtClientPoint');
