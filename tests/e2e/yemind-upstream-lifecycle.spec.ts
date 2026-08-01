@@ -77,4 +77,37 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
     await expect(editor).toHaveText('上游生命周期连续输入123');
     expect(errors).toEqual([]);
   });
+
+  for (const shortcut of ['Tab', 'Enter'] as const) {
+    test(`${shortcut} creates one node through the upstream inserting editor with immediate text and caret`, async ({
+      page,
+      isMobile,
+    }) => {
+      test.skip(isMobile, 'desktop inserted-node lifecycle');
+      const errors = recordPageErrors(page);
+      await resetWebApp(page);
+      const shell = page.locator('.ymw-editor > .ymz-editor');
+      const nodes = shell.locator('.smm-node');
+      await nodes.first().click();
+      if (shortcut === 'Enter') {
+        await page.keyboard.press('Tab');
+        await expect(canvasEditor(page)).toBeFocused();
+        await shell.locator('[data-role="canvas"]').click({ position: { x: 24, y: 90 } });
+        await expect(canvasEditor(page)).toBeHidden();
+        await nodes.last().click();
+      }
+      const originalCount = await nodes.count();
+
+      await page.keyboard.press(shortcut);
+
+      const editor = canvasEditor(page);
+      await expect(editor).toBeVisible();
+      await expect(editor).toBeFocused();
+      await expect(editor).toHaveText('新节点');
+      await expect(nodes).toHaveCount(originalCount + 1);
+      await editor.pressSequentially('已编辑', { delay: 20 });
+      await expect(editor).toContainText('已编辑');
+      expect(errors).toEqual([]);
+    });
+  }
 });
