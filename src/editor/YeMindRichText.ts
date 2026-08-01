@@ -297,6 +297,28 @@ export default class YeMindRichText extends (BaseRichText as any) {
     ) return;
     this.scheduleOpeningFocusReclaim(sessionId);
   };
+  private readonly handleOpeningFocusIn = (event: FocusEvent): void => {
+    const sessionId = this.openingFocusSessionId;
+    const root = this.openingFocusRoot;
+    if (
+      !sessionId
+      || !root
+      || !this.showTextEdit
+      || !this.sessionCoordinator().isCurrent(sessionId)
+    ) return;
+    const target = event.target;
+    if (target === root || (target instanceof Node && root.contains(target))) return;
+
+    // SiYuan may programmatically restore focus to its RootWebArea after the
+    // node's dblclick transaction has already activated Quill. Waiting for a
+    // later animation frame leaves a real interval in which the user's first
+    // keystroke is delivered to the host instead of the editor. A pointer
+    // action ends this lease before focusin is dispatched, so only an
+    // unaccompanied/programmatic host claim is rejected synchronously here.
+    root.focus({ preventScroll: true });
+    const range = this.range ?? this.pasteUseRange;
+    if (range) this.quill?.setSelection(range.index, range.length, Quill.sources.SILENT);
+  };
 
   private sessionCoordinator(): CanvasEditSessionCoordinator {
     this.editSessions ??= new CanvasEditSessionCoordinator();
@@ -884,6 +906,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.openingFocusSessionId = sessionId;
     this.openingFocusRoot = this.quill?.root as HTMLElement | null;
     window.addEventListener('pointerdown', this.handleOpeningFocusPointerDown, true);
+    window.addEventListener('focusin', this.handleOpeningFocusIn, true);
     window.addEventListener('blur', this.handleOpeningFocusWindowBlur);
     this.openingFocusRoot?.addEventListener('focusout', this.handleOpeningFocusOut);
     this.scheduleOpeningFocusReclaim(sessionId);
@@ -925,6 +948,7 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.openingFocusRoot?.removeEventListener('focusout', this.handleOpeningFocusOut);
     this.openingFocusRoot = null;
     window.removeEventListener?.('pointerdown', this.handleOpeningFocusPointerDown, true);
+    window.removeEventListener?.('focusin', this.handleOpeningFocusIn, true);
     window.removeEventListener?.('blur', this.handleOpeningFocusWindowBlur);
   }
 

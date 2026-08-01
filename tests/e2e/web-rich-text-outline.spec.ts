@@ -739,6 +739,34 @@ test('YM-TEXT-028 double-click owns focus after the host restores RootWebArea fo
   await expect(textEditor).toContainText('X');
 });
 
+test('YM-TEXT-029 active canvas editing rejects a programmatic host focus claim synchronously', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop SiYuan synchronous focus handoff regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeVisible();
+  await expect(textEditor).toBeFocused();
+
+  const reclaimedInSameTask = await page.evaluate(() => {
+    const focusProxy = document.createElement('div');
+    focusProxy.tabIndex = -1;
+    focusProxy.dataset.siyuanRootFocusProxy = 'same-task';
+    document.body.appendChild(focusProxy);
+    focusProxy.focus({ preventScroll: true });
+    const editorRoot = document.querySelector<HTMLElement>(
+      '.ymw-editor > .ymz-editor .smm-richtext-node-edit-wrap .ql-editor',
+    );
+    return document.activeElement === editorRoot;
+  });
+
+  expect(reclaimedInSameTask).toBe(true);
+  await page.keyboard.type('K');
+  await expect(textEditor).toContainText('K');
+});
+
 test('a newly inserted child receives one stable final editor placement', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop inserted-node placement regression');
   await resetWebApp(page);
