@@ -18,3 +18,4 @@ import '../suites/rich-text-editing/v151RenderLifecycle.suite';
 import '../suites/rich-text-editing/v160CanvasEditSession.suite';
 import '../suites/rich-text-editing/v181AtomicCanvasEditorOpening.suite';
 import '../suites/rich-text-editing/v190PlainTextLayoutContract.suite';
+import '../suites/rich-text-editing/v190UpstreamRuntimeTextData.suite';

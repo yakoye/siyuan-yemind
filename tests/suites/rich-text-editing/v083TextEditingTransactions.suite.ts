@@ -51,9 +51,9 @@ function mountMap(data: any) {
 }
 
 describe('v0.8.3 canvas text editing transactions', () => {
-  it('keeps canonical plain multiline data plain when the rich-text plugin initializes', () => {
+  it('keeps the canonical source unchanged while the runtime uses upstream rich-text blocks', async () => {
     const multiline = 'Detect\n↓\nPolling\n↓\nConfiguration\n↓\nRecovery\n↓\nL0';
-    const { root, map } = mountMap({
+    const source = {
       data: {
         text: multiline,
         uid: 'root',
@@ -61,19 +61,22 @@ describe('v0.8.3 canvas text editing transactions', () => {
         yemindTextEdited: true,
       },
       children: [],
-    });
+    };
+    const { root, map } = mountMap(source);
+    await waitForMapRender(map);
 
     expect(map.getData(false).data).toMatchObject({
       uid: 'root',
-      text: multiline,
-      richText: false,
+      text: '<p>Detect</p><p>↓</p><p>Polling</p><p>↓</p><p>Configuration</p><p>↓</p><p>Recovery</p><p>↓</p><p>L0</p>',
+      richText: true,
     });
+    expect(source.data).toMatchObject({ text: multiline, richText: false });
 
     map.destroy();
     root.remove();
   });
 
-  it('does not rewrite plain nodes when another canonical tree is installed', () => {
+  it('normalizes a newly installed canonical tree without losing hard line breaks', async () => {
     const { root, map } = mountMap({
       data: { text: 'Root', uid: 'root', richText: false },
       children: [],
@@ -87,18 +90,19 @@ describe('v0.8.3 canvas text editing transactions', () => {
         children: [],
       }],
     });
+    await waitForMapRender(map);
 
     expect(map.getData(false).children[0].data).toMatchObject({
       uid: 'flow',
-      text: multiline,
-      richText: false,
+      text: '<p>配置空间读写</p><p>↓</p><p>BAR 寄存器读写</p><p>↓</p><p>DMA 双向传输</p>',
+      richText: true,
     });
 
     map.destroy();
     root.remove();
   });
 
-  it('uses customTextWidth when rendering a canonical plain-text node', async () => {
+  it('uses customTextWidth on the shared upstream HTML text box', async () => {
     const { root, map } = mountMap({
       data: {
         text: 'LTSSM 状态读取及历史记录；当前 Link Speed、Link Width；Lane 状态和 PHY PLL/CDR 状态',
@@ -112,15 +116,8 @@ describe('v0.8.3 canvas text editing transactions', () => {
     await waitForMapRender(map);
 
     expect(map.renderer.root.customTextWidth).toBe(45);
-    expect(map.renderer.root._textData.width).toBe(45);
-    expect(map.renderer.root._textData.wrapWidth).toBe(45);
-    expect(map.renderer.root._textData.contentWidth).toBe(45);
-    expect(map.renderer.root._textData.node.attr()).toMatchObject({
-      'data-width': 45,
-      'data-wrap-width': 45,
-      'data-content-width': 45,
-      'data-auto-wrapped': 'true',
-    });
+    expect(map.renderer.root.getData('richText')).toBe(true);
+    expect(map.renderer.root._textData.node.node.querySelector('.smm-richtext-node-wrap')?.style.width).toBe('45px');
 
     const rendered = new Promise<void>((resolve) => {
       const onRenderEnd = () => {
@@ -134,9 +131,7 @@ describe('v0.8.3 canvas text editing transactions', () => {
     await rendered;
 
     expect(map.renderer.root.nodeData.data.customTextWidth).toBe(90);
-    expect(map.renderer.root._textData.width).toBe(90);
-    expect(map.renderer.root._textData.wrapWidth).toBe(90);
-    expect(map.renderer.root._textData.contentWidth).toBe(90);
+    expect(map.renderer.root._textData.node.node.querySelector('.smm-richtext-node-wrap')?.style.width).toBe('90px');
 
     map.destroy();
     root.remove();

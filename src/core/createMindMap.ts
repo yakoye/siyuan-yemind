@@ -15,6 +15,7 @@ import { buildThemeConfig, detectAppearance, type YeMindLineStyle } from './them
 import { configureThemeColorRuntime, installThemeColorRuntime } from './themeColorRuntime';
 import { stabilizeMindMapMeasurementHost } from './measurementHost';
 import { installHistoryTransactionCoordinator } from './historyTransactionCoordinator';
+import { normalizeTreeForUpstreamRichText } from './upstreamRichTextData';
 
 export interface CreateMindMapOptions {
   el: HTMLElement;
@@ -58,13 +59,14 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
   const viewData = settings?.restoreSavedView === false
     ? undefined
     : normalizePersistedViewData(options.viewData);
+  const runtimeData = normalizeTreeForUpstreamRichText(options.data);
 
   const editorRoot = options.el.closest<HTMLElement>('.ymz-editor') ?? options.el;
 
   const mindMap = new MindMap({
     el: options.el,
     customInnerElsAppendTo: editorRoot,
-    data: options.data,
+    data: runtimeData,
     viewData,
     theme: 'default',
     themeConfig: appearance.themeConfig,

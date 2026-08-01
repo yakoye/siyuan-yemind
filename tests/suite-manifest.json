@@ -38,6 +38,7 @@
     "v160CanvasEditSession.suite.ts",
     "v181AtomicCanvasEditorOpening.suite.ts"
     ,"v190PlainTextLayoutContract.suite.ts"
+    ,"v190UpstreamRuntimeTextData.suite.ts"
   ],
   "styles-themes": [
     "colorPresentation.suite.ts",

@@ -17,6 +17,7 @@ import {
   snapshotRect,
   type ResolvedTextRect,
 } from './richTextGeometry';
+import { normalizeTreeForUpstreamRichTextInPlace } from '../core/upstreamRichTextData';
 import {
   CanvasEditSessionCoordinator,
   type CanvasEditSessionSnapshot,
@@ -376,21 +377,15 @@ export default class YeMindRichText extends (BaseRichText as any) {
     return sessions.acceptSelection(sessions.snapshot().id);
   }
 
-  /**
-   * The upstream RichText plugin migrates every plain node to `richText: true`
-   * when it is constructed and whenever a new tree is installed. YeMind keeps
-   * plain and formatted nodes in one canonical model, so that implicit
-   * migration destroys native line breaks and changes node measurement after
-   * a collapse, reload, or first edit.
-   *
-   * Rich text is enabled only by an actual formatting edit. Loading or
-   * replacing a tree must be identity-preserving.
-   */
   handleDataToRichTextOnInit(): void {
-    // Intentionally keep the repository model unchanged.
+    const tree = this.mindMap.renderer.renderTree ?? this.mindMap.opt.data;
+    if (tree) normalizeTreeForUpstreamRichTextInPlace(tree);
   }
 
   handleSetData<T>(data: T): T {
+    if (data && typeof data === 'object') {
+      normalizeTreeForUpstreamRichTextInPlace(data as any);
+    }
     return data;
   }
 
