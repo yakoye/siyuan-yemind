@@ -187,6 +187,7 @@ export class NodeQuickActionsController {
   private readonly layer: HTMLElement;
   private frame: number | null = null;
   private geometryFrame: number | null = null;
+  private editSuppressed = false;
   private hideTimer: number | null = null;
   private hoveredUid: string | null = null;
   private readonly nodeElementToUid = new Map<Element, string>();
@@ -208,6 +209,8 @@ export class NodeQuickActionsController {
     this.options.canvas.addEventListener('pointerover', this.onCanvasPointerOver);
     this.options.canvas.addEventListener('pointerout', this.onCanvasPointerOut);
     this.bindViewportTracking();
+    this.options.viewportEventSource?.on?.('node_dragging', this.onNodeDraggingStart);
+    this.options.viewportEventSource?.on?.('node_dragend', this.onNodeDragEnd);
   }
 
   destroy(): void {
@@ -225,6 +228,26 @@ export class NodeQuickActionsController {
     this.nodeElementToUid.clear();
     this.renderedActionTargets.clear();
     this.lastKnownSideByUid.clear();
+  }
+
+  suppress(): void {
+    this.editSuppressed = true;
+    this.layer.style.visibility = 'hidden';
+    this.stopGeometryTracking();
+  }
+
+  // resume() does not check whether a node drag is in progress before
+  // unconditionally restoring visibility. This relies on an implicit
+  // assumption: the hide_text_edit event that triggers resume() and the
+  // mousemove-past-threshold gesture that triggers node_dragging do not
+  // overlap in the current interaction timelines. If that ever stops holding
+  // -- e.g. a future interaction path can close text editing mid-drag -- this
+  // needs to be revisited (mirror the editSuppressed guard used by
+  // onNodeDraggingStart/onNodeDragEnd, or track drag state explicitly here).
+  resume(): void {
+    this.editSuppressed = false;
+    this.layer.style.visibility = '';
+    this.scheduleRefresh();
   }
 
   scheduleRefresh(): void {
@@ -317,10 +340,24 @@ export class NodeQuickActionsController {
     ['translate', 'scale', 'resize', 'view_data_change'].forEach((name) => {
       this.options.viewportEventSource?.off?.(name, this.onViewportChange);
     });
+    this.options.viewportEventSource?.off?.('node_dragging', this.onNodeDraggingStart);
+    this.options.viewportEventSource?.off?.('node_dragend', this.onNodeDragEnd);
   }
 
   private readonly onViewportChange = (): void => {
     this.startGeometryTracking();
+  };
+
+  private readonly onNodeDraggingStart = (): void => {
+    if (this.editSuppressed) return;
+    this.layer.style.visibility = 'hidden';
+    this.stopGeometryTracking();
+  };
+
+  private readonly onNodeDragEnd = (): void => {
+    if (this.editSuppressed) return;
+    this.layer.style.visibility = '';
+    this.scheduleRefresh();
   };
 
   private startGeometryTracking(): void {
@@ -350,7 +387,6 @@ export class NodeQuickActionsController {
       if (target.element.style.left !== left) target.element.style.left = left;
       if (target.element.style.top !== top) target.element.style.top = top;
     }
-    this.startGeometryTracking();
   };
 
   private eventNodeUid(event: PointerEvent): string | null {

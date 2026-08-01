@@ -284,7 +284,7 @@ it('tracks every viewport transform with one non-starving refresh per animation 
   expect(canvas.querySelector<HTMLElement>('[data-node-uid="a"]')?.style.left).toBe('345px');
 
   controller.destroy();
-  expect(viewportEventSource.off).toHaveBeenCalledTimes(4);
+  expect(viewportEventSource.off).toHaveBeenCalledTimes(6);
   requestFrame.mockRestore();
   cancelFrame.mockRestore();
   root.remove();
@@ -420,7 +420,7 @@ it('tracks host ancestor scrolling when the canvas transform does not change', (
   scrollHost.remove();
 });
 
-it('tracks painted node geometry continuously without renderer or host events', () => {
+it('tracks painted node geometry once per external trigger, not continuously', () => {
   const root = document.createElement('div');
   const canvas = document.createElement('div');
   const liveElement = document.createElement('div');
@@ -474,8 +474,157 @@ it('tracks painted node geometry continuously without renderer or host events', 
   nodeTop = 150;
   frames.shift()?.(performance.now());
 
+  // The one-shot geometry sync updates the painted position from the new
+  // getBoundingClientRect() reading...
   expect(canvas.querySelector<HTMLElement>('[data-node-uid="a"]')!.style.top).not.toBe(initialTop);
-  expect(frames).toHaveLength(1);
+  // ...but must not reschedule itself. Only an external trigger (a viewport
+  // event, drag event, or another refresh()) should queue the next frame.
+  expect(frames).toHaveLength(0);
+
+  controller.destroy();
+  requestFrame.mockRestore();
+  cancelFrame.mockRestore();
+  root.remove();
+});
+
+it('keeps the quick actions layer hidden after a drag on another node ends while text editing is still suppressing it', () => {
+  // Regression: text editing on node A calls suppress() to hide the layer. If a
+  // concurrent drag gesture starts and ends on a *different* node B while A is
+  // still being edited, node_dragend must not blindly restore visibility --
+  // vendor node dragging and text-edit suppression are independent event
+  // streams and dragend has no way to know editing finished first.
+  const root = document.createElement('div');
+  const canvas = document.createElement('div');
+  root.appendChild(canvas);
+  document.body.appendChild(root);
+  Object.defineProperty(canvas, 'getBoundingClientRect', {
+    value: () => ({ left: 100, top: 80, right: 900, bottom: 680, width: 800, height: 600, x: 100, y: 80, toJSON() {} }),
+  });
+  const liveElement = document.createElement('div');
+  Object.defineProperty(liveElement, 'getBoundingClientRect', {
+    value: () => ({ left: 360, top: 260, right: 460, bottom: 300, width: 100, height: 40, x: 360, y: 260, toJSON() {} }),
+  });
+  const liveNode: any = {
+    isRoot: false,
+    children: [],
+    nodeData: { children: [] },
+    group: { node: liveElement },
+    getData: (key: string) => ({ uid: 'a', expand: true, isActive: true } as any)[key],
+  };
+  const listeners = new Map<string, Set<(...args: any[]) => void>>();
+  const viewportEventSource = {
+    on: vi.fn((name: string, listener: (...args: any[]) => void) => {
+      if (!listeners.has(name)) listeners.set(name, new Set());
+      listeners.get(name)!.add(listener);
+    }),
+    off: vi.fn((name: string, listener: (...args: any[]) => void) => {
+      listeners.get(name)?.delete(listener);
+    }),
+  };
+  const controller = new NodeQuickActionsController({
+    root,
+    canvas,
+    viewportEventSource,
+    getRendererRoot: () => liveNode,
+    getActiveNodes: () => [liveNode],
+    readonly: () => false,
+    onAddChild: vi.fn(),
+    onSetExpanded: vi.fn(),
+  });
+  controller.refresh();
+
+  const layer = canvas.querySelector<HTMLElement>('.ymz-node-quick-actions-layer')!;
+
+  // Node A enters text editing: the editor suppresses the quick-actions layer.
+  controller.suppress();
+  expect(layer.style.visibility).toBe('hidden');
+
+  // Node B (a different node) is dragged concurrently while A is still being edited.
+  listeners.get('node_dragging')?.forEach((listener) => listener());
+  listeners.get('node_dragend')?.forEach((listener) => listener());
+
+  // The layer must remain hidden: text editing on node A has not ended.
+  expect(layer.style.visibility).toBe('hidden');
+
+  // Once editing genuinely ends, resume() restores visibility as normal.
+  controller.resume();
+  expect(layer.style.visibility).toBe('');
+
+  controller.destroy();
+  root.remove();
+});
+
+it('hides the quick actions layer during a plain node drag with no text editing involved, and restores it after drag ends', () => {
+  // Task 6's core behavior: dragging any node -- independent of text editing --
+  // hides the quick-actions layer while it moves and restores + refreshes it once
+  // the drag ends. The suppress()/resume() text-editing interaction is covered by
+  // the test above; this exercises the drag path on its own, with suppress()
+  // never called.
+  const root = document.createElement('div');
+  const canvas = document.createElement('div');
+  root.appendChild(canvas);
+  document.body.appendChild(root);
+  Object.defineProperty(canvas, 'getBoundingClientRect', {
+    value: () => ({ left: 100, top: 80, right: 900, bottom: 680, width: 800, height: 600, x: 100, y: 80, toJSON() {} }),
+  });
+  const liveElement = document.createElement('div');
+  Object.defineProperty(liveElement, 'getBoundingClientRect', {
+    value: () => ({ left: 360, top: 260, right: 460, bottom: 300, width: 100, height: 40, x: 360, y: 260, toJSON() {} }),
+  });
+  const liveNode: any = {
+    isRoot: false,
+    children: [],
+    nodeData: { children: [] },
+    group: { node: liveElement },
+    getData: (key: string) => ({ uid: 'a', expand: true, isActive: true } as any)[key],
+  };
+  const listeners = new Map<string, Set<(...args: any[]) => void>>();
+  const viewportEventSource = {
+    on: vi.fn((name: string, listener: (...args: any[]) => void) => {
+      if (!listeners.has(name)) listeners.set(name, new Set());
+      listeners.get(name)!.add(listener);
+    }),
+    off: vi.fn((name: string, listener: (...args: any[]) => void) => {
+      listeners.get(name)?.delete(listener);
+    }),
+  };
+  const frames: FrameRequestCallback[] = [];
+  const requestFrame = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+    frames.push(callback);
+    return frames.length;
+  });
+  const cancelFrame = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
+  const controller = new NodeQuickActionsController({
+    root,
+    canvas,
+    viewportEventSource,
+    getRendererRoot: () => liveNode,
+    getActiveNodes: () => [liveNode],
+    readonly: () => false,
+    onAddChild: vi.fn(),
+    onSetExpanded: vi.fn(),
+  });
+  controller.refresh();
+  const layer = canvas.querySelector<HTMLElement>('.ymz-node-quick-actions-layer')!;
+  expect(layer.style.visibility).toBe('');
+  // refresh() above already queued a one-shot geometry-tracking frame; discard it
+  // so the frame count below only reflects what the drag lifecycle schedules.
+  frames.length = 0;
+
+  // A plain node drag starts. suppress() was never called, so this is not a
+  // text-editing interaction -- it must still hide the layer.
+  listeners.get('node_dragging')?.forEach((listener) => listener());
+  expect(layer.style.visibility).toBe('hidden');
+
+  // The drag ends: visibility is restored and a refresh is scheduled for the
+  // next frame (scheduleRefresh() -> requestAnimationFrame).
+  listeners.get('node_dragend')?.forEach((listener) => listener());
+  expect(layer.style.visibility).toBe('');
+  expect(frames.length).toBeGreaterThan(0);
+
+  // Running the scheduled frame actually refreshes the rendered actions.
+  frames.shift()?.(performance.now());
+  expect(canvas.querySelector<HTMLElement>('[data-node-uid="a"]')).not.toBeNull();
 
   controller.destroy();
   requestFrame.mockRestore();

@@ -258,14 +258,12 @@ export default class YeMindRichText extends (BaseRichText as any) {
   private lastValidNodeRect: DOMRect | null = null;
   private lastRectSource: ResolvedTextRect['source'] | 'show-parameter' | 'last-valid' | 'none' = 'none';
   private placementFrame: number | null = null;
-  private placementMonitorFrame: number | null = null;
   private placementTracking = false;
   private placementResizeObserver: ResizeObserver | null = null;
   private lastAlignedSessionId = 0;
   private openingFocusFrame: number | null = null;
   private openingFocusSessionId = 0;
   private openingFocusAttempts = 0;
-  private pasteTransactionPending = false;
   private readonly handlePlacementInvalidation = (): void => {
     if (!this.showTextEdit) return;
     this.schedulePlacementStabilization();
@@ -390,7 +388,14 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.bindTextEditingKeyboard();
     this.bindPlacementTracking();
     this.reconcileEditorPlacement(sessionId);
-    this.startPlacementMonitor(sessionId);
+    // A newly inserted node can emit node_dblclick before the browser flushes
+    // its final group transform (see schedulePlacementStabilization's own
+    // comment). One synchronous pass above plus one more scheduled frame here
+    // covers that without a permanent per-frame monitor: every other geometry
+    // change is already covered by bindPlacementTracking's event subscriptions
+    // (resize/scale/translate/node_tree_render_end/view_data_change) and by the
+    // width-drag frame loop in liveNodeWidthLayout.ts.
+    this.schedulePlacementStabilization();
     this.emitEditingDiagnostic('opened', {
       liveNodeResolved: Boolean(liveNode && liveNode !== sourceNode),
       rectSource: this.lastRectSource,
@@ -820,29 +825,6 @@ export default class YeMindRichText extends (BaseRichText as any) {
   }
 
   /**
-   * SVG layout and the detached HTML editor are painted by different runtime
-   * layers. A render, fit, host resize or width draft can settle after the
-   * event which opened the editor. Keep one session-scoped geometry monitor
-   * alive while editing so every painted HTML frame remains anchored to the
-   * current renderer node; stale callbacks from an earlier node are rejected
-   * by the monotonically increasing session id.
-   */
-  private startPlacementMonitor(sessionId: number): void {
-    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') return;
-    if (this.placementMonitorFrame !== null) {
-      window.cancelAnimationFrame(this.placementMonitorFrame);
-      this.placementMonitorFrame = null;
-    }
-    const tick = (): void => {
-      this.placementMonitorFrame = null;
-      if (!this.showTextEdit || !this.sessionCoordinator().isCurrent(sessionId)) return;
-      this.reconcileEditorPlacement(sessionId);
-      this.placementMonitorFrame = window.requestAnimationFrame(tick);
-    };
-    this.placementMonitorFrame = window.requestAnimationFrame(tick);
-  }
-
-  /**
    * A newly inserted node can emit `node_dblclick` from inside the SVG render
    * stack before the browser has flushed its final group transform. The first
    * rectangle can therefore point at the canvas origin even though the node is
@@ -884,10 +866,6 @@ export default class YeMindRichText extends (BaseRichText as any) {
     window.removeEventListener('resize', this.handlePlacementInvalidation);
     this.placementResizeObserver?.disconnect();
     this.placementResizeObserver = null;
-    if (this.placementMonitorFrame !== null) {
-      window.cancelAnimationFrame?.(this.placementMonitorFrame);
-      this.placementMonitorFrame = null;
-    }
   }
 
   private cancelPlacementStabilization(): void {
@@ -1128,7 +1106,6 @@ export default class YeMindRichText extends (BaseRichText as any) {
         this.lastRange = null;
       }
       this.sessionCoordinator().advanceRevision(quillSessionId);
-      this.emitLiveTextEditChange(this.pasteTransactionPending ? 'paste' : 'input');
     });
 
     this.quill.clipboard.addMatcher(Node.ELEMENT_NODE, (_node: Node, delta: any) => {
@@ -1144,26 +1121,9 @@ export default class YeMindRichText extends (BaseRichText as any) {
     });
 
     this.quill.root.addEventListener('paste', (event: ClipboardEvent) => {
-      this.pasteTransactionPending = true;
       if (event.clipboardData?.files?.length) event.preventDefault();
-      // Quill handles the same event synchronously in its bubble listener and
-      // emits `text-change` before this task ends. Keep the marker alive for
-      // that one transaction, then clear it without scheduling a second render.
-      queueMicrotask(() => {
-        this.pasteTransactionPending = false;
-      });
     }, true);
   }
-
-  private emitLiveTextEditChange(reason: 'paste' | 'input'): void {
-    this.mindMap.emit('node_text_edit_change', {
-      node: this.node,
-      text: this.getEditText(),
-      richText: true,
-      reason,
-    });
-  }
-
 
   private bindCanvasInteractionIsolation(): void {
     const host = this.textEditNode as HTMLElement | null;

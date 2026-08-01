@@ -1150,6 +1150,13 @@
 }
 .ymz-editor .smm-richtext-node-edit-wrap .ql-container,
 .ymz-editor .smm-richtext-node-edit-wrap .ql-editor{background:transparent!important}
+.ymz-editor .smm-richtext-node-edit-wrap .ql-container,
+.ymz-editor .smm-richtext-node-edit-wrap .ql-editor{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  line-height:inherit;
+}
 
 /* v0.9.11 anchored style panels and flush node quick actions */
 .ymz-node-quick-actions{gap:0!important}

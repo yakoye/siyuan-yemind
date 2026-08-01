@@ -139,10 +139,7 @@ import { normalizeStudyCards } from '../review/studyCards';
 import { normalizeStudyCardSource } from '../review/studyCardSource';
 import { MiniMapController } from './MiniMapController';
 import { bindCanvasNodeClipboard } from './nodeClipboard';
-import {
-  RenderLifecycleCoordinator,
-  type RenderTextEditPayload,
-} from './RenderLifecycleCoordinator';
+import { RenderedTextGeometryRepair } from './RenderedTextGeometryRepair';
 import {
   readImageResourceFromTransfer,
   writeImageResourceToClipboard,
@@ -272,7 +269,7 @@ export class YeMindEditor {
   private appearanceController: AppearanceController | null = null;
   private studyPanel: StudyPanelController | null = null;
   private miniMapController: MiniMapController | null = null;
-  private renderLifecycle: RenderLifecycleCoordinator | null = null;
+  private renderLifecycle: RenderedTextGeometryRepair | null = null;
   private unbindCanvasNodeClipboard: (() => void) | null = null;
   private studyMode: StudyPanelMode | null = null;
   private presentationState: {
@@ -1097,7 +1094,7 @@ export class YeMindEditor {
         return inserted;
       },
     });
-    this.renderLifecycle = new RenderLifecycleCoordinator(this.map, () => {
+    this.renderLifecycle = new RenderedTextGeometryRepair(this.map, () => {
       synchronizeCanvasRichTextVisibility(this.map as any);
       this.nodeQuickActions?.scheduleRefresh();
       this.miniMapController?.refresh();
@@ -2104,6 +2101,7 @@ export class YeMindEditor {
       this.canvasRightDrag?.cancel();
       queueMicrotask(() => synchronizeCanvasRichTextVisibility(this.map as any));
       window.requestAnimationFrame(() => synchronizeCanvasRichTextVisibility(this.map as any));
+      this.nodeQuickActions?.suppress();
     });
     this.map.on("yemind_text_edit_diagnostic", (payload: { action?: string; details?: Record<string, unknown> }) => {
       this.options.diagnostics.record(
@@ -2116,23 +2114,15 @@ export class YeMindEditor {
     this.map.on("yemind_text_edit_ready", () => {
       synchronizeCanvasRichTextVisibility(this.map as any);
     });
-    this.map.on('node_text_edit_change', (payload: RenderTextEditPayload) => {
-      this.renderLifecycle?.scheduleTextEdit(payload);
-    });
     this.map.on('hide_text_edit', () => {
-      // hideEditText() already read the editor's current text and committed it
-      // authoritatively (SET_NODE_TEXT + a full render when it actually
-      // changed) before emitting this event. A debounced live-edit commit can
-      // still be in flight at that point (see RenderLifecycleCoordinator's
-      // commit debounce) and can hold an older snapshot of the text than what
-      // hideEditText() just committed -- flushing it here would replay that
-      // stale snapshot over the authoritative one. Discard it instead of
-      // flushing it.
-      this.renderLifecycle?.invalidate();
+      // The live-edit commit path (and everything it could leave pending) was
+      // removed; hideEditText() already committed the final text authoritatively
+      // via SET_NODE_TEXT before this event fired. Nothing to invalidate here.
       // Closing an unchanged edit intentionally skips a map render. Restore
       // the static SVG text layer explicitly so switching nodes does not need
       // a redundant SET_NODE_TEXT transaction merely to repaint the old node.
       synchronizeCanvasRichTextVisibility(this.map as any);
+      this.nodeQuickActions?.resume();
     });
     this.map.on('node_tree_render_end', () => {
       this.renderLifecycle?.reconcileRenderedTextGeometry();

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createMindMap } from '../../../src/core/createMindMap';
 import { OutlineRichTextController } from '../../../src/editor/OutlineRichTextController';
 import { createDefaultTree } from '../../../src/model/defaultMap';
+import { isPristineNodeTextData } from '../../../src/editor/textEditingPolicy';
 
 function rect(left = 0, top = 0, width = 100, height = 30) {
   return { x: left, y: top, left, top, right: left + width, bottom: top + height, width, height, toJSON() {} } as DOMRect;
@@ -131,9 +132,9 @@ describe('v0.8.3 canvas text editing transactions', () => {
     root.remove();
   });
 
-  it.skip('positions the local editor over the node instead of using viewport coordinates inside the editor root', async () => {
+  it('positions the local editor over the node instead of using viewport coordinates inside the editor root', async () => {
     const { root, map } = mountMap({ data: { text: 'AXI 内存事务语义', uid: 'root', yemindTextEdited: true }, children: [] });
-    await new Promise((resolve) => setTimeout(resolve, 40));
+    await waitForMapRender(map);
     map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, clientX: 420, clientY: 270 }));
     await nextFrame();
 
@@ -150,9 +151,9 @@ describe('v0.8.3 canvas text editing transactions', () => {
     root.remove();
   });
 
-  it.skip('selects all text for a pristine/default node and leaves clipboard shortcuts in the text editor', async () => {
+  it('selects all text for a pristine/default node and leaves clipboard shortcuts in the text editor', async () => {
     const { root, map } = mountMap({ data: { text: '新节点', uid: 'root', yemindTextPristine: true }, children: [] });
-    await new Promise((resolve) => setTimeout(resolve, 40));
+    await waitForMapRender(map);
     map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     await nextFrame();
 
@@ -169,9 +170,9 @@ describe('v0.8.3 canvas text editing transactions', () => {
     root.remove();
   });
 
-  it.skip('places the caret at the end for an existing node and implements Ctrl+A locally', async () => {
+  it('places the caret at the end for an existing node and implements Ctrl+A locally', async () => {
     const { root, map } = mountMap({ data: { text: 'AXI 内存事务语义', uid: 'root', yemindTextEdited: true }, children: [] });
-    await new Promise((resolve) => setTimeout(resolve, 40));
+    await waitForMapRender(map);
     map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     await nextFrame();
 
@@ -194,6 +195,15 @@ describe('v0.8.3 canvas text editing transactions', () => {
     const tree = createDefaultTree('自定义标题');
     expect(tree.data.yemindTextPristine).toBe(true);
     expect(tree.children.every((node) => node.data.yemindTextPristine === true)).toBe(true);
+  });
+
+  it('places the caret at the end for an already-edited node and selects all for a pristine one', () => {
+    // selectTextOnEnterEditText is now false; isPristineNodeTextData is the
+    // only source of "select all on open" for a normal (non-keydown) entry.
+    const editedData = { text: '已经编辑过的内容', yemindTextEdited: true };
+    const pristineData = { text: '新节点', yemindTextEdited: false };
+    expect(isPristineNodeTextData(editedData)).toBe(false);
+    expect(isPristineNodeTextData(pristineData)).toBe(true);
   });
 });
 

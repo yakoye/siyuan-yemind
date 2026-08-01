@@ -441,10 +441,8 @@ describe('v0.9.16 direct image editing', () => {
     )).toEqual({ left: 30, top: 36.67, width: 50, height: 33.33 });
   });
 
-  it('selects all node text when entering edit mode and uses a 48px clipart box', () => {
-    const createSource = readFileSync('src/core/createMindMap.ts', 'utf8');
+  it('uses a 48px clipart box', () => {
     const geometrySource = readFileSync('src/core/clipartGeometry.ts', 'utf8');
-    expect(createSource).toContain('selectTextOnEnterEditText: true');
     expect(geometrySource).toContain('export const DEFAULT_CLIPART_BOX_SIZE = 48;');
   });
 
