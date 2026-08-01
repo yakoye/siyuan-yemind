@@ -468,6 +468,11 @@ export class YeMindEditor {
 
   private readonly onImagePaste = (event: ClipboardEvent): void => {
     if (!this.map || !this.commands || this.commands.isReadonly()) return;
+    const target = event.target;
+    const editHost = (this.map as any)?.richText?.textEditNode as Node | null | undefined;
+    const ownsPasteTarget = target instanceof Node
+      && (this.rootEl.contains(target) || Boolean(editHost?.contains(target)));
+    if (!ownsPasteTarget) return;
     const node = this.commands.getPrimaryNode();
     if (!node) return;
     const resource = readImageResourceFromTransfer(event.clipboardData);
@@ -850,7 +855,7 @@ export class YeMindEditor {
     this.rootEl?.removeEventListener("keydown", this.onRootKeydown, true);
     window.removeEventListener("keydown", this.onWindowTextSelectionKeydown, true);
     this.outlinePaneEl?.removeEventListener("keydown", this.onOutlineKeydownBubble);
-    this.rootEl?.removeEventListener("paste", this.onImagePaste);
+    document.removeEventListener("paste", this.onImagePaste, true);
     this.canvasEl?.removeEventListener("dragover", this.onImageDragOver);
     this.canvasEl?.removeEventListener("drop", this.onImageDrop);
     this.canvasEl?.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
@@ -1304,7 +1309,7 @@ export class YeMindEditor {
     });
     window.addEventListener("keydown", this.onWindowTextSelectionKeydown, true);
     this.rootEl.addEventListener("keydown", this.onRootKeydown, true);
-    this.rootEl.addEventListener("paste", this.onImagePaste);
+    document.addEventListener("paste", this.onImagePaste, true);
     this.canvasEl.addEventListener("dragover", this.onImageDragOver);
     this.canvasEl.addEventListener("drop", this.onImageDrop);
     this.canvasEl.addEventListener("pointerdown", this.onCanvasPointerDown, true);

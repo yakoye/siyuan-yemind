@@ -95,10 +95,18 @@ function semanticClasses(value: string): string {
 }
 
 function comparableClipboardText(value: string): string {
-  return value
+  const normalized = value
     .replace(/\r\n?/g, '\n')
     .replace(/[\t \u00a0]+$/gm, '')
     .replace(/\n+$/, '');
+  const lines = normalized.split('\n');
+  const indentation = lines
+    .filter((line) => line.trim().length > 0)
+    .map((line) => line.match(/^[\t \u00a0]*/)?.[0].length ?? 0);
+  const commonIndent = indentation.length > 0 ? Math.min(...indentation) : 0;
+  return commonIndent > 0
+    ? lines.map((line) => line.slice(Math.min(commonIndent, line.length))).join('\n')
+    : normalized;
 }
 
 function cloneTree(tree: MindMapTree, removeIdentity = false): MindMapTree {

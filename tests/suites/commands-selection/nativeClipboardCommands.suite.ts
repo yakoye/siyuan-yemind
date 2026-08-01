@@ -198,6 +198,27 @@ describe('shared node clipboard transactions', () => {
     expect(restored?.sourceSurface).toBe('canvas');
   });
 
+  it('matches an outline node payload when the browser preserves its absolute tree indentation', () => {
+    clearNodeClipboard();
+    const payload = createNodeClipboardPayload({
+      sourceDocumentId: 'doc-a',
+      sourceSurface: 'outline',
+      nodes: nodes(),
+    });
+    publishNodeClipboard(payload);
+    const absoluteOutlineText = nodeClipboardToOutline(payload).text
+      .split('\n')
+      .map((line) => `    ${line}`)
+      .join('\n');
+
+    const restored = readNodeClipboard({
+      getData: (type: string) => type === 'text/plain' ? absoluteOutlineText : '',
+    });
+
+    expect(restored?.nodes).toHaveLength(2);
+    expect(restored?.nodes[0].children[0].data.text).toBe('Alpha child');
+  });
+
   it('moves copied canvas nodes between open files through the shared adapter', async () => {
     clearNodeClipboard();
     const source: any = {
