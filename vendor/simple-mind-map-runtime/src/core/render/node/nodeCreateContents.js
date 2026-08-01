@@ -16,6 +16,7 @@ import {
   applyPlainTextLayoutAttributes,
   createPlainTextLayoutResult
 } from './plainTextLayout'
+import { createNodeMeasurementCache } from './nodeMeasurementHost'
 
 // 测量svg文本宽高
 const measureText = (text, style) => {
@@ -171,15 +172,7 @@ function createRichTextNode(specifyText) {
   })
   // 测量文本大小
   if (!this.mindMap.commonCaches.measureRichtextNodeTextSizeEl) {
-    this.mindMap.commonCaches.measureRichtextNodeTextSizeEl =
-      document.createElement('div')
-    this.mindMap.commonCaches.measureRichtextNodeTextSizeEl.style.position =
-      'fixed'
-    this.mindMap.commonCaches.measureRichtextNodeTextSizeEl.style.left =
-      '-999999px'
-    this.mindMap.el.appendChild(
-      this.mindMap.commonCaches.measureRichtextNodeTextSizeEl
-    )
+    createNodeMeasurementCache(this.mindMap, 'richtext')
   }
   const div = this.mindMap.commonCaches.measureRichtextNodeTextSizeEl
   // 应用节点的文本样式
@@ -573,16 +566,7 @@ function getNoteContentPosition() {
 // 测量自定义节点内容元素的宽高
 function measureCustomNodeContentSize(content) {
   if (!this.mindMap.commonCaches.measureCustomNodeContentSizeEl) {
-    this.mindMap.commonCaches.measureCustomNodeContentSizeEl =
-      document.createElement('div')
-    this.mindMap.commonCaches.measureCustomNodeContentSizeEl.style.cssText = `
-      position: fixed;
-      left: -99999px;
-      top: -99999px;
-    `
-    this.mindMap.el.appendChild(
-      this.mindMap.commonCaches.measureCustomNodeContentSizeEl
-    )
+    createNodeMeasurementCache(this.mindMap, 'custom')
   }
   this.mindMap.commonCaches.measureCustomNodeContentSizeEl.innerHTML = ''
   this.mindMap.commonCaches.measureCustomNodeContentSizeEl.appendChild(content)

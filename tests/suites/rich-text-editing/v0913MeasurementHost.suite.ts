@@ -1,180 +1,60 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { stabilizeMindMapMeasurementHost } from '../../../src/core/measurementHost';
+// The vendored runtime is JavaScript and intentionally has no internal d.ts files.
+// @ts-expect-error testing the runtime-owned measurement host contract directly
+import {
+  createNodeMeasurementCache,
+  removeNodeMeasurementHost,
+} from '../../../vendor/simple-mind-map-runtime/src/core/render/node/nodeMeasurementHost';
 
-describe('v0.9.13 hidden-tab rich-text measurement', () => {
+describe('v0.9.13 hidden-tab node measurement', () => {
   afterEach(() => {
-    document.querySelectorAll('[data-yemind-measurement-host]').forEach((node) => node.remove());
+    document.querySelectorAll('[data-smm-node-measurement-host]').forEach((node) => node.remove());
   });
 
-  it('moves measurement nodes out of a hidden canvas and removes the stable host before destroy', () => {
+  it('creates measurement caches in one stable body host even when the map is hidden', () => {
+    const editor = document.createElement('div');
+    editor.className = 'ymz-editor custom-theme';
     const canvas = document.createElement('div');
     canvas.style.display = 'none';
-    const rich = document.createElement('div');
-    const custom = document.createElement('div');
-    canvas.append(rich, custom);
-    document.body.append(canvas);
-    const render = vi.fn();
-    const reRender = vi.fn();
-    let beforeDestroy: (() => void) | null = null;
-    const map = {
-      commonCaches: {
-        measureRichtextNodeTextSizeEl: rich,
-        measureCustomNodeContentSizeEl: custom,
-      },
-      render,
-      reRender,
-      on: vi.fn((name: string, callback: () => void) => {
-        if (name === 'beforeDestroy') beforeDestroy = callback;
-      }),
-    };
+    editor.append(canvas);
+    document.body.append(editor);
+    const mindMap = { el: canvas, commonCaches: {} };
 
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => { callback(0); return 1; });
-    expect(stabilizeMindMapMeasurementHost(map, canvas)).toBe(true);
-    expect(rich.parentElement?.dataset.yemindMeasurementHost).toBe('true');
-    expect(custom.parentElement).toBe(rich.parentElement);
-    expect(reRender).toHaveBeenCalledWith(null, 'yemind-measurement-host');
-    expect(render).not.toHaveBeenCalled();
-    beforeDestroy?.();
-    expect(rich.isConnected).toBe(false);
-    expect(custom.isConnected).toBe(false);
-    canvas.remove();
+    const rich = createNodeMeasurementCache(mindMap, 'richtext');
+    const custom = createNodeMeasurementCache(mindMap, 'custom');
+    const host = rich.parentElement as HTMLElement;
+
+    expect(host).toBe(custom.parentElement);
+    expect(host.parentElement).toBe(document.body);
+    expect(canvas.contains(host)).toBe(false);
+    expect(host.dataset.smmNodeMeasurementHost).toBe('true');
+    expect(host.classList.contains('ymz-editor')).toBe(true);
+    expect(host.style.visibility).toBe('hidden');
+    expect(host.style.pointerEvents).toBe('none');
+
+    removeNodeMeasurementHost(mindMap);
+    expect(host.isConnected).toBe(false);
+    editor.remove();
   });
 
-  it('relocates cache elements that appear only after the first render', async () => {
-    const canvas = document.createElement('div');
-    document.body.append(canvas);
-    const callbacks = new Map<string, () => void>();
-    const map = {
-      commonCaches: {},
-      render: vi.fn(),
-      reRender: vi.fn(),
-      on: vi.fn((name: string, callback: () => void) => callbacks.set(name, callback)),
-    };
-
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => { callback(0); return 1; });
-    expect(stabilizeMindMapMeasurementHost(map, canvas)).toBe(false);
-    const rich = document.createElement('div');
-    canvas.append(rich);
-    map.commonCaches.measureRichtextNodeTextSizeEl = rich;
-    callbacks.get('node_tree_render_end')?.();
-
-    expect(rich.parentElement?.dataset.yemindMeasurementHost).toBe('true');
-    expect(rich.dataset.yemindMeasurementOwner).toBe('true');
-    expect(map.reRender).toHaveBeenCalledWith(null, 'yemind-measurement-host');
-    expect(map.render).not.toHaveBeenCalled();
-    callbacks.get('beforeDestroy')?.();
-    expect(rich.isConnected).toBe(false);
-    canvas.remove();
-  });
-
-  it('remeasures node geometry after web fonts finish loading', async () => {
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
-      callback(0);
-      return 1;
-    });
-    let resolveFonts!: () => void;
-    const fontsReady = new Promise<void>((resolve) => { resolveFonts = resolve; });
-    const originalFonts = Object.getOwnPropertyDescriptor(document, 'fonts');
-    Object.defineProperty(document, 'fonts', {
-      configurable: true,
-      value: { ready: fontsReady },
-    });
-    const canvas = document.createElement('div');
-    document.body.append(canvas);
-    const callbacks = new Map<string, () => void>();
-    const render = vi.fn();
-    const reRender = vi.fn();
-    const map = {
-      commonCaches: {},
-      render,
-      reRender,
-      on: vi.fn((name: string, callback: () => void) => callbacks.set(name, callback)),
-    };
-
-    stabilizeMindMapMeasurementHost(map, canvas);
-    callbacks.get('node_tree_render_end')?.();
-    resolveFonts();
-    await fontsReady;
-    await Promise.resolve();
-
-    expect(reRender).toHaveBeenCalledWith(null, 'yemind-fonts-ready');
-    expect(render).not.toHaveBeenCalled();
-    if (originalFonts) Object.defineProperty(document, 'fonts', originalFonts);
-    else delete (document as Document & { fonts?: FontFaceSet }).fonts;
-    canvas.remove();
-  });
-
-  it('waits for the first node render before repairing already-ready web fonts', async () => {
-    let resolveFonts!: () => void;
-    const fontsReady = new Promise<void>((resolve) => { resolveFonts = resolve; });
-    const originalFonts = Object.getOwnPropertyDescriptor(document, 'fonts');
-    Object.defineProperty(document, 'fonts', {
-      configurable: true,
-      value: { ready: fontsReady },
-    });
-    const callbacks = new Map<string, () => void>();
-    const reRender = vi.fn();
-    const map = {
-      commonCaches: {},
-      render: vi.fn(),
-      reRender,
-      on: vi.fn((name: string, callback: () => void) => callbacks.set(name, callback)),
-    };
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
-      callback(0);
-      return 1;
-    });
-
-    stabilizeMindMapMeasurementHost(map, document.body);
-    resolveFonts();
-    await fontsReady;
-    await Promise.resolve();
-
-    expect(reRender).not.toHaveBeenCalled();
-    callbacks.get('node_tree_render_end')?.();
-    expect(reRender).toHaveBeenCalledWith(null, 'yemind-fonts-ready');
-
-    callbacks.get('beforeDestroy')?.();
-    if (originalFonts) Object.defineProperty(document, 'fonts', originalFonts);
-    else delete (document as Document & { fonts?: FontFaceSet }).fonts;
-  });
-
-  it('does not remeasure a map destroyed before web fonts finish loading', async () => {
-    let resolveFonts!: () => void;
-    const fontsReady = new Promise<void>((resolve) => { resolveFonts = resolve; });
-    const originalFonts = Object.getOwnPropertyDescriptor(document, 'fonts');
-    Object.defineProperty(document, 'fonts', {
-      configurable: true,
-      value: { ready: fontsReady },
-    });
-    const callbacks = new Map<string, () => void>();
-    const render = vi.fn();
-    const map = {
-      commonCaches: {},
-      render,
-      on: vi.fn((name: string, callback: () => void) => callbacks.set(name, callback)),
-    };
-
-    stabilizeMindMapMeasurementHost(map, document.body);
-    callbacks.get('beforeDestroy')?.();
-    resolveFonts();
-    await fontsReady;
-    await Promise.resolve();
-
-    expect(render).not.toHaveBeenCalled();
-    if (originalFonts) Object.defineProperty(document, 'fonts', originalFonts);
-    else delete (document as Document & { fonts?: FontFaceSet }).fonts;
-  });
-
-  it('stabilizes the measurement host after map creation and before visible-canvas resize', () => {
+  it('does not retain the YeMind relocation and repair coordinator', () => {
     const factorySource = readFileSync(resolve(process.cwd(), 'src/core/createMindMap.ts'), 'utf8');
     const editorSource = readFileSync(resolve(process.cwd(), 'src/editor/YeMindEditor.ts'), 'utf8');
-    expect(factorySource).toContain('stabilizeMindMapMeasurementHost(mindMap as any, editorRoot)');
-    expect(editorSource).toContain('stabilizeMindMapMeasurementHost(this.map as any, this.rootEl)');
-    expect(editorSource.indexOf('stabilizeMindMapMeasurementHost(this.map as any, this.rootEl)'))
-      .toBeLessThan(editorSource.indexOf('this.map.resize()', editorSource.indexOf('stabilizeMindMapMeasurementHost(this.map as any, this.rootEl)')));
-  });
+    const runtimeSource = readFileSync(
+      resolve(process.cwd(), 'vendor/simple-mind-map-runtime/src/core/render/node/nodeCreateContents.js'),
+      'utf8',
+    );
+    const mindMapSource = readFileSync(
+      resolve(process.cwd(), 'vendor/simple-mind-map-runtime/index.js'),
+      'utf8',
+    );
 
+    expect(factorySource).not.toContain('stabilizeMindMapMeasurementHost');
+    expect(editorSource).not.toContain('stabilizeMindMapMeasurementHost');
+    expect(runtimeSource).toContain("createNodeMeasurementCache(this.mindMap, 'richtext')");
+    expect(runtimeSource).toContain("createNodeMeasurementCache(this.mindMap, 'custom')");
+    expect(mindMapSource).toContain('removeNodeMeasurementHost(this)');
+  });
 });

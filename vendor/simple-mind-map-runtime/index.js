@@ -28,6 +28,7 @@ import defaultTheme, {
   checkIsNodeSizeIndependenceConfig
 } from './src/theme/default'
 import { defaultOpt } from './src/constants/defaultOptions'
+import { removeNodeMeasurementHost } from './src/core/render/node/nodeMeasurementHost'
 
 //  思维导图
 class MindMap {
@@ -360,7 +361,8 @@ class MindMap {
   initCache() {
     this.commonCaches = {
       measureCustomNodeContentSizeEl: null,
-      measureRichtextNodeTextSizeEl: null
+      measureRichtextNodeTextSizeEl: null,
+      nodeMeasurementHostEl: null
     }
   }
 
@@ -756,6 +758,7 @@ class MindMap {
   // 销毁
   destroy() {
     this.emit('beforeDestroy')
+    removeNodeMeasurementHost(this)
     // 清除节点编辑框
     this.renderer.textEdit.hideEditTextBox()
     this.renderer.textEdit.removeTextEditEl()

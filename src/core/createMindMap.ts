@@ -13,7 +13,6 @@ import {
 } from '../editor/shortcutSafety';
 import { buildThemeConfig, detectAppearance, type YeMindLineStyle } from './themePresets';
 import { configureThemeColorRuntime, installThemeColorRuntime } from './themeColorRuntime';
-import { stabilizeMindMapMeasurementHost } from './measurementHost';
 import { installHistoryTransactionCoordinator } from './historyTransactionCoordinator';
 import { normalizeTreeForUpstreamRichText } from './upstreamRichTextData';
 
@@ -60,8 +59,6 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     ? undefined
     : normalizePersistedViewData(options.viewData);
   const runtimeData = normalizeTreeForUpstreamRichText(options.data);
-
-  const editorRoot = options.el.closest<HTMLElement>('.ymz-editor') ?? options.el;
 
   const mindMap = new MindMap({
     el: options.el,
@@ -124,7 +121,6 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
   } as any);
   disableUpstreamStructuralInsertShortcuts((mindMap as any).keyCommand);
   installHistoryTransactionCoordinator(mindMap as any, { seed: true });
-  stabilizeMindMapMeasurementHost(mindMap as any, editorRoot);
   installThemeColorRuntime(mindMap);
   configureThemeColorRuntime(mindMap, {
     appearance: appearance.colorAppearance,

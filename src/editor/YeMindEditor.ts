@@ -98,7 +98,6 @@ import { ProjectChoicePanel } from "../ui/projectChoicePanel";
 import { SymbolPicker } from '../ui/symbolPicker';
 import { openClipartPicker, openMarkerPicker } from "../ui/localAssetDialogs";
 import { normalizeLayoutAssetId } from "../core/layoutAssetPresets";
-import { stabilizeMindMapMeasurementHost } from "../core/measurementHost";
 import {
   DEFAULT_SEARCH_OPTIONS,
   setSearchReplaceExpanded,
@@ -3008,7 +3007,6 @@ export class YeMindEditor {
         return;
       }
       try {
-        stabilizeMindMapMeasurementHost(this.map as any, this.rootEl);
         this.map.resize();
         if (this.pendingAppearanceRefresh) this.applyMapAppearance(true);
         const pendingImport = this.pendingImportLayout;
@@ -3492,7 +3490,6 @@ export class YeMindEditor {
         this.applyingImportLayout = false;
         return;
       }
-      stabilizeMindMapMeasurementHost(map, this.rootEl);
       if (typeof map.reRender === 'function') {
         map.reRender(() => { restore(); requestAnimationFrame(finish); }, 'textToMapImport');
       } else {
