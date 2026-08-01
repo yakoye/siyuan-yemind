@@ -1998,7 +1998,46 @@ test('the line a character sits on before entering edit matches the line it sits
   await commitCanvasEdit(page);
 });
 
-test('atomic canvas edit opening preserves the exact visual line distribution', async ({ page, isMobile }) => {
+test('YM-TEXT-022 automatic-width canvas editing preserves the exact visual line distribution', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop exact-wrap opening regression');
+  const errors = recordPageErrors(page);
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const host = editor.locator('.smm-richtext-node-edit-wrap');
+  const criticalText = '高速信号完整性验证与错误注入保护机制可靠性可用性可维护性测试'.repeat(3);
+
+  await addRootChild(page);
+  const rootNode = editor.locator('.smm-node').last();
+  await textEditor.fill(criticalText);
+  await commitCanvasEdit(page);
+
+  const staticTextGroup = rootNode.locator('g[data-width][data-height]').first();
+  await expect(staticTextGroup).toBeVisible();
+  const staticSnapshot = await readVisualLines(staticTextGroup);
+  expect(staticSnapshot.lines.length).toBeGreaterThan(1);
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeVisible();
+  await expect(textEditor).toBeFocused();
+  const liveSnapshot = await readVisualLines(textEditor);
+  const metrics = await staticTextGroup.evaluate((element) => ({
+    inkWidth: Number(element.getAttribute('data-ink-width')),
+    wrapWidth: Number(element.getAttribute('data-wrap-width')),
+    contentWidth: Number(element.getAttribute('data-content-width')),
+  }));
+  const session = await host.evaluate((element) => ({
+    ready: element.dataset.yemindGeometryReady,
+    visibility: getComputedStyle(element).visibility,
+  }));
+
+  expect(metrics.wrapWidth).toBeGreaterThan(metrics.contentWidth);
+  expect(session).toEqual({ ready: 'true', visibility: 'visible' });
+  expect(liveSnapshot.lines).toEqual(staticSnapshot.lines);
+  expect(errors).toEqual([]);
+});
+
+test('custom-width canvas edit opening preserves the exact visual line distribution', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop exact-wrap opening regression');
   const errors = recordPageErrors(page);
   await resetWebApp(page);

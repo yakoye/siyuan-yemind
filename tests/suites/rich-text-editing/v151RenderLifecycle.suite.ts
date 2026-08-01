@@ -191,4 +191,41 @@ describe('v1.5.1 atomic render lifecycle', () => {
     expect(node.reRender).not.toHaveBeenCalled();
     expect(mindMap.render).not.toHaveBeenCalled();
   });
+
+  it.each([
+    'opening',
+    'active',
+    'closing',
+    'preparing',
+    'committing',
+    'aborting',
+  ])('does not start a competing geometry repair while the text edit session is %s', (phase) => {
+    const node = {
+      _textData: {
+        nodeContent: {
+          node: {
+            getBoundingClientRect: () => ({ width: 80, height: 24 }),
+            querySelector: () => ({
+              getBoundingClientRect: () => ({ width: 180, height: 48 }),
+            }),
+          },
+        },
+      },
+      children: [],
+      reRender: vi.fn(),
+    };
+    const mindMap = {
+      richText: {
+        showTextEdit: phase === 'active',
+        getEditSessionSnapshot: () => ({ phase }),
+      },
+      renderer: { root: node },
+      render: vi.fn(),
+    };
+    const coordinator = new RenderedTextGeometryRepair(mindMap, vi.fn());
+
+    expect(coordinator.reconcileRenderedTextGeometry()).toBe(false);
+    expect(node.reRender).not.toHaveBeenCalled();
+    expect(mindMap.render).not.toHaveBeenCalled();
+  });
 });

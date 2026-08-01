@@ -10,6 +10,19 @@ const browserScheduler: RenderedTextGeometryScheduler = {
   cancel: (id) => window.cancelAnimationFrame(id),
 };
 
+const EDITING_SESSION_PHASES = new Set([
+  // Current CanvasEditSessionCoordinator phases.
+  'opening',
+  'active',
+  'closing',
+  // Names reserved by the v1.9 lifecycle contract. Keeping the guard aware
+  // of both vocabularies prevents a later phase rename from silently
+  // re-enabling full-map geometry repair during an edit transaction.
+  'preparing',
+  'committing',
+  'aborting',
+]);
+
 /**
  * Runs after a full render (theme/font change, opening a saved map, structural
  * mutation) to catch a rich-text node whose measured HTML content no longer
@@ -28,6 +41,13 @@ export class RenderedTextGeometryRepair {
     private readonly scheduler: RenderedTextGeometryScheduler = browserScheduler,
   ) {}
 
+  private editingInProgress(): boolean {
+    const richText = this.mindMap?.richText;
+    if (richText?.showTextEdit === true) return true;
+    const phase = richText?.getEditSessionSnapshot?.()?.phase;
+    return typeof phase === 'string' && EDITING_SESSION_PHASES.has(phase);
+  }
+
   /**
    * Rich-text measurement can finish before a late theme/font transaction.
    * In that state the HTML text is taller or wider than its SVG
@@ -39,6 +59,7 @@ export class RenderedTextGeometryRepair {
   reconcileRenderedTextGeometry(): boolean {
     if (
       this.geometryRepairInFlight
+      || this.editingInProgress()
       || hasActiveNodeWidthDrag(this.mindMap?.renderer?.root)
     ) return false;
     const overflowing: Array<{
