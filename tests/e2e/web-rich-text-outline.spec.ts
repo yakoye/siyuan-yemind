@@ -2262,7 +2262,7 @@ test('typing with real pauses between characters never rebuilds the static SVG t
 });
 
 for (const insertion of ['Tab', 'Enter', 'quick-add'] as const) {
-  test(`${insertion} insertion never exposes an empty visible rich-text host before 新节点 is mounted`, async ({ page, isMobile }) => {
+  test(`${insertion} insertion paints 新节点 from the first visible canvas frame`, async ({ page, isMobile }) => {
     test.skip(isMobile, 'desktop inserted-node synchronous first-paint regression');
     await resetWebApp(page);
     const editor = page.locator('.ymw-editor > .ymz-editor');
@@ -2271,7 +2271,17 @@ for (const insertion of ['Tab', 'Enter', 'quick-add'] as const) {
     await editor.locator('.smm-node').last().click();
 
     await page.evaluate(() => {
+      const initialNodes = document.querySelectorAll('.ymw-editor > .ymz-editor .smm-node').length;
       const records: Array<{ visible: boolean; text: string }> = [];
+      const paintFrames: Array<{
+        nodeVisible: boolean;
+        staticTag: string;
+        staticText: string;
+        staticGlyphPainted: boolean;
+        editorVisible: boolean;
+        editorText: string;
+        editorGlyphPainted: boolean;
+      }> = [];
       const capture = (): void => {
         const host = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap');
         if (!host) return;
@@ -2292,6 +2302,45 @@ for (const insertion of ['Tab', 'Enter', 'quick-add'] as const) {
         attributeFilter: ['style', 'class'],
       });
       (window as any).__yemindInsertedHostObserver = observer;
+      (window as any).__yemindInsertedPaintFrames = paintFrames;
+      (window as any).__yemindInsertedPaintActive = true;
+      const capturePaint = (): void => {
+        if (!(window as any).__yemindInsertedPaintActive) return;
+        const nodes = Array.from(document.querySelectorAll<SVGGraphicsElement>('.ymw-editor > .ymz-editor .smm-node'));
+        if (nodes.length > initialNodes) {
+          const node = nodes.at(-1)!;
+          const nodeRect = node.getBoundingClientRect();
+          const host = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap');
+          const hostRect = host?.getBoundingClientRect();
+          const hostStyle = host ? getComputedStyle(host) : null;
+          const staticText = node.querySelector<SVGTextElement>('.smm-text-node-wrap');
+          const staticTextRect = staticText?.getBoundingClientRect();
+          const staticTextStyle = staticText ? getComputedStyle(staticText) : null;
+          const editorRoot = host?.querySelector<HTMLElement>('.ql-editor') ?? null;
+          const editorRange = editorRoot && editorRoot.firstChild
+            ? (() => {
+              const range = document.createRange();
+              range.selectNodeContents(editorRoot);
+              return range.getBoundingClientRect();
+            })()
+            : null;
+          paintFrames.push({
+            nodeVisible: nodeRect.width > 0 && nodeRect.height > 0,
+            staticTag: node.querySelector('.smm-text-node-wrap,.smm-richtext-node-wrap')?.tagName.toLowerCase() ?? '',
+            staticText: (node.querySelector('g[data-width][data-height]')?.textContent ?? '').trim(),
+            staticGlyphPainted: Boolean(staticText && staticTextRect && staticTextStyle
+              && staticTextRect.width > 0 && staticTextRect.height > 0
+              && staticTextStyle.display !== 'none' && staticTextStyle.visibility !== 'hidden'
+              && staticTextStyle.opacity !== '0'),
+            editorVisible: Boolean(host && hostStyle?.display !== 'none' && hostStyle?.visibility !== 'hidden'
+              && hostRect && hostRect.width > 0 && hostRect.height > 0),
+            editorText: (editorRoot?.innerText ?? '').trim(),
+            editorGlyphPainted: Boolean(editorRange && editorRange.width > 0 && editorRange.height > 0),
+          });
+        }
+        requestAnimationFrame(capturePaint);
+      };
+      requestAnimationFrame(capturePaint);
     });
 
     if (insertion === 'quick-add') {
@@ -2300,13 +2349,43 @@ for (const insertion of ['Tab', 'Enter', 'quick-add'] as const) {
       await page.keyboard.press(insertion);
     }
     await expect(canvasTextEditor(page)).toHaveText('新节点');
-    const records = await page.evaluate(() => {
+    await page.evaluate(() => new Promise<void>((resolve) => {
+      let remaining = 6;
+      const next = (): void => {
+        remaining -= 1;
+        if (remaining <= 0) resolve();
+        else requestAnimationFrame(next);
+      };
+      requestAnimationFrame(next);
+    }));
+    const { records, paintFrames } = await page.evaluate(() => {
       (window as any).__yemindInsertedHostObserver?.disconnect();
-      return (window as any).__yemindInsertedHostRecords as Array<{ visible: boolean; text: string }>;
+      (window as any).__yemindInsertedPaintActive = false;
+      return {
+        records: (window as any).__yemindInsertedHostRecords as Array<{ visible: boolean; text: string }>,
+        paintFrames: (window as any).__yemindInsertedPaintFrames as Array<{
+          nodeVisible: boolean;
+          staticTag: string;
+          staticText: string;
+          staticGlyphPainted: boolean;
+          editorVisible: boolean;
+          editorText: string;
+          editorGlyphPainted: boolean;
+        }>,
+      };
     });
     const visible = records.filter((record) => record.visible);
     expect(visible.length).toBeGreaterThan(0);
     visible.forEach((record) => expect(record.text).toBe('新节点'));
+    const visibleNodeFrames = paintFrames.filter((frame) => frame.nodeVisible);
+    expect(visibleNodeFrames.length).toBeGreaterThan(0);
+    expect(visibleNodeFrames[0].staticTag).toBe('text');
+    visibleNodeFrames.forEach((frame) => {
+      expect(
+        (frame.staticText === '新节点' && frame.staticGlyphPainted)
+        || (frame.editorVisible && frame.editorText === '新节点' && frame.editorGlyphPainted),
+      ).toBe(true);
+    });
   });
 }
 

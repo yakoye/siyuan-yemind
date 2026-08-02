@@ -226,6 +226,12 @@ function onDragMouseupHandle() {
   this.setData({
     customTextWidth: this.customTextWidth
   })
+  // The live drag path has already measured and painted the final text and
+  // shape geometry.  Mark that data as the current rendered snapshot before
+  // the tree layout pass so Base does not rebuild this node's text subtree on
+  // mouseup.  The render is still required to reposition relatives and lines;
+  // only the redundant content reconstruction is skipped.
+  this.nodeDataSnapshot = JSON.stringify(this.getData())
   this.mindMap.render()
   this.mindMap.emit('dragModifyNodeWidthEnd', this)
 }

@@ -86,8 +86,13 @@ test('DPR 1.25 width drag keeps painted text anchored inside the shape on every 
     const content = node.querySelector<SVGGraphicsElement>('g[data-width][data-height]')!;
     const painted = content.firstElementChild as SVGGraphicsElement;
     const frames: Array<{
+      phase: 'drag' | 'released';
       x: number;
       y: number;
+      shapeWidth: number;
+      shapeHeight: number;
+      textWidth: number;
+      textHeight: number;
       text: string;
       sameContent: boolean;
       samePainted: boolean;
@@ -96,6 +101,7 @@ test('DPR 1.25 width drag keeps painted text anchored inside the shape on every 
     (window as any).__yemindDprDragContent = content;
     (window as any).__yemindDprDragPainted = painted;
     (window as any).__yemindDprDragDetachCount = 0;
+    (window as any).__yemindDprDragPhase = 'drag';
     const observer = new MutationObserver((records) => {
       for (const record of records) {
         for (const removed of Array.from(record.removedNodes)) {
@@ -118,8 +124,13 @@ test('DPR 1.25 width drag keeps painted text anchored inside the shape on every 
         const shapeRect = shape.getBoundingClientRect();
         const textRect = painted.getBoundingClientRect();
         frames.push({
+          phase: (window as any).__yemindDprDragPhase,
           x: textRect.left - shapeRect.left,
           y: textRect.top - shapeRect.top,
+          shapeWidth: shapeRect.width,
+          shapeHeight: shapeRect.height,
+          textWidth: textRect.width,
+          textHeight: textRect.height,
           text: content.textContent ?? '',
           sameContent: content === (window as any).__yemindDprDragContent,
           samePainted: painted === (window as any).__yemindDprDragPainted,
@@ -134,21 +145,36 @@ test('DPR 1.25 width drag keeps painted text anchored inside the shape on every 
   await page.mouse.down();
   await page.mouse.move(box!.x + 180, box!.y + box!.height / 2, { steps: 24 });
   await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+  await page.evaluate(() => { (window as any).__yemindDprDragPhase = 'released'; });
+  await page.mouse.up();
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    let remaining = 8;
+    const next = (): void => {
+      remaining -= 1;
+      if (remaining <= 0) resolve();
+      else requestAnimationFrame(next);
+    };
+    requestAnimationFrame(next);
+  }));
   const result = await page.evaluate(() => {
     (window as any).__yemindDprDragActive = false;
     (window as any).__yemindDprDragObserver.disconnect();
     return {
       detachCount: (window as any).__yemindDprDragDetachCount as number,
       frames: (window as any).__yemindDprDragFrames as Array<{
+        phase: 'drag' | 'released';
         x: number;
         y: number;
+        shapeWidth: number;
+        shapeHeight: number;
+        textWidth: number;
+        textHeight: number;
         text: string;
         sameContent: boolean;
         samePainted: boolean;
       }>,
     };
   });
-  await page.mouse.up();
   const { frames, detachCount } = result;
 
   expect(frames.length).toBeGreaterThan(3);
@@ -161,6 +187,17 @@ test('DPR 1.25 width drag keeps painted text anchored inside the shape on every 
     expect(frame.text).toContain('LTSSM 状态读取及历史记录');
     expect(frame.sameContent).toBe(true);
     expect(frame.samePainted).toBe(true);
+  });
+  const finalDragFrame = frames.filter((frame) => frame.phase === 'drag').at(-1)!;
+  const releasedFrames = frames.filter((frame) => frame.phase === 'released');
+  expect(releasedFrames.length).toBeGreaterThanOrEqual(2);
+  releasedFrames.forEach((frame) => {
+    expect(Math.abs(frame.x - finalDragFrame.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(frame.y - finalDragFrame.y)).toBeLessThanOrEqual(1);
+    expect(Math.abs(frame.shapeWidth - finalDragFrame.shapeWidth)).toBeLessThanOrEqual(1);
+    expect(Math.abs(frame.shapeHeight - finalDragFrame.shapeHeight)).toBeLessThanOrEqual(1);
+    expect(Math.abs(frame.textWidth - finalDragFrame.textWidth)).toBeLessThanOrEqual(1);
+    expect(Math.abs(frame.textHeight - finalDragFrame.textHeight)).toBeLessThanOrEqual(1);
   });
   await expect(root).toContainText('LTSSM 状态读取及历史记录');
 });
