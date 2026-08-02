@@ -838,14 +838,6 @@ class Render {
           text: text,
           ...params,
           uid: createUid(),
-          // A pristine default node must have a paintable SVG text fallback
-          // in the very frame its shape is mounted. RichText can edit a plain
-          // node and will promote it only after the user makes a real change.
-          // Keeping the initial label plain avoids Electron's first-paint
-          // foreignObject gap without adding timers or retries.
-          ...(appointData && appointData.richText !== undefined
-            ? {}
-            : { richText: false }),
           ...(appointData || {})
         },
         children: [...createUidForAppointNodes(appointChildren, createNewId)]
@@ -951,11 +943,6 @@ class Render {
           text: text,
           uid: createUid(),
           ...params,
-          // See insertNode(): the default label is an immediate SVG fallback;
-          // user-authored rich text is created only when editing commits.
-          ...(appointData && appointData.richText !== undefined
-            ? {}
-            : { richText: false }),
           ...(appointData || {})
         },
         children: [...createUidForAppointNodes(appointChildren, createNewId)]

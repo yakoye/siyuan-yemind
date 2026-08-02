@@ -358,6 +358,10 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
     appointNodes: any[] = [],
   ): void => {
     mindMap.execCommand(command, true, appointNodes, {
+      // Keep the pristine default label on the immediately paintable SVG
+      // text path. The upstream editor can still promote it to rich text as
+      // soon as the user commits an actual edit.
+      richText: false,
       yemindTextPristine: true,
       yemindTextEdited: false,
     });

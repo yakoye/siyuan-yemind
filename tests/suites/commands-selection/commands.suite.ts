@@ -89,9 +89,9 @@ describe('createCommandAdapter', () => {
     expect((map as any).command.yemindBeginHistoryReplay).toHaveBeenCalledTimes(2);
     expect((map as any).command.yemindEndHistoryReplay).toHaveBeenCalledTimes(2);
     expect(map.execCommand.mock.calls).toEqual([
-      ['INSERT_CHILD_NODE', true, [], expect.objectContaining({ yemindTextPristine: true, yemindTextEdited: false })],
-      ['INSERT_NODE', true, [], expect.objectContaining({ yemindTextPristine: true, yemindTextEdited: false })],
-      ['INSERT_PARENT_NODE', true, [], expect.objectContaining({ yemindTextPristine: true, yemindTextEdited: false })],
+      ['INSERT_CHILD_NODE', true, [], expect.objectContaining({ richText: false, yemindTextPristine: true, yemindTextEdited: false })],
+      ['INSERT_NODE', true, [], expect.objectContaining({ richText: false, yemindTextPristine: true, yemindTextEdited: false })],
+      ['INSERT_PARENT_NODE', true, [], expect.objectContaining({ richText: false, yemindTextPristine: true, yemindTextEdited: false })],
       ['UP_NODE'],
       ['DOWN_NODE'],
       ['REMOVE_NODE', [map.renderer.activeNodeList[0]]],
