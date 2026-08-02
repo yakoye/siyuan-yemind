@@ -88,8 +88,10 @@ export class RichTextToolbar {
         '.ql-editor,[data-outline-editor],[data-role="outline-text-editor"],[contenteditable="true"]',
       ),
     );
-    // The vendored rich-text host can be appended beside the SVG editor root,
-    // so root.contains(target) alone misses genuine Quill drag selections.
+    // Suppress stale selection notifications for the duration of any canvas
+    // press. Only a press inside a live text editor is allowed to enter the
+    // post-mouseup quiet period, because only that gesture can keep changing a
+    // DOM Range while the pointer moves.
     this.selecting = this.root.contains(node) || this.pointerSelectionMayPublish;
     this.pointerSessionAtDown = this.selectionSessionId;
     this.cancelSelectionSettle();
@@ -99,8 +101,14 @@ export class RichTextToolbar {
   private readonly onWindowMouseUp = (): void => {
     this.interacting = false;
     this.selecting = false;
-    this.settlingPointerSelection = true;
-    this.scheduleSettledPointerSelection();
+    if (this.pointerSelectionMayPublish) {
+      this.settlingPointerSelection = true;
+      this.scheduleSettledPointerSelection();
+      return;
+    }
+    this.pendingSelection = null;
+    this.cancelSelectionSettle();
+    this.pointerSelectionMayPublish = false;
   };
 
   constructor(

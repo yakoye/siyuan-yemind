@@ -241,8 +241,6 @@ describe('RichTextToolbar', () => {
       null,
       { sessionId: 2, uid: 'next', selectionEpoch: 1 },
     );
-    expect(element.hidden).toBe(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 160));
     expect(element.hidden).toBe(false);
     expect(element.style.left).not.toBe('30px');
 
@@ -504,6 +502,34 @@ describe('RichTextToolbar', () => {
     requestFrame.mockRestore();
     cancelFrame.mockRestore();
     root.remove();
+  });
+
+  it('does not treat a static canvas-node mouseup as an in-editor pointer selection', () => {
+    vi.useFakeTimers();
+    const root = setup();
+    const staticNode = document.createElement('div');
+    staticNode.className = 'smm-node';
+    root.append(staticNode);
+    const toolbar = new RichTextToolbar(root, commands());
+    const element = root.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    const session = { sessionId: 7, uid: 'node-7', selectionEpoch: 1 };
+
+    toolbar.update(false, null, null, null, session);
+    staticNode.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    window.dispatchEvent(new MouseEvent('mouseup'));
+    toolbar.update(
+      true,
+      { left: 100, top: 100, right: 180, bottom: 120, width: 80 },
+      {},
+      null,
+      session,
+    );
+
+    expect(element.hidden).toBe(false);
+
+    toolbar.destroy();
+    root.remove();
+    vi.useRealTimers();
   });
 
 });
