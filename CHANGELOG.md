@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.9.6 - 2026-08-03
+
+This patch release fixes two remaining visual-state defects in the shared canvas text editor without adding another focus or rendering lifecycle.
+
+- Moves the selection toolbar and its color popover into the same document-level overlay space as the upstream body-level canvas editor, so the toolbar remains above selected node text in both light and dark themes.
+- Keeps toolbar placement in viewport coordinates, clamps it to the visible YeMind editor area and preserves the existing 120 ms pointer-selection settle behavior.
+- Makes the existing full selection on Tab/Enter/+ nodes visibly painted by extending the selection CSS to the upstream body portal; typing immediately replaces `新节点` with a visible caret and live text.
+- Adds browser gates for real stacking order, visible selection paint, automatic select-all and immediate replacement across Tab, Enter and quick-add paths.
+
+## 1.9.5 - 2026-08-02
+
+This patch release stabilizes the first visible frame of newly inserted nodes and the final handoff from live editing to committed SVG text.
+
+- Restores the upstream `TextEdit` visibility behavior so Tab, Enter and quick-add nodes always retain a static text fallback until the opaque editor has painted.
+- Keeps the live editor visible while changed text is committed and hides it only after the final `node_tree_render_end`, preventing a temporary upper-left text frame.
+- Adds frame-by-frame gates for inserted-node text, editor-to-SVG handoff and node switching without changing the persisted map format.
+
 ## 1.9.4 - 2026-08-02
 
 This patch release fixes the remaining node-width drag flicker without adding another YeMind overlay or timing workaround. The vendored `simple-mind-map` width-drag path now keeps the existing painted text subtree attached and updates its measured content and node geometry in place, while the normal upstream layout still performs the final committed render on pointer release.
