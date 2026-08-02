@@ -163,7 +163,8 @@
     "v081StorageMigration.suite.ts",
     "v0913DefaultMapNaming.suite.ts",
     "v0924DefaultMap.suite.ts",
-    "v150StudyCards.suite.ts"
+    "v150StudyCards.suite.ts",
+    "v192FreshDataGeneration.suite.ts"
   ],
   "diagnostics-release": [
     "diagnosticsIntegration.suite.ts",

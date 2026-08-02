@@ -1,5 +1,5 @@
 import { createDefaultMap } from './defaultMap';
-import type { MapCheckpointSnapshot, MapStorageDocument, RepositoryStorage, YeMindMapDocument } from './types';
+import { MAP_STORAGE_VERSION, type MapCheckpointSnapshot, type MapStorageDocument, type RepositoryStorage, type YeMindMapDocument } from './types';
 import { normalizeLineStyle, normalizeThemePresetId } from '../core/themePresets';
 import { normalizeLayoutId } from '../core/layoutPresets';
 import { normalizeLayoutAssetId } from '../core/layoutAssetPresets';
@@ -92,7 +92,7 @@ function normalizeLegacyTree(tree: YeMindMapDocument['data'], fallbackTime: numb
 }
 
 export class MapRepository {
-  private state: MapStorageDocument = { version: 1, activeMapId: null, maps: [] };
+  private state: MapStorageDocument = { version: MAP_STORAGE_VERSION, activeMapId: null, maps: [] };
   private readonly listeners = new Set<Listener>();
   private readonly now: () => number;
   private readonly id: () => string;
@@ -115,8 +115,8 @@ export class MapRepository {
   private async loadInternal(): Promise<void> {
     const raw = await this.storage.load();
     let migrated = false;
-    if (!raw || typeof raw !== 'object') {
-      this.state = { version: 1, activeMapId: null, maps: [] };
+    if (!raw || typeof raw !== 'object' || (raw as { version?: unknown }).version !== MAP_STORAGE_VERSION) {
+      this.state = { version: MAP_STORAGE_VERSION, activeMapId: null, maps: [] };
     } else {
       const candidate = raw as Partial<MapStorageDocument>;
       const results = Array.isArray(candidate.maps) ? candidate.maps.map(normalizeMap) : [];
@@ -125,8 +125,8 @@ export class MapRepository {
       const activeMapId = maps.some((map) => map.id === candidate.activeMapId)
         ? String(candidate.activeMapId)
         : maps[0]?.id ?? null;
-      this.state = { version: 1, activeMapId, maps };
-      migrated ||= candidate.version !== 1 || candidate.activeMapId !== activeMapId;
+      this.state = { version: MAP_STORAGE_VERSION, activeMapId, maps };
+      migrated ||= candidate.activeMapId !== activeMapId;
     }
     this.loaded = true;
     if (migrated) await this.enqueueSave(this.snapshot());

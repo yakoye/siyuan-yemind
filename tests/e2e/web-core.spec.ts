@@ -17,6 +17,70 @@ test('creates, renames and restores a map from IndexedDB', async ({ page, isMobi
   expect(errors).toEqual([]);
 });
 
+test('starts a clean web data generation instead of loading pre-release maps', async ({ page }) => {
+  await page.goto('/assets/yemind-icon-32.png');
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.deleteDatabase('yemind-web');
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => reject(new Error('IndexedDB deletion was blocked'));
+    });
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('yemind-web', 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('documents');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const transaction = db.transaction('documents', 'readwrite');
+    transaction.objectStore('documents').put({
+      version: 1,
+      activeMapId: 'pre-release-map',
+      maps: [{
+        id: 'pre-release-map',
+        title: '不应加载的旧导图',
+        createdAt: 1,
+        updatedAt: 1,
+        layout: 'logicalStructure',
+        theme: 'yemind-default',
+        lineStyle: 'curve',
+        projectStyle: {},
+        data: { data: { text: '<p>旧节点</p>', richText: true, customTextWidth: 173 }, children: [] },
+      }],
+    }, 'maps');
+    await new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  });
+
+  await page.goto('/');
+  await expect(page.locator('.ymw-editor > .ymz-editor')).toBeVisible();
+  await expect(page.locator('[data-web-map-id]')).toHaveCount(1);
+  await expect(page.locator('[data-web-map-id]')).toContainText('未命名导图');
+  await expect(page.locator('body')).not.toContainText('不应加载的旧导图');
+
+  const stored = await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('yemind-web', 1);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const transaction = db.transaction('documents', 'readonly');
+    const request = transaction.objectStore('documents').get('maps');
+    const value = await new Promise<any>((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    db.close();
+    return value;
+  });
+  expect(stored.version).toBe(2);
+  expect(stored.maps).toHaveLength(1);
+  expect(stored.maps[0].title).toBe('未命名导图');
+});
+
 test('opens the outline sidebar and returns to the map without losing the editor', async ({ page }) => {
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');

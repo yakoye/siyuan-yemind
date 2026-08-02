@@ -13,9 +13,11 @@ export interface MapCheckpoint {
 }
 
 export interface CheckpointStorageDocument {
-  version: 1;
+  version: 2;
   checkpoints: MapCheckpoint[];
 }
+
+export const CHECKPOINT_STORAGE_VERSION = 2 as const;
 
 export interface CheckpointStorage {
   load(): Promise<unknown>;

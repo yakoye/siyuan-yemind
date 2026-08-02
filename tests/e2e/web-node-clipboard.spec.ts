@@ -86,7 +86,7 @@ async function seedClipboardMaps(page: Page): Promise<void> {
       }],
     };
     store.put({
-      version: 1,
+      version: 2,
       activeMapId: source.id,
       maps: [source, destination],
     }, 'maps');

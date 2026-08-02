@@ -23,7 +23,7 @@ describe('map appearance persistence', () => {
 
   it('migrates legacy default theme and missing line style without losing maps', async () => {
     const storage = memoryStorage({
-      version: 1,
+      version: 2,
       activeMapId: 'legacy',
       maps: [{
         id: 'legacy',

@@ -3,11 +3,12 @@ import { normalizeLineStyle, normalizeThemePresetId } from '../core/themePresets
 import { normalizeLayoutId } from '../core/layoutPresets';
 import { normalizeLayoutAssetId } from '../core/layoutAssetPresets';
 import { normalizeProjectStyle } from '../editor/projectStyle';
-import type {
-  CheckpointKind,
-  CheckpointStorage,
-  CheckpointStorageDocument,
-  MapCheckpoint,
+import {
+  CHECKPOINT_STORAGE_VERSION,
+  type CheckpointKind,
+  type CheckpointStorage,
+  type CheckpointStorageDocument,
+  type MapCheckpoint,
 } from './checkpointTypes';
 
 interface CheckpointRepositoryOptions {
@@ -47,7 +48,7 @@ function normalizeCheckpoint(value: unknown): MapCheckpoint | null {
 }
 
 export class CheckpointRepository {
-  private state: CheckpointStorageDocument = { version: 1, checkpoints: [] };
+  private state: CheckpointStorageDocument = { version: CHECKPOINT_STORAGE_VERSION, checkpoints: [] };
   private loaded = false;
   private loadPromise: Promise<void> | null = null;
   private saveQueue: Promise<void> = Promise.resolve();
@@ -71,10 +72,10 @@ export class CheckpointRepository {
   private async loadInternal(): Promise<void> {
     const raw = await this.storage.load();
     const candidate = raw && typeof raw === 'object' ? raw as Partial<CheckpointStorageDocument> : null;
-    const checkpoints = Array.isArray(candidate?.checkpoints)
-      ? candidate!.checkpoints.map(normalizeCheckpoint).filter((item): item is MapCheckpoint => Boolean(item))
+    const checkpoints = candidate?.version === CHECKPOINT_STORAGE_VERSION && Array.isArray(candidate.checkpoints)
+      ? candidate.checkpoints.map(normalizeCheckpoint).filter((item): item is MapCheckpoint => Boolean(item))
       : [];
-    this.state = { version: 1, checkpoints };
+    this.state = { version: CHECKPOINT_STORAGE_VERSION, checkpoints };
     this.loaded = true;
   }
 

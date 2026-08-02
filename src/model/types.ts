@@ -58,10 +58,12 @@ export interface YeMindMapDocument {
 }
 
 export interface MapStorageDocument {
-  version: 1;
+  version: 2;
   activeMapId: string | null;
   maps: YeMindMapDocument[];
 }
+
+export const MAP_STORAGE_VERSION = 2 as const;
 
 export interface RepositoryStorage {
   load(): Promise<unknown>;

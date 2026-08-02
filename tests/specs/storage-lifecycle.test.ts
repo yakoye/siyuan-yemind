@@ -18,3 +18,4 @@ import '../suites/storage-lifecycle/v081StorageMigration.suite';
 import '../suites/storage-lifecycle/v0913DefaultMapNaming.suite';
 import '../suites/storage-lifecycle/v0924DefaultMap.suite';
 import '../suites/storage-lifecycle/v150StudyCards.suite';
+import '../suites/storage-lifecycle/v192FreshDataGeneration.suite';

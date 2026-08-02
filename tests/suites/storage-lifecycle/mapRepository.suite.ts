@@ -43,7 +43,7 @@ describe('MapRepository', () => {
 
     await repo.rename('map-2', '新名称');
     expect(repo.get('map-2')?.title).toBe('新名称');
-    expect(storage.read()).toMatchObject({ version: 1, activeMapId: 'map-2' });
+    expect(storage.read()).toMatchObject({ version: 2, activeMapId: 'map-2' });
   });
 
   it('allows deleting the final map and leaves the repository empty', async () => {
@@ -60,7 +60,7 @@ describe('MapRepository', () => {
 
   it('migrates legacy notes into comments and removes the separate note field', async () => {
     const storage = memoryStorage({
-      version: 1,
+      version: 2,
       activeMapId: 'legacy',
       maps: [{
         id: 'legacy',
@@ -85,7 +85,7 @@ describe('MapRepository', () => {
 
   it('migrates clipboard boundary blank lines from existing plain and rich-text nodes', async () => {
     const storage = memoryStorage({
-      version: 1,
+      version: 2,
       activeMapId: 'legacy-whitespace',
       maps: [{
         id: 'legacy-whitespace',
@@ -122,7 +122,7 @@ describe('MapRepository', () => {
   it('preserves explicit internal line breaks across collapse persistence and reload', async () => {
     const multiline = '配置空间读写\n↓\nBAR 寄存器读写\n↓\nDMA 双向传输';
     const storage = memoryStorage({
-      version: 1,
+      version: 2,
       activeMapId: 'multiline',
       maps: [{
         id: 'multiline',
@@ -157,7 +157,7 @@ describe('MapRepository', () => {
   it('migrates legacy rich-text paragraphs with raw internal newlines to plain multiline text', async () => {
     const multiline = '配置空间读写\n↓\nBAR 寄存器读写\n↓\nDMA 双向传输';
     const storage = memoryStorage({
-      version: 1,
+      version: 2,
       activeMapId: 'legacy-raw-newlines',
       maps: [{
         id: 'legacy-raw-newlines',
@@ -197,7 +197,7 @@ describe('MapRepository', () => {
 
   it('does not discard supported block rich-text formats while migrating existing maps', async () => {
     const storage = memoryStorage({
-      version: 1,
+      version: 2,
       activeMapId: 'legacy-rich-blocks',
       maps: [{
         id: 'legacy-rich-blocks',
@@ -243,7 +243,7 @@ describe('MapRepository', () => {
 
   it('keeps maps with an empty title and names them 未命名导图', async () => {
     const storage = memoryStorage({
-      version: 1,
+      version: 2,
       activeMapId: 'untitled',
       maps: [{
         id: 'untitled',
@@ -275,7 +275,7 @@ describe('MapRepository', () => {
     const loading = repo.load();
     const creating = repo.create('未命名导图');
     resolveLoad({
-      version: 1,
+      version: 2,
       activeMapId: 'old-map',
       maps: [{
         id: 'old-map',
