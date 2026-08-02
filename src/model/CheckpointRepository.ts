@@ -71,7 +71,9 @@ export class CheckpointRepository {
 
   private async loadInternal(): Promise<void> {
     const raw = await this.storage.load();
-    const candidate = raw && typeof raw === 'object' ? raw as Partial<CheckpointStorageDocument> : null;
+    const candidate = raw && typeof raw === 'object'
+      ? raw as Partial<Omit<CheckpointStorageDocument, 'version'>> & { version?: unknown }
+      : null;
     const storageVersion = candidate?.version;
     const supportedVersion = storageVersion === 1 || storageVersion === CHECKPOINT_STORAGE_VERSION;
     const checkpoints = supportedVersion && Array.isArray(candidate?.checkpoints)
