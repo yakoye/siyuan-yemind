@@ -2,10 +2,83 @@ import { expect, test } from '@playwright/test';
 import { recordPageErrors, resetWebApp } from './helpers';
 
 const canvasEditor = (page: import('@playwright/test').Page) => (
-  page.locator('.ymw-editor > .ymz-editor .smm-richtext-node-edit-wrap .ql-editor')
+  page.locator('body > .smm-richtext-node-edit-wrap .ql-editor')
 );
 
+type ViewportFrame = {
+  scrollLeft: number;
+  scrollTop: number;
+  transform: string;
+};
+
+async function readViewportFrame(
+  page: import('@playwright/test').Page,
+): Promise<ViewportFrame> {
+  return page.locator('.ymw-editor > .ymz-editor').evaluate((element) => ({
+    scrollLeft: element.scrollLeft,
+    scrollTop: element.scrollTop,
+    transform: element.querySelector('.smm-container')?.getAttribute('transform') ?? '',
+  }));
+}
+
+async function startViewportFrameCapture(
+  page: import('@playwright/test').Page,
+  frameCount = 50,
+): Promise<void> {
+  await page.evaluate((count) => {
+    const frames: ViewportFrame[] = [];
+    let remaining = count;
+    const capture = (): void => {
+      const shell = document.querySelector<HTMLElement>('.ymw-editor > .ymz-editor');
+      frames.push({
+        scrollLeft: shell?.scrollLeft ?? 0,
+        scrollTop: shell?.scrollTop ?? 0,
+        transform: shell?.querySelector('.smm-container')?.getAttribute('transform') ?? '',
+      });
+      remaining -= 1;
+      if (remaining > 0) requestAnimationFrame(capture);
+    };
+    (window as any).__yemindViewportFrames = frames;
+    requestAnimationFrame(capture);
+  }, frameCount);
+}
+
+async function expectStableViewportFrames(
+  page: import('@playwright/test').Page,
+  before: ViewportFrame,
+): Promise<void> {
+  await page.waitForTimeout(900);
+  const frames = await page.evaluate(() => (
+    (window as any).__yemindViewportFrames as ViewportFrame[]
+  ));
+  expect(frames.length).toBeGreaterThanOrEqual(35);
+  expect(frames.every((frame) => (
+    frame.scrollLeft === before.scrollLeft
+    && frame.scrollTop === before.scrollTop
+    && frame.transform === before.transform
+  ))).toBe(true);
+}
+
 test.describe('YeMind upstream-owned canvas text lifecycle', () => {
+  test('keeps the fixed text editor outside the map scroll container without moving the viewport', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'desktop canvas text lifecycle');
+    await resetWebApp(page);
+    const shell = page.locator('.ymw-editor > .ymz-editor');
+    const node = shell.locator('.smm-node').first();
+    const before = await readViewportFrame(page);
+    await startViewportFrameCapture(page);
+
+    await node.dblclick();
+
+    const host = page.locator('.smm-richtext-node-edit-wrap');
+    await expect(host).toBeVisible();
+    expect(await host.evaluate((element) => element.parentElement === document.body)).toBe(true);
+    await expectStableViewportFrames(page, before);
+  });
+
   test('opens the upstream editor in its configured host without a blank text frame', async ({ page, isMobile }) => {
     test.skip(isMobile, 'desktop canvas text lifecycle');
     const errors = recordPageErrors(page);
@@ -18,7 +91,7 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
       let remaining = 40;
       const capture = (): void => {
         const node = document.querySelector('.ymw-editor > .ymz-editor .smm-node');
-        const editor = document.querySelector<HTMLElement>('.ymw-editor > .ymz-editor .smm-richtext-node-edit-wrap .ql-editor');
+        const editor = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap .ql-editor');
         const editorStyle = editor ? getComputedStyle(editor) : null;
         const editorVisible = Boolean(editor
           && editorStyle?.display !== 'none'
@@ -84,6 +157,53 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
       return Boolean(selection?.rangeCount && element.contains(selection.anchorNode));
     })).toBe(true);
     expect(errors).toEqual([]);
+  });
+
+  test('switches edited nodes without a transient viewport jump', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'desktop canvas text lifecycle');
+    await resetWebApp(page);
+    const shell = page.locator('.ymw-editor > .ymz-editor');
+    const nodes = shell.locator('.smm-node');
+    await nodes.first().click();
+    await page.keyboard.press('Tab');
+    await expect(canvasEditor(page)).toBeFocused();
+    await canvasEditor(page).press('Control+A');
+    await canvasEditor(page).fill('第二节点');
+    await shell.locator('[data-role="canvas"]').click({ position: { x: 24, y: 90 } });
+    await expect(nodes).toHaveCount(2);
+    await nodes.first().dblclick();
+    await expect(canvasEditor(page)).toBeFocused();
+    const secondText = (await nodes.last().textContent())?.trim() ?? '';
+    const before = await readViewportFrame(page);
+    await startViewportFrameCapture(page);
+
+    await nodes.last().dblclick();
+
+    await expect(canvasEditor(page)).toBeFocused();
+    await expect(canvasEditor(page)).toContainText(secondText);
+    await expectStableViewportFrames(page, before);
+  });
+
+  test('deleting a node does not scroll the map shell', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'desktop canvas deletion lifecycle');
+    await resetWebApp(page);
+    const shell = page.locator('.ymw-editor > .ymz-editor');
+    const nodes = shell.locator('.smm-node');
+    await nodes.first().click();
+    await page.keyboard.press('Tab');
+    await expect(canvasEditor(page)).toBeFocused();
+    await canvasEditor(page).pressSequentially('待删除节点');
+    await shell.locator('[data-role="canvas"]').click({ position: { x: 24, y: 90 } });
+    await expect(canvasEditor(page)).toBeHidden();
+    const countBefore = await nodes.count();
+    const before = await readViewportFrame(page);
+    await nodes.filter({ hasText: '待删除节点' }).click();
+    await startViewportFrameCapture(page);
+
+    await page.keyboard.press('Delete');
+
+    await expect(nodes).toHaveCount(countBefore - 1);
+    await expectStableViewportFrames(page, before);
   });
 
   for (const shortcut of ['Tab', 'Enter'] as const) {

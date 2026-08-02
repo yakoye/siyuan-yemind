@@ -58,7 +58,7 @@ test('keeps every center-topic glyph inside its rendered SVG text box', async ({
     expect(geometry.textHeight).toBeLessThanOrEqual(geometry.containerHeight + 0.5);
   };
 
-  const textEditor = editor.locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = page.locator('body > .smm-richtext-node-edit-wrap .ql-editor');
   await editor.locator('.smm-node').first().dblclick();
   await textEditor.fill('未命名');
   await editor.locator('[data-role="canvas"]').click({ position: { x: 24, y: 160 } });

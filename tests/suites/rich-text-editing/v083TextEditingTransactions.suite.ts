@@ -136,16 +136,16 @@ describe('v0.8.3 canvas text editing transactions', () => {
     root.remove();
   });
 
-  it('uses the upstream fixed-position editor in the configured map host', async () => {
+  it('uses the upstream fixed-position editor in the document body portal', async () => {
     const { root, map } = mountMap({ data: { text: 'AXI 内存事务语义', uid: 'root', yemindTextEdited: true }, children: [] });
     await waitForMapRender(map);
     map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, clientX: 420, clientY: 270 }));
     await nextFrame();
 
-    const host = root.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap')!;
+    const host = document.body.querySelector<HTMLElement>(':scope > .smm-richtext-node-edit-wrap')!;
     expect(map.richText.constructor.name).toBe('YeMindRichText');
     expect(host).toBeTruthy();
-    expect(host.parentElement).toBe(root);
+    expect(host.parentElement).toBe(document.body);
     expect(host.style.position).toBe('fixed');
     expect(host.style.left).toBe('410px');
     expect(host.style.top).toBe('260px');

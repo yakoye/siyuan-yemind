@@ -10,11 +10,11 @@ async function commitCanvasEdit(page: Page): Promise<void> {
   const box = await canvas.boundingBox();
   expect(box).not.toBeNull();
   await canvas.click({ position: { x: box!.width - 24, y: box!.height - 90 } });
-  await expect(editor(page).locator('.smm-richtext-node-edit-wrap .ql-editor')).toBeHidden();
+  await expect(page.locator('body > .smm-richtext-node-edit-wrap .ql-editor')).toBeHidden();
 }
 
 async function renameActiveEditor(page: Page, value: string): Promise<void> {
-  const textEditor = editor(page).locator('.smm-richtext-node-edit-wrap .ql-editor');
+  const textEditor = page.locator('body > .smm-richtext-node-edit-wrap .ql-editor');
   await expect(textEditor).toBeVisible();
   await textEditor.fill(value);
   await commitCanvasEdit(page);

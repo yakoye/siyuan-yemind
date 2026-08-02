@@ -5,9 +5,10 @@ import { resolve } from 'node:path';
 const createSource = readFileSync(resolve(process.cwd(), 'src/core/createMindMap.ts'), 'utf8');
 const css = readFileSync(resolve(process.cwd(), 'src/styles/index.css'), 'utf8');
 
-describe('editor-local rich-text overlays', () => {
-  it.skip('mounts upstream editors in the YeMind editor and allows partial node-text selection', () => {
-    expect(createSource).toContain('customInnerElsAppendTo: editorRoot');
+describe('canvas rich-text overlays', () => {
+  it('keeps the upstream fixed editor in the body portal and allows partial node-text selection', () => {
+    expect(createSource).toContain('customInnerElsAppendTo: null');
+    expect(createSource).not.toContain('customInnerElsAppendTo: editorRoot');
     expect(createSource).toContain('selectTextOnEnterEditText: false');
   });
 

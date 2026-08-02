@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.9.1 - 2026-08-02
+
+This patch release removes the local rich-text overlay-host override that caused the map viewport to jump to the upper-left and snap back whenever a node editor opened, switched nodes, or closed during deletion.
+
+- Restores the official `wanglin2/mind-map` body portal for the fixed-position Quill editor by removing YeMind's `.ymz-editor` `customInnerElsAppendTo` override. The editor is no longer nested inside the map's `overflow: hidden` scroll container, so Quill's native caret scrolling cannot move the map shell during editor focus.
+- Keeps the upstream editor lifecycle, focus ownership and persisted map format unchanged; no delay, coordinate compensation, animation-frame positioning loop or parallel editor implementation was added.
+- Adds frame-by-frame viewport invariants for opening an editor, switching from node A to node B, and deleting a node. The tests sample shell scroll offsets and the rendered map transform throughout the transition, preventing a final-position-only assertion from missing a one-frame jump.
+- Updates all canvas rich-text and clipboard browser contracts to address the official body-level editor portal.
+- Full pre-release verification: 973 unit tests passed (38 intentionally skipped), 22 web tests passed, offline smoke checks passed, and the complete desktop Playwright suite passed 90 scenarios with one mobile-only scenario skipped and zero failures.
+
 ## 1.9.0 - 2026-08-02
 
 This release replaces the accumulated canvas text-editing patch stack with the official `wanglin2/mind-map` rich-text lifecycle and width behavior. It is a compatible Minor release: persisted map data and transfer formats remain unchanged, while the shared plugin/web editing runtime is substantially simplified.
