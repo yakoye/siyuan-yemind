@@ -7658,8 +7658,8 @@ const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "42c724bc-clean",
-  time: "2026-08-02T13:07:11+08:00"
+  id: "184345d0-clean",
+  time: "2026-08-02T14:30:08+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
@@ -88403,8 +88403,14 @@ class RichTextToolbar {
     __publicField(this, "onWindowMouseUp", () => {
       this.interacting = false;
       this.selecting = false;
-      this.settlingPointerSelection = true;
-      this.scheduleSettledPointerSelection();
+      if (this.pointerSelectionMayPublish) {
+        this.settlingPointerSelection = true;
+        this.scheduleSettledPointerSelection();
+        return;
+      }
+      this.pendingSelection = null;
+      this.cancelSelectionSettle();
+      this.pointerSelectionMayPublish = false;
     });
     this.root = root2;
     this.callbacks = callbacks;
