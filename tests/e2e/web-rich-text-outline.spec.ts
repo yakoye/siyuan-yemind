@@ -658,6 +658,67 @@ test('opening plain multiline text keeps an aligned readable layer on every anim
   });
 });
 
+test('the live editor owns a flat node shell that grows with multiline input', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop live editor shell regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = canvasTextEditor(page);
+
+  await rootNode.dblclick();
+  await textEditor.fill([
+    '准备：',
+    'LTSSM 状态读取及历史记录；',
+    '当前 Link Speed、Link Width；',
+    'Lane 状态和 PHY PLL/CDR 状态；',
+    '是否卡在 Detect、Polling.Active；',
+  ].join('\n'));
+
+  const geometry = await page.evaluate(() => {
+    const host = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap')!;
+    const live = host.querySelector<HTMLElement>('.ql-editor')!;
+    const staleShape = document.querySelector<SVGGraphicsElement>(
+      '.ymw-editor > .ymz-editor .smm-node .smm-node-shape',
+    )!;
+    const hostRect = host.getBoundingClientRect();
+    const liveRect = live.getBoundingClientRect();
+    const staleShapeRect = staleShape.getBoundingClientRect();
+    const shell = getComputedStyle(host, '::before');
+    const inset = (value: string): number => Number.parseFloat(value) || 0;
+    const shellRect = {
+      left: hostRect.left + inset(shell.left),
+      top: hostRect.top + inset(shell.top),
+      right: hostRect.right - inset(shell.right),
+      bottom: hostRect.bottom - inset(shell.bottom),
+    };
+    return {
+      content: shell.content,
+      background: shell.backgroundColor,
+      borderStyle: shell.borderStyle,
+      boxShadow: getComputedStyle(host).boxShadow,
+      shellRect,
+      liveRect: {
+        left: liveRect.left,
+        top: liveRect.top,
+        right: liveRect.right,
+        bottom: liveRect.bottom,
+      },
+      staleShapeWidth: staleShapeRect.width,
+      shellWidth: shellRect.right - shellRect.left,
+    };
+  });
+
+  expect(geometry.content).not.toBe('none');
+  expect(geometry.background).not.toBe('rgba(0, 0, 0, 0)');
+  expect(geometry.borderStyle).toBe('solid');
+  expect(geometry.boxShadow).toBe('none');
+  expect(geometry.shellRect.left).toBeLessThan(geometry.liveRect.left);
+  expect(geometry.shellRect.top).toBeLessThan(geometry.liveRect.top);
+  expect(geometry.shellRect.right).toBeGreaterThan(geometry.liveRect.right);
+  expect(geometry.shellRect.bottom).toBeGreaterThan(geometry.liveRect.bottom);
+  expect(geometry.shellWidth).toBeGreaterThan(geometry.staleShapeWidth + 100);
+});
+
 test('switching canvas editors keeps the previous node text fixed on every animation frame', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop editor-switch frame regression');
   await resetWebApp(page);
@@ -2200,48 +2261,54 @@ test('typing with real pauses between characters never rebuilds the static SVG t
   await expect(rootNode).toContainText('ab');
 });
 
-test('Tab insertion never exposes an empty visible rich-text host before 新节点 is mounted', async ({ page, isMobile }) => {
-  test.skip(isMobile, 'desktop inserted-node synchronous first-paint regression');
-  await resetWebApp(page);
-  const editor = page.locator('.ymw-editor > .ymz-editor');
-  await addRootChild(page);
-  await commitCanvasEdit(page);
-  await editor.locator('.smm-node').last().click();
+for (const insertion of ['Tab', 'Enter', 'quick-add'] as const) {
+  test(`${insertion} insertion never exposes an empty visible rich-text host before 新节点 is mounted`, async ({ page, isMobile }) => {
+    test.skip(isMobile, 'desktop inserted-node synchronous first-paint regression');
+    await resetWebApp(page);
+    const editor = page.locator('.ymw-editor > .ymz-editor');
+    await addRootChild(page);
+    await commitCanvasEdit(page);
+    await editor.locator('.smm-node').last().click();
 
-  await page.evaluate(() => {
-    const records: Array<{ visible: boolean; text: string }> = [];
-    const capture = (): void => {
-      const host = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap');
-      if (!host) return;
-      const style = getComputedStyle(host);
-      const rect = host.getBoundingClientRect();
-      records.push({
-        visible: style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0,
-        text: host.querySelector<HTMLElement>('.ql-editor')?.innerText.trim() ?? '',
+    await page.evaluate(() => {
+      const records: Array<{ visible: boolean; text: string }> = [];
+      const capture = (): void => {
+        const host = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap');
+        if (!host) return;
+        const style = getComputedStyle(host);
+        const rect = host.getBoundingClientRect();
+        records.push({
+          visible: style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0,
+          text: host.querySelector<HTMLElement>('.ql-editor')?.innerText.trim() ?? '',
+        });
+      };
+      (window as any).__yemindInsertedHostRecords = records;
+      const observer = new MutationObserver(capture);
+      observer.observe(document.body, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ['style', 'class'],
       });
-    };
-    (window as any).__yemindInsertedHostRecords = records;
-    const observer = new MutationObserver(capture);
-    observer.observe(document.body, {
-      subtree: true,
-      childList: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: ['style', 'class'],
+      (window as any).__yemindInsertedHostObserver = observer;
     });
-    (window as any).__yemindInsertedHostObserver = observer;
-  });
 
-  await page.keyboard.press('Tab');
-  await expect(canvasTextEditor(page)).toHaveText('新节点');
-  const records = await page.evaluate(() => {
-    (window as any).__yemindInsertedHostObserver?.disconnect();
-    return (window as any).__yemindInsertedHostRecords as Array<{ visible: boolean; text: string }>;
+    if (insertion === 'quick-add') {
+      await editor.locator('[data-node-quick-action="add-child"]').click();
+    } else {
+      await page.keyboard.press(insertion);
+    }
+    await expect(canvasTextEditor(page)).toHaveText('新节点');
+    const records = await page.evaluate(() => {
+      (window as any).__yemindInsertedHostObserver?.disconnect();
+      return (window as any).__yemindInsertedHostRecords as Array<{ visible: boolean; text: string }>;
+    });
+    const visible = records.filter((record) => record.visible);
+    expect(visible.length).toBeGreaterThan(0);
+    visible.forEach((record) => expect(record.text).toBe('新节点'));
   });
-  const visible = records.filter((record) => record.visible);
-  expect(visible.length).toBeGreaterThan(0);
-  visible.forEach((record) => expect(record.text).toBe('新节点'));
-});
+}
 
 test('the line a character sits on before entering edit matches the line it sits on after', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop line-wrap consistency regression');

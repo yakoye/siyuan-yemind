@@ -174,7 +174,7 @@ describe('v0.8.3 canvas text editing transactions', () => {
     root.remove();
   });
 
-  it('places the caret at the end and records direct text edits', async () => {
+  it('places the caret at the end and commits direct text edits without rebuilding SVG while typing', async () => {
     const { root, map } = mountMap({ data: { text: 'AXI 内存事务语义', uid: 'root', yemindTextEdited: true }, children: [] });
     await waitForMapRender(map);
     const editedData = map.renderer.root.nodeData.data;
@@ -183,17 +183,27 @@ describe('v0.8.3 canvas text editing transactions', () => {
 
     const length = map.richText.quill.getLength() - 1;
     expect(map.richText.quill.getSelection()).toMatchObject({ index: length, length: 0 });
-    const rendered = new Promise<void>((resolve) => {
-      const onRenderEnd = () => {
-        map.off('node_tree_render_end', onRenderEnd);
-        resolve();
-      };
-      map.on('node_tree_render_end', onRenderEnd);
-    });
+    let renderCount = 0;
+    const onRenderEnd = () => { renderCount += 1; };
+    map.on('node_tree_render_end', onRenderEnd);
     map.richText.quill.insertText(length, '!', 'user');
     expect(editedData.yemindTextEdited).toBe(true);
     expect(editedData.yemindTextPristine).toBe(false);
+    await nextFrame();
+    expect(renderCount).toBe(0);
+
+    const rendered = new Promise<void>((resolve) => {
+      const onCommittedRender = () => {
+        map.off('node_tree_render_end', onCommittedRender);
+        resolve();
+      };
+      map.on('node_tree_render_end', onCommittedRender);
+    });
+    map.richText.hideEditText();
     await rendered;
+    expect(renderCount).toBe(1);
+    expect(map.renderer.root.nodeData.data.text).toContain('!');
+    map.off('node_tree_render_end', onRenderEnd);
 
     map.destroy();
     root.remove();
