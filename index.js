@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.4";
+const PLUGIN_VERSION = "1.9.5";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "f79865ac-clean",
-  time: "2026-08-02T23:05:25+08:00"
+  id: "f3833082-clean",
+  time: "2026-08-02T23:57:06+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-02T13:29:58.937Z",
-  buildId: "yemind-v1.9.4-20260802",
+  buildTime: "2026-08-02T15:55:02.161Z",
+  buildId: "yemind-v1.9.5-20260802",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -23423,6 +23423,9 @@ class TextEdit {
       g.show();
     }
     const rect2 = g.node.getBoundingClientRect();
+    if (openRealtimeRenderOnNodeTextEdit) {
+      g.hide();
+    }
     const params = {
       node,
       rect: rect2,
@@ -23432,12 +23435,10 @@ class TextEdit {
     };
     if (this.mindMap.richText) {
       this.mindMap.richText.showEditText(params);
-      g.hide();
       return;
     }
     this.currentNode = node;
     this.showEditTextBox(params);
-    g.hide();
   }
   // 当openRealtimeRenderOnNodeTextEdit配置更新后需要更新编辑框样式
   onOpenRealtimeRenderOnNodeTextEditConfigUpdate(openRealtimeRenderOnNodeTextEdit) {
@@ -80341,6 +80342,7 @@ class RichText {
     this.styleEl = null;
     this.cacheEditingText = "";
     this.initialEditText = "";
+    this.editVisibilityRevision = 0;
     this.isCompositing = false;
     this.textNodePaddingX = 6;
     this.textNodePaddingY = 4;
@@ -80464,6 +80466,7 @@ class RichText {
     if (this.showTextEdit) {
       return;
     }
+    this.editVisibilityRevision += 1;
     let {
       customInnerElsAppendTo,
       nodeTextEditZIndex,
@@ -80611,20 +80614,41 @@ class RichText {
     const changed = html2 !== this.initialEditText;
     const list = nodes && nodes.length > 0 ? nodes : [this.node];
     const node = this.node;
-    this.textEditNode.style.display = "none";
+    const visibilityRevision = this.editVisibilityRevision;
+    const hideEditorLayer = () => {
+      if (visibilityRevision !== this.editVisibilityRevision || this.showTextEdit) {
+        return;
+      }
+      this.textEditNode.style.display = "none";
+    };
     this.setIsShowTextEdit(false);
     this.mindMap.emit("rich_text_selection_change", false);
     this.node = null;
     this.isInserting = false;
     this.initialEditText = "";
-    list.forEach((node2) => {
-      var _a, _b;
-      if (!changed) {
-        (_b = (_a = node2 == null ? void 0 : node2._textData) == null ? void 0 : _a.node) == null ? void 0 : _b.show();
-        return;
-      }
-      this.mindMap.execCommand("SET_NODE_TEXT", node2, html2, true);
-    });
+    if (!changed) {
+      list.forEach((node2) => {
+        var _a, _b;
+        return (_b = (_a = node2 == null ? void 0 : node2._textData) == null ? void 0 : _a.node) == null ? void 0 : _b.show();
+      });
+      hideEditorLayer();
+      this.mindMap.emit("hide_text_edit", this.textEditNode, list, node);
+      return;
+    }
+    const onRenderEnd = () => {
+      this.mindMap.off("node_tree_render_end", onRenderEnd);
+      hideEditorLayer();
+    };
+    this.mindMap.on("node_tree_render_end", onRenderEnd);
+    try {
+      list.forEach((node2) => {
+        this.mindMap.execCommand("SET_NODE_TEXT", node2, html2, true);
+      });
+    } catch (error2) {
+      this.mindMap.off("node_tree_render_end", onRenderEnd);
+      hideEditorLayer();
+      throw error2;
+    }
     this.mindMap.emit("hide_text_edit", this.textEditNode, list, node);
   }
   // 初始化Quill富文本编辑器
