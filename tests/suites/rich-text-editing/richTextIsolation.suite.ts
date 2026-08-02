@@ -12,9 +12,12 @@ describe('canvas rich-text overlays', () => {
     expect(createSource).toContain('selectTextOnEnterEditText: false');
   });
 
-  it('contains toolbar z-index inside the tab and preserves visible edit text', () => {
+  it('keeps the toolbar above the upstream body portal and preserves visible edit text', () => {
     expect(css).toContain('.ymz-editor{isolation:isolate;z-index:0}');
     expect(css).toContain('.ymz-rich-toolbar{position:absolute;z-index:60}');
+    expect(css).toContain('body > .ymz-rich-toolbar{');
+    expect(css).toContain('z-index:3101');
     expect(css).toContain('.smm-richtext-node-edit-wrap .ql-editor{color:inherit!important');
+    expect(css).toContain('body > .smm-richtext-node-edit-wrap .ql-editor::selection');
   });
 });

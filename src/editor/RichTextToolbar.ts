@@ -35,6 +35,19 @@ type ColorKind = "color" | "background";
 // browser/Quill publishes the final Range. Only reveal the toolbar after that
 // stream is quiet so it never chases the pointer or flashes at an old anchor.
 const POINTER_SELECTION_SETTLE_MS = 120;
+const TOOLBAR_Z_INDEX = 3101;
+const COLOR_POPOVER_Z_INDEX = 3102;
+const PORTAL_THEME_PROPERTIES = [
+  "--ymz-shell-border",
+  "--ymz-panel-bg",
+  "--ymz-text-80",
+  "--ymz-control-hover-bg",
+  "--ymz-accent",
+  "--ymz-accent-soft",
+  "--ymz-border",
+  "--ymz-text-selection-bg",
+  "--ymz-text-selection-fg",
+] as const;
 
 function option(value: string, label: string): string {
   return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
@@ -119,6 +132,7 @@ export class RichTextToolbar {
     this.target = initialTarget;
     this.element = document.createElement("div");
     this.element.className = "ymz-rich-toolbar";
+    this.element.style.zIndex = String(TOOLBAR_Z_INDEX);
     this.element.hidden = true;
     this.element.style.visibility = "hidden";
     this.element.innerHTML = `
@@ -145,6 +159,7 @@ export class RichTextToolbar {
 
     this.colorPopover = document.createElement("div");
     this.colorPopover.className = "ymz-color-popover";
+    this.colorPopover.style.zIndex = String(COLOR_POPOVER_Z_INDEX);
     this.colorPopover.hidden = true;
     this.colorPopover.innerHTML = colorPaletteInnerHtml();
     this.customColorInput = document.createElement("input");
@@ -154,9 +169,12 @@ export class RichTextToolbar {
     this.customColorInput.setAttribute("aria-hidden", "true");
     this.colorPopover.appendChild(this.customColorInput);
 
-    // Keep every editor overlay inside its own clipping/stacking context. This is
-    // critical when SiYuan opens Settings or another host dialog above a tab.
-    this.root.append(this.element, this.colorPopover);
+    // The upstream canvas text editor is a fixed body portal at z-index 3000.
+    // A toolbar kept inside the editor root cannot cover it because the root is
+    // intentionally an isolated stacking context. Keep both text overlays in
+    // the same document-level coordinate and stacking space instead.
+    document.body.append(this.element, this.colorPopover);
+    this.syncPortalTheme();
     document.addEventListener("mousedown", this.onDocumentMouseDown, true);
     window.addEventListener("mouseup", this.onWindowMouseUp, true);
     this.bind();
@@ -399,6 +417,7 @@ export class RichTextToolbar {
   }
 
   private openColorPopover(kind: ColorKind, anchor: HTMLElement): void {
+    this.syncPortalTheme();
     this.activeColorKind = kind;
     this.colorSessionOriginal =
       typeof this.formatInfo[kind] === "string"
@@ -407,21 +426,19 @@ export class RichTextToolbar {
     this.colorPopover.dataset.kind = kind;
     this.syncColorReadout();
     this.colorPopover.hidden = false;
-    const rootRect = this.root.getBoundingClientRect();
+    const rootRect = this.visibleRootRect();
     const anchorRect = anchor.getBoundingClientRect();
     const width = this.colorPopover.offsetWidth || 320;
     const height = this.colorPopover.offsetHeight || 145;
-    const rootWidth =
-      this.root.clientWidth || rootRect.width || window.innerWidth;
-    const rootHeight =
-      this.root.clientHeight || rootRect.height || window.innerHeight;
     const left = Math.max(
-      8,
-      Math.min(anchorRect.left - rootRect.left, rootWidth - width - 8),
+      rootRect.left + 8,
+      Math.min(anchorRect.left, rootRect.right - width - 8),
     );
-    const below = anchorRect.bottom - rootRect.top + 6;
-    const above = anchorRect.top - rootRect.top - height - 6;
-    const top = below + height <= rootHeight - 8 ? below : Math.max(8, above);
+    const below = anchorRect.bottom + 6;
+    const above = anchorRect.top - height - 6;
+    const top = below + height <= rootRect.bottom - 8
+      ? below
+      : Math.max(rootRect.top + 8, above);
     this.colorPopover.style.left = `${Math.round(left)}px`;
     this.colorPopover.style.top = `${Math.round(top)}px`;
   }
@@ -579,13 +596,14 @@ export class RichTextToolbar {
   }
 
   private position(rect: RichTextSelectionRect, allowLiveSelection = true): void {
+    this.syncPortalTheme();
     const selection = window.getSelection();
     if (
       selection &&
       !selection.isCollapsed &&
       selection.rangeCount > 0 &&
       selection.anchorNode &&
-      this.root.contains(selection.anchorNode)
+      (this.root.contains(selection.anchorNode) || this.isBodyCanvasEditorNode(selection.anchorNode))
     ) {
       const anchorElement = selection.anchorNode instanceof Element
         ? selection.anchorNode
@@ -597,7 +615,7 @@ export class RichTextToolbar {
       if (
         allowLiveSelection
         && activeTextEditor
-        && this.root.contains(activeTextEditor)
+        && (this.root.contains(activeTextEditor) || this.isBodyCanvasEditorNode(activeTextEditor))
         && live
         && (live.width || live.height)
       ) {
@@ -610,54 +628,42 @@ export class RichTextToolbar {
         };
       }
     }
-    const rootRect = this.root.getBoundingClientRect();
-    const rootWidth =
-      this.root.clientWidth || rootRect.width || window.innerWidth;
-    const rootHeight =
-      this.root.clientHeight || rootRect.height || window.innerHeight;
-    const scaleX = rootRect.width > 0 && rootWidth > 0
-      ? rootRect.width / rootWidth
-      : 1;
-    const scaleY = rootRect.height > 0 && rootHeight > 0
-      ? rootRect.height / rootHeight
-      : 1;
+    const rootRect = this.visibleRootRect();
+    const rootWidth = rootRect.width || window.innerWidth;
     const width = Math.min(
       this.element.scrollWidth || 820,
       Math.max(240, rootWidth - 16),
     );
-    const localLeft = (rect.left - rootRect.left) / scaleX;
-    const localTop = (rect.top - rootRect.top) / scaleY;
-    const localBottom = (rect.bottom - rootRect.top) / scaleY;
-    const localWidth = (rect.width ?? rect.right - rect.left) / scaleX;
+    const selectionWidth = rect.width ?? rect.right - rect.left;
     const left = Math.max(
-      8,
+      rootRect.left + 8,
       Math.min(
-        localLeft + localWidth / 2 - width / 2,
-        rootWidth - width - 8,
+        rect.left + selectionWidth / 2 - width / 2,
+        rootRect.right - width - 8,
       ),
     );
     const measuredHeight = this.element.offsetHeight || 44;
-    const above = localTop - measuredHeight - 8;
-    const below = localBottom + 8;
+    const above = rect.top - measuredHeight - 8;
+    const below = rect.bottom + 8;
     let top =
-      below + measuredHeight <= rootHeight - 8
+      below + measuredHeight <= rootRect.bottom - 8
         ? below
-        : Math.max(8, above);
+        : Math.max(rootRect.top + 8, above);
     if (rootWidth <= 720) {
       const canvasEditor = document.querySelector<HTMLElement>(
         'body > .smm-richtext-node-edit-wrap',
       );
       if (canvasEditor && getComputedStyle(canvasEditor).display !== 'none') {
         const editorRect = canvasEditor.getBoundingClientRect();
-        const editorTop = (editorRect.top - rootRect.top) / scaleY;
-        const editorBottom = (editorRect.bottom - rootRect.top) / scaleY;
+        const editorTop = editorRect.top;
+        const editorBottom = editorRect.bottom;
         const overlapsEditor =
           top < editorBottom && top + measuredHeight > editorTop;
         if (overlapsEditor) {
           const belowEditor = editorBottom + 8;
-          top = belowEditor + measuredHeight <= rootHeight - 8
+          top = belowEditor + measuredHeight <= rootRect.bottom - 8
             ? belowEditor
-            : Math.max(8, editorTop - measuredHeight - 8);
+            : Math.max(rootRect.top + 8, editorTop - measuredHeight - 8);
         }
       }
     }
@@ -667,6 +673,33 @@ export class RichTextToolbar {
     if (this.element.style.left !== nextLeft) this.element.style.left = nextLeft;
     if (this.element.style.top !== nextTop) this.element.style.top = nextTop;
     if (this.element.style.maxWidth !== nextMaxWidth) this.element.style.maxWidth = nextMaxWidth;
+  }
+
+  private visibleRootRect(): DOMRect {
+    const rect = this.root.getBoundingClientRect();
+    const left = Math.max(0, rect.left);
+    const top = Math.max(0, rect.top);
+    const right = Math.min(window.innerWidth, rect.right || window.innerWidth);
+    const bottom = Math.min(window.innerHeight, rect.bottom || window.innerHeight);
+    return new DOMRect(left, top, Math.max(0, right - left), Math.max(0, bottom - top));
+  }
+
+  private isBodyCanvasEditorNode(node: Node): boolean {
+    const element = node instanceof Element ? node : node.parentElement;
+    const host = element?.closest<HTMLElement>('.smm-richtext-node-edit-wrap');
+    return host?.parentElement === document.body;
+  }
+
+  private syncPortalTheme(): void {
+    const source = getComputedStyle(this.root);
+    for (const property of PORTAL_THEME_PROPERTIES) {
+      const value = source.getPropertyValue(property).trim();
+      if (!value) continue;
+      this.element.style.setProperty(property, value);
+      this.colorPopover.style.setProperty(property, value);
+    }
+    this.element.style.colorScheme = source.colorScheme;
+    this.colorPopover.style.colorScheme = source.colorScheme;
   }
 
   private cancelSelectionSettle(): void {

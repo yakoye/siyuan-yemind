@@ -34,10 +34,10 @@ describe('editable color values', () => {
     const actions = target();
     const toolbar = new RichTextToolbar(root, actions);
     toolbar.update(true, { left: 20, top: 20, right: 80, bottom: 40, width: 60 }, { color: '#FF4D3D' });
-    root.querySelector<HTMLButtonElement>('[data-rich-action="color-menu"]')!.click();
+    document.body.querySelector<HTMLButtonElement>('[data-rich-action="color-menu"]')!.click();
 
-    const hex = root.querySelector<HTMLInputElement>('[data-color-input="hex"]')!;
-    const rgb = root.querySelector<HTMLInputElement>('[data-color-input="rgb"]')!;
+    const hex = document.body.querySelector<HTMLInputElement>('[data-color-input="hex"]')!;
+    const rgb = document.body.querySelector<HTMLInputElement>('[data-color-input="rgb"]')!;
     expect(hex.value).toBe('#FF4D3D');
     expect(rgb.value).toBe('255, 77, 61');
 
@@ -50,7 +50,7 @@ describe('editable color values', () => {
 
     expect(actions.formatText).toHaveBeenCalledWith({ color: '#00FF80' });
     expect(rgb.value).toBe('0, 255, 128');
-    expect(root.querySelector<HTMLElement>('.ymz-color-popover')!.hidden).toBe(false);
+    expect(document.body.querySelector<HTMLElement>('.ymz-color-popover')!.hidden).toBe(false);
     expect(parentKey).not.toHaveBeenCalled();
 
     rgb.value = '999, 1, 2';
@@ -60,7 +60,7 @@ describe('editable color values', () => {
 
     hex.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(actions.formatText).toHaveBeenLastCalledWith({ color: '#FF4D3D' });
-    expect(root.querySelector<HTMLElement>('.ymz-color-popover')!.hidden).toBe(true);
+    expect(document.body.querySelector<HTMLElement>('.ymz-color-popover')!.hidden).toBe(true);
 
     toolbar.destroy();
     root.remove();

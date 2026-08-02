@@ -27,18 +27,41 @@ function setup() {
   return root;
 }
 
+function overlayQuery<T extends Element = Element>(selector: string): T | null {
+  return document.body.querySelector<T>(selector);
+}
+
 describe('RichTextToolbar', () => {
-  it('stays inside the editor stacking context and applies native text formats', () => {
+  it('portals the toolbar above the body-level canvas text editor', () => {
+    const root = setup();
+    const canvasEditor = document.createElement('div');
+    canvasEditor.className = 'smm-richtext-node-edit-wrap';
+    canvasEditor.style.zIndex = '3000';
+    document.body.appendChild(canvasEditor);
+    const toolbar = new RichTextToolbar(root, commands());
+    const element = document.body.querySelector<HTMLElement>(':scope > .ymz-rich-toolbar');
+
+    expect(element).not.toBeNull();
+    expect(element?.parentElement).toBe(document.body);
+    expect(Number(element?.style.zIndex || 0)).toBeGreaterThan(3000);
+
+    toolbar.destroy();
+    canvasEditor.remove();
+    root.remove();
+  });
+
+  it('uses the shared document overlay and applies native text formats', () => {
     const root = setup();
     const actions = commands();
     const toolbar = new RichTextToolbar(root, actions);
 
     toolbar.update(true, { left: 100, top: 100, right: 160, bottom: 120, width: 60 }, {});
-    root.querySelector<HTMLButtonElement>('[data-rich-action="bold"]')!.click();
-    root.querySelector<HTMLButtonElement>('[data-rich-action="inline-code"]')!.click();
+    overlayQuery<HTMLButtonElement>('[data-rich-action="bold"]')!.click();
+    overlayQuery<HTMLButtonElement>('[data-rich-action="inline-code"]')!.click();
     expect(actions.formatText).toHaveBeenCalledWith({ bold: true });
     expect(actions.toggleInlineCode).toHaveBeenCalledOnce();
-    expect(root.querySelector('.ymz-rich-toolbar')).not.toBeNull();
+    expect(overlayQuery('.ymz-rich-toolbar')).not.toBeNull();
+    expect(root.querySelector('.ymz-rich-toolbar')).toBeNull();
     expect(document.body.children).toContain(root);
 
     toolbar.destroy();
@@ -52,7 +75,7 @@ describe('RichTextToolbar', () => {
     const bodyClick = vi.fn();
     document.body.addEventListener('click', bodyClick);
 
-    root.querySelector<HTMLButtonElement>('[data-rich-action="bold"]')!.click();
+    overlayQuery<HTMLButtonElement>('[data-rich-action="bold"]')!.click();
 
     expect(bodyClick).not.toHaveBeenCalled();
     document.body.removeEventListener('click', bodyClick);
@@ -67,9 +90,9 @@ describe('RichTextToolbar', () => {
     const onCodeBlock = vi.fn();
     const toolbar = new RichTextToolbar(root, target, { onLink, onCodeBlock });
     toolbar.update(true, { left: 1, top: 1, right: 2, bottom: 2, width: 1 }, {});
-    root.querySelector<HTMLButtonElement>('[data-rich-action="link"]')!.click();
+    overlayQuery<HTMLButtonElement>('[data-rich-action="link"]')!.click();
     toolbar.update(true, { left: 1, top: 1, right: 2, bottom: 2, width: 1 }, {});
-    root.querySelector<HTMLButtonElement>('[data-rich-action="code-block"]')!.click();
+    overlayQuery<HTMLButtonElement>('[data-rich-action="code-block"]')!.click();
     expect(onLink).toHaveBeenCalledWith(target);
     expect(onCodeBlock).toHaveBeenCalledWith(target);
     toolbar.destroy();
@@ -81,7 +104,7 @@ describe('RichTextToolbar', () => {
     const toolbar = new RichTextToolbar(root, commands());
     toolbar.update(true, { left: 1, top: 1, right: 2, bottom: 2, width: 1 }, {});
     toolbar.setEnabled(false);
-    expect(root.querySelector('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(true);
+    expect(overlayQuery('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(true);
     toolbar.destroy();
     root.remove();
   });
@@ -90,10 +113,10 @@ describe('RichTextToolbar', () => {
     const root = setup();
     const toolbar = new RichTextToolbar(root, commands());
     toolbar.update(true, { left: 1, top: 1, right: 2, bottom: 2, width: 1 }, {});
-    const size = root.querySelector<HTMLSelectElement>('[data-rich-field="size"]')!;
+    const size = overlayQuery<HTMLSelectElement>('[data-rich-field="size"]')!;
     size.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     toolbar.update(false, null, null);
-    expect(root.querySelector('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(false);
+    expect(overlayQuery('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(false);
     toolbar.destroy();
     root.remove();
   });
@@ -104,25 +127,25 @@ describe('RichTextToolbar', () => {
     const toolbar = new RichTextToolbar(root, actions);
     toolbar.update(true, { left: 20, top: 20, right: 80, bottom: 40, width: 60 }, {});
 
-    expect(root.querySelector('[data-rich-action="clear-color"]')).toBeNull();
-    expect(root.querySelector('[data-rich-action="clear-background"]')).toBeNull();
-    root.querySelector<HTMLButtonElement>('[data-rich-action="color-menu"]')!.click();
-    root.querySelector<HTMLButtonElement>('[data-color-value="#ff4d3d"]')!.click();
+    expect(overlayQuery('[data-rich-action="clear-color"]')).toBeNull();
+    expect(overlayQuery('[data-rich-action="clear-background"]')).toBeNull();
+    overlayQuery<HTMLButtonElement>('[data-rich-action="color-menu"]')!.click();
+    overlayQuery<HTMLButtonElement>('[data-color-value="#ff4d3d"]')!.click();
     expect(actions.formatText).toHaveBeenCalledWith({ color: '#ff4d3d' });
 
     toolbar.update(true, { left: 20, top: 20, right: 80, bottom: 40, width: 60 }, {});
-    root.querySelector<HTMLButtonElement>('[data-rich-action="background-menu"]')!.click();
-    root.querySelector<HTMLButtonElement>('[data-color-action="reset"]')!.click();
+    overlayQuery<HTMLButtonElement>('[data-rich-action="background-menu"]')!.click();
+    overlayQuery<HTMLButtonElement>('[data-color-action="reset"]')!.click();
     expect(actions.formatText).toHaveBeenCalledWith({ background: false });
-    expect(root.querySelector('[data-color-action="custom"]')).not.toBeNull();
-    expect(root.querySelector('[data-color-action="eyedropper"]')).toBeNull();
-    expect(root.querySelector('[data-color-readout="hex"]')?.textContent).toBe('默认');
-    expect(root.querySelector('[data-color-readout="rgb"]')?.textContent).toBe('继承节点颜色');
+    expect(overlayQuery('[data-color-action="custom"]')).not.toBeNull();
+    expect(overlayQuery('[data-color-action="eyedropper"]')).toBeNull();
+    expect(overlayQuery('[data-color-readout="hex"]')?.textContent).toBe('默认');
+    expect(overlayQuery('[data-color-readout="rgb"]')?.textContent).toBe('继承节点颜色');
 
     toolbar.update(true, { left: 20, top: 20, right: 80, bottom: 40, width: 60 }, { color: '#ff4d3d' });
-    root.querySelector<HTMLButtonElement>('[data-rich-action="color-menu"]')!.click();
-    expect(root.querySelector('[data-color-readout="hex"]')?.textContent).toBe('#FF4D3D');
-    expect(root.querySelector('[data-color-readout="rgb"]')?.textContent).toBe('RGB(255, 77, 61)');
+    overlayQuery<HTMLButtonElement>('[data-rich-action="color-menu"]')!.click();
+    expect(overlayQuery('[data-color-readout="hex"]')?.textContent).toBe('#FF4D3D');
+    expect(overlayQuery('[data-color-readout="rgb"]')?.textContent).toBe('RGB(255, 77, 61)');
 
     toolbar.destroy();
     root.remove();
@@ -135,16 +158,16 @@ describe('RichTextToolbar', () => {
     const toolbar = new RichTextToolbar(root, actions, { onFormula });
     toolbar.update(true, { left: 20, top: 20, right: 80, bottom: 40, width: 60 }, {});
 
-    const size = root.querySelector<HTMLSelectElement>('[data-rich-field="size"]')!;
+    const size = overlayQuery<HTMLSelectElement>('[data-rich-field="size"]')!;
     size.value = '18px';
     size.dispatchEvent(new Event('change', { bubbles: true }));
-    const font = root.querySelector<HTMLSelectElement>('[data-rich-field="font"]')!;
+    const font = overlayQuery<HTMLSelectElement>('[data-rich-field="font"]')!;
     font.value = 'serif';
     font.dispatchEvent(new Event('change', { bubbles: true }));
-    root.querySelector<HTMLButtonElement>('[data-rich-action="cloze"]')!.click();
-    root.querySelector<HTMLButtonElement>('[data-rich-action="clear"]')!.click();
+    overlayQuery<HTMLButtonElement>('[data-rich-action="cloze"]')!.click();
+    overlayQuery<HTMLButtonElement>('[data-rich-action="clear"]')!.click();
     toolbar.update(true, { left: 20, top: 20, right: 80, bottom: 40, width: 60 }, {});
-    root.querySelector<HTMLButtonElement>('[data-rich-action="formula"]')!.click();
+    overlayQuery<HTMLButtonElement>('[data-rich-action="formula"]')!.click();
 
     expect(actions.restoreSelection).toHaveBeenCalledTimes(5);
     expect(actions.formatText).toHaveBeenCalledWith({ size: '18px' });
@@ -168,20 +191,20 @@ describe('RichTextToolbar', () => {
       { left: 30, top: 30, right: 90, bottom: 50, width: 60 },
       { font: 'serif', size: '18px' },
     );
-    expect(root.querySelector('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(true);
+    expect(overlayQuery('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(true);
     window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
     await new Promise((resolve) => window.setTimeout(resolve, 40));
-    expect(root.querySelector('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(true);
+    expect(overlayQuery('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(true);
     toolbar.update(
       true,
       { left: 36, top: 34, right: 104, bottom: 54, width: 68 },
       { font: 'serif', size: '18px' },
     );
     await new Promise((resolve) => window.setTimeout(resolve, 40));
-    expect(root.querySelector('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(true);
+    expect(overlayQuery('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(true);
     await new Promise((resolve) => window.setTimeout(resolve, 120));
-    expect(root.querySelector('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(false);
-    expect((root.querySelector('.ymz-rich-toolbar') as HTMLElement).style.left).not.toBe('');
+    expect(overlayQuery('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(false);
+    expect((overlayQuery('.ymz-rich-toolbar') as HTMLElement).style.left).not.toBe('');
     toolbar.destroy();
     root.remove();
   });
@@ -194,10 +217,10 @@ describe('RichTextToolbar', () => {
       { left: 20, top: 20, right: 80, bottom: 40, width: 60 },
       { font: 'Unknown UI Font, sans-serif', size: '15px' },
     );
-    expect(root.querySelector<HTMLSelectElement>('[data-rich-field="font"]')?.value).toBe('');
-    expect(root.querySelector<HTMLSelectElement>('[data-rich-field="size"]')?.value).toBe('');
-    expect(root.querySelector<HTMLSelectElement>('[data-rich-field="font"]')?.selectedOptions[0]?.textContent).toBe('默认字体');
-    expect(root.querySelector<HTMLSelectElement>('[data-rich-field="size"]')?.selectedOptions[0]?.textContent).toBe('自动');
+    expect(overlayQuery<HTMLSelectElement>('[data-rich-field="font"]')?.value).toBe('');
+    expect(overlayQuery<HTMLSelectElement>('[data-rich-field="size"]')?.value).toBe('');
+    expect(overlayQuery<HTMLSelectElement>('[data-rich-field="font"]')?.selectedOptions[0]?.textContent).toBe('默认字体');
+    expect(overlayQuery<HTMLSelectElement>('[data-rich-field="size"]')?.selectedOptions[0]?.textContent).toBe('自动');
     toolbar.destroy();
     root.remove();
   });
@@ -210,7 +233,7 @@ describe('RichTextToolbar', () => {
     nextNode.className = 'smm-node';
     root.append(oldEditor, nextNode);
     const toolbar = new RichTextToolbar(root, commands());
-    const element = root.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    const element = overlayQuery<HTMLElement>('.ymz-rich-toolbar')!;
     const oldSession = { sessionId: 1, uid: 'old', selectionEpoch: 1 };
     toolbar.update(
       true,
@@ -284,7 +307,7 @@ describe('RichTextToolbar', () => {
       getRangeAt: () => ({ getBoundingClientRect: () => liveRect }),
     } as any);
     const toolbar = new RichTextToolbar(root, commands());
-    const element = root.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    const element = overlayQuery<HTMLElement>('.ymz-rich-toolbar')!;
     Object.defineProperties(element, {
       scrollWidth: { configurable: true, value: 700 },
       offsetHeight: { configurable: true, value: 48 },
@@ -296,7 +319,7 @@ describe('RichTextToolbar', () => {
       {},
     );
 
-    expect(element.style.top).toBe('298px');
+    expect(element.style.top).toBe('398px');
     getSelection.mockRestore();
     toolbar.destroy();
     root.remove();
@@ -342,7 +365,7 @@ describe('RichTextToolbar', () => {
       getRangeAt: () => ({ getBoundingClientRect: () => liveRect }),
     } as any);
     const toolbar = new RichTextToolbar(root, commands());
-    const element = root.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    const element = overlayQuery<HTMLElement>('.ymz-rich-toolbar')!;
     Object.defineProperties(element, {
       scrollWidth: { configurable: true, value: 700 },
       offsetHeight: { configurable: true, value: 48 },
@@ -354,7 +377,7 @@ describe('RichTextToolbar', () => {
       {},
     );
 
-    expect(element.style.top).toBe('298px');
+    expect(element.style.top).toBe('398px');
     getSelection.mockRestore();
     toolbar.destroy();
     root.remove();
@@ -378,7 +401,7 @@ describe('RichTextToolbar', () => {
       toJSON: () => ({}),
     });
     const toolbar = new RichTextToolbar(root, commands());
-    const element = root.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    const element = overlayQuery<HTMLElement>('.ymz-rich-toolbar')!;
     Object.defineProperties(element, {
       scrollWidth: { configurable: true, value: 700 },
       offsetHeight: { configurable: true, value: 48 },
@@ -413,7 +436,7 @@ describe('RichTextToolbar', () => {
       toJSON: () => ({}),
     });
     const toolbar = new RichTextToolbar(root, commands());
-    const element = root.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    const element = overlayQuery<HTMLElement>('.ymz-rich-toolbar')!;
     Object.defineProperties(element, {
       scrollWidth: { configurable: true, value: 300 },
       offsetHeight: { configurable: true, value: 44 },
@@ -477,7 +500,7 @@ describe('RichTextToolbar', () => {
     const cancelFrame = vi.spyOn(window, 'cancelAnimationFrame')
       .mockImplementation(() => undefined);
     const toolbar = new RichTextToolbar(root, commands());
-    const element = root.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    const element = overlayQuery<HTMLElement>('.ymz-rich-toolbar')!;
     Object.defineProperties(element, {
       scrollWidth: { configurable: true, value: 700 },
       offsetHeight: { configurable: true, value: 48 },
@@ -511,7 +534,7 @@ describe('RichTextToolbar', () => {
     staticNode.className = 'smm-node';
     root.append(staticNode);
     const toolbar = new RichTextToolbar(root, commands());
-    const element = root.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    const element = overlayQuery<HTMLElement>('.ymz-rich-toolbar')!;
     const session = { sessionId: 7, uid: 'node-7', selectionEpoch: 1 };
 
     toolbar.update(false, null, null, null, session);

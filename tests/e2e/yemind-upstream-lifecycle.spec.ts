@@ -291,7 +291,7 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
     const second = nodes.filter({ hasText: '第二节点' });
     await first.dblclick();
     await editor.fill('第一节点修改为一段明显更长、会改变节点尺寸并触发布局的内容');
-    await shell.locator('.ymz-rich-toolbar').evaluate((element) => {
+    await page.locator('body > .ymz-rich-toolbar').evaluate((element) => {
       (element as HTMLElement).style.pointerEvents = 'none';
     });
     await page.evaluate(() => {

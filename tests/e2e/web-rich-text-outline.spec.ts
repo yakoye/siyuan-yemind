@@ -18,6 +18,14 @@ function canvasTextEditHost(page: import('@playwright/test').Page): import('@pla
   return page.locator('body > .smm-richtext-node-edit-wrap');
 }
 
+function richTextToolbar(page: import('@playwright/test').Page): import('@playwright/test').Locator {
+  return page.locator('body > .ymz-rich-toolbar');
+}
+
+function richTextColorPopover(page: import('@playwright/test').Page): import('@playwright/test').Locator {
+  return page.locator('body > .ymz-color-popover:not([hidden])');
+}
+
 async function commitCanvasEdit(page: import('@playwright/test').Page): Promise<void> {
   const canvas = page.locator('.ymw-editor > .ymz-editor [data-role="canvas"]');
   const box = await canvas.boundingBox();
@@ -813,7 +821,7 @@ test('switching canvas editors keeps the previous node text fixed on every anima
     }, { capture: true, once: true });
   }, firstText);
 
-  await editor.locator('.ymz-rich-toolbar').evaluate((element) => {
+  await richTextToolbar(page).evaluate((element) => {
     (element as HTMLElement).style.pointerEvents = 'none';
   });
   await secondNode.dblclick();
@@ -958,7 +966,7 @@ test('selection toolbar is complete and anchored on its first visible frame afte
   // whole text. The toolbar only shows for a real selection, so establish
   // one explicitly instead of relying on the old implicit select-all.
   await textEditor.selectText();
-  await expect(editor.locator('.ymz-rich-toolbar')).toBeVisible();
+  await expect(richTextToolbar(page)).toBeVisible();
   await nodes.nth(2).evaluate((element) => element.setAttribute('data-toolbar-switch-target', 'true'));
 
   await page.evaluate(() => {
@@ -1017,12 +1025,12 @@ test('selection toolbar is complete and anchored on its first visible frame afte
   // testing pointer occlusion between two deliberately tightly packed fixture
   // nodes. Real layout keeps the toolbar below the selection; let the pointer
   // reach the switch target so the frame recorder can exercise that path.
-  await editor.locator('.ymz-rich-toolbar').evaluate((element) => {
+  await richTextToolbar(page).evaluate((element) => {
     (element as HTMLElement).style.pointerEvents = 'none';
   });
   await nodes.nth(2).dblclick();
   await textEditor.selectText();
-  await expect(editor.locator('.ymz-rich-toolbar')).toBeVisible();
+  await expect(richTextToolbar(page)).toBeVisible();
   await page.waitForTimeout(360);
   const frames = await page.evaluate(() => (window as any).__yemindToolbarSwitchFrames as Array<{
     visible: boolean;
@@ -1044,13 +1052,56 @@ test('selection toolbar is complete and anchored on its first visible frame afte
   });
 });
 
+test('selection toolbar stays above the body-level canvas editor', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop stacking regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const root = editor.locator('.smm-node').first();
+  const textEditor = canvasTextEditor(page);
+  const toolbar = richTextToolbar(page);
+
+  await root.dblclick();
+  await textEditor.fill('工具栏层级必须覆盖正在编辑的节点文字');
+  await textEditor.selectText();
+  await expect(toolbar).toBeVisible();
+
+  const stacking = await page.evaluate(() => {
+    const toolbarElement = document.querySelector<HTMLElement>('body > .ymz-rich-toolbar')!;
+    const editorElement = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap')!;
+    const editorRect = editorElement.getBoundingClientRect();
+    toolbarElement.style.left = `${editorRect.left}px`;
+    toolbarElement.style.top = `${editorRect.top}px`;
+    const button = toolbarElement.querySelector<HTMLElement>('button[data-rich-action]')!;
+    const buttonRect = button.getBoundingClientRect();
+    const topElement = document.elementsFromPoint(
+      buttonRect.left + buttonRect.width / 2,
+      buttonRect.top + buttonRect.height / 2,
+    )[0];
+    return {
+      toolbarIsBodyChild: toolbarElement.parentElement === document.body,
+      editorIsBodyChild: editorElement.parentElement === document.body,
+      toolbarZ: Number(getComputedStyle(toolbarElement).zIndex),
+      editorZ: Number(getComputedStyle(editorElement).zIndex),
+      topBelongsToToolbar: Boolean(topElement?.closest('.ymz-rich-toolbar')),
+    };
+  });
+
+  expect(stacking).toEqual({
+    toolbarIsBodyChild: true,
+    editorIsBodyChild: true,
+    toolbarZ: 3101,
+    editorZ: 3000,
+    topBelongsToToolbar: true,
+  });
+});
+
 test('pointer selection toolbar waits until the selection has stopped moving', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop pointer-selection settle regression');
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const textEditor = canvasTextEditor(page);
   const root = editor.locator('.smm-node').first();
-  const toolbar = editor.locator('.ymz-rich-toolbar');
+  const toolbar = richTextToolbar(page);
   await root.dblclick();
   await textEditor.fill('拖动选择这段文字以后，工具栏只在鼠标停止后出现');
   const box = await textEditor.boundingBox();
@@ -1322,7 +1373,7 @@ test('canvas partial selection cuts in one Ctrl+X transaction and keeps the tool
   await commitCanvasEdit(page);
   await rootNode.dblclick();
   await textEditor.dblclick();
-  const toolbar = editor.locator('.ymz-rich-toolbar');
+  const toolbar = richTextToolbar(page);
   await expect(toolbar).toBeVisible();
   const geometry = await page.evaluate(() => {
     const selection = window.getSelection();
@@ -1704,7 +1755,7 @@ test('outline paste trims browser boundary blank lines and Delete removes the pa
   expect(await childText.evaluate((element) => element.textContent?.includes('\n') ?? false)).toBe(false);
 
   await childText.click({ clickCount: 3 });
-  const toolbar = editor.locator('.ymz-rich-toolbar');
+  const toolbar = richTextToolbar(page);
   await expect(toolbar).toBeVisible();
   await expect(toolbar).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   await expect(toolbar).toHaveCSS('box-shadow', 'none');
@@ -1747,7 +1798,7 @@ test('canvas selected text keeps its range while every direct format control run
   const textEditor = canvasTextEditor(page);
   await expect(textEditor).toBeVisible();
   await textEditor.selectText();
-  const toolbar = editor.locator('.ymz-rich-toolbar');
+  const toolbar = richTextToolbar(page);
   await expect(toolbar).toBeVisible();
 
   await toolbar.locator('[data-rich-action="bold"]').click();
@@ -1767,12 +1818,12 @@ test('canvas selected text keeps its range while every direct format control run
 
   await textEditor.selectText();
   await toolbar.locator('[data-rich-action="color-menu"]').click();
-  await editor.locator('.ymz-color-popover:not([hidden]) [data-color-value="#ff4d3d"]').click();
+  await richTextColorPopover(page).locator('[data-color-value="#ff4d3d"]').click();
   await expect(textEditor.locator('[style*="color: rgb(255, 77, 61)"]')).toBeVisible();
 
   await textEditor.selectText();
   await toolbar.locator('[data-rich-action="background-menu"]').click();
-  await editor.locator('.ymz-color-popover:not([hidden]) [data-color-value="#ff4d3d"]').click();
+  await richTextColorPopover(page).locator('[data-color-value="#ff4d3d"]').click();
   await expect(textEditor.locator('[style*="background-color: rgb(255, 77, 61)"]')).toBeVisible();
 
   await textEditor.selectText();
@@ -1805,7 +1856,7 @@ test('outline selection toolbar formats text and its context menu edits and dele
   const childRow = editor.locator('[data-outline-drag-source="true"]').first();
   const childText = childRow.locator('[data-outline-editor]');
   await childText.click({ clickCount: 3 });
-  const toolbar = editor.locator('.ymz-rich-toolbar');
+  const toolbar = richTextToolbar(page);
   await expect(toolbar).toBeVisible();
   await toolbar.locator('[data-rich-action="bold"]').click();
   await expect(childText.locator('b, strong')).toBeVisible();
@@ -1825,12 +1876,12 @@ test('outline selection toolbar formats text and its context menu edits and dele
 
   await childText.click({ clickCount: 3 });
   await toolbar.locator('[data-rich-action="color-menu"]').click();
-  await editor.locator('.ymz-color-popover:not([hidden]) [data-color-value="#ff4d3d"]').click();
+  await richTextColorPopover(page).locator('[data-color-value="#ff4d3d"]').click();
   await expect(childText.locator('[color="#ff4d3d"], [style*="255, 77, 61"]')).toBeVisible();
 
   await childText.click({ clickCount: 3 });
   await toolbar.locator('[data-rich-action="background-menu"]').click();
-  await editor.locator('.ymz-color-popover:not([hidden]) [data-color-value="#ff4d3d"]').click();
+  await richTextColorPopover(page).locator('[data-color-value="#ff4d3d"]').click();
   await expect(childText.locator('[style*="background-color: rgb(255, 77, 61)"]')).toBeVisible();
 
   await childText.click({ clickCount: 3 });
@@ -1881,7 +1932,7 @@ test('canvas link, code-block and formula dialogs commit against the saved text 
   const editorUrl = page.url();
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const textEditor = canvasTextEditor(page);
-  const toolbar = editor.locator('.ymz-rich-toolbar');
+  const toolbar = richTextToolbar(page);
 
   await editor.locator('.smm-node').first().dblclick();
   await textEditor.selectText();
@@ -1920,7 +1971,7 @@ test('outline link, code-block and formula dialogs commit against the saved text
   const editor = page.locator('.ymw-editor > .ymz-editor');
   await editor.locator('[data-action="view-outline"]').click();
   const childText = editor.locator('[data-outline-drag-source="true"]').first().locator('[data-outline-editor]');
-  const toolbar = editor.locator('.ymz-rich-toolbar');
+  const toolbar = richTextToolbar(page);
 
   await childText.click({ clickCount: 3 });
   await toolbar.locator('[data-rich-action="link"]').click();
@@ -2090,7 +2141,7 @@ test('a second canvas edit session on a different node accepts continuous typing
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const textEditor = canvasTextEditor(page);
-  const toolbar = editor.locator('.ymz-rich-toolbar');
+  const toolbar = richTextToolbar(page);
 
   await addRootChild(page);
   await textEditor.pressSequentially('nodeAtext', { delay: 40 });
@@ -2435,6 +2486,35 @@ for (const insertion of ['Tab', 'Enter', 'quick-add'] as const) {
       await page.keyboard.press(insertion);
     }
     await expect(canvasTextEditor(page)).toHaveText('新节点');
+    await expect(canvasTextEditor(page)).toBeFocused();
+    const initialSelection = await canvasTextEditor(page).evaluate((element) => {
+      const selection = window.getSelection();
+      const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+      return {
+        collapsed: selection?.isCollapsed ?? true,
+        selectedText: selection?.toString() ?? '',
+        belongsToEditor: Boolean(
+          range
+          && element.contains(range.startContainer)
+          && element.contains(range.endContainer),
+        ),
+      };
+    });
+    expect(initialSelection).toEqual({
+      collapsed: false,
+      selectedText: '新节点',
+      belongsToEditor: true,
+    });
+    const selectionPaint = await canvasTextEditor(page).evaluate((element) => {
+      const style = getComputedStyle(element, '::selection');
+      return {
+        backgroundColor: style.backgroundColor,
+        caretColor: getComputedStyle(element).caretColor,
+      };
+    });
+    expect(selectionPaint.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+    expect(selectionPaint.backgroundColor).not.toBe('transparent');
+    expect(selectionPaint.caretColor).not.toBe('transparent');
     await page.evaluate(() => new Promise<void>((resolve) => {
       let remaining = 6;
       const next = (): void => {
@@ -2472,6 +2552,8 @@ for (const insertion of ['Tab', 'Enter', 'quick-add'] as const) {
         || (frame.editorVisible && frame.editorText === '新节点' && frame.editorGlyphPainted),
       ).toBe(true);
     });
+    await canvasTextEditor(page).pressSequentially('直接替换');
+    await expect(canvasTextEditor(page)).toHaveText('直接替换');
   });
 }
 
