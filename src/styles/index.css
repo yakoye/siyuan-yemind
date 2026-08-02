@@ -559,6 +559,17 @@
   fill:none!important;
   stroke-width:1!important;
 }
+/* The upstream editor already keeps the original node shape mounted while its
+   body portal is visible. Do not paint a second, padded active rectangle over
+   that shape: it changes the visible bounds on the dblclick frame. */
+body:has(> .smm-richtext-node-edit-wrap[style*="display: block"])
+  .ymz-editor .smm-node.active .smm-hover-node{
+  display:none!important;
+}
+body:has(> .smm-richtext-node-edit-wrap[style*="display: block"])
+  .ymz-editor .smm-node.active .smm-node-shape{
+  stroke:var(--ymz-accent)!important;
+}
 .ymz-editor .smm-richtext-node-edit-wrap,
 .ymz-editor .smm-richtext-node-edit-wrap .ql-container{
   border-color:var(--ymz-accent)!important;

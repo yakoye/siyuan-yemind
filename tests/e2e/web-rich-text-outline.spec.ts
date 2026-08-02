@@ -389,6 +389,139 @@ test('the upstream rich-text host has valid geometry on its first visible record
   });
 });
 
+test('the first visible canvas editor glyph frame exactly replaces the static glyph frame', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop first-visible-glyph regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = canvasTextEditor(page);
+  const multilineText = [
+    '一个开源工具 + 国内',
+    '大模型，几分钟就能',
+    '把官方收费、还要魔',
+    '法的 Claude Code',
+    'Codex 跑起来，成本',
+    '可能就是官方的零',
+    '头。说真的，工具和',
+    '模型都不该成为你学',
+    '习。这个可以吗',
+  ].join('\n');
+
+  await rootNode.dblclick();
+  await textEditor.fill(multilineText);
+  await commitCanvasEdit(page);
+  await rootNode.evaluate((element) => element.setAttribute('data-glyph-handoff-target', 'true'));
+
+  await page.evaluate(() => {
+    type Rect = { left: number; top: number; width: number; height: number };
+    type Frame = {
+      editorVisible: boolean;
+      editorGlyph: Rect | null;
+      padding: string;
+      lineHeight: string;
+    };
+    const rectOfText = (element: Element | null): Rect | null => {
+      if (!element) return null;
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      const rects = Array.from(range.getClientRects()).filter((rect) => rect.width > 0 && rect.height > 0);
+      if (rects.length === 0) return null;
+      const left = Math.min(...rects.map((rect) => rect.left));
+      const top = Math.min(...rects.map((rect) => rect.top));
+      const right = Math.max(...rects.map((rect) => rect.right));
+      const bottom = Math.max(...rects.map((rect) => rect.bottom));
+      return { left, top, width: right - left, height: bottom - top };
+    };
+    const target = document.querySelector('[data-glyph-handoff-target="true"]');
+    const staticLayer = target?.querySelector('.smm-richtext-node-wrap') ?? null;
+    (window as any).__yemindStaticGlyphRect = rectOfText(staticLayer);
+    const frames: Frame[] = [];
+    (window as any).__yemindEditorGlyphFrames = frames;
+    let remaining = 0;
+    const capture = (): void => {
+      const live = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap .ql-editor');
+      const host = live?.closest<HTMLElement>('.smm-richtext-node-edit-wrap') ?? null;
+      const style = live ? getComputedStyle(live) : null;
+      const hostStyle = host ? getComputedStyle(host) : null;
+      const editorVisible = Boolean(live && host
+        && style?.visibility !== 'hidden'
+        && style?.display !== 'none'
+        && hostStyle?.visibility !== 'hidden'
+        && hostStyle?.display !== 'none');
+      frames.push({
+        editorVisible,
+        editorGlyph: editorVisible ? rectOfText(live) : null,
+        padding: style?.padding ?? '',
+        lineHeight: style?.lineHeight ?? '',
+      });
+      remaining -= 1;
+      if (remaining > 0) requestAnimationFrame(capture);
+    };
+    document.addEventListener('mousedown', () => {
+      remaining = 60;
+      requestAnimationFrame(capture);
+    }, { capture: true, once: true });
+  });
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeVisible();
+  await page.waitForTimeout(1100);
+  const evidence = await page.evaluate(() => ({
+    staticGlyph: (window as any).__yemindStaticGlyphRect as {
+      left: number; top: number; width: number; height: number;
+    } | null,
+    frames: (window as any).__yemindEditorGlyphFrames as Array<{
+      editorVisible: boolean;
+      editorGlyph: { left: number; top: number; width: number; height: number } | null;
+      padding: string;
+      lineHeight: string;
+    }>,
+  }));
+  expect(evidence.staticGlyph).not.toBeNull();
+  const visible = evidence.frames.filter((frame) => frame.editorVisible && frame.editorGlyph);
+  expect(visible.length).toBeGreaterThan(5);
+  const first = visible[0].editorGlyph!;
+  const last = visible.at(-1)!.editorGlyph!;
+  const staticGlyph = evidence.staticGlyph!;
+  expect(visible[0].padding).toBe('0px');
+  expect(Math.abs(first.left - staticGlyph.left)).toBeLessThanOrEqual(1);
+  expect(Math.abs(first.top - staticGlyph.top)).toBeLessThanOrEqual(1);
+  expect(Math.abs(first.width - last.width)).toBeLessThanOrEqual(1);
+  expect(Math.abs(first.height - last.height)).toBeLessThanOrEqual(1);
+});
+
+test('entering canvas text edit keeps the active outline on the node boundary', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop active-outline geometry regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  await rootNode.dblclick();
+  await canvasTextEditor(page).fill([
+    '一个开源工具 + 国内',
+    '大模型，几分钟就能',
+    '把官方收费、还要魔',
+    '法的 Claude Code',
+    'Codex 跑起来，成本',
+    '可能就是官方的零',
+    '头。说真的，工具和',
+    '模型都不该成为你学',
+    '习。这个可以吗',
+  ].join('\n'));
+  await commitCanvasEdit(page);
+  const shape = rootNode.locator('.smm-node-shape').first();
+  const activeOutline = rootNode.locator('.smm-hover-node').first();
+
+  const shapeBefore = await shape.boundingBox();
+  expect(shapeBefore).not.toBeNull();
+  await rootNode.dblclick();
+  await expect(canvasTextEditor(page)).toBeFocused();
+  const shapeDuring = await shape.boundingBox();
+
+  expect(shapeDuring).toEqual(shapeBefore);
+  await expect(activeOutline).toBeHidden();
+  await expect(shape).toHaveCSS('stroke', 'rgb(34, 201, 160)');
+});
+
 test('opening plain multiline text keeps an aligned readable layer on every animation frame', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop atomic editor handoff regression');
   await resetWebApp(page);

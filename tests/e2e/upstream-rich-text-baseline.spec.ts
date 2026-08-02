@@ -1,6 +1,40 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('official simple-mind-map rich-text baseline', () => {
+  test('keeps the upstream editor geometry stable while its padded active outline appears', async ({ page }) => {
+    await page.goto('/upstream-baseline.html');
+    const node = page.locator('#upstream-baseline .smm-node').first();
+    await expect(node).toBeVisible();
+
+    const before = await node.evaluate((element) => {
+      const shape = element.querySelector<SVGGraphicsElement>('.smm-node-shape');
+      const hover = element.querySelector<SVGGraphicsElement>('.smm-hover-node');
+      return {
+        node: element.getBoundingClientRect().toJSON(),
+        shape: shape?.getBoundingClientRect().toJSON(),
+        hover: hover?.getBoundingClientRect().toJSON(),
+      };
+    });
+
+    await node.dblclick();
+    const editor = page.locator('.smm-richtext-node-edit-wrap .ql-editor');
+    await expect(editor).toBeFocused();
+    const after = await node.evaluate((element) => {
+      const shape = element.querySelector<SVGGraphicsElement>('.smm-node-shape');
+      const hover = element.querySelector<SVGGraphicsElement>('.smm-hover-node');
+      return {
+        node: element.getBoundingClientRect().toJSON(),
+        shape: shape?.getBoundingClientRect().toJSON(),
+        hover: hover?.getBoundingClientRect().toJSON(),
+      };
+    });
+
+    expect(after.shape).toEqual(before.shape);
+    expect(after.hover).not.toBeNull();
+    expect(after.hover!.width).toBeGreaterThan(after.shape!.width);
+    expect(after.hover!.height).toBeGreaterThan(after.shape!.height);
+  });
+
   test('opens an immediately focused editor without a blank text frame', async ({ page }) => {
     await page.goto('/upstream-baseline.html');
     const canvas = page.locator('#upstream-baseline');
