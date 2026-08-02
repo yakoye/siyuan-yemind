@@ -899,6 +899,55 @@ test('selection toolbar is complete and anchored on its first visible frame afte
   });
 });
 
+test('pointer selection toolbar waits until the selection has stopped moving', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop pointer-selection settle regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const textEditor = canvasTextEditor(page);
+  const root = editor.locator('.smm-node').first();
+  const toolbar = editor.locator('.ymz-rich-toolbar');
+  await root.dblclick();
+  await textEditor.fill('拖动选择这段文字以后，工具栏只在鼠标停止后出现');
+  const box = await textEditor.boundingBox();
+  expect(box).not.toBeNull();
+
+  await page.evaluate(() => {
+    const toolbar = document.querySelector<HTMLElement>('.ymz-rich-toolbar')!;
+    const timing = { mouseUpAt: 0, visibleAt: 0 };
+    (window as any).__yemindPointerToolbarTiming = timing;
+    window.addEventListener('mouseup', () => {
+      timing.mouseUpAt = performance.now();
+    }, { capture: true, once: true });
+    const observer = new MutationObserver(() => {
+      const style = getComputedStyle(toolbar);
+      if (!toolbar.hidden && style.visibility !== 'hidden' && timing.visibleAt === 0) {
+        timing.visibleAt = performance.now();
+        observer.disconnect();
+      }
+    });
+    observer.observe(toolbar, { attributes: true, attributeFilter: ['hidden', 'style', 'class'] });
+  });
+
+  await page.mouse.move(box!.x + box!.width - 8, box!.y + box!.height / 2);
+  await page.mouse.down();
+  for (let step = 1; step <= 6; step += 1) {
+    await page.mouse.move(
+      box!.x + box!.width - 8 - step * Math.max(12, box!.width / 8),
+      box!.y + box!.height / 2,
+    );
+    expect(await toolbar.isHidden()).toBe(true);
+  }
+  await page.mouse.up();
+  await page.waitForTimeout(260);
+  await expect(toolbar).toBeVisible();
+  const timing = await page.evaluate(() => (window as any).__yemindPointerToolbarTiming as {
+    mouseUpAt: number;
+    visibleAt: number;
+  });
+  expect(timing.mouseUpAt).toBeGreaterThan(0);
+  expect(timing.visibleAt - timing.mouseUpAt).toBeGreaterThanOrEqual(100);
+});
+
 test('YM-TEXT-028 double-click owns focus after the host restores RootWebArea focus and needs no third click', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop SiYuan focus handoff regression');
   await resetWebApp(page);
@@ -2305,4 +2354,68 @@ test('the live Quill layer remains visible on every sampled frame while typing',
 
   expect(samples.every((sample) => sample.quillVisible)).toBe(true);
   await commitCanvasEdit(page);
+});
+
+test('freshly saved nodes keep identical committed geometry after a full reload and an unchanged edit', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop persisted rich-text geometry regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const textEditor = canvasTextEditor(page);
+  const rootNode = editor.locator('.smm-node').first();
+  const rootText = '这是一个较长的中心主题，需要在重新打开导图后保持完整且尺寸不变';
+  const childText = '新节点两支表笔分别接触电池正、负极，读取电压并判断极性与状态';
+
+  await rootNode.dblclick();
+  await textEditor.fill(rootText);
+  await commitCanvasEdit(page);
+  await addRootChild(page);
+  await textEditor.fill(childText);
+  await commitCanvasEdit(page);
+  await expect(editor.locator('[data-role="save-state-label"]')).toHaveText('已保存');
+
+  const readGeometry = async () => editor.locator('.smm-node').evaluateAll((nodes) => nodes.map((node) => {
+    const textGroup = node.querySelector<SVGGElement>('g[data-width][data-height]');
+    const textLayer = node.querySelector<HTMLElement>('.smm-richtext-node-wrap,.smm-text-node-wrap');
+    const nodeRect = node.getBoundingClientRect();
+    const textRect = textLayer?.getBoundingClientRect() ?? new DOMRect();
+    return {
+      text: textLayer?.textContent ?? '',
+      nodeWidth: nodeRect.width,
+      nodeHeight: nodeRect.height,
+      textLeft: textRect.left,
+      textTop: textRect.top,
+      textWidth: Number(textGroup?.getAttribute('data-width') ?? 0),
+      textHeight: Number(textGroup?.getAttribute('data-height') ?? 0),
+      richText: Boolean(node.querySelector('.smm-richtext-node-wrap')),
+    };
+  }));
+
+  const beforeReload = await readGeometry();
+  expect(beforeReload).toHaveLength(2);
+  await page.reload();
+  await expect(editor.locator('.smm-node')).toHaveCount(2);
+  const afterReload = await readGeometry();
+
+  const reloadedRoot = editor.locator('.smm-node').filter({ hasText: rootText }).first();
+  await reloadedRoot.dblclick();
+  await expect(textEditor).toBeFocused();
+  await commitCanvasEdit(page);
+  const afterUnchangedEdit = await readGeometry();
+
+  const normalize = (items: typeof beforeReload) => items
+    .map((item) => ({ ...item }))
+    .sort((left, right) => left.text.localeCompare(right.text));
+  const baseline = normalize(beforeReload);
+  const reloaded = normalize(afterReload);
+  const edited = normalize(afterUnchangedEdit);
+  expect(reloaded.map(({ text, nodeWidth, nodeHeight, textWidth, textHeight, richText }) => ({
+    text, nodeWidth, nodeHeight, textWidth, textHeight, richText,
+  }))).toEqual(baseline.map(({ text, nodeWidth, nodeHeight, textWidth, textHeight, richText }) => ({
+    text, nodeWidth, nodeHeight, textWidth, textHeight, richText,
+  })));
+  expect(edited.map(({ text, nodeWidth, nodeHeight, textWidth, textHeight, richText }) => ({
+    text, nodeWidth, nodeHeight, textWidth, textHeight, richText,
+  }))).toEqual(baseline.map(({ text, nodeWidth, nodeHeight, textWidth, textHeight, richText }) => ({
+    text, nodeWidth, nodeHeight, textWidth, textHeight, richText,
+  })));
 });

@@ -1160,6 +1160,7 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
   };
 
   private readonly onPointerUp = (): void => {
+    if (this.pointerSelecting) this.commitPointerTextSelection();
     this.pointerSelecting = false;
     window.setTimeout(() => this.publishSelection(), 0);
   };
@@ -1194,9 +1195,38 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       this.options.onSelectionChange(false, null, null, this);
     } else if (currentRange) {
       const textRange = clampRangeToOutlineEditors(currentRange, this.options.root);
-      if (textRange || !this.pointerSelecting) this.savedRange = textRange ?? currentRange.cloneRange();
+      // Decorative outline elements (drag grips, guide lines, disclosure
+      // triangles) are not editable selection endpoints. A late Chromium
+      // selectionchange after pointerup must never replace the last valid
+      // text range with a range that ends in one of those elements.
+      if (textRange) this.savedRange = textRange;
     }
   };
+
+  private commitPointerTextSelection(): void {
+    const selection = window.getSelection();
+    if (!selection?.rangeCount) return;
+    const textRange = clampRangeToOutlineEditors(selection.getRangeAt(0), this.options.root);
+    if (!textRange) return;
+    const direction = (selection as Selection & { direction?: string }).direction;
+    this.suppressSelectionChange = true;
+    try {
+      selection.removeAllRanges();
+      if (direction === 'backward' && typeof selection.setBaseAndExtent === 'function') {
+        selection.setBaseAndExtent(
+          textRange.endContainer,
+          textRange.endOffset,
+          textRange.startContainer,
+          textRange.startOffset,
+        );
+      } else {
+        selection.addRange(textRange);
+      }
+      this.savedRange = textRange.cloneRange();
+    } finally {
+      this.suppressSelectionChange = false;
+    }
+  }
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
     if (event.isComposing || this.composing) return;
@@ -2392,7 +2422,12 @@ export class StructuredOutlineEditorController implements RichTextFormattingTarg
       this.options.onSelectionChange(false, null, null, this);
       return;
     }
-    const range = selection.getRangeAt(0);
+    const currentRange = selection.getRangeAt(0);
+    const range = clampRangeToOutlineEditors(currentRange, this.options.root);
+    if (!range) {
+      this.options.onSelectionChange(false, null, null, this);
+      return;
+    }
     if (range.collapsed) {
       this.options.onSelectionChange(false, null, null, this);
       return;

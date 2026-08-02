@@ -31,6 +31,11 @@ export interface RichTextToolbarCallbacks {
 
 type ColorKind = "color" | "background";
 
+// Pointer selections keep changing for a short time after mouseup while the
+// browser/Quill publishes the final Range. Only reveal the toolbar after that
+// stream is quiet so it never chases the pointer or flashes at an old anchor.
+const POINTER_SELECTION_SETTLE_MS = 120;
+
 function option(value: string, label: string): string {
   return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -66,8 +71,9 @@ export class RichTextToolbar {
   private target: RichTextFormattingTarget | null = null;
   private activeColorKind: ColorKind = "color";
   private colorSessionOriginal: string | false = false;
-  private anchorFrame = 0;
   private revealFrame = 0;
+  private selectionSettleTimer = 0;
+  private settlingPointerSelection = false;
   private visibilityEpoch = 0;
   private lastReportedRect: RichTextSelectionRect | null = null;
   private selectionSessionId = 0;
@@ -76,38 +82,25 @@ export class RichTextToolbar {
   private readonly onDocumentMouseDown = (event: MouseEvent): void => {
     const node = event.target as Node;
     if (this.element.contains(node) || this.colorPopover.contains(node)) return;
-    this.selecting = this.root.contains(node);
     const targetElement = node instanceof Element ? node : node.parentElement;
     this.pointerSelectionMayPublish = Boolean(
       targetElement?.closest(
         '.ql-editor,[data-outline-editor],[data-role="outline-text-editor"],[contenteditable="true"]',
       ),
     );
+    // The vendored rich-text host can be appended beside the SVG editor root,
+    // so root.contains(target) alone misses genuine Quill drag selections.
+    this.selecting = this.root.contains(node) || this.pointerSelectionMayPublish;
     this.pointerSessionAtDown = this.selectionSessionId;
+    this.cancelSelectionSettle();
     this.pendingSelection = null;
     this.hide();
   };
   private readonly onWindowMouseUp = (): void => {
-    window.setTimeout(() => {
-      this.interacting = false;
-      const pending = this.pendingSelection;
-      this.selecting = false;
-      this.pendingSelection = null;
-      const belongsToNewSession = Boolean(
-        pending?.session
-        && pending.session.sessionId !== this.pointerSessionAtDown,
-      );
-      if (pending && (this.pointerSelectionMayPublish || belongsToNewSession)) {
-        this.applyUpdate(
-          pending.hasRange,
-          pending.rectInfo,
-          pending.formatInfo,
-          pending.target,
-          pending.session,
-        );
-      }
-      this.pointerSelectionMayPublish = false;
-    }, 0);
+    this.interacting = false;
+    this.selecting = false;
+    this.settlingPointerSelection = true;
+    this.scheduleSettledPointerSelection();
   };
 
   constructor(
@@ -174,7 +167,7 @@ export class RichTextToolbar {
     session?: CanvasSelectionSession | null,
   ): void {
     if (target) this.target = target;
-    if (this.selecting && !this.interacting) {
+    if ((this.selecting || this.settlingPointerSelection) && !this.interacting) {
       this.pendingSelection = {
         hasRange,
         rectInfo: rectInfo ?? null,
@@ -182,6 +175,9 @@ export class RichTextToolbar {
         target: target ?? this.target,
         session: session ?? null,
       };
+      if (this.settlingPointerSelection) {
+        this.scheduleSettledPointerSelection();
+      }
       return;
     }
     this.applyUpdate(
@@ -228,7 +224,6 @@ export class RichTextToolbar {
       return;
     }
     this.position(rectInfo, true);
-    this.trackLiveSelection();
   }
 
   hide(): void {
@@ -239,14 +234,12 @@ export class RichTextToolbar {
     this.element.hidden = true;
     this.colorPopover.hidden = true;
     this.lastReportedRect = null;
-    window.cancelAnimationFrame(this.anchorFrame);
-    this.anchorFrame = 0;
   }
 
   destroy(): void {
     document.removeEventListener("mousedown", this.onDocumentMouseDown, true);
     window.removeEventListener("mouseup", this.onWindowMouseUp, true);
-    window.cancelAnimationFrame(this.anchorFrame);
+    this.cancelSelectionSettle();
     window.cancelAnimationFrame(this.revealFrame);
     this.element.remove();
     this.colorPopover.remove();
@@ -638,10 +631,28 @@ export class RichTextToolbar {
     const measuredHeight = this.element.offsetHeight || 44;
     const above = localTop - measuredHeight - 8;
     const below = localBottom + 8;
-    const top =
+    let top =
       below + measuredHeight <= rootHeight - 8
         ? below
         : Math.max(8, above);
+    if (rootWidth <= 720) {
+      const canvasEditor = document.querySelector<HTMLElement>(
+        'body > .smm-richtext-node-edit-wrap',
+      );
+      if (canvasEditor && getComputedStyle(canvasEditor).display !== 'none') {
+        const editorRect = canvasEditor.getBoundingClientRect();
+        const editorTop = (editorRect.top - rootRect.top) / scaleY;
+        const editorBottom = (editorRect.bottom - rootRect.top) / scaleY;
+        const overlapsEditor =
+          top < editorBottom && top + measuredHeight > editorTop;
+        if (overlapsEditor) {
+          const belowEditor = editorBottom + 8;
+          top = belowEditor + measuredHeight <= rootHeight - 8
+            ? belowEditor
+            : Math.max(8, editorTop - measuredHeight - 8);
+        }
+      }
+    }
     const nextLeft = `${Math.round(left)}px`;
     const nextTop = `${Math.round(top)}px`;
     const nextMaxWidth = `${Math.max(240, rootWidth - 16)}px`;
@@ -650,20 +661,39 @@ export class RichTextToolbar {
     if (this.element.style.maxWidth !== nextMaxWidth) this.element.style.maxWidth = nextMaxWidth;
   }
 
-  private trackLiveSelection(): void {
-    if (
-      this.anchorFrame
-      || this.element.hidden
-      || this.element.style.visibility === "hidden"
-      || !this.lastReportedRect
-    ) return;
-    const update = (): void => {
-      this.anchorFrame = 0;
-      if (this.element.hidden || !this.lastReportedRect) return;
-      this.position(this.lastReportedRect, true);
-      this.anchorFrame = window.requestAnimationFrame(update);
-    };
-    this.anchorFrame = window.requestAnimationFrame(update);
+  private cancelSelectionSettle(): void {
+    if (this.selectionSettleTimer) {
+      window.clearTimeout(this.selectionSettleTimer);
+      this.selectionSettleTimer = 0;
+    }
+    this.settlingPointerSelection = false;
+  }
+
+  private scheduleSettledPointerSelection(): void {
+    if (!this.settlingPointerSelection) return;
+    if (this.selectionSettleTimer) {
+      window.clearTimeout(this.selectionSettleTimer);
+    }
+    this.selectionSettleTimer = window.setTimeout(() => {
+      this.selectionSettleTimer = 0;
+      this.settlingPointerSelection = false;
+      const pending = this.pendingSelection;
+      this.pendingSelection = null;
+      const belongsToNewSession = Boolean(
+        pending?.session
+        && pending.session.sessionId !== this.pointerSessionAtDown,
+      );
+      if (pending && (this.pointerSelectionMayPublish || belongsToNewSession)) {
+        this.applyUpdate(
+          pending.hasRange,
+          pending.rectInfo,
+          pending.formatInfo,
+          pending.target,
+          pending.session,
+        );
+      }
+      this.pointerSelectionMayPublish = false;
+    }, POINTER_SELECTION_SETTLE_MS);
   }
 
   private scheduleReveal(): void {
@@ -691,7 +721,6 @@ export class RichTextToolbar {
         ) return;
         this.position(this.lastReportedRect, true);
         this.element.style.visibility = "";
-        this.trackLiveSelection();
       });
     });
   }

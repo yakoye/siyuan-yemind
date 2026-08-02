@@ -170,8 +170,18 @@ describe('RichTextToolbar', () => {
     );
     expect(root.querySelector('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(true);
     window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-    await new Promise((resolve) => window.setTimeout(resolve, 1));
+    await new Promise((resolve) => window.setTimeout(resolve, 40));
+    expect(root.querySelector('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(true);
+    toolbar.update(
+      true,
+      { left: 36, top: 34, right: 104, bottom: 54, width: 68 },
+      { font: 'serif', size: '18px' },
+    );
+    await new Promise((resolve) => window.setTimeout(resolve, 40));
+    expect(root.querySelector('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(true);
+    await new Promise((resolve) => window.setTimeout(resolve, 120));
     expect(root.querySelector('.ymz-rich-toolbar')?.hasAttribute('hidden')).toBe(false);
+    expect((root.querySelector('.ymz-rich-toolbar') as HTMLElement).style.left).not.toBe('');
     toolbar.destroy();
     root.remove();
   });
@@ -231,8 +241,10 @@ describe('RichTextToolbar', () => {
       null,
       { sessionId: 2, uid: 'next', selectionEpoch: 1 },
     );
+    expect(element.hidden).toBe(true);
+    await new Promise((resolve) => window.setTimeout(resolve, 160));
     expect(element.hidden).toBe(false);
-    expect(element.style.visibility).toBe('hidden');
+    expect(element.style.left).not.toBe('30px');
 
     toolbar.destroy();
     root.remove();

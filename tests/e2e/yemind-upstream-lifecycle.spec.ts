@@ -184,6 +184,99 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
     await expectStableViewportFrames(page, before);
   });
 
+  test('commits a resized node as one geometry state before opening another editor', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'desktop atomic text/geometry handoff');
+    await resetWebApp(page);
+    const shell = page.locator('.ymw-editor > .ymz-editor');
+    const nodes = shell.locator('.smm-node');
+    const editor = canvasEditor(page);
+    await nodes.first().click();
+    await page.keyboard.press('Tab');
+    await editor.fill('第一节点');
+    await shell.locator('[data-role="canvas"]').click({ position: { x: 24, y: 90 } });
+    await expect(nodes.filter({ hasText: '第一节点' })).toBeVisible();
+    await nodes.first().click();
+    await page.keyboard.press('Tab');
+    await editor.fill('第二节点');
+    await shell.locator('[data-role="canvas"]').click({ position: { x: 24, y: 90 } });
+    await expect(nodes.filter({ hasText: '第二节点' })).toBeVisible();
+
+    const first = nodes.filter({ hasText: '第一节点' });
+    const second = nodes.filter({ hasText: '第二节点' });
+    await first.dblclick();
+    await editor.fill('第一节点修改为一段明显更长、会改变节点尺寸并触发布局的内容');
+    await shell.locator('.ymz-rich-toolbar').evaluate((element) => {
+      (element as HTMLElement).style.pointerEvents = 'none';
+    });
+    await page.evaluate(() => {
+      const frames: Array<{
+        editorVisible: boolean;
+        staticVisible: boolean;
+        staticRect: { left: number; top: number; width: number; height: number } | null;
+      }> = [];
+      let remaining = 60;
+      const capture = (): void => {
+        const editor = document.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
+        const editorStyle = editor ? getComputedStyle(editor) : null;
+        const editorVisible = Boolean(
+          editor
+          && editor.checkVisibility({ checkVisibilityCSS: true })
+          && editorStyle?.display !== 'none'
+          && editorStyle?.visibility !== 'hidden'
+          && editor.getBoundingClientRect().width > 0
+          && editor.textContent?.includes('第一节点修改为一段明显更长'),
+        );
+        const target = Array.from(document.querySelectorAll<SVGGraphicsElement>('.smm-node'))
+          .find((element) => element.textContent?.includes('第一节点修改为一段明显更长'));
+        const staticText = target?.querySelector<HTMLElement>('.smm-richtext-node-wrap') ?? null;
+        const staticStyle = staticText ? getComputedStyle(staticText) : null;
+        const staticVisible = Boolean(
+          staticText
+          && staticText.checkVisibility({ checkVisibilityCSS: true })
+          && staticStyle?.display !== 'none'
+          && staticStyle?.visibility !== 'hidden'
+          && staticText.getBoundingClientRect().width > 0,
+        );
+        const rect = staticVisible ? staticText!.getBoundingClientRect() : null;
+        frames.push({
+          editorVisible,
+          staticVisible,
+          staticRect: rect
+            ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
+            : null,
+        });
+        remaining -= 1;
+        if (remaining > 0) requestAnimationFrame(capture);
+      };
+      (window as any).__yemindAtomicGeometryFrames = frames;
+      requestAnimationFrame(capture);
+    });
+
+    await second.dblclick();
+    await expect(editor).toBeFocused();
+    await expect(editor).toContainText('第二节点');
+    await page.waitForTimeout(1000);
+    const frames = await page.evaluate(() => (
+      (window as any).__yemindAtomicGeometryFrames as Array<{
+        editorVisible: boolean;
+        staticVisible: boolean;
+        staticRect: { left: number; top: number; width: number; height: number } | null;
+      }>
+    ));
+    expect(frames.length).toBeGreaterThanOrEqual(45);
+    expect(frames.filter((frame) => !frame.editorVisible && !frame.staticVisible)).toEqual([]);
+    const staticRects = frames.flatMap((frame) => frame.staticRect ? [frame.staticRect] : []);
+    expect(staticRects.length).toBeGreaterThan(0);
+    const finalRect = staticRects.at(-1)!;
+    const misplaced = staticRects.filter((rect) => (
+      Math.abs(rect.left - finalRect.left) > 1
+      || Math.abs(rect.top - finalRect.top) > 1
+      || Math.abs(rect.width - finalRect.width) > 1
+      || Math.abs(rect.height - finalRect.height) > 1
+    ));
+    expect(misplaced, JSON.stringify({ finalRect, misplaced }, null, 2)).toEqual([]);
+  });
+
   test('deleting a node does not scroll the map shell', async ({ page, isMobile }) => {
     test.skip(isMobile, 'desktop canvas deletion lifecycle');
     await resetWebApp(page);

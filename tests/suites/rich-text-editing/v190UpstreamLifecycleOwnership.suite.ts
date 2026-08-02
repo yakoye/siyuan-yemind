@@ -49,4 +49,14 @@ describe('v1.9.0 upstream rich-text lifecycle ownership', () => {
     expect(editor).not.toMatch(/this\.map\.on\(["']node_click["'][\s\S]{0,160}this\.canvasEl\.focus/);
     expect(css).not.toContain('data-yemind-geometry-ready');
   });
+
+  it('installs the static rich-text measurement contract before constructing the upstream map', () => {
+    const createSource = readFileSync(resolve(process.cwd(), 'src/core/createMindMap.ts'), 'utf8');
+    const createBody = createSource.slice(createSource.indexOf('export function createMindMap'));
+    expect(createBody.indexOf('installMindMapMeasurementContract()'))
+      .toBeLessThan(createBody.indexOf('new MindMap('));
+    expect(createSource).toContain('data-yemind-mind-map-measurement-contract');
+    expect(createSource).toContain('margin-block-start:0');
+    expect(createSource).toContain('margin-block-end:0');
+  });
 });

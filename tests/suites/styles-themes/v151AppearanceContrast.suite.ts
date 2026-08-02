@@ -13,7 +13,8 @@ describe('v1.5.1 light and dark appearance contrast', () => {
 
   it('keeps text selection controls readable without a transparent surface or second node shadow', () => {
     expect(css).toMatch(/\.ymz-rich-toolbar\{[^}]*border:1px solid var\(--ymz-shell-border\)[^}]*background:var\(--ymz-panel-bg\)[^}]*box-shadow:none/s);
-    expect(css).toMatch(/\.ymz-editor \.smm-node\.active \.smm-hover-node[^}]*\{[^}]*fill:none!important[^}]*stroke-width:1(?:px)?!important/s);
+    expect(css).toMatch(/\.ymz-editor \.smm-hover-node\{[^}]*stroke:transparent!important[^}]*fill:none!important/s);
+    expect(css).toMatch(/\.ymz-editor \.smm-node\.active \.smm-node-shape[^}]*\{[^}]*stroke:var\(--ymz-accent\)!important/s);
   });
 
   it('V151-10/V151-11 gives controls, placeholders and selections explicit contrast tokens', () => {

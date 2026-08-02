@@ -70,7 +70,9 @@ describe('v0.6.2 toolbar visual language', () => {
     const css = readFileSync('src/styles/index.css', 'utf8');
     expect(css).toContain('--ymz-accent:var(--ymz-green,#176b50)');
     expect(css).toContain('.ymz-outline-row.is-active');
-    expect(css).toContain('.ymz-editor .smm-node.active .smm-hover-node');
+    expect(css).toContain('.ymz-editor .smm-hover-node');
+    expect(css).toContain('stroke:transparent!important');
+    expect(css).toContain('.ymz-editor .smm-node.active .smm-node-shape');
     expect(css).toContain('.ymz-floating button.is-active');
     expect(css).toContain('stroke:var(--ymz-accent)!important');
   });

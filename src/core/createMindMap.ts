@@ -31,6 +31,15 @@ export interface CreateMindMapOptions {
   pluginBaseUrl?: string;
 }
 
+export function installMindMapMeasurementContract(): void {
+  if (typeof document === 'undefined') return;
+  if (document.head.querySelector('[data-yemind-mind-map-measurement-contract]')) return;
+  const style = document.createElement('style');
+  style.setAttribute('data-yemind-mind-map-measurement-contract', 'true');
+  style.textContent = '.smm-richtext-node-wrap :is(p,h1,h2,h3,h4,h5,h6,blockquote,pre,ul,ol){margin-block-start:0;margin-block-end:0}.smm-richtext-node-wrap :is(ul,ol){padding-inline-start:1.5em}';
+  document.head.prepend(style);
+}
+
 
 export function createImageDeleteGuard(
   confirmDelete?: (node: any) => Promise<boolean>,
@@ -43,6 +52,7 @@ export function createImageDeleteGuard(
 }
 
 export function createMindMap(options: CreateMindMapOptions): MindMap {
+  installMindMapMeasurementContract();
   registerMindMapLayouts();
   registerMindMapPlugins(options.settings);
   const settings = options.settings;

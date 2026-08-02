@@ -1234,15 +1234,6 @@
 .ymz-node-style-panel footer{padding-top:8px;border-top:1px solid var(--ymz-border)}
 .ymz-about-dialog{height:100%;overflow:auto;padding:2px 4px 12px;box-sizing:border-box}
 
-/* Keep block spacing deterministic without replacing simple-mind-map's
-   canonical rich-text wrapping rules. Static and live text must use the same
-   upstream word-break contract. */
-.ymz-editor .smm-richtext-node-wrap :is(p,h1,h2,h3,h4,h5,h6,blockquote,pre,ul,ol){
-  margin-block-start:0;
-  margin-block-end:0;
-}
-.ymz-editor .smm-richtext-node-wrap :is(ul,ol){padding-inline-start:1.5em}
-
 /* v0.9.16 direct image selection, resize and replacement */
 .ymz-node-image-frame{
   position:absolute;
