@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import BaseRichText from 'simple-mind-map/src/plugins/RichText';
@@ -18,6 +18,23 @@ describe('v1.9.0 upstream rich-text lifecycle ownership', () => {
     ].forEach((method) => {
       expect(yemind[method], `${method} must be inherited from upstream`).toBe(upstream[method]);
     });
+  });
+
+  it('lets the upstream non-silent selection transaction focus and select a newly inserted node', () => {
+    const setSelection = vi.fn();
+    const richText = Object.create(BaseRichText.prototype) as {
+      quill: { getLength(): number; setSelection(index: number, length: number): void };
+      focus(start?: number): void;
+    };
+    richText.quill = {
+      getLength: () => 4,
+      setSelection,
+    };
+
+    richText.focus(0);
+
+    expect(setSelection).toHaveBeenCalledOnce();
+    expect(setSelection).toHaveBeenCalledWith(0, 4);
   });
 
   it('removes YeMind lifecycle coordinators instead of leaving dormant patch paths', () => {

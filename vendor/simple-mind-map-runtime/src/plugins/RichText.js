@@ -679,13 +679,7 @@ class RichText {
   // 聚焦
   focus(start) {
     const len = this.quill.getLength()
-    const selectAll = typeof start === 'number'
-    const index = selectAll ? start : len
-    this.quill.root.focus({ preventScroll: true })
-    // 非 SILENT 的 setSelection 会由 Quill 调用 scrollSelectionIntoView。
-    // 编辑器位于 document.body，而画布可能位于宿主滚动容器中，自动滚动会
-    // 造成宿主/画布短暂偏移后复位。
-    this.quill.setSelection(index, selectAll ? len : 0, Quill.sources.SILENT)
+    this.quill.setSelection(typeof start === 'number' ? start : len, len)
   }
 
   // 格式化当前选中的文本
