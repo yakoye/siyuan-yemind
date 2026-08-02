@@ -666,65 +666,111 @@ test('opening plain multiline text keeps an aligned readable layer on every anim
   });
 });
 
-test('the live editor owns a flat node shell that grows with multiline input', async ({ page, isMobile }) => {
-  test.skip(isMobile, 'desktop live editor shell regression');
+test('editing and width dragging keep one SVG node shell around the live editor', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop single-shell width-drag regression');
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
   const rootNode = editor.locator('.smm-node').first();
   const textEditor = canvasTextEditor(page);
 
   await rootNode.dblclick();
-  await textEditor.fill([
-    '准备：',
-    'LTSSM 状态读取及历史记录；',
-    '当前 Link Speed、Link Width；',
-    'Lane 状态和 PHY PLL/CDR 状态；',
-    '是否卡在 Detect、Polling.Active；',
-  ].join('\n'));
+  await expect(textEditor).toBeFocused();
 
-  const geometry = await page.evaluate(() => {
-    const host = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap')!;
-    const live = host.querySelector<HTMLElement>('.ql-editor')!;
-    const staleShape = document.querySelector<SVGGraphicsElement>(
-      '.ymw-editor > .ymz-editor .smm-node .smm-node-shape',
-    )!;
-    const hostRect = host.getBoundingClientRect();
-    const liveRect = live.getBoundingClientRect();
-    const staleShapeRect = staleShape.getBoundingClientRect();
-    const shell = getComputedStyle(host, '::before');
-    const inset = (value: string): number => Number.parseFloat(value) || 0;
-    const shellRect = {
-      left: hostRect.left + inset(shell.left),
-      top: hostRect.top + inset(shell.top),
-      right: hostRect.right - inset(shell.right),
-      bottom: hostRect.bottom - inset(shell.bottom),
+  await page.evaluate(() => {
+    type Frame = {
+      pseudoContent: string;
+      hostBorder: string;
+      editorBorder: string;
+      shapeWidth: number;
+      hostLeft: number;
+      hostTop: number;
+      hostRight: number;
+      hostBottom: number;
+      shapeLeft: number;
+      shapeTop: number;
+      shapeRight: number;
+      shapeBottom: number;
     };
-    return {
-      content: shell.content,
-      background: shell.backgroundColor,
-      borderStyle: shell.borderStyle,
-      boxShadow: getComputedStyle(host).boxShadow,
-      shellRect,
-      liveRect: {
-        left: liveRect.left,
-        top: liveRect.top,
-        right: liveRect.right,
-        bottom: liveRect.bottom,
-      },
-      staleShapeWidth: staleShapeRect.width,
-      shellWidth: shellRect.right - shellRect.left,
+    const frames: Frame[] = [];
+    let remaining = 0;
+    const capture = (): void => {
+      const host = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap');
+      const live = host?.querySelector<HTMLElement>('.ql-editor') ?? null;
+      const shape = document.querySelector<SVGGraphicsElement>(
+        '.ymw-editor > .ymz-editor .smm-node .smm-node-shape',
+      );
+      if (host && live && shape) {
+        const hostRect = host.getBoundingClientRect();
+        const shapeRect = shape.getBoundingClientRect();
+        frames.push({
+          pseudoContent: getComputedStyle(host, '::before').content,
+          hostBorder: getComputedStyle(host).borderStyle,
+          editorBorder: getComputedStyle(live).borderStyle,
+          shapeWidth: shapeRect.width,
+          hostLeft: hostRect.left,
+          hostTop: hostRect.top,
+          hostRight: hostRect.right,
+          hostBottom: hostRect.bottom,
+          shapeLeft: shapeRect.left,
+          shapeTop: shapeRect.top,
+          shapeRight: shapeRect.right,
+          shapeBottom: shapeRect.bottom,
+        });
+      }
+      remaining -= 1;
+      if (remaining > 0) requestAnimationFrame(capture);
     };
+    (window as any).__yemindSingleShellFrames = frames;
+    document.addEventListener('mousedown', () => {
+      remaining = 24;
+      requestAnimationFrame(capture);
+    }, { capture: true, once: true });
   });
 
-  expect(geometry.content).not.toBe('none');
-  expect(geometry.background).not.toBe('rgba(0, 0, 0, 0)');
-  expect(geometry.borderStyle).toBe('solid');
-  expect(geometry.boxShadow).toBe('none');
-  expect(geometry.shellRect.left).toBeLessThan(geometry.liveRect.left);
-  expect(geometry.shellRect.top).toBeLessThan(geometry.liveRect.top);
-  expect(geometry.shellRect.right).toBeGreaterThan(geometry.liveRect.right);
-  expect(geometry.shellRect.bottom).toBeGreaterThan(geometry.liveRect.bottom);
-  expect(geometry.shellWidth).toBeGreaterThan(geometry.staleShapeWidth + 100);
+  const rightHandle = rootNode.locator('rect[style*="ew-resize"]').last();
+  const handleBox = await rightHandle.boundingBox();
+  expect(handleBox).not.toBeNull();
+  const startX = handleBox!.x + handleBox!.width / 2;
+  const startY = handleBox!.y + handleBox!.height / 2;
+  // The body-level editor intentionally receives pointer input above the SVG.
+  // Dispatch the drag-handle press to the real SVG target, matching the user's
+  // explicit resize-handle gesture without letting the editor swallow it.
+  await rightHandle.dispatchEvent('mousedown', {
+    bubbles: true,
+    cancelable: true,
+    clientX: startX,
+    clientY: startY,
+  });
+  await page.mouse.move(handleBox!.x + 180, handleBox!.y + handleBox!.height / 2, { steps: 10 });
+  await page.mouse.up();
+  await page.waitForTimeout(420);
+
+  const frames = await page.evaluate(() => (window as any).__yemindSingleShellFrames as Array<{
+    pseudoContent: string;
+    hostBorder: string;
+    editorBorder: string;
+    shapeWidth: number;
+    hostLeft: number;
+    hostTop: number;
+    hostRight: number;
+    hostBottom: number;
+    shapeLeft: number;
+    shapeTop: number;
+    shapeRight: number;
+    shapeBottom: number;
+  }>);
+  expect(frames.length).toBeGreaterThan(5);
+  expect(Math.max(...frames.map((frame) => frame.shapeWidth))
+    - Math.min(...frames.map((frame) => frame.shapeWidth))).toBeGreaterThan(80);
+  frames.forEach((frame) => {
+    expect(frame.pseudoContent).toBe('none');
+    expect(frame.hostBorder).toBe('none');
+    expect(frame.editorBorder).toBe('none');
+    expect(frame.hostLeft).toBeGreaterThanOrEqual(frame.shapeLeft - 1);
+    expect(frame.hostTop).toBeGreaterThanOrEqual(frame.shapeTop - 1);
+    expect(frame.hostRight).toBeLessThanOrEqual(frame.shapeRight + 1);
+    expect(frame.hostBottom).toBeLessThanOrEqual(frame.shapeBottom + 1);
+  });
 });
 
 test('switching canvas editors keeps the previous node text fixed on every animation frame', async ({ page, isMobile }) => {
@@ -790,11 +836,11 @@ test('switching canvas editors keeps the previous node text fixed on every anima
       // the DOM beneath an opaque HTML editor. That is one visually effective
       // layer, not a ghost: prefer the foreground editor while it is present.
       const frontLayer = editorVisible ? editorText : (staticVisible ? staticLayer : null);
-      const shellBackground = editorHost
-        ? getComputedStyle(editorHost, '::before').backgroundColor
+      const editorBackground = editorHost
+        ? getComputedStyle(editorHost).backgroundColor
         : 'rgba(0, 0, 0, 0)';
-      const alpha = shellBackground.match(/[\d.]+/g)?.map(Number).at(-1) ?? 1;
-      const editorOpaque = shellBackground.startsWith('rgb(') || alpha > 0.99;
+      const alpha = editorBackground.match(/[\d.]+/g)?.map(Number).at(-1) ?? 1;
+      const editorOpaque = editorBackground.startsWith('rgb(') || alpha > 0.99;
       const rect = frontLayer?.getBoundingClientRect() ?? new DOMRect();
       return {
         sourceLayers: frontLayer ? 1 : 0,

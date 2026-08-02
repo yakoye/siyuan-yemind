@@ -124,6 +124,18 @@ function updateWidthDragLayoutInPlace() {
   return true
 }
 
+function syncActiveRichTextEditor() {
+  const richText = this.mindMap.richText
+  if (
+    richText &&
+    richText.showTextEdit === true &&
+    richText.node === this &&
+    typeof richText.updateTextEditNode === 'function'
+  ) {
+    richText.updateTextEditNode()
+  }
+}
+
 // 初始化拖拽
 function initDragHandle() {
   if (!this.checkEnableDragModifyNodeWidth()) {
@@ -209,6 +221,7 @@ function onDragMousemoveHandle(e) {
       this.layout()
       this.update()
     }
+    syncActiveRichTextEditor.call(this)
   }
 }
 
@@ -232,7 +245,7 @@ function onDragMouseupHandle() {
   // mouseup.  The render is still required to reposition relatives and lines;
   // only the redundant content reconstruction is skipped.
   this.nodeDataSnapshot = JSON.stringify(this.getData())
-  this.mindMap.render()
+  this.mindMap.render(() => syncActiveRichTextEditor.call(this))
   this.mindMap.emit('dragModifyNodeWidthEnd', this)
 }
 

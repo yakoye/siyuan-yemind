@@ -353,11 +353,21 @@ class RichText {
     const rect = g.node.getBoundingClientRect()
     const originWidth = g.attr('data-width')
     const originHeight = g.attr('data-height')
+    const scaleX = Math.ceil(rect.width) / originWidth
+    const scaleY = Math.ceil(rect.height) / originHeight
+    const paddingX = this.textNodePaddingX
+    const paddingY = this.textNodePaddingY
+    this.textEditNode.style.marginLeft = `-${paddingX * scaleX}px`
+    this.textEditNode.style.marginTop = `-${paddingY * scaleY}px`
     this.textEditNode.style.minWidth =
-      originWidth + this.textNodePaddingX * 2 + 'px'
+      originWidth + paddingX * 2 + 'px'
+    this.textEditNode.style.maxWidth =
+      originWidth + paddingX * 2 + 'px'
     this.textEditNode.style.minHeight = originHeight + 'px'
     this.textEditNode.style.left = rect.left + 'px'
     this.textEditNode.style.top = rect.top + 'px'
+    this.textEditNode.style.transform = `scale(${scaleX}, ${scaleY})`
+    this.textEditNode.style.transformOrigin = 'left top'
     this.setQuillContainerMinHeight(originHeight)
   }
 
