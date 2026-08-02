@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.3";
+const PLUGIN_VERSION = "1.9.4";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "10f69588-clean",
-  time: "2026-08-02T20:49:21+08:00"
+  id: "74ae4649-clean",
+  time: "2026-08-02T21:30:54+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-02T12:47:57.427Z",
-  buildId: "yemind-v1.9.3-20260802",
+  buildTime: "2026-08-02T13:29:58.937Z",
+  buildId: "yemind-v1.9.4-20260802",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -18504,6 +18504,103 @@ const nodeExpandBtnPlaceholderRectMethods = {
   clearExpandBtnPlaceholderRect,
   updateExpandBtnPlaceholderRect
 };
+function copyDomAttributes(target, source) {
+  if (!target || !source || !target.getAttributeNames) return;
+  const nextNames = new Set(source.getAttributeNames());
+  target.getAttributeNames().forEach((name) => {
+    if (!nextNames.has(name)) target.removeAttribute(name);
+  });
+  nextNames.forEach((name) => {
+    target.setAttribute(name, source.getAttribute(name));
+  });
+}
+function canReuseDomNode(target, source) {
+  return Boolean(
+    target && source && target.nodeType === source.nodeType && (target.nodeType !== 1 || target.nodeName === source.nodeName)
+  );
+}
+function reconcilePaintedDom(target, source) {
+  if (!canReuseDomNode(target, source)) return false;
+  if (target.nodeType === 3) {
+    target.nodeValue = source.nodeValue;
+    return true;
+  }
+  if (target.nodeType !== 1) return true;
+  copyDomAttributes(target, source);
+  const targetChildren = Array.from(target.childNodes);
+  const sourceChildren = Array.from(source.childNodes);
+  sourceChildren.forEach((sourceChild, index) => {
+    const targetChild = targetChildren[index];
+    if (reconcilePaintedDom(targetChild, sourceChild)) return;
+    const replacement = sourceChild.cloneNode(true);
+    if (targetChild) target.replaceChild(replacement, targetChild);
+    else target.appendChild(replacement);
+  });
+  for (let index = targetChildren.length - 1; index >= sourceChildren.length; index--) {
+    targetChildren[index].remove();
+  }
+  return true;
+}
+function preserveLayoutAttributes(target, names2) {
+  if (!target) return () => {
+  };
+  const values2 = names2.map((name) => [name, target.getAttribute(name)]);
+  return () => {
+    values2.forEach(([name, value]) => {
+      if (value === null) target.removeAttribute(name);
+      else target.setAttribute(name, value);
+    });
+  };
+}
+function preserveLiveTextData(previous, next2) {
+  if (!previous || !next2 || !previous.node || !next2.node) return next2;
+  const previousOuter = previous.node.node;
+  const nextOuter = next2.node.node;
+  if (!previousOuter || !nextOuter) return next2;
+  const restoreOuterLayout = preserveLayoutAttributes(previousOuter, [
+    "x",
+    "y",
+    "transform",
+    "data-offsetx"
+  ]);
+  const restoreContentLayout = preserveLayoutAttributes(
+    previous.nodeContent && previous.nodeContent.node,
+    ["x", "y", "transform"]
+  );
+  reconcilePaintedDom(previousOuter, nextOuter);
+  restoreOuterLayout();
+  restoreContentLayout();
+  previous.width = next2.width;
+  previous.height = next2.height;
+  return previous;
+}
+function updateWidthDragLayoutInPlace() {
+  if (!this.group || !this.shapeNode || !this.hoverNode) return false;
+  const halfBorderWidth = this.getBorderWidth() / 2;
+  const nextShape = this.shapeInstance.createShape();
+  nextShape.addClass("smm-node-shape");
+  nextShape.translate(halfBorderWidth, halfBorderWidth);
+  this.style.shape(nextShape);
+  if (!reconcilePaintedDom(this.shapeNode.node, nextShape.node)) return false;
+  const { hoverRectPadding } = this.mindMap.opt;
+  this.hoverNode.size(
+    this.width + hoverRectPadding * 2,
+    this.height + hoverRectPadding * 2
+  ).x(-hoverRectPadding).y(-hoverRectPadding);
+  this.style.hoverNode(this.hoverNode, this.width, this.height);
+  if (this._unVisibleRectRegionNode) {
+    this.renderer.layout.renderExpandBtnRect(
+      this._unVisibleRectRegionNode,
+      this.mindMap.opt.expandBtnSize,
+      this.width,
+      this.height,
+      this
+    );
+  }
+  this.update();
+  this.mindMap.emit("node_layout_end", this);
+  return true;
+}
 function initDragHandle() {
   if (!this.checkEnableDragModifyNodeWidth()) {
     return;
@@ -18554,9 +18651,21 @@ function onDragMousemoveHandle(e) {
   if (this.dragHandleIndex === 0) {
     this.left = this.dragHandleMousedownLeft + ox / scaleX;
   }
-  this.reRender(useCustomContent ? [] : ["text"], {
-    ignoreUpdateCustomTextWidth: true
-  });
+  if (useCustomContent) {
+    this.reRender([], {
+      ignoreUpdateCustomTextWidth: true
+    });
+  } else {
+    const previousTextData = this._textData;
+    this.getSize(["text"], {
+      ignoreUpdateCustomTextWidth: true
+    });
+    this._textData = preserveLiveTextData(previousTextData, this._textData);
+    if (!updateWidthDragLayoutInPlace.call(this)) {
+      this.layout();
+      this.update();
+    }
+  }
 }
 function onDragMouseupHandle() {
   if (!this.isDragHandleMousedown) return;
