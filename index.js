@@ -7662,8 +7662,8 @@ const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "74ae4649-clean",
-  time: "2026-08-02T21:30:54+08:00"
+  id: "19089dfb-clean",
+  time: "2026-08-02T23:02:19+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
@@ -18680,6 +18680,7 @@ function onDragMouseupHandle() {
   this.setData({
     customTextWidth: this.customTextWidth
   });
+  this.nodeDataSnapshot = JSON.stringify(this.getData());
   this.mindMap.render();
   this.mindMap.emit("dragModifyNodeWidthEnd", this);
 }
@@ -83541,6 +83542,10 @@ function createCommandAdapter(mindMap) {
   };
   const insertAndEdit = (command, appointNodes = []) => {
     mindMap.execCommand(command, true, appointNodes, {
+      // Keep the pristine default label on the immediately paintable SVG
+      // text path. The upstream editor can still promote it to rich text as
+      // soon as the user commits an actual edit.
+      richText: false,
       yemindTextPristine: true,
       yemindTextEdited: false
     });
