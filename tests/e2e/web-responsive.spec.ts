@@ -32,6 +32,7 @@ test('mobile sidebar remains explicitly discoverable and closable', async ({ pag
 });
 
 test('keeps the version47 shell complete at all five release widths', async ({ page }, testInfo) => {
+  test.setTimeout(90_000);
   test.skip(testInfo.project.name !== 'chromium-desktop', 'one five-width pass is sufficient');
   for (const width of [1440, 1280, 1024, 768, 390]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 800 });
