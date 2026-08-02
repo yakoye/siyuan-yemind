@@ -7658,8 +7658,8 @@ const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "184345d0-clean",
-  time: "2026-08-02T14:30:08+08:00"
+  id: "8c8fa5a9-clean",
+  time: "2026-08-02T17:59:01+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
@@ -23309,9 +23309,6 @@ class TextEdit {
       g.show();
     }
     const rect2 = g.node.getBoundingClientRect();
-    if (openRealtimeRenderOnNodeTextEdit) {
-      g.hide();
-    }
     const params = {
       node,
       rect: rect2,
@@ -23321,10 +23318,16 @@ class TextEdit {
     };
     if (this.mindMap.richText) {
       this.mindMap.richText.showEditText(params);
+      if (openRealtimeRenderOnNodeTextEdit) {
+        g.hide();
+      }
       return;
     }
     this.currentNode = node;
     this.showEditTextBox(params);
+    if (openRealtimeRenderOnNodeTextEdit) {
+      g.hide();
+    }
   }
   // 当openRealtimeRenderOnNodeTextEdit配置更新后需要更新编辑框样式
   onOpenRealtimeRenderOnNodeTextEditConfigUpdate(openRealtimeRenderOnNodeTextEdit) {
@@ -80227,6 +80230,7 @@ class RichText {
     this.isInserting = false;
     this.styleEl = null;
     this.cacheEditingText = "";
+    this.initialEditText = "";
     this.isCompositing = false;
     this.textNodePaddingX = 6;
     this.textNodePaddingY = 4;
@@ -80432,6 +80436,9 @@ class RichText {
     }
     this.initQuillEditor();
     this.setQuillContainerMinHeight(originHeight);
+    if (!isFromScale || !this.initialEditText) {
+      this.initialEditText = this.getEditText();
+    }
     this.setIsShowTextEdit(true);
     this.focus(
       isInserting || selectTextOnEnterEditText && !isFromKeyDown ? 0 : null
@@ -80491,6 +80498,7 @@ class RichText {
       beforeHideRichTextEdit(this);
     }
     const html2 = this.getEditText();
+    const changed = html2 !== this.initialEditText;
     const list = nodes && nodes.length > 0 ? nodes : [this.node];
     const node = this.node;
     this.textEditNode.style.display = "none";
@@ -80498,9 +80506,14 @@ class RichText {
     this.mindMap.emit("rich_text_selection_change", false);
     this.node = null;
     this.isInserting = false;
+    this.initialEditText = "";
     list.forEach((node2) => {
+      var _a, _b;
+      if (!changed) {
+        (_b = (_a = node2 == null ? void 0 : node2._textData) == null ? void 0 : _a.node) == null ? void 0 : _b.show();
+        return;
+      }
       this.mindMap.execCommand("SET_NODE_TEXT", node2, html2, true);
-      this.mindMap.render();
     });
     this.mindMap.emit("hide_text_edit", this.textEditNode, list, node);
   }
@@ -80707,7 +80720,10 @@ class RichText {
   // 聚焦
   focus(start) {
     const len = this.quill.getLength();
-    this.quill.setSelection(typeof start === "number" ? start : len, len);
+    const selectAll = typeof start === "number";
+    const index = selectAll ? start : len;
+    this.quill.root.focus({ preventScroll: true });
+    this.quill.setSelection(index, selectAll ? len : 0, Quill.sources.SILENT);
   }
   // 格式化当前选中的文本
   formatText(config2 = {}, clear2 = false) {
