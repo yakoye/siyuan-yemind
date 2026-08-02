@@ -155,6 +155,32 @@ describe('v0.8.3 canvas text editing transactions', () => {
     root.remove();
   });
 
+  it('keeps the static SVG text available beneath the opaque editor when realtime rendering is disabled', async () => {
+    const { root, map } = mountMap({
+      data: { text: '新节点', uid: 'root', yemindTextPristine: true },
+      children: [],
+    });
+    await waitForMapRender(map);
+
+    const node = map.renderer.root;
+    const staticText = node._textData.node;
+    expect(map.opt.openRealtimeRenderOnNodeTextEdit).toBe(false);
+    expect(staticText.visible()).toBe(true);
+
+    node.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+
+    const host = document.body.querySelector<HTMLElement>(':scope > .smm-richtext-node-edit-wrap')!;
+    expect(host.style.display).not.toBe('none');
+    expect(host.querySelector('.ql-editor')?.textContent).toContain('新节点');
+    // This is the upstream non-realtime contract: the opaque HTML editor
+    // covers a still-valid SVG fallback. Hiding the SVG here creates a frame
+    // in which a newly inserted node can be mounted with no painted glyphs.
+    expect(staticText.visible()).toBe(true);
+
+    map.destroy();
+    root.remove();
+  });
+
   it('uses the upstream caret placement and leaves clipboard shortcuts in the text editor', async () => {
     const { root, map } = mountMap({ data: { text: '新节点', uid: 'root', yemindTextPristine: true }, children: [] });
     await waitForMapRender(map);
@@ -204,6 +230,53 @@ describe('v0.8.3 canvas text editing transactions', () => {
     expect(renderCount).toBe(1);
     expect(map.renderer.root.nodeData.data.text).toContain('!');
     map.off('node_tree_render_end', onRenderEnd);
+
+    map.destroy();
+    root.remove();
+  });
+
+  it('keeps the opaque editor visible until the committed static node has finished layout', async () => {
+    const { root, map } = mountMap({
+      data: { text: '提交前文字', uid: 'root', yemindTextEdited: true },
+      children: [],
+    });
+    await waitForMapRender(map);
+    map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    await nextFrame();
+
+    const host = document.body.querySelector<HTMLElement>(':scope > .smm-richtext-node-edit-wrap')!;
+    const length = map.richText.quill.getLength() - 1;
+    map.richText.quill.insertText(
+      length,
+      '已修改并显著扩展节点宽度以强制执行异步布局提交',
+      'user',
+    );
+
+    let displayDuringCommit = '';
+    const originalExecCommand = map.execCommand.bind(map);
+    map.execCommand = (name: string, ...args: unknown[]) => {
+      if (name === 'SET_NODE_TEXT') displayDuringCommit = host.style.display;
+      return originalExecCommand(name, ...args);
+    };
+    const rendered = new Promise<void>((resolve) => {
+      const onRenderEnd = () => {
+        map.off('node_tree_render_end', onRenderEnd);
+        resolve();
+      };
+      map.on('node_tree_render_end', onRenderEnd);
+    });
+
+    map.richText.hideEditText();
+    await rendered;
+
+    // Render.render() can be asynchronous. Hiding the editor before the
+    // SET_NODE_TEXT transaction exposes the freshly re-rendered text at its
+    // temporary local origin for one paint, which is the upper-left jump.
+    expect(displayDuringCommit).not.toBe('');
+    expect(displayDuringCommit).not.toBe('none');
+    expect(host.style.display).toBe('none');
+    expect(map.renderer.root._textData.node.visible()).toBe(true);
+    expect(map.renderer.root.nodeData.data.text).toContain('已修改');
 
     map.destroy();
     root.remove();

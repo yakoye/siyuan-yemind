@@ -745,6 +745,8 @@ test('switching canvas editors keeps the previous node text fixed on every anima
   await page.evaluate((sourceText) => {
     type Frame = {
       sourceLayers: number;
+      sourceDomLayers: number;
+      editorOpaque: boolean;
       left: number;
       top: number;
       width: number;
@@ -768,14 +770,28 @@ test('switching canvas editors keeps the previous node text fixed on every anima
       const staticLayer = staticWrap?.parentElement ?? staticWrap;
       const editorHost = document.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
       const editorText = editorHost?.querySelector<HTMLElement>('.ql-editor') ?? null;
-      const layers: Element[] = [];
-      if (painted(staticLayer) && staticLayer.textContent?.includes(sourceText)) layers.push(staticLayer);
-      if (painted(editorHost) && painted(editorText) && editorText.textContent?.includes(sourceText)) {
-        layers.push(editorText);
-      }
-      const rect = layers[0]?.getBoundingClientRect() ?? new DOMRect();
+      const staticVisible = Boolean(
+        painted(staticLayer) && staticLayer.textContent?.includes(sourceText),
+      );
+      const editorVisible = Boolean(
+        painted(editorHost)
+        && painted(editorText)
+        && editorText.textContent?.includes(sourceText),
+      );
+      // In non-realtime mode the official runtime keeps the SVG fallback in
+      // the DOM beneath an opaque HTML editor. That is one visually effective
+      // layer, not a ghost: prefer the foreground editor while it is present.
+      const frontLayer = editorVisible ? editorText : (staticVisible ? staticLayer : null);
+      const shellBackground = editorHost
+        ? getComputedStyle(editorHost, '::before').backgroundColor
+        : 'rgba(0, 0, 0, 0)';
+      const alpha = shellBackground.match(/[\d.]+/g)?.map(Number).at(-1) ?? 1;
+      const editorOpaque = shellBackground.startsWith('rgb(') || alpha > 0.99;
+      const rect = frontLayer?.getBoundingClientRect() ?? new DOMRect();
       return {
-        sourceLayers: layers.length,
+        sourceLayers: frontLayer ? 1 : 0,
+        sourceDomLayers: Number(staticVisible) + Number(editorVisible),
+        editorOpaque,
         left: rect.left,
         top: rect.top,
         width: rect.width,
@@ -805,6 +821,8 @@ test('switching canvas editors keeps the previous node text fixed on every anima
   await page.waitForTimeout(360);
   const frames = await page.evaluate(() => (window as any).__yemindEditorSwitchFrames as Array<{
     sourceLayers: number;
+    sourceDomLayers: number;
+    editorOpaque: boolean;
     left: number;
     top: number;
     width: number;
@@ -814,6 +832,8 @@ test('switching canvas editors keeps the previous node text fixed on every anima
   const visible = frames.filter((frame) => frame.sourceLayers > 0);
   expect(visible.length).toBeGreaterThan(2);
   visible.forEach((frame) => expect(frame.sourceLayers).toBe(1));
+  visible.filter((frame) => frame.sourceDomLayers === 2)
+    .forEach((frame) => expect(frame.editorOpaque).toBe(true));
   const spread = (key: 'left' | 'top' | 'width' | 'height') =>
     Math.max(...visible.map((frame) => frame[key])) - Math.min(...visible.map((frame) => frame[key]));
   expect(spread('left')).toBeLessThanOrEqual(1);
@@ -854,6 +874,70 @@ test('closing an unchanged canvas edit restores the static text layer immediatel
 
   expect(paintedLayers).toBe(1);
   await expect(rootNode).toContainText(expectedText);
+});
+
+test('a changed canvas edit stays covered until the replacement SVG text is laid out', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop edit-commit handoff regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = canvasTextEditor(page);
+  const expectedText = '编辑提交后静态文字必须完成布局再接管显示，不能暴露左上角中间帧';
+
+  await rootNode.evaluate((element) => element.setAttribute('data-commit-handoff-node', 'true'));
+  await rootNode.dblclick();
+  await textEditor.fill(expectedText);
+  await page.evaluate((text) => {
+    type Record = { editorVisible: boolean; staticText: string };
+    const records: Record[] = [];
+    const capture = (): void => {
+      const host = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap');
+      const hostStyle = host ? getComputedStyle(host) : null;
+      const hostRect = host?.getBoundingClientRect();
+      const node = document.querySelector('[data-commit-handoff-node="true"]');
+      const staticText = (node?.querySelector('.smm-text-node-wrap,.smm-richtext-node-wrap')?.textContent ?? '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (staticText.includes(text)) {
+        records.push({
+          editorVisible: Boolean(
+            host
+            && hostStyle?.display !== 'none'
+            && hostStyle?.visibility !== 'hidden'
+            && hostRect
+            && hostRect.width > 0
+            && hostRect.height > 0
+          ),
+          staticText,
+        });
+      }
+    };
+    const observer = new MutationObserver(capture);
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ['style', 'transform'],
+    });
+    (window as any).__yemindCommitHandoffObserver = observer;
+    (window as any).__yemindCommitHandoffRecords = records;
+  }, expectedText);
+
+  await commitCanvasEdit(page);
+  await expect(rootNode).toContainText(expectedText);
+  const records = await page.evaluate(() => {
+    (window as any).__yemindCommitHandoffObserver?.disconnect();
+    return (window as any).__yemindCommitHandoffRecords as Array<{
+      editorVisible: boolean;
+      staticText: string;
+    }>;
+  });
+
+  expect(records.length).toBeGreaterThan(0);
+  // The first moment the replacement SVG becomes observable, the old opaque
+  // editor must still cover it. It is removed only by node_tree_render_end.
+  expect(records[0].editorVisible).toBe(true);
 });
 
 test('selection toolbar is complete and anchored on its first visible frame after switching nodes', async ({ page, isMobile }) => {
@@ -2271,7 +2355,9 @@ for (const insertion of ['Tab', 'Enter', 'quick-add'] as const) {
     await editor.locator('.smm-node').last().click();
 
     await page.evaluate(() => {
-      const initialNodes = document.querySelectorAll('.ymw-editor > .ymz-editor .smm-node').length;
+      const initialNodes = new Set(
+        Array.from(document.querySelectorAll<SVGGraphicsElement>('.ymw-editor > .ymz-editor .smm-node')),
+      );
       const records: Array<{ visible: boolean; text: string }> = [];
       const paintFrames: Array<{
         nodeVisible: boolean;
@@ -2307,8 +2393,8 @@ for (const insertion of ['Tab', 'Enter', 'quick-add'] as const) {
       const capturePaint = (): void => {
         if (!(window as any).__yemindInsertedPaintActive) return;
         const nodes = Array.from(document.querySelectorAll<SVGGraphicsElement>('.ymw-editor > .ymz-editor .smm-node'));
-        if (nodes.length > initialNodes) {
-          const node = nodes.at(-1)!;
+        const node = nodes.find((candidate) => !initialNodes.has(candidate));
+        if (node) {
           const nodeRect = node.getBoundingClientRect();
           const host = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap');
           const hostRect = host?.getBoundingClientRect();

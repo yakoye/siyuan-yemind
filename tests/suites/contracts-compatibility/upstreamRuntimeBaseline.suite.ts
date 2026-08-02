@@ -73,12 +73,11 @@ describe('vendored simple-mind-map upstream baseline', () => {
 
     expect(baseline.allowedModifiedFiles).toEqual([
       'src/core/command/KeyCommand.js',
-      textEditPath,
       modifyWidthPath,
       richTextPath,
     ]);
     expect(normalizedSha256(join(runtimeRoot, textEditPath)))
-      .not.toBe(baseline.sourceHashes[textEditPath]);
+      .toBe(baseline.sourceHashes[textEditPath]);
     expect(normalizedSha256(join(runtimeRoot, modifyWidthPath)))
       .not.toBe(baseline.sourceHashes[modifyWidthPath]);
     expect(normalizedSha256(join(runtimeRoot, richTextPath)))

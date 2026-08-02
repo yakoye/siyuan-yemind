@@ -58,6 +58,7 @@ class RichText {
     this.styleEl = null
     this.cacheEditingText = ''
     this.initialEditText = ''
+    this.editVisibilityRevision = 0
     this.isCompositing = false
     this.textNodePaddingX = 6
     this.textNodePaddingY = 4
@@ -204,6 +205,7 @@ class RichText {
     if (this.showTextEdit) {
       return
     }
+    this.editVisibilityRevision += 1
     let {
       customInnerElsAppendTo,
       nodeTextEditZIndex,
@@ -393,25 +395,52 @@ class RichText {
     const changed = html !== this.initialEditText
     const list = nodes && nodes.length > 0 ? nodes : [this.node]
     const node = this.node
-    this.textEditNode.style.display = 'none'
+    const visibilityRevision = this.editVisibilityRevision
+    const hideEditorLayer = () => {
+      if (
+        visibilityRevision !== this.editVisibilityRevision ||
+        this.showTextEdit
+      ) {
+        return
+      }
+      this.textEditNode.style.display = 'none'
+    }
     this.setIsShowTextEdit(false)
     this.mindMap.emit('rich_text_selection_change', false)
     this.node = null
     this.isInserting = false
     this.initialEditText = ''
-    list.forEach(node => {
-      if (!changed) {
-        // 实时编辑模式进入时仅隐藏了静态文字；内容未变化时直接恢复即可，
-        // 不应执行 SET_NODE_TEXT、清空节点 SVG 或触发整图布局。
-        node?._textData?.node?.show()
-        return
-      }
-      this.mindMap.execCommand('SET_NODE_TEXT', node, html, true)
-      // if (node.isGeneralization) {
-      // 概要节点
-      // node.generalizationBelongNode.updateGeneralization()
-      // }
-    })
+    if (!changed) {
+      // Reveal the already-laid-out SVG fallback before removing the opaque
+      // editor. This keeps the handoff atomic without rebuilding the node.
+      list.forEach(node => node?._textData?.node?.show())
+      hideEditorLayer()
+      this.mindMap.emit('hide_text_edit', this.textEditNode, list, node)
+      return
+    }
+
+    // SET_NODE_TEXT re-renders the node synchronously and schedules layout on
+    // the next task. Keep the opaque editor over that temporary local-origin
+    // SVG until node_tree_render_end; otherwise one browser frame exposes the
+    // text at the upper-left before layout places it back inside the node.
+    const onRenderEnd = () => {
+      this.mindMap.off('node_tree_render_end', onRenderEnd)
+      hideEditorLayer()
+    }
+    this.mindMap.on('node_tree_render_end', onRenderEnd)
+    try {
+      list.forEach(node => {
+        this.mindMap.execCommand('SET_NODE_TEXT', node, html, true)
+        // if (node.isGeneralization) {
+        // 概要节点
+        // node.generalizationBelongNode.updateGeneralization()
+        // }
+      })
+    } catch (error) {
+      this.mindMap.off('node_tree_render_end', onRenderEnd)
+      hideEditorLayer()
+      throw error
+    }
     this.mindMap.emit('hide_text_edit', this.textEditNode, list, node)
   }
 
