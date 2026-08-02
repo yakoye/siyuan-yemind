@@ -490,7 +490,7 @@ test('the first visible canvas editor glyph frame exactly replaces the static gl
   expect(Math.abs(first.height - last.height)).toBeLessThanOrEqual(1);
 });
 
-test('entering canvas text edit keeps the active outline on the node boundary', async ({ page, isMobile }) => {
+test('hover, activation and canvas text edit never paint the padded outline', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop active-outline geometry regression');
   await resetWebApp(page);
   const editor = page.locator('.ymw-editor > .ymz-editor');
@@ -513,12 +513,51 @@ test('entering canvas text edit keeps the active outline on the node boundary', 
 
   const shapeBefore = await shape.boundingBox();
   expect(shapeBefore).not.toBeNull();
-  await rootNode.dblclick();
+  await rootNode.hover();
+  await expect(activeOutline).toHaveCSS('stroke', 'rgba(0, 0, 0, 0)');
+  await expect(shape).toHaveCSS('stroke', 'rgb(34, 201, 160)');
+
+  await page.evaluate(() => {
+    const frames: Array<{
+      outlineStroke: string;
+      shapeRect: string;
+    }> = [];
+    (window as any).__yemindDblclickOutlineFrames = frames;
+    const sample = (remaining: number) => {
+      const node = document.querySelector<SVGGElement>('.ymw-editor > .ymz-editor .smm-node');
+      const outline = node?.querySelector<SVGGraphicsElement>('.smm-hover-node');
+      const shape = node?.querySelector<SVGGraphicsElement>('.smm-node-shape');
+      if (outline && shape) {
+        const rect = shape.getBoundingClientRect();
+        frames.push({
+          outlineStroke: getComputedStyle(outline).stroke,
+          shapeRect: [rect.left, rect.top, rect.width, rect.height]
+            .map((value) => value.toFixed(3))
+            .join(','),
+        });
+      }
+      if (remaining > 0) requestAnimationFrame(() => sample(remaining - 1));
+    };
+    requestAnimationFrame(() => sample(59));
+  });
+
+  await rootNode.click({ clickCount: 2, delay: 80 });
   await expect(canvasTextEditor(page)).toBeFocused();
+  await page.waitForFunction(() => (
+    ((window as any).__yemindDblclickOutlineFrames as unknown[] | undefined)?.length ?? 0
+  ) >= 60);
   const shapeDuring = await shape.boundingBox();
+  const frames = await page.evaluate(() => (
+    (window as any).__yemindDblclickOutlineFrames as Array<{
+      outlineStroke: string;
+      shapeRect: string;
+    }>
+  ));
 
   expect(shapeDuring).toEqual(shapeBefore);
-  await expect(activeOutline).toBeHidden();
+  expect(new Set(frames.map((frame) => frame.shapeRect)).size).toBe(1);
+  expect(new Set(frames.map((frame) => frame.outlineStroke))).toEqual(new Set(['rgba(0, 0, 0, 0)']));
+  await expect(activeOutline).toHaveCSS('stroke', 'rgba(0, 0, 0, 0)');
   await expect(shape).toHaveCSS('stroke', 'rgb(34, 201, 160)');
 });
 
