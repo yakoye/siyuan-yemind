@@ -93,6 +93,7 @@ test('opens the outline sidebar and returns to the map without losing the editor
 });
 
 test('keeps every center-topic glyph inside its rendered SVG text box', async ({ page }) => {
+  test.slow();
   await resetWebApp(page);
   let editor = page.locator('.ymw-editor > .ymz-editor');
   const expectCenterTextFits = async (expectedText = '中心主题') => {

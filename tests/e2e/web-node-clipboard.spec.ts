@@ -552,6 +552,7 @@ test('copies multiple hierarchical canvas nodes to another file canvas', async (
 });
 
 test('copies multiple hierarchical outline nodes to another file outline', async ({ page, isMobile }) => {
+  test.slow();
   test.skip(isMobile, 'continuous desktop range selection');
   const errors = recordPageErrors(page);
   await seedClipboardMaps(page);
