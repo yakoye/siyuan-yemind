@@ -82,8 +82,31 @@ test('DPR 1.25 width drag keeps painted text anchored inside the shape on every 
   const box = await handle.boundingBox();
   expect(box).not.toBeNull();
   await page.evaluate(() => {
-    const frames: Array<{ x: number; y: number; text: string }> = [];
+    const node = document.querySelector<HTMLElement>('.ymw-editor > .ymz-editor .smm-node')!;
+    const content = node.querySelector<SVGGraphicsElement>('g[data-width][data-height]')!;
+    const painted = content.firstElementChild as SVGGraphicsElement;
+    const frames: Array<{
+      x: number;
+      y: number;
+      text: string;
+      sameContent: boolean;
+      samePainted: boolean;
+    }> = [];
     (window as any).__yemindDprDragFrames = frames;
+    (window as any).__yemindDprDragContent = content;
+    (window as any).__yemindDprDragPainted = painted;
+    (window as any).__yemindDprDragDetachCount = 0;
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        for (const removed of Array.from(record.removedNodes)) {
+          if (removed === content || (removed instanceof Element && removed.contains(content))) {
+            (window as any).__yemindDprDragDetachCount += 1;
+          }
+        }
+      }
+    });
+    observer.observe(node, { childList: true, subtree: true });
+    (window as any).__yemindDprDragObserver = observer;
     (window as any).__yemindDprDragActive = true;
     const capture = (): void => {
       if (!(window as any).__yemindDprDragActive) return;
@@ -98,6 +121,8 @@ test('DPR 1.25 width drag keeps painted text anchored inside the shape on every 
           x: textRect.left - shapeRect.left,
           y: textRect.top - shapeRect.top,
           text: content.textContent ?? '',
+          sameContent: content === (window as any).__yemindDprDragContent,
+          samePainted: painted === (window as any).__yemindDprDragPainted,
         });
       }
       requestAnimationFrame(capture);
@@ -108,17 +133,34 @@ test('DPR 1.25 width drag keeps painted text anchored inside the shape on every 
   await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
   await page.mouse.down();
   await page.mouse.move(box!.x + 180, box!.y + box!.height / 2, { steps: 24 });
-  await page.mouse.up();
   await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
-  const frames = await page.evaluate(() => {
+  const result = await page.evaluate(() => {
     (window as any).__yemindDprDragActive = false;
-    return (window as any).__yemindDprDragFrames as Array<{ x: number; y: number; text: string }>;
+    (window as any).__yemindDprDragObserver.disconnect();
+    return {
+      detachCount: (window as any).__yemindDprDragDetachCount as number,
+      frames: (window as any).__yemindDprDragFrames as Array<{
+        x: number;
+        y: number;
+        text: string;
+        sameContent: boolean;
+        samePainted: boolean;
+      }>,
+    };
   });
+  await page.mouse.up();
+  const { frames, detachCount } = result;
 
   expect(frames.length).toBeGreaterThan(3);
+  expect(detachCount).toBe(0);
   expect(Math.max(...frames.map((frame) => frame.x)) - Math.min(...frames.map((frame) => frame.x)))
     .toBeLessThanOrEqual(1);
   expect(Math.max(...frames.map((frame) => frame.y)) - Math.min(...frames.map((frame) => frame.y)))
     .toBeLessThanOrEqual(1);
-  frames.forEach((frame) => expect(frame.text).toContain('LTSSM 状态读取及历史记录'));
+  frames.forEach((frame) => {
+    expect(frame.text).toContain('LTSSM 状态读取及历史记录');
+    expect(frame.sameContent).toBe(true);
+    expect(frame.samePainted).toBe(true);
+  });
+  await expect(root).toContainText('LTSSM 状态读取及历史记录');
 });

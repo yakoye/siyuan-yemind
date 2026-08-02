@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.9.3 - 2026-08-02
+
+This stability release completes the shared canvas/outline editing transaction work without replacing the upstream `wanglin2/mind-map` editor lifecycle. It removes the remaining first-frame gaps and stale clipboard state while keeping the plugin and standalone web build on one runtime.
+
+- Gives the live canvas editor a stable node shell so text insertion, paste, node switching and custom-width editing keep the text, border and selection geometry aligned without an empty or duplicated visible frame.
+- Makes nodes created through `Tab`, `Enter` and the quick-add button render their default text on the first visible frame, and keeps selection toolbars hidden until their current selection has settled and a complete below-selection position is available.
+- Keeps clipboard intent explicit between text, node and image operations across canvas/outline editing states and same-file/cross-file destinations, preventing stale node payloads or source styling from leaking into a later paste.
+- Accepts legacy v1/v2 map and checkpoint storage through the documented migration path while preserving every map instead of resetting pre-release data.
+- Expands browser coverage for editing geometry, width drag, first paint, selection toolbar transitions, undo/redo and the cross-surface clipboard matrix; the verified release artifacts are shared by the SiYuan plugin and web edition.
+
 ## 1.9.2-rc.20260802.0910 - 2026-08-02
 
 This timestamped release candidate keeps the official `simple-mind-map` text-edit lifecycle and removes YeMind's duplicate padded active outline during canvas text editing. It is intentionally not the stable v1.9.2 release and remains pending user verification in SiYuan.

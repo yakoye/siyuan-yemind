@@ -65,18 +65,22 @@ describe('vendored simple-mind-map upstream baseline', () => {
     });
   });
 
-  it('limits the RichText lifecycle fork to the two trace-proven upstream files', () => {
+  it('limits the runtime fork to the trace-proven editing and width-drag files', () => {
     const baseline = JSON.parse(readFileSync(baselinePath, 'utf8')) as UpstreamRuntimeBaseline;
     const textEditPath = 'src/core/render/TextEdit.js';
+    const modifyWidthPath = 'src/core/render/node/nodeModifyWidth.js';
     const richTextPath = 'src/plugins/RichText.js';
 
     expect(baseline.allowedModifiedFiles).toEqual([
       'src/core/command/KeyCommand.js',
       textEditPath,
+      modifyWidthPath,
       richTextPath,
     ]);
     expect(normalizedSha256(join(runtimeRoot, textEditPath)))
       .not.toBe(baseline.sourceHashes[textEditPath]);
+    expect(normalizedSha256(join(runtimeRoot, modifyWidthPath)))
+      .not.toBe(baseline.sourceHashes[modifyWidthPath]);
     expect(normalizedSha256(join(runtimeRoot, richTextPath)))
       .not.toBe(baseline.sourceHashes[richTextPath]);
   });

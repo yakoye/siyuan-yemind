@@ -84,6 +84,7 @@
   "allowedModifiedFiles": [
     "src/core/command/KeyCommand.js",
     "src/core/render/TextEdit.js",
+    "src/core/render/node/nodeModifyWidth.js",
     "src/plugins/RichText.js"
   ],
   "allowedAddedFiles": []
