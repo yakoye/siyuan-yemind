@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.9.4 - 2026-08-02
+
+This patch release fixes the remaining node-width drag flicker without adding another YeMind overlay or timing workaround. The vendored `simple-mind-map` width-drag path now keeps the existing painted text subtree attached and updates its measured content and node geometry in place, while the normal upstream layout still performs the final committed render on pointer release.
+
+- Keeps the same SVG text group and `foreignObject` alive for every width-drag frame, preventing the text from alternating between the upper-left origin and its final position.
+- Updates the node shape, hover geometry and expansion placeholder in place during the live drag, then performs one canonical full render after the drag ends.
+- Adds a DPR 1.25 browser regression that records every animation frame and fails on text-layer replacement, DOM detachment, missing content or more than one pixel of position drift.
+- Records the trace-proven `nodeModifyWidth.js` fork in the upstream baseline contract so future builds cannot silently replace or broaden the vendor changes.
+
 ## 1.9.3 - 2026-08-02
 
 This stability release completes the shared canvas/outline editing transaction work without replacing the upstream `wanglin2/mind-map` editor lifecycle. It removes the remaining first-frame gaps and stale clipboard state while keeping the plugin and standalone web build on one runtime.
