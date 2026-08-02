@@ -7649,21 +7649,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.0";
+const PLUGIN_VERSION = "1.9.1";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "5d5054a7-clean",
-  time: "2026-08-02T00:39:00+08:00"
+  id: "f133f416-clean",
+  time: "2026-08-02T08:31:43+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-01T16:38:00.537Z",
-  buildId: "yemind-v1.9.0-20260801",
+  buildTime: "2026-08-02T00:30:36.064Z",
+  buildId: "yemind-v1.9.1-20260802",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -82329,10 +82329,9 @@ function createMindMap(options) {
   });
   const viewData = (settings == null ? void 0 : settings.restoreSavedView) === false ? void 0 : normalizePersistedViewData(options.viewData);
   const runtimeData = normalizeTreeForUpstreamRichText(options.data);
-  const editorRoot = options.el.closest(".ymz-editor") ?? options.el;
   const mindMap = new MindMap2({
     el: options.el,
-    customInnerElsAppendTo: editorRoot,
+    customInnerElsAppendTo: null,
     data: runtimeData,
     viewData,
     theme: "default",
