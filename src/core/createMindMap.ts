@@ -113,7 +113,11 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     iconList: createYemindIconList(options.pluginBaseUrl),
     createNodePrefixContent,
     createNodePostfixContent,
-    openRealtimeRenderOnNodeTextEdit: true,
+    // Keep the upstream non-realtime editing contract: Quill owns the text
+    // for the whole edit session and the SVG text is committed once on exit.
+    // Rebuilding the static SVG on every input races the HTML editor geometry
+    // and is the source of the visible upper-left jump.
+    openRealtimeRenderOnNodeTextEdit: false,
     enableEditFormulaInRichTextEdit: true,
     customHyperlinkJump: (href: string) => options.onHyperlink?.(href),
     beforeDeleteNodeImg: createImageDeleteGuard(options.onConfirmDeleteImage),

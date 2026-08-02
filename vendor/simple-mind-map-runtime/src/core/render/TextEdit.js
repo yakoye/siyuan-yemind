@@ -254,17 +254,14 @@ export default class TextEdit {
     if (this.mindMap.richText) {
       this.mindMap.richText.showEditText(params)
       // 编辑层已经完成内容、几何和焦点初始化后再隐藏静态文字。
-      // 避免构建 Quill 的同步阶段出现两层文字都不可见的空档。
-      if (openRealtimeRenderOnNodeTextEdit) {
-        g.hide()
-      }
+      // 避免构建 Quill 的同步阶段出现两层文字都不可见的空档。即使关闭
+      // 实时 SVG 重建，编辑期也必须只保留 Quill 一个文字层。
+      g.hide()
       return
     }
     this.currentNode = node
     this.showEditTextBox(params)
-    if (openRealtimeRenderOnNodeTextEdit) {
-      g.hide()
-    }
+    g.hide()
   }
 
   // 当openRealtimeRenderOnNodeTextEdit配置更新后需要更新编辑框样式

@@ -1288,6 +1288,8 @@ test('width-handle drag grows the live node monotonically without disappearing o
   const tops = [before!.y];
   const textLefts: number[] = [];
   const textTops: number[] = [];
+  const textOffsetsX: number[] = [];
+  const textOffsetsY: number[] = [];
   for (let step = 1; step <= 5; step += 1) {
     await page.mouse.move(
       handleBox!.x + handleBox!.width / 2 + step * 24,
@@ -1313,6 +1315,8 @@ test('width-handle drag grows the live node monotonically without disappearing o
         textHeight: textRect.height,
         textLeft: paintedContentRect.left,
         textTop: paintedContentRect.top,
+        textOffsetX: paintedContentRect.left - shapeRect.left,
+        textOffsetY: paintedContentRect.top - shapeRect.top,
         shapeWidth: shapeRect.width,
         shapeHeight: shapeRect.height,
       };
@@ -1325,6 +1329,8 @@ test('width-handle drag grows the live node monotonically without disappearing o
     expect(painted!.shapeHeight).toBeGreaterThanOrEqual(painted!.textHeight);
     textLefts.push(painted!.textLeft);
     textTops.push(painted!.textTop);
+    textOffsetsX.push(painted!.textOffsetX);
+    textOffsetsY.push(painted!.textOffsetY);
   }
   await page.mouse.up();
   for (let index = 1; index < widths.length; index += 1) {
@@ -1334,6 +1340,8 @@ test('width-handle drag grows the live node monotonically without disappearing o
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(2);
   expect(Math.max(...textLefts) - Math.min(...textLefts)).toBeLessThanOrEqual(2);
   expect(Math.max(...textTops) - Math.min(...textTops)).toBeLessThanOrEqual(2);
+  expect(Math.max(...textOffsetsX) - Math.min(...textOffsetsX)).toBeLessThanOrEqual(0.75);
+  expect(Math.max(...textOffsetsY) - Math.min(...textOffsetsY)).toBeLessThanOrEqual(0.75);
   await expect(rootNode).toBeVisible();
 });
 
@@ -2158,29 +2166,81 @@ test('typing with real pauses between characters never rebuilds the static SVG t
   await expect(textEditor).toBeFocused();
   await textEditor.press('Control+A');
 
-  const staticTextGroupCountBefore = await editor.locator('.smm-node').first()
-    .locator('.smm-text-node-wrap,.smm-richtext-node-wrap').count();
+  await rootNode.evaluate((element) => {
+    const original = element.querySelector('.smm-text-node-wrap,.smm-richtext-node-wrap');
+    (window as any).__yemindStaticTextIdentity = original;
+    (window as any).__yemindStaticTextReplacementCount = 0;
+    const observer = new MutationObserver(() => {
+      const current = element.querySelector('.smm-text-node-wrap,.smm-richtext-node-wrap');
+      if (current !== (window as any).__yemindStaticTextIdentity) {
+        (window as any).__yemindStaticTextReplacementCount += 1;
+        (window as any).__yemindStaticTextIdentity = current;
+      }
+    });
+    observer.observe(element, { childList: true, subtree: true });
+    (window as any).__yemindStaticTextIdentityObserver = observer;
+  });
 
   // Each character waits longer than the old debounce window used to. If any
   // code path still rebuilds SVG text mid-edit, this would flicker or change
   // the static group count while the editor stays open.
   await textEditor.pressSequentially('abc', { delay: 250 });
 
-  const staticTextGroupCountDuring = await editor.locator('.smm-node').first()
-    .locator('.smm-text-node-wrap,.smm-richtext-node-wrap').count();
-  expect(staticTextGroupCountDuring).toBe(staticTextGroupCountBefore);
+  expect(await page.evaluate(() => (window as any).__yemindStaticTextReplacementCount)).toBe(0);
   await expect(textEditor).toHaveText('abc');
   expect(errors).toEqual([]);
 
   await textEditor.press('Backspace');
   await page.waitForTimeout(250);
-  const staticTextGroupCountAfterDelete = await editor.locator('.smm-node').first()
-    .locator('.smm-text-node-wrap,.smm-richtext-node-wrap').count();
-  expect(staticTextGroupCountAfterDelete).toBe(staticTextGroupCountBefore);
+  expect(await page.evaluate(() => (window as any).__yemindStaticTextReplacementCount)).toBe(0);
   await expect(textEditor).toHaveText('ab');
 
   await commitCanvasEdit(page);
+  await page.evaluate(() => (window as any).__yemindStaticTextIdentityObserver?.disconnect());
   await expect(rootNode).toContainText('ab');
+});
+
+test('Tab insertion never exposes an empty visible rich-text host before 新节点 is mounted', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop inserted-node synchronous first-paint regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  await addRootChild(page);
+  await commitCanvasEdit(page);
+  await editor.locator('.smm-node').last().click();
+
+  await page.evaluate(() => {
+    const records: Array<{ visible: boolean; text: string }> = [];
+    const capture = (): void => {
+      const host = document.querySelector<HTMLElement>('body > .smm-richtext-node-edit-wrap');
+      if (!host) return;
+      const style = getComputedStyle(host);
+      const rect = host.getBoundingClientRect();
+      records.push({
+        visible: style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0,
+        text: host.querySelector<HTMLElement>('.ql-editor')?.innerText.trim() ?? '',
+      });
+    };
+    (window as any).__yemindInsertedHostRecords = records;
+    const observer = new MutationObserver(capture);
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ['style', 'class'],
+    });
+    (window as any).__yemindInsertedHostObserver = observer;
+  });
+
+  await page.keyboard.press('Tab');
+  await expect(canvasTextEditor(page)).toHaveText('新节点');
+  const records = await page.evaluate(() => {
+    (window as any).__yemindInsertedHostObserver?.disconnect();
+    return (window as any).__yemindInsertedHostRecords as Array<{ visible: boolean; text: string }>;
+  });
+  const visible = records.filter((record) => record.visible);
+  expect(visible.length).toBeGreaterThan(0);
+  visible.forEach((record) => expect(record.text).toBe('新节点'));
 });
 
 test('the line a character sits on before entering edit matches the line it sits on after', async ({ page, isMobile }) => {
