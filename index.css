@@ -1206,6 +1206,20 @@ body > .smm-richtext-node-edit-wrap .ql-editor{
   caret-color:currentColor!important;
   -webkit-text-fill-color:currentColor!important;
 }
+body > .smm-richtext-node-edit-wrap .ql-editor::selection,
+body > .smm-richtext-node-edit-wrap .ql-editor *::selection{
+  background:var(--ymz-text-selection-bg,color-mix(in srgb,var(--b3-theme-primary,#21c7a8) 30%,transparent))!important;
+  color:var(--ymz-text-selection-fg,inherit)!important;
+  -webkit-text-fill-color:currentColor!important;
+}
+body > .ymz-rich-toolbar{
+  position:fixed;
+  z-index:3101;
+}
+body > .ymz-color-popover{
+  position:fixed;
+  z-index:3102;
+}
 
 /* v0.9.11 anchored style panels and flush node quick actions */
 .ymz-node-quick-actions{gap:0!important}

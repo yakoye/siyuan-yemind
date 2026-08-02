@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.5";
+const PLUGIN_VERSION = "1.9.6";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "c21db699-clean",
-  time: "2026-08-03T00:13:01+08:00"
+  id: "8e5bac32-clean",
+  time: "2026-08-03T06:54:12+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-02T15:55:02.161Z",
-  buildId: "yemind-v1.9.5-20260802",
+  buildTime: "2026-08-02T22:50:37.629Z",
+  buildId: "yemind-v1.9.6-20260802",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -88508,6 +88508,19 @@ function colorPaletteInnerHtml() {
     </div>`;
 }
 const POINTER_SELECTION_SETTLE_MS = 120;
+const TOOLBAR_Z_INDEX = 3101;
+const COLOR_POPOVER_Z_INDEX = 3102;
+const PORTAL_THEME_PROPERTIES = [
+  "--ymz-shell-border",
+  "--ymz-panel-bg",
+  "--ymz-text-80",
+  "--ymz-control-hover-bg",
+  "--ymz-accent",
+  "--ymz-accent-soft",
+  "--ymz-border",
+  "--ymz-text-selection-bg",
+  "--ymz-text-selection-fg"
+];
 function option(value, label) {
   return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -88575,6 +88588,7 @@ class RichTextToolbar {
     this.target = initialTarget;
     this.element = document.createElement("div");
     this.element.className = "ymz-rich-toolbar";
+    this.element.style.zIndex = String(TOOLBAR_Z_INDEX);
     this.element.hidden = true;
     this.element.style.visibility = "hidden";
     this.element.innerHTML = `
@@ -88600,6 +88614,7 @@ class RichTextToolbar {
       <button type="button" data-rich-action="clear" title="清除全部格式">清除</button>`;
     this.colorPopover = document.createElement("div");
     this.colorPopover.className = "ymz-color-popover";
+    this.colorPopover.style.zIndex = String(COLOR_POPOVER_Z_INDEX);
     this.colorPopover.hidden = true;
     this.colorPopover.innerHTML = colorPaletteInnerHtml();
     this.customColorInput = document.createElement("input");
@@ -88608,7 +88623,8 @@ class RichTextToolbar {
     this.customColorInput.tabIndex = -1;
     this.customColorInput.setAttribute("aria-hidden", "true");
     this.colorPopover.appendChild(this.customColorInput);
-    this.root.append(this.element, this.colorPopover);
+    document.body.append(this.element, this.colorPopover);
+    this.syncPortalTheme();
     document.addEventListener("mousedown", this.onDocumentMouseDown, true);
     window.addEventListener("mouseup", this.onWindowMouseUp, true);
     this.bind();
@@ -88816,24 +88832,23 @@ class RichTextToolbar {
     });
   }
   openColorPopover(kind, anchor) {
+    this.syncPortalTheme();
     this.activeColorKind = kind;
     this.colorSessionOriginal = typeof this.formatInfo[kind] === "string" ? this.formatInfo[kind] : false;
     this.colorPopover.dataset.kind = kind;
     this.syncColorReadout();
     this.colorPopover.hidden = false;
-    const rootRect = this.root.getBoundingClientRect();
+    const rootRect = this.visibleRootRect();
     const anchorRect = anchor.getBoundingClientRect();
     const width2 = this.colorPopover.offsetWidth || 320;
     const height2 = this.colorPopover.offsetHeight || 145;
-    const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
-    const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
     const left = Math.max(
-      8,
-      Math.min(anchorRect.left - rootRect.left, rootWidth - width2 - 8)
+      rootRect.left + 8,
+      Math.min(anchorRect.left, rootRect.right - width2 - 8)
     );
-    const below = anchorRect.bottom - rootRect.top + 6;
-    const above = anchorRect.top - rootRect.top - height2 - 6;
-    const top = below + height2 <= rootHeight - 8 ? below : Math.max(8, above);
+    const below = anchorRect.bottom + 6;
+    const above = anchorRect.top - height2 - 6;
+    const top = below + height2 <= rootRect.bottom - 8 ? below : Math.max(rootRect.top + 8, above);
     this.colorPopover.style.left = `${Math.round(left)}px`;
     this.colorPopover.style.top = `${Math.round(top)}px`;
   }
@@ -88950,14 +88965,15 @@ class RichTextToolbar {
     if (syncInputs) this.syncColorReadout();
   }
   position(rect2, allowLiveSelection = true) {
+    this.syncPortalTheme();
     const selection = window.getSelection();
-    if (selection && !selection.isCollapsed && selection.rangeCount > 0 && selection.anchorNode && this.root.contains(selection.anchorNode)) {
+    if (selection && !selection.isCollapsed && selection.rangeCount > 0 && selection.anchorNode && (this.root.contains(selection.anchorNode) || this.isBodyCanvasEditorNode(selection.anchorNode))) {
       const anchorElement = selection.anchorNode instanceof Element ? selection.anchorNode : selection.anchorNode.parentElement;
       const activeTextEditor = anchorElement == null ? void 0 : anchorElement.closest(
         '.ql-editor,[data-outline-editor],[data-role="outline-text-editor"]'
       );
       const live = selection.getRangeAt(0).getBoundingClientRect();
-      if (allowLiveSelection && activeTextEditor && this.root.contains(activeTextEditor) && live && (live.width || live.height)) {
+      if (allowLiveSelection && activeTextEditor && (this.root.contains(activeTextEditor) || this.isBodyCanvasEditorNode(activeTextEditor)) && live && (live.width || live.height)) {
         rect2 = {
           left: live.left,
           top: live.top,
@@ -88967,42 +88983,36 @@ class RichTextToolbar {
         };
       }
     }
-    const rootRect = this.root.getBoundingClientRect();
-    const rootWidth = this.root.clientWidth || rootRect.width || window.innerWidth;
-    const rootHeight = this.root.clientHeight || rootRect.height || window.innerHeight;
-    const scaleX = rootRect.width > 0 && rootWidth > 0 ? rootRect.width / rootWidth : 1;
-    const scaleY = rootRect.height > 0 && rootHeight > 0 ? rootRect.height / rootHeight : 1;
+    const rootRect = this.visibleRootRect();
+    const rootWidth = rootRect.width || window.innerWidth;
     const width2 = Math.min(
       this.element.scrollWidth || 820,
       Math.max(240, rootWidth - 16)
     );
-    const localLeft = (rect2.left - rootRect.left) / scaleX;
-    const localTop = (rect2.top - rootRect.top) / scaleY;
-    const localBottom = (rect2.bottom - rootRect.top) / scaleY;
-    const localWidth = (rect2.width ?? rect2.right - rect2.left) / scaleX;
+    const selectionWidth = rect2.width ?? rect2.right - rect2.left;
     const left = Math.max(
-      8,
+      rootRect.left + 8,
       Math.min(
-        localLeft + localWidth / 2 - width2 / 2,
-        rootWidth - width2 - 8
+        rect2.left + selectionWidth / 2 - width2 / 2,
+        rootRect.right - width2 - 8
       )
     );
     const measuredHeight = this.element.offsetHeight || 44;
-    const above = localTop - measuredHeight - 8;
-    const below = localBottom + 8;
-    let top = below + measuredHeight <= rootHeight - 8 ? below : Math.max(8, above);
+    const above = rect2.top - measuredHeight - 8;
+    const below = rect2.bottom + 8;
+    let top = below + measuredHeight <= rootRect.bottom - 8 ? below : Math.max(rootRect.top + 8, above);
     if (rootWidth <= 720) {
       const canvasEditor = document.querySelector(
         "body > .smm-richtext-node-edit-wrap"
       );
       if (canvasEditor && getComputedStyle(canvasEditor).display !== "none") {
         const editorRect = canvasEditor.getBoundingClientRect();
-        const editorTop = (editorRect.top - rootRect.top) / scaleY;
-        const editorBottom = (editorRect.bottom - rootRect.top) / scaleY;
+        const editorTop = editorRect.top;
+        const editorBottom = editorRect.bottom;
         const overlapsEditor = top < editorBottom && top + measuredHeight > editorTop;
         if (overlapsEditor) {
           const belowEditor = editorBottom + 8;
-          top = belowEditor + measuredHeight <= rootHeight - 8 ? belowEditor : Math.max(8, editorTop - measuredHeight - 8);
+          top = belowEditor + measuredHeight <= rootRect.bottom - 8 ? belowEditor : Math.max(rootRect.top + 8, editorTop - measuredHeight - 8);
         }
       }
     }
@@ -89012,6 +89022,30 @@ class RichTextToolbar {
     if (this.element.style.left !== nextLeft) this.element.style.left = nextLeft;
     if (this.element.style.top !== nextTop) this.element.style.top = nextTop;
     if (this.element.style.maxWidth !== nextMaxWidth) this.element.style.maxWidth = nextMaxWidth;
+  }
+  visibleRootRect() {
+    const rect2 = this.root.getBoundingClientRect();
+    const left = Math.max(0, rect2.left);
+    const top = Math.max(0, rect2.top);
+    const right = Math.min(window.innerWidth, rect2.right || window.innerWidth);
+    const bottom = Math.min(window.innerHeight, rect2.bottom || window.innerHeight);
+    return new DOMRect(left, top, Math.max(0, right - left), Math.max(0, bottom - top));
+  }
+  isBodyCanvasEditorNode(node) {
+    const element = node instanceof Element ? node : node.parentElement;
+    const host = element == null ? void 0 : element.closest(".smm-richtext-node-edit-wrap");
+    return (host == null ? void 0 : host.parentElement) === document.body;
+  }
+  syncPortalTheme() {
+    const source = getComputedStyle(this.root);
+    for (const property of PORTAL_THEME_PROPERTIES) {
+      const value = source.getPropertyValue(property).trim();
+      if (!value) continue;
+      this.element.style.setProperty(property, value);
+      this.colorPopover.style.setProperty(property, value);
+    }
+    this.element.style.colorScheme = source.colorScheme;
+    this.colorPopover.style.colorScheme = source.colorScheme;
   }
   cancelSelectionSettle() {
     if (this.selectionSettleTimer) {
