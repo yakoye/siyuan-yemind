@@ -17,7 +17,7 @@ test('creates, renames and restores a map from IndexedDB', async ({ page, isMobi
   expect(errors).toEqual([]);
 });
 
-test('starts a clean web data generation instead of loading pre-release maps', async ({ page }) => {
+test('migrates pre-release maps into the current web data generation without losing them', async ({ page }) => {
   await page.goto('/assets/yemind-icon-32.png');
   await page.evaluate(async () => {
     await new Promise<void>((resolve, reject) => {
@@ -58,8 +58,7 @@ test('starts a clean web data generation instead of loading pre-release maps', a
   await page.goto('/');
   await expect(page.locator('.ymw-editor > .ymz-editor')).toBeVisible();
   await expect(page.locator('[data-web-map-id]')).toHaveCount(1);
-  await expect(page.locator('[data-web-map-id]')).toContainText('未命名导图');
-  await expect(page.locator('body')).not.toContainText('不应加载的旧导图');
+  await expect(page.locator('[data-web-map-id]')).toContainText('不应加载的旧导图');
 
   const stored = await page.evaluate(async () => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -78,7 +77,9 @@ test('starts a clean web data generation instead of loading pre-release maps', a
   });
   expect(stored.version).toBe(2);
   expect(stored.maps).toHaveLength(1);
-  expect(stored.maps[0].title).toBe('未命名导图');
+  expect(stored.maps[0].title).toBe('不应加载的旧导图');
+  expect(stored.maps[0].data.data.text).toBe('旧节点');
+  expect(stored.maps[0].data.data.richText).toBe(false);
 });
 
 test('opens the outline sidebar and returns to the map without losing the editor', async ({ page }) => {
