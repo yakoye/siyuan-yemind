@@ -8,6 +8,7 @@ web-dist/
 index.js.map
 output/playwright/
 output/browser-preview/
+output/vite-debug/
 test-results/
 playwright-report/
 .playwright-cli/
