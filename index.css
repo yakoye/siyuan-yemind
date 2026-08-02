@@ -1167,6 +1167,46 @@
   max-width:none;
 }
 
+/* The upstream rich-text host is appended directly to <body>, outside the
+   editor root.  It therefore has to own the complete live node shell while
+   editing: the SVG text/shape behind it is only a committed snapshot and must
+   never be used as the resizing border for the live HTML editor. */
+body > .smm-richtext-node-edit-wrap{
+  isolation:isolate;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+}
+body > .smm-richtext-node-edit-wrap::before{
+  content:"";
+  position:absolute;
+  inset:-7px -6px;
+  z-index:0;
+  border:2px solid var(--ymz-accent,var(--b3-theme-primary,#21c7a8));
+  border-radius:10px;
+  background:inherit;
+  box-sizing:border-box;
+  pointer-events:none;
+}
+body > .smm-richtext-node-edit-wrap .ql-container,
+body > .smm-richtext-node-edit-wrap .ql-editor{
+  position:relative;
+  z-index:1;
+  width:100%;
+  min-width:0;
+  max-width:none;
+  margin:0;
+  padding:0;
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  box-sizing:border-box;
+  color:inherit!important;
+  caret-color:currentColor!important;
+  -webkit-text-fill-color:currentColor!important;
+}
+
 /* v0.9.11 anchored style panels and flush node quick actions */
 .ymz-node-quick-actions{gap:0!important}
 .ymz-node-quick-action{margin-left:0!important}

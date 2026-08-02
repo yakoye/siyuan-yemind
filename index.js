@@ -6321,9 +6321,12 @@ class CheckpointRepository {
   async loadInternal() {
     const raw = await this.storage.load();
     const candidate = raw && typeof raw === "object" ? raw : null;
-    const checkpoints = (candidate == null ? void 0 : candidate.version) === CHECKPOINT_STORAGE_VERSION && Array.isArray(candidate.checkpoints) ? candidate.checkpoints.map(normalizeCheckpoint).filter((item) => Boolean(item)) : [];
+    const storageVersion = candidate == null ? void 0 : candidate.version;
+    const supportedVersion = storageVersion === 1 || storageVersion === CHECKPOINT_STORAGE_VERSION;
+    const checkpoints = supportedVersion && Array.isArray(candidate == null ? void 0 : candidate.checkpoints) ? candidate.checkpoints.map(normalizeCheckpoint).filter((item) => Boolean(item)) : [];
     this.state = { version: CHECKPOINT_STORAGE_VERSION, checkpoints };
     this.loaded = true;
+    if (storageVersion === 1) await this.enqueueSave(this.snapshot());
   }
   async ensureLoaded() {
     if (!this.loaded) await this.load();
@@ -7295,13 +7298,14 @@ class MapRepository {
     var _a, _b;
     const raw = await this.storage.load();
     let migrated = false;
-    if (!raw || typeof raw !== "object" || raw.version !== MAP_STORAGE_VERSION) {
+    const storageVersion = raw && typeof raw === "object" ? raw.version : void 0;
+    if (storageVersion !== 1 && storageVersion !== MAP_STORAGE_VERSION) {
       this.state = { version: MAP_STORAGE_VERSION, activeMapId: null, maps: [] };
     } else {
       const candidate = raw;
       const results = Array.isArray(candidate.maps) ? candidate.maps.map(normalizeMap) : [];
       const maps = results.map((item) => item.map).filter((item) => Boolean(item));
-      migrated = results.some((item) => item.changed) || maps.length !== (((_a = candidate.maps) == null ? void 0 : _a.length) ?? 0);
+      migrated = storageVersion !== MAP_STORAGE_VERSION || results.some((item) => item.changed) || maps.length !== (((_a = candidate.maps) == null ? void 0 : _a.length) ?? 0);
       const activeMapId = maps.some((map2) => map2.id === candidate.activeMapId) ? String(candidate.activeMapId) : ((_b = maps[0]) == null ? void 0 : _b.id) ?? null;
       this.state = { version: MAP_STORAGE_VERSION, activeMapId, maps };
       migrated || (migrated = candidate.activeMapId !== activeMapId);
@@ -7651,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.2";
+const PLUGIN_VERSION = "1.9.3";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "8c8fa5a9-clean",
-  time: "2026-08-02T17:59:01+08:00"
+  id: "10f69588-clean",
+  time: "2026-08-02T20:49:21+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-02T05:06:57.161Z",
-  buildId: "yemind-v1.9.2-20260802",
+  buildTime: "2026-08-02T12:47:57.427Z",
+  buildId: "yemind-v1.9.3-20260802",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -23318,16 +23322,12 @@ class TextEdit {
     };
     if (this.mindMap.richText) {
       this.mindMap.richText.showEditText(params);
-      if (openRealtimeRenderOnNodeTextEdit) {
-        g.hide();
-      }
+      g.hide();
       return;
     }
     this.currentNode = node;
     this.showEditTextBox(params);
-    if (openRealtimeRenderOnNodeTextEdit) {
-      g.hide();
-    }
+    g.hide();
   }
   // 当openRealtimeRenderOnNodeTextEdit配置更新后需要更新编辑框样式
   onOpenRealtimeRenderOnNodeTextEditConfigUpdate(openRealtimeRenderOnNodeTextEdit) {
@@ -82400,7 +82400,11 @@ function createMindMap(options) {
     iconList: createYemindIconList(options.pluginBaseUrl),
     createNodePrefixContent,
     createNodePostfixContent,
-    openRealtimeRenderOnNodeTextEdit: true,
+    // Keep the upstream non-realtime editing contract: Quill owns the text
+    // for the whole edit session and the SVG text is committed once on exit.
+    // Rebuilding the static SVG on every input races the HTML editor geometry
+    // and is the source of the visible upper-left jump.
+    openRealtimeRenderOnNodeTextEdit: false,
     enableEditFormulaInRichTextEdit: true,
     customHyperlinkJump: (href) => {
       var _a;
