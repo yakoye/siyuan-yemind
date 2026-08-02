@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.9.2-rc.20260802.0910 - 2026-08-02
+
+This timestamped release candidate keeps the official `simple-mind-map` text-edit lifecycle and removes YeMind's duplicate padded active outline during canvas text editing. It is intentionally not the stable v1.9.2 release and remains pending user verification in SiYuan.
+
+- Confirmed from `Trace-20260802T084131.json.gz` and real SiYuan geometry sampling that the text glyph position remains stable while the padded active rectangle expands the visible node bounds on the double-click frame.
+- Keeps the original node shape, text layout, Quill portal, focus and editing lifecycle unchanged.
+- Hides only the redundant padded active rectangle while the upstream body editor portal is visible and applies the accent color to the existing node boundary.
+- Adds exact first-visible-glyph, active-outline and official-upstream comparison coverage.
+- Adds standard timestamped release-candidate identities so unconfirmed fixes do not consume a stable Patch version.
+
 ## 1.9.1 - 2026-08-02
 
 This patch release removes the local rich-text overlay-host override that caused the map viewport to jump to the upper-left and snap back whenever a node editor opened, switched nodes, or closed during deletion.

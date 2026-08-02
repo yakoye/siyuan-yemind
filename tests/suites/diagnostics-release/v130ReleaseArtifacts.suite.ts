@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   assertVersionContract,
   readVersionContract,
+  releaseInfoVersion,
   VERSION_MARKER_COUNT,
 } from '../../../scripts/release/version-contract.mjs';
 import {
@@ -40,6 +41,19 @@ describe('v1.5.0 unified release artifacts', () => {
         'web/VERSION': '1.2.0',
       },
     })).toThrow(/web\/VERSION.*1\.2\.0.*1\.5\.0/s);
+  });
+
+  it('accepts timestamped release candidates without consuming the stable version', () => {
+    const candidate = '1.9.2-rc.20260802.0910';
+    expect(releaseInfoVersion(
+      `export const RELEASE_INFO = { buildId: 'yemind-v${candidate}-20260802' };`,
+    )).toBe(candidate);
+    expect(() => assertVersionContract({
+      expected: candidate,
+      versions: Object.fromEntries(
+        Array.from({ length: VERSION_MARKER_COUNT }, (_, index) => [`marker-${index}`, candidate]),
+      ),
+    })).not.toThrow();
   });
 
   it('names both host packages and refuses release cleanup outside release root', async () => {

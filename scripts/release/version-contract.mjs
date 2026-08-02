@@ -4,6 +4,10 @@ import path from 'node:path';
 export const VERSION_MARKER_COUNT = 10;
 const SEMVER = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 
+export function releaseInfoVersion(source) {
+  return source.match(/buildId:\s*['"]yemind-v(.+)-\d{8}['"]/)?.[1];
+}
+
 const readText = async (root, relative) =>
   (await readFile(path.join(root, relative), 'utf8')).trim();
 const readJson = async (root, relative) =>
@@ -31,7 +35,7 @@ export async function readVersionContract(root = process.cwd()) {
       'src/plugin/constants.ts':
         constants.match(/PLUGIN_VERSION\s*=\s*['"]([^'"]+)/)?.[1],
       'src/releaseInfo.ts buildId':
-        releaseInfo.match(/buildId:\s*['"]yemind-v([^-]+)/)?.[1],
+        releaseInfoVersion(releaseInfo),
       'README.md':
         readme.match(/Current version:\s*`([^`]+)`/)?.[1],
       'README_zh_CN.md':
