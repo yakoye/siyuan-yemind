@@ -115,13 +115,18 @@ export class MapRepository {
   private async loadInternal(): Promise<void> {
     const raw = await this.storage.load();
     let migrated = false;
-    if (!raw || typeof raw !== 'object' || (raw as { version?: unknown }).version !== MAP_STORAGE_VERSION) {
+    const storageVersion = raw && typeof raw === 'object'
+      ? (raw as { version?: unknown }).version
+      : undefined;
+    if (storageVersion !== 1 && storageVersion !== MAP_STORAGE_VERSION) {
       this.state = { version: MAP_STORAGE_VERSION, activeMapId: null, maps: [] };
     } else {
       const candidate = raw as Partial<MapStorageDocument>;
       const results = Array.isArray(candidate.maps) ? candidate.maps.map(normalizeMap) : [];
       const maps = results.map((item) => item.map).filter((item): item is YeMindMapDocument => Boolean(item));
-      migrated = results.some((item) => item.changed) || maps.length !== (candidate.maps?.length ?? 0);
+      migrated = storageVersion !== MAP_STORAGE_VERSION
+        || results.some((item) => item.changed)
+        || maps.length !== (candidate.maps?.length ?? 0);
       const activeMapId = maps.some((map) => map.id === candidate.activeMapId)
         ? String(candidate.activeMapId)
         : maps[0]?.id ?? null;

@@ -72,11 +72,14 @@ export class CheckpointRepository {
   private async loadInternal(): Promise<void> {
     const raw = await this.storage.load();
     const candidate = raw && typeof raw === 'object' ? raw as Partial<CheckpointStorageDocument> : null;
-    const checkpoints = candidate?.version === CHECKPOINT_STORAGE_VERSION && Array.isArray(candidate.checkpoints)
+    const storageVersion = candidate?.version;
+    const supportedVersion = storageVersion === 1 || storageVersion === CHECKPOINT_STORAGE_VERSION;
+    const checkpoints = supportedVersion && Array.isArray(candidate?.checkpoints)
       ? candidate.checkpoints.map(normalizeCheckpoint).filter((item): item is MapCheckpoint => Boolean(item))
       : [];
     this.state = { version: CHECKPOINT_STORAGE_VERSION, checkpoints };
     this.loaded = true;
+    if (storageVersion === 1) await this.enqueueSave(this.snapshot());
   }
 
   private async ensureLoaded(): Promise<void> {
