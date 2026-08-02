@@ -131,6 +131,92 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
     expect(errors).toEqual([]);
   });
 
+  test('keeps static text visible until the upstream editor layer is attached and populated', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'desktop canvas text lifecycle');
+    await resetWebApp(page);
+    const node = page.locator('.ymw-editor > .ymz-editor .smm-node').first();
+
+    await page.evaluate(() => {
+      const targetNode = document.querySelector<SVGGraphicsElement>('.ymw-editor > .ymz-editor .smm-node');
+      const originalAppendChild = Node.prototype.appendChild;
+      (window as any).__yemindEditorAttachFrames = [];
+      Node.prototype.appendChild = function appendChild<T extends Node>(child: T): T {
+        if (child instanceof HTMLElement && child.classList.contains('smm-richtext-node-edit-wrap')) {
+          const staticLayer = targetNode?.querySelector<HTMLElement>('.smm-richtext-node-wrap') ?? null;
+          const staticStyle = staticLayer ? getComputedStyle(staticLayer) : null;
+          (window as any).__yemindEditorAttachFrames.push({
+            staticVisible: Boolean(
+              staticLayer
+              && staticStyle?.display !== 'none'
+              && staticStyle?.visibility !== 'hidden'
+              && staticLayer.getBoundingClientRect().width > 0,
+            ),
+            editorText: child.textContent ?? '',
+          });
+        }
+        return originalAppendChild.call(this, child) as T;
+      };
+      (window as any).__restoreYemindAppendChild = (): void => {
+        Node.prototype.appendChild = originalAppendChild;
+      };
+    });
+
+    try {
+      await node.dblclick();
+      await expect(canvasEditor(page)).toBeVisible();
+      const frames = await page.evaluate(() => (window as any).__yemindEditorAttachFrames as Array<{
+        staticVisible: boolean;
+        editorText: string;
+      }>);
+      expect(frames.length).toBeGreaterThan(0);
+      expect(frames.every((frame) => frame.staticVisible)).toBe(true);
+    } finally {
+      await page.evaluate(() => (window as any).__restoreYemindAppendChild?.());
+    }
+  });
+
+  test('closing an unchanged editor does not clear or rebuild the node subtree', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'desktop canvas text lifecycle');
+    await resetWebApp(page);
+    const shell = page.locator('.ymw-editor > .ymz-editor');
+    const node = shell.locator('.smm-node').first();
+    await node.dblclick();
+    await expect(canvasEditor(page)).toBeFocused();
+
+    await page.evaluate(() => {
+      const targetNode = document.querySelector<SVGGraphicsElement>('.ymw-editor > .ymz-editor .smm-node');
+      const originalRemoveChild = Node.prototype.removeChild;
+      (window as any).__yemindUnchangedCloseRemovals = [];
+      Node.prototype.removeChild = function removeChild<T extends Node>(child: T): T {
+        if (targetNode && (this === targetNode || targetNode.contains(this))) {
+          (window as any).__yemindUnchangedCloseRemovals.push({
+            parent: this instanceof Element ? this.tagName : this.nodeName,
+            child: child instanceof Element ? child.tagName : child.nodeName,
+          });
+        }
+        return originalRemoveChild.call(this, child) as T;
+      };
+      (window as any).__restoreYemindRemoveChild = (): void => {
+        Node.prototype.removeChild = originalRemoveChild;
+      };
+    });
+
+    try {
+      await shell.locator('[data-role="canvas"]').click({ position: { x: 24, y: 90 } });
+      await expect(canvasEditor(page)).toBeHidden();
+      const removals = await page.evaluate(() => (
+        (window as any).__yemindUnchangedCloseRemovals as Array<{ parent: string; child: string }>
+      ));
+      const contentRemovals = removals.filter((entry) => entry.child !== 'rect');
+      expect(contentRemovals, JSON.stringify(removals, null, 2)).toEqual([]);
+    } finally {
+      await page.evaluate(() => (window as any).__restoreYemindRemoveChild?.());
+    }
+  });
+
   test('types, closes and reopens through the upstream editor without an extra click', async ({ page, isMobile }) => {
     test.skip(isMobile, 'desktop canvas text lifecycle');
     const errors = recordPageErrors(page);

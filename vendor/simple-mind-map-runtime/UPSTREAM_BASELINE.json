@@ -82,7 +82,9 @@
     "src/utils/xmind.js": "96e69667caabd8efa19bb6dc51b0c1e8ae985e5aa21a3d100af8f5a400fc1cf1"
   },
   "allowedModifiedFiles": [
-    "src/core/command/KeyCommand.js"
+    "src/core/command/KeyCommand.js",
+    "src/core/render/TextEdit.js",
+    "src/plugins/RichText.js"
   ],
   "allowedAddedFiles": []
 }

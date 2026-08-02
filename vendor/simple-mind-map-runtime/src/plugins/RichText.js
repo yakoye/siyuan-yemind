@@ -57,6 +57,7 @@ class RichText {
     this.isInserting = false
     this.styleEl = null
     this.cacheEditingText = ''
+    this.initialEditText = ''
     this.isCompositing = false
     this.textNodePaddingX = 6
     this.textNodePaddingY = 4
@@ -300,6 +301,11 @@ class RichText {
     }
     this.initQuillEditor()
     this.setQuillContainerMinHeight(originHeight)
+    // 缩放会重建编辑器，但仍属于同一次编辑会话，必须保留首次进入时
+    // 的基线，否则缩放前的修改会被误判为“未修改”。
+    if (!isFromScale || !this.initialEditText) {
+      this.initialEditText = this.getEditText()
+    }
     this.setIsShowTextEdit(true)
     // 如果是刚创建的节点，那么默认全选，否则普通激活不全选，除非selectTextOnEnterEditText配置为true
     // 在selectTextOnEnterEditText时，如果是在keydown事件进入的节点编辑，也不需要全选
@@ -384,6 +390,7 @@ class RichText {
       beforeHideRichTextEdit(this)
     }
     const html = this.getEditText()
+    const changed = html !== this.initialEditText
     const list = nodes && nodes.length > 0 ? nodes : [this.node]
     const node = this.node
     this.textEditNode.style.display = 'none'
@@ -391,13 +398,19 @@ class RichText {
     this.mindMap.emit('rich_text_selection_change', false)
     this.node = null
     this.isInserting = false
+    this.initialEditText = ''
     list.forEach(node => {
+      if (!changed) {
+        // 实时编辑模式进入时仅隐藏了静态文字；内容未变化时直接恢复即可，
+        // 不应执行 SET_NODE_TEXT、清空节点 SVG 或触发整图布局。
+        node?._textData?.node?.show()
+        return
+      }
       this.mindMap.execCommand('SET_NODE_TEXT', node, html, true)
       // if (node.isGeneralization) {
       // 概要节点
       // node.generalizationBelongNode.updateGeneralization()
       // }
-      this.mindMap.render()
     })
     this.mindMap.emit('hide_text_edit', this.textEditNode, list, node)
   }
@@ -637,7 +650,13 @@ class RichText {
   // 聚焦
   focus(start) {
     const len = this.quill.getLength()
-    this.quill.setSelection(typeof start === 'number' ? start : len, len)
+    const selectAll = typeof start === 'number'
+    const index = selectAll ? start : len
+    this.quill.root.focus({ preventScroll: true })
+    // 非 SILENT 的 setSelection 会由 Quill 调用 scrollSelectionIntoView。
+    // 编辑器位于 document.body，而画布可能位于宿主滚动容器中，自动滚动会
+    // 造成宿主/画布短暂偏移后复位。
+    this.quill.setSelection(index, selectAll ? len : 0, Quill.sources.SILENT)
   }
 
   // 格式化当前选中的文本

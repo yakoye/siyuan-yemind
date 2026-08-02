@@ -65,11 +65,19 @@ describe('vendored simple-mind-map upstream baseline', () => {
     });
   });
 
-  it('does not fork the upstream RichText lifecycle', () => {
+  it('limits the RichText lifecycle fork to the two trace-proven upstream files', () => {
     const baseline = JSON.parse(readFileSync(baselinePath, 'utf8')) as UpstreamRuntimeBaseline;
+    const textEditPath = 'src/core/render/TextEdit.js';
     const richTextPath = 'src/plugins/RichText.js';
 
-    expect(baseline.allowedModifiedFiles).not.toContain(richTextPath);
-    expect(normalizedSha256(join(runtimeRoot, richTextPath))).toBe(baseline.sourceHashes[richTextPath]);
+    expect(baseline.allowedModifiedFiles).toEqual([
+      'src/core/command/KeyCommand.js',
+      textEditPath,
+      richTextPath,
+    ]);
+    expect(normalizedSha256(join(runtimeRoot, textEditPath)))
+      .not.toBe(baseline.sourceHashes[textEditPath]);
+    expect(normalizedSha256(join(runtimeRoot, richTextPath)))
+      .not.toBe(baseline.sourceHashes[richTextPath]);
   });
 });
