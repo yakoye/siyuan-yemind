@@ -6266,6 +6266,7 @@ function resolveProjectAppearance(input) {
     }
   };
 }
+const CHECKPOINT_STORAGE_VERSION = 2;
 const clone$4 = (value) => JSON.parse(JSON.stringify(value));
 function countNodes(tree) {
   return 1 + (tree.children ?? []).reduce((total, child) => total + countNodes(child), 0);
@@ -6296,7 +6297,7 @@ function normalizeCheckpoint(value) {
 }
 class CheckpointRepository {
   constructor(storage, options = {}) {
-    __publicField(this, "state", { version: 1, checkpoints: [] });
+    __publicField(this, "state", { version: CHECKPOINT_STORAGE_VERSION, checkpoints: [] });
     __publicField(this, "loaded", false);
     __publicField(this, "loadPromise", null);
     __publicField(this, "saveQueue", Promise.resolve());
@@ -6320,8 +6321,8 @@ class CheckpointRepository {
   async loadInternal() {
     const raw = await this.storage.load();
     const candidate = raw && typeof raw === "object" ? raw : null;
-    const checkpoints = Array.isArray(candidate == null ? void 0 : candidate.checkpoints) ? candidate.checkpoints.map(normalizeCheckpoint).filter((item) => Boolean(item)) : [];
-    this.state = { version: 1, checkpoints };
+    const checkpoints = (candidate == null ? void 0 : candidate.version) === CHECKPOINT_STORAGE_VERSION && Array.isArray(candidate.checkpoints) ? candidate.checkpoints.map(normalizeCheckpoint).filter((item) => Boolean(item)) : [];
+    this.state = { version: CHECKPOINT_STORAGE_VERSION, checkpoints };
     this.loaded = true;
   }
   async ensureLoaded() {
@@ -6451,6 +6452,7 @@ function createDefaultMap(title = "未命名导图", id = ((_b) => (_b = ((_a) =
     data: createDefaultTree(normalizedTitle)
   };
 }
+const MAP_STORAGE_VERSION = 2;
 const BLOCKED_ELEMENTS = "script,style,iframe,object,embed,meta,link,base,form,input,button,textarea,select,option";
 function isUnsafeUrl(value, attributeName) {
   const normalized2 = value.trim().replace(/[\u0000-\u001f\u007f\s]+/g, "").toLowerCase();
@@ -7269,7 +7271,7 @@ function normalizeLegacyTree(tree, fallbackTime, path2 = "root") {
 }
 class MapRepository {
   constructor(storage, options = {}) {
-    __publicField(this, "state", { version: 1, activeMapId: null, maps: [] });
+    __publicField(this, "state", { version: MAP_STORAGE_VERSION, activeMapId: null, maps: [] });
     __publicField(this, "listeners", /* @__PURE__ */ new Set());
     __publicField(this, "now");
     __publicField(this, "id");
@@ -7293,16 +7295,16 @@ class MapRepository {
     var _a, _b;
     const raw = await this.storage.load();
     let migrated = false;
-    if (!raw || typeof raw !== "object") {
-      this.state = { version: 1, activeMapId: null, maps: [] };
+    if (!raw || typeof raw !== "object" || raw.version !== MAP_STORAGE_VERSION) {
+      this.state = { version: MAP_STORAGE_VERSION, activeMapId: null, maps: [] };
     } else {
       const candidate = raw;
       const results = Array.isArray(candidate.maps) ? candidate.maps.map(normalizeMap) : [];
       const maps = results.map((item) => item.map).filter((item) => Boolean(item));
       migrated = results.some((item) => item.changed) || maps.length !== (((_a = candidate.maps) == null ? void 0 : _a.length) ?? 0);
       const activeMapId = maps.some((map2) => map2.id === candidate.activeMapId) ? String(candidate.activeMapId) : ((_b = maps[0]) == null ? void 0 : _b.id) ?? null;
-      this.state = { version: 1, activeMapId, maps };
-      migrated || (migrated = candidate.version !== 1 || candidate.activeMapId !== activeMapId);
+      this.state = { version: MAP_STORAGE_VERSION, activeMapId, maps };
+      migrated || (migrated = candidate.activeMapId !== activeMapId);
     }
     this.loaded = true;
     if (migrated) await this.enqueueSave(this.snapshot());
@@ -7649,21 +7651,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.1";
+const PLUGIN_VERSION = "1.9.2";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "f133f416-clean",
-  time: "2026-08-02T08:31:43+08:00"
+  id: "42c724bc-clean",
+  time: "2026-08-02T13:07:11+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-02T00:30:36.064Z",
-  buildId: "yemind-v1.9.1-20260802",
+  buildTime: "2026-08-02T05:06:57.161Z",
+  buildId: "yemind-v1.9.2-20260802",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -82307,6 +82309,14 @@ function installHistoryTransactionCoordinator(mindMap, options = {}) {
   if (options.seed) coordinator.commitNow();
   return coordinator;
 }
+function installMindMapMeasurementContract() {
+  if (typeof document === "undefined") return;
+  if (document.head.querySelector("[data-yemind-mind-map-measurement-contract]")) return;
+  const style = document.createElement("style");
+  style.setAttribute("data-yemind-mind-map-measurement-contract", "true");
+  style.textContent = ".smm-richtext-node-wrap :is(p,h1,h2,h3,h4,h5,h6,blockquote,pre,ul,ol){margin-block-start:0;margin-block-end:0}.smm-richtext-node-wrap :is(ul,ol){padding-inline-start:1.5em}";
+  document.head.prepend(style);
+}
 function createImageDeleteGuard(confirmDelete) {
   return async (node) => {
     if (!confirmDelete) return false;
@@ -82315,6 +82325,7 @@ function createImageDeleteGuard(confirmDelete) {
   };
 }
 function createMindMap(options) {
+  installMindMapMeasurementContract();
   registerMindMapLayouts();
   registerMindMapPlugins(options.settings);
   const settings = options.settings;
@@ -86438,6 +86449,7 @@ class StructuredOutlineEditorController {
       this.options.onSelectionChange(false, null, null, this);
     });
     __publicField(this, "onPointerUp", () => {
+      if (this.pointerSelecting) this.commitPointerTextSelection();
       this.pointerSelecting = false;
       window.setTimeout(() => this.publishSelection(), 0);
     });
@@ -86470,7 +86482,7 @@ class StructuredOutlineEditorController {
         this.options.onSelectionChange(false, null, null, this);
       } else if (currentRange) {
         const textRange = clampRangeToOutlineEditors(currentRange, this.options.root);
-        if (textRange || !this.pointerSelecting) this.savedRange = textRange ?? currentRange.cloneRange();
+        if (textRange) this.savedRange = textRange;
       }
     });
     __publicField(this, "onKeyDown", (event) => {
@@ -87191,6 +87203,30 @@ class StructuredOutlineEditorController {
     root2.removeEventListener("compositionstart", this.onCompositionStart);
     root2.removeEventListener("compositionend", this.onCompositionEnd);
     document.removeEventListener("selectionchange", this.onDocumentSelectionChange);
+  }
+  commitPointerTextSelection() {
+    const selection = window.getSelection();
+    if (!(selection == null ? void 0 : selection.rangeCount)) return;
+    const textRange = clampRangeToOutlineEditors(selection.getRangeAt(0), this.options.root);
+    if (!textRange) return;
+    const direction = selection.direction;
+    this.suppressSelectionChange = true;
+    try {
+      selection.removeAllRanges();
+      if (direction === "backward" && typeof selection.setBaseAndExtent === "function") {
+        selection.setBaseAndExtent(
+          textRange.endContainer,
+          textRange.endOffset,
+          textRange.startContainer,
+          textRange.startOffset
+        );
+      } else {
+        selection.addRange(textRange);
+      }
+      this.savedRange = textRange.cloneRange();
+    } finally {
+      this.suppressSelectionChange = false;
+    }
   }
   markDirty(reason) {
     if (this.options.isReadonly()) return;
@@ -88052,7 +88088,12 @@ class StructuredOutlineEditorController {
       this.options.onSelectionChange(false, null, null, this);
       return;
     }
-    const range2 = selection.getRangeAt(0);
+    const currentRange = selection.getRangeAt(0);
+    const range2 = clampRangeToOutlineEditors(currentRange, this.options.root);
+    if (!range2) {
+      this.options.onSelectionChange(false, null, null, this);
+      return;
+    }
     if (range2.collapsed) {
       this.options.onSelectionChange(false, null, null, this);
       return;
@@ -88308,6 +88349,7 @@ function colorPaletteInnerHtml() {
       <span class="ymz-sr-only" data-color-readout="rgb">继承颜色</span>
     </div>`;
 }
+const POINTER_SELECTION_SETTLE_MS = 120;
 function option(value, label) {
   return `<option value="${value.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">${label}</option>`;
 }
@@ -88335,8 +88377,9 @@ class RichTextToolbar {
     __publicField(this, "target", null);
     __publicField(this, "activeColorKind", "color");
     __publicField(this, "colorSessionOriginal", false);
-    __publicField(this, "anchorFrame", 0);
     __publicField(this, "revealFrame", 0);
+    __publicField(this, "selectionSettleTimer", 0);
+    __publicField(this, "settlingPointerSelection", false);
     __publicField(this, "visibilityEpoch", 0);
     __publicField(this, "lastReportedRect", null);
     __publicField(this, "selectionSessionId", 0);
@@ -88345,37 +88388,23 @@ class RichTextToolbar {
     __publicField(this, "onDocumentMouseDown", (event) => {
       const node = event.target;
       if (this.element.contains(node) || this.colorPopover.contains(node)) return;
-      this.selecting = this.root.contains(node);
       const targetElement = node instanceof Element ? node : node.parentElement;
       this.pointerSelectionMayPublish = Boolean(
         targetElement == null ? void 0 : targetElement.closest(
           '.ql-editor,[data-outline-editor],[data-role="outline-text-editor"],[contenteditable="true"]'
         )
       );
+      this.selecting = this.root.contains(node) || this.pointerSelectionMayPublish;
       this.pointerSessionAtDown = this.selectionSessionId;
+      this.cancelSelectionSettle();
       this.pendingSelection = null;
       this.hide();
     });
     __publicField(this, "onWindowMouseUp", () => {
-      window.setTimeout(() => {
-        this.interacting = false;
-        const pending = this.pendingSelection;
-        this.selecting = false;
-        this.pendingSelection = null;
-        const belongsToNewSession = Boolean(
-          (pending == null ? void 0 : pending.session) && pending.session.sessionId !== this.pointerSessionAtDown
-        );
-        if (pending && (this.pointerSelectionMayPublish || belongsToNewSession)) {
-          this.applyUpdate(
-            pending.hasRange,
-            pending.rectInfo,
-            pending.formatInfo,
-            pending.target,
-            pending.session
-          );
-        }
-        this.pointerSelectionMayPublish = false;
-      }, 0);
+      this.interacting = false;
+      this.selecting = false;
+      this.settlingPointerSelection = true;
+      this.scheduleSettledPointerSelection();
     });
     this.root = root2;
     this.callbacks = callbacks;
@@ -88426,7 +88455,7 @@ class RichTextToolbar {
   }
   update(hasRange, rectInfo, formatInfo, target, session) {
     if (target) this.target = target;
-    if (this.selecting && !this.interacting) {
+    if ((this.selecting || this.settlingPointerSelection) && !this.interacting) {
       this.pendingSelection = {
         hasRange,
         rectInfo: rectInfo ?? null,
@@ -88434,6 +88463,9 @@ class RichTextToolbar {
         target: target ?? this.target,
         session: session ?? null
       };
+      if (this.settlingPointerSelection) {
+        this.scheduleSettledPointerSelection();
+      }
       return;
     }
     this.applyUpdate(
@@ -88470,7 +88502,6 @@ class RichTextToolbar {
       return;
     }
     this.position(rectInfo, true);
-    this.trackLiveSelection();
   }
   hide() {
     this.visibilityEpoch += 1;
@@ -88480,13 +88511,11 @@ class RichTextToolbar {
     this.element.hidden = true;
     this.colorPopover.hidden = true;
     this.lastReportedRect = null;
-    window.cancelAnimationFrame(this.anchorFrame);
-    this.anchorFrame = 0;
   }
   destroy() {
     document.removeEventListener("mousedown", this.onDocumentMouseDown, true);
     window.removeEventListener("mouseup", this.onWindowMouseUp, true);
-    window.cancelAnimationFrame(this.anchorFrame);
+    this.cancelSelectionSettle();
     window.cancelAnimationFrame(this.revealFrame);
     this.element.remove();
     this.colorPopover.remove();
@@ -88797,7 +88826,22 @@ class RichTextToolbar {
     const measuredHeight = this.element.offsetHeight || 44;
     const above = localTop - measuredHeight - 8;
     const below = localBottom + 8;
-    const top = below + measuredHeight <= rootHeight - 8 ? below : Math.max(8, above);
+    let top = below + measuredHeight <= rootHeight - 8 ? below : Math.max(8, above);
+    if (rootWidth <= 720) {
+      const canvasEditor = document.querySelector(
+        "body > .smm-richtext-node-edit-wrap"
+      );
+      if (canvasEditor && getComputedStyle(canvasEditor).display !== "none") {
+        const editorRect = canvasEditor.getBoundingClientRect();
+        const editorTop = (editorRect.top - rootRect.top) / scaleY;
+        const editorBottom = (editorRect.bottom - rootRect.top) / scaleY;
+        const overlapsEditor = top < editorBottom && top + measuredHeight > editorTop;
+        if (overlapsEditor) {
+          const belowEditor = editorBottom + 8;
+          top = belowEditor + measuredHeight <= rootHeight - 8 ? belowEditor : Math.max(8, editorTop - measuredHeight - 8);
+        }
+      }
+    }
     const nextLeft = `${Math.round(left)}px`;
     const nextTop = `${Math.round(top)}px`;
     const nextMaxWidth = `${Math.max(240, rootWidth - 16)}px`;
@@ -88805,15 +88849,37 @@ class RichTextToolbar {
     if (this.element.style.top !== nextTop) this.element.style.top = nextTop;
     if (this.element.style.maxWidth !== nextMaxWidth) this.element.style.maxWidth = nextMaxWidth;
   }
-  trackLiveSelection() {
-    if (this.anchorFrame || this.element.hidden || this.element.style.visibility === "hidden" || !this.lastReportedRect) return;
-    const update = () => {
-      this.anchorFrame = 0;
-      if (this.element.hidden || !this.lastReportedRect) return;
-      this.position(this.lastReportedRect, true);
-      this.anchorFrame = window.requestAnimationFrame(update);
-    };
-    this.anchorFrame = window.requestAnimationFrame(update);
+  cancelSelectionSettle() {
+    if (this.selectionSettleTimer) {
+      window.clearTimeout(this.selectionSettleTimer);
+      this.selectionSettleTimer = 0;
+    }
+    this.settlingPointerSelection = false;
+  }
+  scheduleSettledPointerSelection() {
+    if (!this.settlingPointerSelection) return;
+    if (this.selectionSettleTimer) {
+      window.clearTimeout(this.selectionSettleTimer);
+    }
+    this.selectionSettleTimer = window.setTimeout(() => {
+      this.selectionSettleTimer = 0;
+      this.settlingPointerSelection = false;
+      const pending = this.pendingSelection;
+      this.pendingSelection = null;
+      const belongsToNewSession = Boolean(
+        (pending == null ? void 0 : pending.session) && pending.session.sessionId !== this.pointerSessionAtDown
+      );
+      if (pending && (this.pointerSelectionMayPublish || belongsToNewSession)) {
+        this.applyUpdate(
+          pending.hasRange,
+          pending.rectInfo,
+          pending.formatInfo,
+          pending.target,
+          pending.session
+        );
+      }
+      this.pointerSelectionMayPublish = false;
+    }, POINTER_SELECTION_SETTLE_MS);
   }
   scheduleReveal() {
     window.cancelAnimationFrame(this.revealFrame);
@@ -88829,7 +88895,6 @@ class RichTextToolbar {
         if (epoch !== this.visibilityEpoch || this.element.hidden || !this.lastReportedRect) return;
         this.position(this.lastReportedRect, true);
         this.element.style.visibility = "";
-        this.trackLiveSelection();
       });
     });
   }

@@ -553,11 +553,14 @@
   border-color:var(--ymz-accent)!important;
   box-shadow:0 0 0 2px var(--ymz-accent-soft)!important;
 }
-.ymz-editor .smm-node.active .smm-hover-node,
-.ymz-editor .smm-node-highlight .smm-hover-node{
-  stroke:var(--ymz-accent)!important;
+.ymz-editor .smm-hover-node{
+  stroke:transparent!important;
   fill:none!important;
-  stroke-width:1!important;
+}
+.ymz-editor .smm-node:not(.smm-node-dragging):hover .smm-node-shape,
+.ymz-editor .smm-node.active .smm-node-shape,
+.ymz-editor .smm-node-highlight .smm-node-shape{
+  stroke:var(--ymz-accent)!important;
 }
 .ymz-editor .smm-richtext-node-edit-wrap,
 .ymz-editor .smm-richtext-node-edit-wrap .ql-container{
@@ -1230,15 +1233,6 @@
 .ymz-node-style-panel section label:has([data-node-style="width"]){grid-column:1/-1}
 .ymz-node-style-panel footer{padding-top:8px;border-top:1px solid var(--ymz-border)}
 .ymz-about-dialog{height:100%;overflow:auto;padding:2px 4px 12px;box-sizing:border-box}
-
-/* Keep block spacing deterministic without replacing simple-mind-map's
-   canonical rich-text wrapping rules. Static and live text must use the same
-   upstream word-break contract. */
-.ymz-editor .smm-richtext-node-wrap :is(p,h1,h2,h3,h4,h5,h6,blockquote,pre,ul,ol){
-  margin-block-start:0;
-  margin-block-end:0;
-}
-.ymz-editor .smm-richtext-node-wrap :is(ul,ol){padding-inline-start:1.5em}
 
 /* v0.9.16 direct image selection, resize and replacement */
 .ymz-node-image-frame{
