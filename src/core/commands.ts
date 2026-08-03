@@ -121,7 +121,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   goToNode(uid: string): void;
   setNodeTextByUid(uid: string, text: string): boolean;
   setNodeRichTextByUid(uid: string, html: string): boolean;
-  applyNodeTextPatches(data: MindMapTree, patches: readonly NodeTextPatch[]): boolean;
+  applyNodeTextPatches(patches: readonly NodeTextPatch[]): boolean;
   insertSiblingByUid(uid: string, newUid: string): boolean;
   insertChildByUid(uid: string, newUid: string): boolean;
   addChildByUid(uid: string): boolean;
@@ -819,7 +819,7 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       mindMap.execCommand('SET_NODE_TEXT', node, html, true, false);
       return true;
     },
-    applyNodeTextPatches: (data, patches) => {
+    applyNodeTextPatches: (patches) => {
       if (!canMutate() || patches.length === 0) return false;
       const targets = patches.map((patch) => findNodeByUid(patch.uid));
       if (targets.some((node) => !node)) return false;
@@ -839,19 +839,40 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       }
 
       const updateData = (mindMap as any).updateData;
-      if (typeof updateData !== 'function') return false;
-      const patchUids = new Set(patches.map((patch) => patch.uid));
-      const normalized = normalizeTreeForUpstreamRichText(data);
-      const markPatchedTreeNodes = (tree: MindMapTree): void => {
-        if (tree.data.uid && patchUids.has(tree.data.uid)) {
-          tree.data.yemindTextEdited = true;
-          tree.data.yemindTextPristine = false;
+      const getData = (mindMap as any).getData;
+      if (typeof updateData !== 'function' || typeof getData !== 'function') return false;
+
+      const normalized = normalizeTreeForUpstreamRichText(getData.call(mindMap, false) as MindMapTree);
+      const canonicalByUid = new Map<string, MindMapTree['data']>();
+      const collectCanonicalData = (tree: MindMapTree): void => {
+        if (tree.data.uid) canonicalByUid.set(tree.data.uid, tree.data);
+        const summaries = tree.data.generalization;
+        if (Array.isArray(summaries)) {
+          summaries.forEach((summary) => {
+            if (summary && typeof summary === 'object') {
+              const data = summary as MindMapTree['data'];
+              if (data.uid) canonicalByUid.set(data.uid, data);
+            }
+          });
+        } else if (summaries && typeof summaries === 'object') {
+          const data = summaries as MindMapTree['data'];
+          if (data.uid) canonicalByUid.set(data.uid, data);
         }
-        tree.children.forEach(markPatchedTreeNodes);
+        tree.children.forEach(collectCanonicalData);
       };
-      markPatchedTreeNodes(normalized);
+      collectCanonicalData(normalized);
+      if (patches.some((patch) => !canonicalByUid.has(patch.uid))) return false;
+
+      patches.forEach((patch) => {
+        const data = canonicalByUid.get(patch.uid)!;
+        data.text = patch.richText ? patch.text : plainTextToRichHtml(patch.text);
+        data.richText = true;
+        data.yemindTextEdited = true;
+        data.yemindTextPristine = false;
+      });
       // One updateData call is one upstream undoable transaction. Validating all
-      // live targets before this point prevents a partially applied text batch.
+      // live and canonical targets before this point prevents a partial batch,
+      // while untouched nodes retain their canonical runtime metadata verbatim.
       updateData.call(mindMap, normalized);
       return true;
     },

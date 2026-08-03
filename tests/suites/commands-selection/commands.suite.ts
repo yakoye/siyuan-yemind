@@ -240,22 +240,24 @@ describe('outline command bridge', () => {
     map.updateData = vi.fn();
     map.renderer.findNodeByUid = vi.fn((uid: string) => uid === 'first' ? first : uid === 'second' ? second : null);
     const commands = createCommandAdapter(map as never);
-    const nextTree = {
-      data: { uid: 'root', text: '<p>Root</p>', richText: true },
+    const canonicalTree = {
+      data: { uid: 'root', text: '<p>Root</p>', richText: true, untouched: 'root-metadata' },
       children: [
-        { data: { uid: 'first', text: '<p>A</p>', richText: true }, children: [] },
-        { data: { uid: 'second', text: '<p>B</p>', richText: true }, children: [] },
+        { data: { uid: 'first', text: '<p>Old A</p>', richText: true, untouched: 'first-metadata' }, children: [] },
+        { data: { uid: 'second', text: '<p>Old B</p>', richText: true, untouched: 'second-metadata' }, children: [] },
+        { data: { uid: 'untouched', text: '<p>Keep me</p>', richText: true, yemindTextPristine: true }, children: [] },
       ],
     };
+    map.getData = vi.fn(() => structuredClone(canonicalTree));
 
-    expect(commands.applyNodeTextPatches(nextTree, [
+    expect(commands.applyNodeTextPatches([
       { uid: 'first', text: 'A < B', richText: false },
     ])).toBe(true);
     expect(map.execCommand).toHaveBeenCalledWith('SET_NODE_TEXT', first, '<p>A &lt; B</p>', true, false);
     expect(map.updateData).not.toHaveBeenCalled();
 
     map.execCommand.mockClear();
-    expect(commands.applyNodeTextPatches(nextTree, [
+    expect(commands.applyNodeTextPatches([
       { uid: 'first', text: '<p>A</p>', richText: true },
       { uid: 'second', text: '<p>B</p>', richText: true },
     ])).toBe(true);
@@ -265,8 +267,13 @@ describe('outline command bridge', () => {
       children: [
         expect.objectContaining({ data: expect.objectContaining({ uid: 'first', yemindTextEdited: true, yemindTextPristine: false }) }),
         expect.objectContaining({ data: expect.objectContaining({ uid: 'second', yemindTextEdited: true, yemindTextPristine: false }) }),
+        expect.objectContaining({ data: expect.objectContaining({ uid: 'untouched', text: '<p>Keep me</p>', yemindTextPristine: true }) }),
       ],
     }));
+    const committed = map.updateData.mock.calls[0][0];
+    expect(committed.data).toMatchObject({ untouched: 'root-metadata' });
+    expect(committed.children[0].data).toMatchObject({ text: '<p>A</p>', untouched: 'first-metadata' });
+    expect(committed.children[1].data).toMatchObject({ text: '<p>B</p>', untouched: 'second-metadata' });
   });
 
   it('rejects an invalid outline text batch without applying any partial mutation', () => {
@@ -276,12 +283,12 @@ describe('outline command bridge', () => {
     map.updateData = vi.fn();
     map.renderer.findNodeByUid = vi.fn((uid: string) => uid === 'first' ? first : null);
     const commands = createCommandAdapter(map as never);
-    const nextTree = {
+    map.getData = vi.fn(() => ({
       data: { uid: 'root', text: '<p>Root</p>', richText: true },
       children: [{ data: { uid: 'first', text: '<p>A</p>', richText: true }, children: [] }],
-    };
+    }));
 
-    expect(commands.applyNodeTextPatches(nextTree, [
+    expect(commands.applyNodeTextPatches([
       { uid: 'first', text: '<p>A</p>', richText: true },
       { uid: 'missing', text: '<p>B</p>', richText: true },
     ])).toBe(false);

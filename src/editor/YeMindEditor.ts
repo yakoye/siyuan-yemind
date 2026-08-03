@@ -1232,7 +1232,7 @@ export class YeMindEditor {
       onApply: (tree, details) => {
         const patches = details.transaction === 'text' ? details.patches : [];
         const applied = details.transaction === 'text'
-          ? Boolean(this.commands?.applyNodeTextPatches(tree, patches))
+          ? Boolean(this.commands?.applyNodeTextPatches(patches))
           : Boolean(this.commands?.replaceTree(tree));
         if (applied && this.map) {
           this.current.data = this.map.getData(false) as MindMapTree;
