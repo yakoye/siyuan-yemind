@@ -67,6 +67,14 @@ class MindMapNode {
     this.isDrag = false
     // 父节点
     this.parent = opt.parent || null
+    // Register insertion editing before child callbacks can complete the
+    // entire render. A leaf may be the final node in traversal, so queuing it
+    // after callback() would miss this render's onRenderEnd entirely.
+    if (this.nodeData.inserting) {
+      delete this.nodeData.inserting
+      this.active()
+      this.renderer.requestInsertedNodeEdit(this)
+    }
     // 子节点
     this.children = opt.children || []
     // 当前同时操作该节点的用户列表
@@ -669,14 +677,6 @@ class MindMapNode {
       })
     } else {
       callback()
-    }
-    // 手动插入的节点立即获得焦点并且开启编辑模式
-    if (this.nodeData.inserting) {
-      delete this.nodeData.inserting
-      this.active()
-      // setTimeout(() => {
-      this.mindMap.emit('node_dblclick', this, null, true)
-      // }, 0)
     }
   }
 

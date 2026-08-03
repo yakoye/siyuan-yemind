@@ -110,6 +110,11 @@ class Render {
     this.highlightBoxNodeStyle = null
     // 上一次节点激活数据
     this.lastActiveNodeList = []
+    // A newly inserted node may be encountered before the rest of the tree has
+    // committed its final transforms. Opening the fixed rich-text editor from
+    // MindMapNode.render() would therefore read a stale client rect. Keep only
+    // the latest insertion and open it from the single render completion point.
+    this.pendingInsertedEditNode = null
     // 布局
     this.setLayout()
     // 绑定事件
@@ -546,7 +551,22 @@ class Render {
     this.reRender = false
     this.renderCallbackList = []
     this.renderSourceList = []
+    const pendingInsertedEditNode = this.pendingInsertedEditNode
+    this.pendingInsertedEditNode = null
     this.mindMap.emit('node_tree_render_end')
+    if (pendingInsertedEditNode) {
+      this.mindMap.emit(
+        'node_dblclick',
+        pendingInsertedEditNode,
+        null,
+        true
+      )
+    }
+  }
+
+  // Open insertion editing only after the entire tree has committed geometry.
+  requestInsertedNodeEdit(node) {
+    this.pendingInsertedEditNode = node
   }
 
   // 渲染

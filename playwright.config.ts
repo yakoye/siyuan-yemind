@@ -25,7 +25,10 @@ export default defineConfig({
     use: { ...devices['Pixel 5'], browserName: 'chromium' },
   }],
   webServer: {
-    command: `npm run dev:web -- --host 127.0.0.1 --port ${e2ePort} --strictPort`,
+    // simple-mind-map is a maintained local file dependency. Force Vite to
+    // rebuild its optimized copy so E2E always exercises the current vendor
+    // source instead of a cache from an earlier RC build.
+    command: `npm run dev:web -- --force --host 127.0.0.1 --port ${e2ePort} --strictPort`,
     url: e2eBaseUrl,
     reuseExistingServer: false,
     timeout: 120_000,

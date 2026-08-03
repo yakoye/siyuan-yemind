@@ -21,7 +21,10 @@ async function nextFrame(): Promise<void> {
 
 async function waitForMapRender(map: any): Promise<void> {
   for (let attempt = 0; attempt < 30; attempt += 1) {
-    if (map.renderer.root) return;
+    if (map.renderer.root && map.renderer.isRendering === false) {
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      if (map.renderer.isRendering === false) return;
+    }
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
   }
   throw new Error('mind-map render did not finish');
@@ -179,6 +182,48 @@ describe('v0.8.3 canvas text editing transactions', () => {
 
     map.destroy();
     root.remove();
+  });
+
+  it('opens a newly inserted node editor only after its final tree layout has committed', async () => {
+    const { root, map } = mountMap({
+      data: { text: 'Root', uid: 'root', richText: false },
+      children: [
+        { data: { text: 'First branch', uid: 'first', richText: false }, children: [] },
+        { data: { text: 'Later branch', uid: 'later', richText: false }, children: [] },
+      ],
+    });
+    try {
+      await waitForMapRender(map);
+      const insertionParent = map.renderer.root.children[0];
+      insertionParent.active();
+      expect(map.renderer.activeNodeList).toContain(insertionParent);
+
+      const events: string[] = [];
+      const rendered = new Promise<void>((resolve) => {
+        const onRenderEnd = () => {
+          events.push('render-end');
+          map.off('node_tree_render_end', onRenderEnd);
+          resolve();
+        };
+        map.on('node_tree_render_end', onRenderEnd);
+      });
+      map.on('before_show_text_edit', () => events.push('editor-open'));
+
+      map.execCommand('INSERT_CHILD_NODE', true, [], {
+        richText: false,
+        yemindTextPristine: true,
+        yemindTextEdited: false,
+      });
+      await rendered;
+      await nextFrame();
+
+      expect(events.slice(0, 2)).toEqual(['render-end', 'editor-open']);
+      expect(map.richText.showTextEdit).toBe(true);
+      expect(map.richText.quill.root.textContent).toContain('新节点');
+    } finally {
+      map.destroy();
+      root.remove();
+    }
   });
 
   it('uses the upstream caret placement and leaves clipboard shortcuts in the text editor', async () => {
