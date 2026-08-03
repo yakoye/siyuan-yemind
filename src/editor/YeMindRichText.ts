@@ -220,6 +220,8 @@ export default class YeMindRichText extends (BaseRichText as any) {
 
   private static activeFocusOwner: YeMindRichText | null = null;
 
+  private static activeEditSession: YeMindRichText | null = null;
+
   private ownsEditFocus = false;
 
   bindEvent(): void {
@@ -237,6 +239,9 @@ export default class YeMindRichText extends (BaseRichText as any) {
   unbindEvent(): void {
     super.unbindEvent();
     this.releaseEditFocusOwnership();
+    if (YeMindRichText.activeEditSession === this) {
+      YeMindRichText.activeEditSession = null;
+    }
     this.mindMap.off('before_show_text_edit', this.beginEditFocusOwnership);
     this.mindMap.off('hide_text_edit', this.releaseEditFocusOwnership);
     document.removeEventListener('focusin', this.handleHostFocusIn, true);
@@ -244,8 +249,12 @@ export default class YeMindRichText extends (BaseRichText as any) {
   }
 
   private beginEditFocusOwnership(): void {
-    const previous = YeMindRichText.activeFocusOwner;
-    if (previous && previous !== this) previous.ownsEditFocus = false;
+    const previous = YeMindRichText.activeEditSession;
+    if (previous && previous !== this) {
+      if (previous.showTextEdit) previous.hideEditText();
+      else previous.releaseEditFocusOwnership();
+    }
+    YeMindRichText.activeEditSession = this;
     YeMindRichText.activeFocusOwner = this;
     this.ownsEditFocus = true;
   }
@@ -254,6 +263,9 @@ export default class YeMindRichText extends (BaseRichText as any) {
     this.ownsEditFocus = false;
     if (YeMindRichText.activeFocusOwner === this) {
       YeMindRichText.activeFocusOwner = null;
+    }
+    if (!this.showTextEdit && YeMindRichText.activeEditSession === this) {
+      YeMindRichText.activeEditSession = null;
     }
   }
 

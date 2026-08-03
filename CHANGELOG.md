@@ -4,7 +4,7 @@
 
 This release candidate fixes document-level focus ownership when several SiYuan mind-map tabs remain mounted.
 
-- Transfers rich-text focus ownership atomically to the most recently activated map editor, preventing a hidden map tab from reclaiming Ctrl+A, Delete, Backspace or clipboard shortcuts.
+- Finishes the previous map's still-open rich-text session before transferring ownership to the newly activated map editor, preventing a hidden tab from retaining or reclaiming Ctrl+A, Delete, Backspace or clipboard shortcuts.
 - Keeps the canonical first-paint geometry and outline-to-canvas width-drag fixes from rc.2 unchanged.
 - Adds a two-editor regression that fails if an older mounted map can focus its Quill editor after ownership has moved to the current map.
 - Extends browser regression coverage for selected multiline deletion, saved selections, focus recovery and immediate width dragging after outline edits.

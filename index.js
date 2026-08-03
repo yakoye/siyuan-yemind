@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.9-rc.2";
+const PLUGIN_VERSION = "1.9.9-rc.3";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "02944e6e-clean",
-  time: "2026-08-03T15:02:02+08:00"
+  id: "02a3da6b-clean",
+  time: "2026-08-03T15:43:47+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-03T05:37:32.719Z",
-  buildId: "yemind-v1.9.9-rc.2-20260803",
+  buildTime: "2026-08-03T07:41:34.369Z",
+  buildId: "yemind-v1.9.9-rc.3-20260803",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -81216,7 +81216,7 @@ function registerYeMindFormats() {
   Quill.register(YeMindLink, true);
   Quill.register(YeMindCodeBlock, true);
 }
-class YeMindRichText extends RichText {
+const _YeMindRichText = class _YeMindRichText extends RichText {
   constructor() {
     super(...arguments);
     __publicField(this, "ownsEditFocus", false);
@@ -81241,10 +81241,16 @@ class YeMindRichText extends RichText {
     window.removeEventListener("pointerdown", this.handleFocusOwnershipPointerDown, true);
   }
   beginEditFocusOwnership() {
+    const previous = _YeMindRichText.activeFocusOwner;
+    if (previous && previous !== this) previous.ownsEditFocus = false;
+    _YeMindRichText.activeFocusOwner = this;
     this.ownsEditFocus = true;
   }
   releaseEditFocusOwnership() {
     this.ownsEditFocus = false;
+    if (_YeMindRichText.activeFocusOwner === this) {
+      _YeMindRichText.activeFocusOwner = null;
+    }
   }
   handleFocusOwnershipPointerDown(event) {
     var _a;
@@ -81391,8 +81397,10 @@ class YeMindRichText extends RichText {
     if (isSmm && ((_a = data2 == null ? void 0 : data2[0]) == null ? void 0 : _a.data)) return getTextFromHtml(data2[0].data.text);
     return text2;
   }
-}
-__publicField(YeMindRichText, "instanceName", "richText");
+};
+__publicField(_YeMindRichText, "instanceName", "richText");
+__publicField(_YeMindRichText, "activeFocusOwner", null);
+let YeMindRichText = _YeMindRichText;
 const plugins = [YeMindDrag, Select, MiniMap, Search, Export, ExportPDF, YeMindRichText, Formula, YeMindAssociativeLine, OuterFrame, YeMindNodeImgAdjust, RainbowLines];
 let registered$1 = false;
 function configureMindMapPlugins(settings) {

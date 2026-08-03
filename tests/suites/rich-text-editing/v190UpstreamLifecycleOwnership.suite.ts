@@ -93,6 +93,10 @@ describe('v1.9.0 upstream rich-text lifecycle ownership', () => {
       };
       editor.range = { index: 2, length: 3 };
       editor.pasteUseRange = null;
+      editor.hideEditText = vi.fn(() => {
+        editor.showTextEdit = false;
+        editor.releaseEditFocusOwnership();
+      });
       return { editor, focus, root };
     };
     const first = createEditor();
@@ -101,15 +105,18 @@ describe('v1.9.0 upstream rich-text lifecycle ownership', () => {
     document.body.appendChild(outside);
 
     first.editor.beginEditFocusOwnership();
+    first.editor.handleFocusOwnershipPointerDown({ target: outside } as PointerEvent);
     second.editor.beginEditFocusOwnership();
     first.editor.handleHostFocusIn({ target: outside } as FocusEvent);
     second.editor.handleHostFocusIn({ target: outside } as FocusEvent);
 
+    expect(first.editor.hideEditText).toHaveBeenCalledOnce();
+    expect(first.editor.showTextEdit).toBe(false);
     expect(first.focus).not.toHaveBeenCalled();
     expect(second.focus).toHaveBeenCalledOnce();
     expect(second.editor.quill.setSelection).toHaveBeenCalledWith(2, 3, expect.anything());
 
-    second.editor.releaseEditFocusOwnership();
+    second.editor.hideEditText();
     first.root.remove();
     second.root.remove();
     outside.remove();
