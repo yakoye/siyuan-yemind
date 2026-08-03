@@ -65,19 +65,27 @@ describe('vendored simple-mind-map upstream baseline', () => {
     });
   });
 
-  it('limits the runtime fork to the trace-proven editing and width-drag files', () => {
+  it('limits the runtime fork to the trace-proven editing, insertion and width-drag files', () => {
     const baseline = JSON.parse(readFileSync(baselinePath, 'utf8')) as UpstreamRuntimeBaseline;
+    const renderPath = 'src/core/render/Render.js';
+    const nodePath = 'src/core/render/node/MindMapNode.js';
     const textEditPath = 'src/core/render/TextEdit.js';
     const modifyWidthPath = 'src/core/render/node/nodeModifyWidth.js';
     const richTextPath = 'src/plugins/RichText.js';
 
     expect(baseline.allowedModifiedFiles).toEqual([
       'src/core/command/KeyCommand.js',
+      renderPath,
+      nodePath,
       modifyWidthPath,
       richTextPath,
     ]);
     expect(normalizedSha256(join(runtimeRoot, textEditPath)))
       .toBe(baseline.sourceHashes[textEditPath]);
+    expect(normalizedSha256(join(runtimeRoot, renderPath)))
+      .not.toBe(baseline.sourceHashes[renderPath]);
+    expect(normalizedSha256(join(runtimeRoot, nodePath)))
+      .not.toBe(baseline.sourceHashes[nodePath]);
     expect(normalizedSha256(join(runtimeRoot, modifyWidthPath)))
       .not.toBe(baseline.sourceHashes[modifyWidthPath]);
     expect(normalizedSha256(join(runtimeRoot, richTextPath)))
