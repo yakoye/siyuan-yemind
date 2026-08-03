@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.9.7 - 2026-08-03
+
+This patch release removes the invalid first frame from structural drag guides and makes the three drag states visually explicit without changing map data or the upstream commit lifecycle.
+
+- Defers the green dashed target guide until the drag clone has received its first real pointer position, preventing the one-frame line from a canvas edge.
+- Highlights the current candidate parent with the native node highlight and restores any pre-existing highlight when the candidate changes or the drag ends.
+- Keeps leaf-node drag previews unchanged while marking only the root of a multi-node subtree preview with the requested `#8de2ce` border.
+- Adds animation-frame browser gates for guide geometry, dragged subtree identity, candidate-parent highlight and complete cleanup after release.
+
 ## 1.9.6 - 2026-08-03
 
 This patch release fixes two remaining visual-state defects in the shared canvas text editor without adding another focus or rendering lifecycle.

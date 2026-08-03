@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import Drag from 'simple-mind-map/src/plugins/Drag';
+import YeMindDrag from '../../../src/core/YeMindDrag';
 import {
   calculateDragGuidePath,
   calculateOriginalParentGuideStyle,
@@ -109,6 +111,7 @@ describe('YeMindDrag pointer target guide', () => {
       clone() {
         return {
           name: `${name}-clone`,
+          addClass: vi.fn(),
           transform: () => ({ translateX: x, translateY: y }),
           translate: vi.fn(),
         };
@@ -159,6 +162,8 @@ describe('YeMindDrag pointer target guide', () => {
       'parent-clone',
       'child-clone',
     ]);
+    expect(added[1].addClass).toHaveBeenCalledWith('ymz-drag-subtree-root');
+    expect(added[2].addClass).not.toHaveBeenCalledWith('ymz-drag-subtree-root');
     expect(wrapper.translate).toHaveBeenCalledWith(100, 60);
   });
 
@@ -217,5 +222,52 @@ describe('YeMindDrag pointer target guide', () => {
     expect(added).not.toContain(lineClone);
     expect(added).toContain(visibleLineClone);
     expect(added).toEqual(expect.arrayContaining([parentClone, collapsedClone, siblingClone]));
+  });
+
+  it('does not paint a target guide before the first pointer move positions the drag clone', () => {
+    const upstreamCreateClone = vi
+      .spyOn(Drag.prototype as any, 'createCloneNode')
+      .mockImplementation(function createInitialClone(this: any) {
+        this.clone = {};
+      });
+    const drag = Object.create(YeMindDrag.prototype) as any;
+    const updateOfficialGuideLines = vi.fn();
+    Object.assign(drag, {
+      clone: null,
+      beingDragNodeList: [],
+      ensureGuideLines: vi.fn(),
+      clearUpstreamPlaceholder: vi.fn(),
+      updateOfficialGuideLines,
+    });
+
+    try {
+      drag.createCloneNode();
+      expect(updateOfficialGuideLines).not.toHaveBeenCalled();
+    } finally {
+      upstreamCreateClone.mockRestore();
+    }
+  });
+
+  it('moves the native highlight between candidate parents and restores prior state on cleanup', () => {
+    const makeNode = (uid: string, initiallyHighlighted = false) => {
+      let highlighted = initiallyHighlighted;
+      return {
+        uid,
+        group: { hasClass: () => highlighted },
+        highlight: vi.fn(() => { highlighted = true; }),
+        closeHighlight: vi.fn(() => { highlighted = false; }),
+      };
+    };
+    const first = makeNode('first', true);
+    const second = makeNode('second');
+    const drag = Object.create(YeMindDrag.prototype) as any;
+
+    drag.setCandidateParentHighlight(first);
+    drag.setCandidateParentHighlight(second);
+    expect(first.closeHighlight).not.toHaveBeenCalled();
+    expect(second.highlight).toHaveBeenCalledTimes(1);
+
+    drag.clearCandidateParentHighlight();
+    expect(second.closeHighlight).toHaveBeenCalledTimes(1);
   });
 });

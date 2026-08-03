@@ -90,6 +90,32 @@ test('YM-DAILY-DRAG-002 moves a visible parent and its descendants as one commit
   const targetBox = await target.boundingBox();
   expect(sourceBox).not.toBeNull();
   expect(targetBox).not.toBeNull();
+  await page.evaluate(() => {
+    const state = window as any;
+    state.__ymzDragGuideFrames = [];
+    state.__ymzRecordDragGuideFrames = true;
+    const sample = () => {
+      if (!state.__ymzRecordDragGuideFrames) return;
+      const canvas = document.querySelector<HTMLElement>('[data-role="canvas"]');
+      const canvasRect = canvas?.getBoundingClientRect();
+      document.querySelectorAll<SVGPathElement>('path[stroke-dasharray="6 6"]').forEach((path) => {
+        if (!canvasRect || getComputedStyle(path).display === 'none') return;
+        const rect = path.getBoundingClientRect();
+        if (rect.width <= 0 && rect.height <= 0) return;
+        state.__ymzDragGuideFrames.push({
+          d: path.getAttribute('d') ?? '',
+          finite: [rect.left, rect.top, rect.right, rect.bottom].every(Number.isFinite),
+          touchesCanvasEdge:
+            rect.left <= canvasRect.left + 2
+            || rect.top <= canvasRect.top + 2
+            || rect.right >= canvasRect.right - 2
+            || rect.bottom >= canvasRect.bottom - 2,
+        });
+      });
+      requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  });
   await page.mouse.move(sourceBox!.x + sourceBox!.width / 2, sourceBox!.y + sourceBox!.height / 2);
   await page.mouse.down();
   // The right-logical drop target intentionally splits the node body:
@@ -100,7 +126,23 @@ test('YM-DAILY-DRAG-002 moves a visible parent and its descendants as one commit
   await expect(preview).toHaveAttribute('data-preview-node-count', '2');
   await expect(preview).toHaveAttribute('data-drop-kind', 'child');
   await expect(preview).toHaveAttribute('data-drop-target-uid', /.+/);
+  await expect(preview.locator('.smm-node.active').first()).toBeVisible();
+  await expect.poll(async () => mapEditor.locator('path[stroke-dasharray="6 6"]').evaluateAll((paths) => paths.filter((path) => {
+    const d = path.getAttribute('d') ?? '';
+    return getComputedStyle(path).display !== 'none' && /^M\s*-?\d/.test(d);
+  }).length)).toBe(1);
+  await expect(target).toHaveClass(/ymz-drag-parent-candidate/);
+  await expect(target).toHaveClass(/smm-node-highlight/);
+  const guideFrames = await page.evaluate(async () => {
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    const state = window as any;
+    state.__ymzRecordDragGuideFrames = false;
+    return state.__ymzDragGuideFrames as Array<{ d: string; finite: boolean; touchesCanvasEdge: boolean }>;
+  });
+  expect(guideFrames.length).toBeGreaterThan(0);
+  expect(guideFrames.every((frame) => frame.finite && !frame.touchesCanvasEdge)).toBe(true);
   await page.mouse.up();
+  await expect(mapEditor.locator('.ymz-drag-parent-candidate')).toHaveCount(0);
 
   await mapEditor.locator('[data-action="view-outline"]').click();
   const targetRow = mapEditor.locator('.ymz-outline-row').filter({ hasText: '目标父节点' }).first();

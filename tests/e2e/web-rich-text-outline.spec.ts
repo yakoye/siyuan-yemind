@@ -1609,6 +1609,9 @@ test('dragging a parent previews its visible descendants as one coherent subtree
   await expect(preview).toBeVisible();
   await expect(preview).toHaveAttribute('data-preview-node-count', '2');
   await expect(preview.locator('.smm-node')).toHaveCount(2);
+  const previewRoot = preview.locator('.ymz-drag-subtree-root');
+  await expect(previewRoot).toHaveCount(1);
+  await expect(previewRoot.locator('.smm-node-shape')).toHaveCSS('stroke', 'rgb(141, 226, 206)');
   await page.mouse.up();
 });
 

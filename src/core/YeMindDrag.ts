@@ -352,13 +352,14 @@ export function replaceSingleNodeCloneWithSubtree(plugin: any): boolean {
 
   const originX = Number(root?.left) || 0;
   const originY = Number(root?.top) || 0;
-  const addRelativeClone = (source: any): void => {
+  const addRelativeClone = (source: any, className = ''): void => {
     const clone = source?.clone?.();
     if (!clone) return;
     // super.createCloneNode() hides the real descendants before this preview
     // is assembled. A clone inherits that inline display state, so explicitly
     // reveal the clone without touching the real tree.
     clone.show?.();
+    if (className) clone.addClass?.(className);
     // SVG.js translate() applies a delta. Every cloned element already keeps
     // its scene transform, so subtracting the root origin converts it to the
     // wrapper's local coordinate system.
@@ -374,7 +375,10 @@ export function replaceSingleNodeCloneWithSubtree(plugin: any): boolean {
       addRelativeClone(node?._lines?.[index]);
     });
   });
-  nodes.forEach((node) => addRelativeClone(node?.group));
+  nodes.forEach((node) => addRelativeClone(
+    node?.group,
+    node === root ? 'ymz-drag-subtree-root' : '',
+  ));
 
   plugin.clone.remove?.();
   plugin.clone = wrapper;
@@ -431,6 +435,7 @@ export default class YeMindDrag extends Drag {
     plugin.__ymzOverlapFrame = null;
     plugin.__ymzIncomingLines = [];
     plugin.__ymzLayoutRoomPreview = null;
+    plugin.__ymzCandidateParentHighlight = null;
     plugin.__ymzOnKeydown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || (!plugin.isMousedown && !plugin.isDragging)) return;
       event.preventDefault();
@@ -468,7 +473,6 @@ export default class YeMindDrag extends Drag {
     plugin.__ymzIncomingLines = captureIncomingDragLines(plugin.beingDragNodeList ?? []);
     this.ensureGuideLines();
     this.clearUpstreamPlaceholder();
-    this.updateOfficialGuideLines();
   }
 
   onMove(x: number, y: number, event: MouseEvent): void {
@@ -520,6 +524,7 @@ export default class YeMindDrag extends Drag {
 
   removeCloneNode(): void {
     this.cancelCandidateFrame();
+    this.clearCandidateParentHighlight();
     this.clearLayoutRoomPreview();
     this.removeGuideLines();
     super.removeCloneNode();
@@ -529,6 +534,7 @@ export default class YeMindDrag extends Drag {
     const plugin = this as any;
     document.removeEventListener('keydown', plugin.__ymzOnKeydown, true);
     this.cancelCandidateFrame();
+    this.clearCandidateParentHighlight();
     this.clearLayoutRoomPreview();
     this.removeGuideLines();
     this.restoreIncomingLines();
@@ -539,6 +545,7 @@ export default class YeMindDrag extends Drag {
     const plugin = this as any;
     document.removeEventListener('keydown', plugin.__ymzOnKeydown, true);
     this.cancelCandidateFrame();
+    this.clearCandidateParentHighlight();
     this.clearLayoutRoomPreview();
     this.removeGuideLines();
     this.restoreIncomingLines();
@@ -599,6 +606,9 @@ export default class YeMindDrag extends Drag {
       ? emptyOfficialDragCandidate()
       : plugin.__ymzCandidateState.stable;
     applyCandidate(plugin, stable);
+    this.setCandidateParentHighlight(
+      stable.kind === 'none' ? null : officialCandidateParent(stable),
+    );
     if (supportsOfficialDragGeometry(layout)) this.updateLayoutRoomPreview(stable);
     else this.clearLayoutRoomPreview();
     this.updateOfficialGuideLines();
@@ -815,6 +825,28 @@ export default class YeMindDrag extends Drag {
       transforms,
       incomingLines,
     } satisfies LayoutRoomPreview;
+  }
+
+  private setCandidateParentHighlight(node: any | null): void {
+    const plugin = this as any;
+    const current = plugin.__ymzCandidateParentHighlight;
+    if (current?.node === node) return;
+    this.clearCandidateParentHighlight();
+    if (!node?.group) return;
+
+    const wasHighlighted = Boolean(node.group.hasClass?.('smm-node-highlight'));
+    if (!wasHighlighted) node.highlight?.();
+    node.group.addClass?.('ymz-drag-parent-candidate');
+    plugin.__ymzCandidateParentHighlight = { node, wasHighlighted };
+  }
+
+  private clearCandidateParentHighlight(): void {
+    const plugin = this as any;
+    const current = plugin.__ymzCandidateParentHighlight;
+    if (!current) return;
+    current.node?.group?.removeClass?.('ymz-drag-parent-candidate');
+    if (!current.wasHighlighted) current.node?.closeHighlight?.();
+    plugin.__ymzCandidateParentHighlight = null;
   }
 
   private clearLayoutRoomPreview(): void {
