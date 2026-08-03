@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.9.9-rc.1 - 2026-08-03
+
+This release candidate separates the visible drag target from the structural commit target so every valid hovered parent keeps consistent feedback even when dropping would be a no-op.
+
+- Keeps candidate-parent highlighting visible for root, middle and leaf targets instead of clearing it when the source is already in that structural slot.
+- Preserves no-op filtering for the final tree mutation, so visual feedback does not create redundant history entries.
+- Verifies the same lightweight `#8de2ce` preview for leaf and middle-node sources across root, middle and leaf candidate parents.
+- Remains an RC until the candidate-parent feedback is confirmed in the real SiYuan runtime.
+
 ## 1.9.8 - 2026-08-03
 
 This patch release removes YeMind's separate subtree-clone path for non-leaf drag previews and returns every node type to the upstream `simple-mind-map` single-node preview lifecycle.

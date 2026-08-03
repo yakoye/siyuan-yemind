@@ -4,7 +4,7 @@
 
 - Product: YeMind
 - Package and plugin ID: `siyuan-yemind`
-- Current version: `1.8.0` (see `VERSION` / `package.json`; not part of the automated 10-marker `npm run check:version` contract, so update this line by hand on release)
+- Current version: see `VERSION` / `package.json`; do not duplicate a release number in this guidance file.
 - Host baseline: SiYuan `3.7.3`
 - Release archive: `siyuan-yemind-vX.Y.Z.zip`
 
@@ -19,6 +19,7 @@
 7. Re-extract the final ZIP, run `npm ci`, and repeat the complete validation.
 8. New public documentation and UI copy use only the YeMind product identity.
 9. Git commands supplied after releases end with `git push origin main`.
+10. Unconfirmed fixes are released as `vX.Y.Z-rc.N` candidates. Only user-confirmed candidates may be promoted to a stable `vX.Y.Z` tag and formal GitHub Release.
 
 ## Test organization
 
