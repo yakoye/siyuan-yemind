@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.9-rc.1";
+const PLUGIN_VERSION = "1.9.9-rc.2";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "bef9d41a-clean",
-  time: "2026-08-03T11:59:53+08:00"
+  id: "02944e6e-clean",
+  time: "2026-08-03T15:02:02+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-03T03:58:33.593Z",
-  buildId: "yemind-v1.9.9-rc.1-20260803",
+  buildTime: "2026-08-03T05:37:32.719Z",
+  buildId: "yemind-v1.9.9-rc.2-20260803",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -81069,24 +81069,35 @@ function plainTextToRichHtml(value) {
   return String(value ?? "").replace(/\r\n?/g, "\n").split("\n").map((line) => `<p>${line ? escapeHtml$c(line) : "<br>"}</p>`).join("");
 }
 function normalizeNodeData(data2) {
-  if (!data2.richText) data2.text = plainTextToRichHtml(data2.text);
+  let changed = false;
+  if (data2.richText !== true) {
+    data2.text = plainTextToRichHtml(data2.text);
+    changed = true;
+  }
   data2.richText = true;
   const generalization = data2.generalization;
   if (Array.isArray(generalization)) {
     generalization.forEach((item) => {
-      if (item && typeof item === "object") normalizeNodeData(item);
+      if (item && typeof item === "object") {
+        changed = normalizeNodeData(item) || changed;
+      }
     });
   } else if (generalization && typeof generalization === "object") {
-    normalizeNodeData(generalization);
+    changed = normalizeNodeData(generalization) || changed;
   }
+  return changed;
 }
-function normalizeTreeForUpstreamRichTextInPlace(tree) {
+function normalizeTreeForUpstreamRichTextInPlaceWithResult(tree) {
+  let changed = false;
   const visit2 = (node) => {
-    normalizeNodeData(node.data);
+    changed = normalizeNodeData(node.data) || changed;
     (node.children ?? []).forEach(visit2);
   };
   visit2(tree);
-  return tree;
+  return { tree, changed };
+}
+function normalizeTreeForUpstreamRichTextInPlace(tree) {
+  return normalizeTreeForUpstreamRichTextInPlaceWithResult(tree).tree;
 }
 function normalizeTreeForUpstreamRichText(tree) {
   const runtime = cloneTree$2(tree);
@@ -84089,6 +84100,56 @@ function createCommandAdapter(mindMap) {
       if (!node) return false;
       markNodeTextEdited(node);
       mindMap.execCommand("SET_NODE_TEXT", node, html2, true, false);
+      return true;
+    },
+    applyNodeTextPatches: (patches) => {
+      if (!canMutate() || patches.length === 0) return false;
+      const targets = patches.map((patch) => findNodeByUid(patch.uid));
+      if (targets.some((node) => !node)) return false;
+      if (patches.length === 1) {
+        const patch = patches[0];
+        const node = targets[0];
+        markNodeTextEdited(node);
+        mindMap.execCommand(
+          "SET_NODE_TEXT",
+          node,
+          patch.richText ? patch.text : plainTextToRichHtml(patch.text),
+          true,
+          false
+        );
+        return true;
+      }
+      const updateData = mindMap.updateData;
+      const getData = mindMap.getData;
+      if (typeof updateData !== "function" || typeof getData !== "function") return false;
+      const normalized2 = normalizeTreeForUpstreamRichText(getData.call(mindMap, false));
+      const canonicalByUid = /* @__PURE__ */ new Map();
+      const collectCanonicalData = (tree) => {
+        if (tree.data.uid) canonicalByUid.set(tree.data.uid, tree.data);
+        const summaries2 = tree.data.generalization;
+        if (Array.isArray(summaries2)) {
+          summaries2.forEach((summary) => {
+            if (summary && typeof summary === "object") {
+              const data2 = summary;
+              if (data2.uid) canonicalByUid.set(data2.uid, data2);
+            }
+          });
+        } else if (summaries2 && typeof summaries2 === "object") {
+          const data2 = summaries2;
+          if (data2.uid) canonicalByUid.set(data2.uid, data2);
+        }
+        tree.children.forEach(collectCanonicalData);
+      };
+      collectCanonicalData(normalized2);
+      if (patches.some((patch) => !canonicalByUid.has(patch.uid))) return false;
+      patches.forEach((patch) => {
+        const data2 = canonicalByUid.get(patch.uid);
+        data2.text = patch.richText ? patch.text : plainTextToRichHtml(patch.text);
+        data2.richText = true;
+        data2.yemindTextEdited = true;
+        data2.yemindTextPristine = false;
+      });
+      updateData.call(mindMap, normalized2);
       return true;
     },
     insertSiblingByUid: (uid2, newUid) => {
@@ -94664,8 +94725,11 @@ class YeMindEditor {
     const importedWidthRepair = repairImportedAutoWidthTree(runtimeData);
     const normalized2 = stripCustomPositions(importedWidthRepair.tree);
     const sanitized = sanitizeAssociativeLines(normalized2.tree);
-    runtimeData = sanitized.tree;
-    if (importedWidthRepair.changed || normalized2.changed || sanitized.changed) {
+    const richTextNormalization = normalizeTreeForUpstreamRichTextInPlaceWithResult(
+      sanitized.tree
+    );
+    runtimeData = richTextNormalization.tree;
+    if (importedWidthRepair.changed || normalized2.changed || sanitized.changed || richTextNormalization.changed) {
       this.current.data = runtimeData;
       void this.options.repository.update(this.current.id, { data: runtimeData }).catch((error2) => {
         console.error("[YeMind] migrated data save failed", error2);
@@ -94871,15 +94935,12 @@ class YeMindEditor {
         return applied;
       },
       onApply: (tree, details) => {
-        var _a2;
+        var _a2, _b;
         const patches = details.transaction === "text" ? details.patches : [];
-        const applied = details.transaction === "text" ? patches.length > 0 && patches.every(
-          (patch) => {
-            var _a3, _b;
-            return patch.richText ? Boolean((_a3 = this.commands) == null ? void 0 : _a3.setNodeRichTextByUid(patch.uid, patch.text)) : Boolean((_b = this.commands) == null ? void 0 : _b.setNodeTextByUid(patch.uid, patch.text));
-          }
-        ) : Boolean((_a2 = this.commands) == null ? void 0 : _a2.replaceTree(tree));
-        if (applied) this.current.data = tree;
+        const applied = details.transaction === "text" ? Boolean((_a2 = this.commands) == null ? void 0 : _a2.applyNodeTextPatches(patches)) : Boolean((_b = this.commands) == null ? void 0 : _b.replaceTree(tree));
+        if (applied && this.map) {
+          this.current.data = this.map.getData(false);
+        }
         this.options.diagnostics.record("outline", "structured-apply", this.current.id, {
           ...details,
           applied
