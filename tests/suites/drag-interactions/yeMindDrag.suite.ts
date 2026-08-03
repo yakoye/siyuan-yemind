@@ -9,7 +9,6 @@ import {
   updateStableDragCandidate,
   captureIncomingDragLines,
   restoreIncomingDragLines,
-  replaceSingleNodeCloneWithSubtree,
 } from '../../../src/core/YeMindDrag';
 import { emptyOfficialDragCandidate, type OfficialDragCandidate } from '../../../src/core/officialDragIntent';
 
@@ -104,144 +103,32 @@ describe('YeMindDrag pointer target guide', () => {
     expect(far.opacity).toBeCloseTo(0.9);
   });
 
-  it('builds one coherent drag preview for a parent and all visible descendants', () => {
-    const makeElement = (name: string, x: number, y: number) => ({
-      name,
-      removed: false,
-      clone() {
-        return {
-          name: `${name}-clone`,
-          addClass: vi.fn(),
-          transform: () => ({ translateX: x, translateY: y }),
-          translate: vi.fn(),
-        };
-      },
-      remove() { this.removed = true; },
-    });
-    const line = makeElement('line', 0, 0);
-    const child = {
-      left: 180,
-      top: 90,
-      group: makeElement('child', 180, 90),
-      children: [],
-      _lines: [],
-    };
-    const parent = {
-      left: 100,
-      top: 60,
-      group: makeElement('parent', 100, 60),
-      children: [child],
-      _lines: [line],
-    };
-    const added: any[] = [];
-    const wrapper = {
-      add: (element: any) => added.push(element),
-      translate: vi.fn(),
-      opacity: vi.fn(),
-      css: vi.fn(),
-    };
-    const oldClone = makeElement('old', 100, 60);
-    const plugin = {
-      beingDragNodeList: [parent],
-      clone: oldClone,
-      mindMap: {
-        otherDraw: {
-          group: () => wrapper,
-        },
-        opt: {
-          dragOpacityConfig: { cloneNodeOpacity: 0.82 },
-        },
-      },
-    };
-
-    expect(replaceSingleNodeCloneWithSubtree(plugin)).toBe(true);
-    expect(oldClone.removed).toBe(true);
-    expect(plugin.clone).toBe(wrapper);
-    expect(added.map((element) => element.name)).toEqual([
-      'line-clone',
-      'parent-clone',
-      'child-clone',
-    ]);
-    expect(added[1].addClass).toHaveBeenCalledWith('ymz-drag-subtree-root');
-    expect(added[2].addClass).not.toHaveBeenCalledWith('ymz-drag-subtree-root');
-    expect(wrapper.translate).toHaveBeenCalledWith(100, 60);
-  });
-
-  it('does not reveal hidden child lines below a collapsed node in a larger preview subtree', () => {
-    const lineClone = { show: vi.fn(), translate: vi.fn() };
-    const visibleLineClone = { show: vi.fn(), translate: vi.fn() };
-    const parentClone = { show: vi.fn(), translate: vi.fn() };
-    const collapsedClone = { show: vi.fn(), translate: vi.fn() };
-    const siblingClone = { show: vi.fn(), translate: vi.fn() };
-    const hiddenLine = { clone: () => lineClone };
-    const visibleLine = { clone: () => visibleLineClone };
-    const collapsed = {
-      left: 180,
-      top: 90,
-      getData: (key: string) => key === 'expand' ? false : undefined,
-      group: { clone: () => collapsedClone },
-      children: [{ left: 260, top: 90, children: [], _lines: [] }],
-      _lines: [hiddenLine],
-    };
-    const sibling = {
-      left: 180,
-      top: 140,
-      getData: () => true,
-      group: { clone: () => siblingClone },
-      children: [],
-      _lines: [],
-    };
-    const parent = {
-      left: 100,
-      top: 60,
-      getData: () => true,
-      group: { clone: () => parentClone },
-      children: [collapsed, sibling],
-      _lines: [visibleLine, visibleLine],
-    };
-    const added: any[] = [];
-    const wrapper = {
-      add: (element: any) => added.push(element),
-      translate: vi.fn(),
-      opacity: vi.fn(),
-      css: vi.fn(),
+  it('keeps the upstream single-node preview for a middle node and waits for the first positioned frame', () => {
+    const nativeClone = {
       addClass: vi.fn(),
       attr: vi.fn(),
     };
-    const plugin = {
-      beingDragNodeList: [parent],
-      clone: { remove: vi.fn() },
-      mindMap: {
-        otherDraw: { group: () => wrapper },
-        opt: { dragOpacityConfig: { cloneNodeOpacity: 0.82 } },
-      },
-    };
-
-    expect(replaceSingleNodeCloneWithSubtree(plugin)).toBe(true);
-    expect(lineClone.show).not.toHaveBeenCalled();
-    expect(added).not.toContain(lineClone);
-    expect(added).toContain(visibleLineClone);
-    expect(added).toEqual(expect.arrayContaining([parentClone, collapsedClone, siblingClone]));
-  });
-
-  it('does not paint a target guide before the first pointer move positions the drag clone', () => {
     const upstreamCreateClone = vi
       .spyOn(Drag.prototype as any, 'createCloneNode')
       .mockImplementation(function createInitialClone(this: any) {
-        this.clone = {};
+        this.clone = nativeClone;
       });
     const drag = Object.create(YeMindDrag.prototype) as any;
     const updateOfficialGuideLines = vi.fn();
     Object.assign(drag, {
       clone: null,
-      beingDragNodeList: [],
+      beingDragNodeList: [{ children: [{ children: [] }] }],
       ensureGuideLines: vi.fn(),
       clearUpstreamPlaceholder: vi.fn(),
       updateOfficialGuideLines,
+      mindMap: { otherDraw: { group: vi.fn() } },
     });
 
     try {
       drag.createCloneNode();
+      expect(drag.clone).toBe(nativeClone);
+      expect(nativeClone.addClass).toHaveBeenCalledWith('ymz-drag-node-preview');
+      expect(drag.mindMap.otherDraw.group).not.toHaveBeenCalled();
       expect(updateOfficialGuideLines).not.toHaveBeenCalled();
     } finally {
       upstreamCreateClone.mockRestore();

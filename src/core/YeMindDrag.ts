@@ -321,76 +321,6 @@ function collectSubtreeNodes(root: any): any[] {
   return result;
 }
 
-function collectVisibleSubtreeNodes(root: any): any[] {
-  const result: any[] = [];
-  const seen = new Set<any>();
-  const visit = (node: any): void => {
-    if (!node || seen.has(node)) return;
-    seen.add(node);
-    result.push(node);
-    if (node?.getData?.('expand') === false) return;
-    (node.children ?? []).forEach(visit);
-  };
-  visit(root);
-  return result;
-}
-
-/**
- * The upstream drag ghost contains only the selected parent and hides its
- * descendants. Replace that single-node ghost with one SVG group containing
- * the parent, every visible descendant and the internal connector lines.
- * The real tree remains the only mutation source; this is a visual preview.
- */
-export function replaceSingleNodeCloneWithSubtree(plugin: any): boolean {
-  const roots = plugin?.beingDragNodeList ?? [];
-  if (roots.length !== 1 || !plugin.clone) return false;
-  const root = roots[0];
-  const nodes = collectVisibleSubtreeNodes(root);
-  if (nodes.length <= 1) return false;
-  const wrapper = plugin.mindMap?.otherDraw?.group?.();
-  if (!wrapper?.add || !wrapper?.translate) return false;
-
-  const originX = Number(root?.left) || 0;
-  const originY = Number(root?.top) || 0;
-  const addRelativeClone = (source: any, className = ''): void => {
-    const clone = source?.clone?.();
-    if (!clone) return;
-    // super.createCloneNode() hides the real descendants before this preview
-    // is assembled. A clone inherits that inline display state, so explicitly
-    // reveal the clone without touching the real tree.
-    clone.show?.();
-    if (className) clone.addClass?.(className);
-    // SVG.js translate() applies a delta. Every cloned element already keeps
-    // its scene transform, so subtracting the root origin converts it to the
-    // wrapper's local coordinate system.
-    clone.translate?.(-originX, -originY);
-    wrapper.add(clone);
-  };
-
-  const visibleNodes = new Set(nodes);
-  nodes.forEach((node) => {
-    if (node?.getData?.('expand') === false) return;
-    (node?.children ?? []).forEach((child: any, index: number) => {
-      if (!visibleNodes.has(child)) return;
-      addRelativeClone(node?._lines?.[index]);
-    });
-  });
-  nodes.forEach((node) => addRelativeClone(
-    node?.group,
-    node === root ? 'ymz-drag-subtree-root' : '',
-  ));
-
-  plugin.clone.remove?.();
-  plugin.clone = wrapper;
-  wrapper.addClass?.('ymz-drag-subtree-preview');
-  wrapper.attr?.({ 'data-preview-node-count': String(nodes.length) });
-  wrapper.translate(originX, originY);
-  const opacity = Number(plugin.mindMap?.opt?.dragOpacityConfig?.cloneNodeOpacity);
-  wrapper.opacity?.(Number.isFinite(opacity) ? opacity : 0.82);
-  wrapper.css?.('z-index', 99999);
-  return true;
-}
-
 function previewGap(plugin: any, axis: 'x' | 'y'): number {
   const rects: DragGuideRect[] = [];
   (plugin.beingDragNodeList ?? []).forEach((root: any) => {
@@ -466,7 +396,10 @@ export default class YeMindDrag extends Drag {
     const hadClone = Boolean(plugin.clone);
     super.createCloneNode();
     if (hadClone || !plugin.clone) return;
-    replaceSingleNodeCloneWithSubtree(plugin);
+    // Keep the upstream single-node ghost for every node. Replacing it with a
+    // subtree wrapper changed the clone's coordinate space and made every
+    // non-leaf guide originate from a stale/oversized bounding box.
+    plugin.clone.addClass?.('ymz-drag-node-preview');
     const none = emptyOfficialDragCandidate();
     plugin.__ymzCandidateState = createDragCandidateState(none);
     plugin.__ymzRawCandidate = none;

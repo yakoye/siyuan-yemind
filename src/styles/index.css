@@ -562,7 +562,8 @@
 .ymz-editor .smm-node-highlight .smm-node-shape{
   stroke:var(--ymz-accent)!important;
 }
-.ymz-editor .ymz-drag-subtree-preview .ymz-drag-subtree-root .smm-node-shape{
+.ymz-editor .smm-node.ymz-drag-node-preview .smm-node-shape,
+.ymz-editor .smm-node.ymz-drag-node-preview:hover .smm-node-shape{
   stroke:#8de2ce!important;
 }
 .ymz-editor .smm-richtext-node-edit-wrap,

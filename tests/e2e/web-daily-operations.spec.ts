@@ -81,7 +81,8 @@ test('YM-DAILY-DRAG-002 moves a visible parent and its descendants as one commit
   await resetWebApp(page);
   const mapEditor = editor(page);
   const root = mapEditor.locator('.smm-node').first();
-  const source = await addChildFrom(root, page, '拖动父节点');
+  const branch = await addChildFrom(root, page, '拖动一级父节点');
+  const source = await addChildFrom(branch, page, '拖动中间节点');
   await addChildFrom(source, page, '拖动后代');
   const target = await addChildFrom(root, page, '目标父节点');
   await source.click();
@@ -122,11 +123,13 @@ test('YM-DAILY-DRAG-002 moves a visible parent and its descendants as one commit
   // left/top-bottom reorders siblings, while the outward (right) section
   // reparents as a child. Exercise the child zone explicitly.
   await page.mouse.move(targetBox!.x + targetBox!.width * 0.82, targetBox!.y + targetBox!.height / 2, { steps: 12 });
-  const preview = mapEditor.locator('.ymz-drag-subtree-preview');
-  await expect(preview).toHaveAttribute('data-preview-node-count', '2');
+  const preview = mapEditor.locator('.ymz-drag-node-preview');
+  await expect(preview).toHaveCount(1);
+  await expect(preview).not.toHaveClass(/ymz-drag-subtree-preview/);
   await expect(preview).toHaveAttribute('data-drop-kind', 'child');
   await expect(preview).toHaveAttribute('data-drop-target-uid', /.+/);
-  await expect(preview.locator('.smm-node.active').first()).toBeVisible();
+  await expect(preview.locator('.smm-node')).toHaveCount(0);
+  await expect(preview.locator('.smm-node-shape')).toHaveCSS('stroke', 'rgb(141, 226, 206)');
   await expect.poll(async () => mapEditor.locator('path[stroke-dasharray="6 6"]').evaluateAll((paths) => paths.filter((path) => {
     const d = path.getAttribute('d') ?? '';
     return getComputedStyle(path).display !== 'none' && /^M\s*-?\d/.test(d);
@@ -146,7 +149,7 @@ test('YM-DAILY-DRAG-002 moves a visible parent and its descendants as one commit
 
   await mapEditor.locator('[data-action="view-outline"]').click();
   const targetRow = mapEditor.locator('.ymz-outline-row').filter({ hasText: '目标父节点' }).first();
-  const sourceRow = mapEditor.locator('.ymz-outline-row').filter({ hasText: '拖动父节点' }).first();
+  const sourceRow = mapEditor.locator('.ymz-outline-row').filter({ hasText: '拖动中间节点' }).first();
   const descendantRow = mapEditor.locator('.ymz-outline-row').filter({ hasText: '拖动后代' }).first();
   const targetUid = await targetRow.getAttribute('data-outline-uid');
   const sourceUid = await sourceRow.getAttribute('data-outline-uid');

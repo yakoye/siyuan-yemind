@@ -1587,7 +1587,7 @@ test('width-handle drag grows the live node monotonically without disappearing o
   await expect(rootNode).toBeVisible();
 });
 
-test('dragging a parent previews its visible descendants as one coherent subtree', async ({ page, isMobile }) => {
+test('dragging a parent uses the same lightweight single-node preview as a leaf', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop structural-drag regression');
   await resetWebApp(page);
   await addRootChild(page);
@@ -1605,13 +1605,11 @@ test('dragging a parent previews its visible descendants as one coherent subtree
   await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
   await page.mouse.down();
   await page.mouse.move(box!.x + box!.width / 2 + 90, box!.y + box!.height / 2 + 45, { steps: 6 });
-  const preview = editor.locator('.ymz-drag-subtree-preview');
+  const preview = editor.locator('.ymz-drag-node-preview');
   await expect(preview).toBeVisible();
-  await expect(preview).toHaveAttribute('data-preview-node-count', '2');
-  await expect(preview.locator('.smm-node')).toHaveCount(2);
-  const previewRoot = preview.locator('.ymz-drag-subtree-root');
-  await expect(previewRoot).toHaveCount(1);
-  await expect(previewRoot.locator('.smm-node-shape')).toHaveCSS('stroke', 'rgb(141, 226, 206)');
+  await expect(preview).not.toHaveClass(/ymz-drag-subtree-preview/);
+  await expect(preview.locator('.smm-node')).toHaveCount(0);
+  await expect(preview.locator('.smm-node-shape')).toHaveCSS('stroke', 'rgb(141, 226, 206)');
   await page.mouse.up();
 });
 
