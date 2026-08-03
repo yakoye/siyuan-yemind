@@ -327,6 +327,38 @@ describe('v0.8.3 canvas text editing transactions', () => {
     root.remove();
   });
 
+  it('normalizes stale node geometry when an unchanged edit is committed', async () => {
+    const { root, map } = mountMap({
+      data: { text: '未修改文字也必须恢复正确节点尺寸', uid: 'root', yemindTextEdited: true },
+      children: [],
+    });
+    await waitForMapRender(map);
+    const node = map.renderer.root;
+    node.width += 160;
+    node.height += 80;
+    const staleWidth = node.width;
+    const staleHeight = node.height;
+
+    node.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    await nextFrame();
+    const commands: string[] = [];
+    const originalExecCommand = map.execCommand.bind(map);
+    map.execCommand = (name: string, ...args: unknown[]) => {
+      commands.push(name);
+      return originalExecCommand(name, ...args);
+    };
+
+    map.richText.hideEditText();
+    await waitForMapRender(map);
+
+    expect(commands).toContain('SET_NODE_TEXT');
+    expect(node.width).toBeLessThan(staleWidth);
+    expect(node.height).toBeLessThan(staleHeight);
+
+    map.destroy();
+    root.remove();
+  });
+
   it('marks all initial map nodes as pristine text', () => {
     const tree = createDefaultTree('自定义标题');
     expect(tree.data.yemindTextPristine).toBe(true);

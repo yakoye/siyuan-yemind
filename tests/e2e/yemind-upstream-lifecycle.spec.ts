@@ -178,7 +178,7 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
     }
   });
 
-  test('closing an unchanged editor does not clear or rebuild the node subtree', async ({ page, isMobile }) => {
+  test('closing an unchanged editor keeps the opaque editor over geometry normalization', async ({ page, isMobile }) => {
     test.skip(isMobile, 'desktop canvas text lifecycle');
     await resetWebApp(page);
     const shell = page.locator('.ymw-editor > .ymz-editor');
@@ -192,9 +192,15 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
       (window as any).__yemindUnchangedCloseRemovals = [];
       Node.prototype.removeChild = function removeChild<T extends Node>(child: T): T {
         if (targetNode && (this === targetNode || targetNode.contains(this))) {
+          const editor = document.querySelector<HTMLElement>('.smm-richtext-node-edit-wrap');
+          const style = editor ? getComputedStyle(editor) : null;
           (window as any).__yemindUnchangedCloseRemovals.push({
             parent: this instanceof Element ? this.tagName : this.nodeName,
             child: child instanceof Element ? child.tagName : child.nodeName,
+            editorVisible: Boolean(editor
+              && style?.display !== 'none'
+              && style?.visibility !== 'hidden'
+              && Number(style?.opacity || 1) > 0),
           });
         }
         return originalRemoveChild.call(this, child) as T;
@@ -208,10 +214,17 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
       await shell.locator('[data-role="canvas"]').click({ position: { x: 24, y: 90 } });
       await expect(canvasEditor(page)).toBeHidden();
       const removals = await page.evaluate(() => (
-        (window as any).__yemindUnchangedCloseRemovals as Array<{ parent: string; child: string }>
+        (window as any).__yemindUnchangedCloseRemovals as Array<{
+          parent: string;
+          child: string;
+          editorVisible: boolean;
+        }>
       ));
       const contentRemovals = removals.filter((entry) => entry.child !== 'rect');
-      expect(contentRemovals, JSON.stringify(removals, null, 2)).toEqual([]);
+      expect(contentRemovals.length, JSON.stringify(removals, null, 2)).toBeGreaterThan(0);
+      expect(contentRemovals.every((entry) => entry.editorVisible), JSON.stringify(removals, null, 2)).toBe(true);
+      await expect(node).toBeVisible();
+      await expect(node).not.toHaveText('');
     } finally {
       await page.evaluate(() => (window as any).__restoreYemindRemoveChild?.());
     }

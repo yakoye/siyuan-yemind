@@ -402,7 +402,6 @@ class RichText {
       beforeHideRichTextEdit(this)
     }
     const html = this.getEditText()
-    const changed = html !== this.initialEditText
     const list = nodes && nodes.length > 0 ? nodes : [this.node]
     const node = this.node
     const visibilityRevision = this.editVisibilityRevision
@@ -420,18 +419,12 @@ class RichText {
     this.node = null
     this.isInserting = false
     this.initialEditText = ''
-    if (!changed) {
-      // Reveal the already-laid-out SVG fallback before removing the opaque
-      // editor. This keeps the handoff atomic without rebuilding the node.
-      list.forEach(node => node?._textData?.node?.show())
-      hideEditorLayer()
-      this.mindMap.emit('hide_text_edit', this.textEditNode, list, node)
-      return
-    }
-
-    // SET_NODE_TEXT re-renders the node synchronously and schedules layout on
-    // the next task. Keep the opaque editor over that temporary local-origin
-    // SVG until node_tree_render_end; otherwise one browser frame exposes the
+    // Keep the upstream close contract: every completed edit commits the
+    // editor text through SET_NODE_TEXT, even when the text itself did not
+    // change. Besides saving text, that transaction is the single authority
+    // that remeasures stale node geometry after loading or outline updates.
+    // Keep the opaque editor over the temporary local-origin SVG until the
+    // resulting layout has committed, otherwise one browser frame exposes the
     // text at the upper-left before layout places it back inside the node.
     const onRenderEnd = () => {
       this.mindMap.off('node_tree_render_end', onRenderEnd)
