@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.9.9-rc.3 - 2026-08-03
+
+This release candidate fixes document-level focus ownership when several SiYuan mind-map tabs remain mounted.
+
+- Transfers rich-text focus ownership atomically to the most recently activated map editor, preventing a hidden map tab from reclaiming Ctrl+A, Delete, Backspace or clipboard shortcuts.
+- Keeps the canonical first-paint geometry and outline-to-canvas width-drag fixes from rc.2 unchanged.
+- Adds a two-editor regression that fails if an older mounted map can focus its Quill editor after ownership has moved to the current map.
+- Extends browser regression coverage for selected multiline deletion, saved selections, focus recovery and immediate width dragging after outline edits.
+- Remains an RC until multi-map Ctrl+A/Delete behavior and the original geometry issues are confirmed in the real SiYuan runtime.
+
 ## 1.9.9-rc.2 - 2026-08-03
 
 This release candidate removes the remaining split between persisted plain-text nodes, the runtime rich-text renderer and outline text commits.
