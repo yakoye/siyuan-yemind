@@ -14,7 +14,7 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#039;');
 }
 
-function plainTextToRichHtml(value: unknown): string {
+export function plainTextToRichHtml(value: unknown): string {
   return String(value ?? '')
     .replace(/\r\n?/g, '\n')
     .split('\n')
@@ -22,27 +22,46 @@ function plainTextToRichHtml(value: unknown): string {
     .join('');
 }
 
-function normalizeNodeData(data: MindMapNodeData): void {
-  if (!data.richText) data.text = plainTextToRichHtml(data.text);
+function normalizeNodeData(data: MindMapNodeData): boolean {
+  let changed = false;
+  if (!data.richText) {
+    data.text = plainTextToRichHtml(data.text);
+    changed = true;
+  }
   data.richText = true;
 
   const generalization = data.generalization;
   if (Array.isArray(generalization)) {
     generalization.forEach((item) => {
-      if (item && typeof item === 'object') normalizeNodeData(item as MindMapNodeData);
+      if (item && typeof item === 'object') {
+        changed = normalizeNodeData(item as MindMapNodeData) || changed;
+      }
     });
   } else if (generalization && typeof generalization === 'object') {
-    normalizeNodeData(generalization as MindMapNodeData);
+    changed = normalizeNodeData(generalization as MindMapNodeData) || changed;
   }
+  return changed;
 }
 
-export function normalizeTreeForUpstreamRichTextInPlace(tree: MindMapTree): MindMapTree {
+export interface UpstreamRichTextNormalizationResult {
+  tree: MindMapTree;
+  changed: boolean;
+}
+
+export function normalizeTreeForUpstreamRichTextInPlaceWithResult(
+  tree: MindMapTree,
+): UpstreamRichTextNormalizationResult {
+  let changed = false;
   const visit = (node: MindMapTree): void => {
-    normalizeNodeData(node.data);
+    changed = normalizeNodeData(node.data) || changed;
     (node.children ?? []).forEach(visit);
   };
   visit(tree);
-  return tree;
+  return { tree, changed };
+}
+
+export function normalizeTreeForUpstreamRichTextInPlace(tree: MindMapTree): MindMapTree {
+  return normalizeTreeForUpstreamRichTextInPlaceWithResult(tree).tree;
 }
 
 /**

@@ -37,6 +37,10 @@ import { promptText } from "../ui/dialogs";
 import { openTextToMapDialog } from "../ui/textToMapDialog";
 import { repairImportedAutoWidthTree } from "./outlineTreeImport";
 import {
+  normalizeTreeForUpstreamRichTextInPlaceWithResult,
+  plainTextToRichHtml,
+} from "../core/upstreamRichTextData";
+import {
   openCommentsDialog,
   openFormulaDialog,
   openImageDialog,
@@ -1039,8 +1043,16 @@ export class YeMindEditor {
     const importedWidthRepair = repairImportedAutoWidthTree(runtimeData);
     const normalized = stripCustomPositions(importedWidthRepair.tree);
     const sanitized = sanitizeAssociativeLines(normalized.tree);
-    runtimeData = sanitized.tree;
-    if (importedWidthRepair.changed || normalized.changed || sanitized.changed) {
+    const richTextNormalization = normalizeTreeForUpstreamRichTextInPlaceWithResult(
+      sanitized.tree,
+    );
+    runtimeData = richTextNormalization.tree;
+    if (
+      importedWidthRepair.changed
+      || normalized.changed
+      || sanitized.changed
+      || richTextNormalization.changed
+    ) {
       this.current.data = runtimeData;
       void this.options.repository
         .update(this.current.id, { data: runtimeData })
@@ -1222,12 +1234,15 @@ export class YeMindEditor {
         const patches = details.transaction === 'text' ? details.patches : [];
         const applied = details.transaction === 'text'
           ? patches.length > 0 && patches.every((patch) =>
-              patch.richText
-                ? Boolean(this.commands?.setNodeRichTextByUid(patch.uid, patch.text))
-                : Boolean(this.commands?.setNodeTextByUid(patch.uid, patch.text)),
+              Boolean(this.commands?.setNodeRichTextByUid(
+                patch.uid,
+                patch.richText ? patch.text : plainTextToRichHtml(patch.text),
+              )),
             )
           : Boolean(this.commands?.replaceTree(tree));
-        if (applied) this.current.data = tree;
+        if (applied && this.map) {
+          this.current.data = this.map.getData(false) as MindMapTree;
+        }
         this.options.diagnostics.record("outline", "structured-apply", this.current.id, {
           ...details,
           applied,

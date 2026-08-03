@@ -2840,3 +2840,269 @@ test('freshly saved nodes keep identical committed geometry after a full reload 
     text, nodeWidth, nodeHeight, textWidth, textHeight, richText,
   })));
 });
+
+test('persisted custom-width nodes are fully measured on first paint before any edit or width drag', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop cold-load geometry regression');
+  const rootText = '中心主题中心主题是一段用于验证冷启动、双击编辑和重载后尺寸完全一致的较243243243443243243';
+  const childText = '新节点435tre';
+
+  await page.goto('/assets/yemind-icon-32.png');
+  await page.evaluate(async ({ rootText, childText }) => {
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.deleteDatabase('yemind-web');
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => reject(new Error('IndexedDB deletion was blocked'));
+    });
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('yemind-web', 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('documents');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const transaction = db.transaction('documents', 'readwrite');
+    transaction.objectStore('documents').put({
+      version: 2,
+      activeMapId: 'cold-geometry',
+      maps: [{
+        id: 'cold-geometry',
+        title: '冷启动几何回归',
+        createdAt: 1,
+        updatedAt: 1,
+        layout: 'yemindRightMindMap',
+        layoutPresetId: 'right-mindmap',
+        theme: 'yemind-default',
+        lineStyle: 'curve',
+        projectStyle: {},
+        data: {
+          data: { text: rootText, richText: false, uid: 'root-cold', customTextWidth: 151 },
+          children: [{
+            data: { text: childText, richText: false, uid: 'child-cold', customTextWidth: 49 },
+            children: [],
+          }],
+        },
+      }],
+    }, 'maps');
+    await new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  }, { rootText, childText });
+
+  await page.goto('/');
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const nodes = editor.locator('.smm-node');
+  await expect(nodes).toHaveCount(2);
+  await expect(nodes.first()).toContainText(rootText);
+  await expect(nodes.locator('.smm-richtext-node-wrap')).toHaveCount(2);
+  await expect.poll(async () => page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('yemind-web', 1);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const stored = await new Promise<any>((resolve, reject) => {
+      const request = db.transaction('documents', 'readonly').objectStore('documents').get('maps');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    db.close();
+    const root = stored?.maps?.find((item: any) => item.id === 'cold-geometry')?.data;
+    return Boolean(
+      root?.data?.richText === true
+      && /^<p>/.test(String(root.data.text ?? ''))
+      && root?.children?.[0]?.data?.richText === true
+      && /^<p>/.test(String(root.children[0].data.text ?? '')),
+    );
+  })).toBe(true);
+
+  const assertTextFits = async (node: import('@playwright/test').Locator) => {
+    const geometry = await node.evaluate((element) => {
+      const shape = element.querySelector<SVGGraphicsElement>('.smm-node-shape');
+      const foreign = element.querySelector<SVGForeignObjectElement>('foreignObject');
+      const text = element.querySelector<HTMLElement>('.smm-richtext-node-wrap');
+      const shapeRect = shape?.getBoundingClientRect() ?? new DOMRect();
+      const foreignRect = foreign?.getBoundingClientRect() ?? new DOMRect();
+      const textRect = text?.getBoundingClientRect() ?? new DOMRect();
+      return {
+        shape: { left: shapeRect.left, top: shapeRect.top, right: shapeRect.right, bottom: shapeRect.bottom },
+        foreign: { left: foreignRect.left, top: foreignRect.top, right: foreignRect.right, bottom: foreignRect.bottom },
+        text: { left: textRect.left, top: textRect.top, right: textRect.right, bottom: textRect.bottom },
+        scrollWidth: text?.scrollWidth ?? 0,
+        scrollHeight: text?.scrollHeight ?? 0,
+        clientWidth: text?.clientWidth ?? 0,
+        clientHeight: text?.clientHeight ?? 0,
+      };
+    });
+    expect(geometry.text.left).toBeGreaterThanOrEqual(geometry.foreign.left - 0.5);
+    expect(geometry.text.top).toBeGreaterThanOrEqual(geometry.foreign.top - 0.5);
+    expect(geometry.text.right).toBeLessThanOrEqual(geometry.foreign.right + 0.5);
+    expect(geometry.text.bottom).toBeLessThanOrEqual(geometry.foreign.bottom + 0.5);
+    expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
+    expect(geometry.scrollHeight).toBeLessThanOrEqual(geometry.clientHeight + 1);
+    expect(geometry.foreign.left).toBeGreaterThanOrEqual(geometry.shape.left - 0.5);
+    expect(geometry.foreign.top).toBeGreaterThanOrEqual(geometry.shape.top - 0.5);
+    expect(geometry.foreign.right).toBeLessThanOrEqual(geometry.shape.right + 0.5);
+    expect(geometry.foreign.bottom).toBeLessThanOrEqual(geometry.shape.bottom + 0.5);
+  };
+
+  await assertTextFits(nodes.first());
+  await assertTextFits(nodes.nth(1));
+
+  const before = await nodes.nth(1).boundingBox();
+  await nodes.nth(1).click();
+  const handle = nodes.nth(1).locator('rect[style*="ew-resize"]').last();
+  const handleBox = await handle.boundingBox();
+  expect(before).not.toBeNull();
+  expect(handleBox).not.toBeNull();
+  await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handleBox!.x + handleBox!.width / 2 + 1, handleBox!.y + handleBox!.height / 2);
+  await page.mouse.up();
+  const after = await nodes.nth(1).boundingBox();
+  expect(after).not.toBeNull();
+  expect(Math.abs(after!.height - before!.height)).toBeLessThanOrEqual(1);
+});
+
+test('a map mounted in a hidden host is canonically measured when the host becomes visible', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop hidden-host geometry regression');
+  const rootText = '中心主题中心主题是一段用于验证冷启动、双击编辑和重载后尺寸完全一致的较243243243443243243';
+  const childText = '新节点这个不错，你知道吗fsaffdsa453';
+
+  await page.goto('/assets/yemind-icon-32.png');
+  await page.evaluate(async ({ rootText, childText }) => {
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.deleteDatabase('yemind-web');
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => reject(new Error('IndexedDB deletion was blocked'));
+    });
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('yemind-web', 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('documents');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const transaction = db.transaction('documents', 'readwrite');
+    transaction.objectStore('documents').put({
+      version: 2,
+      activeMapId: 'hidden-host-geometry',
+      maps: [{
+        id: 'hidden-host-geometry',
+        title: '隐藏宿主几何回归',
+        createdAt: 1,
+        updatedAt: 1,
+        layout: 'yemindRightMindMap',
+        layoutPresetId: 'right-mindmap',
+        theme: 'yemind-default',
+        lineStyle: 'curve',
+        projectStyle: {},
+        data: {
+          data: { text: `<p>${rootText}</p>`, richText: true, uid: 'root-hidden-host', customTextWidth: 151 },
+          children: [{
+            data: { text: `<p>${childText}</p>`, richText: true, uid: 'child-hidden-host', customTextWidth: 101 },
+            children: [],
+          }],
+        },
+      }],
+    }, 'maps');
+    await new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  }, { rootText, childText });
+
+  await page.route('**/', async (route) => {
+    if (route.request().resourceType() !== 'document') {
+      await route.continue();
+      return;
+    }
+    const response = await route.fetch();
+    const html = await response.text();
+    await route.fulfill({
+      response,
+      body: html.replace('</head>', '<style id="hidden-host-fixture">.ymw-editor{width:240px!important;height:180px!important;overflow:hidden!important}</style></head>'),
+    });
+  });
+  await page.goto('/');
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  await editor.waitFor({ state: 'attached' });
+  await expect(editor.locator('.smm-node')).toHaveCount(2);
+  await page.evaluate(() => document.querySelector('#hidden-host-fixture')?.remove());
+  await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+  await expect(editor).toBeVisible();
+
+  const geometry = await editor.locator('.smm-node').evaluateAll((nodes) => nodes.map((node) => {
+    const shape = node.querySelector<SVGGraphicsElement>('.smm-node-shape');
+    const foreign = node.querySelector<SVGForeignObjectElement>('foreignObject');
+    const text = node.querySelector<HTMLElement>('.smm-richtext-node-wrap');
+    const shapeRect = shape?.getBoundingClientRect() ?? new DOMRect();
+    const foreignRect = foreign?.getBoundingClientRect() ?? new DOMRect();
+    const textRect = text?.getBoundingClientRect() ?? new DOMRect();
+    return {
+      content: text?.textContent ?? '',
+      shape: { left: shapeRect.left, top: shapeRect.top, right: shapeRect.right, bottom: shapeRect.bottom },
+      foreign: { left: foreignRect.left, top: foreignRect.top, right: foreignRect.right, bottom: foreignRect.bottom },
+      text: { left: textRect.left, top: textRect.top, right: textRect.right, bottom: textRect.bottom },
+      scrollWidth: text?.scrollWidth ?? 0,
+      scrollHeight: text?.scrollHeight ?? 0,
+      clientWidth: text?.clientWidth ?? 0,
+      clientHeight: text?.clientHeight ?? 0,
+    };
+  }));
+
+  expect(geometry.map((item) => item.content).sort()).toEqual([rootText, childText].sort());
+  for (const item of geometry) {
+    expect(item.text.left).toBeGreaterThanOrEqual(item.foreign.left - 0.5);
+    expect(item.text.top).toBeGreaterThanOrEqual(item.foreign.top - 0.5);
+    expect(item.text.right).toBeLessThanOrEqual(item.foreign.right + 0.5);
+    expect(item.text.bottom).toBeLessThanOrEqual(item.foreign.bottom + 0.5);
+    expect(item.scrollWidth).toBeLessThanOrEqual(item.clientWidth + 1);
+    expect(item.scrollHeight).toBeLessThanOrEqual(item.clientHeight + 1);
+    expect(item.foreign.left).toBeGreaterThanOrEqual(item.shape.left - 0.5);
+    expect(item.foreign.top).toBeGreaterThanOrEqual(item.shape.top - 0.5);
+    expect(item.foreign.right).toBeLessThanOrEqual(item.shape.right + 0.5);
+    expect(item.foreign.bottom).toBeLessThanOrEqual(item.shape.bottom + 0.5);
+  }
+});
+
+test('an outline text commit leaves the same rendered node immediately width-draggable', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop outline-to-canvas width-drag regression');
+  await resetWebApp(page);
+  await addRootChild(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const textEditor = canvasTextEditor(page);
+  await textEditor.fill('大纲修改前');
+  await commitCanvasEdit(page);
+  await editor.locator('[data-primary-view][data-action="view-outline"]').click();
+
+  const outlineEditor = editor.locator('[data-outline-editor]').filter({ hasText: '大纲修改前' });
+  await outlineEditor.click();
+  await page.keyboard.press('Control+A');
+  await page.keyboard.type('大纲修改后立即拖动宽度');
+  await page.keyboard.press('Enter');
+  await expect(editor.locator('[data-role="save-state-label"]')).toHaveText('已保存');
+
+  let node = editor.locator('.smm-node').filter({ hasText: '大纲修改后立即拖动宽度' });
+  await expect(node).toHaveCount(1);
+  await expect(node.locator('.smm-richtext-node-wrap')).toHaveCount(1);
+  await page.reload();
+  node = editor.locator('.smm-node').filter({ hasText: '大纲修改后立即拖动宽度' });
+  await expect(node).toHaveCount(1);
+  await expect(node.locator('.smm-richtext-node-wrap')).toHaveCount(1);
+  await node.click();
+  const handle = node.locator('rect[style*="ew-resize"]').last();
+  const handleBox = await handle.boundingBox();
+  const before = await node.boundingBox();
+  expect(handleBox).not.toBeNull();
+  expect(before).not.toBeNull();
+  await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handleBox!.x + handleBox!.width / 2 + 80, handleBox!.y + handleBox!.height / 2, { steps: 5 });
+  await page.mouse.up();
+  const after = await node.boundingBox();
+  expect(after).not.toBeNull();
+  expect(after!.width).toBeGreaterThan(before!.width + 50);
+});

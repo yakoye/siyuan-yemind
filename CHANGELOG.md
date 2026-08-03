@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.9.9-rc.2 - 2026-08-03
+
+This release candidate removes the remaining split between persisted plain-text nodes, the runtime rich-text renderer and outline text commits.
+
+- Canonicalizes every loaded map to the shared rich-text node model once and persists that migration, so first-paint node and root geometry no longer depend on a later canvas edit or width drag.
+- Routes plain outline text commits through the same rich-text command as canvas editing and refreshes the editor document from the renderer's canonical tree instead of overwriting it with an outline projection.
+- Keeps multiline content, custom widths and visible text intact while making repeated loads idempotent.
+- Adds browser regressions for persisted custom-width first paint, root clipping, delayed host sizing and immediate width dragging after an outline edit.
+- Remains an RC until the three reported behaviors are confirmed in the real SiYuan runtime.
+
 ## 1.9.9-rc.1 - 2026-08-03
 
 This release candidate separates the visible drag target from the structural commit target so every valid hovered parent keeps consistent feedback even when dropping would be a no-op.

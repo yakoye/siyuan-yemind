@@ -17,7 +17,7 @@ test('creates, renames and restores a map from IndexedDB', async ({ page, isMobi
   expect(errors).toEqual([]);
 });
 
-test('migrates pre-release maps into the current web data generation without losing them', async ({ page }) => {
+test('migrates pre-release maps into the current canonical rich-text generation without losing them', async ({ page }) => {
   await page.goto('/assets/yemind-icon-32.png');
   await page.evaluate(async () => {
     await new Promise<void>((resolve, reject) => {
@@ -78,8 +78,9 @@ test('migrates pre-release maps into the current web data generation without los
   expect(stored.version).toBe(2);
   expect(stored.maps).toHaveLength(1);
   expect(stored.maps[0].title).toBe('不应加载的旧导图');
-  expect(stored.maps[0].data.data.text).toBe('旧节点');
-  expect(stored.maps[0].data.data.richText).toBe(false);
+  expect(stored.maps[0].data.data.text).toBe('<p>旧节点</p>');
+  expect(stored.maps[0].data.data.richText).toBe(true);
+  await expect(page.locator('.smm-node').first()).toContainText('旧节点');
 });
 
 test('opens the outline sidebar and returns to the map without losing the editor', async ({ page }) => {

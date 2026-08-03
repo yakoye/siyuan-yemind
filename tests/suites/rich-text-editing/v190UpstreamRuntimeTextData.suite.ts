@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { createMindMap } from '../../../src/core/createMindMap';
-import { normalizeTreeForUpstreamRichText } from '../../../src/core/upstreamRichTextData';
+import {
+  normalizeTreeForUpstreamRichText,
+  normalizeTreeForUpstreamRichTextInPlaceWithResult,
+} from '../../../src/core/upstreamRichTextData';
 
 describe('v1.9.0 upstream runtime rich-text data', () => {
   it('converts plain multiline text into explicit HTML blocks without changing the source tree', () => {
@@ -64,6 +67,27 @@ describe('v1.9.0 upstream runtime rich-text data', () => {
     });
 
     expect(runtime.data).toMatchObject({ text: '<p><br></p>', richText: true });
+  });
+
+  it('reports a one-time canonical migration and remains idempotent afterwards', () => {
+    const tree = {
+      data: { uid: 'root', text: '中心主题\n第二行', richText: false },
+      children: [{
+        data: { uid: 'child', text: '<p>已有富文本</p>', richText: true },
+        children: [],
+      }],
+    };
+
+    const first = normalizeTreeForUpstreamRichTextInPlaceWithResult(tree);
+    const second = normalizeTreeForUpstreamRichTextInPlaceWithResult(tree);
+
+    expect(first).toMatchObject({ changed: true, tree });
+    expect(second).toMatchObject({ changed: false, tree });
+    expect(tree.data).toMatchObject({
+      text: '<p>中心主题</p><p>第二行</p>',
+      richText: true,
+    });
+    expect(tree.children[0].data.text).toBe('<p>已有富文本</p>');
   });
 
   it('feeds only normalized rich-text data into the runtime renderer', async () => {
