@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.6";
+const PLUGIN_VERSION = "1.9.7";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "31177c1c-clean",
-  time: "2026-08-03T07:56:18+08:00"
+  id: "1347c8e1-clean",
+  time: "2026-08-03T10:19:20+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-02T22:50:37.629Z",
-  buildId: "yemind-v1.9.6-20260802",
+  buildTime: "2026-08-03T02:08:34.246Z",
+  buildId: "yemind-v1.9.7-20260803",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -29275,12 +29275,13 @@ function replaceSingleNodeCloneWithSubtree(plugin) {
   if (!(wrapper == null ? void 0 : wrapper.add) || !(wrapper == null ? void 0 : wrapper.translate)) return false;
   const originX = Number(root2 == null ? void 0 : root2.left) || 0;
   const originY = Number(root2 == null ? void 0 : root2.top) || 0;
-  const addRelativeClone = (source) => {
-    var _a2, _b2, _c3;
+  const addRelativeClone = (source, className = "") => {
+    var _a2, _b2, _c3, _d3;
     const clone2 = (_a2 = source == null ? void 0 : source.clone) == null ? void 0 : _a2.call(source);
     if (!clone2) return;
     (_b2 = clone2.show) == null ? void 0 : _b2.call(clone2);
-    (_c3 = clone2.translate) == null ? void 0 : _c3.call(clone2, -originX, -originY);
+    if (className) (_c3 = clone2.addClass) == null ? void 0 : _c3.call(clone2, className);
+    (_d3 = clone2.translate) == null ? void 0 : _d3.call(clone2, -originX, -originY);
     wrapper.add(clone2);
   };
   const visibleNodes = new Set(nodes);
@@ -29293,7 +29294,10 @@ function replaceSingleNodeCloneWithSubtree(plugin) {
       addRelativeClone((_a3 = node == null ? void 0 : node._lines) == null ? void 0 : _a3[index]);
     });
   });
-  nodes.forEach((node) => addRelativeClone(node == null ? void 0 : node.group));
+  nodes.forEach((node) => addRelativeClone(
+    node == null ? void 0 : node.group,
+    node === root2 ? "ymz-drag-subtree-root" : ""
+  ));
   (_e = (_d2 = plugin.clone).remove) == null ? void 0 : _e.call(_d2);
   plugin.clone = wrapper;
   (_f = wrapper.addClass) == null ? void 0 : _f.call(wrapper, "ymz-drag-subtree-preview");
@@ -29341,6 +29345,7 @@ class YeMindDrag extends Drag {
     plugin.__ymzOverlapFrame = null;
     plugin.__ymzIncomingLines = [];
     plugin.__ymzLayoutRoomPreview = null;
+    plugin.__ymzCandidateParentHighlight = null;
     plugin.__ymzOnKeydown = (event) => {
       if (event.key !== "Escape" || !plugin.isMousedown && !plugin.isDragging) return;
       event.preventDefault();
@@ -29375,7 +29380,6 @@ class YeMindDrag extends Drag {
     plugin.__ymzIncomingLines = captureIncomingDragLines(plugin.beingDragNodeList ?? []);
     this.ensureGuideLines();
     this.clearUpstreamPlaceholder();
-    this.updateOfficialGuideLines();
   }
   onMove(x2, y2, event) {
     super.onMove(x2, y2, event);
@@ -29417,6 +29421,7 @@ class YeMindDrag extends Drag {
   }
   removeCloneNode() {
     this.cancelCandidateFrame();
+    this.clearCandidateParentHighlight();
     this.clearLayoutRoomPreview();
     this.removeGuideLines();
     super.removeCloneNode();
@@ -29425,6 +29430,7 @@ class YeMindDrag extends Drag {
     const plugin = this;
     document.removeEventListener("keydown", plugin.__ymzOnKeydown, true);
     this.cancelCandidateFrame();
+    this.clearCandidateParentHighlight();
     this.clearLayoutRoomPreview();
     this.removeGuideLines();
     this.restoreIncomingLines();
@@ -29434,6 +29440,7 @@ class YeMindDrag extends Drag {
     const plugin = this;
     document.removeEventListener("keydown", plugin.__ymzOnKeydown, true);
     this.cancelCandidateFrame();
+    this.clearCandidateParentHighlight();
     this.clearLayoutRoomPreview();
     this.removeGuideLines();
     this.restoreIncomingLines();
@@ -29484,6 +29491,9 @@ class YeMindDrag extends Drag {
       plugin.beingDragNodeList ?? []
     ) ? emptyOfficialDragCandidate() : plugin.__ymzCandidateState.stable;
     applyCandidate(plugin, stable);
+    this.setCandidateParentHighlight(
+      stable.kind === "none" ? null : officialCandidateParent(stable)
+    );
     if (supportsOfficialDragGeometry(layout2)) this.updateLayoutRoomPreview(stable);
     else this.clearLayoutRoomPreview();
     this.updateOfficialGuideLines();
@@ -29639,6 +29649,27 @@ class YeMindDrag extends Drag {
       transforms: transforms2,
       incomingLines
     };
+  }
+  setCandidateParentHighlight(node) {
+    var _a, _b, _c2, _d2, _e;
+    const plugin = this;
+    const current = plugin.__ymzCandidateParentHighlight;
+    if ((current == null ? void 0 : current.node) === node) return;
+    this.clearCandidateParentHighlight();
+    if (!(node == null ? void 0 : node.group)) return;
+    const wasHighlighted = Boolean((_b = (_a = node.group).hasClass) == null ? void 0 : _b.call(_a, "smm-node-highlight"));
+    if (!wasHighlighted) (_c2 = node.highlight) == null ? void 0 : _c2.call(node);
+    (_e = (_d2 = node.group).addClass) == null ? void 0 : _e.call(_d2, "ymz-drag-parent-candidate");
+    plugin.__ymzCandidateParentHighlight = { node, wasHighlighted };
+  }
+  clearCandidateParentHighlight() {
+    var _a, _b, _c2, _d2, _e;
+    const plugin = this;
+    const current = plugin.__ymzCandidateParentHighlight;
+    if (!current) return;
+    (_c2 = (_b = (_a = current.node) == null ? void 0 : _a.group) == null ? void 0 : _b.removeClass) == null ? void 0 : _c2.call(_b, "ymz-drag-parent-candidate");
+    if (!current.wasHighlighted) (_e = (_d2 = current.node) == null ? void 0 : _d2.closeHighlight) == null ? void 0 : _e.call(_d2);
+    plugin.__ymzCandidateParentHighlight = null;
   }
   clearLayoutRoomPreview() {
     const plugin = this;
