@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  createMindMapShortcutScope,
   disableUpstreamStructuralInsertShortcuts,
   resolveUpstreamShortcutAction,
   shouldBlockUpstreamShortcut,
@@ -38,5 +39,35 @@ describe('upstream shortcut safety', () => {
       ['Tab'],
       ['Enter'],
     ]);
+  });
+
+  it('scopes upstream shortcuts to the map that owns the active Quill editor', () => {
+    const hostA = document.createElement('div');
+    const hostB = document.createElement('div');
+    const editorA = document.createElement('div');
+    const editorB = document.createElement('div');
+    editorA.className = 'ql-editor';
+    editorB.className = 'ql-editor';
+    document.body.append(hostA, hostB, editorA, editorB);
+
+    const scopeA = createMindMapShortcutScope(hostA, () => editorA);
+    const scopeB = createMindMapShortcutScope(hostB, () => editorB);
+    scopeA.activate();
+
+    const currentEditorEvent = { target: editorB } as unknown as KeyboardEvent;
+    expect(scopeA.check(currentEditorEvent)).toBe(false);
+    expect(scopeB.check(currentEditorEvent)).toBe(true);
+
+    scopeB.activate();
+    const hostOwnedEvent = { target: document.body } as unknown as KeyboardEvent;
+    expect(scopeA.check(hostOwnedEvent)).toBe(false);
+    expect(scopeB.check(hostOwnedEvent)).toBe(true);
+
+    scopeA.destroy();
+    scopeB.destroy();
+    hostA.remove();
+    hostB.remove();
+    editorA.remove();
+    editorB.remove();
   });
 });

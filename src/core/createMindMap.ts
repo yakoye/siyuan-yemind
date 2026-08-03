@@ -8,6 +8,7 @@ import { buildDragAndLayoutOptions, normalizePersistedViewData } from './dragBeh
 import { buildRelationOptions } from './relationConfig';
 import { buildOuterFrameOptions } from './outerFrameConfig';
 import {
+  createMindMapShortcutScope,
   disableUpstreamStructuralInsertShortcuts,
   resolveUpstreamShortcutAction,
 } from '../editor/shortcutSafety';
@@ -69,7 +70,12 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     ? undefined
     : normalizePersistedViewData(options.viewData);
   const runtimeData = normalizeTreeForUpstreamRichText(options.data);
-  const mindMap = new MindMap({
+  let mindMap: MindMap;
+  const shortcutScope = createMindMapShortcutScope(
+    options.el,
+    () => (mindMap as any)?.richText?.textEditNode as HTMLElement | null | undefined,
+  );
+  mindMap = new MindMap({
     el: options.el,
     customInnerElsAppendTo: null,
     data: runtimeData,
@@ -121,6 +127,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     enableEditFormulaInRichTextEdit: true,
     customHyperlinkJump: (href: string) => options.onHyperlink?.(href),
     beforeDeleteNodeImg: createImageDeleteGuard(options.onConfirmDeleteImage),
+    customCheckEnableShortcut: (event: KeyboardEvent) => shortcutScope.check(event),
     beforeShortcutRun: (shortcut: string, nodes: any[]) => {
       const action = resolveUpstreamShortcutAction(
         shortcut,
@@ -132,6 +139,7 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     },
     errorHandler: (_code: unknown, error: unknown) => console.error('[YeMind]', error),
   } as any);
+  (mindMap as any).on?.('beforeDestroy', () => shortcutScope.destroy());
   disableUpstreamStructuralInsertShortcuts((mindMap as any).keyCommand);
   installHistoryTransactionCoordinator(mindMap as any, { seed: true });
   installThemeColorRuntime(mindMap);
