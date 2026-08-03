@@ -111,7 +111,7 @@ describe('v0.9.18 layout drag parity', () => {
   it('uses one immediate candidate and generalized room preview for every adapted layout', () => {
     expect(dragSource).toContain('supportsOfficialDragGeometry(layout)');
     expect(dragSource).toContain('{ stable: candidate, pending: null }');
-    expect(dragSource).toContain('this.updateLayoutRoomPreview(stable)');
+    expect(dragSource).toContain('this.updateLayoutRoomPreview(commitCandidate)');
     expect(dragSource).toContain('resolveOfficialDragSiblingAxis');
     expect(dragSource).toContain('createShiftedIncomingLineOverlays(');
     expect(dragSource).toContain('{ deltaX, deltaY }');

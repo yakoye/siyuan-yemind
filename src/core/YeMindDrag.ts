@@ -532,17 +532,18 @@ export default class YeMindDrag extends Drag {
       ? { stable: candidate, pending: null }
       : updateStableDragCandidate(currentState, candidate, now);
 
-    const stable = isOfficialDragCandidateNoop(
-      plugin.__ymzCandidateState.stable,
+    const visualCandidate = plugin.__ymzCandidateState.stable;
+    const commitCandidate = isOfficialDragCandidateNoop(
+      visualCandidate,
       plugin.beingDragNodeList ?? [],
     )
       ? emptyOfficialDragCandidate()
-      : plugin.__ymzCandidateState.stable;
-    applyCandidate(plugin, stable);
+      : visualCandidate;
+    applyCandidate(plugin, commitCandidate);
     this.setCandidateParentHighlight(
-      stable.kind === 'none' ? null : officialCandidateParent(stable),
+      visualCandidate.kind === 'none' ? null : officialCandidateParent(visualCandidate),
     );
-    if (supportsOfficialDragGeometry(layout)) this.updateLayoutRoomPreview(stable);
+    if (supportsOfficialDragGeometry(layout)) this.updateLayoutRoomPreview(commitCandidate);
     else this.clearLayoutRoomPreview();
     this.updateOfficialGuideLines();
 

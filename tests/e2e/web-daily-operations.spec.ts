@@ -29,6 +29,43 @@ async function addChildFrom(node: Locator, page: Page, text: string): Promise<Lo
   return editor(page).locator('.smm-node').filter({ hasText: text }).first();
 }
 
+async function expectUniformCanvasDragFeedback(
+  page: Page,
+  source: Locator,
+  candidateParent: Locator,
+): Promise<void> {
+  const mapEditor = editor(page);
+  const sourceBox = await source.boundingBox();
+  const targetBox = await candidateParent.boundingBox();
+  expect(sourceBox).not.toBeNull();
+  expect(targetBox).not.toBeNull();
+
+  await page.mouse.move(sourceBox!.x + sourceBox!.width / 2, sourceBox!.y + sourceBox!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    targetBox!.x + targetBox!.width * 0.82,
+    targetBox!.y + targetBox!.height / 2,
+    { steps: 12 },
+  );
+
+  const preview = mapEditor.locator('.ymz-drag-node-preview');
+  await expect(preview).toHaveCount(1);
+  await expect(preview).not.toHaveClass(/ymz-drag-subtree-preview/);
+  await expect(preview.locator('.smm-node')).toHaveCount(0);
+  await expect(preview.locator('.smm-node-shape')).toHaveCSS('stroke', 'rgb(141, 226, 206)');
+  await expect(candidateParent).toHaveClass(/ymz-drag-parent-candidate/);
+  await expect(candidateParent).toHaveClass(/smm-node-highlight/);
+  await expect.poll(async () => mapEditor.locator('path[stroke-dasharray="6 6"]').evaluateAll((paths) => paths.filter((path) => {
+    const d = path.getAttribute('d') ?? '';
+    return getComputedStyle(path).display !== 'none' && /^M\s*-?\d/.test(d);
+  }).length)).toBe(1);
+
+  await page.keyboard.press('Escape');
+  await page.mouse.up();
+  await expect(mapEditor.locator('.ymz-drag-node-preview')).toHaveCount(0);
+  await expect(mapEditor.locator('.ymz-drag-parent-candidate')).toHaveCount(0);
+}
+
 test('YM-DAILY-EDIT-003 and YM-DAILY-HIST-005 keep CRUD atomic through undo and redo', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop node CRUD and history matrix');
   const errors = recordPageErrors(page);
@@ -157,5 +194,25 @@ test('YM-DAILY-DRAG-002 moves a visible parent and its descendants as one commit
   expect(sourceUid).toBeTruthy();
   await expect(sourceRow).toHaveAttribute('data-outline-parent-uid', targetUid!);
   await expect(descendantRow).toHaveAttribute('data-outline-parent-uid', sourceUid!);
+  expect(errors).toEqual([]);
+});
+
+test('YM-DAILY-DRAG-003 keeps leaf and middle-node drag feedback uniform across root, middle and leaf candidates', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop drag feedback matrix');
+  const errors = recordPageErrors(page);
+  await resetWebApp(page);
+  const mapEditor = editor(page);
+  const root = mapEditor.locator('.smm-node').first();
+  const sourceMiddle = await addChildFrom(root, page, '拖动源中间节点');
+  const sourceLeaf = await addChildFrom(sourceMiddle, page, '拖动源叶子节点');
+  const targetMiddle = await addChildFrom(root, page, '候选中间节点');
+  const targetLeaf = await addChildFrom(targetMiddle, page, '候选叶子节点');
+
+  for (const source of [sourceMiddle, sourceLeaf]) {
+    for (const target of [root, targetMiddle, targetLeaf]) {
+      await expectUniformCanvasDragFeedback(page, source, target);
+    }
+  }
+
   expect(errors).toEqual([]);
 });

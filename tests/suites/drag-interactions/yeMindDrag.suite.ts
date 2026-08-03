@@ -157,4 +157,50 @@ describe('YeMindDrag pointer target guide', () => {
     drag.clearCandidateParentHighlight();
     expect(second.closeHighlight).toHaveBeenCalledTimes(1);
   });
+
+  it('keeps the hovered candidate parent highlighted even when the drop would be a no-op', () => {
+    const parent = { uid: 'parent', children: [] as any[] };
+    const source = { uid: 'source', parent };
+    const sibling = { uid: 'sibling', parent };
+    parent.children = [source, sibling];
+    const candidate: OfficialDragCandidate = {
+      key: 'before:sibling',
+      kind: 'before',
+      target: sibling,
+      parent,
+      index: 1,
+      overlapNode: null,
+      prevNode: null,
+      nextNode: sibling,
+      targetNode: sibling,
+      parentNode: parent,
+      score: 0,
+    };
+    const setCandidateParentHighlight = vi.fn();
+    const drag = Object.create(YeMindDrag.prototype) as any;
+    Object.assign(drag, {
+      clone: { attr: vi.fn() },
+      placeholder: {},
+      drawTransform: {},
+      mindMap: { opt: { layout: 'unsupported-layout' } },
+      beingDragNodeList: [source],
+      prevNode: null,
+      nextNode: sibling,
+      overlapNode: null,
+      __ymzRawCheckOverlap: vi.fn(),
+      __ymzCandidateState: { stable: candidate, pending: null },
+      __ymzRawCandidate: candidate,
+      styleUpstreamPlaceholderLines: vi.fn(),
+      clearLayoutRoomPreview: vi.fn(),
+      updateOfficialGuideLines: vi.fn(),
+      setCandidateParentHighlight,
+    });
+
+    drag.runOfficialCandidateCheck(100);
+
+    expect(setCandidateParentHighlight).toHaveBeenCalledWith(parent);
+    expect(drag.overlapNode).toBeNull();
+    expect(drag.prevNode).toBeNull();
+    expect(drag.nextNode).toBeNull();
+  });
 });
