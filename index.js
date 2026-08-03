@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.8";
+const PLUGIN_VERSION = "1.9.9-rc.1";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "6efd9d6c-clean",
-  time: "2026-08-03T11:02:10+08:00"
+  id: "bef9d41a-clean",
+  time: "2026-08-03T11:59:53+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-03T02:55:26.115Z",
-  buildId: "yemind-v1.9.8-20260803",
+  buildTime: "2026-08-03T03:58:33.593Z",
+  buildId: "yemind-v1.9.9-rc.1-20260803",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -29429,15 +29429,16 @@ class YeMindDrag extends Drag {
     plugin.__ymzRawCandidate = candidate;
     const currentState = plugin.__ymzCandidateState ?? createDragCandidateState(emptyOfficialDragCandidate());
     plugin.__ymzCandidateState = supportsOfficialDragGeometry(layout2) ? { stable: candidate, pending: null } : updateStableDragCandidate(currentState, candidate, now);
-    const stable = isOfficialDragCandidateNoop(
-      plugin.__ymzCandidateState.stable,
+    const visualCandidate = plugin.__ymzCandidateState.stable;
+    const commitCandidate = isOfficialDragCandidateNoop(
+      visualCandidate,
       plugin.beingDragNodeList ?? []
-    ) ? emptyOfficialDragCandidate() : plugin.__ymzCandidateState.stable;
-    applyCandidate(plugin, stable);
+    ) ? emptyOfficialDragCandidate() : visualCandidate;
+    applyCandidate(plugin, commitCandidate);
     this.setCandidateParentHighlight(
-      stable.kind === "none" ? null : officialCandidateParent(stable)
+      visualCandidate.kind === "none" ? null : officialCandidateParent(visualCandidate)
     );
-    if (supportsOfficialDragGeometry(layout2)) this.updateLayoutRoomPreview(stable);
+    if (supportsOfficialDragGeometry(layout2)) this.updateLayoutRoomPreview(commitCandidate);
     else this.clearLayoutRoomPreview();
     this.updateOfficialGuideLines();
     if (plugin.clone && plugin.__ymzCandidateState.pending) {
