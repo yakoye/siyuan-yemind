@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.9.8 - 2026-08-03
+
+This patch release removes YeMind's separate subtree-clone path for non-leaf drag previews and returns every node type to the upstream `simple-mind-map` single-node preview lifecycle.
+
+- Makes leaf, first-level middle and deep middle nodes use the same upstream drag-clone geometry and positioning rules.
+- Removes the custom nested subtree wrapper that changed the preview bounding box and caused dashed target guides to fly in from a canvas edge.
+- Applies the requested `#8de2ce` border to the single dragged-node preview while retaining candidate-parent highlighting and the green dashed guide.
+- Adds unit and browser regression gates for preview identity, exact border color, finite frame-by-frame guide geometry and preserved descendant hierarchy after drop.
+
 ## 1.9.7 - 2026-08-03
 
 This patch release removes the invalid first frame from structural drag guides and makes the three drag states visually explicit without changing map data or the upstream commit lifecycle.
