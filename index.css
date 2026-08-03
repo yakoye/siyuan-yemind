@@ -1167,26 +1167,17 @@
   max-width:none;
 }
 
-/* The upstream rich-text host is appended directly to <body>, outside the
-   editor root.  It therefore has to own the complete live node shell while
-   editing: the SVG text/shape behind it is only a committed snapshot and must
-   never be used as the resizing border for the live HTML editor. */
+/* The upstream rich-text host is appended directly to <body>. It owns only
+   text input, selection and the caret; the live SVG node shape remains the
+   single visible node shell. Drawing another shell here produces two borders
+   whose geometry diverges while the SVG width handle is moving. */
 body > .smm-richtext-node-edit-wrap{
-  isolation:isolate;
   border:0!important;
   outline:0!important;
   box-shadow:none!important;
 }
 body > .smm-richtext-node-edit-wrap::before{
-  content:"";
-  position:absolute;
-  inset:-7px -6px;
-  z-index:0;
-  border:2px solid var(--ymz-accent,var(--b3-theme-primary,#21c7a8));
-  border-radius:10px;
-  background:inherit;
-  box-sizing:border-box;
-  pointer-events:none;
+  content:none!important;
 }
 body > .smm-richtext-node-edit-wrap .ql-container,
 body > .smm-richtext-node-edit-wrap .ql-editor{

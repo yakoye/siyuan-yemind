@@ -7662,8 +7662,8 @@ const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "8e5bac32-clean",
-  time: "2026-08-03T06:54:12+08:00"
+  id: "31177c1c-clean",
+  time: "2026-08-03T07:56:18+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
@@ -18601,6 +18601,12 @@ function updateWidthDragLayoutInPlace() {
   this.mindMap.emit("node_layout_end", this);
   return true;
 }
+function syncActiveRichTextEditor() {
+  const richText = this.mindMap.richText;
+  if (richText && richText.showTextEdit === true && richText.node === this && typeof richText.updateTextEditNode === "function") {
+    richText.updateTextEditNode();
+  }
+}
 function initDragHandle() {
   if (!this.checkEnableDragModifyNodeWidth()) {
     return;
@@ -18665,6 +18671,7 @@ function onDragMousemoveHandle(e) {
       this.layout();
       this.update();
     }
+    syncActiveRichTextEditor.call(this);
   }
 }
 function onDragMouseupHandle() {
@@ -18681,7 +18688,7 @@ function onDragMouseupHandle() {
     customTextWidth: this.customTextWidth
   });
   this.nodeDataSnapshot = JSON.stringify(this.getData());
-  this.mindMap.render();
+  this.mindMap.render(() => syncActiveRichTextEditor.call(this));
   this.mindMap.emit("dragModifyNodeWidthEnd", this);
 }
 function createDragHandleNode() {
@@ -80582,10 +80589,19 @@ class RichText {
     const rect2 = g.node.getBoundingClientRect();
     const originWidth = g.attr("data-width");
     const originHeight = g.attr("data-height");
-    this.textEditNode.style.minWidth = originWidth + this.textNodePaddingX * 2 + "px";
+    const scaleX = Math.ceil(rect2.width) / originWidth;
+    const scaleY = Math.ceil(rect2.height) / originHeight;
+    const paddingX = this.textNodePaddingX;
+    const paddingY = this.textNodePaddingY;
+    this.textEditNode.style.marginLeft = `-${paddingX * scaleX}px`;
+    this.textEditNode.style.marginTop = `-${paddingY * scaleY}px`;
+    this.textEditNode.style.minWidth = originWidth + paddingX * 2 + "px";
+    this.textEditNode.style.maxWidth = originWidth + paddingX * 2 + "px";
     this.textEditNode.style.minHeight = originHeight + "px";
     this.textEditNode.style.left = rect2.left + "px";
     this.textEditNode.style.top = rect2.top + "px";
+    this.textEditNode.style.transform = `scale(${scaleX}, ${scaleY})`;
+    this.textEditNode.style.transformOrigin = "left top";
     this.setQuillContainerMinHeight(originHeight);
   }
   // 删除文本编辑框元素
@@ -80854,10 +80870,7 @@ class RichText {
   // 聚焦
   focus(start) {
     const len = this.quill.getLength();
-    const selectAll = typeof start === "number";
-    const index = selectAll ? start : len;
-    this.quill.root.focus({ preventScroll: true });
-    this.quill.setSelection(index, selectAll ? len : 0, Quill.sources.SILENT);
+    this.quill.setSelection(typeof start === "number" ? start : len, len);
   }
   // 格式化当前选中的文本
   formatText(config2 = {}, clear2 = false) {
