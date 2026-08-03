@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.9-rc.3";
+const PLUGIN_VERSION = "1.9.9-rc.4";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "02a3da6b-clean",
-  time: "2026-08-03T15:43:47+08:00"
+  id: "2801568c-clean",
+  time: "2026-08-03T17:38:24+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-03T07:41:34.369Z",
-  buildId: "yemind-v1.9.9-rc.3-20260803",
+  buildTime: "2026-08-03T09:35:32.747Z",
+  buildId: "yemind-v1.9.9-rc.4-20260803",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -19315,6 +19315,11 @@ class MindMapNode {
     this.customTop = opt.data.data.customTop || void 0;
     this.isDrag = false;
     this.parent = opt.parent || null;
+    if (this.nodeData.inserting) {
+      delete this.nodeData.inserting;
+      this.active();
+      this.renderer.requestInsertedNodeEdit(this);
+    }
     this.children = opt.children || [];
     this.userList = [];
     this.group = null;
@@ -19802,11 +19807,6 @@ class MindMapNode {
       });
     } else {
       callback();
-    }
-    if (this.nodeData.inserting) {
-      delete this.nodeData.inserting;
-      this.active();
-      this.mindMap.emit("node_dblclick", this, null, true);
     }
   }
   // 删除自身，只是从画布删除，节点容器还在，后续还可以重新插回画布
@@ -23698,6 +23698,7 @@ class Render {
     this.highlightBoxNode = null;
     this.highlightBoxNodeStyle = null;
     this.lastActiveNodeList = [];
+    this.pendingInsertedEditNode = null;
     this.setLayout();
     this.bindEvent();
     this.registerCommands();
@@ -24028,7 +24029,21 @@ class Render {
     this.reRender = false;
     this.renderCallbackList = [];
     this.renderSourceList = [];
+    const pendingInsertedEditNode = this.pendingInsertedEditNode;
+    this.pendingInsertedEditNode = null;
     this.mindMap.emit("node_tree_render_end");
+    if (pendingInsertedEditNode) {
+      this.mindMap.emit(
+        "node_dblclick",
+        pendingInsertedEditNode,
+        null,
+        true
+      );
+    }
+  }
+  // Open insertion editing only after the entire tree has committed geometry.
+  requestInsertedNodeEdit(node) {
+    this.pendingInsertedEditNode = node;
   }
   // 渲染
   render(callback, source) {
@@ -80602,7 +80617,6 @@ class RichText {
       beforeHideRichTextEdit(this);
     }
     const html2 = this.getEditText();
-    const changed = html2 !== this.initialEditText;
     const list = nodes && nodes.length > 0 ? nodes : [this.node];
     const node = this.node;
     const visibilityRevision = this.editVisibilityRevision;
@@ -80617,15 +80631,6 @@ class RichText {
     this.node = null;
     this.isInserting = false;
     this.initialEditText = "";
-    if (!changed) {
-      list.forEach((node2) => {
-        var _a, _b;
-        return (_b = (_a = node2 == null ? void 0 : node2._textData) == null ? void 0 : _a.node) == null ? void 0 : _b.show();
-      });
-      hideEditorLayer();
-      this.mindMap.emit("hide_text_edit", this.textEditNode, list, node);
-      return;
-    }
     const onRenderEnd = () => {
       this.mindMap.off("node_tree_render_end", onRenderEnd);
       hideEditorLayer();
@@ -81235,14 +81240,21 @@ const _YeMindRichText = class _YeMindRichText extends RichText {
   unbindEvent() {
     super.unbindEvent();
     this.releaseEditFocusOwnership();
+    if (_YeMindRichText.activeEditSession === this) {
+      _YeMindRichText.activeEditSession = null;
+    }
     this.mindMap.off("before_show_text_edit", this.beginEditFocusOwnership);
     this.mindMap.off("hide_text_edit", this.releaseEditFocusOwnership);
     document.removeEventListener("focusin", this.handleHostFocusIn, true);
     window.removeEventListener("pointerdown", this.handleFocusOwnershipPointerDown, true);
   }
   beginEditFocusOwnership() {
-    const previous = _YeMindRichText.activeFocusOwner;
-    if (previous && previous !== this) previous.ownsEditFocus = false;
+    const previous = _YeMindRichText.activeEditSession;
+    if (previous && previous !== this) {
+      if (previous.showTextEdit) previous.hideEditText();
+      else previous.releaseEditFocusOwnership();
+    }
+    _YeMindRichText.activeEditSession = this;
     _YeMindRichText.activeFocusOwner = this;
     this.ownsEditFocus = true;
   }
@@ -81250,6 +81262,9 @@ const _YeMindRichText = class _YeMindRichText extends RichText {
     this.ownsEditFocus = false;
     if (_YeMindRichText.activeFocusOwner === this) {
       _YeMindRichText.activeFocusOwner = null;
+    }
+    if (!this.showTextEdit && _YeMindRichText.activeEditSession === this) {
+      _YeMindRichText.activeEditSession = null;
     }
   }
   handleFocusOwnershipPointerDown(event) {
@@ -81400,6 +81415,7 @@ const _YeMindRichText = class _YeMindRichText extends RichText {
 };
 __publicField(_YeMindRichText, "instanceName", "richText");
 __publicField(_YeMindRichText, "activeFocusOwner", null);
+__publicField(_YeMindRichText, "activeEditSession", null);
 let YeMindRichText = _YeMindRichText;
 const plugins = [YeMindDrag, Select, MiniMap, Search, Export, ExportPDF, YeMindRichText, Formula, YeMindAssociativeLine, OuterFrame, YeMindNodeImgAdjust, RainbowLines];
 let registered$1 = false;
@@ -82260,6 +82276,57 @@ const READONLY_ALLOWED_SHORTCUTS = /* @__PURE__ */ new Set([
   "Right"
 ]);
 const DELETE_SHORTCUTS = /* @__PURE__ */ new Set(["Del", "Delete", "Backspace", "Shift+Backspace"]);
+const activeShortcutHostByDocument = /* @__PURE__ */ new WeakMap();
+function isNodeLike(value) {
+  return Boolean(value && typeof value.nodeType === "number");
+}
+function isTextEditingTarget(value) {
+  if (!isNodeLike(value)) return false;
+  const element = value.nodeType === Node.ELEMENT_NODE ? value : value.parentElement;
+  return Boolean(element == null ? void 0 : element.closest(
+    '.ql-editor,.smm-richtext-node-edit-wrap,[contenteditable="true"],input,textarea,select'
+  ));
+}
+function createMindMapShortcutScope(host, getTextEditHost) {
+  const ownerDocument = host.ownerDocument;
+  const activate = () => {
+    activeShortcutHostByDocument.set(ownerDocument, host);
+  };
+  const ownsTarget = (target) => {
+    var _a;
+    if (!isNodeLike(target)) return false;
+    return host.contains(target) || Boolean((_a = getTextEditHost()) == null ? void 0 : _a.contains(target));
+  };
+  const check = (event) => {
+    const target = event.target;
+    if (isTextEditingTarget(target)) {
+      const editHost = getTextEditHost();
+      return Boolean(editHost && isNodeLike(target) && editHost.contains(target));
+    }
+    if (ownsTarget(target)) {
+      activate();
+      return true;
+    }
+    if (target === ownerDocument.body || target === ownerDocument.documentElement || !target) {
+      return activeShortcutHostByDocument.get(ownerDocument) === host;
+    }
+    return false;
+  };
+  const handleActivation = () => activate();
+  host.addEventListener("pointerdown", handleActivation, true);
+  host.addEventListener("focusin", handleActivation, true);
+  return {
+    activate,
+    check,
+    destroy() {
+      host.removeEventListener("pointerdown", handleActivation, true);
+      host.removeEventListener("focusin", handleActivation, true);
+      if (activeShortcutHostByDocument.get(ownerDocument) === host) {
+        activeShortcutHostByDocument.delete(ownerDocument);
+      }
+    }
+  };
+}
 function disableUpstreamStructuralInsertShortcuts(keyCommand) {
   var _a, _b;
   (_a = keyCommand == null ? void 0 : keyCommand.removeShortcut) == null ? void 0 : _a.call(keyCommand, "Tab");
@@ -82482,6 +82549,7 @@ function createImageDeleteGuard(confirmDelete) {
   };
 }
 function createMindMap(options) {
+  var _a;
   installMindMapMeasurementContract();
   registerMindMapLayouts();
   registerMindMapPlugins(options.settings);
@@ -82497,7 +82565,15 @@ function createMindMap(options) {
   });
   const viewData = (settings == null ? void 0 : settings.restoreSavedView) === false ? void 0 : normalizePersistedViewData(options.viewData);
   const runtimeData = normalizeTreeForUpstreamRichText(options.data);
-  const mindMap = new MindMap2({
+  let mindMap;
+  const shortcutScope = createMindMapShortcutScope(
+    options.el,
+    () => {
+      var _a2;
+      return (_a2 = mindMap == null ? void 0 : mindMap.richText) == null ? void 0 : _a2.textEditNode;
+    }
+  );
+  mindMap = new MindMap2({
     el: options.el,
     customInnerElsAppendTo: null,
     data: runtimeData,
@@ -82548,22 +82624,24 @@ function createMindMap(options) {
     openRealtimeRenderOnNodeTextEdit: false,
     enableEditFormulaInRichTextEdit: true,
     customHyperlinkJump: (href) => {
-      var _a;
-      return (_a = options.onHyperlink) == null ? void 0 : _a.call(options, href);
+      var _a2;
+      return (_a2 = options.onHyperlink) == null ? void 0 : _a2.call(options, href);
     },
     beforeDeleteNodeImg: createImageDeleteGuard(options.onConfirmDeleteImage),
+    customCheckEnableShortcut: (event) => shortcutScope.check(event),
     beforeShortcutRun: (shortcut, nodes) => {
-      var _a, _b;
+      var _a2, _b;
       const action = resolveUpstreamShortcutAction(
         shortcut,
         nodes,
-        ((_a = options.el.closest(".ymz-editor")) == null ? void 0 : _a.dataset.readonly) === "true"
+        ((_a2 = options.el.closest(".ymz-editor")) == null ? void 0 : _a2.dataset.readonly) === "true"
       );
       if (action === "safe-delete") (_b = options.onDeleteShortcut) == null ? void 0 : _b.call(options);
       return action !== "allow";
     },
     errorHandler: (_code, error2) => console.error("[YeMind]", error2)
   });
+  (_a = mindMap.on) == null ? void 0 : _a.call(mindMap, "beforeDestroy", () => shortcutScope.destroy());
   disableUpstreamStructuralInsertShortcuts(mindMap.keyCommand);
   installHistoryTransactionCoordinator(mindMap, { seed: true });
   installThemeColorRuntime(mindMap);
