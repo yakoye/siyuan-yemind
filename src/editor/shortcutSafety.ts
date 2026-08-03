@@ -32,6 +32,16 @@ function isNodeLike(value: unknown): value is Node {
   return Boolean(value && typeof (value as Node).nodeType === 'number');
 }
 
+function isTextEditingTarget(value: unknown): boolean {
+  if (!isNodeLike(value)) return false;
+  const element = value.nodeType === Node.ELEMENT_NODE
+    ? value as Element
+    : value.parentElement;
+  return Boolean(element?.closest(
+    '.ql-editor,.smm-richtext-node-edit-wrap,[contenteditable="true"],input,textarea,select',
+  ));
+}
+
 /**
  * simple-mind-map installs one window-level key listener per mounted map.
  * SiYuan keeps inactive tabs mounted, so checking only a shared class such as
@@ -53,6 +63,14 @@ export function createMindMapShortcutScope(
   };
   const check = (event: KeyboardEvent): boolean => {
     const target = event.target;
+    // Editor ownership must win over broad host containment. SiYuan can keep
+    // several map tabs mounted under overlapping host ancestors; otherwise an
+    // inactive map sees the active Quill editor inside its host and consumes
+    // Ctrl+A/Delete before the editor receives them.
+    if (isTextEditingTarget(target)) {
+      const editHost = getTextEditHost();
+      return Boolean(editHost && isNodeLike(target) && editHost.contains(target));
+    }
     if (ownsTarget(target)) {
       activate();
       return true;

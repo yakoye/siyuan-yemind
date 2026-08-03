@@ -70,4 +70,30 @@ describe('upstream shortcut safety', () => {
     editorA.remove();
     editorB.remove();
   });
+
+  it('does not let a broad inactive host capture another map editor', () => {
+    const sharedHost = document.createElement('div');
+    const mapBHost = document.createElement('div');
+    const editorA = document.createElement('div');
+    const editorB = document.createElement('div');
+    editorA.className = 'smm-richtext-node-edit-wrap';
+    editorB.className = 'smm-richtext-node-edit-wrap';
+    const editorBRoot = document.createElement('div');
+    editorBRoot.className = 'ql-editor';
+    editorBRoot.contentEditable = 'true';
+    editorB.append(editorBRoot);
+    sharedHost.append(mapBHost, editorA, editorB);
+    document.body.append(sharedHost);
+
+    const scopeA = createMindMapShortcutScope(sharedHost, () => editorA);
+    const scopeB = createMindMapShortcutScope(mapBHost, () => editorB);
+
+    const activeEditorEvent = { target: editorBRoot } as unknown as KeyboardEvent;
+    expect(scopeA.check(activeEditorEvent)).toBe(false);
+    expect(scopeB.check(activeEditorEvent)).toBe(true);
+
+    scopeA.destroy();
+    scopeB.destroy();
+    sharedHost.remove();
+  });
 });
