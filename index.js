@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.7";
+const PLUGIN_VERSION = "1.9.8";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "1347c8e1-clean",
-  time: "2026-08-03T10:19:20+08:00"
+  id: "6efd9d6c-clean",
+  time: "2026-08-03T11:02:10+08:00"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-03T02:08:34.246Z",
-  buildId: "yemind-v1.9.7-20260803",
+  buildTime: "2026-08-03T02:55:26.115Z",
+  buildId: "yemind-v1.9.8-20260803",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -29250,64 +29250,6 @@ function collectSubtreeNodes(root2) {
   visit2(root2);
   return result;
 }
-function collectVisibleSubtreeNodes(root2) {
-  const result = [];
-  const seen = /* @__PURE__ */ new Set();
-  const visit2 = (node) => {
-    var _a;
-    if (!node || seen.has(node)) return;
-    seen.add(node);
-    result.push(node);
-    if (((_a = node == null ? void 0 : node.getData) == null ? void 0 : _a.call(node, "expand")) === false) return;
-    (node.children ?? []).forEach(visit2);
-  };
-  visit2(root2);
-  return result;
-}
-function replaceSingleNodeCloneWithSubtree(plugin) {
-  var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l;
-  const roots = (plugin == null ? void 0 : plugin.beingDragNodeList) ?? [];
-  if (roots.length !== 1 || !plugin.clone) return false;
-  const root2 = roots[0];
-  const nodes = collectVisibleSubtreeNodes(root2);
-  if (nodes.length <= 1) return false;
-  const wrapper = (_c2 = (_b = (_a = plugin.mindMap) == null ? void 0 : _a.otherDraw) == null ? void 0 : _b.group) == null ? void 0 : _c2.call(_b);
-  if (!(wrapper == null ? void 0 : wrapper.add) || !(wrapper == null ? void 0 : wrapper.translate)) return false;
-  const originX = Number(root2 == null ? void 0 : root2.left) || 0;
-  const originY = Number(root2 == null ? void 0 : root2.top) || 0;
-  const addRelativeClone = (source, className = "") => {
-    var _a2, _b2, _c3, _d3;
-    const clone2 = (_a2 = source == null ? void 0 : source.clone) == null ? void 0 : _a2.call(source);
-    if (!clone2) return;
-    (_b2 = clone2.show) == null ? void 0 : _b2.call(clone2);
-    if (className) (_c3 = clone2.addClass) == null ? void 0 : _c3.call(clone2, className);
-    (_d3 = clone2.translate) == null ? void 0 : _d3.call(clone2, -originX, -originY);
-    wrapper.add(clone2);
-  };
-  const visibleNodes = new Set(nodes);
-  nodes.forEach((node) => {
-    var _a2;
-    if (((_a2 = node == null ? void 0 : node.getData) == null ? void 0 : _a2.call(node, "expand")) === false) return;
-    ((node == null ? void 0 : node.children) ?? []).forEach((child, index) => {
-      var _a3;
-      if (!visibleNodes.has(child)) return;
-      addRelativeClone((_a3 = node == null ? void 0 : node._lines) == null ? void 0 : _a3[index]);
-    });
-  });
-  nodes.forEach((node) => addRelativeClone(
-    node == null ? void 0 : node.group,
-    node === root2 ? "ymz-drag-subtree-root" : ""
-  ));
-  (_e = (_d2 = plugin.clone).remove) == null ? void 0 : _e.call(_d2);
-  plugin.clone = wrapper;
-  (_f = wrapper.addClass) == null ? void 0 : _f.call(wrapper, "ymz-drag-subtree-preview");
-  (_g = wrapper.attr) == null ? void 0 : _g.call(wrapper, { "data-preview-node-count": String(nodes.length) });
-  wrapper.translate(originX, originY);
-  const opacity = Number((_j = (_i = (_h = plugin.mindMap) == null ? void 0 : _h.opt) == null ? void 0 : _i.dragOpacityConfig) == null ? void 0 : _j.cloneNodeOpacity);
-  (_k = wrapper.opacity) == null ? void 0 : _k.call(wrapper, Number.isFinite(opacity) ? opacity : 0.82);
-  (_l = wrapper.css) == null ? void 0 : _l.call(wrapper, "z-index", 99999);
-  return true;
-}
 function previewGap(plugin, axis) {
   const rects = [];
   (plugin.beingDragNodeList ?? []).forEach((root2) => {
@@ -29369,11 +29311,12 @@ class YeMindDrag extends Drag {
     super.onNodeMousedown(node, event);
   }
   createCloneNode() {
+    var _a, _b;
     const plugin = this;
     const hadClone = Boolean(plugin.clone);
     super.createCloneNode();
     if (hadClone || !plugin.clone) return;
-    replaceSingleNodeCloneWithSubtree(plugin);
+    (_b = (_a = plugin.clone).addClass) == null ? void 0 : _b.call(_a, "ymz-drag-node-preview");
     const none = emptyOfficialDragCandidate();
     plugin.__ymzCandidateState = createDragCandidateState(none);
     plugin.__ymzRawCandidate = none;
