@@ -76,4 +76,42 @@ describe('v1.9.0 upstream rich-text lifecycle ownership', () => {
     expect(createSource).toContain('margin-block-start:0');
     expect(createSource).toContain('margin-block-end:0');
   });
+
+  it('transfers document focus ownership to the latest editor when multiple map tabs stay mounted', () => {
+    const createEditor = () => {
+      const root = document.createElement('div');
+      const focus = vi.fn();
+      root.focus = focus;
+      document.body.appendChild(root);
+      const editor = Object.create(YeMindRichText.prototype) as any;
+      editor.showTextEdit = true;
+      editor.quill = {
+        root,
+        getLength: () => 8,
+        getSelection: () => ({ index: 2, length: 3 }),
+        setSelection: vi.fn(),
+      };
+      editor.range = { index: 2, length: 3 };
+      editor.pasteUseRange = null;
+      return { editor, focus, root };
+    };
+    const first = createEditor();
+    const second = createEditor();
+    const outside = document.createElement('button');
+    document.body.appendChild(outside);
+
+    first.editor.beginEditFocusOwnership();
+    second.editor.beginEditFocusOwnership();
+    first.editor.handleHostFocusIn({ target: outside } as FocusEvent);
+    second.editor.handleHostFocusIn({ target: outside } as FocusEvent);
+
+    expect(first.focus).not.toHaveBeenCalled();
+    expect(second.focus).toHaveBeenCalledOnce();
+    expect(second.editor.quill.setSelection).toHaveBeenCalledWith(2, 3, expect.anything());
+
+    second.editor.releaseEditFocusOwnership();
+    first.root.remove();
+    second.root.remove();
+    outside.remove();
+  });
 });

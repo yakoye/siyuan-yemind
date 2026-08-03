@@ -218,6 +218,8 @@ export function registerYeMindFormats(): void {
 export default class YeMindRichText extends (BaseRichText as any) {
   static instanceName = 'richText';
 
+  private static activeFocusOwner: YeMindRichText | null = null;
+
   private ownsEditFocus = false;
 
   bindEvent(): void {
@@ -242,11 +244,17 @@ export default class YeMindRichText extends (BaseRichText as any) {
   }
 
   private beginEditFocusOwnership(): void {
+    const previous = YeMindRichText.activeFocusOwner;
+    if (previous && previous !== this) previous.ownsEditFocus = false;
+    YeMindRichText.activeFocusOwner = this;
     this.ownsEditFocus = true;
   }
 
   private releaseEditFocusOwnership(): void {
     this.ownsEditFocus = false;
+    if (YeMindRichText.activeFocusOwner === this) {
+      YeMindRichText.activeFocusOwner = null;
+    }
   }
 
   private handleFocusOwnershipPointerDown(event: PointerEvent): void {
