@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.9.9-rc.4 - 2026-08-03
+
+This release candidate closes two insertion and edit-commit lifecycle gaps without adding another editor or geometry path.
+
+- Defers Tab, Enter and quick-add editing until the inserted node has completed its final tree layout, so the first visible editor frame contains `新节点`, owns focus and has a visible full selection.
+- Sends unchanged edit closes through the same canonical `SET_NODE_TEXT` geometry transaction as changed edits, so Enter normalizes stale node dimensions instead of waiting for later typing or pointer interaction.
+- Keeps the opaque editor over the node until the committed SVG text is ready, preventing a transient blank or upper-left static-text frame during close.
+- Registers the two trace-proven runtime forks in the upstream baseline contract and keeps `TextEdit.js` identical to upstream.
+- Adds unit and browser regressions for Tab/Enter/+ first paint, unchanged Enter close, persisted geometry and the editor-to-SVG handoff.
+- Remains an RC until the two original operations are confirmed in the real SiYuan runtime.
+
 ## 1.9.9-rc.3 - 2026-08-03
 
 This release candidate fixes document-level focus ownership when several SiYuan mind-map tabs remain mounted.
