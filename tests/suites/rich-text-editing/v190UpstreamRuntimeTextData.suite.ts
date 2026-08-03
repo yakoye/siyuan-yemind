@@ -90,6 +90,25 @@ describe('v1.9.0 upstream runtime rich-text data', () => {
     expect(tree.children[0].data.text).toBe('<p>已有富文本</p>');
   });
 
+  it('repairs malformed truthy richText flags instead of trusting imported metadata', () => {
+    const tree = {
+      data: {
+        uid: 'root',
+        text: 'PCIe <RAS>',
+        richText: 'false' as unknown as boolean,
+      },
+      children: [],
+    };
+
+    const result = normalizeTreeForUpstreamRichTextInPlaceWithResult(tree);
+
+    expect(result.changed).toBe(true);
+    expect(tree.data).toMatchObject({
+      text: '<p>PCIe &lt;RAS&gt;</p>',
+      richText: true,
+    });
+  });
+
   it('feeds only normalized rich-text data into the runtime renderer', async () => {
     const svgPrototype = (globalThis as any).SVGElement?.prototype;
     if (svgPrototype) {

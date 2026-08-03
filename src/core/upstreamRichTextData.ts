@@ -24,7 +24,7 @@ export function plainTextToRichHtml(value: unknown): string {
 
 function normalizeNodeData(data: MindMapNodeData): boolean {
   let changed = false;
-  if (!data.richText) {
+  if (data.richText !== true) {
     data.text = plainTextToRichHtml(data.text);
     changed = true;
   }

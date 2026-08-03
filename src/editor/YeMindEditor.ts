@@ -38,7 +38,6 @@ import { openTextToMapDialog } from "../ui/textToMapDialog";
 import { repairImportedAutoWidthTree } from "./outlineTreeImport";
 import {
   normalizeTreeForUpstreamRichTextInPlaceWithResult,
-  plainTextToRichHtml,
 } from "../core/upstreamRichTextData";
 import {
   openCommentsDialog,
@@ -1233,12 +1232,7 @@ export class YeMindEditor {
       onApply: (tree, details) => {
         const patches = details.transaction === 'text' ? details.patches : [];
         const applied = details.transaction === 'text'
-          ? patches.length > 0 && patches.every((patch) =>
-              Boolean(this.commands?.setNodeRichTextByUid(
-                patch.uid,
-                patch.richText ? patch.text : plainTextToRichHtml(patch.text),
-              )),
-            )
+          ? Boolean(this.commands?.applyNodeTextPatches(tree, patches))
           : Boolean(this.commands?.replaceTree(tree));
         if (applied && this.map) {
           this.current.data = this.map.getData(false) as MindMapTree;

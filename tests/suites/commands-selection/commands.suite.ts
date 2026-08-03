@@ -232,6 +232,63 @@ describe('outline command bridge', () => {
     expect(map.setData).not.toHaveBeenCalled();
   });
 
+  it('applies one outline text patch natively and multiple patches as one atomic tree transaction', () => {
+    const first = { nodeData: { data: {} } };
+    const second = { nodeData: { data: {} } };
+    const map = fakeMindMap() as any;
+    map.opt = { readonly: false };
+    map.updateData = vi.fn();
+    map.renderer.findNodeByUid = vi.fn((uid: string) => uid === 'first' ? first : uid === 'second' ? second : null);
+    const commands = createCommandAdapter(map as never);
+    const nextTree = {
+      data: { uid: 'root', text: '<p>Root</p>', richText: true },
+      children: [
+        { data: { uid: 'first', text: '<p>A</p>', richText: true }, children: [] },
+        { data: { uid: 'second', text: '<p>B</p>', richText: true }, children: [] },
+      ],
+    };
+
+    expect(commands.applyNodeTextPatches(nextTree, [
+      { uid: 'first', text: 'A < B', richText: false },
+    ])).toBe(true);
+    expect(map.execCommand).toHaveBeenCalledWith('SET_NODE_TEXT', first, '<p>A &lt; B</p>', true, false);
+    expect(map.updateData).not.toHaveBeenCalled();
+
+    map.execCommand.mockClear();
+    expect(commands.applyNodeTextPatches(nextTree, [
+      { uid: 'first', text: '<p>A</p>', richText: true },
+      { uid: 'second', text: '<p>B</p>', richText: true },
+    ])).toBe(true);
+    expect(map.execCommand).not.toHaveBeenCalled();
+    expect(map.updateData).toHaveBeenCalledTimes(1);
+    expect(map.updateData).toHaveBeenCalledWith(expect.objectContaining({
+      children: [
+        expect.objectContaining({ data: expect.objectContaining({ uid: 'first', yemindTextEdited: true, yemindTextPristine: false }) }),
+        expect.objectContaining({ data: expect.objectContaining({ uid: 'second', yemindTextEdited: true, yemindTextPristine: false }) }),
+      ],
+    }));
+  });
+
+  it('rejects an invalid outline text batch without applying any partial mutation', () => {
+    const first = { nodeData: { data: {} } };
+    const map = fakeMindMap() as any;
+    map.opt = { readonly: false };
+    map.updateData = vi.fn();
+    map.renderer.findNodeByUid = vi.fn((uid: string) => uid === 'first' ? first : null);
+    const commands = createCommandAdapter(map as never);
+    const nextTree = {
+      data: { uid: 'root', text: '<p>Root</p>', richText: true },
+      children: [{ data: { uid: 'first', text: '<p>A</p>', richText: true }, children: [] }],
+    };
+
+    expect(commands.applyNodeTextPatches(nextTree, [
+      { uid: 'first', text: '<p>A</p>', richText: true },
+      { uid: 'missing', text: '<p>B</p>', richText: true },
+    ])).toBe(false);
+    expect(map.execCommand).not.toHaveBeenCalled();
+    expect(map.updateData).not.toHaveBeenCalled();
+  });
+
   it('refuses whole-tree replacement when readonly or when the upstream transaction is unavailable', () => {
     const nextTree = { data: { uid: 'root', text: 'Root' }, children: [] };
     const readonlyMap = fakeMindMap() as any;

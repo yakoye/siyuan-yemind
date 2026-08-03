@@ -16,6 +16,7 @@ import {
   type SearchOptions,
 } from '../editor/searchEngine';
 import { steppedZoomPercent } from '../editor/zoomPercent';
+import { normalizeTreeForUpstreamRichText, plainTextToRichHtml } from './upstreamRichTextData';
 
 export interface NodeImageInput {
   url: string | null;
@@ -23,6 +24,12 @@ export interface NodeImageInput {
   width?: number;
   height?: number;
   custom?: boolean;
+}
+
+export interface NodeTextPatch {
+  uid: string;
+  text: string;
+  richText: boolean;
 }
 
 export interface YeMindCommands extends RichTextFormattingTarget {
@@ -114,6 +121,7 @@ export interface YeMindCommands extends RichTextFormattingTarget {
   goToNode(uid: string): void;
   setNodeTextByUid(uid: string, text: string): boolean;
   setNodeRichTextByUid(uid: string, html: string): boolean;
+  applyNodeTextPatches(data: MindMapTree, patches: readonly NodeTextPatch[]): boolean;
   insertSiblingByUid(uid: string, newUid: string): boolean;
   insertChildByUid(uid: string, newUid: string): boolean;
   addChildByUid(uid: string): boolean;
@@ -809,6 +817,42 @@ export function createCommandAdapter(mindMap: MindMap): YeMindCommands {
       if (!node) return false;
       markNodeTextEdited(node);
       mindMap.execCommand('SET_NODE_TEXT', node, html, true, false);
+      return true;
+    },
+    applyNodeTextPatches: (data, patches) => {
+      if (!canMutate() || patches.length === 0) return false;
+      const targets = patches.map((patch) => findNodeByUid(patch.uid));
+      if (targets.some((node) => !node)) return false;
+
+      if (patches.length === 1) {
+        const patch = patches[0];
+        const node = targets[0];
+        markNodeTextEdited(node);
+        mindMap.execCommand(
+          'SET_NODE_TEXT',
+          node,
+          patch.richText ? patch.text : plainTextToRichHtml(patch.text),
+          true,
+          false,
+        );
+        return true;
+      }
+
+      const updateData = (mindMap as any).updateData;
+      if (typeof updateData !== 'function') return false;
+      const patchUids = new Set(patches.map((patch) => patch.uid));
+      const normalized = normalizeTreeForUpstreamRichText(data);
+      const markPatchedTreeNodes = (tree: MindMapTree): void => {
+        if (tree.data.uid && patchUids.has(tree.data.uid)) {
+          tree.data.yemindTextEdited = true;
+          tree.data.yemindTextPristine = false;
+        }
+        tree.children.forEach(markPatchedTreeNodes);
+      };
+      markPatchedTreeNodes(normalized);
+      // One updateData call is one upstream undoable transaction. Validating all
+      // live targets before this point prevents a partially applied text batch.
+      updateData.call(mindMap, normalized);
       return true;
     },
     insertSiblingByUid: (uid, newUid) => {

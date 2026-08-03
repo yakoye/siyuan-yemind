@@ -2965,8 +2965,8 @@ test('persisted custom-width nodes are fully measured on first paint before any 
   expect(Math.abs(after!.height - before!.height)).toBeLessThanOrEqual(1);
 });
 
-test('a map mounted in a hidden host is canonically measured when the host becomes visible', async ({ page, isMobile }) => {
-  test.skip(isMobile, 'desktop hidden-host geometry regression');
+test('a map mounted in a constrained host is canonically measured when the host expands', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop constrained-host geometry regression');
   const rootText = '中心主题中心主题是一段用于验证冷启动、双击编辑和重载后尺寸完全一致的较243243243443243243';
   const childText = '新节点这个不错，你知道吗fsaffdsa453';
 
@@ -3023,14 +3023,14 @@ test('a map mounted in a hidden host is canonically measured when the host becom
     const html = await response.text();
     await route.fulfill({
       response,
-      body: html.replace('</head>', '<style id="hidden-host-fixture">.ymw-editor{width:240px!important;height:180px!important;overflow:hidden!important}</style></head>'),
+      body: html.replace('</head>', '<style id="constrained-host-fixture">.ymw-editor{width:240px!important;height:180px!important;overflow:hidden!important}</style></head>'),
     });
   });
   await page.goto('/');
   const editor = page.locator('.ymw-editor > .ymz-editor');
   await editor.waitFor({ state: 'attached' });
   await expect(editor.locator('.smm-node')).toHaveCount(2);
-  await page.evaluate(() => document.querySelector('#hidden-host-fixture')?.remove());
+  await page.evaluate(() => document.querySelector('#constrained-host-fixture')?.remove());
   await page.evaluate(() => window.dispatchEvent(new Event('resize')));
   await expect(editor).toBeVisible();
 
@@ -3085,11 +3085,7 @@ test('an outline text commit leaves the same rendered node immediately width-dra
   await page.keyboard.press('Enter');
   await expect(editor.locator('[data-role="save-state-label"]')).toHaveText('已保存');
 
-  let node = editor.locator('.smm-node').filter({ hasText: '大纲修改后立即拖动宽度' });
-  await expect(node).toHaveCount(1);
-  await expect(node.locator('.smm-richtext-node-wrap')).toHaveCount(1);
-  await page.reload();
-  node = editor.locator('.smm-node').filter({ hasText: '大纲修改后立即拖动宽度' });
+  const node = editor.locator('.smm-node').filter({ hasText: '大纲修改后立即拖动宽度' });
   await expect(node).toHaveCount(1);
   await expect(node.locator('.smm-richtext-node-wrap')).toHaveCount(1);
   await node.click();
