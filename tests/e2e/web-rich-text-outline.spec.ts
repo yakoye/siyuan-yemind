@@ -2397,7 +2397,7 @@ test('a transient editor/target geometry mismatch during typing must not hide or
 // docs/superpowers/plans/2026-07-31-canvas-text-edit-stabilization.md). The
 // tests below lock in the resulting guarantees directly.
 
-test('typing with real pauses between characters never rebuilds the static SVG text mid-edit', async ({ page, isMobile }) => {
+test('typing with real pauses between characters keeps exactly one static text layer under the editor', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop live-edit isolation regression');
   const errors = recordPageErrors(page);
   await resetWebApp(page);
@@ -2409,37 +2409,53 @@ test('typing with real pauses between characters never rebuilds the static SVG t
   await expect(textEditor).toBeFocused();
   await textEditor.press('Control+A');
 
+  // The node's box now follows the typed text (see the live-adaptation tests),
+  // which means its text layer is replaced when the measured size changes.
+  // What must never happen is a *second* layer appearing beside it, or the
+  // layer escaping the opaque editor that covers it -- either one paints two
+  // sets of glyphs at once, which is the flicker this scenario guards.
   await rootNode.evaluate((element) => {
-    const original = element.querySelector('.smm-text-node-wrap,.smm-richtext-node-wrap');
-    (window as any).__yemindStaticTextIdentity = original;
-    (window as any).__yemindStaticTextReplacementCount = 0;
-    const observer = new MutationObserver(() => {
-      const current = element.querySelector('.smm-text-node-wrap,.smm-richtext-node-wrap');
-      if (current !== (window as any).__yemindStaticTextIdentity) {
-        (window as any).__yemindStaticTextReplacementCount += 1;
-        (window as any).__yemindStaticTextIdentity = current;
+    const state = { maxLayers: 0, escapedFrames: 0, samples: 0 };
+    (window as any).__yemindStaticTextState = state;
+    const sample = () => {
+      const layers = element.querySelectorAll('.smm-text-node-wrap,.smm-richtext-node-wrap');
+      state.maxLayers = Math.max(state.maxLayers, layers.length);
+      state.samples += 1;
+      const host = document.querySelector('.smm-richtext-node-edit-wrap') as HTMLElement | null;
+      if (host && host.style.display !== 'none' && layers.length > 0) {
+        const hostBox = host.getBoundingClientRect();
+        const textBox = (layers[0] as Element).getBoundingClientRect();
+        if (
+          textBox.left < hostBox.left - 2
+          || textBox.right > hostBox.right + 2
+          || textBox.top < hostBox.top - 2
+          || textBox.bottom > hostBox.bottom + 2
+        ) state.escapedFrames += 1;
       }
-    });
-    observer.observe(element, { childList: true, subtree: true });
-    (window as any).__yemindStaticTextIdentityObserver = observer;
+      (window as any).__yemindStaticTextFrame = requestAnimationFrame(sample);
+    };
+    sample();
   });
 
-  // Each character waits longer than the old debounce window used to. If any
-  // code path still rebuilds SVG text mid-edit, this would flicker or change
-  // the static group count while the editor stays open.
+  // Each character waits longer than the reconcile throttle, so every
+  // intermediate geometry state is actually sampled rather than skipped over.
   await textEditor.pressSequentially('abc', { delay: 250 });
-
-  expect(await page.evaluate(() => (window as any).__yemindStaticTextReplacementCount)).toBe(0);
   await expect(textEditor).toHaveText('abc');
-  expect(errors).toEqual([]);
 
   await textEditor.press('Backspace');
   await page.waitForTimeout(250);
-  expect(await page.evaluate(() => (window as any).__yemindStaticTextReplacementCount)).toBe(0);
   await expect(textEditor).toHaveText('ab');
 
+  const state = await page.evaluate(() => {
+    cancelAnimationFrame((window as any).__yemindStaticTextFrame);
+    return (window as any).__yemindStaticTextState;
+  });
+  expect(state.samples).toBeGreaterThan(30);
+  expect(state.maxLayers).toBe(1);
+  expect(state.escapedFrames).toBe(0);
+  expect(errors).toEqual([]);
+
   await commitCanvasEdit(page);
-  await page.evaluate(() => (window as any).__yemindStaticTextIdentityObserver?.disconnect());
   await expect(rootNode).toContainText('ab');
 });
 
@@ -3101,4 +3117,144 @@ test('an outline text commit leaves the same rendered node immediately width-dra
   const after = await node.boundingBox();
   expect(after).not.toBeNull();
   expect(after!.width).toBeGreaterThan(before!.width + 50);
+});
+
+async function canvasNodeGeometry(page: import('@playwright/test').Page): Promise<{
+  shape: { x: number; y: number; w: number; h: number };
+  text: { x: number; y: number; w: number; h: number };
+  host: { x: number; y: number; w: number; h: number } | null;
+}> {
+  return page.evaluate(() => {
+    const rect = (element: Element | null) => {
+      if (!element) return null;
+      const box = element.getBoundingClientRect();
+      return {
+        x: Math.round(box.x * 10) / 10,
+        y: Math.round(box.y * 10) / 10,
+        w: Math.round(box.width * 10) / 10,
+        h: Math.round(box.height * 10) / 10,
+      };
+    };
+    const group = document.querySelector('.ymw-editor > .ymz-editor .smm-node')
+      ?? document.querySelector('.smm-node');
+    const editorHost = document.querySelector('.smm-richtext-node-edit-wrap');
+    const visibleHost = editorHost instanceof HTMLElement && editorHost.style.display !== 'none'
+      ? editorHost
+      : null;
+    return {
+      shape: rect(group?.querySelector('.smm-node-shape') ?? null)!,
+      text: rect(group?.querySelector('g[data-width]') ?? null)!,
+      host: rect(visibleHost),
+    };
+  });
+}
+
+// v1.9.9 user regression: the node frame only resized when the edit session
+// closed, so text that outgrew it was clipped by its own frame.
+test('the node frame grows with the text while it is still being typed', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop live node adaptation regression');
+  const errors = recordPageErrors(page);
+  await resetWebApp(page);
+  const rootNode = page.locator('.ymw-editor > .ymz-editor .smm-node').first();
+  const textEditor = canvasTextEditor(page);
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeFocused();
+  const before = await canvasNodeGeometry(page);
+
+  await page.keyboard.press('Control+a');
+  await textEditor.pressSequentially('中心主题是一段明显更长的验证文本内容', { delay: 30 });
+  await page.waitForTimeout(400);
+
+  const during = await canvasNodeGeometry(page);
+  expect(during.shape.w).toBeGreaterThan(before.shape.w + 50);
+  // The frame must actually contain the text, not merely be larger.
+  expect(during.text.x).toBeGreaterThanOrEqual(during.shape.x);
+  expect(during.text.x + during.text.w).toBeLessThanOrEqual(during.shape.x + during.shape.w + 0.5);
+  // The editor overlay stays anchored on the text it replaces.
+  expect(Math.abs((during.host?.x ?? 0) + 6 - during.text.x)).toBeLessThanOrEqual(1.5);
+
+  const previewWidth = during.shape.w;
+  await commitCanvasEdit(page);
+  const after = await canvasNodeGeometry(page);
+  // What the user saw while typing is exactly what gets committed.
+  expect(Math.abs(after.shape.w - previewWidth)).toBeLessThanOrEqual(1);
+  expect(errors).toEqual([]);
+});
+
+// v1.9.9 user regression: a node kept the frame of its previous, longer text
+// after the text was shortened.
+test('the node frame shrinks back while text is being deleted', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop live node adaptation regression');
+  await resetWebApp(page);
+  const rootNode = page.locator('.ymw-editor > .ymz-editor .smm-node').first();
+  const textEditor = canvasTextEditor(page);
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeFocused();
+  await page.keyboard.press('Control+a');
+  await textEditor.pressSequentially('先输入一段很长的内容用来把节点撑大', { delay: 20 });
+  await page.waitForTimeout(400);
+  const wide = await canvasNodeGeometry(page);
+
+  await page.keyboard.press('Control+a');
+  await textEditor.pressSequentially('短', { delay: 20 });
+  await page.waitForTimeout(400);
+
+  const narrow = await canvasNodeGeometry(page);
+  expect(narrow.shape.w).toBeLessThan(wide.shape.w / 2);
+  expect(narrow.text.x).toBeGreaterThanOrEqual(narrow.shape.x);
+  expect(narrow.text.x + narrow.text.w).toBeLessThanOrEqual(narrow.shape.x + narrow.shape.w + 0.5);
+  expect(Math.abs((narrow.host?.x ?? 0) + 6 - narrow.text.x)).toBeLessThanOrEqual(1.5);
+
+  const previewWidth = narrow.shape.w;
+  await commitCanvasEdit(page);
+  const after = await canvasNodeGeometry(page);
+  expect(Math.abs(after.shape.w - previewWidth)).toBeLessThanOrEqual(1);
+});
+
+// v1.9.9 user regression: Ctrl+A had to select the node text, not the
+// surrounding application UI, and the result had to be a real editable range.
+test('Ctrl+A selects the edited node text and never the surrounding application UI', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop keyboard regression');
+  await resetWebApp(page);
+  const rootNode = page.locator('.ymw-editor > .ymz-editor .smm-node').first();
+  const textEditor = canvasTextEditor(page);
+
+  const readSelection = () => page.evaluate(() => {
+    const selection = window.getSelection();
+    const editorRoot = document.querySelector('.smm-richtext-node-edit-wrap .ql-editor');
+    const anchor = selection?.anchorNode ?? null;
+    const anchorElement = anchor?.nodeType === 1 ? (anchor as Element) : anchor?.parentElement ?? null;
+    return {
+      text: selection ? String(selection) : '',
+      insideEditor: Boolean(editorRoot && anchorElement && editorRoot.contains(anchorElement)),
+    };
+  });
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeFocused();
+  await page.keyboard.press('Control+a');
+  await textEditor.pressSequentially('可以被全选的节点文字', { delay: 20 });
+  await page.waitForTimeout(300);
+
+  await page.keyboard.press('Control+a');
+  const selected = await readSelection();
+  expect(selected.text).toBe('可以被全选的节点文字');
+  expect(selected.insideEditor).toBe(true);
+
+  // The selection must be a real editable range: Cut empties the node text.
+  await page.keyboard.press('Control+x');
+  await expect(textEditor).toHaveText('');
+  await page.keyboard.type('剪切之后继续输入');
+  await expect(textEditor).toHaveText('剪切之后继续输入');
+  await commitCanvasEdit(page);
+  await expect(rootNode).toContainText('剪切之后继续输入');
+
+  // With no edit session open, Ctrl+A must not select the application chrome.
+  await rootNode.click();
+  await page.keyboard.press('Control+a');
+  await page.waitForTimeout(200);
+  const canvasSelection = await readSelection();
+  expect(canvasSelection.text).toBe('');
 });

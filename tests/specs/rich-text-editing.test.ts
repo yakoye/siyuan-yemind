@@ -13,3 +13,4 @@ import '../suites/rich-text-editing/v0914MeasurementGeometry.suite';
 import '../suites/rich-text-editing/v0924FormulaIcon.suite';
 import '../suites/rich-text-editing/v190UpstreamRuntimeTextData.suite';
 import '../suites/rich-text-editing/v190UpstreamLifecycleOwnership.suite';
+import '../suites/rich-text-editing/v199LiveNodeTextGeometry.suite';

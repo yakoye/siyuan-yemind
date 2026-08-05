@@ -32,7 +32,8 @@
     "v0914MeasurementGeometry.suite.ts",
     "v0924FormulaIcon.suite.ts",
     "v190UpstreamRuntimeTextData.suite.ts",
-    "v190UpstreamLifecycleOwnership.suite.ts"
+    "v190UpstreamLifecycleOwnership.suite.ts",
+    "v199LiveNodeTextGeometry.suite.ts"
   ],
   "styles-themes": [
     "colorPresentation.suite.ts",
