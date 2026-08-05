@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.9.9-rc.5 - 2026-08-05
+
+This release candidate makes a node's box follow the text while it is still being typed, instead of only when the edit closes.
+
+- Fixes a node clipping text that had outgrown its frame, and keeping an oversized frame after text was deleted. Measured in Chromium before the fix: typing a 33-character string into the root node left its shape at the exact `97x36px` it had before the first keystroke, and after deleting back down to one character the shape stayed `524px` wide. Both symptoms had the same cause — the box was only measured by the `SET_NODE_TEXT` transaction on close.
+- Adds `LiveNodeTextGeometryController` (`src/editor/liveNodeTextGeometry.ts`), which listens to the upstream `node_text_edit_change` event and measures the live editor HTML with the same `MindMapNode#createTextNode` the close commits. Because every node is normalized to the upstream rich-text model and `hideEditText()` commits `getEditText()` verbatim, the preview and the commit cannot disagree: the browser regressions assert the previewed width is within 1px of the committed one.
+- Deliberately does **not** switch on `openRealtimeRenderOnNodeTextEdit`. That upstream mode also makes the edit host transparent and drives the node's static text with `opacity(0)`, which would undo the opaque-editor close contract from rc.4, and it rebuilds the node on a fixed 100ms tick regardless of whether the geometry changed. This runs on a trailing throttle and only commits when the measured size really changed, so typing inside an already-wide-enough node costs one measurement and no layout.
+- Replaces the node's text layer rather than resizing the box around the old one. `nodeLayout.js#layout()` centres the text slot on painted glyph ink, so a stale layer inside a resized box drags the whole content group — and the editor anchored to it — sideways by half the difference; measured at `224.5px` off for a node shrunk from `469px` to `20px` of text.
+- Resizes the edit host in the same synchronous block as the node, then again after the tree layout runs. `mindMap.render()` is asynchronous, so updating the host only from its callback left one or two painted frames in which the static glyphs visibly stuck out past the editor covering them.
+- Writes nothing to the map data model while typing, so a typing burst still produces no history entry, no `data_change` and no autosave; `hideEditText()` remains the single authority that commits text.
+- Retargets the mid-edit isolation regression from "the static text element is never replaced" (the behaviour this change intentionally alters) to the invariant that actually protects the user: across every sampled animation frame there is exactly one static text layer and it never escapes the opaque editor covering it.
+- Adds `tests/suites/rich-text-editing/v199LiveNodeTextGeometry.suite.ts` (12 scenarios) and three browser regressions for grow, shrink and canvas select-all/cut.
+- Full verification: `tsc --noEmit`, docs check, unit suite (1003 passed / 0 failed), complete Playwright E2E across desktop and mobile projects (137 passed / 0 failed, no retries).
+- Remains an RC until the node adaptation is confirmed in the real SiYuan runtime.
+
 ## 1.9.9-rc.4 - 2026-08-03
 
 This release candidate closes two insertion and edit-commit lifecycle gaps without adding another editor or geometry path.
