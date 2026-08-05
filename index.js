@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.9-rc.4";
+const PLUGIN_VERSION = "1.9.9-rc.5";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "2801568c-clean",
-  time: "2026-08-03T17:38:24+08:00"
+  id: "b44dd7f4-dirty-a4250e39",
+  time: "2026-08-05T13:34:22.330Z"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-03T09:35:32.747Z",
-  buildId: "yemind-v1.9.9-rc.4-20260803",
+  buildTime: "2026-08-05T13:34:22.326Z",
+  buildId: "yemind-v1.9.9-rc.5-20260805",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -94028,6 +94028,85 @@ class MiniMapController {
     return normalized2;
   }
 }
+const browserTimers = {
+  set: (callback, delayMs) => window.setTimeout(callback, delayMs),
+  clear: (handle) => window.clearTimeout(handle)
+};
+function createMeasuredTextData(node, html2) {
+  var _a;
+  const data2 = (_a = node == null ? void 0 : node.nodeData) == null ? void 0 : _a.data;
+  if (!data2 || typeof (node == null ? void 0 : node.createTextNode) !== "function") return null;
+  if (data2.resetRichText) return null;
+  const previousNeedUpdate = data2.needUpdate;
+  try {
+    const created = node.createTextNode(html2);
+    const width2 = Number(created == null ? void 0 : created.width);
+    const height2 = Number(created == null ? void 0 : created.height);
+    if (!(created == null ? void 0 : created.node) || !Number.isFinite(width2) || !Number.isFinite(height2)) return null;
+    if (!(width2 > 0) || !(height2 > 0)) return null;
+    return created;
+  } catch {
+    return null;
+  } finally {
+    if (previousNeedUpdate === void 0) delete data2.needUpdate;
+    else data2.needUpdate = previousNeedUpdate;
+  }
+}
+function textSizeChanged(current, next2) {
+  return Math.abs(Number(current == null ? void 0 : current.width) - next2.width) >= 0.5 || Math.abs(Number(current == null ? void 0 : current.height) - next2.height) >= 0.5;
+}
+class LiveNodeTextGeometryController {
+  constructor(mindMap, options = {}) {
+    __publicField(this, "timer", null);
+    __publicField(this, "destroyed", false);
+    __publicField(this, "intervalMs");
+    __publicField(this, "timers");
+    __publicField(this, "onTextEditChange", () => this.schedule());
+    var _a, _b;
+    this.mindMap = mindMap;
+    this.intervalMs = Math.max(0, Number(options.intervalMs ?? 50));
+    this.timers = options.timers ?? browserTimers;
+    (_b = (_a = this.mindMap) == null ? void 0 : _a.on) == null ? void 0 : _b.call(_a, "node_text_edit_change", this.onTextEditChange);
+  }
+  schedule() {
+    if (this.destroyed || this.timer !== null) return;
+    this.timer = this.timers.set(() => {
+      this.timer = null;
+      this.reconcile();
+    }, this.intervalMs);
+  }
+  reconcile() {
+    var _a, _b, _c2, _d2, _e, _f;
+    if (this.destroyed) return false;
+    const richText = (_a = this.mindMap) == null ? void 0 : _a.richText;
+    if ((richText == null ? void 0 : richText.showTextEdit) !== true) return false;
+    const node = richText.node;
+    if (!(node == null ? void 0 : node._textData)) return false;
+    if (node.isDragHandleMousedown === true) return false;
+    const measured = createMeasuredTextData(node, String(((_b = richText.getEditText) == null ? void 0 : _b.call(richText)) ?? ""));
+    if (!measured) return false;
+    if (!textSizeChanged(node._textData, measured)) return false;
+    node._textData = measured;
+    (_c2 = node.reRender) == null ? void 0 : _c2.call(node, [], { ignoreUpdateCustomTextWidth: true });
+    (_d2 = richText.updateTextEditNode) == null ? void 0 : _d2.call(richText);
+    (_f = (_e = this.mindMap).render) == null ? void 0 : _f.call(_e, () => {
+      var _a2, _b2, _c3, _d3;
+      if (this.destroyed || ((_b2 = (_a2 = this.mindMap) == null ? void 0 : _a2.richText) == null ? void 0 : _b2.showTextEdit) !== true) return;
+      (_d3 = (_c3 = this.mindMap.richText) == null ? void 0 : _c3.updateTextEditNode) == null ? void 0 : _d3.call(_c3);
+    }, "yemind-live-node-text-geometry");
+    return true;
+  }
+  invalidate() {
+    if (this.timer !== null) this.timers.clear(this.timer);
+    this.timer = null;
+  }
+  destroy() {
+    var _a, _b;
+    this.invalidate();
+    this.destroyed = true;
+    (_b = (_a = this.mindMap) == null ? void 0 : _a.off) == null ? void 0 : _b.call(_a, "node_text_edit_change", this.onTextEditChange);
+  }
+}
 function renderedNodeUid(node) {
   var _a, _b, _c2, _d2, _e;
   const data2 = (_a = node == null ? void 0 : node.getData) == null ? void 0 : _a.call(node);
@@ -94104,6 +94183,7 @@ class YeMindEditor {
     __publicField(this, "appearanceController", null);
     __publicField(this, "studyPanel", null);
     __publicField(this, "miniMapController", null);
+    __publicField(this, "liveNodeTextGeometry", null);
     __publicField(this, "unbindCanvasNodeClipboard", null);
     __publicField(this, "studyMode", null);
     __publicField(this, "presentationState", null);
@@ -94580,7 +94660,7 @@ class YeMindEditor {
     (_b = panel.querySelector("[data-import-kind]:not([hidden])")) == null ? void 0 : _b.focus();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G;
     this.options.diagnostics.record(
       "editor",
       "destroy-started",
@@ -94621,20 +94701,22 @@ class YeMindEditor {
     this.resourceActionPopover = null;
     (_q = this.nodeQuickActions) == null ? void 0 : _q.destroy();
     this.nodeQuickActions = null;
-    (_r = this.canvasRightDrag) == null ? void 0 : _r.destroy();
+    (_r = this.liveNodeTextGeometry) == null ? void 0 : _r.destroy();
+    this.liveNodeTextGeometry = null;
+    (_s = this.canvasRightDrag) == null ? void 0 : _s.destroy();
     this.canvasRightDrag = null;
-    (_s = this.cancelFocusedNodeHighlight) == null ? void 0 : _s.call(this);
+    (_t = this.cancelFocusedNodeHighlight) == null ? void 0 : _t.call(this);
     this.cancelFocusedNodeHighlight = null;
-    (_t = this.rootEl) == null ? void 0 : _t.removeEventListener("keydown", this.onRootKeydown, true);
+    (_u = this.rootEl) == null ? void 0 : _u.removeEventListener("keydown", this.onRootKeydown, true);
     window.removeEventListener("keydown", this.onWindowTextSelectionKeydown, true);
-    (_u = this.outlinePaneEl) == null ? void 0 : _u.removeEventListener("keydown", this.onOutlineKeydownBubble);
+    (_v = this.outlinePaneEl) == null ? void 0 : _v.removeEventListener("keydown", this.onOutlineKeydownBubble);
     document.removeEventListener("paste", this.onImagePaste, true);
-    (_v = this.canvasEl) == null ? void 0 : _v.removeEventListener("dragover", this.onImageDragOver);
-    (_w = this.canvasEl) == null ? void 0 : _w.removeEventListener("drop", this.onImageDrop);
-    (_x = this.canvasEl) == null ? void 0 : _x.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
-    (_y = this.canvasEl) == null ? void 0 : _y.removeEventListener("click", this.onCanvasLinkClickCapture, true);
-    (_z = this.canvasEl) == null ? void 0 : _z.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
-    (_A = this.outlineEl) == null ? void 0 : _A.removeEventListener(
+    (_w = this.canvasEl) == null ? void 0 : _w.removeEventListener("dragover", this.onImageDragOver);
+    (_x = this.canvasEl) == null ? void 0 : _x.removeEventListener("drop", this.onImageDrop);
+    (_y = this.canvasEl) == null ? void 0 : _y.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
+    (_z = this.canvasEl) == null ? void 0 : _z.removeEventListener("click", this.onCanvasLinkClickCapture, true);
+    (_A = this.canvasEl) == null ? void 0 : _A.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
+    (_B = this.outlineEl) == null ? void 0 : _B.removeEventListener(
       "pointerdown",
       this.onOutlinePointerDown,
       true
@@ -94651,10 +94733,10 @@ class YeMindEditor {
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_B = this.unbindCanvasNodeClipboard) == null ? void 0 : _B.call(this);
+    (_C = this.unbindCanvasNodeClipboard) == null ? void 0 : _C.call(this);
     this.unbindCanvasNodeClipboard = null;
-    (_E = (_D = (_C = this.map) == null ? void 0 : _C.command) == null ? void 0 : _D.yemindCancelHistory) == null ? void 0 : _E.call(_D);
-    (_F = this.map) == null ? void 0 : _F.destroy();
+    (_F = (_E = (_D = this.map) == null ? void 0 : _D.command) == null ? void 0 : _E.yemindCancelHistory) == null ? void 0 : _F.call(_E);
+    (_G = this.map) == null ? void 0 : _G.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record(
@@ -94861,6 +94943,7 @@ class YeMindEditor {
         return inserted;
       }
     });
+    this.liveNodeTextGeometry = new LiveNodeTextGeometryController(this.map);
     const miniMapElement = this.options.container.querySelector('[data-role="minimap"]');
     if (miniMapElement) {
       this.miniMapController = new MiniMapController(this.rootEl, this.map, miniMapElement);
