@@ -139,6 +139,7 @@ import { normalizeStudyCards } from '../review/studyCards';
 import { normalizeStudyCardSource } from '../review/studyCardSource';
 import { MiniMapController } from './MiniMapController';
 import { LiveNodeTextGeometryController } from './liveNodeTextGeometry';
+import { EditingNodeTextSuppression } from './editingNodeTextSuppression';
 import { bindCanvasNodeClipboard } from './nodeClipboard';
 import {
   readImageResourceFromTransfer,
@@ -269,6 +270,7 @@ export class YeMindEditor {
   private studyPanel: StudyPanelController | null = null;
   private miniMapController: MiniMapController | null = null;
   private liveNodeTextGeometry: LiveNodeTextGeometryController | null = null;
+  private editingNodeTextSuppression: EditingNodeTextSuppression | null = null;
   private unbindCanvasNodeClipboard: (() => void) | null = null;
   private studyMode: StudyPanelMode | null = null;
   private presentationState: {
@@ -851,6 +853,8 @@ export class YeMindEditor {
     this.nodeQuickActions = null;
     this.liveNodeTextGeometry?.destroy();
     this.liveNodeTextGeometry = null;
+    this.editingNodeTextSuppression?.destroy();
+    this.editingNodeTextSuppression = null;
     this.canvasRightDrag?.destroy();
     this.canvasRightDrag = null;
     this.cancelFocusedNodeHighlight?.();
@@ -1105,6 +1109,7 @@ export class YeMindEditor {
       },
     });
     this.liveNodeTextGeometry = new LiveNodeTextGeometryController(this.map);
+    this.editingNodeTextSuppression = new EditingNodeTextSuppression(this.map);
     const miniMapElement = this.options.container.querySelector<HTMLElement>('[data-role="minimap"]');
     if (miniMapElement) {
       this.miniMapController = new MiniMapController(this.rootEl, this.map, miniMapElement);

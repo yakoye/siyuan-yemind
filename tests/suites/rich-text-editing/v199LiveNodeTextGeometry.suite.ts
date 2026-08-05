@@ -5,6 +5,11 @@ import {
   textSizeChanged,
   type LiveTextGeometryTimers,
 } from '../../../src/editor/liveNodeTextGeometry';
+import { resolveFocusRestoreRange } from '../../../src/editor/YeMindRichText';
+import {
+  EDITING_NODE_CLASS,
+  EditingNodeTextSuppression,
+} from '../../../src/editor/editingNodeTextSuppression';
 
 interface Harness {
   mindMap: any;
@@ -217,5 +222,118 @@ describe('v1.9.9 live canvas node geometry', () => {
   it('treats a sub-pixel measurement difference as unchanged', () => {
     expect(textSizeChanged({ width: 100, height: 20 }, { node: {}, width: 100.2, height: 20.1 })).toBe(false);
     expect(textSizeChanged({ width: 100, height: 20 }, { node: {}, width: 101, height: 20 })).toBe(true);
+  });
+});
+
+describe('v1.9.9-rc.6 canvas edit focus recovery', () => {
+  it('restores the first known selection instead of collapsing to the end of the text', () => {
+    // The order matters: a live non-collapsed selection wins, then the paste
+    // range, then whatever Quill still reports, then the last recorded range.
+    expect(resolveFocusRestoreRange([{ index: 2, length: 5 }, null, null, null], 99))
+      .toEqual({ index: 2, length: 5 });
+    expect(resolveFocusRestoreRange([null, null, null, { index: 0, length: 3 }], 99))
+      .toEqual({ index: 0, length: 3 });
+  });
+
+  it('keeps a freshly inserted node fully selected across a host focus steal', () => {
+    // `range` holds only non-collapsed selections and is cleared on every
+    // keystroke; `quill.getSelection()` is null while focus sits elsewhere. The
+    // insertion's own select-all therefore survives only through the recorded
+    // range -- without it the caret collapsed to the end and typing appended to
+    // 新节点 instead of replacing it.
+    expect(resolveFocusRestoreRange([null, null, null, { index: 0, length: 3 }], 3))
+      .toEqual({ index: 0, length: 3 });
+  });
+
+  it('collapses to the end only when nothing at all is known', () => {
+    expect(resolveFocusRestoreRange([null, undefined, null, null], 7))
+      .toEqual({ index: 7, length: 0 });
+    expect(resolveFocusRestoreRange([], 0)).toEqual({ index: 0, length: 0 });
+  });
+
+  it('treats a collapsed recorded caret as a real position, not as "nothing known"', () => {
+    expect(resolveFocusRestoreRange([null, null, null, { index: 4, length: 0 }], 99))
+      .toEqual({ index: 4, length: 0 });
+  });
+});
+
+describe('v1.9.9-rc.6 editing node glyph suppression', () => {
+  function suppressionHarness() {
+    const listeners: Record<string, Array<() => void>> = {};
+    const classList = new Set<string>();
+    const group = {
+      classList: {
+        add: (name: string) => classList.add(name),
+        remove: (name: string) => classList.delete(name),
+      },
+    };
+    let queued: Array<() => void> = [];
+    const mindMap: any = {
+      richText: { showTextEdit: true, node: { group: { node: group } } },
+      on: (name: string, handler: () => void) => { (listeners[name] ??= []).push(handler); },
+      off: (name: string, handler: () => void) => {
+        listeners[name] = (listeners[name] ?? []).filter((item) => item !== handler);
+      },
+      emit: (name: string) => [...(listeners[name] ?? [])].forEach((handler) => handler()),
+    };
+    const timers = {
+      set: (callback: () => void) => { queued.push(callback); return queued.length; },
+      clear: () => { queued = []; },
+      run: () => { const pending = queued; queued = []; pending.forEach((item) => item()); },
+      pending: () => queued.length,
+    };
+    const controller = new EditingNodeTextSuppression(mindMap, {
+      timers,
+      // Run the deferred read inline so the test observes the same frame.
+      schedule: (callback) => callback(),
+    });
+    return { controller, mindMap, classList, timers, listeners };
+  }
+
+  it('hides the node glyphs for the whole session, so only the Quill overlay paints text', () => {
+    const harness = suppressionHarness();
+    harness.mindMap.emit('before_show_text_edit');
+    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(true);
+    harness.mindMap.emit('node_text_edit_change');
+    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(true);
+    harness.controller.destroy();
+  });
+
+  it('restores the glyphs only once the committed text has been laid out', () => {
+    const harness = suppressionHarness();
+    harness.mindMap.emit('before_show_text_edit');
+    harness.mindMap.richText.showTextEdit = false;
+    harness.mindMap.emit('hide_text_edit');
+    // Still hidden: revealing here is what painted text at the node's local
+    // origin for one frame before layout placed it.
+    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(true);
+    harness.mindMap.emit('node_tree_render_end');
+    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(false);
+    harness.controller.destroy();
+  });
+
+  it('never leaves glyphs hidden if no render follows the close', () => {
+    const harness = suppressionHarness();
+    harness.mindMap.emit('before_show_text_edit');
+    harness.mindMap.richText.showTextEdit = false;
+    harness.mindMap.emit('hide_text_edit');
+    harness.timers.run();
+    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(false);
+    harness.controller.destroy();
+  });
+
+  it('does nothing when no edit session is open, and cleans up on destroy', () => {
+    const harness = suppressionHarness();
+    harness.mindMap.richText.showTextEdit = false;
+    expect(harness.controller.suppress()).toBe(false);
+    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(false);
+
+    harness.mindMap.richText.showTextEdit = true;
+    harness.mindMap.emit('before_show_text_edit');
+    harness.controller.destroy();
+    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(false);
+    expect(harness.listeners.before_show_text_edit).toHaveLength(0);
+    expect(harness.listeners.node_text_edit_change).toHaveLength(0);
+    expect(harness.listeners.hide_text_edit).toHaveLength(0);
   });
 });

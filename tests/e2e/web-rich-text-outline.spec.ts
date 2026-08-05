@@ -2397,7 +2397,13 @@ test('a transient editor/target geometry mismatch during typing must not hide or
 // docs/superpowers/plans/2026-07-31-canvas-text-edit-stabilization.md). The
 // tests below lock in the resulting guarantees directly.
 
-test('typing with real pauses between characters keeps exactly one static text layer under the editor', async ({ page, isMobile }) => {
+// v1.9.9-rc.6 user regression: while an editor is open the node resizes with
+// the text, so a second painted text layer no longer holds a frozen copy that
+// the opaque host happens to cover -- it holds a *different revision of the
+// same string* a few pixels away, which reads as doubled, blurred text. The
+// same suppression also removes the one-frame flash of text at the node's
+// local origin as an editor closes.
+test('only the Quill overlay paints the edited node glyphs, from open to committed close', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop live-edit isolation regression');
   const errors = recordPageErrors(page);
   await resetWebApp(page);
@@ -2407,56 +2413,79 @@ test('typing with real pauses between characters keeps exactly one static text l
 
   await rootNode.dblclick();
   await expect(textEditor).toBeFocused();
-  await textEditor.press('Control+A');
 
-  // The node's box now follows the typed text (see the live-adaptation tests),
-  // which means its text layer is replaced when the measured size changes.
-  // What must never happen is a *second* layer appearing beside it, or the
-  // layer escaping the opaque editor that covers it -- either one paints two
-  // sets of glyphs at once, which is the flicker this scenario guards.
-  await rootNode.evaluate((element) => {
-    const state = { maxLayers: 0, escapedFrames: 0, samples: 0 };
-    (window as any).__yemindStaticTextState = state;
-    const sample = () => {
-      const layers = element.querySelectorAll('.smm-text-node-wrap,.smm-richtext-node-wrap');
-      state.maxLayers = Math.max(state.maxLayers, layers.length);
-      state.samples += 1;
+  await page.evaluate(() => {
+    const state = { frames: 0, bothPainted: 0, layers: 0, wrapVisibleAtEnd: false };
+    (window as any).__yemindLayerState = state;
+    const tick = () => {
+      const group = document.querySelector('.ymw-editor > .ymz-editor .smm-node');
+      const wraps = group ? group.querySelectorAll('.smm-richtext-node-wrap,.smm-text-node-wrap') : [];
       const host = document.querySelector('.smm-richtext-node-edit-wrap') as HTMLElement | null;
-      if (host && host.style.display !== 'none' && layers.length > 0) {
-        const hostBox = host.getBoundingClientRect();
-        const textBox = (layers[0] as Element).getBoundingClientRect();
-        if (
-          textBox.left < hostBox.left - 2
-          || textBox.right > hostBox.right + 2
-          || textBox.top < hostBox.top - 2
-          || textBox.bottom > hostBox.bottom + 2
-        ) state.escapedFrames += 1;
+      if (wraps.length > 0) {
+        state.frames += 1;
+        state.layers = Math.max(state.layers, wraps.length);
+        const wrapVisible = getComputedStyle(wraps[0] as Element).visibility !== 'hidden';
+        const hostVisible = Boolean(host && host.style.display !== 'none');
+        state.wrapVisibleAtEnd = wrapVisible;
+        if (wrapVisible && hostVisible) state.bothPainted += 1;
       }
-      (window as any).__yemindStaticTextFrame = requestAnimationFrame(sample);
+      (window as any).__yemindLayerFrame = requestAnimationFrame(tick);
     };
-    sample();
+    tick();
   });
 
-  // Each character waits longer than the reconcile throttle, so every
-  // intermediate geometry state is actually sampled rather than skipped over.
-  await textEditor.pressSequentially('abc', { delay: 250 });
-  await expect(textEditor).toHaveText('abc');
-
-  await textEditor.press('Backspace');
-  await page.waitForTimeout(250);
-  await expect(textEditor).toHaveText('ab');
+  await page.keyboard.press('Control+a');
+  await textEditor.pressSequentially('提交后要重新排版的一段文字', { delay: 25 });
+  await expect(textEditor).toHaveText('提交后要重新排版的一段文字');
+  await commitCanvasEdit(page);
+  await page.waitForTimeout(600);
 
   const state = await page.evaluate(() => {
-    cancelAnimationFrame((window as any).__yemindStaticTextFrame);
-    return (window as any).__yemindStaticTextState;
+    cancelAnimationFrame((window as any).__yemindLayerFrame);
+    return (window as any).__yemindLayerState;
   });
-  expect(state.samples).toBeGreaterThan(30);
-  expect(state.maxLayers).toBe(1);
-  expect(state.escapedFrames).toBe(0);
+  expect(state.frames).toBeGreaterThan(40);
+  // Never two text layers, and never the SVG layer painting underneath a
+  // shown editor. Removing the suppression turns this into ~50 frames.
+  expect(state.layers).toBe(1);
+  expect(state.bothPainted).toBe(0);
+  // The glyphs must come back once the commit has been laid out, not stay gone.
+  expect(state.wrapVisibleAtEnd).toBe(true);
+  await expect(rootNode).toContainText('提交后要重新排版的一段文字');
   expect(errors).toEqual([]);
+});
 
+// v1.9.9-rc.6 user regression: typing into a brand new node appended to
+// `新节点` instead of replacing it, because the host taking DOM focus made the
+// editor reclaim it and collapse the selection to the end of the text.
+test('a freshly inserted node keeps its full selection when the host steals focus', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop insertion selection regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const textEditor = canvasTextEditor(page);
+
+  await editor.locator('.smm-node').first().click();
+  await page.keyboard.press('Tab');
+  await expect(textEditor).toBeFocused();
+  await expect(textEditor).toHaveText('新节点');
+
+  // SiYuan moves DOM focus onto its own chrome while a plugin editor is open.
+  await page.evaluate(() => {
+    const thief = document.createElement('input');
+    thief.id = 'yemind-host-focus-thief';
+    thief.style.cssText = 'position:fixed;left:-9999px;top:0';
+    document.body.appendChild(thief);
+    thief.focus();
+  });
+  await page.waitForTimeout(150);
+
+  const restored = await page.evaluate(() => String(window.getSelection() ?? ''));
+  expect(restored).toBe('新节点');
+
+  await page.keyboard.type('替换后的内容');
+  await expect(textEditor).toHaveText('替换后的内容');
   await commitCanvasEdit(page);
-  await expect(rootNode).toContainText('ab');
+  await expect(editor.locator('.smm-node').nth(1)).toContainText('替换后的内容');
 });
 
 for (const insertion of ['Tab', 'Enter', 'quick-add'] as const) {

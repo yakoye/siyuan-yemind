@@ -38,6 +38,32 @@ export const YEMIND_RICH_TEXT_FORMATS = [
 
 let formatsRegistered = false;
 
+export interface QuillRange {
+  index: number;
+  length: number;
+}
+
+/**
+ * Pick the selection to restore when the editor reclaims focus the host took.
+ *
+ * Collapsing to the end of the text is the last resort, not the default. The
+ * previous code reached it in the common case — `range` only ever holds a
+ * non-collapsed selection and `quill.getSelection()` is null while focus is
+ * elsewhere — which silently destroyed the full selection a freshly inserted
+ * node opens with.
+ */
+export function resolveFocusRestoreRange(
+  candidates: Array<QuillRange | null | undefined>,
+  fallbackIndex: number,
+): QuillRange {
+  for (const candidate of candidates) {
+    if (candidate && Number.isFinite(candidate.index)) {
+      return { index: candidate.index, length: Number(candidate.length) || 0 };
+    }
+  }
+  return { index: Math.max(0, Number(fallbackIndex) || 0), length: 0 };
+}
+
 interface QuillClipboardRange {
   index: number;
   length: number;
@@ -224,6 +250,13 @@ export default class YeMindRichText extends (BaseRichText as any) {
 
   private ownsEditFocus = false;
 
+  /**
+   * The last selection Quill is known to have had. Quill reports caret moves
+   * that follow typing as suppressed events, so this is refreshed from both
+   * `selection-change` and `text-change` rather than from either alone.
+   */
+  private lastKnownRange: { index: number; length: number } | null = null;
+
   bindEvent(): void {
     super.bindEvent();
     this.beginEditFocusOwnership = this.beginEditFocusOwnership.bind(this);
@@ -282,10 +315,20 @@ export default class YeMindRichText extends (BaseRichText as any) {
     const root = this.quill?.root as HTMLElement | null | undefined;
     const target = event.target;
     if (!root || (target instanceof Node && root.contains(target))) return;
-    const range = this.range ?? this.pasteUseRange ?? this.quill?.getSelection?.();
+    // Reclaiming focus must restore the selection the user actually had.
+    // `this.range` only ever holds a *non-collapsed* selection and is cleared
+    // on every keystroke, and `quill.getSelection()` returns null while focus
+    // is elsewhere -- so collapsing to the end of the text was the common
+    // case, not the exception. It silently destroyed the full selection a
+    // freshly inserted node opens with, which is why typing into a brand new
+    // node appended to `新节点` instead of replacing it whenever the host
+    // touched focus first.
+    const range = resolveFocusRestoreRange(
+      [this.range, this.pasteUseRange, this.quill?.getSelection?.(), this.lastKnownRange],
+      this.quill.getLength(),
+    );
     root.focus({ preventScroll: true });
-    if (range) this.quill.setSelection(range.index, range.length, Quill.sources.SILENT);
-    else this.quill.setSelection(this.quill.getLength(), 0, Quill.sources.SILENT);
+    this.quill.setSelection(range.index, range.length, Quill.sources.SILENT);
   }
 
   handleDataToRichTextOnInit(): void {
@@ -358,8 +401,14 @@ export default class YeMindRichText extends (BaseRichText as any) {
     });
 
     this.quill.on('selection-change', (range: any) => {
+      // Recorded before the `isInserting` short-circuit below: that branch
+      // exists only to keep the insertion's own initial selection from opening
+      // the formatting toolbar, but it used to drop the selection from every
+      // record too, leaving nothing to restore when the host stole focus.
+      if (range) this.lastKnownRange = { index: range.index, length: range.length };
       if (this.isInserting) {
         this.isInserting = false;
+        this.pasteUseRange = range ?? this.pasteUseRange;
         return;
       }
       this.lastRange = this.range;
@@ -393,6 +442,12 @@ export default class YeMindRichText extends (BaseRichText as any) {
         markNodeTextEditedData(this.node?.nodeData?.data ?? this.node?.getData?.());
         this.range = null;
         this.lastRange = null;
+        // Quill emits the caret move that follows typing as a suppressed event,
+        // so `selection-change` alone would leave `lastKnownRange` pointing at
+        // whatever was selected *before* the user started typing -- restoring
+        // that after a focus steal would re-select text the user had already
+        // replaced, and the next keystroke would wipe it.
+        this.lastKnownRange = this.quill?.getSelection?.() ?? null;
       }
       this.mindMap.emit('node_text_edit_change', {
         node: this.node,
