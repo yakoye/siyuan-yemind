@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.9.9-rc.11 - 2026-08-06
+
+Fixes a node's text flashing at its top-left corner when an editor closes.
+
+- **Root cause: the glyph/overlay handover was not atomic.** `hideEditText` cleared `richText.node` before committing, but `nodeLayout.js#layout()` decides whether to paint a node's glyphs at `opacity 0` by asking `getCurrentEditNode()`. Clearing it early told the commit render "nothing is being edited", so that render restored the glyphs while the editor overlay was still up — and a newly created text layer paints at the node group's local origin until `layout()` places it. Any frame in between showed both layers, with the static one misplaced.
+- **Fix:** the node stays marked as edited until the overlay is actually dropped. `hideEditorLayer()` — which already owns the moment the overlay disappears — now clears `richText.node` and restores the glyphs in the same step. This reuses upstream's own `getCurrentEditNode()` mechanism rather than adding a second visibility owner; the change is confined to the already-forked `RichText.js`.
+- The regression asserts the ordering at the moment of commit (`getCurrentEditNode()` still resolves to the node, overlay still shown), then asserts both hand over together. It is verified to discriminate: restoring the previous ordering makes it fail.
+- Full verification: `tsc --noEmit`, docs check, unit suite (1013 passed / 0 failed), complete Playwright E2E across desktop and mobile projects (145 passed / 0 failed / 0 flaky).
+- Two reported defects remain open and are **not** addressed here: a Tab/quick-add inserted node opening with an empty editor, and a first child node measuring as large as the root. Both need a capture from the runtime where they occur; the insertion path reads as correct end to end in source and all three insertion entry points assert the default label selected in the browser suite.
+
 ## 1.9.9-rc.10 - 2026-08-06
 
 Fixes reopened maps rendering every non-root node too tall.

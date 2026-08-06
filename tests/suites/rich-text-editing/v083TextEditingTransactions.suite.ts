@@ -283,6 +283,55 @@ describe('v0.8.3 canvas text editing transactions', () => {
     root.remove();
   });
 
+  it('keeps the node marked as edited while the commit renders, so glyphs and overlay never both paint', async () => {
+    const { root, map } = mountMap({
+      data: { text: '提交前文字', uid: 'root', yemindTextEdited: true },
+      children: [],
+    });
+    try {
+      await waitForMapRender(map);
+      map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      await nextFrame();
+
+      const host = document.body.querySelector<HTMLElement>(':scope > .smm-richtext-node-edit-wrap')!;
+      const node = map.renderer.root;
+      const length = map.richText.quill.getLength() - 1;
+      map.richText.quill.insertText(length, '改成一段更长的内容以强制重新布局', 'user');
+
+      let editNodeDuringCommit: unknown = 'not-captured';
+      let displayDuringCommit = '';
+      const originalExecCommand = map.execCommand.bind(map);
+      map.execCommand = (name: string, ...args: unknown[]) => {
+        if (name === 'SET_NODE_TEXT') {
+          editNodeDuringCommit = map.renderer.textEdit.getCurrentEditNode();
+          displayDuringCommit = host.style.display;
+        }
+        return originalExecCommand(name, ...args);
+      };
+
+      map.richText.hideEditText();
+      await nextFrame();
+
+      // layout() decides glyph opacity from getCurrentEditNode(). Clearing the
+      // node before the commit render made that render restore the glyphs while
+      // the overlay was still up, and a newly created text layer paints at the
+      // group's local origin until layout() places it -- so a frame in between
+      // showed both layers with the static one misplaced.
+      expect(editNodeDuringCommit).toBe(node);
+      expect(displayDuringCommit).not.toBe('none');
+
+      // The overlay and the glyphs hand over together.
+      expect(host.style.display).toBe('none');
+      expect(map.renderer.textEdit.getCurrentEditNode()).toBe(null);
+      const layer = map.renderer.root._textData.node;
+      expect(layer.visible()).toBe(true);
+      expect(Number(layer.attr('opacity') ?? 1)).toBe(1);
+    } finally {
+      map.destroy();
+      root.remove();
+    }
+  });
+
   it('keeps the opaque editor visible until the committed static node has finished layout', async () => {
     const { root, map } = mountMap({
       data: { text: '提交前文字', uid: 'root', yemindTextEdited: true },

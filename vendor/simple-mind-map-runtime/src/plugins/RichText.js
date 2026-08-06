@@ -415,10 +415,26 @@ class RichText {
         return
       }
       this.textEditNode.style.display = 'none'
+      // YeMind: the overlay is gone, so this node owns its glyphs again. The
+      // commit render replaced the text layer, so restore the current one.
+      this.node = null
+      const restored = node && node._textData && node._textData.node
+      if (restored) {
+        restored.show()
+        restored.opacity(1)
+      }
     }
     this.setIsShowTextEdit(false)
     this.mindMap.emit('rich_text_selection_change', false)
-    this.node = null
+    // YeMind: `this.node` used to be cleared here, before the commit render.
+    // layout() paints the *editing* node's glyphs at opacity 0 and decides that
+    // from getCurrentEditNode(), so clearing it early made the render restore
+    // the glyphs while the editor overlay was still up -- and the newly created
+    // text layer paints at the group's local origin until layout() places it.
+    // Any frame in between showed both layers, the static one misplaced: the
+    // reported flash of text at the node's top-left corner on close. Keeping
+    // the node marked as edited until the overlay is actually dropped makes the
+    // handover atomic; `hideEditorLayer` clears it and restores the glyphs.
     this.isInserting = false
     this.initialEditText = ''
     // Keep the upstream close contract: every completed edit commits the
