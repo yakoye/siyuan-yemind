@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.9-rc.11";
+const PLUGIN_VERSION = "1.9.9-rc.12";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "8b8ab7b3-dirty-47855aae",
-  time: "2026-08-06T09:22:44.923Z"
+  id: "3bc01892-dirty-51a7731d",
+  time: "2026-08-06T11:50:22.887Z"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-06T09:22:44.918Z",
-  buildId: "yemind-v1.9.9-rc.11-20260806",
+  buildTime: "2026-08-06T11:50:22.882Z",
+  buildId: "yemind-v1.9.9-rc.12-20260806",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -80343,6 +80343,11 @@ let fontSizeList = new Array(100).fill(0).map((_, index) => {
   return index + "px";
 });
 const RICH_TEXT_EDIT_WRAP = "ql-editor";
+const editTextNodeTrackingEvents = [
+  "translate",
+  "view_data_change",
+  "node_tree_render_end"
+];
 class RichText {
   constructor({ mindMap, pluginOpt }) {
     this.mindMap = mindMap;
@@ -80572,6 +80577,36 @@ class RichText {
       isInserting || selectTextOnEnterEditText && !isFromKeyDown ? 0 : null
     );
     this.cacheEditingText = "";
+    const textGroup = node._textData && node._textData.node;
+    if (openRealtimeRenderOnNodeTextEdit && textGroup) {
+      textGroup.show();
+      textGroup.opacity(0);
+    }
+    this.bindEditTextNodeTracking();
+  }
+  // YeMind: the overlay is positioned once, in viewport coordinates, when
+  // editing opens. Panning or zooming the canvas afterwards moves the node but
+  // left the overlay behind -- far enough, for a node brought into view on
+  // insertion, that the node read as empty while its text sat hundreds of
+  // pixels away. Follow the node for as long as the session is open, through
+  // upstream's own repositioning function.
+  bindEditTextNodeTracking() {
+    if (this.editTextNodeTrackingBound) return;
+    this.editTextNodeTrackingBound = true;
+    this.onEditTextNodeViewChange = () => {
+      if (!this.showTextEdit || !this.node) return;
+      this.updateTextEditNode();
+    };
+    editTextNodeTrackingEvents.forEach((name) => {
+      this.mindMap.on(name, this.onEditTextNodeViewChange);
+    });
+  }
+  unbindEditTextNodeTracking() {
+    if (!this.editTextNodeTrackingBound) return;
+    this.editTextNodeTrackingBound = false;
+    editTextNodeTrackingEvents.forEach((name) => {
+      this.mindMap.off(name, this.onEditTextNodeViewChange);
+    });
   }
   // 当openRealtimeRenderOnNodeTextEdit配置更新后需要更新编辑框样式
   onOpenRealtimeRenderOnNodeTextEditConfigUpdate(openRealtimeRenderOnNodeTextEdit) {
@@ -80581,6 +80616,9 @@ class RichText {
   }
   // 将指定节点的文本样式添加到编辑框元素上
   addNodeTextStyleToTextEditNode(node) {
+    richTextSupportStyleList.forEach((prop) => {
+      this.textEditNode.style[prop] = "";
+    });
     const style = getNodeRichTextStyles(node);
     Object.keys(style).forEach((prop) => {
       this.textEditNode.style[prop] = style[prop];
@@ -80643,6 +80681,7 @@ class RichText {
         return;
       }
       this.textEditNode.style.display = "none";
+      this.unbindEditTextNodeTracking();
       this.node = null;
       const restored = node && node._textData && node._textData.node;
       if (restored) {
