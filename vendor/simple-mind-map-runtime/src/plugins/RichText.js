@@ -332,9 +332,78 @@ class RichText {
     const textGroup = node._textData && node._textData.node
     if (openRealtimeRenderOnNodeTextEdit && textGroup) {
       textGroup.show()
-      textGroup.opacity(0)
+      // YeMind: the node keeps painting its own glyphs until the overlay is
+      // confirmed to sit on top of them. Correcting a misplaced overlay while
+      // it is visible is itself a visible jump; hiding it until it is right
+      // means the user only ever sees one correct text layer. opacity does not
+      // block focus or IME composition, so the editor is usable throughout.
+      textGroup.opacity(1)
+      this.textEditNode.style.opacity = '0'
     }
     this.bindEditTextNodeTracking()
+    // YeMind: show() translates the canvas to bring an off-screen node into
+    // view and then measures that node in the same task. Changing an SVG
+    // ancestor's transform does not reliably invalidate a descendant's
+    // geometry for an immediate read, so the rect can still describe where the
+    // node was before the pan, and the overlay is pinned there. Nothing moves
+    // afterwards, so no event can correct it. Measured in Chromium on an
+    // inserted node: placed at (128, 20) while the node settled at (427, 321),
+    // with no translate or render event in between. Re-read once on the next
+    // frame, when the geometry is trustworthy.
+    this.scheduleEditTextNodePlacement()
+  }
+
+  scheduleEditTextNodePlacement() {
+    const reveal = () => {
+      this.textEditNode.style.opacity = ''
+      const g = this.node && this.node._textData && this.node._textData.node
+      if (g && this.mindMap.opt.openRealtimeRenderOnNodeTextEdit) g.opacity(0)
+    }
+    if (typeof requestAnimationFrame !== 'function') {
+      reveal()
+      return
+    }
+    const revision = this.editVisibilityRevision
+    // The node's settled geometry can take more than one frame to become
+    // readable, so watch a short window rather than sampling once. The swap
+    // happens the frame the two agree; the window is a bound, not a delay.
+    let framesLeft = 12
+    const check = () => {
+      if (revision !== this.editVisibilityRevision || !this.showTextEdit || !this.node) {
+        return
+      }
+      const g = this.node._textData && this.node._textData.node
+      if (!g) {
+        reveal()
+        return
+      }
+      const now = g.node.getBoundingClientRect()
+      const host = this.textEditNode.getBoundingClientRect()
+      // Nothing measurable to align against (a non-rendering host): show the
+      // editor rather than waiting out the window on a comparison that can
+      // never succeed.
+      if (now.width <= 0 && now.height <= 0) {
+        reveal()
+        return
+      }
+      const aligned =
+        Math.abs(host.left + this.textNodePaddingX - now.left) <= 0.5 &&
+        Math.abs(host.top + this.textNodePaddingY - now.top) <= 0.5
+      if (aligned) {
+        reveal()
+        return
+      }
+      framesLeft -= 1
+      if (framesLeft <= 0) {
+        // Never leave the editor invisible: take the best placement available.
+        this.updateTextEditNode()
+        reveal()
+        return
+      }
+      this.updateTextEditNode()
+      requestAnimationFrame(check)
+    }
+    requestAnimationFrame(check)
   }
 
   // YeMind: the overlay is positioned once, in viewport coordinates, when
@@ -467,6 +536,7 @@ class RichText {
         return
       }
       this.textEditNode.style.display = 'none'
+      this.textEditNode.style.opacity = ''
       this.unbindEditTextNodeTracking()
       // YeMind: the overlay is gone, so this node owns its glyphs again. The
       // commit render replaced the text layer, so restore the current one.

@@ -2,7 +2,7 @@
 
 YeMind is a local-first mind-map workspace for SiYuan and the web. One shared TypeScript codebase powers both hosts, so maps, outlines, cards, themes, import/export, and interaction behavior stay compatible.
 
-Current version: `1.9.9-rc.12`
+Current version: `1.9.9-rc.13`
 SiYuan baseline: `3.7.3`
 
 ## Highlights

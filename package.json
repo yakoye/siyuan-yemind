@@ -1,6 +1,6 @@
 {
   "name": "siyuan-yemind",
-  "version": "1.9.9-rc.12",
+  "version": "1.9.9-rc.13",
   "private": true,
   "description": "A SiYuan mind-map plugin built around simple-mind-map.",
   "license": "MIT",
@@ -14,6 +14,7 @@
     "build:all": "npm run build && npm run build:web",
     "prebuild:web": "npm run check:version",
     "build:web": "vite build --config vite.web.config.ts && node scripts/copy-web-assets.mjs",
+    "preview:web": "vite preview --config vite.web.config.ts",
     "precheck": "npm run generate:theme-colors",
     "check": "tsc --noEmit && npm run check:docs",
     "check:docs": "node scripts/docs/checkDocumentation.mjs",

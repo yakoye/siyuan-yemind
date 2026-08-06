@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.9.9-rc.13 - 2026-08-06
+
+Fixes the inserted-node editor still opening far away from its node. rc.12 identified the symptom but not the mechanism.
+
+- **Root cause: the node's geometry is not readable yet when the overlay is placed.** `TextEdit.show()` translates the canvas to bring an off-screen node into view and then measures that node **in the same task**. Changing an SVG ancestor's `transform` does not reliably invalidate a descendant's geometry for an immediate read, so the measurement can still describe where the node was *before* the pan. Traced in the reporting runtime: placed at `(128, 20)` while the node settled at `(427, 321)`, and — decisively — **no `translate`, `view_data_change` or `node_tree_render_end` fired in between**. Nothing moved; the reading was simply stale, which is why rc.12's event subscription could never correct it, and why one deferred re-read was also not enough (the geometry was still stale a frame later).
+- **The overlay is now held invisible until it is confirmed to sit on its node, and the node keeps painting its own glyphs until then.** Correcting a misplaced overlay while it is visible is itself a visible jump — which is what the reporter saw once the placement was being corrected rather than left wrong. The two layers swap in one step, so the user only ever sees one correct text layer: never a misplaced one, never none. `opacity` is used rather than `visibility`, so focus and IME composition work throughout the hold.
+- **Fix:** after opening, the overlay's actual position is compared against the node's for a short window and corrected the moment they disagree. A placement that is already correct is never rewritten — repositioning also rewrites the overlay's min/max width and transform, which perturbs an editor the user may be interacting with. That regression was caught by an existing pointer-selection test, which failed 3/3 against an unconditional re-placement and passes 3/3 against the conditional one.
+- Verified in the runtime that reproduced it: an inserted node's overlay now lands on its node (offset `-4,-3`, the overlay's own padding) with `新节点` present and fully selected. Sampling 70 frames through a close in the same session showed 0 blank frames and 0 misplaced glyph frames.
+- Full verification: `tsc --noEmit`, docs check, unit suite (1015 passed / 0 failed), complete Playwright E2E across desktop and mobile projects (152 passed / 0 failed).
+- Also adds `npm run preview:web`, which serves the built web bundle — the same code the plugin ships — so a behaviour can be checked without the dev server's module cache in the way.
+
 ## 1.9.9-rc.12 - 2026-08-06
 
 Fixes a node inserted with Tab or quick-add appearing empty. It never was: its editor was painting hundreds of pixels away.

@@ -19,6 +19,14 @@ async function nextFrame(): Promise<void> {
   await new Promise<void>((resolve) => setTimeout(resolve, 0));
 }
 
+async function waitForGlyphSwap(map: any): Promise<void> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const layer = map.renderer.root._textData.node;
+    if (Number(layer.attr('opacity')) === 0) return;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
+}
+
 async function waitForMapRender(map: any): Promise<void> {
   for (let attempt = 0; attempt < 30; attempt += 1) {
     if (map.renderer.root && map.renderer.isRendering === false) {
@@ -177,11 +185,14 @@ describe('v0.8.3 canvas text editing transactions', () => {
     const host = document.body.querySelector<HTMLElement>(':scope > .smm-richtext-node-edit-wrap')!;
     expect(host.style.display).not.toBe('none');
     expect(host.querySelector('.ql-editor')?.textContent).toContain('新节点');
-    // The node's own glyphs must not paint for the whole session, so the Quill
-    // overlay is the only text layer -- two painting at once produced doubled,
-    // blurred text once the node started resizing as the user types. They stay
-    // laid out (not display:none) on purpose: the overlay repositions itself
-    // from this group's box, which a display:none element does not have.
+    // The node keeps painting its own glyphs until the overlay is confirmed to
+    // sit on top of them, then the two swap in one step: correcting a misplaced
+    // overlay while it is visible is itself a visible jump.
+    await waitForGlyphSwap(map);
+    // From then on the overlay is the only text layer -- two painting at once
+    // produced doubled, blurred text once the node resized as the user types.
+    // The glyphs stay laid out (not display:none) on purpose: the overlay
+    // repositions from this group's box, which display:none does not have.
     expect(Number(staticText.attr('opacity'))).toBe(0);
     expect(staticText.visible()).toBe(true);
 
@@ -285,6 +296,47 @@ describe('v0.8.3 canvas text editing transactions', () => {
     root.remove();
   });
 
+  it('corrects an overlay that does not sit on its node, and leaves a correct one alone', async () => {
+    // TextEdit.show() translates the canvas to bring an off-screen node into
+    // view and then measures that node in the same task. Changing an SVG
+    // ancestor's transform does not reliably invalidate a descendant's
+    // geometry for an immediate read, so the overlay can be pinned to where the
+    // node was before the pan -- measured in Chromium on an inserted node:
+    // placed at (128, 20) while the node settled at (427, 321), with no
+    // translate or render event in between, and still stale one frame later.
+    const openWith = async (nodeLeft: number, nodeTop: number) => {
+      const { root, map } = mountMap({
+        data: { text: '编辑中的节点', uid: 'root', yemindTextEdited: true },
+        children: [],
+      });
+      await waitForMapRender(map);
+      map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+
+      const group = map.renderer.root._textData.node.node as SVGGraphicsElement;
+      const host = map.richText.textEditNode as HTMLElement;
+      const rect = (left: number, top: number) => ({
+        left, top, right: left + 40, bottom: top + 20, width: 40, height: 20, x: left, y: top,
+        toJSON: () => ({}),
+      }) as DOMRect;
+      group.getBoundingClientRect = () => rect(nodeLeft, nodeTop);
+      host.getBoundingClientRect = () => rect(0, 0);
+
+      const reposition = vi.spyOn(map.richText, 'updateTextEditNode');
+      await nextFrame();
+      const called = reposition.mock.calls.length > 0;
+      map.destroy();
+      root.remove();
+      return called;
+    };
+
+    // The overlay sits at 0,0 and the node is 300px away: correct it.
+    expect(await openWith(300, 300)).toBe(true);
+    // The overlay already covers the node (its own padding is 6x4): leave it.
+    // Repositioning rewrites the overlay's min/max width and transform, which
+    // perturbs an editor the user may already be interacting with.
+    expect(await openWith(6, 4)).toBe(false);
+  });
+
   it('keeps the open editor on its node when the canvas moves underneath it', async () => {
     const { root, map } = mountMap({
       data: { text: '编辑中的节点', uid: 'root', yemindTextEdited: true },
@@ -296,6 +348,7 @@ describe('v0.8.3 canvas text editing transactions', () => {
       await nextFrame();
 
       const textGroup = map.renderer.root._textData.node;
+      await waitForGlyphSwap(map);
       // The overlay repositions itself from this group's box, so the group must
       // stay laid out. With realtime rendering it used to be display:none,
       // which has no box at all -- repositioning could only ever read 0x0.
