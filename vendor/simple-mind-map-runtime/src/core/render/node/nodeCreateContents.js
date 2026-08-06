@@ -9,6 +9,7 @@ import {
   camelCaseToHyphen,
   getNodeRichTextStyles
 } from '../../../utils'
+import { richTextSupportStyleList } from '../../../constants/constant'
 import { Image as SVGImage, SVG, A, G, Rect, Text } from '@svgdotjs/svg.js'
 import iconsSvg from '../../../svg/icons'
 import { noneRichTextNodeLineHeight } from '../../../constants/constant'
@@ -194,6 +195,13 @@ function createRichTextNode(specifyText) {
     )
   }
   const div = this.mindMap.commonCaches.measureRichtextNodeTextSizeEl
+  // YeMind: this element is shared by every node measured in a render pass, so
+  // any property the current node does not set would otherwise keep the value
+  // the previous node left behind. Clear the whole supported set first, and
+  // measurement stops depending on which node happened to be measured before.
+  richTextSupportStyleList.forEach(prop => {
+    div.style[prop] = ''
+  })
   // 应用节点的文本样式
   nodeTextStyleList.forEach(([prop, value]) => {
     div.style[prop] = value

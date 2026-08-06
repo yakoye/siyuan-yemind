@@ -1690,8 +1690,18 @@ export const getNodeRichTextStyles = node => {
   richTextSupportStyleList.forEach(prop => {
     let value = node.style.merge(prop)
     if (prop === 'fontSize') {
-      value = value + 'px'
+      // YeMind: an unresolved font size used to be concatenated into the
+      // string 'undefinedpx'. The CSSOM silently rejects that, so the shared
+      // measurement element kept whatever font size the previously measured
+      // node had left on it -- the root's, on a first render -- while the
+      // freshly created foreignObject simply inherited the stylesheet's size.
+      // Measurement and paint then disagreed by a whole font size, which is
+      // one extra text line per rendered line.
+      const size = Number(value)
+      if (!Number.isFinite(size) || size <= 0) return
+      value = size + 'px'
     }
+    if (value === undefined || value === null || value === '') return
     res[prop] = value
   })
   return res

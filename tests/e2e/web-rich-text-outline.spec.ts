@@ -3497,3 +3497,70 @@ test('a width the user dragged outranks the auto-wrap limit', async ({ page, isM
   await page.waitForTimeout(400);
   expect(await declaredWidth()).toBe(dragged);
 });
+
+// v1.9.9-rc.10 user regression: on a reopened map every non-root node was
+// measured with the root's font size and rendered with its own, so each node
+// declared roughly one extra text line per rendered line. The measurement
+// element is shared across a render pass, and an unresolvable font size became
+// the string 'undefinedpx', which the CSSOM rejects -- leaving the previously
+// measured node's size in place.
+test('node geometry does not depend on the previously measured node', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop measurement isolation regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const textEditor = canvasTextEditor(page);
+
+  // A root (large font) plus children (smaller font), several of them wrapping.
+  await editor.locator('.smm-node').first().dblclick();
+  await page.keyboard.press('Control+a');
+  await textEditor.pressSequentially('中心主题dsaffr', { delay: 4 });
+  await commitCanvasEdit(page);
+  for (const text of ['到撒房东阿发房东艾弗森a', '壹贰叁肆伍陆柒捌玖拾壹贰叁肆伍陆柒捌玖拾']) {
+    await editor.locator('.smm-node').first().click();
+    await page.keyboard.press('Tab');
+    await expect(textEditor).toBeFocused();
+    await page.keyboard.press('Control+a');
+    await textEditor.pressSequentially(text, { delay: 4 });
+    await commitCanvasEdit(page);
+  }
+  await page.waitForTimeout(500);
+
+  const geometry = async () => page.evaluate(() => Array.from(document.querySelectorAll('.smm-node')).map((group) => {
+    const layer = group.querySelector('g[data-width][data-height]');
+    const wrap = group.querySelector('.smm-richtext-node-wrap');
+    const box = wrap?.getBoundingClientRect();
+    return {
+      declared: [Number(layer?.getAttribute('data-width')), Number(layer?.getAttribute('data-height'))],
+      painted: box ? [Math.round(box.width), Math.round(box.height)] : null,
+    };
+  }));
+
+  const before = await geometry();
+  // Every node must declare the box it actually paints. A node measured with
+  // another node's font declares a taller box than it renders.
+  before.forEach((node) => {
+    expect(node.painted).not.toBeNull();
+    expect(Math.abs(node.declared[0] - node.painted![0])).toBeLessThanOrEqual(2);
+    expect(Math.abs(node.declared[1] - node.painted![1])).toBeLessThanOrEqual(2);
+  });
+
+  // Poison the shared measurement element exactly the way a rejected font-size
+  // assignment used to, then force a full re-measure of every node.
+  const poisoned = await page.evaluate(() => {
+    const candidates = Array.from(document.querySelectorAll<HTMLElement>('.ymz-canvas > div'));
+    const element = candidates.find((item) => item.style.position === 'fixed') ?? candidates.at(-1);
+    if (!element) return false;
+    element.style.fontSize = '48px';
+    element.style.fontWeight = '900';
+    return true;
+  });
+  expect(poisoned).toBe(true);
+
+  await editor.locator('.smm-node').first().dblclick();
+  await expect(textEditor).toBeFocused();
+  await commitCanvasEdit(page);
+  await page.waitForTimeout(600);
+
+  // Geometry must be identical: the measurement resets what it depends on.
+  expect((await geometry()).map((node) => node.declared)).toEqual(before.map((node) => node.declared));
+});

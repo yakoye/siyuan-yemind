@@ -36,6 +36,14 @@ to the pinned upstream revision.
   stated in characters stays correct across node levels with different font
   sizes. A number keeps behaving exactly as upstream. The static measurement
   and the live editor share one resolver so they wrap at the same boundary.
+- `src/utils/index.js` and `src/core/render/node/nodeCreateContents.js`: node
+  text measurement no longer depends on which node was measured before it. An
+  unresolvable font size used to be concatenated into the string
+  `'undefinedpx'`, which the CSSOM rejects, so the shared measurement element
+  kept the previously measured node's font size while the freshly created
+  foreignObject inherited the stylesheet's. `getNodeRichTextStyles` now omits
+  unusable values, and `createRichTextNode` resets the supported style set on
+  the shared element before applying the current node's.
 - `src/core/render/node/nodeModifyWidth.js`: preserves one painted text shell
   while the user resizes a node instead of replacing visible text every frame.
 - `src/plugins/RichText.js`: keeps the editor opaque until committed SVG layout,

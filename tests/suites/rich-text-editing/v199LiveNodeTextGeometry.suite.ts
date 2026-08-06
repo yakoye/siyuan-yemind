@@ -7,6 +7,9 @@ import { remeasureWhenFontsReady } from '../../../src/core/firstPaintGeometry';
 import { NODE_AUTO_WRAP_CHARACTERS, nodeAutoWrapWidth } from '../../../src/core/createMindMap';
 import { resolveTextAutoWrapWidth } from 'simple-mind-map/src/core/render/node/nodeCreateContents';
 import Render from 'simple-mind-map/src/core/render/Render';
+import { getNodeRichTextStyles } from 'simple-mind-map/src/utils';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 describe('v1.9.9-rc.6 canvas edit focus recovery', () => {
   it('restores the first known selection instead of collapsing to the end of the text', () => {
@@ -216,5 +219,51 @@ describe('v1.9.9-rc.9 upstream live node resizing', () => {
     expect(target.height).toBe(60);
     expect(target.layout).toHaveBeenCalledOnce();
     expect(host.render).toHaveBeenCalledOnce();
+  });
+});
+
+describe('v1.9.9-rc.10 node text measurement isolation', () => {
+  const node = (merged: Record<string, unknown>) => ({
+    style: { merge: (prop: string) => merged[prop] },
+  });
+
+  it('never emits an unresolvable font size as the string "undefinedpx"', () => {
+    // 'undefinedpx' is not a valid CSS length, so assigning it is silently
+    // rejected and whatever font size was already on the shared measurement
+    // element survives -- the root's, on a first render. Measurement then ran
+    // one whole font size larger than the paint, i.e. one extra text line per
+    // rendered line.
+    expect(getNodeRichTextStyles(node({ fontSize: undefined })).fontSize).toBeUndefined();
+    expect(getNodeRichTextStyles(node({ fontSize: null })).fontSize).toBeUndefined();
+    expect(getNodeRichTextStyles(node({ fontSize: '' })).fontSize).toBeUndefined();
+    expect(getNodeRichTextStyles(node({ fontSize: 0 })).fontSize).toBeUndefined();
+    expect(getNodeRichTextStyles(node({ fontSize: 'abc' })).fontSize).toBeUndefined();
+  });
+
+  it('keeps resolving a usable font size exactly as before', () => {
+    expect(getNodeRichTextStyles(node({ fontSize: 14 })).fontSize).toBe('14px');
+    expect(getNodeRichTextStyles(node({ fontSize: '18' })).fontSize).toBe('18px');
+  });
+
+  it('omits every other unusable style rather than assigning undefined', () => {
+    const styles = getNodeRichTextStyles(node({ fontSize: 14, color: undefined, fontFamily: '' }));
+    expect(styles.color).toBeUndefined();
+    expect(styles.fontFamily).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call(styles, 'color')).toBe(false);
+  });
+
+  it('resets the whole supported style set on the shared measurement element', () => {
+    // Without the reset, a property the current node does not set keeps the
+    // previous node's value, so a node's measured size depended on which node
+    // happened to be measured before it.
+    const source = readFileSync(
+      resolve(process.cwd(), 'vendor/simple-mind-map-runtime/src/core/render/node/nodeCreateContents.js'),
+      'utf8',
+    );
+    const reset = source.indexOf("richTextSupportStyleList.forEach(prop => {\n    div.style[prop] = ''");
+    const apply = source.indexOf('nodeTextStyleList.forEach(([prop, value]) => {\n    div.style[prop] = value');
+    expect(reset).toBeGreaterThan(-1);
+    expect(apply).toBeGreaterThan(-1);
+    expect(reset).toBeLessThan(apply);
   });
 });

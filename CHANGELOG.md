@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.9.9-rc.10 - 2026-08-06
+
+Fixes reopened maps rendering every non-root node too tall.
+
+- **Root cause: node text measurement depended on which node was measured before it.** `getNodeRichTextStyles` built the font size as `value + 'px'` unconditionally, so an unresolved size became the string `'undefinedpx'`. That is not a valid CSS length, and the CSSOM silently rejects it — verified in Chromium: assigning `'undefinedpx'` over an existing `18px` leaves `18px` in place. The measurement element is shared by every node in a render pass and was never reset, so the rejected assignment left the previously measured node's font size on it. On a first render that is the root's. Every non-root node was therefore *measured* at the root's font size while its freshly created `foreignObject` simply inherited the stylesheet's size and *painted* at the correct one.
+- Diagnosed from the reported map's own numbers: declared heights were `22/17 ≈ 18/14` per line and the line count was inflated in the same ratio — `44 = 2×22` for a one-line node, `87 ≈ 4×21.6` for a three-line node, `173 ≈ 8×21.6` for a six-line node. The root node was the only one that matched its paint, because the root genuinely is 18px. Double-clicking a node healed it because an isolated re-measure inherits whatever the last measured node left, which after the first render is another 14px node.
+- **Two fixes, both in the vendored runtime.** `getNodeRichTextStyles` now omits a style it cannot resolve instead of emitting an invalid value, and `createRichTextNode` resets the whole supported style set on the shared measurement element before applying the current node's. Either alone would fix the reported symptom; together, measurement stops depending on order at all, including for any property a future node type leaves unset.
+- Added 4 unit scenarios (unresolvable font sizes of every shape, unchanged behaviour for usable ones, other unusable styles omitted, reset ordered before apply) and a browser regression that asserts every node declares the box it actually paints, then poisons the shared measurement element with a 48px/900-weight font, forces a full re-measure, and asserts geometry does not move.
+- Verified against the reported map itself: loaded its exported data into the app's own IndexedDB, and all 13 nodes' declared and painted boxes agree, before and after the poisoning.
+- The vendored-runtime fork ledger and its contract test now cover `src/utils/index.js`.
+- Full verification: `tsc --noEmit`, docs check, unit suite (1012 passed / 0 failed), complete Playwright E2E across desktop and mobile projects.
+
 ## 1.9.9-rc.9 - 2026-08-06
 
 Architectural consolidation, no new user-facing behaviour intended. Live node resizing during a text edit was re-implemented twice in the YeMind layer; `simple-mind-map` already owns it. This release deletes both YeMind implementations and turns on the upstream capability instead.

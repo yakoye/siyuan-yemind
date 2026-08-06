@@ -73,6 +73,7 @@ describe('vendored simple-mind-map upstream baseline', () => {
     const modifyWidthPath = 'src/core/render/node/nodeModifyWidth.js';
     const richTextPath = 'src/plugins/RichText.js';
     const createContentsPath = 'src/core/render/node/nodeCreateContents.js';
+    const utilsPath = 'src/utils/index.js';
 
     expect(baseline.allowedModifiedFiles).toEqual([
       'src/core/command/KeyCommand.js',
@@ -81,6 +82,7 @@ describe('vendored simple-mind-map upstream baseline', () => {
       createContentsPath,
       modifyWidthPath,
       richTextPath,
+      utilsPath,
     ]);
     expect(normalizedSha256(join(runtimeRoot, textEditPath)))
       .toBe(baseline.sourceHashes[textEditPath]);
@@ -96,5 +98,10 @@ describe('vendored simple-mind-map upstream baseline', () => {
     // resolve the same limit, which is why this pair is forked together.
     expect(normalizedSha256(join(runtimeRoot, createContentsPath)))
       .not.toBe(baseline.sourceHashes[createContentsPath]);
+    // Node text measurement: an unresolvable font size must not become the
+    // string 'undefinedpx', and the shared measurement element must not carry
+    // the previously measured node's styles into the next node.
+    expect(normalizedSha256(join(runtimeRoot, utilsPath)))
+      .not.toBe(baseline.sourceHashes[utilsPath]);
   });
 });
