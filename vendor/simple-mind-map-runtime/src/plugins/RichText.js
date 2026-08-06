@@ -14,6 +14,7 @@ import {
 } from '../utils'
 import { richTextSupportStyleList } from '../constants/constant'
 import MindMapNode from '../core/render/node/MindMapNode'
+import { resolveTextAutoWrapWidth } from '../core/render/node/nodeCreateContents'
 import { Scope } from 'parchment'
 
 let extended = false
@@ -209,15 +210,16 @@ class RichText {
     let {
       customInnerElsAppendTo,
       nodeTextEditZIndex,
-      textAutoWrapWidth,
       selectTextOnEnterEditText,
       transformRichTextOnEnterEdit,
       openRealtimeRenderOnNodeTextEdit,
       autoEmptyTextWhenKeydownEnterEdit
     } = this.mindMap.opt
-    textAutoWrapWidth = node.hasCustomWidth()
+    // YeMind: same per-node resolution the static measurement uses, so the
+    // live editor wraps exactly where the committed node will.
+    let textAutoWrapWidth = node.hasCustomWidth()
       ? node.customTextWidth
-      : textAutoWrapWidth
+      : resolveTextAutoWrapWidth(this.mindMap, node)
     this.node = node
     this.isInserting = isInserting
     if (!rect) rect = node._textData.node.node.getBoundingClientRect()

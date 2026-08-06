@@ -1149,7 +1149,9 @@ test('pointer selection toolbar waits until the selection has stopped moving', a
   const root = editor.locator('.smm-node').first();
   const toolbar = richTextToolbar(page);
   await root.dblclick();
-  await textEditor.fill('拖动选择这段文字以后，工具栏只在鼠标停止后出现');
+  // Kept under the 20-character auto-wrap limit so the selection stays on one
+  // line: this test is about toolbar timing, not about wrapping.
+  await textEditor.fill('拖动选择这段文字看工具栏时机');
   const box = await textEditor.boundingBox();
   expect(box).not.toBeNull();
 
@@ -3371,3 +3373,99 @@ for (const entry of ['Tab', 'Enter', 'quick-add'] as const) {
     await expect(textEditor).toHaveText('替换后的内容');
   });
 }
+
+// v1.9.9-rc.8 user requirement: a node widens up to 20 characters, then stops
+// widening and grows downwards instead; a width the user dragged always wins.
+test('a node widens up to the 20-character limit, then grows taller instead', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop auto-wrap regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = canvasTextEditor(page);
+
+  const declared = async () => rootNode.evaluate((element) => {
+    const layer = element.querySelector('g[data-width][data-height]')!;
+    return {
+      width: Number(layer.getAttribute('data-width')),
+      height: Number(layer.getAttribute('data-height')),
+    };
+  });
+
+  const type = async (text: string) => {
+    await rootNode.dblclick();
+    await expect(textEditor).toBeFocused();
+    await page.keyboard.press('Control+a');
+    await textEditor.pressSequentially(text, { delay: 4 });
+    await commitCanvasEdit(page);
+    await page.waitForTimeout(400);
+    return declared();
+  };
+
+  const fontSize = await rootNode.evaluate((element) => {
+    const wrap = element.querySelector('.smm-richtext-node-wrap') as HTMLElement | null;
+    return wrap ? Number.parseFloat(getComputedStyle(wrap).fontSize) : 0;
+  });
+  expect(fontSize).toBeGreaterThan(0);
+  // A CJK glyph advances one em, so the limit is 20 * the node's own font size
+  // — not one global pixel constant shared by every level.
+  const limit = Math.round(fontSize * 20);
+
+  const short = await type('汉'.repeat(5));
+  const atLimit = await type('汉'.repeat(20));
+  const beyond = await type('汉'.repeat(40));
+
+  // Below the limit the node widens with the text and stays one line.
+  expect(atLimit.width).toBeGreaterThan(short.width);
+  expect(atLimit.height).toBe(short.height);
+  expect(atLimit.width).toBeLessThanOrEqual(limit);
+  expect(atLimit.width).toBeGreaterThanOrEqual(limit - fontSize);
+
+  // Past the limit the width stops and the height takes over.
+  expect(beyond.width).toBeLessThanOrEqual(limit);
+  expect(beyond.height).toBeGreaterThan(atLimit.height);
+});
+
+test('a width the user dragged outranks the auto-wrap limit', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop manual width precedence regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = canvasTextEditor(page);
+
+  const declaredWidth = async () => rootNode.evaluate((element) => (
+    Number(element.querySelector('g[data-width]')!.getAttribute('data-width'))
+  ));
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeFocused();
+  await page.keyboard.press('Control+a');
+  await textEditor.pressSequentially('汉'.repeat(40), { delay: 4 });
+  await commitCanvasEdit(page);
+  await page.waitForTimeout(400);
+  const wrapped = await declaredWidth();
+
+  // The width handles are two transparent ew-resize rects on the node.
+  await rootNode.click();
+  await page.waitForTimeout(300);
+  const handle = rootNode.locator('rect[style*="ew-resize"]').last();
+  await expect(handle).toBeAttached();
+  const box = await handle.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + box!.width / 2 + 200, box!.y + box!.height / 2, { steps: 12 });
+  await page.mouse.up();
+  await page.waitForTimeout(600);
+
+  const dragged = await declaredWidth();
+  expect(dragged).toBeGreaterThan(wrapped + 50);
+
+  // Re-editing must not pull a manually sized node back to the auto limit.
+  await rootNode.dblclick();
+  await expect(textEditor).toBeFocused();
+  await page.keyboard.press('Control+a');
+  await textEditor.pressSequentially('改写之后手动宽度依然保持不变不能被自动上限拉回去', { delay: 4 });
+  await commitCanvasEdit(page);
+  await page.waitForTimeout(400);
+  expect(await declaredWidth()).toBe(dragged);
+});

@@ -133,13 +133,29 @@ function createIconNode() {
   })
 }
 
+// YeMind: textAutoWrapWidth may also be a function of the node.
+// A wrap limit expressed in characters is only a fixed pixel width for one
+// font size, and node font size varies by level and by theme (16-26px for a
+// root, 14px for an ordinary node). Resolving the option per node keeps one
+// limit correct everywhere instead of making each caller special-case levels.
+// A number keeps behaving exactly as before.
+export function resolveTextAutoWrapWidth(mindMap, node) {
+  const configured = mindMap.opt.textAutoWrapWidth
+  const value = typeof configured === 'function' ? configured(node) : configured
+  const width = Number(value)
+  // Falls back to the documented default (constants/defaultOptions.js).
+  return Number.isFinite(width) && width > 0 ? width : 500
+}
+
 // 创建富文本节点
 function createRichTextNode(specifyText) {
   const hasCustomWidth = this.hasCustomWidth()
   let text =
     typeof specifyText === 'string' ? specifyText : this.getData('text')
-  let { textAutoWrapWidth, emptyTextMeasureHeightText } = this.mindMap.opt
-  textAutoWrapWidth = hasCustomWidth ? this.customTextWidth : textAutoWrapWidth
+  let { emptyTextMeasureHeightText } = this.mindMap.opt
+  let textAutoWrapWidth = hasCustomWidth
+    ? this.customTextWidth
+    : resolveTextAutoWrapWidth(this.mindMap, this)
   const g = new G()
   // 创建富文本结构，或复位富文本样式
   let recoverText = false
@@ -252,8 +268,8 @@ function createTextNode(specifyText) {
   if (!isUndef(text)) {
     textArr = String(text).split(/\n/gim)
   }
-  const { textAutoWrapWidth: maxWidth, emptyTextMeasureHeightText } =
-    this.mindMap.opt
+  const { emptyTextMeasureHeightText } = this.mindMap.opt
+  const maxWidth = resolveTextAutoWrapWidth(this.mindMap, this)
   let isMultiLine = textArr.length > 1
   textArr.forEach((item, index) => {
     let arr = item.split('')

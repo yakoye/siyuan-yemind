@@ -85,6 +85,7 @@
     "src/core/command/KeyCommand.js",
     "src/core/render/Render.js",
     "src/core/render/node/MindMapNode.js",
+    "src/core/render/node/nodeCreateContents.js",
     "src/core/render/node/nodeModifyWidth.js",
     "src/plugins/RichText.js"
   ],

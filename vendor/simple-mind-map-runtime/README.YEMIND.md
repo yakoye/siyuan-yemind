@@ -26,6 +26,11 @@ to the pinned upstream revision.
   opening an inserted node editor until the completed tree layout has committed
   its final SVG transforms, so Tab, Enter and quick-add never expose a blank or
   misplaced first frame.
+- `src/core/render/node/nodeCreateContents.js` and `src/plugins/RichText.js`:
+  `textAutoWrapWidth` may also be a function of the node, so an auto-wrap limit
+  stated in characters stays correct across node levels with different font
+  sizes. A number keeps behaving exactly as upstream. The static measurement
+  and the live editor share one resolver so they wrap at the same boundary.
 - `src/core/render/node/nodeModifyWidth.js`: preserves one painted text shell
   while the user resizes a node instead of replacing visible text every frame.
 - `src/plugins/RichText.js`: keeps the editor opaque until committed SVG layout,

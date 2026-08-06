@@ -42,6 +42,30 @@ export function installMindMapMeasurementContract(): void {
 }
 
 
+/** How wide a node may grow before its text wraps, counted in CJK characters. */
+export const NODE_AUTO_WRAP_CHARACTERS = 20;
+
+const FALLBACK_NODE_FONT_SIZE = 14;
+
+/**
+ * The auto-wrap limit for one node, in pixels.
+ *
+ * A CJK glyph advances one em, so a limit stated in characters is `characters
+ * * fontSize`. Node font size varies by level and theme (16-26px for a root,
+ * 14px for an ordinary node), which is why this is resolved per node rather
+ * than configured as one pixel constant: a single number would mean 20
+ * characters for one level and far fewer or more for the others.
+ */
+export function nodeAutoWrapWidth(
+  node: { getStyle?: (prop: string, root: boolean) => unknown } | null | undefined,
+  characters: number = NODE_AUTO_WRAP_CHARACTERS,
+): number {
+  const fontSize = Number(node?.getStyle?.('fontSize', false));
+  const size = Number.isFinite(fontSize) && fontSize > 0 ? fontSize : FALLBACK_NODE_FONT_SIZE;
+  const count = Number.isFinite(characters) && characters > 0 ? characters : NODE_AUTO_WRAP_CHARACTERS;
+  return Math.round(size * count);
+}
+
 export function createImageDeleteGuard(
   confirmDelete?: (node: any) => Promise<boolean>,
 ): (node: any) => Promise<boolean> {
@@ -108,6 +132,11 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     selectTextOnEnterEditText: false,
     isEndNodeTextEditOnClickOuter: true,
     enableDragModifyNodeWidth: true,
+    // Auto width grows up to NODE_AUTO_WRAP_CHARACTERS characters, then the
+    // text wraps and the node grows downwards instead. A node the user has
+    // dragged keeps its own width: upstream short-circuits this option with
+    // `hasCustomWidth() ? customTextWidth : ...` at every measurement site.
+    textAutoWrapWidth: (node: any) => nodeAutoWrapWidth(node),
     isShowCreateChildBtnIcon: false,
     notShowExpandBtn: true,
     fit: Boolean(settings?.autoFitOnOpen ?? true) && !viewData,

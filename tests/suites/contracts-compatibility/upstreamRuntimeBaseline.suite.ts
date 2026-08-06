@@ -72,11 +72,13 @@ describe('vendored simple-mind-map upstream baseline', () => {
     const textEditPath = 'src/core/render/TextEdit.js';
     const modifyWidthPath = 'src/core/render/node/nodeModifyWidth.js';
     const richTextPath = 'src/plugins/RichText.js';
+    const createContentsPath = 'src/core/render/node/nodeCreateContents.js';
 
     expect(baseline.allowedModifiedFiles).toEqual([
       'src/core/command/KeyCommand.js',
       renderPath,
       nodePath,
+      createContentsPath,
       modifyWidthPath,
       richTextPath,
     ]);
@@ -90,5 +92,9 @@ describe('vendored simple-mind-map upstream baseline', () => {
       .not.toBe(baseline.sourceHashes[modifyWidthPath]);
     expect(normalizedSha256(join(runtimeRoot, richTextPath)))
       .not.toBe(baseline.sourceHashes[richTextPath]);
+    // Per-node auto-wrap width: the measurement site and the live editor must
+    // resolve the same limit, which is why this pair is forked together.
+    expect(normalizedSha256(join(runtimeRoot, createContentsPath)))
+      .not.toBe(baseline.sourceHashes[createContentsPath]);
   });
 });

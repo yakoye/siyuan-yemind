@@ -10,6 +10,8 @@ import {
   resolveFocusRestoreRange,
 } from '../../../src/editor/YeMindRichText';
 import { remeasureWhenFontsReady } from '../../../src/core/firstPaintGeometry';
+import { NODE_AUTO_WRAP_CHARACTERS, nodeAutoWrapWidth } from '../../../src/core/createMindMap';
+import { resolveTextAutoWrapWidth } from 'simple-mind-map/src/core/render/node/nodeCreateContents';
 import {
   EDITING_NODE_CLASS,
   EditingNodeTextSuppression,
@@ -408,5 +410,39 @@ describe('v1.9.9-rc.7 first-paint geometry and cached editor text', () => {
     expect(isEmptyRichTextDocument('<p>新节点</p>')).toBe(false);
     expect(isEmptyRichTextDocument('<p><img src="x"></p>')).toBe(false);
     expect(isEmptyRichTextDocument('<p><span class="ql-formula" data-value="x"></span></p>')).toBe(false);
+  });
+});
+
+describe('v1.9.9-rc.8 per-node auto wrap width', () => {
+  const styled = (fontSize: unknown) => ({ getStyle: (prop: string) => (prop === 'fontSize' ? fontSize : '') });
+
+  it('caps auto width at 20 characters of the node own font size', () => {
+    // A CJK glyph advances one em, so the limit in pixels is characters * fontSize.
+    expect(NODE_AUTO_WRAP_CHARACTERS).toBe(20);
+    expect(nodeAutoWrapWidth(styled(14))).toBe(280);
+    expect(nodeAutoWrapWidth(styled(18))).toBe(360);
+    expect(nodeAutoWrapWidth(styled(26))).toBe(520);
+  });
+
+  it('resolves per node instead of one global pixel constant', () => {
+    // The whole reason for the vendor extension: one pixel number cannot mean
+    // 20 characters for a 26px root and a 14px ordinary node at the same time.
+    expect(nodeAutoWrapWidth(styled(26))).not.toBe(nodeAutoWrapWidth(styled(14)));
+  });
+
+  it('falls back to the ordinary node size when the style is missing or unusable', () => {
+    expect(nodeAutoWrapWidth(null)).toBe(280);
+    expect(nodeAutoWrapWidth(styled(''))).toBe(280);
+    expect(nodeAutoWrapWidth(styled(0))).toBe(280);
+    expect(nodeAutoWrapWidth(styled(Number.NaN))).toBe(280);
+  });
+
+  it('accepts a number, a function or nothing usable at the vendor resolver', () => {
+    const node = { id: 'n1' };
+    expect(resolveTextAutoWrapWidth({ opt: { textAutoWrapWidth: 500 } }, node)).toBe(500);
+    expect(resolveTextAutoWrapWidth({ opt: { textAutoWrapWidth: (n: any) => (n === node ? 280 : 0) } }, node)).toBe(280);
+    // Unusable values fall back to the documented upstream default.
+    expect(resolveTextAutoWrapWidth({ opt: { textAutoWrapWidth: undefined } }, node)).toBe(500);
+    expect(resolveTextAutoWrapWidth({ opt: { textAutoWrapWidth: () => -1 } }, node)).toBe(500);
   });
 });

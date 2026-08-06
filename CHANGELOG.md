@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.9.9-rc.8 - 2026-08-06
+
+Node auto width is now capped at 20 characters. Past that the text wraps and the node grows downwards instead of sideways.
+
+- **`textAutoWrapWidth` may now be a function of the node.** A wrap limit stated in characters is only a fixed pixel width for one font size, and node font size varies by level and theme — 16-26px for a root, 14px for an ordinary node. One global pixel constant would therefore mean 20 characters for one level and roughly 11 or 28 for the others. Rather than making each caller special-case levels, the option itself is resolved per node in the vendored runtime (`nodeCreateContents.js#resolveTextAutoWrapWidth`, used by both the static measurement and the live editor so they wrap at the same boundary). Passing a number keeps behaving exactly as upstream.
+- **YeMind sets the limit to 20 CJK characters of each node's own font size** (`nodeAutoWrapWidth` in `src/core/createMindMap.ts`). A CJK glyph advances one em, so this is `20 × fontSize` — 280px for an ordinary node, up to 520px for a large root. Previously YeMind never set the option at all and inherited upstream's `500`, about 35 characters at 14px, which is why nodes kept widening instead of wrapping.
+- **A width the user dragged still outranks the limit, in both directions, and needs no code**: upstream already short-circuits the option with `hasCustomWidth() ? customTextWidth : …` at every measurement site, and `nodeModifyWidth.js` persists `customTextWidth` into node data. Covered by a regression that drags a node past the limit, re-edits it, and asserts the width is unchanged.
+- Growing downwards past the limit also needs no new code: once `max-width` binds, the same measurement returns the wrapped multi-line height, and the live geometry controller added in rc.5 already tracks both dimensions while typing.
+- **Visible change to existing maps.** Nodes currently wider than 20 characters will re-wrap and become taller on next open. This is measurement-time only: no data is modified, and undo/redo, save/load and copy/paste are unaffected. Nodes with a dragged width are untouched.
+- The vendored-runtime fork ledger (`UPSTREAM_BASELINE.json`, `README.YEMIND.md`) and its contract test are updated for the one newly forked file. `TextEdit.js` is deliberately not touched — the contract pins it byte-equivalent to upstream, and it only serves the non-rich-text editor path, which never runs while the rich-text plugin is registered.
+- Added 4 unit scenarios (per-node limit, per-level divergence, font-size fallbacks, and the vendor resolver accepting a number, a function or nothing usable) and 2 browser regressions (widen-then-grow-taller against the node's real font size; dragged width outranking the limit across a re-edit).
+- One existing browser test needed its fixture text shortened: it drags a pointer selection across a 23-character line that now wraps to two. The assertions are unchanged; only the fixture was brought under the new limit.
+- Full verification: `tsc --noEmit`, docs check, unit suite (1020 passed / 0 failed), complete Playwright E2E across desktop and mobile projects, run twice (144 passed / 0 failed / 0 flaky on the confirming run).
+
 ## 1.9.9-rc.7 - 2026-08-06
 
 This release candidate closes the gap rc.6 left between an editor closing and the node's own text coming back, and hardens two first-paint paths.
