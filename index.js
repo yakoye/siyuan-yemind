@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.9-rc.6";
+const PLUGIN_VERSION = "1.9.9-rc.7";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "b6dfd7a7-dirty-a812881c",
-  time: "2026-08-05T14:30:43.589Z"
+  id: "b1d3f782-dirty-ab55ab36",
+  time: "2026-08-06T02:03:21.012Z"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-05T14:30:43.581Z",
-  buildId: "yemind-v1.9.9-rc.6-20260805",
+  buildTime: "2026-08-06T02:03:21.007Z",
+  buildId: "yemind-v1.9.9-rc.7-20260806",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -81141,6 +81141,13 @@ const YEMIND_RICH_TEXT_FORMATS = [
   "code-block"
 ];
 let formatsRegistered = false;
+function isEmptyRichTextDocument(value) {
+  const source = String(value ?? "");
+  if (!source.trim()) return true;
+  const withoutMarkup = source.replace(/<br\s*\/?>/gi, "").replace(/<[^>]*>/g, "").replace(/&nbsp;| |﻿/g, " ");
+  if (withoutMarkup.trim()) return false;
+  return !/<(img|svg|iframe|video|audio|mjx-container)\b/i.test(source) && !/class="[^"]*ql-formula/i.test(source);
+}
 function resolveFocusRestoreRange(candidates, fallbackIndex) {
   for (const candidate of candidates) {
     if (candidate && Number.isFinite(candidate.index)) {
@@ -81239,6 +81246,22 @@ const _YeMindRichText = class _YeMindRichText extends RichText {
      * `selection-change` and `text-change` rather than from either alone.
      */
     __publicField(this, "lastKnownRange", null);
+    __publicField(this, "cachedEditingText", "");
+  }
+  /**
+   * A canvas resize or zoom while an editor is open makes upstream tear the
+   * editor down and rebuild it from `cacheEditingText || nodeText`. Quill's
+   * "empty" document is `<p><br></p>`, which is truthy, so a rebuild triggered
+   * before the editor had mounted its content would replace the node's real
+   * text with a blank document — a freshly inserted node losing its `新节点`
+   * label. An empty document is stored as an empty string so the fallback to
+   * the node's own text actually happens.
+   */
+  get cacheEditingText() {
+    return this.cachedEditingText;
+  }
+  set cacheEditingText(value) {
+    this.cachedEditingText = isEmptyRichTextDocument(value) ? "" : String(value ?? "");
   }
   bindEvent() {
     super.bindEvent();
@@ -94146,7 +94169,12 @@ class EditingNodeTextSuppression {
       this.suppress();
     });
     __publicField(this, "onHide", () => this.scheduleReveal());
-    var _a, _b, _c2, _d2, _e, _f;
+    __publicField(this, "onRenderEnd", () => {
+      if (!this.revealPending) return;
+      this.reveal();
+    });
+    __publicField(this, "revealPending", false);
+    var _a, _b, _c2, _d2, _e, _f, _g, _h;
     this.mindMap = mindMap;
     this.timers = options.timers ?? browserTimers;
     this.revealFallbackMs = Math.max(0, Number(options.revealFallbackMs ?? 400));
@@ -94154,10 +94182,12 @@ class EditingNodeTextSuppression {
     (_b = (_a = this.mindMap) == null ? void 0 : _a.on) == null ? void 0 : _b.call(_a, "before_show_text_edit", this.onBeforeShow);
     (_d2 = (_c2 = this.mindMap) == null ? void 0 : _c2.on) == null ? void 0 : _d2.call(_c2, "node_text_edit_change", this.onTextEditChange);
     (_f = (_e = this.mindMap) == null ? void 0 : _e.on) == null ? void 0 : _f.call(_e, "hide_text_edit", this.onHide);
+    (_h = (_g = this.mindMap) == null ? void 0 : _g.on) == null ? void 0 : _h.call(_g, "node_tree_render_end", this.onRenderEnd);
   }
   suppress() {
     var _a, _b, _c2;
     if (this.destroyed) return false;
+    this.revealPending = false;
     const richText = (_a = this.mindMap) == null ? void 0 : _a.richText;
     if ((richText == null ? void 0 : richText.showTextEdit) !== true) return false;
     const group = (_c2 = (_b = richText.node) == null ? void 0 : _b.group) == null ? void 0 : _c2.node;
@@ -94168,23 +94198,40 @@ class EditingNodeTextSuppression {
     group.classList.add(EDITING_NODE_CLASS);
     return true;
   }
+  /**
+   * The glyphs may come back exactly when the opaque host stops covering them
+   * -- no earlier (the node would paint nothing, or paint text at its
+   * pre-layout local origin) and no later (the node would paint nothing at
+   * all, which is what a ~400ms wait produced: a node visibly flashing empty
+   * on close).
+   *
+   * By the time `hide_text_edit` is emitted, upstream has usually already run
+   * its own one-shot `node_tree_render_end` listener and dropped the host,
+   * because the commit render completes synchronously inside `SET_NODE_TEXT`.
+   * Waiting for a *further* render end therefore waits for something that
+   * already happened. So the host's own state is the signal, not the event.
+   */
   scheduleReveal() {
     var _a, _b;
-    const group = this.group;
-    if (!group) return;
+    if (!this.group) return;
     this.cancelReveal();
-    const reveal = () => {
-      var _a2, _b2;
-      (_b2 = (_a2 = this.mindMap) == null ? void 0 : _a2.off) == null ? void 0 : _b2.call(_a2, "node_tree_render_end", reveal);
-      this.cancelReveal();
-      group.classList.remove(EDITING_NODE_CLASS);
-      if (this.group === group) this.group = null;
-    };
-    (_b = (_a = this.mindMap) == null ? void 0 : _a.on) == null ? void 0 : _b.call(_a, "node_tree_render_end", reveal);
+    const host = (_b = (_a = this.mindMap) == null ? void 0 : _a.richText) == null ? void 0 : _b.textEditNode;
+    if (!host || host.style.display === "none") {
+      this.reveal();
+      return;
+    }
+    this.revealPending = true;
     this.revealTimer = this.timers.set(() => {
       this.revealTimer = null;
-      reveal();
+      this.reveal();
     }, this.revealFallbackMs);
+  }
+  reveal() {
+    var _a;
+    this.cancelReveal();
+    this.revealPending = false;
+    (_a = this.group) == null ? void 0 : _a.classList.remove(EDITING_NODE_CLASS);
+    this.group = null;
   }
   cancelReveal() {
     if (this.revealTimer === null) return;
@@ -94192,15 +94239,34 @@ class EditingNodeTextSuppression {
     this.revealTimer = null;
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i;
     this.destroyed = true;
     this.cancelReveal();
     (_a = this.group) == null ? void 0 : _a.classList.remove(EDITING_NODE_CLASS);
     this.group = null;
-    (_c2 = (_b = this.mindMap) == null ? void 0 : _b.off) == null ? void 0 : _c2.call(_b, "before_show_text_edit", this.onBeforeShow);
-    (_e = (_d2 = this.mindMap) == null ? void 0 : _d2.off) == null ? void 0 : _e.call(_d2, "node_text_edit_change", this.onTextEditChange);
-    (_g = (_f = this.mindMap) == null ? void 0 : _f.off) == null ? void 0 : _g.call(_f, "hide_text_edit", this.onHide);
+    (_c2 = (_b = this.mindMap) == null ? void 0 : _b.off) == null ? void 0 : _c2.call(_b, "node_tree_render_end", this.onRenderEnd);
+    (_e = (_d2 = this.mindMap) == null ? void 0 : _d2.off) == null ? void 0 : _e.call(_d2, "before_show_text_edit", this.onBeforeShow);
+    (_g = (_f = this.mindMap) == null ? void 0 : _f.off) == null ? void 0 : _g.call(_f, "node_text_edit_change", this.onTextEditChange);
+    (_i = (_h = this.mindMap) == null ? void 0 : _h.off) == null ? void 0 : _i.call(_h, "hide_text_edit", this.onHide);
   }
+}
+function remeasureWhenFontsReady(mindMap, fonts = typeof document === "undefined" ? null : document.fonts) {
+  let cancelled = false;
+  const ready = fonts == null ? void 0 : fonts.ready;
+  if (!ready || typeof ready.then !== "function" || (fonts == null ? void 0 : fonts.status) === "loaded") {
+    return () => {
+      cancelled = true;
+    };
+  }
+  void ready.then(() => {
+    var _a, _b;
+    if (cancelled) return;
+    if (((_a = mindMap == null ? void 0 : mindMap.richText) == null ? void 0 : _a.showTextEdit) === true) return;
+    (_b = mindMap == null ? void 0 : mindMap.render) == null ? void 0 : _b.call(mindMap, null, "changeTheme");
+  });
+  return () => {
+    cancelled = true;
+  };
 }
 function renderedNodeUid(node) {
   var _a, _b, _c2, _d2, _e;
@@ -94280,6 +94346,7 @@ class YeMindEditor {
     __publicField(this, "miniMapController", null);
     __publicField(this, "liveNodeTextGeometry", null);
     __publicField(this, "editingNodeTextSuppression", null);
+    __publicField(this, "cancelFontRemeasure", null);
     __publicField(this, "unbindCanvasNodeClipboard", null);
     __publicField(this, "studyMode", null);
     __publicField(this, "presentationState", null);
@@ -94756,7 +94823,7 @@ class YeMindEditor {
     (_b = panel.querySelector("[data-import-kind]:not([hidden])")) == null ? void 0 : _b.focus();
   }
   destroy() {
-    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H;
+    var _a, _b, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I;
     this.options.diagnostics.record(
       "editor",
       "destroy-started",
@@ -94801,20 +94868,22 @@ class YeMindEditor {
     this.liveNodeTextGeometry = null;
     (_s = this.editingNodeTextSuppression) == null ? void 0 : _s.destroy();
     this.editingNodeTextSuppression = null;
-    (_t = this.canvasRightDrag) == null ? void 0 : _t.destroy();
+    (_t = this.cancelFontRemeasure) == null ? void 0 : _t.call(this);
+    this.cancelFontRemeasure = null;
+    (_u = this.canvasRightDrag) == null ? void 0 : _u.destroy();
     this.canvasRightDrag = null;
-    (_u = this.cancelFocusedNodeHighlight) == null ? void 0 : _u.call(this);
+    (_v = this.cancelFocusedNodeHighlight) == null ? void 0 : _v.call(this);
     this.cancelFocusedNodeHighlight = null;
-    (_v = this.rootEl) == null ? void 0 : _v.removeEventListener("keydown", this.onRootKeydown, true);
+    (_w = this.rootEl) == null ? void 0 : _w.removeEventListener("keydown", this.onRootKeydown, true);
     window.removeEventListener("keydown", this.onWindowTextSelectionKeydown, true);
-    (_w = this.outlinePaneEl) == null ? void 0 : _w.removeEventListener("keydown", this.onOutlineKeydownBubble);
+    (_x = this.outlinePaneEl) == null ? void 0 : _x.removeEventListener("keydown", this.onOutlineKeydownBubble);
     document.removeEventListener("paste", this.onImagePaste, true);
-    (_x = this.canvasEl) == null ? void 0 : _x.removeEventListener("dragover", this.onImageDragOver);
-    (_y = this.canvasEl) == null ? void 0 : _y.removeEventListener("drop", this.onImageDrop);
-    (_z = this.canvasEl) == null ? void 0 : _z.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
-    (_A = this.canvasEl) == null ? void 0 : _A.removeEventListener("click", this.onCanvasLinkClickCapture, true);
-    (_B = this.canvasEl) == null ? void 0 : _B.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
-    (_C = this.outlineEl) == null ? void 0 : _C.removeEventListener(
+    (_y = this.canvasEl) == null ? void 0 : _y.removeEventListener("dragover", this.onImageDragOver);
+    (_z = this.canvasEl) == null ? void 0 : _z.removeEventListener("drop", this.onImageDrop);
+    (_A = this.canvasEl) == null ? void 0 : _A.removeEventListener("pointerdown", this.onCanvasPointerDown, true);
+    (_B = this.canvasEl) == null ? void 0 : _B.removeEventListener("click", this.onCanvasLinkClickCapture, true);
+    (_C = this.canvasEl) == null ? void 0 : _C.removeEventListener("contextmenu", this.onCanvasContextMenuCapture, true);
+    (_D = this.outlineEl) == null ? void 0 : _D.removeEventListener(
       "pointerdown",
       this.onOutlinePointerDown,
       true
@@ -94831,10 +94900,10 @@ class YeMindEditor {
     this.resizeFrame = null;
     this.splitResizeFrame = null;
     this.splitDragPointerId = null;
-    (_D = this.unbindCanvasNodeClipboard) == null ? void 0 : _D.call(this);
+    (_E = this.unbindCanvasNodeClipboard) == null ? void 0 : _E.call(this);
     this.unbindCanvasNodeClipboard = null;
-    (_G = (_F = (_E = this.map) == null ? void 0 : _E.command) == null ? void 0 : _F.yemindCancelHistory) == null ? void 0 : _G.call(_F);
-    (_H = this.map) == null ? void 0 : _H.destroy();
+    (_H = (_G = (_F = this.map) == null ? void 0 : _F.command) == null ? void 0 : _G.yemindCancelHistory) == null ? void 0 : _H.call(_G);
+    (_I = this.map) == null ? void 0 : _I.destroy();
     this.map = null;
     this.options.diagnostics.removeEditorState(this.current.id);
     this.options.diagnostics.record(
@@ -95043,6 +95112,7 @@ class YeMindEditor {
     });
     this.liveNodeTextGeometry = new LiveNodeTextGeometryController(this.map);
     this.editingNodeTextSuppression = new EditingNodeTextSuppression(this.map);
+    this.cancelFontRemeasure = remeasureWhenFontsReady(this.map);
     const miniMapElement = this.options.container.querySelector('[data-role="minimap"]');
     if (miniMapElement) {
       this.miniMapController = new MiniMapController(this.rootEl, this.map, miniMapElement);
