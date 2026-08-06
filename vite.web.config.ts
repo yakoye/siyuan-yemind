@@ -67,6 +67,15 @@ export default defineConfig({
   base: './',
   define: createSourceBuildDefines(sourceBuild),
   plugins: [serveWorkspaceAssets()],
+  // The vendored simple-mind-map runtime is a `file:` dependency that this
+  // repo patches. Vite pre-bundles dependencies and serves that cache until
+  // the optimizer re-runs, so a long-lived dev server keeps handing out the
+  // pre-patch runtime while the app's own source hot-reloads around it -- the
+  // version banner updates, the engine does not. Excluding it means a vendor
+  // edit takes effect on the next reload, like any other source file.
+  optimizeDeps: {
+    exclude: ['simple-mind-map'],
+  },
   resolve: {
     alias: {
       siyuan: resolve(__dirname, 'web/src/siyuanAdapter.ts'),
