@@ -5,7 +5,11 @@ import {
   textSizeChanged,
   type LiveTextGeometryTimers,
 } from '../../../src/editor/liveNodeTextGeometry';
-import { resolveFocusRestoreRange } from '../../../src/editor/YeMindRichText';
+import {
+  isEmptyRichTextDocument,
+  resolveFocusRestoreRange,
+} from '../../../src/editor/YeMindRichText';
+import { remeasureWhenFontsReady } from '../../../src/core/firstPaintGeometry';
 import {
   EDITING_NODE_CLASS,
   EditingNodeTextSuppression,
@@ -268,8 +272,9 @@ describe('v1.9.9-rc.6 editing node glyph suppression', () => {
       },
     };
     let queued: Array<() => void> = [];
+    const host = { style: { display: 'block' } };
     const mindMap: any = {
-      richText: { showTextEdit: true, node: { group: { node: group } } },
+      richText: { showTextEdit: true, node: { group: { node: group } }, textEditNode: host },
       on: (name: string, handler: () => void) => { (listeners[name] ??= []).push(handler); },
       off: (name: string, handler: () => void) => {
         listeners[name] = (listeners[name] ?? []).filter((item) => item !== handler);
@@ -287,7 +292,7 @@ describe('v1.9.9-rc.6 editing node glyph suppression', () => {
       // Run the deferred read inline so the test observes the same frame.
       schedule: (callback) => callback(),
     });
-    return { controller, mindMap, classList, timers, listeners };
+    return { controller, mindMap, classList, timers, listeners, host };
   }
 
   it('hides the node glyphs for the whole session, so only the Quill overlay paints text', () => {
@@ -299,13 +304,27 @@ describe('v1.9.9-rc.6 editing node glyph suppression', () => {
     harness.controller.destroy();
   });
 
-  it('restores the glyphs only once the committed text has been laid out', () => {
+  it('restores the glyphs the moment the opaque host stops covering the node', () => {
+    const harness = suppressionHarness();
+    harness.mindMap.emit('before_show_text_edit');
+    // The commit render normally completes synchronously inside SET_NODE_TEXT,
+    // so upstream has already dropped the host by the time hide_text_edit is
+    // emitted. Waiting for a further render end waits for something that
+    // already happened, and left the node painted empty for ~400ms.
+    harness.mindMap.richText.showTextEdit = false;
+    harness.host.style.display = 'none';
+    harness.mindMap.emit('hide_text_edit');
+    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(false);
+    harness.controller.destroy();
+  });
+
+  it('keeps the glyphs hidden while the host still covers them, then reveals on the commit render', () => {
     const harness = suppressionHarness();
     harness.mindMap.emit('before_show_text_edit');
     harness.mindMap.richText.showTextEdit = false;
     harness.mindMap.emit('hide_text_edit');
-    // Still hidden: revealing here is what painted text at the node's local
-    // origin for one frame before layout placed it.
+    // Host still shown: revealing now would paint text at the node's
+    // pre-layout local origin for one frame.
     expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(true);
     harness.mindMap.emit('node_tree_render_end');
     expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(false);
@@ -335,5 +354,59 @@ describe('v1.9.9-rc.6 editing node glyph suppression', () => {
     expect(harness.listeners.before_show_text_edit).toHaveLength(0);
     expect(harness.listeners.node_text_edit_change).toHaveLength(0);
     expect(harness.listeners.hide_text_edit).toHaveLength(0);
+  });
+});
+
+describe('v1.9.9-rc.7 first-paint geometry and cached editor text', () => {
+  it('re-measures every node once the fonts it was rendered with have loaded', async () => {
+    let resolveFonts: (() => void) | null = null;
+    const fonts = { status: 'loading', ready: new Promise<void>((resolve) => { resolveFonts = resolve; }) };
+    const mindMap: any = { render: vi.fn() };
+
+    remeasureWhenFontsReady(mindMap, fonts);
+    expect(mindMap.render).not.toHaveBeenCalled();
+
+    resolveFonts?.();
+    await fonts.ready;
+    await Promise.resolve();
+    // `changeTheme` is the one render source upstream treats as "geometry is
+    // stale"; any other source only re-lays out the cached sizes.
+    expect(mindMap.render).toHaveBeenCalledWith(null, 'changeTheme');
+  });
+
+  it('does nothing on a warm start where the fonts already resolved', () => {
+    const mindMap: any = { render: vi.fn() };
+    remeasureWhenFontsReady(mindMap, { status: 'loaded', ready: Promise.resolve() });
+    expect(mindMap.render).not.toHaveBeenCalled();
+    remeasureWhenFontsReady(mindMap, null);
+    expect(mindMap.render).not.toHaveBeenCalled();
+  });
+
+  it('never re-measures under an open editor or after the map was torn down', async () => {
+    const editing: any = { render: vi.fn(), richText: { showTextEdit: true } };
+    const editingFonts = { status: 'loading', ready: Promise.resolve() };
+    remeasureWhenFontsReady(editing, editingFonts);
+    await editingFonts.ready;
+    await Promise.resolve();
+    expect(editing.render).not.toHaveBeenCalled();
+
+    const torn: any = { render: vi.fn() };
+    const tornFonts = { status: 'loading', ready: Promise.resolve() };
+    remeasureWhenFontsReady(torn, tornFonts)();
+    await tornFonts.ready;
+    await Promise.resolve();
+    expect(torn.render).not.toHaveBeenCalled();
+  });
+
+  it('treats a Quill empty document as no cached editor text', () => {
+    // Upstream rebuilds a scaled editor from `cacheEditingText || nodeText`.
+    // `<p><br></p>` is truthy, so without this an editor rebuilt before its
+    // content mounted replaced a node's real text with a blank document.
+    expect(isEmptyRichTextDocument('<p><br></p>')).toBe(true);
+    expect(isEmptyRichTextDocument('<p></p><p>&nbsp;</p>')).toBe(true);
+    expect(isEmptyRichTextDocument('')).toBe(true);
+    expect(isEmptyRichTextDocument('<p>新节点</p>')).toBe(false);
+    expect(isEmptyRichTextDocument('<p><img src="x"></p>')).toBe(false);
+    expect(isEmptyRichTextDocument('<p><span class="ql-formula" data-value="x"></span></p>')).toBe(false);
   });
 });

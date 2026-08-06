@@ -52,6 +52,25 @@ export interface QuillRange {
  * elsewhere — which silently destroyed the full selection a freshly inserted
  * node opens with.
  */
+/**
+ * True for the document Quill leaves behind when an editor holds no text —
+ * `<p><br></p>` and friends. It is not the same thing as an empty string, and
+ * that difference matters wherever a cached editor document is used with a
+ * `||` fallback to the node's real text.
+ */
+export function isEmptyRichTextDocument(value: unknown): boolean {
+  const source = String(value ?? '');
+  if (!source.trim()) return true;
+  const withoutMarkup = source
+    .replace(/<br\s*\/?>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;| |﻿/g, ' ');
+  if (withoutMarkup.trim()) return false;
+  // Media carries no text but is still content.
+  return !/<(img|svg|iframe|video|audio|mjx-container)\b/i.test(source)
+    && !/class="[^"]*ql-formula/i.test(source);
+}
+
 export function resolveFocusRestoreRange(
   candidates: Array<QuillRange | null | undefined>,
   fallbackIndex: number,
@@ -256,6 +275,25 @@ export default class YeMindRichText extends (BaseRichText as any) {
    * `selection-change` and `text-change` rather than from either alone.
    */
   private lastKnownRange: { index: number; length: number } | null = null;
+
+  private cachedEditingText = '';
+
+  /**
+   * A canvas resize or zoom while an editor is open makes upstream tear the
+   * editor down and rebuild it from `cacheEditingText || nodeText`. Quill's
+   * "empty" document is `<p><br></p>`, which is truthy, so a rebuild triggered
+   * before the editor had mounted its content would replace the node's real
+   * text with a blank document — a freshly inserted node losing its `新节点`
+   * label. An empty document is stored as an empty string so the fallback to
+   * the node's own text actually happens.
+   */
+  get cacheEditingText(): string {
+    return this.cachedEditingText;
+  }
+
+  set cacheEditingText(value: string) {
+    this.cachedEditingText = isEmptyRichTextDocument(value) ? '' : String(value ?? '');
+  }
 
   bindEvent(): void {
     super.bindEvent();

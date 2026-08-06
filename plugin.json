@@ -2,7 +2,7 @@
   "name": "siyuan-yemind",
   "author": "gocoffee-local",
   "url": "",
-  "version": "1.9.9-rc.6",
+  "version": "1.9.9-rc.7",
   "minAppVersion": "3.7.3",
   "backends": [
     "all"

@@ -60,6 +60,13 @@ export class EditingNodeTextSuppression {
 
   private readonly onHide = (): void => this.scheduleReveal();
 
+  private readonly onRenderEnd = (): void => {
+    if (!this.revealPending) return;
+    this.reveal();
+  };
+
+  private revealPending = false;
+
   constructor(private readonly mindMap: any, options: EditingNodeTextSuppressionOptions = {}) {
     this.timers = options.timers ?? browserTimers;
     this.revealFallbackMs = Math.max(0, Number(options.revealFallbackMs ?? 400));
@@ -69,10 +76,15 @@ export class EditingNodeTextSuppression {
     // suppression independent of the exact opening callback order.
     this.mindMap?.on?.('node_text_edit_change', this.onTextEditChange);
     this.mindMap?.on?.('hide_text_edit', this.onHide);
+    // Only a safety net: the commit render usually completes synchronously
+    // inside `SET_NODE_TEXT`, before `hide_text_edit` is even emitted, so the
+    // reveal normally happens directly in `scheduleReveal`.
+    this.mindMap?.on?.('node_tree_render_end', this.onRenderEnd);
   }
 
   suppress(): boolean {
     if (this.destroyed) return false;
+    this.revealPending = false;
     const richText = this.mindMap?.richText;
     if (richText?.showTextEdit !== true) return false;
     const group = richText.node?.group?.node as SVGElement | undefined;
@@ -84,21 +96,39 @@ export class EditingNodeTextSuppression {
     return true;
   }
 
+  /**
+   * The glyphs may come back exactly when the opaque host stops covering them
+   * -- no earlier (the node would paint nothing, or paint text at its
+   * pre-layout local origin) and no later (the node would paint nothing at
+   * all, which is what a ~400ms wait produced: a node visibly flashing empty
+   * on close).
+   *
+   * By the time `hide_text_edit` is emitted, upstream has usually already run
+   * its own one-shot `node_tree_render_end` listener and dropped the host,
+   * because the commit render completes synchronously inside `SET_NODE_TEXT`.
+   * Waiting for a *further* render end therefore waits for something that
+   * already happened. So the host's own state is the signal, not the event.
+   */
   private scheduleReveal(): void {
-    const group = this.group;
-    if (!group) return;
+    if (!this.group) return;
     this.cancelReveal();
-    const reveal = (): void => {
-      this.mindMap?.off?.('node_tree_render_end', reveal);
-      this.cancelReveal();
-      group.classList.remove(EDITING_NODE_CLASS);
-      if (this.group === group) this.group = null;
-    };
-    this.mindMap?.on?.('node_tree_render_end', reveal);
+    const host = this.mindMap?.richText?.textEditNode as HTMLElement | null | undefined;
+    if (!host || host.style.display === 'none') {
+      this.reveal();
+      return;
+    }
+    this.revealPending = true;
     this.revealTimer = this.timers.set(() => {
       this.revealTimer = null;
-      reveal();
+      this.reveal();
     }, this.revealFallbackMs);
+  }
+
+  private reveal(): void {
+    this.cancelReveal();
+    this.revealPending = false;
+    this.group?.classList.remove(EDITING_NODE_CLASS);
+    this.group = null;
   }
 
   private cancelReveal(): void {
@@ -112,6 +142,7 @@ export class EditingNodeTextSuppression {
     this.cancelReveal();
     this.group?.classList.remove(EDITING_NODE_CLASS);
     this.group = null;
+    this.mindMap?.off?.('node_tree_render_end', this.onRenderEnd);
     this.mindMap?.off?.('before_show_text_edit', this.onBeforeShow);
     this.mindMap?.off?.('node_text_edit_change', this.onTextEditChange);
     this.mindMap?.off?.('hide_text_edit', this.onHide);

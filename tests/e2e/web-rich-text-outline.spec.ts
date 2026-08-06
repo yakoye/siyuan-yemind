@@ -3287,3 +3287,87 @@ test('Ctrl+A selects the edited node text and never the surrounding application 
   const canvasSelection = await readSelection();
   expect(canvasSelection.text).toBe('');
 });
+
+// v1.9.9-rc.7 user regression: closing an editor left the node painted as an
+// empty box for ~25 frames before its text reappeared.
+test('a closing editor hands the node straight back to its glyphs, with no empty frame', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop close-handover regression');
+  await resetWebApp(page);
+  const editor = page.locator('.ymw-editor > .ymz-editor');
+  const rootNode = editor.locator('.smm-node').first();
+  const textEditor = canvasTextEditor(page);
+
+  await rootNode.dblclick();
+  await expect(textEditor).toBeFocused();
+  await page.keyboard.press('Control+a');
+  await textEditor.pressSequentially('关闭时不应该闪白', { delay: 20 });
+  await expect(textEditor).toHaveText('关闭时不应该闪白');
+
+  await page.evaluate(() => {
+    const state = { frames: 0, blank: 0 };
+    (window as any).__yemindCloseState = state;
+    const tick = () => {
+      const group = document.querySelector('.ymw-editor > .ymz-editor .smm-node');
+      const wrap = group?.querySelector('.smm-richtext-node-wrap,.smm-text-node-wrap');
+      const host = document.querySelector('.smm-richtext-node-edit-wrap') as HTMLElement | null;
+      if (wrap) {
+        state.frames += 1;
+        const glyphs = getComputedStyle(wrap as Element).visibility !== 'hidden';
+        const hostVisible = Boolean(host && host.style.display !== 'none');
+        // Neither layer painting means the node is a blank box on screen.
+        if (!glyphs && !hostVisible) state.blank += 1;
+      }
+      (window as any).__yemindCloseFrame = requestAnimationFrame(tick);
+    };
+    tick();
+  });
+
+  await commitCanvasEdit(page);
+  await page.waitForTimeout(900);
+
+  const state = await page.evaluate(() => {
+    cancelAnimationFrame((window as any).__yemindCloseFrame);
+    return (window as any).__yemindCloseState;
+  });
+  expect(state.frames).toBeGreaterThan(30);
+  expect(state.blank).toBe(0);
+  await expect(rootNode).toContainText('关闭时不应该闪白');
+});
+
+// v1.9.9-rc.7 user regression: every insertion entry point must open on the
+// default label, fully selected, so the first keystroke replaces it.
+for (const entry of ['Tab', 'Enter', 'quick-add'] as const) {
+  test(`${entry} insertion opens on 新节点 with the whole label selected`, async ({ page, isMobile }) => {
+    test.skip(isMobile, 'desktop insertion selection regression');
+    await resetWebApp(page);
+    const editor = page.locator('.ymw-editor > .ymz-editor');
+    const textEditor = canvasTextEditor(page);
+
+    // Enter adds a sibling, which the root cannot have; give it a child first.
+    if (entry === 'Enter') {
+      await editor.locator('.smm-node').first().click();
+      await page.keyboard.press('Tab');
+      await expect(textEditor).toBeFocused();
+      await page.keyboard.type('第一个子节点');
+      await commitCanvasEdit(page);
+      await editor.locator('.smm-node').nth(1).click();
+      await page.keyboard.press('Enter');
+    } else if (entry === 'Tab') {
+      await editor.locator('.smm-node').first().click();
+      await page.keyboard.press('Tab');
+    } else {
+      await editor.locator('.smm-node').first().click();
+      const add = editor.locator('[data-node-quick-action="add-child"]').first();
+      await expect(add).toBeVisible();
+      await add.click();
+    }
+
+    await expect(textEditor).toBeFocused();
+    await expect(textEditor).toHaveText('新节点');
+    expect(await page.evaluate(() => String(window.getSelection() ?? ''))).toBe('新节点');
+
+    // The whole point of the selection: the first keystroke replaces the label.
+    await page.keyboard.type('替换后的内容');
+    await expect(textEditor).toHaveText('替换后的内容');
+  });
+}
