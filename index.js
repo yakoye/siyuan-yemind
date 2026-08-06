@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.9-rc.7";
+const PLUGIN_VERSION = "1.9.9-rc.8";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "b1d3f782-dirty-ab55ab36",
-  time: "2026-08-06T02:03:21.012Z"
+  id: "d19b1f05-dirty-4af78a21",
+  time: "2026-08-06T03:18:59.356Z"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-06T02:03:21.007Z",
-  buildId: "yemind-v1.9.9-rc.7-20260806",
+  buildTime: "2026-08-06T03:18:59.351Z",
+  buildId: "yemind-v1.9.9-rc.8-20260806",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -18062,11 +18062,17 @@ function createIconNode() {
     };
   });
 }
+function resolveTextAutoWrapWidth(mindMap, node) {
+  const configured = mindMap.opt.textAutoWrapWidth;
+  const value = typeof configured === "function" ? configured(node) : configured;
+  const width2 = Number(value);
+  return Number.isFinite(width2) && width2 > 0 ? width2 : 500;
+}
 function createRichTextNode(specifyText) {
   const hasCustomWidth = this.hasCustomWidth();
   let text2 = typeof specifyText === "string" ? specifyText : this.getData("text");
-  let { textAutoWrapWidth, emptyTextMeasureHeightText } = this.mindMap.opt;
-  textAutoWrapWidth = hasCustomWidth ? this.customTextWidth : textAutoWrapWidth;
+  let { emptyTextMeasureHeightText } = this.mindMap.opt;
+  let textAutoWrapWidth = hasCustomWidth ? this.customTextWidth : resolveTextAutoWrapWidth(this.mindMap, this);
   const g = new G();
   let recoverText = false;
   if (this.getData("resetRichText")) {
@@ -18162,7 +18168,8 @@ function createTextNode(specifyText) {
   if (!isUndef(text2)) {
     textArr = String(text2).split(/\n/gim);
   }
-  const { textAutoWrapWidth: maxWidth, emptyTextMeasureHeightText } = this.mindMap.opt;
+  const { emptyTextMeasureHeightText } = this.mindMap.opt;
+  const maxWidth = resolveTextAutoWrapWidth(this.mindMap, this);
   let isMultiLine = textArr.length > 1;
   textArr.forEach((item, index) => {
     let arr = item.split("");
@@ -80467,13 +80474,12 @@ class RichText {
     let {
       customInnerElsAppendTo,
       nodeTextEditZIndex,
-      textAutoWrapWidth,
       selectTextOnEnterEditText,
       transformRichTextOnEnterEdit,
       openRealtimeRenderOnNodeTextEdit,
       autoEmptyTextWhenKeydownEnterEdit
     } = this.mindMap.opt;
-    textAutoWrapWidth = node.hasCustomWidth() ? node.customTextWidth : textAutoWrapWidth;
+    let textAutoWrapWidth = node.hasCustomWidth() ? node.customTextWidth : resolveTextAutoWrapWidth(this.mindMap, node);
     this.node = node;
     this.isInserting = isInserting;
     if (!rect2) rect2 = node._textData.node.node.getBoundingClientRect();
@@ -82583,6 +82589,15 @@ function installMindMapMeasurementContract() {
   style.textContent = ".smm-richtext-node-wrap :is(p,h1,h2,h3,h4,h5,h6,blockquote,pre,ul,ol){margin-block-start:0;margin-block-end:0}.smm-richtext-node-wrap :is(ul,ol){padding-inline-start:1.5em}";
   document.head.prepend(style);
 }
+const NODE_AUTO_WRAP_CHARACTERS = 20;
+const FALLBACK_NODE_FONT_SIZE = 14;
+function nodeAutoWrapWidth(node, characters = NODE_AUTO_WRAP_CHARACTERS) {
+  var _a;
+  const fontSize = Number((_a = node == null ? void 0 : node.getStyle) == null ? void 0 : _a.call(node, "fontSize", false));
+  const size2 = Number.isFinite(fontSize) && fontSize > 0 ? fontSize : FALLBACK_NODE_FONT_SIZE;
+  const count = Number.isFinite(characters) && characters > 0 ? characters : NODE_AUTO_WRAP_CHARACTERS;
+  return Math.round(size2 * count);
+}
 function createImageDeleteGuard(confirmDelete) {
   return async (node) => {
     if (!confirmDelete) return false;
@@ -82648,6 +82663,11 @@ function createMindMap(options) {
     selectTextOnEnterEditText: false,
     isEndNodeTextEditOnClickOuter: true,
     enableDragModifyNodeWidth: true,
+    // Auto width grows up to NODE_AUTO_WRAP_CHARACTERS characters, then the
+    // text wraps and the node grows downwards instead. A node the user has
+    // dragged keeps its own width: upstream short-circuits this option with
+    // `hasCustomWidth() ? customTextWidth : ...` at every measurement site.
+    textAutoWrapWidth: (node) => nodeAutoWrapWidth(node),
     isShowCreateChildBtnIcon: false,
     notShowExpandBtn: true,
     fit: Boolean((settings == null ? void 0 : settings.autoFitOnOpen) ?? true) && !viewData,
