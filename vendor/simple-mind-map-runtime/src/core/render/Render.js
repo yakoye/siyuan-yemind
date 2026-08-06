@@ -222,11 +222,34 @@ class Render {
 
   // 监听文本编辑事件，实时更新节点大小
   onNodeTextEditChange({ node, text }) {
+    const previous = node._textData
+    // getNodeRect() reads the node's own _textData, so the fresh measurement
+    // has to be installed before asking for the resulting box.
     node._textData = node.createTextNode(text)
     const { width, height } = node.getNodeRect()
+    // YeMind: most ticks of a typing burst do not change the node box at all
+    // -- the text only grows within the line it already occupies. Laying out
+    // the node and re-rendering the tree on every tick regardless was the
+    // measured CPU cost of the pre-1.8.0 live-render pipeline. Keep the old
+    // measured layer in that case: it stays attached, so the editor overlay
+    // still has a live rectangle to follow, and it is invisible during the
+    // edit anyway (layout() paints the editing node's text at opacity 0).
+    if (previous && node.width === width && node.height === height) {
+      node._textData = previous
+      return
+    }
     node.width = width
     node.height = height
     node.layout()
+    // YeMind: this node has just been measured and painted from the live
+    // editor text, which is newer than the text still stored on the node.
+    // Base#doLayout re-measures any node whose data changed since the last
+    // render, and an edit session does mutate node data (the edited/pristine
+    // marker), so without refreshing the snapshot the very next render would
+    // rebuild this node's text subtree from the stale stored text and throw
+    // the live measurement away -- the node would never visibly resize.
+    // Same idiom as the width-drag path in nodeModifyWidth.js.
+    node.nodeDataSnapshot = JSON.stringify(node.getData())
     this.mindMap.render(() => {
       this.textEdit.updateTextEditNode()
     })

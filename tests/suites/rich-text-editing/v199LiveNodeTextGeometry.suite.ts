@@ -1,235 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  LiveNodeTextGeometryController,
-  createMeasuredTextData,
-  textSizeChanged,
-  type LiveTextGeometryTimers,
-} from '../../../src/editor/liveNodeTextGeometry';
-import {
   isEmptyRichTextDocument,
   resolveFocusRestoreRange,
 } from '../../../src/editor/YeMindRichText';
 import { remeasureWhenFontsReady } from '../../../src/core/firstPaintGeometry';
 import { NODE_AUTO_WRAP_CHARACTERS, nodeAutoWrapWidth } from '../../../src/core/createMindMap';
 import { resolveTextAutoWrapWidth } from 'simple-mind-map/src/core/render/node/nodeCreateContents';
-import {
-  EDITING_NODE_CLASS,
-  EditingNodeTextSuppression,
-} from '../../../src/editor/editingNodeTextSuppression';
-
-interface Harness {
-  mindMap: any;
-  node: any;
-  order: string[];
-  created: any[];
-  timers: LiveTextGeometryTimers & { run(): void; pending(): number };
-  listeners: Record<string, Array<() => void>>;
-}
-
-function createHarness(options: {
-  measured?: Array<{ width: number; height: number }>;
-  currentWidth?: number;
-  currentHeight?: number;
-} = {}): Harness {
-  const order: string[] = [];
-  const created: any[] = [];
-  const listeners: Record<string, Array<() => void>> = {};
-  const sizes = options.measured ?? [{ width: 300, height: 24 }];
-  let sizeIndex = 0;
-
-  const node: any = {
-    nodeData: { data: { uid: 'n1', text: '<p>旧文本</p>', richText: true } },
-    children: [],
-    getData: (key?: string) => (key ? node.nodeData.data[key] : node.nodeData.data),
-    _textData: {
-      node: { attr: vi.fn() },
-      width: options.currentWidth ?? 90,
-      height: options.currentHeight ?? 24,
-    },
-    createTextNode: vi.fn((html: string) => {
-      const size = sizes[Math.min(sizeIndex, sizes.length - 1)];
-      sizeIndex += 1;
-      const value = { node: { attr: vi.fn() }, width: size.width, height: size.height, measuredFrom: html };
-      created.push(value);
-      order.push('createTextNode');
-      return value;
-    }),
-    reRender: vi.fn(() => order.push('reRender')),
-  };
-
-  const mindMap: any = {
-    richText: {
-      showTextEdit: true,
-      node,
-      getEditText: () => '<p>正在输入的内容</p>',
-      updateTextEditNode: vi.fn(() => order.push('updateTextEditNode')),
-    },
-    on: (name: string, handler: () => void) => {
-      (listeners[name] ??= []).push(handler);
-    },
-    off: (name: string, handler: () => void) => {
-      listeners[name] = (listeners[name] ?? []).filter((item) => item !== handler);
-    },
-    render: vi.fn((done?: () => void) => {
-      order.push('render');
-      done?.();
-    }),
-  };
-
-  let queued: Array<() => void> = [];
-  const timers = {
-    set: (callback: () => void) => {
-      queued.push(callback);
-      return queued.length;
-    },
-    clear: () => { queued = []; },
-    run: () => {
-      const pending = queued;
-      queued = [];
-      pending.forEach((callback) => callback());
-    },
-    pending: () => queued.length,
-  };
-
-  return { mindMap, node, order, created, timers, listeners };
-}
-
-describe('v1.9.9 live canvas node geometry', () => {
-  it('resizes the edited node to the text being typed instead of waiting for the commit', () => {
-    const harness = createHarness({ measured: [{ width: 300, height: 48 }] });
-    const controller = new LiveNodeTextGeometryController(harness.mindMap, { timers: harness.timers });
-
-    controller.schedule();
-    harness.timers.run();
-
-    expect(harness.node._textData.width).toBe(300);
-    expect(harness.node._textData.height).toBe(48);
-    expect(harness.node.reRender).toHaveBeenCalledWith([], { ignoreUpdateCustomTextWidth: true });
-    expect(harness.mindMap.render).toHaveBeenCalledWith(
-      expect.any(Function),
-      'yemind-live-node-text-geometry',
-    );
-    // The host is resized in the same synchronous block as the node, then
-    // again after the tree layout placed it. Waiting only for the asynchronous
-    // render callback leaves painted frames where the node already has the new
-    // size but the editor covering it still has the old one.
-    expect(harness.order).toEqual([
-      'createTextNode',
-      'reRender',
-      'updateTextEditNode',
-      'render',
-      'updateTextEditNode',
-    ]);
-    controller.destroy();
-  });
-
-  it('shrinks the node when text is deleted, so a short node stops rendering an oversized frame', () => {
-    const harness = createHarness({ currentWidth: 480, measured: [{ width: 26, height: 24 }] });
-    const controller = new LiveNodeTextGeometryController(harness.mindMap, { timers: harness.timers });
-
-    controller.schedule();
-    harness.timers.run();
-
-    expect(harness.node._textData.width).toBe(26);
-    controller.destroy();
-  });
-
-  it('replaces the text layer before the node relayouts it, so ink and declared geometry stay identical', () => {
-    const harness = createHarness({ measured: [{ width: 300, height: 24 }] });
-    const controller = new LiveNodeTextGeometryController(harness.mindMap, { timers: harness.timers });
-
-    controller.schedule();
-    harness.timers.run();
-
-    expect(harness.order.indexOf('createTextNode')).toBeLessThan(harness.order.indexOf('reRender'));
-    expect(harness.order.indexOf('reRender')).toBeLessThan(harness.order.indexOf('render'));
-    expect(harness.node._textData).toBe(harness.created[0]);
-    controller.destroy();
-  });
-
-  it('measures the live editor text, which is exactly what the close commits', () => {
-    const harness = createHarness({ measured: [{ width: 300, height: 24 }] });
-    const controller = new LiveNodeTextGeometryController(harness.mindMap, { timers: harness.timers });
-
-    controller.reconcile();
-
-    expect(harness.node.createTextNode).toHaveBeenCalledWith('<p>正在输入的内容</p>');
-    controller.destroy();
-  });
-
-  it('does no layout work when the typed text does not change the measured size', () => {
-    const harness = createHarness({ currentWidth: 90, currentHeight: 24, measured: [{ width: 90, height: 24 }] });
-    const controller = new LiveNodeTextGeometryController(harness.mindMap, { timers: harness.timers });
-
-    expect(controller.reconcile()).toBe(false);
-    expect(harness.node.reRender).not.toHaveBeenCalled();
-    expect(harness.mindMap.render).not.toHaveBeenCalled();
-    controller.destroy();
-  });
-
-  it('coalesces a typing burst into one reconcile', () => {
-    const harness = createHarness({ measured: [{ width: 300, height: 24 }] });
-    const controller = new LiveNodeTextGeometryController(harness.mindMap, { timers: harness.timers });
-
-    controller.schedule();
-    controller.schedule();
-    controller.schedule();
-    expect(harness.timers.pending()).toBe(1);
-    harness.timers.run();
-    expect(harness.mindMap.render).toHaveBeenCalledOnce();
-    controller.destroy();
-  });
-
-  it('follows the upstream node_text_edit_change event and unsubscribes on destroy', () => {
-    const harness = createHarness({ measured: [{ width: 300, height: 24 }] });
-    const controller = new LiveNodeTextGeometryController(harness.mindMap, { timers: harness.timers });
-
-    expect(harness.listeners.node_text_edit_change).toHaveLength(1);
-    harness.listeners.node_text_edit_change[0]();
-    harness.timers.run();
-    expect(harness.mindMap.render).toHaveBeenCalledOnce();
-
-    controller.destroy();
-    expect(harness.listeners.node_text_edit_change).toHaveLength(0);
-  });
-
-  it('stays out of the way of a width-handle drag and of a closed edit session', () => {
-    const dragging = createHarness({ measured: [{ width: 300, height: 24 }] });
-    dragging.node.isDragHandleMousedown = true;
-    const draggingController = new LiveNodeTextGeometryController(dragging.mindMap, { timers: dragging.timers });
-    expect(draggingController.reconcile()).toBe(false);
-    draggingController.destroy();
-
-    const closed = createHarness({ measured: [{ width: 300, height: 24 }] });
-    closed.mindMap.richText.showTextEdit = false;
-    const closedController = new LiveNodeTextGeometryController(closed.mindMap, { timers: closed.timers });
-    expect(closedController.reconcile()).toBe(false);
-    expect(closed.node.reRender).not.toHaveBeenCalled();
-    closedController.destroy();
-  });
-
-  it('restores needUpdate, because createTextNode consumes it and a measurement must not', () => {
-    const harness = createHarness({ measured: [{ width: 300, height: 24 }] });
-    harness.node.nodeData.data.needUpdate = true;
-
-    const measured = createMeasuredTextData(harness.node, '<p>任意</p>');
-
-    expect(measured?.width).toBe(300);
-    expect(harness.node.nodeData.data.needUpdate).toBe(true);
-  });
-
-  it('never measures while a resetRichText rewrite is pending, because that path mutates node text', () => {
-    const harness = createHarness();
-    harness.node.nodeData.data.resetRichText = true;
-    expect(createMeasuredTextData(harness.node, '<p>任意</p>')).toBeNull();
-    expect(harness.node.createTextNode).not.toHaveBeenCalled();
-  });
-
-  it('treats a sub-pixel measurement difference as unchanged', () => {
-    expect(textSizeChanged({ width: 100, height: 20 }, { node: {}, width: 100.2, height: 20.1 })).toBe(false);
-    expect(textSizeChanged({ width: 100, height: 20 }, { node: {}, width: 101, height: 20 })).toBe(true);
-  });
-});
+import Render from 'simple-mind-map/src/core/render/Render';
 
 describe('v1.9.9-rc.6 canvas edit focus recovery', () => {
   it('restores the first known selection instead of collapsing to the end of the text', () => {
@@ -263,101 +40,6 @@ describe('v1.9.9-rc.6 canvas edit focus recovery', () => {
   });
 });
 
-describe('v1.9.9-rc.6 editing node glyph suppression', () => {
-  function suppressionHarness() {
-    const listeners: Record<string, Array<() => void>> = {};
-    const classList = new Set<string>();
-    const group = {
-      classList: {
-        add: (name: string) => classList.add(name),
-        remove: (name: string) => classList.delete(name),
-      },
-    };
-    let queued: Array<() => void> = [];
-    const host = { style: { display: 'block' } };
-    const mindMap: any = {
-      richText: { showTextEdit: true, node: { group: { node: group } }, textEditNode: host },
-      on: (name: string, handler: () => void) => { (listeners[name] ??= []).push(handler); },
-      off: (name: string, handler: () => void) => {
-        listeners[name] = (listeners[name] ?? []).filter((item) => item !== handler);
-      },
-      emit: (name: string) => [...(listeners[name] ?? [])].forEach((handler) => handler()),
-    };
-    const timers = {
-      set: (callback: () => void) => { queued.push(callback); return queued.length; },
-      clear: () => { queued = []; },
-      run: () => { const pending = queued; queued = []; pending.forEach((item) => item()); },
-      pending: () => queued.length,
-    };
-    const controller = new EditingNodeTextSuppression(mindMap, {
-      timers,
-      // Run the deferred read inline so the test observes the same frame.
-      schedule: (callback) => callback(),
-    });
-    return { controller, mindMap, classList, timers, listeners, host };
-  }
-
-  it('hides the node glyphs for the whole session, so only the Quill overlay paints text', () => {
-    const harness = suppressionHarness();
-    harness.mindMap.emit('before_show_text_edit');
-    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(true);
-    harness.mindMap.emit('node_text_edit_change');
-    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(true);
-    harness.controller.destroy();
-  });
-
-  it('restores the glyphs the moment the opaque host stops covering the node', () => {
-    const harness = suppressionHarness();
-    harness.mindMap.emit('before_show_text_edit');
-    // The commit render normally completes synchronously inside SET_NODE_TEXT,
-    // so upstream has already dropped the host by the time hide_text_edit is
-    // emitted. Waiting for a further render end waits for something that
-    // already happened, and left the node painted empty for ~400ms.
-    harness.mindMap.richText.showTextEdit = false;
-    harness.host.style.display = 'none';
-    harness.mindMap.emit('hide_text_edit');
-    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(false);
-    harness.controller.destroy();
-  });
-
-  it('keeps the glyphs hidden while the host still covers them, then reveals on the commit render', () => {
-    const harness = suppressionHarness();
-    harness.mindMap.emit('before_show_text_edit');
-    harness.mindMap.richText.showTextEdit = false;
-    harness.mindMap.emit('hide_text_edit');
-    // Host still shown: revealing now would paint text at the node's
-    // pre-layout local origin for one frame.
-    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(true);
-    harness.mindMap.emit('node_tree_render_end');
-    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(false);
-    harness.controller.destroy();
-  });
-
-  it('never leaves glyphs hidden if no render follows the close', () => {
-    const harness = suppressionHarness();
-    harness.mindMap.emit('before_show_text_edit');
-    harness.mindMap.richText.showTextEdit = false;
-    harness.mindMap.emit('hide_text_edit');
-    harness.timers.run();
-    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(false);
-    harness.controller.destroy();
-  });
-
-  it('does nothing when no edit session is open, and cleans up on destroy', () => {
-    const harness = suppressionHarness();
-    harness.mindMap.richText.showTextEdit = false;
-    expect(harness.controller.suppress()).toBe(false);
-    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(false);
-
-    harness.mindMap.richText.showTextEdit = true;
-    harness.mindMap.emit('before_show_text_edit');
-    harness.controller.destroy();
-    expect(harness.classList.has(EDITING_NODE_CLASS)).toBe(false);
-    expect(harness.listeners.before_show_text_edit).toHaveLength(0);
-    expect(harness.listeners.node_text_edit_change).toHaveLength(0);
-    expect(harness.listeners.hide_text_edit).toHaveLength(0);
-  });
-});
 
 describe('v1.9.9-rc.7 first-paint geometry and cached editor text', () => {
   it('re-measures every node once the fonts it was rendered with have loaded', async () => {
@@ -444,5 +126,95 @@ describe('v1.9.9-rc.8 per-node auto wrap width', () => {
     // Unusable values fall back to the documented upstream default.
     expect(resolveTextAutoWrapWidth({ opt: { textAutoWrapWidth: undefined } }, node)).toBe(500);
     expect(resolveTextAutoWrapWidth({ opt: { textAutoWrapWidth: () => -1 } }, node)).toBe(500);
+  });
+});
+
+describe('v1.9.9-rc.9 upstream live node resizing', () => {
+  function node(measured: Array<{ width: number; height: number }>, current = { width: 90, height: 24 }) {
+    let index = 0;
+    const layers: any[] = [];
+    return {
+      width: current.width + 24,
+      height: current.height + 12,
+      _textData: { id: 'original', width: current.width, height: current.height },
+      nodeDataSnapshot: '{"text":"旧文本"}',
+      getData: () => ({ text: '旧文本', uid: 'n1' }),
+      layers,
+      createTextNode: vi.fn(() => {
+        const size = measured[Math.min(index, measured.length - 1)];
+        index += 1;
+        const layer = { id: `measured-${index}`, ...size };
+        layers.push(layer);
+        return layer;
+      }),
+      // Mirrors getNodeRect(): the node box is derived from _textData.
+      getNodeRect(this: any) {
+        return { width: this._textData.width + 24, height: this._textData.height + 12 };
+      },
+      layout: vi.fn(),
+    };
+  }
+
+  function renderer() {
+    const render = vi.fn((done?: () => void) => done?.());
+    return {
+      mindMap: { render },
+      textEdit: { updateTextEditNode: vi.fn() },
+      onNodeTextEditChange: Render.prototype.onNodeTextEditChange,
+      render,
+    };
+  }
+
+  it('resizes the node and repositions the editor when the measurement changed the box', () => {
+    const host = renderer();
+    const target = node([{ width: 300, height: 24 }]);
+    host.onNodeTextEditChange.call(host, { node: target, text: '<p>更长的一段文字</p>' });
+
+    expect(target._textData).toBe(target.layers[0]);
+    expect(target.width).toBe(324);
+    expect(target.layout).toHaveBeenCalledOnce();
+    expect(host.render).toHaveBeenCalledOnce();
+    expect(host.textEdit.updateTextEditNode).toHaveBeenCalledOnce();
+    // Base#doLayout re-measures any node whose data changed since the last
+    // render, and an edit session does mutate node data (the edited/pristine
+    // marker). Without refreshing the snapshot the next render rebuilds this
+    // node's text from the stale stored text and the live measurement is lost,
+    // so the node never visibly resizes.
+    expect(target.nodeDataSnapshot).toBe(JSON.stringify(target.getData()));
+  });
+
+  it('skips the tree relayout when typing did not change the node box', () => {
+    // Most ticks of a typing burst grow the text within the line it already
+    // occupies. Relaying out the tree anyway was the measured cost of the
+    // pre-1.8.0 live-render pipeline.
+    const host = renderer();
+    const target = node([{ width: 90, height: 24 }]);
+    host.onNodeTextEditChange.call(host, { node: target, text: '<p>同宽</p>' });
+
+    expect(target.layout).not.toHaveBeenCalled();
+    expect(host.render).not.toHaveBeenCalled();
+    expect(host.textEdit.updateTextEditNode).not.toHaveBeenCalled();
+    // Nothing was repainted, so the node must stay eligible for a real rebuild.
+    expect(target.nodeDataSnapshot).toBe('{"text":"旧文本"}');
+  });
+
+  it('keeps the attached measured layer when it skips, so the editor still has a live rectangle', () => {
+    const host = renderer();
+    const target = node([{ width: 90, height: 24 }]);
+    const attached = target._textData;
+    host.onNodeTextEditChange.call(host, { node: target, text: '<p>同宽</p>' });
+    // The freshly measured layer is detached; pointing _textData at it would
+    // make the editor overlay follow a zero-sized rectangle.
+    expect(target._textData).toBe(attached);
+  });
+
+  it('still resizes when only the height changed, so wrapping past the width limit grows downwards', () => {
+    const host = renderer();
+    const target = node([{ width: 90, height: 48 }]);
+    host.onNodeTextEditChange.call(host, { node: target, text: '<p>换行了</p>' });
+
+    expect(target.height).toBe(60);
+    expect(target.layout).toHaveBeenCalledOnce();
+    expect(host.render).toHaveBeenCalledOnce();
   });
 });

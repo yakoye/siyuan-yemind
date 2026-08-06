@@ -131,7 +131,7 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
     expect(errors).toEqual([]);
   });
 
-  test('keeps static text visible until the upstream editor layer is attached and populated', async ({
+  test('takes the node glyphs down before the editor layer is attached, never both at once', async ({
     page,
     isMobile,
   }) => {
@@ -172,7 +172,12 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
         editorText: string;
       }>);
       expect(frames.length).toBeGreaterThan(0);
-      expect(frames.every((frame) => frame.staticVisible)).toBe(true);
+      // Upstream's realtime contract hides the node's own glyphs before the
+      // editor layer is attached, so the two never paint text at the same
+      // time. (The host is attached empty and populated afterwards, so its
+      // content is not observable at this point; that the node is never blank
+      // during the handover is covered by the frame sampling above.)
+      expect(frames.every((frame) => frame.staticVisible)).toBe(false);
     } finally {
       await page.evaluate(() => (window as any).__restoreYemindAppendChild?.());
     }
@@ -328,12 +333,25 @@ test.describe('YeMind upstream-owned canvas text lifecycle', () => {
         const target = Array.from(document.querySelectorAll<SVGGraphicsElement>('.smm-node'))
           .find((element) => element.textContent?.includes('第一节点修改为一段明显更长'));
         const staticText = target?.querySelector<HTMLElement>('.smm-richtext-node-wrap') ?? null;
-        const staticStyle = staticText ? getComputedStyle(staticText) : null;
+        // Upstream paints the edited node's glyphs at opacity 0 on an ancestor
+        // <g>. opacity is not inherited and checkVisibility() ignores it by
+        // default, so reading only this element's own style counts a hidden
+        // layer as painted -- and then samples the intermediate geometry of a
+        // node that is actively resizing under the editor.
+        const paints = (element: Element | null): boolean => {
+          let current: Element | null = element;
+          while (current) {
+            const style = getComputedStyle(current);
+            if (style.display === 'none' || style.visibility === 'hidden') return false;
+            if (Number(style.opacity) <= 0.01) return false;
+            if (current.classList.contains('smm-node')) break;
+            current = current.parentElement ?? (current.parentNode as Element | null);
+          }
+          return Boolean(element);
+        };
         const staticVisible = Boolean(
           staticText
-          && staticText.checkVisibility({ checkVisibilityCSS: true })
-          && staticStyle?.display !== 'none'
-          && staticStyle?.visibility !== 'hidden'
+          && paints(staticText)
           && staticText.getBoundingClientRect().width > 0,
         );
         const rect = staticVisible ? staticText!.getBoundingClientRect() : null;

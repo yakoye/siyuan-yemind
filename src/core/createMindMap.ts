@@ -148,11 +148,12 @@ export function createMindMap(options: CreateMindMapOptions): MindMap {
     iconList: createYemindIconList(options.pluginBaseUrl),
     createNodePrefixContent,
     createNodePostfixContent,
-    // Keep the upstream non-realtime editing contract: Quill owns the text
-    // for the whole edit session and the SVG text is committed once on exit.
-    // Rebuilding the static SVG on every input races the HTML editor geometry
-    // and is the source of the visible upper-left jump.
-    openRealtimeRenderOnNodeTextEdit: false,
+    // Upstream owns live node resizing during a text edit: it swaps in a fresh
+    // measurement, relayouts the node and repositions the editor, and paints
+    // the edited node's own glyphs at opacity 0 so the Quill overlay is the
+    // only text layer. Render.onNodeTextEditChange carries the YeMind gate that
+    // skips the tree relayout when the measurement did not change the box.
+    openRealtimeRenderOnNodeTextEdit: true,
     enableEditFormulaInRichTextEdit: true,
     customHyperlinkJump: (href: string) => options.onHyperlink?.(href),
     beforeDeleteNodeImg: createImageDeleteGuard(options.onConfirmDeleteImage),

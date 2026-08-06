@@ -138,8 +138,6 @@ import {
 import { normalizeStudyCards } from '../review/studyCards';
 import { normalizeStudyCardSource } from '../review/studyCardSource';
 import { MiniMapController } from './MiniMapController';
-import { LiveNodeTextGeometryController } from './liveNodeTextGeometry';
-import { EditingNodeTextSuppression } from './editingNodeTextSuppression';
 import { remeasureWhenFontsReady } from '../core/firstPaintGeometry';
 import { bindCanvasNodeClipboard } from './nodeClipboard';
 import {
@@ -270,8 +268,6 @@ export class YeMindEditor {
   private appearanceController: AppearanceController | null = null;
   private studyPanel: StudyPanelController | null = null;
   private miniMapController: MiniMapController | null = null;
-  private liveNodeTextGeometry: LiveNodeTextGeometryController | null = null;
-  private editingNodeTextSuppression: EditingNodeTextSuppression | null = null;
   private cancelFontRemeasure: (() => void) | null = null;
   private unbindCanvasNodeClipboard: (() => void) | null = null;
   private studyMode: StudyPanelMode | null = null;
@@ -853,10 +849,6 @@ export class YeMindEditor {
     this.resourceActionPopover = null;
     this.nodeQuickActions?.destroy();
     this.nodeQuickActions = null;
-    this.liveNodeTextGeometry?.destroy();
-    this.liveNodeTextGeometry = null;
-    this.editingNodeTextSuppression?.destroy();
-    this.editingNodeTextSuppression = null;
     this.cancelFontRemeasure?.();
     this.cancelFontRemeasure = null;
     this.canvasRightDrag?.destroy();
@@ -1112,8 +1104,6 @@ export class YeMindEditor {
         return inserted;
       },
     });
-    this.liveNodeTextGeometry = new LiveNodeTextGeometryController(this.map);
-    this.editingNodeTextSuppression = new EditingNodeTextSuppression(this.map);
     this.cancelFontRemeasure = remeasureWhenFontsReady(this.map);
     const miniMapElement = this.options.container.querySelector<HTMLElement>('[data-role="minimap"]');
     if (miniMapElement) {

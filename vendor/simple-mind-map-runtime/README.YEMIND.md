@@ -22,6 +22,11 @@ runtime. Every file outside `allowedModifiedFiles` must remain byte-equivalent
 to the pinned upstream revision.
 
 - `src/core/command/KeyCommand.js`: existing YeMind keyboard integration.
+- `src/core/render/Render.js`: `onNodeTextEditChange` skips the tree relayout
+  when the fresh measurement did not change the node box (most ticks of a
+  typing burst), and refreshes `nodeDataSnapshot` when it did, so the next
+  render does not rebuild the node's text from the stale stored text and throw
+  the live measurement away.
 - `src/core/render/Render.js` and `src/core/render/node/MindMapNode.js`: defer
   opening an inserted node editor until the completed tree layout has committed
   its final SVG transforms, so Tab, Enter and quick-add never expose a blank or

@@ -4,8 +4,8 @@ import { SOURCE_BUILD_INFO } from './buildInfo';
 export const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: '2026-08-06T03:18:59.351Z',
-  buildId: 'yemind-v1.9.9-rc.8-20260806',
+  buildTime: '2026-08-06T04:02:17.641Z',
+  buildId: 'yemind-v1.9.9-rc.9-20260806',
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,

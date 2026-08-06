@@ -46,6 +46,12 @@ describe('v1.9.0 upstream rich-text lifecycle ownership', () => {
       'src/editor/richTextGeometry.ts',
       'src/core/measurementHost.ts',
       'src/editor/liveNodeWidthLayout.ts',
+      // v1.9.9-rc.9: both re-implemented capabilities upstream already owns
+      // behind openRealtimeRenderOnNodeTextEdit -- live node resizing during
+      // an edit, and hiding the edited node's glyphs so the editor is the only
+      // text layer.
+      'src/editor/liveNodeTextGeometry.ts',
+      'src/editor/editingNodeTextSuppression.ts',
     ];
     removed.forEach((file) => expect(existsSync(resolve(process.cwd(), file)), file).toBe(false));
 
@@ -58,6 +64,8 @@ describe('v1.9.0 upstream rich-text lifecycle ownership', () => {
     expect(production).not.toContain('canvasRichTextVisibility');
     expect(production).not.toContain('CanvasEditSessionCoordinator');
     expect(production).not.toContain('RenderedTextGeometryRepair');
+    expect(production).not.toContain('LiveNodeTextGeometryController');
+    expect(production).not.toContain('EditingNodeTextSuppression');
   });
 
   it('does not let the outer editor steal focus or gate the upstream editor', () => {

@@ -158,7 +158,7 @@ describe('v0.8.3 canvas text editing transactions', () => {
     root.remove();
   });
 
-  it('keeps the static SVG text available beneath the opaque editor when realtime rendering is disabled', async () => {
+  it('hides the edited node glyphs so the open editor is the only text layer', async () => {
     const { root, map } = mountMap({
       data: { text: '新节点', uid: 'root', yemindTextPristine: true },
       children: [],
@@ -167,7 +167,9 @@ describe('v0.8.3 canvas text editing transactions', () => {
 
     const node = map.renderer.root;
     const staticText = node._textData.node;
-    expect(map.opt.openRealtimeRenderOnNodeTextEdit).toBe(false);
+    // Upstream owns live node resizing during an edit; YeMind no longer runs a
+    // parallel controller for it.
+    expect(map.opt.openRealtimeRenderOnNodeTextEdit).toBe(true);
     expect(staticText.visible()).toBe(true);
 
     node.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
@@ -175,10 +177,11 @@ describe('v0.8.3 canvas text editing transactions', () => {
     const host = document.body.querySelector<HTMLElement>(':scope > .smm-richtext-node-edit-wrap')!;
     expect(host.style.display).not.toBe('none');
     expect(host.querySelector('.ql-editor')?.textContent).toContain('新节点');
-    // This is the upstream non-realtime contract: the opaque HTML editor
-    // covers a still-valid SVG fallback. Hiding the SVG here creates a frame
-    // in which a newly inserted node can be mounted with no painted glyphs.
-    expect(staticText.visible()).toBe(true);
+    // Upstream's realtime contract: the node's own glyphs are hidden for the
+    // whole session so the Quill overlay is the only layer painting text.
+    // Two layers painting at once is what produced doubled, blurred text once
+    // the node started resizing as the user types.
+    expect(staticText.visible()).toBe(false);
 
     map.destroy();
     root.remove();

@@ -2426,7 +2426,21 @@ test('only the Quill overlay paints the edited node glyphs, from open to committ
       if (wraps.length > 0) {
         state.frames += 1;
         state.layers = Math.max(state.layers, wraps.length);
-        const wrapVisible = getComputedStyle(wraps[0] as Element).visibility !== 'hidden';
+        const wrapVisible = ((element: Element) => {
+          // Upstream hides the edited node's glyphs with display:none on open
+          // and opacity 0 on every relayout, and both sit on an ancestor <g>.
+          // opacity is not inherited, so checking only the text element's own
+          // computed style reports a hidden layer as painted.
+          let current: Element | null = element;
+          while (current) {
+            const style = getComputedStyle(current);
+            if (style.display === 'none' || style.visibility === 'hidden') return false;
+            if (Number(style.opacity) <= 0.01) return false;
+            if (current.classList.contains('smm-node')) break;
+            current = current.parentElement ?? (current.parentNode as Element | null);
+          }
+          return true;
+        })(wraps[0] as Element);
         const hostVisible = Boolean(host && host.style.display !== 'none');
         state.wrapVisibleAtEnd = wrapVisible;
         if (wrapVisible && hostVisible) state.bothPainted += 1;
@@ -3314,7 +3328,21 @@ test('a closing editor hands the node straight back to its glyphs, with no empty
       const host = document.querySelector('.smm-richtext-node-edit-wrap') as HTMLElement | null;
       if (wrap) {
         state.frames += 1;
-        const glyphs = getComputedStyle(wrap as Element).visibility !== 'hidden';
+        const glyphs = ((element: Element) => {
+          // Upstream hides the edited node's glyphs with display:none on open
+          // and opacity 0 on every relayout, and both sit on an ancestor <g>.
+          // opacity is not inherited, so checking only the text element's own
+          // computed style reports a hidden layer as painted.
+          let current: Element | null = element;
+          while (current) {
+            const style = getComputedStyle(current);
+            if (style.display === 'none' || style.visibility === 'hidden') return false;
+            if (Number(style.opacity) <= 0.01) return false;
+            if (current.classList.contains('smm-node')) break;
+            current = current.parentElement ?? (current.parentNode as Element | null);
+          }
+          return true;
+        })(wrap as Element);
         const hostVisible = Boolean(host && host.style.display !== 'none');
         // Neither layer painting means the node is a blank box on screen.
         if (!glyphs && !hostVisible) state.blank += 1;

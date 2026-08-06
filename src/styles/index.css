@@ -3001,15 +3001,3 @@ html.layout--dark .ymz-context-menu .ymz-operation-icon--dark{display:block!impo
   }
   .ymz-editor[data-status-overflow-open="true"] .ymz-statusbar__separator{display:block!important}
 }
-
-/* v1.9.9-rc.6 — the open Quill overlay is the only layer that may paint a
-   node's glyphs. Suppressing the SVG text (not the node shape, fill or border)
-   removes the doubled/blurred text produced by two layers painting different
-   revisions of the same string while the node resizes as the user types, and
-   the one-frame flash of text at the node's local origin as an editor closes.
-   The class is written on the node group, so it survives the text layer being
-   replaced by a live measurement. */
-.ymz-editor .smm-node.ymz-node-text-editing .smm-richtext-node-wrap,
-.ymz-editor .smm-node.ymz-node-text-editing .smm-text-node-wrap{
-  visibility:hidden!important;
-}
