@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.9-rc.10";
+const PLUGIN_VERSION = "1.9.9-rc.11";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "e42d1de0-dirty-c18c6abb",
-  time: "2026-08-06T07:20:10.946Z"
+  id: "8b8ab7b3-dirty-47855aae",
+  time: "2026-08-06T09:22:44.923Z"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-06T07:20:10.931Z",
-  buildId: "yemind-v1.9.9-rc.10-20260806",
+  buildTime: "2026-08-06T09:22:44.918Z",
+  buildId: "yemind-v1.9.9-rc.11-20260806",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -80643,10 +80643,15 @@ class RichText {
         return;
       }
       this.textEditNode.style.display = "none";
+      this.node = null;
+      const restored = node && node._textData && node._textData.node;
+      if (restored) {
+        restored.show();
+        restored.opacity(1);
+      }
     };
     this.setIsShowTextEdit(false);
     this.mindMap.emit("rich_text_selection_change", false);
-    this.node = null;
     this.isInserting = false;
     this.initialEditText = "";
     const onRenderEnd = () => {
