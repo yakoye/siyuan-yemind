@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.9-rc.12";
+const PLUGIN_VERSION = "1.9.9-rc.13";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "3bc01892-dirty-51a7731d",
-  time: "2026-08-06T11:50:22.887Z"
+  id: "ebcd18cd-dirty-7bc6e54a",
+  time: "2026-08-06T13:18:40.986Z"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-06T11:50:22.882Z",
-  buildId: "yemind-v1.9.9-rc.12-20260806",
+  buildTime: "2026-08-06T13:13:45.049Z",
+  buildId: "yemind-v1.9.9-rc.13-20260806",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -80580,9 +80580,54 @@ class RichText {
     const textGroup = node._textData && node._textData.node;
     if (openRealtimeRenderOnNodeTextEdit && textGroup) {
       textGroup.show();
-      textGroup.opacity(0);
+      textGroup.opacity(1);
+      this.textEditNode.style.opacity = "0";
     }
     this.bindEditTextNodeTracking();
+    this.scheduleEditTextNodePlacement();
+  }
+  scheduleEditTextNodePlacement() {
+    const reveal = () => {
+      this.textEditNode.style.opacity = "";
+      const g = this.node && this.node._textData && this.node._textData.node;
+      if (g && this.mindMap.opt.openRealtimeRenderOnNodeTextEdit) g.opacity(0);
+    };
+    if (typeof requestAnimationFrame !== "function") {
+      reveal();
+      return;
+    }
+    const revision = this.editVisibilityRevision;
+    let framesLeft = 12;
+    const check = () => {
+      if (revision !== this.editVisibilityRevision || !this.showTextEdit || !this.node) {
+        return;
+      }
+      const g = this.node._textData && this.node._textData.node;
+      if (!g) {
+        reveal();
+        return;
+      }
+      const now = g.node.getBoundingClientRect();
+      const host = this.textEditNode.getBoundingClientRect();
+      if (now.width <= 0 && now.height <= 0) {
+        reveal();
+        return;
+      }
+      const aligned = Math.abs(host.left + this.textNodePaddingX - now.left) <= 0.5 && Math.abs(host.top + this.textNodePaddingY - now.top) <= 0.5;
+      if (aligned) {
+        reveal();
+        return;
+      }
+      framesLeft -= 1;
+      if (framesLeft <= 0) {
+        this.updateTextEditNode();
+        reveal();
+        return;
+      }
+      this.updateTextEditNode();
+      requestAnimationFrame(check);
+    };
+    requestAnimationFrame(check);
   }
   // YeMind: the overlay is positioned once, in viewport coordinates, when
   // editing opens. Panning or zooming the canvas afterwards moves the node but
@@ -80681,6 +80726,7 @@ class RichText {
         return;
       }
       this.textEditNode.style.display = "none";
+      this.textEditNode.style.opacity = "";
       this.unbindEditTextNodeTracking();
       this.node = null;
       const restored = node && node._textData && node._textData.node;
