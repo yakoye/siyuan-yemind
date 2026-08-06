@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.9.9-rc.12 - 2026-08-06
+
+Fixes a node inserted with Tab or quick-add appearing empty. It never was: its editor was painting hundreds of pixels away.
+
+- **Root cause: the editor overlay does not follow its node.** It is `position: fixed` and is placed once, in viewport coordinates, when editing opens. Inserting a node off-screen makes `TextEdit.show()` pan the canvas to bring it into view — the node moves, the overlay stays. Captured in the reporting runtime: the overlay sat at `(647, 296)` while the node was at `(1305, 527)`, 658×231px apart, with the text present, fully selected and typable the whole time. The node read as empty because its own glyphs are suppressed during editing while its text was rendered elsewhere.
+- **A second defect made the built-in recovery path unusable.** Upstream repositions through `updateTextEditNode()`, which measures the node's text group — but with realtime rendering that group was hidden with `display:none`, which has no layout box, so it could only ever read `0×0`. The group is now kept laid out and unpainted (`opacity: 0`) instead: visually identical, and the overlay always has a live target.
+- **Fix:** the overlay tracks its node for the lifetime of the session, through upstream's own `updateTextEditNode()`, subscribed to `translate` / `view_data_change` / `node_tree_render_end` and unsubscribed when the session ends. No second positioning system was introduced.
+- Also fixes the same never-reset shared-element defect rc.10 fixed for measurement, on the editor host: `addNodeTextStyleToTextEditNode` applied node text styles to one reused element without clearing them, so a property the current node did not resolve kept the previously edited node's colour, font or size.
+- Three test predicates were reading only an element's own computed style to decide whether it paints. `opacity` is not inherited, so a layer suppressed on an ancestor `<g>` was reported as painted — a blind spot that only surfaced once suppression moved from `display:none` to `opacity: 0`. All now walk the ancestor chain.
+- Regressions added: the overlay repositions on canvas movement while a session is open and stops once it closes; the node's text group stays laid out but unpainted during editing. Both verified to discriminate — removing the subscription fails the first.
+- Full verification: `tsc --noEmit`, docs check, unit suite (1014 passed / 0 failed), complete Playwright E2E across desktop and mobile projects (145 passed / 0 failed / 0 flaky).
+- One reported defect remains open by agreement: a first child node measuring as large as the root.
+
 ## 1.9.9-rc.11 - 2026-08-06
 
 Fixes a node's text flashing at its top-left corner when an editor closes.

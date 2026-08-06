@@ -43,6 +43,13 @@ let fontSizeList = new Array(100).fill(0).map((_, index) => {
 
 const RICH_TEXT_EDIT_WRAP = 'ql-editor'
 
+// YeMind: every event after which the node may sit somewhere else on screen.
+const editTextNodeTrackingEvents = [
+  'translate',
+  'view_data_change',
+  'node_tree_render_end'
+]
+
 // 富文本编辑插件
 class RichText {
   constructor({ mindMap, pluginOpt }) {
@@ -317,6 +324,43 @@ class RichText {
       isInserting || (selectTextOnEnterEditText && !isFromKeyDown) ? 0 : null
     )
     this.cacheEditingText = ''
+    // YeMind: with realtime rendering, TextEdit.show() hides the node's text
+    // group with display:none, which also removes its layout box -- so
+    // updateTextEditNode(), which repositions the overlay from that box, could
+    // only ever read 0x0 at that point. Keep the group laid out but unpainted
+    // instead, so the overlay always has a live target to follow.
+    const textGroup = node._textData && node._textData.node
+    if (openRealtimeRenderOnNodeTextEdit && textGroup) {
+      textGroup.show()
+      textGroup.opacity(0)
+    }
+    this.bindEditTextNodeTracking()
+  }
+
+  // YeMind: the overlay is positioned once, in viewport coordinates, when
+  // editing opens. Panning or zooming the canvas afterwards moves the node but
+  // left the overlay behind -- far enough, for a node brought into view on
+  // insertion, that the node read as empty while its text sat hundreds of
+  // pixels away. Follow the node for as long as the session is open, through
+  // upstream's own repositioning function.
+  bindEditTextNodeTracking() {
+    if (this.editTextNodeTrackingBound) return
+    this.editTextNodeTrackingBound = true
+    this.onEditTextNodeViewChange = () => {
+      if (!this.showTextEdit || !this.node) return
+      this.updateTextEditNode()
+    }
+    editTextNodeTrackingEvents.forEach(name => {
+      this.mindMap.on(name, this.onEditTextNodeViewChange)
+    })
+  }
+
+  unbindEditTextNodeTracking() {
+    if (!this.editTextNodeTrackingBound) return
+    this.editTextNodeTrackingBound = false
+    editTextNodeTrackingEvents.forEach(name => {
+      this.mindMap.off(name, this.onEditTextNodeViewChange)
+    })
   }
 
   // 当openRealtimeRenderOnNodeTextEdit配置更新后需要更新编辑框样式
@@ -336,6 +380,14 @@ class RichText {
 
   // 将指定节点的文本样式添加到编辑框元素上
   addNodeTextStyleToTextEditNode(node) {
+    // YeMind: one editor host is reused for every node, so a property this
+    // node does not resolve would otherwise keep the value the previously
+    // edited node left behind -- its colour, font or size. Clear the whole
+    // supported set first, exactly as the shared measurement element does, and
+    // the editor stops depending on which node was edited before it.
+    richTextSupportStyleList.forEach(prop => {
+      this.textEditNode.style[prop] = ''
+    })
     const style = getNodeRichTextStyles(node)
     Object.keys(style).forEach(prop => {
       this.textEditNode.style[prop] = style[prop]
@@ -415,6 +467,7 @@ class RichText {
         return
       }
       this.textEditNode.style.display = 'none'
+      this.unbindEditTextNodeTracking()
       // YeMind: the overlay is gone, so this node owns its glyphs again. The
       // commit render replaced the text layer, so restore the current one.
       this.node = null

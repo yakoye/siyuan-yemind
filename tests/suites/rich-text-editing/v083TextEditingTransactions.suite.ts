@@ -177,11 +177,13 @@ describe('v0.8.3 canvas text editing transactions', () => {
     const host = document.body.querySelector<HTMLElement>(':scope > .smm-richtext-node-edit-wrap')!;
     expect(host.style.display).not.toBe('none');
     expect(host.querySelector('.ql-editor')?.textContent).toContain('新节点');
-    // Upstream's realtime contract: the node's own glyphs are hidden for the
-    // whole session so the Quill overlay is the only layer painting text.
-    // Two layers painting at once is what produced doubled, blurred text once
-    // the node started resizing as the user types.
-    expect(staticText.visible()).toBe(false);
+    // The node's own glyphs must not paint for the whole session, so the Quill
+    // overlay is the only text layer -- two painting at once produced doubled,
+    // blurred text once the node started resizing as the user types. They stay
+    // laid out (not display:none) on purpose: the overlay repositions itself
+    // from this group's box, which a display:none element does not have.
+    expect(Number(staticText.attr('opacity'))).toBe(0);
+    expect(staticText.visible()).toBe(true);
 
     map.destroy();
     root.remove();
@@ -281,6 +283,43 @@ describe('v0.8.3 canvas text editing transactions', () => {
 
     map.destroy();
     root.remove();
+  });
+
+  it('keeps the open editor on its node when the canvas moves underneath it', async () => {
+    const { root, map } = mountMap({
+      data: { text: '编辑中的节点', uid: 'root', yemindTextEdited: true },
+      children: [],
+    });
+    try {
+      await waitForMapRender(map);
+      map.renderer.root.group.node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      await nextFrame();
+
+      const textGroup = map.renderer.root._textData.node;
+      // The overlay repositions itself from this group's box, so the group must
+      // stay laid out. With realtime rendering it used to be display:none,
+      // which has no box at all -- repositioning could only ever read 0x0.
+      expect(textGroup.visible()).toBe(true);
+      expect(Number(textGroup.attr('opacity'))).toBe(0);
+
+      // The overlay is positioned once, in viewport coordinates. Insertion pans
+      // the canvas to bring an off-screen node into view, and without tracking
+      // the overlay stays where the node used to be -- far enough that the node
+      // reads as empty while its text sits hundreds of pixels away.
+      const reposition = vi.spyOn(map.richText, 'updateTextEditNode');
+      map.view.translateXY(160, 90);
+      expect(reposition).toHaveBeenCalled();
+
+      // ...and stops following once the session is over.
+      map.richText.hideEditText();
+      await nextFrame();
+      reposition.mockClear();
+      map.view.translateXY(-160, -90);
+      expect(reposition).not.toHaveBeenCalled();
+    } finally {
+      map.destroy();
+      root.remove();
+    }
   });
 
   it('keeps the node marked as edited while the commit renders, so glyphs and overlay never both paint', async () => {

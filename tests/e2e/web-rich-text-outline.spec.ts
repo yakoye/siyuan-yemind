@@ -810,13 +810,20 @@ test('switching canvas editors keeps the previous node text fixed on every anima
     let remaining = 0;
     const painted = (element: Element | null): element is Element => {
       if (!element) return false;
-      const style = getComputedStyle(element);
       const rect = element.getBoundingClientRect();
-      return style.display !== 'none'
-        && style.visibility !== 'hidden'
-        && Number(style.opacity || 1) > 0
-        && rect.width > 0
-        && rect.height > 0;
+      if (rect.width <= 0 || rect.height <= 0) return false;
+      // The editing node's glyphs are suppressed with opacity 0 on an ancestor
+      // <g>. opacity is not inherited, so reading only this element's own
+      // computed style reports a layer that paints nothing as painted.
+      let current: Element | null = element;
+      while (current) {
+        const style = getComputedStyle(current);
+        if (style.display === 'none' || style.visibility === 'hidden') return false;
+        if (Number(style.opacity || 1) <= 0.01) return false;
+        if (current.classList.contains('smm-node') || current === document.body) break;
+        current = current.parentElement ?? (current.parentNode as Element | null);
+      }
+      return true;
     };
     const readFrame = (): Frame => {
       const sourceNode = document.querySelector<HTMLElement>('[data-switch-source="true"]');
