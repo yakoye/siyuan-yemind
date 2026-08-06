@@ -7655,21 +7655,21 @@ const CHECKPOINT_STORAGE_NAME = "checkpoints.json";
 const DIAGNOSTIC_PROBE_STORAGE_NAME = "diagnostics-probe.json";
 const DIAGNOSTIC_LIFECYCLE_MAP_PREFIX = "diagnostics-lifecycle-maps";
 const DIAGNOSTIC_LIFECYCLE_CHECKPOINT_PREFIX = "diagnostics-lifecycle-checkpoints";
-const PLUGIN_VERSION = "1.9.9-rc.9";
+const PLUGIN_VERSION = "1.9.9-rc.10";
 const TAB_TYPE = "yemind-map";
 const DOCK_TYPE = "yemind-dock";
 const ICON_ID = "iconYeMind";
 const ROOT_ICON_URL = `/plugins/${PLUGIN_ID}/icon.png`;
 (/* @__PURE__ */ new Date()).toISOString();
 const SOURCE_BUILD_INFO = Object.freeze({
-  id: "49a20454-dirty-58755cb3",
-  time: "2026-08-06T04:02:17.645Z"
+  id: "e42d1de0-dirty-c18c6abb",
+  time: "2026-08-06T07:20:10.946Z"
 });
 const RELEASE_INFO = {
   version: PLUGIN_VERSION,
   buildVersion: PLUGIN_VERSION,
-  buildTime: "2026-08-06T04:02:17.641Z",
-  buildId: "yemind-v1.9.9-rc.9-20260806",
+  buildTime: "2026-08-06T07:20:10.931Z",
+  buildId: "yemind-v1.9.9-rc.10-20260806",
   sourceBuildId: SOURCE_BUILD_INFO.id,
   sourceBuildTime: SOURCE_BUILD_INFO.time,
   sourceBuildLabel: `v${PLUGIN_VERSION} · ${SOURCE_BUILD_INFO.id}`,
@@ -16657,8 +16657,11 @@ const getNodeRichTextStyles = (node) => {
   richTextSupportStyleList.forEach((prop) => {
     let value = node.style.merge(prop);
     if (prop === "fontSize") {
-      value = value + "px";
+      const size2 = Number(value);
+      if (!Number.isFinite(size2) || size2 <= 0) return;
+      value = size2 + "px";
     }
+    if (value === void 0 || value === null || value === "") return;
     res[prop] = value;
   });
   return res;
@@ -18103,6 +18106,9 @@ function createRichTextNode(specifyText) {
     );
   }
   const div = this.mindMap.commonCaches.measureRichtextNodeTextSizeEl;
+  richTextSupportStyleList.forEach((prop) => {
+    div.style[prop] = "";
+  });
   nodeTextStyleList.forEach(([prop, value]) => {
     div.style[prop] = value;
   });
